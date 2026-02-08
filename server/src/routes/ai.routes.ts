@@ -18,6 +18,7 @@ import {
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
 import {
   ActionIdParamSchema,
   ActionTypeParamSchema,
@@ -793,11 +794,34 @@ router.post(
 
     const enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
 
+    // Prevent Node.js / proxy / ALB socket timeouts for long-running SSE streams
+    // (Deep Thinking can run 30–90 seconds; default 2min timeout gives safety margin)
+    if (req.socket) {
+      req.socket.setTimeout(120_000); // 2 minutes
+      req.socket.setNoDelay(true);    // Disable Nagle for real-time streaming
+    }
+
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable Nginx buffering for SSE
     res.setHeader('X-Stream-Session-Id', streamSessionId);
     res.flushHeaders();
+
+    // SSE heartbeat: keep connection alive during long AI processing (context build,
+    // RAG retrieval, Deep Thinking research). Prevents proxy/ALB idle timeouts.
+    const heartbeatInterval = setInterval(() => {
+      if (!isClientConnected || streamCompleted || streamAborted) {
+        clearInterval(heartbeatInterval);
+        return;
+      }
+      try {
+        res.write(': heartbeat\n\n');
+      } catch {
+        // Connection already closed — will be cleaned up by connectionCleanup
+        clearInterval(heartbeatInterval);
+      }
+    }, 15_000); // Every 15 seconds
 
     // --------------------------------------------------------------------
     // E2E_MODE: deterministic streaming for runtime tests (CI + Playwright)
@@ -835,6 +859,7 @@ router.post(
       if (streamCompleted) return;
       isClientConnected = false;
       streamAborted = true;
+      clearInterval(heartbeatInterval);
       logger.info(`[Stream] Client disconnected: ${streamSessionId}`);
 
       // Deep Thinking ops metric: aborted run
@@ -1193,6 +1218,72 @@ router.post(
         }
         res.write(`data: ${JSON.stringify(payload)}\n\n`);
       };
+
+      // --------------------------------------------------------
+      // Help / KB documentation grounding (product how-to)
+      // --------------------------------------------------------
+      // Lightweight retrieval: inject only a few relevant KB articles as snippets.
+      // Also stream KB citations so the UI can show them.
+      try {
+        const kbModuleId = String(
+          (screenContext as any)?.moduleId ||
+            (screenContext as any)?.module ||
+            (screenContext as any)?.currentModule ||
+            (screenContext as any)?.screenId ||
+            (screenContext as any)?.currentScreen ||
+            ''
+        ).trim() || null;
+
+        const kb = await buildHelpDocsContext({
+          query: message,
+          language,
+          moduleId: kbModuleId,
+          maxArticles: 3,
+          maxCharsPerArticle: 1200,
+        });
+
+        if (kb?.citations?.length) {
+          emitSSE({ type: 'citations', citations: kb.citations });
+          if (chatRunId) {
+            import('../services/ai/chatTraceService.js')
+              .then((m: any) =>
+                (m.default || m).addEvent(chatRunId, 'kb_docs', {
+                  moduleId: kbModuleId,
+                  citationsCount: kb.citations.length,
+                })
+              )
+              .catch(() => {
+                /* ignore */
+              });
+          }
+        }
+
+        if (kb?.systemInstructionAddon?.trim()) {
+          pipelineRequest = {
+            ...pipelineRequest,
+            options: {
+              ...(pipelineRequest.options || {}),
+              systemInstruction:
+                String((pipelineRequest.options as any)?.systemInstruction || '') +
+                `\n\n${kb.systemInstructionAddon}\n`,
+            },
+            context: {
+              ...((pipelineRequest as any).context || {}),
+              external: {
+                ...((pipelineRequest as any).context?.external || {}),
+                helpDocs: {
+                  query: message,
+                  moduleId: kbModuleId,
+                  articles: kb.articles || [],
+                  citations: kb.citations || [],
+                },
+              },
+            },
+          } as any;
+        }
+      } catch (kbErr: any) {
+        logger.warn('[AI Stream] KB docs retrieval failed, continuing without it:', kbErr?.message);
+      }
 
       // --------------------------------------------------------
       // AI-suggested Deep Thinking activation (hint)
@@ -2268,6 +2359,7 @@ router.post(
         return res.end();
       }
     } finally {
+      clearInterval(heartbeatInterval);
       req.socket?.removeListener('close', connectionCleanup);
       req.socket?.removeListener('error', connectionCleanup);
       res.removeListener('close', connectionCleanup);
@@ -4147,6 +4239,32 @@ router.get(
       logger.error('[AI] Nudges error:', err);
       return res.json({ success: true, nudges: [] });
     }
+  })
+);
+
+// 3.6b Nudge dismiss (best-effort persistence)
+router.post(
+  '/nudges/:nudgeId/dismiss',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { nudgeId } = req.params;
+    try {
+      const svc = await import('../services/ai/proactiveNudges.js');
+      await (svc.default || svc.proactiveNudgesService).dismissNudge(nudgeId, req.userId!);
+    } catch {
+      // best-effort — dismiss tracking is optional
+    }
+    return res.json({ success: true });
+  })
+);
+
+// 3.6c Nudge action tracking (best-effort)
+router.post(
+  '/nudges/:nudgeId/action',
+  verifyToken,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    // Best-effort: track that user acted on this nudge. Can be enhanced later.
+    return res.json({ success: true });
   })
 );
 

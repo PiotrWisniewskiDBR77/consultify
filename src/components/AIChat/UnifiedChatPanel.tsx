@@ -26,7 +26,7 @@ import { isValidLanguage, type SupportedLanguage } from '@/i18n';
 
 import { useAIStream } from '../../hooks/useAIStream';
 import { useDemoSession } from '../../hooks/useDemoSession';
-import { useOrgMemory } from '../../hooks/useOrgMemory';
+// import { useOrgMemory } from '../../hooks/useOrgMemory'; // removed — panel disabled
 import { useUniversalVoice } from '../../hooks/useUniversalVoice';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -44,7 +44,7 @@ import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
-import { OrganizationMemoryPanel } from './OrganizationMemoryPanel';
+// import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
 
 // ============================================================================
@@ -221,8 +221,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     consumeAIInteraction,
   } = useDemoSession();
 
-  // Organization Memory — past decisions & patterns
-  const orgMemory = useOrgMemory();
+  // Organization Memory — disabled (panel removed)
+  // const orgMemory = useOrgMemory();
 
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
@@ -1978,19 +1978,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         />
       </div>
 
-      {/* Organization Memory — past decisions & patterns */}
-      <div className={`${isCompact ? 'px-2' : 'px-3'}`}>
-        <OrganizationMemoryPanel
-          decisions={orgMemory.decisions}
-          patterns={orgMemory.patterns}
-          loading={orgMemory.loading}
-          onSearch={(q) => orgMemory.fetchDecisions(q)}
-          onUseInConversation={(text) => handleSendMessage(text)}
-          onOpenConversation={(convId) => {
-            setActiveConversation(convId);
-          }}
-        />
-      </div>
+      {/* Organization Memory panel removed — unused / WIP feature */}
 
       {/* Messages Area */}
       <div

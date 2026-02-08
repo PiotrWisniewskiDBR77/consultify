@@ -186,49 +186,119 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
         </div>
       )}
 
+      {/* Task Filter Tabs */}
+      {tasks.length > 0 && (
+        <div className="flex items-center gap-1 mb-3 p-1 bg-slate-100/50 dark:bg-navy-800/50 rounded-lg">
+          {[
+            { key: 'all', label: isPolish ? 'Wszystkie' : 'All', count: tasks.filter((t) => !t.isMilestone).length },
+            { key: 'open', label: isPolish ? 'Otwarte' : 'Open', count: tasks.filter((t) => !t.isMilestone && !['done', 'DONE'].includes(t.status)).length },
+            { key: 'blocked', label: isPolish ? 'Zablokowane' : 'Blocked', count: tasks.filter((t) => ['blocked', 'BLOCKED'].includes(t.status)).length },
+            { key: 'done', label: isPolish ? 'Ukończone' : 'Done', count: tasks.filter((t) => ['done', 'DONE'].includes(t.status)).length },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-medium transition-all ${
+                tab.count > 0 || tab.key === 'all'
+                  ? 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-navy-700'
+                  : 'text-slate-300 dark:text-slate-600 cursor-default'
+              }`}
+            >
+              {tab.label}
+              {tab.count > 0 && (
+                <span className="ml-1 text-[9px] text-slate-400">({tab.count})</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Tasks List */}
       {tasks.length === 0 && !showCreateTask ? (
         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
           <CheckSquare size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
           <p className="text-sm text-slate-400">{isPolish ? 'Brak zadań' : 'No tasks yet'}</p>
+          <p className="text-xs text-slate-400 mt-1">
+            {isPolish
+              ? 'Dodaj zadanie ręcznie lub pozwól AI zasugerować'
+              : 'Add tasks manually or let AI suggest them'}
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
           {tasks
             .filter((t) => !t.isMilestone)
-            .map((task) => (
-              <div
-                key={task.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50 hover:border-emerald-500/30 cursor-pointer transition-all"
-                onClick={() => onOpenTask?.(task.id)}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-2.5 h-2.5 rounded-full ${
-                      task.status === 'done' || task.status === 'DONE'
-                        ? 'bg-emerald-500'
-                        : task.status === 'in_progress' || task.status === 'IN_PROGRESS'
-                          ? 'bg-blue-500'
-                          : task.status === 'blocked' || task.status === 'BLOCKED'
-                            ? 'bg-red-500'
-                            : 'bg-slate-400'
-                    }`}
-                  />
-                  <span className="text-sm text-slate-700 dark:text-slate-300">{task.title}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {task.assigneeName && (
-                    <span className="text-xs text-slate-400">{task.assigneeName}</span>
-                  )}
-                  {task.dueDate && (
-                    <span className="text-xs text-slate-400">
-                      {new Date(task.dueDate).toLocaleDateString()}
+            .map((task) => {
+              const isDone = task.status === 'done' || task.status === 'DONE';
+              const isBlocked = task.status === 'blocked' || task.status === 'BLOCKED';
+              const isInProgress = task.status === 'in_progress' || task.status === 'IN_PROGRESS';
+              const isOverdue = task.dueDate && !isDone && new Date(task.dueDate) < new Date();
+              const priorityColor =
+                task.priority === 'CRITICAL' || task.priority === 'critical'
+                  ? 'text-red-500'
+                  : task.priority === 'HIGH' || task.priority === 'high'
+                    ? 'text-orange-500'
+                    : '';
+
+              return (
+                <div
+                  key={task.id}
+                  className={`flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer group ${
+                    isBlocked
+                      ? 'bg-red-50/50 dark:bg-red-500/5 border-red-200/50 dark:border-red-500/20'
+                      : isDone
+                        ? 'bg-emerald-50/30 dark:bg-emerald-500/5 border-emerald-200/50 dark:border-emerald-500/20'
+                        : 'bg-slate-50/50 dark:bg-navy-800/50 border-slate-200/50 dark:border-navy-700/50 hover:border-emerald-500/30'
+                  }`}
+                  onClick={() => onOpenTask?.(task.id)}
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div
+                      className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                        isDone
+                          ? 'bg-emerald-500'
+                          : isInProgress
+                            ? 'bg-blue-500 animate-pulse'
+                            : isBlocked
+                              ? 'bg-red-500'
+                              : 'bg-slate-400'
+                      }`}
+                    />
+                    <span
+                      className={`text-sm truncate ${
+                        isDone
+                          ? 'text-slate-400 line-through'
+                          : 'text-slate-700 dark:text-slate-300'
+                      } ${priorityColor}`}
+                    >
+                      {task.title}
                     </span>
-                  )}
-                  <ExternalLink size={14} className="text-slate-400" />
+                    {isBlocked && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-medium flex-shrink-0">
+                        {isPolish ? 'ZABLOK.' : 'BLOCKED'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                    {task.assigneeName && (
+                      <span className="text-xs text-slate-400 hidden sm:inline">
+                        {task.assigneeName}
+                      </span>
+                    )}
+                    {task.dueDate && (
+                      <span
+                        className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-slate-400'}`}
+                      >
+                        {new Date(task.dueDate).toLocaleDateString()}
+                      </span>
+                    )}
+                    <ExternalLink
+                      size={14}
+                      className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
         </div>
       )}
 

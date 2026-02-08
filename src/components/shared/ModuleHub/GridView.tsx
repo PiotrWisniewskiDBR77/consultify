@@ -3,17 +3,15 @@
  * Card-based grid view as alternative to table
  */
 
-import { Eye, MoreVertical, Plus } from 'lucide-react';
+import { Copy, Edit, Eye, Maximize2, MoreVertical, Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
-
-import { ItemStatus } from './types';
 
 export interface GridItem {
   id: string;
   name: string;
   type: string;
   typeColor: string;
-  status: ItemStatus;
+  status: string;
   progress: number;
   updatedAt: Date | string;
   [key: string]: any;
@@ -28,9 +26,10 @@ interface GridViewProps {
   emptyMessage?: string;
 }
 
-// Status config - uses canonical 11-status initiative lifecycle
-const STATUS_CONFIG: Record<ItemStatus, { bg: string; text: string; dot: string; label: string }> =
+// Status config — supports all status families (assessment, report, initiative)
+const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; label: string }> =
   {
+    // Initiative / shared statuses
     DRAFT: { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400', label: 'Draft' },
     PENDING_REVIEW: {
       bg: 'bg-orange-500/10',
@@ -93,6 +92,50 @@ const STATUS_CONFIG: Record<ItemStatus, { bg: string; text: string; dot: string;
       text: 'text-slate-400',
       dot: 'bg-slate-500',
       label: 'Archived',
+    },
+    // Assessment-specific statuses
+    IN_REVIEW: {
+      bg: 'bg-amber-500/10',
+      text: 'text-amber-400',
+      dot: 'bg-amber-400',
+      label: 'In Review',
+    },
+    AWAITING_APPROVAL: {
+      bg: 'bg-orange-500/10',
+      text: 'text-orange-400',
+      dot: 'bg-orange-400',
+      label: 'Awaiting Approval',
+    },
+    REJECTED: {
+      bg: 'bg-red-500/10',
+      text: 'text-red-400',
+      dot: 'bg-red-400',
+      label: 'Rejected',
+    },
+    // Report-specific statuses
+    GENERATING: {
+      bg: 'bg-blue-500/10',
+      text: 'text-blue-400',
+      dot: 'bg-blue-400',
+      label: 'Generating',
+    },
+    FINAL: {
+      bg: 'bg-indigo-500/10',
+      text: 'text-indigo-400',
+      dot: 'bg-indigo-400',
+      label: 'Final',
+    },
+    PENDING_APPROVAL: {
+      bg: 'bg-orange-500/10',
+      text: 'text-orange-400',
+      dot: 'bg-orange-400',
+      label: 'Pending Approval',
+    },
+    UTILIZED: {
+      bg: 'bg-teal-500/10',
+      text: 'text-teal-400',
+      dot: 'bg-teal-400',
+      label: 'Utilized',
     },
   };
 
@@ -188,17 +231,7 @@ export const GridView: React.FC<GridViewProps> = ({
                         setMenuItemId(null);
                       }}
                     />
-                    <div className="absolute right-0 top-full mt-1 z-50 w-32 bg-navy-800 border border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onItemAction?.('view', item);
-                          setMenuItemId(null);
-                        }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
-                      >
-                        View
-                      </button>
+                    <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-navy-800 border border-navy-600 rounded-lg shadow-xl overflow-hidden">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -207,8 +240,32 @@ export const GridView: React.FC<GridViewProps> = ({
                         }}
                         className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
                       >
+                        <Maximize2 size={14} />
+                        Open
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onItemAction?.('duplicate', item);
+                          setMenuItemId(null);
+                        }}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                      >
+                        <Copy size={14} />
+                        Duplicate
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onItemAction?.('rename', item);
+                          setMenuItemId(null);
+                        }}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                      >
+                        <Edit size={14} />
                         Edit
                       </button>
+                      <div className="border-t border-navy-600" />
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -217,6 +274,7 @@ export const GridView: React.FC<GridViewProps> = ({
                         }}
                         className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-400 hover:bg-navy-700"
                       >
+                        <Trash2 size={14} />
                         Delete
                       </button>
                     </div>
@@ -260,11 +318,11 @@ export const GridView: React.FC<GridViewProps> = ({
               <span className="text-xs text-slate-500">{formatRelativeTime(item.updatedAt)}</span>
             </div>
 
-            {/* Quick View Button (on hover) */}
+            {/* Quick Preview Button (on hover) */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onItemAction?.('view', item);
+                onItemAction?.('preview', item);
               }}
               className="
                 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
@@ -273,6 +331,7 @@ export const GridView: React.FC<GridViewProps> = ({
                 shadow-lg shadow-primary-500/25
                 transition-all duration-200
               "
+              title="Quick Preview"
             >
               <Eye size={20} />
             </button>

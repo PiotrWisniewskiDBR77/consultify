@@ -59,8 +59,9 @@ export function useOrgMemory() {
       const result = await Api.getAIDecisionHistory({ search, limit: 20 });
       setDecisions(result?.decisions || []);
     } catch (err: any) {
-      console.warn('[useOrgMemory] Failed to fetch decisions:', err?.message);
-      setError(err?.message || 'Failed to load decision history');
+      const msg = typeof err?.message === 'string' ? err.message : String(err);
+      console.warn('[useOrgMemory] Failed to fetch decisions:', msg);
+      setError(msg || 'Failed to load decision history');
       setDecisions([]);
     } finally {
       setLoading(false);

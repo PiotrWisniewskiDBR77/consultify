@@ -35,6 +35,7 @@ import notificationService from '../services/notificationService.js';
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportGenerationService from '../services/reportGenerationService.js';
+import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -984,6 +985,28 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
     logger.info('[ReportBuilder] Report created', { reportId: result.report.id, userId });
 
+    // Projection into Assessment module list (so the report appears in Assessment → Reports tab)
+    // Best-effort and non-blocking.
+    try {
+      if (String(result.report.sourceType || '').toUpperCase() === 'ASSESSMENT') {
+        await upsertAssessmentReportForBuilder({
+          organizationId,
+          assessmentId: String(result.report.sourceId),
+          projectId: result.report.projectId ? String(result.report.projectId) : null,
+          builderReportId: String(result.report.id),
+          name: String(result.report.title || title || 'Report'),
+          templateId: result.report.templateId ? String(result.report.templateId) : templateId || null,
+          rbStatus: String(result.report.status || 'CONFIGURING'),
+          userId,
+        });
+      }
+    } catch (syncErr: any) {
+      logger.warn('[ReportBuilder] Failed to project report into assessment_reports', {
+        reportId: result.report.id,
+        message: syncErr?.message,
+      });
+    }
+
     res.status(201).json(result);
   } catch (err: any) {
     logger.error('[ReportBuilder] Error creating report:', err);
@@ -1574,6 +1597,57 @@ router.post('/:id/approve', async (req: Request, res: Response, next: NextFuncti
         `Your report "${report.report.title || 'Report'}" has been approved.`,
         report.report.title
       );
+    }
+
+    // Auto-sync: mark APPROVE_REPORT gate as APPROVED in assessment workflow (when sourced from assessment)
+    if (String(report.report.sourceType || '').toUpperCase() === 'ASSESSMENT' && report.report.sourceId) {
+      const assessmentId = String(report.report.sourceId);
+      try {
+        const { getDatabase } = await import('../database/index.js');
+        const db = getDatabase();
+
+        await new Promise<void>((resolve, reject) => {
+          db.run(
+            `UPDATE assessments
+             SET report_approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+             WHERE id = ? AND organization_id = ?`,
+            [assessmentId, String(organizationId)],
+            (err: Error | null) => (err ? reject(err) : resolve())
+          );
+        });
+
+        // Best-effort: gate table may not exist in all environments
+        await new Promise<void>((resolve) => {
+          db.run(
+            `UPDATE assessment_gate_decisions
+             SET status = 'APPROVED', decided_by = ?, decided_at = CURRENT_TIMESTAMP
+             WHERE assessment_id = ? AND gate_type = 'APPROVE_REPORT'`,
+            [String(userId), assessmentId],
+            () => resolve()
+          );
+        });
+
+        await new Promise<void>((resolve) => {
+          db.run(
+            `UPDATE assessment_gate_decisions
+             SET status = 'APPROVED', decided_by = ?, decided_at = CURRENT_TIMESTAMP
+             WHERE assessment_id = ? AND gate_type = 'GENERATE_REPORT' AND status != 'APPROVED'`,
+            [String(userId), assessmentId],
+            () => resolve()
+          );
+        });
+
+        logger.info('[ReportBuilder] Auto-synced APPROVE_REPORT gate for assessment', {
+          assessmentId,
+          reportId: id,
+        });
+      } catch (syncErr: any) {
+        logger.warn('[ReportBuilder] Gate sync failed for assessment report approval', {
+          assessmentId,
+          reportId: id,
+          message: syncErr?.message,
+        });
+      }
     }
 
     logger.info('[ReportBuilder] Report approved', { reportId: id });

@@ -6,6 +6,7 @@
  */
 
 import { Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 
 import InitiativeControllerRaw from '../../controllers/InitiativeController.js';
 const InitiativeController = InitiativeControllerRaw as any;
@@ -69,6 +70,80 @@ router.delete('/portfolio/dependencies/:id', InitiativeController.deletePortfoli
  * Get all initiatives for organization
  */
 router.get('/', InitiativeController.getInitiatives);
+
+/**
+ * POST /api/initiatives/:id/duplicate
+ * Duplicate a single initiative (lightweight copy; keeps assessment/report linkage).
+ *
+ * Note: This intentionally duplicates only the main `initiatives` row and does not clone
+ * deep project-management sub-entities (tasks, RAID, etc.). Those can be re-generated later.
+ */
+router.post('/:id/duplicate', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const originalId = String(req.params.id || '');
+    const original = (await queryHelpers.queryOne(
+      `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [originalId, String(orgId)]
+    )) as any;
+    if (!original) return res.status(404).json({ error: 'Initiative not found' });
+
+    const now = new Date().toISOString();
+    const newId = uuidv4();
+    const baseTitle = String(original.title || original.name || 'Initiative');
+    const newTitle = req.body?.title ? String(req.body.title) : `${baseTitle} (Copy)`;
+
+    // SQLite-first: duplicate using actual table columns to avoid NOT NULL surprises.
+    let cols: string[] = [];
+    try {
+      const info = (await queryHelpers.queryAll(`PRAGMA table_info(initiatives)`)) as Array<{
+        name?: string;
+      }>;
+      cols = (info || []).map((r) => String(r.name || '')).filter(Boolean);
+    } catch {
+      cols = [];
+    }
+
+    if (cols.length === 0) {
+      // Fallback minimal insert (best-effort)
+      await queryHelpers.queryRun(
+        `INSERT INTO initiatives (id, organization_id, title, status, created_at, updated_at)
+         VALUES (?, ?, ?, 'DRAFT', ?, ?)`,
+        [newId, String(orgId), newTitle, now, now]
+      );
+      return res.status(201).json({ id: newId });
+    }
+
+    const insertCols: string[] = [];
+    const insertVals: any[] = [];
+    for (const c of cols) {
+      insertCols.push(c);
+      if (c === 'id') insertVals.push(newId);
+      else if (c === 'organization_id') insertVals.push(String(orgId));
+      else if (c === 'title') insertVals.push(newTitle);
+      else if (c === 'name') insertVals.push(newTitle);
+      else if (c === 'status') insertVals.push('DRAFT');
+      else if (c === 'created_at') insertVals.push(now);
+      else if (c === 'updated_at') insertVals.push(now);
+      else if (c === 'created_by') insertVals.push(String(userId || original.created_by || 'system'));
+      else if (c === 'updated_by') insertVals.push(String(userId || original.updated_by || 'system'));
+      else insertVals.push(original[c] ?? null);
+    }
+
+    const placeholders = insertCols.map(() => '?').join(', ');
+    await queryHelpers.queryRun(
+      `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${placeholders})`,
+      insertVals
+    );
+
+    return res.status(201).json({ id: newId });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to duplicate initiative', message: err.message });
+  }
+});
 
 /**
  * GET /api/initiatives/templates
@@ -273,6 +348,201 @@ router.patch(
   }
 );
 
+/**
+ * POST /api/initiatives/:id/apply-template
+ * Apply a template to an initiative: creates suggested tasks, milestones, decisions, KPIs, RAID items
+ */
+router.post('/:id/apply-template', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.params;
+    const { templateId } = req.body;
+    if (!templateId) return res.status(400).json({ error: 'templateId is required' });
+
+    // Verify initiative exists
+    const initiative = (await queryHelpers.queryOne(
+      `SELECT id, name, title FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [String(id), String(orgId)]
+    )) as any;
+    if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
+
+    // Fetch template
+    const template = await initiativeTemplateService.getTemplateById(String(templateId));
+    if (!template) return res.status(404).json({ error: 'Template not found' });
+
+    const now = new Date().toISOString();
+    const created = { tasks: 0, milestones: 0, decisions: 0, kpis: 0, raidItems: 0 };
+
+    // 1. Create suggested tasks (V3: suggestedTaskItems)
+    const taskItems = template.suggestedTaskItems || [];
+    for (const task of taskItems) {
+      try {
+        const taskId = uuidv4();
+        await queryHelpers.queryRun(
+          `INSERT INTO tasks (id, organization_id, initiative_id, title, type, priority, status, step_phase, created_by, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, 'TODO', ?, ?, ?, ?)`,
+          [
+            taskId,
+            String(orgId),
+            String(id),
+            String(task.title || 'Untitled task'),
+            String(task.taskType || task.type || 'general'),
+            String(task.priority || 'medium'),
+            String(task.stepPhase || task.phase || null),
+            String(userId || 'system'),
+            now,
+            now,
+          ]
+        );
+        created.tasks++;
+      } catch {
+        // table schema may differ — skip individual failures
+      }
+    }
+
+    // Fallback: V1 suggestedTasks (simple string array)
+    if (taskItems.length === 0 && template.suggestedTasks?.length) {
+      for (const taskTitle of template.suggestedTasks) {
+        try {
+          const taskId = uuidv4();
+          await queryHelpers.queryRun(
+            `INSERT INTO tasks (id, organization_id, initiative_id, title, status, created_by, created_at, updated_at)
+             VALUES (?, ?, ?, ?, 'TODO', ?, ?, ?)`,
+            [taskId, String(orgId), String(id), String(taskTitle), String(userId || 'system'), now, now]
+          );
+          created.tasks++;
+        } catch {
+          // skip
+        }
+      }
+    }
+
+    // 2. Create suggested milestones
+    const milestones = template.suggestedMilestones || [];
+    for (let i = 0; i < milestones.length; i++) {
+      const ms = milestones[i];
+      try {
+        const msId = uuidv4();
+        await queryHelpers.queryRun(
+          `INSERT INTO initiative_milestones (id, initiative_id, organization_id, name, description, status, is_gate, order_index, created_at)
+           VALUES (?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)`,
+          [
+            msId,
+            String(id),
+            String(orgId),
+            String(ms.name || `Milestone ${i + 1}`),
+            String(ms.description || ''),
+            ms.isGate ? 1 : 0,
+            ms.order ?? i,
+            now,
+          ]
+        );
+        created.milestones++;
+      } catch {
+        // skip
+      }
+    }
+
+    // 3. Create suggested decisions (gate decisions)
+    const decisions = template.suggestedDecisions || [];
+    for (const dec of decisions) {
+      try {
+        const decId = uuidv4();
+        await queryHelpers.queryRun(
+          `INSERT INTO decisions (id, organization_id, initiative_id, title, type, priority, status, pmo_domain, trigger_status, created_by, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)`,
+          [
+            decId,
+            String(orgId),
+            String(id),
+            String(dec.title || 'Untitled decision'),
+            String(dec.type || 'APPROVAL'),
+            String(dec.priority || 'medium'),
+            String(dec.pmoDomain || dec.pmo_domain || null),
+            String(dec.triggerStatus || dec.trigger_status || null),
+            String(userId || 'system'),
+            now,
+            now,
+          ]
+        );
+        created.decisions++;
+      } catch {
+        // skip — decisions table schema may vary
+      }
+    }
+
+    // 4. Create suggested KPIs
+    const kpis = template.suggestedKpis || [];
+    for (const kpi of kpis) {
+      try {
+        const kpiId = uuidv4();
+        await queryHelpers.queryRun(
+          `INSERT INTO initiative_kpis (id, initiative_id, organization_id, name, unit, target_value, frequency, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            kpiId,
+            String(id),
+            String(orgId),
+            String(kpi.name || 'Untitled KPI'),
+            String(kpi.unit || '%'),
+            kpi.targetValue ?? kpi.target_value ?? null,
+            String(kpi.frequency || kpi.measurementFrequency || 'monthly'),
+            now,
+          ]
+        );
+        created.kpis++;
+      } catch {
+        // skip
+      }
+    }
+
+    // 5. Create RAID template items
+    const raidItems = template.raidTemplates || [];
+    for (const item of raidItems) {
+      try {
+        const raidId = uuidv4();
+        await queryHelpers.queryRun(
+          `INSERT INTO raid_items (id, initiative_id, organization_id, type, title, description, severity, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?)`,
+          [
+            raidId,
+            String(id),
+            String(orgId),
+            String(item.type || 'RISK').toUpperCase(),
+            String(item.title || 'Untitled'),
+            String(item.description || ''),
+            String(item.impact || item.severity || 'MEDIUM').toUpperCase(),
+            now,
+            now,
+          ]
+        );
+        created.raidItems++;
+      } catch {
+        // skip
+      }
+    }
+
+    // Update initiative template reference
+    await queryHelpers.queryRun(
+      `UPDATE initiatives SET initiative_template_id = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
+      [String(templateId), now, String(id), String(orgId)]
+    );
+
+    return res.json({
+      success: true,
+      initiativeId: id,
+      templateId,
+      templateName: template.name,
+      created,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to apply template', message: err.message });
+  }
+});
+
 // ==========================================
 // INITIATIVE SECTION TYPES (Library)
 // ==========================================
@@ -408,6 +678,93 @@ router.post('/generate-section', async (req: any, res: any) => {
       error: 'Failed to generate section content',
       message: err.message,
     });
+  }
+});
+
+/**
+ * POST /api/initiatives/readiness-analysis
+ * AI-powered readiness analysis for the next gate
+ * Body: { initiativeId }
+ */
+router.post('/readiness-analysis', async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { initiativeId } = req.body;
+    if (!initiativeId) return res.status(400).json({ error: 'initiativeId is required' });
+
+    // Fetch initiative + related data
+    const initiative = (await queryHelpers.queryOne(
+      `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [String(initiativeId), String(orgId)]
+    )) as any;
+    if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
+
+    // Gather context
+    let taskCount = 0;
+    let taskDone = 0;
+    let decisionCount = 0;
+    let decisionApproved = 0;
+    let raidCritical = 0;
+
+    try {
+      const taskRows = await queryHelpers.queryAll<any>(
+        `SELECT status FROM tasks WHERE initiative_id = ? AND organization_id = ?`,
+        [String(initiativeId), String(orgId)]
+      );
+      taskCount = taskRows.length;
+      taskDone = taskRows.filter((t: any) => ['done', 'DONE'].includes(t.status)).length;
+    } catch { /* tasks table may not exist */ }
+
+    try {
+      const decRows = await queryHelpers.queryAll<any>(
+        `SELECT status FROM decisions WHERE initiative_id = ? AND organization_id = ?`,
+        [String(initiativeId), String(orgId)]
+      );
+      decisionCount = decRows.length;
+      decisionApproved = decRows.filter((d: any) => ['approved', 'APPROVED'].includes(d.status)).length;
+    } catch { /* */ }
+
+    try {
+      const raidRows = await queryHelpers.queryAll<any>(
+        `SELECT severity FROM raid_items WHERE initiative_id = ? AND organization_id = ? AND status != 'RESOLVED'`,
+        [String(initiativeId), String(orgId)]
+      );
+      raidCritical = raidRows.filter((r: any) => ['HIGH', 'CRITICAL'].includes(String(r.severity || '').toUpperCase())).length;
+    } catch { /* */ }
+
+    // Generate AI readiness analysis
+    const result = await initiativeGenerationService.generateSectionContent('gates', {
+      initiativeId: String(initiativeId),
+      initiativeName: initiative.name || initiative.title || 'Initiative',
+      summary: initiative.summary || '',
+      problemStatement: initiative.problem_statement || '',
+      status: initiative.status || 'DRAFT',
+      completedTasks: taskDone,
+      totalTasks: taskCount,
+      openRisks: raidCritical,
+      openDecisions: decisionCount - decisionApproved,
+      language: req.body.language || 'en',
+    }, String(orgId));
+
+    return res.json({
+      analysis: result.content,
+      parsedAnalysis: result.parsedContent,
+      metrics: {
+        tasksProgress: taskCount > 0 ? Math.round((taskDone / taskCount) * 100) : 0,
+        decisionsApproved: decisionApproved,
+        decisionsPending: decisionCount - decisionApproved,
+        criticalRisks: raidCritical,
+        hasOwner: !!initiative.owner_business_id || !!initiative.owner_execution_id,
+        hasTimeline: !!initiative.planned_start_date && !!initiative.planned_end_date,
+        hasSummary: !!(initiative.summary || '').trim(),
+        hasProblemStatement: !!(initiative.problem_statement || '').trim(),
+      },
+      model: result.model,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to analyze readiness', message: err.message });
   }
 });
 

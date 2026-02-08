@@ -5,7 +5,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { AlertTriangle, Loader2, Plus, Sparkles } from 'lucide-react';
+import { AlertTriangle, Clock, Loader2, Plus, Sparkles } from 'lucide-react';
 import React from 'react';
 
 import { CollapsibleSection } from './CollapsibleSection';
@@ -183,40 +183,89 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
           <p className="text-sm text-slate-400">
             {isPolish ? 'Brak elementów RAID' : 'No RAID items'}
           </p>
+          <p className="text-xs text-slate-400 mt-1">
+            {isPolish
+              ? 'Dodaj ryzyka, założenia, problemy lub zależności'
+              : 'Add risks, assumptions, issues or dependencies'}
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
-          {raidItems.map((r) => (
-            <div
-              key={r.id}
-              className="p-3 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-medium ${RAID_TYPE_CONFIG[r.type].color}`}
-                  >
-                    {isPolish ? RAID_TYPE_CONFIG[r.type].labelPl : RAID_TYPE_CONFIG[r.type].label}
-                  </span>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {r.title}
-                  </span>
+          {/* Sort: critical/high severity first, then by type */}
+          {raidItems
+            .sort((a, b) => {
+              const severityOrder: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+              const aSev = severityOrder[a.severity?.toUpperCase() || 'MEDIUM'] ?? 2;
+              const bSev = severityOrder[b.severity?.toUpperCase() || 'MEDIUM'] ?? 2;
+              return aSev - bSev;
+            })
+            .map((r) => {
+              const isHighSeverity = ['HIGH', 'CRITICAL'].includes(r.severity?.toUpperCase() || '');
+              const raidTypeConfig = RAID_TYPE_CONFIG[r.type] || RAID_TYPE_CONFIG.risk;
+              const sevConfig = SEVERITY_CONFIG[r.severity?.toUpperCase() || 'MEDIUM'] || SEVERITY_CONFIG.MEDIUM;
+
+              return (
+                <div
+                  key={r.id}
+                  className={`p-3 rounded-lg border transition-all ${
+                    isHighSeverity
+                      ? 'bg-red-50/30 dark:bg-red-500/5 border-red-200/50 dark:border-red-500/20'
+                      : 'bg-slate-50/50 dark:bg-navy-800/50 border-slate-200/50 dark:border-navy-700/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-medium flex-shrink-0 ${raidTypeConfig.color}`}
+                      >
+                        {isPolish ? raidTypeConfig.labelPl : raidTypeConfig.label}
+                      </span>
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                        {r.title}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      {r.ownerName && (
+                        <span className="text-[10px] text-slate-400 hidden sm:inline">
+                          {r.ownerName}
+                        </span>
+                      )}
+                      {r.severity && (
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded font-medium ${sevConfig.color}`}
+                        >
+                          {isPolish ? sevConfig.labelPl : sevConfig.label}
+                        </span>
+                      )}
+                      {r.status && r.status !== 'OPEN' && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-500/20 text-slate-400">
+                          {r.status}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {r.description && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                      {r.description}
+                    </p>
+                  )}
+                  {r.dueDate && (
+                    <div className="mt-1.5 flex items-center gap-1">
+                      <Clock size={10} className="text-slate-400" />
+                      <span
+                        className={`text-[10px] ${
+                          new Date(r.dueDate) < new Date()
+                            ? 'text-red-500 font-medium'
+                            : 'text-slate-400'
+                        }`}
+                      >
+                        {new Date(r.dueDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                {r.severity && (
-                  <span
-                    className={`text-[10px] px-2 py-0.5 rounded ${SEVERITY_CONFIG[r.severity].color}`}
-                  >
-                    {isPolish
-                      ? SEVERITY_CONFIG[r.severity].labelPl
-                      : SEVERITY_CONFIG[r.severity].label}
-                  </span>
-                )}
-              </div>
-              {r.description && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">{r.description}</p>
-              )}
-            </div>
-          ))}
+              );
+            })}
         </div>
       )}
     </CollapsibleSection>

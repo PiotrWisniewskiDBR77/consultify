@@ -251,6 +251,139 @@
   },
   "help": {
     "title": "Help Center",
+    "sidePanel": {
+      "title": "Help Center",
+      "tabs": {
+        "overview": "Overview",
+        "faq": "FAQ",
+        "knowledge": "Knowledge Base"
+      },
+      "fullDocs": "Full documentation",
+      "overview": {
+        "title": "Welcome to Consultinity",
+        "intro": "Your complete PMO platform for digital transformation. Assess, plan, and track your organization's journey to digital excellence with AI-powered insights and proven methodologies.",
+        "watchVideo": "Watch introduction video",
+        "videoDuration": "3 min overview",
+        "guides": "Quick guides",
+        "guidesList": {
+          "gettingStarted": "Getting started",
+          "assessment": "Assessment",
+          "initiatives": "Initiatives & roadmap",
+          "reports": "Reports & exports",
+          "aiFeatures": "AI features"
+        },
+        "whatToKnow": "Key things to know",
+        "tip1": "Start with Quick Assessment (5 min) for instant AI recommendations",
+        "tip2": "AI generates initiatives from assessment gaps — review in Roadmap",
+        "tip3": "Track implementation in Execution module with real-time dashboards",
+        "tip4": "Use AI Chat anytime to ask questions or get recommendations",
+        "tip5": "Export reports in PDF/PowerPoint for stakeholder presentations",
+        "keyboardShortcuts": "Keyboard shortcuts",
+        "keyboardShortcutsHint": "Press ? anytime to view"
+      },
+      "faq": {
+        "searchPlaceholder": "Search questions...",
+        "noResults": "No matching questions found.",
+        "noFAQ": "No FAQ available."
+      },
+      "knowledge": {
+        "title": "Knowledge Base",
+        "description": "Explore articles, tutorials, and best practices.",
+        "comingSoon": "Coming soon",
+        "categories": {
+          "tools": "Tools",
+          "methodologies": "Methodologies",
+          "caseStudies": "Case studies",
+          "bestPractices": "Best practices"
+        },
+        "notify": {
+          "success": "You'll be notified when it's ready!"
+        }
+      }
+    },
+    "search": {
+      "placeholder": "Search help articles, tutorials...",
+      "searching": "Searching...",
+      "results": "Results",
+      "found": "found",
+      "viewAll": "View all results",
+      "noResults": "No results found for \"{{query}}\"",
+      "tryDifferent": "Try different keywords or browse categories",
+      "recent": "Recent searches",
+      "clearRecent": "Clear",
+      "suggested": "Suggested articles",
+      "startTyping": "Start typing to search",
+      "navigate": "Navigate",
+      "select": "Select",
+      "close": "Close",
+      "buttonText": "Search help..."
+    },
+    "article": {
+      "tableOfContents": "Table of Contents",
+      "showMeHow": "Show me how",
+      "completed": "completed",
+      "thanksFeedback": "Thanks for your feedback!",
+      "loading": "Loading article...",
+      "notFound": "Article not found",
+      "minRead": "min read"
+    },
+    "contact": {
+      "title": "Contact Support",
+      "selectCategory": "Select a category to get started",
+      "describeIssue": "Describe your issue or request",
+      "requestSubmitted": "Request submitted successfully",
+      "categoryIntro": "What can we help you with today?",
+      "quickLinks": "Quick Links",
+      "documentation": "Documentation",
+      "systemStatus": "System Status",
+      "changeCategory": "Change category",
+      "priority": "Priority",
+      "subject": "Subject",
+      "description": "Description",
+      "email": "Email",
+      "emailPlaceholder": "Your email for follow-up",
+      "attachments": "Attachments",
+      "dropFiles": "Click to attach files",
+      "fileLimit": "Max {{max}} files, 10MB each",
+      "includeSystemInfo": "Include system information",
+      "thankYou": "Thank you!",
+      "submitAnother": "Submit another",
+      "responseTime": "Typical response time: 24 hours",
+      "submitting": "Submitting...",
+      "submit": "Submit Request",
+      "success": "Support request submitted successfully!",
+      "error": "Failed to submit request. Please try again.",
+      "fileTooLarge": "File {{name}} is too large (max 10MB)",
+      "tooManyFiles": "Maximum {{max}} files allowed",
+      "errors": {
+        "subjectRequired": "Subject is required",
+        "invalidEmail": "Invalid email address"
+      }
+    },
+    "dashboard": {
+      "overview": "Dashboard overview",
+      "overviewContent": "Use the Dashboard to monitor progress, key metrics, and the overall health of your transformation program.",
+      "navigation": "Navigation tips",
+      "navigationContent": "Use the left sidebar to move between modules. The Help panel adapts to the screen you're on."
+    },
+    "initiatives": {
+      "create": "Creating initiatives",
+      "createContent": "Create initiatives from assessment gaps or add them manually. Define owners, milestones, and expected benefits.",
+      "manage": "Managing initiatives",
+      "manageContent": "Prioritize initiatives, track progress, and keep stakeholders aligned using execution boards and reports."
+    },
+    "assessment": {
+      "start": "Starting an assessment",
+      "startContent": "Choose a framework, complete the questionnaire, and review gaps and recommendations generated from your inputs.",
+      "methodology": "Methodology",
+      "methodologyContent": "Assessments benchmark your current maturity and translate results into a prioritized roadmap of initiatives."
+    },
+    "general": {
+      "gettingStarted": "Getting started",
+      "gettingStartedContent": "Open the Help Center for quick guides, then run an assessment to generate a first roadmap.",
+      "support": "Support",
+      "supportContent": "If you get stuck, contact support and attach screenshots/logs. The AI Chat can also explain features and workflows."
+    },
     "knowledge": {
       "title": "Knowledge Base",
       "searchPlaceholder": "Search articles...",
@@ -723,16 +856,20 @@
       "selectFile": "Select file",
       "downloading": "Downloading: {{name}}"
     },
-    "myProjects": "My Projects",
-    "teamProjects": "Team Projects",
+    "myProjects": "My Folders",
+    "teamProjects": "Team Folders",
+    "myFolders": "My Folders",
+    "teamFolders": "Team Folders",
     "folders": "Folders",
     "createFolder": "Create folder",
     "createTeamFolder": "Create team folder",
     "newPersonalFolder": "New personal folder",
     "newTeamFolder": "New team folder",
     "newFolder": "New folder",
-    "projectName": "Project name...",
-    "noProjectConversations": "No conversations in this project",
+    "projectName": "Folder name...",
+    "folderName": "Folder name...",
+    "noProjectConversations": "No conversations in this folder",
+    "noFolderConversations": "No conversations in this folder",
     "noConversations": "No conversations yet",
     "noResults": "No conversations found",
     "startNewChat": "Start a new chat to begin",
@@ -741,6 +878,23 @@
     "searchPlaceholder": "Search conversations...",
     "sections": {
       "archived": "Archived"
+    },
+    "capabilities": {
+      "deepThinking": "Deep Thinking",
+      "deepThinkingDesc": "Multi-step analysis with web research",
+      "deepThinkingPrompt": "Analyze the biggest risk to our current strategy and suggest 3 mitigations",
+      "scenarios": "Scenario Modeling",
+      "scenariosDesc": "Monte Carlo ROI & what-if analysis",
+      "scenariosPrompt": "Run a Monte Carlo simulation for the ROI of our top initiative",
+      "riskAlerts": "Risk Alerts",
+      "riskAlertsDesc": "Predictive risk & budget warnings",
+      "riskAlertsPrompt": "What are the top risks in my portfolio right now?",
+      "actions": "Quick Actions",
+      "actionsDesc": "Create tasks, decisions & reports",
+      "actionsPrompt": "Create a task to review our Q1 roadmap progress"
+    },
+    "onboarding": {
+      "hint": "Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis"
     }
   },
   "agentAudit": {

@@ -18,7 +18,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { ADMAAssessmentEditor } from '@/components/assessment/adma/ADMAAssessmentEditor';
 import { DRDAssessmentEditor } from '@/components/assessment/drd/DRDAssessmentEditor';
 import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
@@ -278,7 +277,11 @@ export const AssessmentSessionEditorView: React.FC = () => {
   // because it can trigger "getSnapshot should be cached" warnings/loops.
   const setCurrentViewState = useAppStore((s) => s.setCurrentViewState);
   const currentUser = useAppStore((s) => s.currentUser);
+  const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
+  const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
   const createConversation = useConversationStore((s) => s.createConversation);
+  const setActiveConversation = useConversationStore((s) => s.setActiveConversation);
+  const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const framework = (frameworkParam?.toLowerCase() as SupportedFramework | undefined) || undefined;
@@ -318,6 +321,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const saveTimerRef = useRef<number | null>(null);
   const isMountedRef = useRef(true);
 
+  // Track the conversation created for this assessment session (to avoid duplicates)
+  const assessmentChatIdRef = useRef<string | null>(null);
+
   // Chat context attach (general chat)
   const [isChatContextOpen, setIsChatContextOpen] = useState(false);
   const [chatSearch, setChatSearch] = useState('');
@@ -334,7 +340,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [showRequestAccessModal, setShowRequestAccessModal] = useState(false);
-  const [leftWorkspace, setLeftWorkspace] = useState<'none' | 'manage' | 'chat'>('none');
+  const [leftWorkspace, setLeftWorkspace] = useState<'none' | 'manage'>('none');
   const [manageTab, setManageTab] = useState<
     'workflow' | 'team' | 'initiatives' | 'reports' | 'access' | 'logs'
   >('workflow');
@@ -720,120 +726,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
     navigate,
   ]);
 
-  // Open chat with assessment context
-  const handleOpenChat = useCallback(async () => {
-    if (!assessmentId || !assessment) return;
-
-    try {
-      // Create new conversation with assessment context
-      await createConversation({
-        title: `Assessment: ${assessment.name || 'Untitled'}`,
-        pmoContext: {
-          assessmentId: assessmentId,
-        },
-      });
-      // Open embedded chat workspace (left panel)
-      setLeftWorkspace('chat');
-    } catch (e: any) {
-      console.error('[AssessmentSessionEditorView] Failed to create chat:', e);
-      toast.error('Failed to open chat');
-    }
-  }, [assessmentId, assessment, createConversation]);
-
-  const handleOpenInitiativesWorkflow = useCallback(() => {
-    if (canManageEffective) {
-      setManageTab('initiatives');
-      setLeftWorkspace('manage');
-    }
-    setIsInitiativesWizardOpen(true);
-  }, [canManageEffective]);
-
-  const openReport = useCallback(
-    (reportId: string) => {
-      // Open the Report Builder editor with a returnUrl so the close button brings back here
-      const returnUrl = encodeURIComponent(
-        `/assessment/drd/${assessmentId}?${searchParams.toString()}`
-      );
-      navigate(`/reports/builder/${reportId}?returnUrl=${returnUrl}`);
-    },
-    [navigate, assessmentId, searchParams]
-  );
-
-  const handleOpenReportWorkflow = useCallback(() => {
-    if (!assessmentId || !assessment) return;
-    if (canManageEffective) {
-      setManageTab('reports');
-      setLeftWorkspace('manage');
-    }
-    setIsReportTemplatePickerOpen(true);
-  }, [assessmentId, assessment, canManageEffective]);
-
-  const handleStartNewReportFromTemplate = useCallback(
-    async (templateId: string) => {
-      if (!assessmentId || !assessment) return;
-
-      // 1. Create the report record from the template
-      // 2. Trigger AI generation for all sections
-      // 3. Navigate to the editor with the fully-generated report
-      const toastId = toast.loading('Creating report…');
-      try {
-        const reportTitle = `${assessment?.name || 'Assessment'} - Report`;
-        const response = await Api.post('/report-builder', {
-          sourceType: 'ASSESSMENT',
-          sourceId: assessmentId,
-          title: reportTitle,
-          templateId,
-        });
-
-        const reportId = response?.report?.id;
-        if (!reportId) throw new Error('Unexpected server response');
-
-        // Auto-generate AI content for every section
-        toast.loading('Generating report content with AI…', { id: toastId });
-        try {
-          await Api.post(`/report-builder/${reportId}/generate`, {
-            regenerateAll: false,
-          });
-        } catch (genErr: any) {
-          // Generation failed but report exists — show warning, still open the editor
-          const genMsg = genErr?.error || genErr?.message || 'AI generation failed';
-          console.error('[handleStartNewReportFromTemplate] Generation error:', genErr);
-          toast.error(`Generation issue: ${genMsg}. You can retry in the editor.`, { id: toastId, duration: 6000 });
-          // Skip the success toast — navigate to editor below
-          const returnUrl = encodeURIComponent(
-            `/assessment/drd/${assessmentId}?${searchParams.toString()}`
-          );
-          navigate(`/reports/builder/${reportId}?returnUrl=${returnUrl}`);
-          return;
-        }
-
-        setIsReportTemplatePickerOpen(false);
-        toast.success('Report generated — opening editor', { id: toastId });
-
-        // Navigate to the Report Builder editor.
-        // Pass returnUrl so the editor's close button brings the user back here.
-        const returnUrl = encodeURIComponent(
-          `/assessment/drd/${assessmentId}?${searchParams.toString()}`
-        );
-        navigate(`/reports/builder/${reportId}?returnUrl=${returnUrl}`);
-      } catch (err: any) {
-        const msg = err?.error || err?.message || 'Failed to create report';
-        toast.error(msg, { id: toastId });
-        console.error('[handleStartNewReportFromTemplate] Error:', err);
-        throw err;
-      }
-    },
-    [assessmentId, assessment, navigate, searchParams]
-  );
-
-  const assignmentByAreaId = useMemo(() => {
-    const map: Record<string, any> = {};
-    for (const a of assignments || []) {
-      if (a?.area_id) map[String(a.area_id)] = a;
-    }
-    return map;
-  }, [assignments]);
-
+  // Workspace context for AI chat awareness (assessment data snapshot)
   const chatWorkspaceContext = useMemo(() => {
     if (!assessmentId || !assessment) return undefined;
     const view =
@@ -887,6 +780,185 @@ export const AssessmentSessionEditorView: React.FC = () => {
       },
     });
   }, [assessmentId, assessment, framework, answers, currentAxisId, currentAreaId, currentLevel]);
+
+  // Open chat with assessment context
+  // Uses the existing MainLayout chat panel (not a separate overlay).
+  // 1. Creates/reuses a conversation with assessment context
+  // 2. Pushes the assessment workspaceContext so the AI "sees" the assessment
+  // 3. Expands the MainLayout chat panel if it's collapsed
+  const handleOpenChat = useCallback(async () => {
+    if (!assessmentId || !assessment) return;
+
+    try {
+      // Reuse the conversation already created for this assessment session
+      if (assessmentChatIdRef.current) {
+        setActiveConversation(assessmentChatIdRef.current);
+      } else {
+        // Build a rich context package for the AI conversation
+        const completionPercent = framework
+          ? calcCompletionPercent(framework, answers)
+          : (assessment?.completion_percent ?? 0);
+
+        const drdData: any = answers?.drd || {};
+        const axisProgress =
+          framework === 'drd'
+            ? DRD_STRUCTURE.map((ax) => {
+                const p = calcAxisProgress(drdData, ax.id);
+                return {
+                  axisId: ax.id,
+                  axisName: ax.namePL || ax.name,
+                  completed: p.completed,
+                  total: p.total,
+                  percent: p.percent,
+                };
+              }).sort((a, b) => a.percent - b.percent)
+            : [];
+
+        const pmoContext: Record<string, any> = {
+          assessmentId,
+          framework,
+          status: assessment?.status,
+          completionPercent,
+          currentFocus:
+            framework === 'drd'
+              ? { axisId: currentAxisId, areaId: currentAreaId, level: currentLevel }
+              : null,
+          needsWorkTopAxes: axisProgress.slice(0, 3),
+          contextSnapshot: assessment?.contextSnapshot || null,
+        };
+
+        // Create new conversation with the full assessment context
+        const conversation = await createConversation({
+          title: `Assessment: ${assessment.name || 'Untitled'}`,
+          pmoContext,
+        });
+
+        // Track conversation ID for this session so we can reuse on next click
+        assessmentChatIdRef.current = conversation.id;
+      }
+
+      // Push assessment workspace context so the AI panel "sees" the assessment
+      if (chatWorkspaceContext) {
+        setWorkspaceContext(chatWorkspaceContext);
+      }
+
+      // Open the existing MainLayout chat panel if it's collapsed
+      if (isChatCollapsed) {
+        toggleChatCollapse();
+      }
+    } catch (e: any) {
+      console.error('[AssessmentSessionEditorView] Failed to create chat:', e);
+      toast.error('Failed to open chat');
+    }
+  }, [
+    assessmentId,
+    assessment,
+    framework,
+    answers,
+    currentAxisId,
+    currentAreaId,
+    currentLevel,
+    isChatCollapsed,
+    chatWorkspaceContext,
+    createConversation,
+    setActiveConversation,
+    setWorkspaceContext,
+    toggleChatCollapse,
+  ]);
+
+  const handleOpenInitiativesWorkflow = useCallback(() => {
+    if (canManageEffective) {
+      setManageTab('initiatives');
+      setLeftWorkspace('manage');
+    }
+    setIsInitiativesWizardOpen(true);
+  }, [canManageEffective]);
+
+  const openReport = useCallback(
+    (reportId: string) => {
+      // Open the Report Builder editor with a returnUrl so the close button brings back here
+      const returnUrl = encodeURIComponent(
+        `/assessment/${framework}/${assessmentId}?${searchParams.toString()}`
+      );
+      navigate(`/reports/builder/${reportId}?returnUrl=${returnUrl}`);
+    },
+    [navigate, assessmentId, searchParams, framework]
+  );
+
+  const handleOpenReportWorkflow = useCallback(() => {
+    if (!assessmentId || !assessment) return;
+    if (canManageEffective) {
+      setManageTab('reports');
+      setLeftWorkspace('manage');
+    }
+    setIsReportTemplatePickerOpen(true);
+  }, [assessmentId, assessment, canManageEffective]);
+
+  const handleStartNewReportFromTemplate = useCallback(
+    async (templateId: string) => {
+      if (!assessmentId || !assessment) return;
+
+      // 1. Create the report record from the template
+      // 2. Trigger AI generation for all sections
+      // 3. Navigate to the editor with the fully-generated report
+      const toastId = toast.loading('Creating report…');
+      try {
+        const reportTitle = `${assessment?.name || 'Assessment'} - Report`;
+        const response = await Api.post('/report-builder', {
+          sourceType: 'ASSESSMENT',
+          sourceId: assessmentId,
+          title: reportTitle,
+          templateId,
+        });
+
+        const reportId = response?.report?.id;
+        if (!reportId) throw new Error('Unexpected server response');
+
+        // Auto-generate AI content for every section
+        toast.loading('Generating report content with AI…', { id: toastId });
+        try {
+          await Api.post(`/report-builder/${reportId}/generate`, {
+            regenerateAll: false,
+          });
+        } catch (genErr: any) {
+          // Generation failed but report exists — show warning, still open the editor
+          const genMsg = genErr?.error || genErr?.message || 'AI generation failed';
+          console.error('[handleStartNewReportFromTemplate] Generation error:', genErr);
+          toast.error(`Generation issue: ${genMsg}. You can retry in the editor.`, { id: toastId, duration: 6000 });
+          // Skip the success toast — navigate to editor below
+          const returnUrl = encodeURIComponent(
+            `/assessment/${framework}/${assessmentId}?${searchParams.toString()}`
+          );
+          navigate(`/reports/builder/${reportId}?returnUrl=${returnUrl}`);
+          return;
+        }
+
+        setIsReportTemplatePickerOpen(false);
+        toast.success('Report generated — opening editor', { id: toastId });
+
+        // Navigate to the Report Builder editor.
+        // Pass returnUrl so the editor's close button brings the user back here.
+        const returnUrl = encodeURIComponent(
+          `/assessment/${framework}/${assessmentId}?${searchParams.toString()}`
+        );
+        navigate(`/reports/builder/${reportId}?returnUrl=${returnUrl}`);
+      } catch (err: any) {
+        const msg = err?.error || err?.message || 'Failed to create report';
+        toast.error(msg, { id: toastId });
+        console.error('[handleStartNewReportFromTemplate] Error:', err);
+        throw err;
+      }
+    },
+    [assessmentId, assessment, navigate, searchParams, framework]
+  );
+
+  const assignmentByAreaId = useMemo(() => {
+    const map: Record<string, any> = {};
+    for (const a of assignments || []) {
+      if (a?.area_id) map[String(a.area_id)] = a;
+    }
+    return map;
+  }, [assignments]);
 
   const assignAreaToMe = useCallback(
     async (areaId: string) => {
@@ -1130,19 +1202,6 @@ export const AssessmentSessionEditorView: React.FC = () => {
                 onOpenReport={(reportId) => openReport(reportId)}
                 onCreateReport={() => setIsReportTemplatePickerOpen(true)}
               />
-            ) : leftWorkspace === 'chat' ? (
-              <div className="h-full">
-                <UnifiedChatPanel
-                  mode="split"
-                  showModeToggle={false}
-                  showHistoryTrigger={true}
-                  showFocusMode={true}
-                  title="Assessment chat"
-                  workspaceContext={chatWorkspaceContext}
-                  onBack={() => setLeftWorkspace('none')}
-                  className="h-full"
-                />
-              </div>
             ) : undefined
           }
           onViewModeChange={() => {
@@ -1180,6 +1239,17 @@ export const AssessmentSessionEditorView: React.FC = () => {
         <SIRIAssessmentEditor
           assessmentId={assessmentId || ''}
           readOnly={isLocked}
+          leftOverride={
+            leftWorkspace === 'manage' && canManageEffective ? (
+              <AssessmentManagePanel
+                assessmentId={assessmentId}
+                assessmentName={assessment?.name}
+                initialTab={manageTab}
+                onOpenReport={(reportId) => openReport(reportId)}
+                onCreateReport={() => setIsReportTemplatePickerOpen(true)}
+              />
+            ) : undefined
+          }
           value={siriData}
           onChange={(next) => {
             const nextAnswers = { ...answers, siri: next };
@@ -1196,6 +1266,17 @@ export const AssessmentSessionEditorView: React.FC = () => {
         <ADMAAssessmentEditor
           assessmentId={assessmentId || ''}
           readOnly={isLocked}
+          leftOverride={
+            leftWorkspace === 'manage' && canManageEffective ? (
+              <AssessmentManagePanel
+                assessmentId={assessmentId}
+                assessmentName={assessment?.name}
+                initialTab={manageTab}
+                onOpenReport={(reportId) => openReport(reportId)}
+                onCreateReport={() => setIsReportTemplatePickerOpen(true)}
+              />
+            ) : undefined
+          }
           value={admaData}
           onChange={(next) => {
             const nextAnswers = { ...answers, adma: next };
@@ -1415,28 +1496,6 @@ export const AssessmentSessionEditorView: React.FC = () => {
               <span>Chat</span>
             </button>
 
-            {/* Report workflow (in-place overlay) */}
-            <button
-              onClick={handleOpenReportWorkflow}
-              className="hidden sm:inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white text-sm font-semibold shadow-sm hover:shadow-md transition-all"
-              title="Create report from this assessment"
-              type="button"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Report</span>
-            </button>
-
-            {/* Initiatives workflow (in-place overlay) */}
-            <button
-              onClick={handleOpenInitiativesWorkflow}
-              className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
-              title="Generate initiatives from this assessment"
-              type="button"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Initiatives</span>
-            </button>
-
             {/* Exit button - always visible */}
             <button
               onClick={handleExitClick}
@@ -1505,6 +1564,53 @@ export const AssessmentSessionEditorView: React.FC = () => {
         {isInfoOpen && (
           <div className="px-6 pb-4">
             <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 p-4 text-sm text-slate-700 dark:text-slate-200">
+              {/* Workflow Status Banner */}
+              <div className="mb-4 p-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/40">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Workflow Status
+                    </span>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          String(status).toUpperCase() === 'APPROVED'
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : String(status).toUpperCase() === 'IN_REVIEW'
+                              ? 'bg-amber-500/20 text-amber-300'
+                              : String(status).toUpperCase() === 'AWAITING_APPROVAL'
+                                ? 'bg-orange-500/20 text-orange-300'
+                                : String(status).toUpperCase() === 'REJECTED'
+                                  ? 'bg-red-500/20 text-red-300'
+                                  : 'bg-slate-500/20 text-slate-300'
+                        }`}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            String(status).toUpperCase() === 'APPROVED'
+                              ? 'bg-emerald-400'
+                              : String(status).toUpperCase() === 'IN_REVIEW'
+                                ? 'bg-amber-400'
+                                : String(status).toUpperCase() === 'AWAITING_APPROVAL'
+                                  ? 'bg-orange-400'
+                                  : String(status).toUpperCase() === 'REJECTED'
+                                    ? 'bg-red-400'
+                                    : 'bg-slate-400'
+                          }`}
+                        />
+                        {String(status).toUpperCase().replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${overallProgress >= 80 ? 'bg-emerald-400' : 'bg-slate-400'}`} />
+                      <span>Assessment {overallProgress >= 80 ? 'ready' : `${Math.round(overallProgress)}% complete`}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-x-6 gap-y-2">
                 <div>
                   <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -1579,25 +1685,6 @@ export const AssessmentSessionEditorView: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-auto">{renderEditor()}</div>
-
-      {/* Embedded chat fallback for non-DRD tools (no leftOverride shell yet) */}
-      {leftWorkspace === 'chat' && framework !== 'drd' && (
-        <div className="fixed inset-0 z-40">
-          <div className="absolute inset-0 bg-black/20" onClick={() => setLeftWorkspace('none')} />
-          <div className="absolute inset-y-0 left-0 w-[min(560px,calc(100vw-32px))] m-4 rounded-2xl overflow-hidden border border-slate-200 dark:border-navy-700 shadow-2xl bg-white dark:bg-navy-900">
-            <UnifiedChatPanel
-              mode="split"
-              showModeToggle={false}
-              showHistoryTrigger={true}
-              showFocusMode={true}
-              title="Assessment chat"
-              workspaceContext={chatWorkspaceContext}
-              onBack={() => setLeftWorkspace('none')}
-              className="h-full"
-            />
-          </div>
-        </div>
-      )}
 
       <ReportTemplatePickerModal
         isOpen={isReportTemplatePickerOpen}

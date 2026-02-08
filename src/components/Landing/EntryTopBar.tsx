@@ -44,7 +44,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
     displayCode: LANGUAGE_DISPLAY_CODES[code],
   }));
 
-  const currentLang = languages.find((l) => l.code === i18n.language.split('-')[0]) || languages[0];
+  const currentLang = languages.find((l) => l.code === (i18n.language || 'en').split('-')[0]) || languages[0];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

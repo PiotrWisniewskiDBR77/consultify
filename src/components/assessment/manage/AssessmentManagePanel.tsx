@@ -205,6 +205,70 @@ export function AssessmentManagePanel(props: {
     .trim();
   const isDRD = assessmentType === 'DRD';
 
+  const workflowGuide = useMemo(() => {
+    const status = String(workflow?.status || 'DRAFT').toUpperCase() as WorkflowState;
+    const completion = Number(eligibility?.assessment?.completionPercent || 0);
+    const confidence = Number(eligibility?.assessment?.confidenceAvg || 0);
+    const reportApproved = Boolean((eligibility?.assessment as any)?.reportApprovedAt);
+
+    const steps: Array<{ title: string; detail: string; done?: boolean; next?: boolean }> = [
+      {
+        title: '1) Uzupełnij assessment (DoD)',
+        detail: `Wymagane: completion 100% i confidence >= 3 (teraz: ${completion}% / ${confidence.toFixed(
+          1
+        )}).`,
+        done: completion >= 100 && confidence >= 3,
+      },
+      {
+        title: '2) Submit for review',
+        detail: 'W workflow kliknij gate REQUEST_REVIEW (DRAFT → IN_REVIEW).',
+        done: status !== 'DRAFT',
+      },
+      {
+        title: '3) Utwórz i wygeneruj raport w Report Builder',
+        detail:
+          'Kliknij gate GENERATE_REPORT / APPROVE_REPORT → otworzy się Report Builder. Wygeneruj sekcje (Generate), potem Finalize (IN_REVIEW).',
+        done: status === 'AWAITING_APPROVAL' || status === 'APPROVED' || reportApproved,
+      },
+      {
+        title: '4) Zatwierdź raport',
+        detail:
+          'W Report Builder: Finalize → Approve (blokada: otwarte komentarze). Po approve gate APPROVE_REPORT w assessment workflow aktualizuje się automatycznie.',
+        done: reportApproved,
+      },
+      {
+        title: '5) Zatwierdź assessment',
+        detail: 'Gate APPROVE_ASSESSMENT (AWAITING_APPROVAL → APPROVED).',
+        done: status === 'APPROVED',
+      },
+      {
+        title: '6) Wygeneruj inicjatywy',
+        detail:
+          'Po APPROVED użyj GENERATE_INITIATIVES / New Initiative (inicjatywy widoczne od DRAFT w module).',
+        done: false,
+      },
+    ];
+
+    // Mark the next actionable step
+    const nextIdx =
+      status === 'DRAFT'
+        ? steps[0].done
+          ? 1
+          : 0
+        : status === 'IN_REVIEW'
+          ? reportApproved
+            ? 4
+            : 2
+          : status === 'AWAITING_APPROVAL'
+            ? 4
+            : status === 'APPROVED'
+              ? 5
+              : 0;
+    if (steps[nextIdx]) steps[nextIdx].next = true;
+
+    return { status, steps };
+  }, [workflow?.status, eligibility?.assessment]);
+
   // Allow parent to drive tab selection (e.g., header shortcuts)
   useEffect(() => {
     if (!initialTab) return;

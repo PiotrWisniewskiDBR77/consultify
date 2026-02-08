@@ -130,39 +130,148 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({
           </div>
         </motion.div>
       )}
+      {/* Decision Stats Summary */}
+      {decisions.length > 0 && (
+        <div className="mb-3 grid grid-cols-3 gap-2">
+          <div className="p-2 rounded-lg bg-amber-500/10 text-center">
+            <div className="text-lg font-bold text-amber-500">
+              {decisions.filter((d) => d.status === 'pending' || d.status === 'PENDING' || d.status === 'escalated' || d.status === 'ESCALATED').length}
+            </div>
+            <div className="text-[10px] uppercase text-amber-500/70">
+              {isPolish ? 'Oczekujące' : 'Pending'}
+            </div>
+          </div>
+          <div className="p-2 rounded-lg bg-emerald-500/10 text-center">
+            <div className="text-lg font-bold text-emerald-500">
+              {decisions.filter((d) => d.status === 'APPROVED' || d.status === 'approved').length}
+            </div>
+            <div className="text-[10px] uppercase text-emerald-500/70">
+              {isPolish ? 'Zatwierdzone' : 'Approved'}
+            </div>
+          </div>
+          <div className="p-2 rounded-lg bg-red-500/10 text-center">
+            <div className="text-lg font-bold text-red-500">
+              {decisions.filter((d) => d.status === 'REJECTED' || d.status === 'rejected').length}
+            </div>
+            <div className="text-[10px] uppercase text-red-500/70">
+              {isPolish ? 'Odrzucone' : 'Rejected'}
+            </div>
+          </div>
+        </div>
+      )}
+
       {decisions.length === 0 && !showCreateDecision ? (
         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
           <Scale size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
           <p className="text-sm text-slate-400">
             {isPolish ? 'Brak decyzji' : 'No decisions yet'}
           </p>
+          <p className="text-xs text-slate-400 mt-1">
+            {isPolish
+              ? 'Dodaj decyzje bramkowe lub operacyjne'
+              : 'Add gate or operational decisions'}
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
-          {decisions.map((d) => (
-            <div
-              key={d.id}
-              className="flex items-center justify-between p-3 rounded-lg bg-slate-50/50 dark:bg-navy-800/50 border border-slate-200/50 dark:border-navy-700/50 hover:border-amber-500/30 cursor-pointer transition-all"
-              onClick={() => onOpenDecision?.(d.id)}
-            >
-              <div className="flex items-center gap-3">
+          {/* Gate decisions first */}
+          {decisions
+            .sort((a, b) => {
+              // Gate decisions on top
+              const aIsGate = ['GOVERNANCE_DECISION_MAKING', 'RESOURCE_RESPONSIBILITY', 'SCHEDULE_MILESTONES'].includes(a.type);
+              const bIsGate = ['GOVERNANCE_DECISION_MAKING', 'RESOURCE_RESPONSIBILITY', 'SCHEDULE_MILESTONES'].includes(b.type);
+              if (aIsGate && !bIsGate) return -1;
+              if (!aIsGate && bIsGate) return 1;
+              // Then by status: pending first
+              const aIsPending = !['APPROVED', 'approved', 'REJECTED', 'rejected'].includes(a.status);
+              const bIsPending = !['APPROVED', 'approved', 'REJECTED', 'rejected'].includes(b.status);
+              if (aIsPending && !bIsPending) return -1;
+              if (!aIsPending && bIsPending) return 1;
+              return 0;
+            })
+            .map((d) => {
+              const isGate = ['GOVERNANCE_DECISION_MAKING', 'RESOURCE_RESPONSIBILITY', 'SCHEDULE_MILESTONES', 'GO_NO_GO'].includes(d.type);
+              const isApproved = d.status === 'APPROVED' || d.status === 'approved';
+              const isRejected = d.status === 'REJECTED' || d.status === 'rejected';
+              const isPending = !isApproved && !isRejected;
+              const isOverdue = d.dueDate && isPending && new Date(d.dueDate) < new Date();
+
+              const GATE_TYPE_LABELS: Record<string, { en: string; pl: string }> = {
+                GOVERNANCE_DECISION_MAKING: { en: 'Go/No-Go', pl: 'Go/No-Go' },
+                RESOURCE_RESPONSIBILITY: { en: 'Resources Commit', pl: 'Zobowiązanie zasobów' },
+                SCHEDULE_MILESTONES: { en: 'Schedule Lock', pl: 'Blokada harmonogramu' },
+                BUDGET_APPROVAL: { en: 'Budget Approval', pl: 'Zatwierdzenie budżetu' },
+                OTHER: { en: 'Decision', pl: 'Decyzja' },
+              };
+
+              return (
                 <div
-                  className={`w-2.5 h-2.5 rounded-full ${d.status === 'APPROVED' ? 'bg-emerald-500' : d.status === 'REJECTED' ? 'bg-red-500' : 'bg-amber-500'}`}
-                />
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {d.title}
-                  </p>
-                  <p className="text-xs text-slate-400">{d.type}</p>
+                  key={d.id}
+                  className={`p-3 rounded-lg border transition-all cursor-pointer group ${
+                    isGate && isPending
+                      ? 'bg-amber-50/50 dark:bg-amber-500/5 border-amber-200/50 dark:border-amber-500/20'
+                      : isApproved
+                        ? 'bg-emerald-50/30 dark:bg-emerald-500/5 border-emerald-200/50 dark:border-emerald-500/20'
+                        : isRejected
+                          ? 'bg-red-50/30 dark:bg-red-500/5 border-red-200/50 dark:border-red-500/20'
+                          : 'bg-slate-50/50 dark:bg-navy-800/50 border-slate-200/50 dark:border-navy-700/50 hover:border-amber-500/30'
+                  }`}
+                  onClick={() => onOpenDecision?.(d.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div
+                        className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                          isApproved
+                            ? 'bg-emerald-500'
+                            : isRejected
+                              ? 'bg-red-500'
+                              : isPending
+                                ? 'bg-amber-500 animate-pulse'
+                                : 'bg-slate-400'
+                        }`}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                            {d.title}
+                          </p>
+                          {isGate && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 font-semibold flex-shrink-0">
+                              GATE
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-400 truncate">
+                          {isPolish
+                            ? GATE_TYPE_LABELS[d.type]?.pl || d.type
+                            : GATE_TYPE_LABELS[d.type]?.en || d.type}
+                          {d.deciderName && ` · ${d.deciderName}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      {isOverdue && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-medium">
+                          {isPolish ? 'PRZETERMIN.' : 'OVERDUE'}
+                        </span>
+                      )}
+                      <span
+                        className={`px-2 py-0.5 text-[10px] font-medium rounded ${
+                          isApproved
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : isRejected
+                              ? 'bg-red-500/20 text-red-400'
+                              : 'bg-amber-500/20 text-amber-400'
+                        }`}
+                      >
+                        {d.status}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <span
-                className={`px-2 py-0.5 text-[10px] font-medium rounded ${d.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400' : d.status === 'REJECTED' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}
-              >
-                {d.status}
-              </span>
-            </div>
-          ))}
+              );
+            })}
         </div>
       )}
     </CollapsibleSection>

@@ -710,7 +710,8 @@ export const Api = {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const raw = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const msg = typeof raw === 'string' ? raw : JSON.stringify(raw);
       const err: any = new Error(msg);
       err.code = data?.code;
       throw err;
@@ -730,7 +731,8 @@ export const Api = {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const raw = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const msg = typeof raw === 'string' ? raw : JSON.stringify(raw);
       const err: any = new Error(msg);
       err.code = data?.code;
       throw err;

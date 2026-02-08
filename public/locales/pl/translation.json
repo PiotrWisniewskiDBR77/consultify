@@ -173,6 +173,139 @@
   },
   "help": {
     "title": "Centrum Pomocy",
+    "sidePanel": {
+      "title": "Centrum Pomocy",
+      "tabs": {
+        "overview": "Przegląd",
+        "faq": "FAQ",
+        "knowledge": "Baza wiedzy"
+      },
+      "fullDocs": "Pełna dokumentacja",
+      "overview": {
+        "title": "Witamy w Consultinity",
+        "intro": "Kompletna platforma PMO do transformacji cyfrowej. Oceniaj, planuj i śledź drogę organizacji do doskonałości cyfrowej dzięki wsparciu AI i sprawdzonym metodologiom.",
+        "watchVideo": "Obejrzyj wideo wprowadzające",
+        "videoDuration": "3 min — przegląd",
+        "guides": "Szybkie przewodniki",
+        "guidesList": {
+          "gettingStarted": "Pierwsze kroki",
+          "assessment": "Ocena (Assessment)",
+          "initiatives": "Inicjatywy i roadmapa",
+          "reports": "Raporty i eksport",
+          "aiFeatures": "Funkcje AI"
+        },
+        "whatToKnow": "Warto wiedzieć",
+        "tip1": "Zacznij od szybkiej oceny (ok. 5 min), aby dostać natychmiastowe rekomendacje AI",
+        "tip2": "AI generuje inicjatywy na bazie luk z oceny — zweryfikuj je w Roadmapie",
+        "tip3": "Śledź wdrożenie w module Execution dzięki dashboardom w czasie rzeczywistym",
+        "tip4": "Korzystaj z AI Chat w dowolnym momencie, aby zadawać pytania i prosić o rekomendacje",
+        "tip5": "Eksportuj raporty do PDF/PowerPoint na potrzeby prezentacji dla interesariuszy",
+        "keyboardShortcuts": "Skróty klawiszowe",
+        "keyboardShortcutsHint": "Naciśnij ? w dowolnym momencie, aby zobaczyć listę"
+      },
+      "faq": {
+        "searchPlaceholder": "Szukaj pytań...",
+        "noResults": "Nie znaleziono pasujących pytań.",
+        "noFAQ": "Brak FAQ."
+      },
+      "knowledge": {
+        "title": "Baza wiedzy",
+        "description": "Przeglądaj artykuły, samouczki i najlepsze praktyki.",
+        "comingSoon": "Wkrótce",
+        "categories": {
+          "tools": "Narzędzia",
+          "methodologies": "Metodologie",
+          "caseStudies": "Studia przypadku",
+          "bestPractices": "Najlepsze praktyki"
+        },
+        "notify": {
+          "success": "Powiadomimy Cię, gdy będzie gotowe!"
+        }
+      }
+    },
+    "search": {
+      "placeholder": "Szukaj w pomocy (artykuły, poradniki...)",
+      "searching": "Wyszukiwanie...",
+      "results": "Wyniki",
+      "found": "znaleziono",
+      "viewAll": "Zobacz wszystkie wyniki",
+      "noResults": "Brak wyników dla \"{{query}}\"",
+      "tryDifferent": "Spróbuj innych słów kluczowych lub przejrzyj kategorie",
+      "recent": "Ostatnie wyszukiwania",
+      "clearRecent": "Wyczyść",
+      "suggested": "Sugerowane artykuły",
+      "startTyping": "Zacznij pisać, aby wyszukać",
+      "navigate": "Nawiguj",
+      "select": "Wybierz",
+      "close": "Zamknij",
+      "buttonText": "Szukaj w pomocy..."
+    },
+    "article": {
+      "tableOfContents": "Spis treści",
+      "showMeHow": "Pokaż jak",
+      "completed": "ukończone",
+      "thanksFeedback": "Dziękujemy za opinię!",
+      "loading": "Wczytywanie artykułu...",
+      "notFound": "Nie znaleziono artykułu",
+      "minRead": "min czytania"
+    },
+    "contact": {
+      "title": "Kontakt z supportem",
+      "selectCategory": "Wybierz kategorię, aby rozpocząć",
+      "describeIssue": "Opisz problem lub prośbę",
+      "requestSubmitted": "Zgłoszenie zostało wysłane",
+      "categoryIntro": "W czym możemy dziś pomóc?",
+      "quickLinks": "Szybkie linki",
+      "documentation": "Dokumentacja",
+      "systemStatus": "Status systemu",
+      "changeCategory": "Zmień kategorię",
+      "priority": "Priorytet",
+      "subject": "Temat",
+      "description": "Opis",
+      "email": "Email",
+      "emailPlaceholder": "Twój email do kontaktu zwrotnego",
+      "attachments": "Załączniki",
+      "dropFiles": "Kliknij, aby dodać pliki",
+      "fileLimit": "Maks. {{max}} plików, 10MB każdy",
+      "includeSystemInfo": "Dołącz informacje systemowe",
+      "thankYou": "Dziękujemy!",
+      "submitAnother": "Wyślij kolejne",
+      "responseTime": "Typowy czas odpowiedzi: 24 godziny",
+      "submitting": "Wysyłanie...",
+      "submit": "Wyślij zgłoszenie",
+      "success": "Zgłoszenie do supportu zostało wysłane!",
+      "error": "Nie udało się wysłać zgłoszenia. Spróbuj ponownie.",
+      "fileTooLarge": "Plik {{name}} jest zbyt duży (maks. 10MB)",
+      "tooManyFiles": "Maksymalnie {{max}} plików",
+      "errors": {
+        "subjectRequired": "Temat jest wymagany",
+        "invalidEmail": "Nieprawidłowy adres email"
+      }
+    },
+    "dashboard": {
+      "overview": "Przegląd Dashboardu",
+      "overviewContent": "Używaj Dashboardu do monitorowania postępów, kluczowych metryk i ogólnej kondycji programu transformacji.",
+      "navigation": "Wskazówki nawigacji",
+      "navigationContent": "Korzystaj z lewego menu, aby przechodzić między modułami. Panel Pomocy dopasowuje się do aktualnego ekranu."
+    },
+    "initiatives": {
+      "create": "Tworzenie inicjatyw",
+      "createContent": "Twórz inicjatywy na bazie luk z oceny lub dodawaj je ręcznie. Ustal właścicieli, kamienie milowe i oczekiwane korzyści.",
+      "manage": "Zarządzanie inicjatywami",
+      "manageContent": "Priorytetyzuj inicjatywy, śledź postęp i utrzymuj spójność komunikacji dzięki tablicom wykonawczym i raportom."
+    },
+    "assessment": {
+      "start": "Rozpoczęcie oceny",
+      "startContent": "Wybierz framework, uzupełnij ankietę, a następnie przejrzyj luki i rekomendacje wygenerowane na podstawie odpowiedzi.",
+      "methodology": "Metodologia",
+      "methodologyContent": "Oceny porównują aktualną dojrzałość i przekładają wyniki na priorytetyzowaną roadmapę inicjatyw."
+    },
+    "general": {
+      "gettingStarted": "Pierwsze kroki",
+      "gettingStartedContent": "Otwórz Centrum Pomocy, skorzystaj z szybkich przewodników, a następnie uruchom ocenę, aby wygenerować pierwszą roadmapę.",
+      "support": "Wsparcie",
+      "supportContent": "Jeśli utkniesz, skontaktuj się z supportem i dołącz zrzuty ekranu/logi. AI Chat może też wyjaśniać funkcje i przepływy pracy."
+    },
     "knowledge": {
       "title": "Baza Wiedzy",
       "searchPlaceholder": "Szukaj artykułów...",
@@ -726,16 +859,20 @@
       "selectFile": "Wybierz plik",
       "downloading": "Pobieranie: {{name}}"
     },
-    "myProjects": "Moje projekty",
-    "teamProjects": "Projekty zespołu",
+    "myProjects": "Moje foldery",
+    "teamProjects": "Foldery zespołu",
+    "myFolders": "Moje foldery",
+    "teamFolders": "Foldery zespołu",
     "folders": "Foldery",
     "createFolder": "Utwórz folder",
     "createTeamFolder": "Utwórz folder zespołu",
     "newPersonalFolder": "Nowy folder osobisty",
     "newTeamFolder": "Nowy folder zespołu",
     "newFolder": "Nowy folder",
-    "projectName": "Nazwa projektu...",
-    "noProjectConversations": "Brak rozmów w tym projekcie",
+    "projectName": "Nazwa folderu...",
+    "folderName": "Nazwa folderu...",
+    "noProjectConversations": "Brak rozmów w tym folderze",
+    "noFolderConversations": "Brak rozmów w tym folderze",
     "noConversations": "Brak rozmów",
     "noResults": "Nie znaleziono rozmów",
     "startNewChat": "Rozpocznij nowy czat",
@@ -744,6 +881,23 @@
     "searchPlaceholder": "Szukaj rozmów...",
     "sections": {
       "archived": "Archiwum"
+    },
+    "capabilities": {
+      "deepThinking": "Deep Thinking",
+      "deepThinkingDesc": "Wieloetapowa analiza z wyszukiwaniem w sieci",
+      "deepThinkingPrompt": "Przeanalizuj największe ryzyko dla naszej obecnej strategii i zaproponuj 3 sposoby mitygacji",
+      "scenarios": "Modelowanie scenariuszy",
+      "scenariosDesc": "Monte Carlo ROI i analiza wariantów",
+      "scenariosPrompt": "Uruchom symulację Monte Carlo dla ROI naszej top inicjatywy",
+      "riskAlerts": "Alerty ryzyka",
+      "riskAlertsDesc": "Predykcyjne ryzyka i ostrzeżenia budżetowe",
+      "riskAlertsPrompt": "Jakie są najważniejsze ryzyka w moim portfelu inicjatyw?",
+      "actions": "Szybkie akcje",
+      "actionsDesc": "Tworzenie zadań, decyzji i raportów",
+      "actionsPrompt": "Utwórz zadanie przeglądu postępów roadmapy Q1"
+    },
+    "onboarding": {
+      "hint": "Tip: Wypróbuj tryb głosowy, załącz pliki lub włącz Deep Thinking dla wieloetapowej analizy"
     }
   },
   "agentAudit": {

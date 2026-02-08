@@ -111,7 +111,7 @@ const CreateConversationSchema = z.object({
   title: z.string().max(255).optional(),
   projectId: z.string().uuid().optional(),
   chatProjectId: z.string().uuid().optional(),
-  pmoContext: z.record(z.unknown()).optional(),
+  pmoContext: z.record(z.string(), z.unknown()).optional(),
   language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).optional(),
 });
 
@@ -124,7 +124,7 @@ const UpdateConversationSchema = z.object({
   starred: z.boolean().optional(),
   archived: z.boolean().optional(),
   tags: z.array(z.string()).optional(),
-  pmoContext: z.record(z.unknown()).optional(),
+  pmoContext: z.record(z.string(), z.unknown()).optional(),
   chatProjectId: z.string().uuid().nullable().optional(),
   language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).optional(),
 });
@@ -135,7 +135,7 @@ const AddMessageSchema = z.object({
   messageType: z
     .enum(['text', 'action_request', 'summary', 'file', 'tool_call', 'voice'])
     .optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   tokenCount: z.number().int().positive().optional(),
   modelUsed: z.string().max(100).optional(),
 });
@@ -382,7 +382,7 @@ router.get(
                 SELECT cm.id, cm.conversation_id, cm.role, cm.content, cm.message_type,
                        cm.metadata, cm.token_count, cm.model_used, cm.author_user_id,
                        cm.created_at,
-                       u.name as author_name, u.email as author_email
+                       COALESCE(u.first_name || ' ' || u.last_name, u.email) as author_name, u.email as author_email
                 FROM conversation_messages cm
                 LEFT JOIN users u ON cm.author_user_id = u.id
                 WHERE cm.conversation_id = ?
@@ -610,7 +610,7 @@ router.post(
       // Note: Trigger in DB handles updating conversation metadata
 
       const message = await dbGet(
-        `SELECT cm.*, u.name as author_name, u.email as author_email
+        `SELECT cm.*, COALESCE(u.first_name || ' ' || u.last_name, u.email) as author_name, u.email as author_email
          FROM conversation_messages cm
          LEFT JOIN users u ON cm.author_user_id = u.id
          WHERE cm.id = ?`,

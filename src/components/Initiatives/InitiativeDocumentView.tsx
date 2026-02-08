@@ -141,6 +141,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [ownerId, setOwnerId] = useState('');
   const [sponsorId, setSponsorId] = useState('');
   const [targetDate, setTargetDate] = useState('');
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
 
   // UI state
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
@@ -278,6 +280,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setOwnerId(data.ownerId || data.owner_id || '');
       setSponsorId(data.sponsorId || data.sponsor_id || '');
       setTargetDate(data.plannedEndDate || data.targetDate || '');
+      setStartDate(data.plannedStartDate || data.planned_start_date || null);
+      setEndDate(data.plannedEndDate || data.planned_end_date || null);
 
       // Fetch related data (best-effort, parallel)
       const fetches = [
@@ -529,6 +533,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     tags, setTags, users, pendingApprovals,
     summary, setSummary, description, setDescription, priority, setPriority,
     ownerId, setOwnerId, sponsorId, setSponsorId, targetDate, setTargetDate,
+    startDate, setStartDate, endDate, setEndDate,
     reminders, setReminders, escalation, setEscalation, thresholds, setThresholds,
     expandedSections, toggleSection, isGeneratingAI, isMutating, currentUserId,
     status, ownerName, sponsorName, tasksDone, tasksInProgress, milestones,
@@ -554,6 +559,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     decisions, raidItems, watchers, history, tasks, comments, linkedItems,
     attachments, stakeholders, dependencies, tags, users, pendingApprovals,
     summary, description, priority, ownerId, sponsorId, targetDate,
+    startDate, endDate,
     reminders, escalation, thresholds,
     expandedSections, toggleSection, isGeneratingAI, isMutating, currentUserId,
     status, ownerName, sponsorName, tasksDone, tasksInProgress, milestones,

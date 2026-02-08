@@ -8,7 +8,6 @@
 
 import {
   AlertTriangle,
-  BarChart3,
   CheckCircle2,
   ChevronDown,
   Cpu,
@@ -53,6 +52,7 @@ export interface ADMAEditorAnswers {
 interface Props {
   assessmentId: string;
   readOnly?: boolean;
+  leftOverride?: React.ReactNode;
   value: ADMAEditorAnswers | undefined;
   onChange: (next: ADMAEditorAnswers) => void;
   onPillarChange?: (pillarId: ADMAPillarId) => void;
@@ -454,6 +454,7 @@ const ScoreSummaryPanel: React.FC<{
 export const ADMAAssessmentEditor: React.FC<Props> = ({
   assessmentId,
   readOnly = false,
+  leftOverride,
   value,
   onChange,
   onPillarChange,
@@ -461,6 +462,11 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
   onDimensionChange,
   currentDimensionId,
 }) => {
+  // Manage panel support (same pattern as DRD): allow parent to override the whole editor view.
+  if (leftOverride) {
+    return <div className="h-full bg-white dark:bg-navy-900">{leftOverride}</div>;
+  }
+
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
@@ -561,12 +567,8 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
   return (
     <div className="flex flex-col h-full bg-white dark:bg-navy-900">
       {/* Header with Pillar Tabs */}
-      <div className="border-b border-slate-200 dark:border-navy-700 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-            <BarChart3 className="text-blue-500" />
-            ADMA Assessment
-          </h2>
+      <div className="border-b border-slate-200 dark:border-navy-700 p-3">
+        <div className="flex items-center justify-end mb-3">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode('dimensions')}

@@ -126,6 +126,39 @@ export const AI_TOOLS: ToolDefinition[] = [
   {
     type: 'function',
     function: {
+      name: 'run_monte_carlo',
+      description: 'Run a Monte Carlo simulation to forecast ROI under uncertainty. Use when the user asks about risk-adjusted ROI, probability of success, scenario modeling, or "what are the chances" of an investment succeeding.',
+      parameters: {
+        type: 'object',
+        properties: {
+          base_roi: {
+            type: 'number',
+            description: 'Expected base ROI in percent (e.g. 150 for 150% ROI)',
+          },
+          capex: {
+            type: 'number',
+            description: 'Capital expenditure (one-time investment) in monetary units',
+          },
+          opex: {
+            type: 'number',
+            description: 'Annual operational expenditure',
+          },
+          uncertainty: {
+            type: 'number',
+            description: 'Uncertainty band (0.1 = ±10%, 0.3 = ±30%). Default 0.3',
+          },
+          iterations: {
+            type: 'number',
+            description: 'Number of Monte Carlo iterations. Default 10000',
+          },
+        },
+        required: ['base_roi', 'capex'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'get_initiative_status',
       description: 'Get current status, progress, and details of a specific initiative or all initiatives in the project.',
       parameters: {
@@ -247,6 +280,8 @@ export async function executeToolCall(
         return await executeGetAssessment(args, context);
       case 'calculate_financial':
         return await executeFinancialCalc(args, context);
+      case 'run_monte_carlo':
+        return await executeMonteCarloTool(args);
       case 'get_initiative_status':
         return await executeGetInitiativeStatus(args, context);
       case 'compare_benchmarks':
@@ -382,6 +417,39 @@ async function executeFinancialCalc(args: any, ctx: ToolExecutionContext): Promi
   }
 
   return JSON.stringify(results);
+}
+
+async function executeMonteCarloTool(args: any): Promise<string> {
+  try {
+    const { runMonteCarloROI } = await import('./advancedFeatures.js');
+    const result = runMonteCarloROI(
+      args.base_roi ?? 100,
+      args.capex ?? 100000,
+      args.opex ?? 0,
+      args.uncertainty ?? 0.3,
+      args.iterations ?? 10000
+    );
+    return JSON.stringify({
+      source: 'monte_carlo_simulation',
+      iterations: result.iterations,
+      mean_roi: result.mean + '%',
+      median_roi: result.percentiles.p50 + '%',
+      probability_positive_roi: result.probabilityOfPositiveROI + '%',
+      standard_deviation: result.standardDeviation,
+      scenarios: result.scenarios.map((s: any) => ({
+        scenario: s.label,
+        roi: s.roi + '%',
+      })),
+      interpretation:
+        result.probabilityOfPositiveROI >= 80
+          ? 'High confidence — strong investment case'
+          : result.probabilityOfPositiveROI >= 50
+            ? 'Moderate risk — further analysis recommended'
+            : 'High risk — consider risk mitigation before proceeding',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: err.message, source: 'monte_carlo_simulation' });
+  }
 }
 
 async function executeGetInitiativeStatus(args: any, ctx: ToolExecutionContext): Promise<string> {

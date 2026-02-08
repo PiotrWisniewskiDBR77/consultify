@@ -56,8 +56,65 @@ router.get(
       [orgId]
     );
 
+    // Build AI-generated text version of the brief
+    const tasksList = (tasks || []) as Array<{ title: string; priority: string; due_date: string }>;
+    const meetingsList = (meetings || []) as Array<{ title: string; start_time: string }>;
+    const decisionsList = (decisions || []) as Array<{ title: string; status: string }>;
+    const notifCount = (notifications || []).length;
+
+    const uiLang = (req.query.lang as string || req.headers['accept-language'] || 'pl').split('-')[0];
+    const isPl = uiLang === 'pl';
+
+    // Generate a concise text brief (no LLM needed for basic version)
+    const lines: string[] = [];
+    const today = new Date().toLocaleDateString(isPl ? 'pl-PL' : 'en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    });
+
+    lines.push(isPl ? `## Twój brief na ${today}` : `## Your brief for ${today}`);
+    lines.push('');
+
+    if (tasksList.length > 0) {
+      lines.push(isPl ? `### 📋 Zadania (${tasksList.length})` : `### 📋 Tasks (${tasksList.length})`);
+      for (const t of tasksList.slice(0, 5)) {
+        const prio = t.priority === 'high' ? '🔴' : t.priority === 'medium' ? '🟡' : '🟢';
+        lines.push(`- ${prio} **${t.title}** — ${t.due_date || (isPl ? 'brak terminu' : 'no due date')}`);
+      }
+      if (tasksList.length > 5) lines.push(isPl ? `_...i ${tasksList.length - 5} więcej_` : `_...and ${tasksList.length - 5} more_`);
+      lines.push('');
+    }
+
+    if (meetingsList.length > 0) {
+      lines.push(isPl ? `### 📅 Spotkania dzisiaj (${meetingsList.length})` : `### 📅 Meetings today (${meetingsList.length})`);
+      for (const m of meetingsList) {
+        const time = m.start_time ? new Date(m.start_time).toLocaleTimeString(isPl ? 'pl-PL' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '';
+        lines.push(`- ${time} ${m.title}`);
+      }
+      lines.push('');
+    }
+
+    if (decisionsList.length > 0) {
+      lines.push(isPl ? `### ⚖️ Oczekujące decyzje (${decisionsList.length})` : `### ⚖️ Pending decisions (${decisionsList.length})`);
+      for (const d of decisionsList) {
+        lines.push(`- ${d.title}`);
+      }
+      lines.push('');
+    }
+
+    if (notifCount > 0) {
+      lines.push(isPl ? `### 🔔 Nieprzeczytane powiadomienia: ${notifCount}` : `### 🔔 Unread notifications: ${notifCount}`);
+      lines.push('');
+    }
+
+    if (tasksList.length === 0 && meetingsList.length === 0 && decisionsList.length === 0) {
+      lines.push(isPl ? '_Brak pilnych zadań — dobry dzień na planowanie strategiczne!_' : '_No urgent items — great day for strategic planning!_');
+    }
+
+    const textVersion = lines.join('\n');
+
     res.json({
       date: new Date().toISOString().split('T')[0],
+      brief: { textVersion },
       tasks: tasks || [],
       notifications: notifications || [],
       meetings: meetings || [],

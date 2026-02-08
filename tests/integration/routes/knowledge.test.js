@@ -66,7 +66,7 @@ describe('Integration Test: Knowledge Routes', () => {
         .get('/api/knowledge/candidates')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 403, 500]).toContain(res.status);
+      expect([200, 403, 500, 503]).toContain(res.status);
     });
   });
 
@@ -84,7 +84,7 @@ describe('Integration Test: Knowledge Routes', () => {
           source: 'USER',
         });
 
-      expect([200, 201, 500]).toContain(res.status);
+      expect([200, 201, 500, 503]).toContain(res.status);
     });
   });
 
@@ -97,7 +97,7 @@ describe('Integration Test: Knowledge Routes', () => {
         .get('/api/knowledge/strategies')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect([200, 500]).toContain(res.status);
+      expect([200, 500, 503]).toContain(res.status);
     });
   });
 

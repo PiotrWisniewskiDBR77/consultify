@@ -295,7 +295,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
 
   const handleRowAction = useCallback(
     (action: string, row: DigitizationAnalysis) => {
-      if (action === 'view' || action === 'edit') {
+      if (action === 'preview' || action === 'view' || action === 'edit') {
         handleOpenDocument(row);
       }
     },

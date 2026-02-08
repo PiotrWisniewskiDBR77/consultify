@@ -39,7 +39,6 @@ import { formatExecutiveBrief } from '../../utils/textCleaning';
 import { ArtifactBadge } from './ArtifactBadge';
 import { CitationList } from './CitationList';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
-import { ThinkingBlock } from './Messages/ThinkingBlock';
 import { ResearchProgress } from './ResearchProgress';
 import { ThinkingStatusLine } from './ThinkingStatusLine';
 
@@ -224,6 +223,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 }) => {
   const { t } = useTranslation();
 
+  // Quick feedback state (hover toolbar thumbs)
+  const [quickFeedbackGiven, setQuickFeedbackGiven] = useState<'positive' | 'negative' | null>(null);
+
   const isLastMessage = index === displayMessages.length - 1;
   const isHovered = hoveredMessageId === msg.id;
   const hasArtifacts = msg.artifacts && msg.artifacts.length > 0;
@@ -243,14 +245,18 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
       onMouseEnter={() => setHoveredMessageId(msg.id)}
       onMouseLeave={() => setHoveredMessageId(null)}
     >
-      {/* Thinking Steps (for AI messages) — only show full block for multi-step (medium/deep) */}
-      {msg.role === 'ai' && hasThinkingSteps && (msg.thinkingSteps!.length > 1) && (
-        <div className={`w-full ${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
-          <ThinkingBlock
-            steps={msg.thinkingSteps!}
-            isStreaming={msg.isStreaming}
-            defaultExpanded={msg.isStreaming === true}
-            streamStartedAt={msg.isStreaming ? streamStartedAt : null}
+      {/* Cursor-like thinking log: plain dim text, no background, no panel */}
+      {msg.role === 'ai' && msg.isStreaming && (thinkingSteps.length > 0 || !msg.content?.trim()) && (
+        <div className={`${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
+          <ThinkingStatusLine
+            compact={isCompact}
+            show
+            showSpinner={false}
+            lines={thinkingSteps
+              .map((s) => String((s as any)?.label || '').trim())
+              .filter(Boolean)
+              .slice(-6)}
+            label={t('thinking.processing', 'Rozważam Twoje zapytanie...') as string}
           />
         </div>
       )}
@@ -565,17 +571,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </div>
                 ) : (
                   <>
-                    {/* Cursor-like thinking indicator - shows only when streaming with no content yet */}
-                    <ThinkingStatusLine
-                      compact={isCompact}
-                      className="mb-1"
-                      show={msg.isStreaming === true && thinkingSteps.length > 0 && !msg.content?.trim()}
-                      label={
-                        (thinkingSteps.find((s) => s.status === 'in_progress')?.label ||
-                          thinkingSteps.find((s) => s.status === 'pending')?.label ||
-                          t('thinking.processing', 'Thinking...')) as string
-                      }
-                    />
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
@@ -1019,14 +1014,38 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 {msg.role === 'ai' && (
                   <>
                     <button
-                      className="p-1 rounded-md text-slate-500 hover:text-green-600 dark:text-slate-400 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                      onClick={() => {
+                        setQuickFeedbackGiven('positive');
+                        handleFeedback(msg.id, msg.content, {
+                          rating: 'positive',
+                          timestamp: new Date(),
+                        });
+                      }}
+                      className={`p-1 rounded-md transition-colors ${
+                        quickFeedbackGiven === 'positive'
+                          ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30'
+                          : 'text-slate-500 hover:text-green-600 dark:text-slate-400 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+                      }`}
                       title={t('chat.actions.helpful', 'Helpful')}
+                      disabled={!!quickFeedbackGiven}
                     >
                       <ThumbsUp size={12} />
                     </button>
                     <button
-                      className="p-1 rounded-md text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      onClick={() => {
+                        setQuickFeedbackGiven('negative');
+                        handleFeedback(msg.id, msg.content, {
+                          rating: 'negative',
+                          timestamp: new Date(),
+                        });
+                      }}
+                      className={`p-1 rounded-md transition-colors ${
+                        quickFeedbackGiven === 'negative'
+                          ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30'
+                          : 'text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                      }`}
                       title={t('chat.actions.notHelpful', 'Not helpful')}
+                      disabled={!!quickFeedbackGiven}
                     >
                       <ThumbsDown size={12} />
                     </button>

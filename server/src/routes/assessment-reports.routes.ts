@@ -17,8 +17,10 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import AssessmentInitiativeGenerationRunService from '../services/assessmentInitiativeGenerationRunService.js';
 import AssessmentPermissionService from '../services/assessmentPermissionService.js';
+import ReportBuilderService from '../services/reportBuilderService.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { mapReportBuilderStatusToAssessmentReportStatus } from '../services/assessmentReportBuilderLinkService.js';
 
 const router = Router();
 
@@ -50,7 +52,15 @@ type DetailedAnalysis = {
   [key: string]: any;
 };
 
-type ReportStatus = 'DRAFT' | 'FINAL' | 'ARCHIVED';
+type ReportStatus =
+  | 'DRAFT'
+  | 'GENERATING'
+  | 'FINAL'
+  | 'PENDING_APPROVAL'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'UTILIZED'
+  | 'ARCHIVED';
 type SectionType =
   | 'cover_page'
   | 'executive_summary'
@@ -111,6 +121,7 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
       name TEXT,
       status TEXT DEFAULT 'DRAFT',
       template_id TEXT,
+      builder_report_id TEXT,
       axis_data TEXT,
       executive_summary TEXT,
       detailed_analysis TEXT,
@@ -121,6 +132,12 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
       updated_by TEXT,
       approved_by TEXT,
       approved_at TIMESTAMP,
+      rejected_by TEXT,
+      rejected_at TIMESTAMP,
+      rejection_reason TEXT,
+      utilized_by TEXT,
+      utilized_at TIMESTAMP,
+      utilization_notes TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`
@@ -139,6 +156,7 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
     await add('name', 'TEXT');
     await add('status', "TEXT DEFAULT 'DRAFT'");
     await add('template_id', 'TEXT');
+    await add('builder_report_id', 'TEXT');
     await add('axis_data', 'TEXT');
     await add('executive_summary', 'TEXT');
     await add('detailed_analysis', 'TEXT');
@@ -149,6 +167,12 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
     await add('updated_by', 'TEXT');
     await add('approved_by', 'TEXT');
     await add('approved_at', 'TIMESTAMP');
+    await add('rejected_by', 'TEXT');
+    await add('rejected_at', 'TIMESTAMP');
+    await add('rejection_reason', 'TEXT');
+    await add('utilized_by', 'TEXT');
+    await add('utilized_at', 'TIMESTAMP');
+    await add('utilization_notes', 'TEXT');
   } catch (e) {
     // ignore; table might be locked or pragma not available in some environments
   }
@@ -512,6 +536,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         r.name as name,
         r.status as status,
         r.template_id as templateId,
+        r.builder_report_id as builderReportId,
         r.created_by as createdBy,
         r.created_at as createdAt,
         r.updated_at as updatedAt,
@@ -556,6 +581,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         projectId: r.projectId || null,
         status: String(r.status || 'DRAFT').toUpperCase(),
         templateId: r.templateId || null,
+        builderReportId: r.builderReportId || null,
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
         createdBy: r.createdBy || 'system',
@@ -738,28 +764,13 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     });
     if (!assessment) return res.status(404).json({ error: 'Assessment not found' });
 
-    const existing = await new Promise<any>((resolve, reject) => {
-      db.get(
-        `SELECT id FROM assessment_reports WHERE assessment_id = ? AND organization_id = ?`,
-        [assessmentId, organizationId],
-        (err: Error | null, row: any) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
-
-    if (existing?.id) {
-      return res.status(200).json({ id: existing.id });
-    }
-
     const id = `report-${uuidv4()}`;
     await new Promise<void>((resolve, reject) => {
       db.run(
         `INSERT INTO assessment_reports (
-          id, assessment_id, organization_id, project_id, name, status, template_id, axis_data,
+          id, assessment_id, organization_id, project_id, name, status, template_id, builder_report_id, axis_data,
           generation_params, created_by, updated_by, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
           id,
           assessmentId,
@@ -768,6 +779,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
           name ? String(name) : `Report - ${assessment.name || 'Assessment'}`,
           'DRAFT',
           templateId ? String(templateId) : null,
+          null,
           JSON.stringify(computeAxisDataFromAssessment(assessment)),
           JSON.stringify({ source: 'manual', templateId: templateId || null }),
           userId,
@@ -780,7 +792,41 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       );
     });
 
-    res.status(201).json({ id });
+    // If assessment is approved, also create a linked Report Builder report (for review/comments/export).
+    let builderReportId: string | null = null;
+    try {
+      const assessmentStatus = String(assessment.status || '').toUpperCase();
+      if (assessmentStatus === 'APPROVED') {
+        const rb = await ReportBuilderService.createReport({
+          organizationId,
+          sourceType: 'ASSESSMENT',
+          sourceId: String(assessmentId),
+          title: name ? String(name) : `Report - ${assessment.name || 'Assessment'}`,
+          description: `Assessment report for "${assessment.name || 'Assessment'}"`,
+          createdBy: userId,
+          templateId: templateId ? String(templateId) : undefined,
+        });
+        builderReportId = rb?.report?.id ? String(rb.report.id) : null;
+        if (builderReportId) {
+          const projected = mapReportBuilderStatusToAssessmentReportStatus(
+            String(rb.report.status || 'CONFIGURING')
+          );
+          await run(
+            `UPDATE assessment_reports
+             SET builder_report_id = ?, status = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+             WHERE id = ? AND organization_id = ?`,
+            [builderReportId, projected, userId, id, organizationId]
+          );
+        }
+      }
+    } catch (syncErr: any) {
+      logger.warn('[AssessmentReports] Failed to create linked report builder report', {
+        reportId: id,
+        message: syncErr?.message,
+      });
+    }
+
+    res.status(201).json({ id, builderReportId });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error creating report:', err);
     res.status(500).json({ error: 'Failed to create report', message: err.message });
@@ -840,12 +886,17 @@ router.get('/:reportId/full', async (req: AuthRequest, res: Response) => {
     const progress =
       totalSections > 0 ? Math.round((sectionsWithContent / totalSections) * 100) : 0;
     const status = String(reportRow.status || 'DRAFT').toUpperCase();
-    const isComplete = status === 'FINAL' || status === 'APPROVED' || status === 'UTILIZED';
+    const isComplete =
+      status === 'FINAL' ||
+      status === 'PENDING_APPROVAL' ||
+      status === 'APPROVED' ||
+      status === 'UTILIZED';
 
     return res.json({
       id: reportRow.id,
       name: reportRow.name || `Report - ${reportRow.assessmentName || 'Assessment'}`,
       status,
+      builderReportId: reportRow.builder_report_id || null,
       assessmentId: reportRow.assessment_id,
       assessmentName: reportRow.assessmentName || 'Assessment',
       assessmentType: reportRow.assessmentType || 'DRD',
@@ -1658,6 +1709,14 @@ router.delete('/:reportId', async (req: AuthRequest, res: Response) => {
     const organizationId = req.user?.organizationId || 'org-dbr77-system';
     const { reportId } = req.params;
 
+    const row = await get<any>(
+      `SELECT id, builder_report_id as builderReportId
+       FROM assessment_reports
+       WHERE id = ? AND organization_id = ?`,
+      [String(reportId), String(organizationId)]
+    ).catch(() => null);
+    const builderReportId = row?.builderReportId ? String(row.builderReportId) : null;
+
     // Best-effort cascade
     await run(`DELETE FROM assessment_report_section_history WHERE report_id = ?`, [
       reportId,
@@ -1670,6 +1729,14 @@ router.delete('/:reportId', async (req: AuthRequest, res: Response) => {
       reportId,
       organizationId,
     ]);
+
+    // If linked to Report Builder, delete it as well (best-effort).
+    if (builderReportId) {
+      await run(`DELETE FROM report_builder_reports WHERE id = ? AND organization_id = ?`, [
+        builderReportId,
+        organizationId,
+      ]).catch(() => {});
+    }
 
     return res.json({ success: true });
   } catch (err: any) {
@@ -1730,10 +1797,10 @@ router.post('/:reportId/approve', async (req: AuthRequest, res: Response) => {
     if (!reportRow) return res.status(404).json({ error: 'Report not found' });
 
     const currentStatus = String(reportRow.status || 'DRAFT').toUpperCase();
-    if (currentStatus !== 'FINAL') {
+    if (!['FINAL', 'PENDING_APPROVAL'].includes(currentStatus)) {
       return res
         .status(409)
-        .json({ error: 'Report must be FINAL to approve', status: currentStatus });
+        .json({ error: 'Report must be FINAL or PENDING_APPROVAL to approve', status: currentStatus });
     }
 
     const roleInfo = await AssessmentPermissionService.getUserRole(
@@ -1757,7 +1824,59 @@ router.post('/:reportId/approve', async (req: AuthRequest, res: Response) => {
       );
     });
 
-    return res.json({ success: true });
+    // ── Auto-sync: mark APPROVE_REPORT gate as APPROVED in assessment workflow ──
+    if (reportRow.assessmentId) {
+      try {
+        // Update the assessment's report_approved_at timestamp
+        await new Promise<void>((resolve, reject) => {
+          db.run(
+            `UPDATE assessments
+             SET report_approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+             WHERE id = ? AND organization_id = ?`,
+            [String(reportRow.assessmentId), String(organizationId)],
+            (err: Error | null) => (err ? reject(err) : resolve())
+          );
+        });
+
+        // Update APPROVE_REPORT gate decision to APPROVED (if gate_decisions table exists)
+        await new Promise<void>((resolve, reject) => {
+          db.run(
+            `UPDATE assessment_gate_decisions
+             SET status = 'APPROVED', decided_by = ?, decided_at = CURRENT_TIMESTAMP
+             WHERE assessment_id = ? AND gate_type = 'APPROVE_REPORT'`,
+            [String(userId), String(reportRow.assessmentId)],
+            (err: Error | null) => {
+              // Ignore errors — table may not exist in all environments
+              resolve();
+            }
+          );
+        });
+
+        // Also update GENERATE_REPORT gate if present
+        await new Promise<void>((resolve, reject) => {
+          db.run(
+            `UPDATE assessment_gate_decisions
+             SET status = 'APPROVED', decided_by = ?, decided_at = CURRENT_TIMESTAMP
+             WHERE assessment_id = ? AND gate_type = 'GENERATE_REPORT' AND status != 'APPROVED'`,
+            [String(userId), String(reportRow.assessmentId)],
+            (err: Error | null) => {
+              resolve();
+            }
+          );
+        });
+
+        logger.info(
+          `[AssessmentReports] Auto-synced APPROVE_REPORT gate for assessment ${reportRow.assessmentId}`
+        );
+      } catch (syncErr: any) {
+        // Non-blocking: log but don't fail the approval
+        logger.warn(
+          `[AssessmentReports] Gate sync failed for assessment ${reportRow.assessmentId}: ${syncErr?.message}`
+        );
+      }
+    }
+
+    return res.json({ success: true, gatesSynced: !!reportRow.assessmentId });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error approving report:', err);
     return res.status(500).json({ error: 'Failed to approve report', message: err.message });
@@ -1785,10 +1904,10 @@ router.post('/:reportId/reject', async (req: AuthRequest, res: Response) => {
     if (!reportRow) return res.status(404).json({ error: 'Report not found' });
 
     const currentStatus = String(reportRow.status || 'DRAFT').toUpperCase();
-    if (currentStatus !== 'FINAL' && currentStatus !== 'APPROVED') {
+    if (currentStatus !== 'FINAL' && currentStatus !== 'PENDING_APPROVAL' && currentStatus !== 'APPROVED') {
       return res
         .status(409)
-        .json({ error: 'Report must be FINAL or APPROVED to reject', status: currentStatus });
+        .json({ error: 'Report must be FINAL, PENDING_APPROVAL or APPROVED to reject', status: currentStatus });
     }
 
     // RBAC check
@@ -1805,7 +1924,7 @@ router.post('/:reportId/reject', async (req: AuthRequest, res: Response) => {
     await new Promise<void>((resolve, reject) => {
       db.run(
         `UPDATE assessment_reports
-         SET status = 'DRAFT', rejected_by = ?, rejected_at = CURRENT_TIMESTAMP,
+         SET status = 'REJECTED', rejected_by = ?, rejected_at = CURRENT_TIMESTAMP,
              rejection_reason = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
          WHERE id = ? AND organization_id = ?`,
         [
@@ -1848,7 +1967,12 @@ router.post('/:reportId/send-back', async (req: AuthRequest, res: Response) => {
     await new Promise<void>((resolve, reject) => {
       db.run(
         `UPDATE assessment_reports
-         SET status = 'DRAFT', rejection_reason = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+         SET status = 'DRAFT',
+             rejection_reason = ?,
+             rejected_by = NULL,
+             rejected_at = NULL,
+             updated_by = ?,
+             updated_at = CURRENT_TIMESTAMP
          WHERE id = ? AND organization_id = ?`,
         [String(reason || ''), String(userId), String(reportId), String(organizationId)],
         (err: Error | null) => (err ? reject(err) : resolve())

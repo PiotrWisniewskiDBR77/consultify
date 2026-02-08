@@ -10,7 +10,6 @@
 import {
   BookTemplate,
   Check,
-  ChevronDown,
   ChevronRight,
   Download,
   Eye,
@@ -21,14 +20,12 @@ import {
   MoreHorizontal,
   Palette,
   Plus,
-  RefreshCw,
   Save,
   Settings,
   Share2,
   Sparkles,
   Trash2,
   Type,
-  Wand2,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -513,7 +510,6 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showGenerateMenu, setShowGenerateMenu] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showBlockPalette, setShowBlockPalette] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
@@ -2044,110 +2040,6 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             </button>
           )}
 
-          {/* Generate button with dropdown */}
-          {!isTemplateMode && (
-            <div className="relative">
-              <div className="flex items-center">
-                <button
-                  onClick={() => handleGenerate('new_only')}
-                  disabled={isGenerating || blocks.filter((b) => b.enabled).length === 0}
-                  className="flex items-center gap-2 pl-5 pr-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-l-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                >
-                  {isGenerating ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-4 h-4" />
-                  )}
-                  {isPl ? 'Generuj' : 'Generate'}
-                  {(() => {
-                    const dirtyCount = blocks.filter((b) => b.enabled && b.needsRegeneration).length;
-                    return dirtyCount > 0 ? (
-                      <span className="ml-1 min-w-[18px] h-[18px] px-1 bg-white/25 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                        {dirtyCount}
-                      </span>
-                    ) : null;
-                  })()}
-                </button>
-                <button
-                  onClick={() => setShowGenerateMenu((prev) => !prev)}
-                  disabled={isGenerating}
-                  className="flex items-center px-2 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-r-lg hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed border-l border-white/20"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-              </div>
-
-              {showGenerateMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowGenerateMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <div className="p-1.5">
-                      <button
-                        onClick={() => { handleGenerate('new_only'); setShowGenerateMenu(false); }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 text-left transition-colors"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center flex-shrink-0">
-                          <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                            {isPl ? 'Nowe bloki' : 'New blocks only'}
-                          </div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                            {isPl ? 'Generuj tylko puste sekcje' : 'Generate only empty sections'}
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => { handleGenerate('modified'); setShowGenerateMenu(false); }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 text-left transition-colors"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
-                          <RefreshCw className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                            {isPl ? 'Zmienione' : 'Modified'}
-                            {(() => {
-                              const cnt = blocks.filter((b) => b.enabled && b.needsRegeneration).length;
-                              return cnt > 0 ? (
-                                <span className="text-[10px] px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-full font-bold">
-                                  {cnt}
-                                </span>
-                              ) : null;
-                            })()}
-                          </div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                            {isPl ? 'Regeneruj bloki z nowymi ustawieniami' : 'Regenerate blocks with new settings'}
-                          </div>
-                        </div>
-                      </button>
-
-                      <div className="mx-3 my-1 border-t border-slate-100 dark:border-slate-700" />
-
-                      <button
-                        onClick={() => { handleGenerate('all'); setShowGenerateMenu(false); }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-left transition-colors"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
-                          <Wand2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                            {isPl ? 'Wszystko od nowa' : 'Regenerate all'}
-                          </div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                            {isPl ? 'Zastąp wszystkie treści' : 'Replace all existing content'}
-                          </div>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
         </div>
       </header>
 

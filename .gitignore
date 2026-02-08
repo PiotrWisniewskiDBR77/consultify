@@ -29,6 +29,12 @@ dist-ssr
 .env.production
 server/.env
 
+# Auth tokens and session files
+token.json
+
+# Local startup scripts with paths
+start-londyn.sh
+
 # Database files
 *.db
 *.db-journal

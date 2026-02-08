@@ -395,7 +395,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
 
   const handleRowAction = useCallback(
     (action: string, row: BenefitsInitiative) => {
-      if (action === 'view' || action === 'edit') {
+      if (action === 'preview' || action === 'view' || action === 'edit') {
         handleOpenDocument(row);
       } else if (action === 'add-kpi') {
         setSelectedInitiative(row);

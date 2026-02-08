@@ -70,10 +70,26 @@ class ProactiveNudgesServiceImpl {
 
   async dismissNudge(nudgeId: string, userId: string) {
     try {
-      await dbRun(
+      const result = await dbRun(
         `INSERT OR REPLACE INTO ai_dismissed_nudges (nudge_id,user_id,dismissed_at) VALUES (?,?,datetime('now'))`,
         [nudgeId, userId]
       );
+      if (!result?.success && String(result?.error || '').includes('no such table')) {
+        // Best-effort self-heal: create table on demand in environments missing migrations
+        await dbRun(
+          `CREATE TABLE IF NOT EXISTS ai_dismissed_nudges (
+            nudge_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            dismissed_at TEXT NOT NULL,
+            PRIMARY KEY (nudge_id, user_id)
+          )`,
+          []
+        );
+        await dbRun(
+          `INSERT OR REPLACE INTO ai_dismissed_nudges (nudge_id,user_id,dismissed_at) VALUES (?,?,datetime('now'))`,
+          [nudgeId, userId]
+        );
+      }
       return { dismissed: true };
     } catch {
       return { dismissed: false };

@@ -907,11 +907,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   const handleRowAction = useCallback(
     (action: string, row: FullInitiative) => {
-      if (action === 'view' || action === 'edit') {
+      if (action === 'preview' || action === 'view') {
         handleOpenSidePanel(row);
+      } else if (action === 'edit') {
+        handleOpenDocument(row);
       }
     },
-    [handleOpenSidePanel]
+    [handleOpenSidePanel, handleOpenDocument]
   );
 
   // Convert to grid items

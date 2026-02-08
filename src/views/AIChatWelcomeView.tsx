@@ -12,7 +12,16 @@
  * - Action execution capabilities
  */
 
-import { PanelLeft, RefreshCw } from 'lucide-react';
+import {
+  BarChart3,
+  Brain,
+  FileText,
+  PanelLeft,
+  RefreshCw,
+  Shield,
+  Sparkles,
+  Zap,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -39,6 +48,7 @@ import { useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
 import { ChatCitation, ChatMessage, ChatResponseAction } from '../types';
 import { MessageFeedback } from '../types';
+import { exportConversationToPDF } from '../utils/pdfExport';
 import { cleanTextForSpeech } from '../utils/textCleaning';
 
 // Time-aware greeting helper
@@ -893,10 +903,15 @@ For example: REMEMBER: preferred_language: Polish`;
           'text/plain'
         );
       } else {
-        // PDF — fallback to text since we don't have a PDF library
-        const lines = messages.map((m) => `[${m.role === 'user' ? 'User' : 'AI'}]\n${m.content}\n`);
-        const content = `${title}\n${'='.repeat(40)}\n\n${lines.join('\n---\n\n')}`;
-        downloadFile(`${filename}.txt`, content, 'text/plain');
+        // PDF — proper formatted document
+        await exportConversationToPDF(
+          messages.map((m) => ({
+            role: m.role,
+            content: m.content,
+            timestamp: m.timestamp,
+          })),
+          { title, filename: `${filename}.pdf` }
+        );
       }
 
       setShowExportModal(false);
@@ -1654,6 +1669,70 @@ For example: REMEMBER: preferred_language: Polish`;
               workspaceType={workspaceContext?.type}
               entityName={workspaceContext?.entityName}
             />
+          </div>
+
+          {/* AI Capability Cards — shows what the AI can do */}
+          <div className="w-full max-w-3xl mt-8 grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              {
+                icon: Brain,
+                label: t('aiChat.capabilities.deepThinking', 'Deep Thinking'),
+                desc: t('aiChat.capabilities.deepThinkingDesc', 'Multi-step analysis with web research'),
+                color: 'text-violet-500',
+                bg: 'bg-violet-50 dark:bg-violet-900/20',
+                prompt: t('aiChat.capabilities.deepThinkingPrompt', 'Analyze the biggest risk to our current strategy and suggest 3 mitigations'),
+              },
+              {
+                icon: BarChart3,
+                label: t('aiChat.capabilities.scenarios', 'Scenario Modeling'),
+                desc: t('aiChat.capabilities.scenariosDesc', 'Monte Carlo ROI & what-if analysis'),
+                color: 'text-emerald-500',
+                bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+                prompt: t('aiChat.capabilities.scenariosPrompt', 'Run a Monte Carlo simulation for the ROI of our top initiative'),
+              },
+              {
+                icon: Shield,
+                label: t('aiChat.capabilities.riskAlerts', 'Risk Alerts'),
+                desc: t('aiChat.capabilities.riskAlertsDesc', 'Predictive risk & budget warnings'),
+                color: 'text-amber-500',
+                bg: 'bg-amber-50 dark:bg-amber-900/20',
+                prompt: t('aiChat.capabilities.riskAlertsPrompt', 'What are the top risks in my portfolio right now?'),
+              },
+              {
+                icon: Zap,
+                label: t('aiChat.capabilities.actions', 'Quick Actions'),
+                desc: t('aiChat.capabilities.actionsDesc', 'Create tasks, decisions & reports'),
+                color: 'text-blue-500',
+                bg: 'bg-blue-50 dark:bg-blue-900/20',
+                prompt: t('aiChat.capabilities.actionsPrompt', 'Create a task to review our Q1 roadmap progress'),
+              },
+            ].map((cap) => (
+              <button
+                key={cap.label}
+                onClick={() => handleSuggestionClick(cap.prompt)}
+                className="group flex flex-col items-start gap-2 p-3 rounded-xl border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-white/[0.02] hover:bg-white dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 text-left"
+              >
+                <div className={`p-2 rounded-lg ${cap.bg}`}>
+                  <cap.icon size={18} className={cap.color} />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-navy-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                    {cap.label}
+                  </div>
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">
+                    {cap.desc}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* First-time help hint */}
+          <div className="w-full max-w-2xl mt-6 text-center">
+            <p className="text-[11px] text-slate-400 dark:text-slate-600 flex items-center justify-center gap-1.5">
+              <Sparkles size={11} />
+              {t('aiChat.onboarding.hint', 'Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis')}
+            </p>
           </div>
         </div>
 

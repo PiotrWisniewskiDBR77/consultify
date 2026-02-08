@@ -302,10 +302,18 @@ Max 3-4 sentences.`;
 
 export interface AINudge {
   id: string;
-  type: 'overdue_tasks' | 'stalled_initiative' | 'upcoming_deadline' | 'gap_without_initiative' | 'review_reminder';
+  type:
+    | 'overdue_tasks'
+    | 'stalled_initiative'
+    | 'upcoming_deadline'
+    | 'gap_without_initiative'
+    | 'review_reminder'
+    | 'risk_alert';
   title: string;
   message: string;
   priority: 'low' | 'normal' | 'high' | 'critical';
+  dismissible?: boolean;
+  actionLabel?: string;
   recommendation?: string;
   entityType?: string;
   entityId?: string;
@@ -322,7 +330,7 @@ export async function generateNudges(
   const nudges: AINudge[] = [];
 
   try {
-    // Check overdue tasks
+    // Check overdue tasks (stable per-task nudges so dismiss works across refreshes)
     const overdueTasks = (await dbAll(
       `SELECT id, title, due_date FROM tasks 
        WHERE assignee_id = ? AND status NOT IN ('DONE', 'CANCELLED') 
@@ -331,16 +339,21 @@ export async function generateNudges(
       [userId]
     )) as any[];
 
-    if (overdueTasks.length > 0) {
+    for (const t of overdueTasks || []) {
+      const tid = String(t?.id || '').trim();
+      if (!tid) continue;
+      const title = String(t?.title || 'Task').trim();
       nudges.push({
-        id: `nudge-overdue-${Date.now()}`,
+        id: `nudge-overdue-task-${tid}`,
         type: 'overdue_tasks',
-        title: `${overdueTasks.length} overdue task(s)`,
-        message: `Masz ${overdueTasks.length} zaległych zadań. Najstarsze: "${overdueTasks[0].title}". Chcesz żebym pomógł repriorytetyzować?`,
+        title: `Overdue: ${title}`.slice(0, 120),
+        message: `Masz zaległe zadanie: "${title}". Chcesz żebym pomógł repriorytetyzować?`,
         priority: 'high',
+        dismissible: true,
+        actionLabel: 'Open',
         entityType: 'task',
-        entityId: overdueTasks[0].id,
-        actionUrl: `/tasks/${overdueTasks[0].id}`,
+        entityId: tid,
+        actionUrl: `/tasks/${tid}`,
       });
     }
 
@@ -355,20 +368,24 @@ export async function generateNudges(
       )) as any[];
 
       for (const init of stalledInitiatives) {
+        const iid = String(init?.id || '').trim();
+        if (!iid) continue;
         nudges.push({
-          id: `nudge-stalled-${init.id}`,
+          id: `nudge-stalled-initiative-${iid}`,
           type: 'stalled_initiative',
           title: `Stalled: ${init.name}`,
           message: `Inicjatywa "${init.name}" nie miała aktualizacji od 14+ dni. Warto sprawdzić status.`,
           priority: 'normal',
+          dismissible: true,
+          actionLabel: 'Open',
           entityType: 'initiative',
-          entityId: init.id,
-          actionUrl: `/initiatives/${init.id}`,
+          entityId: iid,
+          actionUrl: `/initiatives/${iid}`,
         });
       }
     }
 
-    // Check upcoming deadlines (next 3 days)
+    // Check upcoming deadlines (next 3 days) (stable per-task nudges)
     const upcomingTasks = (await dbAll(
       `SELECT id, title, due_date FROM tasks
        WHERE assignee_id = ? AND status NOT IN ('DONE', 'CANCELLED')
@@ -377,19 +394,109 @@ export async function generateNudges(
       [userId]
     )) as any[];
 
-    if (upcomingTasks.length > 0) {
+    for (const t of upcomingTasks || []) {
+      const tid = String(t?.id || '').trim();
+      if (!tid) continue;
+      const title = String(t?.title || 'Task').trim();
       nudges.push({
-        id: `nudge-upcoming-${Date.now()}`,
+        id: `nudge-upcoming-deadline-task-${tid}`,
         type: 'upcoming_deadline',
-        title: `${upcomingTasks.length} deadline(s) approaching`,
-        message: `${upcomingTasks.length} zadań z terminem w ciągu 3 dni. Najbliższe: "${upcomingTasks[0].title}".`,
+        title: `Upcoming deadline: ${title}`.slice(0, 120),
+        message: `Zadanie "${title}" ma termin w ciągu 3 dni.`,
         priority: 'normal',
+        dismissible: true,
+        actionLabel: 'Open',
         entityType: 'task',
-        entityId: upcomingTasks[0].id,
+        entityId: tid,
+        actionUrl: `/tasks/${tid}`,
       });
+    }
+
+    // Risk detection: initiatives with many overdue tasks (high-risk signal)
+    if (projectId) {
+      const riskyInitiatives = (await dbAll(
+        `SELECT i.id, i.name, COUNT(t.id) as overdue_count
+         FROM initiatives i
+         JOIN tasks t ON t.initiative_id = i.id
+         WHERE i.project_id = ? AND i.status IN ('IN_PROGRESS', 'ACTIVE')
+           AND t.status NOT IN ('DONE', 'CANCELLED')
+           AND t.due_date < datetime('now')
+         GROUP BY i.id
+         HAVING overdue_count >= 3
+         ORDER BY overdue_count DESC LIMIT 3`,
+        [projectId]
+      )) as any[];
+
+      for (const init of riskyInitiatives) {
+        const iid = String(init?.id || '').trim();
+        if (!iid) continue;
+        nudges.push({
+          id: `nudge-risk-overdue-${iid}`,
+          type: 'risk_alert',
+          title: `⚠️ High risk: ${init.name}`,
+          message: `Inicjatywa "${init.name}" ma ${init.overdue_count} zaległych zadań — sygnał wysokiego ryzyka. Rozważ przegląd zakresu lub realokację zasobów.`,
+          priority: 'critical',
+          dismissible: true,
+          actionLabel: 'Open',
+          entityType: 'initiative',
+          entityId: iid,
+          actionUrl: `/initiatives/${iid}`,
+        });
+      }
+    }
+
+    // Risk detection: budget overrun (initiatives exceeding planned cost)
+    if (projectId) {
+      const budgetRisks = (await dbAll(
+        `SELECT i.id, i.name, i.estimated_cost, i.actual_cost
+         FROM initiatives i
+         WHERE i.project_id = ? AND i.status IN ('IN_PROGRESS', 'ACTIVE')
+           AND i.actual_cost > 0 AND i.estimated_cost > 0
+           AND (CAST(i.actual_cost AS REAL) / CAST(i.estimated_cost AS REAL)) > 0.9
+         ORDER BY (CAST(i.actual_cost AS REAL) / CAST(i.estimated_cost AS REAL)) DESC LIMIT 2`,
+        [projectId]
+      )) as any[];
+
+      for (const init of budgetRisks) {
+        const iid = String(init?.id || '').trim();
+        if (!iid) continue;
+        const pct = Math.round((init.actual_cost / init.estimated_cost) * 100);
+        nudges.push({
+          id: `nudge-risk-budget-${iid}`,
+          type: 'risk_alert',
+          title: `💰 Budget alert: ${init.name} (${pct}%)`,
+          message: `Inicjatywa "${init.name}" wykorzystała ${pct}% budżetu. ${pct >= 100 ? 'Przekroczono planowany budżet!' : 'Zbliżasz się do limitu budżetowego.'}`,
+          priority: pct >= 100 ? 'critical' : 'high',
+          dismissible: true,
+          actionLabel: 'Open',
+          entityType: 'initiative',
+          entityId: iid,
+          actionUrl: `/initiatives/${iid}`,
+        });
+      }
     }
   } catch (err: any) {
     logger.warn('[ProactiveNudges] Failed to generate nudges:', err?.message);
+  }
+
+  // Filter dismissed nudges (best-effort; table may not exist everywhere)
+  try {
+    const dismissed = (await dbAll(
+      `SELECT nudge_id FROM ai_dismissed_nudges WHERE user_id = ?`,
+      [userId]
+    )) as Array<{ nudge_id?: string }>;
+    const dismissedIds = new Set(
+      (dismissed || [])
+        .map((d) => String(d?.nudge_id || '').trim())
+        .filter(Boolean)
+    );
+    if (dismissedIds.size > 0) {
+      for (let i = nudges.length - 1; i >= 0; i--) {
+        if (dismissedIds.has(String(nudges[i]?.id || ''))) nudges.splice(i, 1);
+      }
+    }
+  } catch {
+    // ignore
   }
 
   // ── Optional LLM enrichment (non-blocking, with graceful fallback) ──

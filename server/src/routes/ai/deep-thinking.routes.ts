@@ -176,7 +176,12 @@ router.get(
     query += ` ORDER BY created_at DESC LIMIT ?`;
     params.push(limit);
 
-    const rows = (await dbAll(query, params)) || [];
+    const rows = (await dbAll(query, params).catch(() => [])) || [];
+
+    const safeParse = (val: any, fallback: any = null) => {
+      if (!val) return fallback;
+      try { return JSON.parse(val); } catch { return fallback; }
+    };
 
     return res.json({
       success: true,
@@ -184,13 +189,13 @@ router.get(
         id: r.id,
         decisionSummary: r.decision_summary,
         problemFraming: r.problem_framing,
-        optionsConsidered: r.options_considered ? JSON.parse(r.options_considered) : null,
+        optionsConsidered: safeParse(r.options_considered),
         chosenOption: r.chosen_option,
         recommendationText: r.recommendation_text,
         confidenceScore: r.confidence_score,
         outcomeStatus: r.outcome_status,
         outcomeNotes: r.outcome_notes,
-        tags: r.tags ? JSON.parse(r.tags) : [],
+        tags: safeParse(r.tags, []),
         industryContext: r.industry_context,
         conversationId: r.conversation_id,
         createdAt: r.created_at,

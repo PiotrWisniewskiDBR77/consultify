@@ -11,6 +11,7 @@ import { DRD_STRUCTURE } from '../data/drdStructure.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
+import { upsertAssessmentReportForBuilder } from './assessmentReportBuilderLinkService.js';
 
 // ==========================================
 // TYPES
@@ -1249,6 +1250,42 @@ export async function updateReportStatus(
   );
 
   await logActivity(reportId, `STATUS_${status}`, userId);
+
+  // Best-effort projection into Assessment module list (when report is sourced from assessment)
+  try {
+    const row = await queryOne<{
+      organization_id: string;
+      source_type: string;
+      source_id: string;
+      project_id: string | null;
+      title: string;
+      status: string;
+      template_id?: string | null;
+    }>(
+      `SELECT organization_id, source_type, source_id, project_id, title, status, template_id
+       FROM report_builder_reports
+       WHERE id = ?`,
+      [reportId]
+    );
+
+    if (row && String(row.source_type || '').toUpperCase() === 'ASSESSMENT') {
+      await upsertAssessmentReportForBuilder({
+        organizationId: String(row.organization_id),
+        assessmentId: String(row.source_id),
+        projectId: row.project_id ? String(row.project_id) : null,
+        builderReportId: reportId,
+        name: String(row.title || 'Report'),
+        templateId: (row as any).template_id ? String((row as any).template_id) : null,
+        rbStatus: String(row.status || status),
+        userId,
+      });
+    }
+  } catch (err: any) {
+    logger.warn('[ReportBuilder] Failed to sync assessment report projection (status)', {
+      reportId,
+      message: err?.message,
+    });
+  }
 }
 
 /**
@@ -1284,6 +1321,41 @@ export async function updateReportMetadata(
   );
 
   await logActivity(reportId, 'METADATA_UPDATED', userId, updates);
+
+  // Best-effort: keep Assessment module list name in sync (when linked)
+  try {
+    const row = await queryOne<{
+      organization_id: string;
+      source_type: string;
+      source_id: string;
+      project_id: string | null;
+      title: string;
+      template_id?: string | null;
+    }>(
+      `SELECT organization_id, source_type, source_id, project_id, title, template_id
+       FROM report_builder_reports
+       WHERE id = ? AND organization_id = ?`,
+      [reportId, organizationId]
+    );
+
+    if (row && String(row.source_type || '').toUpperCase() === 'ASSESSMENT') {
+      await upsertAssessmentReportForBuilder({
+        organizationId: String(row.organization_id),
+        assessmentId: String(row.source_id),
+        projectId: row.project_id ? String(row.project_id) : null,
+        builderReportId: reportId,
+        name: String(row.title || updates.title || 'Report'),
+        templateId: (row as any).template_id ? String((row as any).template_id) : null,
+        // rbStatus omitted → don't overwrite assessment report status
+        userId,
+      });
+    }
+  } catch (err: any) {
+    logger.warn('[ReportBuilder] Failed to sync assessment report projection (metadata)', {
+      reportId,
+      message: err?.message,
+    });
+  }
 }
 
 /**

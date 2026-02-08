@@ -9,7 +9,13 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { canExecuteGate, GateType, getGateForTransition } from '../constants/initiativeStatuses.js';
+import {
+  canExecuteGate,
+  GateType,
+  getGateForTransition,
+  isValidTransition,
+  VALID_TRANSITIONS,
+} from '../constants/initiativeStatuses.js';
 import notificationService from '../services/notificationService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -522,14 +528,246 @@ export class InitiativeController {
     async (req: AuthenticatedRequest<UpdateInitiativeRequest>, res: Response): Promise<void> => {
       const { id } = req.params;
       const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
       if (!orgId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
-      // TODO: Implement full update logic with field mapping
-      // For now, return success
-      res.json({ message: 'Initiative updated' });
+      // 1. Fetch existing initiative
+      const existing = await queryHelpers.queryOne(
+        `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      if (!existing) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      const currentStatus = normalizeStatus((existing as any).status);
+      const actorId = userId;
+      const actorName =
+        req.user?.firstName && req.user?.lastName
+          ? `${req.user.firstName} ${req.user.lastName}`
+          : req.user?.email || undefined;
+
+      // 2. Block editing for terminal statuses (CANCELLED, ARCHIVED)
+      if (currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED') {
+        res.status(403).json({
+          error: 'Cannot edit initiative in terminal status',
+          status: currentStatus,
+        });
+        return;
+      }
+
+      // 3. Build update map — only include fields that are provided
+      const body = req.body as Record<string, unknown>;
+      const FIELD_MAP: Record<string, string> = {
+        title: 'title',
+        axis: 'axis',
+        area: 'area',
+        summary: 'summary',
+        hypothesis: 'hypothesis',
+        businessValue: 'business_value',
+        costCapex: 'cost_capex',
+        costOpex: 'cost_opex',
+        expectedRoi: 'expected_roi',
+        valueDriver: 'value_driver',
+        confidenceLevel: 'confidence_level',
+        valueTiming: 'value_timing',
+        plannedStartDate: 'planned_start_date',
+        plannedEndDate: 'planned_end_date',
+        ownerBusinessId: 'owner_business_id',
+        ownerExecutionId: 'owner_execution_id',
+        problemStatement: 'problem_statement',
+      };
+
+      // JSON array fields (stored as JSON strings)
+      const JSON_FIELDS: Record<string, string> = {
+        deliverables: 'deliverables',
+        successCriteria: 'success_criteria',
+        scopeIn: 'scope_in',
+        scopeOut: 'scope_out',
+        keyRisks: 'key_risks',
+      };
+
+      const updates: string[] = [];
+      const params: unknown[] = [];
+      const changes: Array<{ field: string; oldValue: unknown; newValue: unknown }> = [];
+
+      // Process scalar fields
+      for (const [bodyKey, dbCol] of Object.entries(FIELD_MAP)) {
+        if (body[bodyKey] !== undefined) {
+          const oldVal = (existing as Record<string, unknown>)[dbCol];
+          const newVal = body[bodyKey];
+          if (String(oldVal ?? '') !== String(newVal ?? '')) {
+            changes.push({ field: bodyKey, oldValue: oldVal, newValue: newVal });
+          }
+          updates.push(`${dbCol} = ?`);
+          params.push(newVal ?? null);
+        }
+      }
+
+      // Process JSON array fields
+      for (const [bodyKey, dbCol] of Object.entries(JSON_FIELDS)) {
+        if (body[bodyKey] !== undefined) {
+          const newJson = JSON.stringify(body[bodyKey] || []);
+          const oldJson = (existing as Record<string, unknown>)[dbCol];
+          if (String(oldJson || '[]') !== newJson) {
+            changes.push({ field: bodyKey, oldValue: oldJson, newValue: body[bodyKey] });
+          }
+          updates.push(`${dbCol} = ?`);
+          params.push(newJson);
+        }
+      }
+
+      if (updates.length === 0) {
+        res.json({ id, message: 'No changes detected' });
+        return;
+      }
+
+      // 4. Date validation
+      const finalStart = (body.plannedStartDate ?? (existing as any).planned_start_date) as
+        | string
+        | null;
+      const finalEnd = (body.plannedEndDate ?? (existing as any).planned_end_date) as
+        | string
+        | null;
+      if (finalStart && finalEnd) {
+        const startDate = new Date(finalStart);
+        const endDate = new Date(finalEnd);
+        if (!Number.isNaN(startDate.getTime()) && !Number.isNaN(endDate.getTime())) {
+          if (startDate > endDate) {
+            res.status(400).json({ error: 'plannedStartDate must be before plannedEndDate' });
+            return;
+          }
+        }
+      }
+
+      // 5. Execute the update
+      const now = new Date().toISOString();
+      updates.push('updated_at = ?');
+      params.push(now);
+      if (userId) {
+        updates.push('updated_by = ?');
+        params.push(userId);
+      }
+      params.push(id, orgId);
+
+      const sql = `UPDATE initiatives SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`;
+      await queryHelpers.queryRun(sql, params);
+
+      // 6. Log changes to initiative_history (diff audit trail)
+      if (changes.length > 0) {
+        try {
+          const historyId = uuidv4();
+          await queryHelpers.queryRun(
+            `INSERT INTO initiative_history (id, initiative_id, organization_id, action, actor_id, actor_name, changes, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              historyId,
+              id,
+              orgId,
+              'fields_updated',
+              actorId || null,
+              actorName || null,
+              JSON.stringify(
+                changes.map((c) => ({
+                  field: c.field,
+                  from: c.oldValue,
+                  to: c.newValue,
+                }))
+              ),
+              now,
+            ]
+          );
+        } catch {
+          // history table may not exist - best effort
+          logger.warn('[initiatives] Could not write to initiative_history');
+        }
+      }
+
+      // 7. Emit notifications for critical changes (owner changes)
+      try {
+        const ownerBusinessChanged =
+          body.ownerBusinessId !== undefined &&
+          String(body.ownerBusinessId || '') !==
+            String((existing as any).owner_business_id || '');
+        const ownerExecutionChanged =
+          body.ownerExecutionId !== undefined &&
+          String(body.ownerExecutionId || '') !==
+            String((existing as any).owner_execution_id || '');
+
+        if (ownerBusinessChanged || ownerExecutionChanged) {
+          const initiativeName = String(
+            (existing as any)?.name || (existing as any)?.title || 'Initiative'
+          );
+          const recipients = await getInitiativeNotificationRecipients(orgId, id);
+
+          // Notify new owners
+          const newOwners = [
+            ownerBusinessChanged ? body.ownerBusinessId : null,
+            ownerExecutionChanged ? body.ownerExecutionId : null,
+          ].filter(Boolean) as string[];
+
+          for (const newOwnerId of newOwners) {
+            if (newOwnerId && newOwnerId !== actorId) {
+              await notificationService
+                .send({
+                  userId: newOwnerId,
+                  organizationId: orgId,
+                  type: 'initiative.owner_changed',
+                  title: 'You were assigned as initiative owner',
+                  body: `You are now an owner of: ${initiativeName}`,
+                  entityType: 'initiative',
+                  entityId: id,
+                  actionUrl: '/initiatives',
+                  actorId,
+                  actorName,
+                  priority: 'high',
+                  metadata: { initiativeName },
+                })
+                .catch(() => {});
+            }
+          }
+
+          // Notify watchers/stakeholders about owner change
+          await Promise.allSettled(
+            recipients
+              .filter((uid) => uid && uid !== actorId && !newOwners.includes(uid))
+              .map((uid) =>
+                notificationService.send({
+                  userId: uid,
+                  organizationId: orgId,
+                  type: 'initiative.owner_changed',
+                  title: 'Initiative ownership changed',
+                  body: `${initiativeName}: ownership was updated`,
+                  entityType: 'initiative',
+                  entityId: id,
+                  actionUrl: '/initiatives',
+                  actorId,
+                  actorName,
+                  priority: 'normal',
+                  metadata: { initiativeName },
+                })
+              )
+          );
+        }
+      } catch {
+        // best-effort notifications
+      }
+
+      // 8. Return updated initiative
+      const updated = await queryHelpers.queryOne(
+        `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      res.json({
+        id,
+        message: 'Initiative updated',
+        changesCount: changes.length,
+        initiative: updated,
+      });
     }
   );
 
@@ -567,6 +805,18 @@ export class InitiativeController {
         req.user?.firstName && req.user?.lastName
           ? `${req.user.firstName} ${req.user.lastName}`
           : req.user?.email || undefined;
+
+      // TRANSITION VALIDATION: check if from→to is allowed
+      if (!isValidTransition(currentStatus as any, nextStatus as any)) {
+        res.status(400).json({
+          error: `Invalid status transition: ${currentStatus} → ${nextStatus}`,
+          rule: 'INVALID_TRANSITION',
+          from: currentStatus,
+          to: nextStatus,
+          validNext: VALID_TRANSITIONS[currentStatus as keyof typeof VALID_TRANSITIONS] || [],
+        });
+        return;
+      }
 
       // RBAC + gate enforcement (enterprise governance)
       // - Consultant can only SUBMIT_FOR_REVIEW for initiatives they authored (created_by)
@@ -784,13 +1034,103 @@ export class InitiativeController {
         return;
       }
 
-      // TODO: Use InitiativeStatusService when migrated
-      const sql = `UPDATE initiatives SET status = ?, updated_at = ? WHERE id = ? AND organization_id = ?`;
-      await queryHelpers.queryRun(sql, [nextStatus, new Date().toISOString(), id, orgId]);
+      // Execute status update with lifecycle timestamps
+      const now = new Date().toISOString();
+      const lifecycleUpdates: string[] = ['status = ?', 'updated_at = ?'];
+      const lifecycleParams: unknown[] = [nextStatus, now];
+
+      // Set lifecycle-specific timestamps
+      if (nextStatus === 'PENDING_REVIEW') {
+        lifecycleUpdates.push('review_requested_at = ?', 'review_requested_by = ?');
+        lifecycleParams.push(now, actorId || null);
+      }
+      if (nextStatus === 'APPROVED') {
+        lifecycleUpdates.push('approved_at = ?', 'approved_by = ?');
+        lifecycleParams.push(now, actorId || null);
+        if (reason) {
+          lifecycleUpdates.push('approval_comment = ?');
+          lifecycleParams.push(reason);
+        }
+      }
+      if (nextStatus === 'SCHEDULED') {
+        lifecycleUpdates.push('execution_started_at = ?');
+        lifecycleParams.push(null); // will be set when EXECUTING starts
+      }
+      if (nextStatus === 'EXECUTING') {
+        lifecycleUpdates.push('execution_started_at = ?');
+        lifecycleParams.push(now);
+      }
+      if (nextStatus === 'BLOCKED') {
+        lifecycleUpdates.push('blocked_at = ?', 'blocked_reason = ?');
+        lifecycleParams.push(now, reason || null);
+      }
+      if (currentStatus === 'BLOCKED' && nextStatus === 'EXECUTING') {
+        lifecycleUpdates.push('unblocked_at = ?', 'blocked_at = ?', 'blocked_reason = ?');
+        lifecycleParams.push(now, null, null);
+      }
+      if (nextStatus === 'DONE') {
+        lifecycleUpdates.push('done_at = ?', 'done_by = ?', 'completed_at = ?');
+        lifecycleParams.push(now, actorId || null, now);
+      }
+      if (nextStatus === 'CANCELLED') {
+        lifecycleUpdates.push('cancelled_at = ?', 'cancelled_reason = ?');
+        lifecycleParams.push(now, reason || null);
+      }
+      if (nextStatus === 'ARCHIVED') {
+        lifecycleUpdates.push('archived_at = ?');
+        lifecycleParams.push(now);
+      }
+      if (actorId) {
+        lifecycleUpdates.push('updated_by = ?');
+        lifecycleParams.push(actorId);
+      }
+
+      lifecycleParams.push(id, orgId);
+      const sql = `UPDATE initiatives SET ${lifecycleUpdates.join(', ')} WHERE id = ? AND organization_id = ?`;
+      await queryHelpers.queryRun(sql, lifecycleParams);
+
+      // Log to initiative_status_history (audit trail)
+      try {
+        const historyId = uuidv4();
+        await queryHelpers.queryRun(
+          `INSERT INTO initiative_status_history (id, initiative_id, organization_id, from_status, to_status, changed_by, reason, gate_type, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [historyId, id, orgId, currentStatus, nextStatus, actorId || null, reason || null, gate || null, now]
+        );
+      } catch {
+        // status_history table may not exist yet — best-effort
+        logger.warn('[initiatives] Could not write to initiative_status_history');
+      }
+
+      // Log to initiative_history (general audit)
+      try {
+        const histId = uuidv4();
+        await queryHelpers.queryRun(
+          `INSERT INTO initiative_history (id, initiative_id, organization_id, action, actor_id, actor_name, changes, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            histId,
+            id,
+            orgId,
+            'status_changed',
+            actorId || null,
+            actorName || null,
+            JSON.stringify({ from: currentStatus, to: nextStatus, reason: reason || null, gate: gate || null }),
+            now,
+          ]
+        );
+      } catch {
+        // best-effort
+      }
 
       // Emit notifications (best-effort)
       try {
         const recipients = await getInitiativeNotificationRecipients(orgId, id);
+        const isModuleChange =
+          (currentStatus === 'PENDING_REVIEW' && nextStatus === 'REVIEW') ||
+          (currentStatus === 'SCHEDULED' && nextStatus === 'EXECUTING') ||
+          (currentStatus === 'DONE' && nextStatus === 'TRACKING');
+
         await Promise.allSettled(
           recipients
             .filter((uid) => uid && uid !== actorId)
@@ -798,16 +1138,18 @@ export class InitiativeController {
               notificationService.send({
                 userId,
                 organizationId: orgId,
-                type: 'initiative.status_changed',
-                title: 'Initiative status changed',
-                body: `${initiativeName}: ${currentStatus} → ${nextStatus}`,
+                type: isModuleChange ? 'initiative.module_changed' : 'initiative.status_changed',
+                title: isModuleChange
+                  ? 'Initiative moved to new module'
+                  : 'Initiative status changed',
+                body: `${initiativeName}: ${currentStatus} → ${nextStatus}${reason ? ` (${reason})` : ''}`,
                 entityType: 'initiative',
                 entityId: id,
                 actionUrl: '/initiatives',
                 actorId,
                 actorName,
-                priority: 'normal',
-                metadata: { from: currentStatus, to: nextStatus },
+                priority: nextStatus === 'BLOCKED' || nextStatus === 'CANCELLED' ? 'high' : 'normal',
+                metadata: { from: currentStatus, to: nextStatus, reason, gate },
               })
             )
         );
@@ -815,7 +1157,13 @@ export class InitiativeController {
         // best-effort
       }
 
-      res.json({ id, status: nextStatus, message: 'Status updated' });
+      res.json({
+        id,
+        status: nextStatus,
+        previousStatus: currentStatus,
+        gate: gate || null,
+        message: 'Status updated',
+      });
     }
   );
 
@@ -1211,15 +1559,15 @@ export class InitiativeController {
         return;
       }
 
-      const existing = await queryHelpers.queryOne(
+      const existingDep = await queryHelpers.queryOne(
         `SELECT id FROM initiative_dependencies
          WHERE organization_id = ? AND from_initiative_id = ? AND to_initiative_id = ?`,
         [orgId, fromInitiativeId, toInitiativeId]
       );
-      if (existing) {
+      if (existingDep) {
         res.json({
           dependency: {
-            id: (existing as Record<string, unknown>).id,
+            id: (existingDep as Record<string, unknown>).id,
             fromInitiativeId,
             toInitiativeId,
             type: type || 'FINISH_TO_START',
@@ -1227,6 +1575,66 @@ export class InitiativeController {
           },
         });
         return;
+      }
+
+      // Cycle detection using DFS — prevent A→B→C→A loops
+      try {
+        const allDeps = await queryHelpers.queryAll<{
+          from_initiative_id: string;
+          to_initiative_id: string;
+        }>(
+          `SELECT from_initiative_id, to_initiative_id FROM initiative_dependencies WHERE organization_id = ?`,
+          [orgId]
+        );
+
+        // Build adjacency list (from → [to1, to2, ...])
+        const adjacency = new Map<string, Set<string>>();
+        for (const dep of allDeps) {
+          const from = String(dep.from_initiative_id);
+          const to = String(dep.to_initiative_id);
+          if (!adjacency.has(from)) adjacency.set(from, new Set());
+          adjacency.get(from)!.add(to);
+        }
+        // Add the proposed new edge
+        if (!adjacency.has(fromInitiativeId)) adjacency.set(fromInitiativeId, new Set());
+        adjacency.get(fromInitiativeId)!.add(toInitiativeId);
+
+        // DFS from toInitiativeId to see if we can reach fromInitiativeId (= cycle)
+        const visited = new Set<string>();
+        const stack = [toInitiativeId];
+        let hasCycle = false;
+
+        while (stack.length > 0) {
+          const current = stack.pop()!;
+          if (current === fromInitiativeId) {
+            hasCycle = true;
+            break;
+          }
+          if (visited.has(current)) continue;
+          visited.add(current);
+
+          const neighbors = adjacency.get(current);
+          if (neighbors) {
+            for (const neighbor of neighbors) {
+              if (!visited.has(neighbor)) {
+                stack.push(neighbor);
+              }
+            }
+          }
+        }
+
+        if (hasCycle) {
+          res.status(400).json({
+            error: 'Creating this dependency would form a cycle',
+            rule: 'DEPENDENCY_CYCLE_DETECTED',
+            fromInitiativeId,
+            toInitiativeId,
+          });
+          return;
+        }
+      } catch (cycleErr) {
+        // If cycle detection fails, log but don't block
+        logger.warn('[initiatives] Cycle detection failed:', cycleErr);
       }
 
       let resolvedProjectId = projectId;

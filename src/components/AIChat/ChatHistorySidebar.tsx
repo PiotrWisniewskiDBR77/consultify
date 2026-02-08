@@ -1,7 +1,7 @@
 /**
  * ChatHistorySidebar
  *
- * FLOATING overlay sidebar showing conversation history AND projects.
+ * FLOATING overlay sidebar showing conversation history AND folders.
  * When closed, completely disappears except for a floating toggle button.
  *
  * Layout:
@@ -9,8 +9,8 @@
  * │ Header + New Chat      │
  * │ Search                 │
  * ├────────────────────────┤
- * │ MY PROJECTS (personal) │
- * │ TEAM PROJECTS (shared) │
+ * │ MY FOLDERS (personal)  │
+ * │ TEAM FOLDERS (shared)  │
  * ├────────────────────────┤
  * │ Conversations by date  │
  * ├────────────────────────┤
@@ -55,9 +55,9 @@ interface ChatHistorySidebarProps {
   className?: string;
 }
 
-// ==================== PROJECT SECTION COMPONENT ====================
+// ==================== FOLDER SECTION COMPONENT ====================
 
-interface ProjectSectionProps {
+interface FolderSectionProps {
   title: string;
   icon: React.ReactNode;
   projects: ChatProject[];
@@ -73,7 +73,7 @@ interface ProjectSectionProps {
   t: (key: string, fallback: string) => string;
 }
 
-const ProjectSection: React.FC<ProjectSectionProps> = ({
+const FolderSection: React.FC<FolderSectionProps> = ({
   title,
   icon,
   projects,
@@ -115,7 +115,7 @@ const ProjectSection: React.FC<ProjectSectionProps> = ({
         </button>
       </div>
 
-      {/* New Project Input */}
+      {/* New Folder Input */}
       {showInput && (
         <div className="mb-2 flex gap-2">
           <input
@@ -129,7 +129,7 @@ const ProjectSection: React.FC<ProjectSectionProps> = ({
                 setName('');
               }
             }}
-            placeholder={t('aiChat.projectName', 'Project name...')}
+            placeholder={t('aiChat.folderName', 'Folder name...')}
             className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
             autoFocus
           />
@@ -196,7 +196,7 @@ const ProjectSection: React.FC<ProjectSectionProps> = ({
                   </div>
                 </div>
 
-                {/* Project Conversations */}
+                {/* Folder Conversations */}
                 {isExpanded && projectConversations.length > 0 && (
                   <div className="ml-4 mt-0.5 space-y-0.5">
                     {projectConversations.map((conv) => (
@@ -213,7 +213,7 @@ const ProjectSection: React.FC<ProjectSectionProps> = ({
 
                 {isExpanded && projectConversations.length === 0 && (
                   <div className="ml-6 mt-1 px-2 py-2 text-xs text-slate-400 dark:text-slate-500 italic">
-                    {t('aiChat.noProjectConversations', 'No conversations in this project')}
+                    {t('aiChat.noFolderConversations', 'No conversations in this folder')}
                   </div>
                 )}
               </div>
@@ -331,13 +331,13 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     [setActiveConversation, toggleSidebar]
   );
 
-  // Handle create project with scope
+  // Handle create folder with scope
   const handleCreatePersonalProject = useCallback(
     async (name: string) => {
       try {
         await createProject({ name, scope: 'personal' });
       } catch (err) {
-        console.error('[ChatHistorySidebar] Failed to create personal project:', err);
+        console.error('[ChatHistorySidebar] Failed to create personal folder:', err);
       }
     },
     [createProject]
@@ -348,19 +348,19 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
       try {
         await createProject({ name, scope: 'team' });
       } catch (err) {
-        console.error('[ChatHistorySidebar] Failed to create team project:', err);
+        console.error('[ChatHistorySidebar] Failed to create team folder:', err);
       }
     },
     [createProject]
   );
 
-  // Handle delete project
+  // Handle delete folder
   const handleDeleteProject = useCallback(
     async (id: string) => {
       try {
         await deleteProject(id);
       } catch (err) {
-        console.error('[ChatHistorySidebar] Failed to delete project:', err);
+        console.error('[ChatHistorySidebar] Failed to delete folder:', err);
       }
     },
     [deleteProject]
@@ -456,11 +456,11 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           ) : (
             /* Default mode: Project folders first, then unassigned conversations */
             <>
-              {/* Project Folders (Primary Navigation) */}
+              {/* Chat Folders (Primary Navigation) */}
               <div className="pb-1">
-                {/* My Projects (Personal) */}
-                <ProjectSection
-                  title={t('aiChat.myProjects', 'My Projects')}
+                {/* My Folders (Personal) */}
+                <FolderSection
+                  title={t('aiChat.myFolders', 'My Folders')}
                   icon={<Folder size={11} />}
                   projects={personalProjects}
                   expandedProjectIds={expandedProjectIds}
@@ -475,9 +475,9 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                   t={t}
                 />
 
-                {/* Team Projects (Shared) */}
-                <ProjectSection
-                  title={t('aiChat.teamProjects', 'Team Projects')}
+                {/* Team Folders (Shared) */}
+                <FolderSection
+                  title={t('aiChat.teamFolders', 'Team Folders')}
                   icon={<Users size={11} />}
                   projects={teamProjects}
                   expandedProjectIds={expandedProjectIds}

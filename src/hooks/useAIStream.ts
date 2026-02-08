@@ -5,6 +5,40 @@ import { useAppStore } from '@/store/useAppStore';
 import { parseArtifactsFromResponse, useArtifactsStore } from '@/store/useArtifactsStore';
 import type { Artifact, ThinkingStep } from '@/types';
 
+function mergeCitations(prev: any[], next: any[]): any[] {
+  const out: any[] = [];
+  const seen = new Map<string, any>();
+
+  const keyOf = (c: any) =>
+    String(
+      c?.id ||
+        c?.link ||
+        c?.reference ||
+        c?.url ||
+        c?.title ||
+        `${c?.type || 'citation'}:${JSON.stringify(c).slice(0, 120)}`
+    );
+
+  const add = (c: any) => {
+    if (!c) return;
+    const k = keyOf(c);
+    if (!k) return;
+    if (seen.has(k)) {
+      // Prefer newer fields (e.g., excerpt added later)
+      seen.set(k, { ...(seen.get(k) || {}), ...(c || {}) });
+      return;
+    }
+    const merged = c;
+    seen.set(k, merged);
+    out.push(merged);
+  };
+
+  (Array.isArray(prev) ? prev : []).forEach(add);
+  (Array.isArray(next) ? next : []).forEach(add);
+
+  return out;
+}
+
 /**
  * Build localized thinking step labels for Cursor-like AI thinking indicator.
  * Uses natural, conversational phrases that change as the AI processes.
@@ -32,67 +66,120 @@ function buildDefaultThinkingSteps(language: string, complexity: ThinkingComplex
   > = {
     pl: {
       analyzing: [
-        'Analizuję Twoje pytanie…',
-        'Rozważam Twoje zapytanie…',
-        'Przygotowuję się…',
+        'Analizuję Twoje pytanie i szukam najlepszego sposobu odpowiedzi…',
+        'Rozważam kontekst Twojego zapytania i dobieram odpowiednie podejście…',
+        'Przygotowuję się do odpowiedzi — sprawdzam dostępne informacje…',
       ],
       context: [
-        'Zbieram kontekst…',
-        'Szukam powiązań…',
-        'Przeglądam informacje…',
-        'Gromadzę wiedzę…',
+        'Zbieram kontekst z danych projektu i powiązanych dokumentów…',
+        'Przeszukuję historię rozmów i dane organizacji pod kątem powiązań…',
+        'Przeglądam informacje o inicjatywach, zadaniach i postępach…',
+        'Gromadzę wiedzę z dostępnych źródeł, żeby dać pełniejszą odpowiedź…',
       ],
-      planning: ['Układam plan odpowiedzi…', 'Porządkuję wątki…', 'Wybieram podejście…'],
-      validating: ['Sprawdzam spójność…', 'Weryfikuję szczegóły…', 'Dopinam odpowiedź…'],
-      composing: ['Przygotowuję odpowiedź…', 'Składam wszystko w całość…', 'Kończę i dopracowuję…'],
+      planning: [
+        'Układam plan odpowiedzi — wybieram najważniejsze wątki do poruszenia…',
+        'Porządkuję zebrane informacje i priorytetyzuję kluczowe punkty…',
+        'Wybieram podejście, które najlepiej odpowiada na Twoje pytanie…',
+      ],
+      validating: [
+        'Sprawdzam spójność mojej analizy i weryfikuję szczegóły…',
+        'Weryfikuję czy informacje się zgadzają i nie ma sprzeczności…',
+        'Dopinam odpowiedź — upewniam się, że wszystko jest na miejscu…',
+      ],
+      composing: [
+        'Przygotowuję odpowiedź — składam wnioski w przejrzystą całość…',
+        'Składam wszystko w czytelną odpowiedź z konkretnymi rekomendacjami…',
+        'Kończę i dopracowuję treść, żeby była jak najbardziej pomocna…',
+      ],
     },
     en: {
       analyzing: [
-        'Analyzing your question…',
-        'Processing your request…',
-        'Understanding the context…',
+        'Analyzing your question and finding the best way to respond…',
+        'Processing your request and evaluating the relevant context…',
+        'Understanding what you need and preparing my approach…',
       ],
       context: [
-        'Gathering context…',
-        'Searching for connections…',
-        'Reviewing information…',
-        'Collecting insights…',
+        'Gathering context from project data and related documents…',
+        'Searching conversation history and organization data for connections…',
+        'Reviewing initiatives, tasks, and progress to build a complete picture…',
+        'Collecting insights from available sources for a more thorough answer…',
       ],
-      planning: ['Planning the response…', 'Organizing the key points…', 'Choosing an approach…'],
-      validating: ['Checking for consistency…', 'Verifying details…', 'Cross-referencing…'],
-      composing: ['Composing the answer…', 'Putting it all together…', 'Finalizing…'],
+      planning: [
+        'Planning the response — selecting the most important points to cover…',
+        'Organizing the gathered information and prioritizing key findings…',
+        'Choosing an approach that best addresses your specific question…',
+      ],
+      validating: [
+        'Checking my analysis for consistency and verifying the details…',
+        'Cross-referencing information to make sure there are no contradictions…',
+        'Finalizing the details — making sure everything checks out…',
+      ],
+      composing: [
+        'Composing the answer — weaving conclusions into a clear response…',
+        'Putting it all together with concrete recommendations…',
+        'Finishing up and polishing the response to be as helpful as possible…',
+      ],
     },
     de: {
       analyzing: [
-        'Ich analysiere deine Frage…',
-        'Ich denke darüber nach…',
-        'Bearbeite deine Anfrage…',
+        'Ich analysiere deine Frage und suche den besten Ansatz für die Antwort…',
+        'Ich denke über den Kontext deiner Frage nach und wähle ein Vorgehen…',
+        'Bearbeite deine Anfrage — prüfe verfügbare Informationen…',
       ],
-      context: ['Ich sammle Kontext…', 'Suche nach Zusammenhängen…', 'Überprüfe Informationen…'],
-      planning: ['Ich plane die Antwort…', 'Ordne die Punkte…', 'Wähle ein Vorgehen…'],
-      validating: ['Prüfe die Konsistenz…', 'Verifiziere Details…', 'Gegencheck…'],
-      composing: ['Formuliere die Antwort…', 'Setze alles zusammen…', 'Finalisiere…'],
+      context: [
+        'Ich sammle Kontext aus Projektdaten und zugehörigen Dokumenten…',
+        'Suche nach Zusammenhängen in der Gesprächshistorie und Organisationsdaten…',
+        'Überprüfe Informationen zu Initiativen, Aufgaben und Fortschritt…',
+      ],
+      planning: [
+        'Ich plane die Antwort — wähle die wichtigsten Punkte aus…',
+        'Ordne die gesammelten Informationen und priorisiere die Ergebnisse…',
+        'Wähle ein Vorgehen, das deine Frage am besten beantwortet…',
+      ],
+      validating: [
+        'Prüfe die Konsistenz meiner Analyse und verifiziere Details…',
+        'Gegencheck — stelle sicher, dass keine Widersprüche bestehen…',
+      ],
+      composing: [
+        'Formuliere die Antwort mit konkreten Empfehlungen…',
+        'Setze alles zu einer klaren Antwort zusammen…',
+      ],
     },
     es: {
-      analyzing: ['Analizando tu pregunta…', 'Pensando en esto…', 'Procesando tu solicitud…'],
-      context: ['Recopilando contexto…', 'Buscando conexiones…', 'Revisando información…'],
-      planning: ['Planificando la respuesta…', 'Organizando puntos clave…', 'Eligiendo enfoque…'],
-      validating: ['Verificando coherencia…', 'Revisando detalles…', 'Comprobando…'],
-      composing: ['Redactando la respuesta…', 'Uniendo todo…', 'Finalizando…'],
+      analyzing: [
+        'Analizando tu pregunta y buscando la mejor forma de responder…',
+        'Procesando tu solicitud y evaluando el contexto relevante…',
+      ],
+      context: [
+        'Recopilando contexto de los datos del proyecto y documentos relacionados…',
+        'Buscando conexiones en el historial y los datos de la organización…',
+      ],
+      planning: [
+        'Planificando la respuesta — seleccionando los puntos más importantes…',
+        'Organizando la información recopilada y priorizando hallazgos clave…',
+      ],
+      validating: [
+        'Verificando coherencia y revisando los detalles de mi análisis…',
+        'Comprobando que no haya contradicciones en la información…',
+      ],
+      composing: [
+        'Redactando la respuesta con recomendaciones concretas…',
+        'Uniendo todo en una respuesta clara y útil…',
+      ],
     },
     ar: {
-      analyzing: ['أحلّل سؤالك…', 'أفكر في هذا…'],
-      context: ['أجمع السياق…', 'أبحث عن المعلومات…'],
-      planning: ['أخطط للإجابة…', 'أنظم الأفكار…'],
-      validating: ['أتحقق من الاتساق…', 'أراجع التفاصيل…'],
-      composing: ['أصوغ الإجابة…', 'أجهّز الرد…'],
+      analyzing: ['أحلّل سؤالك وأبحث عن أفضل طريقة للإجابة…', 'أفكر في سياق سؤالك وأختار المنهج المناسب…'],
+      context: ['أجمع السياق من بيانات المشروع والمستندات ذات الصلة…', 'أبحث عن المعلومات والروابط في بيانات المنظمة…'],
+      planning: ['أخطط للإجابة — أختار أهم النقاط للتغطية…', 'أنظم المعلومات وأرتب الأولويات…'],
+      validating: ['أتحقق من اتساق التحليل وأراجع التفاصيل…'],
+      composing: ['أصوغ الإجابة بتوصيات محددة…', 'أجهّز الرد النهائي…'],
     },
     ja: {
-      analyzing: ['質問を分析しています…', '考えています…'],
-      context: ['コンテキストを収集中…', '情報を確認中…'],
-      planning: ['回答の方針を整理中…', 'ポイントをまとめています…'],
-      validating: ['整合性を確認中…', '詳細をチェック中…'],
-      composing: ['回答を作成中…', '仕上げ中…'],
+      analyzing: ['ご質問を分析し、最適な回答方法を検討しています…', 'ご質問の文脈を理解し、アプローチを選択中…'],
+      context: ['プロジェクトデータと関連ドキュメントからコンテキストを収集中…', '組織データと会話履歴から関連情報を検索中…'],
+      planning: ['回答を計画中 — 最も重要なポイントを選択しています…', '収集した情報を整理し、重要な発見を優先しています…'],
+      validating: ['分析の整合性を確認し、詳細を検証中…'],
+      composing: ['具体的な提案を含む回答を作成中…', '明確で役立つ回答にまとめています…'],
     },
   };
 
@@ -494,17 +581,22 @@ export const useAIStream = (options: StreamOptions = {}) => {
         }
 
         // Long-wait escalation labels (3-second rule: always update something)
+        const isPl = (language || '').startsWith('pl');
         if (elapsed > 30000 && !isDeepThinking) {
           const escalationStep = currentThinking.find((s) => s.status === 'in_progress');
-          if (escalationStep && !escalationStep.label.includes('moment')) {
-            escalationStep.label = escalationStep.label.replace(/…$/, '') + ' — almost done…';
+          if (escalationStep && !escalationStep.label.includes('zaraz') && !escalationStep.label.includes('almost')) {
+            escalationStep.label = isPl
+              ? 'Już prawie kończę — dopracowuję ostatnie szczegóły odpowiedzi…'
+              : 'Almost done — polishing the final details of the response…';
             setThinkingSteps([...currentThinking]);
             options.onThinkingUpdate?.([...currentThinking]);
           }
         } else if (elapsed > 10000 && !isDeepThinking) {
           const escalationStep = currentThinking.find((s) => s.status === 'in_progress');
-          if (escalationStep && !escalationStep.label.includes('moment')) {
-            escalationStep.label = escalationStep.label.replace(/…$/, '') + ' — one moment…';
+          if (escalationStep && !escalationStep.label.includes('chwilę') && !escalationStep.label.includes('moment')) {
+            escalationStep.label = isPl
+              ? 'To zajmie jeszcze chwilę — analizuję bardziej złożone aspekty Twojego pytania…'
+              : 'This is taking a moment — analyzing more complex aspects of your question…';
             setThinkingSteps([...currentThinking]);
             options.onThinkingUpdate?.([...currentThinking]);
           }
@@ -606,7 +698,8 @@ export const useAIStream = (options: StreamOptions = {}) => {
 
         if (evt.type === 'citations') {
           const e = evt as CitationsEvent;
-          setCitations(Array.isArray(e.citations) ? e.citations : []);
+          const incoming = Array.isArray(e.citations) ? e.citations : [];
+          setCitations((prev) => mergeCitations(prev, incoming));
           return;
         }
 

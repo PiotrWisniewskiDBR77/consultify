@@ -77,6 +77,10 @@ export interface InitiativeContextValue {
   setSponsorId: (v: string) => void;
   targetDate: string;
   setTargetDate: (v: string) => void;
+  startDate: string | null;
+  setStartDate: (v: string | null) => void;
+  endDate: string | null;
+  setEndDate: (v: string | null) => void;
   reminders: ReminderRule[];
   setReminders: React.Dispatch<React.SetStateAction<ReminderRule[]>>;
   escalation: EscalationRule | null;

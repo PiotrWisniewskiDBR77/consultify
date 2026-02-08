@@ -558,6 +558,7 @@ export const Sidebar: React.FC = () => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isActive = item.viewId === currentView;
     const isCompleted = item.viewId && completedViews.includes(item.viewId);
+    const badgeLabel = item.badge === 'soon' ? 'Coming soon' : item.badge;
 
     // Check if locked
     const isLocked =
@@ -672,7 +673,7 @@ export const Sidebar: React.FC = () => {
           `}
           title={getTooltip()}
         >
-          <div className={`flex items-center gap-3 ${!showFull ? 'justify-center w-full' : ''} `}>
+          <div className={`flex items-center gap-3 min-w-0 ${!showFull ? 'justify-center w-full' : 'flex-1'} `}>
             {item.icon && (
               <span
                 className={`transition-colors ${isActive || isParentActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
@@ -686,23 +687,23 @@ export const Sidebar: React.FC = () => {
             {showFull && (
               <span className="truncate tracking-wide flex-1 text-left">{item.label}</span>
             )}
-            {/* Beta/New/Soon Badge */}
-            {item.badge && showFull && (
-              <span
-                className={`
-                                    ml-auto px-2 py-0.5 text-[10px] font-bold uppercase rounded-full tracking-wide shrink-0
-                                    ${item.badge === 'beta' ? 'bg-amber-500/30 text-amber-500 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-500/30' : ''}
-                                    ${item.badge === 'new' ? 'bg-green-500/30 text-green-500 dark:bg-green-500/20 dark:text-green-400 border border-green-500/30' : ''}
-                                    ${item.badge === 'soon' ? 'bg-slate-500/30 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400 border border-slate-500/30' : ''}
-                                `}
-              >
-                {item.badge}
-              </span>
-            )}
           </div>
 
           {showFull && (
             <div className="flex items-center gap-2">
+              {/* Beta/New/Soon Badge */}
+              {item.badge && (
+                <span
+                  className={`
+                    px-2 py-0.5 text-[10px] font-semibold rounded-full tracking-wide shrink-0 border
+                    ${item.badge === 'beta' ? 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 border-amber-500/25 dark:border-amber-400/20' : ''}
+                    ${item.badge === 'new' ? 'bg-green-500/10 text-green-700 dark:bg-green-400/10 dark:text-green-300 border-green-500/25 dark:border-green-400/20' : ''}
+                    ${item.badge === 'soon' ? 'bg-amber-400/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 border-amber-400/25 dark:border-amber-400/20' : ''}
+                  `}
+                >
+                  {badgeLabel}
+                </span>
+              )}
               {isCompleted && !isActive && <CheckCircle2 size={14} className="text-green-500/80" />}
               {isLocked && <Lock size={12} className="text-slate-400 dark:text-slate-500" />}
               {hasSubItems && (

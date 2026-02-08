@@ -463,9 +463,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // AI action state
-  const [customInstruction, setCustomInstruction] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [activeAIAction, setActiveAIAction] = useState<string | null>(null);
+  // Queued quick-actions (toggled on/off, applied on Regenerate)
+  const [selectedActions, setSelectedActions] = useState<Set<string>>(new Set());
+  const [additionalPrompt, setAdditionalPrompt] = useState('');
 
   // Diff state (after AI regeneration)
   const [previousContent, setPreviousContent] = useState<string | null>(null);
@@ -523,48 +524,6 @@ export const BlockCard: React.FC<BlockCardProps> = ({
       });
     }
   }, [mode, block.content, isEditing]);
-
-  // AI action handler
-  const handleAIAction = async (action: ContextualAction) => {
-    if (!onRegenerate) return;
-    setIsProcessing(true);
-    setActiveAIAction(action.id);
-
-    // Save current content for diff
-    if (block.content) setPreviousContent(block.content);
-
-    try {
-      let instruction = isPl ? action.instructionPl : action.instruction;
-      if (previousBlockSummary) instruction += `\n\nContext: Previous section: ${previousBlockSummary}`;
-      if (nextBlockSummary) instruction += `\nNext section: ${nextBlockSummary}`;
-      await onRegenerate(instruction);
-      setShowDiff(true);
-      setMode('preview');
-    } catch (err) {
-      console.error('AI action failed:', err);
-    } finally {
-      setIsProcessing(false);
-      setActiveAIAction(null);
-    }
-  };
-
-  const handleCustomAI = async () => {
-    if (!customInstruction.trim() || !onRegenerate) return;
-    setIsProcessing(true);
-    setActiveAIAction('custom');
-    if (block.content) setPreviousContent(block.content);
-    try {
-      await onRegenerate(customInstruction);
-      setCustomInstruction('');
-      setShowDiff(true);
-      setMode('preview');
-    } catch (err) {
-      console.error('Custom AI failed:', err);
-    } finally {
-      setIsProcessing(false);
-      setActiveAIAction(null);
-    }
-  };
 
   // Generate/regenerate this block
   const handleGenerateBlock = async () => {
@@ -913,139 +872,241 @@ export const BlockCard: React.FC<BlockCardProps> = ({
 
           {/* --- AI TAB --- */}
           {mode === 'ai' && (
-            <div className="p-4 space-y-0" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 space-y-3" onClick={(e) => e.stopPropagation()}>
 
-              {/* ── Section 1: Prompt ── */}
-              <div className="pb-3">
+              {/* ── Section 1: Main Prompt (persistent) ── */}
+              <div>
+                <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                  <Wand2 className="w-3 h-3 text-purple-500" />
+                  {isPl ? 'Główny prompt' : 'Main prompt'}
+                </label>
                 <textarea
                   value={block.customPrompt || ''}
                   onChange={(e) => onUpdate({ customPrompt: e.target.value })}
                   placeholder={isPl
                     ? (PROMPT_PLACEHOLDERS[block.type]?.pl || PROMPT_PLACEHOLDERS.custom.pl)
                     : (PROMPT_PLACEHOLDERS[block.type]?.en || PROMPT_PLACEHOLDERS.custom.en)}
-                  className="w-full px-3 py-2.5 text-[11px] bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg resize-none h-20 focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 leading-relaxed placeholder:text-slate-400"
+                  className="w-full px-3 py-2 text-[11px] bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg resize-none h-16 focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 leading-relaxed placeholder:text-slate-400"
                 />
-                <div className="flex items-center justify-between mt-1.5">
-                  <span className="text-[9px] text-slate-400">
-                    {isPl ? 'Główna instrukcja dla AI — opisz czego oczekujesz' : 'Main AI instruction — describe what you expect'}
-                  </span>
-                  {block.customPrompt && (
-                    <span className="text-[9px] text-purple-400 font-medium">{block.customPrompt.length} {isPl ? 'znaków' : 'chars'}</span>
+              </div>
+
+              {/* ── Section 2: Additional Instructions (one-off) ── */}
+              <div>
+                <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                  <MessageSquarePlus className="w-3 h-3 text-blue-500" />
+                  {isPl ? 'Dodatkowe instrukcje' : 'Additional instructions'}
+                </label>
+                <textarea
+                  value={additionalPrompt}
+                  onChange={(e) => setAdditionalPrompt(e.target.value)}
+                  placeholder={isPl ? 'Np. "Skróć do 3 akapitów, dodaj metryki, ton formalny..."' : 'E.g., "Shorten to 3 paragraphs, add metrics, formal tone..."'}
+                  className="w-full px-3 py-2 text-[11px] bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200/60 dark:border-blue-800/40 rounded-lg resize-none h-12 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 leading-relaxed placeholder:text-slate-400"
+                />
+              </div>
+
+              {/* ── Section 3: Quick Modifiers (toggle chips) ── */}
+              <div>
+                {/* Contextual actions for this block type */}
+                {contextActions.length > 0 && (
+                  <div className="mb-2">
+                    <div className="text-[9px] font-semibold text-purple-500 uppercase tracking-wider mb-1">
+                      {isPl ? `Dla ${block.type.replace(/_/g, ' ')}` : `For ${block.type.replace(/_/g, ' ')}`}
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {contextActions.map((action) => {
+                        const isSelected = selectedActions.has(action.id);
+                        return (
+                          <button
+                            key={action.id}
+                            onClick={() => {
+                              setSelectedActions((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(action.id)) next.delete(action.id);
+                                else next.add(action.id);
+                                return next;
+                              });
+                            }}
+                            className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-md transition-all border ${
+                              isSelected
+                                ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                                : 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800/50 hover:bg-purple-50 dark:hover:bg-purple-900/30'
+                            }`}
+                          >
+                            {isSelected ? <Check className="w-3 h-3" /> : action.icon}
+                            {isPl ? action.labelPl : action.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Universal modifiers */}
+                <div>
+                  {contextActions.length > 0 && (
+                    <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                      {isPl ? 'Modyfikatory' : 'Modifiers'}
+                    </div>
                   )}
+                  <div className="flex flex-wrap gap-1">
+                    {UNIVERSAL_ACTIONS.map((action) => {
+                      const isSelected = selectedActions.has(action.id);
+                      return (
+                        <button
+                          key={action.id}
+                          onClick={() => {
+                            setSelectedActions((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(action.id)) next.delete(action.id);
+                              else next.add(action.id);
+                              return next;
+                            });
+                          }}
+                          disabled={!block.content && !block.isGenerated}
+                          className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-md transition-all border ${
+                            isSelected
+                              ? 'bg-slate-700 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-700 dark:border-slate-200 shadow-sm'
+                              : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                          } ${!block.content && !block.isGenerated ? 'opacity-30 cursor-not-allowed' : ''}`}
+                        >
+                          {isSelected ? <Check className="w-3 h-3" /> : action.icon}
+                          {isPl ? action.labelPl : action.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
-              {/* ── Section 2: Source / Context (collapsible) ── */}
-              <details className="group pb-3">
-                <summary className="flex items-center gap-1.5 cursor-pointer select-none py-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+              {/* ── Section 4: Source/Context (collapsible) ── */}
+              <details className="group">
+                <summary className="flex items-center gap-1.5 cursor-pointer select-none py-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
                   <ChevronRight className="w-3 h-3 transition-transform group-open:rotate-90" />
                   <FileText className="w-3 h-3 text-emerald-500" />
                   {isPl ? 'Źródło / Kontekst' : 'Source / Context'}
                   {block.sourceContext && <span className="text-[8px] text-emerald-500 ml-1 normal-case">●</span>}
                 </summary>
-                <div className="mt-2">
+                <div className="mt-1.5">
                   <textarea
                     value={block.sourceContext || ''}
                     onChange={(e) => onUpdate({ sourceContext: e.target.value })}
                     placeholder={isPl ? 'Wklej dane źródłowe, kontekst, wymagania biznesowe...' : 'Paste source data, context, business requirements...'}
-                    className="w-full px-3 py-2 text-[11px] bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg resize-none h-16 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 leading-relaxed placeholder:text-slate-400"
+                    className="w-full px-3 py-2 text-[11px] bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg resize-none h-14 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 leading-relaxed placeholder:text-slate-400"
                   />
                 </div>
               </details>
 
-              {/* ── Section 3: Quick Actions ── */}
-              <div className="border-t border-slate-100 dark:border-slate-800 pt-3 pb-3">
-                {/* Contextual actions */}
-                {contextActions.length > 0 && (
-                  <div className="mb-2.5">
-                    <div className="text-[9px] font-semibold text-purple-500 uppercase tracking-wider mb-1.5">
-                      {isPl ? `Dla ${block.type.replace(/_/g, ' ')}` : `For ${block.type.replace(/_/g, ' ')}`}
+              {/* ── Section 5: Action Bar ── */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                {/* Summary of pending changes */}
+                {(selectedActions.size > 0 || additionalPrompt.trim()) && (
+                  <div className="mb-2 p-2 bg-blue-50/80 dark:bg-blue-900/15 border border-blue-200/50 dark:border-blue-800/30 rounded-lg">
+                    <div className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 mb-1">
+                      {isPl ? 'Zaplanowane zmiany:' : 'Pending changes:'}
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {contextActions.map((action) => (
-                        <button key={action.id} onClick={() => handleAIAction(action)} disabled={isProcessing}
-                          className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium rounded-md transition-all border ${
-                            activeAIAction === action.id
-                              ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700'
-                              : 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800/50 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300'
-                          } ${isProcessing && activeAIAction !== action.id ? 'opacity-40' : ''}`}>
-                          {activeAIAction === action.id && isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : action.icon}
-                          {isPl ? action.labelPl : action.label}
-                        </button>
-                      ))}
+                      {Array.from(selectedActions).map((id) => {
+                        const action = [...contextActions, ...UNIVERSAL_ACTIONS].find((a) => a.id === id);
+                        if (!action) return null;
+                        return (
+                          <span key={id} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
+                            {isPl ? action.labelPl : action.label}
+                            <button onClick={() => setSelectedActions((prev) => { const next = new Set(prev); next.delete(id); return next; })} className="ml-0.5 hover:text-red-500">
+                              <X className="w-2.5 h-2.5" />
+                            </button>
+                          </span>
+                        );
+                      })}
+                      {additionalPrompt.trim() && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
+                          + {isPl ? 'instrukcje' : 'instructions'}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
 
-                {/* Universal actions */}
-                <div className="mb-2.5">
-                  {contextActions.length > 0 && (
-                    <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                      {isPl ? 'Uniwersalne' : 'Universal'}
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-1">
-                    {UNIVERSAL_ACTIONS.map((action) => (
-                      <button key={action.id} onClick={() => handleAIAction(action)} disabled={isProcessing || !block.content}
-                        className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-md transition-all border ${
-                          activeAIAction === action.id
-                            ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600'
-                            : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                        } ${isProcessing && activeAIAction !== action.id ? 'opacity-40' : ''} ${!block.content ? 'opacity-30 cursor-not-allowed' : ''}`}>
-                        {activeAIAction === action.id && isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : action.icon}
-                        {isPl ? action.labelPl : action.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Section 4: One-off instruction + actions ── */}
-              <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
-                <div className="flex gap-1.5">
-                  <input
-                    type="text"
-                    value={customInstruction}
-                    onChange={(e) => setCustomInstruction(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCustomAI()}
-                    placeholder={isPl ? 'Wpisz polecenie dla AI i naciśnij Enter...' : 'Type an AI instruction and press Enter...'}
-                    className="flex-1 px-3 py-2 text-[11px] bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 placeholder:text-slate-400"
-                    disabled={isProcessing}
-                  />
-                  <button onClick={handleCustomAI} disabled={isProcessing || !customInstruction.trim()}
-                    className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-40 transition-colors flex items-center gap-1 text-[10px] font-medium">
-                    {isProcessing && activeAIAction === 'custom' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-                {/* Bottom row: Generate + Regenerate */}
-                <div className="flex items-center gap-2 mt-3">
+                {/* Action buttons */}
+                <div className="flex items-center gap-2">
+                  {/* Primary: Regenerate with all instructions */}
                   {onGenerateBlock && !block.id.startsWith('tmp_') && (
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleGenerateBlock(); }}
-                      disabled={block.isGenerating}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold rounded-lg transition-all ${
-                        !block.isGenerated
-                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        // Build combined instruction from selected actions + additional prompt
+                        const allActions = [...contextActions, ...UNIVERSAL_ACTIONS];
+                        const actionInstructions = Array.from(selectedActions)
+                          .map((id) => allActions.find((a) => a.id === id))
+                          .filter(Boolean)
+                          .map((a) => isPl ? a!.instructionPl : a!.instruction);
+                        let combinedExtra = [...actionInstructions, additionalPrompt.trim()].filter(Boolean).join('\n');
+                        if (previousBlockSummary) combinedExtra += `\n\nContext: Previous section: ${previousBlockSummary}`;
+                        if (nextBlockSummary) combinedExtra += `\nNext section: ${nextBlockSummary}`;
+
+                        if (combinedExtra && onRegenerate && block.content) {
+                          // Has modifiers → use onRegenerate with combined instructions
+                          setIsProcessing(true);
+                          if (block.content) setPreviousContent(block.content);
+                          try {
+                            await onRegenerate(combinedExtra);
+                            setSelectedActions(new Set());
+                            setAdditionalPrompt('');
+                            setShowDiff(true);
+                            setMode('preview');
+                          } catch (err) {
+                            console.error('Regenerate failed:', err);
+                          } finally {
+                            setIsProcessing(false);
+                          }
+                        } else {
+                          // No modifiers → standard generate/regenerate
+                          if (block.content) setPreviousContent(block.content);
+                          try {
+                            await onGenerateBlock();
+                            setSelectedActions(new Set());
+                            setAdditionalPrompt('');
+                            setMode('preview');
+                            if (block.content) setShowDiff(true);
+                          } catch (err) {
+                            console.error('Generate failed:', err);
+                          }
+                        }
+                      }}
+                      disabled={block.isGenerating || isProcessing}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-[11px] font-semibold rounded-lg transition-all ${
+                        selectedActions.size > 0 || additionalPrompt.trim()
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-md ring-2 ring-blue-400/20'
+                          : !block.isGenerated
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-sm'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                       } disabled:opacity-40`}
                     >
-                      {block.isGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : block.isGenerated ? <RefreshCw className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                      {block.isGenerating ? (isPl ? 'Generowanie...' : 'Generating...') : block.isGenerated ? (isPl ? 'Regeneruj' : 'Regenerate') : (isPl ? 'Generuj' : 'Generate')}
+                      {(block.isGenerating || isProcessing) ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : block.isGenerated ? (
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      ) : (
+                        <Sparkles className="w-3.5 h-3.5" />
+                      )}
+                      {(block.isGenerating || isProcessing)
+                        ? (isPl ? 'Generowanie...' : 'Generating...')
+                        : (selectedActions.size > 0 || additionalPrompt.trim())
+                          ? (isPl ? `Regeneruj (${selectedActions.size + (additionalPrompt.trim() ? 1 : 0)})` : `Regenerate (${selectedActions.size + (additionalPrompt.trim() ? 1 : 0)})`)
+                          : block.isGenerated
+                            ? (isPl ? 'Regeneruj' : 'Regenerate')
+                            : (isPl ? 'Generuj' : 'Generate')
+                      }
                     </button>
                   )}
-                  {onRegenerate && block.content && (
+
+                  {/* Clear selections */}
+                  {(selectedActions.size > 0 || additionalPrompt.trim()) && (
                     <button
-                      onClick={() => handleAIAction({
-                        id: 'regenerate_full', icon: <RefreshCw className="w-3.5 h-3.5" />,
-                        label: 'Regenerate from scratch', labelPl: 'Od nowa',
-                        instruction: 'Regenerate this section completely with fresh content, different structure and phrasing.',
-                        instructionPl: 'Wygeneruj sekcję całkowicie od nowa z inną strukturą i frazami.',
-                      })}
-                      disabled={isProcessing}
-                      className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all disabled:opacity-40"
+                      onClick={() => { setSelectedActions(new Set()); setAdditionalPrompt(''); }}
+                      className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                      title={isPl ? 'Wyczyść' : 'Clear'}
                     >
-                      {activeAIAction === 'regenerate_full' && isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                      {isPl ? 'Od nowa' : 'From scratch'}
+                      <X className="w-4 h-4" />
                     </button>
                   )}
                 </div>
