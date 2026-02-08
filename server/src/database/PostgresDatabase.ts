@@ -267,6 +267,19 @@ function adaptQuery(sql: string): string {
     }
   );
 
+  // Replace json_extract(json_column, '$.path') with PostgreSQL JSON operators
+  // json_extract returns JSON, so we use -> for JSON or ->> for text
+  // For numeric values in COALESCE, we'll use ->> and cast if needed
+  adapted = adapted.replace(
+    /json_extract\s*\(\s*([^,]+)\s*,\s*['"]\$\.([^'"]+)['"]\s*\)/gi,
+    (match, jsonColumn, jsonPath) => {
+      // Use ->> to get text, which can be cast to numeric if needed
+      // Check if it's wrapped in COALESCE with a numeric default (0, etc.)
+      // For now, just return the JSON path access - PostgreSQL will handle type coercion
+      return `(${jsonColumn.trim()}->>'${jsonPath}')`;
+    }
+  );
+
   return adapted;
 }
 
