@@ -45,10 +45,12 @@ export const MODEL_PROVIDER_MAP: Record<string, string> = {
   'claude-3-sonnet': 'anthropic',
   'claude-3-haiku': 'anthropic',
   'claude-3-haiku-20240307': 'anthropic',
+  'gemini-2.5-pro': 'google',
+  'gemini-2.5-flash': 'google',
   'gemini-2.0-flash': 'google',
-  'gemini-1.5-flash': 'google',
-  'gemini-1.5-pro': 'google',
-  'gemini-pro': 'google',
+  'gemini-1.5-flash': 'google', // deprecated alias
+  'gemini-1.5-pro': 'google',   // deprecated alias
+  'gemini-pro': 'google',       // deprecated alias
   'deepseek-chat': 'deepseek',
   'deepseek-coder': 'deepseek',
   'qwen-max': 'qwen',
@@ -72,10 +74,10 @@ export const TIER_DEFAULTS: Record<string, string> = {
 };
 
 export const TIER_FALLBACK_CHAINS: Record<string, string[]> = {
-  BUDGET: ['gpt-4o-mini', 'deepseek-chat', 'gemini-1.5-flash', 'qwen-turbo', 'glm-4-flash'],
+  BUDGET: ['gpt-4o-mini', 'gemini-2.0-flash', 'deepseek-chat', 'qwen-turbo', 'glm-4-flash'],
   STANDARD: [
     'gpt-4o',
-    'gemini-1.5-pro',
+    'gemini-2.5-flash',
     'claude-3-5-sonnet',
     'command-r-plus',
     'qwen-max',
@@ -83,13 +85,13 @@ export const TIER_FALLBACK_CHAINS: Record<string, string[]> = {
   ],
   PREMIUM: [
     'gpt-4o',
+    'gemini-2.5-pro',
     'claude-3-opus',
-    'gemini-1.5-pro',
     'meta/llama-3.1-405b-instruct',
     'glm-4-plus',
   ],
-  REASONING: ['o1-preview', 'gpt-4o', 'deepseek-chat', 'claude-3-opus'],
-  VISION: ['gpt-4o', 'gemini-1.5-pro', 'claude-3-5-sonnet', 'qwen-vl-max'],
+  REASONING: ['o1-preview', 'gpt-4o', 'gemini-2.5-pro', 'deepseek-chat', 'claude-3-opus'],
+  VISION: ['gpt-4o', 'gemini-2.5-flash', 'claude-3-5-sonnet', 'qwen-vl-max'],
 };
 
 export const TIER_FALLBACKS: Record<string, string> = {
@@ -97,7 +99,7 @@ export const TIER_FALLBACKS: Record<string, string> = {
   STANDARD: 'gpt-4o-mini',
   PREMIUM: 'gpt-4o',
   REASONING: 'gpt-4o',
-  VISION: 'gemini-1.5-pro',
+  VISION: 'gemini-2.5-flash',
 };
 
 type ProviderRow = {
@@ -315,16 +317,16 @@ export class ModelRouter {
     ).trim();
 
     const geminiDefaultByTier: Record<string, string> = {
-      BUDGET: 'gemini-1.5-flash',
-      STANDARD: 'gemini-1.5-pro',
-      PREMIUM: 'gemini-1.5-pro',
-      REASONING: 'gemini-1.5-pro',
-      VISION: 'gemini-1.5-pro',
+      BUDGET: 'gemini-2.0-flash',
+      STANDARD: 'gemini-2.5-flash',
+      PREMIUM: 'gemini-2.5-pro',
+      REASONING: 'gemini-2.5-pro',
+      VISION: 'gemini-2.5-flash',
     };
 
     const staticCandidates =
       !hasOpenAI && hasGemini
-        ? [geminiDefaultByTier[tier] || 'gemini-1.5-flash', ...(TIER_FALLBACK_CHAINS[tier] || [])]
+        ? [geminiDefaultByTier[tier] || 'gemini-2.0-flash', ...(TIER_FALLBACK_CHAINS[tier] || [])]
         : [TIER_DEFAULTS[tier], ...(TIER_FALLBACK_CHAINS[tier] || [])];
     const staticPick = staticCandidates.find((m) =>
       modelMeetsRequirements(String(m || ''), requirements)
