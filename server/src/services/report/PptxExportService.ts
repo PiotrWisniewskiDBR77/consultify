@@ -208,7 +208,7 @@ export class PptxExportService {
           rect: {
             x: 0,
             y: 0,
-            w: '100%',
+            w: 10,
             h: 0.8,
             fill: { color: brandColor },
           },
@@ -216,16 +216,15 @@ export class PptxExportService {
         // Title placeholder
         {
           placeholder: {
+            name: 'title',
+            type: 'title',
             options: {
-              name: 'title',
-              type: 'title',
               x: 0.5,
               y: 0.15,
               w: 9,
               h: 0.5,
               fontSize: 24,
-              
-      fontFace: FONTS.title,
+              fontFace: FONTS.title,
               color: 'FFFFFF',
               bold: true,
             },
@@ -253,12 +252,10 @@ export class PptxExportService {
             y: 5.2,
             w: 1,
             h: 0.3,
-              fontSize: 10,
-              
-      fontFace: FONTS.body,
-              color: COLORS.darkGray,
-              align: 'right',
-            },
+            fontSize: 10,
+            fontFace: FONTS.body,
+            color: COLORS.darkGray,
+            align: 'right',
           },
         },
       ],
@@ -273,7 +270,7 @@ export class PptxExportService {
           rect: {
             x: 0,
             y: 2,
-            w: '100%',
+            w: 10,
             h: 2,
             fill: { color: brandColor },
           },

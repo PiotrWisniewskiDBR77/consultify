@@ -29,6 +29,7 @@ declare module 'pptxgenjs' {
         name: string;
         type: string;
         options?: TextOptions;
+        text?: string;
       };
       rect?: {
         x: number;
@@ -75,7 +76,7 @@ declare module 'pptxgenjs' {
     addText(text: string | TextProps[], options?: TextOptions): void;
     addShape(shapeType: string, options: ShapeOptions): void;
     addChart(chartType: string, data: ChartData, options: ChartOptions): void;
-    addTable(rows: Array<Array<TextProps>>, options?: { x?: number; y?: number; w?: number; h?: number }): void;
+    addTable(rows: Array<Array<TextProps>>, options?: { x?: number; y?: number; w?: number; h?: number; colW?: number[]; border?: { pt?: number; color?: string }; fontFace?: string }): void;
   }
 
   export type { Slide, TextProps, ChartData };
