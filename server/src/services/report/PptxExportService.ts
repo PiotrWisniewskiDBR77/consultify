@@ -765,12 +765,10 @@ export class PptxExportService {
       data: [
         {
           name: 'Actual',
-          labels,
           values: actualValues,
         },
         {
           name: 'Target',
-          labels,
           values: targetValues,
         },
       ],
