@@ -26,8 +26,8 @@ WORKDIR /app
 
 # Copy package files and install all dependencies (including dev)
 COPY package.json package-lock.json ./
-# Copy recharts tarball if it exists (needed for file: dependency)
-COPY recharts-2.15.4.tgz* ./ || true
+# Copy recharts tarball (needed for file: dependency)
+COPY recharts-2.15.4.tgz ./
 # Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
 RUN npm ci || (echo "Lock file out of sync, updating..." && npm install)
 
