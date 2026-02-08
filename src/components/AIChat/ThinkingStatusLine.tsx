@@ -1,20 +1,35 @@
+import { Check, Loader2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 /**
  * ThinkingStatusLine - Cursor-style plain-text thinking log
  *
- * Renders each thinking step as a plain, dim line of text — no backgrounds,
- * no panels, no spinners, no varying opacities. Just text.
+ * Renders each thinking step as a plain, dim line of text with status indicators:
+ * - ✓ checkmark for completed steps
+ * - spinner for in-progress steps
+ * - no icon for pending/future steps
+ *
+ * Shows the user what the AI is actually doing at each stage of processing.
  */
+
+export interface ThinkingLineItem {
+  label: string;
+  status: 'done' | 'in_progress' | 'pending';
+}
+
 export function ThinkingStatusLine({
   label,
   lines,
+  steps,
   className = '',
   compact = false,
   show = true,
 }: {
   label: string;
+  /** Simple string lines (legacy API) */
   lines?: string[];
+  /** Rich step data with status (preferred) */
+  steps?: ThinkingLineItem[];
   className?: string;
   compact?: boolean;
   show?: boolean;
@@ -23,18 +38,43 @@ export function ThinkingStatusLine({
 }) {
   const [visible, setVisible] = useState(false);
 
-  const displayLines = useMemo(() => {
+  const displaySteps: ThinkingLineItem[] = useMemo(() => {
+    // Prefer rich steps if provided
+    if (Array.isArray(steps) && steps.length > 0) {
+      // Dedupe ALL duplicates by label, preserving order of first occurrence
+      const seen = new Set<string>();
+      const out: ThinkingLineItem[] = [];
+      for (const s of steps) {
+        const trimmed = String(s.label || '').trim();
+        if (trimmed && !seen.has(trimmed)) {
+          seen.add(trimmed);
+          out.push({ label: trimmed, status: s.status });
+        }
+      }
+      return out.slice(-8);
+    }
+
+    // Fallback to simple string lines
     const base = Array.isArray(lines) && lines.length ? lines : [label];
     const cleaned = base.map((x) => String(x || '').trim()).filter(Boolean);
 
-    // Dedupe consecutive duplicates
-    const out: string[] = [];
+    // Dedupe ALL duplicates, preserving order of first occurrence
+    const seen = new Set<string>();
+    const out: ThinkingLineItem[] = [];
     for (const l of cleaned) {
-      if (out.length === 0 || out[out.length - 1] !== l) out.push(l);
+      if (!seen.has(l)) {
+        seen.add(l);
+        // Last one is in_progress, rest are done
+        out.push({ label: l, status: 'in_progress' });
+      }
+    }
+    // Mark all except last as done
+    for (let i = 0; i < out.length - 1; i++) {
+      out[i].status = 'done';
     }
 
     return out.slice(-8);
-  }, [label, lines]);
+  }, [label, lines, steps]);
 
   // Smooth fade-in on mount
   useEffect(() => {
@@ -58,17 +98,38 @@ export function ThinkingStatusLine({
       `}
       role="status"
       aria-live="polite"
-      aria-label={displayLines[displayLines.length - 1] || label}
+      aria-label={displaySteps[displaySteps.length - 1]?.label || label}
     >
-      {displayLines.map((line, idx) => (
+      {displaySteps.map((step, idx) => (
         <div
-          key={`${idx}-${line}`}
+          key={`${idx}-${step.label}`}
           className={`
-            text-slate-400 dark:text-slate-500
+            flex items-center gap-1.5
+            transition-opacity duration-200
+            ${step.status === 'done' ? 'opacity-50' : 'opacity-100'}
             ${compact ? 'text-[11px] leading-5' : 'text-xs leading-5'}
           `}
         >
-          {line}
+          {/* Status indicator */}
+          {step.status === 'done' && (
+            <Check
+              size={compact ? 10 : 12}
+              className="text-green-400 dark:text-green-500 flex-shrink-0"
+              strokeWidth={2.5}
+            />
+          )}
+          {step.status === 'in_progress' && (
+            <Loader2
+              size={compact ? 10 : 12}
+              className="text-slate-400 dark:text-slate-500 flex-shrink-0 animate-spin"
+            />
+          )}
+          {step.status === 'pending' && (
+            <span className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} flex-shrink-0`} />
+          )}
+
+          {/* Step label */}
+          <span className="text-slate-400 dark:text-slate-500">{step.label}</span>
         </div>
       ))}
     </div>

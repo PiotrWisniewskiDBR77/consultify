@@ -87,6 +87,14 @@ const validationRules: EnvValidationRule[] = [
     required: false,
   },
 
+  // Web Search (Tavily) — enables AI chat to search the internet
+  {
+    key: 'TAVILY_API_KEY',
+    required: false,
+    validator: (value) => !value || value.startsWith('tvly-'),
+    errorMessage: 'TAVILY_API_KEY should start with "tvly-" (get one at https://tavily.com)',
+  },
+
   // Application
   {
     key: 'PORT',

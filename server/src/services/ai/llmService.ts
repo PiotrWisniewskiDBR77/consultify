@@ -3,6 +3,7 @@
  * Unified wrapper for model providers using the 'ai' package.
  */
 
+import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateObject, generateText, jsonSchema, streamText, tool } from 'ai';
@@ -20,6 +21,7 @@ const PROVIDER_CONCURRENCY_LIMITS: Record<string, number> = {
   openai: 25,
   google: 20,
   gemini: 20,
+  anthropic: 20,
   deepseek: 15,
   nvidia: 10,
   cohere: 15,
@@ -31,6 +33,7 @@ const PROVIDER_RATE_LIMIT_PER_SEC: Record<string, number> = {
   openai: 40,
   google: 30,
   gemini: 30,
+  anthropic: 30,
   deepseek: 25,
   nvidia: 15,
   cohere: 25,
@@ -229,6 +232,15 @@ function getProviderSync(modelConfig: ModelConfig) {
       return createGoogleGenerativeAI({
         apiKey: envGemini || effectiveApiKey,
       });
+    case 'anthropic': {
+      const envAnthropic = process.env.ANTHROPIC_API_KEY?.trim();
+      if (!envAnthropic && !effectiveApiKey) {
+        throw new Error('No Anthropic API key configured (set ANTHROPIC_API_KEY).');
+      }
+      return createAnthropic({
+        apiKey: envAnthropic || effectiveApiKey,
+      });
+    }
     case 'deepseek':
     case 'z_ai':
     case 'zai':

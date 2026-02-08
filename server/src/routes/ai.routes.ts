@@ -17,7 +17,7 @@ import {
 } from '../middleware/validation.middleware.js';
 import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import {
   ActionIdParamSchema,
@@ -1140,9 +1140,27 @@ router.post(
         // ignore tracing failures
       }
 
+      // Helper to emit SSE events to the client (hoisted before first usage)
+      const emitSSE = (payload: Record<string, unknown>) => {
+        if (!isClientConnected || res.destroyed) return;
+        // Capture dt_state events for B1 diagnostic
+        if (payload.type === 'dt_state' && typeof payload.state === 'string') {
+          dtStatesEmitted.push(payload.state);
+        }
+        res.write(`data: ${JSON.stringify(payload)}\n\n`);
+      };
+
       // --------------------------------------------------------
       // Memory injection (short-term summary + long-term user/org)
       // --------------------------------------------------------
+      emitSSE({
+        type: 'thought',
+        step: 'memory',
+        status: 'in_progress',
+        label: language?.startsWith('pl')
+          ? 'Wczytuję kontekst rozmowy i pamięć…'
+          : 'Loading conversation context and memory…',
+      });
       try {
         const convIdForMemory = conversationId || null;
         const [convSummary, ltmAddon] = await Promise.all([
@@ -1222,20 +1240,19 @@ router.post(
         screenId: screenContext?.screenId || screenContext?.currentScreen || 'unknown',
       });
 
-      const emitSSE = (payload: Record<string, unknown>) => {
-        if (!isClientConnected || res.destroyed) return;
-        // Capture dt_state events for B1 diagnostic
-        if (payload.type === 'dt_state' && typeof payload.state === 'string') {
-          dtStatesEmitted.push(payload.state);
-        }
-        res.write(`data: ${JSON.stringify(payload)}\n\n`);
-      };
-
       // --------------------------------------------------------
       // Help / KB documentation grounding (product how-to)
       // --------------------------------------------------------
       // Lightweight retrieval: inject only a few relevant KB articles as snippets.
       // Also stream KB citations so the UI can show them.
+      emitSSE({
+        type: 'thought',
+        step: 'knowledge',
+        status: 'in_progress',
+        label: language?.startsWith('pl')
+          ? 'Przeszukuję bazę wiedzy i dokumentację…'
+          : 'Searching knowledge base and documentation…',
+      });
       try {
         const kbModuleId =
           String(
@@ -1320,33 +1337,98 @@ router.post(
       }
 
       // --------------------------------------------------------
-      // Web Search tool (non-DeepThinking mode)
+      // Web Search (non-DeepThinking mode) — auto-detect + smart queries
       // --------------------------------------------------------
-      // When webSearch is enabled but deepResearch is OFF, we do a lightweight search and:
-      // - stream citations metadata to the client (for UI rendering)
-      // - inject sources into system instruction so the model can ground claims
-      if (aiModes?.webSearch && !aiModes?.deepResearch) {
+      // Strategy:
+      // 1. If user explicitly enabled webSearch → always search
+      // 2. If webSearch is default (true) → use intent detector to decide
+      // 3. Use optimized search queries (not raw message) for better results
+      // 4. Run multiple queries for complex questions
+      // 5. Inject results + citations into system instruction for grounded answers
+      if (!aiModes?.deepResearch && (aiModes?.webSearch || message?.trim().length >= 20)) {
+        emitSSE({
+          type: 'thought',
+          step: 'web_search_check',
+          status: 'in_progress',
+          label: language?.startsWith('pl')
+            ? 'Sprawdzam, czy potrzebuję informacji z internetu…'
+            : 'Checking if web search is needed…',
+        });
+      }
+      if (!aiModes?.deepResearch) {
         const tavilyKey = (process.env.TAVILY_API_KEY || '').trim();
-        if (!tavilyKey) {
-          emitSSE({
-            type: 'research_progress',
-            topic: message,
-            stage: 'complete',
-            queries: [],
-            sources: [],
-            error: 'Web research enabled but TAVILY_API_KEY is missing',
+        const userEnabledWebSearch = aiModes?.webSearch === true;
+
+        // Auto-detect web search intent
+        let searchIntent: any = null;
+        try {
+          const { detectWebSearchIntent } =
+            await import('../services/ai/webSearchIntentDetector.js');
+          searchIntent = detectWebSearchIntent(message, {
+            userEnabledWebSearch,
+            historyLength: Array.isArray(history) ? history.length : 0,
           });
-        } else {
+        } catch (err: any) {
+          logger.debug('[AI Stream] Intent detector not available:', err?.message);
+          // Fallback: if user enabled webSearch, search with raw message
+          if (userEnabledWebSearch) {
+            searchIntent = {
+              shouldSearch: true,
+              confidence: 0.5,
+              reason: 'user toggle enabled (fallback)',
+              queries: [message.slice(0, 150)],
+              searchDepth: 'basic' as const,
+              maxResults: 5,
+            };
+          }
+        }
+
+        if (searchIntent?.shouldSearch && tavilyKey) {
           try {
             const { TavilyWebSearchService } =
               await import('../services/ai/tavilyWebSearchService.js');
             const svc = new (TavilyWebSearchService as any)(tavilyKey);
-            const resp = await svc.search(message, { maxResults: 5, includeNews: true });
-            const results = Array.isArray(resp?.results) ? resp.results : [];
 
-            const citations = results
+            // Execute search queries (possibly multiple for complex questions)
+            const searchQueries: string[] =
+              searchIntent.queries?.length > 0 ? searchIntent.queries : [message.slice(0, 150)];
+
+            emitSSE({
+              type: 'research_progress',
+              topic: message,
+              stage: 'searching',
+              queries: searchQueries,
+              sources: [],
+            });
+
+            const allResults: any[] = [];
+            const allAnswers: string[] = [];
+            for (const query of searchQueries.slice(0, 3)) {
+              try {
+                const resp = await svc.search(query, {
+                  maxResults: searchIntent.maxResults ?? 5,
+                  includeNews: true,
+                  searchDepth: searchIntent.searchDepth ?? 'basic',
+                });
+                const results = Array.isArray(resp?.results) ? resp.results : [];
+                allResults.push(...results);
+                if (resp?.answer) allAnswers.push(resp.answer);
+              } catch (qErr: any) {
+                logger.debug(`[AI Stream] Query "${query}" failed: ${qErr?.message}`);
+              }
+            }
+
+            // Deduplicate by URL
+            const seenUrls = new Set<string>();
+            const dedupedResults = allResults.filter((r: any) => {
+              if (!r?.url || seenUrls.has(r.url)) return false;
+              seenUrls.add(r.url);
+              return true;
+            });
+
+            const citations = dedupedResults
               .filter((r: any) => r?.url && r?.title)
-              .slice(0, 5)
+              .slice(0, 8)
               .map((r: any, idx: number) => ({
                 id: `web_${idx + 1}`,
                 type: 'external',
@@ -1356,24 +1438,42 @@ router.post(
                 excerpt: String(r.snippet || ''),
               }));
 
-            emitSSE({ type: 'citations', citations });
+            if (citations.length > 0) {
+              emitSSE({ type: 'citations', citations });
+            }
+
+            emitSSE({
+              type: 'research_progress',
+              topic: message,
+              stage: 'complete',
+              queries: searchQueries,
+              sources: citations.map((c: any) => ({ title: c.title, url: c.link })),
+            });
+
             if (chatRunId) {
               import('../services/ai/chatTraceService.js')
                 .then((m: any) =>
                   (m.default || m).addEvent(chatRunId, 'web_search', {
-                    query: message,
+                    queries: searchQueries,
                     citationsCount: citations.length,
+                    intent: searchIntent.reason,
+                    confidence: searchIntent.confidence,
                   })
                 )
                 .catch(() => {
-                  /* ignore */
+                  /* non-critical */
                 });
             }
 
-            // Inject sources into the system instruction (so the model can cite them).
+            // Inject sources + Tavily answers into system instruction
             const sourcesText = citations
               .map((c: any, i: number) => `[${i + 1}] ${c.title}\n${c.link}\n${c.excerpt || ''}`)
               .join('\n\n');
+
+            const tavilyAnswerText =
+              allAnswers.length > 0
+                ? `\n\n## WEB SEARCH SYNTHESIS\n${allAnswers.join('\n\n')}`
+                : '';
 
             pipelineRequest = {
               ...pipelineRequest,
@@ -1381,13 +1481,18 @@ router.post(
                 ...(pipelineRequest.options || {}),
                 systemInstruction:
                   String((pipelineRequest.options as any)?.systemInstruction || '') +
-                  `\n\n## WEB SOURCES (provided by tool)\n${sourcesText}\n\nRules:\n- When using any web source, cite it inline like [1], [2].\n- If sources are insufficient or contradictory, say so.\n`,
+                  `\n\n## WEB SOURCES (${citations.length} results from ${searchQueries.length} queries)\n${sourcesText}${tavilyAnswerText}\n\nRules:\n- When using any web source, cite it inline like [1], [2].\n- If sources are insufficient or contradictory, say so.\n- Prioritize higher-scored sources and prefer recent data.\n`,
               },
               context: {
                 ...((pipelineRequest as any).context || {}),
                 external: {
                   ...(context as any)?.external,
-                  webSearch: { query: message, results },
+                  webSearch: {
+                    queries: searchQueries,
+                    results: dedupedResults,
+                    answers: allAnswers,
+                    intent: searchIntent.reason,
+                  },
                   citations,
                 },
               },
@@ -1403,6 +1508,17 @@ router.post(
               error: 'Web research unavailable',
             });
           }
+        } else if (searchIntent?.shouldSearch && !tavilyKey) {
+          // User/auto-detect wants web search but no API key configured
+          logger.info('[AI Stream] Web search intent detected but TAVILY_API_KEY not set');
+          emitSSE({
+            type: 'research_progress',
+            topic: message,
+            stage: 'complete',
+            queries: [],
+            sources: [],
+            error: 'Web search unavailable — TAVILY_API_KEY not configured',
+          });
         }
       }
 
@@ -1423,6 +1539,15 @@ router.post(
         : [];
 
       if (attachmentDocIds.length > 0 && message && message.trim().length > 0) {
+        emitSSE({
+          type: 'thought',
+          step: 'attachments',
+          status: 'in_progress',
+          label: language?.startsWith('pl')
+            ? `Analizuję ${attachmentDocIds.length} załącznik(ów) — szukam powiązanych fragmentów…`
+            : `Analyzing ${attachmentDocIds.length} attachment(s) — searching for relevant fragments…`,
+        });
+        let attachmentChunksInjected = false;
         try {
           const ragModule = await import('../services/ragService.js');
           const ragService = (ragModule.default || ragModule) as any;
@@ -1433,6 +1558,7 @@ router.post(
           });
 
           if (Array.isArray(chunks) && chunks.length > 0) {
+            attachmentChunksInjected = true;
             const attachmentsText = chunks
               .slice(0, 5)
               .map((c: any, i: number) => {
@@ -1448,7 +1574,7 @@ router.post(
                 ...(pipelineRequest.options || {}),
                 systemInstruction:
                   String((pipelineRequest.options as any)?.systemInstruction || '') +
-                  `\n\n## ATTACHMENTS (conversation-scoped sources)\n${attachmentsText}\n\nRules:\n- Prefer these attachments when relevant.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n- If the attachments do not contain the needed info, say so.\n`,
+                  `\n\n## ATTACHMENTS (conversation-scoped sources)\n${attachmentsText}\n\nRules:\n- The user has attached documents to this conversation. The above content comes from those attachments.\n- Prefer these attachments when relevant.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n- If the attachments do not contain the needed info, say so.\n`,
               },
               context: {
                 ...((pipelineRequest as any).context || {}),
@@ -1480,6 +1606,82 @@ router.post(
             '[AI Stream] Attachment RAG failed, continuing without it:',
             err?.message || String(err)
           );
+        }
+
+        // Fallback: if RAG returned no chunks (e.g. embedding failure, query mismatch),
+        // load raw chunks directly from DB to ensure the AI always sees attachment content.
+        if (!attachmentChunksInjected) {
+          try {
+            const placeholders = attachmentDocIds.map(() => '?').join(',');
+            const rows = await dbAll(
+              `SELECT c.content, d.filename
+               FROM knowledge_chunks c
+               JOIN knowledge_docs d ON c.doc_id = d.id
+               WHERE d.id IN (${placeholders})
+               ORDER BY c.chunk_index ASC
+               LIMIT 10`,
+              attachmentDocIds,
+              { fallback: true } as any
+            );
+
+            if (Array.isArray(rows) && rows.length > 0) {
+              attachmentChunksInjected = true;
+              const attachmentsText = rows
+                .map((r: any, i: number) => {
+                  const source = String(r?.filename || 'Attachment');
+                  const content = String(r?.content || '').trim();
+                  return `[A${i + 1}] ${source}\n${content}`;
+                })
+                .join('\n\n');
+
+              pipelineRequest = {
+                ...pipelineRequest,
+                options: {
+                  ...(pipelineRequest.options || {}),
+                  systemInstruction:
+                    String((pipelineRequest.options as any)?.systemInstruction || '') +
+                    `\n\n## ATTACHMENTS (conversation-scoped sources — direct load)\n${attachmentsText}\n\nRules:\n- The user has attached documents to this conversation. The above content comes from those attachments.\n- Refer to this content when the user asks about their attachments.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n`,
+                },
+              } as any;
+
+              logger.info(
+                `[AI Stream] Attachment fallback: loaded ${rows.length} raw chunks for ${attachmentDocIds.length} doc(s)`
+              );
+            } else {
+              logger.warn(
+                `[AI Stream] Attachment fallback: no chunks found in DB for docIds: ${attachmentDocIds.join(', ')}`
+              );
+            }
+          } catch (fbErr: any) {
+            logger.warn(
+              '[AI Stream] Attachment fallback DB query failed:',
+              fbErr?.message || String(fbErr)
+            );
+          }
+        }
+
+        // If we still have no chunks but DO have attachment doc IDs, inject a minimal awareness note
+        // so the AI knows the user attached files even if content couldn't be extracted.
+        if (!attachmentChunksInjected && attachmentDocIds.length > 0) {
+          const attachmentNames = (
+            Array.isArray((context as any)?.attachments)
+              ? (context as any).attachments
+                  .map((a: any) => String(a?.filename || ''))
+                  .filter(Boolean)
+              : []
+          ).join(', ');
+
+          pipelineRequest = {
+            ...pipelineRequest,
+            options: {
+              ...(pipelineRequest.options || {}),
+              systemInstruction:
+                String((pipelineRequest.options as any)?.systemInstruction || '') +
+                `\n\n## ATTACHMENTS (metadata only)\nThe user has attached ${attachmentDocIds.length} document(s) to this conversation${attachmentNames ? ` (${attachmentNames})` : ''}. ` +
+                `However, the content could not be extracted or retrieved. ` +
+                `If the user asks about these attachments, acknowledge that they were attached but explain that the content extraction may have failed and suggest re-uploading in a supported format (PDF, TXT, MD, CSV, JSON).\n`,
+            },
+          } as any;
         }
       }
 
@@ -1628,6 +1830,16 @@ router.post(
           // Fall through to standard pipeline
         }
       }
+
+      // Emit thought: generating response
+      emitSSE({
+        type: 'thought',
+        step: 'generating',
+        status: 'in_progress',
+        label: language?.startsWith('pl')
+          ? 'Generuję odpowiedź na podstawie zebranego kontekstu…'
+          : 'Generating response based on gathered context…',
+      });
 
       const aiPipeline = await getAIPipeline();
       const response = await (aiPipeline as any).process(

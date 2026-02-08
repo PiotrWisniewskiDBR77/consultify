@@ -1213,7 +1213,7 @@ export function getBlockSettings(
   // For library blocks (bt_ prefix or unknown types), use custom fallback
   if (!base) {
     if (blockTypeId || !BLOCK_SETTINGS.some((d) => d.blockType === blockType)) {
-      base = BLOCK_SETTINGS.find((d) => d.blockType === 'custom') || null;
+      base = BLOCK_SETTINGS.find((d) => d.blockType === 'custom') || undefined;
     }
   }
 

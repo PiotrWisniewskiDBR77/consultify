@@ -138,10 +138,10 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({
               {
                 decisions.filter(
                   (d) =>
-                    d.status === 'pending' ||
-                    d.status === 'PENDING' ||
-                    d.status === 'escalated' ||
-                    d.status === 'ESCALATED'
+                    (d.status as string) === 'pending' ||
+                    (d.status as string) === 'PENDING' ||
+                    (d.status as string) === 'escalated' ||
+                    (d.status as string) === 'ESCALATED'
                 ).length
               }
             </div>
@@ -151,7 +151,11 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({
           </div>
           <div className="p-2 rounded-lg bg-emerald-500/10 text-center">
             <div className="text-lg font-bold text-emerald-500">
-              {decisions.filter((d) => d.status === 'APPROVED' || d.status === 'approved').length}
+              {
+                decisions.filter(
+                  (d) => (d.status as string) === 'APPROVED' || (d.status as string) === 'approved'
+                ).length
+              }
             </div>
             <div className="text-[10px] uppercase text-emerald-500/70">
               {isPolish ? 'Zatwierdzone' : 'Approved'}
@@ -159,7 +163,11 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({
           </div>
           <div className="p-2 rounded-lg bg-red-500/10 text-center">
             <div className="text-lg font-bold text-red-500">
-              {decisions.filter((d) => d.status === 'REJECTED' || d.status === 'rejected').length}
+              {
+                decisions.filter(
+                  (d) => (d.status as string) === 'REJECTED' || (d.status as string) === 'rejected'
+                ).length
+              }
             </div>
             <div className="text-[10px] uppercase text-red-500/70">
               {isPolish ? 'Odrzucone' : 'Rejected'}
@@ -198,10 +206,10 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({
               if (!aIsGate && bIsGate) return 1;
               // Then by status: pending first
               const aIsPending = !['APPROVED', 'approved', 'REJECTED', 'rejected'].includes(
-                a.status
+                a.status as string
               );
               const bIsPending = !['APPROVED', 'approved', 'REJECTED', 'rejected'].includes(
-                b.status
+                b.status as string
               );
               if (aIsPending && !bIsPending) return -1;
               if (!aIsPending && bIsPending) return 1;
@@ -214,8 +222,10 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({
                 'SCHEDULE_MILESTONES',
                 'GO_NO_GO',
               ].includes(d.type);
-              const isApproved = d.status === 'APPROVED' || d.status === 'approved';
-              const isRejected = d.status === 'REJECTED' || d.status === 'rejected';
+              const isApproved =
+                (d.status as string) === 'APPROVED' || (d.status as string) === 'approved';
+              const isRejected =
+                (d.status as string) === 'REJECTED' || (d.status as string) === 'rejected';
               const isPending = !isApproved && !isRejected;
               const isOverdue = d.dueDate && isPending && new Date(d.dueDate) < new Date();
 
@@ -269,7 +279,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({
                           {isPolish
                             ? GATE_TYPE_LABELS[d.type]?.pl || d.type
                             : GATE_TYPE_LABELS[d.type]?.en || d.type}
-                          {d.deciderName && ` · ${d.deciderName}`}
+                          {(d as any).deciderName && ` · ${(d as any).deciderName}`}
                         </p>
                       </div>
                     </div>

@@ -165,7 +165,7 @@ class QualityCheckerService {
       }
     }
 
-    // Persist
+    // Persist quality metrics to DB (non-blocking — table may not exist in all deployments)
     try {
       await dbRun(
         `INSERT INTO ai_quality_metrics (conversation_id,message_id,user_id,organization_id,relevance,groundedness,completeness,coherence,overall_score,flags,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
@@ -183,8 +183,8 @@ class QualityCheckerService {
           new Date().toISOString(),
         ]
       );
-    } catch {
-      /* table may not exist */
+    } catch (err: any) {
+      logger.warn(`[QualityChecker] Failed to persist quality metrics: ${err?.message}`);
     }
 
     logger.debug(

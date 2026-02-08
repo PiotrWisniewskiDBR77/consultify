@@ -1309,10 +1309,22 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
       );
     }
 
-    if (aiModes?.webSearch) {
-      instructions.push(
-        '9. TRYB: Web Search — możesz otrzymać od systemu wyniki researchu i listę źródeł. Jeśli nie masz dostarczonych wyników/źródeł: nie udawaj, że wykonałeś wyszukiwanie. Zamiast tego przejdź w tryb best‑effort (hipotezy + pytania + plan weryfikacji) i poproś użytkownika o źródło (link/fragment/plik).'
-      );
+    // Web search instruction — active when user toggle is on OR when auto-detected
+    if (aiModes?.webSearch || (request as any)?.context?.external?.webSearch) {
+      const hasWebResults = !!(request as any)?.context?.external?.webSearch?.results?.length;
+      if (hasWebResults) {
+        instructions.push(
+          '9. TRYB: Web Search AKTYWNY — System dostarczył Ci wyniki wyszukiwania internetowego w sekcji "WEB SOURCES". Wykorzystaj je aktywnie:\n' +
+            '   - Cytuj źródła inline jak [1], [2] gdy korzystasz z danych ze źródeł.\n' +
+            '   - Jeśli źródła są sprzeczne, zaznacz to.\n' +
+            '   - Preferuj najnowsze dane i źródła o wyższej wiarygodności.\n' +
+            '   - Jeśli źródła nie wystarczają do pełnej odpowiedzi, uzupełnij swoją wiedzą ale zaznacz co pochodzi ze źródeł a co z Twojej wiedzy.'
+        );
+      } else {
+        instructions.push(
+          '9. TRYB: Web Search — wyszukiwanie jest włączone, ale w tym przypadku nie dostarczono wyników. Nie udawaj, że wykonałeś wyszukiwanie. Odpowiedz najlepiej jak potrafisz na podstawie swojej wiedzy, zaznaczając że odpowiedź nie jest oparta na najświeższych danych z internetu.'
+        );
+      }
     }
 
     if (aiModes?.showReasoning) {
@@ -1322,7 +1334,10 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
         );
       } else {
         instructions.push(
-          '10. TRYB: Reasoning ON — dodaj krótki, wysokopoziomowy opis toku rozumowania w tagach <thinking>...</thinking>. Nie ujawniaj danych wrażliwych ani długich rozważań.'
+          '10. TRYB: Reasoning ON — PRZED odpowiedzią dodaj sekcję toku rozumowania w tagach <thinking>...</thinking>. ' +
+            'Opisz w 3-8 punktach: jakie założenia przyjąłeś, jakie alternatywy rozważyłeś, ' +
+            'dlaczego wybrałeś daną ścieżkę, i co mogłoby zmienić Twoją rekomendację. ' +
+            'Bądź konkretny i merytoryczny. Nie ujawniaj danych wrażliwych.'
         );
       }
     } else {

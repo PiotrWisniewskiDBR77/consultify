@@ -249,17 +249,27 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
       onMouseLeave={() => setHoveredMessageId(null)}
     >
       {/* Cursor-like thinking log: plain dim text, no background, no panel */}
+      {/* Only show for the LAST streaming AI message to avoid duplicated lines */}
       {msg.role === 'ai' &&
         msg.isStreaming &&
+        isLastMessage &&
         (thinkingSteps.length > 0 || !msg.content?.trim()) && (
           <div className={`${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
             <ThinkingStatusLine
               compact={isCompact}
               show
               showSpinner={false}
-              lines={thinkingSteps
-                .map((s) => String((s as any)?.label || '').trim())
-                .filter(Boolean)
+              steps={thinkingSteps
+                .filter((s) => String((s as any)?.label || '').trim())
+                .map((s) => ({
+                  label: String((s as any)?.label || '').trim(),
+                  status:
+                    s.status === 'done' || s.status === 'completed'
+                      ? ('done' as const)
+                      : s.status === 'in_progress'
+                        ? ('in_progress' as const)
+                        : ('pending' as const),
+                }))
                 .slice(-6)}
               label={t('thinking.processing', 'Rozważam Twoje zapytanie...') as string}
             />

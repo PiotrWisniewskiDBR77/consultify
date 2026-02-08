@@ -227,7 +227,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
   const handleDuplicate = async (id: string) => {
     setIsMutating(true);
     try {
-      await Api.post(`/initiatives/section-types/${id}/duplicate`);
+      await Api.post(`/initiatives/section-types/${id}/duplicate`, {});
       toast.success('Section duplicated to organization');
       fetchSectionTypes();
     } catch (e: any) {

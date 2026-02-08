@@ -520,15 +520,15 @@ const RagService = {
         `;
     const params: unknown[] = [];
 
-    if (organizationId && hasOrg) {
-      sql += ' AND d.organization_id = ?';
-      params.push(organizationId);
-    }
-
+    // When searching by specific documentIds (e.g. conversation-scoped attachments),
+    // skip the organization_id filter — the caller already knows which docs to search.
     if (Array.isArray(documentIds) && documentIds.length > 0) {
       const placeholders = documentIds.map(() => '?').join(',');
       sql += ` AND d.id IN (${placeholders})`;
       params.push(...documentIds);
+    } else if (organizationId && hasOrg) {
+      sql += ' AND d.organization_id = ?';
+      params.push(organizationId);
     }
 
     const rows = await DbPromise.all<{ id: string; content: string; filename: string }>(
@@ -701,15 +701,15 @@ const RagService = {
         `;
     const params: unknown[] = [];
 
-    if (organizationId && hasOrg) {
-      sql += ' AND d.organization_id = ?';
-      params.push(organizationId);
-    }
-
+    // When searching by specific documentIds (e.g. conversation-scoped attachments),
+    // skip the organization_id filter — the caller already knows which docs to search.
     if (Array.isArray(documentIds) && documentIds.length > 0) {
       const placeholders = documentIds.map(() => '?').join(',');
       sql += ` AND d.id IN (${placeholders})`;
       params.push(...documentIds);
+    } else if (organizationId && hasOrg) {
+      sql += ' AND d.organization_id = ?';
+      params.push(organizationId);
     }
 
     const rows = await DbPromise.all<{

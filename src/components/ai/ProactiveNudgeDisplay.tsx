@@ -148,7 +148,7 @@ export function ProactiveNudgeDisplay({
               dismissible: n?.dismissible !== false,
             } as Nudge;
           })
-          .filter((n) => n.id && !dismissedIds.has(n.id));
+          .filter((n: Nudge) => n.id && !dismissedIds.has(n.id));
         setNudges(newNudges);
       }
     } catch {

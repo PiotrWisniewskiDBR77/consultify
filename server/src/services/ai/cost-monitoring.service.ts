@@ -144,7 +144,9 @@ class AICostMonitoringService {
         record.costUSD,
         new Date(record.timestamp).toISOString(),
       ]
-    ).catch((err) => logger.debug(`[Cost] DB persist: ${err?.message}`));
+    ).catch((err) =>
+      logger.warn(`[CostMonitoring] Failed to persist usage record: ${err?.message}`)
+    );
 
     // Check for budget alerts
     this.checkBudgetAlerts(organizationId);

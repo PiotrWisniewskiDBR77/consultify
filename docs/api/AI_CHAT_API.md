@@ -438,9 +438,7 @@ POST /ai/chat/confirm
       "decisionHorizon": "Średnioterminowy"
     },
     "isClearEnoughToProceed": false,
-    "missingInfoQuestions": [
-      { "id": "q1", "question": "...", "whyItMatters": "..." }
-    ],
+    "missingInfoQuestions": [{ "id": "q1", "question": "...", "whyItMatters": "..." }],
     "researchPlanItems": [
       { "id": "r1", "type": "ConceptualFrameworks", "label": "...", "rationale": "..." }
     ],
@@ -924,12 +922,35 @@ POST /ai/context/build
 
 ---
 
-## 11. WebSocket Events (Future)
+## 11. Real-Time Communication
 
-For real-time updates, WebSocket connection:
+### 11.1 AI Chat Streaming (SSE)
+
+AI chat responses are streamed via **Server-Sent Events (SSE)** on the `POST /api/ai/chat/stream` endpoint.
+The response uses `Content-Type: text/event-stream` with the following event format:
 
 ```
-ws://api.consultinity.com/ws
+data: {"text": "chunk of response"}
+
+data: {"type": "citations", "citations": [...]}
+
+data: {"type": "dt_state", "state": "researching", ...}
+
+data: [DONE]
+```
+
+Features:
+
+- Heartbeat every 15 seconds to prevent timeouts
+- Socket timeout: 120 seconds for long-running streams
+- Partial response resume via `GET /api/ai/stream/partial/:sessionId`
+
+### 11.2 WebSocket (Collaborative Sessions)
+
+WebSocket is available for collaborative Deep Thinking sessions via Socket.IO:
+
+```
+ws://api.consultinity.com/dt
 ```
 
 **Events:**
@@ -940,7 +961,10 @@ ws://api.consultinity.com/ws
 | `action.status_changed` | AI action status changed |
 | `memory.updated` | User/org memory updated |
 
+> **Note:** Standard AI chat streaming uses SSE (Section 11.1), not WebSocket.
+> WebSocket is used only for collaborative features (shared sessions, voting, presence).
+
 ---
 
-_Document Version: 1.0_  
-_Last Updated: 2026-01-11_
+_Document Version: 1.1_  
+_Last Updated: 2026-02-08_

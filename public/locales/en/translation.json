@@ -824,6 +824,7 @@
         "deepResearch": { "label": "Deep analysis", "desc": "In-depth exploration of a topic" },
         "webSearch": { "label": "Web search", "desc": "Real-time information" },
         "showReasoning": { "label": "Show reasoning", "desc": "Expose the AI's chain of thought" },
+        "multiAgent": { "label": "Multi-agent analysis", "desc": "CFO/CTO/CHRO/COO perspectives" },
         "textToSpeech": { "label": "Read responses", "desc": "Automatically read responses aloud" }
       },
       "sources": {
@@ -833,11 +834,16 @@
       },
       "styles": {
         "normal": "Normal",
-        "learning": "Learning",
+        "executive": "Executive",
+        "analyst": "Analyst",
+        "coach": "Coach",
         "concise": "Concise",
-        "explanatory": "Explanatory",
         "formal": "Formal"
       },
+      "customInstructions": "My instructions",
+      "customInstructionsPlaceholder": "e.g. \"Always respond in English\", \"I prefer tables over text\", \"I am a CTO at a manufacturing company\"",
+      "instructionsSaved": "Instructions saved",
+      "instructionsSaveError": "Failed to save instructions",
       "toast": {
         "enabled": "{{label}}: enabled",
         "disabled": "{{label}}: disabled",
@@ -854,7 +860,8 @@
       "demoModeDesc": "Sample files are shown. Cloud integration will be added soon.",
       "noFiles": "No files",
       "selectFile": "Select file",
-      "downloading": "Downloading: {{name}}"
+      "downloading": "Downloading: {{name}}",
+      "loadError": "Failed to load files"
     },
     "myProjects": "My Folders",
     "teamProjects": "Team Folders",

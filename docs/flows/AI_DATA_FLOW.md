@@ -76,51 +76,51 @@ Ten dokument opisuje przepływ danych w systemie AI Chat - jakie dane AI odczytu
 
 ### 1. User Input Data
 
-| Data Type | Source | Purpose | Sensitivity |
-|-----------|--------|---------|-------------|
-| Message content | User input | Primary query | Medium |
-| Attachments | File upload | Context enhancement | High |
-| Voice input | Microphone | STT conversion | Medium |
-| Focus mode | UI selection | Response filtering | Low |
+| Data Type       | Source       | Purpose             | Sensitivity |
+| --------------- | ------------ | ------------------- | ----------- |
+| Message content | User input   | Primary query       | Medium      |
+| Attachments     | File upload  | Context enhancement | High        |
+| Voice input     | Microphone   | STT conversion      | Medium      |
+| Focus mode      | UI selection | Response filtering  | Low         |
 
 ### 2. Workspace Context Data
 
-| Data Type | Source | Purpose | Sensitivity |
-|-----------|--------|---------|-------------|
-| Current view | AppStore | Context awareness | Low |
-| Entity ID | URL/Store | Specific item focus | Low |
-| Entity name | PMO data | Display & context | Low |
-| Entity data | PMO stores | Rich context | Medium |
-| Project ID | PMO context | Project scope | Low |
+| Data Type    | Source      | Purpose             | Sensitivity |
+| ------------ | ----------- | ------------------- | ----------- |
+| Current view | AppStore    | Context awareness   | Low         |
+| Entity ID    | URL/Store   | Specific item focus | Low         |
+| Entity name  | PMO data    | Display & context   | Low         |
+| Entity data  | PMO stores  | Rich context        | Medium      |
+| Project ID   | PMO context | Project scope       | Low         |
 
 ### 3. PMO Data (Read-Only)
 
-| Data Type | Source Table | Purpose | Access Control |
-|-----------|--------------|---------|----------------|
-| Projects | `projects` | Project context | Team member |
-| Initiatives | `initiatives` | Initiative details | Team member |
-| Tasks | `tasks` | Task information | Assignee/Team |
-| Decisions | `decisions` | Decision history | Stakeholders |
-| Assessments | `assessment_responses` | Maturity data | Org admin |
-| Reports | `reports` | Historical reports | Team member |
+| Data Type   | Source Table           | Purpose            | Access Control |
+| ----------- | ---------------------- | ------------------ | -------------- |
+| Projects    | `projects`             | Project context    | Team member    |
+| Initiatives | `initiatives`          | Initiative details | Team member    |
+| Tasks       | `tasks`                | Task information   | Assignee/Team  |
+| Decisions   | `decisions`            | Decision history   | Stakeholders   |
+| Assessments | `assessment_responses` | Maturity data      | Org admin      |
+| Reports     | `reports`              | Historical reports | Team member    |
 
 ### 4. Memory Data
 
-| Data Type | Source Table | Purpose | Retention |
-|-----------|--------------|---------|-----------|
-| User preferences | `ai_user_memory` | Personalization | Indefinite |
-| User expertise | `ai_user_memory` | Response calibration | Indefinite |
-| Org context | `ai_org_memory` | Business terminology | Indefinite |
-| Org procedures | `ai_org_memory` | Process awareness | Indefinite |
+| Data Type        | Source Table     | Purpose              | Retention  |
+| ---------------- | ---------------- | -------------------- | ---------- |
+| User preferences | `ai_user_memory` | Personalization      | Indefinite |
+| User expertise   | `ai_user_memory` | Response calibration | Indefinite |
+| Org context      | `ai_org_memory`  | Business terminology | Indefinite |
+| Org procedures   | `ai_org_memory`  | Process awareness    | Indefinite |
 
 ### 5. Knowledge Base Data
 
-| Data Type | Source | Purpose | Updates |
-|-----------|--------|---------|---------|
-| ISO 21500 | Static files | Standard compliance | Manual |
-| PMBOK 7 | Static files | Best practices | Manual |
-| PRINCE2 | Static files | Governance | Manual |
-| Custom KB | `knowledge_bases` | Org-specific | User upload |
+| Data Type | Source            | Purpose             | Updates     |
+| --------- | ----------------- | ------------------- | ----------- |
+| ISO 21500 | Static files      | Standard compliance | Manual      |
+| PMBOK 7   | Static files      | Best practices      | Manual      |
+| PRINCE2   | Static files      | Governance          | Manual      |
+| Custom KB | `knowledge_bases` | Org-specific        | User upload |
 
 ---
 
@@ -145,7 +145,7 @@ interface MessageWrite {
   id: string;
   conversation_id: string;
   role: 'user' | 'ai';
-  content: string;  // Encrypted at rest
+  content: string; // Encrypted at rest
   token_count: number;
   model_used: string;
   created_at: Date;
@@ -154,22 +154,22 @@ interface MessageWrite {
 
 ### 2. Conditionally Written
 
-| Data Type | Condition | Table | TTL |
-|-----------|-----------|-------|-----|
-| AI Actions | Action detected | `ai_actions_log` | 90 days |
-| Feedback | User provided | `ai_feedback` | 1 year |
-| Artifacts | Generated | `ai_artifacts` | With conversation |
-| Memory updates | Learning triggered | `ai_user_memory` | Indefinite |
+| Data Type      | Condition          | Table            | TTL               |
+| -------------- | ------------------ | ---------------- | ----------------- |
+| AI Actions     | Action detected    | `ai_actions_log` | 90 days           |
+| Feedback       | User provided      | `ai_feedback`    | 1 year            |
+| Artifacts      | Generated          | `ai_artifacts`   | With conversation |
+| Memory updates | Learning triggered | `ai_user_memory` | Indefinite        |
 
 ### 3. PMO Writes (Requires Approval)
 
-| Action Type | Target Table | Approval Required | Audit Log |
-|-------------|--------------|-------------------|-----------|
-| create_task | `tasks` | Yes | Yes |
-| update_task | `tasks` | Yes (if status change) | Yes |
-| create_initiative | `initiatives` | Yes | Yes |
-| create_decision | `decisions` | Yes | Yes |
-| update_assessment | `assessment_responses` | Yes (high risk) | Yes |
+| Action Type       | Target Table           | Approval Required      | Audit Log |
+| ----------------- | ---------------------- | ---------------------- | --------- |
+| create_task       | `tasks`                | Yes                    | Yes       |
+| update_task       | `tasks`                | Yes (if status change) | Yes       |
+| create_initiative | `initiatives`          | Yes                    | Yes       |
+| create_decision   | `decisions`            | Yes                    | Yes       |
+| update_assessment | `assessment_responses` | Yes (high risk)        | Yes       |
 
 ---
 
@@ -177,21 +177,21 @@ interface MessageWrite {
 
 ### Data Classification
 
-| Level | Data Types | Protection |
-|-------|------------|------------|
-| **Public** | PMO standards, Help content | None required |
-| **Internal** | Project names, Initiative titles | Org boundary |
-| **Confidential** | Message content, Assessments | Encryption + Access control |
-| **Restricted** | Financial data, Personal info | Encryption + Audit + Approval |
+| Level            | Data Types                       | Protection                    |
+| ---------------- | -------------------------------- | ----------------------------- |
+| **Public**       | PMO standards, Help content      | None required                 |
+| **Internal**     | Project names, Initiative titles | Org boundary                  |
+| **Confidential** | Message content, Assessments     | Encryption + Access control   |
+| **Restricted**   | Financial data, Personal info    | Encryption + Audit + Approval |
 
 ### Access Control Matrix
 
-| Role | Read Own | Read Team | Read Org | Write Memory | Execute Actions |
-|------|----------|-----------|----------|--------------|-----------------|
-| User | ✅ | ❌ | ❌ | ✅ Own | ✅ Low risk |
-| Team Lead | ✅ | ✅ | ❌ | ✅ Own | ✅ Medium risk |
-| Org Admin | ✅ | ✅ | ✅ | ✅ Org | ✅ All |
-| SuperAdmin | ✅ | ✅ | ✅ | ✅ All | ✅ All |
+| Role       | Read Own | Read Team | Read Org | Write Memory | Execute Actions |
+| ---------- | -------- | --------- | -------- | ------------ | --------------- |
+| User       | ✅       | ❌        | ❌       | ✅ Own       | ✅ Low risk     |
+| Team Lead  | ✅       | ✅        | ❌       | ✅ Own       | ✅ Medium risk  |
+| Org Admin  | ✅       | ✅        | ✅       | ✅ Org       | ✅ All          |
+| SuperAdmin | ✅       | ✅        | ✅       | ✅ All       | ✅ All          |
 
 ### PII Handling
 
@@ -217,15 +217,15 @@ const PII_PATTERNS = {
 
 ### Retention Schedule
 
-| Data Type | Default Retention | Compliance Basis | Deletion Method |
-|-----------|-------------------|------------------|-----------------|
-| Conversations | 2 years | Business need | Soft delete → Hard delete |
-| Messages | 2 years | With conversation | Cascade |
-| AI Actions Log | 90 days | Audit trail | Auto-purge |
-| Feedback | 1 year | Product improvement | Anonymize → Delete |
-| User Memory | Until deletion | User consent | GDPR request |
-| Org Memory | Until org deletion | Business need | Cascade |
-| Artifacts | With conversation | Storage limit | Cascade |
+| Data Type      | Default Retention  | Compliance Basis    | Deletion Method           |
+| -------------- | ------------------ | ------------------- | ------------------------- |
+| Conversations  | 2 years            | Business need       | Soft delete → Hard delete |
+| Messages       | 2 years            | With conversation   | Cascade                   |
+| AI Actions Log | 90 days            | Audit trail         | Auto-purge                |
+| Feedback       | 1 year             | Product improvement | Anonymize → Delete        |
+| User Memory    | Until deletion     | User consent        | GDPR request              |
+| Org Memory     | Until org deletion | Business need       | Cascade                   |
+| Artifacts      | With conversation  | Storage limit       | Cascade                   |
 
 ### GDPR Compliance
 
@@ -257,11 +257,11 @@ async function deleteUserData(userId: string): Promise<void> {
 
 ### Real-time Updates
 
-| Data Type | Sync Method | Latency | Conflict Resolution |
-|-----------|-------------|---------|---------------------|
-| Messages | WebSocket (SSE) | <100ms | Server wins |
-| Actions status | Polling (30s) | <30s | Last write wins |
-| Memory | On-demand | On next request | Merge |
+| Data Type      | Sync Method              | Latency         | Conflict Resolution |
+| -------------- | ------------------------ | --------------- | ------------------- |
+| Messages       | SSE (Server-Sent Events) | <100ms          | Server wins         |
+| Actions status | Polling (30s)            | <30s            | Last write wins     |
+| Memory         | On-demand                | On next request | Merge               |
 
 ### Offline Support
 
@@ -295,13 +295,13 @@ async function syncOfflineMessages(): Promise<void> {
 
 ### Key Metrics Tracked
 
-| Metric | Purpose | Retention | Dashboard |
-|--------|---------|-----------|-----------|
-| Messages/day | Usage | 1 year | Analytics |
-| Token usage | Cost | 1 year | Billing |
-| Response time | Performance | 30 days | Operations |
-| Error rate | Reliability | 30 days | Operations |
-| Action approval rate | UX | 90 days | Product |
+| Metric               | Purpose     | Retention | Dashboard  |
+| -------------------- | ----------- | --------- | ---------- |
+| Messages/day         | Usage       | 1 year    | Analytics  |
+| Token usage          | Cost        | 1 year    | Billing    |
+| Response time        | Performance | 30 days   | Operations |
+| Error rate           | Reliability | 30 days   | Operations |
+| Action approval rate | UX          | 90 days   | Product    |
 
 ### Audit Logging
 
@@ -331,15 +331,16 @@ CREATE INDEX idx_audit_org ON ai_audit_log(organization_id, timestamp);
 
 ### Encryption
 
-| Data State | Method | Key Management |
-|------------|--------|----------------|
-| In Transit | TLS 1.3 | Auto-renewed certs |
-| At Rest | AES-256 | AWS KMS |
-| In Memory | N/A (transient) | Process isolation |
+| Data State | Method          | Key Management     |
+| ---------- | --------------- | ------------------ |
+| In Transit | TLS 1.3         | Auto-renewed certs |
+| At Rest    | AES-256         | AWS KMS            |
+| In Memory  | N/A (transient) | Process isolation  |
 
 ### Access Logging
 
 All data access is logged with:
+
 - User ID
 - Timestamp
 - Resource accessed
@@ -349,12 +350,12 @@ All data access is logged with:
 
 ### Rate Limiting
 
-| Operation | Limit | Window | Action on Exceed |
-|-----------|-------|--------|------------------|
-| Messages | 60 | 1 min | Queue |
-| Actions | 10 | 1 min | Reject |
-| Memory updates | 30 | 1 min | Queue |
-| Data export | 1 | 1 hour | Reject |
+| Operation      | Limit | Window | Action on Exceed |
+| -------------- | ----- | ------ | ---------------- |
+| Messages       | 60    | 1 min  | Queue            |
+| Actions        | 10    | 1 min  | Reject           |
+| Memory updates | 30    | 1 min  | Queue            |
+| Data export    | 1     | 1 hour | Reject           |
 
 ---
 

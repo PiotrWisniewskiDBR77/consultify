@@ -20,6 +20,7 @@
 
 import { Bot, History, MessageSquare, Plus, Volume2, VolumeX } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { isValidLanguage, type SupportedLanguage } from '@/i18n';
@@ -784,21 +785,59 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             type: file.type,
             size: file.size,
           });
+          toast.error(
+            t(
+              'aiChat.attachments.unsupportedType',
+              'Plik "{{name}}" nie jest obsługiwany. Dozwolone formaty: PDF, TXT, MD, CSV, JSON.',
+              { name: file.name }
+            ),
+            { duration: 5000 }
+          );
           continue;
         }
 
         try {
           const resp = await Api.uploadChatAttachment(file);
           const docId = String((resp as any)?.docId || '');
-          if (!docId) continue;
+          if (!docId) {
+            toast.error(
+              t('aiChat.attachments.uploadFailed', 'Nie udało się przetworzyć pliku "{{name}}".', {
+                name: file.name,
+              }),
+              { duration: 4000 }
+            );
+            continue;
+          }
           uploadedAttachments.push({
             docId,
             filename: file.name,
             mimeType: file.type || undefined,
             size: file.size,
           });
-        } catch (err) {
+          toast.success(
+            t('aiChat.attachments.uploadSuccess', 'Załącznik "{{name}}" przetworzony.', {
+              name: file.name,
+            }),
+            { duration: 2000 }
+          );
+        } catch (err: any) {
           console.error('[UnifiedChatPanel] Failed to upload attachment:', err);
+          const errMsg = String(err?.message || '');
+          const isTextExtraction = errMsg.includes('extract') || errMsg.includes('text');
+          toast.error(
+            isTextExtraction
+              ? t(
+                  'aiChat.attachments.extractionFailed',
+                  'Nie udało się odczytać tekstu z pliku "{{name}}". Sprawdź czy plik nie jest pusty lub uszkodzony.',
+                  { name: file.name }
+                )
+              : t(
+                  'aiChat.attachments.uploadError',
+                  'Błąd przesyłania pliku "{{name}}": {{error}}',
+                  { name: file.name, error: errMsg.slice(0, 100) }
+                ),
+            { duration: 5000 }
+          );
         }
       }
 

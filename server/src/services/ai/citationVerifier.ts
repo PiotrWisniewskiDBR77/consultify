@@ -55,6 +55,7 @@ class CitationVerifierService {
       timestamp: new Date().toISOString(),
     };
 
+    // Persist verification log to DB (non-blocking — table may not exist in all deployments)
     try {
       await dbRun(
         `INSERT INTO citation_verification_logs (conversation_id, message_id, total_citations, verified_count, unverified_count, broken_count, overall_score, results_json, created_at) VALUES (?,?,?,?,?,?,?,?,?)`,
@@ -70,8 +71,8 @@ class CitationVerifierService {
           report.timestamp,
         ]
       );
-    } catch {
-      /* table may not exist */
+    } catch (err: any) {
+      logger.warn(`[CitationVerifier] Failed to persist verification log: ${err?.message}`);
     }
 
     logger.info(
@@ -123,7 +124,8 @@ class CitationVerifierService {
     try {
       const r = await dbAll(`SELECT id FROM ${t} WHERE id = ? LIMIT 1`, [id]);
       return Array.isArray(r) && r.length > 0;
-    } catch {
+    } catch (err: any) {
+      logger.debug(`[CitationVerifier] Source check failed for ${type}/${id}: ${err?.message}`);
       return false;
     }
   }

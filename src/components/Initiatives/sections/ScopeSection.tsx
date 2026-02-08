@@ -3,7 +3,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { Loader2, Plus, Scale, Sparkles, X } from 'lucide-react';
+import { AlertTriangle, Loader2, Plus, Scale, Sparkles, X } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { CollapsibleSection } from './CollapsibleSection';

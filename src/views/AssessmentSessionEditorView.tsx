@@ -1329,7 +1329,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
             Editor not available yet
           </div>
           <div className="text-sm text-slate-500 dark:text-slate-400">
-            Framework: {framework?.toUpperCase()}
+            Framework: {(framework as string)?.toUpperCase()}
           </div>
         </div>
       </div>

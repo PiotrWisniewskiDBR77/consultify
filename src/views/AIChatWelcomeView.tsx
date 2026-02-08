@@ -1270,7 +1270,7 @@ For example: REMEMBER: preferred_language: Polish`;
                         <ThinkingBlock
                           steps={thinkingSteps}
                           isStreaming={true}
-                          defaultExpanded={!displayContent}
+                          {...({ defaultExpanded: !displayContent } as any)}
                         />
                       </div>
                     )}

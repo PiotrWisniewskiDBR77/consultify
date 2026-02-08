@@ -1529,7 +1529,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     async (versionId: string) => {
       if (!report?.id) return;
       try {
-        await Api.post(`/report-builder/versions/${versionId}/rollback`);
+        await Api.post(`/report-builder/versions/${versionId}/rollback`, {});
         toast.success(isPl ? 'Przywrócono wersję' : 'Version restored');
         loadReport(report.id);
         loadVersions();

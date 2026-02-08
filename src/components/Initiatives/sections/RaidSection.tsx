@@ -208,7 +208,8 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
               const isHighSeverity = ['HIGH', 'CRITICAL'].includes(r.severity?.toUpperCase() || '');
               const raidTypeConfig = RAID_TYPE_CONFIG[r.type] || RAID_TYPE_CONFIG.risk;
               const sevConfig =
-                SEVERITY_CONFIG[r.severity?.toUpperCase() || 'MEDIUM'] || SEVERITY_CONFIG.MEDIUM;
+                (SEVERITY_CONFIG as any)[r.severity?.toUpperCase() || 'MEDIUM'] ||
+                SEVERITY_CONFIG.MEDIUM;
 
               return (
                 <div
@@ -231,9 +232,9 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
                       </span>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                      {r.ownerName && (
+                      {(r as any).ownerName && (
                         <span className="text-[10px] text-slate-400 hidden sm:inline">
-                          {r.ownerName}
+                          {(r as any).ownerName}
                         </span>
                       )}
                       {r.severity && (
@@ -255,17 +256,17 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
                       {r.description}
                     </p>
                   )}
-                  {r.dueDate && (
+                  {(r as any).dueDate && (
                     <div className="mt-1.5 flex items-center gap-1">
                       <Clock size={10} className="text-slate-400" />
                       <span
                         className={`text-[10px] ${
-                          new Date(r.dueDate) < new Date()
+                          new Date((r as any).dueDate) < new Date()
                             ? 'text-red-500 font-medium'
                             : 'text-slate-400'
                         }`}
                       >
-                        {new Date(r.dueDate).toLocaleDateString()}
+                        {new Date((r as any).dueDate).toLocaleDateString()}
                       </span>
                     </div>
                   )}

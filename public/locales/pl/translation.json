@@ -827,6 +827,7 @@
           "desc": "Informacje w czasie rzeczywistym"
         },
         "showReasoning": { "label": "Pokaż rozumowanie", "desc": "Widoczny tok myślenia AI" },
+        "multiAgent": { "label": "Analiza wieloagentowa", "desc": "Perspektywy CFO/CTO/CHRO/COO" },
         "textToSpeech": { "label": "Czytaj odpowiedzi", "desc": "Automatyczne czytanie na głos" }
       },
       "sources": {
@@ -836,11 +837,16 @@
       },
       "styles": {
         "normal": "Normalny",
-        "learning": "Edukacyjny",
+        "executive": "Executivowy",
+        "analyst": "Analityczny",
+        "coach": "Coaching",
         "concise": "Zwięzły",
-        "explanatory": "Wyjaśniający",
         "formal": "Formalny"
       },
+      "customInstructions": "Moje instrukcje",
+      "customInstructionsPlaceholder": "np. \"Zawsze odpowiadaj po polsku\", \"Preferuję tabele nad tekstem\", \"Jestem CTO w firmie produkcyjnej\"",
+      "instructionsSaved": "Instrukcje zapisane",
+      "instructionsSaveError": "Nie udało się zapisać",
       "toast": {
         "enabled": "{{label}}: włączone",
         "disabled": "{{label}}: wyłączone",
@@ -857,7 +863,8 @@
       "demoModeDesc": "Wyświetlane są przykładowe pliki. Integracja z chmurą zostanie dodana wkrótce.",
       "noFiles": "Brak plików",
       "selectFile": "Wybierz plik",
-      "downloading": "Pobieranie: {{name}}"
+      "downloading": "Pobieranie: {{name}}",
+      "loadError": "Nie udało się załadować plików"
     },
     "myProjects": "Moje foldery",
     "teamProjects": "Foldery zespołu",

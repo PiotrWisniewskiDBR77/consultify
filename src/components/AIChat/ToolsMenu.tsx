@@ -1,22 +1,22 @@
 /**
  * ToolsMenu
  *
- * Dropdown menu for AI tools and integrations:
+ * Dropdown menu for AI tools (Gemini-style, opens downward):
  * - AI Modes (toggles with visual feedback)
- * - Knowledge Sources (toggles for data sources)
+ * - Response Style
+ * - Custom Instructions
  *
- * @version 2.1.0
+ * Knowledge Sources removed — always enabled by default.
+ *
+ * @version 3.0.0
  */
 
 import {
   BarChart3,
-  BookOpen,
   Brain,
   Briefcase,
-  Building2,
   Check,
   ChevronRight,
-  Database,
   Globe,
   GraduationCap,
   MessageSquare,
@@ -48,14 +48,6 @@ interface ToolMode {
   labelKey: string;
   descKey: string;
   enabled?: boolean;
-}
-
-interface KnowledgeSource {
-  id: string;
-  icon: React.ElementType;
-  labelKey: string;
-  descKey: string;
-  enabled: boolean;
 }
 
 // Response Style definitions — domain-specific presets for PMO/consulting
@@ -91,9 +83,21 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   const [customInstructions, setCustomInstructions] = useState('');
   const [customInstructionsLoaded, setCustomInstructionsLoaded] = useState(false);
   const [isSavingInstructions, setIsSavingInstructions] = useState(false);
+  const [menuMaxHeight, setMenuMaxHeight] = useState<number | undefined>(undefined);
   const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const styleButtonRef = useRef<HTMLButtonElement>(null);
   const ttsButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Calculate available space below the trigger button for menu positioning
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      // Available space below trigger minus some padding
+      const availableBelow = window.innerHeight - rect.bottom - 24;
+      setMenuMaxHeight(Math.max(200, availableBelow));
+    }
+  }, [isOpen]);
 
   // Load custom instructions from AI memory on first open
   React.useEffect(() => {
@@ -152,22 +156,13 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   }, []);
 
   // Use global store values
-  const {
-    deepResearch,
-    webSearch,
-    showReasoning,
-    knowledgeSources,
-    responseStyle,
-    textToSpeech,
-    ttsRate,
-    ttsVoice,
-  } = aiConfig;
+  const { deepResearch, webSearch, showReasoning, responseStyle, textToSpeech, ttsRate, ttsVoice } =
+    aiConfig;
 
   // Count active modes for badge
   const activeModeCount = [deepResearch, webSearch, showReasoning, textToSpeech].filter(
     Boolean
   ).length;
-  const activeSourceCount = Object.values(knowledgeSources || {}).filter(Boolean).length;
 
   // AI Modes - using global store values
   const AI_MODES: ToolMode[] = [
@@ -205,31 +200,6 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       labelKey: 'aiChat.menu.modes.textToSpeech.label',
       descKey: 'aiChat.menu.modes.textToSpeech.desc',
       enabled: textToSpeech,
-    },
-  ];
-
-  // Knowledge Sources - using global store values (all disabled by default)
-  const KNOWLEDGE_SOURCES: KnowledgeSource[] = [
-    {
-      id: 'pmoDocuments',
-      icon: BookOpen,
-      labelKey: 'aiChat.menu.sources.pmoDocuments.label',
-      descKey: 'aiChat.menu.sources.pmoDocuments.desc',
-      enabled: knowledgeSources?.pmoDocuments ?? false,
-    },
-    {
-      id: 'projectData',
-      icon: Database,
-      labelKey: 'aiChat.menu.sources.projectData.label',
-      descKey: 'aiChat.menu.sources.projectData.desc',
-      enabled: knowledgeSources?.projectData ?? false,
-    },
-    {
-      id: 'organizationData',
-      icon: Building2,
-      labelKey: 'aiChat.menu.sources.organizationData.label',
-      descKey: 'aiChat.menu.sources.organizationData.desc',
-      enabled: knowledgeSources?.organizationData ?? false,
     },
   ];
 
@@ -271,29 +241,11 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     onToolSelect(`toggle:${modeId}`);
   };
 
-  // Toggle knowledge sources - persists to global store
-  const toggleKnowledgeSource = (sourceId: string) => {
-    const currentValue = knowledgeSources?.[sourceId as keyof typeof knowledgeSources] ?? false;
-    const newValue = !currentValue;
-    const newSources = {
-      ...knowledgeSources,
-      [sourceId]: newValue,
-    };
-    setAIConfig({ knowledgeSources: newSources });
-
-    const label = t(`aiChat.menu.sources.${sourceId}.label`, sourceId);
-    toast.success(
-      t(newValue ? 'aiChat.menu.toast.enabled' : 'aiChat.menu.toast.disabled', { label }),
-      { duration: 2000 }
-    );
-
-    onToolSelect(`source:${sourceId}`);
-  };
-
   return (
     <div className="relative" ref={menuRef}>
       {/* Trigger Button */}
       <button
+        ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
         data-testid="chat-tools-button"
@@ -316,18 +268,19 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         )}
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Dropdown Menu — opens downward (Gemini-style) */}
       {isOpen && (
         <div
           className="
-                        absolute left-0 bottom-full mb-2 z-50
+                        absolute left-0 top-full mt-2 z-50
                         w-72 py-1
                         bg-white dark:bg-navy-800
                         border border-slate-200 dark:border-navy-700
                         rounded-xl shadow-xl
-                        animate-in fade-in-0 slide-in-from-bottom-2 duration-150
-                        max-h-[70vh] overflow-y-auto
+                        animate-in fade-in-0 slide-in-from-top-2 duration-150
+                        overflow-y-auto
                     "
+          style={{ maxHeight: menuMaxHeight ? `${menuMaxHeight}px` : '70vh' }}
         >
           {/* AI Modes Section */}
           <div className="px-3 py-2 flex items-center justify-between">
@@ -372,55 +325,6 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 </div>
                 {isEnabled ? (
                   <ToggleRight size={22} className="text-primary-500 shrink-0" />
-                ) : (
-                  <ToggleLeft size={22} className="text-slate-300 dark:text-slate-600 shrink-0" />
-                )}
-              </button>
-            );
-          })}
-
-          {/* Divider */}
-          <div className="my-2 border-t border-slate-200 dark:border-navy-700" />
-
-          {/* Knowledge Sources Section */}
-          <div className="px-3 py-2 flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              {t('aiChat.menu.knowledgeSources', 'Źródła wiedzy')}
-            </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400 font-medium">
-              {activeSourceCount}/{KNOWLEDGE_SOURCES.length}
-            </span>
-          </div>
-
-          {KNOWLEDGE_SOURCES.map((source) => {
-            const Icon = source.icon;
-            const isEnabled = source.enabled;
-
-            return (
-              <button
-                key={source.id}
-                onClick={() => toggleKnowledgeSource(source.id)}
-                className={`
-                                    w-full flex items-center gap-3 px-3 py-2 text-left
-                                    transition-colors
-                                    ${isEnabled ? 'bg-green-50 dark:bg-green-900/20' : 'hover:bg-slate-50 dark:hover:bg-navy-700'}
-                                `}
-              >
-                <div
-                  className={`p-1.5 rounded-lg ${isEnabled ? 'bg-green-100 dark:bg-green-900/30' : 'bg-slate-100 dark:bg-navy-700'}`}
-                >
-                  <Icon
-                    size={14}
-                    className={isEnabled ? 'text-green-500' : 'text-slate-400 dark:text-slate-500'}
-                  />
-                </div>
-                <div
-                  className={`flex-1 text-sm font-medium ${isEnabled ? 'text-green-700 dark:text-green-300' : 'text-slate-700 dark:text-slate-300'}`}
-                >
-                  {t(source.labelKey)}
-                </div>
-                {isEnabled ? (
-                  <ToggleRight size={22} className="text-green-500 shrink-0" />
                 ) : (
                   <ToggleLeft size={22} className="text-slate-300 dark:text-slate-600 shrink-0" />
                 )}

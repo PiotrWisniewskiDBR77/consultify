@@ -46,6 +46,7 @@ export const ChatConfirmRequestSchema = z.object({
       deepResearch: z.boolean().optional(),
       webSearch: z.boolean().optional(),
       showReasoning: z.boolean().optional(),
+      multiAgent: z.boolean().optional(),
     })
     .optional(),
   knowledgeSources: z
@@ -55,7 +56,9 @@ export const ChatConfirmRequestSchema = z.object({
       organizationData: z.boolean().optional(),
     })
     .optional(),
-  responseStyle: z.enum(['normal', 'learning', 'concise', 'explanatory', 'formal']).optional(),
+  responseStyle: z
+    .enum(['normal', 'executive', 'analyst', 'coach', 'concise', 'formal'])
+    .optional(),
   language: z
     .string()
     .transform((lang) => {
@@ -102,6 +105,7 @@ export const ChatStreamRequestSchema = z.object({
       deepResearch: z.boolean().optional(),
       webSearch: z.boolean().optional(),
       showReasoning: z.boolean().optional(),
+      multiAgent: z.boolean().optional(),
     })
     .optional(),
   knowledgeSources: z
@@ -111,7 +115,9 @@ export const ChatStreamRequestSchema = z.object({
       organizationData: z.boolean().optional(),
     })
     .optional(),
-  responseStyle: z.enum(['normal', 'learning', 'concise', 'explanatory', 'formal']).optional(),
+  responseStyle: z
+    .enum(['normal', 'executive', 'analyst', 'coach', 'concise', 'formal'])
+    .optional(),
   language: z
     .string()
     .transform((lang) => {

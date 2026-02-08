@@ -570,6 +570,7 @@ export const useAIStream = (options: StreamOptions = {}) => {
       let hasEscalatedComplexity = isDeepThinking; // deep starts fully expanded
       let step = 0;
       let hasReceivedContent = false;
+      let hasReceivedBackendThought = false; // switches to real steps once backend sends thoughts
       const streamStartTime = Date.now();
 
       // Make "LLM is working" visible immediately (Cursor-like)
@@ -578,6 +579,7 @@ export const useAIStream = (options: StreamOptions = {}) => {
 
       // Keep the UI "alive" even before first chunk arrives.
       // Uses logarithmic progress curve — never freezes, always micro-moves.
+      // Once backend sends real 'thought' events, we defer to them and stop simulated updates.
       if (thinkingIntervalRef.current) clearInterval(thinkingIntervalRef.current);
       thinkingIntervalRef.current = setInterval(() => {
         if (abortRef.current.aborted || hasReceivedContent) {
@@ -585,9 +587,43 @@ export const useAIStream = (options: StreamOptions = {}) => {
           thinkingIntervalRef.current = null;
           return;
         }
+
+        // If backend is sending real thought events, only update progress bar
+        // and skip simulated step manipulations
         const elapsed = Date.now() - streamStartTime;
         const pct = logarithmicProgress(elapsed);
         setProgress(Math.floor(pct));
+
+        if (hasReceivedBackendThought) {
+          // Backend is driving thinking steps — do NOT override with simulated steps.
+          // Only add a long-wait label if generating takes very long (>30s)
+          const isPl = (language || '').startsWith('pl');
+          if (elapsed > 30000 && !isDeepThinking) {
+            setThinkingSteps((prev) => {
+              const lastStep = prev[prev.length - 1];
+              if (
+                lastStep &&
+                lastStep.status === 'in_progress' &&
+                !lastStep.label.includes('prawie') &&
+                !lastStep.label.includes('almost')
+              ) {
+                const updated = [...prev];
+                updated[updated.length - 1] = {
+                  ...lastStep,
+                  label: isPl
+                    ? 'Już prawie kończę — dopracowuję ostatnie szczegóły…'
+                    : 'Almost done — polishing the final details…',
+                };
+                options.onThinkingUpdate?.(updated);
+                return updated;
+              }
+              return prev;
+            });
+          }
+          return;
+        }
+
+        // Simulated mode: use client-side steps when backend doesn't send thoughts
         currentThinking = advanceThinkingSteps(currentThinking, pct);
         setThinkingSteps([...currentThinking]);
         options.onThinkingUpdate?.([...currentThinking]);
@@ -639,16 +675,34 @@ export const useAIStream = (options: StreamOptions = {}) => {
       const handleChunk = (chunk: string) => {
         if (abortRef.current.aborted) return;
 
-        // Strip any <thinking> tags if present (legacy support)
-        const thinkingMatches = Array.from(chunk.matchAll(/<thinking>([\s\S]*?)<\/thinking>/g));
-        let cleanedChunk = chunk;
-        if (thinkingMatches.length > 0) {
-          cleanedChunk = chunk.replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
+        // Handle <thinking> tags: show as visible blockquote when showReasoning is on,
+        // otherwise strip them silently.
+        let processedChunk = chunk;
+        const hasThinkingTags = /<thinking>[\s\S]*?<\/thinking>/g.test(chunk);
+        if (hasThinkingTags) {
+          if (aiConfig?.showReasoning) {
+            // Convert <thinking>...</thinking> into a visible markdown blockquote
+            processedChunk = chunk.replace(
+              /<thinking>([\s\S]*?)<\/thinking>/g,
+              (_match, content: string) => {
+                const trimmed = content.trim();
+                if (!trimmed) return '';
+                // Format as a collapsible reasoning block
+                const quotedLines = trimmed
+                  .split('\n')
+                  .map((line: string) => `> ${line}`)
+                  .join('\n');
+                return `\n> **Tok rozumowania:**\n${quotedLines}\n\n`;
+              }
+            );
+          } else {
+            processedChunk = chunk.replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
+          }
         }
 
         // Add to full text
-        if (cleanedChunk) {
-          fullText += cleanedChunk;
+        if (processedChunk) {
+          fullText += processedChunk;
         }
 
         setStreamedContent(fullText);
@@ -864,6 +918,67 @@ export const useAIStream = (options: StreamOptions = {}) => {
           return;
         }
 
+        // Backend thought progress — real-time pipeline stage updates
+        if (evt.type === 'thought') {
+          const e = evt as {
+            type: 'thought';
+            step?: string;
+            status?: string;
+            label?: string;
+          };
+          const stepId = e.step || 'unknown';
+          const label = e.label || stepId;
+          const now = new Date();
+
+          // Switch from simulated steps to real backend-driven steps
+          hasReceivedBackendThought = true;
+
+          setThinkingSteps((prev) => {
+            // Check if step already exists
+            const existingIdx = prev.findIndex((s) => s.id === `backend-${stepId}`);
+
+            if (existingIdx >= 0) {
+              // Update existing step
+              const updated = [...prev];
+              updated[existingIdx] = {
+                ...updated[existingIdx],
+                label,
+                status: e.status === 'done' ? ('done' as const) : ('in_progress' as const),
+                timestamp: now,
+              };
+              // Mark all previous steps as done
+              for (let i = 0; i < existingIdx; i++) {
+                if (updated[i].status !== 'done') {
+                  updated[i] = { ...updated[i], status: 'done' as const };
+                }
+              }
+              options.onThinkingUpdate?.(updated);
+              return updated;
+            }
+
+            // New step — mark all previous as done, add new one
+            const updated: ThinkingStep[] = prev
+              .filter((s) => s.id.startsWith('backend-')) // keep only backend steps
+              .map((s) => ({
+                ...s,
+                status: 'done' as const,
+              }));
+
+            updated.push({
+              id: `backend-${stepId}`,
+              label,
+              content: '',
+              status: 'in_progress' as const,
+              timestamp: now,
+              category: stepId === 'generating' ? 'synthesis' : ('research' as const),
+            });
+
+            options.onThinkingUpdate?.(updated);
+            return updated;
+          });
+          return;
+        }
+
         // Partial resume: backend may send a full/partial buffer to restore UI continuity.
         // Treat as a replace (NOT append), otherwise we'd duplicate content.
         if (evt.type === 'resume') {
@@ -969,7 +1084,12 @@ export const useAIStream = (options: StreamOptions = {}) => {
             webSearch: aiConfig?.webSearch,
             showReasoning: aiConfig?.showReasoning,
             multiAgent: aiConfig?.multiAgent,
-            knowledgeSources: aiConfig?.knowledgeSources,
+            // Knowledge sources always enabled — no UI toggle needed
+            knowledgeSources: {
+              pmoDocuments: true,
+              projectData: true,
+              organizationData: true,
+            },
             responseStyle: aiConfig?.responseStyle,
             selectedTier: (aiConfig as any)?.selectedTier,
             selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
@@ -1017,7 +1137,12 @@ export const useAIStream = (options: StreamOptions = {}) => {
                   webSearch: aiConfig?.webSearch,
                   showReasoning: aiConfig?.showReasoning,
                   multiAgent: aiConfig?.multiAgent,
-                  knowledgeSources: aiConfig?.knowledgeSources,
+                  // Knowledge sources always enabled
+                  knowledgeSources: {
+                    pmoDocuments: true,
+                    projectData: true,
+                    organizationData: true,
+                  },
                   responseStyle: aiConfig?.responseStyle,
                   selectedTier: (aiConfig as any)?.selectedTier,
                   selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
