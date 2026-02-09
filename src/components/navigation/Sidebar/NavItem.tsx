@@ -45,6 +45,7 @@ export const NavItem: React.FC<NavItemProps> = ({
   const hasSubItems = item.subItems && item.subItems.length > 0;
   const isActive = item.viewId === currentView;
   const isCompleted = item.viewId && completedViews.includes(item.viewId);
+  const badgeLabel = item.badge === 'soon' ? 'Coming soon' : item.badge;
 
   // Check if locked
   const isLocked =
@@ -72,6 +73,12 @@ export const NavItem: React.FC<NavItemProps> = ({
   };
 
   const isHighlighted = isActive || (item.id === 'AI_CHAT' && isChatSlidingPanelOpen);
+  const showRightSide =
+    showFull &&
+    (Boolean(item.badge) ||
+      (Boolean(isCompleted) && !isActive) ||
+      Boolean(isLocked) ||
+      hasSubItems);
 
   return (
     <div
@@ -101,7 +108,9 @@ export const NavItem: React.FC<NavItemProps> = ({
         title={getTooltip()}
       >
         {/* Left side: Icon and Label */}
-        <div className={`flex items-center gap-3 ${!showFull ? 'justify-center w-full' : ''}`}>
+        <div
+          className={`flex items-center gap-3 min-w-0 ${!showFull ? 'justify-center w-full' : 'flex-1'}`}
+        >
           {item.icon && (
             <span
               className={`
@@ -120,25 +129,24 @@ export const NavItem: React.FC<NavItemProps> = ({
           {showFull && (
             <span className="truncate tracking-wide flex-1 text-left">{item.label}</span>
           )}
-
-          {/* Beta/New/Soon Badge */}
-          {item.badge && showFull && (
-            <span
-              className={`
-                                ml-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full tracking-wide shrink-0
-                                ${item.badge === 'beta' ? 'bg-amber-500/20 text-amber-500 dark:bg-amber-400/15 dark:text-amber-400' : ''}
-                                ${item.badge === 'new' ? 'bg-green-500/20 text-green-500 dark:bg-green-400/15 dark:text-green-400' : ''}
-                                ${item.badge === 'soon' ? 'bg-slate-500/20 text-slate-500 dark:bg-slate-400/15 dark:text-slate-400' : ''}
-                            `}
-            >
-              {item.badge}
-            </span>
-          )}
         </div>
 
         {/* Right side: Status icons */}
-        {showFull && (
-          <div className="flex items-center gap-2">
+        {showRightSide && (
+          <div className="flex items-center gap-2 ml-auto">
+            {/* Badge */}
+            {item.badge && (
+              <span
+                className={`
+                  px-2 py-0.5 text-[10px] font-semibold rounded-full tracking-wide shrink-0 border
+                  ${item.badge === 'beta' ? 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 border-amber-500/25 dark:border-amber-400/20' : ''}
+                  ${item.badge === 'new' ? 'bg-green-500/10 text-green-700 dark:bg-green-400/10 dark:text-green-300 border-green-500/25 dark:border-green-400/20' : ''}
+                  ${item.badge === 'soon' ? 'bg-amber-400/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 border-amber-400/25 dark:border-amber-400/20' : ''}
+                `}
+              >
+                {badgeLabel}
+              </span>
+            )}
             {isCompleted && !isActive && <CheckCircle2 size={14} className="text-success-500/80" />}
             {isLocked && <Lock size={12} className="text-slate-400 dark:text-slate-500" />}
             {hasSubItems && (

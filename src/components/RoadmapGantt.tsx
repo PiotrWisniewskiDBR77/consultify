@@ -41,6 +41,9 @@ interface FullInitiative extends Initiative {
   plannedEndDate?: string;
   dependencies?: any[];
   name: string;
+  readinessPercent?: number;
+  missingReadiness?: string[];
+  conflictCount?: number;
 }
 
 interface RoadmapGanttProps {
@@ -442,6 +445,39 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                     >
                       {init.priority}
                     </span>
+                    {typeof init.readinessPercent === 'number' && (
+                      <>
+                        <span>•</span>
+                        <span
+                          className={`px-1.5 py-0.5 rounded ${
+                            init.readinessPercent >= 80
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                              : init.readinessPercent >= 50
+                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+                          }`}
+                          title={
+                            init.missingReadiness?.length
+                              ? `Missing: ${init.missingReadiness.join(', ')}`
+                              : 'Readiness'
+                          }
+                        >
+                          {init.readinessPercent}%
+                        </span>
+                      </>
+                    )}
+                    {!!init.conflictCount && init.conflictCount > 0 && (
+                      <>
+                        <span>•</span>
+                        <span
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
+                          title="Conflicts detected"
+                        >
+                          <AlertTriangle size={10} className="text-rose-500" />
+                          {init.conflictCount}
+                        </span>
+                      </>
+                    )}
                     {(init.status === 'BLOCKED' || init.status === 'on_hold') && (
                       <AlertTriangle size={10} className="text-red-500" />
                     )}
@@ -497,6 +533,11 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                   >
+                    {!!init.conflictCount && init.conflictCount > 0 && (
+                      <div className="absolute right-2 top-2 w-5 h-5 rounded-full bg-black/25 flex items-center justify-center text-[10px] font-bold">
+                        {init.conflictCount}
+                      </div>
+                    )}
                     {/* Resize Handle Start */}
                     <div
                       className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"

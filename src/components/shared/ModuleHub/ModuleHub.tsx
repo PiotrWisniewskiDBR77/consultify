@@ -50,6 +50,16 @@ interface ModuleHubProps {
   statusFilters?: StatusFilter[];
   activeStatusFilter?: string | null;
   onStatusFilterChange?: (status: string | null) => void;
+  // Status dropdown (replaces buttons with a compact dropdown)
+  statusDropdownContext?:
+    | 'initiatives'
+    | 'execution'
+    | 'benefits'
+    | 'assessment'
+    | 'assessment_list'
+    | 'assessment_reports'
+    | 'tools';
+  statusCounts?: Record<string, number>;
 
   // Available view modes (default: table, grid)
   availableViewModes?: ViewMode[];
@@ -87,6 +97,8 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
   statusFilters,
   activeStatusFilter,
   onStatusFilterChange,
+  statusDropdownContext,
+  statusCounts,
   availableViewModes,
   rightControls,
   filterActions,
@@ -112,6 +124,8 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({
         statusFilters={statusFilters}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={onStatusFilterChange}
+        statusDropdownContext={statusDropdownContext}
+        statusCounts={statusCounts}
         availableViewModes={availableViewModes}
         rightControls={rightControls}
       />

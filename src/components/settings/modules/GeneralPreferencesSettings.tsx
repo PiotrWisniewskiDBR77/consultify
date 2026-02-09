@@ -67,7 +67,7 @@ interface GeneralSettings {
 }
 
 const defaultSettings: GeneralSettings = {
-  startupView: 'dashboard',
+  startupView: 'chat',
   showWelcomeOnStartup: true,
   autoSaveEnabled: true,
   autoSaveInterval: 30,
@@ -87,7 +87,7 @@ const defaultSettings: GeneralSettings = {
 };
 
 const startupViews = [
-  { id: 'dashboard', label: 'Dashboard', desc: 'Overview of your work' },
+  { id: 'chat', label: 'AI Chat', desc: 'Start with AI assistant' },
   { id: 'inbox', label: 'Inbox', desc: 'Your notifications and tasks' },
   { id: 'mywork', label: 'My Work', desc: 'Personal task list' },
   { id: 'projects', label: 'Projects', desc: 'Project list view' },

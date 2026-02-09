@@ -5,31 +5,61 @@ import { defineConfig, loadEnv } from 'vite';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   const apiTarget = env.VITE_API_TARGET || 'http://127.0.0.1:3001';
+  const stableDev = env.VITE_STABLE_DEV === '1' || process.env.VITE_STABLE_DEV === '1';
+
+  const watchIgnored = [
+    '**/coverage/**',
+    '**/playwright-report/**',
+    '**/test-results/**',
+    '**/dist/**',
+    '**/data/**',
+    '**/.cursor/**',
+    '**/agent-transcripts/**',
+    // macOS Finder/iCloud duplicate naming patterns (project contains many "... 2.ts", "... 13.tsx", etc.)
+    '**/* [0-9]*.*',
+    '**/* copy.*',
+    // Common macOS metadata files
+    '**/.DS_Store',
+    '**/._*',
+    '**/*.icloud',
+  ];
+
   return {
     plugins: [react()],
     server: {
       port: 3000,
       host: '0.0.0.0',
       watch: {
-        // Prevent dev-server reload loops caused by generated artifacts (coverage, backups)
-        // and OS-created duplicate files like "Foo 2.tsx" that may be rewritten by sync tools.
-        ignored: [
-          '**/coverage/**',
-          '**/playwright-report/**',
-          '**/test-results/**',
-          '**/dist/**',
-          '**/data/**',
-          '**/.cursor/**',
-          '**/agent-transcripts/**',
-          // macOS Finder/iCloud duplicate naming patterns
-          '**/* [0-9].ts',
-          '**/* [0-9].tsx',
-          '**/* [0-9].js',
-          '**/* [0-9].jsx',
-          '**/* [0-9].md',
-          '**/* [0-9].html',
-        ],
+        // Prevent dev-server reload loops caused by generated artifacts and iCloud/Finder duplicates.
+        ignored: watchIgnored,
+        // Reduce "save storm" events (esp. from sync tools) that can trigger cascaded reloads.
+        awaitWriteFinish: {
+          stabilityThreshold: stableDev ? 2000 : 250,
+          pollInterval: 100,
+        },
+        ...(stableDev ? { usePolling: true, interval: 2000 } : {}),
       },
+      // In stable mode we disable HMR to prevent constant reconnect/reload loops.
+      hmr: stableDev ? false : undefined,
+      proxy: {
+        '/api': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/uploads': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+      },
+    },
+    preview: {
+      // Allow running a production-like frontend on :3000
+      // while proxying API calls to the dev backend on :3001.
+      port: 3000,
+      strictPort: true,
+      host: '0.0.0.0',
       proxy: {
         '/api': {
           target: apiTarget,
@@ -275,7 +305,9 @@ export default defineConfig(({ mode }) => {
     },
     // CSS optimization
     css: {
-      devSourcemap: true,
+      // Sourcemaps in dev can add noticeable overhead in very large apps.
+      // Keep them on normally, but disable in "stable dev" mode.
+      devSourcemap: stableDev ? false : true,
     },
   };
 });

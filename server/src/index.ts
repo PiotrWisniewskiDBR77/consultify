@@ -158,7 +158,7 @@ app.use('/api/health', dbHealthRoutes);
 app.use('/api/system', systemHealthRoutes);
 
 // Initialize Sentry (must be before other middleware)
-const sentryHandlers = initSentry(app);
+const sentryHandlers = await initSentry(app);
 
 // Logger is already imported as default export
 

@@ -47,6 +47,29 @@
 
 ## 🚀 Quick Start (Development)
 
+### Recommended: Stable Dev Mode (less lag / no backend resets)
+
+This repo contains many macOS/iCloud duplicate files (e.g. `Foo 2.tsx`, `Bar 13.ts`) which can cause file-watch “storms”
+and make `vite` + `tsx watch` feel laggy or unstable.
+
+Run the stable mode:
+
+```bash
+npm run dev:stable
+```
+
+Diagnostics:
+
+```bash
+npm run doctor
+```
+
+Optional (safe) cleanup: move iCloud duplicates into `_quarantine/` (undoable by moving them back):
+
+```bash
+npm run cleanup:quarantine-duplicates
+```
+
 ### Option 1: Using Startup Script (Recommended)
 
 ```bash
@@ -105,6 +128,59 @@ npm run typecheck      # Type check only
 - [Migration Guide](docs/typescript-migration-guide.md) - How to migrate services
 - [Build Optimization](docs/build-optimization-guide.md) - Build performance tips
 - [Verification Report](docs/migration-verification-report.md) - Current migration status
+
+---
+
+## 🚢 Deployment
+
+### Environment Configuration
+
+1. Copy `.env.example` to `.env` and fill in values:
+   ```bash
+   cp .env.example .env
+   ```
+2. **Required variables**:
+   - `JWT_SECRET` — generate with: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
+   - `GEMINI_API_KEY` or `OPENAI_API_KEY` — at least one AI provider
+   - `DATABASE_URL` — for PostgreSQL production mode
+3. See [.env.production.example](.env.production.example) for full production template.
+
+### Option 1: Docker Compose (Recommended)
+
+```bash
+docker-compose up --build
+```
+
+For PostgreSQL mode with pgvector:
+
+```bash
+docker-compose -f docker-compose.postgres.yml up -d   # Start PostgreSQL
+docker-compose up --build                               # Start application
+```
+
+### Option 2: Railway
+
+See [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md) and [RAILWAY_SETUP.md](RAILWAY_SETUP.md) for configuration details.
+
+Configure Railway environment variables from `.env.production.example`.
+
+### Option 3: Manual Deployment
+
+```bash
+npm ci                  # Install dependencies
+npm run build           # Build frontend + backend
+cd server && npm run build  # Build backend
+npm start               # Start production server
+```
+
+### Architecture
+
+| Component | Technology                       | Port |
+| --------- | -------------------------------- | ---- |
+| Frontend  | React + Vite                     | 3000 |
+| Backend   | Node.js + Express                | 3005 |
+| Database  | SQLite (dev) / PostgreSQL (prod) | 5432 |
+| Cache     | Redis (optional)                 | 6379 |
 
 ---
 

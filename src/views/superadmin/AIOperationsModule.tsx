@@ -12,9 +12,10 @@
  * - Usage analytics and insights
  */
 
-import { Activity, BarChart2, DollarSign, Radar, Shield } from 'lucide-react';
+import { Activity, BarChart2, DollarSign, List, Radar, Shield } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { ChatTracesViewer } from '../../components/Admin/AI/ChatTracesViewer';
 import { UsageAnalyticsDashboard } from '../../components/Admin/AI/UsageAnalyticsDashboard';
 import { AICostDashboard } from '../../components/Admin/AICostDashboard';
 import { AIMissionControl } from '../../components/Admin/AIMissionControl';
@@ -61,6 +62,12 @@ export const AIOperationsModule: React.FC<AIOperationsModuleProps> = ({ initialT
       icon: <BarChart2 size={16} />,
       description: 'Usage analytics and insights',
     },
+    {
+      id: 'traces',
+      label: 'Traces',
+      icon: <List size={16} />,
+      description: 'Per-run chat traces & basic evals',
+    },
   ];
 
   const renderContent = () => {
@@ -95,6 +102,12 @@ export const AIOperationsModule: React.FC<AIOperationsModuleProps> = ({ initialT
             <UsageAnalyticsDashboard />
           </div>
         );
+      case 'traces':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <ChatTracesViewer />
+          </div>
+        );
       default:
         return null;
     }
@@ -113,6 +126,8 @@ export const AIOperationsModule: React.FC<AIOperationsModuleProps> = ({ initialT
         return 'superadmin-ai-sla';
       case 'analytics':
         return 'superadmin-ai-analytics';
+      case 'traces':
+        return 'superadmin-ai-traces';
       default:
         return 'superadmin-ai-operations';
     }

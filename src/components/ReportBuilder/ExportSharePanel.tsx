@@ -5,6 +5,7 @@
  */
 
 import {
+  AlertTriangle,
   Calendar,
   Check,
   Copy,
@@ -18,7 +19,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // ==========================================
@@ -33,6 +34,14 @@ interface ShareLink {
   expiresAt?: string;
   viewCount: number;
   createdAt: string;
+}
+
+interface BlockForReadiness {
+  id: string;
+  title: string;
+  enabled: boolean;
+  content?: string;
+  isGenerated?: boolean;
 }
 
 interface ExportSharePanelProps {
@@ -58,6 +67,8 @@ interface ExportSharePanelProps {
   onGetShareLinks: () => Promise<ShareLink[] | null>;
   onRevokeShareLink: (linkId: string) => Promise<boolean>;
   isLoading?: boolean;
+  /** Blocks for readiness check (optional) */
+  blocks?: BlockForReadiness[];
 }
 
 // ==========================================
@@ -75,6 +86,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
   onGetShareLinks,
   onRevokeShareLink,
   isLoading = false,
+  blocks = [],
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -162,26 +174,85 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
 
   const canShare = ['GENERATED', 'IN_REVIEW', 'APPROVED', 'UTILIZED'].includes(reportStatus);
 
-  return (
-    <div className="flex items-center gap-2">
-      {/* Export PDF Button */}
-      <button
-        onClick={handleExportPdf}
-        disabled={isLoading}
-        className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
-      >
-        {isLoading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Download className="w-4 h-4" />
-        )}
-        <span>PDF</span>
-      </button>
+  // ==========================================
+  // READINESS WARNINGS
+  // ==========================================
 
-      {/* Export PPTX Button */}
-      {onExportPptx && (
+  const readinessWarnings = useMemo(() => {
+    const warnings: Array<{ type: 'error' | 'warning'; message: string }> = [];
+
+    // Check for enabled blocks without content
+    const enabledBlocks = blocks.filter((b) => b.enabled);
+    const emptyBlocks = enabledBlocks.filter((b) => !b.content || b.content.trim().length === 0);
+    const notGeneratedBlocks = enabledBlocks.filter((b) => !b.isGenerated && !b.content);
+
+    if (enabledBlocks.length === 0) {
+      warnings.push({
+        type: 'error',
+        message: isPl ? 'Brak włączonych bloków w raporcie' : 'No enabled blocks in the report',
+      });
+    }
+
+    if (emptyBlocks.length > 0) {
+      warnings.push({
+        type: 'warning',
+        message: isPl
+          ? `${emptyBlocks.length} blok(ów) bez treści: ${emptyBlocks.map((b) => b.title).join(', ')}`
+          : `${emptyBlocks.length} block(s) without content: ${emptyBlocks.map((b) => b.title).join(', ')}`,
+      });
+    }
+
+    if (notGeneratedBlocks.length > 0 && emptyBlocks.length === 0) {
+      warnings.push({
+        type: 'warning',
+        message: isPl
+          ? `${notGeneratedBlocks.length} blok(ów) nie wygenerowanych`
+          : `${notGeneratedBlocks.length} block(s) not generated`,
+      });
+    }
+
+    // Check report status
+    if (!['GENERATED', 'IN_REVIEW', 'APPROVED', 'UTILIZED'].includes(reportStatus)) {
+      warnings.push({
+        type: 'error',
+        message: isPl
+          ? 'Raport nie został jeszcze wygenerowany'
+          : 'Report has not been generated yet',
+      });
+    }
+
+    return warnings;
+  }, [blocks, reportStatus, isPl]);
+
+  const hasErrors = readinessWarnings.some((w) => w.type === 'error');
+  const hasWarnings = readinessWarnings.length > 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Readiness Warnings */}
+      {hasWarnings && (
+        <div className="space-y-2">
+          {readinessWarnings.map((warning, idx) => (
+            <div
+              key={idx}
+              className={`flex items-start gap-2 p-3 rounded-lg text-sm ${
+                warning.type === 'error'
+                  ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+                  : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+              }`}
+            >
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>{warning.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Export Buttons Row */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Export PDF Button */}
         <button
-          onClick={handleExportPptx}
+          onClick={handleExportPdf}
           disabled={isLoading}
           className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
         >
@@ -190,38 +261,54 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
           ) : (
             <Download className="w-4 h-4" />
           )}
-          <span>PPTX</span>
+          <span>PDF</span>
         </button>
-      )}
 
-      {/* Export Word Button */}
-      {onExportWord && (
+        {/* Export PPTX Button */}
+        {onExportPptx && (
+          <button
+            onClick={handleExportPptx}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            <span>PPTX</span>
+          </button>
+        )}
+
+        {/* Export Word Button */}
+        {onExportWord && (
+          <button
+            onClick={handleExportWord}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileText className="w-4 h-4" />
+            )}
+            <span>{isPl ? 'DOCX' : 'DOCX'}</span>
+          </button>
+        )}
+
+        {/* Share Button */}
         <button
-          onClick={handleExportWord}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+          onClick={() => setShowShareModal(true)}
+          disabled={!canShare}
+          className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          title={
+            !canShare ? (isPl ? 'Raport musi być wygenerowany' : 'Report must be generated') : ''
+          }
         >
-          {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <FileText className="w-4 h-4" />
-          )}
-          <span>{isPl ? 'Word' : 'Word'}</span>
+          <Share2 className="w-4 h-4" />
+          <span>{isPl ? 'Udostępnij' : 'Share'}</span>
         </button>
-      )}
-
-      {/* Share Button */}
-      <button
-        onClick={() => setShowShareModal(true)}
-        disabled={!canShare}
-        className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        title={
-          !canShare ? (isPl ? 'Raport musi być wygenerowany' : 'Report must be generated') : ''
-        }
-      >
-        <Share2 className="w-4 h-4" />
-        <span>{isPl ? 'Udostępnij' : 'Share'}</span>
-      </button>
+      </div>
 
       {/* Share Modal */}
       {showShareModal && (
@@ -416,4 +503,5 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
   );
 };
 
+export type { BlockForReadiness };
 export default ExportSharePanel;

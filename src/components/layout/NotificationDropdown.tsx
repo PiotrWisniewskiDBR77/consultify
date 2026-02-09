@@ -58,7 +58,9 @@ export const NotificationDropdown = () => {
 
     // Optional: Poll for new notifications every 60s
     const interval = setInterval(fetchNotifications, 60000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {

@@ -26,7 +26,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/routeConfig';
 
 import { FullInitiative, InitiativeStatus, Quarter, User } from '../types';
-import { InitiativeDrawer } from './Initiatives/InitiativeDrawer';
+import { InitiativeCompactPanel } from './Initiatives/InitiativeCompactPanel';
 
 interface Props {
   initiatives: FullInitiative[];
@@ -323,7 +323,7 @@ export const RoadmapKanban: React.FC<Props> = ({
         </DragOverlay>
       </DndContext>
 
-      <InitiativeDrawer
+      <InitiativeCompactPanel
         initiative={selectedInitiative as any}
         isOpen={isDrawerOpen}
         onClose={() => {
@@ -334,7 +334,7 @@ export const RoadmapKanban: React.FC<Props> = ({
           onUpdateInitiative(updated as any);
           setSelectedInitiative(updated as any);
         }}
-        onOpenWider={(initiative) => {
+        onOpenFull={(initiative) => {
           navigate(`${ROUTES.INITIATIVES}?open=${initiative.id}&mode=doc`);
         }}
         users={users as any}

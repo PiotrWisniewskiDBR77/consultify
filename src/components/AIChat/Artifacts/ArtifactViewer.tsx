@@ -22,6 +22,8 @@ const ReactFlowDiagramRenderer = React.lazy(() =>
 import { Loader2 } from 'lucide-react';
 
 import { CodeRenderer } from './renderers/CodeRenderer';
+import { ComparisonMatrixRenderer } from './renderers/ComparisonMatrixRenderer';
+import { DecisionTimelineRenderer } from './renderers/DecisionTimelineRenderer';
 import { HTMLPreview } from './renderers/HTMLPreview';
 import { MarkdownRenderer } from './renderers/MarkdownRenderer';
 import { PMODocumentRenderer } from './renderers/PMODocumentRenderer';
@@ -82,6 +84,12 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ artifact, classN
 
       case 'table':
         return <TableRenderer content={artifact.content} />;
+
+      case 'comparison-matrix':
+        return <ComparisonMatrixRenderer content={artifact.content} />;
+
+      case 'decision-timeline':
+        return <DecisionTimelineRenderer content={artifact.content} />;
 
       case 'pmo-document':
         return (

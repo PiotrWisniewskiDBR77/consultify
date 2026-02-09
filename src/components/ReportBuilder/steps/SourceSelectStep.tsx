@@ -60,7 +60,7 @@ const SOURCE_TYPES: Array<{
     description: 'Create report from completed interviews',
     descriptionPl: 'Utwórz raport z przeprowadzonych wywiadów',
     icon: FileQuestion,
-    available: false,
+    available: true,
   },
   {
     type: 'TOOL',
@@ -69,7 +69,7 @@ const SOURCE_TYPES: Array<{
     description: 'Create report from strategy tool analysis',
     descriptionPl: 'Utwórz raport z analizy narzędzia strategicznego',
     icon: Wrench,
-    available: false,
+    available: true,
   },
   {
     type: 'INITIATIVE',
@@ -78,7 +78,7 @@ const SOURCE_TYPES: Array<{
     description: 'Create report for initiative progress',
     descriptionPl: 'Utwórz raport postępu inicjatywy',
     icon: Lightbulb,
-    available: false,
+    available: true,
   },
 ];
 
@@ -233,6 +233,25 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {filteredSources.map((source) => {
                 const isSelected = selectedSource?.id === source.id;
+                const rawDate =
+                  (source as any).approvedAt ||
+                  (source as any).completedAt ||
+                  (source as any).updatedAt ||
+                  (source as any).createdAt ||
+                  '';
+                const dateText = rawDate ? new Date(String(rawDate)).toLocaleDateString() : '—';
+                const dateLabel =
+                  sourceType === 'ASSESSMENT'
+                    ? isPl
+                      ? 'Zatwierdzono'
+                      : 'Approved'
+                    : (source as any).completedAt
+                      ? isPl
+                        ? 'Zakończono'
+                        : 'Completed'
+                      : isPl
+                        ? 'Zaktualizowano'
+                        : 'Updated';
 
                 return (
                   <button
@@ -253,8 +272,7 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
                           {source.name}
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          {source.framework} • {isPl ? 'Zatwierdzono' : 'Approved'}:{' '}
-                          {new Date(source.approvedAt).toLocaleDateString()}
+                          {source.framework} • {dateLabel}: {dateText}
                         </div>
                       </div>
 

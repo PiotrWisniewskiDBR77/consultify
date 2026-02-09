@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { StatusDropdown } from './StatusDropdown';
 import { CategoryButton, ModuleTab, TabConfig, ViewMode } from './types';
 
 // Debounce hook for search
@@ -64,6 +65,16 @@ interface ModuleNavBarProps {
   statusFilters?: StatusFilter[];
   activeStatusFilter?: string | null;
   onStatusFilterChange?: (status: string | null) => void;
+  // Status dropdown (replaces buttons) - context for StatusDropdown component
+  statusDropdownContext?:
+    | 'initiatives'
+    | 'execution'
+    | 'benefits'
+    | 'assessment'
+    | 'assessment_list'
+    | 'assessment_reports'
+    | 'tools';
+  statusCounts?: Record<string, number>;
   // View modes to show (default: table, grid)
   availableViewModes?: ViewMode[];
   // Extra controls rendered on the right, just before view mode buttons
@@ -101,6 +112,8 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   statusFilters,
   activeStatusFilter,
   onStatusFilterChange,
+  statusDropdownContext,
+  statusCounts,
   availableViewModes = ['table', 'grid'],
   rightControls,
 }) => {
@@ -194,8 +207,22 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             })}
           </div>
 
-          {/* Status Filters (for Initiatives module) */}
-          {statusFilters && statusFilters.length > 0 && (
+          {/* Status Filter Dropdown (replaces button row) */}
+          {statusDropdownContext && onStatusFilterChange && (
+            <>
+              <div className="w-px h-6 bg-navy-600" />
+              <StatusDropdown
+                context={statusDropdownContext}
+                value={activeStatusFilter || 'all'}
+                onChange={(status) => onStatusFilterChange(status === 'all' ? null : status)}
+                counts={statusCounts}
+                size="sm"
+              />
+            </>
+          )}
+
+          {/* Legacy: Status Filter Buttons (fallback when no dropdown context) */}
+          {!statusDropdownContext && statusFilters && statusFilters.length > 0 && (
             <>
               <div className="w-px h-6 bg-navy-600" />
               <div className="flex items-center gap-1.5">

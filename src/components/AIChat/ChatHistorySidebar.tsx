@@ -1,7 +1,7 @@
 /**
  * ChatHistorySidebar
  *
- * FLOATING overlay sidebar showing conversation history AND projects.
+ * FLOATING overlay sidebar showing conversation history AND folders.
  * When closed, completely disappears except for a floating toggle button.
  *
  * Layout:
@@ -9,8 +9,8 @@
  * │ Header + New Chat      │
  * │ Search                 │
  * ├────────────────────────┤
- * │ MY PROJECTS (personal) │
- * │ TEAM PROJECTS (shared) │
+ * │ MY FOLDERS (personal)  │
+ * │ TEAM FOLDERS (shared)  │
  * ├────────────────────────┤
  * │ Conversations by date  │
  * ├────────────────────────┤
@@ -45,6 +45,7 @@ import {
   groupConversations,
   useConversationStore,
 } from '../../store/useConversationStore';
+import { ConversationItem } from './ConversationItem';
 import { ConversationList } from './ConversationList';
 import { ConversationSearch } from './ConversationSearch';
 
@@ -54,9 +55,9 @@ interface ChatHistorySidebarProps {
   className?: string;
 }
 
-// ==================== PROJECT SECTION COMPONENT ====================
+// ==================== FOLDER SECTION COMPONENT ====================
 
-interface ProjectSectionProps {
+interface FolderSectionProps {
   title: string;
   icon: React.ReactNode;
   projects: ChatProject[];
@@ -72,7 +73,7 @@ interface ProjectSectionProps {
   t: (key: string, fallback: string) => string;
 }
 
-const ProjectSection: React.FC<ProjectSectionProps> = ({
+const FolderSection: React.FC<FolderSectionProps> = ({
   title,
   icon,
   projects,
@@ -114,7 +115,7 @@ const ProjectSection: React.FC<ProjectSectionProps> = ({
         </button>
       </div>
 
-      {/* New Project Input */}
+      {/* New Folder Input */}
       {showInput && (
         <div className="mb-2 flex gap-2">
           <input
@@ -128,7 +129,7 @@ const ProjectSection: React.FC<ProjectSectionProps> = ({
                 setName('');
               }
             }}
-            placeholder={t('aiChat.projectName', 'Project name...')}
+            placeholder={t('aiChat.folderName', 'Folder name...')}
             className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
             autoFocus
           />
@@ -195,28 +196,24 @@ const ProjectSection: React.FC<ProjectSectionProps> = ({
                   </div>
                 </div>
 
-                {/* Project Conversations */}
+                {/* Folder Conversations */}
                 {isExpanded && projectConversations.length > 0 && (
-                  <div className="ml-6 mt-0.5 space-y-0.5">
+                  <div className="ml-4 mt-0.5 space-y-0.5">
                     {projectConversations.map((conv) => (
-                      <button
+                      <ConversationItem
                         key={conv.id}
-                        onClick={() => onSelectConversation(conv.id)}
-                        className={`w-full text-left px-2 py-1.5 rounded-lg text-sm truncate transition-colors ${
-                          activeConversationId === conv.id
-                            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-900 dark:text-primary-100'
-                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
-                        }`}
-                      >
-                        {conv.title || t('aiChat.newConversation', 'New conversation')}
-                      </button>
+                        conversation={conv}
+                        isActive={activeConversationId === conv.id}
+                        onSelect={onSelectConversation}
+                        compact
+                      />
                     ))}
                   </div>
                 )}
 
                 {isExpanded && projectConversations.length === 0 && (
                   <div className="ml-6 mt-1 px-2 py-2 text-xs text-slate-400 dark:text-slate-500 italic">
-                    {t('aiChat.noProjectConversations', 'No conversations in this project')}
+                    {t('aiChat.noFolderConversations', 'No conversations in this folder')}
                   </div>
                 )}
               </div>
@@ -313,6 +310,12 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     return true;
   });
 
+  // Unassigned conversations (not in any folder, not archived)
+  const unassignedConversations = filteredConversations.filter(
+    (c) => !c.chatProjectId && !c.archived
+  );
+  const unassignedGroups = groupConversations(unassignedConversations);
+
   // Handle new chat - clear active and call parent handler
   const handleNewChat = () => {
     clearActiveChat();
@@ -328,13 +331,13 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     [setActiveConversation, toggleSidebar]
   );
 
-  // Handle create project with scope
+  // Handle create folder with scope
   const handleCreatePersonalProject = useCallback(
     async (name: string) => {
       try {
         await createProject({ name, scope: 'personal' });
       } catch (err) {
-        console.error('[ChatHistorySidebar] Failed to create personal project:', err);
+        console.error('[ChatHistorySidebar] Failed to create personal folder:', err);
       }
     },
     [createProject]
@@ -345,19 +348,19 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
       try {
         await createProject({ name, scope: 'team' });
       } catch (err) {
-        console.error('[ChatHistorySidebar] Failed to create team project:', err);
+        console.error('[ChatHistorySidebar] Failed to create team folder:', err);
       }
     },
     [createProject]
   );
 
-  // Handle delete project
+  // Handle delete folder
   const handleDeleteProject = useCallback(
     async (id: string) => {
       try {
         await deleteProject(id);
       } catch (err) {
-        console.error('[ChatHistorySidebar] Failed to delete project:', err);
+        console.error('[ChatHistorySidebar] Failed to delete folder:', err);
       }
     },
     [deleteProject]
@@ -424,73 +427,103 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           />
         </div>
 
-        {/* Projects Sections (hidden during search) */}
-        {!searchQuery && (
-          <div className="border-b border-slate-200 dark:border-navy-700 pb-1">
-            {/* My Projects (Personal) */}
-            <ProjectSection
-              title={t('aiChat.myProjects', 'My Projects')}
-              icon={<Folder size={11} />}
-              projects={personalProjects}
-              expandedProjectIds={expandedProjectIds}
-              activeConversationId={activeConversationId}
-              getConversationsByProjectId={getConversationsByProjectId}
-              onToggleExpanded={toggleProjectExpanded}
-              onSelectConversation={handleSelectConversation}
-              onDeleteProject={handleDeleteProject}
-              onCreateProject={handleCreatePersonalProject}
-              createButtonLabel={t('aiChat.newPersonalFolder', 'New personal folder')}
-              emptyLabel={t('aiChat.createFolder', 'Create folder')}
-              t={t}
-            />
-
-            {/* Team Projects (Shared) */}
-            <ProjectSection
-              title={t('aiChat.teamProjects', 'Team Projects')}
-              icon={<Users size={11} />}
-              projects={teamProjects}
-              expandedProjectIds={expandedProjectIds}
-              activeConversationId={activeConversationId}
-              getConversationsByProjectId={getConversationsByProjectId}
-              onToggleExpanded={toggleProjectExpanded}
-              onSelectConversation={handleSelectConversation}
-              onDeleteProject={handleDeleteProject}
-              onCreateProject={handleCreateTeamProject}
-              createButtonLabel={t('aiChat.newTeamFolder', 'New team folder')}
-              emptyLabel={t('aiChat.createTeamFolder', 'Create team folder')}
-              t={t}
-            />
-          </div>
-        )}
-
-        {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto px-3">
+        {/* Main scrollable area: Folders + Conversations */}
+        <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : visibleGroups.length === 0 ? (
-            <div className="text-center py-12 px-4">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-                <Search size={20} className="text-slate-400 dark:text-slate-500" />
-              </div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                {searchQuery
-                  ? t('aiChat.noResults', 'No conversations found')
-                  : t('aiChat.noConversations', 'No conversations yet')}
-              </p>
-              {!searchQuery && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-                  {t('aiChat.startNewChat', 'Start a new chat to begin')}
+          ) : searchQuery ? (
+            /* Search mode: show flat grouped results */
+            visibleGroups.length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
+                  <Search size={20} className="text-slate-400 dark:text-slate-500" />
+                </div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                  {t('aiChat.noResults', 'No conversations found')}
                 </p>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="px-3">
+                <ConversationList
+                  groups={displayGroups}
+                  activeId={activeConversationId}
+                  onSelect={handleSelectConversation}
+                />
+              </div>
+            )
           ) : (
-            <ConversationList
-              groups={displayGroups}
-              activeId={activeConversationId}
-              onSelect={handleSelectConversation}
-            />
+            /* Default mode: Project folders first, then unassigned conversations */
+            <>
+              {/* Chat Folders (Primary Navigation) */}
+              <div className="pb-1">
+                {/* My Folders (Personal) */}
+                <FolderSection
+                  title={t('aiChat.myFolders', 'My Folders')}
+                  icon={<Folder size={11} />}
+                  projects={personalProjects}
+                  expandedProjectIds={expandedProjectIds}
+                  activeConversationId={activeConversationId}
+                  getConversationsByProjectId={getConversationsByProjectId}
+                  onToggleExpanded={toggleProjectExpanded}
+                  onSelectConversation={handleSelectConversation}
+                  onDeleteProject={handleDeleteProject}
+                  onCreateProject={handleCreatePersonalProject}
+                  createButtonLabel={t('aiChat.newPersonalFolder', 'New personal folder')}
+                  emptyLabel={t('aiChat.createFolder', 'Create folder')}
+                  t={t}
+                />
+
+                {/* Team Folders (Shared) */}
+                <FolderSection
+                  title={t('aiChat.teamFolders', 'Team Folders')}
+                  icon={<Users size={11} />}
+                  projects={teamProjects}
+                  expandedProjectIds={expandedProjectIds}
+                  activeConversationId={activeConversationId}
+                  getConversationsByProjectId={getConversationsByProjectId}
+                  onToggleExpanded={toggleProjectExpanded}
+                  onSelectConversation={handleSelectConversation}
+                  onDeleteProject={handleDeleteProject}
+                  onCreateProject={handleCreateTeamProject}
+                  createButtonLabel={t('aiChat.newTeamFolder', 'New team folder')}
+                  emptyLabel={t('aiChat.createTeamFolder', 'Create team folder')}
+                  t={t}
+                />
+              </div>
+
+              {/* Separator between folders and unassigned conversations */}
+              {(personalProjects.length > 0 || teamProjects.length > 0) &&
+                unassignedConversations.length > 0 && (
+                  <div className="border-t border-slate-200 dark:border-navy-700 mx-3" />
+                )}
+
+              {/* Unassigned Conversations (not in any folder) */}
+              <div className="px-3">
+                {unassignedConversations.length === 0 &&
+                personalProjects.length === 0 &&
+                teamProjects.length === 0 ? (
+                  <div className="text-center py-12 px-4">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
+                      <Search size={20} className="text-slate-400 dark:text-slate-500" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                      {t('aiChat.noConversations', 'No conversations yet')}
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                      {t('aiChat.startNewChat', 'Start a new chat to begin')}
+                    </p>
+                  </div>
+                ) : (
+                  <ConversationList
+                    groups={unassignedGroups}
+                    activeId={activeConversationId}
+                    onSelect={handleSelectConversation}
+                  />
+                )}
+              </div>
+            </>
           )}
         </div>
 

@@ -12,6 +12,7 @@ import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
+import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -50,13 +51,21 @@ router.post(
 
     try {
       // Get AI Pipeline
-      const aiPipeline = await import('../services/ai/aiPipeline.js').then((m) => {
+      const aiPipeline = await import('../services/ai/AIPipeline.js').then((m) => {
         const AIPipelineClass = (m as any).AIPipeline;
         return new AIPipelineClass();
       });
 
+      // Retrieve relevant KB docs and inject into system instruction (kept compact)
+      const kb = await buildHelpDocsContext({
+        query: message,
+        moduleId: context || null,
+        maxArticles: 3,
+        maxCharsPerArticle: 1200,
+      });
+
       // Build system prompt for help context
-      const systemPrompt = buildHelpSystemPrompt(context);
+      const systemPrompt = buildHelpSystemPrompt(context) + (kb.systemInstructionAddon || '');
 
       // Format conversation history
       const formattedHistory = (history || []).map((h: { role: string; content: string }) => ({
@@ -81,7 +90,14 @@ router.post(
       const responseText = (response as any).text || (response as any).content || '';
 
       // Extract sources if RAG was used
-      const sources = extractSources(response);
+      const ragSources = extractSources(response);
+      const kbSources = (kb.citations || []).map((c) => ({
+        id: c.id,
+        type: 'kb',
+        title: c.title,
+        link: c.link,
+      }));
+      const sources = [...kbSources, ...ragSources].filter(Boolean);
 
       logger.info(`[HelpChat] User ${req.userId} asked: "${message.slice(0, 50)}..."`);
 

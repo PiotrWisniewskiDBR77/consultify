@@ -358,20 +358,37 @@ class AdaptiveResponseService {
   // ==========================================
 
   /**
-   * Adapt response content based on user preferences
-   * This is called post-generation to adjust formatting
+   * Adapt response content based on user preferences.
+   * Applies structural transformations post-generation.
    */
   async adaptContent(content: string, userId: string, context?: ScreenContext): Promise<string> {
     try {
+      if (!content?.trim()) return content;
+
       const config = await this.getResponseConfig(userId, context);
+      let adapted = content;
 
-      // For now, return content as-is
-      // In the future, this could apply transformations like:
-      // - Converting paragraphs to bullets
-      // - Summarizing for concise preference
-      // - Adding structure headings
+      // 1. Length adaptation — trim for concise preference
+      if (config.length === 'concise' && adapted.length > 1500) {
+        adapted = this.trimToKeyPoints(adapted);
+      }
 
-      return content;
+      // 2. Depth adaptation — add executive summary for executive_summary depth
+      if (config.depth === 'executive_summary' && adapted.length > 800) {
+        adapted = this.prependExecutiveSummary(adapted);
+      }
+
+      // 3. Format adaptation — convert paragraphs to bullets if preferred
+      if (config.format === 'bullets') {
+        adapted = this.convertToBullets(adapted);
+      }
+
+      // 4. Technical level — simplify jargon for beginners
+      if (config.technicalLevel === 'beginner') {
+        adapted = this.simplifyJargon(adapted);
+      }
+
+      return adapted;
     } catch (error) {
       logger.error('[AdaptiveResponseService] adaptContent error:', error);
       return content;
@@ -379,13 +396,74 @@ class AdaptiveResponseService {
   }
 
   /**
-   * Adapt tone of response
+   * Trim response to key points for concise preference.
    */
-  async adaptTone(content: string, targetTone: string): Promise<string> {
-    // For now, return content as-is
-    // This could be enhanced with LLM-based tone adjustment
-    logger.info(`[AdaptiveResponseService] adaptTone called with tone: ${targetTone}`);
-    return content;
+  private trimToKeyPoints(content: string): string {
+    const sections = content.split(/\n#{1,3}\s/);
+    if (sections.length <= 2) return content;
+
+    // Keep first section (intro/summary) and trim others
+    const trimmed = sections.map((section, i) => {
+      if (i === 0) return section;
+      // For each section, keep header + first 3 bullet points or 2 paragraphs
+      const lines = section.split('\n').filter((l) => l.trim());
+      const header = lines[0] || '';
+      const bodyLines = lines.slice(1);
+
+      const bulletLines = bodyLines.filter(
+        (l) => /^[-*•]\s/.test(l.trim()) || /^\d+\.\s/.test(l.trim())
+      );
+      if (bulletLines.length > 0) {
+        return '\n## ' + header + '\n' + bulletLines.slice(0, 4).join('\n');
+      }
+      return '\n## ' + header + '\n' + bodyLines.slice(0, 3).join('\n');
+    });
+
+    return trimmed.join('\n');
+  }
+
+  /**
+   * Prepend a brief executive summary extracted from the response.
+   */
+  private prependExecutiveSummary(content: string): string {
+    // Extract key takeaways from bullets and bold text
+    const boldMatches = content.match(/\*\*([^*]+)\*\*/g)?.slice(0, 3) || [];
+    const keyPoints = boldMatches.map((m) => m.replace(/\*\*/g, ''));
+
+    if (keyPoints.length === 0) return content;
+
+    const summary = `> **Executive Summary:** ${keyPoints.join(' | ')}\n\n---\n\n`;
+    return summary + content;
+  }
+
+  /**
+   * Convert paragraph-heavy content to bullet format.
+   */
+  private convertToBullets(content: string): string {
+    return content.replace(/^([A-Z][^.\n]{30,}\.)\s*$/gm, (match) => `- ${match.trim()}`);
+  }
+
+  /**
+   * Simplify technical jargon for beginner users.
+   */
+  private simplifyJargon(content: string): string {
+    const jargonMap: Record<string, string> = {
+      NPV: 'NPV (Net Present Value — wartość netto inwestycji)',
+      IRR: 'IRR (Internal Rate of Return — wewnętrzna stopa zwrotu)',
+      MECE: 'MECE (wzajemnie wykluczające, wspólnie wyczerpujące)',
+      OEE: 'OEE (Overall Equipment Effectiveness — efektywność urządzeń)',
+      KPI: 'KPI (Key Performance Indicator — kluczowy wskaźnik)',
+    };
+
+    let simplified = content;
+    for (const [term, explanation] of Object.entries(jargonMap)) {
+      // Only expand the first occurrence
+      const regex = new RegExp(`\\b${term}\\b`, '');
+      if (regex.test(simplified)) {
+        simplified = simplified.replace(regex, explanation);
+      }
+    }
+    return simplified;
   }
 
   /**

@@ -3,6 +3,7 @@
  * Unified wrapper for model providers using the 'ai' package.
  */
 
+import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateObject, generateText, jsonSchema, streamText, tool } from 'ai';
@@ -20,6 +21,7 @@ const PROVIDER_CONCURRENCY_LIMITS: Record<string, number> = {
   openai: 25,
   google: 20,
   gemini: 20,
+  anthropic: 20,
   deepseek: 15,
   nvidia: 10,
   cohere: 15,
@@ -31,6 +33,7 @@ const PROVIDER_RATE_LIMIT_PER_SEC: Record<string, number> = {
   openai: 40,
   google: 30,
   gemini: 30,
+  anthropic: 30,
   deepseek: 25,
   nvidia: 15,
   cohere: 25,
@@ -229,6 +232,15 @@ function getProviderSync(modelConfig: ModelConfig) {
       return createGoogleGenerativeAI({
         apiKey: envGemini || effectiveApiKey,
       });
+    case 'anthropic': {
+      const envAnthropic = process.env.ANTHROPIC_API_KEY?.trim();
+      if (!envAnthropic && !effectiveApiKey) {
+        throw new Error('No Anthropic API key configured (set ANTHROPIC_API_KEY).');
+      }
+      return createAnthropic({
+        apiKey: envAnthropic || effectiveApiKey,
+      });
+    }
     case 'deepseek':
     case 'z_ai':
     case 'zai':
@@ -733,13 +745,45 @@ export class LLMService {
             abortSignal: AbortSignal.timeout(60000),
           });
 
+          // Force-consume the first chunk BEFORE returning. This detects 429 /
+          // rate-limit errors that only manifest during iteration (the Vercel AI
+          // SDK resolves streamText() but the underlying API call fails lazily).
+          // If we don't do this, the error surfaces only inside the route's
+          // for-await loop, AFTER process() has already returned, making the
+          // provider-fallback mechanism in AIPipeline.process() useless.
+          const rawIterator = result.textStream[Symbol.asyncIterator]();
+          let firstChunk: IteratorResult<string>;
+          try {
+            firstChunk = await rawIterator.next();
+          } catch (firstChunkError: any) {
+            // The actual API call failed (e.g. Gemini 429)
+            aiLogger.warn(
+              'LLMService',
+              `Stream first-chunk failed (${providerId}/${modelConfig.id}): ${firstChunkError?.message?.slice(0, 200)}`
+            );
+            throw firstChunkError;
+          }
+
+          // Build a generator that yields the first chunk we already consumed,
+          // then delegates to the rest of the iterator.
+          async function* prependedStream(): AsyncGenerator<string> {
+            if (!firstChunk.done && firstChunk.value) {
+              yield firstChunk.value;
+            }
+            while (true) {
+              const next = await rawIterator.next();
+              if (next.done) break;
+              if (next.value) yield next.value;
+            }
+          }
+
           await circuitBreaker.recordSuccess(providerId);
-          return { stream: result.textStream };
+          return { stream: prependedStream() };
         } catch (error: unknown) {
           lastError = error as Error;
           aiLogger.warn(
             'LLMService',
-            `Stream initialization failed (attempt ${attempt + 1}/2): ${lastError.message}`
+            `Stream initialization failed (attempt ${attempt + 1}/2): ${lastError.message?.slice(0, 200)}`
           );
           if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 1000));
         }

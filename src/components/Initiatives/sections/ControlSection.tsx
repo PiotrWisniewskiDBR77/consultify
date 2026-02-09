@@ -1,0 +1,167 @@
+/**
+ * ControlSection - Module, Status, Priority, Workflow Actions
+ *
+ * Extracted from InitiativeDocumentView (right column #2).
+ */
+
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, ChevronDown, Flag, Layers } from 'lucide-react';
+import React from 'react';
+
+import { getStatusActions, getStatusMeta } from '@/services/initiativeLifecycle';
+
+import { CollapsibleSection } from './CollapsibleSection';
+import { useInitiativeContext } from './InitiativeContext';
+import type { InitiativeSectionProps } from './types';
+import { getModuleFromStatus, MODULE_CONFIG, PRIORITY_CONFIG } from './types';
+
+export const ControlSection: React.FC<InitiativeSectionProps> = ({
+  sectionType,
+  expanded,
+  onToggle,
+}) => {
+  const {
+    initiative,
+    isPolish,
+    priority,
+    setPriority,
+    showPriorityDropdown,
+    setShowPriorityDropdown,
+    statusActions,
+    primaryActions,
+    handleStatusAction,
+    isMutating,
+  } = useInitiativeContext();
+
+  const status = (initiative?.status || 'DRAFT') as string;
+  const statusMeta = getStatusMeta(status as any);
+  const currentModule = getModuleFromStatus(status);
+  const moduleConfig = MODULE_CONFIG[currentModule];
+  const priorityConfig =
+    PRIORITY_CONFIG[priority as keyof typeof PRIORITY_CONFIG] || PRIORITY_CONFIG.medium;
+
+  return (
+    <CollapsibleSection
+      id="control"
+      title={isPolish ? 'Sterowanie' : 'Control'}
+      icon={<Layers size={18} className="text-purple-500 dark:text-purple-400" />}
+      iconBg="bg-gradient-to-br from-purple-500/10 to-pink-500/10 dark:from-purple-500/20 dark:to-pink-500/20"
+      expanded={expanded}
+      onToggle={onToggle}
+    >
+      <div className="space-y-4">
+        {/* Module & Status */}
+        <div className="p-3 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100/50 dark:from-navy-800 dark:to-navy-900/50 border border-slate-200/80 dark:border-navy-700/80">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              {isPolish ? 'Aktualny moduł' : 'Current Module'}
+            </span>
+            <a
+              href={moduleConfig.route}
+              className="text-[10px] text-purple-500 hover:text-purple-600 font-medium"
+            >
+              {isPolish ? 'Przejdź →' : 'Go to →'}
+            </a>
+          </div>
+          <div
+            className={`flex items-center gap-3 p-3 rounded-lg ${moduleConfig.bgLight} border border-slate-200/50 dark:border-navy-600/50 mb-3`}
+          >
+            <div
+              className={`w-10 h-10 rounded-xl ${moduleConfig.bgLight} flex items-center justify-center`}
+            >
+              <div className={`w-3 h-3 rounded-full ${moduleConfig.color}`} />
+            </div>
+            <div className="flex-1">
+              <p className={`text-sm font-semibold ${moduleConfig.textColor}`}>
+                {isPolish ? moduleConfig.labelPl : moduleConfig.label}
+              </p>
+              <p className="text-[10px] text-slate-400">
+                {isPolish ? moduleConfig.descriptionPl : moduleConfig.description}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              Status
+            </span>
+          </div>
+          <div
+            className={`flex items-center gap-3 p-3 rounded-lg ${statusMeta.bgColor} border border-slate-200/50 dark:border-navy-600/50`}
+          >
+            <div
+              className={`w-3 h-3 rounded-full ${statusMeta.dotColor || statusMeta.color || 'bg-slate-400'} animate-pulse`}
+            />
+            <div className="flex-1">
+              <p className={`text-sm font-semibold ${statusMeta.color}`}>{statusMeta.label}</p>
+              {statusMeta.description && (
+                <p className="text-[10px] text-slate-400">{statusMeta.description}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Priority */}
+        <div className="relative">
+          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+            {isPolish ? 'Priorytet' : 'Priority'}
+          </label>
+          <button
+            onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
+            className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Flag size={14} className={priorityConfig.color} />
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {isPolish ? priorityConfig.labelPl : priorityConfig.label}
+              </span>
+            </div>
+            <ChevronDown size={14} className="text-slate-400" />
+          </button>
+          <AnimatePresence>
+            {showPriorityDropdown && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="absolute z-20 mt-1 w-full bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-lg overflow-hidden"
+              >
+                {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setPriority(key as any);
+                      setShowPriorityDropdown(false);
+                    }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 ${key === priority ? 'bg-purple-50 dark:bg-purple-500/10' : ''}`}
+                  >
+                    <Flag size={14} className={config.color} />
+                    <span className="text-slate-700 dark:text-slate-300">
+                      {isPolish ? config.labelPl : config.label}
+                    </span>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Status Actions */}
+        {primaryActions.length > 0 && (
+          <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-navy-700">
+            {primaryActions.map((a) => (
+              <button
+                key={a.targetStatus}
+                onClick={() => handleStatusAction(a)}
+                disabled={isMutating}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white text-sm font-semibold shadow-lg shadow-purple-500/30 disabled:opacity-50 transition-all"
+              >
+                <span>{a.label}</span>
+                <ArrowRight size={16} />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </CollapsibleSection>
+  );
+};

@@ -181,7 +181,9 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
         ref={fileInputRef}
         className="hidden"
         multiple
-        accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.pptx,.ppt,.md,.json"
+        // Backend RAG ingestion currently supports text-like documents and PDF.
+        // (Binary office formats like docx/xlsx/pptx are intentionally excluded here.)
+        accept=".pdf,.txt,.md,.json,.csv"
         onChange={handleFileChange}
       />
 

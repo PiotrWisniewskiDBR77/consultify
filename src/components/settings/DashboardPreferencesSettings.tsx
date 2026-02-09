@@ -39,7 +39,7 @@ interface DashboardPreferencesSettingsProps {
 }
 
 interface DashboardPreferences {
-  defaultLandingPage: 'dashboard' | 'projects' | 'tasks' | 'calendar' | 'ai-assistant';
+  defaultLandingPage: 'ai-assistant' | 'projects' | 'tasks' | 'calendar';
   showGreeting: boolean;
   compactMode: boolean;
   autoRefreshInterval: number; // in seconds, 0 = disabled
@@ -59,7 +59,7 @@ interface DashboardPreferencesResponse {
 }
 
 const DEFAULT_PREFERENCES: DashboardPreferences = {
-  defaultLandingPage: 'dashboard',
+  defaultLandingPage: 'ai-assistant',
   showGreeting: true,
   compactMode: false,
   autoRefreshInterval: 60,
@@ -137,11 +137,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
   }
 
   const landingPageOptions = [
-    {
-      value: 'dashboard',
-      label: t('settings.dashboard.pages.dashboard', 'Dashboard'),
-      icon: LayoutDashboard,
-    },
+    { value: 'ai-assistant', label: t('settings.dashboard.pages.ai', 'AI Chat'), icon: Brain },
     {
       value: 'projects',
       label: t('settings.dashboard.pages.projects', 'Projects'),
@@ -153,7 +149,6 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
       label: t('settings.dashboard.pages.calendar', 'Calendar'),
       icon: Calendar,
     },
-    { value: 'ai-assistant', label: t('settings.dashboard.pages.ai', 'AI Assistant'), icon: Brain },
   ];
 
   const widgetOptions = [

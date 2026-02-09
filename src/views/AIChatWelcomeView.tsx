@@ -1709,7 +1709,7 @@ For example: REMEMBER: preferred_language: Polish`;
           </div>
 
           {/* AI Capability Cards — shows what the AI can do */}
-          <div className="w-full max-w-3xl mt-6 grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="w-full max-w-3xl mt-8 grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
               {
                 icon: Brain,
@@ -1761,17 +1761,17 @@ For example: REMEMBER: preferred_language: Polish`;
             ].map((cap) => (
               <button
                 key={cap.label}
-                onClick={() => void handleSend(cap.prompt)}
-                className="group flex flex-col items-start gap-1.5 p-2 rounded-lg border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-white/[0.02] hover:bg-white dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 text-left"
+                onClick={() => handleSuggestionClick(cap.prompt)}
+                className="group flex flex-col items-start gap-2 p-3 rounded-xl border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-white/[0.02] hover:bg-white dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 text-left"
               >
-                <div className={`p-1.5 rounded-md ${cap.bg}`}>
-                  <cap.icon size={16} className={cap.color} />
+                <div className={`p-2 rounded-lg ${cap.bg}`}>
+                  <cap.icon size={18} className={cap.color} />
                 </div>
                 <div>
-                  <div className="text-[11px] font-semibold text-navy-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                  <div className="text-xs font-semibold text-navy-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                     {cap.label}
                   </div>
-                  <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight line-clamp-2">
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">
                     {cap.desc}
                   </div>
                 </div>

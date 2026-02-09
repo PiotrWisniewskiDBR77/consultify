@@ -55,7 +55,7 @@ const defaultSettings: LayoutSettings = {
   showBreadcrumbs: true,
   showToolbar: true,
   stickyHeader: true,
-  defaultView: 'dashboard',
+  defaultView: 'chat',
   toolbarItems: ['search', 'notifications', 'help', 'profile'],
   quickAccessItems: ['new_task', 'new_project', 'quick_note'],
 };
@@ -82,7 +82,7 @@ const availableQuickAccessItems = [
 ];
 
 const defaultViews = [
-  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'chat', label: 'AI Chat' },
   { id: 'projects', label: 'Projects' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'inbox', label: 'Inbox' },

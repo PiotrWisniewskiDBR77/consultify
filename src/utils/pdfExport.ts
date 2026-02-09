@@ -102,6 +102,115 @@ export async function exportToPDF(elementId: string, options: ExportOptions = {}
 }
 
 /**
+ * Export a conversation (array of messages) as a formatted PDF document.
+ * Uses jsPDF text rendering (no html2canvas needed).
+ */
+export async function exportConversationToPDF(
+  messages: Array<{ role: string; content: string; timestamp?: Date | string }>,
+  options: { title?: string; filename?: string } = {}
+): Promise<void> {
+  const { title = 'AI Conversation', filename = 'conversation.pdf' } = options;
+
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 15;
+  const maxWidth = pageWidth - margin * 2;
+  let y = margin;
+
+  const addPageIfNeeded = (requiredSpace: number) => {
+    if (y + requiredSpace > pageHeight - margin) {
+      pdf.addPage();
+      y = margin;
+    }
+  };
+
+  // Title
+  pdf.setFontSize(18);
+  pdf.setTextColor(20, 30, 70);
+  pdf.text(title, margin, y + 6);
+  y += 14;
+
+  // Subtitle
+  pdf.setFontSize(9);
+  pdf.setTextColor(120, 120, 120);
+  pdf.text(
+    `Exported: ${new Date().toLocaleString()} • ${messages.length} messages • Consultinity`,
+    margin,
+    y
+  );
+  y += 8;
+
+  // Separator
+  pdf.setDrawColor(200, 200, 200);
+  pdf.line(margin, y, pageWidth - margin, y);
+  y += 6;
+
+  // Messages
+  for (const msg of messages) {
+    const isUser = msg.role === 'user';
+    const roleLabel = isUser ? 'USER' : 'AI CONSULTANT';
+    const roleColor: [number, number, number] = isUser ? [59, 130, 246] : [16, 185, 129];
+
+    // Role label
+    addPageIfNeeded(12);
+    pdf.setFontSize(8);
+    pdf.setTextColor(...roleColor);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(roleLabel, margin, y);
+    if (msg.timestamp) {
+      const ts = typeof msg.timestamp === 'string' ? new Date(msg.timestamp) : msg.timestamp;
+      pdf.setTextColor(160, 160, 160);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(ts.toLocaleString(), margin + 35, y);
+    }
+    y += 5;
+
+    // Message content — word-wrap
+    pdf.setFontSize(10);
+    pdf.setTextColor(40, 40, 40);
+    pdf.setFont('helvetica', 'normal');
+
+    // Clean markdown formatting for PDF
+    const cleanContent = msg.content
+      .replace(/\*\*(.*?)\*\*/g, '$1') // bold
+      .replace(/\*(.*?)\*/g, '$1') // italic
+      .replace(/#{1,6}\s/g, '') // headers
+      .replace(/```[\s\S]*?```/g, (m) => m.replace(/```\w*\n?/g, '').trim()) // code blocks
+      .replace(/`([^`]+)`/g, '$1') // inline code
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links
+      .trim();
+
+    const lines = pdf.splitTextToSize(cleanContent, maxWidth);
+    for (const line of lines) {
+      addPageIfNeeded(5);
+      pdf.text(line, margin, y);
+      y += 4.5;
+    }
+    y += 4;
+
+    // Light separator between messages
+    addPageIfNeeded(3);
+    pdf.setDrawColor(230, 230, 230);
+    pdf.line(margin, y, margin + 40, y);
+    y += 5;
+  }
+
+  // Footer on each page
+  const totalPages = pdf.internal.pages.length - 1;
+  for (let i = 1; i <= totalPages; i++) {
+    pdf.setPage(i);
+    pdf.setFontSize(8);
+    pdf.setTextColor(150, 150, 150);
+    pdf.text(`Page ${i} of ${totalPages} • Consultinity AI`, pageWidth - margin, pageHeight - 5, {
+      align: 'right',
+    });
+  }
+
+  pdf.save(filename);
+}
+
+/**
  * Check if PDF export is allowed based on organization type
  * @param orgType - The organization type (DEMO, TRIAL, PAID)
  * @returns boolean indicating if export is allowed

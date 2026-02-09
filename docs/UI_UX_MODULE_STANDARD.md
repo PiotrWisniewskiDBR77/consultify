@@ -33,35 +33,35 @@
 
 ### Lewa strona:
 
-| Element | Opis |
-|---------|------|
-| **🔍 Lupa** | Mała ikona, po kliknięciu rozwija panel wyszukiwania |
-| **Główne taby** | Przyciski nawigacji do rodzajów danych w module |
+| Element         | Opis                                                 |
+| --------------- | ---------------------------------------------------- |
+| **🔍 Lupa**     | Mała ikona, po kliknięciu rozwija panel wyszukiwania |
+| **Główne taby** | Przyciski nawigacji do rodzajów danych w module      |
 
 **Przykłady tabów dla różnych modułów:**
 
-| Moduł | Taby |
-|-------|------|
-| **Discovery Tools** | Discovery, Reports, Initiatives |
-| **Assessment** | Assessment, Reports, Initiatives |
-| **Initiatives** | Draft, Planning, Review, Approved, Executing, Done |
-| **Execution** | Initiatives, Tasks, Decisions, Reports |
-| **Benefits** | Completed, KPIs, ROI Analysis |
+| Moduł               | Taby                                               |
+| ------------------- | -------------------------------------------------- |
+| **Discovery Tools** | Discovery, Reports, Initiatives                    |
+| **Assessment**      | Assessment, Reports, Initiatives                   |
+| **Initiatives**     | Draft, Planning, Review, Approved, Executing, Done |
+| **Execution**       | Initiatives, Tasks, Decisions, Reports             |
+| **Benefits**        | Completed, KPIs, ROI Analysis                      |
 
 ### Prawa strona:
 
-| Element | Opis |
-|---------|------|
-| **View Toggle** | Przełącznik formatu: ≡ Table, ⊞ Grid, Kanban, Matrix, Timeline |
-| **Category Buttons** | Przyciski dodawania nowych elementów (kontekstowe dla modułu) |
+| Element              | Opis                                                           |
+| -------------------- | -------------------------------------------------------------- |
+| **View Toggle**      | Przełącznik formatu: ≡ Table, ⊞ Grid, Kanban, Matrix, Timeline |
+| **Category Buttons** | Przyciski dodawania nowych elementów (kontekstowe dla modułu)  |
 
 **Przykłady category buttons:**
 
-| Moduł | Przyciski |
-|-------|-----------|
-| **Discovery Tools** | Strategy, Operations, Digital, Process Auto |
-| **Assessment** | + New Assessment (otwiera modal z frameworkami) |
-| **Initiatives** | AI Generate, + New Initiative |
+| Moduł               | Przyciski                                       |
+| ------------------- | ----------------------------------------------- |
+| **Discovery Tools** | Strategy, Operations, Digital, Process Auto     |
+| **Assessment**      | + New Assessment (otwiera modal z frameworkami) |
+| **Initiatives**     | AI Generate, + New Initiative                   |
 
 ---
 
@@ -84,17 +84,18 @@
 
 ### Nagłówki kolumn z filtrami:
 
-| Kolumna | Filtrowalna | Sortowalna |
-|---------|-------------|------------|
-| TYPE | ✅ (dropdown) | ❌ |
-| NAME | ❌ | ✅ |
-| CATEGORY | ✅ (dropdown) | ❌ |
-| STATUS | ✅ (dropdown) | ❌ |
-| PROGRESS | ❌ | ✅ |
-| UPDATED | ❌ | ✅ |
-| ACTIONS | ❌ | ❌ |
+| Kolumna  | Filtrowalna   | Sortowalna |
+| -------- | ------------- | ---------- |
+| TYPE     | ✅ (dropdown) | ❌         |
+| NAME     | ❌            | ✅         |
+| CATEGORY | ✅ (dropdown) | ❌         |
+| STATUS   | ✅ (dropdown) | ❌         |
+| PROGRESS | ❌            | ✅         |
+| UPDATED  | ❌            | ✅         |
+| ACTIONS  | ❌            | ❌         |
 
 ### Filtry w nagłówkach:
+
 - Kliknięcie na ▼ otwiera dropdown z opcjami
 - Checkbox multiselect
 - Przyciski Clear / Apply
@@ -103,26 +104,28 @@
 
 ## 5. Formaty Prezentacji Danych
 
-| Format | Ikona | Użycie |
-|--------|-------|--------|
-| **Table** | ≡ | Domyślny, lista z kolumnami |
-| **Grid** | ⊞ | Karty w siatce |
-| **Kanban** | ▭▭▭ | Kolumny statusów (Draft → Done) |
-| **Matrix** | ⊞⊞ | Macierz 2D (np. priority × impact) |
-| **Timeline** | ━━━ | Gantt-style timeline |
+| Format       | Ikona | Użycie                             |
+| ------------ | ----- | ---------------------------------- |
+| **Table**    | ≡     | Domyślny, lista z kolumnami        |
+| **Grid**     | ⊞     | Karty w siatce                     |
+| **Kanban**   | ▭▭▭   | Kolumny statusów (Draft → Done)    |
+| **Matrix**   | ⊞⊞    | Macierz 2D (np. priority × impact) |
+| **Timeline** | ━━━   | Gantt-style timeline               |
 
 ---
 
 ## 6. Kolorystyka i Stany
 
 ### Aktywny element:
+
 ```css
 /* Fioletowa ramka + lekkie tło */
-border: 1px solid #8B5CF6;
+border: 1px solid #8b5cf6;
 background: rgba(139, 92, 246, 0.1);
 ```
 
 ### Nieaktywny element:
+
 ```css
 /* Szara ramka */
 border: 1px solid #374151;
@@ -130,28 +133,41 @@ background: transparent;
 ```
 
 ### Statusy (kropki kolorowe):
-| Status | Kolor |
-|--------|-------|
-| Draft | ⚫ Szary |
+
+| Status    | Kolor           |
+| --------- | --------------- |
+| Draft     | ⚫ Szary        |
 | In Review | 🟠 Pomarańczowy |
-| Approved | 🟢 Zielony |
-| Completed | 🟢 Zielony |
-| Blocked | 🔴 Czerwony |
-| Executing | 🔵 Cyan |
+| Approved  | 🟢 Zielony      |
+| Completed | 🟢 Zielony      |
+| Blocked   | 🔴 Czerwony     |
+| Executing | 🔵 Cyan         |
 
 ---
 
 ## 7. Wyszukiwanie
 
 ### Kompaktowa lupa:
+
 - Mała ikona 🔍 po lewej stronie
 - Kliknięcie rozwija pole `Search...`
 - Wyszukiwanie globalne w module
 
 ### Filtry w tabeli:
+
 - Dropdown w nagłówkach kolumn
 - Multiselect z checkboxami
 - Apply/Clear buttons
+
+---
+
+## Standard tabel aplikacji (Golden Standard)
+
+Jeśli ekran jest “hubem tabelarycznym” (listy, zarządzanie, admin tools), obowiązuje **App Table Standard**:
+
+- Dokument: `docs/ui-standards/app-table-standard.md`
+- Wzór: “Decisions” (My Work)
+- Referencyjna adopcja: “Report Templates” (Admin)
 
 ---
 
@@ -165,21 +181,22 @@ background: transparent;
 
 ## 9. Moduły z tym standardem
 
-| Moduł | Status |
-|-------|--------|
+| Moduł           | Status              |
+| --------------- | ------------------- |
 | Discovery Tools | ✅ Zaimplementowany |
-| Assessment | ✅ Zaimplementowany |
-| Initiatives | 🔄 Do aktualizacji |
-| Execution | 🔄 Do aktualizacji |
-| Benefits | 🔄 Do aktualizacji |
-| Economics | 🔄 Do aktualizacji |
-| Reports | 🔄 Do aktualizacji |
+| Assessment      | ✅ Zaimplementowany |
+| Initiatives     | 🔄 Do aktualizacji  |
+| Execution       | 🔄 Do aktualizacji  |
+| Benefits        | 🔄 Do aktualizacji  |
+| Economics       | 🔄 Do aktualizacji  |
+| Reports         | 🔄 Do aktualizacji  |
 
 ---
 
 ## 10. Wyjątki
 
 ### Moduły BEZ tego standardu:
+
 - **AI Chat** - pełnoekranowy interfejs czatu
 - **Settings** - własny layout ustawień
 - **Admin** - własny layout administracyjny

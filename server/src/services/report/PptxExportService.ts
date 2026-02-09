@@ -5,7 +5,8 @@
  * Uses pptxgenjs library for generating PPTX files.
  */
 
-import PptxGenJS from 'pptxgenjs';
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+const PptxGenJS: any = require('pptxgenjs');
 
 import logger from '../../utils/Logger.js';
 
@@ -69,8 +70,9 @@ const COLORS = {
 };
 
 const FONTS = {
-  title: 'Arial',
-  body: 'Arial',
+  // PowerPoint-safe "consulting" defaults (Calibri is widely available on Office installs)
+  title: 'Calibri Light',
+  body: 'Calibri',
   mono: 'Courier New',
 };
 
@@ -97,9 +99,11 @@ export class PptxExportService {
     logger.info(`[PptxExport] Generating presentation for report: ${report.id}`);
 
     const pptx = new PptxGenJS();
+    // Explicitly use 16:9 deck layout (10 x 5.625 in)
+    pptx.layout = 'LAYOUT_16x9';
 
     // Set presentation properties
-    pptx.author = 'Consultify';
+    pptx.author = 'Consultinity';
     pptx.title = report.name;
     pptx.subject = `${report.sourceType} Report`;
     pptx.company = report.organizationName || 'Organization';
@@ -148,7 +152,7 @@ export class PptxExportService {
   /**
    * Define master slides with consistent styling
    */
-  private defineMasterSlides(pptx: PptxGenJS, options: PptxExportOptions): void {
+  private defineMasterSlides(pptx: any, options: PptxExportOptions): void {
     const brandColor = options.brandColor || COLORS.primary;
 
     // Title slide master
@@ -230,7 +234,7 @@ export class PptxExportService {
         // Footer
         {
           text: {
-            text: 'Consultify Report',
+            text: 'Consultinity Report',
             options: {
               x: 0.5,
               y: 5.2,
@@ -302,7 +306,7 @@ export class PptxExportService {
    * Add title slide
    */
   private addTitleSlide(
-    pptx: PptxGenJS,
+    pptx: any,
     report: ReportData,
     options: PptxExportOptions,
     isPolish: boolean
@@ -364,7 +368,7 @@ export class PptxExportService {
     });
 
     // Logo placeholder
-    slide.addText('Consultify', {
+    slide.addText('Consultinity', {
       x: 0.5,
       y: 5,
       w: 9,
@@ -379,8 +383,15 @@ export class PptxExportService {
   /**
    * Add table of contents slide
    */
-  private addTableOfContents(pptx: PptxGenJS, sections: ReportSection[], isPolish: boolean): void {
+  private addTableOfContents(pptx: any, sections: ReportSection[], isPolish: boolean): void {
     const slide = pptx.addSlide({ masterName: 'CONTENT_SLIDE' });
+    slide.slideNumber = {
+      x: '92%',
+      y: '94%',
+      fontFace: FONTS.body,
+      fontSize: 10,
+      color: COLORS.darkGray,
+    };
 
     slide.addText(isPolish ? 'Spis treści' : 'Table of Contents', {
       x: 0.5,
@@ -416,13 +427,20 @@ export class PptxExportService {
    * Add executive summary slide
    */
   private addSummarySlide(
-    pptx: PptxGenJS,
+    pptx: any,
     section: ReportSection,
     report: ReportData,
     options: PptxExportOptions,
     isPolish: boolean
   ): void {
     const slide = pptx.addSlide({ masterName: 'CONTENT_SLIDE' });
+    slide.slideNumber = {
+      x: '92%',
+      y: '94%',
+      fontFace: FONTS.body,
+      fontSize: 10,
+      color: COLORS.darkGray,
+    };
 
     slide.addText(isPolish ? 'Podsumowanie wykonawcze' : 'Executive Summary', {
       x: 0.5,
@@ -463,12 +481,19 @@ export class PptxExportService {
    * Add score overview slide with chart
    */
   private addScoreOverviewSlide(
-    pptx: PptxGenJS,
+    pptx: any,
     report: ReportData,
     options: PptxExportOptions,
     isPolish: boolean
   ): void {
     const slide = pptx.addSlide({ masterName: 'CONTENT_SLIDE' });
+    slide.slideNumber = {
+      x: '92%',
+      y: '94%',
+      fontFace: FONTS.body,
+      fontSize: 10,
+      color: COLORS.darkGray,
+    };
 
     slide.addText(isPolish ? 'Przegląd wyników' : 'Score Overview', {
       x: 0.5,
@@ -544,13 +569,20 @@ export class PptxExportService {
    * Add section slide
    */
   private addSectionSlide(
-    pptx: PptxGenJS,
+    pptx: any,
     section: ReportSection,
     options: PptxExportOptions,
     isPolish: boolean
   ): void {
     // Add section divider
     const dividerSlide = pptx.addSlide({ masterName: 'SECTION_DIVIDER' });
+    dividerSlide.slideNumber = {
+      x: '92%',
+      y: '94%',
+      fontFace: FONTS.body,
+      fontSize: 10,
+      color: 'FFFFFF',
+    };
     dividerSlide.addText(section.title, {
       x: 0.5,
       y: 2.3,
@@ -566,10 +598,17 @@ export class PptxExportService {
 
     // Add content slide(s)
     const content = this.cleanMarkdown(section.content);
-    const contentChunks = this.splitContentIntoSlides(content, 1500);
+    const contentChunks = this.splitContentIntoSlides(content, 900);
 
     for (let i = 0; i < contentChunks.length; i++) {
       const slide = pptx.addSlide({ masterName: 'CONTENT_SLIDE' });
+      slide.slideNumber = {
+        x: '92%',
+        y: '94%',
+        fontFace: FONTS.body,
+        fontSize: 10,
+        color: COLORS.darkGray,
+      };
 
       const titleText =
         contentChunks.length > 1
@@ -619,11 +658,11 @@ export class PptxExportService {
   /**
    * Add table to slide
    */
-  private addTableToSlide(slide: PptxGenJS.Slide, data: any): void {
+  private addTableToSlide(slide: any, data: any): void {
     if (!data || !Array.isArray(data) || data.length === 0) return;
 
     const headers = Object.keys(data[0]);
-    const rows: PptxGenJS.TableRow[] = [];
+    const rows: any[] = [];
 
     // Header row
     rows.push(
@@ -664,8 +703,9 @@ export class PptxExportService {
   /**
    * Add closing slide
    */
-  private addClosingSlide(pptx: PptxGenJS, report: ReportData, isPolish: boolean): void {
+  private addClosingSlide(pptx: any, report: ReportData, isPolish: boolean): void {
     const slide = pptx.addSlide({ masterName: 'TITLE_SLIDE' });
+    slide.slideNumber = { x: '92%', y: '94%', fontFace: FONTS.body, fontSize: 10, color: 'FFFFFF' };
 
     slide.addText(isPolish ? 'Dziękujemy' : 'Thank You', {
       x: 0.5,
@@ -680,7 +720,7 @@ export class PptxExportService {
     });
 
     slide.addText(
-      isPolish ? 'Raport wygenerowany przez Consultify' : 'Report generated by Consultify',
+      isPolish ? 'Raport wygenerowany przez Consultinity' : 'Report generated by Consultinity',
       {
         x: 0.5,
         y: 3.5,
@@ -716,7 +756,7 @@ export class PptxExportService {
    */
   private prepareChartData(scoreSummary: ReportData['scoreSummary']): {
     labels: string[];
-    data: PptxGenJS.OptsChartData[];
+    data: any[];
   } {
     const labels: string[] = [];
     const actualValues: number[] = [];

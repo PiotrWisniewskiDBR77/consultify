@@ -44,7 +44,14 @@ interface AxisData {
 interface Report {
   id: string;
   name: string;
-  status: 'DRAFT' | 'FINAL';
+  status:
+    | 'DRAFT'
+    | 'GENERATING'
+    | 'FINAL'
+    | 'PENDING_APPROVAL'
+    | 'APPROVED'
+    | 'REJECTED'
+    | 'UTILIZED';
   assessmentId: string;
   assessmentName: string;
   content: ReportContent;

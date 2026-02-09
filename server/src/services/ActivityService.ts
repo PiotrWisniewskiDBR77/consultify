@@ -126,17 +126,20 @@ class ActivityService {
         correlationId,
       ]);
 
-      // Backward-compatible fallback for older SQLite schemas (missing `entity_name` column).
-      // Some dev DBs were created before this column existed; logging must not break the request flow.
+      // Backward-compatible fallback for older SQLite schemas.
+      // Some dev DBs were created from legacy baselines where `activity_logs` had fewer columns
+      // (e.g. missing old_value/new_value/ip_address/user_agent/correlation_id/entity_name).
+      // Logging must never break the request flow.
       if (
         (runResult as any)?.success === false &&
         typeof (runResult as any)?.error === 'string' &&
-        (runResult as any).error.includes('no column named entity_name')
+        (runResult as any).error.toLowerCase().includes('no column named')
       ) {
+        // Minimal insert compatible with the oldest known schema.
         const fallbackSql = `
-                  INSERT INTO activity_logs 
-                  (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, ip_address, user_agent, correlation_id)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  INSERT INTO activity_logs
+                  (id, organization_id, user_id, action, entity_type, entity_id)
+                  VALUES (?, ?, ?, ?, ?, ?)
               `;
         await this.deps.dbRun(fallbackSql, [
           activityId,
@@ -145,11 +148,6 @@ class ActivityService {
           action,
           entityType,
           entityId || null,
-          oldValue ? JSON.stringify(oldValue) : null,
-          newValue || metadata ? JSON.stringify(newValue || metadata) : null,
-          ipAddress || null,
-          userAgent || null,
-          correlationId,
         ]);
       }
     } catch (err) {

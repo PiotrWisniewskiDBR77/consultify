@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx src/index.ts",
+    "dev:watch": "tsx watch src/index.ts",
     "dev:ts": "tsx watch src/index.ts",
     "build": "tsc",
     "build:clean": "rm -rf dist && tsc --build",
@@ -35,6 +36,7 @@
     "@types/cookie-parser": "^1.4.10",
     "cheerio": "^1.1.2",
     "cookie-parser": "^1.4.7",
+    "docx": "9.5.1",
     "ioredis": "^5.8.2",
     "mammoth": "^1.11.0",
     "pdfkit": "^0.17.2",

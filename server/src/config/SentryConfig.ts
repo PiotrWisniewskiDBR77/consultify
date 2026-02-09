@@ -6,13 +6,20 @@
  * Import this at the very top of server/index.js, before other imports.
  */
 
-import * as Sentry from '@sentry/node';
-import { expressIntegration, httpIntegration, setupExpressErrorHandler } from '@sentry/node';
-import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import type { Express, NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 
 import logger from '../utils/Logger.js';
+
+// NOTE:
+// Do NOT import @sentry/node at module scope.
+// In some dev environments/package states, the @sentry/node ESM build can be partially missing files,
+// which would crash the entire backend at startup even when Sentry is disabled.
+// We therefore load Sentry lazily (only when enabled) and always fail-open.
+let Sentry: any | null = null;
+let sentryExpressIntegration: any | null = null;
+let sentryHttpIntegration: any | null = null;
+let sentryNodeProfilingIntegration: (() => unknown) | null = null;
 
 // ==========================================
 // ZOD SCHEMAS
@@ -35,6 +42,37 @@ export type SentryConfig = z.infer<typeof SentryConfigSchema>;
 const isProduction = process.env.NODE_ENV === 'production';
 const isStaging = process.env.NODE_ENV === 'staging';
 const isEnabled = (isProduction || isStaging) && !!process.env.SENTRY_DSN;
+
+async function ensureSentryLoaded(): Promise<boolean> {
+  if (Sentry) return true;
+  try {
+    const sentryNode = await import('@sentry/node');
+    Sentry = (sentryNode as any).default || sentryNode;
+    sentryExpressIntegration = (sentryNode as any).expressIntegration || null;
+    sentryHttpIntegration = (sentryNode as any).httpIntegration || null;
+
+    // Profiling integration is optional
+    try {
+      const profiling = await import('@sentry/profiling-node');
+      sentryNodeProfilingIntegration =
+        (profiling as any).nodeProfilingIntegration || (profiling as any).default || null;
+    } catch {
+      sentryNodeProfilingIntegration = null;
+    }
+
+    return true;
+  } catch (err: unknown) {
+    const e = err instanceof Error ? err : new Error(String(err));
+    logger.warn('[Sentry] Failed to load @sentry/node; continuing without Sentry', {
+      error: e.message,
+    });
+    Sentry = null;
+    sentryExpressIntegration = null;
+    sentryHttpIntegration = null;
+    sentryNodeProfilingIntegration = null;
+    return false;
+  }
+}
 
 // ==========================================
 // TYPES
@@ -66,9 +104,20 @@ export interface Context {
 /**
  * Initialize Sentry
  */
-export function initSentry(app: Express): SentryHandlers {
+export async function initSentry(app: Express): Promise<SentryHandlers> {
   if (!isEnabled) {
     logger.info('[Sentry] Disabled (no SENTRY_DSN or not in production/staging)');
+    return {
+      requestHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
+      tracingHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
+      errorHandler: (err: Error, _req: Request, _res: Response, next: NextFunction) => next(err),
+    };
+  }
+
+  const loaded = await ensureSentryLoaded();
+  if (!loaded || !Sentry) {
+    // Fail-open: never crash the server because observability is misconfigured/broken.
+    logger.warn('[Sentry] Disabled (failed to load @sentry/node)');
     return {
       requestHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
       tracingHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
@@ -91,27 +140,29 @@ export function initSentry(app: Express): SentryHandlers {
   // Validate config
   const validatedConfig = SentryConfigSchema.parse(sentryConfig);
 
+  const integrations = [
+    // Express integration for request tracing
+    sentryExpressIntegration ? sentryExpressIntegration({ app }) : null,
+    // HTTP integration for tracing outgoing requests
+    sentryHttpIntegration ? sentryHttpIntegration({ tracing: true }) : null,
+    // Profiling (optional, requires @sentry/profiling-node)
+    sentryNodeProfilingIntegration ? sentryNodeProfilingIntegration() : null,
+  ].filter(Boolean);
+
   Sentry.init({
     dsn: validatedConfig.dsn,
     environment: validatedConfig.environment,
     release: validatedConfig.release,
 
     // Integrations
-    integrations: [
-      // Express integration for request tracing
-      (expressIntegration as any)({ app }),
-      // HTTP integration for tracing outgoing requests
-      (httpIntegration as any)({ tracing: true }),
-      // Profiling (optional, requires @sentry/profiling-node)
-      nodeProfilingIntegration(),
-    ],
+    integrations: integrations as any,
 
     // Performance Monitoring
     tracesSampleRate: validatedConfig.tracesSampleRate,
     profilesSampleRate: validatedConfig.profilesSampleRate,
 
     // Filter sensitive data
-    beforeSend(event) {
+    beforeSend(event: any) {
       // Remove sensitive headers
       const request = event.request;
       if (request?.headers) {
@@ -217,12 +268,12 @@ export function initSentry(app: Express): SentryHandlers {
  * Capture exception manually
  */
 export function captureException(error: Error, context: Context = {}): void {
-  if (!isEnabled) {
+  if (!isEnabled || !Sentry) {
     logger.error('[Error]', error, context);
     return;
   }
 
-  Sentry.withScope((scope) => {
+  Sentry.withScope((scope: any) => {
     if (context.user) {
       scope.setUser({
         id: context.user.id,
@@ -252,12 +303,12 @@ export function captureMessage(
   level: 'info' | 'warning' | 'error' = 'info',
   context: Context = {}
 ): void {
-  if (!isEnabled) {
+  if (!isEnabled || !Sentry) {
     logger.info(`[${level.toUpperCase()}]`, message, context);
     return;
   }
 
-  Sentry.withScope((scope) => {
+  Sentry.withScope((scope: any) => {
     if (context.tags) {
       Object.entries(context.tags).forEach(([key, value]) => {
         scope.setTag(key, value);
@@ -275,8 +326,8 @@ export function captureMessage(
 /**
  * Add breadcrumb for debugging
  */
-export function addBreadcrumb(breadcrumb: Sentry.Breadcrumb): void {
-  if (!isEnabled) return;
+export function addBreadcrumb(breadcrumb: Record<string, unknown>): void {
+  if (!isEnabled || !Sentry) return;
 
   Sentry.addBreadcrumb({
     timestamp: Date.now() / 1000,
@@ -288,7 +339,7 @@ export function addBreadcrumb(breadcrumb: Sentry.Breadcrumb): void {
  * Set user context
  */
 export function setUser(user: User): void {
-  if (!isEnabled) return;
+  if (!isEnabled || !Sentry) return;
 
   Sentry.setUser({
     id: user.id,
@@ -302,7 +353,7 @@ export function setUser(user: User): void {
  * Clear user context (on logout)
  */
 export function clearUser(): void {
-  if (!isEnabled) return;
+  if (!isEnabled || !Sentry) return;
   Sentry.setUser(null);
 }
 

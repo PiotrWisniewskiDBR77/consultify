@@ -234,13 +234,33 @@ export class TaskController {
         let s = baseSql;
         const p = [...baseParams];
 
+        const normalizeCsvOrArray = (value: unknown): string[] => {
+          if (value == null) return [];
+          if (Array.isArray(value)) {
+            return value
+              .flatMap((v) => String(v ?? '').split(','))
+              .map((v) => v.trim())
+              .filter(Boolean);
+          }
+          return String(value)
+            .split(',')
+            .map((v) => v.trim())
+            .filter(Boolean);
+        };
+
         if (projectId) {
           s += ` AND t.project_id = ?`;
           p.push(projectId);
         }
         if (status) {
-          s += ` AND t.status = ?`;
-          p.push(status);
+          const statuses = normalizeCsvOrArray(status);
+          if (statuses.length === 1) {
+            s += ` AND t.status = ?`;
+            p.push(statuses[0]);
+          } else if (statuses.length > 1) {
+            s += ` AND t.status IN (${statuses.map(() => '?').join(',')})`;
+            p.push(...statuses);
+          }
         }
         if (assigneeId) {
           s += ` AND t.assignee_id = ?`;
@@ -251,8 +271,14 @@ export class TaskController {
           p.push(reporterId);
         }
         if (priority) {
-          s += ` AND t.priority = ?`;
-          p.push(priority);
+          const priorities = normalizeCsvOrArray(priority);
+          if (priorities.length === 1) {
+            s += ` AND t.priority = ?`;
+            p.push(priorities[0]);
+          } else if (priorities.length > 1) {
+            s += ` AND t.priority IN (${priorities.map(() => '?').join(',')})`;
+            p.push(...priorities);
+          }
         }
         if (initiativeId) {
           s += ` AND t.initiative_id = ?`;

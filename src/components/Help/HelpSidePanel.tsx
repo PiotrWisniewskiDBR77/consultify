@@ -19,6 +19,7 @@ import {
   ExternalLink,
   FolderOpen,
   HelpCircle,
+  Keyboard,
   Library,
   Loader2,
   PlayCircle,
@@ -41,6 +42,7 @@ import {
   HELP_CONFIG,
 } from '../../config/helpContent';
 import { HelpTab, useHelpSidePanel } from '../../contexts/HelpContext';
+import { KeyboardShortcutsHelp } from '../MyWork/shared/KeyboardShortcutsHelp';
 import { KnowledgeArticleView } from './KnowledgeArticleView';
 import { KnowledgeLibrary } from './KnowledgeLibrary';
 
@@ -230,6 +232,7 @@ export const HelpSidePanel: React.FC = () => {
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [selectedGuideArticle, setSelectedGuideArticle] = useState<string | null>(null);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
 
   // Handle Quick Guide click - navigate to KB article
   const handleGuideClick = (articleSlug: string | undefined) => {
@@ -469,6 +472,30 @@ export const HelpSidePanel: React.FC = () => {
                   </li>
                 </ul>
               </div>
+
+              {/* Keyboard Shortcuts */}
+              <button
+                onClick={() => setShowKeyboardShortcuts(true)}
+                className="w-full flex items-center gap-3 p-4 bg-slate-50 dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors group"
+              >
+                <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors">
+                  <Keyboard
+                    size={18}
+                    className="text-slate-500 dark:text-slate-400 group-hover:text-purple-600 dark:group-hover:text-purple-400"
+                  />
+                </div>
+                <div className="flex-1 text-left">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-purple-700 dark:group-hover:text-purple-300">
+                    {t('help.sidePanel.overview.keyboardShortcuts', 'Keyboard Shortcuts')}
+                  </span>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    {t('help.sidePanel.overview.keyboardShortcutsHint', 'Press ? anytime to view')}
+                  </p>
+                </div>
+                <kbd className="px-2 py-1 rounded bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 text-[11px] font-mono text-slate-500 dark:text-slate-400 shadow-sm">
+                  ?
+                </kbd>
+              </button>
             </div>
           )}
 
@@ -549,6 +576,12 @@ export const HelpSidePanel: React.FC = () => {
           </Link>
         </div>
       </div>
+
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcutsHelp
+        isOpen={showKeyboardShortcuts}
+        onClose={() => setShowKeyboardShortcuts(false)}
+      />
     </>
   );
 };

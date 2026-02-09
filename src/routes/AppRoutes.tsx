@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import React, { Suspense } from 'react';
 import { Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 
+import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
@@ -16,6 +17,7 @@ import { AppView, AuthStep, SessionMode, User } from '@/types';
 import { AuthView } from '@/views/AuthView';
 import { ProductEntryPage } from '@/views/ProductEntryPage';
 
+import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { ROUTES } from './routeConfig';
 
 // Lazy load views for new routes
@@ -160,10 +162,7 @@ const DiscoveryConsultantView = React.lazy(() =>
 // Become Partner (Public Partner Recruitment Page)
 const BecomePartnerView = React.lazy(() => import('@/views/BecomePartnerView'));
 
-// Dashboard
-const UserDashboardView = React.lazy(() =>
-  import('../views/UserDashboardView').then((m) => ({ default: m.UserDashboardView }))
-);
+// Dashboard - DEPRECATED: Removed, redirects to Chat
 
 // Project Intelligence (legacy)
 const ProjectIntelligenceView = React.lazy(() =>
@@ -683,6 +682,22 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['AI Chat']}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
+                  <ConversationRouteSync />
+                  <AIChatWelcomeView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* AI Chat with Conversation ID - deep link to specific conversation */}
+        <Route
+          path={ROUTES.AI_CHAT_CONVERSATION}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['AI Chat']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <ConversationRouteSync />
                   <AIChatWelcomeView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
@@ -702,22 +717,8 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Dashboard - User Dashboard View */}
-        <Route
-          path={ROUTES.DASHBOARD}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Dashboard']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="fade">
-                  <UserDashboardView
-                    currentUser={currentUser as any}
-                    onNavigate={(view) => setCurrentView(view as AppView)}
-                  />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
-        />
+        {/* Dashboard - DEPRECATED: Redirect to Chat */}
+        <Route path="/dashboard" element={<Navigate to={ROUTES.AI_CHAT} replace />} />
 
         {/* Interview Module - New Hub (ModuleHub pattern) */}
         <Route
@@ -963,31 +964,10 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        <Route
-          path={ROUTES.REPORTS}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Reports']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <FullReportsView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
-        />
-        {/* Report Builder Module */}
-        <Route
-          path="/assessment-reports/:reportId"
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Assessment', 'Reports', 'Builder']} noPadding>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <AssessmentReportBuilderView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
-        />
+        {/* Legacy /reports redirects to Report Builder */}
+        <Route path="/reports" element={<Navigate to="/reports/builder" replace />} />
+        {/* Report Builder Module (ROUTES.REPORTS now points to /reports/builder) */}
+        <Route path="/assessment-reports/:reportId" element={<LegacyAssessmentReportRedirect />} />
         <Route
           path="/reports/builder"
           element={

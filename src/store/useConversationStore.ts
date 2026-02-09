@@ -39,12 +39,19 @@ let _lastFetchConversationsAt = 0;
 const _inflightFetchConversationById: Record<string, Promise<void>> = {};
 const _lastFetchConversationAt: Record<string, number> = {};
 
+// ---------------------------------------------------------------------------
+// Title generation de-dupe / retry
+// ---------------------------------------------------------------------------
+const TITLE_DEDUPE_WINDOW_MS = 5000;
+const TITLE_MAX_RETRIES = 3;
+const _lastTitleAttemptAt: Record<string, number> = {};
+
 function getAppLanguageFallback(): SupportedLanguage {
   try {
-    const raw = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
-    return (isValidLanguage(raw) ? raw : 'en') as SupportedLanguage;
+    const raw = (localStorage.getItem('i18nextLng') || 'pl').split('-')[0];
+    return (isValidLanguage(raw) ? raw : 'pl') as SupportedLanguage;
   } catch {
-    return 'en';
+    return 'pl';
   }
 }
 
@@ -94,6 +101,8 @@ export interface Conversation {
     assessmentId?: string;
     initiativeIds?: string[];
     roadmapId?: string;
+    taskId?: string;
+    decisionId?: string;
   };
   messageCount: number;
   lastMessagePreview?: string;
@@ -229,6 +238,33 @@ export function groupConversations(
   return groups;
 }
 
+// ==================== HELPERS ====================
+
+/**
+ * Determine entity type from conversation pmoContext and title.
+ * Used to show dynamic icons and tags in the sidebar.
+ */
+export function getConversationEntityType(
+  conv: Conversation
+): 'assessment' | 'initiative' | 'roadmap' | 'task' | 'decision' | null {
+  const ctx = conv.pmoContext;
+  if (ctx?.assessmentId) return 'assessment';
+  if (ctx?.initiativeIds && ctx.initiativeIds.length > 0) return 'initiative';
+  if (ctx?.roadmapId) return 'roadmap';
+  if (ctx?.taskId) return 'task';
+  if (ctx?.decisionId) return 'decision';
+  // Fallback: check title prefix (set by useOpenChatWithContext)
+  const title = (conv.title || '').toLowerCase();
+  if (title.startsWith('task:') || title.startsWith('task ')) return 'task';
+  if (
+    title.startsWith('decision:') ||
+    title.startsWith('decision ') ||
+    title.startsWith('decyzja:')
+  )
+    return 'decision';
+  return null;
+}
+
 // ==================== STORE INTERFACE ====================
 
 interface ConversationState {
@@ -290,6 +326,11 @@ interface ConversationState {
     message: Omit<ConversationMessage, 'id' | 'createdAt'>
   ) => Promise<ConversationMessage>;
   updateLastMessage: (content: string) => void;
+  /**
+   * Truncate conversation after a message (inclusive) and optionally edit it.
+   * Used for "edit & regenerate" UX.
+   */
+  truncateFromMessage: (messageId: string, editedContent?: string) => Promise<void>;
 
   // Actions - Organization
   starConversation: (id: string) => Promise<void>;
@@ -616,14 +657,29 @@ export const useConversationStore = create<ConversationState>()(
             };
           });
 
-          // Trigger title generation after first exchange
-          const after = get().activeMessages;
-          if (
-            after.length === 2 &&
+          // Trigger title generation after first exchange (user + AI = 2 messages)
+          const activeConv = get().conversations.find((c) => c.id === conversationId);
+          const defaultTitle =
+            !activeConv?.title ||
+            String(activeConv.title).trim() === '' ||
+            activeConv.title === 'New conversation';
+          const canAutoTitle = activeConv?.titleSource !== 'user';
+          const shouldTryTitle =
             message.role === 'ai' &&
-            get().activeConversationId === conversationId
-          ) {
-            get().generateTitle(conversationId);
+            get().activeConversationId === conversationId &&
+            defaultTitle &&
+            canAutoTitle;
+
+          if (shouldTryTitle) {
+            const now = Date.now();
+            const last = _lastTitleAttemptAt[conversationId] || 0;
+            if (now - last > TITLE_DEDUPE_WINDOW_MS) {
+              _lastTitleAttemptAt[conversationId] = now;
+              // Small delay to ensure backend has persisted the messages/message_count
+              setTimeout(() => {
+                void get().generateTitle(conversationId);
+              }, 1200);
+            }
           }
 
           return newMessage;
@@ -655,6 +711,13 @@ export const useConversationStore = create<ConversationState>()(
           }
           return { activeMessages: messages };
         });
+      },
+
+      truncateFromMessage: async (messageId: string, editedContent?: string) => {
+        const conversationId = get().activeConversationId;
+        if (!conversationId) return;
+        await Api.truncateConversation(conversationId, messageId, editedContent);
+        await get().fetchConversation(conversationId);
       },
 
       // ==================== ORGANIZATION ====================
@@ -726,18 +789,51 @@ export const useConversationStore = create<ConversationState>()(
       // ==================== TITLE ====================
 
       generateTitle: async (id) => {
-        try {
-          const result = await Api.generateConversationTitle(id);
-          if (result.title) {
-            set((state) => ({
-              conversations: state.conversations.map((c) =>
-                c.id === id ? { ...c, title: result.title!, titleSource: 'auto' as const } : c
-              ),
-            }));
+        const attempt = async (tryNo: number) => {
+          try {
+            const result = await Api.generateConversationTitle(id);
+
+            // Success: backend returned a real title
+            if (result?.title && result.title !== 'New conversation') {
+              set((state) => {
+                const next = state.conversations.map((c) =>
+                  c.id === id ? { ...c, title: result.title!, titleSource: 'auto' as const } : c
+                );
+                return {
+                  conversations: next,
+                  groupedConversations: groupConversations(next),
+                };
+              });
+              return;
+            }
+
+            // Skipped because DB isn't ready yet (race on message_count / messages persistence)
+            const skippedReason = String(result?.reason || '');
+            const shouldRetryBecauseNotEnough =
+              result?.skipped === true && skippedReason.toLowerCase().includes('not enough');
+
+            if (shouldRetryBecauseNotEnough && tryNo < TITLE_MAX_RETRIES) {
+              const delay = 1200 * (tryNo + 1);
+              setTimeout(() => void attempt(tryNo + 1), delay);
+            }
+          } catch (err) {
+            // Network / backend error: retry a few times with backoff
+            if (tryNo < TITLE_MAX_RETRIES) {
+              const delay = 1500 * (tryNo + 1);
+              setTimeout(() => void attempt(tryNo + 1), delay);
+              return;
+            }
+            if (STORE_DEBUG) console.warn('[ConversationStore] Title generation failed:', err);
           }
-        } catch (err) {
-          console.error('[ConversationStore] Generate title error:', err);
-        }
+        };
+
+        // De-dupe: prevent repeated manual calls from spamming
+        const now = Date.now();
+        const last = _lastTitleAttemptAt[id] || 0;
+        if (now - last < 1000) return;
+        _lastTitleAttemptAt[id] = now;
+
+        await attempt(0);
       },
 
       renameConversation: async (id, title) => {
@@ -928,6 +1024,31 @@ export const useConversationStore = create<ConversationState>()(
     {
       name: 'consultinity-conversations',
       storage: createJSONStorage(() => localStorage),
+      // Version 2: migrates default language from 'en' to 'pl' for Polish product
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        if (version < 2) {
+          // Migration to v2: Fix language for users whose browser auto-detected 'en'
+          // but the app's primary audience is Polish. Force draftChatLanguage to 'pl'
+          // and set explicit preference key.
+          persistedState.draftChatLanguage = 'pl';
+          // Fix conversations that were auto-assigned 'en'
+          if (persistedState.chatLanguageByConversationId) {
+            const fixed: Record<string, string> = {};
+            for (const [id, lang] of Object.entries(persistedState.chatLanguageByConversationId)) {
+              fixed[id] = lang === 'en' ? 'pl' : (lang as string);
+            }
+            persistedState.chatLanguageByConversationId = fixed;
+          }
+          // Set the explicit user preference so chatLanguage resolution picks it up
+          try {
+            localStorage.setItem('consultinity-preferred-chat-lang', 'pl');
+          } catch {
+            // ignore storage errors
+          }
+        }
+        return persistedState;
+      },
       partialize: (state) => ({
         // Note: isSidebarOpen is NOT persisted - always start with sidebar closed to avoid blocking main content
         showArchived: state.showArchived,
@@ -950,10 +1071,30 @@ export const useConversationStore = create<ConversationState>()(
               '[ConversationStore] Rehydrating active conversation:',
               state.activeConversationId
             );
-            // Defer fetch to avoid race conditions
-            setTimeout(() => {
-              state.fetchConversation(state.activeConversationId!);
-            }, 100);
+
+            // Wait for auth to be ready instead of using a magic timeout.
+            // Poll every 200ms up to 5 seconds for auth token availability.
+            const convId = state.activeConversationId;
+            const maxAttempts = 25;
+            let attempt = 0;
+
+            const tryFetch = () => {
+              attempt++;
+              const token = localStorage.getItem('token');
+
+              if (token) {
+                state.fetchConversation(convId);
+              } else if (attempt < maxAttempts) {
+                setTimeout(tryFetch, 200);
+              } else {
+                console.warn(
+                  '[ConversationStore] Auth not ready after 5s, skipping rehydration fetch'
+                );
+              }
+            };
+
+            // Start checking after a brief initial delay
+            setTimeout(tryFetch, 50);
           }
         };
       },

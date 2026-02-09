@@ -384,3 +384,86 @@ Szczegółowy changelog zmian w systemie AI Chat. Dokumentuje wszystkie modyfika
 | i18n keys                | ✅ Dodane do en, pl, de, es, ar, jp                   |
 | Runtime crashes          | ✅ `/api/ai/suggestions` naprawiony                   |
 | Stale closures           | ✅ `activeConversationIdRef` fix                      |
+
+---
+
+## 2026-02-07 — Deep Research gate + chat attachments (conversation-scoped RAG)
+
+### ✅ Deep Research: Confirm gate przeniesiony na backend
+
+**Cel:** Wyeliminować błąd “Deep Thinking requires Confirm Understanding first” w formie “dziwnego stream eventu” i wymusić deterministyczny flow.
+
+**Zmiana:**
+
+- Jeśli `aiModes.deepResearch = true` i **brak** `context.deepThinkingConfirmed === true`, endpoint `POST /api/ai/chat/stream` zwraca **HTTP 400 JSON**:
+  - `code`: `DEEP_THINKING_CONFIRM_REQUIRED`
+  - `error`: instrukcja użycia `/api/ai/chat/confirm`
+
+**Efekt UX:** frontend może potraktować to jako “flow-control” i pokazać kartę potwierdzenia zamiast wypisywać błąd w czacie.
+
+**Pliki:** `server/src/routes/ai.routes.ts`
+
+---
+
+### ✅ Deep Research: Confirm Understanding endpoint (structured)
+
+**Zmiana:** `/api/ai/chat/confirm` zwraca ustrukturyzowany obiekt `confirm` (goal, constraints, missingInfoQuestions, researchPlanItems, suggestedDepth).
+
+**Pliki:** `server/src/routes/ai.routes.ts`, `server/src/validators/ai.validators.ts`
+
+---
+
+### ✅ Chat attachments: niezależny ingest + conversation-scoped RAG
+
+**Problem:** `/api/knowledge/documents` w trybie dev bywa “zależny” od niedostępnych serwisów (np. Storage/Knowledge), przez co załączniki nie działały w czacie.
+
+**Rozwiązanie:**
+
+- Dodano self-contained endpoint:
+  - `POST /api/ai/attachments/ingest` (multipart/form-data, pole `file`)
+  - zapisuje rekord w `knowledge_docs`
+  - chunkuje tekst (prosty chunker) i zapisuje do `knowledge_chunks`
+  - zwraca `docId`
+- Czat może przekazać `docId` w:
+  - `context.attachmentDocIds: string[]`
+  - (opcjonalnie) `context.attachments: [{ docId, filename }]`
+- Backend ogranicza RAG do **tylko** wskazanych `docId` (conversation-scoped sources).
+
+**Frontend:**
+
+- Dodano `Api.uploadChatAttachment(file)` (zamiast `uploadKnowledgeDocument` dla chat attachments)
+- `AIChatWelcomeView` i `UnifiedChatPanel` uploadują pliki jako chat-attachments i przekazują `attachmentDocIds` do kontekstu streamu
+
+**Pliki:**
+
+- Backend: `server/src/routes/ai.routes.ts`, `server/src/services/ragService.ts`
+- Frontend: `src/services/api.ts`, `src/views/AIChatWelcomeView.tsx`, `src/components/AIChat/UnifiedChatPanel.tsx`
+
+---
+
+### ✅ RAG: kompatybilność SQLite przy braku `knowledge_docs.organization_id`
+
+**Problem:** W SQLite dev schema bywa minimalna (np. `knowledge_docs` bez `organization_id`). Zapytania RAG z warunkiem `d.organization_id = ?` powodowały `SQLITE_ERROR: no such column`.
+
+**Rozwiązanie:** W `ragService` dodano “feature flag” na podstawie `PRAGMA table_info(knowledge_docs)` i filtr `organizationId` jest dokładany tylko gdy kolumna istnieje.
+
+**Plik:** `server/src/services/ragService.ts`
+
+---
+
+### 🧪 Smoke test (manual) — status
+
+**Zweryfikowane:**
+
+- `POST /api/ai/chat/stream`:
+  - działa w trybie standardowym (SSE)
+  - Deep Research gate zwraca 400 JSON (nie SSE) gdy brak confirm
+  - Deep Research stream działa po confirm (`dt_state`, `research_visibility`, `dt_selfcheck`)
+- `POST /api/ai/attachments/ingest`:
+  - zwraca `docId`
+  - zapisuje `knowledge_docs` i `knowledge_chunks`
+  - `context.attachmentDocIds` ogranicza retrieval do wskazanych dokumentów
+
+**Znane ograniczenia z testów:**
+
+- Model nie zawsze respektuje format cytowań `[A1]` mimo instrukcji (merytorycznie korzysta z załącznika, ale cytat może zostać pominięty).

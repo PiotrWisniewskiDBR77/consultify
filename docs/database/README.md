@@ -48,6 +48,20 @@ Expected: `{"status":"healthy",...}`
 
 ---
 
+## Dev Troubleshooting (SQLite)
+
+Jeśli w trybie dev widzisz losowe `HTTP 500` oraz w logach backendu pojawiają się błędy typu:
+
+- `SQLITE_ERROR: table activity_logs has no column named ...`
+
+to masz klasyczny **dryf schematu SQLite** (stara lokalna baza vs aktualny kod).
+
+Zobacz runbook:
+
+- `docs/database/SQLITE_DEV_SCHEMA_DRIFT_RUNBOOK.md`
+
+---
+
 ## What Was Delivered
 
 ### 20 Files Created

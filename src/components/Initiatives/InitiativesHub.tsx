@@ -28,12 +28,12 @@ import {
   ModuleHub,
   ModuleTab,
   OpenDocument,
-  StatusFilter,
+  StatusDropdown,
   ViewMode,
 } from '../shared/ModuleHub';
+// Compact side panel (replaces old 50% drawer)
+import { InitiativeCompactPanel } from './InitiativeCompactPanel';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
-// New Initiative Drawer (50% width with Open wider)
-import { InitiativeDrawer } from './InitiativeDrawer';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
@@ -190,21 +190,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // STATUS FILTERS
   // ============================================
 
-  const statusFilters: StatusFilter[] = useMemo(() => {
-    const counts: Record<string, number> = {};
+  // Status counts for dropdown
+  const statusCounts: Record<string, number> = useMemo(() => {
+    const counts: Record<string, number> = { all: initiatives.length };
     initiatives.forEach((i) => {
       counts[i.status] = (counts[i.status] || 0) + 1;
     });
-
-    return [
-      { id: 'all', label: 'All', color: 'bg-slate-400', count: initiatives.length },
-      ...ALLOWED_STATUSES.map((status) => ({
-        id: status,
-        label: STATUS_METADATA[status].label,
-        color: STATUS_METADATA[status].dotColor,
-        count: counts[status] || 0,
-      })),
-    ];
+    return counts;
   }, [initiatives]);
 
   // Available view modes
@@ -582,6 +574,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // MAIN RENDER
   // ============================================
 
+  // Status dropdown for right-side controls (matches AssessmentHub pattern)
+  const statusDropdownControl = (
+    <StatusDropdown
+      context="initiatives"
+      value={activeStatusFilter || 'all'}
+      onChange={(status) => setActiveStatusFilter(status === 'all' ? null : status)}
+      counts={statusCounts}
+      size="sm"
+    />
+  );
+
   return (
     <div className="h-full" data-testid="initiatives-hub">
       <ModuleHub
@@ -603,16 +606,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         onNewItem={() => setShowNewModal(true)}
         newItemLabel="+ New Initiative"
         filterActions={filterActions}
-        statusFilters={statusFilters}
-        activeStatusFilter={activeStatusFilter}
-        onStatusFilterChange={(id) => setActiveStatusFilter(id === 'all' ? null : id)}
+        rightControls={statusDropdownControl}
         availableViewModes={availableViewModes}
       >
         <div className="flex-1 overflow-hidden">{renderContent()}</div>
       </ModuleHub>
 
-      {/* Initiative Drawer (50% width) with Open Wider functionality */}
-      <InitiativeDrawer
+      {/* Initiative Compact Side Panel */}
+      <InitiativeCompactPanel
         initiative={selectedInitiative}
         isOpen={isSidePanelOpen}
         onClose={handleCloseSidePanel}
@@ -622,7 +623,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setSelectedInitiative(updated);
           }
         }}
-        onOpenWider={handleOpenFullScreen}
+        onOpenFull={handleOpenFullScreen}
         users={users}
       />
 

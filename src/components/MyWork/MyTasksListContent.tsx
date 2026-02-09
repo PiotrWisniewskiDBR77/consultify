@@ -1188,19 +1188,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
       {/* Keyboard Shortcuts Help Modal */}
       <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
-
-      {/* Keyboard hint */}
-      <div className="fixed bottom-4 left-4 z-40 hidden lg:block">
-        <button
-          onClick={() => setShowHelp(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 text-xs hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
-        >
-          <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 text-[10px] font-mono">
-            ?
-          </kbd>
-          <span>{t('keyboard.shortcuts', 'Keyboard shortcuts')}</span>
-        </button>
-      </div>
     </div>
   );
 };

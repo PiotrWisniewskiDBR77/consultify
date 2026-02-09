@@ -2,14 +2,12 @@
  * StatusDropdown
  * Context-aware status filter dropdown for all modules
  *
- * Uses canonical 11-status initiative lifecycle:
- * DRAFT → REVIEW → PROMOTED → PLANNING → APPROVED → SCHEDULED → EXECUTING → DONE → TRACKING
+ * Supports three distinct status families:
+ * 1. Assessment statuses: DRAFT → IN_REVIEW → AWAITING_APPROVAL → APPROVED
+ * 2. Report statuses: DRAFT → GENERATING → FINAL → APPROVED → UTILIZED
+ * 3. Initiative statuses (canonical 13): DRAFT → REVIEW → PROMOTED → ... → TRACKING
  *
- * Each module shows only relevant statuses:
- * - Tools/Assessment: DRAFT (own)
- * - Initiatives: REVIEW, PROMOTED, PLANNING, APPROVED, SCHEDULED, CANCELLED
- * - Execution: SCHEDULED, EXECUTING, BLOCKED, DONE
- * - Benefits: TRACKING
+ * Each module/tab shows only its relevant statuses.
  *
  * Documentation: wdrozenia/standards/03-STATUS-WORKFLOW.md
  */
@@ -36,6 +34,23 @@ export type InitiativeStatus =
   | 'CANCELLED'
   | 'ARCHIVED';
 
+export type AssessmentStatus =
+  | 'DRAFT'
+  | 'IN_REVIEW'
+  | 'AWAITING_APPROVAL'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'ARCHIVED';
+
+export type ReportStatus =
+  | 'DRAFT'
+  | 'GENERATING'
+  | 'FINAL'
+  | 'PENDING_APPROVAL'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'UTILIZED';
+
 export interface StatusOption {
   id: string;
   label: string;
@@ -48,15 +63,19 @@ export interface StatusOption {
 export type ModuleContext =
   | 'tools'
   | 'assessment'
+  | 'assessment_list'
+  | 'assessment_reports'
+  | 'assessment_initiatives'
   | 'initiatives'
   | 'execution'
   | 'benefits'
   | 'reporting';
 
 // ============================================
-// STATUS CONFIGURATIONS (Canonical)
+// STATUS CONFIGURATIONS
 // ============================================
 
+// --- Initiative statuses (canonical 13) ---
 const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
   DRAFT: {
     id: 'DRAFT',
@@ -164,6 +183,118 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
   },
 };
 
+// --- Assessment statuses ---
+const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
+  DRAFT: {
+    id: 'DRAFT',
+    label: 'Draft',
+    labelPL: 'Szkic',
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-500',
+    order: 1,
+  },
+  IN_REVIEW: {
+    id: 'IN_REVIEW',
+    label: 'In Review',
+    labelPL: 'W przeglądzie',
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500',
+    order: 2,
+  },
+  AWAITING_APPROVAL: {
+    id: 'AWAITING_APPROVAL',
+    label: 'Awaiting Approval',
+    labelPL: 'Oczekuje na zatwierdzenie',
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500',
+    order: 3,
+  },
+  APPROVED: {
+    id: 'APPROVED',
+    label: 'Approved',
+    labelPL: 'Zatwierdzony',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500',
+    order: 4,
+  },
+  REJECTED: {
+    id: 'REJECTED',
+    label: 'Rejected',
+    labelPL: 'Odrzucony',
+    color: 'text-red-400',
+    bgColor: 'bg-red-500',
+    order: 5,
+  },
+  ARCHIVED: {
+    id: 'ARCHIVED',
+    label: 'Archived',
+    labelPL: 'Zarchiwizowany',
+    color: 'text-slate-300',
+    bgColor: 'bg-slate-600',
+    order: 6,
+  },
+};
+
+// --- Report statuses ---
+const REPORT_STATUSES: Record<ReportStatus, StatusOption> = {
+  DRAFT: {
+    id: 'DRAFT',
+    label: 'Draft',
+    labelPL: 'Szkic',
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-500',
+    order: 1,
+  },
+  GENERATING: {
+    id: 'GENERATING',
+    label: 'Generating',
+    labelPL: 'Generowanie',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500',
+    order: 2,
+  },
+  FINAL: {
+    id: 'FINAL',
+    label: 'Final',
+    labelPL: 'Finalny',
+    color: 'text-indigo-400',
+    bgColor: 'bg-indigo-500',
+    order: 3,
+  },
+  PENDING_APPROVAL: {
+    id: 'PENDING_APPROVAL',
+    label: 'Pending Approval',
+    labelPL: 'Oczekuje na zatwierdzenie',
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500',
+    order: 4,
+  },
+  APPROVED: {
+    id: 'APPROVED',
+    label: 'Approved',
+    labelPL: 'Zatwierdzony',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500',
+    order: 5,
+  },
+  REJECTED: {
+    id: 'REJECTED',
+    label: 'Rejected',
+    labelPL: 'Odrzucony',
+    color: 'text-red-400',
+    bgColor: 'bg-red-500',
+    order: 6,
+  },
+  UTILIZED: {
+    id: 'UTILIZED',
+    label: 'Utilized',
+    labelPL: 'Wykorzystany',
+    color: 'text-teal-400',
+    bgColor: 'bg-teal-500',
+    order: 7,
+  },
+};
+
 // "All" option for dropdown
 const ALL_OPTION: StatusOption = {
   id: 'all',
@@ -182,47 +313,59 @@ const ALL_OPTION: StatusOption = {
  * Get statuses visible for each module context
  */
 function getStatusesForModule(module: ModuleContext): StatusOption[] {
-  const statuses: InitiativeStatus[] = [];
-
   switch (module) {
     case 'tools':
+      // Source modules — initiative statuses
+      return [ALL_OPTION, ALL_STATUSES.DRAFT, ALL_STATUSES.PENDING_REVIEW];
+
+    case 'assessment_initiatives':
+      // Assessment is also a source module for initiatives (phase 1 only)
+      return [ALL_OPTION, ALL_STATUSES.DRAFT, ALL_STATUSES.PENDING_REVIEW];
+
     case 'assessment':
-      // Source modules
-      statuses.push('DRAFT', 'PENDING_REVIEW');
-      break;
+    case 'assessment_list':
+      // Assessment workflow statuses
+      return [ALL_OPTION, ...Object.values(ASSESSMENT_STATUSES)];
+
+    case 'assessment_reports':
+      // Report statuses
+      return [ALL_OPTION, ...Object.values(REPORT_STATUSES)];
 
     case 'initiatives':
-      // Full planning lifecycle
-      statuses.push(
-        'REVIEW',
-        'PROMOTED',
-        'PLANNING',
-        'APPROVED',
-        'SCHEDULED',
-        'CANCELLED',
-        'ARCHIVED'
-      );
-      break;
+      // Full initiative planning lifecycle
+      return [
+        ALL_OPTION,
+        ALL_STATUSES.DRAFT,
+        ALL_STATUSES.REVIEW,
+        ALL_STATUSES.PROMOTED,
+        ALL_STATUSES.PLANNING,
+        ALL_STATUSES.APPROVED,
+        ALL_STATUSES.SCHEDULED,
+        ALL_STATUSES.CANCELLED,
+        ALL_STATUSES.ARCHIVED,
+      ];
 
     case 'execution':
       // Active work statuses
-      statuses.push('SCHEDULED', 'EXECUTING', 'BLOCKED', 'DONE');
-      break;
+      return [
+        ALL_OPTION,
+        ALL_STATUSES.SCHEDULED,
+        ALL_STATUSES.EXECUTING,
+        ALL_STATUSES.BLOCKED,
+        ALL_STATUSES.DONE,
+      ];
 
     case 'benefits':
       // Tracking only
-      statuses.push('TRACKING');
-      break;
+      return [ALL_OPTION, ALL_STATUSES.TRACKING];
 
     case 'reporting':
-      // All statuses
+      // All statuses (legacy)
       return [ALL_OPTION, ...Object.values(ALL_STATUSES)];
 
     default:
       return [ALL_OPTION];
   }
-
-  return [ALL_OPTION, ...statuses.map((s) => ALL_STATUSES[s])];
 }
 
 // ============================================
@@ -372,6 +515,6 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
 // EXPORTS
 // ============================================
 
-export { ALL_OPTION, ALL_STATUSES, getStatusesForModule };
+export { ALL_OPTION, ALL_STATUSES, ASSESSMENT_STATUSES, getStatusesForModule, REPORT_STATUSES };
 
 export default StatusDropdown;

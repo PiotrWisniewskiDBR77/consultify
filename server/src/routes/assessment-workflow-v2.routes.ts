@@ -246,6 +246,64 @@ router.put(
 // Delete assessment
 router.delete('/:assessmentId', AssessmentController.deleteAssessment);
 
+// Duplicate assessment
+router.post('/:assessmentId/duplicate', async (req, res) => {
+  try {
+    const { assessmentId } = req.params as any;
+    const { userId, organizationId } = getAuthContext(req);
+    const db = getDatabase();
+
+    // Fetch original assessment
+    const original = await new Promise<any>((resolve, reject) => {
+      db.get(
+        `SELECT * FROM assessments WHERE id = ? AND organization_id = ?`,
+        [assessmentId, organizationId],
+        (err: Error | null, row: any) => (err ? reject(err) : resolve(row))
+      );
+    });
+
+    if (!original) return res.status(404).json({ error: 'Assessment not found' });
+
+    const newId = uuidv4();
+    const now = new Date().toISOString();
+    const newName = `${original.name || 'Assessment'} (Copy)`;
+
+    await new Promise<void>((resolve, reject) => {
+      db.run(
+        `INSERT INTO assessments (
+          id, organization_id, project_id, assessment_type, name, status,
+          completion_percent, confidence_avg,
+          answers_json, context_snapshot, score_summary, navigation_json,
+          created_by, updated_by, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          newId,
+          organizationId,
+          original.project_id,
+          original.assessment_type,
+          newName,
+          original.completion_percent || 0,
+          original.confidence_avg || 0,
+          original.answers_json || '{}',
+          original.context_snapshot || '{}',
+          original.score_summary || '{}',
+          original.navigation_json || '{}',
+          userId,
+          userId,
+          now,
+          now,
+        ],
+        (err: Error | null) => (err ? reject(err) : resolve())
+      );
+    });
+
+    res.json({ id: newId, name: newName, status: 'DRAFT' });
+  } catch (err: any) {
+    console.error('[assessment-workflow] duplicate error:', err?.message);
+    res.status(500).json({ error: 'Failed to duplicate assessment' });
+  }
+});
+
 // Session management (for dynamic submenu)
 router.post('/:assessmentId/session/open', AssessmentController.openSession);
 router.post('/:assessmentId/session/close', AssessmentController.closeSession);
@@ -1008,7 +1066,8 @@ router.post(
       const ok = await requireAssessmentFlag(req, res, 'canManage');
       if (!ok) return;
 
-      const actorRole = String((req.user as any)?.role || '').toUpperCase();
+      const { globalRole } = getAuthContext(req);
+      const actorRole = String(globalRole || '').toUpperCase();
       const result = await AssessmentInitiativeGenerationRunService.bulkSubmitRunDrafts({
         runId: String(runId),
         assessmentId: String(assessmentId),

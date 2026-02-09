@@ -1,15 +1,23 @@
 /**
- * Deep Thinking Orchestrator (MVP)
+ * Deep Thinking Orchestrator (v2.0)
  *
  * Standalone orchestration that:
  * - emits state events for UI (SSE-friendly payloads)
- * - optionally runs web research (Tavily + deepResearchService)
+ * - runs web research with iterative deepening (Tavily + deepResearchService)
+ * - injects organization context for personalized research
  * - returns a system-instruction addon to enforce decision-grade output
+ *
+ * v2.0 changes:
+ * - Iterative deepening support (2 rounds)
+ * - Organization context injection
+ * - Enhanced research addon with full content + Tavily answer
+ * - Research type detection & task-specific format
+ * - Clarification answers support
  *
  * Important: This is one-way / composable. It does not know or care about downstream consumers.
  */
 import logger from '../../utils/Logger.js';
-import type { DeepResearchOutput } from './deepResearchService.js';
+import type { DeepResearchOutput, ResearchType } from './deepResearchService.js';
 
 export type DeepThinkingDepth = 'light' | 'standard' | 'hard';
 
@@ -22,12 +30,23 @@ export type DeepThinkingPreludeInput = {
   language?: string;
   context?: Record<string, unknown> | null;
   aiModes?: { deepResearch?: boolean; webSearch?: boolean; showReasoning?: boolean } | null;
+  /** Organization context for personalized research */
+  orgContext?: {
+    industry?: string;
+    region?: string;
+    maturityLevel?: string;
+    organizationName?: string;
+    terminology?: Record<string, string>;
+  } | null;
+  /** Clarification answers from user */
+  clarificationAnswers?: Record<string, string> | null;
   emit: EmitFn;
 };
 
 export type DeepThinkingPreludeOutput = {
   systemInstructionAddon: string;
   researchOutput?: DeepResearchOutput | null;
+  researchType?: ResearchType;
 };
 
 function normalizeDepth(raw: unknown): DeepThinkingDepth {
@@ -37,7 +56,26 @@ function normalizeDepth(raw: unknown): DeepThinkingDepth {
   return 'standard';
 }
 
-function buildDeepThinkingFormatAddon(showHighlights?: boolean): string {
+function buildDeepThinkingFormatAddon(
+  showHighlights?: boolean,
+  researchType?: ResearchType
+): string {
+  // If research has task-specific synthesis, use lighter format rules
+  if (researchType && researchType !== 'general_research') {
+    return [
+      '\n\n## OUTPUT QUALITY RULES (must follow)',
+      '- No fluff. No blog style. This is boardroom-grade.',
+      '- Separate facts vs assumptions explicitly.',
+      '- Use citation markers [n] to reference sources.',
+      '- Include specific data: company names, numbers, dates, financial figures.',
+      '- Be opinionated — give clear recommendations, not just neutral descriptions.',
+      ...(showHighlights
+        ? ['- Include a "Reasoning highlights" section (3–6 bullets, high-level).']
+        : []),
+      '- Do NOT reveal chain-of-thought.',
+    ].join('\n');
+  }
+
   return [
     '\n\n## DEEP THINKING OUTPUT FORMAT (must follow)',
     '1) Executive Summary (5–7 lines)',
@@ -56,30 +94,112 @@ function buildDeepThinkingFormatAddon(showHighlights?: boolean): string {
 }
 
 function buildResearchAddon(researchOutput: DeepResearchOutput): string {
-  const topSources = (researchOutput.sources || []).slice(0, 10);
-  const sourcesBlock = topSources
-    .map((s: any, i: number) => `[${i + 1}] ${s.title} — ${s.url}`)
-    .join('\n');
+  const topSources = (researchOutput.sources || []).slice(0, 20);
 
-  return [
+  // Build source block with full content when available
+  const sourcesBlock = topSources
+    .map((s: any, i: number) => {
+      const content = s.fullContent
+        ? s.fullContent.slice(0, 2000)
+        : s.snippets?.join(' ').slice(0, 800) || '';
+      return `[${i + 1}] ${s.title} (${s.domain})\nURL: ${s.url}\n${content}`;
+    })
+    .join('\n\n');
+
+  const parts = [
     '\n\n## WEB RESEARCH (provided by system)',
+    `Research type: ${researchOutput.researchType || 'general'}`,
+    `Sources found: ${researchOutput.metadata?.totalSources || 0} from ${researchOutput.metadata?.uniqueDomains || 0} domains`,
+    `Research rounds: ${researchOutput.metadata?.rounds || 1}`,
+    '',
     'Use these sources to ground your recommendations. Cite sources using [n] markers.',
     'Do not claim you searched the web beyond the provided sources.',
-    '',
-    researchOutput.synthesis ? `Synthesis:\n${researchOutput.synthesis}` : '',
-    sourcesBlock ? `Sources:\n${sourcesBlock}` : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
+  ];
+
+  // Include Tavily's built-in answer as additional context
+  if (researchOutput.tavilyAnswer) {
+    parts.push('', `### Quick Answer (AI-generated summary):\n${researchOutput.tavilyAnswer}`);
+  }
+
+  // Include the full synthesis from deep research
+  if (researchOutput.synthesis) {
+    parts.push('', `### Research Synthesis:\n${researchOutput.synthesis}`);
+  }
+
+  // Include detailed source material
+  if (sourcesBlock) {
+    parts.push('', `### Detailed Sources:\n${sourcesBlock}`);
+  }
+
+  return parts.filter(Boolean).join('\n');
+}
+
+/**
+ * Extract lightweight org context for research personalization.
+ */
+async function extractOrgContext(
+  userId?: string,
+  organizationId?: string
+): Promise<DeepThinkingPreludeInput['orgContext']> {
+  if (!userId || !organizationId) return null;
+
+  try {
+    const dbMod = await import('../../utils/DbPromise.js');
+    const db = dbMod;
+
+    const org = (await db.get('SELECT name, industry, settings FROM organizations WHERE id = ?', [
+      organizationId,
+    ])) as any;
+
+    if (!org) return null;
+
+    let settings: any = {};
+    try {
+      settings = typeof org.settings === 'string' ? JSON.parse(org.settings) : org.settings || {};
+    } catch {
+      settings = {};
+    }
+
+    // Get org memory for terminology and maturity
+    let orgMemory: any = null;
+    try {
+      const aiMemoryMod = await import('./aiMemoryService.js');
+      const aiMemoryService = (aiMemoryMod as any).default || aiMemoryMod;
+      if (aiMemoryService?.getOrgMemory) {
+        orgMemory = await aiMemoryService.getOrgMemory(organizationId);
+      }
+    } catch {
+      // Memory service not available
+    }
+
+    return {
+      organizationName: org.name || undefined,
+      industry: org.industry || settings?.industry || undefined,
+      region: settings?.region || settings?.country || undefined,
+      maturityLevel: orgMemory?.aiMaturityStage || settings?.maturityLevel || undefined,
+      terminology: orgMemory?.terminology || undefined,
+    };
+  } catch (err: any) {
+    logger.debug(`[DeepThinking] Org context extraction failed: ${err?.message}`);
+    return null;
+  }
 }
 
 export class DeepThinkingOrchestrator {
   async runPrelude(input: DeepThinkingPreludeInput): Promise<DeepThinkingPreludeOutput> {
-    const { message, language, context, aiModes, emit } = input;
+    const { message, language, context, aiModes, emit, clarificationAnswers } = input;
 
     const enabled = aiModes?.deepResearch === true;
     if (!enabled) {
       return { systemInstructionAddon: '' };
+    }
+
+    // 0) Extract org context for personalized research
+    let orgContext = input.orgContext || null;
+    if (!orgContext) {
+      const userId = (context as any)?.userId;
+      const organizationId = (context as any)?.organizationId;
+      orgContext = (await extractOrgContext(userId, organizationId)) ?? null;
     }
 
     // 1) Research visibility (always visible, even without web search)
@@ -116,9 +236,19 @@ export class DeepThinkingOrchestrator {
             {
               id: 'plan-4',
               type: 'ExternalReferences',
-              label: 'External references (optional)',
-              rationale: 'Only if web search is explicitly enabled',
+              label: 'External references (web search + iterative deepening)',
+              rationale: 'Real-time web data with multi-round research',
             },
+            ...(orgContext
+              ? [
+                  {
+                    id: 'plan-5',
+                    type: 'OrganizationContext',
+                    label: 'Organization context',
+                    rationale: `Personalized for ${orgContext.organizationName || 'your organization'}`,
+                  },
+                ]
+              : []),
           ];
 
     emit({
@@ -132,7 +262,7 @@ export class DeepThinkingOrchestrator {
       })),
     });
 
-    // 2) Research execution (optional web search)
+    // 2) Research execution (web search with iterative deepening)
     emit({ type: 'dt_state', state: 'research' satisfies DtState, label: 'Research execution' });
 
     const depth = normalizeDepth((context as any)?.deepThinkingDepth);
@@ -148,8 +278,10 @@ export class DeepThinkingOrchestrator {
         const { TavilyWebSearchService } = await import('./tavilyWebSearchService.js');
         const webSearchService = new (TavilyWebSearchService as any)(tavilyKey);
 
-        const maxQueries = depth === 'light' ? 4 : depth === 'hard' ? 10 : 8;
-        const maxSourcesPerQuery = depth === 'light' ? 3 : depth === 'hard' ? 6 : 5;
+        const maxQueries = depth === 'light' ? 4 : depth === 'hard' ? 12 : 8;
+        const maxSourcesPerQuery = depth === 'light' ? 4 : depth === 'hard' ? 8 : 8;
+        const iterativeDeepening = depth !== 'light';
+        const maxFollowUpQueries = depth === 'hard' ? 8 : 5;
 
         researchOutput = await conductDeepResearch(
           message,
@@ -159,15 +291,26 @@ export class DeepThinkingOrchestrator {
             includeNewsResults: true,
             timeRange: 'all',
             language: (language || 'en').split('-')[0],
+            iterativeDeepening,
+            maxFollowUpQueries,
+            orgContext: orgContext || undefined,
+            clarificationAnswers: clarificationAnswers || undefined,
           },
           {
             webSearchService,
-            onProgress: (status: { stage: string; queries: unknown[] }) => {
+            onProgress: (status: {
+              stage: string;
+              queries: unknown[];
+              round?: number;
+              totalRounds?: number;
+            }) => {
               emit({
                 type: 'research_progress',
                 topic: message,
                 stage: status.stage,
                 queries: status.queries,
+                round: status.round,
+                totalRounds: status.totalRounds,
               });
             },
           }
@@ -184,6 +327,8 @@ export class DeepThinkingOrchestrator {
             domain: s.domain,
             relevanceScore: s.relevanceScore,
           })),
+          researchType: researchOutput.researchType,
+          rounds: researchOutput.metadata?.rounds || 1,
         });
       } catch (err: any) {
         logger.warn('[DeepThinking] Web research failed, continuing without it:', err?.message);
@@ -215,7 +360,6 @@ export class DeepThinkingOrchestrator {
     });
 
     // 3b) Interim Insight checkpoint (hard depth only)
-    // For complex tasks, generate a preliminary insight showing emerging paths.
     if (depth === 'hard') {
       try {
         const { modelRouter } = await import('./modelRouter.js');
@@ -250,7 +394,6 @@ export class DeepThinkingOrchestrator {
 
         const rawText = String(interimResult?.content || '').trim();
 
-        // Parse JSON from response (may be wrapped in markdown code fences)
         const jsonMatch = rawText.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           const paths = JSON.parse(jsonMatch[0]) as Array<{
@@ -274,21 +417,43 @@ export class DeepThinkingOrchestrator {
       }
     }
 
-    // 4) Synthesis
+    // 4) Synthesis — inject historical decision context (organization memory)
     emit({ type: 'dt_state', state: 'synthesis' satisfies DtState, label: 'Synthesis' });
+
+    let historicalContextAddon = '';
+    try {
+      const organizationId = (context as any)?.organizationId;
+      if (organizationId) {
+        const { buildHistoricalContextAddon } = await import('./decisionMemoryService.js');
+        historicalContextAddon = await buildHistoricalContextAddon({
+          organizationId,
+          currentProblem: message,
+          language: (language || 'en').split('-')[0],
+        });
+        if (historicalContextAddon) {
+          logger.info(
+            `[DeepThinking] Injected historical decision context for org ${organizationId}`
+          );
+        }
+      }
+    } catch (histErr: any) {
+      logger.debug(`[DeepThinking] Historical context not available: ${histErr?.message}`);
+    }
 
     // 5) Closure
     emit({ type: 'dt_state', state: 'closure' satisfies DtState, label: 'Closure' });
 
+    const researchType = researchOutput?.researchType;
     const addon = [
-      buildDeepThinkingFormatAddon(showHighlights),
+      buildDeepThinkingFormatAddon(showHighlights, researchType),
+      historicalContextAddon,
       researchOutput ? buildResearchAddon(researchOutput) : '',
       researchOutput ? '\n\nRules (research):\n- If sources are provided, cite them as [n].' : '',
     ]
       .filter(Boolean)
       .join('\n');
 
-    return { systemInstructionAddon: addon, researchOutput };
+    return { systemInstructionAddon: addon, researchOutput, researchType };
   }
 }
 

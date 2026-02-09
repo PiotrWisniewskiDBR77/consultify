@@ -10,6 +10,8 @@ import { Api } from '@/services/api';
 
 import { PortfolioInitiative } from '../../types';
 import { RoadmapGantt } from '../RoadmapGantt';
+import type { InitiativeConflict } from './InitiativeConflictsPanel';
+import { InitiativeConflictsPanel } from './InitiativeConflictsPanel';
 
 interface Dependency {
   id: string;
@@ -24,6 +26,157 @@ interface InitiativesTimelineViewProps {
   projectId?: string;
 }
 
+function safeDate(value?: string): Date | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function getRange(i: PortfolioInitiative): { start: Date; end: Date } | null {
+  const start = safeDate(i.plannedStartDate);
+  const end = safeDate(i.plannedEndDate);
+  if (!start || !end) return null;
+  return { start, end };
+}
+
+function overlaps(a: { start: Date; end: Date }, b: { start: Date; end: Date }): boolean {
+  return a.start <= b.end && b.start <= a.end;
+}
+
+function normalizeAiConflicts(aiConflicts: any): InitiativeConflict[] {
+  const raw = Array.isArray(aiConflicts) ? aiConflicts : aiConflicts?.conflicts;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((c) => c && typeof c === 'object')
+    .map((c: any) => ({
+      source: 'ai' as const,
+      type: (c.type === 'resource' || c.type === 'dependency' || c.type === 'timeline'
+        ? c.type
+        : 'timeline') as any,
+      severity: (c.severity === 'low' || c.severity === 'medium' || c.severity === 'high'
+        ? c.severity
+        : 'low') as any,
+      initiatives: Array.isArray(c.initiatives)
+        ? c.initiatives.map((name: any) => ({ name: String(name) }))
+        : [],
+      description: String(c.description || ''),
+      recommendation: c.recommendation ? String(c.recommendation) : undefined,
+    }))
+    .filter((c) => c.description || c.initiatives.length > 0);
+}
+
+function detectLocalConflicts(
+  initiatives: PortfolioInitiative[],
+  dependencies: Dependency[]
+): InitiativeConflict[] {
+  const conflicts: InitiativeConflict[] = [];
+
+  // Owner overlap conflicts (resource)
+  const byOwner = new Map<string, PortfolioInitiative[]>();
+  for (const i of initiatives) {
+    const ownerKey = i.ownerBusiness?.id || i.ownerExecution?.id;
+    if (!ownerKey) continue;
+    const key = `owner:${ownerKey}`;
+    const list = byOwner.get(key) || [];
+    list.push(i);
+    byOwner.set(key, list);
+  }
+
+  for (const [, list] of byOwner.entries()) {
+    const withRanges = list
+      .map((i) => ({ i, range: getRange(i) }))
+      .filter((x): x is { i: PortfolioInitiative; range: { start: Date; end: Date } } => !!x.range)
+      .sort((a, b) => a.range.start.getTime() - b.range.start.getTime());
+
+    for (let a = 0; a < withRanges.length; a++) {
+      for (let b = a + 1; b < withRanges.length; b++) {
+        const A = withRanges[a];
+        const B = withRanges[b];
+        if (!overlaps(A.range, B.range)) break; // sorted by start, so we can stop early
+
+        const overlapDays = Math.round(
+          (Math.min(A.range.end.getTime(), B.range.end.getTime()) -
+            Math.max(A.range.start.getTime(), B.range.start.getTime())) /
+            (24 * 60 * 60 * 1000)
+        );
+
+        const severity: InitiativeConflict['severity'] =
+          A.i.priority === 'CRITICAL' || B.i.priority === 'CRITICAL' || overlapDays >= 60
+            ? 'high'
+            : 'medium';
+
+        conflicts.push({
+          source: 'local',
+          type: 'resource',
+          severity,
+          initiatives: [
+            { id: A.i.id, name: A.i.name },
+            { id: B.i.id, name: B.i.name },
+          ],
+          description: `Overlapping initiatives for the same owner (${overlapDays} days overlap).`,
+          recommendation: 'Reschedule one initiative, split scope, or assign additional capacity.',
+        });
+      }
+    }
+  }
+
+  // Dependency date violations (dependency)
+  const byId = new Map(initiatives.map((i) => [i.id, i] as const));
+  for (const dep of dependencies) {
+    const from = byId.get(dep.fromInitiativeId);
+    const to = byId.get(dep.toInitiativeId);
+    if (!from || !to) continue;
+    const fromR = getRange(from);
+    const toR = getRange(to);
+    if (!fromR || !toR) continue;
+
+    const violatesFinishToStart = toR.start < fromR.end;
+    if (dep.type === 'FINISH_TO_START' && violatesFinishToStart) {
+      conflicts.push({
+        source: 'local',
+        type: 'dependency',
+        severity: 'high',
+        initiatives: [
+          { id: from.id, name: from.name },
+          { id: to.id, name: to.name },
+        ],
+        description: 'Dependency violated: successor starts before predecessor finishes.',
+        recommendation: 'Move successor later or adjust dependency/scope.',
+      });
+    }
+  }
+
+  return conflicts;
+}
+
+function computeReadiness(i: PortfolioInitiative): { percent: number; missing: string[] } {
+  let score = 0;
+  const missing: string[] = [];
+
+  // 100-point heuristic for portfolio planning (fast, based on what portfolio API provides)
+  if (i.summary || i.description) score += 25;
+  else missing.push('Summary');
+
+  if (i.ownerBusiness) score += 15;
+  else missing.push('Business owner');
+
+  if (i.ownerExecution) score += 10;
+  else missing.push('Execution owner');
+
+  if (i.plannedStartDate) score += 15;
+  else missing.push('Planned start date');
+
+  if (i.plannedEndDate) score += 10;
+  else missing.push('Planned end date');
+
+  if ((i.expectedRoi ?? 0) > 0 || (i.budget ?? 0) > 0) score += 15;
+  else missing.push('Value sizing (ROI/Budget)');
+
+  if ((i.progress ?? 0) > 0) score += 10;
+
+  return { percent: Math.min(100, Math.max(0, score)), missing };
+}
+
 export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = ({
   initiatives,
   onInitiativeClick,
@@ -36,6 +189,7 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
   const [aiConflicts, setAiConflicts] = useState<any | null>(null);
   const [aiPriorities, setAiPriorities] = useState<any | null>(null);
   const [aiLoading, setAiLoading] = useState<'schedule' | 'conflicts' | 'priorities' | null>(null);
+  const [showConflictsPanel, setShowConflictsPanel] = useState(false);
 
   useEffect(() => {
     setLocalInitiatives(initiatives);
@@ -59,6 +213,48 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
     fetchDependencies();
   }, [projectId]);
 
+  const readinessById = useMemo(() => {
+    return new Map(localInitiatives.map((i) => [i.id, computeReadiness(i)] as const));
+  }, [localInitiatives]);
+
+  const localConflicts = useMemo(
+    () => detectLocalConflicts(localInitiatives, dependencies),
+    [dependencies, localInitiatives]
+  );
+
+  const aiConflictList = useMemo(() => normalizeAiConflicts(aiConflicts), [aiConflicts]);
+
+  const conflictCountById = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    // local conflicts include IDs
+    for (const c of localConflicts) {
+      for (const init of c.initiatives) {
+        if (!init.id) continue;
+        counts.set(init.id, (counts.get(init.id) || 0) + 1);
+      }
+    }
+
+    // AI conflicts contain names; map uniquely if possible
+    const byName = new Map<string, string>();
+    const dupes = new Set<string>();
+    for (const i of localInitiatives) {
+      if (byName.has(i.name)) dupes.add(i.name);
+      else byName.set(i.name, i.id);
+    }
+    for (const name of dupes) byName.delete(name);
+
+    for (const c of aiConflictList) {
+      for (const init of c.initiatives) {
+        const id = byName.get(init.name);
+        if (!id) continue;
+        counts.set(id, (counts.get(id) || 0) + 1);
+      }
+    }
+
+    return counts;
+  }, [aiConflictList, localConflicts, localInitiatives]);
+
   const initiativesWithDeps = useMemo(() => {
     const depsByTarget = dependencies.reduce<Record<string, Dependency[]>>((acc, dep) => {
       acc[dep.toInitiativeId] = acc[dep.toInitiativeId] || [];
@@ -77,8 +273,11 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
       plannedStartDate: initiative.plannedStartDate,
       plannedEndDate: initiative.plannedEndDate,
       isCriticalPath: depFrom.has(initiative.id) || depTo.has(initiative.id),
+      readinessPercent: readinessById.get(initiative.id)?.percent ?? 0,
+      missingReadiness: readinessById.get(initiative.id)?.missing ?? [],
+      conflictCount: conflictCountById.get(initiative.id) || 0,
     }));
-  }, [dependencies, localInitiatives]);
+  }, [dependencies, localInitiatives, readinessById, conflictCountById]);
 
   const handleUpdateInitiative = useCallback(async (updated: any) => {
     const { id, plannedStartDate, plannedEndDate } = updated;
@@ -122,6 +321,11 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
         id: initiative.id,
         name: initiative.name,
         priority: initiative.priority,
+        owner: initiative.ownerBusiness
+          ? `${initiative.ownerBusiness.firstName} ${initiative.ownerBusiness.lastName}`
+          : initiative.ownerExecution
+            ? `${initiative.ownerExecution.firstName} ${initiative.ownerExecution.lastName}`
+            : undefined,
         expectedRoi: initiative.expectedRoi,
         plannedStartDate: initiative.plannedStartDate,
         plannedEndDate: initiative.plannedEndDate,
@@ -161,6 +365,7 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
         dependencies: aiDependenciesPayload,
       });
       setAiConflicts(response.conflicts || response);
+      setShowConflictsPanel(true);
     } catch (error: any) {
       toast.error('Failed to analyze conflicts');
     } finally {
@@ -252,6 +457,15 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
               Apply Schedule
             </button>
           )}
+          {(localConflicts.length > 0 || aiConflictList.length > 0) && (
+            <button
+              onClick={() => setShowConflictsPanel((p) => !p)}
+              className="ml-auto px-3 py-1.5 text-xs font-medium rounded-lg bg-rose-600/20 text-rose-200 hover:bg-rose-600/30 transition-colors"
+            >
+              {showConflictsPanel ? 'Hide Conflicts' : 'View Conflicts'} (
+              {localConflicts.length + aiConflictList.length})
+            </button>
+          )}
         </div>
 
         {Array.isArray(aiSchedule) && aiSchedule.length > 0 && (
@@ -259,10 +473,11 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
             Suggested schedule for {aiSchedule.length} initiatives.
           </div>
         )}
-        {aiConflicts && (
-          <pre className="mt-3 text-xs text-slate-400 whitespace-pre-wrap">
-            {JSON.stringify(aiConflicts, null, 2)}
-          </pre>
+        {showConflictsPanel && (localConflicts.length > 0 || aiConflictList.length > 0) && (
+          <InitiativeConflictsPanel
+            conflicts={[...localConflicts, ...aiConflictList]}
+            title="Conflicts (Local + AI)"
+          />
         )}
         {aiPriorities && (
           <pre className="mt-3 text-xs text-slate-400 whitespace-pre-wrap">

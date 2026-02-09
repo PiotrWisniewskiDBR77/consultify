@@ -1,0 +1,406 @@
+/**
+ * Presentation Generation System — Core Types
+ *
+ * BCG-grade type definitions for the component-based PPTX pipeline.
+ * Implements the Unified Report JSON model and all mapping interfaces.
+ */
+
+// ============================================================
+// SLIDE INTENT — narrative purpose of each slide
+// ============================================================
+
+export type SlideIntent =
+  | 'cover'
+  | 'executive_summary'
+  | 'section_intro'
+  | 'key_messages'
+  | 'performance_overview'
+  | 'single_insight'
+  | 'comparison'
+  | 'assessment'
+  | 'root_cause'
+  | 'recommendation_single'
+  | 'recommendation_portfolio'
+  | 'initiative_portfolio'
+  | 'prioritization_matrix'
+  | 'roadmap'
+  | 'risk_management'
+  | 'next_steps'
+  | 'appendix';
+
+// ============================================================
+// UNIFIED REPORT JSON — single source of truth
+// ============================================================
+
+export interface UnifiedReportMeta {
+  client: string;
+  project: string;
+  date: string;
+  author: string;
+  confidentiality: 'confidential' | 'internal' | 'public';
+  framework?: string;
+  sourceType?: string;
+  language: 'en' | 'pl';
+  brandColor?: string;
+  template?: 'corporate' | 'minimal' | 'modern';
+}
+
+export interface UnifiedSlide {
+  intent: SlideIntent;
+  key_message: string;
+  content: SlideContent;
+}
+
+export interface UnifiedReportJSON {
+  meta: UnifiedReportMeta;
+  slides: UnifiedSlide[];
+}
+
+// ============================================================
+// SLIDE CONTENT — structured data per intent
+// ============================================================
+
+export type SlideContent =
+  | CoverContent
+  | ExecutiveSummaryContent
+  | SectionIntroContent
+  | KeyMessagesContent
+  | PerformanceOverviewContent
+  | SingleInsightContent
+  | ComparisonContent
+  | AssessmentContent
+  | RootCauseContent
+  | RecommendationSingleContent
+  | RecommendationPortfolioContent
+  | InitiativePortfolioContent
+  | PrioritizationMatrixContent
+  | RoadmapContent
+  | RiskManagementContent
+  | NextStepsContent
+  | AppendixContent;
+
+export interface CoverContent {
+  type: 'cover';
+  title: string;
+  subtitle?: string;
+  organization: string;
+  date: string;
+  confidentiality?: string;
+}
+
+export interface ExecutiveSummaryContent {
+  type: 'executive_summary';
+  headline: string;
+  kpis?: KpiData[];
+  key_findings: string[];
+  recommendation?: string;
+}
+
+export interface SectionIntroContent {
+  type: 'section_intro';
+  section_title: string;
+  section_number?: number;
+  description?: string;
+}
+
+export interface KeyMessagesContent {
+  type: 'key_messages';
+  messages: Array<{
+    title: string;
+    description: string;
+    icon?: string;
+  }>;
+}
+
+export interface PerformanceOverviewContent {
+  type: 'performance_overview';
+  kpis: KpiData[];
+  period?: string;
+  context?: string;
+}
+
+export interface SingleInsightContent {
+  type: 'single_insight';
+  chart_type: 'bar' | 'line' | 'pie' | 'radar' | 'gauge';
+  chart_data: ChartDataSet;
+  insight_text: string;
+  source?: string;
+}
+
+export interface ComparisonContent {
+  type: 'comparison';
+  left_label: string;
+  right_label: string;
+  left_items: string[];
+  right_items: string[];
+  verdict?: string;
+}
+
+export interface AssessmentContent {
+  type: 'assessment';
+  matrix_type: 'heatmap' | 'maturity' | 'radar';
+  axes: AxisScore[];
+  scale_max: number;
+  overall_score?: number;
+}
+
+export interface RootCauseContent {
+  type: 'root_cause';
+  problem: string;
+  causes: Array<{
+    cause: string;
+    impact: string;
+    severity: 'high' | 'medium' | 'low';
+  }>;
+}
+
+export interface RecommendationSingleContent {
+  type: 'recommendation_single';
+  title: string;
+  description: string;
+  impact: string;
+  effort: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  timeline?: string;
+}
+
+export interface RecommendationPortfolioContent {
+  type: 'recommendation_portfolio';
+  recommendations: Array<{
+    title: string;
+    description: string;
+    impact: string;
+    priority: 'critical' | 'high' | 'medium' | 'low';
+    category?: string;
+  }>;
+}
+
+export interface RoadmapContent {
+  type: 'roadmap';
+  phases: Array<{
+    label: string;
+    timeframe: string;
+    items: string[];
+    status?: 'completed' | 'in_progress' | 'planned';
+  }>;
+}
+
+export interface RiskManagementContent {
+  type: 'risk_management';
+  risks: Array<{
+    risk: string;
+    likelihood: 'high' | 'medium' | 'low';
+    impact: 'high' | 'medium' | 'low';
+    mitigation: string;
+    owner?: string;
+  }>;
+}
+
+export interface NextStepsContent {
+  type: 'next_steps';
+  actions: Array<{
+    action: string;
+    owner?: string;
+    deadline?: string;
+    status?: 'pending' | 'in_progress' | 'done';
+  }>;
+  closing_message?: string;
+}
+
+export interface AppendixContent {
+  type: 'appendix';
+  title: string;
+  body: string;
+  tables?: TableData[];
+  footnotes?: string[];
+}
+
+export interface InitiativePortfolioContent {
+  type: 'initiative_portfolio';
+  initiatives: Array<{
+    name: string;
+    summary?: string;
+    strategicIntent?: 'Grow' | 'Fix' | 'Stabilize' | 'De-risk' | 'Build Capability' | string;
+    strategicRole?: 'Foundation' | 'Enabler' | 'Accelerator' | 'Scaling' | string;
+    priority?: 'critical' | 'high' | 'medium' | 'low';
+    timeline?: string;
+    impact?: number; // 1-5
+    effort?: number; // 1-5
+    effortProfile?: { analytical: number; operational: number; change: number };
+    budget?: string;
+    roi?: string;
+    owner?: string;
+    relatedGap?: string;
+    relatedAxis?: string;
+    tags?: string[];
+  }>;
+}
+
+export interface PrioritizationMatrixContent {
+  type: 'prioritization_matrix';
+  quadrants: Array<{
+    label: string;
+    position: 'top_left' | 'top_right' | 'bottom_left' | 'bottom_right';
+    items: Array<{
+      name: string;
+      description?: string;
+    }>;
+  }>;
+  xAxisLabel: string;
+  yAxisLabel: string;
+}
+
+// ============================================================
+// DATA PRIMITIVES
+// ============================================================
+
+export interface KpiData {
+  name: string;
+  value: number | string;
+  unit?: string;
+  trend?: 'up' | 'down' | 'flat';
+  target?: number | string;
+  delta?: number | string;
+  status?: 'good' | 'warning' | 'critical';
+}
+
+export interface AxisScore {
+  axisId: string;
+  axisName: string;
+  score: number;
+  maxScore: number;
+  target?: number;
+  gap?: number;
+}
+
+export interface ChartDataSet {
+  labels: string[];
+  series: Array<{
+    name: string;
+    values: number[];
+    color?: string;
+  }>;
+}
+
+export interface TableData {
+  headers: string[];
+  rows: string[][];
+}
+
+// ============================================================
+// ATOMIC COMPONENT INTERFACES
+// ============================================================
+
+/** Position + size on a slide (inches, 16:9 = 10×5.625) */
+export interface ElementPosition {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** Base props every atomic component receives */
+export interface AtomicProps {
+  position: ElementPosition;
+}
+
+/** A rendered element — the thing an atomic returns */
+export interface RenderedElement {
+  kind: 'text' | 'shape' | 'table' | 'chart' | 'image';
+  apply: (slide: any) => void;
+}
+
+// ============================================================
+// COMPOSITE COMPONENT INTERFACE
+// ============================================================
+
+export interface CompositeResult {
+  elements: RenderedElement[];
+}
+
+// ============================================================
+// LAYOUT INTERFACE
+// ============================================================
+
+export interface LayoutResult {
+  masterName: string;
+  elements: RenderedElement[];
+  slideOptions?: Record<string, any>;
+}
+
+export interface LayoutDefinition {
+  id: string;
+  intent: SlideIntent;
+  render: (slide: UnifiedSlide, meta: UnifiedReportMeta, tokens: DesignTokens) => LayoutResult;
+}
+
+// ============================================================
+// DESIGN TOKENS
+// ============================================================
+
+export interface DesignTokens {
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    background: string;
+    surface: string;
+    textPrimary: string;
+    textSecondary: string;
+    textInverse: string;
+    success: string;
+    warning: string;
+    danger: string;
+    info: string;
+    border: string;
+    muted: string;
+  };
+  fonts: {
+    title: string;
+    body: string;
+    mono: string;
+  };
+  fontSizes: {
+    slideTitle: number;
+    sectionTitle: number;
+    heading: number;
+    subheading: number;
+    body: number;
+    caption: number;
+    footnote: number;
+    kpiValue: number;
+    kpiLabel: number;
+  };
+  spacing: {
+    margin: number; // slide edge margin
+    gutter: number; // gap between columns
+    paragraphGap: number; // gap between paragraphs
+    elementGap: number; // gap between elements
+  };
+  grid: {
+    slideW: number; // 10 (inches, 16:9)
+    slideH: number; // 5.625
+    contentX: number; // left margin
+    contentY: number; // below header
+    contentW: number; // usable width
+    contentH: number; // usable height
+    headerH: number; // header bar height
+    footerY: number; // footer y position
+  };
+}
+
+// ============================================================
+// RULES ENGINE
+// ============================================================
+
+export interface RuleViolation {
+  rule: string;
+  message: string;
+  severity: 'error' | 'warning';
+  slideIndex?: number;
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  violations: RuleViolation[];
+}

@@ -46,10 +46,10 @@ import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLife
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { RAIDLog } from '../Implementation/RAIDLog';
+import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { DecisionsPanel } from '../MyWork/DecisionsPanel';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
-import { InitiativeSidePanel } from '../Portfolio/InitiativeSidePanel';
 import {
   FilterableTable,
   FilterChip,
@@ -907,11 +907,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   const handleRowAction = useCallback(
     (action: string, row: FullInitiative) => {
-      if (action === 'view' || action === 'edit') {
+      if (action === 'preview' || action === 'view') {
         handleOpenSidePanel(row);
+      } else if (action === 'edit') {
+        handleOpenDocument(row);
       }
     },
-    [handleOpenSidePanel]
+    [handleOpenSidePanel, handleOpenDocument]
   );
 
   // Convert to grid items
@@ -1576,7 +1578,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       >
         {renderContent()}
       </ModuleHub>
-      <InitiativeSidePanel
+      <InitiativeCompactPanel
         initiative={sidePanelInitiative}
         isOpen={isSidePanelOpen}
         onClose={() => {
@@ -1584,7 +1586,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           setSelectedInitiative(null);
         }}
         onUpdate={handlePortfolioUpdate}
-        onOpenFullDetail={(initiative) => {
+        onOpenFull={(initiative) => {
           const full = initiatives.find((item) => item.id === initiative.id);
           if (full) {
             handleOpenDocument(full);

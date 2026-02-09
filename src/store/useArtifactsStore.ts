@@ -319,7 +319,16 @@ export const parseArtifactsFromResponse = (response: string): Artifact[] => {
 };
 
 const isValidArtifactType = (type: string): type is Artifact['type'] => {
-  return ['markdown', 'code', 'html', 'diagram', 'table', 'pmo-document'].includes(type);
+  return [
+    'markdown',
+    'code',
+    'html',
+    'diagram',
+    'table',
+    'comparison-matrix',
+    'decision-timeline',
+    'pmo-document',
+  ].includes(type);
 };
 
 export default useArtifactsStore;

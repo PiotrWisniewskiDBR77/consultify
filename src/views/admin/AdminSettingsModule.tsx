@@ -4,12 +4,13 @@
  * Two-column layout with sidebar navigation (matching Settings pattern)
  */
 
-import { ArrowLeft, Menu, MessageSquare, X } from 'lucide-react';
+import { Menu, MessageSquare, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { AdminInitiativeCreatorPanel } from '../../components/Admin/AdminInitiativeCreatorPanel';
+import { AdminInitiativeSectionTypesPanel } from '../../components/Admin/AdminInitiativeSectionTypesPanel';
+import { AdminInitiativeTemplatesPanel } from '../../components/Admin/AdminInitiativeTemplatesPanel';
 import {
   AdminSettingsSection,
   AdminSettingsSidebar,
@@ -18,11 +19,12 @@ import { AuditExportPanel } from '../../components/Admin/AuditExportPanel';
 import { BrandingSettingsPanel } from '../../components/Admin/BrandingSettingsPanel';
 import { DataGovernancePanel } from '../../components/Admin/DataGovernancePanel';
 import { IntegrationsManagementPanel } from '../../components/Admin/IntegrationsManagementPanel';
-import { ReportsTable } from '../../components/assessment/ReportsTable';
 import { PaymentMethodsPanel } from '../../components/billing/PaymentMethodsPanel';
 import { SubscriptionManager } from '../../components/billing/SubscriptionManager';
 import { TaxSettingsForm } from '../../components/billing/TaxSettingsForm';
 import { UsageAlertsConfig } from '../../components/billing/UsageAlertsConfig';
+import { BlockTypesManager } from '../../components/ReportBuilder/BlockTypesManager';
+import { TemplatesManager } from '../../components/ReportBuilder/TemplatesManager';
 import { OrganizationProfileForm } from '../../components/settings/OrganizationProfileForm';
 import { SecuritySettings } from '../../components/settings/SecuritySettings';
 import { Button } from '../../components/ui/primitives/Button';
@@ -54,12 +56,20 @@ const sectionMeta: Record<AdminSettingsSection, { title: string; subtitle: strin
   governance: { title: 'Governance', subtitle: 'Configure data governance policies' },
   audit: { title: 'Audit', subtitle: 'View and export audit logs' },
   'report-creator': {
-    title: 'Kreator raportów',
-    subtitle: 'Twórz raporty z różnych źródeł danych',
+    title: 'Report Templates',
+    subtitle: 'Manage report templates for your organization',
   },
-  'initiative-creator': {
-    title: 'Kreator inicjatyw',
-    subtitle: 'Generuj inicjatywy na podstawie analiz',
+  'block-library': {
+    title: 'Block Library',
+    subtitle: 'Define block types (render + prompt) reusable across reports',
+  },
+  'initiative-templates': {
+    title: 'Initiative Templates',
+    subtitle: 'Manage initiative templates and process blueprints',
+  },
+  'initiative-sections': {
+    title: 'Initiative Section Library',
+    subtitle: 'Define section types (render + prompt) reusable across initiatives',
   },
   integrations: { title: 'Integrations', subtitle: 'Manage third-party integrations' },
   api: { title: 'API', subtitle: 'Manage API keys and access' },
@@ -153,44 +163,14 @@ const AdminFeedbackView: React.FC = () => {
   );
 };
 
-// Admin Reports Panel - Wrapper for ReportsTable
-const AdminReportsPanel: React.FC = () => {
-  const { currentProjectId } = useAppStore();
-  const navigate = useNavigate();
-
-  const handleCreateInitiatives = useCallback(
-    (reportId: string) => {
-      // Navigate to initiatives generator with the report
-      navigate(`/assessment/initiatives?reportId=${reportId}`);
-    },
-    [navigate]
-  );
-
-  const handleOpenReport = useCallback(
-    (reportId: string, reportName: string, status?: string) => {
-      // Navigate to report builder workspace
-      navigate(`/reports/builder?reportId=${reportId}`);
-    },
-    [navigate]
-  );
-
-  // Use organizationId as fallback if no project selected
-  const projectId = currentProjectId || 'global';
-
-  return (
-    <div className="space-y-4">
-      <ReportsTable
-        projectId={projectId}
-        onCreateInitiatives={handleCreateInitiatives}
-        onOpenReport={handleOpenReport}
-      />
-    </div>
-  );
+// Admin Templates Panel - Wrapper for TemplatesManager
+const AdminTemplatesPanel: React.FC = () => {
+  return <TemplatesManager />;
 };
 
-// Admin Initiatives Panel - Uses the custom AdminInitiativeCreatorPanel
+// Admin Initiatives Panel - Uses the Initiative Templates manager
 const AdminInitiativesPanel: React.FC = () => {
-  return <AdminInitiativeCreatorPanel />;
+  return <AdminInitiativeTemplatesPanel />;
 };
 
 export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
@@ -240,10 +220,10 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
     [location.pathname, location.search, navigate]
   );
 
-  // Handle back to dashboard
+  // Handle back to main app (Chat)
   const handleBackToDashboard = useCallback(() => {
-    setCurrentView(AppView.DASHBOARD);
-    navigate(ROUTES.DASHBOARD);
+    setCurrentView(AppView.AI_CHAT);
+    navigate(ROUTES.AI_CHAT);
   }, [navigate, setCurrentView]);
 
   // Get current section metadata
@@ -277,9 +257,13 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
       case 'audit':
         return <AuditExportPanel />;
       case 'report-creator':
-        return <AdminReportsPanel />;
-      case 'initiative-creator':
+        return <AdminTemplatesPanel />;
+      case 'block-library':
+        return <BlockTypesManager embedded />;
+      case 'initiative-templates':
         return <AdminInitiativesPanel />;
+      case 'initiative-sections':
+        return <AdminInitiativeSectionTypesPanel />;
       case 'integrations':
         return <IntegrationsManagementPanel />;
       case 'api':
@@ -292,7 +276,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   }, [activeSection, currentUser]);
 
   return (
-    <div className="flex h-full bg-navy-950 relative">
+    <div className="flex h-full bg-slate-50 dark:bg-navy-950 relative">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
@@ -318,54 +302,22 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-navy-900">
-        {/* Header */}
-        <header className="flex items-center justify-between px-4 lg:px-6 h-14 border-b border-white/5 bg-navy-900 sticky top-0 z-20">
-          <div className="flex items-center gap-3 lg:gap-4">
-            {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden text-slate-400 dark:text-slate-500 hover:text-white p-2"
-            >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBackToDashboard}
-              className="text-slate-400 dark:text-slate-500 hover:text-white hidden lg:flex"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {t('admin.backToDashboard', 'Back to Dashboard')}
-            </Button>
-
-            <div className="h-5 w-px bg-white/10 hidden lg:block" />
-
-            <div>
-              <h1 className="text-base lg:text-lg font-semibold text-white">{currentMeta.title}</h1>
-              <p className="text-xs text-slate-400 dark:text-slate-500 hidden sm:block">
-                {currentMeta.subtitle}
-              </p>
-            </div>
-          </div>
-
-          {/* Mobile back button */}
+      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-navy-900">
+        {/* Mobile menu button - only visible on mobile */}
+        <div className="lg:hidden flex items-center px-4 py-2 border-b border-slate-200 dark:border-white/5">
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleBackToDashboard}
-            className="lg:hidden text-slate-400 dark:text-slate-500 hover:text-white"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="text-slate-600 hover:text-navy-900 dark:text-slate-400 dark:hover:text-white p-2"
           >
-            <ArrowLeft className="w-4 h-4" />
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
-        </header>
+        </div>
 
-        {/* Content */}
+        {/* Content - No additional header, breadcrumbs are in MainLayout */}
         <ScrollArea className="flex-1">
-          <div className="p-4 lg:p-6 max-w-5xl mx-auto w-full">{renderContent()}</div>
+          <div className="p-2 lg:p-3 w-full">{renderContent()}</div>
         </ScrollArea>
       </div>
     </div>

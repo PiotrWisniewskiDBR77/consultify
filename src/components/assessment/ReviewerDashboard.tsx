@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { Api } from '@/services/api';
+
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 import { ReviewFeedbackPanel } from './panels/ReviewFeedbackPanel';
@@ -75,18 +77,8 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
   // Fetch reviews
   const fetchReviews = useCallback(async () => {
     try {
-      const response = await fetch('/api/assessment-workflow/pending-reviews', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch reviews');
-      }
-
-      const data = await response.json();
-      setReviews(data.reviews || []);
+      const data = (await Api.get('/assessment-workflow/pending-reviews')) as any;
+      setReviews(data?.reviews || []);
 
       // Calculate stats
       const allReviews = data.reviews || [];
@@ -135,13 +127,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
   const handleStartReview = async (review: Review) => {
     try {
       // Update review status to IN_PROGRESS
-      await fetch(`/api/assessment-workflow/reviews/${review.id}/start`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      await Api.post(`/assessment-workflow/reviews/${review.id}/start`, {});
 
       // Navigate to assessment
       if (onNavigateToReview) {

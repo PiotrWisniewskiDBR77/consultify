@@ -4,7 +4,25 @@
  * Uses shared ModuleHub components
  */
 
-import { Activity, Cpu, Database, FileText, Layers, Lightbulb, Workflow } from 'lucide-react';
+import {
+  Activity,
+  ArrowRight,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Cpu,
+  Database,
+  Download,
+  FileText,
+  Globe,
+  Layers,
+  Lightbulb,
+  Loader2,
+  Monitor,
+  Presentation,
+  Workflow,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -12,8 +30,10 @@ import { useNavigate } from 'react-router-dom';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { Api } from '@/services/api';
 
+import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {
+  ASSESSMENT_STATUSES,
   FilterableTable,
   FilterChip,
   GridItem,
@@ -22,6 +42,7 @@ import {
   ModuleHub,
   ModuleTab,
   OpenDocument,
+  REPORT_STATUSES,
   StatusDropdown,
   TableColumn,
   ViewMode,
@@ -33,8 +54,26 @@ import { NewAssessmentData, NewAssessmentModal } from './NewAssessmentModal';
 // Assessment Framework Types
 type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
-// Canonical Initiative Status (13 statuses)
-// Documentation: wdrozenia/standards/03-STATUS-WORKFLOW.md
+// Assessment workflow statuses (own lifecycle)
+type AssessmentStatusType =
+  | 'DRAFT'
+  | 'IN_REVIEW'
+  | 'AWAITING_APPROVAL'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'ARCHIVED';
+
+// Report statuses (own lifecycle)
+type ReportStatusType =
+  | 'DRAFT'
+  | 'GENERATING'
+  | 'FINAL'
+  | 'PENDING_APPROVAL'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'UTILIZED';
+
+// Initiative statuses (canonical 13)
 type InitiativeStatusType =
   | 'DRAFT'
   | 'PENDING_REVIEW'
@@ -122,15 +161,43 @@ interface ReportBuilderReportFromAPI {
   updatedAt?: string;
 }
 
-// Map API status to canonical InitiativeStatus
-const mapApiStatus = (status: string): InitiativeStatusType => {
+// Map API status to assessment status (preserves assessment-native statuses)
+const mapAssessmentApiStatus = (status: string): AssessmentStatusType => {
   const s = status?.toUpperCase() || 'DRAFT';
-  // Map legacy statuses to new canonical statuses
+  const statusMap: Record<string, AssessmentStatusType> = {
+    DRAFT: 'DRAFT',
+    IN_REVIEW: 'IN_REVIEW',
+    PENDING_REVIEW: 'IN_REVIEW',
+    AWAITING_APPROVAL: 'AWAITING_APPROVAL',
+    APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
+    ARCHIVED: 'ARCHIVED',
+    COMPLETED: 'APPROVED',
+  };
+  return statusMap[s] || 'DRAFT';
+};
+
+// Map API status to report status (preserves report-native statuses)
+const mapReportApiStatus = (status: string): ReportStatusType => {
+  const s = status?.toUpperCase() || 'DRAFT';
+  const statusMap: Record<string, ReportStatusType> = {
+    DRAFT: 'DRAFT',
+    GENERATING: 'GENERATING',
+    FINAL: 'FINAL',
+    PENDING_APPROVAL: 'PENDING_APPROVAL',
+    APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
+    UTILIZED: 'UTILIZED',
+  };
+  return statusMap[s] || 'DRAFT';
+};
+
+// Map API status to initiative status (canonical 13)
+const mapInitiativeApiStatus = (status: string): InitiativeStatusType => {
+  const s = status?.toUpperCase() || 'DRAFT';
   const statusMap: Record<string, InitiativeStatusType> = {
     DRAFT: 'DRAFT',
     PENDING_REVIEW: 'PENDING_REVIEW',
-    IN_REVIEW: 'PENDING_REVIEW', // Legacy mapping
-    AWAITING_APPROVAL: 'PENDING_REVIEW', // Legacy mapping
     REVIEW: 'REVIEW',
     PROMOTED: 'PROMOTED',
     PLANNING: 'PLANNING',
@@ -142,18 +209,15 @@ const mapApiStatus = (status: string): InitiativeStatusType => {
     COMPLETED: 'DONE',
     TRACKING: 'TRACKING',
     CANCELLED: 'CANCELLED',
-    ARCHIVED: 'CANCELLED', // Map legacy ARCHIVED to CANCELLED
+    ARCHIVED: 'CANCELLED',
   };
   return statusMap[s] || 'DRAFT';
 };
 
-const mapReportBuilderStatusToHubStatus = (status: string): InitiativeStatusType => {
-  const s = status?.toUpperCase() || 'DRAFT';
-  if (s === 'APPROVED') return 'APPROVED';
-  if (s === 'FINAL') return 'PENDING_REVIEW';
-  if (s === 'ARCHIVED') return 'CANCELLED';
-  if (s === 'DRAFT') return 'DRAFT';
-  return 'DRAFT';
+// In Assessment module we treat initiatives as "source artifacts" (phase 1 only)
+const isAssessmentModuleInitiative = (row: any): boolean => {
+  const s = String(row?.status || '').toUpperCase();
+  return s === 'DRAFT' || s === 'PENDING_REVIEW';
 };
 
 // Map API type to AssessmentFramework
@@ -185,6 +249,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showInitiativesWizard, setShowInitiativesWizard] = useState(false);
   const [showNewReportModal, setShowNewReportModal] = useState(false);
+
+  // Compact panel (preview) state
+  const [previewInitiativeId, setPreviewInitiativeId] = useState<string | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  // Report slide-over: assessment report id + (optional) linked report builder id
+  const [slideOverReportId, setSlideOverReportId] = useState<string | null>(null);
+  const [slideOverBuilderReportId, setSlideOverBuilderReportId] = useState<string | null>(null);
+  const [slideOverReportOpen, setSlideOverReportOpen] = useState(false);
 
   // API data state
   const [assessments, setAssessments] = useState<AssessmentFromAPI[]>([]);
@@ -236,11 +308,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             const assessmentData = assessmentResponse?.assessments || [];
             setAssessments(Array.isArray(assessmentData) ? assessmentData : []);
 
-            // Fetch APPROVED + FINAL (legacy) reports.
-            // UI still defaults to APPROVED-only visibility, but this prevents "disappearing" legacy FINAL reports.
-            const reportsResponse = await Api.get(
-              '/assessment-reports?status=APPROVED,FINAL'
-            ).catch(() => null);
+            // Fetch ALL reports linked to user's assessments (all statuses).
+            // Status filtering is done client-side via the status dropdown.
+            const reportsResponse = await Api.get('/assessment-reports').catch(() => null);
             const reportData = reportsResponse?.reports || [];
             setReports(Array.isArray(reportData) ? reportData : []);
 
@@ -248,7 +318,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             const initiativesResponse = await Api.get('/initiatives?source=assessment').catch(
               () => []
             );
-            setInitiatives(Array.isArray(initiativesResponse) ? initiativesResponse : []);
+            const rawInits = Array.isArray(initiativesResponse) ? initiativesResponse : [];
+            setInitiatives(rawInits.filter(isAssessmentModuleInitiative));
 
             lastErr = null;
             break;
@@ -283,13 +354,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     try {
       const [assessmentsRes, reportsRes, initiativesRes] = await Promise.all([
         Api.get('/assessments/my-assessments').catch(() => null),
-        Api.get('/assessment-reports?status=APPROVED,FINAL').catch(() => null),
+        Api.get('/assessment-reports').catch(() => null),
         Api.get('/initiatives?source=assessment').catch(() => []),
       ]);
 
       setAssessments(assessmentsRes?.assessments || []);
       setReports(reportsRes?.reports || []);
-      setInitiatives(Array.isArray(initiativesRes) ? initiativesRes : []);
+      const rawInits = Array.isArray(initiativesRes) ? initiativesRes : [];
+      setInitiatives(rawInits.filter(isAssessmentModuleInitiative));
     } catch (err: any) {
       toast.error('Failed to refresh');
     } finally {
@@ -298,26 +370,24 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   }, []);
 
   // Get status dropdown context based on active tab
-  // Assessment tab shows DRAFT only, Initiatives tab shows full lifecycle
+  // Each tab uses its own status family
   const statusContext: ModuleContext = useMemo(() => {
     switch (activeTab) {
       case 'reports':
-        return 'reporting'; // Reports can see all statuses
+        return 'assessment_reports'; // Report statuses (DRAFT, GENERATING, FINAL, APPROVED, etc.)
       case 'initiatives':
-        return 'initiatives'; // Full initiative lifecycle
+        return 'assessment_initiatives'; // Source-phase only (DRAFT, PENDING_REVIEW)
       default:
-        return 'assessment'; // DRAFT only
+        return 'assessment_list'; // Assessment workflow statuses (DRAFT, IN_REVIEW, APPROVED, etc.)
     }
   }, [activeTab]);
 
-  // Reset status filter when tab changes
+  // Reset status filter when tab changes — show all items by default
   useEffect(() => {
-    // Reports tab: default to showing only globally visible reports (APPROVED).
-    // Other tabs: no status filter (all).
-    setStatusFilter(activeTab === 'reports' ? 'APPROVED' : 'all');
+    setStatusFilter('all');
   }, [activeTab]);
 
-  // Calculate status counts for dropdown
+  // Calculate status counts for dropdown — each tab uses its own status mapper
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { all: 0 };
 
@@ -336,10 +406,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
     counts.all = data.length;
     data.forEach((item) => {
-      const status =
-        activeTab === 'reports'
-          ? mapReportBuilderStatusToHubStatus(String(item.status || 'DRAFT'))
-          : mapApiStatus(item.status);
+      let status: string;
+      if (activeTab === 'reports') {
+        status = mapReportApiStatus(String(item.status || 'DRAFT'));
+      } else if (activeTab === 'initiatives') {
+        status = mapInitiativeApiStatus(String(item.status || 'DRAFT'));
+      } else {
+        status = mapAssessmentApiStatus(String(item.status || 'DRAFT'));
+      }
       counts[status] = (counts[status] || 0) + 1;
     });
 
@@ -367,73 +441,150 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         id: 'initiatives' as ModuleTab,
         label: 'Initiatives',
         icon: <Lightbulb size={16} />,
-        count: initiatives.filter((i) => String(i?.status || '').toUpperCase() !== 'DRAFT').length,
+        count: initiatives.length,
       },
     ],
     [assessments.length, reports, initiatives]
   );
 
   // Table columns for assessments
-  const assessmentColumns: TableColumn[] = useMemo(
-    () => [
-      {
-        id: 'framework',
-        label: 'Type',
-        width: '120px',
-        filterable: true,
-        filterOptions: Object.entries(FRAMEWORK_META).map(([key, meta]) => ({
-          value: key,
-          label: meta.shortName,
-          color: `bg-${meta.color}-500`,
-        })),
-        render: (row) => {
-          const meta = FRAMEWORK_META[row.framework as AssessmentFramework];
-          return (
-            <div className="flex items-center gap-2">
-              <span className={`text-${meta.color}-400`}>{meta.icon}</span>
-              <span className="font-mono text-xs font-bold text-slate-300">{meta.shortName}</span>
-            </div>
-          );
+  // Dynamic columns per active tab
+  const tableColumns: TableColumn[] = useMemo(() => {
+    // Common columns
+    const frameworkCol: TableColumn = {
+      id: 'framework',
+      label: 'Type',
+      width: '120px',
+      filterable: true,
+      filterOptions: Object.entries(FRAMEWORK_META).map(([key, meta]) => ({
+        value: key,
+        label: meta.shortName,
+        color: `bg-${meta.color}-500`,
+      })),
+      render: (row) => {
+        const meta = FRAMEWORK_META[row.framework as AssessmentFramework];
+        if (!meta) return <span className="text-xs text-slate-400">{row.framework}</span>;
+        return (
+          <div className="flex items-center gap-2">
+            <span className={`text-${meta.color}-400`}>{meta.icon}</span>
+            <span className="font-mono text-xs font-bold text-slate-300">{meta.shortName}</span>
+          </div>
+        );
+      },
+    };
+    const nameCol: TableColumn = {
+      id: 'name',
+      label: 'Name',
+      render: (row) => <span className="text-sm text-white font-medium">{row.name}</span>,
+    };
+    const progressCol: TableColumn = { id: 'progress', label: 'Progress', width: '150px' };
+    const updatedCol: TableColumn = {
+      id: 'updatedAt',
+      label: 'Updated',
+      width: '120px',
+      sortable: true,
+    };
+
+    if (activeTab === 'reports') {
+      return [
+        frameworkCol,
+        nameCol,
+        {
+          id: 'status',
+          label: 'Status',
+          width: '160px',
+          filterable: true,
+          filterOptions: Object.values(REPORT_STATUSES).map((s) => ({
+            value: s.id,
+            label: s.label,
+            color: s.bgColor,
+          })),
         },
-      },
-      {
-        id: 'name',
-        label: 'Name',
-        render: (row) => <span className="text-sm text-white font-medium">{row.name}</span>,
-      },
+        progressCol,
+        updatedCol,
+      ];
+    }
+
+    if (activeTab === 'initiatives') {
+      return [
+        frameworkCol,
+        nameCol,
+        {
+          id: 'sourceReport',
+          label: 'Source Report',
+          width: '200px',
+          render: (row) => (
+            <span
+              className="text-xs text-slate-400 truncate block max-w-[180px]"
+              title={row.sourceReport || ''}
+            >
+              {row.sourceReport || '—'}
+            </span>
+          ),
+        },
+        {
+          id: 'status',
+          label: 'Status',
+          width: '140px',
+          filterable: true,
+          filterOptions: [
+            { value: 'DRAFT', label: 'Draft', color: 'bg-slate-500' },
+            { value: 'REVIEW', label: 'In Review', color: 'bg-amber-500' },
+            { value: 'PLANNING', label: 'Planning', color: 'bg-indigo-500' },
+            { value: 'APPROVED', label: 'Approved', color: 'bg-emerald-500' },
+            { value: 'EXECUTING', label: 'Executing', color: 'bg-cyan-500' },
+            { value: 'CANCELLED', label: 'Cancelled', color: 'bg-gray-500' },
+          ],
+        },
+        {
+          id: 'priority',
+          label: 'Priority',
+          width: '100px',
+          filterable: true,
+          filterOptions: [
+            { value: 'critical', label: 'Critical', color: 'bg-red-500' },
+            { value: 'high', label: 'High', color: 'bg-orange-500' },
+            { value: 'medium', label: 'Medium', color: 'bg-blue-500' },
+            { value: 'low', label: 'Low', color: 'bg-slate-500' },
+          ],
+          render: (row) => {
+            const colors: Record<string, string> = {
+              critical: 'text-red-400 bg-red-500/10',
+              high: 'text-orange-400 bg-orange-500/10',
+              medium: 'text-blue-400 bg-blue-500/10',
+              low: 'text-slate-400 bg-slate-500/10',
+            };
+            const c = colors[row.priority] || colors.medium;
+            return (
+              <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${c}`}>
+                {row.priority || 'medium'}
+              </span>
+            );
+          },
+        },
+        updatedCol,
+      ];
+    }
+
+    // Default: assessment list
+    return [
+      frameworkCol,
+      nameCol,
       {
         id: 'status',
         label: 'Status',
-        width: '140px',
+        width: '160px',
         filterable: true,
-        filterOptions: [
-          { value: 'DRAFT', label: 'Draft', color: 'bg-slate-400' },
-          { value: 'REVIEW', label: 'In Review', color: 'bg-amber-400' },
-          { value: 'PROMOTED', label: 'Promoted', color: 'bg-blue-400' },
-          { value: 'PLANNING', label: 'Planning', color: 'bg-indigo-400' },
-          { value: 'APPROVED', label: 'Approved', color: 'bg-emerald-400' },
-          { value: 'SCHEDULED', label: 'Scheduled', color: 'bg-purple-400' },
-          { value: 'EXECUTING', label: 'Executing', color: 'bg-cyan-400' },
-          { value: 'BLOCKED', label: 'Blocked', color: 'bg-red-400' },
-          { value: 'DONE', label: 'Done', color: 'bg-green-400' },
-          { value: 'TRACKING', label: 'Tracking', color: 'bg-teal-400' },
-          { value: 'CANCELLED', label: 'Cancelled', color: 'bg-gray-400' },
-        ],
+        filterOptions: Object.values(ASSESSMENT_STATUSES).map((s) => ({
+          value: s.id,
+          label: s.label,
+          color: s.bgColor,
+        })),
       },
-      {
-        id: 'progress',
-        label: 'Progress',
-        width: '150px',
-      },
-      {
-        id: 'updatedAt',
-        label: 'Updated',
-        width: '120px',
-        sortable: true,
-      },
-    ],
-    []
-  );
+      progressCol,
+      updatedCol,
+    ];
+  }, [activeTab]);
 
   // Handlers
   const handleOpenDocument = useCallback(
@@ -476,11 +627,20 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         return;
       }
 
-      // For reports, open the report builder editor directly
+      // For reports, open in slide-over panel
       if (docType === 'report') {
-        const tid = toast.loading('Opening report…');
-        window.setTimeout(() => toast.dismiss(tid), 1500);
-        navigate(`/assessment-reports/${row.id}`);
+        setSlideOverReportId(row.id);
+        setSlideOverBuilderReportId(
+          (row as any).builderReportId || (row as any).builder_report_id || null
+        );
+        setSlideOverReportOpen(true);
+        return;
+      }
+
+      // For initiatives, row click opens quick preview panel
+      if (docType === 'initiative') {
+        setPreviewInitiativeId(row.id);
+        setIsPreviewOpen(true);
         return;
       }
 
@@ -538,16 +698,165 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   );
 
   const handleRowAction = useCallback(
-    (action: string, row: any) => {
-      console.log('Row action:', action, row);
-      if (action === 'view' || action === 'edit') {
+    async (action: string, row: any) => {
+      if (action === 'preview') {
+        // Open compact side panel for quick preview
+        if (activeTab === 'initiatives') {
+          setPreviewInitiativeId(row.id);
+          setIsPreviewOpen(true);
+        } else {
+          handleOpenDocument(row);
+        }
+      } else if (action === 'view' || action === 'edit') {
+        handleOpenDocument(row);
+      } else if (action === 'duplicate') {
+        // Duplicate assessment
+        const docType =
+          activeTab === 'initiatives'
+            ? 'initiative'
+            : activeTab === 'reports'
+              ? 'report'
+              : 'assessment';
+        const toastId = toast.loading(`Duplicating ${docType}...`);
+        try {
+          if (docType === 'assessment') {
+            const resp = await Api.post(`/assessment-workflow-v2/${row.id}/duplicate`, {});
+            toast.success('Assessment duplicated', { id: toastId });
+            refreshData();
+            if (resp?.id) {
+              const fw = (row.framework || 'drd').toString().toLowerCase();
+              navigate(`/assessment/${fw}/${resp.id}`);
+            }
+          } else if (docType === 'report') {
+            const builderId =
+              (row as any).builderReportId || (row as any).builder_report_id || null;
+            if (!builderId) throw new Error('Missing linked Report Builder id');
+            const newTitle = `${row.name || 'Report'} (Copy)`;
+            const resp: any = await Api.post(
+              `/report-builder/${encodeURIComponent(String(builderId))}/duplicate`,
+              { title: newTitle }
+            );
+            const newId = String(resp?.report?.id || resp?.id || '');
+            toast.success('Report duplicated', { id: toastId });
+            refreshData();
+            if (newId) navigate(`/reports/builder/${encodeURIComponent(newId)}`);
+          } else if (docType === 'initiative') {
+            const resp: any = await Api.post(
+              `/initiatives/${encodeURIComponent(row.id)}/duplicate`,
+              {
+                title: `${row.name || 'Initiative'} (Copy)`,
+              }
+            );
+            const newId = String(resp?.id || resp?.initiative?.id || '');
+            toast.success('Initiative duplicated', { id: toastId });
+            refreshData();
+            if (newId) {
+              setOpenDocuments((prev) => {
+                if (prev.find((d) => d.id === newId)) return prev;
+                return [
+                  ...prev,
+                  {
+                    id: newId,
+                    type: 'initiative',
+                    subType: row.sourceType,
+                    name: `${row.name || 'Initiative'} (Copy)`,
+                    status: 'DRAFT',
+                  } as any,
+                ];
+              });
+              setActiveDocumentId(newId);
+            }
+          }
+        } catch (e: any) {
+          toast.error(e?.message || 'Failed to duplicate', { id: toastId });
+        }
+      } else if (action === 'delete') {
+        // Delete with confirmation
+        const docType =
+          activeTab === 'initiatives'
+            ? 'initiative'
+            : activeTab === 'reports'
+              ? 'report'
+              : 'assessment';
+        if (
+          !window.confirm(`Are you sure you want to delete this ${docType}? This cannot be undone.`)
+        )
+          return;
+        const toastId = toast.loading(`Deleting ${docType}...`);
+        try {
+          if (docType === 'assessment') {
+            await Api.delete(`/assessment-workflow-v2/${row.id}`);
+          } else if (docType === 'report') {
+            await Api.delete(`/assessment-reports/${row.id}`);
+          } else if (docType === 'initiative') {
+            await Api.delete(`/initiatives/${row.id}`);
+          }
+          toast.success(`${docType.charAt(0).toUpperCase() + docType.slice(1)} deleted`, {
+            id: toastId,
+          });
+          refreshData();
+        } catch (e: any) {
+          toast.error(e?.message || 'Failed to delete', { id: toastId });
+        }
+      } else if (action === 'rename') {
+        // "Edit" action — open full editor (vs "Open" = slide-over / preview)
+        if (activeTab === 'reports') {
+          const builderId =
+            (row as any).builderReportId || (row as any).builder_report_id || row.id;
+          navigate(`/reports/builder/${encodeURIComponent(String(builderId))}`);
+          return;
+        }
+        if (activeTab === 'initiatives') {
+          setOpenDocuments((prev) => {
+            if (prev.find((d) => d.id === row.id)) return prev;
+            return [
+              ...prev,
+              {
+                id: row.id,
+                type: 'initiative',
+                subType: row.sourceType,
+                name: row.name || row.title,
+                status: row.status,
+              } as any,
+            ];
+          });
+          setActiveDocumentId(row.id);
+          return;
+        }
         handleOpenDocument(row);
       }
     },
-    [handleOpenDocument]
+    [handleOpenDocument, activeTab, refreshData, navigate]
   );
 
-  // Transform API data to display format
+  // Close compact preview panel
+  const handleClosePreview = useCallback(() => {
+    setIsPreviewOpen(false);
+    setTimeout(() => setPreviewInitiativeId(null), 300);
+  }, []);
+
+  // Open full card from compact panel
+  const handleOpenFullFromPreview = useCallback(
+    (initiative: any) => {
+      handleClosePreview();
+      // Open as document
+      const doc: OpenDocument = {
+        id: initiative.id,
+        type: 'initiative',
+        subType: initiative.sourceType,
+        name: initiative.name || initiative.title,
+        status: initiative.status,
+      };
+      setOpenDocuments((prev) => {
+        if (prev.find((d) => d.id === doc.id)) return prev;
+        return [...prev, doc];
+      });
+      setActiveDocumentId(initiative.id);
+    },
+    [handleClosePreview]
+  );
+
+  // Transform API data to display format — each tab uses its own status mapper
   const currentData = useMemo(() => {
     let data: any[] = [];
 
@@ -557,7 +866,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           id: item.id,
           name: item.name,
           framework: mapApiFramework(item.type),
-          status: mapApiStatus(item.status),
+          status: mapAssessmentApiStatus(item.status),
           progress: item.progress ?? 0,
           updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
         }));
@@ -567,24 +876,32 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           id: item.id,
           name: (item as any).name || (item as any).title,
           framework: mapApiFramework((item as any).assessmentType),
-          status: mapReportBuilderStatusToHubStatus(item.status),
-          progress: mapReportBuilderStatusToHubStatus(item.status) === 'APPROVED' ? 100 : 60,
+          status: mapReportApiStatus(item.status),
+          builderReportId: (item as any).builderReportId || (item as any).builder_report_id || null,
+          progress:
+            mapReportApiStatus(item.status) === 'APPROVED'
+              ? 100
+              : mapReportApiStatus(item.status) === 'UTILIZED'
+                ? 100
+                : mapReportApiStatus(item.status) === 'FINAL'
+                  ? 80
+                  : 40,
           updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+          assessmentName: (item as any).assessmentName,
         }));
         break;
       case 'initiatives':
-        data = initiatives
-          .filter((item) => String(item.status || '').toUpperCase() !== 'DRAFT')
-          .map((item) => ({
-            id: item.id,
-            name: item.name || item.title,
-            framework: mapApiFramework(item.sourceType),
-            status: mapApiStatus(item.status),
-            progress: 100,
-            updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
-            priority: item.priority || 'medium',
-            impact: item.impact || 'medium',
-          }));
+        data = initiatives.map((item) => ({
+          id: item.id,
+          name: item.name || item.title,
+          framework: mapApiFramework(item.sourceType),
+          status: mapInitiativeApiStatus(item.status),
+          progress: 100,
+          updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+          priority: item.priority || 'medium',
+          impact: item.impact || 'medium',
+          sourceReport: item.reportName || item.report_name || null,
+        }));
         break;
       default:
         data = [];
@@ -711,18 +1028,13 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         );
       }
 
-      // Show document editor (placeholder for reports)
-      return (
-        <div className="flex items-center justify-center h-full text-slate-500">
-          <div className="text-center">
-            <p className="text-lg">Editing: {doc?.name}</p>
-            <p className="text-sm">
-              ({doc?.subType} - {doc?.status})
-            </p>
-            <p className="mt-4 text-xs">Editor placeholder - report editor will be here</p>
-          </div>
-        </div>
-      );
+      // Reports – navigate to the full Report Builder
+      if (doc) {
+        navigate(`/reports/builder/${encodeURIComponent(doc.id)}`);
+        return null;
+      }
+
+      return null;
     }
 
     // Show list/grid view
@@ -740,7 +1052,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
     return (
       <FilterableTable
-        columns={assessmentColumns}
+        columns={tableColumns}
         data={currentData}
         onRowClick={handleOpenDocument}
         onRowAction={handleRowAction}
@@ -767,15 +1079,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     if (activeTab === 'reports') {
       setShowNewReportModal(true);
     } else if (activeTab === 'initiatives') {
-      if (!wizardEnabled) {
-        toast.error('Initiatives wizard is disabled (feature flag).');
-        return;
-      }
+      // Simplified: single "New Initiative" button → open wizard
       setShowInitiativesWizard(true);
     } else {
       handleNewAssessment();
     }
-  }, [activeTab, handleNewAssessment, wizardEnabled]);
+  }, [activeTab, handleNewAssessment]);
 
   // Dynamic new item label based on active tab
   const getNewItemLabel = () => {
@@ -865,9 +1174,544 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           type: a.type,
           status: a.status,
         }))}
-        onCreated={(reportId) => navigate(`/assessment-reports/${reportId}`)}
+        onCreated={(reportId) => navigate(`/reports/builder/${reportId}`)}
       />
+
+      {/* Initiative Compact Side Panel (Quick Preview) */}
+      <InitiativeCompactPanel
+        initiative={null}
+        initiativeId={previewInitiativeId || undefined}
+        isOpen={isPreviewOpen}
+        onClose={handleClosePreview}
+        onOpenFull={handleOpenFullFromPreview}
+        onUpdate={() => refreshData()}
+      />
+
+      {/* Report Slide-Over Panel — compact summary */}
+      {slideOverReportOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-50 bg-black/40 transition-opacity"
+            onClick={() => {
+              setSlideOverReportOpen(false);
+              setTimeout(() => {
+                setSlideOverReportId(null);
+                setSlideOverBuilderReportId(null);
+              }, 300);
+            }}
+          />
+          {/* Slide-over panel — compact width */}
+          <div
+            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-navy-900 border-l border-navy-700 shadow-2xl overflow-hidden flex flex-col"
+            style={{ animation: 'slideInRight 0.25s ease-out' }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-navy-700 bg-navy-800/80">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                  <FileText size={14} className="text-purple-400" />
+                </div>
+                <h3 className="text-white font-semibold text-sm">Report Summary</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setSlideOverReportOpen(false);
+                  setTimeout(() => {
+                    setSlideOverReportId(null);
+                    setSlideOverBuilderReportId(null);
+                  }, 300);
+                }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            {/* Content — compact report summary (scrollable) */}
+            <div className="flex-1 overflow-auto p-5">
+              {slideOverReportId ? (
+                <ReportSlideOverContent
+                  assessmentReportId={slideOverReportId}
+                  builderReportId={slideOverBuilderReportId || undefined}
+                  onOpenFull={() => {
+                    setSlideOverReportOpen(false);
+                    const targetId = slideOverBuilderReportId || slideOverReportId;
+                    if (targetId) navigate(`/reports/builder/${targetId}`);
+                  }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
+                  No report selected
+                </div>
+              )}
+            </div>
+            {/* Sticky footer — Open Full Editor */}
+            {slideOverReportId && (
+              <div className="shrink-0 px-5 py-4 border-t border-navy-700 bg-navy-900/95 backdrop-blur-sm">
+                <button
+                  onClick={() => {
+                    setSlideOverReportOpen(false);
+                    const targetId = slideOverBuilderReportId || slideOverReportId;
+                    if (targetId) navigate(`/reports/builder/${targetId}`);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/30 transition-colors"
+                >
+                  Open Full Editor
+                  <ArrowRight size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+      <style>{`
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
     </>
+  );
+};
+
+// ============================================
+// Status helpers for compact report summary
+// ============================================
+const REPORT_STATUS_CONFIG: Record<
+  string,
+  { label: string; color: string; bgColor: string; icon: 'clock' | 'check' | 'spinner' }
+> = {
+  DRAFT: {
+    label: 'Draft',
+    color: 'text-slate-300',
+    bgColor: 'bg-slate-500/20 border-slate-500/30',
+    icon: 'clock',
+  },
+  GENERATING: {
+    label: 'Generating...',
+    color: 'text-amber-300',
+    bgColor: 'bg-amber-500/20 border-amber-500/30',
+    icon: 'spinner',
+  },
+  FINAL: {
+    label: 'Final',
+    color: 'text-indigo-300',
+    bgColor: 'bg-indigo-500/20 border-indigo-500/30',
+    icon: 'check',
+  },
+  PENDING_APPROVAL: {
+    label: 'Pending Approval',
+    color: 'text-amber-300',
+    bgColor: 'bg-amber-500/20 border-amber-500/30',
+    icon: 'clock',
+  },
+  APPROVED: {
+    label: 'Approved',
+    color: 'text-emerald-300',
+    bgColor: 'bg-emerald-500/20 border-emerald-500/30',
+    icon: 'check',
+  },
+  REJECTED: {
+    label: 'Rejected',
+    color: 'text-red-300',
+    bgColor: 'bg-red-500/20 border-red-500/30',
+    icon: 'clock',
+  },
+  UTILIZED: {
+    label: 'Utilized',
+    color: 'text-cyan-300',
+    bgColor: 'bg-cyan-500/20 border-cyan-500/30',
+    icon: 'check',
+  },
+};
+
+// ============================================
+// Report Slide-Over Content — compact summary
+// ============================================
+// Format config for export items
+const EXPORT_FORMAT_CONFIG: Record<
+  string,
+  { label: string; icon: React.ReactNode; color: string; bgColor: string }
+> = {
+  pdf: {
+    label: 'PDF',
+    icon: <FileText size={14} />,
+    color: 'text-red-400',
+    bgColor: 'bg-red-500/15',
+  },
+  pptx: {
+    label: 'PowerPoint',
+    icon: <Presentation size={14} />,
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500/15',
+  },
+  docx: {
+    label: 'Word',
+    icon: <Globe size={14} />,
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/15',
+  },
+  web: {
+    label: 'Web Preview',
+    icon: <Monitor size={14} />,
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/15',
+  },
+};
+
+const ReportSlideOverContent: React.FC<{
+  assessmentReportId: string;
+  builderReportId?: string;
+  onOpenFull: () => void;
+}> = ({ assessmentReportId, builderReportId, onOpenFull }) => {
+  const [report, setReport] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [exports, setExports] = React.useState<any[]>([]);
+  const [exportsLoading, setExportsLoading] = React.useState(false);
+  const [downloadingId, setDownloadingId] = React.useState<string | null>(null);
+  const navigate = useNavigate();
+
+  // Fetch report data
+  React.useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    Api.get(`/assessment-reports/${assessmentReportId}/full`)
+      .then((data: any) => {
+        if (!cancelled) setReport(data?.report || data);
+      })
+      .catch(() => {
+        if (!cancelled) setReport(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [assessmentReportId]);
+
+  // Fetch export records
+  React.useEffect(() => {
+    const reportId = builderReportId || assessmentReportId;
+    if (!reportId) return;
+    let cancelled = false;
+    setExportsLoading(true);
+    Api.get(`/report-builder/${reportId}/exports`)
+      .then((data: any) => {
+        if (!cancelled) setExports(data?.exports || []);
+      })
+      .catch(() => {
+        if (!cancelled) setExports([]);
+      })
+      .finally(() => {
+        if (!cancelled) setExportsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [builderReportId, assessmentReportId]);
+
+  // Download an export file
+  const handleDownloadExport = React.useCallback(
+    async (format: string) => {
+      const reportId = builderReportId || assessmentReportId;
+      if (!reportId) return;
+      setDownloadingId(format);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/report-builder/${reportId}/export/${format}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (!res.ok) throw new Error(`Export failed (${format})`);
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const safeTitle = (report?.name || report?.title || 'report').replace(
+          /[^\p{L}\p{N}_-]+/gu,
+          '_'
+        );
+        a.download = `${safeTitle}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success(`${format.toUpperCase()} downloaded`);
+      } catch (err) {
+        console.error(`Download ${format} failed:`, err);
+        toast.error(`Failed to download ${format.toUpperCase()}`);
+      } finally {
+        setDownloadingId(null);
+      }
+    },
+    [builderReportId, assessmentReportId, report?.name, report?.title]
+  );
+
+  // Open web preview in full editor
+  const handleOpenWebPreview = React.useCallback(() => {
+    const targetId = builderReportId || assessmentReportId;
+    if (targetId) navigate(`/reports/builder/${targetId}`);
+  }, [builderReportId, assessmentReportId, navigate]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500" />
+      </div>
+    );
+  }
+
+  if (!report) {
+    return (
+      <div className="text-center text-slate-500 py-8">
+        <p className="text-sm">Report not found or could not be loaded.</p>
+      </div>
+    );
+  }
+
+  const statusKey = String(report.status || 'DRAFT').toUpperCase();
+  const statusCfg = REPORT_STATUS_CONFIG[statusKey] || REPORT_STATUS_CONFIG.DRAFT;
+  const reportName = report.name || report.title || 'Untitled Report';
+  const templateId = report.templateId || report.template_id || null;
+  const framework =
+    templateId?.split('_')?.[0]?.toUpperCase() || report.assessmentType?.toUpperCase() || null;
+  const frameworkMeta = framework ? FRAMEWORK_META[framework as AssessmentFramework] : null;
+  const sectionCount = report.sections?.length || 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Report title & framework */}
+      <div>
+        <h4 className="text-white font-semibold text-base leading-snug mb-1.5">{reportName}</h4>
+        {frameworkMeta && (
+          <div className="flex items-center gap-1.5">
+            <span className={`text-${frameworkMeta.color}-400`}>{frameworkMeta.icon}</span>
+            <span className="text-xs text-slate-400">{frameworkMeta.name}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Status badge — prominent */}
+      <div
+        className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border ${statusCfg.bgColor}`}
+      >
+        {statusCfg.icon === 'check' ? (
+          <CheckCircle2 size={16} className={statusCfg.color} />
+        ) : statusCfg.icon === 'spinner' ? (
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-400" />
+        ) : (
+          <Clock size={16} className={statusCfg.color} />
+        )}
+        <div>
+          <span className={`text-sm font-semibold ${statusCfg.color}`}>{statusCfg.label}</span>
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            {statusKey === 'DRAFT' && 'Report is being prepared'}
+            {statusKey === 'GENERATING' && 'AI is generating report content'}
+            {statusKey === 'FINAL' && 'Report content is finalized'}
+            {statusKey === 'PENDING_APPROVAL' && 'Awaiting stakeholder approval'}
+            {statusKey === 'APPROVED' && 'Report has been approved'}
+            {statusKey === 'REJECTED' && 'Report was rejected — needs revision'}
+            {statusKey === 'UTILIZED' && 'Report has been delivered & used'}
+          </p>
+        </div>
+      </div>
+
+      {/* Key details */}
+      <div className="bg-navy-800/50 rounded-xl border border-navy-700/60 divide-y divide-navy-700/40">
+        {templateId && (
+          <div className="flex items-center justify-between px-3.5 py-2.5">
+            <span className="text-xs text-slate-500">Template</span>
+            <span className="text-xs text-slate-300 font-medium">{templateId}</span>
+          </div>
+        )}
+        {report.assessmentName && (
+          <div className="flex items-center justify-between px-3.5 py-2.5">
+            <span className="text-xs text-slate-500">Source Assessment</span>
+            <span className="text-xs text-slate-300 font-medium truncate max-w-[180px]">
+              {report.assessmentName}
+            </span>
+          </div>
+        )}
+        {sectionCount > 0 && (
+          <div className="flex items-center justify-between px-3.5 py-2.5">
+            <span className="text-xs text-slate-500">Sections</span>
+            <span className="text-xs text-slate-300 font-medium">{sectionCount}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between px-3.5 py-2.5">
+          <span className="text-xs text-slate-500 flex items-center gap-1">
+            <Calendar size={11} /> Created
+          </span>
+          <span className="text-xs text-slate-300">
+            {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : '—'}
+          </span>
+        </div>
+        <div className="flex items-center justify-between px-3.5 py-2.5">
+          <span className="text-xs text-slate-500 flex items-center gap-1">
+            <Clock size={11} /> Last updated
+          </span>
+          <span className="text-xs text-slate-300">
+            {report.updatedAt ? new Date(report.updatedAt).toLocaleDateString() : '—'}
+          </span>
+        </div>
+      </div>
+
+      {/* Generated Reports / Exports */}
+      <div className="bg-navy-800/50 rounded-xl border border-navy-700/60 overflow-hidden">
+        <div className="px-3.5 py-2.5 border-b border-navy-700/40">
+          <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+            <Download size={11} />
+            Generated Reports
+          </h5>
+        </div>
+
+        {exportsLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 size={16} className="animate-spin text-slate-500" />
+          </div>
+        ) : exports.length > 0 ? (
+          <div className="divide-y divide-navy-700/30">
+            {exports.map((exp: any) => {
+              const fmt = (exp.format || '').toLowerCase();
+              const cfg = EXPORT_FORMAT_CONFIG[fmt] || EXPORT_FORMAT_CONFIG.pdf;
+              const exportDate = exp.exportedAt || exp.exported_at;
+              return (
+                <button
+                  key={exp.id}
+                  onClick={() => handleDownloadExport(fmt)}
+                  disabled={downloadingId === fmt}
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-navy-700/40 transition-colors group"
+                >
+                  <div
+                    className={`w-7 h-7 rounded-lg ${cfg.bgColor} flex items-center justify-center ${cfg.color} shrink-0`}
+                  >
+                    {cfg.icon}
+                  </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <div className="text-xs font-medium text-slate-300">{cfg.label}</div>
+                    <div className="text-[10px] text-slate-500">
+                      {exportDate
+                        ? new Date(exportDate).toLocaleDateString('pl-PL', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '—'}
+                      {exp.fileSize ? ` · ${(exp.fileSize / 1024).toFixed(0)} KB` : ''}
+                    </div>
+                  </div>
+                  <div className="shrink-0">
+                    {downloadingId === fmt ? (
+                      <Loader2 size={14} className="animate-spin text-slate-500" />
+                    ) : (
+                      <Download
+                        size={14}
+                        className="text-slate-600 group-hover:text-slate-300 transition-colors"
+                      />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          /* Quick-generate buttons when no exports exist */
+          <div className="p-3.5">
+            <p className="text-[11px] text-slate-500 mb-3">No exports yet. Generate now:</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(['pdf', 'pptx', 'docx'] as const).map((fmt) => {
+                const cfg = EXPORT_FORMAT_CONFIG[fmt];
+                return (
+                  <button
+                    key={fmt}
+                    onClick={() => handleDownloadExport(fmt)}
+                    disabled={!!downloadingId}
+                    className={`flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-lg border border-navy-700/60 hover:border-navy-600 hover:bg-navy-700/40 transition-all disabled:opacity-50 group`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-lg ${cfg.bgColor} flex items-center justify-center ${cfg.color}`}
+                    >
+                      {downloadingId === fmt ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        cfg.icon
+                      )}
+                    </div>
+                    <span className="text-[10px] font-medium text-slate-400 group-hover:text-slate-300">
+                      {cfg.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Web preview link — always visible */}
+        <div className="border-t border-navy-700/40">
+          <button
+            onClick={handleOpenWebPreview}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-navy-700/40 transition-colors group"
+          >
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400 shrink-0">
+              <Monitor size={14} />
+            </div>
+            <div className="flex-1 text-left">
+              <div className="text-xs font-medium text-slate-300">Web Preview</div>
+              <div className="text-[10px] text-slate-500">Open in editor</div>
+            </div>
+            <ArrowRight
+              size={14}
+              className="text-slate-600 group-hover:text-slate-300 transition-colors shrink-0"
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Executive Summary — truncated */}
+      {report.executiveSummary && (
+        <div className="bg-navy-800/50 rounded-xl p-3.5 border border-navy-700/60">
+          <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1.5">
+            Executive Summary
+          </h5>
+          <p className="text-xs text-slate-300 leading-relaxed line-clamp-4">
+            {report.executiveSummary}
+          </p>
+        </div>
+      )}
+
+      {/* Sections overview — compact list */}
+      {sectionCount > 0 && (
+        <div className="bg-navy-800/50 rounded-xl p-3.5 border border-navy-700/60">
+          <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-2">
+            Report Scope
+          </h5>
+          <div className="space-y-1">
+            {report.sections.slice(0, 6).map((section: any, idx: number) => {
+              const sectionTitle =
+                typeof section === 'string'
+                  ? section
+                  : section?.title || section?.name || `Section ${idx + 1}`;
+              return (
+                <div key={idx} className="flex items-center gap-2 py-1">
+                  <span className="w-4 h-4 rounded bg-purple-500/15 text-purple-400 text-[10px] font-bold flex items-center justify-center shrink-0">
+                    {idx + 1}
+                  </span>
+                  <span className="text-xs text-slate-400 truncate">{sectionTitle}</span>
+                </div>
+              );
+            })}
+            {sectionCount > 6 && (
+              <span className="text-[11px] text-slate-500 pl-6">
+                +{sectionCount - 6} more sections
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

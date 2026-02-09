@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 import { Api } from '@/services/api';
 import { cn } from '@/utils/cn';
 
-type GenerationMode = 'ASSESSMENT_REPORT' | 'REPORT_ONLY';
+type GenerationMode = 'ASSESSMENT_REPORT' | 'REPORT_ONLY' | 'ASSESSMENT_ONLY';
 type RunStatus = 'RUNNING' | 'SUCCEEDED' | 'PARTIAL' | 'FAILED' | 'CANCELLED';
 
 type AssessmentOption = {
@@ -21,6 +21,23 @@ type AssessmentOption = {
   name: string;
   type?: string;
   status?: string;
+};
+
+type ReportOption = {
+  id: string;
+  name: string;
+  status?: string;
+  builderReportId?: string | null;
+};
+
+type InitiativeTemplateOption = {
+  id: string;
+  name: string;
+  category?: string;
+  description?: string | null;
+  level?: string;
+  sourceTypes?: string[];
+  isPublic?: boolean;
 };
 
 type RunProgress = {
@@ -53,6 +70,12 @@ export function InitiativesGenerationWizardModal(props: {
   const [assessments, setAssessments] = useState<AssessmentOption[]>(assessmentsProp || []);
   const [assessmentId, setAssessmentId] = useState<string>(initialAssessmentId || '');
   const [mode, setMode] = useState<GenerationMode>('ASSESSMENT_REPORT');
+  const [reportId, setReportId] = useState<string>('');
+  const [reports, setReports] = useState<ReportOption[]>([]);
+  const [loadingReports, setLoadingReports] = useState(false);
+  const [templateId, setTemplateId] = useState<string>('');
+  const [templates, setTemplates] = useState<InitiativeTemplateOption[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [methodologyId, setMethodologyId] = useState<string>('impact-feasibility');
   const [requestedCount, setRequestedCount] = useState<number>(20);
   const [includeChatContext, setIncludeChatContext] = useState<boolean>(true);
@@ -73,9 +96,11 @@ export function InitiativesGenerationWizardModal(props: {
 
   const canStart = useMemo(() => {
     if (!assessmentId) return false;
+    if (!templateId) return false;
+    if (mode !== 'ASSESSMENT_ONLY' && !reportId) return false;
     if (!Number.isFinite(requestedCount) || requestedCount < 1) return false;
     return true;
-  }, [assessmentId, requestedCount]);
+  }, [assessmentId, templateId, mode, reportId, requestedCount]);
 
   // Load assessments list
   useEffect(() => {
@@ -115,11 +140,91 @@ export function InitiativesGenerationWizardModal(props: {
     if (!isOpen) return;
     setPhase('config');
     setAssessmentId(initialAssessmentId || '');
+    setReportId('');
+    setReports([]);
+    setTemplateId('');
     setRunId(null);
     setProgress(null);
     setStarting(false);
     setShowAdvanced(false);
   }, [isOpen, initialAssessmentId]);
+
+  // Load initiative templates
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setLoadingTemplates(true);
+    Api.get('/initiatives/templates')
+      .then((resp: any) => {
+        if (cancelled) return;
+        const list = Array.isArray(resp?.templates) ? resp.templates : [];
+        setTemplates(
+          list.map((t: any) => ({
+            id: String(t.id),
+            name: String(t.name || 'Template'),
+            category: t.category ? String(t.category) : undefined,
+            description: t.description ? String(t.description) : null,
+            level: t.level ? String(t.level) : undefined,
+            sourceTypes: Array.isArray(t.sourceTypes) ? t.sourceTypes : t.source_types,
+            isPublic: Boolean(t.isPublic ?? t.is_public),
+          }))
+        );
+      })
+      .catch(() => setTemplates([]))
+      .finally(() => {
+        if (cancelled) return;
+        setLoadingTemplates(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  // Load reports for selected assessment (needed for REPORT_ONLY / ASSESSMENT_REPORT)
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!assessmentId) {
+      setReports([]);
+      setReportId('');
+      return;
+    }
+    if (mode === 'ASSESSMENT_ONLY') {
+      setReports([]);
+      setReportId('');
+      return;
+    }
+    let cancelled = false;
+    setLoadingReports(true);
+    Api.get(`/assessment-reports?assessmentId=${encodeURIComponent(assessmentId)}`)
+      .then((resp: any) => {
+        if (cancelled) return;
+        const list = Array.isArray(resp?.reports) ? resp.reports : [];
+        const mapped: ReportOption[] = list.map((r: any) => ({
+          id: String(r.id),
+          name: String(r.name || r.title || 'Report'),
+          status: r.status ? String(r.status) : undefined,
+          builderReportId: r.builderReportId || null,
+        }));
+        setReports(mapped);
+        // Reset report selection if it no longer exists
+        if (reportId && !mapped.find((x) => x.id === reportId)) {
+          setReportId('');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setReports([]);
+          setReportId('');
+        }
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoadingReports(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, assessmentId, mode, reportId]);
 
   // Poll run progress
   useEffect(() => {
@@ -196,7 +301,9 @@ export function InitiativesGenerationWizardModal(props: {
         requestedCount: Math.max(1, Math.min(200, Number(requestedCount) || 1)),
         batchSize: 7,
         includeChatContext,
+        templateId,
       };
+      if (mode !== 'ASSESSMENT_ONLY' && reportId) body.reportId = reportId;
       if (consultantBrief.trim()) body.consultantBrief = consultantBrief.trim();
 
       const resp = await Api.post(
@@ -267,10 +374,60 @@ export function InitiativesGenerationWizardModal(props: {
         <div className="flex-1 min-h-0 overflow-auto p-5">
           {phase === 'config' ? (
             <div className="space-y-5">
-              {/* Assessment selection */}
+              {/* Step 1: Source selection (prominent) */}
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-slate-900 dark:text-white">
+                  1. Źródło danych
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {(
+                    [
+                      {
+                        value: 'ASSESSMENT_REPORT',
+                        label: 'Assessment + Report',
+                        desc: 'Pełna analiza z obu źródeł',
+                      },
+                      {
+                        value: 'ASSESSMENT_ONLY',
+                        label: 'Tylko Assessment',
+                        desc: 'Na podstawie samej oceny',
+                      },
+                      { value: 'REPORT_ONLY', label: 'Tylko Report', desc: 'Na podstawie raportu' },
+                    ] as const
+                  ).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setMode(opt.value)}
+                      className={cn(
+                        'p-3 rounded-xl border text-left transition-all',
+                        mode === opt.value
+                          ? 'border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-500/30'
+                          : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-slate-300 dark:hover:border-navy-600'
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          'text-sm font-medium',
+                          mode === opt.value
+                            ? 'text-emerald-700 dark:text-emerald-300'
+                            : 'text-slate-900 dark:text-white'
+                        )}
+                      >
+                        {opt.label}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {opt.desc}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Step 2: Assessment selection */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-900 dark:text-white">
-                  Ocena źródłowa
+                <label className="text-sm font-semibold text-slate-900 dark:text-white">
+                  2. Wybierz ocenę
                 </label>
                 {loadingAssessments ? (
                   <div className="flex items-center gap-2 h-11 px-4 text-sm text-slate-500">
@@ -298,11 +455,91 @@ export function InitiativesGenerationWizardModal(props: {
                 )}
               </div>
 
-              {/* Main options row */}
+              {/* Step 3: Report selection (required for Report modes) */}
+              {mode !== 'ASSESSMENT_ONLY' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-900 dark:text-white">
+                    3. Wybierz raport
+                  </label>
+                  {!assessmentId ? (
+                    <div className="h-11 px-4 flex items-center text-sm text-slate-500">
+                      Najpierw wybierz ocenę.
+                    </div>
+                  ) : loadingReports ? (
+                    <div className="flex items-center gap-2 h-11 px-4 text-sm text-slate-500">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Ładowanie raportów…
+                    </div>
+                  ) : (
+                    <select
+                      value={reportId}
+                      onChange={(e) => setReportId(e.target.value)}
+                      className={cn(
+                        'w-full h-11 px-4 rounded-xl border text-sm',
+                        'border-slate-200 bg-white text-slate-900',
+                        'dark:border-navy-700 dark:bg-navy-900 dark:text-white',
+                        'focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-500/40'
+                      )}
+                    >
+                      <option value="">— wybierz raport —</option>
+                      {reports.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name} {r.status ? `(${String(r.status).toUpperCase()})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {mode === 'REPORT_ONLY'
+                      ? 'Tryb REPORT_ONLY wymaga raportu.'
+                      : 'Tryb Assessment + Report użyje obu źródeł.'}
+                  </p>
+                </div>
+              )}
+
+              {/* Step 4: Template selection (required) */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {mode === 'ASSESSMENT_ONLY' ? '3.' : '4.'} Wybierz template inicjatywy
+                </label>
+                {loadingTemplates ? (
+                  <div className="flex items-center gap-2 h-11 px-4 text-sm text-slate-500">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Ładowanie template’ów…
+                  </div>
+                ) : (
+                  <select
+                    value={templateId}
+                    onChange={(e) => setTemplateId(e.target.value)}
+                    className={cn(
+                      'w-full h-11 px-4 rounded-xl border text-sm',
+                      'border-slate-200 bg-white text-slate-900',
+                      'dark:border-navy-700 dark:bg-navy-900 dark:text-white',
+                      'focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-500/40'
+                    )}
+                  >
+                    <option value="">— wybierz template —</option>
+                    {templates.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                        {t.category ? ` • ${t.category}` : ''}
+                        {t.level ? ` • ${t.level}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {templateId ? (
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {templates.find((t) => t.id === templateId)?.description || ''}
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Step 5: Configuration row */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-900 dark:text-white">
-                    Metodologia
+                  <label className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {mode === 'ASSESSMENT_ONLY' ? '4.' : '5.'} Metodologia
                   </label>
                   <select
                     value={methodologyId}
@@ -323,7 +560,7 @@ export function InitiativesGenerationWizardModal(props: {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-900 dark:text-white">
+                  <label className="text-sm font-semibold text-slate-900 dark:text-white">
                     Liczba inicjatyw
                   </label>
                   <div className="flex items-center gap-2">
@@ -375,25 +612,7 @@ export function InitiativesGenerationWizardModal(props: {
               {showAdvanced && (
                 <div className="space-y-4 p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-900 dark:text-white">
-                        Tryb
-                      </label>
-                      <select
-                        value={mode}
-                        onChange={(e) => setMode(e.target.value as GenerationMode)}
-                        className={cn(
-                          'w-full h-10 px-3 rounded-lg border text-sm',
-                          'border-slate-200 bg-white text-slate-900',
-                          'dark:border-navy-700 dark:bg-navy-950 dark:text-white'
-                        )}
-                      >
-                        <option value="ASSESSMENT_REPORT">Assessment + Report</option>
-                        <option value="REPORT_ONLY">Report only</option>
-                      </select>
-                    </div>
-
-                    <label className="flex items-center gap-3 cursor-pointer">
+                    <label className="flex items-center gap-3 cursor-pointer col-span-2">
                       <input
                         type="checkbox"
                         checked={includeChatContext}

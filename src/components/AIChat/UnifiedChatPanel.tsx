@@ -18,58 +18,30 @@
  * @version 1.0.0
  */
 
-import {
-  Bookmark,
-  Bot,
-  BrainCircuit,
-  Check,
-  Copy,
-  FileCode,
-  History,
-  Lightbulb,
-  MessageSquare,
-  Plus,
-  RefreshCw,
-  Sparkles,
-  ThumbsDown,
-  ThumbsUp,
-  User,
-  Volume2,
-  VolumeX,
-  Zap,
-} from 'lucide-react';
+import { Bot, History, MessageSquare, Plus, Volume2, VolumeX } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 
 import { isValidLanguage, type SupportedLanguage } from '@/i18n';
 
 import { useAIStream } from '../../hooks/useAIStream';
 import { useDemoSession } from '../../hooks/useDemoSession';
+// import { useOrgMemory } from '../../hooks/useOrgMemory'; // removed — panel disabled
 import { useUniversalVoice } from '../../hooks/useUniversalVoice';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
-import { ConversationMessage, useConversationStore } from '../../store/useConversationStore';
-import {
-  AppView,
-  Artifact,
-  ChatMessage,
-  FocusMode,
-  ResponseFeedback,
-  ThinkingStep,
-} from '../../types';
+import { useConversationStore } from '../../store/useConversationStore';
+import { Artifact, ChatMessage, FocusMode, ResponseFeedback, ThinkingStep } from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
+import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
-import { CitationList } from './CitationList';
 import { ContextBadge } from './ContextBadge';
 import { EnhancedChatInput } from './EnhancedChatInput';
-import { InlineResponseFeedback } from './InlineResponseFeedback';
-import { ThinkingBlock } from './Messages/ThinkingBlock';
+import { MessageRenderer } from './MessageRenderer';
+// import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
-import { ResearchProgress } from './ResearchProgress';
-import { ThinkingStatusLine } from './ThinkingStatusLine';
 
 // ============================================================================
 // Types
@@ -162,8 +134,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // ========================================================================
 
   const {
-    isChatSlidingPanelOpen,
-    setChatSlidingPanelOpen,
     currentStreamContent,
     isBotTyping,
     addChatMessage,
@@ -176,12 +146,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     activeConversationId,
     activeMessages,
     isLoading: isConversationLoading,
+    isSidebarOpen,
     displayMode,
     createConversation,
     addMessage: addMessageToConversation,
     setActiveConversation,
     fetchConversation,
     clearActiveChat,
+    truncateFromMessage,
+    toggleSidebar,
     setDisplayMode,
     expandToFullScreen,
     collapseToSplit,
@@ -189,7 +162,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     chatLanguageByConversationId,
   } = useConversationStore();
 
-  const { addArtifact, togglePanel: toggleArtifactsPanel } = useArtifactsStore();
+  const { addArtifact, togglePanel: toggleArtifactsPanel, exportArtifact } = useArtifactsStore();
 
   // ========================================================================
   // Local state (must be declared before hooks that depend on them)
@@ -197,21 +170,27 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const [focusMode, setFocusMode] = useState<FocusMode>('all');
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
-  const [autoReadEnabled, setAutoReadEnabled] = useState(false);
+  // Auto-read is driven by textToSpeech from ToolsMenu (aiConfig) or manual toggle
+  const [autoReadEnabled, setAutoReadEnabled] = useState(aiConfig?.textToSpeech ?? false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState<string>('');
+  const [editBusy, setEditBusy] = useState(false);
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
+    // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
+    const explicitPref = localStorage.getItem('consultinity-preferred-chat-lang');
+    // 2. Conversation-specific language (from DB/store)
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
       : undefined;
-    const candidate =
-      activeLang ||
-      draftChatLanguage ||
-      i18n.language ||
-      localStorage.getItem('i18nextLng') ||
-      'en';
+    // Priority: explicit preference > conversation-specific > draft > 'pl' default
+    // NOTE: We do NOT use i18nextLng here because it reflects UI language (auto-detected
+    // from browser), not the user's chat language preference. For this Polish product,
+    // the default chat language is 'pl'.
+    const candidate = explicitPref || activeLang || draftChatLanguage || 'pl';
     const base = String(candidate).split('-')[0];
-    return (isValidLanguage(base) ? base : 'en') as SupportedLanguage;
-  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
+    return (isValidLanguage(base) ? base : 'pl') as SupportedLanguage;
+  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage]);
 
   // Voice Hook (uses autoReadEnabled state)
   const {
@@ -228,7 +207,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     settings: {
       autoSpeakResponses: autoReadEnabled,
       sttProvider: 'whisper',
-      ttsProvider: 'openai',
+      ttsProvider: 'web',
       language: chatLanguage,
     },
   });
@@ -240,11 +219,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     aiInteractionsLimit,
     consumeAIInteraction,
   } = useDemoSession();
+
+  // Organization Memory — disabled (panel removed)
+  // const orgMemory = useOrgMemory();
+
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
   const [dtHintDismissed, setDtHintDismissed] = useState(false);
+  const [abortFeedback, setAbortFeedback] = useState<'partial' | 'cancelled' | null>(null);
   const [dtSavingDecision, setDtSavingDecision] = useState<string | null>(null);
   const [dtDecisionSaved, setDtDecisionSaved] = useState<Set<string>>(new Set());
   const [dtPendingConfirm, setDtPendingConfirm] = useState<{
@@ -255,8 +239,45 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     confirm: any;
     context: any;
     attachments?: any[];
+    agentAudit?: {
+      suggested?: any;
+      orchestratorRunId?: string;
+      selectedAgentIds: string[];
+      userIntent: 'validate' | 'stress_test' | 'approve';
+      maxAgents: 2 | 3 | 4;
+      decisionContext?: {
+        topic: string;
+        industry?: string;
+        horizon?: string;
+        functions?: string[];
+        riskFocus?: string[];
+      };
+    };
   } | null>(null);
   const [dtConfirmBusy, setDtConfirmBusy] = useState(false);
+
+  // Agent Audit Layer (registry + post-DT verdict)
+  const [agentRegistryById, setAgentRegistryById] = useState<Record<string, any>>({});
+  const [agentAuditBusy, setAgentAuditBusy] = useState(false);
+  const [agentAuditActiveTabByMessageId, setAgentAuditActiveTabByMessageId] = useState<
+    Record<string, string>
+  >({});
+  const deepThinkingRunRef = useRef<{
+    conversationId: string | null;
+    decisionContext: {
+      topic: string;
+      industry?: string;
+      horizon?: string;
+      functions?: string[];
+      riskFocus?: string[];
+    };
+    agentIds: string[];
+    userIntent: 'validate' | 'stress_test' | 'approve';
+    loopIteration: 1 | 2;
+    deepThinkingConfirm: any;
+  } | null>(null);
+  const agentAuditVerdictRef = useRef<any>(null);
+  const persistedAgentAuditRunIdsRef = useRef<Set<string>>(new Set());
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -269,6 +290,39 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     autoReadEnabledRef.current = autoReadEnabled;
   }, [autoReadEnabled]);
 
+  // Sync autoReadEnabled with textToSpeech from ToolsMenu (aiConfig)
+  useEffect(() => {
+    const ttsFromConfig = aiConfig?.textToSpeech ?? false;
+    if (ttsFromConfig !== autoReadEnabled) {
+      setAutoReadEnabled(ttsFromConfig);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiConfig?.textToSpeech]);
+
+  // Ref for incremental TTS (defined here, used in effects after useAIStream)
+  const spokenCharsRef = useRef(0);
+
+  // Agent registry (for readable labels in approval UI)
+  useEffect(() => {
+    let mounted = true;
+    Api.agentAuditListAgents()
+      .then((res: any) => {
+        const list = (res as any)?.agents || [];
+        if (!mounted) return;
+        const map: Record<string, any> = {};
+        for (const a of list) {
+          if (a?.id) map[String(a.id)] = a;
+        }
+        setAgentRegistryById(map);
+      })
+      .catch(() => {
+        // best-effort; UI will fall back to ids
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Computed values
   const isSplitMode = mode === 'split' || displayMode === 'split';
   const isCompact = isSplitMode;
@@ -280,6 +334,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const {
     startStream,
+    abortStream,
+    retryLastStream,
+    lastError,
+    clearLastError,
     isStreaming,
     streamedContent,
     researchProgress,
@@ -287,8 +345,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     deepThinkingState,
     deepThinkingHint,
     interimInsight,
+    agentAuditState,
+    agentAuditVerdict,
+    retryInfo,
+    streamStartedAt,
+    streamCompletedSignal,
   } = useAIStream({
-    onStreamDone: async (fullText, thinking, artifacts) => {
+    onStreamDone: async (fullText, thinking, artifacts, meta) => {
       const safeText =
         typeof fullText === 'string' && fullText.trim().length > 0
           ? fullText
@@ -322,6 +385,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             metadata: {
               thinkingSteps: thinking as any,
               artifacts: artifactsForConversation,
+              citations: Array.isArray(meta?.citations) ? meta?.citations : [],
               ...(aiConfig?.deepResearch
                 ? {
                     options: [
@@ -369,14 +433,158 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           : {}),
       });
 
-      // Auto-read AI response if enabled (use ref for current value)
+      // Auto-read AI response if enabled (speak only remaining text not already spoken during streaming)
       if (autoReadEnabledRef.current && safeText) {
-        speak(safeText);
+        const cleaned = cleanTextForSpeech(safeText);
+        const remaining = cleaned.slice(spokenCharsRef.current).trim();
+        if (remaining) {
+          console.log('[TTS] Speaking remaining:', remaining.slice(0, 60) + '…');
+          speak(remaining).catch((err) => console.warn('[TTS] speak error:', err));
+        }
+        spokenCharsRef.current = 0;
+      }
+
+      // Agent Audit Layer: run post-DT review on the CLOSED report
+      if (
+        aiConfig?.deepResearch &&
+        deepThinkingRunRef.current &&
+        deepThinkingRunRef.current.conversationId === activeConversationId &&
+        Array.isArray(deepThinkingRunRef.current.agentIds) &&
+        deepThinkingRunRef.current.agentIds.length > 0
+      ) {
+        try {
+          // Prefer streamed verdict (from SSE) if present; fallback to REST review otherwise.
+          const streamed = agentAuditVerdictRef.current;
+          const streamedRunId = String(streamed?.orchestratorRunId || '').trim();
+          const canUseStreamed =
+            streamed &&
+            streamed?.verdict &&
+            Array.isArray(streamed?.reviews) &&
+            streamed?.reviews?.length >= 0 &&
+            streamed?.loopIteration === deepThinkingRunRef.current.loopIteration &&
+            !persistedAgentAuditRunIdsRef.current.has(streamedRunId);
+
+          let verdict: any = null;
+          let reviews: any[] = [];
+          let runId: string | null = null;
+
+          if (canUseStreamed) {
+            verdict = streamed.verdict || {};
+            reviews = streamed.reviews || [];
+            runId = streamedRunId || null;
+          } else {
+            setAgentAuditBusy(true);
+            const reviewRes = await Api.agentAuditReview({
+              decisionContext: deepThinkingRunRef.current.decisionContext,
+              deepThinkingReport: safeText,
+              agentIds: deepThinkingRunRef.current.agentIds,
+              conversationId: activeConversationId || undefined,
+              dtSessionId: activeConversationId || undefined,
+              webSearchEnabled: aiConfig?.webSearch === true,
+              userIntent: deepThinkingRunRef.current.userIntent,
+              language: chatLanguage,
+              selectedTier: (aiConfig as any)?.selectedTier,
+              selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
+              loopIteration: deepThinkingRunRef.current.loopIteration,
+            });
+            verdict = (reviewRes as any)?.verdict || {};
+            reviews = (reviewRes as any)?.reviews || [];
+            runId = String((reviewRes as any)?.orchestratorRunId || '').trim() || null;
+          }
+
+          const lines: string[] = [];
+          lines.push('**Agent Audit (post Deep Thinking)**');
+          lines.push(`- Status: **${String(verdict.qualityStatus || '—')}**`);
+          lines.push(
+            `- Gates: ${Array.isArray(verdict.gatesTriggered) && verdict.gatesTriggered.length ? verdict.gatesTriggered.join(', ') : '—'}`
+          );
+          lines.push(`- Reviewers: ${deepThinkingRunRef.current.agentIds.length}`);
+          lines.push('');
+
+          if (Array.isArray(verdict.criticalRisks) && verdict.criticalRisks.length) {
+            lines.push('**Critical risks (high)**');
+            for (const r of verdict.criticalRisks.slice(0, 6)) {
+              lines.push(`- (${String(r.area || 'other')}) ${String(r.claim || '').trim()}`.trim());
+            }
+            lines.push('');
+          }
+
+          if (Array.isArray(verdict.actionableFollowups) && verdict.actionableFollowups.length) {
+            lines.push('**Actionable follow-ups (data / gaps)**');
+            for (const f of verdict.actionableFollowups.slice(0, 6)) {
+              lines.push(`- ${String(f.question || '').trim()}`.trim());
+            }
+            lines.push('');
+          }
+
+          if (verdict?.directedLoop?.deepThinkingPrompt) {
+            lines.push('**Directed deepening prompt (max 2 loops)**');
+            lines.push('```');
+            lines.push(String(verdict.directedLoop.deepThinkingPrompt || '').trim());
+            lines.push('```');
+          }
+
+          const verdictMessageContent = lines.filter(Boolean).join('\n');
+          const verdictMessageId = `agent-audit-${Date.now()}`;
+
+          // Persist verdict into conversation (survives refresh)
+          if (activeConversationId) {
+            await addMessageToConversation({
+              conversationId: activeConversationId,
+              role: 'ai',
+              content: verdictMessageContent,
+              messageType: 'text',
+              metadata: {
+                agentAudit: {
+                  kind: 'verdict',
+                  orchestratorRunId: runId,
+                  verdict,
+                  reviews,
+                  decisionContext: deepThinkingRunRef.current.decisionContext,
+                  agentIds: deepThinkingRunRef.current.agentIds,
+                  userIntent: deepThinkingRunRef.current.userIntent,
+                  loopIteration: deepThinkingRunRef.current.loopIteration,
+                },
+              } as any,
+            });
+          }
+
+          // Also add to legacy global store
+          addChatMessage({
+            id: verdictMessageId,
+            role: 'ai',
+            content: verdictMessageContent,
+            timestamp: new Date(),
+            metadata: {
+              agentAudit: {
+                kind: 'verdict',
+                orchestratorRunId: runId,
+                verdict,
+                reviews,
+                decisionContext: deepThinkingRunRef.current.decisionContext,
+                agentIds: deepThinkingRunRef.current.agentIds,
+                userIntent: deepThinkingRunRef.current.userIntent,
+                loopIteration: deepThinkingRunRef.current.loopIteration,
+              },
+            },
+          } as any);
+
+          if (runId) persistedAgentAuditRunIdsRef.current.add(runId);
+        } catch (err) {
+          console.error('[UnifiedChatPanel] Agent audit review failed:', err);
+        } finally {
+          setAgentAuditBusy(false);
+        }
       }
 
       setThinkingSteps([]);
     },
     onStreamError: async (err) => {
+      if ((err as any)?.code === 'DEEP_THINKING_CONFIRM_REQUIRED') {
+        // Flow-control error: do not persist as a chat message.
+        setThinkingSteps([]);
+        return;
+      }
       // Make failures visible in the conversation UI (otherwise user only sees their own messages).
       const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
       const friendly =
@@ -419,6 +627,42 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       addArtifact(artifact);
     },
   });
+
+  // =========================================================================
+  // Incremental TTS: speak sentence-by-sentence WHILE AI is streaming
+  // =========================================================================
+  useEffect(() => {
+    if (isStreaming) {
+      spokenCharsRef.current = 0;
+    }
+  }, [isStreaming]);
+
+  useEffect(() => {
+    if (!autoReadEnabledRef.current || !isStreaming || !streamedContent) return;
+
+    const text = cleanTextForSpeech(streamedContent);
+    if (!text || text.length <= spokenCharsRef.current) return;
+
+    const unspoken = text.slice(spokenCharsRef.current);
+    // Split on sentence boundaries (. ! ? followed by whitespace, or newlines)
+    const sentenceEnd = /(?<=[.!?])\s+|(?<=\n)\s*/g;
+    const parts = unspoken.split(sentenceEnd).filter(Boolean);
+
+    if (parts.length > 1) {
+      // Speak all complete sentences, keep the last (potentially incomplete) part
+      const toSpeak = parts.slice(0, -1).join(' ').trim();
+      if (toSpeak) {
+        console.log('[TTS] Speaking sentence:', toSpeak.slice(0, 60) + '…');
+        speak(toSpeak).catch((err) => console.warn('[TTS] speak error:', err));
+        spokenCharsRef.current += unspoken.length - parts[parts.length - 1].length;
+      }
+    }
+  }, [isStreaming, streamedContent, speak]);
+
+  // Keep the streamed verdict accessible from callbacks without dependency churn
+  useEffect(() => {
+    agentAuditVerdictRef.current = agentAuditVerdict;
+  }, [agentAuditVerdict]);
 
   // ========================================================================
   // Convert conversation messages to ChatMessage format
@@ -480,6 +724,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   ]);
 
   // ========================================================================
+  // Ensure messages are loaded when activeConversationId changes (e.g. after
+  // navigating between screens or browser refresh with localStorage rehydration)
+  // ========================================================================
+
+  useEffect(() => {
+    if (activeConversationId && activeMessages.length === 0 && !isConversationLoading) {
+      fetchConversation(activeConversationId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConversationId]);
+
+  // ========================================================================
   // Scroll to bottom on new messages
   // ========================================================================
 
@@ -538,6 +794,110 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
       }
 
+      // Conversation-scoped attachments: upload supported files to Knowledge Base and
+      // pass doc filters to the backend so RAG only searches within these attachments.
+      const existingAttachmentDocIds = Array.from(
+        new Set(
+          (customMessages || messages || [])
+            .flatMap((m: any) =>
+              Array.isArray(m?.metadata?.attachments) ? m.metadata.attachments : []
+            )
+            .map((a: any) => a?.docId)
+            .filter(Boolean)
+            .map((x: any) => String(x))
+        )
+      );
+
+      const files: File[] = Array.isArray(attachments)
+        ? attachments.filter(
+            (a: any): a is File => typeof File !== 'undefined' && a instanceof File
+          )
+        : [];
+
+      const uploadedAttachments: Array<{
+        docId: string;
+        filename: string;
+        mimeType?: string;
+        size?: number;
+      }> = [];
+
+      for (const file of files) {
+        const ext = String(file.name || '')
+          .split('.')
+          .pop()
+          ?.toLowerCase();
+        const supported =
+          file.type === 'application/pdf' ||
+          file.type.startsWith('text/') ||
+          file.type === 'application/json' ||
+          ['txt', 'md', 'csv', 'json'].includes(ext || '');
+
+        if (!supported) {
+          console.warn('[UnifiedChatPanel] Skipping unsupported attachment type:', {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+          });
+          toast.error(
+            t(
+              'aiChat.attachments.unsupportedType',
+              'Plik "{{name}}" nie jest obsługiwany. Dozwolone formaty: PDF, TXT, MD, CSV, JSON.',
+              { name: file.name }
+            ),
+            { duration: 5000 }
+          );
+          continue;
+        }
+
+        try {
+          const resp = await Api.uploadChatAttachment(file);
+          const docId = String((resp as any)?.docId || '');
+          if (!docId) {
+            toast.error(
+              t('aiChat.attachments.uploadFailed', 'Nie udało się przetworzyć pliku "{{name}}".', {
+                name: file.name,
+              }),
+              { duration: 4000 }
+            );
+            continue;
+          }
+          uploadedAttachments.push({
+            docId,
+            filename: file.name,
+            mimeType: file.type || undefined,
+            size: file.size,
+          });
+          toast.success(
+            t('aiChat.attachments.uploadSuccess', 'Załącznik "{{name}}" przetworzony.', {
+              name: file.name,
+            }),
+            { duration: 2000 }
+          );
+        } catch (err: any) {
+          console.error('[UnifiedChatPanel] Failed to upload attachment:', err);
+          const errMsg = String(err?.message || '');
+          const isTextExtraction = errMsg.includes('extract') || errMsg.includes('text');
+          toast.error(
+            isTextExtraction
+              ? t(
+                  'aiChat.attachments.extractionFailed',
+                  'Nie udało się odczytać tekstu z pliku "{{name}}". Sprawdź czy plik nie jest pusty lub uszkodzony.',
+                  { name: file.name }
+                )
+              : t(
+                  'aiChat.attachments.uploadError',
+                  'Błąd przesyłania pliku "{{name}}": {{error}}',
+                  { name: file.name, error: errMsg.slice(0, 100) }
+                ),
+            { duration: 5000 }
+          );
+        }
+      }
+
+      const attachmentDocIds = Array.from(
+        new Set([...existingAttachmentDocIds, ...uploadedAttachments.map((a) => a.docId)])
+      );
+
       // Save user message to conversation store
       if (conversationId) {
         try {
@@ -546,6 +906,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             role: 'user',
             content,
             messageType: 'text',
+            metadata:
+              uploadedAttachments.length > 0
+                ? ({ attachments: uploadedAttachments } as any)
+                : undefined,
           });
         } catch (err) {
           console.error('[UnifiedChatPanel] Failed to save user message:', err);
@@ -564,7 +928,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // Build context for AI
       const context = {
         focusMode,
-        attachments,
+        attachments: uploadedAttachments,
+        attachmentDocIds,
         workspaceContext,
         conversationId,
         conversationLanguage: chatLanguage,
@@ -653,6 +1018,26 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
           const c = (confirmRes as any)?.confirm || {};
           const u = c?.understanding || {};
+          // Agent Audit Layer: suggested reviewers (manual approval before DT)
+          const decisionContext = {
+            topic: String(content || '').trim(),
+            horizon: String(u.decisionHorizon || '').trim() || undefined,
+            industry: undefined,
+            functions: [],
+            riskFocus: [],
+          };
+          let suggestedAgentsSet: any = null;
+          try {
+            const suggestRes = await Api.agentAuditSuggest({
+              decisionContext,
+              userIntent: 'validate',
+              language: chatLanguage,
+              maxAgents: 3,
+            });
+            suggestedAgentsSet = (suggestRes as any)?.suggested || null;
+          } catch {
+            // best-effort; DT can proceed without agent layer
+          }
           const md = [
             '**My understanding of your task**',
             `- Goal: ${u.goal || ''}`,
@@ -686,6 +1071,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               metadata: {
                 deepThinking: { kind: 'confirm', originalMessage: content },
                 deepThinkingConfirm: c,
+                agentAuditSuggested: suggestedAgentsSet,
               } as any,
             });
             confirmMessageId = (saved as any)?.id || confirmMessageId;
@@ -698,6 +1084,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               metadata: {
                 deepThinking: { kind: 'confirm', originalMessage: content },
                 deepThinkingConfirm: c,
+                agentAuditSuggested: suggestedAgentsSet,
               },
             } as any);
           }
@@ -710,6 +1097,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             confirm: c,
             context,
             attachments,
+            agentAudit: {
+              suggested: suggestedAgentsSet,
+              orchestratorRunId: String(suggestedAgentsSet?.orchestratorRunId || ''),
+              selectedAgentIds: Array.isArray(suggestedAgentsSet?.agents)
+                ? suggestedAgentsSet.agents
+                    .map((a: any) => String(a?.agentId || ''))
+                    .filter(Boolean)
+                : [],
+              userIntent: 'validate',
+              maxAgents: 3,
+              decisionContext,
+            },
           });
 
           onMessageSent?.(content);
@@ -778,6 +1177,87 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     const depthRaw = dtPendingConfirm?.confirm?.suggestedDepth || 'Standard';
     const depth = String(depthRaw).toLowerCase(); // light|standard|hard
 
+    // Agent Audit Layer: lock context for post-DT review + directed loop
+    const agentIds =
+      dtPendingConfirm.agentAudit?.selectedAgentIds ||
+      (Array.isArray(dtPendingConfirm.agentAudit?.suggested?.agents)
+        ? dtPendingConfirm.agentAudit?.suggested?.agents
+            ?.map((a: any) => String(a?.agentId || '').trim())
+            .filter(Boolean)
+        : []);
+    const decisionContext =
+      dtPendingConfirm.agentAudit?.decisionContext ||
+      ({
+        topic: String(
+          dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage || ''
+        ).trim(),
+        horizon:
+          String(dtPendingConfirm?.confirm?.understanding?.decisionHorizon || '').trim() ||
+          undefined,
+        industry: undefined,
+        functions: [],
+        riskFocus: [],
+      } as any);
+
+    deepThinkingRunRef.current = {
+      conversationId: dtPendingConfirm.conversationId,
+      decisionContext,
+      agentIds,
+      userIntent: dtPendingConfirm.agentAudit?.userIntent || 'validate',
+      loopIteration: 1,
+      deepThinkingConfirm: dtPendingConfirm.confirm,
+    };
+
+    // Persist approved agent set for transparency/history
+    if (dtPendingConfirm.conversationId) {
+      try {
+        const suggested = dtPendingConfirm.agentAudit?.suggested?.agents || [];
+        const selectedSet = new Set(agentIds);
+        const selectedAgents = (Array.isArray(suggested) ? suggested : [])
+          .map((a: any) => ({
+            agentId: String(a?.agentId || '').trim(),
+            whySelected: String(a?.whySelected || '').trim(),
+          }))
+          .filter((a: any) => a.agentId && selectedSet.has(a.agentId));
+
+        const lines: string[] = [];
+        lines.push('**Agent Audit — approved reviewers (pre Deep Thinking)**');
+        lines.push(
+          `- Intent: **${String(dtPendingConfirm.agentAudit?.userIntent || 'validate')}**`
+        );
+        lines.push(`- Max agents: **${String(dtPendingConfirm.agentAudit?.maxAgents || 3)}**`);
+        lines.push('');
+        for (const a of selectedAgents) {
+          const label =
+            agentRegistryById[a.agentId]?.displayName?.pl ||
+            agentRegistryById[a.agentId]?.displayName?.en ||
+            a.agentId;
+          lines.push(`- **${String(label)}**`);
+          if (a.whySelected) lines.push(`  - ${a.whySelected}`);
+        }
+
+        const approvalContent = lines.filter(Boolean).join('\n');
+        await addMessageToConversation({
+          conversationId: dtPendingConfirm.conversationId,
+          role: 'ai',
+          content: approvalContent,
+          messageType: 'text',
+          metadata: {
+            agentAudit: {
+              kind: 'approval',
+              suggested: dtPendingConfirm.agentAudit?.suggested || null,
+              selectedAgentIds: agentIds,
+              userIntent: dtPendingConfirm.agentAudit?.userIntent || 'validate',
+              maxAgents: dtPendingConfirm.agentAudit?.maxAgents || 3,
+              decisionContext,
+            },
+          } as any,
+        });
+      } catch {
+        // best-effort
+      }
+    }
+
     // Legacy placeholder in global store
     addChatMessage({
       id: `ai-${Date.now()}`,
@@ -797,6 +1277,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         deepThinkingConfirmed: true,
         deepThinkingConfirm: dtPendingConfirm.confirm,
         deepThinkingDepth: depth,
+        agentAudit: {
+          orchestratorRunId: dtPendingConfirm.agentAudit?.orchestratorRunId || null,
+          agentIds,
+          userIntent: dtPendingConfirm.agentAudit?.userIntent || 'validate',
+          loopIteration: 1,
+          decisionContext,
+        },
       },
       focusMode,
       roleName,
@@ -810,6 +1297,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     customMessages,
     messages,
     addChatMessage,
+    addMessageToConversation,
+    agentRegistryById,
     startStream,
     systemPrompt,
     focusMode,
@@ -849,7 +1338,58 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       );
 
       const c = (confirmRes as any)?.confirm || {};
-      setDtPendingConfirm((prev) => (prev ? { ...prev, confirm: c } : prev));
+      // Refresh Agent Audit suggestions after reconfirm (task may have changed)
+      const u = c?.understanding || {};
+      const decisionContext = {
+        topic: String(
+          dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage || ''
+        ).trim(),
+        horizon: String(u.decisionHorizon || '').trim() || undefined,
+        industry: undefined,
+        functions: [],
+        riskFocus: [],
+      };
+      let suggestedAgentsSet: any = null;
+      try {
+        const suggestRes = await Api.agentAuditSuggest({
+          decisionContext,
+          userIntent: dtPendingConfirm.agentAudit?.userIntent || 'validate',
+          language: chatLanguage,
+          maxAgents: dtPendingConfirm.agentAudit?.maxAgents || 3,
+        });
+        suggestedAgentsSet = (suggestRes as any)?.suggested || null;
+      } catch {
+        // ignore
+      }
+
+      setDtPendingConfirm((prev) => {
+        if (!prev) return prev;
+        const prevSelected = prev.agentAudit?.selectedAgentIds || [];
+        const nextSuggestedIds = Array.isArray(suggestedAgentsSet?.agents)
+          ? suggestedAgentsSet.agents.map((a: any) => String(a?.agentId || '')).filter(Boolean)
+          : prevSelected;
+        const nextSelected =
+          prevSelected.length > 0
+            ? nextSuggestedIds.filter((id: string) => prevSelected.includes(id))
+            : nextSuggestedIds;
+        return {
+          ...prev,
+          confirm: c,
+          agentAudit: {
+            ...(prev.agentAudit || {
+              selectedAgentIds: [],
+              userIntent: 'validate',
+              maxAgents: 3,
+            }),
+            suggested: suggestedAgentsSet || prev.agentAudit?.suggested,
+            orchestratorRunId: String(
+              suggestedAgentsSet?.orchestratorRunId || prev.agentAudit?.orchestratorRunId || ''
+            ),
+            selectedAgentIds: nextSelected,
+            decisionContext,
+          },
+        };
+      });
     } catch (err) {
       console.error('[UnifiedChatPanel] Deep Thinking reconfirm failed:', err);
       throw err;
@@ -866,6 +1406,140 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     chatLanguage,
     aiConfig,
   ]);
+
+  const refreshAgentAuditSuggestionsOnly = useCallback(
+    async (overrides?: {
+      userIntent?: 'validate' | 'stress_test' | 'approve';
+      maxAgents?: 2 | 3 | 4;
+    }) => {
+      if (!dtPendingConfirm) return;
+      const decisionContext =
+        dtPendingConfirm.agentAudit?.decisionContext ||
+        ({
+          topic: String(
+            dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage || ''
+          ).trim(),
+          industry: undefined,
+          horizon: undefined,
+          functions: [],
+          riskFocus: [],
+        } as any);
+
+      const userIntent =
+        overrides?.userIntent || dtPendingConfirm.agentAudit?.userIntent || ('validate' as const);
+      const maxAgents =
+        overrides?.maxAgents || dtPendingConfirm.agentAudit?.maxAgents || (3 as const);
+
+      try {
+        const suggestRes = await Api.agentAuditSuggest({
+          decisionContext,
+          userIntent,
+          language: chatLanguage,
+          maxAgents,
+        });
+        const suggestedAgentsSet = (suggestRes as any)?.suggested || null;
+
+        setDtPendingConfirm((prev) => {
+          if (!prev?.agentAudit) return prev;
+          const prevSelected = prev.agentAudit.selectedAgentIds || [];
+          const nextSuggestedIds = Array.isArray(suggestedAgentsSet?.agents)
+            ? suggestedAgentsSet.agents.map((a: any) => String(a?.agentId || '')).filter(Boolean)
+            : prevSelected;
+
+          // Preserve previous selections where possible; otherwise default to suggested list.
+          const nextSelected =
+            prevSelected.length > 0
+              ? nextSuggestedIds.filter((id: string) => prevSelected.includes(id))
+              : nextSuggestedIds;
+
+          return {
+            ...prev,
+            agentAudit: {
+              ...prev.agentAudit,
+              suggested: suggestedAgentsSet || prev.agentAudit.suggested,
+              orchestratorRunId: String(
+                suggestedAgentsSet?.orchestratorRunId || prev.agentAudit.orchestratorRunId || ''
+              ),
+              selectedAgentIds: nextSelected.slice(0, maxAgents),
+              userIntent,
+              maxAgents,
+              decisionContext,
+            },
+          };
+        });
+      } catch {
+        // best-effort; DT can proceed without agent layer
+      }
+    },
+    [dtPendingConfirm, chatLanguage]
+  );
+
+  const handleRunDirectedDeepening = useCallback(
+    async (agentAuditPayload: any) => {
+      const prompt = String(
+        agentAuditPayload?.verdict?.directedLoop?.deepThinkingPrompt || ''
+      ).trim();
+      if (!prompt) return;
+      if (isDisabled) return;
+
+      const run = deepThinkingRunRef.current;
+      if (!run) return;
+      if (run.loopIteration >= 2) return;
+
+      const nextIteration = ((run.loopIteration + 1) as 2) || 2;
+      run.loopIteration = nextIteration;
+
+      // Build backend-compatible history, excluding confirm cards
+      const base = (customMessages || messages).filter(
+        (m) => !((m as any).metadata?.deepThinking?.kind === 'confirm')
+      );
+      const history = base.map((m) => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.content }],
+      }));
+
+      // Legacy placeholder in global store
+      addChatMessage({
+        id: `ai-${Date.now()}`,
+        role: 'ai',
+        content: '',
+        timestamp: new Date(),
+        isStreaming: true,
+      });
+
+      await startStream(
+        prompt,
+        history,
+        systemPrompt,
+        {
+          deepThinkingConfirmed: true,
+          deepThinkingConfirm: run.deepThinkingConfirm,
+          deepThinkingDepth: 'hard',
+          forceDepth: true,
+          agentAudit: {
+            agentIds: run.agentIds,
+            userIntent: run.userIntent,
+            loopIteration: nextIteration,
+            decisionContext: run.decisionContext,
+          },
+        },
+        focusMode,
+        roleName,
+        chatLanguage
+      );
+    },
+    [
+      addChatMessage,
+      chatLanguage,
+      customMessages,
+      focusMode,
+      isDisabled,
+      messages,
+      roleName,
+      startStream,
+      systemPrompt,
+    ]
+  );
 
   const handleNewChat = useCallback(async () => {
     clearActiveChat();
@@ -951,9 +1625,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const handleEnableDeepThinking = useCallback(() => {
     setDtHintDismissed(true);
     // Toggle Deep Thinking in aiConfig
-    const { setAiConfig } = useAppStore.getState();
-    if (typeof setAiConfig === 'function') {
-      setAiConfig({ ...aiConfig, deepResearch: true } as any);
+    const { setAIConfig } = useAppStore.getState();
+    if (typeof setAIConfig === 'function') {
+      setAIConfig({ ...aiConfig, deepResearch: true } as any);
     }
   }, [aiConfig]);
 
@@ -1022,586 +1696,271 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   };
 
   // ========================================================================
+  // Inline edit & regenerate (ChatGPT-like)
+  // ========================================================================
+
+  const handleStartEditMessage = useCallback(
+    (messageId: string) => {
+      const msg = displayMessages.find((m) => m.id === messageId);
+      if (!msg || msg.role !== 'user') return;
+      if (String(msg.id || '').startsWith('local-')) return;
+      setEditingMessageId(messageId);
+      setEditingText(msg.content || '');
+    },
+    [displayMessages]
+  );
+
+  const handleCancelEditMessage = useCallback(() => {
+    setEditingMessageId(null);
+    setEditingText('');
+  }, []);
+
+  const handleCommitEditMessage = useCallback(async () => {
+    if (!editingMessageId) return;
+    const newText = editingText.trim();
+    if (!newText) return;
+    if (!activeConversationId) return;
+    if (editBusy || isStreaming) return;
+
+    setEditBusy(true);
+    try {
+      await truncateFromMessage(editingMessageId, newText);
+
+      const msgs = useConversationStore.getState().activeMessages || [];
+      const idx = msgs.findIndex((m: any) => m.id === editingMessageId);
+      const before = idx >= 0 ? msgs.slice(0, idx) : msgs;
+      const history = before
+        .filter((m: any) => m?.content && String(m.content).trim().length > 0)
+        .map((m: any) => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: String(m.content || '') }],
+        }));
+
+      const context = {
+        focusMode,
+        attachments: [],
+        workspaceContext,
+        conversationId: activeConversationId,
+        conversationLanguage: chatLanguage,
+      };
+
+      if (aiConfig?.deepResearch) {
+        if (dtConfirmBusy) return;
+        setDtConfirmBusy(true);
+        try {
+          const confirmRes = await Api.chatConfirm(
+            newText,
+            history,
+            systemPrompt,
+            context,
+            roleName,
+            chatLanguage,
+            {
+              deepResearch: aiConfig?.deepResearch,
+              webSearch: aiConfig?.webSearch,
+              showReasoning: aiConfig?.showReasoning,
+              knowledgeSources: aiConfig?.knowledgeSources,
+              responseStyle: aiConfig?.responseStyle,
+              selectedTier: (aiConfig as any)?.selectedTier || undefined,
+              selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
+            }
+          );
+
+          const c = (confirmRes as any)?.confirm || {};
+          const u = c?.understanding || {};
+          const md = [
+            '**My understanding of your task**',
+            `- Goal: ${u.goal || ''}`,
+            u.context ? `- Context: ${u.context}` : '',
+            Array.isArray(u.constraints) && u.constraints.length
+              ? `- Constraints: ${u.constraints.join('; ')}`
+              : '',
+            u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
+            u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
+            '',
+            Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
+              ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
+                  .slice(0, 3)
+                  .map((q: any, i: number) => `${i + 1}. ${q.question}`)
+                  .join('\n')}`
+              : '',
+            '',
+            '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
+          ]
+            .filter(Boolean)
+            .join('\n');
+
+          const saved = await addMessageToConversation({
+            conversationId: activeConversationId,
+            role: 'ai',
+            content: md,
+            messageType: 'text',
+            metadata: {
+              deepThinking: { kind: 'confirm', originalMessage: newText },
+              deepThinkingConfirm: c,
+            } as any,
+          });
+          const confirmMessageId = (saved as any)?.id || `dt-confirm-${Date.now()}`;
+
+          setDtPendingConfirm({
+            messageId: confirmMessageId,
+            conversationId: activeConversationId,
+            originalMessage: newText,
+            editedMessage: newText,
+            confirm: c,
+            context,
+            attachments: [],
+          } as any);
+        } finally {
+          setDtConfirmBusy(false);
+        }
+      } else {
+        await startStream(
+          newText,
+          history,
+          systemPrompt,
+          context,
+          focusMode,
+          roleName,
+          chatLanguage
+        );
+      }
+
+      handleCancelEditMessage();
+    } catch (e) {
+      console.error('[UnifiedChatPanel] Edit & regenerate failed:', e);
+    } finally {
+      setEditBusy(false);
+    }
+  }, [
+    activeConversationId,
+    addMessageToConversation,
+    aiConfig,
+    chatLanguage,
+    dtConfirmBusy,
+    editBusy,
+    editingMessageId,
+    editingText,
+    focusMode,
+    handleCancelEditMessage,
+    isStreaming,
+    roleName,
+    startStream,
+    systemPrompt,
+    truncateFromMessage,
+    workspaceContext,
+  ]);
+
+  // ========================================================================
+  // Agent Audit: Accept risk handler (extracted for MessageRenderer)
+  // ========================================================================
+
+  const handleAgentAuditAccept = useCallback(
+    async (audit: any, _msgId: string) => {
+      if (agentAuditBusy) return;
+      const runId = String(audit?.orchestratorRunId || '').trim();
+      if (!runId) return;
+      setAgentAuditBusy(true);
+      try {
+        await Api.agentAuditAcceptRun({ runId });
+        const content = [
+          '**Agent Audit — risk accepted**',
+          `- Run: \`${runId}\``,
+          '- Decision: user accepted proceeding despite FAIL.',
+        ].join('\n');
+        if (activeConversationId) {
+          await addMessageToConversation({
+            conversationId: activeConversationId,
+            role: 'ai',
+            content,
+            messageType: 'text',
+            metadata: {
+              agentAudit: { kind: 'accept', runId },
+            } as any,
+          });
+        }
+        addChatMessage({
+          id: `agent-audit-accept-${Date.now()}`,
+          role: 'ai',
+          content,
+          timestamp: new Date(),
+          metadata: { agentAudit: { kind: 'accept', runId } },
+        } as any);
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to accept audit run:', err);
+      } finally {
+        setAgentAuditBusy(false);
+      }
+    },
+    [activeConversationId, addChatMessage, addMessageToConversation, agentAuditBusy]
+  );
+
+  // ========================================================================
   // Render helpers
   // ========================================================================
 
-  const renderMessage = (msg: ChatMessage, index: number) => {
-    const isLastMessage = index === displayMessages.length - 1;
-    const isHovered = hoveredMessageId === msg.id;
-    const hasArtifacts = msg.artifacts && msg.artifacts.length > 0;
-    const hasThinkingSteps = msg.thinkingSteps && msg.thinkingSteps.length > 0;
-    const hasCitations = msg.citations && msg.citations.length > 0;
-    const isCopied = copiedMessageId === msg.id;
-    const isDeepThinkingConfirm = (msg as any).metadata?.deepThinking?.kind === 'confirm';
-    const confirmPayload =
-      isDeepThinkingConfirm && dtPendingConfirm?.messageId === msg.id
-        ? dtPendingConfirm.confirm
-        : (msg as any).metadata?.deepThinkingConfirm;
-
-    return (
-      <div
-        key={msg.id}
-        className={`flex flex-col space-y-1.5 group ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
-        onMouseEnter={() => setHoveredMessageId(msg.id)}
-        onMouseLeave={() => setHoveredMessageId(null)}
-      >
-        {/* Thinking Steps (for AI messages) */}
-        {msg.role === 'ai' && hasThinkingSteps && (
-          <div className={`w-full ${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
-            <ThinkingBlock
-              steps={msg.thinkingSteps!}
-              isStreaming={msg.isStreaming}
-              defaultExpanded={msg.isStreaming === true && !msg.content}
-            />
-          </div>
-        )}
-
-        <div
-          className={`flex gap-2 ${isCompact ? 'gap-2' : 'gap-3'} ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-        >
-          {/* Avatar */}
-          <div
-            className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full flex items-center justify-center shrink-0 mt-0.5 border ${
-              msg.role === 'ai'
-                ? 'bg-primary-50 dark:bg-primary-900/50 border-primary-200 dark:border-primary-700'
-                : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600'
-            }`}
-          >
-            {msg.role === 'ai' ? (
-              <Bot size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" />
-            ) : (
-              <User size={isCompact ? 12 : 14} className="text-slate-400 dark:text-slate-300" />
-            )}
-          </div>
-
-          {/* Message Bubble */}
-          <div className="flex flex-col max-w-[85%]">
-            {/* Author name for team messages */}
-            {msg.role === 'user' && msg.authorName && (
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 mb-0.5 text-right pr-1 font-medium">
-                {msg.authorName}
-              </span>
-            )}
-            <div
-              className={`relative rounded-xl px-3 py-2 ${isCompact ? 'text-xs' : 'text-sm'} leading-relaxed shadow-sm ${
-                msg.role === 'user'
-                  ? 'bg-primary-600 text-white rounded-tr-none'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
-              }`}
-            >
-              {/* AI Message Content */}
-              {msg.role === 'ai' ? (
-                <div
-                  className={`${isDeepThinkingConfirm ? 'not-prose' : `prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert`} max-w-none`}
-                >
-                  {/* Deep Thinking: Research progress (SSE events) */}
-                  {(msg as any).metadata?.researchVisibility?.items && (
-                    <div className={`${isCompact ? 'mb-2' : 'mb-3'} not-prose`}>
-                      <div className="mb-2 text-[11px] font-medium text-slate-600 dark:text-slate-300">
-                        Research & Sources (planned)
-                      </div>
-                      <div className="space-y-1">
-                        {(msg as any).metadata?.researchVisibility?.items
-                          ?.slice(0, 6)
-                          .map((it: any) => (
-                            <div
-                              key={it.id}
-                              className="flex items-start justify-between gap-2 text-[11px] bg-white/60 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1"
-                            >
-                              <div className="min-w-0">
-                                <div className="text-slate-700 dark:text-slate-200 truncate">
-                                  {it.label}
-                                </div>
-                                {it.rationale ? (
-                                  <div className="text-slate-400 dark:text-slate-500 truncate">
-                                    {it.rationale}
-                                  </div>
-                                ) : null}
-                              </div>
-                              <div className="flex-shrink-0 text-slate-500 dark:text-slate-400">
-                                {String(it.status || 'planned')}
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {(msg as any).metadata?.researchProgress && (
-                    <div className={`${isCompact ? 'mb-2' : 'mb-3'} not-prose`}>
-                      {((msg as any).metadata?.researchProgress?.error as string | undefined) && (
-                        <div className="mb-2 text-[11px] text-amber-600 dark:text-amber-400">
-                          {(msg as any).metadata?.researchProgress?.error}
-                        </div>
-                      )}
-                      <ResearchProgress
-                        topic={String((msg as any).metadata?.researchProgress?.topic || '')}
-                        stage={
-                          ((msg as any).metadata?.researchProgress?.stage || 'searching') as any
-                        }
-                        queries={((msg as any).metadata?.researchProgress?.queries || []) as any}
-                        sources={((msg as any).metadata?.researchProgress?.sources || []) as any}
-                      />
-                    </div>
-                  )}
-
-                  {isDeepThinkingConfirm ? (
-                    <div className="space-y-3">
-                      <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                        Confirm Understanding (Deep Thinking)
-                      </div>
-                      <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1">
-                        <div className="font-medium">My understanding of your task</div>
-                        <ul className="list-disc pl-4 space-y-0.5">
-                          <li>
-                            <span className="font-medium">Goal:</span>{' '}
-                            {String(confirmPayload?.understanding?.goal || '').trim() || '—'}
-                          </li>
-                          {String(confirmPayload?.understanding?.context || '').trim() ? (
-                            <li>
-                              <span className="font-medium">Context:</span>{' '}
-                              {String(confirmPayload?.understanding?.context || '').trim()}
-                            </li>
-                          ) : null}
-                          {Array.isArray(confirmPayload?.understanding?.constraints) &&
-                          confirmPayload.understanding.constraints.length ? (
-                            <li>
-                              <span className="font-medium">Constraints:</span>{' '}
-                              {confirmPayload.understanding.constraints.join('; ')}
-                            </li>
-                          ) : null}
-                          {String(confirmPayload?.understanding?.expectedOutput || '').trim() ? (
-                            <li>
-                              <span className="font-medium">Output:</span>{' '}
-                              {String(confirmPayload.understanding.expectedOutput)}
-                            </li>
-                          ) : null}
-                          {String(confirmPayload?.understanding?.decisionHorizon || '').trim() ? (
-                            <li>
-                              <span className="font-medium">Horizon:</span>{' '}
-                              {String(confirmPayload.understanding.decisionHorizon)}
-                            </li>
-                          ) : null}
-                        </ul>
-                      </div>
-
-                      {Array.isArray(confirmPayload?.missingInfoQuestions) &&
-                      confirmPayload.missingInfoQuestions.length ? (
-                        <div className="text-xs text-slate-600 dark:text-slate-300">
-                          <div className="font-medium mb-1">Assumptions & gaps (optional)</div>
-                          <ol className="list-decimal pl-4 space-y-0.5">
-                            {confirmPayload.missingInfoQuestions.slice(0, 3).map((q: any) => (
-                              <li key={q.id || q.question}>{q.question}</li>
-                            ))}
-                          </ol>
-                        </div>
-                      ) : null}
-
-                      {/* Adjust */}
-                      {dtPendingConfirm?.messageId === msg.id && (
-                        <div className="space-y-2">
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                            If this is not correct, adjust the task and re-run confirm.
-                          </div>
-                          <textarea
-                            value={dtPendingConfirm.editedMessage}
-                            onChange={(e) =>
-                              setDtPendingConfirm((prev) =>
-                                prev ? { ...prev, editedMessage: e.target.value } : prev
-                              )
-                            }
-                            rows={3}
-                            className="w-full text-xs bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 outline-none focus:ring-2 focus:ring-primary-500/40"
-                          />
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              onClick={handleDeepThinkingProceed}
-                              disabled={dtConfirmBusy || isDisabled}
-                              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              Confirm & proceed
-                            </button>
-                            <button
-                              onClick={handleDeepThinkingReconfirm}
-                              disabled={dtConfirmBusy || isDisabled}
-                              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {dtConfirmBusy ? 'Reconfirming…' : 'Adjust & reconfirm'}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <>
-                      {/* Cursor-like thinking indicator - shows only when streaming with no content yet */}
-                      <ThinkingStatusLine
-                        compact={isCompact}
-                        className="mb-1"
-                        show={msg.isStreaming === true && thinkingSteps.length > 0}
-                        label={
-                          (thinkingSteps.find((s) => s.status === 'in_progress')?.label ||
-                            thinkingSteps.find((s) => s.status === 'pending')?.label ||
-                            t('thinking.processing', 'Thinking...')) as string
-                        }
-                      />
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          code: ({ inline, className: codeClassName, children }: any) => {
-                            if (inline) {
-                              return (
-                                <code className="px-1 py-0.5 bg-slate-200 dark:bg-navy-700 rounded text-primary-600 dark:text-primary-400 text-xs font-mono">
-                                  {children}
-                                </code>
-                              );
-                            }
-                            return (
-                              <pre className="bg-slate-900 dark:bg-navy-950 text-slate-100 p-2 rounded-lg overflow-x-auto text-xs my-2">
-                                <code className={codeClassName}>{children}</code>
-                              </pre>
-                            );
-                          },
-                          a: ({ href, children }: any) => (
-                            <a
-                              href={href}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary-600 hover:text-primary-700 underline"
-                            >
-                              {children}
-                            </a>
-                          ),
-                        }}
-                      >
-                        {msg.content}
-                      </ReactMarkdown>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <span>{msg.content}</span>
-              )}
-
-              {/* Streaming indicator */}
-              {msg.isStreaming && (
-                <span className="inline-flex items-center gap-1 ml-2">
-                  <span
-                    className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
-                    style={{ animationDelay: '0ms' }}
-                  />
-                  <span
-                    className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
-                    style={{ animationDelay: '150ms' }}
-                  />
-                  <span
-                    className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
-                    style={{ animationDelay: '300ms' }}
-                  />
-                </span>
-              )}
-
-              {/* Retry button for error messages */}
-              {msg.role === 'ai' &&
-                !msg.isStreaming &&
-                msg.content?.includes('⚠️') &&
-                (() => {
-                  // Find the last user message before this error
-                  const errorIdx = displayMessages.indexOf(msg);
-                  const prevUserMsg = displayMessages
-                    .slice(0, errorIdx)
-                    .reverse()
-                    .find((m) => m.role === 'user');
-                  return prevUserMsg ? (
-                    <button
-                      onClick={() => handleSendMessage(prevUserMsg.content)}
-                      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors"
-                    >
-                      <RefreshCw size={12} />
-                      {t('aiChat.retry', 'Try again')}
-                    </button>
-                  ) : null;
-                })()}
-
-              {/* Hover Actions */}
-              {isHovered && !msg.isStreaming && (
-                <div
-                  className={`absolute ${msg.role === 'user' ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'} top-0 flex items-center gap-0.5 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 p-1`}
-                >
-                  {/* Copy */}
-                  <button
-                    onClick={() => handleCopyMessage(msg.content, msg.id)}
-                    className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700"
-                    title={t('chat.actions.copy', 'Copy')}
-                  >
-                    {isCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
-                  </button>
-
-                  {/* Quick Feedback (AI only) */}
-                  {msg.role === 'ai' && (
-                    <>
-                      <button
-                        className="p-1 rounded-md text-slate-500 hover:text-green-600 dark:text-slate-400 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
-                        title={t('chat.actions.helpful', 'Helpful')}
-                      >
-                        <ThumbsUp size={12} />
-                      </button>
-                      <button
-                        className="p-1 rounded-md text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        title={t('chat.actions.notHelpful', 'Not helpful')}
-                      >
-                        <ThumbsDown size={12} />
-                      </button>
-                    </>
-                  )}
-
-                  {/* View Artifacts */}
-                  {msg.role === 'ai' && hasArtifacts && (
-                    <button
-                      onClick={() => handleViewArtifacts(msg.artifacts!)}
-                      className="p-1 rounded-md text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20"
-                      title={t('chat.actions.viewArtifacts', 'View Artifacts')}
-                    >
-                      <FileCode size={12} />
-                    </button>
-                  )}
-
-                  {/* Speak */}
-                  {msg.role === 'ai' && (
-                    <button
-                      onClick={() => (voiceState.isSpeaking ? stopSpeaking() : speak(msg.content))}
-                      className={`p-1 rounded-md ${voiceState.isSpeaking ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
-                      title={
-                        voiceState.isSpeaking
-                          ? t('chat.actions.stop', 'Stop')
-                          : t('chat.actions.speak', 'Speak')
-                      }
-                    >
-                      <Volume2 size={12} />
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Artifacts Badge */}
-        {msg.role === 'ai' && hasArtifacts && (
-          <button
-            onClick={() => handleViewArtifacts(msg.artifacts!)}
-            className={`${isCompact ? 'ml-7' : 'ml-9'} flex items-center gap-1 px-2 py-1 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg text-xs font-medium transition-colors`}
-          >
-            <FileCode size={12} />
-            {msg.artifacts!.length}{' '}
-            {msg.artifacts!.length === 1
-              ? t('chat.artifact', 'artifact')
-              : t('chat.artifacts', 'artifacts')}
-          </button>
-        )}
-
-        {/* Citations */}
-        {msg.role === 'ai' && hasCitations && (
-          <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
-            <CitationList citations={msg.citations!} />
-          </div>
-        )}
-
-        {/* Inline Feedback (AI messages only, not streaming) */}
-        {msg.role === 'ai' && !msg.isStreaming && (
-          <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
-            <InlineResponseFeedback
-              messageId={msg.id}
-              conversationId={activeConversationId || undefined}
-              responseLength={msg.content.length}
-              onFeedback={(feedback) => handleFeedback(msg.id, msg.content, feedback)}
-              compact={isCompact}
-            />
-          </div>
-        )}
-
-        {/* AI-suggested Deep Thinking activation hint */}
-        {msg.role === 'ai' &&
-          !msg.isStreaming &&
-          isLastMessage &&
-          deepThinkingHint &&
-          !dtHintDismissed &&
-          !aiConfig?.deepResearch && (
-            <div
-              className={`${isCompact ? 'ml-7' : 'ml-9'} mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg`}
-            >
-              <div className="flex items-start gap-2">
-                <Lightbulb
-                  size={16}
-                  className="text-amber-500 dark:text-amber-400 mt-0.5 shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
-                    {t(
-                      'deepThinking.hint',
-                      'This looks like a strategic problem. Deep Thinking Mode can provide structured, decision-grade analysis.'
-                    )}
-                  </p>
-                  <div className="flex gap-2 mt-2">
-                    <button
-                      onClick={handleEnableDeepThinking}
-                      className="px-3 py-1 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors flex items-center gap-1"
-                    >
-                      <BrainCircuit size={12} />
-                      {t('deepThinking.enableHint', 'Enable Deep Thinking')}
-                    </button>
-                    <button
-                      onClick={() => setDtHintDismissed(true)}
-                      className="px-3 py-1 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                    >
-                      {t('deepThinking.dismissHint', 'Not now')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-        {/* Deep Thinking CTA: Save as Decision / Convert to Initiative */}
-        {msg.role === 'ai' &&
-          !msg.isStreaming &&
-          (msg as any).metadata?.deepThinking?.kind === 'report' &&
-          !dtDecisionSaved.has(msg.id) && (
-            <div
-              className={`${isCompact ? 'ml-7' : 'ml-9'} mt-2 p-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/50 rounded-lg`}
-            >
-              <p className="text-xs font-medium text-primary-800 dark:text-primary-200 mb-2 flex items-center gap-1.5">
-                <Sparkles size={14} className="text-primary-500" />
-                {t('deepThinking.ctaTitle', 'What do you want to do with this output?')}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => handleSaveAsDecision(msg.id, msg.content)}
-                  disabled={dtSavingDecision === msg.id}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 transition-colors flex items-center gap-1"
-                >
-                  <Bookmark size={12} />
-                  {dtSavingDecision === msg.id
-                    ? t('deepThinking.saving', 'Saving…')
-                    : t('deepThinking.saveDecision', 'Save as Decision')}
-                </button>
-                <button
-                  onClick={() => handleSaveAsDecision(msg.id, msg.content)}
-                  disabled={dtSavingDecision === msg.id}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 disabled:opacity-50 transition-colors flex items-center gap-1"
-                >
-                  <Zap size={12} />
-                  {t('deepThinking.convertInitiative', 'Convert to Initiative')}
-                </button>
-              </div>
-            </div>
-          )}
-
-        {/* Deep Thinking CTA: saved confirmation */}
-        {msg.role === 'ai' && !msg.isStreaming && dtDecisionSaved.has(msg.id) && (
-          <div
-            className={`${isCompact ? 'ml-7' : 'ml-9'} mt-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-lg`}
-          >
-            <p className="text-xs font-medium text-green-700 dark:text-green-300 flex items-center gap-1.5">
-              <Check size={14} />
-              {t('deepThinking.decisionSaved', 'Decision saved successfully')}
-            </p>
-          </div>
-        )}
-
-        {/* Interim Insight checkpoint */}
-        {msg.role === 'ai' &&
-          !msg.isStreaming &&
-          isLastMessage &&
-          interimInsight &&
-          interimInsight.paths.length > 0 && (
-            <div
-              className={`${isCompact ? 'ml-7' : 'ml-9'} mt-2 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg`}
-            >
-              <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-200 mb-2 flex items-center gap-1.5">
-                <BrainCircuit size={14} className="text-indigo-500" />
-                {t('deepThinking.interimInsight', 'Preliminary insight — dominant paths emerging:')}
-              </p>
-              <ul className="space-y-1 mb-2">
-                {interimInsight.paths.map((p) => (
-                  <li key={p.id} className="text-xs text-indigo-700 dark:text-indigo-300">
-                    <span className="font-medium">{p.label}</span>
-                    {p.summary ? ` — ${p.summary}` : ''}
-                  </li>
-                ))}
-              </ul>
-              <div className="flex gap-2">
-                <button
-                  onClick={() =>
-                    handleSendMessage(
-                      t('deepThinking.narrowFocus', 'Narrow focus on the first path')
-                    )
-                  }
-                  className="px-3 py-1 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
-                >
-                  {t('deepThinking.narrowFocusBtn', 'Narrow focus')}
-                </button>
-                <button
-                  onClick={() => handleSendMessage(t('deepThinking.goDeeper', 'Go deeper'))}
-                  className="px-3 py-1 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 transition-colors"
-                >
-                  {t('deepThinking.continueDeeper', 'Continue to full report')}
-                </button>
-              </div>
-            </div>
-          )}
-
-        {/* Interactive Options */}
-        {msg.role === 'ai' && !msg.isStreaming && msg.options && msg.options.length > 0 && (
-          <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-3 flex flex-wrap gap-2`}>
-            {msg.multiSelect ? (
-              <div className="flex flex-col gap-3 w-full">
-                <div className="flex flex-wrap gap-2">
-                  {msg.options.map((option) => {
-                    const isSelected = selectedMultiOptions.includes(option.value);
-                    return (
-                      <button
-                        key={option.id}
-                        onClick={() => handleMultiSelectToggle(option.value)}
-                        className={`px-3 py-1.5 text-xs rounded-full border transition-all flex items-center gap-1.5 ${
-                          isSelected
-                            ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
-                            : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
-                        }`}
-                      >
-                        {option.label}
-                        {isSelected && <Check size={12} />}
-                      </button>
-                    );
-                  })}
-                </div>
-                {isLastMessage && selectedMultiOptions.length > 0 && (
-                  <button
-                    onClick={handleMultiSelectConfirm}
-                    className="self-start px-4 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
-                  >
-                    {t('chat.confirmSelection', 'Confirm Selection')}
-                  </button>
-                )}
-              </div>
-            ) : (
-              msg.options.map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() =>
-                    onOptionSelect ? onOptionSelect(option) : handleSendMessage(option.label)
-                  }
-                  className="px-3 py-1.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 text-xs rounded-full hover:bg-primary-50 dark:hover:bg-primary-900/10 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
-                >
-                  {option.label}
-                </button>
-              ))
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
+  const renderMessage = (msg: ChatMessage, index: number) => (
+    <MessageRenderer
+      key={msg.id}
+      msg={msg}
+      index={index}
+      displayMessages={displayMessages}
+      isCompact={isCompact}
+      isDisabled={isDisabled}
+      activeConversationId={activeConversationId}
+      thinkingSteps={thinkingSteps}
+      streamStartedAt={streamStartedAt}
+      streamCompletedSignal={streamCompletedSignal}
+      retryInfo={retryInfo}
+      abortFeedback={abortFeedback}
+      agentAuditState={agentAuditState}
+      agentAuditBusy={agentAuditBusy}
+      agentRegistryById={agentRegistryById}
+      agentAuditActiveTabByMessageId={agentAuditActiveTabByMessageId}
+      setAgentAuditActiveTabByMessageId={setAgentAuditActiveTabByMessageId}
+      deepThinkingHint={deepThinkingHint}
+      dtHintDismissed={dtHintDismissed}
+      dtPendingConfirm={dtPendingConfirm}
+      setDtPendingConfirm={setDtPendingConfirm}
+      dtConfirmBusy={dtConfirmBusy}
+      dtSavingDecision={dtSavingDecision}
+      dtDecisionSaved={dtDecisionSaved}
+      interimInsight={interimInsight}
+      aiConfig={aiConfig}
+      editingMessageId={editingMessageId}
+      editingText={editingText}
+      editBusy={editBusy}
+      setEditingText={setEditingText}
+      hoveredMessageId={hoveredMessageId}
+      setHoveredMessageId={setHoveredMessageId}
+      copiedMessageId={copiedMessageId}
+      selectedMultiOptions={selectedMultiOptions}
+      voiceState={voiceState}
+      handleCopyMessage={handleCopyMessage}
+      handleStartEditMessage={handleStartEditMessage}
+      handleCancelEditMessage={handleCancelEditMessage}
+      handleCommitEditMessage={handleCommitEditMessage}
+      handleViewArtifacts={handleViewArtifacts}
+      handleFeedback={handleFeedback}
+      handleSendMessage={handleSendMessage}
+      handleEnableDeepThinking={handleEnableDeepThinking}
+      handleDeepThinkingProceed={handleDeepThinkingProceed}
+      handleDeepThinkingReconfirm={handleDeepThinkingReconfirm}
+      handleSaveAsDecision={handleSaveAsDecision}
+      handleRunDirectedDeepening={handleRunDirectedDeepening}
+      handleMultiSelectToggle={handleMultiSelectToggle}
+      handleMultiSelectConfirm={handleMultiSelectConfirm}
+      refreshAgentAuditSuggestionsOnly={refreshAgentAuditSuggestionsOnly}
+      speak={speak}
+      stopSpeaking={stopSpeaking}
+      setDtHintDismissed={setDtHintDismissed}
+      addArtifact={addArtifact}
+      toggleArtifactsPanel={toggleArtifactsPanel}
+      exportArtifact={exportArtifact}
+      handleAgentAuditAccept={handleAgentAuditAccept}
+      onOptionSelect={onOptionSelect}
+    />
+  );
 
   // ========================================================================
   // Render
@@ -1638,11 +1997,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           {/* History toggle - second from left */}
           {showHistoryTrigger && (
             <button
-              onClick={() => setChatSlidingPanelOpen(!isChatSlidingPanelOpen)}
+              onClick={() => toggleSidebar()}
               data-testid="chat-history-button"
               data-chat-toggle
               className={`p-1.5 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors ${
-                isChatSlidingPanelOpen
+                isSidebarOpen
                   ? 'text-primary-600 dark:text-primary-400'
                   : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300'
               }`}
@@ -1705,6 +2064,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         />
       </div>
 
+      {/* Organization Memory panel removed — unused / WIP feature */}
+
       {/* Messages Area */}
       <div
         ref={messagesContainerRef}
@@ -1764,8 +2125,35 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         id="chat-input"
         className={`${isCompact ? 'p-2' : 'p-3'} border-t border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950`}
       >
+        {!!lastError && !isStreaming && (
+          <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+            <div className="text-xs text-amber-800 dark:text-amber-200">
+              {t('aiChat.streamError', 'Last request failed. You can retry.')}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => retryLastStream()}
+                className="px-3 py-1 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                {t('common.tryAgain', 'Try again')}
+              </button>
+              <button
+                onClick={() => clearLastError()}
+                className="px-3 py-1 rounded-md text-xs font-medium bg-white/60 dark:bg-white/10 hover:bg-white/80 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
+              >
+                {t('common.dismiss', 'Dismiss')}
+              </button>
+            </div>
+          </div>
+        )}
         <EnhancedChatInput
           onSend={handleSendMessage}
+          onStopGenerating={() => {
+            const hadPartial = abortStream();
+            setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
+            setTimeout(() => setAbortFeedback(null), 3000);
+          }}
+          isStreaming={isStreaming}
           disabled={isDisabled}
           placeholder={
             workspaceContext && workspaceContext.type !== 'empty' && workspaceContext.entityName
@@ -1776,6 +2164,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           }
           voiceModeEnabled={voiceModeEnabled}
           onVoiceModeChange={setVoiceModeEnabled}
+          chatLanguage={chatLanguage}
           voiceState={voiceState}
           startVoiceListening={startListening}
           stopVoiceListening={stopListening}

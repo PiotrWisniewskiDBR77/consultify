@@ -12,6 +12,55 @@ import { aiLogger } from './ai/logger.js';
 
 type _DbRow = Record<string, unknown>;
 
+let knowledgeDocsColumns: Set<string> | null = null;
+
+async function ensureKnowledgeDocsColumns(): Promise<Set<string>> {
+  if (knowledgeDocsColumns) return knowledgeDocsColumns;
+  const cols = new Set<string>();
+
+  // Try SQLite pragma first
+  try {
+    const rows = (await DbPromise.all<{ name?: string }>(`PRAGMA table_info(knowledge_docs)`, [], {
+      fallback: true,
+    })) as Array<{ name?: string }>;
+    for (const r of rows || []) {
+      const name = String(r?.name || '').trim();
+      if (name) cols.add(name);
+    }
+  } catch {
+    // ignore
+  }
+
+  // Postgres fallback
+  if (cols.size === 0 && process.env.DB_TYPE === 'postgres') {
+    try {
+      const rows = (await DbPromise.all<{ column_name?: string }>(
+        `SELECT column_name FROM information_schema.columns WHERE table_name = 'knowledge_docs'`,
+        [],
+        { fallback: true }
+      )) as Array<{ column_name?: string }>;
+      for (const r of rows || []) {
+        const name = String(r?.column_name || '').trim();
+        if (name) cols.add(name);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Minimal fallback (for older DBs)
+  if (cols.size === 0) {
+    cols.add('id');
+    cols.add('filename');
+    cols.add('filepath');
+    cols.add('status');
+    cols.add('created_at');
+  }
+
+  knowledgeDocsColumns = cols;
+  return cols;
+}
+
 type RerankableChunk = {
   id?: string;
   content: string;
@@ -28,6 +77,11 @@ type SearchOptions = {
   limit?: number;
   organizationId?: string | null;
   minSimilarity?: number;
+  /**
+   * Restrict search to specific documents (conversation-scoped RAG).
+   * When provided, ONLY chunks belonging to these `knowledge_docs.id` are considered.
+   */
+  documentIds?: string[];
 };
 
 type HybridOptions = {
@@ -35,6 +89,10 @@ type HybridOptions = {
   organizationId?: string | null;
   alpha?: number;
   enableReranking?: boolean;
+  /**
+   * Restrict hybrid search to specific documents (conversation-scoped RAG).
+   */
+  documentIds?: string[];
 };
 
 type ScreenContext = {
@@ -164,6 +222,8 @@ const RagService = {
   ): Promise<string> => {
     await initDeps();
     const { organizationId, screenContext } = filterOptions;
+    const cols = await ensureKnowledgeDocsColumns();
+    const hasOrg = cols.has('organization_id');
 
     let expandedQuery = query;
     if (screenContext) {
@@ -184,7 +244,7 @@ const RagService = {
         `;
     const params: unknown[] = [];
 
-    if (organizationId) {
+    if (organizationId && hasOrg) {
       sql += ' AND d.organization_id = ?';
       params.push(organizationId);
     }
@@ -246,6 +306,8 @@ const RagService = {
     organizationId: string | null = null
   ): Promise<string> => {
     await initDeps();
+    const cols = await ensureKnowledgeDocsColumns();
+    const hasOrg = cols.has('organization_id');
     if (!query) return '';
     const keywords = query
       .split(' ')
@@ -263,7 +325,7 @@ const RagService = {
             WHERE (${sqlParts})
         `;
 
-    if (organizationId) {
+    if (organizationId && hasOrg) {
       sql += ' AND d.organization_id = ?';
       params.push(organizationId);
     }
@@ -309,9 +371,26 @@ const RagService = {
     }>
   > => {
     await initDeps();
-    const { limit = 5, organizationId, minSimilarity = 0.5 } = options;
+    const { limit = 5, organizationId, minSimilarity = 0.5, documentIds } = options;
 
     try {
+      // Conversation-scoped RAG: if documentIds are provided, bypass embeddingService.search()
+      // (which may not support doc-level filters) and use the hybrid SQL path with doc filters.
+      if (Array.isArray(documentIds) && documentIds.length > 0) {
+        const results = await RagService.hybridSearch(query, {
+          limit,
+          organizationId: organizationId || null,
+          enableReranking: true,
+          documentIds,
+        });
+        return results.map((r) => ({
+          content: r.content || '',
+          source: r.filename || 'Knowledge Base',
+          similarity: r.hybridScore || 0,
+          documentId: (r as any)?.doc_id || (r as any)?.documentId || undefined,
+        }));
+      }
+
       const results = await deps.embeddingService.search(query, {
         limit,
         organizationId: organizationId || undefined,
@@ -419,18 +498,35 @@ const RagService = {
   bm25Search: async (
     query: string,
     limit = 10,
-    organizationId: string | null = null
+    organizationId: string | null = null,
+    documentIds?: string[]
   ): Promise<RerankableChunk[]> => {
     await initDeps();
+    const cols = await ensureKnowledgeDocsColumns();
+    const hasCategory = cols.has('category');
+    const hasVersion = cols.has('version');
+    const hasOrg = cols.has('organization_id');
     let sql = `
-            SELECT c.id, c.content, d.filename, d.id as doc_id
+            SELECT
+              c.id,
+              c.content,
+              d.filename,
+              d.id as doc_id
+              ${hasCategory ? ', d.category as doc_category' : ''}
+              ${hasVersion ? ', d.version as doc_version' : ''}
             FROM knowledge_chunks c
             JOIN knowledge_docs d ON c.doc_id = d.id
             WHERE 1=1
         `;
     const params: unknown[] = [];
 
-    if (organizationId) {
+    // When searching by specific documentIds (e.g. conversation-scoped attachments),
+    // skip the organization_id filter — the caller already knows which docs to search.
+    if (Array.isArray(documentIds) && documentIds.length > 0) {
+      const placeholders = documentIds.map(() => '?').join(',');
+      sql += ` AND d.id IN (${placeholders})`;
+      params.push(...documentIds);
+    } else if (organizationId && hasOrg) {
       sql += ' AND d.organization_id = ?';
       params.push(organizationId);
     }
@@ -481,6 +577,7 @@ const RagService = {
       organizationId = null,
       alpha = HYBRID_CONFIG.alpha,
       enableReranking = HYBRID_CONFIG.rerankerEnabled,
+      documentIds,
     } = options;
 
     aiLogger.info(
@@ -490,8 +587,8 @@ const RagService = {
 
     const candidateLimit = limit * 3;
     const [bm25Results, vectorResults] = await Promise.all([
-      RagService.bm25Search(query, candidateLimit, organizationId),
-      RagService._vectorSearch(query, candidateLimit, organizationId),
+      RagService.bm25Search(query, candidateLimit, organizationId, documentIds),
+      RagService._vectorSearch(query, candidateLimit, organizationId, documentIds),
     ]);
 
     aiLogger.info(
@@ -578,21 +675,39 @@ const RagService = {
   _vectorSearch: async (
     query: string,
     limit: number,
-    organizationId: string | null = null
+    organizationId: string | null = null,
+    documentIds?: string[]
   ): Promise<Array<RerankableChunk & { vectorScore: number }>> => {
     await initDeps();
+    const cols = await ensureKnowledgeDocsColumns();
+    const hasCategory = cols.has('category');
+    const hasVersion = cols.has('version');
+    const hasOrg = cols.has('organization_id');
     const queryEmbedding = await RagService.generateEmbedding(query);
     if (!queryEmbedding) return [];
 
     let sql = `
-            SELECT c.id, c.content, d.filename, c.embedding
+            SELECT
+              c.id,
+              c.content,
+              d.filename,
+              d.id as doc_id,
+              c.embedding
+              ${hasCategory ? ', d.category as doc_category' : ''}
+              ${hasVersion ? ', d.version as doc_version' : ''}
             FROM knowledge_chunks c
             JOIN knowledge_docs d ON c.doc_id = d.id
             WHERE c.embedding IS NOT NULL
         `;
     const params: unknown[] = [];
 
-    if (organizationId) {
+    // When searching by specific documentIds (e.g. conversation-scoped attachments),
+    // skip the organization_id filter — the caller already knows which docs to search.
+    if (Array.isArray(documentIds) && documentIds.length > 0) {
+      const placeholders = documentIds.map(() => '?').join(',');
+      sql += ` AND d.id IN (${placeholders})`;
+      params.push(...documentIds);
+    } else if (organizationId && hasOrg) {
       sql += ' AND d.organization_id = ?';
       params.push(organizationId);
     }
@@ -644,7 +759,12 @@ const RagService = {
 
   getContextHybrid: async (
     query: string,
-    options: { limit?: number; organizationId?: string; screenContext?: ScreenContext } = {}
+    options: {
+      limit?: number;
+      organizationId?: string;
+      screenContext?: ScreenContext;
+      documentIds?: string[];
+    } = {}
   ): Promise<{
     context: string;
     sources: Array<{
@@ -655,7 +775,7 @@ const RagService = {
     }>;
     metrics: Record<string, unknown>;
   }> => {
-    const { limit = 5, organizationId, screenContext } = options;
+    const { limit = 5, organizationId, screenContext, documentIds } = options;
     let expandedQuery = query;
 
     if (screenContext) {
@@ -667,6 +787,7 @@ const RagService = {
       limit,
       organizationId,
       enableReranking: true,
+      documentIds,
     });
 
     const context = results

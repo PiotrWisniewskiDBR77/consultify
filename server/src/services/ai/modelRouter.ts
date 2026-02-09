@@ -6,6 +6,7 @@ import * as DbPromise from '../../utils/DbPromise.js';
 import { appCache } from '../redis/CacheService.js';
 import type { LLMConfigService } from './llmConfigService.js';
 import { aiLogger } from './logger.js';
+import { modelMeetsRequirements, type ModelRequirements } from './modelCapabilities.js';
 
 export const TIER_HIERARCHY = ['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'] as const;
 export type Tier = (typeof TIER_HIERARCHY)[number] | 'VISION';
@@ -14,6 +15,7 @@ export const CAPABILITY_TIERS: Record<string, Tier> = {
   chat: 'BUDGET',
   chat_simple: 'BUDGET',
   magic_wand: 'BUDGET',
+  chat_confirm: 'BUDGET',
   chat_complex: 'STANDARD',
   report_section: 'STANDARD',
   analysis: 'STANDARD',
@@ -43,10 +45,12 @@ export const MODEL_PROVIDER_MAP: Record<string, string> = {
   'claude-3-sonnet': 'anthropic',
   'claude-3-haiku': 'anthropic',
   'claude-3-haiku-20240307': 'anthropic',
+  'gemini-2.5-pro': 'google',
+  'gemini-2.5-flash': 'google',
   'gemini-2.0-flash': 'google',
-  'gemini-1.5-flash': 'google',
-  'gemini-1.5-pro': 'google',
-  'gemini-pro': 'google',
+  'gemini-1.5-flash': 'google', // deprecated alias
+  'gemini-1.5-pro': 'google', // deprecated alias
+  'gemini-pro': 'google', // deprecated alias
   'deepseek-chat': 'deepseek',
   'deepseek-coder': 'deepseek',
   'qwen-max': 'qwen',
@@ -70,24 +74,12 @@ export const TIER_DEFAULTS: Record<string, string> = {
 };
 
 export const TIER_FALLBACK_CHAINS: Record<string, string[]> = {
-  BUDGET: ['gpt-4o-mini', 'deepseek-chat', 'gemini-1.5-flash', 'qwen-turbo', 'glm-4-flash'],
-  STANDARD: [
-    'gpt-4o',
-    'gemini-1.5-pro',
-    'claude-3-5-sonnet',
-    'command-r-plus',
-    'qwen-max',
-    'glm-4-plus',
-  ],
-  PREMIUM: [
-    'gpt-4o',
-    'claude-3-opus',
-    'gemini-1.5-pro',
-    'meta/llama-3.1-405b-instruct',
-    'glm-4-plus',
-  ],
-  REASONING: ['o1-preview', 'gpt-4o', 'deepseek-chat', 'claude-3-opus'],
-  VISION: ['gpt-4o', 'gemini-1.5-pro', 'claude-3-5-sonnet', 'qwen-vl-max'],
+  // Active providers: OpenAI + Gemini + Anthropic (Mistral not configured)
+  BUDGET: ['gpt-4o-mini', 'gemini-2.0-flash', 'claude-3-haiku'],
+  STANDARD: ['gpt-4o', 'gemini-2.5-flash', 'claude-3-sonnet'],
+  PREMIUM: ['gpt-4o', 'gemini-2.5-pro', 'claude-3-5-sonnet'],
+  REASONING: ['o1-preview', 'gpt-4o', 'gemini-2.5-pro', 'claude-3-5-sonnet'],
+  VISION: ['gpt-4o', 'gemini-2.5-flash', 'claude-3-5-sonnet'],
 };
 
 export const TIER_FALLBACKS: Record<string, string> = {
@@ -95,7 +87,7 @@ export const TIER_FALLBACKS: Record<string, string> = {
   STANDARD: 'gpt-4o-mini',
   PREMIUM: 'gpt-4o',
   REASONING: 'gpt-4o',
-  VISION: 'gemini-1.5-pro',
+  VISION: 'gemini-2.5-flash',
 };
 
 type ProviderRow = {
@@ -146,6 +138,7 @@ type SelectParams = {
   tier?: string;
   organizationId?: string;
   options?: { tier?: string };
+  requirements?: ModelRequirements;
 };
 
 let _llmConfigService: LLMConfigService | null = null;
@@ -188,7 +181,7 @@ export class ModelRouter {
   }
 
   async select(params: SelectParams): Promise<ProviderConfig> {
-    const { capability, organizationId, options = {} } = params;
+    const { capability, organizationId, options = {}, requirements } = params;
     const tier = (options.tier ||
       params.tier ||
       CAPABILITY_TIERS[capability || ''] ||
@@ -201,8 +194,14 @@ export class ModelRouter {
 
     const override = await this.getOrgOverride(organizationId, capability);
     if (override) {
-      aiLogger.info('ModelRouter', `Using org override for ${capability}: ${override.model_id}`);
-      return this.getProviderConfig(override.model_id, (override.tier || tier) as Tier);
+      if (modelMeetsRequirements(override.model_id, requirements)) {
+        aiLogger.info('ModelRouter', `Using org override for ${capability}: ${override.model_id}`);
+        return this.getProviderConfig(override.model_id, (override.tier || tier) as Tier);
+      }
+      aiLogger.warn(
+        'ModelRouter',
+        `Org override model does not meet requirements (${capability}): ${override.model_id}`
+      );
     }
 
     // If an env var is explicitly set to empty string, treat that provider as disabled.
@@ -211,9 +210,14 @@ export class ModelRouter {
       process.env.OPENAI_API_KEY !== undefined && String(process.env.OPENAI_API_KEY).trim() === '';
 
     const availableModelsRaw = await this.getModelsForTier(tier, organizationId);
-    const availableModels = openaiDisabled
+    const availableModelsFilteredByProvider = openaiDisabled
       ? availableModelsRaw.filter((m) => String(m.provider || '').toLowerCase() !== 'openai')
       : availableModelsRaw;
+    const availableModels = requirements
+      ? availableModelsFilteredByProvider.filter((m) =>
+          modelMeetsRequirements(String((m as any).model_id || m.id || ''), requirements)
+        )
+      : availableModelsFilteredByProvider;
 
     if (availableModels.length > 0) {
       const selectedModel = await this.selectWithRoundRobin(tier, organizationId, availableModels);
@@ -243,7 +247,11 @@ export class ModelRouter {
           if (
             providerConfig &&
             providerConfig.isConfigured &&
-            providerConfig.healthStatus !== 'unhealthy'
+            providerConfig.healthStatus !== 'unhealthy' &&
+            modelMeetsRequirements(
+              String(providerConfig.model_id || providerConfig.id || ''),
+              requirements
+            )
           ) {
             aiLogger.info('ModelRouter', `Selected ${providerId} from config service for ${tier}`);
             return {
@@ -266,7 +274,11 @@ export class ModelRouter {
     if (
       defaultProvider &&
       defaultProvider.api_key &&
-      !(openaiDisabled && String(defaultProvider.provider || '').toLowerCase() === 'openai')
+      !(openaiDisabled && String(defaultProvider.provider || '').toLowerCase() === 'openai') &&
+      modelMeetsRequirements(
+        String(defaultProvider.model_id || defaultProvider.id || ''),
+        requirements
+      )
     ) {
       aiLogger.info(
         'ModelRouter',
@@ -293,19 +305,27 @@ export class ModelRouter {
     ).trim();
 
     const geminiDefaultByTier: Record<string, string> = {
-      BUDGET: 'gemini-1.5-flash',
-      STANDARD: 'gemini-1.5-pro',
-      PREMIUM: 'gemini-1.5-pro',
-      REASONING: 'gemini-1.5-pro',
-      VISION: 'gemini-1.5-pro',
+      BUDGET: 'gemini-2.0-flash',
+      STANDARD: 'gemini-2.5-flash',
+      PREMIUM: 'gemini-2.5-pro',
+      REASONING: 'gemini-2.5-pro',
+      VISION: 'gemini-2.5-flash',
     };
 
-    const model =
+    const staticCandidates =
       !hasOpenAI && hasGemini
-        ? geminiDefaultByTier[tier] || 'gemini-1.5-flash'
-        : TIER_DEFAULTS[tier];
-    aiLogger.warn('ModelRouter', `Using static fallback: ${model} for tier ${tier}`);
-    return this.getProviderConfig(model, tier);
+        ? [geminiDefaultByTier[tier] || 'gemini-2.0-flash', ...(TIER_FALLBACK_CHAINS[tier] || [])]
+        : [TIER_DEFAULTS[tier], ...(TIER_FALLBACK_CHAINS[tier] || [])];
+    const staticPick = staticCandidates.find((m) =>
+      modelMeetsRequirements(String(m || ''), requirements)
+    );
+    if (!staticPick) {
+      throw new Error(
+        `No model satisfies requirements for tier ${tier} (capability=${capability || 'n/a'})`
+      );
+    }
+    aiLogger.warn('ModelRouter', `Using static fallback: ${staticPick} for tier ${tier}`);
+    return this.getProviderConfig(staticPick, tier);
   }
 
   async getModelsForTier(tier: Tier, organizationId?: string): Promise<ProviderRow[]> {
