@@ -251,7 +251,8 @@ function adaptQuery(sql: string): string {
   
   // Step 2: Add ON CONFLICT clause AFTER VALUES for INSERT statements that had INSERT OR IGNORE
   // Only process if we actually replaced INSERT OR IGNORE (don't modify regular INSERT statements)
-  if (hadInsertOrIgnore && !adapted.includes('ON CONFLICT')) {
+  // CRITICAL: Double-check that we're not processing a regular INSERT INTO statement
+  if (hadInsertOrIgnore && !adapted.includes('ON CONFLICT') && adapted.includes('VALUES')) {
     // Handle multi-line INSERT statements where column list and VALUES might span multiple lines
     // Pattern: INSERT INTO table (columns...)\nVALUES (values...)
     // We need to find VALUES and add ON CONFLICT after the VALUES clause, not before
@@ -287,10 +288,14 @@ function adaptQuery(sql: string): string {
         }
         
         if (foundEnd) {
+          // CRITICAL: Verify VALUES comes before any existing ON CONFLICT
           // Insert ON CONFLICT after the VALUES clause
           const beforeValues = adapted.substring(0, valuesEndPos);
           const afterValues = adapted.substring(valuesEndPos);
-          adapted = `${beforeValues} ON CONFLICT (${firstColumn}) DO NOTHING${afterValues}`;
+          // Double-check: VALUES should be in beforeValues, not afterValues
+          if (beforeValues.includes('VALUES') && !beforeValues.includes('ON CONFLICT')) {
+            adapted = `${beforeValues} ON CONFLICT (${firstColumn}) DO NOTHING${afterValues}`;
+          }
         } else {
           // Fallback: Use regex if we can't find balanced parentheses
           adapted = adapted.replace(
