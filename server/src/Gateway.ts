@@ -1,5 +1,4 @@
 import type { Express } from 'express';
-import { Router } from 'express';
 
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import accessControlRoutes from './routes/access-control.routes.js';
@@ -436,14 +435,14 @@ export class ApiGateway {
       app.use('/api/economics', economicsRoutes);
       // Alias for backward compatibility - digitization-analyses -> economics/analyses
       // Map /api/digitization-analyses to /api/economics/analyses
-      const digitizationAliasRouter = Router();
-      digitizationAliasRouter.all('*', (req, res, next) => {
+      app.use('/api/digitization-analyses', (req, res, next) => {
         // Rewrite URL: /api/digitization-analyses -> /api/economics/analyses
         const originalPath = req.path;
-        req.url = '/analyses' + (originalPath === '/' ? '' : originalPath) + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '');
-        economicsRoutes.handle(req, res, next);
+        const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+        req.url = '/analyses' + (originalPath === '/' ? '' : originalPath) + queryString;
+        // Call economicsRoutes as middleware (Express routers are callable)
+        economicsRoutes(req, res, next);
       });
-      app.use('/api/digitization-analyses', digitizationAliasRouter);
       app.use('/api/locations', locationsRoutes);
       app.use('/api/notification-settings', notificationSettingsRoutes);
       app.use('/api/metrics', metricsRoutes);
