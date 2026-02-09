@@ -243,29 +243,57 @@ function adaptQuery(sql: string): string {
 
   // Replace INSERT OR IGNORE with INSERT ... ON CONFLICT DO NOTHING
   // Handle both single-line and multi-line INSERT statements
+  // Track if we replaced INSERT OR IGNORE so we only add ON CONFLICT for those
+  const hadInsertOrIgnore = /INSERT\s+OR\s+IGNORE/gi.test(adapted);
+  
   // Step 1: Replace INSERT OR IGNORE with INSERT
   adapted = adapted.replace(/INSERT\s+OR\s+IGNORE/gi, 'INSERT');
   
-  // Step 2: Add ON CONFLICT clause before VALUES for INSERT statements that don't already have it
-  // Use multiline matching (s flag) to handle column lists spanning multiple lines
-  adapted = adapted.replace(
-    /(INSERT\s+INTO\s+\w+\s*\([^)]+\))(\s+)(VALUES)/gis,
-    (match, insertPart, whitespace, valuesPart) => {
-      // Skip if already has ON CONFLICT
-      if (insertPart.includes('ON CONFLICT') || match.includes('ON CONFLICT')) {
+  // Step 2: Add ON CONFLICT clause AFTER VALUES for INSERT statements that had INSERT OR IGNORE
+  // Only process if we actually replaced INSERT OR IGNORE (don't modify regular INSERT statements)
+  if (hadInsertOrIgnore && !adapted.includes('ON CONFLICT')) {
+    // Handle multi-line INSERT statements where VALUES might be on a different line
+    // Pattern: INSERT INTO table (columns)\nVALUES (values)
+    // This must come first to handle the multi-line case
+    adapted = adapted.replace(
+      /(INSERT\s+INTO\s+\w+\s*\([^)]+\))\s+(VALUES\s*\([^)]+\))/gis,
+      (match, insertPart, valuesPart) => {
+        // Skip if already has ON CONFLICT
+        if (match.includes('ON CONFLICT')) {
+          return match;
+        }
+        // Extract first column from column list
+        const columnsMatch = insertPart.match(/\(([^)]+)\)/s);
+        if (columnsMatch) {
+          const columns = columnsMatch[1];
+          const firstColumn = columns.split(',')[0].trim().split(/\s+/)[0];
+          // Add ON CONFLICT after VALUES clause
+          return `${insertPart} ${valuesPart} ON CONFLICT (${firstColumn}) DO NOTHING`;
+        }
         return match;
       }
-      // Extract column list (handle multiline with [\s\S] or s flag)
-      const columnsMatch = insertPart.match(/\(([^)]+)\)/s);
-      if (columnsMatch) {
-        const columns = columnsMatch[1];
-        // Get first column name (handle newlines, whitespace, and potential aliases)
-        const firstColumn = columns.split(',')[0].trim().split(/\s+/)[0];
-        return `${insertPart} ON CONFLICT (${firstColumn}) DO NOTHING${whitespace}${valuesPart}`;
+    );
+    
+    // Handle single-line INSERT statements: INSERT INTO table (columns) VALUES (values)
+    adapted = adapted.replace(
+      /(INSERT\s+INTO\s+\w+\s*\([^)]+\)\s+VALUES\s*\([^)]+\))/gis,
+      (match) => {
+        // Skip if already has ON CONFLICT
+        if (match.includes('ON CONFLICT')) {
+          return match;
+        }
+        // Extract first column from column list
+        const columnsMatch = match.match(/INSERT\s+INTO\s+\w+\s*\(([^)]+)\)/i);
+        if (columnsMatch) {
+          const columns = columnsMatch[1];
+          const firstColumn = columns.split(',')[0].trim().split(/\s+/)[0];
+          // Add ON CONFLICT after VALUES clause
+          return `${match} ON CONFLICT (${firstColumn}) DO NOTHING`;
+        }
+        return match;
       }
-      return match;
-    }
-  );
+    );
+  }
 
   // Replace json_extract(json_column, '$.path') with PostgreSQL JSON operators
   // json_extract returns JSON, so we use -> for JSON or ->> for text
