@@ -7,14 +7,18 @@
 
 const AiRoleGuard = {
   getRoleConfig: async (projectId: string) => {
+    const role = 'ADVISOR';
     return {
-      role: 'ADVISOR',
+      role,
+      activeRole: role,
       capabilities: {
         canAnalyze: true,
         canSuggest: true,
         canCreateDrafts: true,
         canExecuteActions: false,
       },
+      roleDescription: 'Provides expert analysis and recommendations but does not take action.',
+      roleHierarchy: ['ADVISOR', 'MANAGER', 'OPERATOR'],
     };
   },
 

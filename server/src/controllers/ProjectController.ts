@@ -505,8 +505,7 @@ export class ProjectController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { id } = req.params;
 
-      // const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
-      const AIRoleGuard = {} as any; // Stubbed missing service
+      const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
       const roleConfig = await AIRoleGuard.getRoleConfig(id);
 
       res.json({
@@ -550,8 +549,7 @@ export class ProjectController {
         return;
       }
 
-      // const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
-      const AIRoleGuard = {} as any; // Stubbed missing service
+      const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
 
       const AIAuditLogger = await import('../services/aiAuditLogger.js').then(
         (m) => m.default || m
@@ -560,8 +558,9 @@ export class ProjectController {
       // Get current role for audit
       const currentRole = await AIRoleGuard.getProjectRole(projectId);
 
-      // Update the role
-      await AIRoleGuard.setProjectRole(projectId, aiRole, userId);
+      // Update the role - note: aiRoleGuard.ts stub doesn't have setProjectRole, so we'll handle it differently
+      // For now, just log the change since the stub doesn't persist changes
+      await AIRoleGuard.updateProjectRole(projectId, aiRole);
 
       // Audit the change
       await AIAuditLogger.logInteraction({
