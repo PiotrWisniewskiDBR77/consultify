@@ -252,47 +252,75 @@ function adaptQuery(sql: string): string {
   // Step 2: Add ON CONFLICT clause AFTER VALUES for INSERT statements that had INSERT OR IGNORE
   // Only process if we actually replaced INSERT OR IGNORE (don't modify regular INSERT statements)
   if (hadInsertOrIgnore && !adapted.includes('ON CONFLICT')) {
-    // Handle multi-line INSERT statements where VALUES might be on a different line
-    // Pattern: INSERT INTO table (columns)\nVALUES (values)
-    // This must come first to handle the multi-line case
-    adapted = adapted.replace(
-      /(INSERT\s+INTO\s+\w+\s*\([^)]+\))\s+(VALUES\s*\([^)]+\))/gis,
-      (match, insertPart, valuesPart) => {
-        // Skip if already has ON CONFLICT
-        if (match.includes('ON CONFLICT')) {
-          return match;
-        }
-        // Extract first column from column list
-        const columnsMatch = insertPart.match(/\(([^)]+)\)/s);
-        if (columnsMatch) {
-          const columns = columnsMatch[1];
-          const firstColumn = columns.split(',')[0].trim().split(/\s+/)[0];
-          // Add ON CONFLICT after VALUES clause
-          return `${insertPart} ${valuesPart} ON CONFLICT (${firstColumn}) DO NOTHING`;
-        }
-        return match;
-      }
-    );
+    // Handle multi-line INSERT statements where column list and VALUES might span multiple lines
+    // Pattern: INSERT INTO table (columns...)\nVALUES (values...)
+    // We need to find VALUES and add ON CONFLICT after the VALUES clause, not before
     
-    // Handle single-line INSERT statements: INSERT INTO table (columns) VALUES (values)
-    adapted = adapted.replace(
-      /(INSERT\s+INTO\s+\w+\s*\([^)]+\)\s+VALUES\s*\([^)]+\))/gis,
-      (match) => {
-        // Skip if already has ON CONFLICT
-        if (match.includes('ON CONFLICT')) {
-          return match;
+    // Strategy: Find the VALUES keyword and insert ON CONFLICT after the VALUES clause
+    // Match: INSERT INTO table (columns) ... VALUES (values)
+    // Use non-greedy matching with [\s\S] to handle newlines and match balanced parentheses
+    
+    // Extract the column list first to get the first column for conflict target
+    const insertMatch = adapted.match(/INSERT\s+INTO\s+\w+\s*\(([\s\S]+?)\)/i);
+    if (insertMatch) {
+      const columns = insertMatch[1];
+      const firstColumn = columns.split(',')[0].trim().split(/\s+/)[0];
+      
+      // Find the position of VALUES in the INSERT statement
+      const valuesMatch = adapted.match(/\bVALUES\s*\(/i);
+      if (valuesMatch && valuesMatch.index !== undefined) {
+        // Find the matching closing parenthesis for VALUES clause
+        let parenCount = 0;
+        let valuesEndPos = valuesMatch.index + valuesMatch[0].length;
+        let foundEnd = false;
+        
+        for (let i = valuesEndPos; i < adapted.length; i++) {
+          if (adapted[i] === '(') parenCount++;
+          if (adapted[i] === ')') {
+            parenCount--;
+            if (parenCount === 0) {
+              valuesEndPos = i + 1;
+              foundEnd = true;
+              break;
+            }
+          }
         }
-        // Extract first column from column list
-        const columnsMatch = match.match(/INSERT\s+INTO\s+\w+\s*\(([^)]+)\)/i);
-        if (columnsMatch) {
-          const columns = columnsMatch[1];
-          const firstColumn = columns.split(',')[0].trim().split(/\s+/)[0];
-          // Add ON CONFLICT after VALUES clause
-          return `${match} ON CONFLICT (${firstColumn}) DO NOTHING`;
+        
+        if (foundEnd) {
+          // Insert ON CONFLICT after the VALUES clause
+          const beforeValues = adapted.substring(0, valuesEndPos);
+          const afterValues = adapted.substring(valuesEndPos);
+          adapted = `${beforeValues} ON CONFLICT (${firstColumn}) DO NOTHING${afterValues}`;
+        } else {
+          // Fallback: Use regex if we can't find balanced parentheses
+          adapted = adapted.replace(
+            /(VALUES\s*\([\s\S]+?\))/i,
+            (match) => `${match} ON CONFLICT (${firstColumn}) DO NOTHING`
+          );
         }
-        return match;
+      } else {
+        // Fallback: Use regex for simpler cases
+        // Match INSERT INTO ... (columns) ... VALUES (values) with flexible whitespace
+        adapted = adapted.replace(
+          /(INSERT\s+INTO\s+\w+\s*\([\s\S]+?\))\s+(VALUES\s*\([\s\S]+?\))/gi,
+          (match, insertPart, valuesPart) => {
+            // Skip if already has ON CONFLICT
+            if (match.includes('ON CONFLICT')) {
+              return match;
+            }
+            // Extract first column from column list
+            const columnsMatch = insertPart.match(/\(([\s\S]+?)\)/);
+            if (columnsMatch) {
+              const columns = columnsMatch[1];
+              const firstColumn = columns.split(',')[0].trim().split(/\s+/)[0];
+              // Add ON CONFLICT after VALUES clause
+              return `${insertPart} ${valuesPart} ON CONFLICT (${firstColumn}) DO NOTHING`;
+            }
+            return match;
+          }
+        );
       }
-    );
+    }
   }
 
   // Replace json_extract(json_column, '$.path') with PostgreSQL JSON operators
