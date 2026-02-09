@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ROUTES } from '../../routes/routeConfig';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 type AccessBlockedCTA = {
@@ -24,7 +25,7 @@ function getDefaultCta(code?: string): AccessBlockedCTA | null {
     case 'ORG_INACTIVE':
       return { label: 'Log in again', href: '/auth?mode=login' };
     case 'TRIAL_PROFILE_INCOMPLETE':
-      return { label: 'Complete setup', href: '/org-setup' };
+      return { label: 'Complete setup', href: ROUTES.ORG_SETUP };
     case 'DEMO_TIME_EXPIRED':
     case 'DEMO_AI_SESSION_LIMIT_REACHED':
     case 'DEMO_READ_ONLY':
