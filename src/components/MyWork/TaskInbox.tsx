@@ -19,13 +19,17 @@ import {
   Trash2,
   User,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Virtuoso } from 'react-virtuoso';
 
 import { Api } from '../../services/api';
 import { PMOTaskLabel, usePMOStore } from '../../store/usePMOStore';
 import { Task } from '../../types';
+import { CardViewStyle, CardViewSwitcher } from '../shared/CardViewSwitcher';
+import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
+import type { GenericListItem, ListColumn, ListSection } from '../shared/ViewLayouts';
+import { ClickUpListView, NotionListView } from '../shared/ViewLayouts';
 
 // PMO Priority Categories
 type PMOCategory =
@@ -49,6 +53,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
   const [openFilter, setOpenFilter] = useState<'quick' | 'view' | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'pmo'>('pmo'); // Default to PMO view
+  const [cardStyle, setCardStyle] = useState<CardViewStyle>('current');
   const [expandedCategories, setExpandedCategories] = useState<Set<PMOCategory>>(
     new Set(['blocking_phase', 'blocking_initiative', 'overdue'])
   );
@@ -291,6 +296,119 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
   };
 
   // Render a single task card
+  /* ─── A7.1: Notion / ClickUp view support ─── */
+  const taskToGenericItem = useCallback(
+    (task: Task): GenericListItem => {
+      const statusLower = task.status?.toLowerCase() || '';
+      const priorityLower = task.priority?.toLowerCase() || '';
+      const statusVariant: GenericListItem['statusVariant'] = [
+        'done',
+        'completed',
+        'validated',
+      ].includes(statusLower)
+        ? 'success'
+        : ['in_progress', 'in progress'].includes(statusLower)
+          ? 'info'
+          : statusLower === 'blocked'
+            ? 'danger'
+            : 'warning';
+      const priorityVariant: GenericListItem['priorityVariant'] = ['urgent', 'critical'].includes(
+        priorityLower
+      )
+        ? 'critical'
+        : priorityLower === 'high'
+          ? 'high'
+          : priorityLower === 'low'
+            ? 'low'
+            : 'medium';
+      return {
+        id: task.id,
+        title: task.title || 'Untitled task',
+        subtitle: task.description || undefined,
+        status: task.status || 'todo',
+        statusVariant,
+        priority: task.priority || 'medium',
+        priorityVariant,
+        dueDate: task.dueDate
+          ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          : undefined,
+        isOverdue: task.dueDate
+          ? new Date(task.dueDate) < new Date() &&
+            !['done', 'completed', 'validated'].includes(statusLower)
+          : false,
+        assignee: task.assignee
+          ? `${task.assignee.firstName || ''} ${task.assignee.lastName || ''}`.trim()
+          : undefined,
+        secondaryLabel: (task as any).initiativeName || (task as any).projectName || undefined,
+        isHighlighted: pinnedTaskIds.has(task.id),
+        _raw: task,
+      };
+    },
+    [pinnedTaskIds]
+  );
+
+  const taskInboxSections: ListSection[] = useMemo(() => {
+    const pinnedItems: GenericListItem[] = filteredTasks
+      .filter((t) => pinnedTaskIds.has(t.id))
+      .map((t) => taskToGenericItem(t));
+    const overdueIds = new Set<string>();
+    const overdueItems: GenericListItem[] = filteredTasks
+      .filter((t) => {
+        if (pinnedTaskIds.has(t.id)) return false;
+        const isOverdue =
+          t.dueDate &&
+          new Date(t.dueDate) < new Date() &&
+          !['done', 'completed', 'validated'].includes(t.status?.toLowerCase() || '');
+        if (isOverdue) overdueIds.add(t.id);
+        return isOverdue;
+      })
+      .map((t) => taskToGenericItem(t));
+    const restItems: GenericListItem[] = filteredTasks
+      .filter((t) => !pinnedTaskIds.has(t.id) && !overdueIds.has(t.id))
+      .map((t) => taskToGenericItem(t));
+    const sections: ListSection[] = [];
+    if (pinnedItems.length > 0)
+      sections.push({
+        id: 'pinned',
+        label: 'Pinned',
+        items: pinnedItems,
+        accentColor: 'text-amber-500',
+      });
+    if (overdueItems.length > 0)
+      sections.push({
+        id: 'overdue',
+        label: 'Overdue',
+        items: overdueItems,
+        accentColor: 'text-red-500',
+      });
+    if (restItems.length > 0)
+      sections.push({
+        id: 'tasks',
+        label: 'All Tasks',
+        items: restItems,
+        accentColor: 'text-blue-500',
+      });
+    return sections;
+  }, [filteredTasks, pinnedTaskIds, taskToGenericItem]);
+
+  const TASK_INBOX_COLUMNS: ListColumn[] = useMemo(
+    () => [
+      { key: 'title', label: 'Task', width: 'flex-1 min-w-0' },
+      { key: 'status', label: 'Status', width: 'w-28' },
+      { key: 'priority', label: 'Priority', width: 'w-24' },
+      { key: 'assignee', label: 'Assignee', width: 'w-32' },
+      { key: 'dueDate', label: 'Due', width: 'w-24' },
+    ],
+    []
+  );
+
+  const handleGenericItemClick = useCallback(
+    (item: GenericListItem) => {
+      onEditTask(item.id);
+    },
+    [onEditTask]
+  );
+
   const renderTaskCard = (task: Task) => {
     const isDone = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
     const warnings = getTaskWarnings(task);
@@ -349,14 +467,22 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                   </div>
                 )}
               </div>
-              {task.dueDate && (
-                <div
-                  className={`flex items-center gap-1 text-[10px] whitespace-nowrap ${new Date(task.dueDate) < new Date() && !isDone ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}
-                >
-                  <Calendar size={10} />
-                  {new Date(task.dueDate).toLocaleDateString()}
-                </div>
-              )}
+              <div
+                className={`flex items-center gap-1 text-[10px] whitespace-nowrap ${
+                  task.dueDate
+                    ? new Date(task.dueDate) < new Date() && !isDone
+                      ? 'text-red-500'
+                      : 'text-slate-400 dark:text-slate-500'
+                    : 'text-slate-300 dark:text-slate-600'
+                }`}
+              >
+                <Calendar size={10} />
+                {task.dueDate ? (
+                  new Date(task.dueDate).toLocaleDateString()
+                ) : (
+                  <span className="italic">No due date</span>
+                )}
+              </div>
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-2 line-clamp-1">
@@ -373,35 +499,51 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                 <span className="capitalize">{task.priority || 'Normal'}</span>
               </span>
               {/* Assignee */}
-              {task.assignee && (
-                <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
-                  <User size={10} />
-                  <span className="truncate max-w-[80px]">{task.assignee.lastName}</span>
-                </div>
-              )}
+              <div
+                className={`flex items-center gap-1 text-[10px] ${
+                  task.assignee
+                    ? 'text-slate-500 dark:text-slate-400'
+                    : 'text-slate-300 dark:text-slate-600'
+                }`}
+              >
+                <User size={10} />
+                <span className="truncate max-w-[80px]">
+                  {task.assignee
+                    ? task.assignee.lastName || task.assignee.firstName || 'Unassigned'
+                    : 'Unassigned'}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Hover Actions */}
-          <div className="shrink-0 flex flex-col justify-center items-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity pl-2">
-            <button
-              onClick={(e) => togglePinTask(task.id, e)}
-              className={`p-1.5 rounded transition-colors ${
-                pinnedTaskIds.has(task.id)
-                  ? 'text-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                  : 'text-slate-300 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10'
-              }`}
-              title={pinnedTaskIds.has(task.id) ? 'Unpin from top' : 'Pin to top'}
-            >
-              <Pin size={14} />
-            </button>
-            <button
-              onClick={(e) => handleDelete(task.id, e)}
-              className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-              title="Delete Task"
-            >
-              <Trash2 size={14} />
-            </button>
+          {/* Row Actions — "⋯" menu (A3.2: replaces overlapping inline buttons) */}
+          <div className="shrink-0 flex items-center pl-2" onClick={(e) => e.stopPropagation()}>
+            <RowActionsMenu
+              size="sm"
+              actions={
+                [
+                  {
+                    id: 'pin',
+                    label: pinnedTaskIds.has(task.id) ? 'Unpin' : 'Pin to top',
+                    icon: Pin,
+                    onClick: () => togglePinTask(task.id),
+                    variant: pinnedTaskIds.has(task.id) ? 'primary' : 'default',
+                  },
+                  {
+                    id: 'delete',
+                    label: 'Delete',
+                    icon: Trash2,
+                    onClick: () => {
+                      if (confirm('Are you sure you want to delete this task?')) {
+                        handleDelete(task.id, { stopPropagation: () => {} } as React.MouseEvent);
+                      }
+                    },
+                    variant: 'danger',
+                    divider: true,
+                  },
+                ] satisfies RowAction[]
+              }
+            />
           </div>
         </div>
       </motion.div>
@@ -500,6 +642,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
 
         {/* View Toggle */}
         <div className="flex items-center gap-2">
+          <CardViewSwitcher moduleId="tasks" value={cardStyle} onChange={setCardStyle} compact />
           <span className="text-slate-400 dark:text-slate-500 text-xs hidden sm:inline">View:</span>
           <div className="relative">
             <button
@@ -561,8 +704,31 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
           </div>
         )}
 
-        {/* Pinned Tasks Section (Always rendered normally as it's small) */}
-        {!loading && pinnedTasks.length > 0 && (
+        {/* A7.1: Notion view */}
+        {cardStyle === 'notion' && !loading && filteredTasks.length > 0 && (
+          <div className="h-full overflow-y-auto">
+            <NotionListView
+              sections={taskInboxSections}
+              onItemClick={handleGenericItemClick}
+              emptyMessage="No tasks"
+            />
+          </div>
+        )}
+
+        {/* A7.1: ClickUp view */}
+        {cardStyle === 'clickup' && !loading && filteredTasks.length > 0 && (
+          <div className="h-full overflow-y-auto">
+            <ClickUpListView
+              sections={taskInboxSections}
+              columns={TASK_INBOX_COLUMNS}
+              onItemClick={handleGenericItemClick}
+              emptyMessage="No tasks"
+            />
+          </div>
+        )}
+
+        {/* Pinned Tasks Section (Always rendered normally as it's small) — only in current view */}
+        {cardStyle === 'current' && !loading && pinnedTasks.length > 0 && (
           <div className="mb-4 pb-3 border-b border-dashed border-slate-200 dark:border-navy-700 flex-shrink-0">
             <div className="flex items-center gap-2 mb-2 px-1">
               <Pin size={12} className="text-purple-500" />
@@ -581,8 +747,8 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
           </div>
         )}
 
-        {/* PMO Priority View */}
-        {viewMode === 'pmo' && !loading && unpinnedTasks.length > 0 && (
+        {/* PMO Priority View — only in current card style */}
+        {cardStyle === 'current' && viewMode === 'pmo' && !loading && unpinnedTasks.length > 0 && (
           <div className="space-y-4 overflow-y-auto h-full custom-scrollbar pb-10">
             {/* PMO Category Sections */}
             {[
@@ -657,8 +823,8 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
           </div>
         )}
 
-        {/* List View - VIRTUALIZED */}
-        {viewMode === 'list' && !loading && unpinnedTasks.length > 0 && (
+        {/* List View - VIRTUALIZED — only in current card style */}
+        {cardStyle === 'current' && viewMode === 'list' && !loading && unpinnedTasks.length > 0 && (
           <Virtuoso
             style={{ height: '100%' }}
             data={unpinnedTasks}

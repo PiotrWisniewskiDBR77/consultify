@@ -569,7 +569,9 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
           </button>
           <button
             className="flex items-center gap-3 p-4 border border-slate-200 dark:border-navy-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-950 transition-colors"
-            onClick={() => toast('Import wizard coming soon', { icon: 'ℹ️' })}
+            onClick={() =>
+              toast('Import wizard is in beta — contact support to get started', { icon: 'ℹ️' })
+            }
           >
             <Upload size={24} className="text-emerald-600" />
             <div className="text-left">

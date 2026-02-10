@@ -49,6 +49,7 @@ export interface InterviewQuestion {
   category: InterviewCategory;
   questionText: string;
   answerText: string;
+  notes?: string; // E2.1: per-question notes field
   status: QuestionStatus;
   confidenceScore: number; // 1-5
   answeredBy?: string;
@@ -154,6 +155,9 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [newQuestionText, setNewQuestionText] = useState('');
   const [showNewQuestion, setShowNewQuestion] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState<string | null>(null);
@@ -173,7 +177,9 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
   const handleStartEdit = useCallback((question: InterviewQuestion) => {
     setEditingId(question.id);
     setEditValue(question.answerText || '');
+    setEditNotes(question.notes || '');
     setExpandedId(question.id);
+    setSaveError(null);
   }, []);
 
   // Save answer and move to next unanswered question
@@ -181,36 +187,77 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
     async (questionId: string) => {
       if (!editValue.trim()) return;
 
-      await onUpdateQuestion(questionId, {
-        answerText: editValue.trim(),
-        status: 'answered',
-      });
-      setEditingId(null);
-      setEditValue('');
+      setSavingId(questionId);
+      setSaveError(null);
+      try {
+        await onUpdateQuestion(questionId, {
+          answerText: editValue.trim(),
+          notes: editNotes.trim() || undefined,
+          status: 'answered',
+        });
+        setEditingId(null);
+        setEditValue('');
+        setEditNotes('');
 
-      // Find next unanswered question and expand it
-      const currentIndex = categoryQuestions.findIndex((q) => q.id === questionId);
-      const nextUnanswered = categoryQuestions
-        .slice(currentIndex + 1)
-        .find((q) => q.status !== 'answered');
-      if (nextUnanswered) {
-        setExpandedId(nextUnanswered.id);
+        // Find next unanswered question and expand it
+        const currentIndex = categoryQuestions.findIndex((q) => q.id === questionId);
+        const nextUnanswered = categoryQuestions
+          .slice(currentIndex + 1)
+          .find((q) => q.status !== 'answered');
+        if (nextUnanswered) {
+          setExpandedId(nextUnanswered.id);
+        }
+      } catch (error) {
+        console.error('[QuestionsList] Failed to save answer:', error);
+        setSaveError(
+          isPolish
+            ? 'Nie udało się zapisać. Spróbuj ponownie.'
+            : 'Failed to save. Please try again.'
+        );
+      } finally {
+        setSavingId(null);
       }
     },
-    [editValue, onUpdateQuestion, categoryQuestions]
+    [editValue, editNotes, onUpdateQuestion, categoryQuestions, isPolish]
+  );
+
+  // Save notes only (without changing status)
+  const handleSaveNotesOnly = useCallback(
+    async (questionId: string) => {
+      setSavingId(questionId);
+      setSaveError(null);
+      try {
+        await onUpdateQuestion(questionId, {
+          notes: editNotes.trim() || undefined,
+        });
+      } catch (error) {
+        console.error('[QuestionsList] Failed to save notes:', error);
+        setSaveError(isPolish ? 'Nie udało się zapisać notatki.' : 'Failed to save notes.');
+      } finally {
+        setSavingId(null);
+      }
+    },
+    [editNotes, onUpdateQuestion, isPolish]
   );
 
   // Cancel edit
   const handleCancelEdit = useCallback(() => {
     setEditingId(null);
     setEditValue('');
+    setEditNotes('');
+    setSaveError(null);
   }, []);
 
   // Update status
   const handleStatusChange = useCallback(
     async (questionId: string, status: QuestionStatus) => {
-      await onUpdateQuestion(questionId, { status });
-      setShowStatusMenu(null);
+      try {
+        await onUpdateQuestion(questionId, { status });
+      } catch (error) {
+        console.error('[QuestionsList] Failed to update status:', error);
+      } finally {
+        setShowStatusMenu(null);
+      }
     },
     [onUpdateQuestion]
   );
@@ -218,7 +265,11 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
   // Update confidence
   const handleConfidenceChange = useCallback(
     async (questionId: string, score: number) => {
-      await onUpdateQuestion(questionId, { confidenceScore: score });
+      try {
+        await onUpdateQuestion(questionId, { confidenceScore: score });
+      } catch (error) {
+        console.error('[QuestionsList] Failed to update confidence:', error);
+      }
     },
     [onUpdateQuestion]
   );
@@ -229,7 +280,11 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
       const newTags = currentTags.includes(tag)
         ? currentTags.filter((t) => t !== tag)
         : [...currentTags, tag];
-      await onUpdateQuestion(questionId, { tags: newTags });
+      try {
+        await onUpdateQuestion(questionId, { tags: newTags });
+      } catch (error) {
+        console.error('[QuestionsList] Failed to update tags:', error);
+      }
     },
     [onUpdateQuestion]
   );
@@ -272,19 +327,26 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
     (question: InterviewQuestion) => {
       if (readOnly) return;
       setChatQuestion(question);
+      const categoryLabel = category || 'General';
+      const existingAnswer = question.answerText
+        ? `\n\n${isPolish ? 'Dotychczasowa odpowiedź:' : 'Current answer:'} ${question.answerText}`
+        : '';
+      const existingNotes = question.notes
+        ? `\n${isPolish ? 'Notatki:' : 'Notes:'} ${question.notes}`
+        : '';
       setChatMessages([
         {
           role: 'ai',
           content:
             (isPolish
-              ? 'Opisz krótko kontekst i fakty. Ja pomogę ułożyć odpowiedź i potem możesz ją wstawić do pytania.'
-              : 'Describe the context and facts briefly. I will help draft the answer, and you can insert it into the question.') +
-            `\n\n${isPolish ? 'Pytanie:' : 'Question:'} ${question.questionText}`,
+              ? `Jestem asystentem AI dla sekcji "${categoryLabel}". Opisz krótko kontekst i fakty. Ja pomogę ułożyć odpowiedź i potem możesz ją wstawić do pytania.`
+              : `I'm the AI assistant for the "${categoryLabel}" section. Describe the context and facts briefly. I will help draft the answer, and you can insert it into the question.`) +
+            `\n\n${isPolish ? 'Pytanie:' : 'Question:'} ${question.questionText}${existingAnswer}${existingNotes}`,
         },
       ]);
       setChatInput('');
     },
-    [isPolish, readOnly]
+    [isPolish, readOnly, category]
   );
 
   const closeChat = useCallback(() => {
@@ -312,10 +374,14 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
 
       const systemInstruction = `
 You are a senior manufacturing transformation consultant helping complete an interview.
+Category/Section: ${category || 'General'}
+Question being discussed: ${chatQuestion.questionText}
 Rules:
 - Facts only. No recommendations or action plans.
 - Ask clarifying questions if needed.
 - Keep it concise and structured.
+- Help the user formulate a clear, evidence-based answer.
+- When the user provides enough context, suggest a draft answer they can insert.
 `;
 
       const aiResponse = await sendMessageToAI(history, userMsg, systemInstruction);
@@ -528,7 +594,7 @@ Rules:
                 )}
               </div>
 
-              {/* Right side: Confidence + Actions */}
+              {/* Right side: Confidence + Chat + Actions */}
               <div className="flex items-center gap-2 shrink-0">
                 {/* Confidence */}
                 <div className="hidden sm:flex items-center gap-1">
@@ -544,6 +610,20 @@ Rules:
                     />
                   ))}
                 </div>
+
+                {/* E2.4: Chat-assist button (visible in header for quick access) */}
+                {!readOnly && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openChatForQuestion(question);
+                    }}
+                    className="p-1.5 rounded hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors group"
+                    title={isPolish ? 'Czat AI do tego pytania' : 'AI Chat for this question'}
+                  >
+                    <Sparkles size={14} className="text-purple-400 group-hover:text-purple-500" />
+                  </button>
+                )}
 
                 {/* Tag Button */}
                 <div className="relative">
@@ -638,6 +718,7 @@ Rules:
 
                   {isEditing ? (
                     <div className="space-y-3">
+                      {/* Answer textarea */}
                       <textarea
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
@@ -646,6 +727,33 @@ Rules:
                         placeholder={isPolish ? 'Wpisz odpowiedź...' : 'Type your answer...'}
                         autoFocus
                       />
+
+                      {/* Notes textarea (E2.1) */}
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                          {isPolish ? 'Notatki (opcjonalne):' : 'Notes (optional):'}
+                        </label>
+                        <textarea
+                          value={editNotes}
+                          onChange={(e) => setEditNotes(e.target.value)}
+                          className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none min-h-[60px]"
+                          rows={2}
+                          placeholder={
+                            isPolish
+                              ? 'Dodatkowe notatki, kontekst...'
+                              : 'Additional notes, context...'
+                          }
+                        />
+                      </div>
+
+                      {/* Save error message */}
+                      {saveError && (
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs">
+                          <AlertTriangle size={14} />
+                          {saveError}
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-xs text-slate-400">
                           <Sparkles size={12} />
@@ -664,9 +772,14 @@ Rules:
                           </button>
                           <button
                             onClick={() => handleSaveAnswer(question.id)}
-                            className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                            disabled={savingId === question.id}
+                            className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 disabled:cursor-wait text-white rounded-lg font-medium transition-colors flex items-center gap-2"
                           >
-                            <Check size={14} />
+                            {savingId === question.id ? (
+                              <RefreshCw size={14} className="animate-spin" />
+                            ) : (
+                              <Check size={14} />
+                            )}
                             {isPolish ? 'Zapisz' : 'Save'}
                           </button>
                         </div>
@@ -682,7 +795,20 @@ Rules:
                       onClick={() => !readOnly && !question.answerText && handleStartEdit(question)}
                     >
                       {question.answerText ? (
-                        <div className="whitespace-pre-wrap">{question.answerText}</div>
+                        <div>
+                          <div className="whitespace-pre-wrap">{question.answerText}</div>
+                          {/* Show notes if present */}
+                          {question.notes && (
+                            <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-navy-700/50">
+                              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                                {isPolish ? 'Notatki:' : 'Notes:'}
+                              </span>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 whitespace-pre-wrap">
+                                {question.notes}
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <div className="flex items-center justify-center gap-2 py-4">
                           <Plus size={16} />
@@ -776,13 +902,44 @@ Rules:
             </div>
           ) : (
             categoryQuestions.length > 0 && (
-              <button
-                onClick={() => setShowNewQuestion(true)}
-                className="w-full flex items-center justify-center gap-2 py-2 text-sm text-slate-500 hover:text-blue-600 hover:bg-slate-50 dark:hover:bg-navy-800 rounded-lg border border-dashed border-slate-200 dark:border-navy-700"
-              >
-                <Plus size={16} />
-                {isPolish ? 'Dodaj pytanie' : 'Add question'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowNewQuestion(true)}
+                  className="flex-1 flex items-center justify-center gap-2 py-2 text-sm text-slate-500 hover:text-blue-600 hover:bg-slate-50 dark:hover:bg-navy-800 rounded-lg border border-dashed border-slate-200 dark:border-navy-700"
+                >
+                  <Plus size={16} />
+                  {isPolish ? 'Dodaj pytanie' : 'Add question'}
+                </button>
+                {/* E5.1: AI proposes next questions */}
+                <button
+                  onClick={async () => {
+                    if (!category) return;
+                    const categoryLabel = typeof category === 'string' ? category : category;
+                    const existingQs = categoryQuestions.map((q) => q.questionText).join('\n- ');
+                    const prompt = isPolish
+                      ? `Na podstawie istniejących pytań w kategorii "${categoryLabel}":\n- ${existingQs}\n\nZaproponuj 3 nowe, uzupełniające pytania do wywiadu, które pomogą uzyskać pełniejszy obraz.`
+                      : `Based on existing questions in category "${categoryLabel}":\n- ${existingQs}\n\nPropose 3 new, complementary interview questions that will help get a fuller picture.`;
+                    try {
+                      const response = await sendMessageToAI(prompt);
+                      if (response) {
+                        setChatQuestion(categoryQuestions[0] || null);
+                        setChatMessages([{ role: 'assistant' as const, content: response }]);
+                      }
+                    } catch {
+                      // fallback: open chat with prompt
+                      setChatQuestion(categoryQuestions[0] || null);
+                      setChatMessages([{ role: 'user' as const, content: prompt }]);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg border border-dashed border-purple-300 dark:border-purple-700 transition-colors"
+                  title={
+                    isPolish ? 'AI zaproponuje kolejne pytania' : 'AI will propose next questions'
+                  }
+                >
+                  <Lightbulb size={14} />
+                  {isPolish ? 'Zaproponuj pytania' : 'Propose questions'}
+                </button>
+              </div>
             )
           )}
         </div>

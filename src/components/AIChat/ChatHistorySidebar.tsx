@@ -71,7 +71,12 @@ interface FolderSectionProps {
   createButtonLabel: string;
   emptyLabel: string;
   t: (key: string, fallback: string) => string;
+  /** C3.3: Called when user clicks the folder name to enter folder-scoped view */
+  onFolderClick?: (folderId: string) => void;
 }
+
+/** Max folders visible before "Show more" is displayed */
+const MAX_VISIBLE_FOLDERS = 4;
 
 const FolderSection: React.FC<FolderSectionProps> = ({
   title,
@@ -87,10 +92,12 @@ const FolderSection: React.FC<FolderSectionProps> = ({
   createButtonLabel,
   emptyLabel,
   t,
+  onFolderClick,
 }) => {
   const [showInput, setShowInput] = useState(false);
   const [name, setName] = useState('');
   const [menuId, setMenuId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   const handleCreate = () => {
     if (!name.trim()) return;
@@ -99,12 +106,20 @@ const FolderSection: React.FC<FolderSectionProps> = ({
     setShowInput(false);
   };
 
+  const visibleProjects = showAll ? projects : projects.slice(0, MAX_VISIBLE_FOLDERS);
+  const hasMore = projects.length > MAX_VISIBLE_FOLDERS;
+
   return (
     <div className="px-3 pb-2">
       <div className="flex items-center justify-between mb-1.5 px-1">
         <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
           {icon}
           {title}
+          {projects.length > 0 && (
+            <span className="text-[9px] text-slate-300 dark:text-slate-600 font-normal">
+              {projects.length}
+            </span>
+          )}
         </h5>
         <button
           onClick={() => setShowInput(true)}
@@ -146,7 +161,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
       {/* Project List */}
       {projects.length > 0 ? (
         <div className="space-y-0.5">
-          {projects.map((project) => {
+          {visibleProjects.map((project) => {
             const isExpanded = expandedProjectIds.includes(project.id);
             const projectConversations = getConversationsByProjectId(project.id);
 
@@ -156,11 +171,26 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                   className="group flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 cursor-pointer transition-colors"
                   onClick={() => onToggleExpanded(project.id)}
                 >
-                  <button className="shrink-0 text-slate-400 dark:text-slate-500">
+                  <button
+                    className="shrink-0 text-slate-400 dark:text-slate-500"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleExpanded(project.id);
+                    }}
+                  >
                     {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                   </button>
                   <Folder size={15} className="shrink-0" style={{ color: project.color }} />
-                  <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                  <span
+                    className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300 truncate hover:text-primary-600 dark:hover:text-primary-400"
+                    onClick={(e) => {
+                      if (onFolderClick) {
+                        e.stopPropagation();
+                        onFolderClick(project.id);
+                      }
+                    }}
+                    title={t('aiChat.openFolder', 'Open folder')}
+                  >
                     {project.name}
                   </span>
                   <span className="text-xs text-slate-400 dark:text-slate-500">
@@ -219,6 +249,26 @@ const FolderSection: React.FC<FolderSectionProps> = ({
               </div>
             );
           })}
+
+          {/* Show more / Show less toggle */}
+          {hasMore && (
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-lg transition-colors"
+            >
+              {showAll ? (
+                <>
+                  <ChevronRight size={12} className="rotate-[-90deg]" />
+                  {t('aiChat.showLess', 'Show less')}
+                </>
+              ) : (
+                <>
+                  <ChevronDown size={12} />
+                  {t('aiChat.showMore', 'Show more')} ({projects.length - MAX_VISIBLE_FOLDERS})
+                </>
+              )}
+            </button>
+          )}
         </div>
       ) : !showInput ? (
         <button
@@ -256,6 +306,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     showArchived,
     fetchConversations,
     setActiveConversation,
+    createConversation,
     toggleSidebar,
     setSearchQuery,
     toggleShowArchived,
@@ -275,6 +326,12 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     getPersonalProjects,
     getTeamProjects,
   } = useChatProjectStore();
+
+  // C3.3: Active folder filter — clicking a folder name filters to that folder's conversations
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+  const activeFolder = activeFolderId
+    ? projects.find((p) => p.id === activeFolderId) || null
+    : null;
 
   // Derived project lists
   const personalProjects = getPersonalProjects();
@@ -316,9 +373,24 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   );
   const unassignedGroups = groupConversations(unassignedConversations);
 
-  // Handle new chat - clear active and call parent handler
-  const handleNewChat = () => {
+  // C3.3: Folder-scoped conversations (when a folder is active)
+  const folderConversations = activeFolderId ? getConversationsByProjectId(activeFolderId) : [];
+  const folderGroups = activeFolderId ? groupConversations(folderConversations) : null;
+
+  // C3.4: Handle new chat — if a folder is active, create conversation in that folder's context
+  const handleNewChat = async () => {
     clearActiveChat();
+    if (activeFolderId) {
+      try {
+        const conv = await createConversation({ projectId: activeFolderId });
+        if (conv?.id) {
+          setActiveConversation(conv.id);
+          return;
+        }
+      } catch (e) {
+        console.error('[ChatHistorySidebar] Failed to create conversation in folder context:', e);
+      }
+    }
     onNewChat();
   };
 
@@ -427,12 +499,49 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           />
         </div>
 
-        {/* Main scrollable area: Folders + Conversations */}
-        <div className="flex-1 overflow-y-auto">
+        {/* C3.3: Folder breadcrumb — shown when viewing a specific folder */}
+        {activeFolderId && activeFolder && (
+          <div className="px-4 py-2 border-b border-slate-200 dark:border-navy-700 flex items-center gap-2">
+            <button
+              onClick={() => setActiveFolderId(null)}
+              className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            >
+              {t('aiChat.allConversations', 'All')}
+            </button>
+            <ChevronRight size={12} className="text-slate-300 dark:text-slate-600" />
+            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
+              <Folder size={12} style={{ color: activeFolder.color }} />
+              <span className="truncate">{activeFolder.name}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Main scrollable area: Folders + Conversations — bounded scroll container (C3.1) */}
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             </div>
+          ) : activeFolderId && folderGroups ? (
+            /* C3.3: Folder-scoped view — show only this folder's conversations */
+            folderConversations.length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
+                  <Folder size={20} className="text-slate-400 dark:text-slate-500" />
+                </div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                  {t('aiChat.noFolderConversations', 'No conversations in this folder')}
+                </p>
+              </div>
+            ) : (
+              <div className="px-3">
+                <ConversationList
+                  groups={folderGroups}
+                  activeId={activeConversationId}
+                  onSelect={handleSelectConversation}
+                />
+              </div>
+            )
           ) : searchQuery ? (
             /* Search mode: show flat grouped results */
             visibleGroups.length === 0 ? (
@@ -473,6 +582,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                   createButtonLabel={t('aiChat.newPersonalFolder', 'New personal folder')}
                   emptyLabel={t('aiChat.createFolder', 'Create folder')}
                   t={t}
+                  onFolderClick={setActiveFolderId}
                 />
 
                 {/* Team Folders (Shared) */}
@@ -490,6 +600,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                   createButtonLabel={t('aiChat.newTeamFolder', 'New team folder')}
                   emptyLabel={t('aiChat.createTeamFolder', 'Create team folder')}
                   t={t}
+                  onFolderClick={setActiveFolderId}
                 />
               </div>
 

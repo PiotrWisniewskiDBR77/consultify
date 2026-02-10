@@ -1992,9 +1992,22 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
             name: `${u.firstName} ${u.lastName}`,
           }))}
           currentDeciderId={deciderId}
-          onDelegated={() => {
-            // Reload decision to get updated data
-            loadDecision(decisionId);
+          onDelegated={async () => {
+            try {
+              // Reload decision to get updated data
+              await loadDecision(decisionId);
+              addActivityLogEntry(
+                'assignment',
+                isPolish ? 'Decyzja delegowana' : 'Decision delegated'
+              );
+            } catch (error) {
+              console.error('[DecisionDetailView] Failed to reload after delegation:', error);
+              toast.error(
+                isPolish
+                  ? 'Delegacja zapisana, ale nie udało się odświeżyć danych'
+                  : 'Delegation saved, but failed to refresh data'
+              );
+            }
           }}
         />
       )}

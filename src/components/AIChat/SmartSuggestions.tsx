@@ -394,36 +394,200 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
         );
     }
 
-    // Take first 3 suggestions
-    const minimalSuggestions = contextSuggestions.slice(0, 3);
+    // Universal pool of suggestions (~20) for rotation (C2.1)
+    const universalPool: Array<{ id: string; text: string; prompt: string }> = [
+      {
+        id: 'u-strategy',
+        text: t('aiChat.pool.strategy', 'Analiza strategii'),
+        prompt: t(
+          'aiChat.pool.strategyPrompt',
+          'Przeanalizuj naszą obecną strategię transformacji — co działa, a co wymaga korekty?'
+        ),
+      },
+      {
+        id: 'u-risks',
+        text: t('aiChat.pool.risks', 'Mapa ryzyk'),
+        prompt: t(
+          'aiChat.pool.risksPrompt',
+          'Jakie są najważniejsze ryzyka w naszym portfelu i jak je mitygować?'
+        ),
+      },
+      {
+        id: 'u-kpi',
+        text: t('aiChat.pool.kpi', 'Przegląd KPI'),
+        prompt: t('aiChat.pool.kpiPrompt', 'Pokaż mi przegląd kluczowych KPI — co wymaga uwagi?'),
+      },
+      {
+        id: 'u-blockers',
+        text: t('aiChat.pool.blockers', 'Blokery'),
+        prompt: t(
+          'aiChat.pool.blockersPrompt',
+          'Jakie blokery mam w moich zadaniach i jak je rozwiązać?'
+        ),
+      },
+      {
+        id: 'u-priorities',
+        text: t('aiChat.pool.priorities', 'Priorytety tygodnia'),
+        prompt: t('aiChat.pool.prioritiesPrompt', 'Pomóż mi ustalić priorytety na ten tydzień.'),
+      },
+      {
+        id: 'u-stakeholders',
+        text: t('aiChat.pool.stakeholders', 'Komunikacja ze stakeholderami'),
+        prompt: t(
+          'aiChat.pool.stakeholdersPrompt',
+          'Przygotuj podsumowanie postępów dla stakeholderów.'
+        ),
+      },
+      {
+        id: 'u-budget',
+        text: t('aiChat.pool.budget', 'Analiza budżetu'),
+        prompt: t(
+          'aiChat.pool.budgetPrompt',
+          'Przeanalizuj wykorzystanie budżetu w naszych inicjatywach.'
+        ),
+      },
+      {
+        id: 'u-timeline',
+        text: t('aiChat.pool.timeline', 'Harmonogram'),
+        prompt: t(
+          'aiChat.pool.timelinePrompt',
+          'Czy jesteśmy na dobrej drodze z harmonogramem? Pokaż opóźnienia.'
+        ),
+      },
+      {
+        id: 'u-team',
+        text: t('aiChat.pool.team', 'Obciążenie zespołu'),
+        prompt: t(
+          'aiChat.pool.teamPrompt',
+          'Jak wygląda obciążenie zespołu? Kto jest przeciążony?'
+        ),
+      },
+      {
+        id: 'u-maturity',
+        text: t('aiChat.pool.maturity', 'Dojrzałość cyfrowa'),
+        prompt: t(
+          'aiChat.pool.maturityPrompt',
+          'Jakie są nasze największe luki w dojrzałości cyfrowej?'
+        ),
+      },
+      {
+        id: 'u-roi',
+        text: t('aiChat.pool.roi', 'Analiza ROI'),
+        prompt: t('aiChat.pool.roiPrompt', 'Przeanalizuj ROI naszych top 5 inicjatyw.'),
+      },
+      {
+        id: 'u-decisions',
+        text: t('aiChat.pool.decisions', 'Oczekujące decyzje'),
+        prompt: t(
+          'aiChat.pool.decisionsPrompt',
+          'Jakie decyzje czekają na mnie i które są najpilniejsze?'
+        ),
+      },
+      {
+        id: 'u-benchmark',
+        text: t('aiChat.pool.benchmark', 'Benchmark branżowy'),
+        prompt: t(
+          'aiChat.pool.benchmarkPrompt',
+          'Jak wypadamy na tle branży w kluczowych obszarach?'
+        ),
+      },
+      {
+        id: 'u-quick-wins',
+        text: t('aiChat.pool.quickWins', 'Quick wins'),
+        prompt: t(
+          'aiChat.pool.quickWinsPrompt',
+          'Jakie quick wins możemy zrealizować w najbliższych 2 tygodniach?'
+        ),
+      },
+      {
+        id: 'u-lessons',
+        text: t('aiChat.pool.lessons', 'Lessons learned'),
+        prompt: t(
+          'aiChat.pool.lessonsPrompt',
+          'Jakie wnioski wyciągnęliśmy z ostatnich projektów?'
+        ),
+      },
+      {
+        id: 'u-innovation',
+        text: t('aiChat.pool.innovation', 'Pomysły na innowacje'),
+        prompt: t(
+          'aiChat.pool.innovationPrompt',
+          'Zaproponuj innowacyjne podejścia do naszych obecnych wyzwań.'
+        ),
+      },
+      {
+        id: 'u-change',
+        text: t('aiChat.pool.change', 'Zarządzanie zmianą'),
+        prompt: t(
+          'aiChat.pool.changePrompt',
+          'Jak zarządzać oporem wobec zmian w naszej organizacji?'
+        ),
+      },
+      {
+        id: 'u-report',
+        text: t('aiChat.pool.report', 'Raport tygodniowy'),
+        prompt: t(
+          'aiChat.pool.reportPrompt',
+          'Wygeneruj raport tygodniowy z postępów transformacji.'
+        ),
+      },
+      {
+        id: 'u-dependencies',
+        text: t('aiChat.pool.dependencies', 'Zależności'),
+        prompt: t(
+          'aiChat.pool.dependenciesPrompt',
+          'Pokaż zależności między inicjatywami i potencjalne wąskie gardła.'
+        ),
+      },
+      {
+        id: 'u-next-steps',
+        text: t('aiChat.pool.nextSteps', 'Kolejne kroki'),
+        prompt: t(
+          'aiChat.pool.nextStepsPrompt',
+          'Jakie powinny być moje kolejne kroki na podstawie obecnego stanu?'
+        ),
+      },
+    ];
+
+    // Merge context-specific with universal pool, deduplicate by id
+    const contextIds = new Set(contextSuggestions.map((s) => s.id));
+    const merged = [...contextSuggestions, ...universalPool.filter((s) => !contextIds.has(s.id))];
+
+    // Shuffle using a seed based on the current hour (rotates every hour)
+    const hourSeed = Math.floor(Date.now() / (1000 * 60 * 60));
+    const shuffled = [...merged];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = ((hourSeed * (i + 1) * 2654435761) >>> 0) % (i + 1);
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    // Always keep Daily Brief first, then pick 3 more from shuffled pool
+    const dailyBrief = contextSuggestions.find((s) => s.id === 'brief');
+    const rest = shuffled.filter((s) => s.id !== 'brief');
+    const minimalSuggestions = dailyBrief ? [dailyBrief, ...rest.slice(0, 3)] : rest.slice(0, 4);
 
     return (
-      <div className={`flex items-center justify-center ${className}`}>
-        <div
-          className="
-            inline-flex items-center justify-center gap-4
-            rounded-xl border border-slate-200/70 dark:border-navy-800/70
-            bg-white/40 dark:bg-navy-950/20
-            px-4 py-2
-            backdrop-blur-sm
-          "
-        >
-          {minimalSuggestions.map((item, idx) => (
-            <React.Fragment key={item.id}>
-              {idx > 0 && <span className="text-slate-300 dark:text-slate-700">·</span>}
-              <button
-                onClick={() => handleMinimalClick(item.prompt)}
-                className="
-                  text-xs text-slate-500 dark:text-slate-400
-                  hover:text-slate-700 dark:hover:text-slate-200
-                  transition-colors duration-200
-                "
-              >
-                {item.text}
-              </button>
-            </React.Fragment>
-          ))}
-        </div>
+      <div className={`flex flex-wrap items-center justify-center gap-2 ${className}`}>
+        {minimalSuggestions.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => handleMinimalClick(item.prompt)}
+            className="
+              px-3 py-1.5 text-xs
+              rounded-full
+              border border-slate-200/70 dark:border-navy-700/70
+              bg-white/60 dark:bg-navy-900/40
+              text-slate-600 dark:text-slate-400
+              hover:text-primary-600 dark:hover:text-primary-400
+              hover:border-primary-300 dark:hover:border-primary-700
+              hover:bg-primary-50/50 dark:hover:bg-primary-900/20
+              transition-all duration-200
+              backdrop-blur-sm
+            "
+          >
+            {item.text}
+          </button>
+        ))}
       </div>
     );
   }

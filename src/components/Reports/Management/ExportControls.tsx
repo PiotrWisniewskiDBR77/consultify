@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 interface ExportControlsProps {
   reportId: string;
@@ -36,6 +37,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
   disabled = false,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const [exportingPDF, setExportingPDF] = useState(false);
   const [exportingPPTX, setExportingPPTX] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -49,9 +51,9 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
     try {
       const url = await onExportPDF();
       window.open(url, '_blank');
-      toast.success('PDF generated successfully');
+      toast.success(t('reports.export.pdfSuccess', 'PDF wygenerowany pomyślnie'));
     } catch (error) {
-      toast.error('Failed to generate PDF');
+      toast.error(t('reports.export.pdfError', 'Nie udało się wygenerować PDF'));
       console.error('PDF export error:', error);
     } finally {
       setExportingPDF(false);
@@ -65,9 +67,9 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
     try {
       const url = await onExportPPTX();
       window.open(url, '_blank');
-      toast.success('PowerPoint generated successfully');
+      toast.success(t('reports.export.pptxSuccess', 'PowerPoint wygenerowany pomyślnie'));
     } catch (error) {
-      toast.error('Failed to generate PowerPoint');
+      toast.error(t('reports.export.pptxError', 'Nie udało się wygenerować PowerPoint'));
       console.error('PPTX export error:', error);
     } finally {
       setExportingPPTX(false);
@@ -87,11 +89,11 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
       const result = await onShare();
       // Replace optimistic URL with real one
       setShareUrl(result.shareUrl);
-      toast.success('Share link created');
+      toast.success(t('reports.export.shareLinkCreated', 'Link do udostępniania utworzony'));
     } catch (error) {
       // Rollback optimistic update
       setShareUrl(null);
-      toast.error('Failed to create share link');
+      toast.error(t('reports.export.shareLinkError', 'Nie udało się utworzyć linku'));
       console.error('Share error:', error);
     } finally {
       setSharing(false);
@@ -104,10 +106,10 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
     try {
       await navigator.clipboard.writeText(window.location.origin + shareUrl);
       setCopied(true);
-      toast.success('Link copied to clipboard');
+      toast.success(t('reports.export.linkCopied', 'Link skopiowany do schowka'));
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      toast.error('Failed to copy link');
+      toast.error(t('reports.export.copyError', 'Nie udało się skopiować linku'));
     }
   };
 

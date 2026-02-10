@@ -20,6 +20,7 @@ import {
   User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
@@ -217,35 +218,53 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
 
   // Handlers
   const handleApprove = async (id: string) => {
+    if (!id) {
+      toast.error(t('decisions.error', 'Missing decision ID'));
+      return;
+    }
     try {
       await Api.put(`/decisions/${id}/decide`, {
         status: 'APPROVED',
         outcome: t('decisions.defaultApproveRationale', 'Approved via quick action'),
       });
+      toast.success(t('decisions.approved', 'Decision approved'));
       fetchDecisions(true);
     } catch (error) {
       console.error('Failed to approve:', error);
+      toast.error(t('decisions.approveError', 'Failed to approve decision'));
     }
   };
 
   const handleReject = async (id: string) => {
+    if (!id) {
+      toast.error(t('decisions.error', 'Missing decision ID'));
+      return;
+    }
     try {
       await Api.put(`/decisions/${id}/decide`, {
         status: 'REJECTED',
         outcome: t('decisions.defaultRejectRationale', 'Rejected via quick action'),
       });
+      toast.success(t('decisions.rejected', 'Decision rejected'));
       fetchDecisions(true);
     } catch (error) {
       console.error('Failed to reject:', error);
+      toast.error(t('decisions.rejectError', 'Failed to reject decision'));
     }
   };
 
   const handleEscalate = async (id: string) => {
+    if (!id) {
+      toast.error(t('decisions.error', 'Missing decision ID'));
+      return;
+    }
     try {
       await Api.post(`/decisions/${id}/escalate`, {});
+      toast.success(t('decisions.escalated', 'Decision escalated'));
       fetchDecisions(true);
     } catch (error) {
       console.error('Failed to escalate:', error);
+      toast.error(t('decisions.escalateError', 'Failed to escalate decision'));
     }
   };
 

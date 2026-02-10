@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -47,13 +48,14 @@ interface ReportData {
  */
 export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) => {
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
   const [report, setReport] = useState<ReportData | null>(null);
   const currentProjectId = useAppStore((state) => state.currentProjectId);
   const activeProjectId = projectId || currentProjectId;
 
   const generateReport = useCallback(async () => {
     if (!activeProjectId) {
-      toast.error('Please select a project first');
+      toast.error(t('reports.toast.selectProjectFirst', 'Najpierw wybierz projekt'));
       return;
     }
 
@@ -89,10 +91,10 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
       };
 
       setReport(reportData);
-      toast.success('Report generated successfully');
+      toast.success(t('reports.toast.reportGenerated', 'Raport wygenerowany pomyślnie'));
     } catch (error) {
       console.error('Failed to generate report:', error);
-      toast.error('Failed to generate report');
+      toast.error(t('reports.toast.generateError', 'Nie udało się wygenerować raportu'));
     } finally {
       setLoading(false);
     }

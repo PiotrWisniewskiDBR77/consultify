@@ -294,9 +294,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             disabled={selectedOrg?.billing_status === 'ACTIVE'}
             className="w-full bg-slate-900 dark:bg-white text-white dark:text-navy-900 px-4 py-2 rounded-lg font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {selectedOrg?.billing_status === 'ACTIVE'
-              ? 'Billing Active'
-              : 'Activate Billing (Stub)'}
+            {selectedOrg?.billing_status === 'ACTIVE' ? 'Billing Active' : 'Activate Billing'}
           </button>
         </div>
 

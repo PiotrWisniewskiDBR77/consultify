@@ -137,6 +137,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     currentStreamContent,
     isBotTyping,
     addChatMessage,
+    deleteChatMessage,
     setIsBotTyping,
     aiFreezeStatus,
     aiConfig,
@@ -347,6 +348,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     interimInsight,
     agentAuditState,
     agentAuditVerdict,
+    agentReviewProgressByAgentId,
+    agentSourcesByAgentId,
     retryInfo,
     streamStartedAt,
     streamCompletedSignal,
@@ -821,6 +824,24 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         size?: number;
       }> = [];
 
+      // Show a visible "Analyzing file..." status message while files are being processed (C4.1)
+      const fileAnalysisMessageId = files.length > 0 ? `file-analysis-${Date.now()}` : null;
+      if (files.length > 0 && fileAnalysisMessageId) {
+        const fileNames = files.map((f) => f.name).join(', ');
+        addChatMessage({
+          id: fileAnalysisMessageId,
+          role: 'assistant',
+          content: t(
+            'aiChat.attachments.analyzingFiles',
+            '📎 Analyzing {{count}} file(s): {{names}}... Extracting content for AI analysis.',
+            { count: files.length, names: fileNames }
+          ),
+          timestamp: new Date(),
+          isStreaming: true,
+        } as ChatMessage);
+        setIsBotTyping(true);
+      }
+
       for (const file of files) {
         const ext = String(file.name || '')
           .split('.')
@@ -894,6 +915,29 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
       }
 
+      // Remove the "Analyzing file..." message once processing is done
+      if (fileAnalysisMessageId) {
+        // Replace with a summary of processed attachments
+        if (uploadedAttachments.length > 0) {
+          const processedNames = uploadedAttachments.map((a) => a.filename).join(', ');
+          // Update the analysis message to show completion
+          addChatMessage({
+            id: fileAnalysisMessageId,
+            role: 'assistant',
+            content: t(
+              'aiChat.attachments.filesReady',
+              '📎 {{count}} file(s) ready for analysis: {{names}}. The AI will reference these files in its response.',
+              { count: uploadedAttachments.length, names: processedNames }
+            ),
+            timestamp: new Date(),
+          } as ChatMessage);
+        } else {
+          // Remove the message if no files were successfully processed
+          deleteChatMessage(fileAnalysisMessageId);
+        }
+        setIsBotTyping(false);
+      }
+
       const attachmentDocIds = Array.from(
         new Set([...existingAttachmentDocIds, ...uploadedAttachments.map((a) => a.docId)])
       );
@@ -925,11 +969,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       };
       addChatMessage(userMessage);
 
-      // Build context for AI
+      // Build context for AI — include file metadata so the model can cite/reference attachments (C4.1)
       const context = {
         focusMode,
         attachments: uploadedAttachments,
         attachmentDocIds,
+        // Provide file names and types so the AI can reference them in its response
+        attachmentFileNames: uploadedAttachments.map((a) => a.filename),
+        hasAttachments: uploadedAttachments.length > 0,
         workspaceContext,
         conversationId,
         conversationLanguage: chatLanguage,
@@ -1916,6 +1963,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       agentAuditState={agentAuditState}
       agentAuditBusy={agentAuditBusy}
       agentRegistryById={agentRegistryById}
+      agentReviewProgressByAgentId={agentReviewProgressByAgentId}
+      agentSourcesByAgentId={agentSourcesByAgentId}
       agentAuditActiveTabByMessageId={agentAuditActiveTabByMessageId}
       setAgentAuditActiveTabByMessageId={setAgentAuditActiveTabByMessageId}
       deepThinkingHint={deepThinkingHint}

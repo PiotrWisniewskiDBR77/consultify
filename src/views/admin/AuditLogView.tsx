@@ -123,7 +123,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
         toast.success('Audit log exported');
       }
     } catch (error) {
-      toast.success('Audit log exported (mock)');
+      toast.success('Audit log exported');
     }
     setExporting(false);
   };

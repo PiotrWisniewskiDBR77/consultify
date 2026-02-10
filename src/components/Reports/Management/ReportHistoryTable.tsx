@@ -38,6 +38,8 @@ interface ReportHistoryItem {
   createdAt: string;
   pdfPath?: string;
   pptxPath?: string;
+  versionNumber?: number;
+  versionLabel?: string;
 }
 
 interface ReportHistoryTableProps {
@@ -63,6 +65,8 @@ interface ReportHistoryTableProps {
   onDownloadPDF?: (reportId: string) => void;
   onDownloadPPTX?: (reportId: string) => void;
   onShare?: (reportId: string) => void;
+  /** B5.4: Rename report callback */
+  onRenameReport?: (reportId: string, newTitle: string) => void;
   className?: string;
 }
 
@@ -132,6 +136,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
   onDownloadPDF,
   onDownloadPPTX,
   onShare,
+  onRenameReport,
   className = '',
 }) => {
   const totalPages = Math.ceil(total / pageSize);
@@ -243,6 +248,9 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Title
                 </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16">
+                  Ver.
+                </th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Type
                 </th>
@@ -281,6 +289,9 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Title
                 </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16">
+                  Ver.
+                </th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Type
                 </th>
@@ -318,6 +329,11 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                           </div>
                         )}
                       </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-mono font-medium bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 rounded">
+                        v{report.versionLabel || report.versionNumber || '1.0'}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`px-2 py-1 text-xs font-medium rounded ${typeBadge.color}`}>
@@ -384,6 +400,21 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                             title="Share"
                           >
                             <Share2 size={16} className="text-violet-500" />
+                          </button>
+                        )}
+                        {/* B5.4: Rename report */}
+                        {onRenameReport && (
+                          <button
+                            onClick={() => {
+                              const newTitle = window.prompt('Rename report:', report.title);
+                              if (newTitle && newTitle.trim() && newTitle !== report.title) {
+                                onRenameReport(report.id, newTitle.trim());
+                              }
+                            }}
+                            className="p-2 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 rounded-lg transition-colors"
+                            title="Rename"
+                          >
+                            <FileText size={16} className="text-cyan-500" />
                           </button>
                         )}
                       </div>

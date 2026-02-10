@@ -203,7 +203,7 @@ export const AssessmentView: React.FC<AssessmentViewProps> = ({
                     </div>
                     {framework.status === 'coming_soon' && (
                       <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full text-xs font-medium">
-                        {isPolish ? 'Wkrótce' : 'Coming Soon'}
+                        {isPolish ? 'W przygotowaniu' : 'In Development'}
                       </span>
                     )}
                     {isAvailable && assessmentCount > 0 && (

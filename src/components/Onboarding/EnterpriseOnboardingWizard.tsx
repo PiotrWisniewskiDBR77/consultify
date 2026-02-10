@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
@@ -31,6 +32,7 @@ interface OnboardingStatus {
 
 export const EnterpriseOnboardingWizard: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [step, setStep] = useState<OnboardingStep>(1);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<OnboardingStatus | null>(null);
@@ -69,7 +71,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
   const handleAcceptTerms = async () => {
     if (!termsAccepted || !privacyAccepted) {
-      toast.error('Please accept both Terms and Privacy Policy');
+      toast.error(t('onboarding.toast.acceptBoth', 'Zaakceptuj Regulamin i Politykę Prywatności'));
       return;
     }
 
@@ -79,10 +81,10 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
         termsVersion: 'v1.0',
         privacyVersion: 'v1.0',
       });
-      toast.success('Terms accepted');
+      toast.success(t('onboarding.toast.termsAccepted', 'Regulamin zaakceptowany'));
       setStep(2);
     } catch (error) {
-      toast.error('Failed to accept terms');
+      toast.error(t('onboarding.toast.termsError', 'Nie udało się zaakceptować regulaminu'));
     } finally {
       setLoading(false);
     }
@@ -90,17 +92,17 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
   const handleSelectTier = async () => {
     if (!selectedTier) {
-      toast.error('Please select a pricing tier');
+      toast.error(t('onboarding.toast.selectTier', 'Wybierz plan cenowy'));
       return;
     }
 
     setLoading(true);
     try {
       await Api.post('/onboarding/select-tier', { tier: selectedTier });
-      toast.success('Pricing tier selected');
+      toast.success(t('onboarding.toast.tierSelected', 'Plan cenowy wybrany'));
       setStep(3);
     } catch (error) {
-      toast.error('Failed to select tier');
+      toast.error(t('onboarding.toast.tierError', 'Nie udało się wybrać planu'));
     } finally {
       setLoading(false);
     }
@@ -111,10 +113,10 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
     setLoading(true);
     try {
       await Api.post('/onboarding/complete', {});
-      toast.success('Onboarding completed!');
+      toast.success(t('onboarding.toast.completed', 'Onboarding zakończony!'));
       navigate('/app');
     } catch (error) {
-      toast.error('Failed to complete onboarding');
+      toast.error(t('onboarding.toast.completeError', 'Nie udało się zakończyć onboardingu'));
     } finally {
       setLoading(false);
     }
@@ -122,7 +124,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
   const handleSetupPayment = async () => {
     // TODO: Integrate Stripe Elements here
-    toast('Stripe integration coming soon');
+    toast('Contact sales for billing setup.', { icon: 'ℹ️' });
     // For now, just skip to completion
     handleSkipPayment();
   };

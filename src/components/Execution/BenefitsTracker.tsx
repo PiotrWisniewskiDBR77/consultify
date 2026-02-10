@@ -80,73 +80,35 @@ const TYPE_CONFIG: Record<BenefitType, { icon: React.ElementType; color: string 
 
 export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, benefits = [] }) => {
   const [selectedType, setSelectedType] = useState<'all' | BenefitType>('all');
+  const [localBenefits, setLocalBenefits] = useState<Benefit[]>(benefits);
+  const [isLoading, setIsLoading] = useState(!benefits.length);
 
-  // Mock benefits
-  const [localBenefits] = useState<Benefit[]>([
-    {
-      id: 'ben-1',
-      name: 'Cost Reduction from Automation',
-      description: 'Annual cost savings from automated processes',
-      type: 'FINANCIAL',
-      status: 'PARTIALLY_REALIZED',
-      targetValue: 500000,
-      currentValue: 320000,
-      unit: 'PLN',
-      targetDate: '2025-06-30',
-      linkedInitiativeName: 'Digital Process Automation',
-      measurementCriteria: 'Total annual OpEx reduction in automated departments',
-    },
-    {
-      id: 'ben-2',
-      name: 'Process Cycle Time Reduction',
-      description: 'Reduction in average process completion time',
-      type: 'EFFICIENCY',
-      status: 'FULLY_REALIZED',
-      targetValue: 40,
-      currentValue: 45,
-      unit: '%',
-      targetDate: '2024-12-31',
-      linkedInitiativeName: 'Workflow Optimization',
-      measurementCriteria: 'Average time from request to completion',
-    },
-    {
-      id: 'ben-3',
-      name: 'Customer Satisfaction Improvement',
-      description: 'Increase in NPS score',
-      type: 'QUALITY',
-      status: 'PARTIALLY_REALIZED',
-      targetValue: 50,
-      currentValue: 42,
-      unit: 'NPS',
-      targetDate: '2025-03-31',
-      measurementCriteria: 'Quarterly NPS survey results',
-    },
-    {
-      id: 'ben-4',
-      name: 'Data-Driven Decision Making',
-      description: 'Percentage of decisions backed by analytics',
-      type: 'STRATEGIC',
-      status: 'PLANNED',
-      targetValue: 80,
-      currentValue: 35,
-      unit: '%',
-      targetDate: '2025-09-30',
-      linkedInitiativeName: 'BI Dashboard Implementation',
-      measurementCriteria: 'Audit of management decisions with data evidence',
-    },
-    {
-      id: 'ben-5',
-      name: 'GDPR Compliance Rate',
-      description: 'Compliance with data protection requirements',
-      type: 'COMPLIANCE',
-      status: 'FULLY_REALIZED',
-      targetValue: 100,
-      currentValue: 100,
-      unit: '%',
-      targetDate: '2024-06-30',
-      measurementCriteria: 'Internal audit results',
-    },
-  ]);
+  // Fetch benefits from API when props don't provide them
+  React.useEffect(() => {
+    if (benefits.length > 0) {
+      setLocalBenefits(benefits);
+      setIsLoading(false);
+      return;
+    }
+    const fetchBenefits = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/pmo/projects/${projectId}/benefits`);
+        if (response.ok) {
+          const data = await response.json();
+          setLocalBenefits(Array.isArray(data) ? data : data?.benefits || []);
+        } else {
+          setLocalBenefits([]);
+        }
+      } catch {
+        console.warn('[BenefitsTracker] No benefits data available from API');
+        setLocalBenefits([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchBenefits();
+  }, [projectId, benefits]);
 
   const filteredBenefits =
     selectedType === 'all' ? localBenefits : localBenefits.filter((b) => b.type === selectedType);
@@ -171,6 +133,50 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
       }, 0) / localBenefits.length
     ),
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
+            <TrendingUp className="text-green-500" size={24} />
+            Benefits Realization
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Loading benefits data...
+          </p>
+        </div>
+        <div className="flex items-center justify-center h-48">
+          <div className="animate-spin w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (localBenefits.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
+            <TrendingUp className="text-green-500" size={24} />
+            Benefits Realization
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Track transformation benefits and ROI
+          </p>
+        </div>
+        <div className="flex flex-col items-center justify-center h-48 text-slate-400 dark:text-slate-500">
+          <TrendingUp size={48} className="mb-4 opacity-50" />
+          <p className="text-lg font-medium text-navy-900 dark:text-white">
+            No benefits tracked yet
+          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Define expected benefits to track realization progress
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

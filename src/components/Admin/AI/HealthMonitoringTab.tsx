@@ -580,7 +580,7 @@ export const HealthMonitoringTab: React.FC = () => {
             <TrendingUp className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-navy-900 dark:text-white">Usage Trends</h3>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
-              Coming soon: Interactive usage charts
+              Interactive usage charts are available in the Analytics tab
             </p>
           </div>
         </div>

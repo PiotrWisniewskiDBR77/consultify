@@ -36,6 +36,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useUserCan } from '@/hooks/useUserCan';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -173,6 +174,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const isPolish = i18n.language === 'pl';
   const { currentUser, myWorkIntent, clearMyWorkIntent } = useAppStore();
 
+  // A1.2: Role-based access – Executive tab restricted to admin/manager/superadmin
+  const { isAdmin, isManager, isSuperAdmin } = useUserCan();
+  const canViewExecutive = isAdmin || isManager || isSuperAdmin;
+
   // Tab state
   const [activeTab, setActiveTab] = useState<ModuleTab>('tasks');
   const [searchQuery, setSearchQuery] = useState('');
@@ -234,7 +239,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   useEffect(() => {
     if (!myWorkIntent) return;
     if (myWorkIntent.tab) {
-      setActiveTab(myWorkIntent.tab as ModuleTab);
+      // A1.2: Block navigation to executive tab for unauthorized users
+      const targetTab = myWorkIntent.tab as ModuleTab;
+      if (targetTab === 'executive' && !canViewExecutive) {
+        clearMyWorkIntent();
+        return;
+      }
+      setActiveTab(targetTab);
     }
     setActiveDocumentId(null);
     if (myWorkIntent.open) {
@@ -262,14 +273,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   }, [myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
 
   // Tab configuration
-  const tabs = useMemo(
-    () => [
+  // A1.2: Executive tab only visible to admin/manager/superadmin roles
+  const tabs = useMemo(() => {
+    const allTabs = [
       {
         id: 'executive' as ModuleTab,
         label: isPolish ? 'Executive' : 'Executive',
         icon: <FileText size={16} />,
         count: tabCounts.executive,
         color: 'bg-violet-500',
+        requiresExecutiveAccess: true,
       },
       {
         id: 'inbox' as ModuleTab,
@@ -277,6 +290,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <Inbox size={16} />,
         count: tabCounts.inbox,
         color: 'bg-red-500',
+        requiresExecutiveAccess: false,
       },
       {
         id: 'focus' as ModuleTab,
@@ -284,6 +298,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <Target size={16} />,
         count: tabCounts.focus,
         color: 'bg-amber-500',
+        requiresExecutiveAccess: false,
       },
       {
         id: 'tasks' as ModuleTab,
@@ -291,6 +306,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <CheckSquare size={16} />,
         count: tabCounts.tasks,
         color: 'bg-blue-500',
+        requiresExecutiveAccess: false,
       },
       {
         id: 'decisions' as ModuleTab,
@@ -298,6 +314,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <Scale size={16} />,
         count: tabCounts.decisions,
         color: 'bg-purple-500',
+        requiresExecutiveAccess: false,
       },
       {
         id: 'notifications' as ModuleTab,
@@ -305,10 +322,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <Bell size={16} />,
         count: tabCounts.notifications,
         color: 'bg-amber-500',
+        requiresExecutiveAccess: false,
       },
-    ],
-    [isPolish, tabCounts]
-  );
+    ];
+
+    // A1.2: Filter out Executive tab for users without admin/manager role
+    return allTabs.filter((tab) => !tab.requiresExecutiveAccess || canViewExecutive);
+  }, [isPolish, tabCounts, canViewExecutive]);
 
   // Task filters configuration
   const taskFilters = useMemo(
@@ -583,7 +603,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           label: isPolish ? 'Nowe powiadomienie' : 'New Notification',
           icon: <Plus size={16} />,
           onClick: () => {
-            toast.success(isPolish ? 'Funkcja w przygotowaniu' : 'Feature coming soon');
+            const newId = `new-notification-${Date.now()}`;
+            handleOpenDocument({
+              id: newId,
+              type: 'notification',
+              name: isPolish ? 'Nowe powiadomienie' : 'New Notification',
+              status: 'unread',
+              data: { isNew: true },
+            });
           },
           color: 'from-amber-500 to-amber-600',
           variant: 'primary' as const,
@@ -753,6 +780,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const renderListContent = () => {
     switch (activeTab) {
       case 'executive':
+        // A1.2: Double-check role access – if user somehow navigated here without permission
+        if (!canViewExecutive) {
+          return (
+            <div className="flex h-64 items-center justify-center">
+              <div className="text-center">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Brak dostępu. Wymagana rola Admin lub Manager.'
+                    : 'Access restricted. Admin or Manager role required.'}
+                </p>
+              </div>
+            </div>
+          );
+        }
         return (
           <ExecutiveDashboard
             onNavigate={(section) => {

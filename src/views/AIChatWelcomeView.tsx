@@ -24,10 +24,12 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import { useAIContext } from '@/contexts/AIContext';
 import { isValidLanguage, type SupportedLanguage } from '@/i18n';
-import { Api } from '@/services/api';
+import { Api } from '@/services/api.ts';
 
 import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 // Components
@@ -36,8 +38,10 @@ import { CitationList } from '../components/AIChat/CitationList';
 import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
+import { ResearchProgress } from '../components/AIChat/ResearchProgress';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
+import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
@@ -105,6 +109,7 @@ export const AIChatWelcomeView: React.FC = () => {
   );
 
   // Conversation store
+  const conversationStore = useConversationStore() as any;
   const {
     activeConversationId,
     activeMessages,
@@ -121,7 +126,7 @@ export const AIChatWelcomeView: React.FC = () => {
     draftChatLanguage,
     chatLanguageByConversationId,
     setConversationChatLanguage,
-  } = useConversationStore();
+  } = conversationStore;
 
   const activeConversationIdRef = useRef(activeConversationId);
   const activeMessagesRef = useRef(activeMessages);
@@ -193,6 +198,10 @@ export const AIChatWelcomeView: React.FC = () => {
     retryLastStream,
     lastError,
     clearLastError,
+    researchProgress,
+    streamStartedAt,
+    streamCompletedSignal,
+    retryInfo,
   } = useAIStream({
     onStreamDone: handleStreamDone,
     onStreamError: (err) => {
@@ -895,14 +904,32 @@ For example: REMEMBER: preferred_language: Polish`;
     ]
   );
 
-  // Handle new chat
-  const handleNewChat = useCallback(() => {
+  // Handle new chat — clear state AND create a fresh conversation (like UnifiedChatPanel)
+  const handleNewChat = useCallback(async () => {
     clearActiveChat();
     setDtPendingConfirm(null);
     clearLastError();
     abortStream();
     // Title generation is handled by the conversation store
-  }, [abortStream, clearActiveChat, clearLastError]);
+    try {
+      const conv = await createConversation({ projectId: selectedProject?.id });
+      setActiveConversation(conv.id);
+      if (chatLanguage) {
+        setConversationChatLanguage(conv.id, chatLanguage);
+      }
+    } catch (err) {
+      console.error('[AIChatWelcomeView] Failed to create new chat:', err);
+    }
+  }, [
+    abortStream,
+    chatLanguage,
+    clearActiveChat,
+    clearLastError,
+    createConversation,
+    selectedProject?.id,
+    setActiveConversation,
+    setConversationChatLanguage,
+  ]);
 
   // Handle export
   const handleExport = useCallback(() => {
@@ -1314,6 +1341,28 @@ For example: REMEMBER: preferred_language: Polish`;
                       </div>
                     )}
 
+                    {/* Research Progress - web search / sources status (C6.1) */}
+                    {isAiMessage && isStreamingThis && researchProgress && (
+                      <div className="mb-2 max-w-[85%]">
+                        <ResearchProgress progress={researchProgress} />
+                      </div>
+                    )}
+
+                    {/* Thinking Status Line - elapsed time + retry info */}
+                    {isAiMessage && isStreamingThis && !displayContent && streamStartedAt && (
+                      <div className="mb-2 max-w-[85%]">
+                        <ThinkingStatusLine
+                          streamStartedAt={streamStartedAt}
+                          streamCompletedSignal={streamCompletedSignal}
+                          retryInfo={
+                            retryInfo
+                              ? { attempt: retryInfo.attempt, maxRetries: retryInfo.maxRetries }
+                              : null
+                          }
+                        />
+                      </div>
+                    )}
+
                     <div
                       className={`inline-block max-w-[85%] ${
                         msg.role === 'user'
@@ -1321,7 +1370,7 @@ For example: REMEMBER: preferred_language: Polish`;
                           : 'text-navy-900 dark:text-slate-200'
                       }`}
                     >
-                      <div className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                      <div className="text-[15px] leading-relaxed">
                         {isEditingThis ? (
                           <div className="flex flex-col gap-2">
                             <textarea
@@ -1349,8 +1398,14 @@ For example: REMEMBER: preferred_language: Polish`;
                               </button>
                             </div>
                           </div>
+                        ) : isAiMessage ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-pre:my-2 prose-code:text-primary-600 dark:prose-code:text-primary-400 prose-code:before:content-none prose-code:after:content-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {displayContent || ''}
+                            </ReactMarkdown>
+                          </div>
                         ) : (
-                          displayContent
+                          <span className="whitespace-pre-wrap">{displayContent}</span>
                         )}
                         {isStreamingThis && displayContent && (
                           <span className="inline-block w-2 h-5 bg-primary-500 ml-1 animate-pulse rounded-sm" />

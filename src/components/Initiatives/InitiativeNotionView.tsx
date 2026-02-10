@@ -8,10 +8,19 @@
  * Uses existing section components from SECTION_REGISTRY and InitiativeContext.
  */
 
-import { Search } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import {
+  AlertTriangle,
+  Calendar,
+  CheckSquare,
+  DollarSign,
+  Search,
+  Target,
+  Users,
+} from 'lucide-react';
+import React, { useContext, useMemo, useState } from 'react';
 
 import { SECTION_REGISTRY } from './sections';
+import { InitiativeContext } from './sections/InitiativeContext';
 import type { SectionTypeInfo } from './sections/types';
 
 type NavGroup = {
@@ -160,6 +169,9 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
 }) => {
   const [query, setQuery] = useState('');
 
+  // B7.2: Access initiative context for key info bar (null when outside provider)
+  const ctx = useContext(InitiativeContext);
+
   const allSorted = useMemo(() => {
     const all = [...rightSections, ...leftSections];
 
@@ -307,6 +319,96 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
 
       {/* Main Panel */}
       <main className="min-w-0">
+        {/* B7.2: Key Info Strip — 5 sections always visible */}
+        {ctx && (
+          <div className="grid grid-cols-5 gap-2 mb-4">
+            <div className="p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Target size={11} className="text-blue-500" />
+                <span className="text-[9px] font-semibold text-slate-400 uppercase">
+                  {isPolish ? 'Cel' : 'Goal'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-700 dark:text-slate-300 line-clamp-1">
+                {ctx.summary || '—'}
+              </p>
+            </div>
+            <div className="p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
+              <div className="flex items-center gap-1.5 mb-1">
+                <CheckSquare size={11} className="text-emerald-500" />
+                <span className="text-[9px] font-semibold text-slate-400 uppercase">
+                  {isPolish ? 'Zadania' : 'Tasks'}
+                </span>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                {ctx.tasksDone}/{ctx.tasks?.length || 0}
+              </p>
+            </div>
+            <div className="p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Users size={11} className="text-purple-500" />
+                <span className="text-[9px] font-semibold text-slate-400 uppercase">
+                  {isPolish ? 'Zespół' : 'Team'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-700 dark:text-slate-300 truncate">
+                {ctx.ownerName || '—'}
+              </p>
+            </div>
+            <div className="p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Calendar size={11} className="text-cyan-500" />
+                <span className="text-[9px] font-semibold text-slate-400 uppercase">
+                  {isPolish ? 'Zasoby' : 'Resources'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-700 dark:text-slate-300">
+                {ctx.startDate
+                  ? new Date(ctx.startDate).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                    })
+                  : '?'}
+                {' → '}
+                {ctx.endDate
+                  ? new Date(ctx.endDate).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                    })
+                  : '?'}
+              </p>
+            </div>
+            <div className="p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
+              <div className="flex items-center gap-1.5 mb-1">
+                <DollarSign size={11} className="text-amber-500" />
+                <span className="text-[9px] font-semibold text-slate-400 uppercase">
+                  {isPolish ? 'Finanse' : 'Finance'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {ctx.riskCount > 0 && (
+                  <span
+                    className={`text-[9px] font-medium px-1 py-0.5 rounded ${ctx.criticalRaids > 0 ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}
+                  >
+                    {ctx.riskCount}R
+                  </span>
+                )}
+                {ctx.initiative?.costCapex ? (
+                  <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                    {ctx.initiative.costCapex >= 1_000_000
+                      ? `$${(ctx.initiative.costCapex / 1_000_000).toFixed(1)}M`
+                      : ctx.initiative.costCapex >= 1_000
+                        ? `$${(ctx.initiative.costCapex / 1_000).toFixed(0)}K`
+                        : `$${ctx.initiative.costCapex}`}
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-slate-400">—</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {isGroupSelected && selectedGroup ? (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">

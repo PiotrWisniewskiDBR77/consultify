@@ -15,7 +15,6 @@ import {
   Eye,
   Loader2,
   Minus,
-  MoreVertical,
   Plus,
   Square,
   Trash2,
@@ -26,6 +25,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
+import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
+import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
 import {
   BulkActionBar,
   type ColumnDef,
@@ -141,7 +144,7 @@ const getStatusConfig = (status?: string) => {
 
 // Date formatting
 const formatDueDate = (dueDate?: string | Date): string => {
-  if (!dueDate) return '-';
+  if (!dueDate) return 'No due date';
   const date = new Date(dueDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -164,6 +167,73 @@ const isOverdue = (dueDate?: string | Date, status?: string): boolean => {
   today.setHours(0, 0, 0, 0);
   return date < today;
 };
+
+/* ─────────────── Task → GenericListItem mapping ─────────────── */
+
+const getStatusVariant = (status?: string): GenericListItem['statusVariant'] => {
+  switch (status?.toLowerCase()) {
+    case 'done':
+    case 'completed':
+    case 'validated':
+      return 'success';
+    case 'in_progress':
+    case 'in progress':
+      return 'info';
+    case 'pending_approval':
+    case 'review':
+      return 'purple';
+    case 'blocked':
+      return 'danger';
+    case 'cancelled':
+      return 'neutral';
+    default:
+      return 'warning';
+  }
+};
+
+const getPriorityVariant = (priority?: string): GenericListItem['priorityVariant'] => {
+  switch (priority?.toLowerCase()) {
+    case 'urgent':
+    case 'critical':
+      return 'critical';
+    case 'high':
+      return 'high';
+    case 'medium':
+      return 'medium';
+    case 'low':
+      return 'low';
+    default:
+      return 'medium';
+  }
+};
+
+const taskToGenericItem = (task: Task): GenericListItem => ({
+  id: task.id,
+  title: task.title || 'Untitled task',
+  subtitle: task.description || undefined,
+  status: getStatusConfig(task.status).label,
+  statusVariant: getStatusVariant(task.status),
+  priority: getPriorityConfig(task.priority).label,
+  priorityVariant: getPriorityVariant(task.priority),
+  dueDate: formatDueDate(task.dueDate),
+  isOverdue: isOverdue(task.dueDate, task.status),
+  assignee: task.assignee
+    ? `${task.assignee.firstName || ''} ${task.assignee.lastName || ''}`.trim()
+    : undefined,
+  assigneeAvatar: (task.assignee as any)?.avatarUrl,
+  secondaryLabel: (task as any).initiativeName || (task as any).projectName || undefined,
+  _raw: task,
+});
+
+/** ClickUp-style columns for tasks */
+const TASK_CLICKUP_COLUMNS: ListColumn[] = [
+  { key: 'title', label: 'Task', width: 'flex-1 min-w-0' },
+  { key: 'status', label: 'Status', width: 'w-28' },
+  { key: 'priority', label: 'Priority', width: 'w-24' },
+  { key: 'assignee', label: 'Assignee', width: 'w-36' },
+  { key: 'dueDate', label: 'Due', width: 'w-24' },
+  { key: 'secondaryLabel', label: 'Initiative', width: 'w-32' },
+];
 
 // Categorize task by time
 const categorizeTask = (task: Task): TaskTimeGroup => {
@@ -304,7 +374,6 @@ const TaskTableRow: React.FC<{
   onClick,
   columnWidths,
 }) => {
-  const [showMenu, setShowMenu] = useState(false);
   const { t } = useTranslation();
 
   const isCompleted = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
@@ -313,8 +382,8 @@ const TaskTableRow: React.FC<{
   const statusConfig = getStatusConfig(task.status);
   const assigneeName = task.assignee?.firstName
     ? `${task.assignee.firstName} ${task.assignee.lastName || ''}`.trim()
-    : '-';
-  const assigneeInitial = assigneeName !== '-' ? assigneeName[0].toUpperCase() : '';
+    : 'Unassigned';
+  const assigneeInitial = assigneeName !== 'Unassigned' ? assigneeName[0].toUpperCase() : '';
 
   return (
     <motion.tr
@@ -399,9 +468,11 @@ const TaskTableRow: React.FC<{
       <td className="px-3 py-2.5" style={{ width: columnWidths.date }}>
         <div
           className={`flex items-center gap-1.5 text-xs ${
-            overdue
-              ? 'text-red-700 dark:text-red-400 font-medium'
-              : 'text-slate-600 dark:text-slate-400'
+            !task.dueDate
+              ? 'text-slate-300 dark:text-slate-600 italic'
+              : overdue
+                ? 'text-red-700 dark:text-red-400 font-medium'
+                : 'text-slate-600 dark:text-slate-400'
           }`}
         >
           <Calendar size={12} />
@@ -417,91 +488,66 @@ const TaskTableRow: React.FC<{
               {assigneeInitial}
             </div>
           ) : (
-            <User size={14} className="text-slate-500" />
+            <User size={14} className="text-slate-300 dark:text-slate-600" />
           )}
-          <span className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[80px]">
+          <span
+            className={`text-xs truncate max-w-[80px] ${
+              assigneeName === 'Unassigned'
+                ? 'text-slate-300 dark:text-slate-600 italic'
+                : 'text-slate-600 dark:text-slate-400'
+            }`}
+          >
             {assigneeName}
           </span>
         </div>
       </td>
 
-      {/* Actions */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.actions }}>
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick(task.id);
-            }}
-            className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            title="View"
-          >
-            <Eye size={14} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick(task.id);
-            }}
-            className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            title="Edit"
-          >
-            <Edit size={14} />
-          </button>
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowMenu(!showMenu);
-              }}
-              className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              <MoreVertical size={14} />
-            </button>
-            {showMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 w-36 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClick(task.id);
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                  >
-                    <Eye size={14} />
-                    View
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClick(task.id);
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                  >
-                    <Edit size={14} />
-                    Edit
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm('Delete this task?')) {
-                        onDelete(task.id);
-                      }
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-navy-700"
-                  >
-                    <Trash2 size={14} />
-                    Delete
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+      {/* Actions — "⋯" menu (A3.2: replaces overlapping inline buttons) */}
+      <td
+        className="px-3 py-2.5 text-right"
+        style={{ width: columnWidths.actions }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <RowActionsMenu
+          size="sm"
+          actions={
+            [
+              {
+                id: 'view',
+                label: t('common.view', 'View'),
+                icon: Eye,
+                onClick: () => onClick(task.id, task),
+                variant: 'primary',
+              },
+              {
+                id: 'edit',
+                label: t('common.edit', 'Edit'),
+                icon: Edit,
+                onClick: () => onClick(task.id, task),
+              },
+              {
+                id: 'complete',
+                label: isCompleted
+                  ? t('myWork.tasks.reopen', 'Reopen')
+                  : t('myWork.tasks.complete', 'Complete'),
+                icon: CheckCircle2,
+                onClick: () => onToggleComplete(task.id, !isCompleted),
+              },
+              {
+                id: 'delete',
+                label: t('common.delete', 'Delete'),
+                icon: Trash2,
+                onClick: () => {
+                  if (confirm('Delete this task?')) {
+                    onDelete(task.id);
+                  }
+                },
+                variant: 'danger',
+                divider: true,
+              },
+            ] satisfies RowAction[]
+          }
+        />
       </td>
     </motion.tr>
   );
@@ -517,6 +563,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('current');
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -769,12 +816,70 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   };
 
   // Create bulk action configuration
+  const handleBulkChangePriority = async () => {
+    const newPriority = prompt('Set priority for selected tasks (low / medium / high / critical):');
+    if (
+      !newPriority ||
+      !['low', 'medium', 'high', 'critical', 'urgent'].includes(newPriority.toLowerCase())
+    )
+      return;
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) =>
+          Api.updateTask(id, { priority: newPriority.toLowerCase() })
+        )
+      );
+      setTasks((prev) =>
+        prev.map((t) =>
+          selectedIds.has(t.id) ? ({ ...t, priority: newPriority.toLowerCase() } as Task) : t
+        )
+      );
+      toast.success(`Priority set to ${newPriority} for ${selectedIds.size} tasks`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error(t('myWork.errors.updateFailed', 'Failed to update priority'));
+    }
+  };
+
+  const handleBulkChangeDate = async () => {
+    const newDate = prompt('Set due date (YYYY-MM-DD):');
+    if (!newDate || !/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+      if (newDate) toast.error('Invalid date format. Use YYYY-MM-DD');
+      return;
+    }
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) => Api.updateTask(id, { dueDate: newDate }))
+      );
+      setTasks((prev) =>
+        prev.map((t) => (selectedIds.has(t.id) ? ({ ...t, dueDate: newDate } as Task) : t))
+      );
+      toast.success(`Due date updated for ${selectedIds.size} tasks`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error(t('myWork.errors.updateFailed', 'Failed to update due date'));
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) => Api.updateTask(id, { status: 'archived' }))
+      );
+      setTasks((prev) => prev.filter((t) => !selectedIds.has(t.id)));
+      toast.success(`${selectedIds.size} tasks archived`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error(t('myWork.errors.updateFailed', 'Failed to archive tasks'));
+    }
+  };
+
   const bulkActions = createTaskBulkActions({
     onComplete: handleBulkComplete,
     onDelete: handleBulkDelete,
-    onChangePriority: () => toast('Priority change coming soon'),
-    onChangeDate: () => toast('Date change coming soon'),
-    onArchive: () => toast('Archive coming soon'),
+    onChangePriority: handleBulkChangePriority,
+    onChangeDate: handleBulkChangeDate,
+    onArchive: handleBulkArchive,
   });
 
   // Flat list of all visible tasks for keyboard navigation
@@ -875,6 +980,75 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     return result;
   }, [groupedTasks, tableFilters]);
 
+  /* ─── Sections for Notion / ClickUp views ─── */
+  const viewSections: ListSection[] = useMemo(() => {
+    const overdueItems = groupedTasks.overdue.map(taskToGenericItem);
+    const todayItems = groupedTasks.today.map(taskToGenericItem);
+    const weekItems = groupedTasks.week.map(taskToGenericItem);
+    const laterItems = groupedTasks.later.map(taskToGenericItem);
+    const noDateItems = groupedTasks['no-date'].map(taskToGenericItem);
+
+    return [
+      ...(overdueItems.length > 0
+        ? [
+            {
+              id: 'overdue',
+              label: t('myWork.groups.overdue', 'Overdue'),
+              items: overdueItems,
+              accentColor: 'text-red-500',
+            },
+          ]
+        : []),
+      ...(todayItems.length > 0
+        ? [
+            {
+              id: 'today',
+              label: t('myWork.groups.today', 'Today'),
+              items: todayItems,
+              accentColor: 'text-cyan-500',
+            },
+          ]
+        : []),
+      ...(weekItems.length > 0
+        ? [
+            {
+              id: 'week',
+              label: t('myWork.groups.thisWeek', 'This Week'),
+              items: weekItems,
+              accentColor: 'text-blue-500',
+            },
+          ]
+        : []),
+      ...(laterItems.length > 0
+        ? [
+            {
+              id: 'later',
+              label: t('myWork.groups.later', 'Later / Done'),
+              items: laterItems,
+              accentColor: 'text-slate-400',
+            },
+          ]
+        : []),
+      ...(noDateItems.length > 0
+        ? [
+            {
+              id: 'no-date',
+              label: t('myWork.groups.noDate', 'No Date'),
+              items: noDateItems,
+              accentColor: 'text-slate-400',
+            },
+          ]
+        : []),
+    ];
+  }, [groupedTasks, t]);
+
+  const handleGenericItemClick = useCallback(
+    (item: GenericListItem) => {
+      onTaskClick(item.id, item._raw as Task);
+    },
+    [onTaskClick]
+  );
+
   if (loading) {
     return (
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
@@ -929,11 +1103,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
               {taskStats.completed}
             </div>
-            {taskStats.total > 0 && (
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {taskStats.completionRate}%
-              </div>
-            )}
           </div>
 
           {/* In Progress */}
@@ -988,25 +1157,68 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             </div>
           </div>
 
-          {/* Completion Rate */}
+          {/* Status Summary */}
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp size={16} className="text-emerald-500" />
+              <BarChart3 size={16} className="text-slate-500 dark:text-slate-400" />
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                {t('myWork.stats.completionRate', 'Done')}
+                {t('myWork.stats.statusSummary', 'Status')}
               </span>
             </div>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-              {taskStats.completionRate}%
-            </div>
-            <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-1.5 mt-2">
-              <div
-                className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
-                style={{ width: `${taskStats.completionRate}%` }}
-              />
+            <div className="text-xs text-slate-600 dark:text-slate-300 space-y-0.5">
+              {taskStats.todo > 0 && (
+                <div>
+                  <span className="font-medium">{taskStats.todo}</span> todo
+                </div>
+              )}
+              {taskStats.inProgress > 0 && (
+                <div>
+                  <span className="font-medium">{taskStats.inProgress}</span> in progress
+                </div>
+              )}
+              {taskStats.blocked > 0 && (
+                <div>
+                  <span className="font-medium">{taskStats.blocked}</span> blocked
+                </div>
+              )}
+              {taskStats.overdue > 0 && (
+                <div>
+                  <span className="font-medium">{taskStats.overdue}</span> overdue
+                </div>
+              )}
+              {taskStats.critical > 0 && (
+                <div>
+                  <span className="font-medium">{taskStats.critical}</span> critical
+                </div>
+              )}
+              {taskStats.completed > 0 && (
+                <div>
+                  <span className="font-medium">{taskStats.completed}</span> done
+                </div>
+              )}
+              {taskStats.todo === 0 &&
+                taskStats.inProgress === 0 &&
+                taskStats.blocked === 0 &&
+                taskStats.overdue === 0 &&
+                taskStats.critical === 0 &&
+                taskStats.completed === 0 && (
+                  <div className="text-slate-400 dark:text-slate-500">No tasks</div>
+                )}
             </div>
           </div>
         </div>
+
+        {/* A7.1: View style switcher — header stays constant (A7.5) */}
+        {tasks.length > 0 && (
+          <div className="flex items-center justify-end mb-3">
+            <CardViewSwitcher
+              moduleId="my-work-tasks"
+              value={cardViewStyle}
+              onChange={setCardViewStyle}
+              compact
+            />
+          </div>
+        )}
 
         {tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
@@ -1021,6 +1233,21 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               Create Task
             </button>
           </div>
+        ) : cardViewStyle === 'notion' ? (
+          /* A7.2: Notion-like view — same data, different layout */
+          <NotionListView
+            sections={viewSections}
+            onItemClick={handleGenericItemClick}
+            emptyMessage={t('myWork.tasks.empty', 'No tasks match your filters')}
+          />
+        ) : cardViewStyle === 'clickup' ? (
+          /* A7.3: ClickUp-like dense view */
+          <ClickUpListView
+            sections={viewSections}
+            columns={TASK_CLICKUP_COLUMNS}
+            onItemClick={handleGenericItemClick}
+            emptyMessage={t('myWork.tasks.empty', 'No tasks match your filters')}
+          />
         ) : (
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
             <table className="w-full" style={{ minWidth: 900 }}>

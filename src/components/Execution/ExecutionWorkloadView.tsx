@@ -2,15 +2,25 @@
  * ExecutionWorkloadView
  *
  * Resource allocation and capacity planning view for execution phase.
- * Shows team workload as a heat map with:
+ *
+ * D5.2: Workload heatmap with:
+ * - Toggle between weekly and monthly views
  * - Person/team rows
- * - Week columns
- * - Allocation percentage per cell
- * - Color coding for capacity (green/yellow/red)
+ * - Color coding: green (low) → yellow (medium) → red (high/overallocated)
  * - Initiative breakdown on click
+ * - Team average totals row
+ * - Parameterizable time range
  */
 
-import { AlertTriangle, ChevronLeft, ChevronRight, User, Users } from 'lucide-react';
+import {
+  AlertTriangle,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  User,
+  Users,
+} from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { FullInitiative, InitiativeStatus } from '../../types';
@@ -25,6 +35,8 @@ interface ExecutionWorkloadViewProps {
 // TYPES
 // ============================================
 
+type ViewMode = 'weekly' | 'monthly';
+
 interface ResourceAllocation {
   initiativeId: string;
   initiativeName: string;
@@ -37,34 +49,20 @@ interface PersonWorkload {
   userName: string;
   avatar?: string;
   role?: string;
-  weeklyAllocations: Map<string, ResourceAllocation[]>; // weekKey -> allocations
+  allocations: Map<string, ResourceAllocation[]>; // periodKey -> allocations
+}
+
+interface TimePeriod {
+  key: string;
+  label: string;
+  shortLabel: string;
+  startDate: Date;
+  endDate: Date;
 }
 
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
-
-const generateWeeks = (
-  startDate: Date,
-  numWeeks: number = 8
-): { key: string; label: string; date: Date }[] => {
-  const weeks: { key: string; label: string; date: Date }[] = [];
-  const current = new Date(startDate);
-  current.setDate(current.getDate() - current.getDay() + 1); // Start from Monday
-
-  for (let i = 0; i < numWeeks; i++) {
-    const weekDate = new Date(current);
-    const weekNum = getWeekNumber(weekDate);
-    weeks.push({
-      key: `${weekDate.getFullYear()}-W${weekNum.toString().padStart(2, '0')}`,
-      label: `W${weekNum}`,
-      date: weekDate,
-    });
-    current.setDate(current.getDate() + 7);
-  }
-
-  return weeks;
-};
 
 const getWeekNumber = (date: Date): number => {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -74,19 +72,93 @@ const getWeekNumber = (date: Date): number => {
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 };
 
-const getAllocationColor = (percentage: number): string => {
-  if (percentage === 0) return 'bg-navy-800';
-  if (percentage < 50) return 'bg-emerald-500/30';
-  if (percentage <= 80) return 'bg-emerald-500/50';
-  if (percentage <= 100) return 'bg-amber-500/50';
+const generateWeeks = (startDate: Date, numWeeks: number): TimePeriod[] => {
+  const periods: TimePeriod[] = [];
+  const current = new Date(startDate);
+  current.setDate(current.getDate() - current.getDay() + 1);
+
+  for (let i = 0; i < numWeeks; i++) {
+    const weekStart = new Date(current);
+    const weekEnd = new Date(current);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    const weekNum = getWeekNumber(weekStart);
+
+    periods.push({
+      key: `${weekStart.getFullYear()}-W${weekNum.toString().padStart(2, '0')}`,
+      label: `W${weekNum}`,
+      shortLabel: `W${weekNum}`,
+      startDate: weekStart,
+      endDate: weekEnd,
+    });
+    current.setDate(current.getDate() + 7);
+  }
+
+  return periods;
+};
+
+const generateMonths = (startDate: Date, numMonths: number): TimePeriod[] => {
+  const periods: TimePeriod[] = [];
+  const current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  for (let i = 0; i < numMonths; i++) {
+    const monthStart = new Date(current);
+    const monthEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+
+    periods.push({
+      key: `${current.getFullYear()}-M${(current.getMonth() + 1).toString().padStart(2, '0')}`,
+      label: `${monthNames[current.getMonth()]} ${current.getFullYear()}`,
+      shortLabel: monthNames[current.getMonth()],
+      startDate: monthStart,
+      endDate: monthEnd,
+    });
+
+    current.setMonth(current.getMonth() + 1);
+  }
+
+  return periods;
+};
+
+// D5.2: Green → Yellow → Red color scale
+const getHeatmapColor = (percentage: number): string => {
+  if (percentage === 0) return 'bg-navy-800/50';
+  if (percentage <= 30) return 'bg-emerald-500/20';
+  if (percentage <= 50) return 'bg-emerald-500/35';
+  if (percentage <= 70) return 'bg-emerald-500/50';
+  if (percentage <= 85) return 'bg-yellow-500/35';
+  if (percentage <= 100) return 'bg-amber-500/45';
+  if (percentage <= 120) return 'bg-orange-500/50';
   return 'bg-red-500/50';
 };
 
-const getAllocationTextColor = (percentage: number): string => {
+const getHeatmapTextColor = (percentage: number): string => {
   if (percentage === 0) return 'text-slate-600';
-  if (percentage <= 80) return 'text-emerald-400';
+  if (percentage <= 50) return 'text-emerald-400';
+  if (percentage <= 70) return 'text-emerald-300';
+  if (percentage <= 85) return 'text-yellow-400';
   if (percentage <= 100) return 'text-amber-400';
   return 'text-red-400';
+};
+
+const getHeatmapBorder = (percentage: number): string => {
+  if (percentage === 0) return 'border-transparent';
+  if (percentage <= 70) return 'border-emerald-500/20';
+  if (percentage <= 100) return 'border-amber-500/30';
+  return 'border-red-500/40';
 };
 
 // ============================================
@@ -96,29 +168,44 @@ const getAllocationTextColor = (percentage: number): string => {
 interface WorkloadCellProps {
   allocations: ResourceAllocation[];
   onClick: () => void;
+  viewMode: ViewMode;
 }
 
-const WorkloadCell: React.FC<WorkloadCellProps> = ({ allocations, onClick }) => {
+const WorkloadCell: React.FC<WorkloadCellProps> = ({ allocations, onClick, viewMode }) => {
   const totalPercentage = allocations.reduce((sum, a) => sum + a.percentage, 0);
   const isOverallocated = totalPercentage > 100;
-  const bgColor = getAllocationColor(totalPercentage);
-  const textColor = getAllocationTextColor(totalPercentage);
+  const bgColor = getHeatmapColor(totalPercentage);
+  const textColor = getHeatmapTextColor(totalPercentage);
+  const borderColor = getHeatmapBorder(totalPercentage);
+  const taskCount = allocations.length;
 
   return (
     <button
       onClick={onClick}
       className={`
-        w-full h-12 rounded-lg transition-all border border-transparent
-        hover:border-cyan-500/50 hover:scale-105
-        ${bgColor}
-        flex items-center justify-center
+        w-full rounded-lg transition-all border
+        hover:border-cyan-500/50 hover:scale-[1.03] hover:shadow-md
+        ${bgColor} ${borderColor}
+        flex flex-col items-center justify-center
+        ${viewMode === 'monthly' ? 'h-16 gap-0.5' : 'h-12'}
       `}
     >
       {totalPercentage > 0 && (
-        <div className="flex items-center gap-1">
-          <span className={`text-sm font-bold ${textColor}`}>{totalPercentage}%</span>
-          {isOverallocated && <AlertTriangle size={12} className="text-red-500" />}
-        </div>
+        <>
+          <div className="flex items-center gap-1">
+            <span
+              className={`font-bold ${textColor} ${viewMode === 'monthly' ? 'text-sm' : 'text-xs'}`}
+            >
+              {totalPercentage}%
+            </span>
+            {isOverallocated && <AlertTriangle size={11} className="text-red-500" />}
+          </div>
+          {viewMode === 'monthly' && taskCount > 0 && (
+            <span className="text-[10px] text-slate-500">
+              {taskCount} task{taskCount !== 1 ? 's' : ''}
+            </span>
+          )}
+        </>
       )}
     </button>
   );
@@ -130,7 +217,7 @@ const WorkloadCell: React.FC<WorkloadCellProps> = ({ allocations, onClick }) => 
 
 interface AllocationDetailModalProps {
   person: PersonWorkload;
-  weekLabel: string;
+  periodLabel: string;
   allocations: ResourceAllocation[];
   onClose: () => void;
   onInitiativeClick: (initiativeId: string) => void;
@@ -138,12 +225,13 @@ interface AllocationDetailModalProps {
 
 const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
   person,
-  weekLabel,
+  periodLabel,
   allocations,
   onClose,
   onInitiativeClick,
 }) => {
   const totalPercentage = allocations.reduce((sum, a) => sum + a.percentage, 0);
+  const textColor = getHeatmapTextColor(totalPercentage);
 
   return (
     <div
@@ -161,13 +249,13 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
           <div>
             <h3 className="font-semibold text-white">{person.userName}</h3>
             <p className="text-sm text-slate-400">
-              {weekLabel} - {totalPercentage}% allocated
+              {periodLabel} — <span className={textColor}>{totalPercentage}% allocated</span>
             </p>
           </div>
         </div>
 
         {allocations.length === 0 ? (
-          <p className="text-center text-slate-500 py-4">No allocations this week</p>
+          <p className="text-center text-slate-500 py-4">No allocations this period</p>
         ) : (
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {allocations.map((allocation, idx) => (
@@ -181,7 +269,7 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
                     {allocation.initiativeName}
                   </span>
                   <span
-                    className={`text-sm font-bold ${getAllocationTextColor(allocation.percentage)}`}
+                    className={`text-sm font-bold ${getHeatmapTextColor(allocation.percentage)}`}
                   >
                     {allocation.percentage}%
                   </span>
@@ -223,33 +311,36 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
   initiatives,
   onInitiativeClick,
 }) => {
-  const [viewWeeks, setViewWeeks] = useState(8);
+  const [viewMode, setViewMode] = useState<ViewMode>('monthly');
+  const [weekCount, setWeekCount] = useState(8);
+  const [monthCount, setMonthCount] = useState(6);
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
-    today.setDate(today.getDate() - 7); // Start 1 week ago
+    today.setDate(today.getDate() - 7);
     return today;
   });
   const [selectedCell, setSelectedCell] = useState<{
     person: PersonWorkload;
-    weekKey: string;
-    weekLabel: string;
+    periodKey: string;
+    periodLabel: string;
   } | null>(null);
 
-  // Generate weeks
-  const weeks = useMemo(() => generateWeeks(startDate, viewWeeks), [startDate, viewWeeks]);
+  // Generate time periods based on view mode
+  const periods = useMemo(() => {
+    if (viewMode === 'weekly') {
+      return generateWeeks(startDate, weekCount);
+    }
+    return generateMonths(startDate, monthCount);
+  }, [viewMode, startDate, weekCount, monthCount]);
 
   // Build workload data from initiatives
   const workloadData = useMemo(() => {
     const peopleMap = new Map<string, PersonWorkload>();
 
-    // Process initiatives with owners
     initiatives.forEach((initiative) => {
-      // Check for assigned owners
       const owners = [initiative.ownerBusiness, initiative.ownerTechnical].filter(Boolean);
-
       if (owners.length === 0) return;
 
-      // Calculate allocation per week based on initiative dates
       const startDateStr = initiative.startDate;
       const endDateStr =
         initiative.actualEndDate || initiative.plannedEndDate || initiative.endDate;
@@ -261,8 +352,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
         ? new Date(endDateStr)
         : new Date(iStart.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-      // Default allocation per person (split equally among owners)
-      const allocationPerPerson = Math.round(50 / owners.length); // 50% total, split
+      const allocationPerPerson = Math.round(50 / owners.length);
 
       owners.forEach((owner) => {
         if (!owner?.id) return;
@@ -275,62 +365,73 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
             userId: ownerId,
             userName: ownerName,
             avatar: owner.avatarUrl,
-            weeklyAllocations: new Map(),
+            allocations: new Map(),
           });
         }
 
         const person = peopleMap.get(ownerId)!;
 
-        // Add allocation for each week the initiative spans
-        weeks.forEach((week) => {
-          const weekStart = week.date;
-          const weekEnd = new Date(week.date);
-          weekEnd.setDate(weekEnd.getDate() + 7);
-
-          // Check if initiative overlaps with this week
-          if (iStart <= weekEnd && iEnd >= weekStart) {
-            const existingAllocations = person.weeklyAllocations.get(week.key) || [];
+        periods.forEach((period) => {
+          if (iStart <= period.endDate && iEnd >= period.startDate) {
+            const existingAllocations = person.allocations.get(period.key) || [];
             existingAllocations.push({
               initiativeId: initiative.id,
               initiativeName: initiative.name,
               percentage: allocationPerPerson,
               status: initiative.status,
             });
-            person.weeklyAllocations.set(week.key, existingAllocations);
+            person.allocations.set(period.key, existingAllocations);
           }
         });
       });
     });
 
     return Array.from(peopleMap.values()).sort((a, b) => a.userName.localeCompare(b.userName));
-  }, [initiatives, weeks]);
+  }, [initiatives, periods]);
 
-  // Calculate totals per week
-  const weeklyTotals = useMemo(() => {
+  // Calculate totals per period
+  const periodTotals = useMemo(() => {
     const totals = new Map<string, number>();
-    weeks.forEach((week) => {
+    periods.forEach((period) => {
       let total = 0;
       workloadData.forEach((person) => {
-        const allocations = person.weeklyAllocations.get(week.key) || [];
+        const allocations = person.allocations.get(period.key) || [];
         total += allocations.reduce((sum, a) => sum + a.percentage, 0);
       });
-      totals.set(week.key, Math.round(total / Math.max(workloadData.length, 1)));
+      totals.set(period.key, Math.round(total / Math.max(workloadData.length, 1)));
     });
     return totals;
-  }, [workloadData, weeks]);
+  }, [workloadData, periods]);
+
+  // Calculate max allocation for any person in any period (for scale reference)
+  const maxAllocation = useMemo(() => {
+    let max = 0;
+    workloadData.forEach((person) => {
+      periods.forEach((period) => {
+        const allocations = person.allocations.get(period.key) || [];
+        const total = allocations.reduce((sum, a) => sum + a.percentage, 0);
+        if (total > max) max = total;
+      });
+    });
+    return max;
+  }, [workloadData, periods]);
 
   // Navigation
   const navigateTimeline = (direction: 'prev' | 'next') => {
     setStartDate((prev) => {
       const newDate = new Date(prev);
-      newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
+      if (viewMode === 'weekly') {
+        newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
+      } else {
+        newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
+      }
       return newDate;
     });
   };
 
   const handleCellClick = useCallback(
-    (person: PersonWorkload, weekKey: string, weekLabel: string) => {
-      setSelectedCell({ person, weekKey, weekLabel });
+    (person: PersonWorkload, periodKey: string, periodLabel: string) => {
+      setSelectedCell({ person, periodKey, periodLabel });
     },
     []
   );
@@ -350,6 +451,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
     <div className="h-full flex flex-col bg-navy-950">
       {/* Controls */}
       <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-navy-700 bg-navy-900">
+        {/* Left: Navigation */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigateTimeline('prev')}
@@ -357,12 +459,8 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
           >
             <ChevronLeft size={18} />
           </button>
-          <span className="text-sm font-medium text-white min-w-[100px] text-center">
-            {weeks[0]?.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} -
-            {weeks[weeks.length - 1]?.date.toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-            })}
+          <span className="text-sm font-medium text-white min-w-[140px] text-center">
+            {periods[0]?.label} — {periods[periods.length - 1]?.label}
           </span>
           <button
             onClick={() => navigateTimeline('next')}
@@ -372,20 +470,66 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
           </button>
         </div>
 
-        <div className="flex items-center gap-1 bg-navy-800 rounded-lg p-1 border border-navy-700">
-          {[6, 8, 12].map((w) => (
+        {/* Right: View controls */}
+        <div className="flex items-center gap-3">
+          {/* View mode toggle */}
+          <div className="flex items-center bg-navy-800 rounded-lg p-0.5 border border-navy-700">
             <button
-              key={w}
-              onClick={() => setViewWeeks(w)}
-              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                viewWeeks === w
-                  ? 'bg-purple-500/20 text-purple-400'
+              onClick={() => setViewMode('weekly')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                viewMode === 'weekly'
+                  ? 'bg-purple-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              {w}W
+              <LayoutGrid size={12} />
+              Weekly
             </button>
-          ))}
+            <button
+              onClick={() => setViewMode('monthly')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                viewMode === 'monthly'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <CalendarDays size={12} />
+              Monthly
+            </button>
+          </div>
+
+          <div className="w-px h-4 bg-navy-700" />
+
+          {/* Period count */}
+          <div className="flex items-center gap-1 bg-navy-800 rounded-lg p-1 border border-navy-700">
+            {viewMode === 'weekly'
+              ? [6, 8, 12].map((w) => (
+                  <button
+                    key={w}
+                    onClick={() => setWeekCount(w)}
+                    className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                      weekCount === w
+                        ? 'bg-purple-500/20 text-purple-400'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {w}W
+                  </button>
+                ))
+              : [3, 6, 12].map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setMonthCount(m)}
+                    className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                      monthCount === m
+                        ? 'bg-purple-500/20 text-purple-400'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {m}M
+                  </button>
+                ))}
+          </div>
         </div>
       </div>
 
@@ -405,30 +549,42 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
           <div className="min-w-[800px]">
             {/* Header */}
             <div className="sticky top-0 z-10 flex bg-navy-900 border-b border-navy-700">
-              <div className="w-48 shrink-0 px-4 py-3 border-r border-navy-700">
+              <div className="w-52 shrink-0 px-4 py-3 border-r border-navy-700">
                 <span className="text-sm font-semibold text-white">Team Member</span>
               </div>
-              {weeks.map((week) => (
+              {periods.map((period) => (
                 <div
-                  key={week.key}
+                  key={period.key}
                   className="flex-1 px-2 py-3 text-center border-r border-navy-700 last:border-r-0"
                 >
-                  <div className="text-sm font-medium text-white">{week.label}</div>
-                  <div className="text-[10px] text-slate-500">
-                    {week.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  <div className="text-sm font-medium text-white">
+                    {viewMode === 'monthly' ? period.shortLabel : period.label}
                   </div>
+                  {viewMode === 'monthly' && (
+                    <div className="text-[10px] text-slate-500">
+                      {period.startDate.getFullYear()}
+                    </div>
+                  )}
+                  {viewMode === 'weekly' && (
+                    <div className="text-[10px] text-slate-500">
+                      {period.startDate.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
 
-            {/* Rows */}
+            {/* Person Rows */}
             {workloadData.map((person) => (
               <div
                 key={person.userId}
                 className="flex border-b border-navy-800 hover:bg-navy-900/50"
               >
-                <div className="w-48 shrink-0 px-4 py-3 border-r border-navy-700 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-navy-700 flex items-center justify-center text-xs text-white">
+                <div className="w-52 shrink-0 px-4 py-3 border-r border-navy-700 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-navy-700 flex items-center justify-center text-xs text-white shrink-0">
                     {person.userName
                       .split(' ')
                       .map((n) => n[0])
@@ -443,16 +599,17 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                     )}
                   </div>
                 </div>
-                {weeks.map((week) => {
-                  const allocations = person.weeklyAllocations.get(week.key) || [];
+                {periods.map((period) => {
+                  const allocations = person.allocations.get(period.key) || [];
                   return (
                     <div
-                      key={week.key}
-                      className="flex-1 p-1 border-r border-navy-800 last:border-r-0"
+                      key={period.key}
+                      className="flex-1 p-1.5 border-r border-navy-800 last:border-r-0"
                     >
                       <WorkloadCell
                         allocations={allocations}
-                        onClick={() => handleCellClick(person, week.key, week.label)}
+                        onClick={() => handleCellClick(person, period.key, period.label)}
+                        viewMode={viewMode}
                       />
                     </div>
                   );
@@ -462,17 +619,17 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
 
             {/* Totals Row */}
             <div className="flex bg-navy-900 border-t border-navy-700">
-              <div className="w-48 shrink-0 px-4 py-3 border-r border-navy-700">
+              <div className="w-52 shrink-0 px-4 py-3 border-r border-navy-700">
                 <span className="text-sm font-semibold text-slate-400">Team Average</span>
               </div>
-              {weeks.map((week) => {
-                const avgAllocation = weeklyTotals.get(week.key) || 0;
+              {periods.map((period) => {
+                const avgAllocation = periodTotals.get(period.key) || 0;
                 return (
                   <div
-                    key={week.key}
+                    key={period.key}
                     className="flex-1 p-2 text-center border-r border-navy-700 last:border-r-0"
                   >
-                    <span className={`text-sm font-bold ${getAllocationTextColor(avgAllocation)}`}>
+                    <span className={`text-sm font-bold ${getHeatmapTextColor(avgAllocation)}`}>
                       {avgAllocation}%
                     </span>
                   </div>
@@ -483,25 +640,52 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
         )}
       </div>
 
-      {/* Legend */}
-      <div className="shrink-0 flex items-center gap-6 px-4 py-2 border-t border-navy-700 bg-navy-900 text-xs">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded bg-emerald-500/30" />
-            <span className="text-slate-400">&lt;50%</span>
+      {/* D5.2: Enhanced Legend with heatmap scale */}
+      <div className="shrink-0 px-4 py-2 border-t border-navy-700 bg-navy-900">
+        <div className="flex items-center gap-4 text-xs flex-wrap">
+          <span className="text-slate-400 font-medium">Load:</span>
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
+              {[
+                { pct: 0, label: '0%' },
+                { pct: 30, label: '30%' },
+                { pct: 50, label: '50%' },
+                { pct: 70, label: '70%' },
+                { pct: 85, label: '85%' },
+                { pct: 100, label: '100%' },
+                { pct: 120, label: '>100%' },
+              ].map(({ pct, label }) => (
+                <div key={pct} className="flex flex-col items-center gap-0.5">
+                  <div className={`w-6 h-3 rounded-sm ${getHeatmapColor(pct)}`} />
+                  <span className="text-[9px] text-slate-500">{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded bg-emerald-500/50" />
-            <span className="text-slate-400">50-80%</span>
+          <div className="w-px h-3 bg-navy-700 mx-1" />
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-3 rounded-sm bg-emerald-500/35" />
+              <span className="text-slate-400">Low</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-3 rounded-sm bg-amber-500/45" />
+              <span className="text-slate-400">Medium</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-3 rounded-sm bg-red-500/50" />
+              <span className="text-slate-400">Overallocated</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded bg-amber-500/50" />
-            <span className="text-slate-400">80-100%</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded bg-red-500/50" />
-            <span className="text-slate-400">&gt;100% (Overallocated)</span>
-          </div>
+          {maxAllocation > 100 && (
+            <>
+              <div className="w-px h-3 bg-navy-700 mx-1" />
+              <div className="flex items-center gap-1.5">
+                <AlertTriangle size={11} className="text-red-500" />
+                <span className="text-red-400">Peak: {maxAllocation}%</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -509,8 +693,8 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
       {selectedCell && (
         <AllocationDetailModal
           person={selectedCell.person}
-          weekLabel={selectedCell.weekLabel}
-          allocations={selectedCell.person.weeklyAllocations.get(selectedCell.weekKey) || []}
+          periodLabel={selectedCell.periodLabel}
+          allocations={selectedCell.person.allocations.get(selectedCell.periodKey) || []}
           onClose={() => setSelectedCell(null)}
           onInitiativeClick={handleInitiativeClick}
         />

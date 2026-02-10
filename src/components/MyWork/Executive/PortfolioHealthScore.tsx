@@ -170,6 +170,9 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
 }) => {
   const { t } = useTranslation();
 
+  // A1.1: Determine if we have real data – score 0 with no previous score likely means no data loaded
+  const hasData = score > 0 || (previousScore !== undefined && previousScore > 0);
+
   const scoreDiff = previousScore !== undefined ? score - previousScore : 0;
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
   const trendColor =
@@ -188,7 +191,17 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
     return { label: t('executive.health.critical', 'Critical'), color: 'text-rose-500' };
   };
 
-  const scoreInfo = getScoreLabel(score);
+  const scoreInfo = hasData
+    ? getScoreLabel(score)
+    : { label: t('executive.health.noData', 'No data'), color: 'text-slate-400' };
+
+  // A1.1: Filter out breakdown items that have no real data (value === 0 means not populated)
+  const hasBreakdownData =
+    breakdown &&
+    (breakdown.execution > 0 ||
+      breakdown.decisions > 0 ||
+      breakdown.capacity > 0 ||
+      breakdown.risk > 0);
 
   if (loading) {
     return (
@@ -212,10 +225,10 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
         className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4 flex items-center gap-4"
       >
         <div className="relative">
-          <ScoreRing score={score} size={80} />
+          <ScoreRing score={hasData ? score : 0} size={80} />
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-xl font-bold text-navy-900 dark:text-white tabular-nums">
-              <AnimatedNumber value={score} />
+              {hasData ? <AnimatedNumber value={score} /> : '—'}
             </span>
           </div>
         </div>
@@ -224,7 +237,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
             {t('executive.health.portfolio', 'Portfolio Health')}
           </p>
           <p className={`text-sm font-semibold ${scoreInfo.color}`}>{scoreInfo.label}</p>
-          {scoreDiff !== 0 && (
+          {hasData && scoreDiff !== 0 && (
             <div className={`flex items-center gap-1 mt-1 ${trendColor}`}>
               <TrendIcon size={12} />
               <span className="text-xs font-medium">
@@ -262,8 +275,8 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
             </div>
           </div>
 
-          {/* Trend Badge */}
-          {scoreDiff !== 0 && (
+          {/* Trend Badge – A1.1: only show when real data exists */}
+          {hasData && scoreDiff !== 0 && (
             <div
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
                 trend === 'up'
@@ -287,46 +300,79 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
       {/* Main Score Display */}
       <div className="p-6">
         <div className="flex flex-col lg:flex-row items-center gap-8">
-          {/* Score Ring */}
+          {/* Score Ring – A1.1: data source: computed from /my-work/stats completion + on-time rates */}
           <div className="relative flex-shrink-0">
-            <ScoreRing score={score} size={200} />
+            <ScoreRing score={hasData ? score : 0} size={200} />
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-5xl font-bold text-navy-900 dark:text-white tabular-nums">
-                <AnimatedNumber value={score} duration={1500} />
-              </span>
-              <span className={`text-sm font-semibold mt-1 ${scoreInfo.color}`}>
-                {scoreInfo.label}
-              </span>
+              {hasData ? (
+                <>
+                  <span className="text-5xl font-bold text-navy-900 dark:text-white tabular-nums">
+                    <AnimatedNumber value={score} duration={1500} />
+                  </span>
+                  <span className={`text-sm font-semibold mt-1 ${scoreInfo.color}`}>
+                    {scoreInfo.label}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-3xl font-bold text-slate-300 dark:text-slate-600">—</span>
+                  <span className="text-sm font-semibold mt-1 text-slate-400 dark:text-slate-500">
+                    {t('executive.health.noData', 'No data')}
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Breakdown Grid */}
-          {breakdown && (
+          {/* Breakdown Grid – A1.1: only show bars that have real data (>0) */}
+          {hasBreakdownData ? (
             <div className="flex-1 w-full space-y-4">
-              <BreakdownBar
-                label={t('executive.health.execution', 'Execution')}
-                value={breakdown.execution}
-                icon={<Target size={16} className="text-white" />}
-                color="bg-emerald-500"
-              />
-              <BreakdownBar
-                label={t('executive.health.decisions', 'Decision Velocity')}
-                value={breakdown.decisions}
-                icon={<Zap size={16} className="text-white" />}
-                color="bg-cyan-500"
-              />
-              <BreakdownBar
-                label={t('executive.health.capacity', 'Team Capacity')}
-                value={breakdown.capacity}
-                icon={<CheckCircle2 size={16} className="text-white" />}
-                color="bg-violet-500"
-              />
-              <BreakdownBar
-                label={t('executive.health.risk', 'Risk Mitigation')}
-                value={breakdown.risk}
-                icon={<AlertTriangle size={16} className="text-white" />}
-                color="bg-amber-500"
-              />
+              {breakdown!.execution > 0 && (
+                <BreakdownBar
+                  label={t('executive.health.execution', 'Execution')}
+                  value={breakdown!.execution}
+                  icon={<Target size={16} className="text-white" />}
+                  color="bg-emerald-500"
+                />
+              )}
+              {breakdown!.decisions > 0 && (
+                <BreakdownBar
+                  label={t('executive.health.decisions', 'Decision Velocity')}
+                  value={breakdown!.decisions}
+                  icon={<Zap size={16} className="text-white" />}
+                  color="bg-cyan-500"
+                />
+              )}
+              {breakdown!.capacity > 0 && (
+                <BreakdownBar
+                  label={t('executive.health.capacity', 'Team Capacity')}
+                  value={breakdown!.capacity}
+                  icon={<CheckCircle2 size={16} className="text-white" />}
+                  color="bg-violet-500"
+                />
+              )}
+              {breakdown!.risk > 0 && (
+                <BreakdownBar
+                  label={t('executive.health.risk', 'Risk Mitigation')}
+                  value={breakdown!.risk}
+                  icon={<AlertTriangle size={16} className="text-white" />}
+                  color="bg-amber-500"
+                />
+              )}
+            </div>
+          ) : (
+            <div className="flex-1 w-full flex flex-col items-center justify-center py-4 text-center">
+              <p className="text-sm text-slate-400 dark:text-slate-500">
+                {t('executive.health.noBreakdown', 'Breakdown data not yet available')}
+              </p>
+              <p className="text-xs text-slate-300 dark:text-slate-600 mt-1">
+                {/* A1.1: TODO – populate breakdown.decisions from decision velocity,
+                    breakdown.capacity from team workload, breakdown.risk from risk assessment */}
+                {t(
+                  'executive.health.noBreakdownHint',
+                  'Data will appear as tasks and decisions are tracked'
+                )}
+              </p>
             </div>
           )}
         </div>

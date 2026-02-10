@@ -11,13 +11,17 @@ import {
   FileText,
   LayoutDashboard,
   ListChecks,
+  Shield,
   TrendingUp,
   Zap,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, FullSession, Language } from '../../types';
+import { BenefitsTracker } from '../Execution/BenefitsTracker';
+import { CorrectiveActions } from '../Execution/CorrectiveActions';
+import { KPIDashboard } from '../Execution/KPIDashboard';
 import { Button } from '../ui/primitives/Button';
 // import { exportReportToPDF } from '../../services/pdf/pdfExport';
 import { AIInsightFeed } from './AIInsightFeed';
@@ -36,12 +40,29 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
   onGenerateReport,
   language: _language,
 }) => {
-  const { currentUser } = useAppStore();
+  const { currentUser, currentProjectId } = useAppStore();
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
 
   const handleDownloadPDF = async () => {
     onGenerateReport();
   };
+
+  // Compute real stats from fullSession.initiatives
+  const stats = useMemo(() => {
+    const initiatives = fullSession.initiatives || [];
+    const total = initiatives.length;
+    const inProgress = initiatives.filter(
+      (i) => (i.status as string) === 'In Progress' || i.status === 'EXECUTING'
+    ).length;
+    const done = initiatives.filter(
+      (i) => (i.status as string) === 'Done' || i.status === 'DONE'
+    ).length;
+    const blocked = initiatives.filter(
+      (i) => (i.status as string) === 'Blocked' || i.status === 'BLOCKED'
+    ).length;
+    const healthPercent = total > 0 ? Math.round(((total - blocked) / total) * 100) : 0;
+    return { total, inProgress, done, blocked, healthPercent };
+  }, [fullSession.initiatives]);
 
   // --- Components ---
 
@@ -79,35 +100,45 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
 
   const renderOverview = () => (
     <div className="space-y-6 animate-fade-in">
-      {/* Top Stats Row */}
+      {/* Top Stats Row — computed from fullSession */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Health Score"
-          value="92%"
-          subtext="Transformation Healthy"
+          value={`${stats.healthPercent}%`}
+          subtext={
+            stats.healthPercent >= 80
+              ? 'Transformation Healthy'
+              : stats.healthPercent >= 50
+                ? 'Needs Attention'
+                : 'Critical'
+          }
           icon={Activity}
-          color="green"
+          color={stats.healthPercent >= 80 ? 'green' : stats.healthPercent >= 50 ? 'amber' : 'red'}
         />
         <StatCard
           title="Active Initiatives"
-          value={fullSession.initiatives.length.toString()}
-          subtext={`${fullSession.initiatives.filter((i) => (i.status as string) === 'In Progress' || i.status === 'EXECUTING').length} In Progress`}
+          value={stats.total.toString()}
+          subtext={`${stats.inProgress} In Progress`}
           icon={ListChecks}
           color="blue"
         />
         <StatCard
-          title="Value Realized"
-          value="$1.85M"
-          subtext="22% of Target ($8.4M)"
+          title="Completed"
+          value={stats.done.toString()}
+          subtext={
+            stats.total > 0
+              ? `${Math.round((stats.done / stats.total) * 100)}% of total`
+              : 'No initiatives'
+          }
           icon={TrendingUp}
           color="purple"
         />
         <StatCard
-          title="Critical Risks"
-          value="3"
-          subtext="Need Attention"
+          title="Blocked"
+          value={stats.blocked.toString()}
+          subtext={stats.blocked > 0 ? 'Need Attention' : 'All Clear'}
           icon={AlertTriangle}
-          color="red"
+          color={stats.blocked > 0 ? 'red' : 'green'}
         />
       </div>
 
@@ -132,12 +163,39 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
               </div>
             </div>
 
-            {/* Placeholder Chart */}
-            <div className="flex-1 w-full bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-dashed border-slate-200 dark:border-navy-700 flex items-center justify-center relative overflow-hidden group">
-              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-brand/20 to-transparent opacity-50 group-hover:h-full transition-all duration-1000" />
-              <p className="text-slate-400 dark:text-slate-500 text-sm font-medium z-10">
-                Use Recharts for real data visualization here
-              </p>
+            {/* Initiative Progress Summary */}
+            <div className="flex-1 w-full bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700 p-4 overflow-auto">
+              <div className="space-y-3">
+                {fullSession.initiatives.slice(0, 6).map((init) => {
+                  const tasks = (init as any).tasks || [];
+                  const doneTasks = tasks.filter(
+                    (t: any) => t.status === 'done' || t.status === 'DONE'
+                  ).length;
+                  const progressPct =
+                    tasks.length > 0 ? Math.round((doneTasks / tasks.length) * 100) : 0;
+                  return (
+                    <div key={init.id} className="flex items-center gap-3">
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate w-40">
+                        {init.name}
+                      </span>
+                      <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-brand to-blue-500 rounded-full transition-all"
+                          style={{ width: `${progressPct}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400 w-10 text-right">
+                        {progressPct}%
+                      </span>
+                    </div>
+                  );
+                })}
+                {fullSession.initiatives.length === 0 && (
+                  <p className="text-slate-400 dark:text-slate-500 text-sm text-center py-4">
+                    No initiatives yet
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -156,33 +214,45 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
               <Clock size={14} /> Live Activity
             </h3>
             <div className="space-y-4">
-              {[
-                { text: "Pilot 1 'Smart Factory' Completed", time: '2h ago', color: 'green' },
-                { text: "Risk #4 'Data Privacy' Updated to High", time: '5h ago', color: 'red' },
-                {
-                  text: "New Initiative 'AI Customer Support' Added",
-                  time: '1d ago',
-                  color: 'blue',
-                },
-                { text: 'Budget approved for Phase 2', time: '2d ago', color: 'purple' },
-              ].map((evt, i) => (
-                <div key={i} className="flex gap-3 group">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={`w-2 h-2 rounded-full bg-${evt.color}-500 ring-4 ring-${evt.color}-500/20 group-hover:ring-8 transition-all duration-300`}
-                    />
-                    <div className="w-px h-full bg-slate-200 dark:bg-white/10 mt-2" />
+              {fullSession.initiatives.slice(0, 4).map((init, i) => {
+                const statusColor =
+                  init.status === 'DONE' || (init.status as string) === 'Done'
+                    ? 'green'
+                    : init.status === 'BLOCKED' || (init.status as string) === 'Blocked'
+                      ? 'red'
+                      : init.status === 'EXECUTING' || (init.status as string) === 'In Progress'
+                        ? 'blue'
+                        : 'purple';
+                const lastDate = init.updatedAt || init.createdAt;
+                const timeAgo = lastDate
+                  ? (() => {
+                      const diff = Date.now() - new Date(lastDate as string).getTime();
+                      const hours = Math.floor(diff / 3600000);
+                      return hours < 24 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`;
+                    })()
+                  : '';
+                return (
+                  <div key={init.id} className="flex gap-3 group">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className={`w-2 h-2 rounded-full bg-${statusColor}-500 ring-4 ring-${statusColor}-500/20 group-hover:ring-8 transition-all duration-300`}
+                      />
+                      <div className="w-px h-full bg-slate-200 dark:bg-white/10 mt-2" />
+                    </div>
+                    <div className="pb-4">
+                      <p className="text-sm font-medium text-navy-900 dark:text-white leading-tight">
+                        {init.name}
+                      </p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                        {String(init.status).replace('_', ' ')} • {timeAgo}
+                      </p>
+                    </div>
                   </div>
-                  <div className="pb-4">
-                    <p className="text-sm font-medium text-navy-900 dark:text-white leading-tight">
-                      {evt.text}
-                    </p>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
-                      {evt.time}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
+              {fullSession.initiatives.length === 0 && (
+                <p className="text-sm text-slate-400 dark:text-slate-500">No recent activity</p>
+              )}
             </div>
           </div>
 
@@ -264,20 +334,34 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                   </span>
                 </td>
                 <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-900 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-brand to-blue-500 rounded-full"
-                        style={{ width: '65%' }}
-                      ></div>
-                    </div>
-                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                      65%
-                    </span>
-                  </div>
+                  {(() => {
+                    const tasks = (init as any).tasks || [];
+                    const doneTasks = tasks.filter(
+                      (t: any) => t.status === 'done' || t.status === 'DONE'
+                    ).length;
+                    const pct = tasks.length > 0 ? Math.round((doneTasks / tasks.length) * 100) : 0;
+                    return (
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-900 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-brand to-blue-500 rounded-full"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                          {pct}%
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </td>
                 <td className="p-4 text-slate-500 dark:text-slate-400 text-xs font-mono">
-                  Dec 2025
+                  {(init as any).endDate
+                    ? new Date((init as any).endDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        year: 'numeric',
+                      })
+                    : '—'}
                 </td>
               </tr>
             ))}
@@ -399,20 +483,20 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
         return renderProgress();
       case 'kpi':
         return (
-          <div className="p-20 text-center text-slate-400 dark:text-slate-500 font-mono text-sm bg-slate-50/30 dark:bg-navy-950/20 border border-dashed border-white/10 rounded-xl">
-            KPI Widgets Coming Soon
+          <div className="animate-fade-in">
+            <KPIDashboard projectId={currentProjectId || 'default'} />
           </div>
         );
       case 'roi':
         return (
-          <div className="p-20 text-center text-slate-400 dark:text-slate-500 font-mono text-sm bg-slate-50/30 dark:bg-navy-950/20 border border-dashed border-white/10 rounded-xl">
-            ROI Widgets Coming Soon
+          <div className="animate-fade-in">
+            <BenefitsTracker projectId={currentProjectId || 'default'} />
           </div>
         );
       case 'risks':
         return (
-          <div className="p-20 text-center text-slate-400 dark:text-slate-500 font-mono text-sm bg-slate-50/30 dark:bg-navy-950/20 border border-dashed border-white/10 rounded-xl">
-            Risk Matrix Coming Soon
+          <div className="animate-fade-in">
+            <CorrectiveActions projectId={currentProjectId || 'default'} />
           </div>
         );
       case 'ai':
@@ -454,6 +538,9 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
           {[
             { id: 'overview', label: 'Overview', icon: LayoutDashboard },
             { id: 'progress', label: 'Progress', icon: ListChecks },
+            { id: 'kpi', label: 'KPIs', icon: BarChart3 },
+            { id: 'roi', label: 'Benefits', icon: TrendingUp },
+            { id: 'risks', label: 'Risk Actions', icon: Shield },
             { id: 'ai', label: 'AI Command', icon: Bot },
             { id: 'report', label: 'Report', icon: FileText },
           ].map((tab) => (

@@ -139,7 +139,117 @@
   "initiatives": {
     "title": "Inicjatywy",
     "roadmap": "Mapa Drogowa",
-    "portfolio": "Portfolio"
+    "portfolio": "Portfolio",
+    "form": {
+      "createNew": "Utwórz nową inicjatywę",
+      "edit": "Edytuj inicjatywę",
+      "newInitiative": "Nowa inicjatywa",
+      "title": "Tytuł",
+      "titleRequired": "Tytuł *",
+      "titlePlaceholder": "np. Złożenie dokumentacji zgodności",
+      "axis": "Oś",
+      "summary": "Podsumowanie",
+      "summaryPlaceholder": "Krótkie sformułowanie problemu/celu…",
+      "description": "Opis",
+      "descriptionOptional": "Opis (opcjonalnie)",
+      "descriptionPlaceholder": "Opisz inicjatywę...",
+      "category": "Kategoria",
+      "categoryOptional": "Kategoria (opcjonalnie)",
+      "categoryPlaceholder": "np. Cyberbezpieczeństwo",
+      "priority": "Priorytet",
+      "risk": "Ryzyko",
+      "riskLevel": "Poziom ryzyka",
+      "sourceAxis": "Oś źródłowa",
+      "budget": "Budżet (PLN)",
+      "expectedROI": "Oczekiwany zwrot z inwestycji",
+      "timeline": "Harmonogram",
+      "objectives": "Cele",
+      "addObjective": "Dodaj nowy cel...",
+      "create": "Utwórz",
+      "creating": "Tworzenie…",
+      "save": "Zapisz zmiany",
+      "cancel": "Anuluj",
+      "nameRequired": "Nazwa inicjatywy *",
+      "namePlaceholder": "Wprowadź nazwę inicjatywy",
+      "nameMinLength": "Nazwa musi mieć co najmniej 5 znaków",
+      "descriptionMinLength": "Opis musi mieć co najmniej 20 znaków",
+      "budgetRequired": "Budżet musi być większy niż 0",
+      "roiRequired": "Zwrot z inwestycji musi być większy niż 0",
+      "highRiskHighBudget": "Inicjatywa wysokiego ryzyka i wysokiego budżetu",
+      "highRiskHighBudgetDesc": "Rozważ podział na mniejsze fazy lub wprowadzenie dodatkowych kontroli zarządczych.",
+      "titleTooShort": "Tytuł jest za krótki",
+      "titleRequiredError": "Tytuł jest wymagany",
+      "initiativeCreated": "Inicjatywa utworzona",
+      "initiativeUpdated": "Inicjatywa zaktualizowana",
+      "createFailed": "Nie udało się utworzyć inicjatywy",
+      "updateFailed": "Nie udało się zaktualizować inicjatywy",
+      "duplicateWarning": "Podobna inicjatywa już istnieje: {{name}}",
+      "duplicateWarningDesc": "Ten tytuł inicjatywy jest bardzo podobny do istniejącego. Sprawdź, czy to nie duplikat."
+    },
+    "bulkEdit": {
+      "title": "Masowa edycja inicjatyw",
+      "selectedCount": "Wybrano {{count}} inicjatyw",
+      "status": "Status",
+      "priority": "Priorytet",
+      "businessOwner": "Właściciel biznesowy",
+      "executionOwner": "Właściciel realizacji",
+      "noChange": "Bez zmian",
+      "applyChanges": "Zastosuj zmiany",
+      "updatesFailed": "{{count}} aktualizacji nie powiodło się",
+      "bulkUpdateApplied": "Masowa aktualizacja zastosowana"
+    },
+    "empty": {
+      "title": "Brak inicjatyw",
+      "description": "Utwórz swoją pierwszą inicjatywę, aby rozpocząć"
+    },
+    "axis": {
+      "operational": "Operacyjna",
+      "strategic": "Strategiczna",
+      "transformational": "Transformacyjna",
+      "compliance": "Zgodność"
+    },
+    "priority": {
+      "low": "Niski",
+      "medium": "Średni",
+      "high": "Wysoki",
+      "critical": "Krytyczny"
+    },
+    "risk": {
+      "low": "Niskie ryzyko",
+      "medium": "Średnie ryzyko",
+      "high": "Wysokie ryzyko"
+    },
+    "level": {
+      "label": "Typ / Poziom inicjatywy",
+      "quick_win": "Quick Win",
+      "standard": "Projekt standardowy",
+      "strategic": "Program strategiczny",
+      "transformation": "Transformacja",
+      "cannotDowngrade": "Poziom inicjatywy nie może być obniżony",
+      "upgradeNote": "Poziom może być podniesiony, ale nie obniżony"
+    },
+    "status": {
+      "draft": "Szkic",
+      "pending_review": "Oczekuje na przegląd",
+      "review": "W przeglądzie",
+      "promoted": "Promowana",
+      "planning": "Planowanie",
+      "approved": "Zatwierdzona",
+      "scheduled": "Zaplanowana",
+      "executing": "W realizacji",
+      "blocked": "Zablokowana",
+      "done": "Ukończona",
+      "tracking": "Śledzenie",
+      "cancelled": "Anulowana",
+      "archived": "Zarchiwizowana"
+    },
+    "approval": {
+      "cannotApprove": "Nie można zatwierdzić inicjatywy",
+      "missingFields": "Brakujące wymagane pola",
+      "needsTasks": "Wymagane jest co najmniej 1 zadanie przed zatwierdzeniem",
+      "needsDeadline": "Wymagany jest termin końcowy przed zatwierdzeniem",
+      "needsOwner": "Wymagany jest właściciel biznesowy przed zatwierdzeniem"
+    }
   },
   "execution": {
     "title": "Centrum Realizacji",
@@ -845,11 +955,17 @@
       },
       "styles": {
         "normal": "Normalny",
+        "normalDesc": "Zbalansowane, konwersacyjne odpowiedzi",
         "executive": "Executivowy",
+        "executiveDesc": "Zwięzły, decyzyjny, 3-5 bulletów z rekomendacją",
         "analyst": "Analityczny",
+        "analystDesc": "Dane, metryki, tabele, benchmarki",
         "coach": "Coaching",
+        "coachDesc": "Pytania naprowadzające, tłumaczenie krok po kroku",
         "concise": "Zwięzły",
-        "formal": "Formalny"
+        "conciseDesc": "Tylko najważniejsze punkty, bez dygresji",
+        "formal": "Formalny",
+        "formalDesc": "Język urzędowy/biznesowy, precyzyjny i neutralny"
       },
       "customInstructions": "Moje instrukcje",
       "customInstructionsPlaceholder": "np. \"Zawsze odpowiadaj po polsku\", \"Preferuję tabele nad tekstem\", \"Jestem CTO w firmie produkcyjnej\"",
@@ -908,6 +1024,10 @@
     "personalFolder": "Osobisty",
     "teamFolder": "Zespołowy",
     "createFolderFailed": "Nie udało się utworzyć folderu. Spróbuj ponownie.",
+    "showMore": "Pokaż więcej",
+    "showLess": "Pokaż mniej",
+    "allConversations": "Wszystkie",
+    "openFolder": "Otwórz folder",
     "capabilities": {
       "deepThinking": "Deep Thinking",
       "deepThinkingDesc": "Wieloetapowa analiza z wyszukiwaniem w sieci",
@@ -995,6 +1115,11 @@
       "change_management": "Zarządzanie zmianą",
       "architecture_integrations": "Architektura/Integracje",
       "other": "Inne"
+    },
+    "streaming": {
+      "reviewing": "Wieloagentowa analiza w toku",
+      "aggregating": "Agregowanie ustaleń agentów",
+      "processing": "Przetwarzanie audytu agentów"
     }
   },
   "research": {

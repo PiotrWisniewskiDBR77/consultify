@@ -41,7 +41,6 @@ import {
   Clock,
   GripVertical,
   Loader2,
-  MoreHorizontal,
   Sun,
   Target,
   User,
@@ -54,6 +53,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import type { PMOCategory } from '../../../types/myWork';
+import { type RowAction, RowActionsMenu } from '../../shared/RowActionsMenu';
 import { DueDateIndicator } from '../shared/DueDateIndicator';
 import { EmptyState } from '../shared/EmptyState';
 import { getPMOCategory, PMOPriorityBadge } from '../shared/PMOPriorityBadge';
@@ -161,7 +161,6 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
   isDragging,
 }) => {
   const { t } = useTranslation();
-  const [showQuickActions, setShowQuickActions] = useState(false);
 
   const {
     attributes,
@@ -206,8 +205,6 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
         ${isDragging || isSortableDragging ? 'shadow-xl ring-2 ring-brand opacity-50' : 'shadow-sm'}
         transition-all duration-200 cursor-pointer
       `}
-      onMouseEnter={() => setShowQuickActions(true)}
-      onMouseLeave={() => setShowQuickActions(false)}
     >
       <div className="flex items-start gap-3 p-4">
         {/* Drag Handle */}
@@ -298,69 +295,44 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
         </div>
       </div>
 
-      {/* Quick Actions Overlay */}
-      <AnimatePresence>
-        {showQuickActions && !item.isCompleted && (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4 }}
-            className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2 bg-gradient-to-t from-white dark:from-navy-900 to-transparent"
-          >
-            <div className="flex items-center gap-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onComplete(item);
-                }}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-                title={t('myWork.focus.actions.markDone', 'Mark Done')}
-              >
-                <Check size={14} />
-                <span className="hidden sm:inline">{t('myWork.focus.actions.done', 'Done')}</span>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Snooze to next column
-                  const nextColumn: Record<FocusColumn, FocusColumn> = {
-                    today: 'thisWeek',
-                    thisWeek: 'later',
-                    later: 'later',
-                  };
-                  onSnooze(item, nextColumn[item.column]);
-                }}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                title={t('myWork.focus.actions.snooze', 'Snooze')}
-              >
-                <Clock size={14} />
-                <span className="hidden sm:inline">
-                  {t('myWork.focus.actions.snooze', 'Snooze')}
-                </span>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelegate(item);
-                }}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                title={t('myWork.focus.actions.delegate', 'Delegate')}
-              >
-                <UserPlus size={14} />
-                <span className="hidden sm:inline">
-                  {t('myWork.focus.actions.delegate', 'Delegate')}
-                </span>
-              </button>
-            </div>
-            <button
-              onClick={(e) => e.stopPropagation()}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-all"
-            >
-              <MoreHorizontal size={14} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Row Actions Menu (A3.2: replaces overlapping inline buttons) */}
+      {!item.isCompleted && (
+        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+          <RowActionsMenu
+            size="sm"
+            actions={(() => {
+              const nextColumn: Record<FocusColumn, FocusColumn> = {
+                today: 'thisWeek',
+                thisWeek: 'later',
+                later: 'later',
+              };
+              const actions: RowAction[] = [
+                {
+                  id: 'done',
+                  label: t('myWork.focus.actions.done', 'Done'),
+                  icon: Check,
+                  onClick: () => onComplete(item),
+                  variant: 'primary',
+                },
+                {
+                  id: 'snooze',
+                  label: t('myWork.focus.actions.snooze', 'Snooze'),
+                  icon: Clock,
+                  onClick: () => onSnooze(item, nextColumn[item.column]),
+                },
+                {
+                  id: 'delegate',
+                  label: t('myWork.focus.actions.delegate', 'Delegate'),
+                  icon: UserPlus,
+                  onClick: () => onDelegate(item),
+                  divider: true,
+                },
+              ];
+              return actions;
+            })()}
+          />
+        </div>
+      )}
     </motion.div>
   );
 };
@@ -622,19 +594,26 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
       const decisions = Array.isArray(decisionsRes) ? decisionsRes : decisionsRes.decisions || [];
 
       // Map tasks to FocusItems
+      // A3.1: Compute date boundaries once, then assign each task to exactly one column
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const tomorrowStart = new Date(todayStart);
+      tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+      const endOfWeek = new Date(todayStart);
+      endOfWeek.setDate(todayStart.getDate() + 7);
+
       const taskItems: FocusItem[] = tasks.slice(0, 20).map((task: any, idx: number) => {
         // Determine column based on due date
         let column: FocusColumn = 'later';
         if (task.dueDate) {
           const dueDate = new Date(task.dueDate);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const endOfWeek = new Date(today);
-          endOfWeek.setDate(today.getDate() + 7);
+          dueDate.setHours(0, 0, 0, 0);
 
-          if (dueDate <= today) {
+          if (dueDate < tomorrowStart) {
+            // Due today or overdue → Today
             column = 'today';
-          } else if (dueDate <= endOfWeek) {
+          } else if (dueDate < endOfWeek) {
+            // Due this week (but NOT today) → This Week
             column = 'thisWeek';
           }
         }
@@ -656,7 +635,7 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
         };
       });
 
-      // Map decisions to FocusItems
+      // Map decisions to FocusItems (A3.1: use same date boundaries as tasks)
       const decisionItems: FocusItem[] = decisions
         .slice(0, 10)
         .map((decision: any, idx: number) => {
@@ -665,9 +644,8 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
             column = 'today';
           } else if (decision.dueDate) {
             const dueDate = new Date(decision.dueDate);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            if (dueDate <= today) {
+            dueDate.setHours(0, 0, 0, 0);
+            if (dueDate < tomorrowStart) {
               column = 'today';
             }
           }
@@ -702,14 +680,21 @@ export const FocusView: React.FC<FocusViewProps> = ({ onItemClick, onNavigateToI
     loadFocus();
   }, [loadFocus]);
 
-  // Group items by column
+  // Group items by column (A3.1: This Week excludes items already in Today)
   const itemsByColumn = useMemo(() => {
+    const todayItems = items
+      .filter((i) => i.column === 'today')
+      .sort((a, b) => a.position - b.position);
+    const todayIds = new Set(todayItems.map((i) => i.id));
+
     return {
-      today: items.filter((i) => i.column === 'today').sort((a, b) => a.position - b.position),
+      today: todayItems,
       thisWeek: items
-        .filter((i) => i.column === 'thisWeek')
+        .filter((i) => i.column === 'thisWeek' && !todayIds.has(i.id))
         .sort((a, b) => a.position - b.position),
-      later: items.filter((i) => i.column === 'later').sort((a, b) => a.position - b.position),
+      later: items
+        .filter((i) => i.column === 'later' && !todayIds.has(i.id))
+        .sort((a, b) => a.position - b.position),
     };
   }, [items]);
 

@@ -252,17 +252,16 @@ export const ProgressView: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to fetch stats:', error);
-      // Use mock data for demo
       setStats({
-        completed: 12,
-        total: 18,
-        onTimeRate: 78,
-        avgDays: 3.2,
-        velocityHistory: [3, 5, 4, 7, 6, 8, 9],
-        velocityChange: 12,
-        trend: 'up',
-        byPriority: { high: 4, medium: 6, low: 2 },
-        byStatus: { completed: 12, inProgress: 4, todo: 2, overdue: 1 },
+        completed: 0,
+        total: 0,
+        onTimeRate: 0,
+        avgDays: 0,
+        velocityHistory: [],
+        velocityChange: 0,
+        trend: 'stable',
+        byPriority: { high: 0, medium: 0, low: 0 },
+        byStatus: { completed: 0, inProgress: 0, todo: 0, overdue: 0 },
       });
     } finally {
       setLoading(false);

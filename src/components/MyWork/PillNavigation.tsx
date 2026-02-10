@@ -112,10 +112,10 @@ export const PillNavigation: React.FC<PillNavigationProps> = ({
                 </span>
               )}
 
-              {/* Coming Soon Badge */}
+              {/* Beta Badge */}
               {tab.comingSoon && (
-                <span className="px-1.5 text-[9px] font-semibold rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400">
-                  Soon
+                <span className="px-1.5 text-[9px] font-semibold rounded-full bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400">
+                  Beta
                 </span>
               )}
             </button>

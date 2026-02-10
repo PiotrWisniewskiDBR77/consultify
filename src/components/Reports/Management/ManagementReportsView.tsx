@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
@@ -54,6 +55,7 @@ interface ManagementReportsViewProps {
 }
 
 export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ className = '' }) => {
+  const { t } = useTranslation();
   // State
   const [viewMode, setViewMode] = useState<ViewModeExtended>('selector');
   const [reportType, setReportType] = useState<ManagementReportType>('TEAM_MEETING');
@@ -90,7 +92,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
   const currentUser = useAppStore((state) => state.currentUser);
   const currentOrganizationId = currentUser?.organizationId;
 
-  // Mocked projects list (replace with actual API call)
+  // Projects list from API
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
 
   // Load projects
@@ -130,7 +132,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
       setHistoryTotal(response.data?.total || 0);
     } catch (error) {
       console.error('Failed to load report history:', error);
-      toast.error('Failed to load report history');
+      toast.error(t('reports.toast.loadHistoryError', 'Nie udało się załadować historii'));
     } finally {
       setHistoryLoading(false);
     }
@@ -145,7 +147,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
   // Generate report
   const handleGenerateReport = useCallback(async () => {
     if (scope === 'PROJECT' && !selectedProjectId) {
-      toast.error('Please select a project');
+      toast.error(t('reports.toast.selectProject', 'Wybierz projekt'));
       return;
     }
 
@@ -165,7 +167,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
       if (response.data?.report) {
         setCurrentReport(response.data.report);
         setViewMode('preview');
-        toast.success('Report generated successfully!');
+        toast.success(t('reports.toast.reportGenerated', 'Raport wygenerowany pomyślnie!'));
 
         if (scheduleMode === 'RECURRING') {
           try {
@@ -184,16 +186,23 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 .map((entry) => entry.trim())
                 .filter(Boolean),
             });
-            toast.success('Recurring schedule created');
+            toast.success(t('reports.toast.scheduleCreated', 'Harmonogram cykliczny utworzony'));
           } catch (scheduleError) {
             console.error('Failed to create schedule:', scheduleError);
-            toast.error('Report generated, but schedule setup failed');
+            toast.error(
+              t(
+                'reports.toast.scheduleError',
+                'Raport wygenerowany, ale harmonogram nie został utworzony'
+              )
+            );
           }
         }
       }
     } catch (error: any) {
       console.error('Report generation failed:', error);
-      toast.error(error.message || 'Failed to generate report');
+      toast.error(
+        error.message || t('reports.toast.generateFailed', 'Nie udało się wygenerować raportu')
+      );
     } finally {
       setGenerating(false);
     }
@@ -247,7 +256,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
         setViewMode('preview');
       }
     } catch (error) {
-      toast.error('Failed to load report');
+      toast.error(t('reports.toast.loadReportError', 'Nie udało się załadować raportu'));
     }
   };
 
@@ -605,10 +614,14 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                   .then((res) => {
                     if (res.data?.shareUrl) {
                       navigator.clipboard.writeText(window.location.origin + res.data.shareUrl);
-                      toast.success('Share link copied to clipboard');
+                      toast.success(
+                        t('reports.toast.shareLinkCopied', 'Link do udostępniania skopiowany')
+                      );
                     }
                   })
-                  .catch(() => toast.error('Failed to create share link'));
+                  .catch(() =>
+                    toast.error(t('reports.toast.shareLinkError', 'Nie udało się utworzyć linku'))
+                  );
               }}
             />
           </div>

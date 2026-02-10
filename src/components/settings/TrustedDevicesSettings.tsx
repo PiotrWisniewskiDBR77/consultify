@@ -92,51 +92,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
       }
     } catch (error) {
       console.error('Failed to fetch trusted devices:', error);
-      // Mock data for development
-      setDevices([
-        {
-          id: '1',
-          name: 'Chrome on MacOS',
-          deviceType: 'desktop',
-          browser: 'Chrome 120',
-          os: 'macOS Sonoma',
-          location: 'Warsaw, Poland',
-          ip: '192.168.1.100',
-          fingerprint: 'abc123...xyz789',
-          trustedAt: new Date(Date.now() - 86400000 * 15).toISOString(),
-          lastUsed: new Date().toISOString(),
-          expiresAt: new Date(Date.now() + 86400000 * 15).toISOString(),
-          isCurrent: true,
-        },
-        {
-          id: '2',
-          name: 'Safari on iPhone',
-          deviceType: 'mobile',
-          browser: 'Safari 17',
-          os: 'iOS 17.2',
-          location: 'Warsaw, Poland',
-          ip: '192.168.1.101',
-          fingerprint: 'def456...uvw012',
-          trustedAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-          lastUsed: new Date(Date.now() - 3600000 * 2).toISOString(),
-          expiresAt: new Date(Date.now() + 86400000 * 23).toISOString(),
-          isCurrent: false,
-        },
-        {
-          id: '3',
-          name: 'Firefox on Windows',
-          deviceType: 'laptop',
-          browser: 'Firefox 121',
-          os: 'Windows 11',
-          location: 'Krakow, Poland',
-          ip: '10.0.0.50',
-          fingerprint: 'ghi789...rst345',
-          trustedAt: new Date(Date.now() - 86400000 * 25).toISOString(),
-          lastUsed: new Date(Date.now() - 86400000 * 3).toISOString(),
-          expiresAt: new Date(Date.now() + 86400000 * 5).toISOString(),
-          isCurrent: false,
-        },
-      ]);
+      setDevices([]);
     } finally {
       setLoading(false);
     }

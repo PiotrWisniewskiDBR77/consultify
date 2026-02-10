@@ -8,6 +8,7 @@
 import {
   Brain,
   Check,
+  ChevronDown,
   ChevronRight,
   Clock,
   Database,
@@ -56,6 +57,19 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'ALL'>('ALL');
   const [previewTemplate, setPreviewTemplate] = useState<InitiativeTemplate | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  };
 
   // Filter templates
   const filteredTemplates = useMemo(() => {
@@ -173,77 +187,108 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
           <p>No templates found matching your criteria</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredTemplates.map((template) => {
-            const config = CATEGORY_CONFIG[template.category];
-            const isSelected = selectedTemplateId === template.id;
+        <div className="space-y-3">
+          {Object.entries(groupedTemplates).map(([category, categoryTemplates]) => {
+            const config = CATEGORY_CONFIG[category as TemplateCategory];
+            const isExpanded = expandedCategories.has(category);
 
             return (
               <div
-                key={template.id}
-                onClick={() => handleSelect(template)}
-                className={`relative bg-white dark:bg-navy-950 border rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg ${
-                  isSelected
-                    ? 'border-blue-500 ring-2 ring-blue-500/20'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-blue-500/30'
-                }`}
+                key={category}
+                className="border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden"
               >
-                {/* Selected Check */}
-                {isSelected && (
-                  <div className="absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                    <Check size={14} className="text-white" />
+                {/* Category Header - Collapsible */}
+                <button
+                  onClick={() => toggleCategory(category)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-navy-950/50 hover:bg-slate-100 dark:hover:bg-navy-950/70 transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className={`text-${config.color}-600 dark:text-${config.color}-400`}>
+                      {config.icon}
+                    </span>
+                    <span className="text-sm font-semibold text-navy-900 dark:text-white">
+                      {config.label}
+                    </span>
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300">
+                      {categoryTemplates.length}
+                    </span>
+                  </div>
+                  {isExpanded ? (
+                    <ChevronDown size={16} className="text-slate-400" />
+                  ) : (
+                    <ChevronRight size={16} className="text-slate-400" />
+                  )}
+                </button>
+
+                {/* Category Content */}
+                {isExpanded && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                    {categoryTemplates.map((template) => {
+                      const isSelected = selectedTemplateId === template.id;
+
+                      return (
+                        <div
+                          key={template.id}
+                          onClick={() => handleSelect(template)}
+                          className={`relative bg-white dark:bg-navy-950 border rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg ${
+                            isSelected
+                              ? 'border-blue-500 ring-2 ring-blue-500/20'
+                              : 'border-slate-200 dark:border-navy-700 hover:border-blue-500/30'
+                          }`}
+                        >
+                          {/* Selected Check */}
+                          {isSelected && (
+                            <div className="absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                              <Check size={14} className="text-white" />
+                            </div>
+                          )}
+
+                          {/* Title & Description */}
+                          <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-2">
+                            {template.name}
+                          </h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">
+                            {template.description || 'No description available'}
+                          </p>
+
+                          {/* Quick Stats */}
+                          <div className="flex items-center gap-4 text-[10px] text-slate-400 dark:text-slate-500">
+                            {template.typicalTimeline && (
+                              <span className="flex items-center gap-1">
+                                <Clock size={10} />
+                                {template.typicalTimeline}
+                              </span>
+                            )}
+                            {template.typicalBudgetRange && (
+                              <span className="flex items-center gap-1">
+                                <DollarSign size={10} />
+                                {template.typicalBudgetRange.min / 1000}k -{' '}
+                                {template.typicalBudgetRange.max / 1000}k
+                              </span>
+                            )}
+                            {template.suggestedTasks && (
+                              <span className="flex items-center gap-1">
+                                <FileText size={10} />
+                                {template.suggestedTasks.length} tasks
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Preview Button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewTemplate(template);
+                            }}
+                            className="mt-3 text-xs text-blue-500 hover:text-blue-400 flex items-center gap-1"
+                          >
+                            Preview <ChevronRight size={12} />
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
-
-                {/* Category Badge */}
-                <div
-                  className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase bg-${config.color}-100 dark:bg-${config.color}-500/20 text-${config.color}-700 dark:text-${config.color}-400 mb-3`}
-                >
-                  {config.icon}
-                  {config.label}
-                </div>
-
-                {/* Title & Description */}
-                <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-2">
-                  {template.name}
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">
-                  {template.description || 'No description available'}
-                </p>
-
-                {/* Quick Stats */}
-                <div className="flex items-center gap-4 text-[10px] text-slate-400 dark:text-slate-500">
-                  {template.typicalTimeline && (
-                    <span className="flex items-center gap-1">
-                      <Clock size={10} />
-                      {template.typicalTimeline}
-                    </span>
-                  )}
-                  {template.typicalBudgetRange && (
-                    <span className="flex items-center gap-1">
-                      <DollarSign size={10} />
-                      {template.typicalBudgetRange.min / 1000}k -{' '}
-                      {template.typicalBudgetRange.max / 1000}k
-                    </span>
-                  )}
-                  {template.suggestedTasks && (
-                    <span className="flex items-center gap-1">
-                      <FileText size={10} />
-                      {template.suggestedTasks.length} tasks
-                    </span>
-                  )}
-                </div>
-
-                {/* Preview Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPreviewTemplate(template);
-                  }}
-                  className="mt-3 text-xs text-blue-500 hover:text-blue-400 flex items-center gap-1"
-                >
-                  Preview <ChevronRight size={12} />
-                </button>
               </div>
             );
           })}
@@ -252,8 +297,16 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
 
       {/* Template Preview Modal */}
       {previewTemplate && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-navy-900 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setPreviewTemplate(null);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-navy-900 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="p-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
               <div>

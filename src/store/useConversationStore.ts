@@ -103,6 +103,7 @@ export interface Conversation {
     roadmapId?: string;
     taskId?: string;
     decisionId?: string;
+    reportId?: string;
   };
   messageCount: number;
   lastMessagePreview?: string;
@@ -316,7 +317,14 @@ interface ConversationState {
   createConversation: (options?: {
     title?: string;
     projectId?: string;
-    pmoContext?: { assessmentId?: string; initiativeIds?: string[]; roadmapId?: string };
+    pmoContext?: {
+      assessmentId?: string;
+      initiativeIds?: string[];
+      roadmapId?: string;
+      taskId?: string;
+      decisionId?: string;
+      reportId?: string;
+    };
   }) => Promise<Conversation>;
   updateConversation: (id: string, updates: Partial<Conversation>) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
@@ -659,10 +667,14 @@ export const useConversationStore = create<ConversationState>()(
 
           // Trigger title generation after first exchange (user + AI = 2 messages)
           const activeConv = get().conversations.find((c) => c.id === conversationId);
+          const titleLower = String(activeConv?.title || '')
+            .trim()
+            .toLowerCase();
           const defaultTitle =
             !activeConv?.title ||
-            String(activeConv.title).trim() === '' ||
-            activeConv.title === 'New conversation';
+            titleLower === '' ||
+            titleLower === 'new conversation' ||
+            titleLower === 'nowa rozmowa';
           const canAutoTitle = activeConv?.titleSource !== 'user';
           const shouldTryTitle =
             message.role === 'ai' &&
@@ -794,7 +806,14 @@ export const useConversationStore = create<ConversationState>()(
             const result = await Api.generateConversationTitle(id);
 
             // Success: backend returned a real title
-            if (result?.title && result.title !== 'New conversation') {
+            const resultTitleLower = String(result?.title || '')
+              .trim()
+              .toLowerCase();
+            if (
+              result?.title &&
+              resultTitleLower !== 'new conversation' &&
+              resultTitleLower !== 'nowa rozmowa'
+            ) {
               set((state) => {
                 const next = state.conversations.map((c) =>
                   c.id === id ? { ...c, title: result.title!, titleSource: 'auto' as const } : c
@@ -837,7 +856,17 @@ export const useConversationStore = create<ConversationState>()(
       },
 
       renameConversation: async (id, title) => {
-        await get().updateConversation(id, { title } as any);
+        // Mark titleSource as 'user' so auto-title generation won't overwrite
+        set((state) => {
+          const next = state.conversations.map((c) =>
+            c.id === id ? { ...c, title, titleSource: 'user' as const } : c
+          );
+          return {
+            conversations: next,
+            groupedConversations: groupConversations(next),
+          };
+        });
+        await get().updateConversation(id, { title, titleSource: 'user' } as any);
       },
 
       // ==================== BULK ====================

@@ -1371,26 +1371,71 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
       }
     }
 
+    // C8.3: Behavioral guardrails — prevent autonomous creation of entities
+    instructions.push(
+      '13. ZASADA BEZPIECZEŃSTWA: NIGDY nie twórz samodzielnie inicjatyw, zadań, decyzji ani kamieni milowych w systemie. ' +
+        'Możesz jedynie PROPONOWAĆ ich utworzenie jako akcje do zatwierdzenia przez użytkownika. ' +
+        'Każda modyfikacja danych w systemie wymaga jawnej zgody użytkownika. ' +
+        'Możesz natomiast generować powiadomienia informacyjne i sugestie.'
+    );
+
+    // C8.2: Documentation/help awareness — AI knows the platform and can guide users
+    instructions.push(
+      '14. POMOC I DOKUMENTACJA: Znasz strukturę platformy Consultinity i jej moduły:\n' +
+        '   - Assessment (DRD, SIRI, ADMA, CMMI, Lean) — ocena dojrzałości organizacji\n' +
+        '   - Initiatives — zarządzanie inicjatywami transformacyjnymi\n' +
+        '   - Execution — realizacja zadań, KPI, timeline\n' +
+        '   - Portfolio — widok portfela inicjatyw, priorytetyzacja\n' +
+        '   - Reports — generowanie raportów zarządczych\n' +
+        '   - My Work — osobisty dashboard, zadania, decyzje, powiadomienia\n' +
+        '   - Interview/Discovery — wywiady i narzędzia odkrywcze\n' +
+        '   - Context Builder — profil organizacji, cele, wyzwania\n' +
+        '   - Studio — zaawansowane narzędzia analityczne\n' +
+        '   Gdy użytkownik pyta "jak coś zrobić" lub potrzebuje pomocy, wskaż mu odpowiedni moduł, ' +
+        '   opisz kroki i zaproponuj nawigację (akcja navigate). ' +
+        '   Możesz też sugerować najlepsze praktyki PMO i metodyki zarządzania projektami.'
+    );
+
+    // C8.1: Navigation capability — AI can propose navigation actions
+    instructions.push(
+      '15. NAWIGACJA: Możesz zaproponować użytkownikowi przejście do konkretnego modułu/ekranu. ' +
+        'Dostępne widoki: chat, my-work, initiatives, portfolio, execution, roadmap, reports, ' +
+        'assessment, interview, discovery-tools, implementation, roi, economics, kpi-okr, benefits, ' +
+        'studio, admin, settings, project-intelligence, context, rollout. ' +
+        'Gdy użytkownik pyta o konkretną inicjatywę, zadanie lub moduł, zaproponuj nawigację.'
+    );
+
+    // C4.1: Attachment analysis — AI should reference uploaded files
+    if (ctx?.attachments?.length > 0 || ctx?.attachmentFileNames?.length > 0) {
+      const fileNames =
+        ctx.attachmentFileNames || ctx.attachments?.map((a: any) => a.filename) || [];
+      instructions.push(
+        `16. ZAŁĄCZNIKI: Użytkownik dołączył pliki: ${fileNames.join(', ')}. ` +
+          'Przeanalizuj ich zawartość (dostarczoną przez system RAG) i odwołuj się do nich w odpowiedzi. ' +
+          'Cytuj konkretne fragmenty z plików gdy to istotne. Wskaż nazwy plików w odpowiedzi.'
+      );
+    }
+
     // Add context-specific instructions
     if (ctx?.execution?.capacityStatus === 'OVERLOADED') {
       instructions.push(
-        '5. ⚠️ Użytkownik jest przeciążony - sugeruj priorytetyzację i delegowanie zadań.'
+        '17. ⚠️ Użytkownik jest przeciążony - sugeruj priorytetyzację i delegowanie zadań.'
       );
     }
 
     if (ctx?.execution?.blockers?.length > 0) {
-      instructions.push('5. Są aktywne blokery - zaoferuj pomoc w ich rozwiązaniu.');
+      instructions.push('17. Są aktywne blokery - zaoferuj pomoc w ich rozwiązaniu.');
     }
 
     if (ctx?.pendingApprovals?.count > 0) {
       instructions.push(
-        `5. Użytkownik ma ${ctx.pendingApprovals.count} oczekujących akcji AI do przejrzenia.`
+        `17. Użytkownik ma ${ctx.pendingApprovals.count} oczekujących akcji AI do przejrzenia.`
       );
     }
 
     // Response format hint
     if (capability.outputFormat === 'json') {
-      instructions.push('6. Odpowiedz w formacie JSON.');
+      instructions.push('18. Odpowiedz w formacie JSON.');
     }
 
     return instructions.join('\n');

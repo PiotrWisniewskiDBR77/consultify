@@ -358,6 +358,54 @@ type StreamOptions = {
   onArtifactDetected?: (artifact: Artifact) => void;
 };
 
+export type UseAIStreamReturn = {
+  startStream: (
+    message: string,
+    history?: any[],
+    systemPrompt?: string,
+    context?: Record<string, unknown>,
+    focusMode?: string,
+    roleName?: string,
+    language?: string
+  ) => Promise<void>;
+  abortStream: () => boolean;
+  retryLastStream: () => Promise<void>;
+  lastError: Error | null;
+  clearLastError: () => void;
+  resumeFromPartial: (
+    sessionId: string,
+    message: string,
+    history?: any[],
+    systemPrompt?: string,
+    context?: Record<string, unknown>,
+    focusMode?: string
+  ) => Promise<void>;
+  checkPartialResponse: (sessionId: string) => Promise<{
+    sessionId: string;
+    content: string;
+    canResume?: boolean;
+  } | null>;
+
+  isStreaming: boolean;
+  streamedContent: string;
+  thinkingSteps: ThinkingStep[];
+  citations: any[];
+  deepThinkingState: any | null;
+  researchProgress: any | null;
+  researchVisibility: any | null;
+  agentAuditState: any | null;
+  agentReviewProgressByAgentId: Record<string, any>;
+  agentSourcesByAgentId: Record<string, { kb: any[]; web: any[] }>;
+  agentAuditVerdict: any | null;
+  deepThinkingHint: any | null;
+  interimInsight: any | null;
+  artifacts: Artifact[];
+  progress: number;
+  retryInfo: { attempt: number; maxRetries: number; backoffMs: number } | null;
+  streamStartedAt: number | null;
+  streamCompletedSignal: boolean;
+};
+
 type DeepThinkingStateEvent = {
   type: 'dt_state';
   state: 'research_visibility' | 'research' | 'thinking' | 'synthesis' | 'closure' | string;
@@ -440,7 +488,7 @@ type PartialResponse = {
   canResume?: boolean;
 };
 
-export const useAIStream = (options: StreamOptions = {}) => {
+export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const { updateLastChatMessage, setIsBotTyping, setCurrentStreamContent, aiConfig } =
     useAppStore();
   const { addArtifact } = useArtifactsStore();

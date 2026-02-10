@@ -332,15 +332,20 @@ function getStatusesForModule(module: ModuleContext): StatusOption[] {
       return [ALL_OPTION, ...Object.values(REPORT_STATUSES)];
 
     case 'initiatives':
-      // Full initiative planning lifecycle
+      // D1.2: Complete initiative lifecycle — all 13 statuses visible for filtering
       return [
         ALL_OPTION,
         ALL_STATUSES.DRAFT,
+        ALL_STATUSES.PENDING_REVIEW,
         ALL_STATUSES.REVIEW,
         ALL_STATUSES.PROMOTED,
         ALL_STATUSES.PLANNING,
         ALL_STATUSES.APPROVED,
         ALL_STATUSES.SCHEDULED,
+        ALL_STATUSES.EXECUTING,
+        ALL_STATUSES.BLOCKED,
+        ALL_STATUSES.DONE,
+        ALL_STATUSES.TRACKING,
         ALL_STATUSES.CANCELLED,
         ALL_STATUSES.ARCHIVED,
       ];

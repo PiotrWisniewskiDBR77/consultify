@@ -224,7 +224,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
 
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'webhooks' | 'apps'>('webhooks');
-  const [webhooks, setWebhooks] = useState<WebhookEndpoint[]>(SAMPLE_WEBHOOKS);
+  const [webhooks, setWebhooks] = useState<WebhookEndpoint[]>([]);
   const [apps, setApps] = useState<ConnectedApp[]>(AVAILABLE_INTEGRATIONS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedWebhook, setSelectedWebhook] = useState<WebhookEndpoint | null>(null);

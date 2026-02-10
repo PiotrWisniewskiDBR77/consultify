@@ -185,45 +185,8 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
-      // Fallback mock data
-      setMetrics([
-        {
-          id: 'api_requests',
-          title: 'API Requests',
-          value: '0',
-          change: 0,
-          changeLabel: 'vs last period',
-          icon: Globe,
-          color: 'cyan',
-        },
-        {
-          id: 'ai_requests',
-          title: 'AI Requests',
-          value: '0',
-          change: 0,
-          changeLabel: 'vs last period',
-          icon: Zap,
-          color: 'purple',
-        },
-        {
-          id: 'active_users',
-          title: 'Active Users',
-          value: '0',
-          change: 0,
-          changeLabel: 'vs last period',
-          icon: Users,
-          color: 'emerald',
-        },
-        {
-          id: 'db_queries',
-          title: 'DB Queries',
-          value: '0',
-          change: 0,
-          changeLabel: 'vs last period',
-          icon: Database,
-          color: 'amber',
-        },
-      ]);
+      // Set empty state on error
+      setMetrics([]);
 
       const labels = generateTimeLabels(timeRange);
       setApiChartData({
@@ -245,39 +208,8 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
   }, [timeRange]);
 
   const fetchScheduledReports = useCallback(async () => {
-    // Mock data
-    setScheduledReports([
-      {
-        id: '1',
-        name: 'Weekly Performance Report',
-        type: 'system_performance',
-        schedule: 'weekly',
-        recipients: ['admin@example.com', 'cto@example.com'],
-        last_sent: new Date(Date.now() - 86400000 * 2).toISOString(),
-        next_run: new Date(Date.now() + 86400000 * 5).toISOString(),
-        is_active: true,
-      },
-      {
-        id: '2',
-        name: 'Monthly AI Usage Summary',
-        type: 'ai_usage',
-        schedule: 'monthly',
-        recipients: ['finance@example.com'],
-        last_sent: new Date(Date.now() - 86400000 * 15).toISOString(),
-        next_run: new Date(Date.now() + 86400000 * 15).toISOString(),
-        is_active: true,
-      },
-      {
-        id: '3',
-        name: 'Daily Security Digest',
-        type: 'security_events',
-        schedule: 'daily',
-        recipients: ['security@example.com'],
-        last_sent: new Date(Date.now() - 86400000).toISOString(),
-        next_run: new Date(Date.now() + 3600000).toISOString(),
-        is_active: false,
-      },
-    ]);
+    // Empty state - no mock data
+    setScheduledReports([]);
   }, []);
 
   useEffect(() => {

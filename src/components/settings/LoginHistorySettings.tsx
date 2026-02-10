@@ -37,33 +37,7 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
       setHistory(historyData);
     } catch (error) {
       console.error('Failed to fetch login history:', error);
-      // Use mock data if API not available
-      setHistory([
-        {
-          id: '1',
-          timestamp: new Date().toISOString(),
-          status: 'success',
-          location: 'Warsaw, Poland',
-          ip: '192.168.1.1',
-          device: 'Chrome on Windows',
-        },
-        {
-          id: '2',
-          timestamp: new Date(Date.now() - 86400000).toISOString(),
-          status: 'success',
-          location: 'Warsaw, Poland',
-          ip: '192.168.1.1',
-          device: 'Safari on iOS',
-        },
-        {
-          id: '3',
-          timestamp: new Date(Date.now() - 172800000).toISOString(),
-          status: 'failed',
-          location: 'Unknown',
-          ip: '10.0.0.1',
-          device: 'Unknown',
-        },
-      ]);
+      setHistory([]);
     } finally {
       setLoading(false);
     }

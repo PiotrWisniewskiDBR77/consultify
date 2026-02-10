@@ -231,11 +231,23 @@ export function AIPerformanceDashboard() {
       setResponseTimeTrend(trend);
     } catch (err) {
       console.error('Failed to load performance metrics:', err);
-      // Set demo data on error
-      setMetrics(generateMockMetrics());
-      setCapabilityMetrics(generateMockCapabilities());
-      setModelMetrics(generateMockModels());
-      setResponseTimeTrend(generateMockTrend());
+      // Set empty state on error
+      setMetrics({
+        avgResponseTime: 0,
+        p50ResponseTime: 0,
+        p95ResponseTime: 0,
+        p99ResponseTime: 0,
+        totalRequests: 0,
+        successRate: 0,
+        errorRate: 0,
+        avgTokensPerRequest: 0,
+        totalTokensUsed: 0,
+        cacheHitRate: 0,
+        totalCostUsd: 0,
+      });
+      setCapabilityMetrics([]);
+      setModelMetrics([]);
+      setResponseTimeTrend([]);
     }
     setLoading(false);
   }, [timeRange]);
@@ -251,110 +263,6 @@ export function AIPerformanceDashboard() {
     }
     return undefined;
   }, [autoRefresh, loadMetrics]);
-
-  const generateMockMetrics = (): PerformanceMetrics => ({
-    avgResponseTime: 1.2 + Math.random() * 0.5,
-    p50ResponseTime: 0.8 + Math.random() * 0.3,
-    p95ResponseTime: 2.5 + Math.random() * 1,
-    p99ResponseTime: 4.0 + Math.random() * 2,
-    totalRequests: Math.floor(5000 + Math.random() * 10000),
-    successRate: 94 + Math.random() * 5,
-    errorRate: 1 + Math.random() * 3,
-    avgTokensPerRequest: Math.floor(800 + Math.random() * 400),
-    totalTokensUsed: Math.floor(2000000 + Math.random() * 1000000),
-    cacheHitRate: 20 + Math.random() * 15,
-    totalCostUsd: 150 + Math.random() * 100,
-  });
-
-  const generateMockCapabilities = (): CapabilityMetrics[] => [
-    {
-      capability: 'chat',
-      requests: 3500,
-      avgResponseTime: 0.9,
-      avgTokens: 650,
-      totalCost: 45.2,
-      successRate: 98.2,
-    },
-    {
-      capability: 'report',
-      requests: 850,
-      avgResponseTime: 3.2,
-      avgTokens: 2100,
-      totalCost: 62.5,
-      successRate: 95.1,
-    },
-    {
-      capability: 'initiative',
-      requests: 420,
-      avgResponseTime: 2.8,
-      avgTokens: 1800,
-      totalCost: 38.3,
-      successRate: 93.5,
-    },
-    {
-      capability: 'diagnose',
-      requests: 680,
-      avgResponseTime: 1.5,
-      avgTokens: 1200,
-      totalCost: 28.4,
-      successRate: 96.8,
-    },
-    {
-      capability: 'task',
-      requests: 1200,
-      avgResponseTime: 0.7,
-      avgTokens: 450,
-      totalCost: 18.6,
-      successRate: 97.9,
-    },
-  ];
-
-  const generateMockModels = (): ModelMetrics[] => [
-    {
-      model: 'gpt-4o',
-      requests: 2800,
-      avgResponseTime: 1.8,
-      avgQuality: 0.92,
-      totalCost: 85.4,
-      successRate: 97.5,
-    },
-    {
-      model: 'gpt-4o-mini',
-      requests: 3200,
-      avgResponseTime: 0.6,
-      avgQuality: 0.85,
-      totalCost: 12.8,
-      successRate: 98.2,
-    },
-    {
-      model: 'claude-3.5-sonnet',
-      requests: 650,
-      avgResponseTime: 2.1,
-      avgQuality: 0.94,
-      totalCost: 42.5,
-      successRate: 96.8,
-    },
-    {
-      model: 'gemini-1.5-pro',
-      requests: 420,
-      avgResponseTime: 1.4,
-      avgQuality: 0.88,
-      totalCost: 8.2,
-      successRate: 95.2,
-    },
-  ];
-
-  const generateMockTrend = (): TimeSeriesPoint[] => {
-    const points = timeRange === '1h' ? 12 : timeRange === '24h' ? 24 : timeRange === '7d' ? 7 : 30;
-    return Array.from({ length: points }, (_, i) => ({
-      timestamp: new Date(
-        Date.now() -
-          (points - i - 1) *
-            (timeRange === '1h' ? 5 * 60000 : timeRange === '24h' ? 3600000 : 86400000)
-      ).toISOString(),
-      value: 0.8 + Math.random() * 1.5,
-    }));
-  };
 
   const handleExport = () => {
     const data = {

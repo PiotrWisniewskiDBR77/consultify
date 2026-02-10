@@ -190,54 +190,7 @@ export const WorkloadView: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to fetch workload:', error);
-      // Use mock data for demo
-      setTeamMembers([
-        {
-          id: '1',
-          name: 'Anna Kowalska',
-          initials: 'AK',
-          role: 'Project Manager',
-          capacity: 95,
-          tasksAssigned: 8,
-          tasksCompleted: 6,
-        },
-        {
-          id: '2',
-          name: 'Piotr Nowak',
-          initials: 'PN',
-          role: 'Developer',
-          capacity: 120,
-          tasksAssigned: 12,
-          tasksCompleted: 5,
-        },
-        {
-          id: '3',
-          name: 'Marta Wiśniewska',
-          initials: 'MW',
-          role: 'Designer',
-          capacity: 65,
-          tasksAssigned: 5,
-          tasksCompleted: 3,
-        },
-        {
-          id: '4',
-          name: 'Jan Kowalczyk',
-          initials: 'JK',
-          role: 'Analyst',
-          capacity: 40,
-          tasksAssigned: 3,
-          tasksCompleted: 2,
-        },
-        {
-          id: '5',
-          name: 'Karolina Mazur',
-          initials: 'KM',
-          role: 'QA Engineer',
-          capacity: 85,
-          tasksAssigned: 7,
-          tasksCompleted: 4,
-        },
-      ]);
+      setTeamMembers([]);
     } finally {
       setLoading(false);
       setRefreshing(false);

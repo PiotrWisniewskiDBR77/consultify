@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { ManagementReport, ManagementReportScope, ManagementReportType } from '../../../types';
@@ -86,6 +87,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
   onReportGenerated,
 }) => {
   const [reportType, setReportType] = useState<ManagementReportType>('TEAM_MEETING');
+  const { t } = useTranslation();
   const [scope, setScope] = useState<ManagementReportScope>('PORTFOLIO');
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>();
   const [periodDays, setPeriodDays] = useState(7);
@@ -127,7 +129,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
 
   const handleGenerate = useCallback(async () => {
     if (scope === 'PROJECT' && !selectedProjectId) {
-      toast.error('Please select a project');
+      toast.error(t('reports.toast.selectProject', 'Wybierz projekt'));
       return;
     }
 
@@ -146,7 +148,9 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
       }
     } catch (error: any) {
       console.error('Report generation failed:', error);
-      toast.error(error.message || 'Failed to generate report');
+      toast.error(
+        error.message || t('reports.toast.generateFailed', 'Nie udało się wygenerować raportu')
+      );
     } finally {
       setGenerating(false);
     }

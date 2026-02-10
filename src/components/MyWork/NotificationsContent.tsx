@@ -929,10 +929,23 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
   };
 
   // Create bulk action configuration
+  const handleBulkArchive = async () => {
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) => Api.updateNotification(id, { archived: true }))
+      );
+      setNotifications((prev) => prev.filter((n) => !selectedIds.has(n.id)));
+      toast.success(`${selectedIds.size} notifications archived`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error('Failed to archive notifications');
+    }
+  };
+
   const bulkActions = createNotificationBulkActions({
     onMarkRead: handleBulkMarkRead,
     onDelete: handleBulkDelete,
-    onArchive: () => toast('Archive coming soon'),
+    onArchive: handleBulkArchive,
   });
 
   // Apply table filters and exclude snoozed notifications

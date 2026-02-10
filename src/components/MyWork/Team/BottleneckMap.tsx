@@ -218,44 +218,7 @@ export const BottleneckMap: React.FC<BottleneckMapProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // Default/mock data
-  const displayBottlenecks: BlockingItem[] =
-    bottlenecks.length > 0
-      ? bottlenecks
-      : [
-          {
-            id: '1',
-            title: 'API Integration Approval',
-            type: 'decision',
-            owner: 'CTO',
-            daysBlocked: 5,
-            blockedItems: 4,
-            severity: 'critical',
-            impact: 'Blocking 4 development tasks and delaying sprint delivery by 3 days',
-          },
-          {
-            id: '2',
-            title: 'Senior Developer Availability',
-            type: 'resource',
-            owner: 'Team Lead',
-            daysBlocked: 3,
-            blockedItems: 2,
-            severity: 'high',
-            impact: 'Code review backlog growing, affecting merge velocity',
-          },
-          {
-            id: '3',
-            title: 'Vendor License Renewal',
-            type: 'external',
-            owner: 'Procurement',
-            daysBlocked: 7,
-            blockedBy: '1',
-            blockedByTitle: 'Budget Approval',
-            blockedItems: 1,
-            severity: 'medium',
-            impact: 'May affect production deployment timeline',
-          },
-        ];
+  const displayBottlenecks: BlockingItem[] = bottlenecks;
 
   // Stats
   const criticalCount = displayBottlenecks.filter((b) => b.severity === 'critical').length;

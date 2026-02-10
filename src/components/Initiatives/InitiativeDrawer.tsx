@@ -121,6 +121,90 @@ const GATE_DEFINITIONS = [
   },
 ];
 
+/**
+ * B7.3: DrawerRaidList — truncated RAID items with "Show more" toggle.
+ */
+const DrawerRaidList: React.FC<{ items: RaidItem[]; maxVisible?: number }> = ({
+  items,
+  maxVisible = 3,
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? items : items.slice(0, maxVisible);
+  const hasMore = items.length > maxVisible;
+
+  return (
+    <div className="space-y-2">
+      {visible.map((item) => (
+        <div key={item.id} className="flex items-center justify-between text-sm">
+          <div className="text-slate-200 truncate pr-2">{item.title}</div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {item.severity && (
+              <span
+                className={`text-[9px] font-medium ${
+                  item.severity === 'CRITICAL' || item.severity === 'HIGH'
+                    ? 'text-red-400'
+                    : 'text-slate-500'
+                }`}
+              >
+                {item.severity}
+              </span>
+            )}
+            <span className="text-[10px] text-slate-400 uppercase">{item.type}</span>
+          </div>
+        </div>
+      ))}
+      {hasMore && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+        >
+          {expanded ? 'Show less' : `Show ${items.length - maxVisible} more…`}
+        </button>
+      )}
+    </div>
+  );
+};
+
+/**
+ * B7.3: DrawerDependenciesList — truncated dependencies with "Show more" toggle.
+ */
+const DrawerDependenciesList: React.FC<{ dependencies: any[]; maxVisible?: number }> = ({
+  dependencies,
+  maxVisible = 3,
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? dependencies : dependencies.slice(0, maxVisible);
+  const hasMore = dependencies.length > maxVisible;
+
+  return (
+    <div className="pt-4 border-t border-navy-700">
+      <h4 className="text-xs font-semibold text-slate-400 uppercase mb-3 flex items-center justify-between">
+        <span>Dependencies</span>
+        <span className="text-slate-500 font-normal">{dependencies.length}</span>
+      </h4>
+      <div className="space-y-2">
+        {visible.map((dep: any) => (
+          <div
+            key={dep.initiativeId || dep.id}
+            className="flex items-center gap-2 p-2 bg-navy-900/50 rounded-lg text-sm text-slate-300"
+          >
+            <ChevronRight size={14} className="text-slate-500 flex-shrink-0" />
+            <span className="truncate">Depends on: {dep.name || dep.initiativeId}</span>
+          </div>
+        ))}
+      </div>
+      {hasMore && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-2 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+        >
+          {expanded ? 'Show less' : `Show ${dependencies.length - maxVisible} more…`}
+        </button>
+      )}
+    </div>
+  );
+};
+
 export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
   initiative,
   isOpen,
@@ -189,9 +273,16 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         });
 
         onUpdate({ ...initiative, status: action.targetStatus });
-        toast.success(`Status changed to ${action.targetStatus}`);
+        toast.success(
+          t('initiatives.toast.statusChanged', 'Status zmieniony na {{status}}', {
+            status: action.targetStatus,
+          })
+        );
       } catch (error: any) {
-        toast.error(error?.response?.data?.error || 'Failed to change status');
+        toast.error(
+          error?.response?.data?.error ||
+            t('initiatives.toast.statusChangeError', 'Nie udało się zmienić statusu')
+        );
       } finally {
         setIsLoading(false);
       }
@@ -424,23 +515,21 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
           </div>
         </div>
 
-        {/* Top RAID */}
+        {/* Top RAID — B7.3: truncated with Show more */}
         <div className="p-3 bg-navy-900/50 rounded-lg border border-navy-700">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-2">
-            <AlertTriangle size={12} />
-            Top risks / issues
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span className="flex items-center gap-1.5">
+              <AlertTriangle size={12} />
+              Top risks / issues
+            </span>
+            {raidItems.length > 0 && (
+              <span className="text-[10px] text-slate-500">{raidItems.length}</span>
+            )}
           </div>
           {raidItems.length === 0 ? (
             <div className="text-sm text-slate-500">No RAID items yet.</div>
           ) : (
-            <div className="space-y-2">
-              {raidItems.slice(0, 3).map((item) => (
-                <div key={item.id} className="flex items-center justify-between text-sm">
-                  <div className="text-slate-200 truncate pr-2">{item.title}</div>
-                  <div className="text-[10px] text-slate-400 uppercase">{item.type}</div>
-                </div>
-              ))}
-            </div>
+            <DrawerRaidList items={raidItems} maxVisible={3} />
           )}
         </div>
 
@@ -545,22 +634,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
           </div>
         )}
 
-        {/* Dependencies */}
+        {/* Dependencies — B7.3: truncated */}
         {(initiative as any).dependencies?.length > 0 && (
-          <div className="pt-4 border-t border-navy-700">
-            <h4 className="text-xs font-semibold text-slate-400 uppercase mb-3">Dependencies</h4>
-            <div className="space-y-2">
-              {(initiative as any).dependencies.map((dep: any) => (
-                <div
-                  key={dep.initiativeId || dep.id}
-                  className="flex items-center gap-2 p-2 bg-navy-900/50 rounded-lg text-sm text-slate-300"
-                >
-                  <ChevronRight size={14} className="text-slate-500" />
-                  <span>Depends on: {dep.name || dep.initiativeId}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <DrawerDependenciesList dependencies={(initiative as any).dependencies} maxVisible={3} />
         )}
       </div>
     );

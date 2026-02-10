@@ -57,15 +57,46 @@ interface StyleOption {
   id: ResponseStyle;
   icon: React.ElementType;
   labelKey: string;
+  descKey: string;
 }
 
 const RESPONSE_STYLES: StyleOption[] = [
-  { id: 'normal', icon: MessageSquare, labelKey: 'aiChat.menu.styles.normal' },
-  { id: 'executive', icon: Briefcase, labelKey: 'aiChat.menu.styles.executive' },
-  { id: 'analyst', icon: BarChart3, labelKey: 'aiChat.menu.styles.analyst' },
-  { id: 'coach', icon: GraduationCap, labelKey: 'aiChat.menu.styles.coach' },
-  { id: 'concise', icon: Zap, labelKey: 'aiChat.menu.styles.concise' },
-  { id: 'formal', icon: Pen, labelKey: 'aiChat.menu.styles.formal' },
+  {
+    id: 'normal',
+    icon: MessageSquare,
+    labelKey: 'aiChat.menu.styles.normal',
+    descKey: 'aiChat.menu.styles.normalDesc',
+  },
+  {
+    id: 'executive',
+    icon: Briefcase,
+    labelKey: 'aiChat.menu.styles.executive',
+    descKey: 'aiChat.menu.styles.executiveDesc',
+  },
+  {
+    id: 'analyst',
+    icon: BarChart3,
+    labelKey: 'aiChat.menu.styles.analyst',
+    descKey: 'aiChat.menu.styles.analystDesc',
+  },
+  {
+    id: 'coach',
+    icon: GraduationCap,
+    labelKey: 'aiChat.menu.styles.coach',
+    descKey: 'aiChat.menu.styles.coachDesc',
+  },
+  {
+    id: 'concise',
+    icon: Zap,
+    labelKey: 'aiChat.menu.styles.concise',
+    descKey: 'aiChat.menu.styles.conciseDesc',
+  },
+  {
+    id: 'formal',
+    icon: Pen,
+    labelKey: 'aiChat.menu.styles.formal',
+    descKey: 'aiChat.menu.styles.formalDesc',
+  },
 ];
 
 export const ToolsMenu: React.FC<ToolsMenuProps> = ({
@@ -371,7 +402,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
             {/* Style Submenu - positions left or right based on viewport */}
             {showStyleSubmenu && (
               <div
-                className={`absolute top-0 w-48 py-1 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-50 ${submenuPosition === 'right' ? 'left-full ml-1' : 'right-full mr-1'}`}
+                className={`absolute top-0 w-56 py-1 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-50 ${submenuPosition === 'right' ? 'left-full ml-1' : 'right-full mr-1'}`}
               >
                 {RESPONSE_STYLES.map((style) => {
                   const StyleIcon = style.icon;
@@ -390,22 +421,29 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                         onToolSelect(`style:${style.id}`);
                       }}
                       className={`
-                        w-full flex items-center gap-3 px-3 py-2 text-left transition-colors
+                        w-full flex items-start gap-3 px-3 py-2.5 text-left transition-colors
                         ${isSelected ? 'bg-primary-50 dark:bg-primary-900/20' : 'hover:bg-slate-50 dark:hover:bg-navy-700'}
                       `}
                     >
                       <StyleIcon
                         size={14}
-                        className={
+                        className={`mt-0.5 shrink-0 ${
                           isSelected ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
-                        }
+                        }`}
                       />
-                      <span
-                        className={`flex-1 text-sm ${isSelected ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-slate-700 dark:text-slate-300'}`}
-                      >
-                        {t(style.labelKey)}
-                      </span>
-                      {isSelected && <Check size={14} className="text-primary-500 shrink-0" />}
+                      <div className="flex-1 min-w-0">
+                        <span
+                          className={`block text-sm ${isSelected ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-slate-700 dark:text-slate-300'}`}
+                        >
+                          {t(style.labelKey)}
+                        </span>
+                        <span className="block text-[10px] text-slate-400 dark:text-slate-500 leading-tight mt-0.5">
+                          {t(style.descKey)}
+                        </span>
+                      </div>
+                      {isSelected && (
+                        <Check size={14} className="text-primary-500 shrink-0 mt-0.5" />
+                      )}
                     </button>
                   );
                 })}
@@ -549,6 +587,62 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                             </option>
                           ))}
                       </select>
+                    </div>
+
+                    {/* C7.2: Voice style presets */}
+                    <div>
+                      <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+                        {t('aiChat.menu.voiceStyle', 'Voice style')}
+                      </label>
+                      <div className="grid grid-cols-2 gap-1">
+                        {[
+                          {
+                            id: 'formal',
+                            label: t('aiChat.menu.voiceFormal', 'Formal'),
+                            rate: 0.9,
+                            pitch: 0.9,
+                          },
+                          {
+                            id: 'normal',
+                            label: t('aiChat.menu.voiceNormal', 'Normal'),
+                            rate: 1.0,
+                            pitch: 1.0,
+                          },
+                          {
+                            id: 'cheerful',
+                            label: t('aiChat.menu.voiceCheerful', 'Cheerful'),
+                            rate: 1.1,
+                            pitch: 1.15,
+                          },
+                          {
+                            id: 'calm',
+                            label: t('aiChat.menu.voiceCalm', 'Calm'),
+                            rate: 0.85,
+                            pitch: 0.95,
+                          },
+                        ].map((style) => {
+                          const isActive = (ttsRate ?? 1) === style.rate;
+                          return (
+                            <button
+                              key={style.id}
+                              onClick={() => {
+                                setAIConfig({ ttsRate: style.rate, ttsPitch: style.pitch } as any);
+                                toast.success(`${style.label} voice style`, {
+                                  duration: 1200,
+                                  icon: '🎙️',
+                                });
+                              }}
+                              className={`px-2 py-1.5 text-xs rounded-lg border transition-colors ${
+                                isActive
+                                  ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400 font-medium'
+                                  : 'bg-slate-50 dark:bg-navy-700 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-600'
+                              }`}
+                            >
+                              {style.label}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     {/* Test button */}

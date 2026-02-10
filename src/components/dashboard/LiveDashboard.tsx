@@ -71,24 +71,25 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
     return { total: inits.length, onTrack, atRisk, delayed, done };
   }, [session]);
 
-  // --- 4. KPIs (Mock for now, should come from session.kpis in future) ---
-  const kpis = [
-    { label: 'Cycle Time', value: '-12%', trend: 'good', baseline: '4 days' },
-    { label: 'Quality / Scrap', value: '-5%', trend: 'good', baseline: '2.1%' },
-    { label: 'Throughput', value: '+8%', trend: 'good', baseline: '850 un/h' },
-    { label: 'Op. Savings', value: '$120k', trend: 'good', baseline: '$0' },
+  // --- 4. KPIs (Empty until real data sources are connected) ---
+  const kpis: {
+    label: string;
+    value: string;
+    trend: 'good' | 'bad' | 'neutral';
+    baseline: string;
+  }[] = [
+    { label: 'Cycle Time', value: '—', trend: 'neutral', baseline: '—' },
+    { label: 'Quality / Scrap', value: '—', trend: 'neutral', baseline: '—' },
+    { label: 'Throughput', value: '—', trend: 'neutral', baseline: '—' },
+    { label: 'Op. Savings', value: '—', trend: 'neutral', baseline: '—' },
   ];
 
-  // --- 5. AI Insights (Mock/Placeholder logic) ---
+  // --- 5. AI Insights (Empty until real data sources are connected) ---
   const aiInsights = useMemo(
     () => ({
-      summary: `In this week, the project progressed by ${Math.floor(Math.random() * 5) + 1}%.The biggest risk identified is the delay in the Data Foundation workstream.`,
-      actions: [
-        'Strengthen the Process Owner role in Automation Workstream.',
-        'Accelerate decision on Data Integration vendor.',
-        'Schedule Cultural Workshop for middle management.',
-      ],
-      risk: 'Potential delay in AI User Training rollout due to resource constraints in Q3.',
+      summary: 'Connect data sources to see AI-generated executive insights.',
+      actions: [] as string[],
+      risk: '',
     }),
     []
   );
@@ -243,11 +244,8 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
                   <div className="text-xs text-slate-500 mb-1">{kpi.label}</div>
                   <div className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
                     {kpi.value}
-                    {kpi.trend === 'good' ? (
-                      <TrendingUp size={14} className="text-green-500" />
-                    ) : (
-                      <TrendingDown size={14} className="text-red-500" />
-                    )}
+                    {kpi.trend === 'good' && <TrendingUp size={14} className="text-green-500" />}
+                    {kpi.trend === 'bad' && <TrendingDown size={14} className="text-red-500" />}
                   </div>
                   <div className="text-[10px] text-slate-400">Baseline: {kpi.baseline}</div>
                 </div>
@@ -285,26 +283,34 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
                   <h4 className="text-sm font-semibold text-indigo-200 uppercase tracking-wider mb-3">
                     Recommended Actions
                   </h4>
-                  <ul className="space-y-3">
-                    {aiInsights.actions.map((action, i) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <CheckCircle2 size={18} className="text-green-400 mt-0.5 shrink-0" />
-                        <span className="text-sm text-indigo-50">{action}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {aiInsights.actions.length > 0 ? (
+                    <ul className="space-y-3">
+                      {aiInsights.actions.map((action, i) => (
+                        <li key={i} className="flex items-start gap-3">
+                          <CheckCircle2 size={18} className="text-green-400 mt-0.5 shrink-0" />
+                          <span className="text-sm text-indigo-50">{action}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-indigo-200/60 italic">
+                      No actions available yet. Connect data sources to generate recommendations.
+                    </p>
+                  )}
                 </div>
 
                 {/* Predictive Risk */}
-                <div className="bg-red-500/20 backdrop-blur-md rounded-xl p-5 border border-red-500/20 flex items-start gap-4">
-                  <AlertTriangle size={24} className="text-red-300 shrink-0" />
-                  <div>
-                    <h4 className="text-sm font-semibold text-red-200 uppercase tracking-wider mb-1">
-                      Early Predictive Risk
-                    </h4>
-                    <p className="text-sm text-white/90">{aiInsights.risk}</p>
+                {aiInsights.risk ? (
+                  <div className="bg-red-500/20 backdrop-blur-md rounded-xl p-5 border border-red-500/20 flex items-start gap-4">
+                    <AlertTriangle size={24} className="text-red-300 shrink-0" />
+                    <div>
+                      <h4 className="text-sm font-semibold text-red-200 uppercase tracking-wider mb-1">
+                        Early Predictive Risk
+                      </h4>
+                      <p className="text-sm text-white/90">{aiInsights.risk}</p>
+                    </div>
                   </div>
-                </div>
+                ) : null}
               </div>
             </div>
           </div>

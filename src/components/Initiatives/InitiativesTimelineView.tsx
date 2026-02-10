@@ -5,6 +5,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -183,6 +184,7 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
   projectId,
 }) => {
   const [dependencies, setDependencies] = useState<Dependency[]>([]);
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
   const [localInitiatives, setLocalInitiatives] = useState<PortfolioInitiative[]>(initiatives);
   const [aiSchedule, setAiSchedule] = useState<any | null>(null);
@@ -291,10 +293,12 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
         plannedStartDate,
         plannedEndDate,
       });
-      toast.success('Schedule updated');
+      toast.success(t('initiatives.toast.scheduleUpdated', 'Harmonogram zaktualizowany'));
     } catch (error: any) {
       setLocalInitiatives((prev) => [...prev]);
-      toast.error('Failed to update schedule');
+      toast.error(
+        t('initiatives.toast.scheduleUpdateError', 'Nie udało się zaktualizować harmonogramu')
+      );
     }
   }, []);
 
@@ -309,7 +313,9 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
         });
         setDependencies((prev) => [...prev, response.dependency || response]);
       } catch (error: any) {
-        toast.error('Failed to create dependency');
+        toast.error(
+          t('initiatives.toast.createDependencyError', 'Nie udało się utworzyć zależności')
+        );
       }
     },
     [projectId]
@@ -351,7 +357,9 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
       });
       setAiSchedule(response.schedule || response);
     } catch (error: any) {
-      toast.error('Failed to generate AI schedule');
+      toast.error(
+        t('initiatives.toast.aiScheduleError', 'Nie udało się wygenerować harmonogramu AI')
+      );
     } finally {
       setAiLoading(null);
     }
@@ -367,7 +375,9 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
       setAiConflicts(response.conflicts || response);
       setShowConflictsPanel(true);
     } catch (error: any) {
-      toast.error('Failed to analyze conflicts');
+      toast.error(
+        t('initiatives.toast.aiConflictsError', 'Nie udało się przeanalizować konfliktów')
+      );
     } finally {
       setAiLoading(null);
     }
@@ -381,7 +391,9 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
       });
       setAiPriorities(response.priorities || response);
     } catch (error: any) {
-      toast.error('Failed to recommend priorities');
+      toast.error(
+        t('initiatives.toast.aiPrioritiesError', 'Nie udało się zasugerować priorytetów')
+      );
     } finally {
       setAiLoading(null);
     }
@@ -409,9 +421,11 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
           };
         })
       );
-      toast.success('AI schedule applied');
+      toast.success(t('initiatives.toast.aiScheduleApplied', 'Harmonogram AI zastosowany'));
     } catch (error: any) {
-      toast.error('Failed to apply AI schedule');
+      toast.error(
+        t('initiatives.toast.aiScheduleApplyError', 'Nie udało się zastosować harmonogramu AI')
+      );
     }
   }, [aiSchedule]);
 

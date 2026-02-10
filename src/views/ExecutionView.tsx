@@ -155,7 +155,7 @@ export const ExecutionView: React.FC = () => {
           <div className="text-center">
             <BarChart3 size={48} className="mx-auto mb-2 opacity-50" />
             <p>Monthly KPI trend charts</p>
-            <p className="text-sm">(Interactive charts coming soon)</p>
+            <p className="text-sm">(Charts available in the Execution Hub module)</p>
           </div>
         </div>
       </div>

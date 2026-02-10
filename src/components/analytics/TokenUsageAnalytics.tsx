@@ -83,47 +83,27 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
       setUsageData(data);
     } catch (err: any) {
       console.error('[TokenUsageAnalytics] Failed to fetch usage:', err);
-      // Use mock data if API fails
-      setUsageData(generateMockData());
+      // Set empty data so the component shows an empty state
+      setUsageData(getEmptyUsageData());
+      setError(err?.message || 'Failed to load usage data');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const generateMockData = (): UsageData => {
-    const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
-    const dailyUsage = Array.from({ length: days }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (days - 1 - i));
-      return {
-        date: date.toISOString().split('T')[0],
-        tokens: Math.floor(Math.random() * 3000) + 500,
-        cost: Math.random() * 0.5,
-      };
-    });
-
-    const totalUsed = dailyUsage.reduce((sum, d) => sum + d.tokens, 0);
-    const avgDaily = Math.round(totalUsed / days);
-
-    return {
-      dailyUsage,
-      weeklyUsage: [],
-      usageByType: [
-        { type: 'chat', tokens: Math.round(totalUsed * 0.45), percentage: 45 },
-        { type: 'analysis', tokens: Math.round(totalUsed * 0.25), percentage: 25 },
-        { type: 'generation', tokens: Math.round(totalUsed * 0.2), percentage: 20 },
-        { type: 'automation', tokens: Math.round(totalUsed * 0.1), percentage: 10 },
-      ],
-      totalUsed,
-      totalLimit: 100000,
-      avgDailyUsage: avgDaily,
-      peakUsage: Math.max(...dailyUsage.map((d) => d.tokens)),
-      estimatedDaysRemaining: Math.round((100000 - totalUsed) / avgDaily),
-      costThisMonth: dailyUsage.reduce((sum, d) => sum + d.cost, 0),
-      trend: Math.random() > 0.5 ? 'up' : 'down',
-      trendPercentage: Math.round(Math.random() * 20),
-    };
-  };
+  const getEmptyUsageData = (): UsageData => ({
+    dailyUsage: [],
+    weeklyUsage: [],
+    usageByType: [],
+    totalUsed: 0,
+    totalLimit: 100000,
+    avgDailyUsage: 0,
+    peakUsage: 0,
+    estimatedDaysRemaining: 0,
+    costThisMonth: 0,
+    trend: 'stable',
+    trendPercentage: 0,
+  });
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;

@@ -294,7 +294,22 @@ export const UsageAnalyticsDashboard: React.FC = () => {
       });
     } catch (error) {
       console.error('Failed to load analytics:', error);
-      generateMockData();
+      // Set empty state on error
+      setTrends([]);
+      setModelUsage([]);
+      setCapabilityUsage([]);
+      setHourlyUsage([]);
+      setComparison([]);
+      setSummary({
+        totalRequests: 0,
+        totalTokens: 0,
+        totalCost: 0,
+        uniqueUsers: 0,
+        avgRequestsPerDay: 0,
+        avgCostPerRequest: 0,
+        topModel: '',
+        topCapability: '',
+      });
     }
     setLoading(false);
   }, [timeRange, currentOrganization?.id]);
@@ -302,135 +317,6 @@ export const UsageAnalyticsDashboard: React.FC = () => {
   useEffect(() => {
     loadAnalytics();
   }, [loadAnalytics]);
-
-  const generateMockData = () => {
-    const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
-
-    // Generate trends
-    const trendsData: UsageTrend[] = Array.from({ length: days }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (days - i - 1));
-      const baseRequests = 50 + Math.random() * 100;
-      return {
-        date: date.toISOString().split('T')[0],
-        requests: Math.floor(baseRequests),
-        tokens: Math.floor(baseRequests * (800 + Math.random() * 400)),
-        cost: Math.round(baseRequests * 0.02 * 100) / 100,
-        uniqueUsers: Math.floor(5 + Math.random() * 15),
-      };
-    });
-    setTrends(trendsData);
-
-    // Model usage
-    const models: ModelUsage[] = [
-      {
-        model: 'gpt-4o',
-        requests: 1250,
-        tokens: 1500000,
-        cost: 45.2,
-        avgResponseTime: 1.8,
-        percentage: 35,
-      },
-      {
-        model: 'gpt-4o-mini',
-        requests: 1680,
-        tokens: 850000,
-        cost: 8.5,
-        avgResponseTime: 0.6,
-        percentage: 47,
-      },
-      {
-        model: 'claude-3.5-sonnet',
-        requests: 420,
-        tokens: 520000,
-        cost: 15.6,
-        avgResponseTime: 2.1,
-        percentage: 12,
-      },
-      {
-        model: 'gemini-1.5-pro',
-        requests: 210,
-        tokens: 180000,
-        cost: 3.2,
-        avgResponseTime: 1.2,
-        percentage: 6,
-      },
-    ];
-    setModelUsage(models);
-
-    // Capability usage
-    const capabilities: CapabilityUsage[] = [
-      { capability: 'Chat', requests: 1850, tokens: 920000, cost: 28.5, percentage: 52 },
-      {
-        capability: 'Report Generation',
-        requests: 420,
-        tokens: 680000,
-        cost: 21.3,
-        percentage: 12,
-      },
-      { capability: 'Task Advice', requests: 680, tokens: 450000, cost: 13.5, percentage: 19 },
-      {
-        capability: 'Initiative Creation',
-        requests: 320,
-        tokens: 380000,
-        cost: 11.4,
-        percentage: 9,
-      },
-      { capability: 'Diagnosis', requests: 290, tokens: 180000, cost: 5.4, percentage: 8 },
-    ];
-    setCapabilityUsage(capabilities);
-
-    // Hourly usage heatmap
-    const hourly: HourlyUsage[] = Array.from({ length: 24 }, (_, hour) => {
-      const isWorkHours = hour >= 9 && hour <= 18;
-      const isPeak = (hour >= 10 && hour <= 12) || (hour >= 14 && hour <= 16);
-      const intensity = isPeak
-        ? 70 + Math.random() * 30
-        : isWorkHours
-          ? 40 + Math.random() * 30
-          : 5 + Math.random() * 15;
-      return {
-        hour,
-        requests: Math.floor(intensity * 2),
-        intensity: Math.round(intensity),
-      };
-    });
-    setHourlyUsage(hourly);
-
-    // Period comparison
-    const comparisons: PeriodComparison[] = [
-      { metric: 'Requests', current: 3560, previous: 3120, change: 440, changePercent: 14.1 },
-      {
-        metric: 'Tokens Used',
-        current: 2850000,
-        previous: 2640000,
-        change: 210000,
-        changePercent: 8.0,
-      },
-      { metric: 'Total Cost', current: 72.5, previous: 68.2, change: 4.3, changePercent: 6.3 },
-      { metric: 'Unique Users', current: 24, previous: 21, change: 3, changePercent: 14.3 },
-      {
-        metric: 'Avg Response Time',
-        current: 1.4,
-        previous: 1.6,
-        change: -0.2,
-        changePercent: -12.5,
-      },
-    ];
-    setComparison(comparisons);
-
-    // Summary
-    setSummary({
-      totalRequests: trendsData.reduce((sum, d) => sum + d.requests, 0),
-      totalTokens: trendsData.reduce((sum, d) => sum + d.tokens, 0),
-      totalCost: Math.round(trendsData.reduce((sum, d) => sum + d.cost, 0) * 100) / 100,
-      uniqueUsers: 24,
-      avgRequestsPerDay: Math.round(trendsData.reduce((sum, d) => sum + d.requests, 0) / days),
-      avgCostPerRequest: 0.02,
-      topModel: 'gpt-4o-mini',
-      topCapability: 'Chat',
-    });
-  };
 
   const handleExport = (format: 'csv' | 'pdf') => {
     if (format === 'csv') {

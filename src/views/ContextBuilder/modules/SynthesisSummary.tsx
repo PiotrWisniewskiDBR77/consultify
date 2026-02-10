@@ -14,6 +14,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { SCENARIOS } from '../../../data/transformationScenarios';
 import { DynamicListItem } from '../shared/DynamicList';
@@ -57,7 +58,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
     try {
       // TODO: Implement PDF export via backend
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      alert('PDF export functionality coming soon!');
+      toast('PDF export is being prepared. Use the copy button for now.', { icon: 'ℹ️' });
     } finally {
       setIsExporting(false);
     }

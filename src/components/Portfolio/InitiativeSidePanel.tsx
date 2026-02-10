@@ -11,7 +11,9 @@ import {
   Calendar,
   CheckCircle2,
   CheckSquare,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Clock,
   DollarSign,
   Edit2,
@@ -28,6 +30,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { getAxisColor, getPriorityClasses, getStatusClasses } from '../../config/portfolioColors';
 import { Api } from '../../services/api';
@@ -65,6 +68,9 @@ interface InitiativeSidePanelProps {
 }
 
 type TabId = 'overview' | 'tasks' | 'decisions' | 'financials' | 'stakeholders' | 'risks';
+
+// B7.3: Max visible tasks before "Show more" toggle
+const MAX_VISIBLE_TASKS = 5;
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Overview', icon: <FileText size={16} /> },
@@ -109,10 +115,13 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
 
   // Tasks state
   const [tasks, setTasks] = useState<Task[]>([]);
+  const { t } = useTranslation();
   const [tasksLoading, setTasksLoading] = useState(false);
   const [taskFilter, setTaskFilter] = useState<'all' | 'todo' | 'in_progress' | 'completed'>('all');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  // B7.3: Show more toggle for task list
+  const [showAllTasks, setShowAllTasks] = useState(false);
 
   // Decisions state
   const [decisions, setDecisions] = useState<Decision[]>([]);
@@ -232,7 +241,9 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
       return;
     }
     if (!initiative.projectId) {
-      toast.error('Project is required to request a decision');
+      toast.error(
+        t('portfolio.toast.projectRequired', 'Projekt jest wymagany do zgłoszenia decyzji')
+      );
       return;
     }
     const gate = GATE_DEFINITIONS.find((g) => g.id === gateType);
@@ -256,7 +267,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
       fetchDecisions();
     } catch (error: any) {
       console.error('[InitiativeSidePanel] Failed to create gate decision:', error);
-      toast.error('Failed to create gate decision');
+      toast.error(t('portfolio.toast.gateDecisionError', 'Nie udało się utworzyć decyzji bramki'));
     } finally {
       setSubmittingGate(false);
     }
@@ -440,9 +451,33 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
           </div>
         </div>
 
-        {/* Placeholder for budget tracking */}
-        <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg text-center text-sm text-slate-500 dark:text-slate-400">
-          Detailed budget tracking coming soon
+        {/* Budget utilization summary */}
+        <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+              Budget Utilization
+            </span>
+            <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              {initiative.progress || 0}% spent
+            </span>
+          </div>
+          <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full ${
+                (initiative.progress || 0) > 90
+                  ? 'bg-red-500'
+                  : (initiative.progress || 0) > 70
+                    ? 'bg-amber-500'
+                    : 'bg-green-500'
+              }`}
+              style={{ width: `${initiative.progress || 0}%` }}
+            />
+          </div>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+            Estimated spend:{' '}
+            {formatCurrency(Math.round((initiative.budget * (initiative.progress || 0)) / 100))} of{' '}
+            {formatCurrency(initiative.budget)}
+          </p>
         </div>
       </div>
     );
@@ -553,9 +588,41 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
           </div>
         </div>
 
-        {/* Placeholder for RAID items */}
-        <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg text-center text-sm text-slate-500 dark:text-slate-400">
-          RAID log integration coming soon
+        {/* RAID categories summary */}
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          {[
+            {
+              label: 'Risks',
+              count: initiative?.riskScore && initiative.riskScore > 50 ? 'High' : 'Low',
+              color: 'text-red-500',
+              bg: 'bg-red-50 dark:bg-red-900/20',
+            },
+            {
+              label: 'Assumptions',
+              count: '-',
+              color: 'text-blue-500',
+              bg: 'bg-blue-50 dark:bg-blue-900/20',
+            },
+            {
+              label: 'Issues',
+              count: '-',
+              color: 'text-amber-500',
+              bg: 'bg-amber-50 dark:bg-amber-900/20',
+            },
+            {
+              label: 'Dependencies',
+              count: String(initiative?.dependencies?.length || 0),
+              color: 'text-purple-500',
+              bg: 'bg-purple-50 dark:bg-purple-900/20',
+            },
+          ].map((item) => (
+            <div key={item.label} className={`p-3 rounded-lg ${item.bg}`}>
+              <div className={`text-xs font-medium ${item.color} mb-1`}>{item.label}</div>
+              <div className="text-lg font-semibold text-slate-800 dark:text-white">
+                {item.count}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -649,51 +716,65 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
           </div>
         ) : (
           <div className="space-y-2">
-            {filteredTasks.map((task) => (
-              <div
-                key={task.id}
-                onClick={() => {
-                  setSelectedTask(task);
-                  setIsTaskModalOpen(true);
-                }}
-                className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border border-slate-100 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/30 cursor-pointer transition-all group"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-navy-900 dark:text-white line-clamp-1 group-hover:text-purple-600 dark:group-hover:text-purple-400">
-                      {task.title}
-                    </h4>
-                    {task.description && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
-                        {task.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 mt-2">
-                      <span
-                        className={`px-2 py-0.5 text-[10px] font-medium rounded ${getTaskStatusColor(task.status)}`}
-                      >
-                        {task.status}
-                      </span>
-                      <span
-                        className={`text-[10px] font-medium ${getTaskPriorityColor(task.priority)}`}
-                      >
-                        {task.priority}
-                      </span>
-                      {task.dueDate && (
-                        <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
-                          <Clock size={10} />
-                          {new Date(task.dueDate).toLocaleDateString()}
-                        </span>
+            {/* B7.3: Truncate task list with Show more toggle */}
+            {(showAllTasks ? filteredTasks : filteredTasks.slice(0, MAX_VISIBLE_TASKS)).map(
+              (task) => (
+                <div
+                  key={task.id}
+                  onClick={() => {
+                    setSelectedTask(task);
+                    setIsTaskModalOpen(true);
+                  }}
+                  className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border border-slate-100 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/30 cursor-pointer transition-all group"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium text-navy-900 dark:text-white line-clamp-1 group-hover:text-purple-600 dark:group-hover:text-purple-400">
+                        {task.title}
+                      </h4>
+                      {task.description && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                          {task.description}
+                        </p>
                       )}
+                      <div className="flex items-center gap-2 mt-2">
+                        <span
+                          className={`px-2 py-0.5 text-[10px] font-medium rounded ${getTaskStatusColor(task.status)}`}
+                        >
+                          {task.status}
+                        </span>
+                        <span
+                          className={`text-[10px] font-medium ${getTaskPriorityColor(task.priority)}`}
+                        >
+                          {task.priority}
+                        </span>
+                        {task.dueDate && (
+                          <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
+                            <Clock size={10} />
+                            {new Date(task.dueDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    <ChevronRight
+                      size={16}
+                      className="text-slate-400 dark:text-slate-500 group-hover:text-purple-500 shrink-0 mt-1"
+                    />
                   </div>
-                  <ChevronRight
-                    size={16}
-                    className="text-slate-400 dark:text-slate-500 group-hover:text-purple-500 shrink-0 mt-1"
-                  />
                 </div>
-              </div>
-            ))}
+              )
+            )}
+            {/* B7.3: Show more / Show less toggle */}
+            {filteredTasks.length > MAX_VISIBLE_TASKS && (
+              <button
+                onClick={() => setShowAllTasks((prev) => !prev)}
+                className="w-full text-center py-2 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+              >
+                {showAllTasks
+                  ? 'Show less'
+                  : `Show ${filteredTasks.length - MAX_VISIBLE_TASKS} more…`}
+              </button>
+            )}
           </div>
         )}
 
@@ -1073,6 +1154,36 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                   >
                     <X size={18} />
                   </button>
+                </div>
+              </div>
+            </div>
+
+            {/* B7.5: Key Info — always visible at a glance */}
+            <div className="shrink-0 px-6 py-2 bg-slate-50 dark:bg-navy-950 border-b border-slate-200 dark:border-navy-700">
+              <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <Target size={12} className="text-purple-500" />
+                  <span className="text-slate-500 dark:text-slate-400">Progress:</span>
+                  <span className="font-semibold text-navy-900 dark:text-white">
+                    {initiative.progress ?? 0}%
+                  </span>
+                </div>
+                <div className="w-px h-3 bg-slate-200 dark:bg-navy-700" />
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={12} className="text-cyan-500" />
+                  <span className="text-slate-500 dark:text-slate-400">Q:</span>
+                  <span className="font-medium text-navy-900 dark:text-white">
+                    {initiative.targetQuarter || '—'}
+                  </span>
+                </div>
+                <div className="w-px h-3 bg-slate-200 dark:bg-navy-700" />
+                <div className="flex items-center gap-1.5">
+                  <User size={12} className="text-emerald-500" />
+                  <span className="text-slate-500 dark:text-slate-400 truncate max-w-[120px]">
+                    {initiative.ownerBusiness
+                      ? `${(initiative.ownerBusiness as any).firstName} ${(initiative.ownerBusiness as any).lastName}`
+                      : 'Unassigned'}
+                  </span>
                 </div>
               </div>
             </div>

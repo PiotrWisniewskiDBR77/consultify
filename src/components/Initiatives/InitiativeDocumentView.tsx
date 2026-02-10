@@ -13,24 +13,22 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
   Archive,
-  Bell,
-  BellOff,
+  Calendar,
   CheckSquare,
   ChevronLeft,
   Copy,
+  DollarSign,
   Download,
   ExternalLink,
-  LayoutGrid,
   Loader2,
   MessageSquare,
-  MoreVertical,
-  PanelLeft,
   Save,
   Scale,
-  ScrollText,
-  Share2,
   Sparkles,
+  Target,
   Trash2,
+  Users,
+  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -55,6 +53,8 @@ import {
   type TaskDependency,
   type WarningThresholds,
 } from '../MyWork/shared';
+import { type CardViewStyle, CardViewSwitcher } from '../shared/CardViewSwitcher';
+import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { InitiativeNotionView, NOTION_NAV_GROUP_IDS } from './InitiativeNotionView';
 import { InitiativeScrollView } from './InitiativeScrollView';
 import {
@@ -147,8 +147,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
 
-  // UI state
+  // UI state — map CardViewStyle to internal view modes
+  const cardViewToInternal = (s: CardViewStyle): 'notion' | 'cards' | 'scroll' =>
+    s === 'current' ? 'cards' : s === 'notion' ? 'notion' : 'scroll';
+  const internalToCardView = (m: 'notion' | 'cards' | 'scroll'): CardViewStyle =>
+    m === 'cards' ? 'current' : m === 'notion' ? 'notion' : 'clickup';
   const [viewMode, setViewMode] = useState<'notion' | 'cards' | 'scroll'>('notion');
+  const [showAssessmentPanel, setShowAssessmentPanel] = useState(false);
   const [selectedSectionKey, setSelectedSectionKey] = useState<string>('core');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [isGeneratingAI, setIsGeneratingAI] = useState<string | null>(null);
@@ -485,7 +490,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       toast.success(isPolish ? 'Status zaktualizowany' : 'Status updated');
       fetchAll();
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to update status');
+      toast.error(
+        e?.message ||
+          t('initiatives.toast.statusUpdateError', 'Nie udało się zaktualizować statusu')
+      );
     } finally {
       setIsMutating(false);
     }
@@ -507,7 +515,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         toast.success(isPolish ? 'Obserwujesz inicjatywę' : 'Now watching');
       }
     } catch (e: any) {
-      toast.error(e?.message || 'Failed');
+      toast.error(
+        e?.message || t('initiatives.toast.watchError', 'Nie udało się zmienić obserwowania')
+      );
     } finally {
       setIsMutating(false);
     }
@@ -527,7 +537,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       });
       toast.success(isPolish ? 'Zapisano' : 'Saved');
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to save');
+      toast.error(e?.message || t('initiatives.toast.saveError', 'Nie udało się zapisać'));
     } finally {
       setIsMutating(false);
     }
@@ -560,7 +570,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setShowCreateTask(false);
       toast.success(isPolish ? 'Zadanie utworzone' : 'Task created');
     } catch (e: any) {
-      toast.error(e?.message || 'Failed');
+      toast.error(
+        e?.message || t('initiatives.toast.createTaskError', 'Nie udało się utworzyć zadania')
+      );
     } finally {
       setIsMutating(false);
     }
@@ -582,7 +594,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setShowCreateDecision(false);
       toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
     } catch (e: any) {
-      toast.error(e?.message || 'Failed');
+      toast.error(
+        e?.message || t('initiatives.toast.createDecisionError', 'Nie udało się utworzyć decyzji')
+      );
     } finally {
       setIsMutating(false);
     }
@@ -605,7 +619,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setShowCreateRaid(false);
       toast.success(isPolish ? 'Element RAID dodany' : 'RAID item added');
     } catch (e: any) {
-      toast.error(e?.message || 'Failed');
+      toast.error(
+        e?.message || t('initiatives.toast.createRaidError', 'Nie udało się dodać elementu RAID')
+      );
     } finally {
       setIsMutating(false);
     }
@@ -681,7 +697,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         return null;
       }
     } catch (e: any) {
-      toast.error(e?.message || 'AI generation failed');
+      toast.error(
+        e?.message || t('initiatives.toast.aiGenerationError', 'Generowanie AI nie powiodło się')
+      );
       return null;
     } finally {
       setIsGeneratingAI(null);
@@ -712,7 +730,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       toast.success(isPolish ? 'Wysłano prośbę o zatwierdzenie' : 'Approval request sent');
       fetchAll();
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to request approval');
+      toast.error(
+        e?.message ||
+          t('initiatives.toast.approvalRequestError', 'Nie udało się wysłać prośby o zatwierdzenie')
+      );
     } finally {
       setIsMutating(false);
     }
@@ -750,7 +771,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setShowMoreMenu(false);
       fetchAll();
     } catch (e: any) {
-      toast.error(e?.message || 'Failed');
+      toast.error(e?.message || t('initiatives.toast.archiveError', 'Nie udało się zarchiwizować'));
     } finally {
       setIsMutating(false);
     }
@@ -776,7 +797,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setShowMoreMenu(false);
       onBack?.();
     } catch (e: any) {
-      toast.error(e?.message || 'Failed');
+      toast.error(e?.message || t('initiatives.toast.deleteError', 'Nie udało się usunąć'));
     } finally {
       setIsMutating(false);
     }
@@ -1101,158 +1122,265 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <MessageSquare size={16} />
                     <span>{isPolish ? 'Czat' : 'Chat'}</span>
                   </motion.button>
-                  {/* View Mode Toggle */}
-                  <div className="flex items-center rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-900/50 p-0.5 shadow-sm">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setViewMode('notion')}
-                      className={`p-2 rounded-lg transition-all duration-200 ${
-                        viewMode === 'notion'
-                          ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 shadow-sm'
-                          : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                      }`}
-                      title={isPolish ? 'Widok Notion' : 'Notion view'}
-                    >
-                      <PanelLeft size={16} />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setViewMode('cards')}
-                      className={`p-2 rounded-lg transition-all duration-200 ${
-                        viewMode === 'cards'
-                          ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 shadow-sm'
-                          : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                      }`}
-                      title={isPolish ? 'Widok kart' : 'Cards view'}
-                    >
-                      <LayoutGrid size={16} />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setViewMode('scroll')}
-                      className={`p-2 rounded-lg transition-all duration-200 ${
-                        viewMode === 'scroll'
-                          ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 shadow-sm'
-                          : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                      }`}
-                      title={isPolish ? 'Widok dokumentu' : 'Document view'}
-                    >
-                      <ScrollText size={16} />
-                    </motion.button>
-                  </div>
-                  {/* More Menu */}
-                  <div className="relative">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setShowMoreMenu(!showMoreMenu)}
-                      className="p-2 rounded-xl bg-white/70 dark:bg-navy-900/50 text-slate-400 hover:text-slate-600 border border-slate-200 dark:border-navy-700 transition-all"
-                    >
-                      <MoreVertical size={18} />
-                    </motion.button>
-                    <AnimatePresence>
-                      {showMoreMenu && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                          className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-navy-800 rounded-xl shadow-xl border border-slate-200 dark:border-navy-600 py-1 z-50 max-h-80 overflow-y-auto"
-                        >
-                          <button
-                            onClick={() => {
-                              setShowMoreMenu(false);
-                              toggleSection('tasks');
-                              setShowCreateTask(true);
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
-                          >
-                            <CheckSquare size={16} />
-                            {isPolish ? 'Nowe zadanie' : 'New Task'}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowMoreMenu(false);
-                              toggleSection('decisions');
-                              setShowCreateDecision(true);
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10"
-                          >
-                            <Scale size={16} />
-                            {isPolish ? 'Nowa decyzja' : 'New Decision'}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowMoreMenu(false);
-                              toggleSection('raid');
-                              setShowCreateRaid(true);
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10"
-                          >
-                            <AlertTriangle size={16} />
-                            {isPolish ? 'Dodaj RAID' : 'Add RAID'}
-                          </button>
-                          <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
-                          <button
-                            onClick={() => {
-                              setShowMoreMenu(false);
-                              window.open(window.location.href, '_blank');
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                          >
-                            <ExternalLink size={16} />
-                            {isPolish ? 'Nowa karta' : 'New tab'}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowMoreMenu(false);
-                              handleCopyLink();
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                          >
-                            <Copy size={16} />
-                            {isPolish ? 'Kopiuj link' : 'Copy link'}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowMoreMenu(false);
-                              handleExportPDF();
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                          >
-                            <Download size={16} />
-                            PDF
-                          </button>
-                          <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
-                          <button
-                            onClick={() => {
-                              setShowMoreMenu(false);
-                              handleArchive();
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10"
-                          >
-                            <Archive size={16} />
-                            {isPolish ? 'Archiwizuj' : 'Archive'}
-                          </button>
-                          {status === 'DRAFT' && (
-                            <button
-                              onClick={() => {
-                                setShowMoreMenu(false);
-                                handleDelete();
-                              }}
-                              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
-                            >
-                              <Trash2 size={16} />
-                              {isPolish ? 'Usuń' : 'Delete'}
-                            </button>
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                  {/* B7.1: CardViewSwitcher — 3 consistent view formats */}
+                  <CardViewSwitcher
+                    moduleId="initiative"
+                    value={internalToCardView(viewMode)}
+                    onChange={(style) => setViewMode(cardViewToInternal(style))}
+                    compact
+                  />
+                  {/* B7.4: Toggle assessment summary panel */}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowAssessmentPanel((p) => !p)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
+                      showAssessmentPanel
+                        ? 'bg-violet-500/15 border-violet-500/40 text-violet-600 dark:text-violet-400'
+                        : 'bg-white/70 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700 text-slate-400 hover:text-slate-600'
+                    }`}
+                    title={isPolish ? 'Panel oceny' : 'Assessment panel'}
+                  >
+                    <Sparkles size={16} />
+                  </motion.button>
+                  {/* B7.3: RowActionsMenu — z-50, no overlay issues */}
+                  <RowActionsMenu
+                    actions={
+                      [
+                        {
+                          id: 'new-task',
+                          label: isPolish ? 'Nowe zadanie' : 'New Task',
+                          icon: CheckSquare,
+                          variant: 'primary',
+                          onClick: () => {
+                            toggleSection('tasks');
+                            setShowCreateTask(true);
+                          },
+                        },
+                        {
+                          id: 'new-decision',
+                          label: isPolish ? 'Nowa decyzja' : 'New Decision',
+                          icon: Scale,
+                          onClick: () => {
+                            toggleSection('decisions');
+                            setShowCreateDecision(true);
+                          },
+                        },
+                        {
+                          id: 'add-raid',
+                          label: isPolish ? 'Dodaj RAID' : 'Add RAID',
+                          icon: AlertTriangle,
+                          onClick: () => {
+                            toggleSection('raid');
+                            setShowCreateRaid(true);
+                          },
+                        },
+                        {
+                          id: 'new-tab',
+                          label: isPolish ? 'Nowa karta' : 'New tab',
+                          icon: ExternalLink,
+                          divider: true,
+                          onClick: () => window.open(window.location.href, '_blank'),
+                        },
+                        {
+                          id: 'copy-link',
+                          label: isPolish ? 'Kopiuj link' : 'Copy link',
+                          icon: Copy,
+                          onClick: handleCopyLink,
+                        },
+                        {
+                          id: 'export-pdf',
+                          label: 'PDF',
+                          icon: Download,
+                          onClick: handleExportPDF,
+                        },
+                        {
+                          id: 'archive',
+                          label: isPolish ? 'Archiwizuj' : 'Archive',
+                          icon: Archive,
+                          variant: 'danger' as const,
+                          divider: true,
+                          onClick: handleArchive,
+                        },
+                        ...(status === 'DRAFT'
+                          ? [
+                              {
+                                id: 'delete',
+                                label: isPolish ? 'Usuń' : 'Delete',
+                                icon: Trash2,
+                                variant: 'danger' as const,
+                                onClick: handleDelete,
+                              },
+                            ]
+                          : []),
+                      ] as RowAction[]
+                    }
+                    size="md"
+                  />
                 </div>
+              </div>
+            </motion.div>
+
+            {/* ====== B7.2: Key Info Bar — 5 sections always visible ====== */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
+            >
+              {/* 1. Goal / Objective */}
+              <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/60 dark:border-navy-700/60 shadow-sm">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="p-1 rounded-lg bg-blue-500/10">
+                    <Target size={14} className="text-blue-500" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Cel' : 'Goal'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                  {summary ||
+                    initiative?.strategicIntent ||
+                    initiative?.description ||
+                    (isPolish ? 'Brak opisu' : 'No description')}
+                </p>
+              </div>
+
+              {/* 2. Tasks */}
+              <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/60 dark:border-navy-700/60 shadow-sm">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="p-1 rounded-lg bg-emerald-500/10">
+                    <CheckSquare size={14} className="text-emerald-500" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Zadania' : 'Tasks'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-slate-800 dark:text-white">
+                    {tasksDone}/{tasks.length}
+                  </span>
+                  {tasks.length > 0 && (
+                    <div className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all"
+                        style={{
+                          width: `${tasks.length > 0 ? Math.round((tasksDone / tasks.length) * 100) : 0}%`,
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+                {tasksInProgress > 0 && (
+                  <p className="text-[10px] text-blue-500 mt-0.5">
+                    {tasksInProgress} {isPolish ? 'w toku' : 'in progress'}
+                  </p>
+                )}
+              </div>
+
+              {/* 3. Team */}
+              <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/60 dark:border-navy-700/60 shadow-sm">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="p-1 rounded-lg bg-purple-500/10">
+                    <Users size={14} className="text-purple-500" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Zespół' : 'Team'}
+                  </span>
+                </div>
+                <div className="space-y-0.5">
+                  {ownerName ? (
+                    <p className="text-xs text-slate-700 dark:text-slate-300 truncate">
+                      <span className="text-slate-400">{isPolish ? 'Właściciel:' : 'Owner:'}</span>{' '}
+                      {ownerName}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-slate-400">
+                      {isPolish ? 'Brak właściciela' : 'No owner'}
+                    </p>
+                  )}
+                  {sponsorName && (
+                    <p className="text-[10px] text-slate-400 truncate">
+                      {isPolish ? 'Sponsor:' : 'Sponsor:'} {sponsorName}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* 4. Resources */}
+              <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/60 dark:border-navy-700/60 shadow-sm">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="p-1 rounded-lg bg-cyan-500/10">
+                    <Calendar size={14} className="text-cyan-500" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Zasoby' : 'Resources'}
+                  </span>
+                </div>
+                <div className="space-y-0.5">
+                  {startDate || endDate ? (
+                    <p className="text-xs text-slate-700 dark:text-slate-300">
+                      {startDate
+                        ? new Date(startDate).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                          })
+                        : '?'}
+                      {' → '}
+                      {endDate
+                        ? new Date(endDate).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                          })
+                        : '?'}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-slate-400">{isPolish ? 'Brak dat' : 'No dates'}</p>
+                  )}
+                  {milestones.length > 0 && (
+                    <p className="text-[10px] text-purple-500">
+                      {milestones.length} {isPolish ? 'kamieni milowych' : 'milestones'}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* 5. Finances / Risk */}
+              <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/60 dark:border-navy-700/60 shadow-sm">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="p-1 rounded-lg bg-amber-500/10">
+                    <DollarSign size={14} className="text-amber-500" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Finanse / Ryzyko' : 'Finance / Risk'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {initiative?.costCapex || initiative?.cost_capex ? (
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {(() => {
+                        const amt = initiative.costCapex || initiative.cost_capex || 0;
+                        if (amt >= 1_000_000) return `$${(amt / 1_000_000).toFixed(1)}M`;
+                        if (amt >= 1_000) return `$${(amt / 1_000).toFixed(0)}K`;
+                        return `$${amt}`;
+                      })()}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-400">—</span>
+                  )}
+                  {(riskCount > 0 || issueCount > 0) && (
+                    <span
+                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${criticalRaids > 0 ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}
+                    >
+                      {riskCount}R / {issueCount}I
+                    </span>
+                  )}
+                </div>
+                {initiative?.expectedRoi || initiative?.expected_roi ? (
+                  <p className="text-[10px] text-emerald-500 mt-0.5">
+                    ROI: {(initiative.expectedRoi || initiative.expected_roi || 0).toFixed(1)}x
+                  </p>
+                ) : null}
               </div>
             </motion.div>
 
@@ -1327,6 +1455,192 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <InitiativeScrollView leftSections={leftSections} rightSections={rightSections} />
             )}
           </div>
+
+          {/* ====== B7.4: Assessment Summary Panel (right side) ====== */}
+          <AnimatePresence>
+            {showAssessmentPanel && (
+              <motion.aside
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 40 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="fixed right-0 top-0 h-full w-80 bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-navy-700 shadow-2xl z-40 overflow-y-auto"
+              >
+                <div className="p-5 space-y-5">
+                  {/* Panel Header */}
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                      <Sparkles size={16} className="text-violet-500" />
+                      {isPolish ? 'Podsumowanie oceny' : 'Assessment Summary'}
+                    </h3>
+                    <button
+                      onClick={() => setShowAssessmentPanel(false)}
+                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+
+                  {/* Readiness Score */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-violet-500/5 to-purple-500/5 dark:from-violet-500/10 dark:to-purple-500/10 border border-violet-200/50 dark:border-violet-500/20">
+                    <p className="text-[10px] font-semibold text-violet-500 uppercase tracking-wider mb-2">
+                      {isPolish ? 'Gotowość inicjatywy' : 'Initiative Readiness'}
+                    </p>
+                    <div className="flex items-end gap-2 mb-2">
+                      <span className="text-3xl font-bold text-slate-800 dark:text-white">
+                        {(() => {
+                          let score = 0;
+                          if (summary) score += 15;
+                          if (ownerName) score += 15;
+                          if (sponsorName) score += 10;
+                          if (tasks.length > 0) score += 15;
+                          if (startDate && endDate) score += 10;
+                          if (initiative?.costCapex || initiative?.cost_capex) score += 10;
+                          if (raidItems.length > 0) score += 10;
+                          if (decisions.length > 0) score += 10;
+                          if (stakeholders.length > 0) score += 5;
+                          return Math.min(score, 100);
+                        })()}
+                        %
+                      </span>
+                      <span className="text-xs text-slate-400 mb-1">
+                        {isPolish ? 'kompletność' : 'completeness'}
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all"
+                        style={{
+                          width: `${(() => {
+                            let score = 0;
+                            if (summary) score += 15;
+                            if (ownerName) score += 15;
+                            if (sponsorName) score += 10;
+                            if (tasks.length > 0) score += 15;
+                            if (startDate && endDate) score += 10;
+                            if (initiative?.costCapex || initiative?.cost_capex) score += 10;
+                            if (raidItems.length > 0) score += 10;
+                            if (decisions.length > 0) score += 10;
+                            if (stakeholders.length > 0) score += 5;
+                            return Math.min(score, 100);
+                          })()}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Checklist */}
+                  <div>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                      {isPolish ? 'Lista kontrolna' : 'Checklist'}
+                    </p>
+                    <div className="space-y-1.5">
+                      {[
+                        { label: isPolish ? 'Opis / cel' : 'Description / goal', done: !!summary },
+                        { label: isPolish ? 'Właściciel' : 'Owner assigned', done: !!ownerName },
+                        { label: isPolish ? 'Sponsor' : 'Sponsor assigned', done: !!sponsorName },
+                        { label: isPolish ? 'Zadania' : 'Tasks defined', done: tasks.length > 0 },
+                        {
+                          label: isPolish ? 'Harmonogram' : 'Timeline set',
+                          done: !!(startDate && endDate),
+                        },
+                        {
+                          label: isPolish ? 'Budżet' : 'Budget defined',
+                          done: !!(initiative?.costCapex || initiative?.cost_capex),
+                        },
+                        {
+                          label: isPolish ? 'Ryzyka' : 'Risks identified',
+                          done: raidItems.filter((r) => r.type === 'risk').length > 0,
+                        },
+                        {
+                          label: isPolish ? 'Decyzje' : 'Decisions linked',
+                          done: decisions.length > 0,
+                        },
+                        {
+                          label: isPolish ? 'Interesariusze' : 'Stakeholders',
+                          done: stakeholders.length > 0,
+                        },
+                      ].map((item) => (
+                        <div key={item.label} className="flex items-center gap-2 text-xs">
+                          <div
+                            className={`w-4 h-4 rounded-full flex items-center justify-center ${item.done ? 'bg-emerald-500/20 text-emerald-500' : 'bg-slate-200 dark:bg-navy-700 text-slate-400'}`}
+                          >
+                            {item.done ? '✓' : '○'}
+                          </div>
+                          <span
+                            className={
+                              item.done ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400'
+                            }
+                          >
+                            {item.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Quick Stats */}
+                  <div>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                      {isPolish ? 'Statystyki' : 'Quick Stats'}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
+                        <p className="text-lg font-bold text-slate-800 dark:text-white">
+                          {tasks.length}
+                        </p>
+                        <p className="text-[9px] text-slate-400">
+                          {isPolish ? 'Zadania' : 'Tasks'}
+                        </p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
+                        <p className="text-lg font-bold text-slate-800 dark:text-white">
+                          {decisions.length}
+                        </p>
+                        <p className="text-[9px] text-slate-400">
+                          {isPolish ? 'Decyzje' : 'Decisions'}
+                        </p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
+                        <p
+                          className={`text-lg font-bold ${criticalRaids > 0 ? 'text-red-500' : 'text-slate-800 dark:text-white'}`}
+                        >
+                          {raidItems.length}
+                        </p>
+                        <p className="text-[9px] text-slate-400">RAID</p>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
+                        <p className="text-lg font-bold text-slate-800 dark:text-white">
+                          {stakeholders.length}
+                        </p>
+                        <p className="text-[9px] text-slate-400">
+                          {isPolish ? 'Interesariusze' : 'Stakeholders'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pending Gates */}
+                  {pendingGates.length > 0 && (
+                    <div className="p-3 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-500/20">
+                      <p className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider mb-1.5">
+                        {isPolish ? 'Oczekujące bramki' : 'Pending Gates'}
+                      </p>
+                      {pendingGates.map((g) => (
+                        <div
+                          key={g.id}
+                          className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400"
+                        >
+                          <AlertTriangle size={12} />
+                          <span>{g.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.aside>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </InitiativeContext.Provider>

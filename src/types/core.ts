@@ -788,7 +788,14 @@ export interface PortfolioFilters {
 
 /** Portfolio Sort Configuration */
 export interface PortfolioSortConfig {
-  field: 'name' | 'status' | 'priority' | 'plannedStartDate' | 'budget' | 'progress';
+  field:
+    | 'name'
+    | 'status'
+    | 'priority'
+    | 'plannedStartDate'
+    | 'plannedEndDate'
+    | 'budget'
+    | 'progress';
   direction: 'asc' | 'desc';
 }
 

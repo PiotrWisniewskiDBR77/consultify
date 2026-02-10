@@ -331,6 +331,8 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
   );
 };
 
+const MAX_VISIBLE_FOLDERS = 4; // C3.5: max 4 per section + scroll
+
 const Section: React.FC<{
   title: string;
   icon: React.ReactNode;
@@ -345,6 +347,10 @@ const Section: React.FC<{
   busyId: string | 'remove' | 'create' | null;
   onPick: (id: string) => void;
 }> = ({ title, icon, items, activeId, busyId, onPick }) => {
+  const [showAll, setShowAll] = React.useState(false);
+  const hasMore = items.length > MAX_VISIBLE_FOLDERS;
+  const visibleItems = showAll ? items : items.slice(0, MAX_VISIBLE_FOLDERS);
+
   return (
     <div>
       <div className="flex items-center gap-2 mb-2 px-1">
@@ -355,7 +361,7 @@ const Section: React.FC<{
         <div className="ml-auto text-[10px] text-slate-300 dark:text-slate-600">{items.length}</div>
       </div>
       <div className="space-y-1">
-        {items.map((p) => {
+        {visibleItems.map((p) => {
           const active = activeId === p.id;
           const disabled = busyId !== null;
           return (
@@ -379,6 +385,15 @@ const Section: React.FC<{
             </button>
           );
         })}
+        {/* C3.5: Show more / less toggle */}
+        {hasMore && (
+          <button
+            onClick={() => setShowAll((v) => !v)}
+            className="w-full text-center py-1.5 text-[11px] font-medium text-primary-500 hover:text-primary-400 transition-colors"
+          >
+            {showAll ? `Show less` : `Show ${items.length - MAX_VISIBLE_FOLDERS} more…`}
+          </button>
+        )}
       </div>
     </div>
   );

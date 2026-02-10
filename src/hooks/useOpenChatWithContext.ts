@@ -31,6 +31,7 @@ export interface OpenChatOptions {
     roadmapId?: string;
     taskId?: string;
     decisionId?: string;
+    reportId?: string;
   };
 }
 
@@ -49,6 +50,7 @@ export function useOpenChatWithContext() {
         existingPmoCtx?.assessmentId === entityId ||
         existingPmoCtx?.taskId === entityId ||
         existingPmoCtx?.decisionId === entityId ||
+        existingPmoCtx?.reportId === entityId ||
         (existingPmoCtx?.initiativeIds || []).includes(entityId);
 
       if (alreadyHasContext && activeConversationId) {
@@ -74,6 +76,7 @@ export function useOpenChatWithContext() {
           initiativeIds: entityType === 'initiative' ? [entityId] : undefined,
           taskId: entityType === 'task' ? entityId : undefined,
           decisionId: entityType === 'decision' ? entityId : undefined,
+          reportId: entityType === 'report' ? entityId : undefined,
         },
       });
 

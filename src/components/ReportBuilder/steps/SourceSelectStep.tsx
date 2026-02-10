@@ -192,7 +192,7 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
 
                 {isDisabled && (
                   <span className="absolute top-2 right-2 text-xs text-slate-400 dark:text-slate-500">
-                    {isPl ? 'Wkrótce' : 'Coming soon'}
+                    {isPl ? 'Niedostępne' : 'Not available'}
                   </span>
                 )}
               </button>

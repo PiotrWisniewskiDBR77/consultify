@@ -85,11 +85,11 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
     // Simulate OAuth redirect
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // For now, show coming soon message
+    // For now, show beta message
     toast.success(
       t(
-        'settings.connectedAccounts.comingSoon',
-        `${PROVIDERS.find((p) => p.id === providerId)?.name} integration coming soon!`
+        'settings.connectedAccounts.betaInfo',
+        `${PROVIDERS.find((p) => p.id === providerId)?.name} integration is in beta – stay tuned!`
       ),
       { duration: 3000 }
     );
@@ -269,7 +269,7 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
           <AlertTriangle size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-              {t('settings.connectedAccounts.betaTitle', 'Coming Soon')}
+              {t('settings.connectedAccounts.betaTitle', 'Beta Feature')}
             </p>
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
               {t(

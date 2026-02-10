@@ -312,7 +312,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
                   </div>
                   {!region.available && (
                     <span className="px-2 py-0.5 text-xs font-medium bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400 rounded-full">
-                      {t('admin.org.dataHosting.comingSoon', 'Coming Soon')}
+                      {t('admin.org.dataHosting.planned', 'Planned')}
                     </span>
                   )}
                 </div>

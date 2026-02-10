@@ -9,7 +9,17 @@
  */
 
 import { motion } from 'framer-motion';
-import { AlertTriangle, ChevronRight, List, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  Calendar,
+  CheckSquare,
+  ChevronRight,
+  DollarSign,
+  List,
+  Target,
+  Users,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { SECTION_REGISTRY } from './sections';
@@ -237,6 +247,83 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
 
       {/* Main Content - Single Column, All Expanded */}
       <div className="flex-1 min-w-0 space-y-4">
+        {/* B7.2: Key Info Strip — 5 sections always visible */}
+        <div className="grid grid-cols-5 gap-2">
+          <div className="p-2.5 rounded-xl bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Target size={12} className="text-blue-500" />
+              <span className="text-[10px] font-semibold text-slate-400 uppercase">
+                {isPolish ? 'Cel' : 'Goal'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2">
+              {ctx.summary || '—'}
+            </p>
+          </div>
+          <div className="p-2.5 rounded-xl bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
+            <div className="flex items-center gap-1.5 mb-1">
+              <CheckSquare size={12} className="text-emerald-500" />
+              <span className="text-[10px] font-semibold text-slate-400 uppercase">
+                {isPolish ? 'Zadania' : 'Tasks'}
+              </span>
+            </div>
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              {ctx.tasksDone}/{ctx.tasks?.length || 0}
+            </p>
+          </div>
+          <div className="p-2.5 rounded-xl bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Users size={12} className="text-purple-500" />
+              <span className="text-[10px] font-semibold text-slate-400 uppercase">
+                {isPolish ? 'Zespół' : 'Team'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-700 dark:text-slate-300 truncate">
+              {ctx.ownerName || '—'}
+            </p>
+          </div>
+          <div className="p-2.5 rounded-xl bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Calendar size={12} className="text-cyan-500" />
+              <span className="text-[10px] font-semibold text-slate-400 uppercase">
+                {isPolish ? 'Zasoby' : 'Resources'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-700 dark:text-slate-300">
+              {ctx.startDate
+                ? new Date(ctx.startDate).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                  })
+                : '?'}
+              {' → '}
+              {ctx.endDate
+                ? new Date(ctx.endDate).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                  })
+                : '?'}
+            </p>
+          </div>
+          <div className="p-2.5 rounded-xl bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
+            <div className="flex items-center gap-1.5 mb-1">
+              <DollarSign size={12} className="text-amber-500" />
+              <span className="text-[10px] font-semibold text-slate-400 uppercase">
+                {isPolish ? 'Finanse/Ryzyko' : 'Finance/Risk'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {ctx.riskCount > 0 && (
+                <span
+                  className={`text-[9px] font-medium px-1 py-0.5 rounded ${ctx.criticalRaids > 0 ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}
+                >
+                  {ctx.riskCount}R/{ctx.issueCount}I
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Gate Alert Banner */}
         {pendingGates.length > 0 && (
           <motion.div

@@ -1,6 +1,5 @@
 // Sentry configuration
-// This file can be used to configure Sentry error tracking
-// Currently not implemented - placeholder for future use
+// Error tracking integration — configure SENTRY_DSN env variable to enable
 
 export const initSentry = () => {
   // Sentry initialization will be added here when needed

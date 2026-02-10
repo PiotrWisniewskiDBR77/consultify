@@ -118,7 +118,7 @@
     "active": "active",
     "select": "Select",
     "connected": "connected",
-    "comingSoon": "Coming soon",
+    "comingSoon": "In development",
     "root": "Root"
   },
   "sidebar": {
@@ -217,7 +217,117 @@
   "initiatives": {
     "title": "Initiatives",
     "roadmap": "Roadmap",
-    "portfolio": "Portfolio"
+    "portfolio": "Portfolio",
+    "form": {
+      "createNew": "Create New Initiative",
+      "edit": "Edit Initiative",
+      "newInitiative": "New Initiative",
+      "title": "Title",
+      "titleRequired": "Title *",
+      "titlePlaceholder": "e.g. Submit compliance documentation",
+      "axis": "Axis",
+      "summary": "Summary",
+      "summaryPlaceholder": "Short problem/goal statement…",
+      "description": "Description",
+      "descriptionOptional": "Description (optional)",
+      "descriptionPlaceholder": "Describe the initiative...",
+      "category": "Category",
+      "categoryOptional": "Category (optional)",
+      "categoryPlaceholder": "e.g. Cybersecurity",
+      "priority": "Priority",
+      "risk": "Risk",
+      "riskLevel": "Risk Level",
+      "sourceAxis": "Source Axis",
+      "budget": "Budget (PLN)",
+      "expectedROI": "Expected ROI",
+      "timeline": "Timeline",
+      "objectives": "Objectives",
+      "addObjective": "Add new objective...",
+      "create": "Create",
+      "creating": "Creating…",
+      "save": "Save Changes",
+      "cancel": "Cancel",
+      "nameRequired": "Initiative Name *",
+      "namePlaceholder": "Enter initiative name",
+      "nameMinLength": "Name must be at least 5 characters",
+      "descriptionMinLength": "Description must be at least 20 characters",
+      "budgetRequired": "Budget must be greater than 0",
+      "roiRequired": "ROI must be greater than 0",
+      "highRiskHighBudget": "High-Risk, High-Budget Initiative",
+      "highRiskHighBudgetDesc": "Consider breaking this into smaller phases or implementing additional governance controls.",
+      "titleTooShort": "Title is too short",
+      "titleRequiredError": "Title is required",
+      "initiativeCreated": "Initiative created",
+      "initiativeUpdated": "Initiative updated",
+      "createFailed": "Failed to create initiative",
+      "updateFailed": "Failed to update initiative",
+      "duplicateWarning": "A similar initiative already exists: {{name}}",
+      "duplicateWarningDesc": "This initiative title is very similar to an existing one. Please verify this is not a duplicate."
+    },
+    "bulkEdit": {
+      "title": "Bulk edit initiatives",
+      "selectedCount": "{{count}} initiatives selected",
+      "status": "Status",
+      "priority": "Priority",
+      "businessOwner": "Business Owner",
+      "executionOwner": "Execution Owner",
+      "noChange": "No change",
+      "applyChanges": "Apply changes",
+      "updatesFailed": "{{count}} updates failed",
+      "bulkUpdateApplied": "Bulk update applied"
+    },
+    "empty": {
+      "title": "No Initiatives Yet",
+      "description": "Create your first initiative to get started"
+    },
+    "axis": {
+      "operational": "Operational",
+      "strategic": "Strategic",
+      "transformational": "Transformational",
+      "compliance": "Compliance"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "risk": {
+      "low": "Low Risk",
+      "medium": "Medium Risk",
+      "high": "High Risk"
+    },
+    "level": {
+      "label": "Initiative Type / Level",
+      "quick_win": "Quick Win",
+      "standard": "Standard Project",
+      "strategic": "Strategic Program",
+      "transformation": "Transformation",
+      "cannotDowngrade": "Initiative level cannot be downgraded",
+      "upgradeNote": "Level can be upgraded later but not downgraded"
+    },
+    "status": {
+      "draft": "Draft",
+      "pending_review": "Pending Review",
+      "review": "In Review",
+      "promoted": "Promoted",
+      "planning": "Planning",
+      "approved": "Approved",
+      "scheduled": "Scheduled",
+      "executing": "Executing",
+      "blocked": "Blocked",
+      "done": "Done",
+      "tracking": "Tracking",
+      "cancelled": "Cancelled",
+      "archived": "Archived"
+    },
+    "approval": {
+      "cannotApprove": "Cannot approve initiative",
+      "missingFields": "Missing required fields",
+      "needsTasks": "At least 1 task is required before approval",
+      "needsDeadline": "A deadline (end date) is required before approval",
+      "needsOwner": "A business owner must be assigned before approval"
+    }
   },
   "execution": {
     "title": "Execution Center",
@@ -289,7 +399,7 @@
       "knowledge": {
         "title": "Knowledge Base",
         "description": "Explore articles, tutorials, and best practices.",
-        "comingSoon": "Coming soon",
+        "comingSoon": "In development",
         "categories": {
           "tools": "Tools",
           "methodologies": "Methodologies",
@@ -842,11 +952,17 @@
       },
       "styles": {
         "normal": "Normal",
+        "normalDesc": "Balanced, conversational responses",
         "executive": "Executive",
+        "executiveDesc": "Concise, decision-focused, 3-5 bullet points",
         "analyst": "Analyst",
+        "analystDesc": "Data-driven with metrics, tables, benchmarks",
         "coach": "Coach",
+        "coachDesc": "Guiding questions, step-by-step explanations",
         "concise": "Concise",
-        "formal": "Formal"
+        "conciseDesc": "Key points only, no digressions",
+        "formal": "Formal",
+        "formalDesc": "Business/official language, precise and neutral"
       },
       "customInstructions": "My instructions",
       "customInstructionsPlaceholder": "e.g. \"Always respond in English\", \"I prefer tables over text\", \"I am a CTO at a manufacturing company\"",
@@ -905,6 +1021,10 @@
     "personalFolder": "Personal",
     "teamFolder": "Team",
     "createFolderFailed": "Failed to create folder. Please try again.",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "allConversations": "All",
+    "openFolder": "Open folder",
     "capabilities": {
       "deepThinking": "Deep Thinking",
       "deepThinkingDesc": "Multi-step analysis with web research",
@@ -992,6 +1112,11 @@
       "change_management": "Change Management",
       "architecture_integrations": "Architecture/Integrations",
       "other": "Other"
+    },
+    "streaming": {
+      "reviewing": "Multi-Agent Review in Progress",
+      "aggregating": "Aggregating Agent Findings",
+      "processing": "Agent Audit Processing"
     }
   },
   "research": {

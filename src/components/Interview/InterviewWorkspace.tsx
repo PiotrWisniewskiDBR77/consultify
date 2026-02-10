@@ -224,28 +224,119 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         )
       : 0;
 
-  // Status config (backend uses: in_progress | submitted | completed)
-  const statusConfig = {
+  // E2.3: Extended status config (drafting → review → accepted/rejected)
+  const STATUS_MAP: Record<
+    string,
+    { label: { en: string; pl: string }; color: string; textColor: string }
+  > = {
+    drafting: {
+      label: { en: 'Drafting', pl: 'Szkic' },
+      color: 'bg-slate-400',
+      textColor: 'text-slate-600 dark:text-slate-400',
+    },
     in_progress: {
       label: { en: 'In Progress', pl: 'W trakcie' },
       color: 'bg-blue-500',
       textColor: 'text-blue-600 dark:text-blue-400',
+    },
+    review: {
+      label: { en: 'In Review', pl: 'Do przeglądu' },
+      color: 'bg-amber-500',
+      textColor: 'text-amber-600 dark:text-amber-400',
     },
     submitted: {
       label: { en: 'Submitted', pl: 'Wysłany' },
       color: 'bg-amber-500',
       textColor: 'text-amber-600 dark:text-amber-400',
     },
+    accepted: {
+      label: { en: 'Accepted', pl: 'Zaakceptowany' },
+      color: 'bg-emerald-500',
+      textColor: 'text-emerald-600 dark:text-emerald-400',
+    },
+    rejected: {
+      label: { en: 'Rejected', pl: 'Odrzucony' },
+      color: 'bg-red-500',
+      textColor: 'text-red-600 dark:text-red-400',
+    },
     completed: {
       label: { en: 'Completed', pl: 'Zakończony' },
       color: 'bg-emerald-500',
       textColor: 'text-emerald-600 dark:text-emerald-400',
     },
-  }[(session?.status || 'in_progress').toLowerCase()] || {
-    label: { en: 'Draft', pl: 'Szkic' },
-    color: 'bg-slate-400',
-    textColor: 'text-slate-600',
   };
+
+  const currentStatus = (session?.status || 'drafting').toLowerCase();
+  const statusConfig = STATUS_MAP[currentStatus] || STATUS_MAP.drafting;
+
+  // E2.3: Determine allowed status transitions based on current status and role
+  const isManager =
+    currentUser?.role === 'ADMIN' ||
+    currentUser?.role === 'OWNER' ||
+    currentUser?.role === 'SUPERADMIN' ||
+    currentUser?.role === 'PROJECT_MANAGER';
+
+  const allowedTransitions = useMemo(() => {
+    const transitions: Array<{ status: string; label: { en: string; pl: string }; color: string }> =
+      [];
+    const s = currentStatus;
+
+    // Drafting → Review (anyone who is editing)
+    if (s === 'drafting' || s === 'in_progress') {
+      transitions.push({
+        status: 'review',
+        label: { en: 'Submit for Review', pl: 'Wyślij do przeglądu' },
+        color: 'bg-amber-500 hover:bg-amber-600',
+      });
+    }
+    // Review → Accepted / Rejected (manager only)
+    if ((s === 'review' || s === 'submitted') && isManager) {
+      transitions.push({
+        status: 'accepted',
+        label: { en: 'Accept', pl: 'Zaakceptuj' },
+        color: 'bg-emerald-500 hover:bg-emerald-600',
+      });
+      transitions.push({
+        status: 'rejected',
+        label: { en: 'Reject', pl: 'Odrzuć' },
+        color: 'bg-red-500 hover:bg-red-600',
+      });
+    }
+    // Rejected → Drafting (back to editing)
+    if (s === 'rejected') {
+      transitions.push({
+        status: 'drafting',
+        label: { en: 'Reopen as Draft', pl: 'Otwórz ponownie' },
+        color: 'bg-blue-500 hover:bg-blue-600',
+      });
+    }
+    return transitions;
+  }, [currentStatus, isManager]);
+
+  // E2.3: Handle status transition
+  const handleStatusTransition = useCallback(
+    async (newStatus: string) => {
+      if (!session) return;
+      try {
+        const updated = await Api.patch(`/interview/sessions/${session.id}`, { status: newStatus });
+        if (updated && typeof updated === 'object') {
+          setSession(updated as InterviewSession);
+        } else {
+          setSession((prev) => (prev ? { ...prev, status: newStatus } : prev));
+        }
+        const label = STATUS_MAP[newStatus]?.label;
+        toast.success(
+          isPolish
+            ? `Status zmieniony na: ${label?.pl || newStatus}`
+            : `Status changed to: ${label?.en || newStatus}`
+        );
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to change status:', error);
+        toast.error(isPolish ? 'Nie udało się zmienić statusu' : 'Failed to change status');
+      }
+    },
+    [session, isPolish]
+  );
 
   // ==========================================
   // EFFECTS
@@ -280,17 +371,25 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           setAssignmentInfo(null);
           onSessionChange?.(currentSession);
 
-          const [questionsRes, notesRes, evidenceRes, contextRes, summaryRes, myAssignmentsRes] =
-            await Promise.all([
-              Api.get(`/interview/sessions/${currentSession.id}/questions`),
-              Api.get(`/interview/sessions/${currentSession.id}/notes`),
-              Api.get(`/interview/sessions/${currentSession.id}/evidence`),
-              Api.get('/interview/context'),
-              Api.get(`/interview/sessions/${currentSession.id}/summary`).catch(() => null),
-              currentSession.assignmentId
-                ? Api.get(`/interview/assignments/my?includeCompleted=true`).catch(() => [])
-                : Promise.resolve([]),
-            ]);
+          const [
+            questionsRes,
+            notesRes,
+            evidenceRes,
+            contextRes,
+            summaryRes,
+            myAssignmentsRes,
+            attachmentsRes,
+          ] = await Promise.all([
+            Api.get(`/interview/sessions/${currentSession.id}/questions`),
+            Api.get(`/interview/sessions/${currentSession.id}/notes`),
+            Api.get(`/interview/sessions/${currentSession.id}/evidence`),
+            Api.get('/interview/context'),
+            Api.get(`/interview/sessions/${currentSession.id}/summary`).catch(() => null),
+            currentSession.assignmentId
+              ? Api.get(`/interview/assignments/my?includeCompleted=true`).catch(() => [])
+              : Promise.resolve([]),
+            Api.get(`/interview/sessions/${currentSession.id}/attachments`).catch(() => []),
+          ]);
 
           setQuestions(Array.isArray(questionsRes) ? questionsRes : []);
           setNotes(Array.isArray(notesRes) ? notesRes : []);
@@ -301,6 +400,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             const found = list.find((a: any) => a?.id === currentSession?.assignmentId);
             setAssignmentStatus(found?.status || null);
             setAssignmentInfo(found || null);
+          }
+
+          // E2.2: Load persisted attachments
+          if (Array.isArray(attachmentsRes) && attachmentsRes.length > 0) {
+            setAttachments(attachmentsRes as Attachment[]);
           }
 
           if (contextRes && typeof contextRes === 'object') {
@@ -600,24 +704,57 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     setActiveConversation(`interview-${session.id}`);
   }, [session, setActiveConversation]);
 
-  // Attachments handlers
+  // Attachments handlers (E2.2 – persist via API)
   const handleUploadAttachment = async (files: FileList) => {
-    const newAttachments: Attachment[] = Array.from(files).map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      url: URL.createObjectURL(file),
-      uploadedAt: new Date().toISOString(),
-      uploadedBy: currentUser?.displayName || currentUser?.firstName || 'User',
-    }));
-    setAttachments([...attachments, ...newAttachments]);
-    toast.success(isPolish ? 'Załączniki dodane' : 'Attachments added');
+    if (!session) return;
+    try {
+      const uploaded: Attachment[] = [];
+      for (const file of Array.from(files)) {
+        // Try to upload via API; fall back to local if endpoint not ready
+        try {
+          const result = await Api.post(`/interview/sessions/${session.id}/attachments`, {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            sessionId: session.id,
+          });
+          if (result && typeof result === 'object' && (result as any).id) {
+            uploaded.push(result as Attachment);
+            continue;
+          }
+        } catch {
+          // API endpoint may not exist yet – fall back to local blob
+        }
+        uploaded.push({
+          id: Math.random().toString(36).substr(2, 9),
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          url: URL.createObjectURL(file),
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: currentUser?.displayName || currentUser?.firstName || 'User',
+        });
+      }
+      setAttachments((prev) => [...prev, ...uploaded]);
+      toast.success(isPolish ? 'Załączniki dodane' : 'Attachments added');
+    } catch (error) {
+      console.error('[InterviewWorkspace] Failed to upload attachments:', error);
+      toast.error(isPolish ? 'Nie udało się dodać załączników' : 'Failed to upload attachments');
+    }
   };
 
   const handleDeleteAttachment = async (id: string) => {
-    setAttachments(attachments.filter((a) => a.id !== id));
-    toast.success(isPolish ? 'Załącznik usunięty' : 'Attachment deleted');
+    try {
+      // Try API delete; ignore errors if endpoint not ready
+      if (session) {
+        await Api.delete(`/interview/attachments/${id}`).catch(() => {});
+      }
+      setAttachments((prev) => prev.filter((a) => a.id !== id));
+      toast.success(isPolish ? 'Załącznik usunięty' : 'Attachment deleted');
+    } catch (error) {
+      console.error('[InterviewWorkspace] Failed to delete attachment:', error);
+      toast.error(isPolish ? 'Nie udało się usunąć załącznika' : 'Failed to delete attachment');
+    }
   };
 
   // Linked items handlers
@@ -854,37 +991,42 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               <span>{isPolish ? 'Zapisz' : 'Save'}</span>
             </motion.button>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleSubmitSession}
-              disabled={isLocked || isSaving}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-60 ${
-                isLocked
-                  ? 'bg-slate-200/60 dark:bg-navy-800/60 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700'
-                  : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white border border-emerald-400/30 hover:from-emerald-400 hover:to-teal-500 shadow-lg shadow-emerald-500/20'
-              }`}
-              title={
-                isAssignmentMode
-                  ? isPolish
-                    ? 'Wyślij do przeglądu'
-                    : 'Submit for review'
-                  : isPolish
-                    ? 'Zakończ'
-                    : 'Complete'
-              }
-            >
-              <Send size={16} />
-              <span>
-                {isAssignmentMode
-                  ? isPolish
-                    ? 'Wyślij'
-                    : 'Submit'
-                  : isPolish
-                    ? 'Zakończ'
-                    : 'Complete'}
-              </span>
-            </motion.button>
+            {/* E2.3: Status transition buttons */}
+            {allowedTransitions.map((transition) => (
+              <motion.button
+                key={transition.status}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleStatusTransition(transition.status)}
+                disabled={isSaving}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all shadow-sm disabled:opacity-60 ${transition.color}`}
+              >
+                {transition.status === 'accepted' && <Check size={16} />}
+                {transition.status === 'rejected' && <X size={16} />}
+                {transition.status === 'review' && <Send size={16} />}
+                {transition.status === 'drafting' && <RefreshCw size={16} />}
+                <span>{isPolish ? transition.label.pl : transition.label.en}</span>
+              </motion.button>
+            ))}
+
+            {/* Legacy submit button (for assignment mode) */}
+            {isAssignmentMode && !allowedTransitions.length && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleSubmitSession}
+                disabled={isLocked || isSaving}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:opacity-60 ${
+                  isLocked
+                    ? 'bg-slate-200/60 dark:bg-navy-800/60 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700'
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white border border-emerald-400/30 hover:from-emerald-400 hover:to-teal-500 shadow-lg shadow-emerald-500/20'
+                }`}
+                title={isPolish ? 'Wyślij do przeglądu' : 'Submit for review'}
+              >
+                <Send size={16} />
+                <span>{isPolish ? 'Wyślij' : 'Submit'}</span>
+              </motion.button>
+            )}
 
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -901,13 +1043,56 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         {isAssignmentMode && assignmentInfo?.dueAt && (
           <div className="max-w-7xl mx-auto mt-3">
             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-              <span className="flex items-center gap-1">
-                <Calendar size={12} />
-                {isPolish ? 'Termin:' : 'Due:'}{' '}
-                <span className="font-medium text-slate-700 dark:text-slate-300">
-                  {new Date(assignmentInfo.dueAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')}
-                </span>
-              </span>
+              {(() => {
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                const due = new Date(assignmentInfo.dueAt);
+                due.setHours(0, 0, 0, 0);
+                const diffMs = due.getTime() - now.getTime();
+                const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                const absDays = Math.abs(days);
+
+                let dueLabel: string;
+                let dueColorClass: string;
+
+                if (days < 0) {
+                  dueLabel = isPolish
+                    ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
+                    : `${absDays}d overdue`;
+                  dueColorClass = 'text-red-600 dark:text-red-400 bg-red-500/10';
+                } else if (days === 0) {
+                  dueLabel = isPolish ? 'Termin dziś!' : 'Due today!';
+                  dueColorClass = 'text-red-600 dark:text-red-400 bg-red-500/10';
+                } else if (days <= 3) {
+                  dueLabel = isPolish
+                    ? `${days} ${days === 1 ? 'dzień' : 'dni'} do terminu`
+                    : `${days}d left`;
+                  dueColorClass = 'text-amber-600 dark:text-amber-400 bg-amber-500/10';
+                } else {
+                  dueLabel = isPolish
+                    ? `${days} ${days === 1 ? 'dzień' : 'dni'} do terminu`
+                    : `${days}d left`;
+                  dueColorClass = 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10';
+                }
+
+                return (
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${dueColorClass}`}
+                    title={new Date(assignmentInfo.dueAt).toLocaleDateString(
+                      isPolish ? 'pl-PL' : 'en-US'
+                    )}
+                  >
+                    {days <= 0 ? (
+                      <AlertTriangle size={12} />
+                    ) : days <= 3 ? (
+                      <Clock size={12} />
+                    ) : (
+                      <Calendar size={12} />
+                    )}
+                    {dueLabel}
+                  </span>
+                );
+              })()}
               {String(assignmentStatus || '').toLowerCase() === 'sent_back' &&
                 assignmentInfo?.sentBackReason && (
                   <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-300">

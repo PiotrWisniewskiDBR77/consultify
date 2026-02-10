@@ -155,8 +155,8 @@ const KBCategoryItem: React.FC<{
         </span>
       </div>
       {!enabled && (
-        <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-semibold rounded-full uppercase">
-          {t('help.sidePanel.knowledge.comingSoon', 'Coming Soon')}
+        <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-[10px] font-semibold rounded-full uppercase">
+          {t('help.sidePanel.knowledge.browseArticles', 'Browse articles')}
         </span>
       )}
     </div>

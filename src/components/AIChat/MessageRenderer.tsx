@@ -64,9 +64,11 @@ export interface MessageRendererProps {
   abortFeedback: 'partial' | 'cancelled' | null;
 
   // Agent audit state
-  agentAuditState: { state?: string } | null;
+  agentAuditState: { state?: string; agentsTotal?: number } | null;
   agentAuditBusy: boolean;
   agentRegistryById: Record<string, any>;
+  agentReviewProgressByAgentId?: Record<string, { agentId: string; stage: string; error?: string }>;
+  agentSourcesByAgentId?: Record<string, { kb: any[]; web: any[] }>;
   agentAuditActiveTabByMessageId: Record<string, string>;
   setAgentAuditActiveTabByMessageId: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 
@@ -178,6 +180,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   agentAuditState,
   agentAuditBusy,
   agentRegistryById,
+  agentReviewProgressByAgentId,
+  agentSourcesByAgentId,
   agentAuditActiveTabByMessageId,
   setAgentAuditActiveTabByMessageId,
   deepThinkingHint,
@@ -974,13 +978,80 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               </div>
             )}
 
-            {/* Agent Audit Layer: streamed post-DT progress (keeps UI alive after text ends) */}
+            {/* Agent Audit Layer: streamed post-DT progress with agent name badges and status (C7.1) */}
             {msg.isStreaming &&
               agentAuditState?.state &&
               agentAuditState.state !== 'done' &&
               agentAuditState.state !== 'error' && (
-                <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                  Agent audit: {String(agentAuditState.state)}
+                <div className="mt-3 p-2.5 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                    <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                      {agentAuditState.state === 'reviewing'
+                        ? t('agentAudit.streaming.reviewing', 'Multi-Agent Review in Progress')
+                        : agentAuditState.state === 'aggregating'
+                          ? t('agentAudit.streaming.aggregating', 'Aggregating Agent Findings')
+                          : t('agentAudit.streaming.processing', 'Agent Audit Processing')}
+                    </span>
+                    {agentAuditState.agentsTotal && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+                        {Object.keys(agentReviewProgressByAgentId || {}).length}/
+                        {agentAuditState.agentsTotal} agents
+                      </span>
+                    )}
+                  </div>
+                  {/* Individual agent status badges */}
+                  {agentReviewProgressByAgentId &&
+                    Object.keys(agentReviewProgressByAgentId).length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(agentReviewProgressByAgentId).map(([agentId, progress]) => {
+                          const agentDef = agentRegistryById[agentId];
+                          const agentName =
+                            agentDef?.displayName?.en || agentDef?.displayName?.pl || agentId;
+                          const stage = progress?.stage || 'start';
+                          const isDone = stage === 'done';
+                          const isError = stage === 'error' || stage === 'rejected';
+                          const isActive = stage === 'llm_review' || stage === 'kb_retrieval';
+                          const sources = agentSourcesByAgentId?.[agentId];
+                          const sourceCount =
+                            (sources?.kb?.length || 0) + (sources?.web?.length || 0);
+
+                          return (
+                            <div
+                              key={agentId}
+                              className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium border transition-all ${
+                                isDone
+                                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
+                                  : isError
+                                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+                                    : isActive
+                                      ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+                                      : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                              }`}
+                            >
+                              {isDone ? (
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                              ) : isError ? (
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                              ) : isActive ? (
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                              ) : (
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                              )}
+                              <span className="truncate max-w-[100px]">{agentName}</span>
+                              {isDone && sourceCount > 0 && (
+                                <span className="text-[9px] opacity-70">{sourceCount} src</span>
+                              )}
+                              {isActive && (
+                                <span className="text-[9px] opacity-70">
+                                  {stage === 'kb_retrieval' ? 'KB' : 'LLM'}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                 </div>
               )}
 

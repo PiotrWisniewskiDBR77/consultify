@@ -11,7 +11,7 @@ const router = Router();
 
 // Placeholder endpoints
 router.get('/', (_req, res) => {
-  res.json({ integrations: [], message: 'Calendar integrations coming soon' });
+  res.json({ integrations: [], message: 'Calendar integrations are not configured' });
 });
 
 export default router;

@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
@@ -181,6 +182,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
   mode = 'overlay',
   users = [],
 }) => {
+  const { t } = useTranslation();
   // Data
   const [initiative, setInitiative] = useState<PortfolioInitiative | null>(propInitiative);
   const [isLoading, setIsLoading] = useState(false);
@@ -288,16 +290,51 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
     [raidItems]
   );
 
+  // D3.1: Approval validation — check critical fields before allowing APPROVED status
   const handleStatusAction = async (action: StatusAction) => {
     if (!id) return;
+
+    // D3.1: Block approval if critical fields are missing
+    if (action.targetStatus === InitiativeStatus.APPROVED && initiative) {
+      const approvalErrors: string[] = [];
+
+      if (tasksTotal === 0) {
+        approvalErrors.push('At least 1 task is required');
+      }
+      if (!initiative.plannedEndDate) {
+        approvalErrors.push('A deadline (end date) must be set');
+      }
+      if (!initiative.ownerBusiness?.id) {
+        approvalErrors.push('A business owner must be assigned');
+      }
+
+      if (approvalErrors.length > 0) {
+        toast.error(
+          t(
+            'initiatives.toast.cannotApprove',
+            'Nie można zatwierdzić — brakuje wymaganych pól:\n• {{errors}}',
+            { errors: approvalErrors.join('\n• ') }
+          ),
+          { duration: 6000 }
+        );
+        return;
+      }
+    }
+
     try {
       await Api.patch(`/initiatives/${id}`, { status: action.targetStatus });
-      toast.success(`Status changed to ${action.label}`);
+      toast.success(
+        t('initiatives.toast.statusChangedLabel', 'Status zmieniony na {{label}}', {
+          label: action.label,
+        })
+      );
       const updated = { ...initiative!, status: action.targetStatus as InitiativeStatus };
       setInitiative(updated);
       onUpdate?.(updated);
     } catch (e: any) {
-      toast.error(e?.message || 'Status change failed');
+      toast.error(
+        e?.message || t('initiatives.toast.statusChangeFailed', 'Zmiana statusu nie powiodła się')
+      );
     }
   };
 
@@ -372,9 +409,53 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
         </div>
       </div>
 
-      {/* Metrics Dashboard */}
+      {/* D3.3 / D3.4: Missing data banner — motivates to fill in initiative info */}
+      {initiative &&
+        (() => {
+          const missing: string[] = [];
+          if (tasksTotal === 0) missing.push(t('initiatives.missing.tasks', 'Tasks'));
+          if (!initiative.plannedEndDate)
+            missing.push(t('initiatives.missing.deadline', 'Deadline'));
+          if (!initiative.ownerBusiness?.id) missing.push(t('initiatives.missing.owner', 'Owner'));
+          if (!(initiative as any).summary && !(initiative as any).description)
+            missing.push(t('initiatives.missing.summary', 'Summary'));
+          if (riskCount === 0) missing.push(t('initiatives.missing.risks', 'Risk assessment'));
+          return missing.length > 0 ? (
+            <div className="flex-shrink-0 px-4 py-2 border-b border-amber-200 dark:border-amber-800/30 bg-amber-50 dark:bg-amber-900/10">
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={12} className="text-amber-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400">
+                    {t('initiatives.missingData', 'Missing critical data')}
+                  </p>
+                  <p className="text-[10px] text-amber-600 dark:text-amber-500">
+                    {missing.join(' · ')}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null;
+        })()}
+
+      {/* B7.2: Key Info — Goal always visible (placeholder when empty) */}
+      <div className="flex-shrink-0 px-4 py-2 border-b border-slate-100 dark:border-navy-800">
+        <div className="flex items-start gap-2">
+          <Target size={12} className="text-blue-500 mt-0.5 flex-shrink-0" />
+          {(initiative as any)?.summary || (initiative as any)?.description ? (
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
+              {(initiative as any).summary || (initiative as any).description}
+            </p>
+          ) : (
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 italic">
+              No goal / summary defined yet — add one in the full view.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* B7.2: Metrics Dashboard — Tasks, Team, Resources, Finance/Risk */}
       <div className="flex-shrink-0 px-4 py-3 border-b border-slate-100 dark:border-navy-800">
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-5 gap-2">
           <MetricBox
             icon={CheckSquare}
             label="Tasks"
@@ -383,22 +464,44 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             progress={taskProgress}
           />
           <MetricBox
-            icon={Scale}
-            label="Decisions"
-            value={pendingDecisions > 0 ? `${pendingDecisions} pending` : `${decisions.length}`}
-            color={pendingDecisions > 0 ? 'text-amber-500' : 'text-emerald-500'}
+            icon={Users}
+            label="Team"
+            value={(initiative as any)?.ownerBusiness ? '✓' : '—'}
+            color={(initiative as any)?.ownerBusiness ? 'text-purple-500' : 'text-slate-400'}
+          />
+          <MetricBox
+            icon={Calendar}
+            label="Timeline"
+            value={
+              initiative?.plannedEndDate
+                ? new Date(initiative.plannedEndDate).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                  })
+                : '—'
+            }
+            color="text-cyan-500"
+          />
+          <MetricBox
+            icon={DollarSign}
+            label="Budget"
+            value={(() => {
+              const amt =
+                (initiative as any)?.estimatedBudget ||
+                (initiative as any)?.costCapex ||
+                (initiative as any)?.budget;
+              if (!amt) return '—';
+              if (amt >= 1_000_000) return `${(amt / 1_000_000).toFixed(1)}M`;
+              if (amt >= 1_000) return `${(amt / 1_000).toFixed(0)}K`;
+              return `${amt}`;
+            })()}
+            color="text-amber-500"
           />
           <MetricBox
             icon={AlertTriangle}
             label="Risks"
-            value={`${riskCount}`}
+            value={`${riskCount}R/${issueCount}I`}
             color={riskCount > 0 ? 'text-red-500' : 'text-slate-400'}
-          />
-          <MetricBox
-            icon={Flag}
-            label="Milestones"
-            value={`${milestones.length}`}
-            color="text-purple-500"
           />
         </div>
       </div>
@@ -616,10 +719,15 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
 // TAB: TASKS
 // ==========================================
 
+const MAX_VISIBLE_TASKS = 5; // B7.3: prevent unreadable long lists
+
 const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
   tasks,
   milestones,
 }) => {
+  const [showAllActive, setShowAllActive] = React.useState(false);
+  const [showAllBlocked, setShowAllBlocked] = React.useState(false);
+
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-32 text-slate-400">
@@ -634,6 +742,13 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
     done: tasks.filter((t) => ['done', 'DONE'].includes(t.status)),
     blocked: tasks.filter((t) => ['blocked', 'BLOCKED'].includes(t.status)),
   };
+
+  const visibleBlocked = showAllBlocked
+    ? byStatus.blocked
+    : byStatus.blocked.slice(0, MAX_VISIBLE_TASKS);
+  const visibleActive = showAllActive
+    ? byStatus.active
+    : byStatus.active.slice(0, MAX_VISIBLE_TASKS);
 
   return (
     <div className="p-3 space-y-3">
@@ -670,27 +785,47 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
         </div>
       )}
 
-      {/* Blocked first */}
+      {/* Blocked first — B7.3: truncated */}
       {byStatus.blocked.length > 0 && (
         <div>
           <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-1">
             Blocked ({byStatus.blocked.length})
           </p>
-          {byStatus.blocked.map((t) => (
+          {visibleBlocked.map((t) => (
             <CompactTaskRow key={t.id} task={t} />
           ))}
+          {byStatus.blocked.length > MAX_VISIBLE_TASKS && (
+            <button
+              onClick={() => setShowAllBlocked((v) => !v)}
+              className="w-full text-center py-1 text-[10px] font-medium text-red-400 hover:text-red-300 transition-colors"
+            >
+              {showAllBlocked
+                ? 'Show less'
+                : `Show ${byStatus.blocked.length - MAX_VISIBLE_TASKS} more…`}
+            </button>
+          )}
         </div>
       )}
 
-      {/* Active */}
+      {/* Active — B7.3: truncated */}
       {byStatus.active.length > 0 && (
         <div>
           <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
             Active ({byStatus.active.length})
           </p>
-          {byStatus.active.map((t) => (
+          {visibleActive.map((t) => (
             <CompactTaskRow key={t.id} task={t} />
           ))}
+          {byStatus.active.length > MAX_VISIBLE_TASKS && (
+            <button
+              onClick={() => setShowAllActive((v) => !v)}
+              className="w-full text-center py-1 text-[10px] font-medium text-slate-400 hover:text-slate-300 transition-colors"
+            >
+              {showAllActive
+                ? 'Show less'
+                : `Show ${byStatus.active.length - MAX_VISIBLE_TASKS} more…`}
+            </button>
+          )}
         </div>
       )}
 

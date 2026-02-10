@@ -1185,10 +1185,34 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   };
 
   // Create bulk action configuration
+  const handleBulkChangePriority = async () => {
+    const newPriority = prompt(
+      'Set priority for selected decisions (LOW / MEDIUM / HIGH / CRITICAL):'
+    );
+    if (!newPriority || !['low', 'medium', 'high', 'critical'].includes(newPriority.toLowerCase()))
+      return;
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) =>
+          Api.updateDecision(id, { priority: newPriority.toUpperCase() })
+        )
+      );
+      setDecisions((prev) =>
+        prev.map((d) => (selectedIds.has(d.id) ? { ...d, priority: newPriority.toUpperCase() } : d))
+      );
+      toast.success(
+        `Priority set to ${newPriority.toUpperCase()} for ${selectedIds.size} decisions`
+      );
+      setSelectedIds(new Set());
+    } catch {
+      toast.error('Failed to update priority');
+    }
+  };
+
   const bulkActions = createDecisionBulkActions({
     onApprove: handleBulkApprove,
     onDelete: handleBulkDelete,
-    onChangePriority: () => toast('Priority change coming soon'),
+    onChangePriority: handleBulkChangePriority,
   });
 
   // Apply table filters to decisions

@@ -6,6 +6,7 @@
 import { CalendarClock, Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { ManagementReportScope, ManagementReportType } from '../../../types';
@@ -27,6 +28,7 @@ interface ReportSchedule {
 }
 
 export const ReportScheduleView: React.FC = () => {
+  const { t } = useTranslation();
   const [schedules, setSchedules] = useState<ReportSchedule[]>([]);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,7 @@ export const ReportScheduleView: React.FC = () => {
         }
       } catch (error) {
         console.error('Failed to load schedules:', error);
-        toast.error('Failed to load schedules');
+        toast.error(t('reports.toast.loadSchedulesError', 'Nie udało się załadować harmonogramów'));
       } finally {
         setLoading(false);
       }
@@ -64,7 +66,7 @@ export const ReportScheduleView: React.FC = () => {
 
   const handleCreateSchedule = async () => {
     if (scope === 'PROJECT' && !projectId) {
-      toast.error('Select a project for project-scoped schedules');
+      toast.error(t('reports.toast.selectProjectForSchedule', 'Wybierz projekt dla harmonogramu'));
       return;
     }
     try {
@@ -84,11 +86,11 @@ export const ReportScheduleView: React.FC = () => {
       });
       if (response.data?.schedule) {
         setSchedules((prev) => [response.data.schedule, ...prev]);
-        toast.success('Schedule created');
+        toast.success(t('reports.toast.scheduleCreated', 'Harmonogram utworzony'));
       }
     } catch (error) {
       console.error('Failed to create schedule:', error);
-      toast.error('Failed to create schedule');
+      toast.error(t('reports.toast.scheduleCreateError', 'Nie udało się utworzyć harmonogramu'));
     }
   };
 
@@ -96,10 +98,10 @@ export const ReportScheduleView: React.FC = () => {
     try {
       await Api.delete(`/api/management-reports/schedules/${scheduleId}`);
       setSchedules((prev) => prev.filter((schedule) => schedule.id !== scheduleId));
-      toast.success('Schedule removed');
+      toast.success(t('reports.toast.scheduleRemoved', 'Harmonogram usunięty'));
     } catch (error) {
       console.error('Failed to remove schedule:', error);
-      toast.error('Failed to remove schedule');
+      toast.error(t('reports.toast.scheduleRemoveError', 'Nie udało się usunąć harmonogramu'));
     }
   };
 
