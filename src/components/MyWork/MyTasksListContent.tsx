@@ -225,7 +225,7 @@ const taskToGenericItem = (task: Task): GenericListItem => ({
   _raw: task,
 });
 
-/** ClickUp-style columns for tasks */
+/** C-style (dense) columns for tasks */
 const TASK_CLICKUP_COLUMNS: ListColumn[] = [
   { key: 'title', label: 'Task', width: 'flex-1 min-w-0' },
   { key: 'status', label: 'Status', width: 'w-28' },
@@ -563,7 +563,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('current');
+  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('d');
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -1233,15 +1233,15 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               Create Task
             </button>
           </div>
-        ) : cardViewStyle === 'notion' ? (
-          /* A7.2: Notion-like view — same data, different layout */
+        ) : cardViewStyle === 'n' ? (
+          /* N view — same data, different layout */
           <NotionListView
             sections={viewSections}
             onItemClick={handleGenericItemClick}
             emptyMessage={t('myWork.tasks.empty', 'No tasks match your filters')}
           />
-        ) : cardViewStyle === 'clickup' ? (
-          /* A7.3: ClickUp-like dense view */
+        ) : cardViewStyle === 'c' ? (
+          /* C view — dense */
           <ClickUpListView
             sections={viewSections}
             columns={TASK_CLICKUP_COLUMNS}

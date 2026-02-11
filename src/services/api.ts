@@ -2124,7 +2124,24 @@ export const Api = {
   getDecision: async (id: string): Promise<any> => {
     const res = await fetch(`${API_URL}/decisions/${id}`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch decision');
-    return res.json();
+    const data = await res.json();
+    const d = data?.decision || data;
+    return {
+      ...d,
+      dueDate: d?.dueDate || d?.deadline || d?.due_date || null,
+      deciderId: d?.deciderId || d?.decisionMakerId || d?.decision_maker_id || null,
+      requestedByName: d?.requestedByName || d?.requesterName || d?.requested_by_name || null,
+      projectName: d?.projectName || d?.project_name || null,
+      createdAt: d?.createdAt || d?.created_at || null,
+      updatedAt: d?.updatedAt || d?.updated_at || null,
+    };
+  },
+
+  getDecisionHistory: async (id: string): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/decisions/${id}/history`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch decision history');
+    const data = await res.json();
+    return Array.isArray(data) ? data : data?.history || [];
   },
 
   updateDecision: async (id: string, updates: any): Promise<void> => {

@@ -168,6 +168,84 @@ export const useActionHandler = () => {
         return { status: 'cancelled', result: { message: 'Missing notification title' } };
       }
 
+      // Handle CREATE_TASK action
+      if (action.type === ACTION_TYPES.CREATE_TASK) {
+        const title = String(action.payload?.title || action.payload?.name || '');
+        if (!title) {
+          toast.error('Task title is required');
+          return { status: 'cancelled', result: { message: 'Missing task title' } };
+        }
+        setIsExecuting(true);
+        try {
+          await Api.post('/tasks', {
+            title,
+            description: String(action.payload?.description || ''),
+            priority: String(action.payload?.priority || 'medium'),
+            status: 'todo',
+            dueDate: action.payload?.dueDate || null,
+            initiativeId: action.payload?.initiativeId || null,
+          });
+          toast.success(`Task created: ${title}`, { duration: 2000, icon: '✅' });
+          return { status: 'success', result: { message: `Task created: ${title}` } };
+        } catch (err) {
+          toast.error('Failed to create task');
+          return { status: 'cancelled', result: { message: 'Failed to create task' } };
+        } finally {
+          setIsExecuting(false);
+        }
+      }
+
+      // Handle CREATE_DECISION action
+      if (action.type === ACTION_TYPES.CREATE_DECISION) {
+        const title = String(action.payload?.title || action.payload?.name || '');
+        if (!title) {
+          toast.error('Decision title is required');
+          return { status: 'cancelled', result: { message: 'Missing decision title' } };
+        }
+        setIsExecuting(true);
+        try {
+          await Api.post('/decisions', {
+            title,
+            description: String(action.payload?.description || ''),
+            priority: String(action.payload?.priority || 'medium'),
+            status: 'pending',
+            dueDate: action.payload?.dueDate || null,
+            initiativeId: action.payload?.initiativeId || null,
+          });
+          toast.success(`Decision created: ${title}`, { duration: 2000, icon: '⚖️' });
+          return { status: 'success', result: { message: `Decision created: ${title}` } };
+        } catch (err) {
+          toast.error('Failed to create decision');
+          return { status: 'cancelled', result: { message: 'Failed to create decision' } };
+        } finally {
+          setIsExecuting(false);
+        }
+      }
+
+      // Handle TRIGGER_WORKFLOW action
+      if (action.type === ACTION_TYPES.TRIGGER_WORKFLOW) {
+        const workflowName = String(action.payload?.workflow || action.payload?.name || '');
+        if (!workflowName) {
+          toast.error('Workflow name is required');
+          return { status: 'cancelled', result: { message: 'Missing workflow name' } };
+        }
+        setIsExecuting(true);
+        try {
+          await Api.post('/workflows/trigger', {
+            workflow: workflowName,
+            params: action.payload?.params || {},
+            initiativeId: action.payload?.initiativeId || null,
+          });
+          toast.success(`Workflow triggered: ${workflowName}`, { duration: 2000, icon: '⚡' });
+          return { status: 'success', result: { message: `Workflow triggered: ${workflowName}` } };
+        } catch (err) {
+          toast.error('Failed to trigger workflow');
+          return { status: 'cancelled', result: { message: 'Failed to trigger workflow' } };
+        } finally {
+          setIsExecuting(false);
+        }
+      }
+
       // For actions requiring confirmation, queue them
       if (action.requiresConfirmation) {
         const pending = {
@@ -178,15 +256,9 @@ export const useActionHandler = () => {
         return { status: 'pending', actionId: pending.id };
       }
 
-      setIsExecuting(true);
-      try {
-        return {
-          status: 'success',
-          result: { message: 'Action executed' },
-        };
-      } finally {
-        setIsExecuting(false);
-      }
+      // Unknown action type
+      toast.error(`Unknown action type: ${action.type}`);
+      return { status: 'cancelled', result: { message: `Unknown action type: ${action.type}` } };
     },
     [navigate, resolveRoute]
   );

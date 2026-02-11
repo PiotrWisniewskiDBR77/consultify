@@ -510,8 +510,8 @@ export class DecisionController {
       );
 
       const history = await queryHelpers.queryAll(
-        `SELECT action, changed_by, changed_at, details
-         FROM decision_history WHERE decision_id = ? ORDER BY changed_at ASC`,
+        `SELECT action, changed_by, created_at, details
+         FROM decision_history WHERE decision_id = ? ORDER BY created_at ASC`,
         [id]
       );
 
@@ -568,14 +568,14 @@ export class DecisionController {
         auditTrail: history.map((entry: any) => ({
           action: entry.action,
           by: entry.changed_by,
-          at: entry.changed_at,
+          at: entry.created_at,
           notes: parseHistoryNotes(entry.details),
         })),
         audit_trail: JSON.stringify(
           history.map((entry: any) => ({
             action: entry.action,
             by: entry.changed_by,
-            at: entry.changed_at,
+            at: entry.created_at,
             notes: parseHistoryNotes(entry.details),
           }))
         ),

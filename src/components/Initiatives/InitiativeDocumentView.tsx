@@ -148,11 +148,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [endDate, setEndDate] = useState<string | null>(null);
 
   // UI state — map CardViewStyle to internal view modes
-  const cardViewToInternal = (s: CardViewStyle): 'notion' | 'cards' | 'scroll' =>
-    s === 'current' ? 'cards' : s === 'notion' ? 'notion' : 'scroll';
-  const internalToCardView = (m: 'notion' | 'cards' | 'scroll'): CardViewStyle =>
-    m === 'cards' ? 'current' : m === 'notion' ? 'notion' : 'clickup';
-  const [viewMode, setViewMode] = useState<'notion' | 'cards' | 'scroll'>('notion');
+  const cardViewToInternal = (s: CardViewStyle): 'n' | 'cards' | 'scroll' =>
+    s === 'd' ? 'cards' : s === 'n' ? 'n' : 'scroll';
+  const internalToCardView = (m: 'n' | 'cards' | 'scroll'): CardViewStyle =>
+    m === 'cards' ? 'd' : m === 'n' ? 'n' : 'c';
+  const [viewMode, setViewMode] = useState<'n' | 'cards' | 'scroll'>('n');
   const [showAssessmentPanel, setShowAssessmentPanel] = useState(false);
   const [selectedSectionKey, setSelectedSectionKey] = useState<string>('core');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
@@ -1384,8 +1384,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </div>
             </motion.div>
 
-            {viewMode === 'notion' ? (
-              /* ====== NOTION VIEW (Single section) ====== */
+            {viewMode === 'n' ? (
+              /* ====== N VIEW (Single section) ====== */
               <InitiativeNotionView
                 leftSections={leftSections}
                 rightSections={rightSections}

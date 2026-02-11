@@ -90,6 +90,28 @@
 
 ---
 
+### 🟡 SIGNAL COLORS (Amber/Blue) — dozwolone wyłącznie jako sygnały (KANON)
+
+DBR77 zakłada 4 kolory semantyczne. W praktyce UI potrzebuje jeszcze dwóch **kolorów sygnałowych**,
+ale ich użycie jest ściśle ograniczone.
+
+**Dozwolone:**
+
+- **WARNING / AT RISK**: `amber/*`
+- **INFO**: `blue/*`
+
+**MUST:**
+
+- używamy ich tylko jako: **badge/dot/callout**, ewentualnie subtelny background (`*/surface`)
+- nie budujemy na nich “brand identity” modułu/ekranu
+
+**MUST NOT:**
+
+- nie używamy ich dla głównych CTA (CTA zawsze `primary/*`)
+- nie używamy ich jako stałych kolorów nawigacji/ramek całego panelu
+
+---
+
 ### ⚪ NEUTRAL (Szarości Navy)
 
 ```css

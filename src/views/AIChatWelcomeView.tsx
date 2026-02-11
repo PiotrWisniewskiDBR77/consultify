@@ -1344,7 +1344,7 @@ For example: REMEMBER: preferred_language: Polish`;
                     {/* Research Progress - web search / sources status (C6.1) */}
                     {isAiMessage && isStreamingThis && researchProgress && (
                       <div className="mb-2 max-w-[85%]">
-                        <ResearchProgress progress={researchProgress} />
+                        <ResearchProgress {...researchProgress} />
                       </div>
                     )}
 
@@ -1352,13 +1352,12 @@ For example: REMEMBER: preferred_language: Polish`;
                     {isAiMessage && isStreamingThis && !displayContent && streamStartedAt && (
                       <div className="mb-2 max-w-[85%]">
                         <ThinkingStatusLine
-                          streamStartedAt={streamStartedAt}
-                          streamCompletedSignal={streamCompletedSignal}
-                          retryInfo={
+                          label={
                             retryInfo
-                              ? { attempt: retryInfo.attempt, maxRetries: retryInfo.maxRetries }
-                              : null
+                              ? `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries}...`
+                              : 'Thinking...'
                           }
+                          compact
                         />
                       </div>
                     )}
@@ -1717,7 +1716,7 @@ For example: REMEMBER: preferred_language: Polish`;
           </div>
 
           {/* Chat Input */}
-          <div className="w-full max-w-2xl">
+          <div className="w-full max-w-3xl">
             {!!lastError && !isStreaming && (
               <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
                 <div className="text-xs text-amber-800 dark:text-amber-200">
@@ -1753,7 +1752,7 @@ For example: REMEMBER: preferred_language: Polish`;
           </div>
 
           {/* Minimal Suggestions */}
-          <div className="w-full max-w-2xl mt-6">
+          <div className="w-full max-w-3xl mt-5">
             <SmartSuggestions
               projectId={selectedProject?.id}
               onSuggestionClick={handleSuggestionClick}
@@ -1764,7 +1763,7 @@ For example: REMEMBER: preferred_language: Polish`;
           </div>
 
           {/* AI Capability Cards — shows what the AI can do */}
-          <div className="w-full max-w-3xl mt-8 grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="w-full max-w-2xl mt-6 grid grid-cols-2 md:grid-cols-4 gap-2">
             {[
               {
                 icon: Brain,
@@ -1817,16 +1816,16 @@ For example: REMEMBER: preferred_language: Polish`;
               <button
                 key={cap.label}
                 onClick={() => handleSuggestionClick(cap.prompt)}
-                className="group flex flex-col items-start gap-2 p-3 rounded-xl border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-white/[0.02] hover:bg-white dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 text-left"
+                className="group flex flex-col items-start gap-1.5 p-2.5 rounded-lg border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-white/[0.02] hover:bg-white dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 text-left"
               >
-                <div className={`p-2 rounded-lg ${cap.bg}`}>
-                  <cap.icon size={18} className={cap.color} />
+                <div className={`p-1.5 rounded-md ${cap.bg}`}>
+                  <cap.icon size={15} className={cap.color} />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-navy-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                  <div className="text-[11px] font-semibold text-navy-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                     {cap.label}
                   </div>
-                  <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">
+                  <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">
                     {cap.desc}
                   </div>
                 </div>
@@ -1835,7 +1834,7 @@ For example: REMEMBER: preferred_language: Polish`;
           </div>
 
           {/* First-time help hint */}
-          <div className="w-full max-w-2xl mt-6 text-center">
+          <div className="w-full max-w-2xl mt-4 text-center">
             <p className="text-[11px] text-slate-400 dark:text-slate-600 flex items-center justify-center gap-1.5">
               <Sparkles size={11} />
               {t(

@@ -138,6 +138,14 @@ Minimalne sekcje w drawer (P0):
 
 Cel: **pełna karta jako “hub”**, jedyne miejsce do kompletnego prowadzenia inicjatywy.
 
+Tryby prezentacji (KANON):
+
+- `D` (D presentation mode: obecny Golden Standard 2/3 + 1/3)
+- `N` (N presentation mode: nawigacja + treść strony + properties)
+- `C` (C presentation mode: action-first: command bar + taby)
+
+Źródło prawdy: `docs/ui-standards/detail-view-presentation-modes.md`.
+
 **Układ UI/UX (jak Task/Decision Golden Standard):**
 
 - **Lewa kolumna**: treść merytoryczna (collapsible sections)

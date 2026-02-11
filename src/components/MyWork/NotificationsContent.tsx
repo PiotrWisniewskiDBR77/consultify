@@ -31,6 +31,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
+import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
+import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
 import {
   BulkActionBar,
   type ColumnDef,
@@ -678,6 +681,9 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
   // Open filter dropdown state
   const [openFilterId, setOpenFilterId] = useState<string | null>(null);
 
+  // Card view style
+  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('d');
+
   // Snooze hook
   const { snooze, isSnoozed, formatRemainingTime, getSnoozedIds } = useNotificationSnooze();
 
@@ -932,7 +938,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
   const handleBulkArchive = async () => {
     try {
       await Promise.all(
-        Array.from(selectedIds).map((id) => Api.updateNotification(id, { archived: true }))
+        Array.from(selectedIds).map((id) => Api.patch(`/notifications/${id}`, { archived: true }))
       );
       setNotifications((prev) => prev.filter((n) => !selectedIds.has(n.id)));
       toast.success(`${selectedIds.size} notifications archived`);
@@ -989,6 +995,87 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     return groups;
   }, [displayedNotifications]);
 
+  /* ─── Mapping for N / C views ─── */
+  const notificationToGenericItem = (n: Notification): GenericListItem => {
+    const severityConfig = getSeverityConfig(n.severity);
+    const typeConfig = getTypeConfig(n.type);
+    const isRead = n.read || n.isRead;
+    return {
+      id: n.id,
+      title: n.title || 'Untitled notification',
+      subtitle: n.message || undefined,
+      status: severityConfig.label,
+      statusVariant:
+        n.severity === 'CRITICAL' ? 'danger' : n.severity === 'WARNING' ? 'warning' : 'info',
+      priority: severityConfig.label,
+      priorityVariant:
+        n.severity === 'CRITICAL' ? 'critical' : n.severity === 'WARNING' ? 'high' : 'medium',
+      dueDate: formatRelativeTime(n.createdAt, isPolish),
+      assignee: undefined,
+      secondaryLabel: typeConfig.label,
+      tertiaryLabel: n.projectName || undefined,
+      isHighlighted: !isRead,
+      _raw: n,
+    };
+  };
+
+  const notificationViewSections: ListSection[] = useMemo(() => {
+    const critical = displayedNotifications
+      .filter((n) => n.severity === 'CRITICAL')
+      .map(notificationToGenericItem);
+    const warning = displayedNotifications
+      .filter((n) => n.severity === 'WARNING')
+      .map(notificationToGenericItem);
+    const info = displayedNotifications
+      .filter((n) => n.severity === 'INFO')
+      .map(notificationToGenericItem);
+    return [
+      ...(critical.length
+        ? [
+            {
+              id: 'critical',
+              label: isPolish ? 'Krytyczne' : 'Critical',
+              items: critical,
+              accentColor: 'text-red-500',
+            },
+          ]
+        : []),
+      ...(warning.length
+        ? [
+            {
+              id: 'warning',
+              label: isPolish ? 'Ostrzeżenia' : 'Warnings',
+              items: warning,
+              accentColor: 'text-amber-500',
+            },
+          ]
+        : []),
+      ...(info.length
+        ? [
+            {
+              id: 'info',
+              label: isPolish ? 'Informacje' : 'Info',
+              items: info,
+              accentColor: 'text-blue-500',
+            },
+          ]
+        : []),
+    ];
+  }, [displayedNotifications, isPolish]);
+
+  const NOTIFICATIONS_CLICKUP_COLUMNS: ListColumn[] = [
+    { key: 'title', label: 'Notification', width: 'flex-1 min-w-0' },
+    { key: 'status', label: 'Severity', width: 'w-24' },
+    { key: 'secondaryLabel', label: 'Type', width: 'w-28' },
+    { key: 'tertiaryLabel', label: 'Project', width: 'w-28' },
+    { key: 'dueDate', label: 'Time', width: 'w-24' },
+  ];
+
+  const handleNotificationItemClick = (item: GenericListItem) => {
+    const raw = item._raw as Notification;
+    if (raw) handleClick(raw);
+  };
+
   // Check if we should show grouping (more than one group has items)
   const showGrouping = useMemo(() => {
     const nonEmptyGroups = Object.values(groupedNotifications).filter((g) => g.length > 0);
@@ -1018,16 +1105,44 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-          <table className="w-full" style={{ minWidth: 800 }}>
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
-                {/* Select All */}
-                <th className="w-10 px-2 py-2">
-                  <button
-                    onClick={() => handleSelectAll(!allSelected)}
-                    className={`
+      {/* View switcher toolbar */}
+      <div className="flex items-center justify-end px-4 pt-3 pb-1">
+        <CardViewSwitcher
+          moduleId="my-work-notifications-content"
+          value={cardViewStyle}
+          onChange={setCardViewStyle}
+          compact
+        />
+      </div>
+
+      {cardViewStyle === 'n' ? (
+        <div className="flex-1 overflow-hidden p-4">
+          <NotionListView
+            sections={notificationViewSections}
+            onItemClick={handleNotificationItemClick}
+            emptyMessage={isPolish ? 'Brak powiadomień' : 'No notifications'}
+          />
+        </div>
+      ) : cardViewStyle === 'c' ? (
+        <div className="flex-1 overflow-y-auto p-4">
+          <ClickUpListView
+            sections={notificationViewSections}
+            columns={NOTIFICATIONS_CLICKUP_COLUMNS}
+            onItemClick={handleNotificationItemClick}
+            emptyMessage={isPolish ? 'Brak powiadomień' : 'No notifications'}
+          />
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+            <table className="w-full" style={{ minWidth: 800 }}>
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
+                  {/* Select All */}
+                  <th className="w-10 px-2 py-2">
+                    <button
+                      onClick={() => handleSelectAll(!allSelected)}
+                      className={`
                       w-5 h-5 rounded border flex items-center justify-center transition-colors
                       ${
                         allSelected
@@ -1037,183 +1152,188 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                             : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
                       }
                     `}
+                    >
+                      {allSelected ? (
+                        <CheckSquare size={14} />
+                      ) : someSelected ? (
+                        <Minus size={14} />
+                      ) : (
+                        <Square size={14} />
+                      )}
+                    </button>
+                  </th>
+
+                  {/* Severity with Filter */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.severity }}
                   >
-                    {allSelected ? (
-                      <CheckSquare size={14} />
-                    ) : someSelected ? (
-                      <Minus size={14} />
-                    ) : (
-                      <Square size={14} />
-                    )}
-                  </button>
-                </th>
-
-                {/* Severity with Filter */}
-                <th
-                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                  style={{ width: columnWidths.severity }}
-                >
-                  <div className="flex items-center gap-1">
-                    <span
-                      className={
-                        (tableFilters.severity as string[])?.length ? 'text-primary-500' : ''
-                      }
-                    >
-                      Severity
-                    </span>
-                    <FilterDropdown
-                      column={NOTIFICATION_COLUMNS.find((c) => c.id === 'severity')!}
-                      value={tableFilters.severity as string[]}
-                      onChange={(val) => handleFilterChange('severity', val as string[])}
-                      isOpen={openFilterId === 'severity'}
-                      onToggle={() =>
-                        setOpenFilterId(openFilterId === 'severity' ? null : 'severity')
-                      }
-                      onClose={() => setOpenFilterId(null)}
-                    />
-                  </div>
-                  <ColumnResizer
-                    columnId="severity"
-                    currentWidth={columnWidths.severity}
-                    minWidth={70}
-                    maxWidth={100}
-                    onResize={handleColumnResize}
-                  />
-                </th>
-
-                {/* Type with Filter */}
-                <th
-                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                  style={{ width: columnWidths.type }}
-                >
-                  <div className="flex items-center gap-1">
-                    <span
-                      className={(tableFilters.type as string[])?.length ? 'text-primary-500' : ''}
-                    >
-                      Type
-                    </span>
-                    <FilterDropdown
-                      column={NOTIFICATION_COLUMNS.find((c) => c.id === 'type')!}
-                      value={tableFilters.type as string[]}
-                      onChange={(val) => handleFilterChange('type', val as string[])}
-                      isOpen={openFilterId === 'type'}
-                      onToggle={() => setOpenFilterId(openFilterId === 'type' ? null : 'type')}
-                      onClose={() => setOpenFilterId(null)}
-                    />
-                  </div>
-                  <ColumnResizer
-                    columnId="type"
-                    currentWidth={columnWidths.type}
-                    minWidth={80}
-                    maxWidth={130}
-                    onResize={handleColumnResize}
-                  />
-                </th>
-
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Notification
-                </th>
-                <th
-                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                  style={{ width: columnWidths.source }}
-                >
-                  <span>Source</span>
-                  <ColumnResizer
-                    columnId="source"
-                    currentWidth={columnWidths.source}
-                    minWidth={80}
-                    maxWidth={160}
-                    onResize={handleColumnResize}
-                  />
-                </th>
-                <th
-                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                  style={{ width: columnWidths.time }}
-                >
-                  <span>Time</span>
-                  <ColumnResizer
-                    columnId="time"
-                    currentWidth={columnWidths.time}
-                    minWidth={80}
-                    maxWidth={140}
-                    onResize={handleColumnResize}
-                  />
-                </th>
-                <th
-                  className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
-                  style={{ width: columnWidths.actions }}
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <AnimatePresence>
-                {showGrouping
-                  ? // Render with time grouping
-                    (['today', 'yesterday', 'this_week', 'earlier'] as TimeGroup[]).map((group) => {
-                      const groupNotifications = groupedNotifications[group];
-                      if (groupNotifications.length === 0) return null;
-
-                      return (
-                        <React.Fragment key={group}>
-                          {/* Group header */}
-                          <tr className="bg-slate-100/50 dark:bg-navy-800/50">
-                            <td colSpan={7} className="px-4 py-2">
-                              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                                {isPolish
-                                  ? TIME_GROUP_LABELS[group].pl
-                                  : TIME_GROUP_LABELS[group].en}
-                                <span className="ml-2 text-slate-400 dark:text-slate-500 font-normal">
-                                  ({groupNotifications.length})
-                                </span>
-                              </span>
-                            </td>
-                          </tr>
-                          {/* Group notifications */}
-                          {groupNotifications.map((notification) => (
-                            <NotificationTableRow
-                              key={notification.id}
-                              notification={notification}
-                              isSelected={selectedIds.has(notification.id)}
-                              onSelect={handleSelectNotification}
-                              onMarkRead={handleMarkRead}
-                              onDelete={handleDelete}
-                              onClick={handleClick}
-                              onOpenChat={handleOpenChat}
-                              onSnooze={handleSnooze}
-                              isSnoozed={isSnoozed(notification.id)}
-                              snoozedUntilLabel={formatRemainingTime(notification.id, isPolish)}
-                              columnWidths={columnWidths}
-                              isPolish={isPolish}
-                            />
-                          ))}
-                        </React.Fragment>
-                      );
-                    })
-                  : // Render without grouping
-                    displayedNotifications.map((notification) => (
-                      <NotificationTableRow
-                        key={notification.id}
-                        notification={notification}
-                        isSelected={selectedIds.has(notification.id)}
-                        onSelect={handleSelectNotification}
-                        onMarkRead={handleMarkRead}
-                        onDelete={handleDelete}
-                        onClick={handleClick}
-                        onOpenChat={handleOpenChat}
-                        onSnooze={handleSnooze}
-                        isSnoozed={isSnoozed(notification.id)}
-                        snoozedUntilLabel={formatRemainingTime(notification.id, isPolish)}
-                        columnWidths={columnWidths}
-                        isPolish={isPolish}
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={
+                          (tableFilters.severity as string[])?.length ? 'text-primary-500' : ''
+                        }
+                      >
+                        Severity
+                      </span>
+                      <FilterDropdown
+                        column={NOTIFICATION_COLUMNS.find((c) => c.id === 'severity')!}
+                        value={tableFilters.severity as string[]}
+                        onChange={(val) => handleFilterChange('severity', val as string[])}
+                        isOpen={openFilterId === 'severity'}
+                        onToggle={() =>
+                          setOpenFilterId(openFilterId === 'severity' ? null : 'severity')
+                        }
+                        onClose={() => setOpenFilterId(null)}
                       />
-                    ))}
-              </AnimatePresence>
-            </tbody>
-          </table>
+                    </div>
+                    <ColumnResizer
+                      columnId="severity"
+                      currentWidth={columnWidths.severity}
+                      minWidth={70}
+                      maxWidth={100}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+
+                  {/* Type with Filter */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.type }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={
+                          (tableFilters.type as string[])?.length ? 'text-primary-500' : ''
+                        }
+                      >
+                        Type
+                      </span>
+                      <FilterDropdown
+                        column={NOTIFICATION_COLUMNS.find((c) => c.id === 'type')!}
+                        value={tableFilters.type as string[]}
+                        onChange={(val) => handleFilterChange('type', val as string[])}
+                        isOpen={openFilterId === 'type'}
+                        onToggle={() => setOpenFilterId(openFilterId === 'type' ? null : 'type')}
+                        onClose={() => setOpenFilterId(null)}
+                      />
+                    </div>
+                    <ColumnResizer
+                      columnId="type"
+                      currentWidth={columnWidths.type}
+                      minWidth={80}
+                      maxWidth={130}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    Notification
+                  </th>
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.source }}
+                  >
+                    <span>Source</span>
+                    <ColumnResizer
+                      columnId="source"
+                      currentWidth={columnWidths.source}
+                      minWidth={80}
+                      maxWidth={160}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.time }}
+                  >
+                    <span>Time</span>
+                    <ColumnResizer
+                      columnId="time"
+                      currentWidth={columnWidths.time}
+                      minWidth={80}
+                      maxWidth={140}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+                  <th
+                    className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+                    style={{ width: columnWidths.actions }}
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <AnimatePresence>
+                  {showGrouping
+                    ? // Render with time grouping
+                      (['today', 'yesterday', 'this_week', 'earlier'] as TimeGroup[]).map(
+                        (group) => {
+                          const groupNotifications = groupedNotifications[group];
+                          if (groupNotifications.length === 0) return null;
+
+                          return (
+                            <React.Fragment key={group}>
+                              {/* Group header */}
+                              <tr className="bg-slate-100/50 dark:bg-navy-800/50">
+                                <td colSpan={7} className="px-4 py-2">
+                                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                    {isPolish
+                                      ? TIME_GROUP_LABELS[group].pl
+                                      : TIME_GROUP_LABELS[group].en}
+                                    <span className="ml-2 text-slate-400 dark:text-slate-500 font-normal">
+                                      ({groupNotifications.length})
+                                    </span>
+                                  </span>
+                                </td>
+                              </tr>
+                              {/* Group notifications */}
+                              {groupNotifications.map((notification) => (
+                                <NotificationTableRow
+                                  key={notification.id}
+                                  notification={notification}
+                                  isSelected={selectedIds.has(notification.id)}
+                                  onSelect={handleSelectNotification}
+                                  onMarkRead={handleMarkRead}
+                                  onDelete={handleDelete}
+                                  onClick={handleClick}
+                                  onOpenChat={handleOpenChat}
+                                  onSnooze={handleSnooze}
+                                  isSnoozed={isSnoozed(notification.id)}
+                                  snoozedUntilLabel={formatRemainingTime(notification.id, isPolish)}
+                                  columnWidths={columnWidths}
+                                  isPolish={isPolish}
+                                />
+                              ))}
+                            </React.Fragment>
+                          );
+                        }
+                      )
+                    : // Render without grouping
+                      displayedNotifications.map((notification) => (
+                        <NotificationTableRow
+                          key={notification.id}
+                          notification={notification}
+                          isSelected={selectedIds.has(notification.id)}
+                          onSelect={handleSelectNotification}
+                          onMarkRead={handleMarkRead}
+                          onDelete={handleDelete}
+                          onClick={handleClick}
+                          onOpenChat={handleOpenChat}
+                          onSnooze={handleSnooze}
+                          isSnoozed={isSnoozed(notification.id)}
+                          snoozedUntilLabel={formatRemainingTime(notification.id, isPolish)}
+                          columnWidths={columnWidths}
+                          isPolish={isPolish}
+                        />
+                      ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Bulk Action Bar */}
       <BulkActionBar

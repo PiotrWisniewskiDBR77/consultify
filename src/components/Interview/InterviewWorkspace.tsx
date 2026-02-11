@@ -766,8 +766,36 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     setLinkedItems(linkedItems.filter((i) => i.id !== id));
   };
 
-  const searchLinkedItems = async (_query: string) => {
-    return [];
+  const searchLinkedItems = async (query: string) => {
+    if (!query || query.length < 2) return [];
+    try {
+      const [tasks, initiatives] = await Promise.all([
+        Api.get(`/tasks?search=${encodeURIComponent(query)}&limit=5`).catch(() => []),
+        Api.get(`/initiatives?search=${encodeURIComponent(query)}&limit=5`).catch(() => []),
+      ]);
+      const results: LinkedItem[] = [];
+      if (Array.isArray(tasks)) {
+        tasks.slice(0, 3).forEach((t: { id: string; title?: string; name?: string }) => {
+          results.push({
+            id: t.id,
+            type: 'task' as LinkedItem['type'],
+            title: t.title || t.name || 'Task',
+          });
+        });
+      }
+      if (Array.isArray(initiatives)) {
+        initiatives.slice(0, 3).forEach((i: { id: string; name?: string; title?: string }) => {
+          results.push({
+            id: i.id,
+            type: 'initiative' as LinkedItem['type'],
+            title: i.name || i.title || 'Initiative',
+          });
+        });
+      }
+      return results;
+    } catch {
+      return [];
+    }
   };
 
   // Export handlers

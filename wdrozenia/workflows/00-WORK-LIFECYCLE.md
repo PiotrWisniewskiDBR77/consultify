@@ -4,6 +4,10 @@
 
 Ten dokument opisuje **kompletny flow pracy** w aplikacji - od momentu pojawienia się pomysłu na inicjatywę, przez jej planowanie, realizację, aż po śledzenie korzyści. Obejmuje zarówno poziom **Initiative** jak i **Task**.
 
+> **KANON (MUST):** pełna mapa ról/statusów/gate’ów i ich dokładne kontrakty są w:  
+> `docs/00_foundation/WORKFLOW_CANON_MASTER.md`  
+> Ten dokument pozostaje opisowy (flow), a kontrakty egzekwowalne (permissions/transitions/DoD) trzymamy w jednym miejscu.
+
 ## Kanon ról i założeń (must-read)
 
 Ten flow zakłada jedno rozumienie ról i delegacji w projektach (nie wszystkie role muszą istnieć w każdym projekcie):

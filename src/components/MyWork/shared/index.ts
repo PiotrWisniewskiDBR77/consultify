@@ -1,6 +1,6 @@
 /**
  * Shared components for MyWork detail views
- * ClickUp-style design following Golden Standard
+ * C-style (dense) design following Golden Standard
  */
 
 export type { Attachment } from './AttachmentsSection';
@@ -37,6 +37,9 @@ export type { ImpactValues } from './ImpactAssessmentCompact';
 export { ImpactAssessmentCompact } from './ImpactAssessmentCompact';
 export type { RiskItem } from './RiskAssessmentCompact';
 export { RiskAssessmentCompact } from './RiskAssessmentCompact';
+
+// Presentation mode switcher (shared across all detail views)
+export { PresentationModeSwitcher } from './PresentationModeSwitcher';
 
 // Task-specific components
 export type { AIInsight } from './AIInsightSection';

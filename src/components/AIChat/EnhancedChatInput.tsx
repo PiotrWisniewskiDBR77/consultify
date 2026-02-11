@@ -717,12 +717,12 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           onBlur={() => setIsFocused(false)}
           placeholder={placeholderText}
           disabled={isInputDisabled}
-          rows={1}
+          rows={variant === 'compact' ? 2 : 1}
           data-testid="chat-input"
           className={`
                         w-full bg-transparent text-navy-900 dark:text-white
                         placeholder-slate-400 dark:placeholder-slate-500
-                        px-4 ${variant === 'compact' ? 'pt-3 pb-1.5' : 'pt-4 pb-2'} resize-none focus:outline-none text-[15px]
+                        px-4 ${variant === 'compact' ? 'pt-4 pb-2' : 'pt-4 pb-2'} resize-none focus:outline-none text-[15px]
                     `}
         />
 

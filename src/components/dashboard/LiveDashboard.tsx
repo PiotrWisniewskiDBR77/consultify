@@ -15,7 +15,9 @@ import {
   TrendingUp,
   XCircle,
 } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+
+import { Api } from '@/services/api';
 
 import { AppView, FullSession, InitiativeStatus } from '../../types';
 
@@ -71,28 +73,134 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
     return { total: inits.length, onTrack, atRisk, delayed, done };
   }, [session]);
 
-  // --- 4. KPIs (Empty until real data sources are connected) ---
-  const kpis: {
-    label: string;
-    value: string;
-    trend: 'good' | 'bad' | 'neutral';
-    baseline: string;
-  }[] = [
-    { label: 'Cycle Time', value: '—', trend: 'neutral', baseline: '—' },
-    { label: 'Quality / Scrap', value: '—', trend: 'neutral', baseline: '—' },
-    { label: 'Throughput', value: '—', trend: 'neutral', baseline: '—' },
-    { label: 'Op. Savings', value: '—', trend: 'neutral', baseline: '—' },
-  ];
+  // --- 4. KPIs (fetched from API) ---
+  const [kpis, setKpis] = useState<
+    { label: string; value: string; trend: 'good' | 'bad' | 'neutral'; baseline: string }[]
+  >([]);
 
-  // --- 5. AI Insights (Empty until real data sources are connected) ---
-  const aiInsights = useMemo(
-    () => ({
-      summary: 'Connect data sources to see AI-generated executive insights.',
-      actions: [] as string[],
-      risk: '',
-    }),
-    []
-  );
+  // --- 5. AI Insights (generated from real initiative data) ---
+  const aiInsights = useMemo(() => {
+    const inits = session.initiatives || [];
+    const total = inits.length;
+    const blocked = inits.filter((i) => i.status === InitiativeStatus.BLOCKED).length;
+    const executing = inits.filter((i) => i.status === InitiativeStatus.EXECUTING).length;
+    const done = inits.filter((i) => i.status === InitiativeStatus.DONE).length;
+
+    if (total === 0) {
+      return {
+        summary: 'No initiatives defined yet. Start by creating your transformation roadmap.',
+        actions: [
+          'Define strategic initiatives in the Roadmap module',
+          'Complete the Assessment to identify gaps',
+        ],
+        risk: '',
+      };
+    }
+
+    const completionRate = Math.round((done / total) * 100);
+    const summaryParts: string[] = [];
+    summaryParts.push(
+      `${total} initiatives tracked: ${done} completed (${completionRate}%), ${executing} in execution, ${blocked} blocked.`
+    );
+
+    if (blocked > 0) {
+      summaryParts.push(
+        `${blocked} initiative${blocked > 1 ? 's are' : ' is'} currently blocked and require${blocked === 1 ? 's' : ''} attention.`
+      );
+    }
+
+    const actions: string[] = [];
+    if (blocked > 0)
+      actions.push(
+        `Unblock ${blocked} stalled initiative${blocked > 1 ? 's' : ''} — review dependencies and escalate if needed`
+      );
+    if (executing > 0)
+      actions.push(
+        `Monitor ${executing} active initiative${executing > 1 ? 's' : ''} for milestone completion`
+      );
+    if (!session.step2Completed)
+      actions.push('Complete the Assessment phase to establish a baseline');
+    if (done > 0 && done < total) actions.push('Review completed initiatives for lessons learned');
+
+    const risk =
+      blocked > 2
+        ? `High risk: ${blocked} initiatives are blocked. This may cascade into timeline delays across the portfolio.`
+        : blocked > 0
+          ? `Moderate risk: ${blocked} blocked initiative${blocked > 1 ? 's' : ''} could impact overall delivery timeline.`
+          : '';
+
+    return { summary: summaryParts.join(' '), actions, risk };
+  }, [session]);
+
+  // Fetch KPIs from API
+  useEffect(() => {
+    const fetchKPIs = async () => {
+      try {
+        const res = await Api.get('/pmo/dashboard/kpis');
+        if (Array.isArray(res) && res.length > 0) {
+          setKpis(
+            res
+              .slice(0, 4)
+              .map(
+                (k: {
+                  name?: string;
+                  actual?: number;
+                  target?: number;
+                  unit?: string;
+                  trend?: string;
+                }) => ({
+                  label: k.name || 'KPI',
+                  value: k.actual != null ? `${k.actual}${k.unit || ''}` : '—',
+                  trend: (k.trend === 'UP' ? 'good' : k.trend === 'DOWN' ? 'bad' : 'neutral') as
+                    | 'good'
+                    | 'bad'
+                    | 'neutral',
+                  baseline: k.target != null ? `${k.target}${k.unit || ''}` : '—',
+                })
+              )
+          );
+          return;
+        }
+      } catch {
+        // API not available — derive from initiative data
+      }
+
+      // Derive KPIs from session data
+      const inits = session.initiatives || [];
+      const total = inits.length;
+      const done = inits.filter((i) => i.status === InitiativeStatus.DONE).length;
+      const blocked = inits.filter((i) => i.status === InitiativeStatus.BLOCKED).length;
+      const executing = inits.filter((i) => i.status === InitiativeStatus.EXECUTING).length;
+
+      setKpis([
+        {
+          label: 'Completion Rate',
+          value: total > 0 ? `${Math.round((done / total) * 100)}%` : '—',
+          trend: done > 0 ? 'good' : 'neutral',
+          baseline: `${total} total`,
+        },
+        {
+          label: 'Active Initiatives',
+          value: `${executing}`,
+          trend: executing > 0 ? 'good' : 'neutral',
+          baseline: `of ${total}`,
+        },
+        {
+          label: 'Blocked',
+          value: `${blocked}`,
+          trend: blocked > 0 ? 'bad' : 'good',
+          baseline: blocked > 0 ? 'needs attention' : 'all clear',
+        },
+        {
+          label: 'Phase Progress',
+          value: `${progressStats.toFixed(0)}%`,
+          trend: progressStats >= 50 ? 'good' : progressStats >= 25 ? 'neutral' : 'bad',
+          baseline: currentPhase,
+        },
+      ]);
+    };
+    fetchKPIs();
+  }, [session, progressStats, currentPhase]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-12">
@@ -155,10 +263,12 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
                 {initiativeStats.delayed} initiatives are currently delayed.
               </li>
             )}
-            <li className="text-sm text-red-800 dark:text-red-200 flex items-start gap-2">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
-              Review Q3 budget allocation.
-            </li>
+            {initiativeStats.total === 0 && (
+              <li className="text-sm text-red-800 dark:text-red-200 flex items-start gap-2">
+                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
+                No initiatives defined yet — create a roadmap to begin.
+              </li>
+            )}
           </ul>
         </div>
       </div>
@@ -238,19 +348,25 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
           {/* KPI Snapshot */}
           <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
             <h3 className="font-bold text-navy-900 dark:text-white mb-4">KPI Snapshot</h3>
-            <div className="grid grid-cols-2 gap-4">
-              {kpis.map((kpi, idx) => (
-                <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                  <div className="text-xs text-slate-500 mb-1">{kpi.label}</div>
-                  <div className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                    {kpi.value}
-                    {kpi.trend === 'good' && <TrendingUp size={14} className="text-green-500" />}
-                    {kpi.trend === 'bad' && <TrendingDown size={14} className="text-red-500" />}
+            {kpis.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4">
+                {kpis.map((kpi, idx) => (
+                  <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                    <div className="text-xs text-slate-500 mb-1">{kpi.label}</div>
+                    <div className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
+                      {kpi.value}
+                      {kpi.trend === 'good' && <TrendingUp size={14} className="text-green-500" />}
+                      {kpi.trend === 'bad' && <TrendingDown size={14} className="text-red-500" />}
+                    </div>
+                    <div className="text-[10px] text-slate-400">Baseline: {kpi.baseline}</div>
                   </div>
-                  <div className="text-[10px] text-slate-400">Baseline: {kpi.baseline}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-24 text-slate-400 dark:text-slate-500">
+                <p className="text-sm italic">Loading KPI data...</p>
+              </div>
+            )}
           </div>
         </div>
 

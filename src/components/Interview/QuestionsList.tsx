@@ -920,10 +920,10 @@ Rules:
                       ? `Na podstawie istniejących pytań w kategorii "${categoryLabel}":\n- ${existingQs}\n\nZaproponuj 3 nowe, uzupełniające pytania do wywiadu, które pomogą uzyskać pełniejszy obraz.`
                       : `Based on existing questions in category "${categoryLabel}":\n- ${existingQs}\n\nPropose 3 new, complementary interview questions that will help get a fuller picture.`;
                     try {
-                      const response = await sendMessageToAI(prompt);
+                      const response = await sendMessageToAI([], prompt);
                       if (response) {
                         setChatQuestion(categoryQuestions[0] || null);
-                        setChatMessages([{ role: 'assistant' as const, content: response }]);
+                        setChatMessages([{ role: 'ai' as const, content: response }]);
                       }
                     } catch {
                       // fallback: open chat with prompt

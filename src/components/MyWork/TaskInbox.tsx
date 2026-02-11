@@ -53,7 +53,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
   const [openFilter, setOpenFilter] = useState<'quick' | 'view' | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'pmo'>('pmo'); // Default to PMO view
-  const [cardStyle, setCardStyle] = useState<CardViewStyle>('current');
+  const [cardStyle, setCardStyle] = useState<CardViewStyle>('d');
   const [expandedCategories, setExpandedCategories] = useState<Set<PMOCategory>>(
     new Set(['blocking_phase', 'blocking_initiative', 'overdue'])
   );
@@ -704,8 +704,8 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
           </div>
         )}
 
-        {/* A7.1: Notion view */}
-        {cardStyle === 'notion' && !loading && filteredTasks.length > 0 && (
+        {/* N view */}
+        {cardStyle === 'n' && !loading && filteredTasks.length > 0 && (
           <div className="h-full overflow-y-auto">
             <NotionListView
               sections={taskInboxSections}
@@ -715,8 +715,8 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
           </div>
         )}
 
-        {/* A7.1: ClickUp view */}
-        {cardStyle === 'clickup' && !loading && filteredTasks.length > 0 && (
+        {/* C view */}
+        {cardStyle === 'c' && !loading && filteredTasks.length > 0 && (
           <div className="h-full overflow-y-auto">
             <ClickUpListView
               sections={taskInboxSections}
@@ -728,7 +728,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         )}
 
         {/* Pinned Tasks Section (Always rendered normally as it's small) — only in current view */}
-        {cardStyle === 'current' && !loading && pinnedTasks.length > 0 && (
+        {cardStyle === 'd' && !loading && pinnedTasks.length > 0 && (
           <div className="mb-4 pb-3 border-b border-dashed border-slate-200 dark:border-navy-700 flex-shrink-0">
             <div className="flex items-center gap-2 mb-2 px-1">
               <Pin size={12} className="text-purple-500" />
@@ -748,7 +748,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         )}
 
         {/* PMO Priority View — only in current card style */}
-        {cardStyle === 'current' && viewMode === 'pmo' && !loading && unpinnedTasks.length > 0 && (
+        {cardStyle === 'd' && viewMode === 'pmo' && !loading && unpinnedTasks.length > 0 && (
           <div className="space-y-4 overflow-y-auto h-full custom-scrollbar pb-10">
             {/* PMO Category Sections */}
             {[
@@ -824,7 +824,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         )}
 
         {/* List View - VIRTUALIZED — only in current card style */}
-        {cardStyle === 'current' && viewMode === 'list' && !loading && unpinnedTasks.length > 0 && (
+        {cardStyle === 'd' && viewMode === 'list' && !loading && unpinnedTasks.length > 0 && (
           <Virtuoso
             style={{ height: '100%' }}
             data={unpinnedTasks}

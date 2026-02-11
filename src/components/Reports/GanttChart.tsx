@@ -15,6 +15,7 @@ import { motion } from 'framer-motion';
 import {
   AlertCircle,
   AlertTriangle,
+  Calendar,
   CheckCircle,
   Clock,
   Flag,
@@ -55,67 +56,8 @@ interface GanttChartProps {
   onOpenScheduleChat?: () => void;
 }
 
-// Default transformation phases
-const DEFAULT_PHASES: Phase[] = [
-  {
-    id: 'foundation',
-    name: 'Foundation',
-    namePl: 'Fundamenty',
-    startMonth: 1,
-    duration: 6,
-    color: '#3b82f6',
-    status: 'in_progress',
-    milestones: [
-      { month: 2, label: 'Data Governance', labelPl: 'Data Governance' },
-      { month: 4, label: 'Security Framework', labelPl: 'Framework Bezpieczeństwa' },
-      { month: 6, label: 'Foundation Complete', labelPl: 'Zakończenie Fundamentów' },
-    ],
-  },
-  {
-    id: 'quick_wins',
-    name: 'Quick Wins',
-    namePl: 'Quick Wins',
-    startMonth: 3,
-    duration: 6,
-    color: '#10b981',
-    status: 'pending',
-    dependencies: ['foundation'],
-    milestones: [
-      { month: 5, label: 'Process Automation', labelPl: 'Automatyzacja Procesów' },
-      { month: 9, label: 'Quick Wins Delivered', labelPl: 'Quick Wins Dostarczone' },
-    ],
-  },
-  {
-    id: 'strategic',
-    name: 'Strategic Initiatives',
-    namePl: 'Inicjatywy Strategiczne',
-    startMonth: 6,
-    duration: 12,
-    color: '#8b5cf6',
-    status: 'pending',
-    dependencies: ['foundation'],
-    milestones: [
-      { month: 10, label: 'Digital Products MVP', labelPl: 'MVP Produktów Cyfrowych' },
-      { month: 14, label: 'New Business Models', labelPl: 'Nowe Modele Biznesowe' },
-      { month: 18, label: 'Strategic Complete', labelPl: 'Strategia Zakończona' },
-    ],
-  },
-  {
-    id: 'ai_integration',
-    name: 'AI Integration',
-    namePl: 'Integracja AI',
-    startMonth: 12,
-    duration: 12,
-    color: '#f59e0b',
-    status: 'pending',
-    dependencies: ['strategic'],
-    milestones: [
-      { month: 16, label: 'AI Pilots', labelPl: 'Piloty AI' },
-      { month: 20, label: 'AI at Scale', labelPl: 'AI na Skalę' },
-      { month: 24, label: 'Full AI Maturity', labelPl: 'Pełna Dojrzałość AI' },
-    ],
-  },
-];
+// No default phases — component requires real data from parent
+const DEFAULT_PHASES: Phase[] = [];
 
 // Status icons and colors
 const STATUS_CONFIG = {
@@ -291,6 +233,21 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   const [zoom, setZoom] = useState<'month' | 'quarter' | 'year'>('quarter');
   const [showCriticalPath, setShowCriticalPath] = useState(false);
   const [showWarnings, setShowWarnings] = useState(true);
+
+  // Empty state when no phases provided
+  if (phases.length === 0) {
+    return (
+      <div
+        className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center ${className}`}
+      >
+        <Calendar className="w-12 h-12 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+        <p className="text-lg font-medium text-navy-900 dark:text-white">No schedule data</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Add phases to your roadmap to see the Gantt chart
+        </p>
+      </div>
+    );
+  }
 
   // D4.1: Validation
   const scheduleWarnings = useMemo(() => validatePhaseSchedule(phases), [phases]);

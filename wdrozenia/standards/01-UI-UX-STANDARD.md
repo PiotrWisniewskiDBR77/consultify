@@ -6,8 +6,10 @@ Zapewnić spójny UI/UX we wszystkich modułach (ModuleHub pattern + wspólne st
 
 ## Źródła prawdy
 
-- Golden Standard: `wdrozenia/UI_UX_GOLDEN_STANDARD.md`
+- Golden Standard: `wdrozenia/UI_UX_GOLDEN_STANDARD 4.md`
 - (Legacy) `wdrozenia/standards/UI-UX-STANDARD 2.md` – **nie jest kanoniczny**
+- DBR77 Visual Language: `docs/00_foundation/DBR77_VISUAL_LANGUAGE_STANDARD.md`
+- DBR77 Color System: `docs/00_foundation/COLOR_SYSTEM_STANDARD.md`
 
 ## Wymagania MUST (minimum)
 
@@ -38,6 +40,29 @@ Wymóg:
 
 - Primary CTA (np. Save/Delegate/Decide) zawsze jest po prawej, blisko “Control”.
 - “Dlaczego / co robimy / efekt” zawsze jest po lewej, na górze.
+
+---
+
+## 🧩 Detail Views: tryby prezentacji (KANON)
+
+Detail view dla encji (Initiative / Task / Decision / Notification) posiada **3 równorzędne tryby prezentacji**, wybierane przełącznikiem w nagłówku:
+
+- **D presentation mode (D mode)** — obecny standard DBR77 (2/3 + 1/3, sekcje zwijane).
+- **N presentation mode (N mode)** — page-first (lewa nawigacja po blokach + treść strony + properties pod nagłówkiem).
+- **C presentation mode (C mode)** — action-first (command bar + taby + pola/operacje).
+
+Alias nazewniczy (MUST):
+
+- `D` = `DBR77` (legacy layout, ten który już mamy)
+
+Wymóg:
+
+- Nagłówek detail view jest **stały i identyczny** we wszystkich trybach; zmienia się wyłącznie treść poniżej.
+- Toggle trybu prezentacji: **3 przyciski pomiędzy Chat a AI**.
+- Tryby są tylko innym renderem **tych samych danych** (nic nie znika).
+- Wszystkie 3 tryby MUSZĄ być zgodne z DBR77 Visual Language (kolory/tła/ramki/typografia): `docs/00_foundation/DBR77_VISUAL_LANGUAGE_STANDARD.md`.
+
+Źródło prawdy: `docs/ui-standards/detail-view-presentation-modes.md`.
 
 ---
 

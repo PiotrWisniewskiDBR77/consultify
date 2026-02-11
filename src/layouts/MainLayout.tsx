@@ -165,7 +165,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       <main
         className={`
-                    flex-1 flex flex-col overflow-hidden relative w-full h-full min-h-0 transition-all duration-300
+                    flex-1 flex flex-col overflow-hidden relative min-w-0 h-full min-h-0 transition-all duration-300
                     ${isSidebarCollapsed ? 'md:ltr:pl-16 md:rtl:pr-16' : 'md:ltr:pl-64 md:rtl:pr-64'}
                     ${currentUser?.isDemo ? 'mt-10' : ''}
                     pb-16 md:pb-0

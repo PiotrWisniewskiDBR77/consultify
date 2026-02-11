@@ -453,7 +453,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<NotificationMode>('all');
   const [filter, setFilter] = useState<NotificationFilter>('all');
-  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('current');
+  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('d');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
     new Set(['thisWeek', 'earlier'])
   );
@@ -642,7 +642,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
     }
   };
 
-  /* ─── Sections for Notion / ClickUp views ─── */
+  /* ─── Sections for N / C views ─── */
   const notifViewSections: ListSection[] = useMemo(() => {
     const critical = filteredNotifications
       .filter((n) => n.severity === 'CRITICAL')
@@ -858,7 +858,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
               {t('myWork.noNotifications', 'No notifications')}
             </p>
           </div>
-        ) : cardViewStyle === 'notion' ? (
+        ) : cardViewStyle === 'n' ? (
           <div className="p-4">
             <NotionListView
               sections={notifViewSections}
@@ -866,7 +866,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
               emptyMessage={t('myWork.noNotifications', 'No notifications')}
             />
           </div>
-        ) : cardViewStyle === 'clickup' ? (
+        ) : cardViewStyle === 'c' ? (
           <div className="p-4">
             <ClickUpListView
               sections={notifViewSections}

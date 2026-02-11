@@ -297,7 +297,7 @@ export const InterviewHub: React.FC = () => {
     useState<InterviewTemplate | null>(null);
   const [insightTypeFilter, setInsightTypeFilter] = useState<string>('all');
   const [insightStatusFilter, setInsightStatusFilter] = useState<string>('all');
-  const [insightViewStyle, setInsightViewStyle] = useState<CardViewStyle>('current');
+  const [insightViewStyle, setInsightViewStyle] = useState<CardViewStyle>('d');
   const [insightGroupBy, setInsightGroupBy] = useState<'report' | 'person'>('report');
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState<string>('all');
 
@@ -951,18 +951,49 @@ export const InterviewHub: React.FC = () => {
     [isPolish]
   );
 
-  // Export action
+  // Export action — generates and downloads file
   const handleExport = useCallback(
     (format: 'pdf' | 'excel') => {
-      // TODO: Implement export functionality
-      toast.success(
-        isPolish
-          ? `Eksport do ${format.toUpperCase()} rozpoczęty`
-          : `Export to ${format.toUpperCase()} started`
-      );
+      try {
+        // Build export content from sessions
+        const lines: string[] = [];
+        lines.push('# Interview Sessions Export');
+        lines.push(`Generated: ${new Date().toLocaleDateString()}`);
+        lines.push('');
+        sessions.forEach(
+          (s: { name?: string; status?: string; createdAt?: string; questions?: unknown[] }) => {
+            lines.push(`## ${s.name || 'Untitled Session'}`);
+            lines.push(`Status: ${s.status || '—'}`);
+            lines.push(
+              `Created: ${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '—'}`
+            );
+            lines.push(`Questions: ${Array.isArray(s.questions) ? s.questions.length : 0}`);
+            lines.push('');
+          }
+        );
+
+        const content = lines.join('\n');
+        const mimeType = format === 'pdf' ? 'text/plain' : 'text/csv';
+        const ext = format === 'pdf' ? 'txt' : 'csv';
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `interview-sessions-export.${ext}`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        toast.success(
+          isPolish
+            ? `Eksport do ${format.toUpperCase()} zakończony`
+            : `Export to ${format.toUpperCase()} completed`
+        );
+      } catch {
+        toast.error(isPolish ? 'Błąd eksportu' : 'Export failed');
+      }
       setShowExportModal(false);
     },
-    [isPolish]
+    [isPolish, sessions]
   );
 
   // Generate insight from session
@@ -2250,8 +2281,6 @@ export const InterviewHub: React.FC = () => {
         })) as any;
         toast.dismiss();
 
-        console.log('[InterviewHub] Start assignment result:', result);
-
         // Open the session - backend returns { assignmentId, session }
         const session = result?.session;
         if (session?.id) {
@@ -2336,19 +2365,10 @@ export const InterviewHub: React.FC = () => {
 
     const handleOpenAssignmentRow = async (assignment: InterviewAssignment) => {
       try {
-        console.log('[InterviewHub] Opening assignment:', {
-          id: assignment.id,
-          status: assignment.status,
-          sessionId: assignment.sessionId,
-          showAssignee,
-        });
-
         // If assignment has a session, open it (read-only will be handled by workspace based on assignment status)
         const sid = assignment.sessionId || assignment.session?.id;
         if (sid) {
-          console.log('[InterviewHub] Loading session:', sid);
           const session = await Api.get(`/interview/sessions/${sid}`);
-          console.log('[InterviewHub] Session loaded:', session);
           handleOpenDocument({
             id: (session as InterviewSession).id,
             type: 'session',
@@ -2361,14 +2381,12 @@ export const InterviewHub: React.FC = () => {
 
         // If user is assignee and the assignment hasn't started, start it.
         if (!showAssignee && assignment.status === 'assigned') {
-          console.log('[InterviewHub] Starting assignment as assignee');
           await handleStartAssignment(assignment);
           return;
         }
 
         // If manager view and assignment hasn't started yet, show info message
         if (showAssignee && !assignment.sessionId) {
-          console.log('[InterviewHub] Assignment not started yet (manager view)');
           const message = isPolish
             ? 'Wywiad nie został jeszcze rozpoczęty przez przypisanego użytkownika'
             : 'Interview has not been started by the assignee yet';
@@ -2819,7 +2837,7 @@ export const InterviewHub: React.FC = () => {
           </div>
 
           {/* Render based on view style */}
-          {insightViewStyle === 'current' ? (
+          {insightViewStyle === 'd' ? (
             // Standard table view with optional grouping headers
             Object.keys(groupedInsights).length > 1 ? (
               <div className="space-y-4">
@@ -2843,7 +2861,7 @@ export const InterviewHub: React.FC = () => {
             ) : (
               renderInsightsTable()
             )
-          ) : insightViewStyle === 'notion' ? (
+          ) : insightViewStyle === 'n' ? (
             // Notion-like: card layout with more whitespace
             <div className="space-y-3">
               {Object.entries(groupedInsights).map(([groupName, groupInsights]) => (

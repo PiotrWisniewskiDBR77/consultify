@@ -142,6 +142,14 @@ Domyślne kolumny:
 
 #### Detail (Task)
 
+Tryby prezentacji (KANON):
+
+- `D` (D presentation mode: obecny Golden Standard 2/3 + 1/3)
+- `N` (N presentation mode: nawigacja + treść strony + properties)
+- `C` (C presentation mode: action-first: command bar + taby)
+
+Źródło prawdy: `docs/ui-standards/detail-view-presentation-modes.md`.
+
 Zasada: **pierwsze na ekranie** są: Owner/Status/Deadline + Effect + Blockers.  
 Sekcje (zwijane):
 

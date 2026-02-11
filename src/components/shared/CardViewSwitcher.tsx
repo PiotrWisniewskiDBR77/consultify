@@ -1,22 +1,20 @@
 /**
- * CardViewSwitcher — 3-style view toggle (Current / Notion-like / ClickUp-like)
+ * CardViewSwitcher — 3-style view toggle (D / N / C)
+ *
+ * Neutral naming:
+ * - D: default (standard) view
+ * - N: navigation + content (page-ish)
+ * - C: dense (maximum info on screen)
  *
  * Provides a consistent view mode switcher across Task, Decision, Notification,
  * Initiative modules. Remembers user preference per module in localStorage.
- *
- * AC (A7): 3 views, consistent, remembers preference per user/module.
- *
- * Styles:
- * - "current" (default): Standard card layout with moderate info density
- * - "notion": Notion-like with left nav sections + right content, no accordion hell
- * - "clickup": Dense, tech-focused with small control icons and max info on screen
  */
 
 import { Columns3, LayoutGrid, LayoutList } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export type CardViewStyle = 'current' | 'notion' | 'clickup';
+export type CardViewStyle = 'd' | 'n' | 'c';
 
 interface CardViewSwitcherProps {
   /** Module identifier for persisting preference */
@@ -47,11 +45,18 @@ export const CardViewSwitcher: React.FC<CardViewSwitcherProps> = ({
     if (value) return value;
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}${moduleId}`);
-      if (saved === 'current' || saved === 'notion' || saved === 'clickup') return saved;
+      if (!saved) return 'd';
+
+      // Backward compatibility for legacy values:
+      // - current/notion/clickup
+      const normalized: string =
+        saved === 'current' ? 'd' : saved === 'notion' ? 'n' : saved === 'clickup' ? 'c' : saved;
+
+      if (normalized === 'd' || normalized === 'n' || normalized === 'c') return normalized;
     } catch {
       /* ignore */
     }
-    return 'current';
+    return 'd';
   });
 
   // Sync with external value
@@ -81,22 +86,22 @@ export const CardViewSwitcher: React.FC<CardViewSwitcherProps> = ({
     tooltip: string;
   }> = [
     {
-      id: 'current',
+      id: 'd',
       icon: LayoutGrid,
-      label: t('views.current', 'Standard'),
-      tooltip: t('views.currentTooltip', 'Standard card view'),
+      label: t('views.d', 'D'),
+      tooltip: t('views.dTooltip', 'D view (standard)'),
     },
     {
-      id: 'notion',
+      id: 'n',
       icon: Columns3,
-      label: t('views.notion', 'Notion'),
-      tooltip: t('views.notionTooltip', 'Notion-style sections with side navigation'),
+      label: t('views.n', 'N'),
+      tooltip: t('views.nTooltip', 'N view: navigation + content'),
     },
     {
-      id: 'clickup',
+      id: 'c',
       icon: LayoutList,
-      label: t('views.clickup', 'Dense'),
-      tooltip: t('views.clickupTooltip', 'Dense view with maximum information'),
+      label: t('views.c', 'C'),
+      tooltip: t('views.cTooltip', 'C view: dense (maximum information)'),
     },
   ];
 

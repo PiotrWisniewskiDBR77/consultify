@@ -36,12 +36,12 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
         <>
           {/* Full Logo */}
           <motion.div
-            className="flex items-center overflow-hidden"
+            className="flex items-center overflow-hidden flex-1 min-w-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
           >
-            <img src={logoSrc} alt="Consultinity" className="h-8 w-auto object-contain" />
+            <img src={logoSrc} alt="Consultinity" className="max-w-full h-auto object-contain" />
           </motion.div>
 
           {/* Collapse Button */}
@@ -49,7 +49,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
             onClick={onToggleCollapse}
             whileTap={{ scale: 0.95 }}
             className={`
-              p-2 rounded-xl transition-colors duration-150
+              p-2 rounded-xl transition-colors duration-150 shrink-0 ml-2
               text-slate-400 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30 
               dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10
             `}

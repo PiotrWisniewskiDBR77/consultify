@@ -108,17 +108,8 @@ export const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({
         setSuggestions(data.suggestions || []);
       }
     } catch (err) {
-      console.error('[SmartSuggestions] Fetch error:', err);
-      setSuggestions([
-        {
-          id: 'start-assessment',
-          type: 'action',
-          text: t('aiChat.suggestions.startAssessment', 'Start your digital maturity assessment'),
-          priority: 95,
-          context: ['fallback'],
-          action: { type: 'navigate', view: 'ASSESSMENT_OVERVIEW' },
-        },
-      ]);
+      // API unavailable — show empty state, no hardcoded fallbacks
+      setSuggestions([]);
     } finally {
       setIsLoading(false);
     }

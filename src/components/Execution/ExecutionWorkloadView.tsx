@@ -352,7 +352,12 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
         ? new Date(endDateStr)
         : new Date(iStart.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-      const allocationPerPerson = Math.round(50 / owners.length);
+      // Estimate allocation based on initiative duration and number of owners
+      // Shorter initiatives = more intense; longer = more spread out
+      const durationDays = Math.max(1, (iEnd.getTime() - iStart.getTime()) / (1000 * 60 * 60 * 24));
+      const intensityFactor =
+        durationDays < 30 ? 80 : durationDays < 90 ? 60 : durationDays < 180 ? 40 : 25;
+      const allocationPerPerson = Math.round(intensityFactor / owners.length);
 
       owners.forEach((owner) => {
         if (!owner?.id) return;

@@ -23,6 +23,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import {
   AlertTriangle,
+  BarChart3,
   Calendar,
   CalendarDays,
   CheckCircle2,
@@ -36,6 +37,7 @@ import {
   Scale,
   Shield,
   Target,
+  TrendingUp,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -65,9 +67,12 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { BenefitsTracker } from './BenefitsTracker';
+import { CorrectiveActions } from './CorrectiveActions';
 import { ExecutionDetailPanel } from './ExecutionDetailPanel';
 import { ExecutionTimelineView } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
+import { KPIDashboard } from './KPIDashboard';
 
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
@@ -349,7 +354,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
-  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('current'); // D6.9
+  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('d'); // D6.9
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   // D5.2: Workload heatmap toggle
@@ -544,6 +549,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         label: t('execution.tabs.decisions', 'Decisions'),
         icon: <FileQuestion size={16} />,
         count: decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length,
+      },
+      {
+        id: 'kpi' as ModuleTab,
+        label: t('execution.tabs.kpi', 'KPIs & Benefits'),
+        icon: <BarChart3 size={16} />,
       },
     ],
     [t, filteredInitiatives.length, initiatives.length, decisions]
@@ -1642,6 +1652,57 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     if (activeTab === 'decisions') {
       return renderDecisionsTab();
+    }
+
+    // KPIs & Benefits tab
+    if (activeTab === ('kpi' as ModuleTab)) {
+      return (
+        <div className="p-4 space-y-8 overflow-auto">
+          <KPIDashboard
+            projectId={currentProjectId || ''}
+            onAddKPI={() =>
+              toast(
+                t('execution.kpi.addHint', 'Use the AI chat to define KPIs for your initiatives'),
+                { icon: 'ℹ️' }
+              )
+            }
+            onUpdateKPI={(kpiId, value) => {
+              Api.patch(`/pmo/kpis/${kpiId}`, { actual: value })
+                .then(() => {
+                  toast.success(t('execution.kpi.updated', 'KPI updated'));
+                })
+                .catch(() => toast.error(t('execution.kpi.updateFailed', 'Failed to update KPI')));
+            }}
+            onCreateCorrectiveAction={() => {
+              toast(t('execution.kpi.correctiveHint', 'Creating corrective action for KPI...'), {
+                icon: '🎯',
+              });
+            }}
+          />
+          <BenefitsTracker projectId={currentProjectId || ''} />
+          <CorrectiveActions
+            projectId={currentProjectId || ''}
+            onCreateAction={() =>
+              toast(
+                t(
+                  'execution.corrective.createHint',
+                  'Use the AI chat to create corrective actions'
+                ),
+                { icon: 'ℹ️' }
+              )
+            }
+            onUpdateAction={(actionId, updates) => {
+              Api.patch(`/pmo/corrective-actions/${actionId}`, updates)
+                .then(() => {
+                  toast.success(t('execution.corrective.updated', 'Action updated'));
+                })
+                .catch(() =>
+                  toast.error(t('execution.corrective.updateFailed', 'Failed to update action'))
+                );
+            }}
+          />
+        </div>
+      );
     }
 
     // D6.1: Initiatives tab — dedicated view of all execution initiatives

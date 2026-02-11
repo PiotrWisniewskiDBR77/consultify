@@ -1,11 +1,8 @@
 /**
- * ClickUpListView — Dense, information-rich list view
+ * DenseListView — Dense, information-rich list view (C-style)
  *
  * Layout: Compact table-like rows grouped by sections, with inline
  * status/priority badges, mini avatars, and maximum data density.
- *
- * Inspired by ClickUp's list view: tight rows, color-coded status pills,
- * inline editable feel, section collapse/expand.
  *
  * Reusable across Tasks, Decisions, Notifications, Initiatives, Interview.
  */

@@ -17,6 +17,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
+import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
+import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
 import { Api } from '@/services/api';
 
 import { RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
@@ -121,6 +124,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const [loading, setLoading] = useState(true);
   // A2.3: Section filter analogous to Focus
   const [inboxSection, setInboxSection] = useState<'today' | 'this_week' | 'all'>('all');
+  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('d');
 
   const fetchInbox = useCallback(async () => {
     try {
@@ -155,7 +159,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const weekEnd = new Date(todayStart.getTime() + 7 * 86400000);
       all = all.filter((i) => {
-        const d = new Date(i.receivedAt || i.createdAt || '');
+        const d = new Date(i.receivedAt || '');
         if (inboxSection === 'today') return d >= todayStart;
         if (inboxSection === 'this_week') return d >= todayStart && d < weekEnd;
         return true;
@@ -198,6 +202,95 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     [onOpenDecision, onOpenNotification, onOpenTask]
   );
 
+  /* ─── Mapping for N / C views ─── */
+  const inboxItemToGeneric = (item: InboxItem): GenericListItem => {
+    const u = urgencyStyles[item.urgency] || urgencyStyles.normal;
+    return {
+      id: item.id,
+      title: item.title || 'Untitled',
+      subtitle: item.description || undefined,
+      status: item.triaged ? 'Triaged' : 'New',
+      statusVariant: item.triaged ? 'success' : 'warning',
+      priority: u.label,
+      priorityVariant:
+        item.urgency === 'critical'
+          ? 'critical'
+          : item.urgency === 'high'
+            ? 'high'
+            : item.urgency === 'low'
+              ? 'low'
+              : 'medium',
+      dueDate: item.receivedAt
+        ? new Date(item.receivedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        : undefined,
+      secondaryLabel: item.type.replace(/_/g, ' '),
+      isHighlighted: item.urgency === 'critical' || !item.triaged,
+      _raw: item,
+    };
+  };
+
+  const inboxViewSections: ListSection[] = useMemo(() => {
+    const critical = items.filter((i) => i.urgency === 'critical').map(inboxItemToGeneric);
+    const high = items.filter((i) => i.urgency === 'high').map(inboxItemToGeneric);
+    const normal = items.filter((i) => i.urgency === 'normal').map(inboxItemToGeneric);
+    const low = items.filter((i) => i.urgency === 'low').map(inboxItemToGeneric);
+    return [
+      ...(critical.length
+        ? [
+            {
+              id: 'critical',
+              label: isPolish ? 'Krytyczne' : 'Critical',
+              items: critical,
+              accentColor: 'text-red-500',
+            },
+          ]
+        : []),
+      ...(high.length
+        ? [
+            {
+              id: 'high',
+              label: isPolish ? 'Wysokie' : 'High',
+              items: high,
+              accentColor: 'text-amber-500',
+            },
+          ]
+        : []),
+      ...(normal.length
+        ? [
+            {
+              id: 'normal',
+              label: isPolish ? 'Normalne' : 'Normal',
+              items: normal,
+              accentColor: 'text-slate-500',
+            },
+          ]
+        : []),
+      ...(low.length
+        ? [
+            {
+              id: 'low',
+              label: isPolish ? 'Niskie' : 'Low',
+              items: low,
+              accentColor: 'text-slate-400',
+            },
+          ]
+        : []),
+    ];
+  }, [items, isPolish]);
+
+  const INBOX_CLICKUP_COLUMNS: ListColumn[] = [
+    { key: 'title', label: 'Title', width: 'flex-1 min-w-0' },
+    { key: 'status', label: 'Status', width: 'w-24' },
+    { key: 'priority', label: 'Urgency', width: 'w-24' },
+    { key: 'secondaryLabel', label: 'Type', width: 'w-28' },
+    { key: 'dueDate', label: 'Received', width: 'w-28' },
+  ];
+
+  const handleInboxItemClick = (item: GenericListItem) => {
+    const raw = item._raw as InboxItem;
+    if (raw) open(raw);
+  };
+
   return (
     <div className="p-4">
       <div className="flex items-start justify-between gap-3">
@@ -211,12 +304,20 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               : 'Only items requiring action. 4-line format + CTA.'}
           </div>
         </div>
-        <button
-          onClick={fetchInbox}
-          className="px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-        >
-          {isPolish ? 'Odśwież' : 'Refresh'}
-        </button>
+        <div className="flex items-center gap-2">
+          <CardViewSwitcher
+            moduleId="my-work-inbox"
+            value={cardViewStyle}
+            onChange={setCardViewStyle}
+            compact
+          />
+          <button
+            onClick={fetchInbox}
+            className="px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          >
+            {isPolish ? 'Odśwież' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -242,11 +343,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           const weekEnd = new Date(todayStart.getTime() + 7 * 86400000);
           const sectionCount =
             section === 'today'
-              ? items.filter((i) => new Date(i.receivedAt || i.createdAt || '') >= todayStart)
-                  .length
+              ? items.filter((i) => new Date(i.receivedAt || '') >= todayStart).length
               : section === 'this_week'
                 ? items.filter((i) => {
-                    const d = new Date(i.receivedAt || i.createdAt || '');
+                    const d = new Date(i.receivedAt || '');
                     return d >= todayStart && d < weekEnd;
                   }).length
                 : items.length;
@@ -278,7 +378,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         })}
       </div>
 
-      {/* Unified table layout (A2.1, A2.2, A2.3) */}
+      {/* Unified table layout (A2.1, A2.2, A2.3) — switches layout based on cardViewStyle */}
       <div className="mt-0">
         {loading ? (
           <div className="flex items-center justify-center py-12 text-slate-600 dark:text-slate-300">
@@ -291,6 +391,23 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             <p className="text-sm font-medium">
               {isPolish ? 'Inbox jest pusty — zero zaległości!' : 'Inbox is empty — zero backlog!'}
             </p>
+          </div>
+        ) : cardViewStyle === 'n' ? (
+          <div className="mt-4">
+            <NotionListView
+              sections={inboxViewSections}
+              onItemClick={handleInboxItemClick}
+              emptyMessage={isPolish ? 'Inbox jest pusty' : 'Inbox is empty'}
+            />
+          </div>
+        ) : cardViewStyle === 'c' ? (
+          <div className="mt-4">
+            <ClickUpListView
+              sections={inboxViewSections}
+              columns={INBOX_CLICKUP_COLUMNS}
+              onItemClick={handleInboxItemClick}
+              emptyMessage={isPolish ? 'Inbox jest pusty' : 'Inbox is empty'}
+            />
           </div>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">

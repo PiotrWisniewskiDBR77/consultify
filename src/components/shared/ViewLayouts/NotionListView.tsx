@@ -1,5 +1,5 @@
 /**
- * NotionListView — Notion-style layout for any list module
+ * SectionNavListView — N-style layout for any list module
  *
  * Layout:
  * ┌──────────────┬──────────────────────────────────────┐

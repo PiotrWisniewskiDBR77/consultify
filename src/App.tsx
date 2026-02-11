@@ -152,7 +152,13 @@ function AppContent() {
           const authenticatedUser: User = { ...user, isAuthenticated: true };
 
           // Only update if user data actually changed to prevent unnecessary re-renders
-          if (!restoredUser || restoredUser.id !== user.id || restoredUser.email !== user.email) {
+          if (
+            !restoredUser ||
+            restoredUser.id !== user.id ||
+            restoredUser.email !== user.email ||
+            restoredUser.avatarUrl !== user.avatarUrl ||
+            restoredUser.role !== user.role
+          ) {
             setCurrentUser(authenticatedUser);
             localStorage.setItem('user', JSON.stringify(user));
 

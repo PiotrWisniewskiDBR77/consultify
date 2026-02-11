@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DecisionsPanel - Enhanced decision management
  * Part of My Work Module PMO Upgrade
@@ -917,7 +916,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('current');
+  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('d');
   const [showNewModal, setShowNewModal] = useState(false);
   const [delegateDecision, setDelegateDecision] = useState<Decision | null>(null);
 
@@ -1158,7 +1157,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
     (d) => ['PENDING', 'ESCALATED'].includes(d.status) && d.isOverdue
   ).length;
 
-  /* ─── Sections for Notion / ClickUp views ─── */
+  /* ─── Sections for N / C views ─── */
   const decisionViewSections: ListSection[] = (() => {
     const overdue = filteredDecisions.filter((d) => d.isOverdue).map(decisionToGenericItem);
     const critical = filteredDecisions
@@ -1432,7 +1431,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
       </div>
 
       {/* Content — switches layout based on cardViewStyle (A7.2/A7.3) */}
-      {cardViewStyle === 'notion' ? (
+      {cardViewStyle === 'n' ? (
         <div className="flex-1 overflow-hidden p-4">
           <NotionListView
             sections={decisionViewSections}
@@ -1440,7 +1439,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
             emptyMessage={t('decisions.noMyDecisions', 'No decisions awaiting your action')}
           />
         </div>
-      ) : cardViewStyle === 'clickup' ? (
+      ) : cardViewStyle === 'c' ? (
         <div className="flex-1 overflow-y-auto p-4">
           <ClickUpListView
             sections={decisionViewSections}

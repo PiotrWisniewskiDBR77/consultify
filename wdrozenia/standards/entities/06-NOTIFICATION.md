@@ -127,14 +127,24 @@ To archiwum + preferencje:
 
 ### Notification Detail View (2026-01-29)
 
+Tryby prezentacji (KANON):
+
+- `D` (D presentation mode: obecny Golden Standard 2/3 + 1/3)
+- `N` (N presentation mode: nawigacja + treść strony + properties)
+- `C` (C presentation mode: action-first: command bar + taby)
+
+Źródło prawdy: `docs/ui-standards/detail-view-presentation-modes.md`.
+
 Pełny widok szczegółowy notyfikacji zgodny z Golden Standard:
 
 #### Header
+
 - Fioletowy gradient (jak Task Detail View)
 - 2 przyciski: **Mark Read** (niebieski) + **Chat** (fioletowy)
 - Severity indicator (kolorowa kropka)
 
 #### Lewa kolumna (2/3)
+
 1. **What's Happening** - co się dzieje, dlaczego ważne, co blokowane
 2. **AI Analysis** ⭐ - priorytet, wpływ, rekomendacja AI, przycisk "Zapytaj AI"
 3. **Expected Action** - oczekiwana akcja + interaktywna checklista
@@ -143,11 +153,13 @@ Pełny widok szczegółowy notyfikacji zgodny z Golden Standard:
 6. **Activity Log** - historia aktywności
 
 #### Prawa kolumna (1/3)
+
 1. **Control** - typ, severity, kategoria, daty, Primary CTA, Mute, Delete
 2. **Stakeholders** - interesariusze (przygotowane)
 3. **Why You Got It** - wyjaśnienie dlaczego otrzymano
 
 #### Snooze Mechanism
+
 - Presety: 1h, 4h, jutro, następny tydzień
 - Custom datetime
 - Persystowane w localStorage
