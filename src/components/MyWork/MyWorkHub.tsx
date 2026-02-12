@@ -35,6 +35,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
 import { useUserCan } from '@/hooks/useUserCan';
 import { Api } from '@/services/api';
@@ -172,6 +173,7 @@ interface MyWorkHubProps {
 export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentUser, myWorkIntent, clearMyWorkIntent } = useAppStore();
 
   // A1.2: Role-based access – Executive tab restricted to admin/manager/superadmin
@@ -271,6 +273,38 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
     clearMyWorkIntent();
   }, [myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
+
+  // URL deep link support: /my-work?taskId=... or /my-work?decisionId=...
+  useEffect(() => {
+    const taskId = searchParams.get('taskId');
+    const decisionId = searchParams.get('decisionId');
+    if (!taskId && !decisionId) return;
+
+    if (taskId) {
+      setActiveTab('tasks');
+      handleOpenDocument({
+        id: taskId,
+        type: 'task',
+        name: isPolish ? 'Zadanie' : 'Task',
+        status: 'todo',
+      });
+    }
+
+    if (decisionId) {
+      setActiveTab('decisions');
+      handleOpenDocument({
+        id: decisionId,
+        type: 'decision',
+        name: isPolish ? 'Decyzja' : 'Decision',
+        status: 'pending',
+      });
+    }
+
+    const next = new URLSearchParams(searchParams);
+    next.delete('taskId');
+    next.delete('decisionId');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, handleOpenDocument, isPolish]);
 
   // Tab configuration
   // A1.2: Executive tab only visible to admin/manager/superadmin roles

@@ -1803,9 +1803,12 @@ export const Api = {
   // LLM Provider Health Check - check connectivity and status of all providers
   checkLLMProvidersHealth: async (): Promise<{
     success: boolean;
-    providers: Record<string, { available: boolean; latency?: number; error?: string }>;
+    providers:
+      | Record<string, { available?: boolean; latency?: number; error?: string; status?: string }>
+      | Array<{ available?: boolean; latency?: number; error?: string; status?: string }>;
     circuitBreakers: Array<{ name: string; state: string; failures: number }>;
     lastCheck: number;
+    overall?: string;
   }> => {
     const res = await fetch(`${API_URL}/llm/providers/health`);
     if (!res.ok) throw new Error('Health check failed');

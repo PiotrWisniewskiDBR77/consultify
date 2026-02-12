@@ -39,6 +39,7 @@ import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initia
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
+import { buildArtifactPermalink } from '@/utils/artifactLinks';
 
 import { InitiativeStatus } from '../../types';
 import {
@@ -54,6 +55,7 @@ import {
   type WarningThresholds,
 } from '../MyWork/shared';
 import { type CardViewStyle, CardViewSwitcher } from '../shared/CardViewSwitcher';
+import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { InitiativeNotionView, NOTION_NAV_GROUP_IDS } from './InitiativeNotionView';
 import { InitiativeScrollView } from './InitiativeScrollView';
@@ -641,9 +643,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast.success(isPolish ? 'Link skopiowany' : 'Link copied');
-    setShowMoreMenu(false);
+    navigator.clipboard
+      .writeText(buildArtifactPermalink('initiative', initiativeId))
+      .then(() => {
+        toast.success(isPolish ? 'Link do inicjatywy skopiowany' : 'Initiative permalink copied');
+      })
+      .catch(() => {
+        toast.error(isPolish ? 'Nie udało się skopiować linku' : 'Failed to copy link');
+      })
+      .finally(() => {
+        setShowMoreMenu(false);
+      });
   };
   const handleExportPDF = () => {
     toast.success(isPolish ? 'Eksport PDF w przygotowaniu...' : 'Preparing PDF export...');
@@ -1086,6 +1096,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     value={initiative.name || ''}
                     readOnly
                     className="flex-1 text-xl font-bold text-slate-800 dark:text-white bg-transparent border-none focus:outline-none truncate"
+                  />
+                  <ArtifactPermalinkButton
+                    artifactType="initiative"
+                    artifactId={initiativeId}
+                    isPolish={isPolish}
+                    size={13}
                   />
                 </div>
                 <div className="flex items-center gap-3">

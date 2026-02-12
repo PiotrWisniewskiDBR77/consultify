@@ -69,6 +69,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [activeModelName, setActiveModelName] = useState<string>('');
+  const [isAIAvailable, setIsAIAvailable] = useState<boolean>(true);
 
   // Close on click outside
   useEffect(() => {
@@ -120,15 +121,49 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
     }
   }, [isOpen, activeTier.id, aiConfig.selectedModelId]);
 
+  // Health indicator for top-bar model button.
+  // Red indicator means AI providers are currently unavailable.
+  const checkAIAvailability = useCallback(async () => {
+    try {
+      const health = await Api.checkLLMProvidersHealth();
+      const providersRaw = health?.providers;
+      const providers = Array.isArray(providersRaw)
+        ? providersRaw
+        : Object.values(providersRaw || {});
+      const hasAvailable = providers.some(
+        (p: any) => p?.available === true || p?.status === 'healthy'
+      );
+      const isOverallHealthy = health?.overall === 'healthy';
+      setIsAIAvailable(hasAvailable || isOverallHealthy);
+    } catch {
+      setIsAIAvailable(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkAIAvailability();
+    const interval = setInterval(checkAIAvailability, 45000);
+    return () => clearInterval(interval);
+  }, [checkAIAvailability]);
+
   return (
     <div className="relative z-50" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         data-testid="llm-tier-selector"
-        className={`flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-lg border transition-all duration-200 ${isOpen ? 'bg-slate-100 dark:bg-white/10 border-brand/50' : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'} text-xs font-medium text-navy-900 dark:text-white`}
+        title={isAIAvailable ? 'AI providers available' : 'AI currently unavailable'}
+        className={`flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-lg border transition-all duration-200 ${
+          isAIAvailable
+            ? isOpen
+              ? 'bg-slate-100 dark:bg-white/10 border-brand/50'
+              : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'
+            : 'bg-red-50/70 dark:bg-red-500/10 border-red-400/50 dark:border-red-500/40 hover:bg-red-100/70 dark:hover:bg-red-500/15'
+        } text-xs font-medium text-navy-900 dark:text-white`}
       >
         {/* Status Dot / Icon */}
-        <div className={`w-2 h-2 rounded-full ${activeTier.color} animate-pulse`} />
+        <div
+          className={`w-2 h-2 rounded-full animate-pulse ${isAIAvailable ? activeTier.color : 'bg-red-500'}`}
+        />
 
         {!compact && <span>{activeTier.name}</span>}
         {compact && <span className="max-w-[60px] truncate">{activeTier.name}</span>}
@@ -146,6 +181,12 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
             <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
               Model Routing per Tier
             </div>
+            {!isAIAvailable && (
+              <div className="mb-2 flex items-center gap-1.5 text-[10px] text-red-600 dark:text-red-400">
+                <AlertTriangle size={11} />
+                <span>AI unavailable - check provider health</span>
+              </div>
+            )}
             <p className="text-[10px] text-slate-400 dark:text-slate-500">
               Define which LLM level to use. System automatically selects the best available model
               in that tier.

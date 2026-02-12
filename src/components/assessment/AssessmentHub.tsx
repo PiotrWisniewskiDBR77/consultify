@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { Api } from '@/services/api';
@@ -236,6 +236,7 @@ interface AssessmentHubProps {
 
 export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list' }) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isEnabled } = useFeatureFlags();
   const wizardEnabled = isEnabled('assessmentInitiativesWizard');
   // State
@@ -264,6 +265,34 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [initiatives, setInitiatives] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Deep link support:
+  // - /assessment?assessmentId=<id>
+  // - /assessment?reportId=<id>
+  useEffect(() => {
+    const assessmentId = searchParams.get('assessmentId');
+    const reportId = searchParams.get('reportId');
+    if (!assessmentId && !reportId) return;
+
+    if (reportId) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('reportId');
+      setSearchParams(next, { replace: true });
+      navigate(`/reports/builder/${reportId}`);
+      return;
+    }
+
+    if (assessmentId) {
+      const fromList = assessments.find((a) => a.id === assessmentId);
+      if (fromList?.assessmentType) {
+        const framework = String(fromList.assessmentType).toLowerCase();
+        const next = new URLSearchParams(searchParams);
+        next.delete('assessmentId');
+        setSearchParams(next, { replace: true });
+        navigate(`/assessment/${framework}/${assessmentId}`);
+      }
+    }
+  }, [searchParams, setSearchParams, navigate, assessments]);
 
   // Safety net: if an "assessment" document is opened in this hub, always redirect to the real editor.
   // This prevents the placeholder card screen from ever being the primary UX.

@@ -51,6 +51,7 @@ import { InitiativeService } from '@/services/initiativeService';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
+import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 
 import {
   type Alternative,
@@ -999,6 +1000,14 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                   placeholder={isPolish ? 'Tytuł zadania...' : 'Task title...'}
                   autoFocus={!taskId}
                 />
+                {taskId && (
+                  <ArtifactPermalinkButton
+                    artifactType="task"
+                    artifactId={taskId}
+                    isPolish={isPolish}
+                    size={13}
+                  />
+                )}
               </div>
 
               <div className="flex items-center gap-2">

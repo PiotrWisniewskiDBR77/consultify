@@ -18,20 +18,27 @@ import {
   ChevronLeft,
   ChevronsDownUp,
   ChevronsUpDown,
+  Cloud,
   Clock,
   Edit3,
+  Eye,
   FileText,
   Flag,
   FolderOpen,
+  HardDrive,
   HelpCircle,
   History,
   Layers,
   Lightbulb,
   Loader2,
+  ExternalLink,
   MessageSquare,
   Minus,
+  MoreVertical,
   Plus,
   Save,
+  Search,
+  Settings,
   Share2,
   Sparkles,
   Star,
@@ -39,22 +46,29 @@ import {
   ThumbsDown,
   ThumbsUp,
   Trash2,
+  Upload,
   UserCheck,
   Users,
   X,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type SmartOpenConditions, useAccordionSections } from '@/hooks/useAccordionSections';
+import { type CloudFile, type CloudProviderId, useCloudIntegrations } from '@/hooks/useCloudIntegrations';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
+import { buildArtifactCode } from '@/utils/artifactLinks';
 
 import { Api } from '../../services/api';
+import { CloudFilePicker } from '../AIChat/CloudFilePicker';
+import { DateFilterSortControl } from '../shared/DateFilterSortControl';
+import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import {
   type Alternative,
   AlternativesSection,
@@ -124,6 +138,45 @@ interface DecisionDetailViewProps {
   onClose: () => void;
   onSaved?: (data: any) => void;
 }
+
+type ConsequenceTimeline = {
+  d7: string;
+  d30: string;
+  d90: string;
+};
+
+type ConsequenceScenarios = {
+  updatedAt: string;
+  source: 'ai' | 'fallback';
+  pessimistic: ConsequenceTimeline;
+  neutral: ConsequenceTimeline;
+  optimistic: ConsequenceTimeline;
+};
+
+type CommentPriorityLevel = 'low' | 'normal' | 'high';
+type CommentDateFilter = 'all' | 'today' | '7d' | '30d';
+type LinkedItemFilter = 'all' | LinkedItem['type'];
+
+type IntegrationChannel = 'slack' | 'teams' | 'webhook' | 'jira';
+type CoreDeliveryChannel = 'in_app' | 'email';
+type EscalationMode = 'notify_only' | 'manager_review' | 'executive_alert';
+
+type DeliveryConfig = {
+  coreChannels: CoreDeliveryChannel[];
+  integrationChannels: IntegrationChannel[];
+  syncTargets: string[];
+};
+
+type ReminderRuleWithDelivery = ReminderRule & {
+  delivery?: DeliveryConfig;
+};
+
+type EscalationRuleWithConfig = EscalationRule & {
+  warningDays: number;
+  criticalDays: number;
+  escalationMode: EscalationMode;
+  delivery: DeliveryConfig;
+};
 
 // Types - Alternative and ImpactValues are imported from ./shared
 
@@ -329,6 +382,8 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
       triggers: ['on_status_change', 'on_deadline_approaching'],
       emailEnabled: true,
       inAppEnabled: true,
+      integrationChannels: ['teams'],
+      syncTargets: ['msteams:ops-leadership'],
     },
   },
   {
@@ -343,6 +398,8 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
       triggers: ['on_update', 'on_comment'],
       emailEnabled: false,
       inAppEnabled: true,
+      integrationChannels: ['slack'],
+      syncTargets: ['slack:#delivery-dbr77'],
     },
   },
   {
@@ -357,6 +414,8 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
       triggers: ['on_decision_made'],
       emailEnabled: true,
       inAppEnabled: true,
+      integrationChannels: [],
+      syncTargets: [],
     },
   },
   {
@@ -371,6 +430,8 @@ const DEMO_STAKEHOLDERS: Stakeholder[] = [
       triggers: ['on_decision_made'],
       emailEnabled: false,
       inAppEnabled: true,
+      integrationChannels: ['webhook'],
+      syncTargets: ['webhook:governance-automation'],
     },
   },
 ];
@@ -525,8 +586,17 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { isChatCollapsed, toggleChatCollapse, currentProjectId } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
+  const {
+    connectedProviderIds,
+    openFilePicker,
+    isPickerOpen,
+    activeProvider,
+    closeFilePicker,
+    selectFile,
+    isImplemented: isCloudImplemented,
+  } = useCloudIntegrations();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -563,6 +633,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [decisionDate, setDecisionDate] = useState('');
   const [createdAt, setCreatedAt] = useState('');
   const [updatedAt, setUpdatedAt] = useState('');
+  const [contextDetails, setContextDetails] = useState('');
 
   // Alternatives
   const [alternatives, setAlternatives] = useState<Alternative[]>([]);
@@ -589,7 +660,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
   // Escalation & Reminders
-  const [reminders, setReminders] = useState<ReminderRule[]>([]);
+  const [reminders, setReminders] = useState<ReminderRuleWithDelivery[]>([]);
   const [escalation, setEscalation] = useState<EscalationRule | null>(null);
   const [thresholds, setThresholds] = useState<WarningThresholds>({
     warningDays: 3,
@@ -660,16 +731,216 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [activeNotionSection, setActiveNotionSection] = useState('context-problem');
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isContextExpanded, setIsContextExpanded] = useState(false);
+  const [aiFieldLoading, setAiFieldLoading] = useState<Record<string, boolean>>({});
+  const [aiMenuOpenField, setAiMenuOpenField] = useState<string | null>(null);
+  const [aiUndoByField, setAiUndoByField] = useState<Record<string, string>>({});
+  const [altProsDraft, setAltProsDraft] = useState<Record<string, string>>({});
+  const [altConsDraft, setAltConsDraft] = useState<Record<string, string>>({});
+  const [isGeneratingAltProsCons, setIsGeneratingAltProsCons] = useState<Record<string, boolean>>({});
+  const [consequenceScenarios, setConsequenceScenarios] = useState<ConsequenceScenarios | null>(null);
+  const [isGeneratingConsequenceScenarios, setIsGeneratingConsequenceScenarios] = useState(false);
+  const [commentDraft, setCommentDraft] = useState('');
+  const [commentDraftPriority, setCommentDraftPriority] = useState<CommentPriorityLevel>('normal');
+  const [commentDateFilter, setCommentDateFilter] = useState<CommentDateFilter>('all');
+  const [commentSortOrder, setCommentSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [attachmentDateFilter, setAttachmentDateFilter] = useState<CommentDateFilter>('all');
+  const [attachmentSortOrder, setAttachmentSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [linkedItemFilter, setLinkedItemFilter] = useState<LinkedItemFilter>('all');
+  const [linkedItemsSortOrder, setLinkedItemsSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [isInternalLinkModalOpen, setIsInternalLinkModalOpen] = useState(false);
+  const [isExternalLinkModalOpen, setIsExternalLinkModalOpen] = useState(false);
+  const [linkSearchQuery, setLinkSearchQuery] = useState('');
+  const [linkSearchResults, setLinkSearchResults] = useState<LinkedItem[]>([]);
+  const [isLinkSearching, setIsLinkSearching] = useState(false);
+  const [externalLinkTitle, setExternalLinkTitle] = useState('');
+  const [externalLinkUrl, setExternalLinkUrl] = useState('');
+  const [externalLinkComment, setExternalLinkComment] = useState('');
+  const [editingLinkedItemKey, setEditingLinkedItemKey] = useState<string | null>(null);
+  const [editingLinkedItemDraft, setEditingLinkedItemDraft] = useState<LinkedItem | null>(null);
+  const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
+  const [attachmentDiskFiles, setAttachmentDiskFiles] = useState<File[]>([]);
+  const [attachmentSource, setAttachmentSource] = useState<'device' | 'cloud'>('device');
+  const [selectedCloudProvider, setSelectedCloudProvider] = useState<CloudProviderId>('google-drive');
+  const [editingAttachmentId, setEditingAttachmentId] = useState<string | null>(null);
+  const [editingAttachmentDraft, setEditingAttachmentDraft] = useState<Attachment | null>(null);
+  const [resourceMenuKey, setResourceMenuKey] = useState<string | null>(null);
+  const attachmentsSectionRef = useRef<HTMLDivElement | null>(null);
+  const externalLinksSectionRef = useRef<HTMLDivElement | null>(null);
+  const internalLinksSectionRef = useRef<HTMLDivElement | null>(null);
+  const [isEnhancingCommentDraft, setIsEnhancingCommentDraft] = useState(false);
+  const [hoveredCommentPriority, setHoveredCommentPriority] = useState<CommentPriorityLevel | null>(null);
   const [clickupTab, setClickupTab] = useState<
     'overview' | 'resources' | 'risk' | 'options' | 'governance' | 'comments' | 'logs'
   >('overview');
   const [isLocalHydrated, setIsLocalHydrated] = useState(false);
+  const [lastPublishedSnapshot, setLastPublishedSnapshot] = useState('');
+  const [lastDraftSavedAt, setLastDraftSavedAt] = useState<string | null>(null);
+  const [editingStakeholderId, setEditingStakeholderId] = useState<string | null>(null);
+  const [stakeholderDraft, setStakeholderDraft] = useState<Stakeholder | null>(null);
+  const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
+  const [reminderDraft, setReminderDraft] = useState<ReminderRuleWithDelivery | null>(null);
+  const [editingEscalationId, setEditingEscalationId] = useState<string | null>(null);
+  const [escalationDraft, setEscalationDraft] = useState<EscalationRuleWithConfig | null>(null);
+  const [escalationRules, setEscalationRules] = useState<EscalationRuleWithConfig[]>([]);
+  const [isSuggestingStakeholders, setIsSuggestingStakeholders] = useState(false);
+  const [isSuggestingReminders, setIsSuggestingReminders] = useState(false);
+  const [isSuggestingEscalations, setIsSuggestingEscalations] = useState(false);
+
+  const governanceModalClass =
+    'relative w-full max-w-2xl rounded-3xl border border-slate-200/50 dark:border-navy-700/50 bg-white/95 dark:bg-navy-900/95 shadow-2xl p-6 space-y-5';
+  const governanceTableCardClass =
+    'bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3 h-[340px] flex flex-col';
+  const governanceModalHintClass =
+    'rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 px-3 py-2 text-xs text-slate-600 dark:text-slate-300';
+  const channelChipClass =
+    'px-2 py-1 rounded-md border text-[11px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
+
+  const integrationChannelCatalog: Array<{
+    key: IntegrationChannel;
+    label: string;
+    scope: 'notification' | 'work-management' | 'custom';
+  }> = [
+    { key: 'slack', label: 'Slack', scope: 'notification' },
+    { key: 'teams', label: 'Teams', scope: 'notification' },
+    { key: 'jira', label: 'Jira', scope: 'work-management' },
+    { key: 'webhook', label: 'Webhook', scope: 'custom' },
+  ];
+
+  const escalationModeOptions: Array<{ value: EscalationMode; label: string }> = [
+    { value: 'notify_only', label: isPolish ? 'Powiadomienie tylko' : 'Notify only' },
+    { value: 'manager_review', label: isPolish ? 'Przegląd managera' : 'Manager review' },
+    { value: 'executive_alert', label: isPolish ? 'Alert executive' : 'Executive alert' },
+  ];
+  const cloudProviderCatalog: Array<{ id: CloudProviderId; name: string; colorClass: string }> = [
+    { id: 'google-drive', name: 'Google Drive', colorClass: 'text-emerald-400' },
+    { id: 'onedrive', name: 'OneDrive', colorClass: 'text-blue-400' },
+    { id: 'dropbox', name: 'Dropbox', colorClass: 'text-sky-400' },
+  ];
+
+  const fallbackDeliveryFromReminder = (rule: ReminderRule): DeliveryConfig => ({
+    coreChannels: [
+      ...(rule.inAppNotification ? (['in_app'] as CoreDeliveryChannel[]) : []),
+      ...(rule.emailNotification ? (['email'] as CoreDeliveryChannel[]) : []),
+    ],
+    integrationChannels: [],
+    syncTargets: [],
+  });
+
+  const deliveryBadgeLabels = (delivery?: DeliveryConfig, fallback?: ReminderRule) => {
+    const source =
+      delivery ||
+      (fallback
+        ? fallbackDeliveryFromReminder(fallback)
+        : { coreChannels: [], integrationChannels: [], syncTargets: [] });
+    const labels: string[] = [];
+    if (source.coreChannels.includes('in_app')) labels.push('In-app');
+    if (source.coreChannels.includes('email')) labels.push('Email');
+    source.integrationChannels.forEach((channel) => {
+      const found = integrationChannelCatalog.find((c) => c.key === channel);
+      labels.push(found?.label || channel);
+    });
+    if (labels.length === 0) labels.push(isPolish ? 'Brak kanałów' : 'No channels');
+    return labels;
+  };
+
+  const ensureDeliveryConfig = (
+    source?: Partial<DeliveryConfig> | null,
+    fallback?: ReminderRule
+  ): DeliveryConfig => {
+    const backup = fallback ? fallbackDeliveryFromReminder(fallback) : undefined;
+    return {
+      coreChannels:
+        source?.coreChannels && source.coreChannels.length > 0
+          ? source.coreChannels.filter((c): c is CoreDeliveryChannel => c === 'in_app' || c === 'email')
+          : backup?.coreChannels || ['in_app'],
+      integrationChannels: (source?.integrationChannels || []).filter((c): c is IntegrationChannel =>
+        integrationChannelCatalog.some((entry) => entry.key === c)
+      ),
+      syncTargets: Array.isArray(source?.syncTargets)
+        ? source.syncTargets.map((item) => String(item).trim()).filter(Boolean)
+        : [],
+    };
+  };
+
+  const normalizeReminderRule = (rule: ReminderRuleWithDelivery): ReminderRuleWithDelivery => {
+    const delivery = ensureDeliveryConfig(rule.delivery, rule);
+    return {
+      ...rule,
+      inAppNotification: delivery.coreChannels.includes('in_app'),
+      emailNotification: delivery.coreChannels.includes('email'),
+      delivery,
+    };
+  };
+
+  const normalizeEscalationRule = (rule: Partial<EscalationRuleWithConfig>): EscalationRuleWithConfig => ({
+    id: String(rule.id || Math.random().toString(36).slice(2, 11)),
+    enabled: rule.enabled !== false,
+    escalateTo: String(rule.escalateTo || ''),
+    escalateToName: rule.escalateToName ? String(rule.escalateToName) : '',
+    afterDays: Math.max(1, Number(rule.afterDays ?? 3)),
+    warningDays: Math.max(0, Number(rule.warningDays ?? 3)),
+    criticalDays: Math.max(0, Number(rule.criticalDays ?? 1)),
+    escalationMode: (['notify_only', 'manager_review', 'executive_alert'] as EscalationMode[]).includes(
+      rule.escalationMode as EscalationMode
+    )
+      ? (rule.escalationMode as EscalationMode)
+      : 'notify_only',
+    message: String(rule.message || ''),
+    delivery: ensureDeliveryConfig(rule.delivery || null),
+  });
+
+  const toggleChannel = <T extends string>(list: T[], key: T, enabled: boolean): T[] => {
+    if (enabled) return list.includes(key) ? list : [...list, key];
+    return list.filter((entry) => entry !== key);
+  };
+
+  const stakeholderRoleLabel = (role: StakeholderRole) => {
+    if (role === 'responsible') return isPolish ? 'Odpowiedzialny' : 'Responsible';
+    if (role === 'accountable') return isPolish ? 'Rozliczany' : 'Accountable';
+    if (role === 'consulted') return isPolish ? 'Konsultowany' : 'Consulted';
+    return isPolish ? 'Informowany' : 'Informed';
+  };
+  const stakeholderChannelLabels = (settings?: StakeholderNotificationSettings) => {
+    if (!settings?.enabled) return [isPolish ? 'Wyłączone' : 'Disabled'];
+    const labels: string[] = [];
+    if (settings.inAppEnabled) labels.push('In-app');
+    if (settings.emailEnabled) labels.push('Email');
+    const integrations = settings.integrationChannels || [];
+    if (integrations.includes('slack')) labels.push('Slack');
+    if (integrations.includes('teams')) labels.push('Teams');
+    if (integrations.includes('jira')) labels.push('Jira');
+    if (integrations.includes('webhook')) labels.push('Webhook');
+    return labels.length > 0 ? labels : [isPolish ? 'Brak kanałów' : 'No channels'];
+  };
+
+  useEffect(() => {
+    if (escalationRules.length === 0) {
+      setEscalation(null);
+      return;
+    }
+    const first = escalationRules[0];
+    setEscalation({
+      id: first.id,
+      enabled: first.enabled,
+      escalateTo: first.escalateTo,
+      escalateToName: first.escalateToName,
+      afterDays: first.afterDays,
+      message: first.message,
+    });
+    setThresholds((prev) => ({
+      ...prev,
+      warningDays: first.warningDays,
+      criticalDays: first.criticalDays,
+    }));
+  }, [escalationRules]);
 
   const notionSections = useMemo(
     () => [
       {
         id: 'context-problem',
-        label: isPolish ? 'Kontekst i problem' : 'Context & Problem',
+        label: isPolish ? 'Zakres decyzji' : 'Decision Scope',
         icon: FileText,
       },
       {
@@ -683,8 +954,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         icon: AlertTriangle,
       },
       {
+        id: 'consequences',
+        label: isPolish ? 'Konsekwencje' : 'Consequences',
+        icon: Clock,
+      },
+      {
         id: 'governance-escalation',
-        label: isPolish ? 'RACI i reguły eskalacji' : 'RACI & Escalation Rules',
+        label: isPolish ? 'RACI i eskalacja' : 'RACI & Escalation',
         icon: Users,
       },
       {
@@ -706,9 +982,115 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     [isPolish]
   );
 
+  const publishPayload = useMemo(
+    () => ({
+      title,
+      description,
+      status: status.toUpperCase(),
+      priority: priority.toUpperCase(),
+      category,
+      dueDate: dueDate || null,
+      rationale,
+      deciderId: deciderId || null,
+      alternatives,
+      selectedAlternativeId: selectedAlternativeId || null,
+      impact,
+    }),
+    [
+      title,
+      description,
+      status,
+      priority,
+      category,
+      dueDate,
+      rationale,
+      deciderId,
+      alternatives,
+      selectedAlternativeId,
+      impact,
+    ]
+  );
+
+  const draftState = useMemo(
+    () => ({
+      ...publishPayload,
+      requesterName,
+      stakeholders,
+      linkedItems,
+      comments,
+      attachments,
+      risks,
+      reminders,
+      escalation,
+      escalationRules,
+      thresholds,
+      contextDetails,
+      tags,
+      consequenceScenarios,
+    }),
+    [
+      publishPayload,
+      requesterName,
+      stakeholders,
+      linkedItems,
+      comments,
+      attachments,
+      risks,
+      reminders,
+      escalation,
+      escalationRules,
+      thresholds,
+      contextDetails,
+      tags,
+      consequenceScenarios,
+    ]
+  );
+
+  const draftSnapshot = useMemo(() => JSON.stringify(draftState), [draftState]);
+  const hasPublishBaseline = lastPublishedSnapshot.length > 0;
+  const isDirty = hasPublishBaseline && draftSnapshot !== lastPublishedSnapshot;
+  const draftSavedLabel = useMemo(() => {
+    if (!lastDraftSavedAt) return null;
+    const time = new Date(lastDraftSavedAt).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    return isPolish ? `Szkic autozapisany ${time}` : `Draft autosaved ${time}`;
+  }, [lastDraftSavedAt, isPolish]);
+
+  const persistDraft = (source: 'autosave' | 'chat' | 'publish') => {
+    const draftKey = `consultinity-decision-draft:${decisionId || 'new'}`;
+    const savedAt = new Date().toISOString();
+    try {
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({
+          schemaVersion: 1,
+          source,
+          savedAt,
+          decisionId: decisionId || null,
+          draft: draftState,
+        })
+      );
+      setLastDraftSavedAt(savedAt);
+    } catch (e) {
+      console.warn(`[DecisionDetailView] Failed to persist local draft (${source})`, e);
+    }
+  };
+
   useEffect(() => {
     loadUsers();
   }, []);
+
+  useEffect(() => {
+    setLastPublishedSnapshot('');
+    setLastDraftSavedAt(null);
+  }, [decisionId]);
+
+  useEffect(() => {
+    if (!isLocalHydrated || hasPublishBaseline) return;
+    setLastPublishedSnapshot(draftSnapshot);
+  }, [isLocalHydrated, hasPublishBaseline, draftSnapshot]);
 
   useEffect(() => {
     if (presentationMode !== 'n') return;
@@ -735,6 +1117,17 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, [notionSections, presentationMode]);
+
+  useEffect(() => {
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest('[data-ai-menu-root="true"]')) {
+        setAiMenuOpenField(null);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, []);
 
   const loadUsers = async () => {
     try {
@@ -790,6 +1183,172 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     setActivityLog((prev) => [entry, ...prev]);
   };
 
+  const activityLogSorted = useMemo(
+    () =>
+      [...activityLog].sort(
+        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      ),
+    [activityLog]
+  );
+
+  const activityStats = useMemo(() => {
+    const edited = activityLog.filter((entry) =>
+      ['edit', 'assignment', 'status_change', 'priority', 'deadline'].includes(entry.type)
+    ).length;
+    const escalations = activityLog.filter((entry) =>
+      ['escalated', 'deferred'].includes(entry.type)
+    ).length;
+    const collaboration = activityLog.filter((entry) => entry.type === 'comment').length;
+    return { total: activityLog.length, edited, escalations, collaboration };
+  }, [activityLog]);
+
+  const activityTypeMeta = (type: ActivityLogEntry['type']) => {
+    if (type === 'approved')
+      return {
+        icon: <Check size={12} />,
+        label: isPolish ? 'Zatwierdzenie' : 'Approval',
+        style: 'text-emerald-500 bg-emerald-500/10 border-emerald-400/30',
+      };
+    if (type === 'rejected')
+      return {
+        icon: <X size={12} />,
+        label: isPolish ? 'Odrzucenie' : 'Rejection',
+        style: 'text-red-500 bg-red-500/10 border-red-400/30',
+      };
+    if (type === 'escalated')
+      return {
+        icon: <ArrowUp size={12} />,
+        label: isPolish ? 'Eskalacja' : 'Escalation',
+        style: 'text-amber-500 bg-amber-500/10 border-amber-400/30',
+      };
+    if (type === 'deferred')
+      return {
+        icon: <Clock size={12} />,
+        label: isPolish ? 'Odroczenie' : 'Deferral',
+        style: 'text-slate-500 bg-slate-500/10 border-slate-400/30',
+      };
+    if (type === 'assignment')
+      return {
+        icon: <UserCheck size={12} />,
+        label: isPolish ? 'Przypisanie' : 'Assignment',
+        style: 'text-sky-500 bg-sky-500/10 border-sky-400/30',
+      };
+    if (type === 'comment')
+      return {
+        icon: <MessageSquare size={12} />,
+        label: isPolish ? 'Komentarz' : 'Comment',
+        style: 'text-indigo-500 bg-indigo-500/10 border-indigo-400/30',
+      };
+    if (type === 'deadline')
+      return {
+        icon: <Calendar size={12} />,
+        label: isPolish ? 'Termin' : 'Deadline',
+        style: 'text-rose-500 bg-rose-500/10 border-rose-400/30',
+      };
+    if (type === 'priority' || type === 'status_change')
+      return {
+        icon: <Flag size={12} />,
+        label: isPolish ? 'Zmiana statusu' : 'Status change',
+        style: 'text-violet-500 bg-violet-500/10 border-violet-400/30',
+      };
+    if (type === 'edit')
+      return {
+        icon: <Edit3 size={12} />,
+        label: isPolish ? 'Edycja' : 'Edit',
+        style: 'text-cyan-500 bg-cyan-500/10 border-cyan-400/30',
+      };
+    return {
+      icon: <Plus size={12} />,
+      label: isPolish ? 'Utworzenie' : 'Created',
+      style: 'text-slate-500 bg-slate-500/10 border-slate-400/30',
+    };
+  };
+
+  const renderActivityLogPanel = () => (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+        <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            {isPolish ? 'Wpisy' : 'Entries'}
+          </p>
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {activityStats.total}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            {isPolish ? 'Zmiany' : 'Changes'}
+          </p>
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {activityStats.edited}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            {isPolish ? 'Eskalacje' : 'Escalations'}
+          </p>
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {activityStats.escalations}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            {isPolish ? 'Współpraca' : 'Collaboration'}
+          </p>
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {activityStats.collaboration}
+          </p>
+        </div>
+      </div>
+
+      {activityLogSorted.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300/60 dark:border-navy-700/70 bg-white/40 dark:bg-navy-900/40 p-6 text-center text-xs text-slate-400 dark:text-slate-500">
+          {isPolish ? 'Brak wpisów w logu.' : 'No activity entries yet.'}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
+          <div className="space-y-1">
+            {activityLogSorted.map((entry) => {
+              const meta = activityTypeMeta(entry.type);
+              return (
+                <div
+                  key={entry.id}
+                  className="grid grid-cols-[auto_1fr_auto] gap-3 items-start py-2.5 px-2 rounded-xl hover:bg-slate-50/70 dark:hover:bg-navy-800/40 transition-colors"
+                >
+                  <span
+                    className={`inline-flex items-center justify-center w-6 h-6 rounded-lg border ${meta.style}`}
+                  >
+                    {meta.icon}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm text-slate-700 dark:text-slate-200">{entry.description}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
+                      <span>{new Date(entry.timestamp).toLocaleString()}</span>
+                      {entry.userName && <span>{`· ${entry.userName}`}</span>}
+                      <span className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60">
+                        {meta.label}
+                      </span>
+                    </div>
+                    {(entry.oldValue || entry.newValue) && (
+                      <div className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                        {entry.oldValue ? `${isPolish ? 'Było' : 'From'}: ${entry.oldValue}` : ''}
+                        {entry.oldValue && entry.newValue ? '  ->  ' : ''}
+                        {entry.newValue ? `${isPolish ? 'Jest' : 'To'}: ${entry.newValue}` : ''}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[10px] font-mono uppercase tracking-wide text-slate-300 dark:text-slate-600">
+                    {entry.type}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   useEffect(() => {
     if (decisionId) {
       loadDecision(decisionId);
@@ -810,6 +1369,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     setRequesterName('');
     setDeciderId('');
     setProjectName('');
+    setContextDetails('');
     setAlternatives([]);
     setSelectedAlternativeId('');
     setImpact({
@@ -855,12 +1415,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setRequesterName(decision.requestedByName || '');
       setDeciderId(decision.deciderId || '');
       setProjectName(decision.projectName || '');
+      setContextDetails(decision.contextDetails || decision.context || '');
       setDecisionDate(decision.decisionDate || '');
       setCreatedAt(decision.createdAt || '');
       setUpdatedAt(decision.updatedAt || '');
       // Use API data or fallback to demo data for rich UI testing
       const apiAlternatives = decision.alternatives || [];
-      setAlternatives(apiAlternatives.length > 0 ? apiAlternatives : DEMO_ALTERNATIVES);
+      setAlternatives(withProsConsFallback(apiAlternatives.length > 0 ? apiAlternatives : DEMO_ALTERNATIVES));
       setSelectedAlternativeId(decision.selectedAlternativeId || '');
       if (decision.impact) {
         setImpact(decision.impact);
@@ -878,8 +1439,19 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
       // Reminders & escalation — demo fallback
       const apiReminders = decision.reminders || [];
-      setReminders(apiReminders.length > 0 ? apiReminders : DEMO_REMINDERS);
-      setEscalation(decision.escalation || DEMO_ESCALATION);
+      const loadedReminders = (apiReminders.length > 0 ? apiReminders : DEMO_REMINDERS).map(
+        (rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule)
+      );
+      setReminders(loadedReminders);
+      const loadedEscalation = decision.escalation || DEMO_ESCALATION;
+      setEscalation(loadedEscalation);
+      setEscalationRules([
+        normalizeEscalationRule({
+          ...loadedEscalation,
+          warningDays: thresholds.warningDays,
+          criticalDays: thresholds.criticalDays,
+        }),
+      ]);
 
       // Load stakeholders
       try {
@@ -948,14 +1520,21 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
             setLinkedItems(local.linkedItems);
           if (Array.isArray(local.risks) && local.risks.length > 0) setRisks(local.risks);
           if (Array.isArray(local.alternatives) && local.alternatives.length > 0)
-            setAlternatives(local.alternatives);
+            setAlternatives(withProsConsFallback(local.alternatives));
           if (Array.isArray(local.reminders) && local.reminders.length > 0)
-            setReminders(local.reminders);
+            setReminders(local.reminders.map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule)));
           if (local.escalation) setEscalation(local.escalation);
+          if (Array.isArray(local.escalationRules) && local.escalationRules.length > 0) {
+            setEscalationRules(
+              local.escalationRules.map((rule: EscalationRuleWithConfig) => normalizeEscalationRule(rule))
+            );
+          }
           if (typeof local.rationale === 'string' && local.rationale.trim())
             setRationale(local.rationale);
           if (typeof local.description === 'string' && local.description.trim())
             setDescription(local.description);
+          if (typeof local.contextDetails === 'string') setContextDetails(local.contextDetails);
+          if (local.consequenceScenarios) setConsequenceScenarios(local.consequenceScenarios);
         }
       } catch {
         // ignore broken local cache
@@ -985,8 +1564,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
           alternatives,
           reminders,
           escalation,
+          escalationRules,
           rationale,
           description,
+          contextDetails,
+          consequenceScenarios,
         })
       );
     } catch {
@@ -1002,31 +1584,34 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     alternatives,
     reminders,
     escalation,
+    escalationRules,
     rationale,
     description,
+    contextDetails,
+    consequenceScenarios,
   ]);
+
+  // Lightweight autosave to local draft while editing; explicit Save remains publish.
+  useEffect(() => {
+    if (!isLocalHydrated || !hasPublishBaseline || !isDirty) return;
+    const timer = setTimeout(() => {
+      persistDraft('autosave');
+    }, 900);
+    return () => clearTimeout(timer);
+  }, [isLocalHydrated, hasPublishBaseline, isDirty, draftSnapshot]);
 
   const handleSave = async () => {
     if (!title.trim()) {
       toast.error(isPolish ? 'Tytuł jest wymagany' : 'Title is required');
       return;
     }
+    if (!isDirty) {
+      return;
+    }
 
     try {
       setSaving(true);
-      const payload = {
-        title,
-        description,
-        status: status.toUpperCase(),
-        priority: priority.toUpperCase(),
-        category,
-        dueDate: dueDate || null,
-        rationale,
-        deciderId: deciderId || null,
-        alternatives,
-        selectedAlternativeId: selectedAlternativeId || null,
-        impact,
-      };
+      const payload = publishPayload;
 
       if (decisionId) {
         await Api.updateDecision(decisionId, payload);
@@ -1035,6 +1620,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         await Api.createDecision(payload);
         toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
       }
+      setLastPublishedSnapshot(draftSnapshot);
+      persistDraft('publish');
       onSaved?.({ ...payload, id: decisionId });
     } catch (error) {
       console.error('Failed to save decision', error);
@@ -1046,41 +1633,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
   const handleOpenChat = async () => {
     // Persist local draft so user never loses input
-    const draftKey = `consultinity-decision-draft:${decisionId || 'new'}`;
-    try {
-      localStorage.setItem(
-        draftKey,
-        JSON.stringify({
-          schemaVersion: 1,
-          source: 'chat',
-          savedAt: new Date().toISOString(),
-          decisionId: decisionId || null,
-          draft: {
-            title,
-            description,
-            status,
-            priority,
-            category,
-            dueDate: dueDate || null,
-            rationale,
-            deciderId: deciderId || null,
-            alternatives,
-            selectedAlternativeId,
-            impact,
-            comments,
-            attachments,
-            linkedItems,
-            stakeholders,
-            reminders,
-            escalation,
-            thresholds,
-            tags,
-          },
-        })
-      );
-    } catch (e) {
-      console.warn('[DecisionDetailView] Failed to persist local draft (chat)', e);
-    }
+    persistDraft('chat');
 
     // Ensure chat panel is visible
     if (isChatCollapsed) {
@@ -1209,7 +1762,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
   // Alternative handlers
   const addAlternative = () => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') {
+    if (isDecisionStageLocked) {
       toast.error(
         isPolish
           ? 'W etapie podejmowania decyzji treść jest zablokowana'
@@ -1230,12 +1783,161 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   };
 
   const updateAlternative = (id: string, updates: Partial<Alternative>) => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') return;
+    if (isDecisionStageLocked) return;
     setAlternatives(alternatives.map((a) => (a.id === id ? { ...a, ...updates } : a)));
   };
 
+  const updateAlternativePro = (id: string, index: number, value: string) => {
+    if (isDecisionStageLocked) return;
+    setAlternatives((prev) =>
+      prev.map((a) =>
+        a.id === id
+          ? {
+              ...a,
+              pros: (a.pros || []).map((p, i) => (i === index ? value : p)),
+            }
+          : a
+      )
+    );
+  };
+
+  const updateAlternativeCon = (id: string, index: number, value: string) => {
+    if (isDecisionStageLocked) return;
+    setAlternatives((prev) =>
+      prev.map((a) =>
+        a.id === id
+          ? {
+              ...a,
+              cons: (a.cons || []).map((c, i) => (i === index ? value : c)),
+            }
+          : a
+      )
+    );
+  };
+
+  const addAlternativePro = (id: string, value: string) => {
+    if (isDecisionStageLocked) return;
+    const clean = value.trim();
+    if (!clean) return;
+    setAlternatives((prev) =>
+      prev.map((a) =>
+        a.id === id
+          ? {
+              ...a,
+              pros: [...(a.pros || []), clean],
+            }
+          : a
+      )
+    );
+    setAltProsDraft((prev) => ({ ...prev, [id]: '' }));
+  };
+
+  const addAlternativeCon = (id: string, value: string) => {
+    if (isDecisionStageLocked) return;
+    const clean = value.trim();
+    if (!clean) return;
+    setAlternatives((prev) =>
+      prev.map((a) =>
+        a.id === id
+          ? {
+              ...a,
+              cons: [...(a.cons || []), clean],
+            }
+          : a
+      )
+    );
+    setAltConsDraft((prev) => ({ ...prev, [id]: '' }));
+  };
+
+  const removeAlternativePro = (id: string, index: number) => {
+    if (isDecisionStageLocked) return;
+    setAlternatives((prev) =>
+      prev.map((a) =>
+        a.id === id
+          ? {
+              ...a,
+              pros: (a.pros || []).filter((_, i) => i !== index),
+            }
+          : a
+      )
+    );
+  };
+
+  const removeAlternativeCon = (id: string, index: number) => {
+    if (isDecisionStageLocked) return;
+    setAlternatives((prev) =>
+      prev.map((a) =>
+        a.id === id
+          ? {
+              ...a,
+              cons: (a.cons || []).filter((_, i) => i !== index),
+            }
+          : a
+      )
+    );
+  };
+
+  const generateProsConsForAlternative = async (alt: Alternative) => {
+    if (isDecisionStageLocked) return;
+    setIsGeneratingAltProsCons((prev) => ({ ...prev, [alt.id]: true }));
+    try {
+      const prompt = isPolish
+        ? `Dla opcji decyzyjnej wygeneruj 3 konkretne "za" i 3 konkretne "przeciw". Zwróć wyłącznie JSON: {"pros":["..."],"cons":["..."]}.\n\nTytuł opcji: ${alt.title || '-'}\nOpis: ${alt.description || '-'}\nKontekst decyzji: ${title || '-'}`
+        : `For this decision option, generate 3 concrete pros and 3 concrete cons. Return JSON only: {"pros":["..."],"cons":["..."]}.\n\nOption title: ${alt.title || '-'}\nDescription: ${alt.description || '-'}\nDecision context: ${title || '-'}`;
+
+      let nextPros: string[] = [];
+      let nextCons: string[] = [];
+
+      try {
+        const aiRes = await Api.post('/ai/chat', {
+          message: prompt,
+          history: [],
+          systemInstruction: isPolish
+            ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
+            : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+          roleName: 'Decision Option Analyzer',
+        });
+        const rawText = String(aiRes?.text || aiRes?.content || '').trim();
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(rawText);
+        nextPros = Array.isArray(parsed?.pros) ? parsed.pros.map((p: any) => String(p).trim()) : [];
+        nextCons = Array.isArray(parsed?.cons) ? parsed.cons.map((c: any) => String(c).trim()) : [];
+      } catch {
+        nextPros = isPolish
+          ? ['Krótszy czas wdrożenia', 'Lepsza skalowalność', 'Wyższa przewidywalność efektu']
+          : ['Shorter implementation time', 'Better scalability', 'Higher outcome predictability'];
+        nextCons = isPolish
+          ? ['Wyższy koszt początkowy', 'Wymaga kompetencji zespołu', 'Ryzyko integracyjne']
+          : ['Higher initial cost', 'Requires team capability', 'Integration risk'];
+      }
+
+      setAlternatives((prev) =>
+        prev.map((a) =>
+          a.id === alt.id
+            ? {
+                ...a,
+                pros: Array.from(new Set([...(a.pros || []), ...nextPros.filter(Boolean)])).slice(
+                  0,
+                  8
+                ),
+                cons: Array.from(new Set([...(a.cons || []), ...nextCons.filter(Boolean)])).slice(
+                  0,
+                  8
+                ),
+              }
+            : a
+        )
+      );
+      toast.success(
+        isPolish ? 'AI dodało propozycje za i przeciw' : 'AI added suggested pros and cons'
+      );
+    } finally {
+      setIsGeneratingAltProsCons((prev) => ({ ...prev, [alt.id]: false }));
+    }
+  };
+
   const removeAlternative = (id: string) => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') return;
+    if (isDecisionStageLocked) return;
     setAlternatives(alternatives.filter((a) => a.id !== id));
     if (selectedAlternativeId === id) {
       setSelectedAlternativeId('');
@@ -1243,7 +1945,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   };
 
   const setRecommendedAlternative = (id: string) => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') return;
+    if (isDecisionStageLocked) return;
     setAlternatives(
       alternatives.map((a) => ({
         ...a,
@@ -1254,7 +1956,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
   // Risk handlers
   const addRisk = () => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') {
+    if (isDecisionStageLocked) {
       toast.error(
         isPolish
           ? 'W etapie podejmowania decyzji treść jest zablokowana'
@@ -1275,18 +1977,18 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   };
 
   const updateRisk = (id: string, updates: Partial<RiskItem>) => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') return;
+    if (isDecisionStageLocked) return;
     setRisks(risks.map((r) => (r.id === id ? { ...r, ...updates } : r)));
   };
 
   const removeRisk = (id: string) => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') return;
+    if (isDecisionStageLocked) return;
     setRisks(risks.filter((r) => r.id !== id));
   };
 
   // AI Generation handlers
   const generateAlternativesAI = async () => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') {
+    if (isDecisionStageLocked) {
       toast.error(
         isPolish
           ? 'AI generowanie jest dostępne tylko przed etapem decyzji'
@@ -1349,7 +2051,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         },
       ];
 
-      setAlternatives([...alternatives, ...generatedAlternatives]);
+      setAlternatives(withProsConsFallback([...alternatives, ...generatedAlternatives]));
       toast.success(isPolish ? 'Wygenerowano alternatywy' : 'Alternatives generated');
     } catch (error) {
       toast.error(isPolish ? 'Błąd generowania' : 'Generation failed');
@@ -1359,7 +2061,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   };
 
   const generateDescriptionAI = async () => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') {
+    if (isDecisionStageLocked) {
       toast.error(
         isPolish
           ? 'AI generowanie jest dostępne tylko przed etapem decyzji'
@@ -1385,7 +2087,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   };
 
   const generateAIComment = async () => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') {
+    if (isDecisionStageLocked) {
       toast.error(
         isPolish
           ? 'AI generowanie jest dostępne tylko przed etapem decyzji'
@@ -1422,8 +2124,621 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     }
   };
 
+  const suggestStakeholdersAI = async () => {
+    if (isDecisionStageLocked || users.length === 0) return;
+    setIsSuggestingStakeholders(true);
+    try {
+      let projectMemberIds: string[] = [];
+      if (currentProjectId) {
+        try {
+          const project = await Api.get(`/projects/${currentProjectId}`);
+          const pools = [
+            project?.members,
+            project?.teamMembers,
+            project?.users,
+            project?.participants,
+          ].filter(Array.isArray) as any[][];
+          projectMemberIds = pools
+            .flatMap((arr) =>
+              arr
+                .map((m) => String(m?.userId || m?.id || m?.memberId || '').trim())
+                .filter(Boolean)
+            )
+            .filter((id, idx, arr) => arr.indexOf(id) === idx);
+        } catch {
+          // Best-effort only; fallback to org users list.
+        }
+      }
+
+      const candidateUsers =
+        projectMemberIds.length > 0
+          ? users.filter((u) => projectMemberIds.includes(u.id))
+          : users;
+      const roster = candidateUsers
+        .slice(0, 120)
+        .map((u) => `${u.id} | ${u.firstName} ${u.lastName} | ${u.email || '-'}`)
+        .join('\n');
+
+      const prompt = isPolish
+        ? `Na podstawie danych decyzji zaproponuj skład RACI. Zwróć WYŁĄCZNIE JSON:
+{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}
+Wymagania:
+- Dokładnie 1 osoba accountable
+- 1-2 osoby responsible
+- 1-3 osoby consulted/informed
+- Użyj TYLKO userId z listy użytkowników
+
+Decyzja:
+- Tytuł: ${title || '-'}
+- Opis: ${description || '-'}
+- Kategoria: ${category}
+- Priorytet: ${priority}
+- Termin: ${dueDate || '-'}
+- Requester: ${requesterName || '-'}
+- Aktualny deciderId: ${deciderId || '-'}
+
+Użytkownicy (preferuj członków projektu):
+${roster}`
+        : `Based on decision data, propose a RACI team. Return JSON ONLY:
+{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}
+Requirements:
+- Exactly 1 accountable
+- 1-2 responsible
+- 1-3 consulted/informed
+- Use ONLY userId from the provided user list
+
+Decision:
+- Title: ${title || '-'}
+- Description: ${description || '-'}
+- Category: ${category}
+- Priority: ${priority}
+- Due date: ${dueDate || '-'}
+- Requester: ${requesterName || '-'}
+- Current deciderId: ${deciderId || '-'}
+
+Users (prefer project members):
+${roster}`;
+
+      const aiRes = await Api.post('/ai/chat', {
+        message: prompt,
+        history: [],
+        systemInstruction: isPolish
+          ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
+          : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+        roleName: 'RACI Team Advisor',
+      });
+
+      const raw = String(aiRes?.text || aiRes?.content || '').trim();
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+      const aiList = Array.isArray(parsed?.stakeholders) ? parsed.stakeholders : [];
+
+      const next: Stakeholder[] = aiList
+        .map((item: any, idx: number) => {
+          const userId = String(item?.userId || '').trim();
+          const user = users.find((u) => u.id === userId);
+          if (!user) return null;
+          const role = String(item?.role || '').trim() as StakeholderRole;
+          if (!['accountable', 'responsible', 'consulted', 'informed'].includes(role)) return null;
+          return {
+            id: `ai-stk-${Date.now()}-${idx}`,
+            decisionId: decisionId || 'new',
+            userId: user.id,
+            userName: `${user.firstName} ${user.lastName}`,
+            userEmail: user.email,
+            role,
+            notificationSettings: {
+              enabled: true,
+              triggers: ['on_status_change'],
+              emailEnabled: role === 'accountable',
+              inAppEnabled: true,
+              integrationChannels: [],
+              syncTargets: [],
+            },
+          } as Stakeholder;
+        })
+        .filter(Boolean) as Stakeholder[];
+
+      if (next.length === 0) {
+        throw new Error('No valid AI stakeholder suggestions');
+      }
+
+      // Replace list (not append): user asked for proposal that can be adjusted manually.
+      setStakeholders(next);
+      toast.success(
+        isPolish
+          ? `AI zaproponowało i zastosowało skład RACI (${next.length} osób).`
+          : `AI proposed and applied a RACI team (${next.length} people).`
+      );
+    } catch (e) {
+      console.error('Failed to suggest stakeholders via AI', e);
+      toast.error(
+        isPolish
+          ? 'Nie udało się wygenerować składu RACI przez AI'
+          : 'Failed to generate AI RACI suggestions'
+      );
+    } finally {
+      setIsSuggestingStakeholders(false);
+    }
+  };
+
+  const suggestRemindersAI = async () => {
+    if (isDecisionStageLocked) return;
+    setIsSuggestingReminders(true);
+    try {
+      const prompt = isPolish
+        ? `Zaproponuj przypomnienia dla decyzji. Zwróć WYŁĄCZNIE JSON:
+{"reminders":[{"type":"before_due|after_due","days":2,"recipients":"requester|decider|both|stakeholders","inAppNotification":true,"emailNotification":false,"message":"...","enabled":true}]}
+Uwzględnij priorytet ${priority}, termin ${dueDate || '-'} i status ${status}.`
+        : `Propose decision reminders. Return JSON ONLY:
+{"reminders":[{"type":"before_due|after_due","days":2,"recipients":"requester|decider|both|stakeholders","inAppNotification":true,"emailNotification":false,"message":"...","enabled":true}]}
+Consider priority ${priority}, due date ${dueDate || '-'} and status ${status}.`;
+      const aiRes = await Api.post('/ai/chat', {
+        message: prompt,
+        history: [],
+        systemInstruction: isPolish
+          ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
+          : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+        roleName: 'Reminder Rules Advisor',
+      });
+      const raw = String(aiRes?.text || aiRes?.content || '').trim();
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+      const next = (Array.isArray(parsed?.reminders) ? parsed.reminders : [])
+        .map((r: any, idx: number) => ({
+          id: `ai-rem-${Date.now()}-${idx}`,
+          type: r?.type === 'after_due' ? 'after_due' : 'before_due',
+          days: Math.max(0, Number(r?.days ?? 0)),
+          recipients: ['requester', 'decider', 'both', 'stakeholders'].includes(r?.recipients)
+            ? r.recipients
+            : 'both',
+          inAppNotification: r?.inAppNotification !== false,
+          emailNotification: !!r?.emailNotification,
+          delivery: ensureDeliveryConfig({
+            coreChannels: [
+              ...(r?.inAppNotification !== false ? (['in_app'] as CoreDeliveryChannel[]) : []),
+              ...(r?.emailNotification ? (['email'] as CoreDeliveryChannel[]) : []),
+            ],
+            integrationChannels: Array.isArray(r?.integrationChannels)
+              ? r.integrationChannels
+              : Array.isArray(r?.delivery?.integrationChannels)
+                ? r.delivery.integrationChannels
+                : [],
+            syncTargets: Array.isArray(r?.syncTargets)
+              ? r.syncTargets
+              : Array.isArray(r?.delivery?.syncTargets)
+                ? r.delivery.syncTargets
+                : [],
+          }),
+          message: String(r?.message || ''),
+          enabled: r?.enabled !== false,
+        }))
+        .slice(0, 6);
+      if (next.length === 0) throw new Error('No reminders returned');
+      setReminders(next.map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule)));
+      toast.success(
+        isPolish
+          ? `AI zaproponowało i zastosowało reminders (${next.length}).`
+          : `AI suggested and applied reminders (${next.length}).`
+      );
+    } catch (e) {
+      console.error('Failed to suggest reminders via AI', e);
+      const fallback: ReminderRuleWithDelivery[] = [
+        {
+          id: `rem-fb-${Date.now()}-1`,
+          type: 'before_due',
+          days: 3,
+          recipients: 'both',
+          inAppNotification: true,
+          emailNotification: true,
+          delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
+          message: isPolish ? 'Termin decyzji za 3 dni.' : 'Decision due in 3 days.',
+          enabled: true,
+        },
+        {
+          id: `rem-fb-${Date.now()}-2`,
+          type: 'after_due',
+          days: 1,
+          recipients: 'stakeholders',
+          inAppNotification: true,
+          emailNotification: false,
+          delivery: ensureDeliveryConfig({ coreChannels: ['in_app'] }),
+          message: isPolish ? 'Decyzja po terminie - wymaga reakcji.' : 'Decision overdue - action needed.',
+          enabled: true,
+        },
+      ];
+      setReminders(fallback.map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule)));
+      toast.success(
+        isPolish ? 'Zastosowano domyślne reminders.' : 'Applied fallback reminder suggestions.'
+      );
+    } finally {
+      setIsSuggestingReminders(false);
+    }
+  };
+
+  const suggestEscalationsAI = async () => {
+    if (isDecisionStageLocked) return;
+    setIsSuggestingEscalations(true);
+    try {
+      const userList = users
+        .slice(0, 80)
+        .map((u) => `${u.id}|${u.firstName} ${u.lastName}`)
+        .join('\n');
+      const prompt = isPolish
+        ? `Zaproponuj 1-3 reguły eskalacji dla decyzji. Zwróć WYŁĄCZNIE JSON:
+{"rules":[{"afterDays":5,"warningDays":3,"criticalDays":1,"escalateToUserId":"...","message":"...","enabled":true}]}
+Użyj userId wyłącznie z listy użytkowników:
+${userList}`
+        : `Propose 1-3 escalation rules for this decision. Return JSON ONLY:
+{"rules":[{"afterDays":5,"warningDays":3,"criticalDays":1,"escalateToUserId":"...","message":"...","enabled":true}]}
+Use userId only from users list:
+${userList}`;
+      const aiRes = await Api.post('/ai/chat', {
+        message: prompt,
+        history: [],
+        systemInstruction: isPolish
+          ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
+          : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+        roleName: 'Escalation Rules Advisor',
+      });
+      const raw = String(aiRes?.text || aiRes?.content || '').trim();
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+      const next = (Array.isArray(parsed?.rules) ? parsed.rules : [])
+        .map((r: any, idx: number) => {
+          const selected = users.find((u) => u.id === r?.escalateToUserId) || users[0];
+          if (!selected) return null;
+          return normalizeEscalationRule({
+            id: `ai-esc-${Date.now()}-${idx}`,
+            enabled: r?.enabled !== false,
+            escalateTo: selected.id,
+            escalateToName: `${selected.firstName} ${selected.lastName}`,
+            afterDays: Math.max(1, Number(r?.afterDays ?? 3)),
+            warningDays: Math.max(0, Number(r?.warningDays ?? 3)),
+            criticalDays: Math.max(0, Number(r?.criticalDays ?? 1)),
+            escalationMode: (['notify_only', 'manager_review', 'executive_alert'] as EscalationMode[]).includes(
+              r?.escalationMode
+            )
+              ? r.escalationMode
+              : 'notify_only',
+            delivery: ensureDeliveryConfig({
+              coreChannels: [
+                ...(r?.inAppNotification !== false ? (['in_app'] as CoreDeliveryChannel[]) : []),
+                ...(r?.emailNotification ? (['email'] as CoreDeliveryChannel[]) : []),
+              ],
+              integrationChannels: Array.isArray(r?.integrationChannels)
+                ? r.integrationChannels
+                : Array.isArray(r?.delivery?.integrationChannels)
+                  ? r.delivery.integrationChannels
+                  : [],
+              syncTargets: Array.isArray(r?.syncTargets)
+                ? r.syncTargets
+                : Array.isArray(r?.delivery?.syncTargets)
+                  ? r.delivery.syncTargets
+                  : [],
+            }),
+            message: String(r?.message || ''),
+          });
+        })
+        .filter(Boolean)
+        .slice(0, 5) as EscalationRuleWithConfig[];
+      if (next.length === 0) throw new Error('No escalation rules returned');
+      setEscalationRules(next);
+      toast.success(
+        isPolish
+          ? `AI zaproponowało i zastosowało eskalacje (${next.length}).`
+          : `AI suggested and applied escalation rules (${next.length}).`
+      );
+    } catch (e) {
+      console.error('Failed to suggest escalations via AI', e);
+      const selected = users[0];
+      if (selected) {
+        setEscalationRules([
+          normalizeEscalationRule({
+            id: `esc-fb-${Date.now()}-1`,
+            enabled: true,
+            escalateTo: selected.id,
+            escalateToName: `${selected.firstName} ${selected.lastName}`,
+            afterDays: 5,
+            warningDays: 3,
+            criticalDays: 1,
+            escalationMode: 'manager_review',
+            delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
+            message: isPolish
+              ? 'Decyzja eskalowana z powodu braku aktywności.'
+              : 'Decision escalated due to inactivity.',
+          }),
+        ]);
+      }
+      toast.success(
+        isPolish ? 'Zastosowano domyślną regułę eskalacji.' : 'Applied fallback escalation rule.'
+      );
+    } finally {
+      setIsSuggestingEscalations(false);
+    }
+  };
+
+  const suggestStakeholderDraftAI = async () => {
+    if (isDecisionStageLocked || !stakeholderDraft) return;
+    setIsSuggestingStakeholders(true);
+    try {
+      const prompt = isPolish
+        ? `Wypełnij konfigurację pojedynczej osoby RACI. Zwróć WYŁĄCZNIE JSON:
+{"role":"accountable|responsible|consulted|informed","notifications":{"enabled":true,"inAppEnabled":true,"emailEnabled":false,"integrationChannels":["slack"],"syncTargets":["slack:#ops"]}}
+Kontekst: priorytet=${priority}, status=${status}, deadline=${dueDate || '-'}`
+        : `Fill configuration for one RACI person. Return JSON ONLY:
+{"role":"accountable|responsible|consulted|informed","notifications":{"enabled":true,"inAppEnabled":true,"emailEnabled":false,"integrationChannels":["slack"],"syncTargets":["slack:#ops"]}}
+Context: priority=${priority}, status=${status}, deadline=${dueDate || '-'}`;
+      const aiRes = await Api.post('/ai/chat', {
+        message: prompt,
+        history: [],
+        systemInstruction: isPolish
+          ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
+          : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+        roleName: 'RACI Person Form Assistant',
+      });
+      const raw = String(aiRes?.text || aiRes?.content || '').trim();
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+      const role = ['accountable', 'responsible', 'consulted', 'informed'].includes(parsed?.role)
+        ? parsed.role
+        : stakeholderDraft.role;
+      const notifications = parsed?.notifications || {};
+      const integrationChannels = Array.isArray(notifications.integrationChannels)
+        ? notifications.integrationChannels.filter((channel: string) =>
+            integrationChannelCatalog.some((entry) => entry.key === channel)
+          )
+        : stakeholderDraft.notificationSettings.integrationChannels || [];
+      const syncTargets = Array.isArray(notifications.syncTargets)
+        ? notifications.syncTargets.map((item: unknown) => String(item).trim()).filter(Boolean)
+        : stakeholderDraft.notificationSettings.syncTargets || [];
+
+      setStakeholderDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              role,
+              notificationSettings: {
+                ...prev.notificationSettings,
+                enabled:
+                  typeof notifications.enabled === 'boolean'
+                    ? notifications.enabled
+                    : prev.notificationSettings.enabled,
+                inAppEnabled:
+                  typeof notifications.inAppEnabled === 'boolean'
+                    ? notifications.inAppEnabled
+                    : prev.notificationSettings.inAppEnabled,
+                emailEnabled:
+                  typeof notifications.emailEnabled === 'boolean'
+                    ? notifications.emailEnabled
+                    : prev.notificationSettings.emailEnabled,
+                integrationChannels,
+                syncTargets,
+              },
+            }
+          : prev
+      );
+      toast.success(
+        isPolish ? 'AI uzupełniło formularz osoby RACI.' : 'AI filled the RACI person form.'
+      );
+    } catch (e) {
+      console.error('Failed to suggest stakeholder draft via AI', e);
+      setStakeholderDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              notificationSettings: {
+                ...prev.notificationSettings,
+                enabled: true,
+                inAppEnabled: true,
+                emailEnabled: prev.role === 'accountable',
+              },
+            }
+          : prev
+      );
+      toast.success(
+        isPolish
+          ? 'Zastosowano domyślną konfigurację osoby RACI.'
+          : 'Applied fallback RACI person configuration.'
+      );
+    } finally {
+      setIsSuggestingStakeholders(false);
+    }
+  };
+
+  const suggestReminderDraftAI = async () => {
+    if (isDecisionStageLocked || !reminderDraft) return;
+    setIsSuggestingReminders(true);
+    try {
+      const prompt = isPolish
+        ? `Wypełnij pojedynczą regułę remindera dla decyzji. Zwróć WYŁĄCZNIE JSON:
+{"type":"before_due|after_due","days":2,"recipients":"requester|decider|both|stakeholders","inAppNotification":true,"emailNotification":false,"message":"...","enabled":true}
+Kontekst: priorytet=${priority}, status=${status}, deadline=${dueDate || '-'}`
+        : `Fill a single reminder rule for this decision. Return JSON ONLY:
+{"type":"before_due|after_due","days":2,"recipients":"requester|decider|both|stakeholders","inAppNotification":true,"emailNotification":false,"message":"...","enabled":true}
+Context: priority=${priority}, status=${status}, deadline=${dueDate || '-'}`;
+      const aiRes = await Api.post('/ai/chat', {
+        message: prompt,
+        history: [],
+        systemInstruction: isPolish
+          ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
+          : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+        roleName: 'Reminder Form Assistant',
+      });
+      const raw = String(aiRes?.text || aiRes?.content || '').trim();
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      const r = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+      setReminderDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              type: r?.type === 'after_due' ? 'after_due' : 'before_due',
+              days: Math.max(0, Number(r?.days ?? prev.days)),
+              recipients: ['requester', 'decider', 'both', 'stakeholders'].includes(r?.recipients)
+                ? r.recipients
+                : prev.recipients,
+              inAppNotification: r?.inAppNotification !== false,
+              emailNotification: !!r?.emailNotification,
+              delivery: ensureDeliveryConfig({
+                coreChannels: [
+                  ...(r?.inAppNotification !== false ? (['in_app'] as CoreDeliveryChannel[]) : []),
+                  ...(r?.emailNotification ? (['email'] as CoreDeliveryChannel[]) : []),
+                ],
+                integrationChannels: Array.isArray(r?.integrationChannels)
+                  ? r.integrationChannels
+                  : Array.isArray(r?.delivery?.integrationChannels)
+                    ? r.delivery.integrationChannels
+                    : prev.delivery?.integrationChannels || [],
+                syncTargets: Array.isArray(r?.syncTargets)
+                  ? r.syncTargets
+                  : Array.isArray(r?.delivery?.syncTargets)
+                    ? r.delivery.syncTargets
+                    : prev.delivery?.syncTargets || [],
+              }),
+              message: String(r?.message || prev.message || ''),
+              enabled: r?.enabled !== false,
+            }
+          : prev
+      );
+      toast.success(
+        isPolish ? 'AI uzupełniło formularz remindera.' : 'AI filled the reminder form.'
+      );
+    } catch (e) {
+      console.error('Failed to suggest reminder draft via AI', e);
+      setReminderDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              type: 'before_due',
+              days: 3,
+              recipients: 'both',
+              inAppNotification: true,
+              emailNotification: true,
+                delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
+              enabled: true,
+              message: prev.message || (isPolish ? 'Termin decyzji za 3 dni.' : 'Decision due in 3 days.'),
+            }
+          : prev
+      );
+      toast.success(
+        isPolish
+          ? 'Zastosowano domyślne uzupełnienie remindera.'
+          : 'Applied fallback reminder form values.'
+      );
+    } finally {
+      setIsSuggestingReminders(false);
+    }
+  };
+
+  const suggestEscalationDraftAI = async () => {
+    if (isDecisionStageLocked || !escalationDraft) return;
+    setIsSuggestingEscalations(true);
+    try {
+      const userList = users
+        .slice(0, 80)
+        .map((u) => `${u.id}|${u.firstName} ${u.lastName}`)
+        .join('\n');
+      const prompt = isPolish
+        ? `Wypełnij pojedynczą regułę eskalacji. Zwróć WYŁĄCZNIE JSON:
+{"afterDays":5,"warningDays":3,"criticalDays":1,"escalateToUserId":"...","message":"...","enabled":true}
+Użyj userId tylko z listy:
+${userList}`
+        : `Fill one escalation rule. Return JSON ONLY:
+{"afterDays":5,"warningDays":3,"criticalDays":1,"escalateToUserId":"...","message":"...","enabled":true}
+Use userId only from this list:
+${userList}`;
+      const aiRes = await Api.post('/ai/chat', {
+        message: prompt,
+        history: [],
+        systemInstruction: isPolish
+          ? 'Jesteś asystentem PMO. Zwróć tylko poprawny JSON bez markdown.'
+          : 'You are a PMO assistant. Return valid JSON only, no markdown.',
+        roleName: 'Escalation Form Assistant',
+      });
+      const raw = String(aiRes?.text || aiRes?.content || '').trim();
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      const r = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+      const selected = users.find((u) => u.id === r?.escalateToUserId) || users[0];
+      if (!selected) throw new Error('No eligible user');
+      setEscalationDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              afterDays: Math.max(1, Number(r?.afterDays ?? prev.afterDays)),
+              warningDays: Math.max(0, Number(r?.warningDays ?? prev.warningDays)),
+              criticalDays: Math.max(0, Number(r?.criticalDays ?? prev.criticalDays)),
+              escalationMode: (['notify_only', 'manager_review', 'executive_alert'] as EscalationMode[]).includes(
+                r?.escalationMode
+              )
+                ? r.escalationMode
+                : prev.escalationMode,
+              delivery: ensureDeliveryConfig({
+                coreChannels: [
+                  ...(r?.inAppNotification !== false ? (['in_app'] as CoreDeliveryChannel[]) : []),
+                  ...(r?.emailNotification ? (['email'] as CoreDeliveryChannel[]) : []),
+                ],
+                integrationChannels: Array.isArray(r?.integrationChannels)
+                  ? r.integrationChannels
+                  : Array.isArray(r?.delivery?.integrationChannels)
+                    ? r.delivery.integrationChannels
+                    : prev.delivery?.integrationChannels || [],
+                syncTargets: Array.isArray(r?.syncTargets)
+                  ? r.syncTargets
+                  : Array.isArray(r?.delivery?.syncTargets)
+                    ? r.delivery.syncTargets
+                    : prev.delivery?.syncTargets || [],
+              }),
+              escalateTo: selected.id,
+              escalateToName: `${selected.firstName} ${selected.lastName}`,
+              message: String(r?.message || prev.message || ''),
+              enabled: r?.enabled !== false,
+            }
+          : prev
+      );
+      toast.success(
+        isPolish ? 'AI uzupełniło formularz eskalacji.' : 'AI filled the escalation form.'
+      );
+    } catch (e) {
+      console.error('Failed to suggest escalation draft via AI', e);
+      const selected = users[0];
+      if (selected) {
+        setEscalationDraft((prev) =>
+          prev
+            ? {
+                ...prev,
+                afterDays: 5,
+                warningDays: 3,
+                criticalDays: 1,
+                escalationMode: prev.escalationMode || 'manager_review',
+                delivery: ensureDeliveryConfig({
+                  coreChannels: ['in_app', 'email'],
+                  integrationChannels: prev.delivery?.integrationChannels || [],
+                  syncTargets: prev.delivery?.syncTargets || [],
+                }),
+                escalateTo: selected.id,
+                escalateToName: `${selected.firstName} ${selected.lastName}`,
+                enabled: true,
+                message:
+                  prev.message ||
+                  (isPolish
+                    ? 'Decyzja eskalowana z powodu braku aktywności.'
+                    : 'Decision escalated due to inactivity.'),
+              }
+            : prev
+        );
+      }
+      toast.success(
+        isPolish
+          ? 'Zastosowano domyślne uzupełnienie eskalacji.'
+          : 'Applied fallback escalation form values.'
+      );
+    } finally {
+      setIsSuggestingEscalations(false);
+    }
+  };
+
   const generateConsequencesOfInactionAI = () => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') {
+    if (isDecisionStageLocked) {
       toast.error(
         isPolish
           ? 'AI generowanie jest dostępne tylko przed etapem decyzji'
@@ -1452,7 +2767,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
   };
 
   const generateRisksAI = async () => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') {
+    if (isDecisionStageLocked) {
       toast.error(
         isPolish
           ? 'AI generowanie jest dostępne tylko przed etapem decyzji'
@@ -1525,7 +2840,8 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
 
   // Show action buttons for any status that requires action (not just 'pending')
   const isPending = status === 'pending' || status === 'escalated' || status === 'deferred';
-  const isDecisionStageLocked = isPending;
+  const WORKFLOW_LOCKS_ENABLED = false; // temporary: full edit mode during model/design phase
+  const isDecisionStageLocked = WORKFLOW_LOCKS_ENABLED && isPending;
   // Defensive fallbacks (prevents crash on unexpected/null values)
   const statusConfig = (STATUS_CONFIG as any)?.[status] ||
     (STATUS_CONFIG as any)?.pending || {
@@ -1547,10 +2863,625 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
     '—';
   const decisionIndexLabel =
     decisionId || `draft-${title.trim().toLowerCase().replace(/\s+/g, '-').slice(0, 20) || 'new'}`;
+  const relatedDecisionItems = useMemo(
+    () =>
+      linkedItems.filter(
+        (item) => item.type === 'task' || item.type === 'decision'
+      ),
+    [linkedItems]
+  );
+  const canExpandDescription = useMemo(
+    () => description.length > 260 || description.split('\n').length > 5,
+    [description]
+  );
+  const canExpandContext = useMemo(
+    () => contextDetails.length > 220 || contextDetails.split('\n').length > 4,
+    [contextDetails]
+  );
+  const quickProArguments = useMemo(
+    () =>
+      isPolish
+        ? ['Niższy koszt', 'Mniejsze ryzyko', 'Szybciej', 'Lepsza jakość', 'Skalowalność']
+        : ['Lower cost', 'Lower risk', 'Faster delivery', 'Better quality', 'Scalability'],
+    [isPolish]
+  );
+  const quickConArguments = useMemo(
+    () =>
+      isPolish
+        ? ['Wyższy koszt', 'Większe ryzyko', 'Wolniej', 'Większa złożoność', 'Zależność od dostawcy']
+        : ['Higher cost', 'Higher risk', 'Slower delivery', 'Higher complexity', 'Vendor dependency'],
+    [isPolish]
+  );
+  const riskLevelOptions = useMemo(
+    () => ['low', 'medium', 'high', 'critical'] as const,
+    []
+  );
+  const riskCategoryOptions = useMemo(
+    () =>
+      ['technical', 'business', 'financial', 'operational', 'security'].map((c) => ({
+        value: c,
+        label:
+          c === 'technical'
+            ? isPolish
+              ? 'Techniczne'
+              : 'Technical'
+            : c === 'business'
+              ? isPolish
+                ? 'Biznesowe'
+                : 'Business'
+              : c === 'financial'
+                ? isPolish
+                  ? 'Finansowe'
+                  : 'Financial'
+                : c === 'operational'
+                  ? isPolish
+                    ? 'Operacyjne'
+                    : 'Operational'
+                  : isPolish
+                    ? 'Bezpieczeństwo'
+                    : 'Security',
+      })),
+    [isPolish]
+  );
+  const quickMitigationArguments = useMemo(
+    () =>
+      isPolish
+        ? ['POC przed wdrożeniem', 'Przegląd tygodniowy', 'Plan kontroli jakości']
+        : ['POC before rollout', 'Weekly review checkpoint', 'Quality control plan'],
+    [isPolish]
+  );
+  const quickContingencyArguments = useMemo(
+    () =>
+      isPolish
+        ? ['Tryb ręczny fallback', 'Eskalacja do PMO', 'Przesunięcie terminu + komunikat']
+        : ['Manual fallback mode', 'Escalate to PMO', 'Timeline shift with stakeholder notice'],
+    [isPolish]
+  );
+  const riskLevelToScore = (level?: string) => {
+    const normalized = String(level || '').toLowerCase();
+    if (normalized === 'critical') return 4;
+    if (normalized === 'high') return 3;
+    if (normalized === 'medium') return 2;
+    return 1;
+  };
+  const getRiskScore = (risk: RiskItem) =>
+    riskLevelToScore(risk.probability) * riskLevelToScore(risk.impact);
+  const getRiskScoreClass = (score: number) => {
+    if (score >= 12) return 'text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/30';
+    if (score >= 8)
+      return 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30';
+    if (score >= 4)
+      return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
+    return 'text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border-emerald-500/30';
+  };
+  const getRiskLevelClass = (level?: string) => {
+    const normalized = String(level || '').toLowerCase();
+    if (normalized === 'critical')
+      return 'border-red-500/60 bg-red-500/10 text-red-700 dark:text-red-300';
+    if (normalized === 'high')
+      return 'border-orange-500/55 bg-orange-500/10 text-orange-700 dark:text-orange-300';
+    if (normalized === 'medium')
+      return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
+    return 'border-emerald-500/45 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
+  };
+  const getRiskLevelLabel = (level: string) => {
+    if (isPolish) {
+      if (level === 'critical') return 'Krytyczny';
+      if (level === 'high') return 'Wysoki';
+      if (level === 'medium') return 'Średni';
+      return 'Niski';
+    }
+    if (level === 'critical') return 'Critical';
+    if (level === 'high') return 'High';
+    if (level === 'medium') return 'Medium';
+    return 'Low';
+  };
+  const sortedRisks = useMemo(
+    () =>
+      [...risks].sort((a, b) => {
+        const byScore = getRiskScore(b) - getRiskScore(a);
+        if (byScore !== 0) return byScore;
+        return String(a.title || '').localeCompare(String(b.title || ''));
+      }),
+    [risks]
+  );
+  const recommendedAlternative = useMemo(
+    () => alternatives.find((a) => a.isRecommended) || alternatives[0] || null,
+    [alternatives]
+  );
+  const topRiskTitles = useMemo(
+    () =>
+      sortedRisks
+        .slice(0, 2)
+        .map((r) => r.title)
+        .filter(Boolean),
+    [sortedRisks]
+  );
+  const blockedItemsCount = relatedDecisionItems.length;
+  const pressureSummary = useMemo(() => {
+    const weeklyHours = Math.max(8, blockedItemsCount * 6 + sortedRisks.length * 4);
+    return {
+      d7: isPolish
+        ? `${blockedItemsCount || 1} element(y) mogą się zablokować operacyjnie`
+        : `${blockedItemsCount || 1} linked item(s) may become operationally blocked`,
+      d30: isPolish
+        ? `Wzrost pracy manualnej o ok. ${weeklyHours}h/tydzień`
+        : `Manual workload may increase by about ${weeklyHours}h/week`,
+      d90: isPolish
+        ? 'Wysokie ryzyko eskalacji i utraty tempa wykonawczego'
+        : 'High risk of escalation and loss of delivery momentum',
+    };
+  }, [isPolish, blockedItemsCount, sortedRisks.length]);
+
+  const buildConsequencesTemplate = (
+    style: 'conservative' | 'executive' | 'action_forcing'
+  ): string => {
+    const recommendation = recommendedAlternative?.title || (isPolish ? 'wybraną opcję' : 'selected option');
+    const decider = deciderName || deciderId || (isPolish ? 'właściciel decyzji' : 'decision owner');
+    const due = dueDate || (isPolish ? '[DATA]' : '[DATE]');
+    const riskLine = topRiskTitles.length
+      ? topRiskTitles.join(', ')
+      : isPolish
+        ? 'ryzyka operacyjne i jakościowe'
+        : 'operational and quality risks';
+
+    if (style === 'conservative') {
+      return isPolish
+        ? `1) Jeśli decyzja nie zapadnie do ${due}, w ciągu 7 dni:\n- ${pressureSummary.d7}\n\n2) W ciągu 30 dni:\n- ${pressureSummary.d30}\n- Najbardziej narażone obszary: ${riskLine}\n\n3) W ciągu 90 dni:\n- ${pressureSummary.d90}\n\n4) Minimalna decyzja na teraz:\n- Zatwierdzić: ${recommendation}\n- Właściciel: ${decider}`
+        : `1) If the decision is not made by ${due}, within 7 days:\n- ${pressureSummary.d7}\n\n2) Within 30 days:\n- ${pressureSummary.d30}\n- Most exposed areas: ${riskLine}\n\n3) Within 90 days:\n- ${pressureSummary.d90}\n\n4) Minimum action now:\n- Approve: ${recommendation}\n- Owner: ${decider}`;
+    }
+
+    if (style === 'executive') {
+      return isPolish
+        ? `Podsumowanie zarządcze:\nBrak decyzji do ${due} zwiększa koszt bezczynności i ryzyko opóźnień wykonawczych.\n\nWpływ:\n- 7 dni: ${pressureSummary.d7}\n- 30 dni: ${pressureSummary.d30}\n- 90 dni: ${pressureSummary.d90}\n\nRekomendacja:\nZatwierdzić ${recommendation} oraz przypisać odpowiedzialność do: ${decider}.`
+        : `Executive summary:\nNo decision by ${due} increases cost of inaction and delivery delay risk.\n\nImpact:\n- 7 days: ${pressureSummary.d7}\n- 30 days: ${pressureSummary.d30}\n- 90 days: ${pressureSummary.d90}\n\nRecommendation:\nApprove ${recommendation} and assign ownership to: ${decider}.`;
+    }
+
+    return isPolish
+      ? `ALERT: brak decyzji do ${due} uruchamia negatywny scenariusz.\n\nCo stracimy:\n- Natychmiast: ${pressureSummary.d7}\n- 30 dni: ${pressureSummary.d30}\n- 90 dni: ${pressureSummary.d90}\n\nNajwyższe ryzyka: ${riskLine}.\n\nDecyzja wymagana TERAZ:\n- Zatwierdzić ${recommendation}\n- Potwierdzić właściciela: ${decider}\n- Utrzymać termin: ${due}`
+      : `ALERT: no decision by ${due} triggers a negative scenario.\n\nWhat we lose:\n- Immediate: ${pressureSummary.d7}\n- 30 days: ${pressureSummary.d30}\n- 90 days: ${pressureSummary.d90}\n\nHighest risks: ${riskLine}.\n\nDecision required NOW:\n- Approve ${recommendation}\n- Confirm owner: ${decider}\n- Keep deadline: ${due}`;
+  };
+
+  const buildFallbackConsequenceScenarios = (): ConsequenceScenarios => ({
+    updatedAt: new Date().toISOString(),
+    source: 'fallback',
+    pessimistic: {
+      d7: isPolish
+        ? `Natychmiastowe ryzyko blokady: ${pressureSummary.d7}.`
+        : `Immediate blockage risk: ${pressureSummary.d7}.`,
+      d30: isPolish
+        ? `Koszt bezczynności rośnie: ${pressureSummary.d30}.`
+        : `Cost of inaction increases: ${pressureSummary.d30}.`,
+      d90: isPolish
+        ? `Scenariusz krytyczny: ${pressureSummary.d90}.`
+        : `Critical scenario: ${pressureSummary.d90}.`,
+    },
+    neutral: {
+      d7: isPolish
+        ? `Utrzymuje się niepewność wykonawcza i spada tempo decyzji.`
+        : `Execution uncertainty persists and decision velocity drops.`,
+      d30: isPolish
+        ? `Rosną zależności między zadaniami, możliwe lokalne opóźnienia.`
+        : `Task dependencies grow, causing localized delays.`,
+      d90: isPolish
+        ? `Projekt wymaga korekty planu i dodatkowych zasobów.`
+        : `The project requires plan correction and additional resources.`,
+    },
+    optimistic: {
+      d7: isPolish
+        ? `Ryzyko materializacji ograniczone przy monitoringu dziennym.`
+        : `Materialization risk remains limited with daily monitoring.`,
+      d30: isPolish
+        ? `Przy częściowych decyzjach wpływ można utrzymać pod kontrolą.`
+        : `With partial decisions, impact can remain under control.`,
+      d90: isPolish
+        ? `Skutki umiarkowane, jeśli właściciel i termin będą egzekwowane.`
+        : `Impact remains moderate if owner and deadline are enforced.`,
+    },
+  });
+
+  const generateConsequenceScenariosAI = async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    setIsGeneratingConsequenceScenarios(true);
+    try {
+      const projectContext = {
+        decisionTitle: title || null,
+        dueDate: dueDate || null,
+        status,
+        priority,
+        recommendedOption: recommendedAlternative?.title || null,
+        linkedItems: relatedDecisionItems.slice(0, 8).map((i) => i.title),
+        topRisks: sortedRisks.slice(0, 3).map((r) => ({
+          title: r.title,
+          score: getRiskScore(r),
+          probability: r.probability,
+          impact: r.impact,
+        })),
+      };
+      const systemInstruction = isPolish
+        ? 'Jesteś doradcą PMO. Zwróć wyłącznie poprawny JSON zgodny ze schematem.'
+        : 'You are a PMO advisor. Return valid JSON only according to schema.';
+      const prompt = isPolish
+        ? `Na podstawie kontekstu projektu wygeneruj konsekwencje braku decyzji w 3 scenariuszach: pessimistic, neutral, optimistic. Dla każdego scenariusza podaj d7, d30, d90. Zwróć WYŁĄCZNIE JSON w formacie:
+{
+  "pessimistic":{"d7":"...","d30":"...","d90":"..."},
+  "neutral":{"d7":"...","d30":"...","d90":"..."},
+  "optimistic":{"d7":"...","d30":"...","d90":"..."}
+}
+Kontekst: ${JSON.stringify(projectContext)}`
+        : `Based on project context, generate consequences of inaction in 3 scenarios: pessimistic, neutral, optimistic. For each scenario provide d7, d30, d90. Return JSON ONLY in this format:
+{
+  "pessimistic":{"d7":"...","d30":"...","d90":"..."},
+  "neutral":{"d7":"...","d30":"...","d90":"..."},
+  "optimistic":{"d7":"...","d30":"...","d90":"..."}
+}
+Context: ${JSON.stringify(projectContext)}`;
+
+      const aiRes = await Api.post('/ai/chat', {
+        message: prompt,
+        history: [],
+        systemInstruction,
+        roleName: 'Decision Consequence Analyst',
+      });
+      const raw = String(aiRes?.text || aiRes?.content || '').trim();
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+      const normalizeTimeline = (v: any): ConsequenceTimeline => ({
+        d7: String(v?.d7 || ''),
+        d30: String(v?.d30 || ''),
+        d90: String(v?.d90 || ''),
+      });
+
+      const next: ConsequenceScenarios = {
+        updatedAt: new Date().toISOString(),
+        source: 'ai',
+        pessimistic: normalizeTimeline(parsed?.pessimistic),
+        neutral: normalizeTimeline(parsed?.neutral),
+        optimistic: normalizeTimeline(parsed?.optimistic),
+      };
+      if (!next.pessimistic.d7 || !next.neutral.d30 || !next.optimistic.d90) {
+        throw new Error('Incomplete AI scenario response');
+      }
+      setConsequenceScenarios(next);
+      if (!silent) {
+        toast.success(
+          isPolish
+            ? 'Scenariusze konsekwencji zaktualizowane przez AI'
+            : 'Consequence scenarios updated by AI'
+        );
+      }
+    } catch {
+      const fallback = buildFallbackConsequenceScenarios();
+      setConsequenceScenarios(fallback);
+      if (!silent) {
+        toast(
+          isPolish
+            ? 'Użyto scenariuszy awaryjnych. AI chwilowo niedostępne.'
+            : 'Fallback scenarios applied. AI temporarily unavailable.',
+          { icon: '⚠️' }
+        );
+      }
+    } finally {
+      setIsGeneratingConsequenceScenarios(false);
+    }
+  };
+
+  const displayedConsequenceScenarios = useMemo(
+    () => consequenceScenarios || buildFallbackConsequenceScenarios(),
+    [consequenceScenarios, pressureSummary, isPolish]
+  );
+
+  const updateConsequenceScenarioCell = (
+    scenarioKey: 'optimistic' | 'neutral' | 'pessimistic',
+    timelineKey: 'd7' | 'd30' | 'd90',
+    value: string
+  ) => {
+    if (isDecisionStageLocked) return;
+    setConsequenceScenarios((prev) => {
+      const base = prev || buildFallbackConsequenceScenarios();
+      return {
+        ...base,
+        source: 'fallback',
+        updatedAt: new Date().toISOString(),
+        [scenarioKey]: {
+          ...base[scenarioKey],
+          [timelineKey]: value,
+        },
+      };
+    });
+  };
+
+  const getLinkedItemIndex = (item: LinkedItem) => {
+    const raw = String(item.id || '').trim();
+    if (!raw) return '';
+    const normalized = raw.replace(/^.*\//, '');
+    return normalized.length > 24 ? `${normalized.slice(0, 24)}...` : normalized;
+  };
+
+  const withProsConsFallback = (alts: Alternative[]) =>
+    alts.map((alt, idx) => {
+      const hasPros = Array.isArray(alt.pros) && alt.pros.length > 0;
+      const hasCons = Array.isArray(alt.cons) && alt.cons.length > 0;
+      if (hasPros && hasCons) return alt;
+
+      const fallbackPros = isPolish
+        ? [
+            'Szybsze dostarczenie wartości biznesowej',
+            'Lepsza przewidywalność wykonania',
+            'Czytelna odpowiedzialność zespołu',
+          ]
+        : [
+            'Faster delivery of business value',
+            'Better execution predictability',
+            'Clearer team accountability',
+          ];
+      const fallbackCons = isPolish
+        ? [
+            'Ryzyko wzrostu kosztów początkowych',
+            'Wymaga dodatkowej koordynacji',
+            'Potrzebne wsparcie kompetencyjne',
+          ]
+        : [
+            'Risk of higher initial cost',
+            'Requires additional coordination',
+            'Needs additional capability support',
+          ];
+
+      return {
+        ...alt,
+        pros: hasPros ? alt.pros : [fallbackPros[idx % fallbackPros.length]],
+        cons: hasCons ? alt.cons : [fallbackCons[idx % fallbackCons.length]],
+      };
+    });
+
+  const fallbackRefineText = (
+    input: string,
+    mode: 'improve' | 'shorten' | 'expand' | 'formal'
+  ) => {
+    const normalized = input.replace(/\s+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    if (!normalized) return input;
+
+    if (mode === 'shorten') {
+      const target = Math.max(120, Math.floor(normalized.length * 0.65));
+      const compact = normalized.slice(0, target).trim();
+      return compact.endsWith('.') || compact.endsWith('!') || compact.endsWith('?')
+        ? compact
+        : `${compact}...`;
+    }
+
+    if (mode === 'expand') {
+      const appendix = isPolish
+        ? '\n\nUzasadnienie biznesowe: decyzja wpływa na terminowość, ryzyko operacyjne i jakość dostarczanych rezultatów. Rekomendowane jest określenie właściciela wdrożenia oraz punktów kontrolnych.'
+        : '\n\nBusiness rationale: this decision affects delivery timing, operational risk, and outcome quality. It is recommended to define an implementation owner and key control checkpoints.';
+      return `${normalized}${appendix}`;
+    }
+
+    if (mode === 'formal') {
+      return isPolish
+        ? `Niniejszym wskazuje się, że ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`
+        : `It is hereby noted that ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
+    }
+
+    // improve
+    return normalized
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\.\s*\./g, '.')
+      .replace(/(^\w)/, (m) => m.toUpperCase());
+  };
+
+  const enhanceFieldWithAI = async (
+    fieldKey: string,
+    sectionLabel: string,
+    currentValue: string,
+    applyValue: (value: string) => void,
+    mode: 'improve' | 'shorten' | 'expand' | 'formal'
+  ) => {
+    if (isDecisionStageLocked) {
+      toast.error(
+        isPolish
+          ? 'AI generowanie jest dostępne tylko przed etapem decyzji'
+          : 'AI generation is available only before decision stage'
+      );
+      return;
+    }
+    if (!currentValue.trim()) {
+      toast.error(
+        isPolish
+          ? 'Najpierw wpisz treść do edycji AI'
+          : 'Enter some content first to edit with AI'
+      );
+      return;
+    }
+
+    setAiFieldLoading((prev) => ({ ...prev, [fieldKey]: true }));
+    setAiMenuOpenField(null);
+    try {
+      const instructionByMode = {
+        improve: isPolish
+          ? 'Popraw tekst tak, aby był klarowny, profesjonalny i konkretny. Zachowaj sens, usuń powtórzenia.'
+          : 'Improve the text to be clear, professional, and concise. Keep the meaning and remove repetition.',
+        shorten: isPolish
+          ? 'Skróć tekst o 30-40%, zachowując kluczowy sens i decyzjotwórcze informacje.'
+          : 'Shorten the text by about 30-40% while keeping key meaning and decision-relevant information.',
+        expand: isPolish
+          ? 'Rozwiń tekst, dodając istotny kontekst, ryzyka i implikacje biznesowe bez lania wody.'
+          : 'Expand the text with useful context, risks, and business implications without filler.',
+        formal: isPolish
+          ? 'Przeredaguj tekst w bardziej formalnym, zarządczym tonie.'
+          : 'Rewrite the text in a more formal executive tone.',
+      } as const;
+      const prompt = isPolish
+        ? `Sekcja: ${sectionLabel}\nTryb edycji: ${mode}\nTytuł decyzji: ${title || '-'}\nStatus: ${status}\nPriorytet: ${priority}\n\nInstrukcja: ${instructionByMode[mode]}\n\nTekst do edycji:\n${currentValue}`
+        : `Section: ${sectionLabel}\nEdit mode: ${mode}\nDecision title: ${title || '-'}\nStatus: ${status}\nPriority: ${priority}\n\nInstruction: ${instructionByMode[mode]}\n\nText to edit:\n${currentValue}`;
+
+      let refinedText = '';
+      try {
+        const systemInstruction = isPolish
+          ? 'Jesteś redaktorem treści decyzyjnych PMO. Zwróć tylko poprawiony tekst, bez komentarzy.'
+          : 'You are a PMO decision content editor. Return only the revised text, no commentary.';
+
+        // 1) Prefer authenticated API path used across app
+        const aiRes = await Api.post('/ai/chat', {
+          message: prompt,
+          history: [],
+          systemInstruction,
+          roleName: 'Decision Text Editor',
+        });
+        refinedText = String(aiRes?.text || aiRes?.content || '').trim();
+
+        // 2) Fallback to confirm endpoint (some deployments gate /ai/chat responses)
+        if (!refinedText) {
+          const confirmRes = await Api.chatConfirm(prompt, [], systemInstruction, undefined, undefined);
+          refinedText = String(
+            confirmRes?.text ||
+              confirmRes?.content ||
+              confirmRes?.response ||
+              confirmRes?.confirm?.suggestedResponse ||
+              ''
+          ).trim();
+        }
+      } catch {
+        refinedText = '';
+      }
+
+      if (!refinedText) {
+        refinedText = fallbackRefineText(currentValue, mode);
+        toast(
+          isPolish
+            ? 'Użyto trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne).'
+            : 'Fallback local edit applied (AI temporarily unavailable).',
+          { icon: '⚠️' }
+        );
+      }
+
+      if (!refinedText) {
+        throw new Error('Empty AI response');
+      }
+
+      setAiUndoByField((prev) => ({ ...prev, [fieldKey]: currentValue }));
+      applyValue(refinedText);
+      toast.success(
+        isPolish
+          ? 'Treść zaktualizowana przez AI. Jeśli efekt Ci nie pasuje, kliknij Undo AI.'
+          : 'Content updated by AI. If you do not like it, click Undo AI.'
+      );
+    } catch (error) {
+      toast.error(
+        isPolish
+          ? 'Nie udało się poprawić treści przez AI'
+          : 'Failed to refine content with AI'
+      );
+    } finally {
+      setAiFieldLoading((prev) => ({ ...prev, [fieldKey]: false }));
+    }
+  };
+
+  const renderFieldAIButton = (
+    fieldKey: string,
+    sectionLabel: string,
+    currentValue: string,
+    applyValue: (value: string) => void
+  ) => (
+    <div className="relative" data-ai-menu-root="true">
+      <button
+        onClick={() =>
+          setAiMenuOpenField((prev) => (prev === fieldKey ? null : fieldKey))
+        }
+        disabled={isDecisionStageLocked || !!aiFieldLoading[fieldKey]}
+        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-purple-500 dark:text-purple-400 hover:bg-purple-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        title={isPolish ? 'Akcje AI dla tego pola' : 'AI actions for this field'}
+      >
+        {aiFieldLoading[fieldKey] ? (
+          <Loader2 size={11} className="animate-spin" />
+        ) : (
+          <Sparkles size={11} />
+        )}
+        AI
+      </button>
+      {aiMenuOpenField === fieldKey && !isDecisionStageLocked && !aiFieldLoading[fieldKey] && (
+        <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-44 rounded-lg border border-slate-200/70 dark:border-navy-700/70 bg-white/95 dark:bg-navy-900/95 backdrop-blur p-1 shadow-xl">
+          {[
+            ['improve', isPolish ? 'Improve' : 'Improve'],
+            ['shorten', isPolish ? 'Shorten' : 'Shorten'],
+            ['expand', isPolish ? 'Expand' : 'Expand'],
+            ['formal', isPolish ? 'Formal tone' : 'Formal tone'],
+          ].map(([modeKey, label]) => (
+            <button
+              key={modeKey}
+              onClick={() =>
+                enhanceFieldWithAI(
+                  fieldKey,
+                  sectionLabel,
+                  currentValue,
+                  applyValue,
+                  modeKey as 'improve' | 'shorten' | 'expand' | 'formal'
+                )
+              }
+              className="w-full text-left px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-md transition-colors"
+            >
+              {label}
+            </button>
+          ))}
+          {aiUndoByField[fieldKey] !== undefined && (
+            <button
+              onClick={() => {
+                applyValue(aiUndoByField[fieldKey]);
+                setAiUndoByField((prev) => {
+                  const next = { ...prev };
+                  delete next[fieldKey];
+                  return next;
+                });
+                setAiMenuOpenField(null);
+                toast.success(
+                  isPolish ? 'Przywrócono poprzednią wersję tekstu' : 'Previous text restored'
+                );
+              }}
+              className="mt-1 w-full text-left px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-300 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 rounded-md transition-colors"
+            >
+              Undo AI
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+  const createdDateDisplay = useMemo(() => {
+    if (!createdAt) return '—';
+    const d = new Date(createdAt);
+    if (Number.isNaN(d.getTime())) return String(createdAt).split('T')[0] || String(createdAt);
+    return d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-GB');
+  }, [createdAt, isPolish]);
+  const statusAlertBorderClass =
+    status === 'escalated' || status === 'rejected'
+      ? 'border-red-400/70 dark:border-red-500/50'
+      : status === 'pending' || status === 'deferred'
+        ? 'border-amber-400/70 dark:border-amber-500/50'
+        : status === 'approved'
+          ? 'border-emerald-400/70 dark:border-emerald-500/50'
+          : 'border-slate-200/60 dark:border-navy-600/60';
+  const priorityAlertBorderClass =
+    priority === 'critical'
+      ? 'border-red-400/70 dark:border-red-500/50'
+      : priority === 'high'
+        ? 'border-amber-400/70 dark:border-amber-500/50'
+        : priority === 'medium'
+          ? 'border-blue-400/70 dark:border-blue-500/50'
+          : 'border-slate-200/60 dark:border-navy-600/60';
+  const dueDateAlertBorderClass = useMemo(() => {
+    if (!dueDate) return 'border-slate-200/60 dark:border-navy-600/60';
+    if (status === 'approved' || status === 'rejected') return 'border-slate-200/60 dark:border-navy-600/60';
+    const due = new Date(dueDate);
+    if (Number.isNaN(due.getTime())) return 'border-slate-200/60 dark:border-navy-600/60';
+    const now = new Date();
+    const daysDiff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysDiff < 0) return 'border-red-400/70 dark:border-red-500/50';
+    if (daysDiff <= 3) return 'border-amber-400/70 dark:border-amber-500/50';
+    return 'border-emerald-400/60 dark:border-emerald-500/40';
+  }, [dueDate, status]);
 
   // Attachment handlers (mock)
   const handleUploadAttachments = async (files: FileList) => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') {
+    if (isDecisionStageLocked) {
       toast.error(
         isPolish
           ? 'W etapie podejmowania decyzji treść jest zablokowana'
@@ -1570,7 +3501,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
   };
 
   const handleDeleteAttachment = async (id: string) => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') return;
+    if (isDecisionStageLocked) return;
     setAttachments(attachments.filter((a) => a.id !== id));
   };
 
@@ -1578,12 +3509,9 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
   const handleAddComment = async (
     content: string,
     parentId?: string,
-    options?: { force?: boolean }
+    options?: { force?: boolean; priority?: CommentPriorityLevel }
   ) => {
-    if (
-      !options?.force &&
-      (status === 'pending' || status === 'escalated' || status === 'deferred')
-    ) {
+    if (!options?.force && isDecisionStageLocked) {
       toast.error(
         isPolish
           ? 'W etapie podejmowania decyzji treść jest zablokowana'
@@ -1601,6 +3529,8 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
       likedByMe: false,
       parentId,
     };
+    (newComment as Comment & { priority?: CommentPriorityLevel }).priority =
+      options?.priority || 'normal';
     if (parentId) {
       setComments(
         comments.map((c) =>
@@ -1627,25 +3557,301 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
     );
   };
 
+  const filteredComments = useMemo(() => {
+    const now = new Date();
+    const filtered = comments.filter((comment) => {
+      const created = new Date(comment.createdAt);
+      if (Number.isNaN(created.getTime())) return true;
+      if (commentDateFilter === 'today') return created.toDateString() === now.toDateString();
+      if (commentDateFilter === '7d') return now.getTime() - created.getTime() <= 7 * 24 * 60 * 60 * 1000;
+      if (commentDateFilter === '30d') return now.getTime() - created.getTime() <= 30 * 24 * 60 * 60 * 1000;
+      return true;
+    });
+
+    return [...filtered].sort((a, b) => {
+      const aTime = new Date(a.createdAt).getTime();
+      const bTime = new Date(b.createdAt).getTime();
+      const safeATime = Number.isNaN(aTime) ? 0 : aTime;
+      const safeBTime = Number.isNaN(bTime) ? 0 : bTime;
+      return commentSortOrder === 'asc' ? safeATime - safeBTime : safeBTime - safeATime;
+    });
+  }, [comments, commentDateFilter, commentSortOrder]);
+
+  const filteredAttachments = useMemo(() => {
+    const now = new Date();
+    const filtered = attachments.filter((attachment) => {
+      const uploaded = new Date(attachment.uploadedAt || '');
+      if (Number.isNaN(uploaded.getTime())) return true;
+      if (attachmentDateFilter === 'today') return uploaded.toDateString() === now.toDateString();
+      if (attachmentDateFilter === '7d')
+        return now.getTime() - uploaded.getTime() <= 7 * 24 * 60 * 60 * 1000;
+      if (attachmentDateFilter === '30d')
+        return now.getTime() - uploaded.getTime() <= 30 * 24 * 60 * 60 * 1000;
+      return true;
+    });
+
+    return [...filtered].sort((a, b) => {
+      const aTime = new Date(a.uploadedAt || '').getTime();
+      const bTime = new Date(b.uploadedAt || '').getTime();
+      const safeATime = Number.isNaN(aTime) ? 0 : aTime;
+      const safeBTime = Number.isNaN(bTime) ? 0 : bTime;
+      return attachmentSortOrder === 'asc' ? safeATime - safeBTime : safeBTime - safeATime;
+    });
+  }, [attachments, attachmentDateFilter, attachmentSortOrder]);
+
+  const filteredLinkedItems = useMemo(() => {
+    const byType =
+      linkedItemFilter === 'all'
+        ? linkedItems
+        : linkedItems.filter((item) => item.type === linkedItemFilter);
+
+    return [...byType].sort((a, b) => {
+      const left = `${a.title || ''}`.toLowerCase();
+      const right = `${b.title || ''}`.toLowerCase();
+      if (left === right) return 0;
+      if (linkedItemsSortOrder === 'asc') return left < right ? -1 : 1;
+      return left > right ? -1 : 1;
+    });
+  }, [linkedItems, linkedItemFilter, linkedItemsSortOrder]);
+
+  const filteredInternalLinkedItems = useMemo(
+    () => filteredLinkedItems.filter((item) => item.type !== 'external'),
+    [filteredLinkedItems]
+  );
+
+  const filteredExternalLinkedItems = useMemo(() => {
+    const externalItems = linkedItems.filter((item) => item.type === 'external');
+    return [...externalItems].sort((a, b) => {
+      const left = `${a.title || ''}`.toLowerCase();
+      const right = `${b.title || ''}`.toLowerCase();
+      if (left === right) return 0;
+      if (linkedItemsSortOrder === 'asc') return left < right ? -1 : 1;
+      return left > right ? -1 : 1;
+    });
+  }, [linkedItems, linkedItemsSortOrder]);
+
+  const getCommentPriority = (comment: Comment): CommentPriorityLevel =>
+    ((comment as Comment & { priority?: CommentPriorityLevel }).priority || 'normal') as CommentPriorityLevel;
+
+  const getPriorityDotClass = (priority: CommentPriorityLevel) => {
+    if (priority === 'high') return 'bg-amber-400';
+    if (priority === 'low') return 'bg-emerald-400';
+    return 'bg-slate-400';
+  };
+
+  const getCommentPriorityLabel = (priority: CommentPriorityLevel) => {
+    if (priority === 'high') return isPolish ? 'Wysoki' : 'High';
+    if (priority === 'low') return isPolish ? 'Niski' : 'Low';
+    return isPolish ? 'Normalny' : 'Normal';
+  };
+
+  const getCommentPriorityHint = (priority: CommentPriorityLevel) => {
+    if (priority === 'high') {
+      return isPolish
+        ? 'Wymaga szybkiej reakcji i uwagi decydenta.'
+        : 'Needs quick response and decision-maker attention.';
+    }
+    if (priority === 'low') {
+      return isPolish
+        ? 'Informacyjny komentarz, bez pilnej akcji.'
+        : 'Informational note, no urgent action needed.';
+    }
+    return isPolish
+      ? 'Standardowy komentarz roboczy.'
+      : 'Standard working-level comment.';
+  };
+
+  const getPriorityButtonClass = (priority: CommentPriorityLevel, isActive: boolean) => {
+    if (isActive && priority === 'high') {
+      return 'border-amber-400/70 text-amber-300 bg-amber-500/15 shadow-[0_0_0_1px_rgba(251,191,36,0.2)]';
+    }
+    if (isActive && priority === 'normal') {
+      return 'border-indigo-400/70 text-indigo-300 bg-indigo-500/15 shadow-[0_0_0_1px_rgba(129,140,248,0.2)]';
+    }
+    if (isActive && priority === 'low') {
+      return 'border-emerald-400/70 text-emerald-300 bg-emerald-500/15 shadow-[0_0_0_1px_rgba(16,185,129,0.2)]';
+    }
+    return 'border-slate-300/55 dark:border-navy-600/60 text-slate-400 dark:text-slate-500 hover:border-slate-400/70 hover:text-slate-300';
+  };
+
+  const enhanceCommentDraftWithAI = async () => {
+    if (isDecisionStageLocked) return;
+    setIsEnhancingCommentDraft(true);
+    try {
+      const prompt = isPolish
+        ? `Przygotuj zwięzły i profesjonalny komentarz do decyzji. Priorytet komentarza: ${commentDraftPriority}. Tytuł decyzji: "${title || '-'}". Opis: "${description || '-'}". Obecny szkic użytkownika: "${commentDraft || '-'}". Zwróć sam tekst komentarza (bez cudzysłowów i bez listy).`
+        : `Draft a concise and professional decision comment. Comment priority: ${commentDraftPriority}. Decision title: "${title || '-'}". Description: "${description || '-'}". Current user draft: "${commentDraft || '-'}". Return comment text only (no quotes, no list).`;
+      const aiRes = await Api.post('/ai/chat', {
+        message: prompt,
+        history: [],
+        systemInstruction: isPolish
+          ? 'Jesteś konsultantem PM. Zwracaj krótki komentarz gotowy do publikacji.'
+          : 'You are a PM consultant. Return a short comment ready to publish.',
+        roleName: 'Comment Writing Assistant',
+      });
+      const next = String(aiRes?.text || aiRes?.content || '').trim();
+      if (next) {
+        setCommentDraft(next);
+        toast.success(isPolish ? 'AI przygotowało treść komentarza' : 'AI prepared comment text');
+      } else {
+        throw new Error('Empty AI output');
+      }
+    } catch {
+      if (!commentDraft.trim()) {
+        const fallback = isPolish
+          ? 'Proponuję krótką walidację opcji na danych historycznych oraz doprecyzowanie właściciela wykonania.'
+          : 'I suggest a short validation of this option on historical data and clarifying execution ownership.';
+        setCommentDraft(fallback);
+      } else {
+        setCommentDraft((prev) =>
+          `${prev.trim()} ${isPolish ? 'Warto też doprecyzować właściciela i termin.' : 'It is also worth clarifying owner and deadline.'}`.trim()
+        );
+      }
+      toast(isPolish ? 'Użyto lokalnej podpowiedzi AI' : 'Applied local AI fallback hint', { icon: '⚠️' });
+    } finally {
+      setIsEnhancingCommentDraft(false);
+    }
+  };
+
+  const submitCommentDraft = async () => {
+    const trimmed = commentDraft.trim();
+    if (!trimmed) return;
+    await handleAddComment(trimmed, undefined, { priority: commentDraftPriority });
+    setCommentDraft('');
+  };
+
   // Linked items handlers
+  const hydrateLinkedItem = useCallback(
+    async (item: LinkedItem): Promise<{ linkedItem: LinkedItem; synced: boolean }> => {
+      if (item.type === 'external') return { linkedItem: item, synced: true };
+
+      const encodedId = encodeURIComponent(String(item.id));
+      const endpointCandidates =
+        item.type === 'task'
+          ? [`/tasks/${encodedId}`]
+          : item.type === 'decision'
+            ? [`/decisions/${encodedId}`]
+            : item.type === 'initiative'
+              ? [`/initiatives/${encodedId}`]
+              : item.type === 'project'
+                ? [`/projects/${encodedId}`]
+                : item.type === 'assessment'
+                  ? [`/assessments/${encodedId}`]
+                  : item.type === 'report'
+                    ? [`/reports/${encodedId}`]
+                    : item.type === 'tool'
+                      ? [`/tools/sessions/${encodedId}`, `/tools/${encodedId}`]
+                      : item.type === 'insight'
+                        ? [`/interview/insights/${encodedId}`]
+                        : [];
+
+      let entity: any = null;
+      for (const endpoint of endpointCandidates) {
+        try {
+          entity = await Api.get(endpoint);
+          if (entity) break;
+        } catch {
+          // try next endpoint candidate
+        }
+      }
+
+      if (!entity) return { linkedItem: item, synced: false };
+
+      const title = String(entity.title || entity.name || entity.summary || item.title || 'Untitled');
+      const status = String(entity.status || item.status || '').trim() || undefined;
+      const priority = String(entity.priority || item.priority || '').trim() || undefined;
+      const fallbackUrl =
+        item.type === 'task'
+          ? `/my-work/tasks/${encodedId}`
+          : item.type === 'decision'
+            ? `/my-work/decisions/${encodedId}`
+            : item.type === 'initiative'
+              ? `/initiatives/${encodedId}`
+              : item.type === 'project'
+                ? `/projects/${encodedId}`
+                : item.type === 'assessment'
+                  ? '/assessment'
+                  : item.type === 'report'
+                    ? `/assessment-reports/${encodedId}`
+                    : item.type === 'tool'
+                      ? '/tools'
+                      : item.type === 'insight'
+                        ? '/interview'
+                        : item.url;
+
+      return {
+        linkedItem: {
+          ...item,
+          title,
+          status,
+          priority,
+          url: item.url || fallbackUrl,
+        },
+        synced: true,
+      };
+    },
+    []
+  );
+
   const handleAddLinkedItem = async (item: LinkedItem) => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') return;
-    setLinkedItems([...linkedItems, item]);
+    if (isDecisionStageLocked) return;
+    if (linkedItems.some((existing) => existing.id === item.id && existing.type === item.type)) {
+      toast(isPolish ? 'To powiązanie już istnieje' : 'This link already exists', { icon: 'ℹ️' });
+      return;
+    }
+    const { linkedItem, synced } = await hydrateLinkedItem(item);
+    setLinkedItems((prev) => {
+      if (prev.some((existing) => existing.id === linkedItem.id && existing.type === linkedItem.type)) {
+        return prev;
+      }
+      return [...prev, linkedItem];
+    });
+    if (item.type !== 'external' && !synced) {
+      toast(
+        isPolish
+          ? 'Link dodany, ale nie udało się zsynchronizować danych. To sygnał, że linkowanie może nie działać poprawnie.'
+          : 'Link added, but metadata sync failed. This is a sign that internal linking may be broken.',
+        { icon: '⚠️' }
+      );
+    }
   };
 
-  const handleRemoveLinkedItem = async (id: string) => {
-    if (status === 'pending' || status === 'escalated' || status === 'deferred') return;
-    setLinkedItems(linkedItems.filter((i) => i.id !== id));
+  const handleRemoveLinkedItem = async (
+    linkToRemove: string | Pick<LinkedItem, 'id' | 'type'>
+  ) => {
+    if (isDecisionStageLocked) return;
+    if (typeof linkToRemove === 'string') {
+      setLinkedItems(linkedItems.filter((i) => i.id !== linkToRemove));
+      return;
+    }
+    setLinkedItems(
+      linkedItems.filter((i) => !(i.id === linkToRemove.id && i.type === linkToRemove.type))
+    );
   };
 
-  const searchLinkedItems = async (query: string) => {
+  const searchLinkedItems = useCallback(async (query: string) => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
     try {
-      const [tasksRes, initiativesRes, decisionsRes] = await Promise.allSettled([
+      const [
+        tasksRes,
+        initiativesRes,
+        decisionsRes,
+        projectsRes,
+        assessmentsRes,
+        reportsRes,
+        toolsRes,
+        insightsRes,
+      ] =
+        await Promise.allSettled([
         Api.get('/tasks?limit=50'),
         Api.get('/initiatives'),
         Api.getDecisions(),
+        Api.getProjects(),
+        Api.get('/assessments'),
+        Api.get('/reports'),
+        Api.listToolSessions({ limit: 50 }),
+        Api.get('/interview/insights'),
       ]);
 
       const tasks =
@@ -1661,6 +3867,36 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
             : initiativesRes.value?.initiatives || []
           : [];
       const decisions = decisionsRes.status === 'fulfilled' ? decisionsRes.value || [] : [];
+      const projects =
+        projectsRes.status === 'fulfilled'
+          ? Array.isArray(projectsRes.value)
+            ? projectsRes.value
+            : projectsRes.value?.projects || []
+          : [];
+      const assessments =
+        assessmentsRes.status === 'fulfilled'
+          ? Array.isArray(assessmentsRes.value)
+            ? assessmentsRes.value
+            : assessmentsRes.value?.assessments || []
+          : [];
+      const reports =
+        reportsRes.status === 'fulfilled'
+          ? Array.isArray(reportsRes.value)
+            ? reportsRes.value
+            : reportsRes.value?.reports || []
+          : [];
+      const tools =
+        toolsRes.status === 'fulfilled'
+          ? Array.isArray(toolsRes.value)
+            ? toolsRes.value
+            : toolsRes.value?.items || []
+          : [];
+      const insights =
+        insightsRes.status === 'fulfilled'
+          ? Array.isArray(insightsRes.value)
+            ? insightsRes.value
+            : insightsRes.value?.insights || []
+          : [];
 
       const mappedTasks: LinkedItem[] = tasks
         .filter((t: any) =>
@@ -1704,11 +3940,365 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
           status: d.status,
           priority: d.priority,
         }));
+      const mappedProjects: LinkedItem[] = projects
+        .filter((p: any) =>
+          String(p.name || p.title || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 10)
+        .map((p: any) => ({
+          id: String(p.id),
+          type: 'project',
+          title: String(p.name || p.title || 'Project'),
+          status: p.status,
+          priority: p.priority,
+        }));
+      const mappedAssessments: LinkedItem[] = assessments
+        .filter((a: any) =>
+          String(a.title || a.name || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((a: any) => ({
+          id: String(a.id),
+          type: 'assessment',
+          title: String(a.title || a.name || 'Assessment'),
+          status: a.status,
+          url: '/assessment',
+        }));
+      const mappedReports: LinkedItem[] = reports
+        .filter((r: any) =>
+          String(r.title || r.name || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((r: any) => ({
+          id: String(r.id),
+          type: 'report',
+          title: String(r.title || r.name || 'Report'),
+          status: r.status,
+          url: `/assessment-reports/${String(r.id)}`,
+        }));
+      const mappedTools: LinkedItem[] = tools
+        .filter((tool: any) =>
+          String(tool.name || tool.title || tool.toolType || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((tool: any) => ({
+          id: String(tool.id),
+          type: 'tool',
+          title: String(tool.name || tool.title || tool.toolType || 'Tool'),
+          status: tool.status,
+          url: '/tools',
+        }));
+      const mappedInsights: LinkedItem[] = insights
+        .filter((insight: any) =>
+          String(insight.title || insight.name || insight.summary || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((insight: any) => ({
+          id: String(insight.id),
+          type: 'insight',
+          title: String(insight.title || insight.name || 'Insight'),
+          status: insight.status,
+          url: '/interview',
+        }));
 
-      return [...mappedTasks, ...mappedInitiatives, ...mappedDecisions].slice(0, 20);
+      return [
+        ...mappedTasks,
+        ...mappedInitiatives,
+        ...mappedDecisions,
+        ...mappedProjects,
+        ...mappedAssessments,
+        ...mappedReports,
+        ...mappedTools,
+        ...mappedInsights,
+      ].slice(0, 24);
     } catch {
       return [];
     }
+  }, [isPolish]);
+
+  useEffect(() => {
+    if (!isInternalLinkModalOpen) {
+      setLinkSearchQuery('');
+      setLinkSearchResults([]);
+      setIsLinkSearching(false);
+      return;
+    }
+    const query = linkSearchQuery.trim();
+    if (query.length < 2) {
+      setLinkSearchResults([]);
+      setIsLinkSearching(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLinkSearching(true);
+    const timeoutId = window.setTimeout(async () => {
+      const results = await searchLinkedItems(query);
+      if (cancelled) return;
+      const existing = new Set(linkedItems.map((item) => `${item.type}:${item.id}`));
+      setLinkSearchResults(results.filter((item) => !existing.has(`${item.type}:${item.id}`)));
+      setIsLinkSearching(false);
+    }, 260);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [isInternalLinkModalOpen, linkSearchQuery, linkedItems, searchLinkedItems]);
+
+  const handlePickSearchedLinkedItem = async (item: LinkedItem) => {
+    await handleAddLinkedItem(item);
+    setIsInternalLinkModalOpen(false);
+    setLinkSearchQuery('');
+    setLinkSearchResults([]);
+  };
+
+  const handleSaveExternalLinkedItem = async () => {
+    const titleTrimmed = externalLinkTitle.trim();
+    const urlTrimmed = externalLinkUrl.trim();
+    const commentTrimmed = externalLinkComment.trim();
+    if (!urlTrimmed) {
+      toast.error(isPolish ? 'Podaj URL linku' : 'Provide link URL');
+      return;
+    }
+    const title = titleTrimmed || urlTrimmed;
+    await handleAddLinkedItem({
+      id: `external-${Date.now()}`,
+      type: 'external',
+      title,
+      status: isPolish ? 'Zewnętrzny' : 'External',
+      externalUrl: urlTrimmed,
+      url: urlTrimmed,
+      comment: commentTrimmed || undefined,
+    });
+    setExternalLinkTitle('');
+    setExternalLinkUrl('');
+    setExternalLinkComment('');
+    setIsExternalLinkModalOpen(false);
+  };
+
+  const openInternalLinkModal = () => {
+    setLinkSearchQuery('');
+    setLinkSearchResults([]);
+    setResourceMenuKey(null);
+    internalLinksSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setIsInternalLinkModalOpen(true);
+  };
+
+  const openExternalLinkModal = () => {
+    setExternalLinkTitle('');
+    setExternalLinkUrl('');
+    setExternalLinkComment('');
+    setResourceMenuKey(null);
+    externalLinksSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setIsExternalLinkModalOpen(true);
+  };
+
+  const openAttachmentModal = () => {
+    setResourceMenuKey(null);
+    attachmentsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setAttachmentDiskFiles([]);
+    setAttachmentSource('device');
+    setSelectedCloudProvider('google-drive');
+    setIsAttachmentModalOpen(true);
+  };
+
+  const closeAttachmentModal = useCallback(() => {
+    setIsAttachmentModalOpen(false);
+    setAttachmentDiskFiles([]);
+    setAttachmentSource('device');
+    setSelectedCloudProvider('google-drive');
+    closeFilePicker();
+  }, [closeFilePicker]);
+
+  const openIntegrationsSettings = useCallback(() => {
+    window.location.assign(ROUTES.SETTINGS.INTEGRATIONS);
+  }, []);
+
+  const handleCloudFilePickerSelect = useCallback(
+    async (file: CloudFile) => {
+      if (!activeProvider) return;
+      const downloadedFile = await selectFile(file, activeProvider);
+      if (downloadedFile) {
+        setAttachmentDiskFiles((prev) => [...prev, downloadedFile]);
+        toast.success(
+          isPolish
+            ? `Dodano plik z chmury: ${downloadedFile.name}`
+            : `Added cloud file: ${downloadedFile.name}`
+        );
+      } else {
+        toast.error(
+          isPolish
+            ? 'Nie udało się pobrać pliku z chmury'
+            : 'Failed to download selected cloud file'
+        );
+      }
+      closeFilePicker();
+    },
+    [activeProvider, closeFilePicker, isPolish, selectFile]
+  );
+
+  const openCloudProviderPicker = useCallback(() => {
+    const isConnected = connectedProviderIds.includes(selectedCloudProvider);
+    if (!isConnected) {
+      toast(
+        isPolish
+          ? 'Najpierw podłącz wybraną chmurę w Ustawieniach → Integracje'
+          : 'Connect this cloud provider first in Settings → Integrations',
+        { icon: '🔗' }
+      );
+      return;
+    }
+    if (!isCloudImplemented) {
+      toast(
+        isPolish
+          ? 'Integracje chmurowe są przygotowane, pełna obsługa będzie dostępna wkrótce.'
+          : 'Cloud integrations are prepared; full support will be available soon.',
+        { icon: '⏳' }
+      );
+      return;
+    }
+    openFilePicker(selectedCloudProvider);
+  }, [connectedProviderIds, isCloudImplemented, isPolish, openFilePicker, selectedCloudProvider]);
+
+  const openEditLinkedItemModal = (item: LinkedItem) => {
+    setResourceMenuKey(null);
+    setEditingLinkedItemKey(`${item.type}:${item.id}`);
+    setEditingLinkedItemDraft({ ...item });
+  };
+
+  const saveEditedLinkedItem = () => {
+    if (!editingLinkedItemDraft || !editingLinkedItemKey) return;
+    const [type, id] = editingLinkedItemKey.split(':');
+    setLinkedItems((prev) =>
+      prev.map((item) =>
+        item.type === type && item.id === id
+          ? {
+              ...item,
+              title: editingLinkedItemDraft.title,
+              status: editingLinkedItemDraft.status,
+              externalUrl: editingLinkedItemDraft.externalUrl,
+              url: editingLinkedItemDraft.url,
+              comment: editingLinkedItemDraft.comment,
+            }
+          : item
+      )
+    );
+    setEditingLinkedItemKey(null);
+    setEditingLinkedItemDraft(null);
+  };
+
+  const openEditAttachmentModal = (attachment: Attachment) => {
+    setResourceMenuKey(null);
+    setEditingAttachmentId(attachment.id);
+    setEditingAttachmentDraft({ ...attachment });
+  };
+
+  useEffect(() => {
+    const closeMenu = () => setResourceMenuKey(null);
+    window.addEventListener('click', closeMenu);
+    return () => window.removeEventListener('click', closeMenu);
+  }, []);
+
+  useEffect(() => {
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      closeAttachmentModal();
+      setIsInternalLinkModalOpen(false);
+      setLinkSearchQuery('');
+      setLinkSearchResults([]);
+      setIsExternalLinkModalOpen(false);
+      setExternalLinkTitle('');
+      setExternalLinkUrl('');
+      setExternalLinkComment('');
+    };
+    window.addEventListener('keydown', onEscape);
+    return () => window.removeEventListener('keydown', onEscape);
+  }, [closeAttachmentModal]);
+
+  const saveEditedAttachment = () => {
+    if (!editingAttachmentId || !editingAttachmentDraft) return;
+    setAttachments((prev) =>
+      prev.map((attachment) =>
+        attachment.id === editingAttachmentId
+          ? {
+              ...attachment,
+              name: editingAttachmentDraft.name,
+              url: editingAttachmentDraft.url,
+            }
+          : attachment
+      )
+    );
+    setEditingAttachmentId(null);
+    setEditingAttachmentDraft(null);
+  };
+
+  const saveAttachmentFromModal = async () => {
+    if (attachmentDiskFiles.length === 0) {
+      toast.error(isPolish ? 'Wybierz co najmniej jeden plik' : 'Choose at least one file');
+      return;
+    }
+    const dt = new DataTransfer();
+    attachmentDiskFiles.forEach((file) => dt.items.add(file));
+    await handleUploadAttachments(dt.files);
+    closeAttachmentModal();
+  };
+
+  const getLinkedStatusBadgeClass = (status?: string) => {
+    const normalized = String(status || '').trim().toLowerCase();
+    if (!normalized) return 'border-slate-300/50 text-slate-400 bg-slate-500/10';
+    if (['approved', 'completed', 'done', 'closed', 'mitigated', 'resolved'].includes(normalized)) {
+      return 'border-emerald-400/40 text-emerald-400 bg-emerald-500/10';
+    }
+    if (['in progress', 'in_progress', 'active', 'open', 'monitoring', 'monitored'].includes(normalized)) {
+      return 'border-blue-400/40 text-blue-400 bg-blue-500/10';
+    }
+    if (['pending', 'review', 'deferred', 'draft'].includes(normalized)) {
+      return 'border-amber-400/40 text-amber-400 bg-amber-500/10';
+    }
+    if (['blocked', 'rejected', 'critical', 'overdue'].includes(normalized)) {
+      return 'border-red-400/40 text-red-400 bg-red-500/10';
+    }
+    return 'border-slate-300/50 text-slate-400 bg-slate-500/10';
+  };
+
+  const openLinkedItemTarget = (item: LinkedItem) => {
+    const explicitUrl = item.externalUrl || item.url;
+    const normalizedItemId = String(item.id);
+    const fallbackPath =
+      item.type === 'task'
+        ? `/my-work/tasks/${normalizedItemId}`
+        : item.type === 'decision'
+          ? `/my-work/decisions/${normalizedItemId}`
+          : item.type === 'initiative'
+            ? `/initiatives/${normalizedItemId}`
+            : item.type === 'project'
+              ? `/projects/${normalizedItemId}`
+              : item.type === 'assessment'
+                ? '/assessment'
+                : item.type === 'report'
+                  ? `/assessment-reports/${normalizedItemId}`
+                  : item.type === 'tool'
+                    ? '/tools'
+                    : item.type === 'insight'
+                      ? '/interview'
+            : null;
+    const target = explicitUrl || fallbackPath;
+    if (!target) {
+      toast(isPolish ? 'Brak docelowego linku' : 'No target link available', { icon: 'ℹ️' });
+      return;
+    }
+    window.open(target, '_blank', 'noopener,noreferrer');
   };
 
   if (loading) {
@@ -1722,9 +4312,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       <div className="p-6">
-        <div
-          className={`${presentationMode === 'c' ? 'max-w-none w-full' : 'max-w-6xl'} mx-auto grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6`}
-        >
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
           {/* Main */}
           {/* Title Header with Save & Chat */}
           <motion.div
@@ -1756,6 +4344,19 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                   placeholder={isPolish ? 'Tytuł decyzji...' : 'Decision title...'}
                   autoFocus={!decisionId}
                 />
+                {decisionId && (
+                  <>
+                    <span className="hidden sm:inline-flex px-2 py-1 rounded-md border border-slate-300/50 dark:border-navy-600/70 text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400">
+                      {buildArtifactCode('decision', decisionId)}
+                    </span>
+                    <ArtifactPermalinkButton
+                      artifactType="decision"
+                      artifactId={decisionId}
+                      isPolish={isPolish}
+                      size={14}
+                    />
+                  </>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -1763,12 +4364,32 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleSave}
-                  disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                  title={isPolish ? 'Zapisz' : 'Save'}
+                  disabled={saving || !isDirty}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm disabled:cursor-not-allowed ${
+                    isDirty
+                      ? 'bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10'
+                      : 'bg-slate-100/70 dark:bg-navy-900/40 border border-slate-300/50 dark:border-navy-700/60 text-slate-400 dark:text-slate-500'
+                  } ${saving ? 'opacity-70' : ''}`}
+                  title={
+                    isDirty
+                      ? isPolish
+                        ? 'Zapisz i opublikuj zmiany'
+                        : 'Save and publish changes'
+                      : isPolish
+                        ? 'Brak zmian do zapisu'
+                        : 'No changes to save'
+                  }
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                  <span>{isPolish ? 'Zapisz' : 'Save'}</span>
+                  <span>
+                    {isDirty
+                      ? isPolish
+                        ? 'Zapisz'
+                        : 'Save'
+                      : isPolish
+                        ? 'Zapisane'
+                        : 'Saved'}
+                  </span>
                 </motion.button>
 
                 <motion.button
@@ -1785,6 +4406,11 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                 {/* Presentation Mode Switcher — between Chat and AI (doc §5.1) */}
                 <div className="w-px h-6 bg-slate-200 dark:bg-navy-700" />
                 <PresentationModeSwitcher value={presentationMode} onChange={setPresentationMode} />
+                {draftSavedLabel && (
+                  <span className="hidden xl:inline text-xs text-slate-500 dark:text-slate-400">
+                    {draftSavedLabel}
+                  </span>
+                )}
               </div>
             </div>
           </motion.div>
@@ -1893,6 +4519,14 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                         className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
                       >
                         <div className="p-4">
+                          <div className="mb-2 flex items-center justify-end">
+                            {renderFieldAIButton(
+                              'd-description',
+                              'Decision Description',
+                              description,
+                              setDescription
+                            )}
+                          </div>
                           <textarea
                             value={description}
                             onChange={(e) =>
@@ -1970,9 +4604,19 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                         <div className="p-4 space-y-3">
                           {/* Recommendation callout */}
                           <div className="p-3 rounded-xl bg-amber-50/80 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/20">
-                            <label className="block text-xs font-medium text-amber-700 dark:text-amber-300 mb-2">
-                              {isPolish ? 'Konsekwencje braku decyzji' : 'Consequences of Inaction'}
-                            </label>
+                            <div className="mb-2 flex items-center justify-between">
+                              <label className="block text-xs font-medium text-amber-700 dark:text-amber-300">
+                                {isPolish
+                                  ? 'Konsekwencje braku decyzji'
+                                  : 'Consequences of Inaction'}
+                              </label>
+                              {renderFieldAIButton(
+                                'd-rationale',
+                                'Consequences of Inaction',
+                                rationale,
+                                setRationale
+                              )}
+                            </div>
                             <textarea
                               value={rationale}
                               onChange={(e) =>
@@ -2892,7 +5536,18 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                   onAdd={handleAddLinkedItem}
                   onRemove={handleRemoveLinkedItem}
                   searchItems={searchLinkedItems}
-                  allowedTypes={['task', 'initiative', 'decision', 'risk', 'project', 'external']}
+                  allowedTypes={[
+                    'task',
+                    'initiative',
+                    'decision',
+                    'risk',
+                    'project',
+                    'assessment',
+                    'report',
+                    'tool',
+                    'insight',
+                    'external',
+                  ]}
                   expanded={isExpanded('linkedItems')}
                   onToggleExpand={() => toggleSection('linkedItems')}
                 />
@@ -2916,59 +5571,88 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                     <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
                       Status
                     </label>
-                    <div className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 truncate">
-                      {isPolish ? STATUS_CONFIG[status].label.pl : STATUS_CONFIG[status].label.en}
-                    </div>
-                  </div>
-                  {/* Decider */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                      {isPolish ? 'Decydent' : 'Decider'}
-                    </label>
-                    <div className="px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 truncate">
-                      {(() => {
-                        const decider = users.find((u) => u.id === deciderId);
-                        return decider ? `${decider.firstName} ${decider.lastName}` : '—';
-                      })()}
-                    </div>
+                    <select
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value as keyof typeof STATUS_CONFIG)}
+                      className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-navy-800 border ${statusAlertBorderClass} text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors`}
+                    >
+                      {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+                        <option key={key} value={key}>
+                          {isPolish ? config.label.pl : config.label.en}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   {/* Priority */}
                   <div className="space-y-1">
                     <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Priorytet' : 'Priority'}
                     </label>
-                    <div className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 truncate">
-                      {isPolish
-                        ? PRIORITY_CONFIG[priority].label.pl
-                        : PRIORITY_CONFIG[priority].label.en}
-                    </div>
+                    <select
+                      value={priority}
+                      onChange={(e) => setPriority(e.target.value as keyof typeof PRIORITY_CONFIG)}
+                      className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-navy-800 border ${priorityAlertBorderClass} text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors`}
+                    >
+                      {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
+                        <option key={key} value={key}>
+                          {isPolish ? config.label.pl : config.label.en}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Created date */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Data utworzenia' : 'Created date'}
+                    </label>
+                    <input
+                      type="date"
+                      value={createdAt ? createdAt.split('T')[0] : ''}
+                      onChange={(e) => setCreatedAt(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
+                    />
                   </div>
                   {/* Due date */}
                   <div className="space-y-1">
                     <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Termin' : 'Deadline'}
                     </label>
-                    <div className="px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 truncate">
-                      {dueDate || '—'}
-                    </div>
+                    <input
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                      className={`w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border ${dueDateAlertBorderClass} text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors`}
+                    />
                   </div>
                   {/* Requester */}
                   <div className="space-y-1">
                     <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Wnioskodawca' : 'Requester'}
                     </label>
-                    <div className="px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 truncate">
-                      {requesterName || '—'}
-                    </div>
+                    <input
+                      value={requesterName}
+                      onChange={(e) => setRequesterName(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
+                      placeholder={isPolish ? 'Wnioskodawca...' : 'Requester...'}
+                    />
                   </div>
-                  {/* Initiative */}
+                  {/* Decider */}
                   <div className="space-y-1">
                     <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                      {isPolish ? 'Inicjatywa' : 'Initiative'}
+                      {isPolish ? 'Decydent' : 'Decider'}
                     </label>
-                    <div className="px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 truncate">
-                      {initiativeName || (isPolish ? 'Samodzielna' : 'Standalone')}
-                    </div>
+                    <select
+                      value={deciderId}
+                      onChange={(e) => setDeciderId(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
+                    >
+                      <option value="">—</option>
+                      {users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.firstName} {u.lastName}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
                 {/* Action buttons for pending decisions */}
@@ -2998,6 +5682,101 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                     >
                       <Share2 size={13} /> {isPolish ? 'Deleguj' : 'Delegate'}
                     </button>
+                    {activeNotionSection === 'options-tradeoffs' && (
+                      <button
+                        onClick={generateAlternativesAI}
+                        disabled={isDecisionStageLocked || isGeneratingAlternatives}
+                        className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          isGeneratingAlternatives
+                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                        } disabled:opacity-40 disabled:cursor-not-allowed`}
+                        title={isPolish ? 'Generuj opcje przez AI' : 'Generate options with AI'}
+                      >
+                        {isGeneratingAlternatives ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={13} />
+                        )}
+                        {isPolish ? 'Generuj opcje' : 'Generate options'}
+                      </button>
+                    )}
+                    {activeNotionSection === 'risk-impact' && (
+                      <button
+                        onClick={generateRisksAI}
+                        disabled={isDecisionStageLocked || isGeneratingRisks}
+                        className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          isGeneratingRisks
+                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                        } disabled:opacity-40 disabled:cursor-not-allowed`}
+                        title={isPolish ? 'Analizuj ryzyka przez AI' : 'Analyze risks with AI'}
+                      >
+                        {isGeneratingRisks ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={13} />
+                        )}
+                        {isPolish ? 'Analizuj ryzyka' : 'Analyze risks'}
+                      </button>
+                    )}
+                    {activeNotionSection === 'governance-escalation' && (
+                      <button
+                        onClick={suggestStakeholdersAI}
+                        disabled={isDecisionStageLocked || isSuggestingStakeholders}
+                        className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          isSuggestingStakeholders
+                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                        } disabled:opacity-40 disabled:cursor-not-allowed`}
+                        title={isPolish ? 'Generuj RACI przez AI' : 'Generate RACI with AI'}
+                      >
+                        {isSuggestingStakeholders ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={13} />
+                        )}
+                        {isPolish ? 'Generuj RACI' : 'Generate RACI'}
+                      </button>
+                    )}
+                    {activeNotionSection === 'comments' && (
+                      <button
+                        onClick={generateAIComment}
+                        disabled={isDecisionStageLocked || isGeneratingAIComment}
+                        className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          isGeneratingAIComment
+                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                        } disabled:opacity-40 disabled:cursor-not-allowed`}
+                        title={isPolish ? 'Generuj komentarz przez AI' : 'Generate AI comment'}
+                      >
+                        {isGeneratingAIComment ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={13} />
+                        )}
+                        {isPolish ? 'AI komentarze' : 'AI comments'}
+                      </button>
+                    )}
+                    {activeNotionSection === 'consequences' && (
+                      <button
+                        onClick={() => generateConsequenceScenariosAI()}
+                        disabled={isDecisionStageLocked || isGeneratingConsequenceScenarios}
+                        className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          isGeneratingConsequenceScenarios
+                            ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                            : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                        } disabled:opacity-40 disabled:cursor-not-allowed`}
+                        title={isPolish ? 'Uruchom analizę konsekwencji przez AI' : 'Run AI consequence analysis'}
+                      >
+                        {isGeneratingConsequenceScenarios ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={13} />
+                        )}
+                        {isPolish ? 'Analizuj konsekwencje' : 'Analyze consequences'}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -3054,10 +5833,10 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
 
                       {/* ── Section: Context & Problem ───────────────── */}
                       {activeNotionSection === 'context-problem' && (
-                        <div className="space-y-5">
+                        <div className="space-y-6">
                           <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                              {isPolish ? 'Kontekst i problem' : 'Context & Problem'}
+                              {isPolish ? 'Zakres decyzji' : 'Decision Scope'}
                             </h2>
                             <button
                               onClick={generateDescriptionAI}
@@ -3072,20 +5851,141 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                               AI
                             </button>
                           </div>
-                          <textarea
-                            value={description}
-                            onChange={(e) =>
-                              !isDecisionStageLocked && setDescription(e.target.value)
-                            }
-                            readOnly={isDecisionStageLocked}
-                            rows={8}
-                            className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200/40 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
-                            placeholder={
-                              isPolish
-                                ? 'Opisz kontekst i wymagania decyzji...'
-                                : 'Describe the context and requirements...'
-                            }
-                          />
+
+                          {/* 1) Related item from linked records */}
+                          <div className="space-y-2">
+                            <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                              {isPolish ? 'Dotyczy' : 'Related to'}
+                            </label>
+                            {relatedDecisionItems.length === 0 ? (
+                              <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border border-amber-400/60 text-amber-600 dark:text-amber-300 bg-amber-500/10">
+                                {isPolish ? 'Brak podpiętego elementu' : 'No linked item'}
+                              </div>
+                            ) : (
+                              <div className="space-y-1">
+                                {relatedDecisionItems.map((item) => (
+                                  <div
+                                    key={item.id}
+                                    className="flex items-center justify-between gap-3 text-sm text-slate-700 dark:text-slate-300"
+                                  >
+                                    <div className="flex min-w-0 items-center gap-2">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 uppercase">
+                                        {item.type}
+                                      </span>
+                                      <span className="truncate">{item.title}</span>
+                                    </div>
+                                    <span className="shrink-0 text-[11px] font-mono text-slate-500/70 dark:text-slate-500/70">
+                                      {getLinkedItemIndex(item)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 2) Decision scope */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                {isPolish ? 'Zakres decyzji' : 'Decision scope'}
+                              </label>
+                              {renderFieldAIButton(
+                                'n-description',
+                                'Decision Scope',
+                                description,
+                                setDescription
+                              )}
+                            </div>
+                            <div className="relative">
+                              <textarea
+                                value={description}
+                                onChange={(e) =>
+                                  !isDecisionStageLocked && setDescription(e.target.value)
+                                }
+                                readOnly={isDecisionStageLocked}
+                                rows={isDescriptionExpanded ? 10 : 6}
+                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200/40 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
+                                placeholder={
+                                  isPolish
+                                    ? 'Opisz zakres decyzji (co dokładnie podlega decyzji)...'
+                                    : 'Describe the decision scope (what exactly is being decided)...'
+                                }
+                              />
+                              {!isDescriptionExpanded && canExpandDescription && (
+                                <div className="pointer-events-none absolute bottom-7 left-0 right-0 h-10 bg-gradient-to-t from-white/90 to-transparent dark:from-navy-900/90" />
+                              )}
+                            </div>
+                            {canExpandDescription && (
+                              <button
+                                onClick={() => setIsDescriptionExpanded((prev) => !prev)}
+                                className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                              >
+                                {isDescriptionExpanded ? (
+                                  <>
+                                    <ChevronsUpDown size={12} />
+                                    {isPolish ? 'Pokaż mniej' : 'See less'}
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronsUpDown size={12} />
+                                    {isPolish ? 'Pokaż więcej' : 'See more'}
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+
+                          {/* 3) Additional context */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                {isPolish ? 'Kontekst uzupełniający' : 'Additional context'}
+                              </label>
+                              {renderFieldAIButton(
+                                'n-context',
+                                'Additional Context',
+                                contextDetails,
+                                setContextDetails
+                              )}
+                            </div>
+                            <div className="relative">
+                              <textarea
+                                value={contextDetails}
+                                onChange={(e) =>
+                                  !isDecisionStageLocked && setContextDetails(e.target.value)
+                                }
+                                readOnly={isDecisionStageLocked}
+                                rows={isContextExpanded ? 8 : 5}
+                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200/40 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
+                                placeholder={
+                                  isPolish
+                                    ? 'Dodatkowe wyjaśnienie, założenia, ograniczenia (opcjonalnie)...'
+                                    : 'Additional explanation, assumptions, constraints (optional)...'
+                                }
+                              />
+                              {!isContextExpanded && canExpandContext && (
+                                <div className="pointer-events-none absolute bottom-7 left-0 right-0 h-10 bg-gradient-to-t from-white/90 to-transparent dark:from-navy-900/90" />
+                              )}
+                            </div>
+                            {canExpandContext && (
+                              <button
+                                onClick={() => setIsContextExpanded((prev) => !prev)}
+                                className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                              >
+                                {isContextExpanded ? (
+                                  <>
+                                    <ChevronsUpDown size={12} />
+                                    {isPolish ? 'Pokaż mniej' : 'See less'}
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronsUpDown size={12} />
+                                    {isPolish ? 'Pokaż więcej' : 'See more'}
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )}
 
@@ -3096,18 +5996,6 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                             <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
                               {isPolish ? 'Opcje i trade-offy' : 'Options & Trade-offs'}
                             </h2>
-                            <button
-                              onClick={generateAlternativesAI}
-                              disabled={isDecisionStageLocked || isGeneratingAlternatives}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors disabled:opacity-50"
-                            >
-                              {isGeneratingAlternatives ? (
-                                <Loader2 size={13} className="animate-spin" />
-                              ) : (
-                                <Sparkles size={13} />
-                              )}
-                              {isPolish ? 'Generuj opcje' : 'Generate options'}
-                            </button>
                           </div>
 
                           {alternatives.length === 0 ? (
@@ -3131,11 +6019,11 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                             </div>
                           ) : (
                             /* InlineTable — flat comparison */
-                            <div className="space-y-0 divide-y divide-slate-200/50 dark:divide-navy-700/50">
+                            <div className="space-y-0 divide-y divide-slate-300/55 dark:divide-navy-600/65">
                               {alternatives.map((alt) => (
                                 <div
                                   key={alt.id}
-                                  className={`py-4 first:pt-0 group ${alt.isRecommended ? 'relative' : ''}`}
+                                  className={`py-5 first:pt-1 group ${alt.isRecommended ? 'relative' : ''}`}
                                 >
                                   {alt.isRecommended && (
                                     <span
@@ -3181,17 +6069,122 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                     className="w-full text-xs bg-transparent text-slate-500 dark:text-slate-400 focus:outline-none placeholder-slate-300 dark:placeholder-slate-600 resize-none leading-relaxed"
                                     placeholder={isPolish ? 'Opis...' : 'Description...'}
                                   />
+                                  <div className="mt-1 flex justify-end gap-2">
+                                    {renderFieldAIButton(
+                                      `n-alt-${alt.id}`,
+                                      `Option: ${alt.title || 'Option description'}`,
+                                      alt.description || '',
+                                      (value) => updateAlternative(alt.id, { description: value })
+                                    )}
+                                  </div>
                                   {/* Inline pros/cons */}
-                                  <div className="flex gap-6 mt-2 text-[11px]">
-                                    <div className="flex-1">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 text-[11px]">
+                                    <div className="space-y-1.5">
                                       <span className="text-emerald-600 dark:text-emerald-400 font-medium">
                                         + {alt.pros?.length || 0} {isPolish ? 'za' : 'pros'}
                                       </span>
+                                      {(alt.pros || []).map((pro, idx) => (
+                                        <div key={`${alt.id}-pro-${idx}`} className="flex items-center gap-1.5">
+                                          <input
+                                            value={pro}
+                                            onChange={(e) =>
+                                              updateAlternativePro(alt.id, idx, e.target.value)
+                                            }
+                                            className="flex-1 text-[11px] bg-transparent border-b border-emerald-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
+                                            placeholder={isPolish ? 'Argument za...' : 'Pro argument...'}
+                                          />
+                                          <button
+                                            onClick={() => removeAlternativePro(alt.id, idx)}
+                                            className="p-0.5 text-slate-400 hover:text-red-500 transition-colors"
+                                          >
+                                            <X size={11} />
+                                          </button>
+                                        </div>
+                                      ))}
+                                      <div className="flex items-center gap-1.5">
+                                        <input
+                                          value={altProsDraft[alt.id] || ''}
+                                          onChange={(e) =>
+                                            setAltProsDraft((prev) => ({
+                                              ...prev,
+                                              [alt.id]: e.target.value,
+                                            }))
+                                          }
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              e.preventDefault();
+                                              addAlternativePro(alt.id, altProsDraft[alt.id] || '');
+                                            }
+                                          }}
+                                          className="flex-1 text-[11px] bg-transparent border-b border-slate-200/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
+                                          placeholder={isPolish ? '+ Dodaj argument za' : '+ Add pro'}
+                                        />
+                                      </div>
+                                      <div className="flex flex-wrap gap-1">
+                                        {quickProArguments.map((arg) => (
+                                          <button
+                                            key={`${alt.id}-quick-pro-${arg}`}
+                                            onClick={() => addAlternativePro(alt.id, arg)}
+                                            className="px-1.5 py-0.5 rounded border border-emerald-400/30 text-emerald-600 dark:text-emerald-400 text-[10px] hover:bg-emerald-500/10 transition-colors"
+                                          >
+                                            +{arg}
+                                          </button>
+                                        ))}
+                                      </div>
                                     </div>
-                                    <div className="flex-1">
+
+                                    <div className="space-y-1.5">
                                       <span className="text-red-500 dark:text-red-400 font-medium">
                                         − {alt.cons?.length || 0} {isPolish ? 'przeciw' : 'cons'}
                                       </span>
+                                      {(alt.cons || []).map((con, idx) => (
+                                        <div key={`${alt.id}-con-${idx}`} className="flex items-center gap-1.5">
+                                          <input
+                                            value={con}
+                                            onChange={(e) =>
+                                              updateAlternativeCon(alt.id, idx, e.target.value)
+                                            }
+                                            className="flex-1 text-[11px] bg-transparent border-b border-red-400/20 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-red-400"
+                                            placeholder={isPolish ? 'Argument przeciw...' : 'Con argument...'}
+                                          />
+                                          <button
+                                            onClick={() => removeAlternativeCon(alt.id, idx)}
+                                            className="p-0.5 text-slate-400 hover:text-red-500 transition-colors"
+                                          >
+                                            <X size={11} />
+                                          </button>
+                                        </div>
+                                      ))}
+                                      <div className="flex items-center gap-1.5">
+                                        <input
+                                          value={altConsDraft[alt.id] || ''}
+                                          onChange={(e) =>
+                                            setAltConsDraft((prev) => ({
+                                              ...prev,
+                                              [alt.id]: e.target.value,
+                                            }))
+                                          }
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              e.preventDefault();
+                                              addAlternativeCon(alt.id, altConsDraft[alt.id] || '');
+                                            }
+                                          }}
+                                          className="flex-1 text-[11px] bg-transparent border-b border-slate-200/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
+                                          placeholder={isPolish ? '+ Dodaj argument przeciw' : '+ Add con'}
+                                        />
+                                      </div>
+                                      <div className="flex flex-wrap gap-1">
+                                        {quickConArguments.map((arg) => (
+                                          <button
+                                            key={`${alt.id}-quick-con-${arg}`}
+                                            onClick={() => addAlternativeCon(alt.id, arg)}
+                                            className="px-1.5 py-0.5 rounded border border-red-400/30 text-red-500 dark:text-red-400 text-[10px] hover:bg-red-500/10 transition-colors"
+                                          >
+                                            +{arg}
+                                          </button>
+                                        ))}
+                                      </div>
                                     </div>
                                     {alt.riskLevel && (
                                       <span
@@ -3222,18 +6215,6 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                             <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
                               {isPolish ? 'Ryzyko i wpływ' : 'Risk & Impact'}
                             </h2>
-                            <button
-                              onClick={generateRisksAI}
-                              disabled={isDecisionStageLocked || isGeneratingRisks}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-500 dark:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
-                            >
-                              {isGeneratingRisks ? (
-                                <Loader2 size={13} className="animate-spin" />
-                              ) : (
-                                <Sparkles size={13} />
-                              )}
-                              {isPolish ? 'Generuj ryzyka' : 'Generate risks'}
-                            </button>
                           </div>
 
                           {/* Risk items — flat list */}
@@ -3256,57 +6237,213 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                               </button>
                             </div>
                           ) : (
-                            <div className="space-y-0 divide-y divide-slate-200/50 dark:divide-navy-700/50">
-                              {risks.map((risk) => (
-                                <div key={risk.id} className="py-3 first:pt-0 group">
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div className="flex-1 min-w-0">
-                                      <input
-                                        value={risk.title}
-                                        onChange={(e) =>
-                                          updateRisk(risk.id, { title: e.target.value })
-                                        }
-                                        className="w-full text-sm font-medium bg-transparent text-slate-800 dark:text-white focus:outline-none placeholder-slate-400"
-                                        placeholder={isPolish ? 'Nazwa ryzyka...' : 'Risk name...'}
-                                      />
+                            <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+                              <span>
+                                {isPolish
+                                  ? 'Posortowane wg najwyższego risk score (P×I)'
+                                  : 'Sorted by highest risk score (P×I)'}
+                              </span>
+                              <span>{isPolish ? `${risks.length} ryzyk` : `${risks.length} risks`}</span>
+                            </div>
+                          )}
+
+                          {risks.length > 0 && (
+                            <div className="space-y-0 divide-y divide-slate-300/55 dark:divide-navy-600/65">
+                              <div className="py-2 text-[10px] flex flex-wrap items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                                <span>{isPolish ? 'Legenda poziomów:' : 'Level legend:'}</span>
+                                {riskLevelOptions.map((level) => (
+                                  <span
+                                    key={`legend-${level}`}
+                                    className={`px-1.5 py-0.5 rounded border font-medium ${getRiskLevelClass(level)}`}
+                                  >
+                                    {getRiskLevelLabel(level)}
+                                  </span>
+                                ))}
+                              </div>
+                              {sortedRisks.map((risk) => (
+                                <div key={risk.id} className="py-5 first:pt-2 group">
+                                  <div className="p-5 rounded-xl bg-slate-50/20 dark:bg-navy-900/25 space-y-5">
+                                    {/* Top full-width: title + score + selectors */}
+                                    <div className="space-y-3">
+                                      <div className="flex items-start justify-between gap-3">
+                                        <input
+                                          value={risk.title}
+                                          onChange={(e) =>
+                                            updateRisk(risk.id, { title: e.target.value })
+                                          }
+                                          className="flex-1 text-sm font-medium bg-transparent text-slate-800 dark:text-white focus:outline-none placeholder-slate-400"
+                                          placeholder={isPolish ? 'Nazwa ryzyka...' : 'Risk name...'}
+                                        />
+                                        <div className="flex items-center gap-2">
+                                          <span
+                                            className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold ${getRiskScoreClass(getRiskScore(risk))}`}
+                                          >
+                                            Score {getRiskScore(risk)}
+                                          </span>
+                                          <button
+                                            onClick={() => removeRisk(risk.id)}
+                                            className="p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                          >
+                                            <X size={12} />
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                        <div className="space-y-1">
+                                          <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                            {isPolish ? 'Prawdopodobieństwo' : 'Probability'}
+                                          </span>
+                                          <select
+                                            value={risk.probability}
+                                            onChange={(e) =>
+                                              updateRisk(risk.id, {
+                                                probability: e.target.value as any,
+                                              })
+                                            }
+                                            className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-primary-400 ${getRiskLevelClass(
+                                              risk.probability
+                                            )}`}
+                                          >
+                                            {riskLevelOptions.map((level) => (
+                                              <option key={`p-${risk.id}-${level}`} value={level}>
+                                                {getRiskLevelLabel(level)}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                        <div className="space-y-1">
+                                          <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                            {isPolish ? 'Wpływ' : 'Impact'}
+                                          </span>
+                                          <select
+                                            value={risk.impact}
+                                            onChange={(e) =>
+                                              updateRisk(risk.id, { impact: e.target.value as any })
+                                            }
+                                            className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-primary-400 ${getRiskLevelClass(
+                                              risk.impact
+                                            )}`}
+                                          >
+                                            {riskLevelOptions.map((level) => (
+                                              <option key={`i-${risk.id}-${level}`} value={level}>
+                                                {getRiskLevelLabel(level)}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                        <div className="space-y-1">
+                                          <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                            {isPolish ? 'Kategoria' : 'Category'}
+                                          </span>
+                                          <select
+                                            value={risk.category || 'business'}
+                                            onChange={(e) =>
+                                              updateRisk(risk.id, { category: e.target.value as any })
+                                            }
+                                            className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                                          >
+                                            {riskCategoryOptions.map((cat) => (
+                                              <option key={`c-${risk.id}-${cat.value}`} value={cat.value}>
+                                                {cat.label}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                      </div>
                                     </div>
-                                    <div className="flex items-center gap-2 text-[11px]">
-                                      <span
-                                        className={`px-1.5 py-0.5 rounded font-medium ${
-                                          risk.probability === 'critical' ||
-                                          risk.probability === 'high'
-                                            ? 'text-red-600 dark:text-red-400 bg-red-500/10'
-                                            : risk.probability === 'medium'
-                                              ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10'
-                                              : 'text-slate-500 bg-slate-500/10'
-                                        }`}
-                                      >
-                                        P: {risk.probability}
-                                      </span>
-                                      <span
-                                        className={`px-1.5 py-0.5 rounded font-medium ${
-                                          risk.impact === 'critical' || risk.impact === 'high'
-                                            ? 'text-red-600 dark:text-red-400 bg-red-500/10'
-                                            : risk.impact === 'medium'
-                                              ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10'
-                                              : 'text-slate-500 bg-slate-500/10'
-                                        }`}
-                                      >
-                                        I: {risk.impact}
-                                      </span>
-                                      <button
-                                        onClick={() => removeRisk(risk.id)}
-                                        className="p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                                      >
-                                        <X size={12} />
-                                      </button>
+
+                                    {/* Bottom two columns: left risk, right mitigation */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                                      <div className="space-y-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                            {isPolish ? 'Ryzyko (materializacja)' : 'Risk (materialized)'}
+                                          </span>
+                                          {renderFieldAIButton(
+                                            `n-risk-con-${risk.id}`,
+                                            `Risk contingency: ${risk.title || 'Risk'}`,
+                                            risk.contingency || '',
+                                            (value) => updateRisk(risk.id, { contingency: value })
+                                          )}
+                                        </div>
+                                        <textarea
+                                          value={risk.contingency || ''}
+                                          onChange={(e) =>
+                                            updateRisk(risk.id, { contingency: e.target.value })
+                                          }
+                                          rows={4}
+                                          className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
+                                          placeholder={
+                                            isPolish
+                                              ? 'Co robimy, gdy ryzyko się zmaterializuje?'
+                                              : 'What is the fallback if risk materializes?'
+                                          }
+                                        />
+                                        <div className="flex flex-wrap gap-1">
+                                          {quickContingencyArguments.map((arg) => (
+                                            <button
+                                              key={`${risk.id}-con-${arg}`}
+                                              onClick={() =>
+                                                updateRisk(risk.id, {
+                                                  contingency: risk.contingency
+                                                    ? `${risk.contingency}\n- ${arg}`
+                                                    : `- ${arg}`,
+                                                })
+                                              }
+                                              className="px-1.5 py-0.5 rounded border border-red-400/30 text-red-500 dark:text-red-400 text-[10px] hover:bg-red-500/10 transition-colors"
+                                            >
+                                              +{arg}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+
+                                      <div className="space-y-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                            {isPolish ? 'Mitigacja' : 'Mitigation'}
+                                          </span>
+                                          {renderFieldAIButton(
+                                            `n-risk-mit-${risk.id}`,
+                                            `Risk mitigation: ${risk.title || 'Risk'}`,
+                                            risk.mitigation || '',
+                                            (value) => updateRisk(risk.id, { mitigation: value })
+                                          )}
+                                        </div>
+                                        <textarea
+                                          value={risk.mitigation || ''}
+                                          onChange={(e) =>
+                                            updateRisk(risk.id, { mitigation: e.target.value })
+                                          }
+                                          rows={4}
+                                          className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
+                                          placeholder={
+                                            isPolish
+                                              ? 'Jak ograniczamy to ryzyko?'
+                                              : 'How do we mitigate this risk?'
+                                          }
+                                        />
+                                        <div className="flex flex-wrap gap-1">
+                                          {quickMitigationArguments.map((arg) => (
+                                            <button
+                                              key={`${risk.id}-mit-${arg}`}
+                                              onClick={() =>
+                                                updateRisk(risk.id, {
+                                                  mitigation: risk.mitigation
+                                                    ? `${risk.mitigation}\n- ${arg}`
+                                                    : `- ${arg}`,
+                                                })
+                                              }
+                                              className="px-1.5 py-0.5 rounded border border-emerald-400/30 text-emerald-600 dark:text-emerald-400 text-[10px] hover:bg-emerald-500/10 transition-colors"
+                                            >
+                                              +{arg}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
                                     </div>
                                   </div>
-                                  {(risk.mitigation || risk.contingency) && (
-                                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
-                                      {risk.mitigation}
-                                    </p>
-                                  )}
                                 </div>
                               ))}
                             </div>
@@ -3319,22 +6456,122 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                             + {isPolish ? 'Dodaj ryzyko' : 'Add risk'}
                           </button>
 
-                          {/* Callout: Consequences of Inaction (§2.5.5 Callout block) */}
-                          <div className="mt-2 pl-4 border-l-2 border-amber-400 dark:border-amber-500/60">
-                            <div className="flex items-center justify-between mb-2">
-                              <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                                {isPolish
-                                  ? 'Konsekwencje braku decyzji'
-                                  : 'Consequences of Inaction'}
-                              </h3>
-                              <button
-                                onClick={generateConsequencesOfInactionAI}
-                                disabled={isDecisionStageLocked}
-                                className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                              >
-                                <Sparkles size={11} />
-                                {isPolish ? 'Wypełnij AI' : 'Fill with AI'}
-                              </button>
+                        </div>
+                      )}
+
+                      {/* ── Section: Consequences (dedicated menu block) ── */}
+                      {activeNotionSection === 'consequences' && (
+                        <div className="space-y-6">
+                          <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                              {isPolish
+                                ? 'Konsekwencje braku decyzji'
+                                : 'Consequences of Inaction'}
+                            </h2>
+                            {renderFieldAIButton(
+                              'n-rationale-scenarios',
+                              'Consequences of Inaction',
+                              rationale,
+                              setRationale
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
+                              <span>
+                                {isPolish ? 'Scenariusze AI (real-time)' : 'AI scenarios (real-time)'}
+                              </span>
+                              <span className="text-[10px]">
+                                {displayedConsequenceScenarios.source === 'ai'
+                                  ? isPolish
+                                    ? 'Źródło: AI'
+                                    : 'Source: AI'
+                                  : isPolish
+                                    ? 'Źródło: fallback'
+                                    : 'Source: fallback'}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-400 dark:text-slate-500">
+                              {isGeneratingConsequenceScenarios
+                                ? isPolish
+                                  ? 'AI aktualizuje scenariusze...'
+                                  : 'AI is updating scenarios...'
+                                : null}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+                            {(
+                              [
+                                ['optimistic', isPolish ? 'Optymistyczny' : 'Optimistic'],
+                                ['neutral', isPolish ? 'Neutralny' : 'Neutral'],
+                                ['pessimistic', isPolish ? 'Pesymistyczny' : 'Pessimistic'],
+                              ] as const
+                            ).map(([scenarioKey, label]) => {
+                              const scenario = displayedConsequenceScenarios[scenarioKey];
+                              const cardStyle =
+                                scenarioKey === 'optimistic'
+                                  ? 'border-emerald-400/35 bg-emerald-500/5'
+                                  : scenarioKey === 'neutral'
+                                    ? 'border-amber-400/35 bg-amber-500/5'
+                                    : 'border-red-400/35 bg-red-500/5';
+                              return (
+                                <div
+                                  key={scenarioKey}
+                                  className={`rounded-xl border p-3 space-y-3 shadow-sm ${cardStyle}`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                      {label}
+                                    </h3>
+                                    <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                      7 / 30 / 90
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-1 gap-2">
+                                    {(
+                                      [
+                                        ['d7', '7d'],
+                                        ['d30', '30d'],
+                                        ['d90', '90d'],
+                                      ] as const
+                                    ).map(([timelineKey, timelineLabel]) => (
+                                      <div
+                                        key={`${scenarioKey}-${timelineKey}`}
+                                        className="rounded-lg border border-slate-200/40 dark:border-navy-700/50 bg-white/30 dark:bg-navy-900/25 p-2"
+                                      >
+                                        <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                          {timelineLabel}
+                                        </p>
+                                        <textarea
+                                          value={scenario[timelineKey]}
+                                          onChange={(e) =>
+                                            updateConsequenceScenarioCell(
+                                              scenarioKey,
+                                              timelineKey,
+                                              e.target.value
+                                            )
+                                          }
+                                          readOnly={isDecisionStageLocked}
+                                          rows={4}
+                                          className="w-full min-h-[92px] bg-transparent text-xs leading-relaxed text-slate-600 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y"
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="pl-4 border-l-2 border-amber-400 dark:border-amber-500/60">
+                            <div className="mb-2 flex items-center justify-between">
+                              <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                {isPolish ? 'Notatka decyzyjna' : 'Decision note'}
+                              </label>
+                              {renderFieldAIButton(
+                                'n-rationale-note',
+                                'Consequences of Inaction',
+                                rationale,
+                                setRationale
+                              )}
                             </div>
                             <textarea
                               value={rationale}
@@ -3342,8 +6579,8 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                 !isDecisionStageLocked && setRationale(e.target.value)
                               }
                               readOnly={isDecisionStageLocked}
-                              rows={3}
-                              className="w-full px-0 py-1 bg-transparent text-sm text-slate-700 dark:text-slate-300 focus:outline-none placeholder-amber-400/50 dark:placeholder-amber-600/40 resize-y leading-relaxed"
+                              rows={5}
+                              className="w-full min-h-[120px] px-0 py-1 bg-transparent text-sm text-slate-700 dark:text-slate-300 focus:outline-none placeholder-amber-400/50 dark:placeholder-amber-600/40 resize-y leading-relaxed"
                               placeholder={
                                 isPolish
                                   ? 'Co się stanie, jeśli decyzja nie zostanie podjęta?'
@@ -3358,106 +6595,1251 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                       {activeNotionSection === 'governance-escalation' && (
                         <div className="space-y-8">
                           <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                            {isPolish ? 'Governance i eskalacja' : 'Governance & Escalation'}
+                            {isPolish ? 'RACI i eskalacja' : 'RACI & Escalation'}
                           </h2>
-
-                          {/* Stakeholders (RACI) — inline table */}
-                          <div className="space-y-3">
-                            <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
-                              {isPolish ? 'Interesariusze (RACI)' : 'Stakeholders (RACI)'}
-                            </h3>
-                            {stakeholders.length === 0 ? (
-                              <p className="text-xs text-slate-400 dark:text-slate-500 py-2">
-                                {isPolish
-                                  ? 'Brak przypisanych interesariuszy.'
-                                  : 'No stakeholders assigned.'}
-                              </p>
-                            ) : (
-                              <div className="space-y-0 divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                                {stakeholders.map((s) => (
-                                  <div
-                                    key={s.id}
-                                    className="flex items-center justify-between py-2 group"
+                          <div className="space-y-4">
+                            {/* RACI table */}
+                            <div className={governanceTableCardClass}>
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                                  {isPolish
+                                    ? 'RACI (macierz odpowiedzialności)'
+                                    : 'RACI (responsibility matrix)'}
+                                </h3>
+                                <div className="inline-flex items-center gap-2">
+                                  <button
+                                    disabled={isDecisionStageLocked}
+                                    onClick={() => {
+                                      const fallbackUser = users[0];
+                                      if (!fallbackUser) return;
+                                      setEditingStakeholderId('__new__');
+                                      setStakeholderDraft({
+                                        id: '__new__',
+                                        decisionId: decisionId || 'new',
+                                        userId: fallbackUser.id,
+                                        userName: `${fallbackUser.firstName} ${fallbackUser.lastName}`,
+                                        userEmail: fallbackUser.email,
+                                        role: 'consulted',
+                                        notificationSettings: {
+                                          enabled: true,
+                                          triggers: ['on_status_change'],
+                                          emailEnabled: false,
+                                          inAppEnabled: true,
+                                          integrationChannels: [],
+                                          syncTargets: [],
+                                        },
+                                      });
+                                    }}
+                                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-6 h-6 rounded-full bg-primary-500/15 flex items-center justify-center text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase">
-                                        {(s.userName || s.userId).charAt(0)}
-                                      </div>
-                                      <span className="text-sm text-slate-700 dark:text-slate-300">
-                                        {s.userName || s.userId}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">
-                                        {s.role}
-                                      </span>
-                                      <button
-                                        onClick={() =>
-                                          setStakeholders(
-                                            stakeholders.filter((st) => st.id !== s.id)
-                                          )
-                                        }
-                                        className="p-0.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                                      >
-                                        <X size={12} />
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
+                                    + {isPolish ? 'Dodaj osobę' : 'Add person'}
+                                  </button>
+                                </div>
                               </div>
-                            )}
-                            <button
-                              onClick={() => {
-                                if (users.length > 0) {
-                                  const user = users[0];
-                                  const newS: Stakeholder = {
-                                    id: Math.random().toString(36).substr(2, 9),
-                                    decisionId: decisionId || 'new',
-                                    userId: user.id,
-                                    userName: `${user.firstName} ${user.lastName}`,
-                                    userEmail: user.email,
-                                    role: 'consulted',
-                                    notificationSettings: {
-                                      enabled: true,
-                                      triggers: ['on_status_change'],
-                                      emailEnabled: false,
-                                      inAppEnabled: true,
-                                    },
-                                  };
-                                  setStakeholders([...stakeholders, newS]);
-                                }
-                              }}
-                              className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors"
-                            >
-                              + {isPolish ? 'Dodaj interesariusza' : 'Add stakeholder'}
-                            </button>
-                          </div>
+                              <div className="overflow-auto flex-1">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                                      <th className="text-left py-2 pr-2">{isPolish ? 'Osoba' : 'Person'}</th>
+                                      <th className="text-left py-2 pr-2">{isPolish ? 'Rola' : 'Role'}</th>
+                                      <th className="text-left py-2 pr-2">{isPolish ? 'Email' : 'Email'}</th>
+                                      <th className="text-left py-2 pr-2">
+                                        {isPolish ? 'Notyfikacje' : 'Notifications'}
+                                      </th>
+                                      <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                    {stakeholders.length === 0 ? (
+                                      <tr>
+                                        <td colSpan={5} className="py-6 text-center text-xs text-slate-400">
+                                          {isPolish ? 'Brak interesariuszy.' : 'No stakeholders yet.'}
+                                        </td>
+                                      </tr>
+                                    ) : (
+                                      stakeholders.map((s) => (
+                                        <tr key={s.id}>
+                                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
+                                            {s.userName || s.userId}
+                                          </td>
+                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            {stakeholderRoleLabel(s.role)}
+                                          </td>
+                                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                            {s.userEmail || '—'}
+                                          </td>
+                                          <td className="py-2 pr-2 text-xs">
+                                            <div className="flex flex-wrap gap-1">
+                                              {stakeholderChannelLabels(s.notificationSettings).map((label) => (
+                                                <span
+                                                  key={`${s.id}-${label}`}
+                                                  className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                                >
+                                                  {label}
+                                                </span>
+                                              ))}
+                                            </div>
+                                          </td>
+                                          <td className="py-2 text-right">
+                                            <div className="inline-flex items-center gap-1">
+                                              <button
+                                                disabled={isDecisionStageLocked}
+                                                onClick={() => {
+                                                  setEditingStakeholderId(s.id);
+                                                  setStakeholderDraft({ ...s });
+                                                }}
+                                                className="p-1 text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                title={isPolish ? 'Edytuj' : 'Edit'}
+                                              >
+                                                <Edit3 size={13} />
+                                              </button>
+                                              <button
+                                                disabled={isDecisionStageLocked}
+                                                onClick={() =>
+                                                  setStakeholders(stakeholders.filter((item) => item.id !== s.id))
+                                                }
+                                                className="p-1 text-slate-400 hover:text-red-500 disabled:opacity-40"
+                                                title={isPolish ? 'Usuń' : 'Delete'}
+                                              >
+                                                <Trash2 size={13} />
+                                              </button>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      ))
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
 
-                          {/* Escalation — simple summary */}
-                          <div className="space-y-3">
-                            <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
-                              {isPolish ? 'Reguły eskalacji' : 'Escalation Rules'}
-                            </h3>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
-                              <p>
-                                {isPolish ? 'Ostrzeżenie' : 'Warning'}: {thresholds.warningDays}d |{' '}
-                                {isPolish ? 'Krytyczne' : 'Critical'}: {thresholds.criticalDays}d
-                              </p>
-                              {escalation?.enabled && (
-                                <p className="text-amber-600 dark:text-amber-400">
-                                  {isPolish ? 'Eskaluj do' : 'Escalate to'}:{' '}
-                                  {escalation.escalateToName || escalation.escalateTo} (
-                                  {isPolish ? 'po' : 'after'} {escalation.afterDays}d)
-                                </p>
-                              )}
-                              {reminders.filter((r) => r.enabled).length > 0 && (
-                                <p>
-                                  {reminders.filter((r) => r.enabled).length}{' '}
-                                  {isPolish ? 'aktywnych przypomnień' : 'active reminders'}
-                                </p>
-                              )}
+                            {/* Reminders table */}
+                            <div className={governanceTableCardClass}>
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                                  {isPolish ? 'Przypomnienia' : 'Reminders'}
+                                </h3>
+                                <div className="inline-flex items-center gap-2">
+                                  <button
+                                    disabled={isDecisionStageLocked}
+                                    onClick={() => {
+                                      setEditingReminderId('__new__');
+                                      setReminderDraft({
+                                        id: '__new__',
+                                        type: 'before_due',
+                                        days: 2,
+                                        recipients: 'both',
+                                        inAppNotification: true,
+                                        emailNotification: false,
+                                        delivery: ensureDeliveryConfig({ coreChannels: ['in_app'] }),
+                                        message: '',
+                                        enabled: true,
+                                      });
+                                    }}
+                                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                  >
+                                    + {isPolish ? 'Dodaj reminder' : 'Add reminder'}
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="overflow-auto flex-1">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                                      <th className="text-left py-2 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
+                                      <th className="text-left py-2 pr-2">{isPolish ? 'Dni' : 'Days'}</th>
+                                      <th className="text-left py-2 pr-2">{isPolish ? 'Do kogo' : 'Recipients'}</th>
+                                      <th className="text-left py-2 pr-2">
+                                        {isPolish ? 'Notyfikacje' : 'Notifications'}
+                                      </th>
+                                      <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                    {reminders.length === 0 ? (
+                                      <tr>
+                                        <td colSpan={5} className="py-6 text-center text-xs text-slate-400">
+                                          {isPolish ? 'Brak reminderów.' : 'No reminders yet.'}
+                                        </td>
+                                      </tr>
+                                    ) : (
+                                      reminders.map((r) => (
+                                        <tr key={r.id}>
+                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            {r.type === 'before_due'
+                                              ? isPolish
+                                                ? 'Przed terminem'
+                                                : 'Before due'
+                                              : isPolish
+                                                ? 'Po terminie'
+                                                : 'After due'}
+                                          </td>
+                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            {r.days}
+                                          </td>
+                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            {r.recipients}
+                                          </td>
+                                          <td className="py-2 pr-2 text-xs">
+                                            <div className="flex flex-wrap gap-1">
+                                              {!r.enabled && (
+                                                <span className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400">
+                                                  {isPolish ? 'Wyłączone' : 'Disabled'}
+                                                </span>
+                                              )}
+                                              {deliveryBadgeLabels(r.delivery, r).map((label) => (
+                                                <span
+                                                  key={`${r.id}-${label}`}
+                                                  className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                                >
+                                                  {label}
+                                                </span>
+                                              ))}
+                                            </div>
+                                          </td>
+                                          <td className="py-2 text-right">
+                                            <div className="inline-flex items-center gap-1">
+                                              <button
+                                                disabled={isDecisionStageLocked}
+                                                onClick={() => {
+                                                  setEditingReminderId(r.id);
+                                                  setReminderDraft(normalizeReminderRule({ ...r }));
+                                                }}
+                                                className="p-1 text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                title={isPolish ? 'Edytuj' : 'Edit'}
+                                              >
+                                                <Edit3 size={13} />
+                                              </button>
+                                              <button
+                                                disabled={isDecisionStageLocked}
+                                                onClick={() =>
+                                                  setReminders(reminders.filter((item) => item.id !== r.id))
+                                                }
+                                                className="p-1 text-slate-400 hover:text-red-500 disabled:opacity-40"
+                                                title={isPolish ? 'Usuń' : 'Delete'}
+                                              >
+                                                <Trash2 size={13} />
+                                              </button>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      ))
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+
+                            {/* Escalation table */}
+                            <div className={governanceTableCardClass}>
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                                  {isPolish ? 'Eskalacja i zasady' : 'Escalation and rules'}
+                                </h3>
+                                <div className="inline-flex items-center gap-2">
+                                  <button
+                                    disabled={isDecisionStageLocked}
+                                    onClick={() => {
+                                      setEscalationDraft(
+                                        normalizeEscalationRule({
+                                          id: Math.random().toString(36).slice(2, 11),
+                                          enabled: true,
+                                          escalateTo: users[0]?.id || '',
+                                          escalateToName: users[0]
+                                            ? `${users[0].firstName} ${users[0].lastName}`
+                                            : '',
+                                          afterDays: 3,
+                                          warningDays: 3,
+                                          criticalDays: 1,
+                                          escalationMode: 'manager_review',
+                                          delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
+                                          message: '',
+                                        })
+                                      );
+                                      setEditingEscalationId('__new__');
+                                    }}
+                                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                  >
+                                    + {isPolish ? 'Dodaj eskalację' : 'Add escalation'}
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="overflow-auto flex-1">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                                      <th className="text-left py-2 pr-2">{isPolish ? 'Status' : 'Status'}</th>
+                                      <th className="text-left py-2 pr-2">{isPolish ? 'Progi W/C' : 'W/C thresholds'}</th>
+                                      <th className="text-left py-2 pr-2">
+                                        {isPolish ? 'Eskaluj po' : 'Escalate after'}
+                                      </th>
+                                      <th className="text-left py-2 pr-2">
+                                        {isPolish ? 'Eskaluj do' : 'Escalate to'}
+                                      </th>
+                                      <th className="text-left py-2 pr-2">
+                                        {isPolish ? 'Komunikat' : 'Message'}
+                                      </th>
+                                      <th className="text-left py-2 pr-2">{isPolish ? 'Tryb' : 'Mode'}</th>
+                                      <th className="text-left py-2 pr-2">{isPolish ? 'Kanały' : 'Channels'}</th>
+                                      <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                    {escalationRules.length === 0 ? (
+                                      <tr>
+                                        <td colSpan={8} className="py-6 text-center text-xs text-slate-400">
+                                          {isPolish ? 'Brak reguł eskalacji.' : 'No escalation rules yet.'}
+                                        </td>
+                                      </tr>
+                                    ) : (
+                                      escalationRules.map((rule) => (
+                                        <tr key={rule.id}>
+                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            {rule.enabled
+                                              ? isPolish
+                                                ? 'Aktywna'
+                                                : 'Enabled'
+                                              : isPolish
+                                                ? 'Wyłączona'
+                                                : 'Disabled'}
+                                          </td>
+                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            {rule.warningDays}/{rule.criticalDays} d
+                                          </td>
+                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            {rule.afterDays} d
+                                          </td>
+                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            {rule.escalateToName || '—'}
+                                          </td>
+                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            {rule.message || '—'}
+                                          </td>
+                                          <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                            {rule.escalationMode === 'notify_only'
+                                              ? isPolish
+                                                ? 'Powiadomienie'
+                                                : 'Notify'
+                                              : rule.escalationMode === 'manager_review'
+                                                ? isPolish
+                                                  ? 'Manager review'
+                                                  : 'Manager review'
+                                                : isPolish
+                                                  ? 'Executive alert'
+                                                  : 'Executive alert'}
+                                          </td>
+                                          <td className="py-2 pr-2 text-xs">
+                                            <div className="flex flex-wrap gap-1">
+                                              {deliveryBadgeLabels(rule.delivery).map((label) => (
+                                                <span
+                                                  key={`${rule.id}-ch-${label}`}
+                                                  className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                                >
+                                                  {label}
+                                                </span>
+                                              ))}
+                                            </div>
+                                          </td>
+                                          <td className="py-2 text-right">
+                                            <div className="inline-flex items-center gap-1">
+                                              <button
+                                                disabled={isDecisionStageLocked}
+                                                onClick={() => {
+                                                  setEditingEscalationId(rule.id);
+                                                  setEscalationDraft({ ...rule });
+                                                }}
+                                                className="p-1 text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                title={isPolish ? 'Edytuj' : 'Edit'}
+                                              >
+                                                <Edit3 size={13} />
+                                              </button>
+                                              <button
+                                                disabled={isDecisionStageLocked}
+                                                onClick={() =>
+                                                  setEscalationRules(
+                                                    escalationRules.filter((item) => item.id !== rule.id)
+                                                  )
+                                                }
+                                                className="p-1 text-slate-400 hover:text-red-500 disabled:opacity-40"
+                                                title={isPolish ? 'Usuń' : 'Delete'}
+                                              >
+                                                <Trash2 size={13} />
+                                              </button>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      ))
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
                             </div>
                           </div>
+
+                          {/* Stakeholder modal */}
+                          {stakeholderDraft && (
+                            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                              <div
+                                className="absolute inset-0 bg-black/60"
+                                onClick={() => {
+                                  setEditingStakeholderId(null);
+                                  setStakeholderDraft(null);
+                                }}
+                              />
+                              <div className={`${governanceModalClass} min-h-[380px]`}>
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    {editingStakeholderId === '__new__'
+                                      ? isPolish
+                                        ? 'Dodaj osobę do RACI'
+                                        : 'Add RACI person'
+                                      : isPolish
+                                        ? 'Edytuj osobę RACI'
+                                        : 'Edit RACI person'}
+                                  </h4>
+                                  <div className="inline-flex items-center gap-2">
+                                    <button
+                                      disabled={isDecisionStageLocked || isSuggestingStakeholders}
+                                      onClick={suggestStakeholderDraftAI}
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-purple-300/40 dark:border-purple-500/30 text-purple-500 hover:text-purple-600 hover:border-purple-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                    >
+                                      {isSuggestingStakeholders ? (
+                                        <Loader2 size={12} className="animate-spin" />
+                                      ) : (
+                                        <Sparkles size={12} />
+                                      )}
+                                      AI
+                                    </button>
+                                    <button
+                                      className="p-1 text-slate-400 hover:text-slate-600"
+                                      onClick={() => {
+                                        setEditingStakeholderId(null);
+                                        setStakeholderDraft(null);
+                                      }}
+                                    >
+                                      <X size={16} />
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className={governanceModalHintClass}>
+                                  {isPolish
+                                    ? 'Tutaj opisujemy i konfigurujemy odpowiedzialność osoby w RACI oraz kanały komunikacji.'
+                                    : 'Use this window to describe and configure person responsibility in RACI and communication channels.'}
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    {isPolish ? 'Osoba' : 'Person'}
+                                    <select
+                                      value={stakeholderDraft.userId}
+                                      onChange={(e) => {
+                                        const selected = users.find((u) => u.id === e.target.value);
+                                        setStakeholderDraft({
+                                          ...stakeholderDraft,
+                                          userId: e.target.value,
+                                          userName: selected
+                                            ? `${selected.firstName} ${selected.lastName}`
+                                            : stakeholderDraft.userName,
+                                          userEmail: selected?.email || stakeholderDraft.userEmail,
+                                        });
+                                      }}
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                    >
+                                      {users.map((u) => (
+                                        <option key={u.id} value={u.id}>
+                                          {u.firstName} {u.lastName}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                  <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    {isPolish ? 'Rola' : 'Role'}
+                                    <select
+                                      value={stakeholderDraft.role}
+                                      onChange={(e) =>
+                                        setStakeholderDraft({
+                                          ...stakeholderDraft,
+                                          role: e.target.value as StakeholderRole,
+                                        })
+                                      }
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                    >
+                                      <option value="responsible">Responsible</option>
+                                      <option value="accountable">Accountable</option>
+                                      <option value="consulted">Consulted</option>
+                                      <option value="informed">Informed</option>
+                                    </select>
+                                  </label>
+                                </div>
+                                <div className="space-y-2 flex-1">
+                                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                                    {isPolish ? 'Kanały notyfikacji' : 'Notification channels'}
+                                  </div>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                        {isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                                      </div>
+                                      <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                        {[
+                                          {
+                                            key: 'enabled',
+                                            label: isPolish ? 'Aktywne' : 'Enabled',
+                                            active: stakeholderDraft.notificationSettings.enabled,
+                                            toggle: () =>
+                                              setStakeholderDraft({
+                                                ...stakeholderDraft,
+                                                notificationSettings: {
+                                                  ...stakeholderDraft.notificationSettings,
+                                                  enabled: !stakeholderDraft.notificationSettings.enabled,
+                                                },
+                                              }),
+                                          },
+                                          {
+                                            key: 'in_app',
+                                            label: 'In-app',
+                                            active: stakeholderDraft.notificationSettings.inAppEnabled,
+                                            toggle: () =>
+                                              setStakeholderDraft({
+                                                ...stakeholderDraft,
+                                                notificationSettings: {
+                                                  ...stakeholderDraft.notificationSettings,
+                                                  inAppEnabled: !stakeholderDraft.notificationSettings.inAppEnabled,
+                                                },
+                                              }),
+                                          },
+                                          {
+                                            key: 'email',
+                                            label: 'Email',
+                                            active: stakeholderDraft.notificationSettings.emailEnabled,
+                                            toggle: () =>
+                                              setStakeholderDraft({
+                                                ...stakeholderDraft,
+                                                notificationSettings: {
+                                                  ...stakeholderDraft.notificationSettings,
+                                                  emailEnabled: !stakeholderDraft.notificationSettings.emailEnabled,
+                                                },
+                                              }),
+                                          },
+                                        ].map((channel) => (
+                                          <button
+                                            key={channel.key}
+                                            type="button"
+                                            onClick={channel.toggle}
+                                            className={`${channelChipClass} ${
+                                              channel.active
+                                                ? 'border-purple-400/60 text-purple-500 bg-purple-500/10'
+                                                : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                            }`}
+                                          >
+                                            {channel.label}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                        {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                                      </div>
+                                      <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                        {integrationChannelCatalog.map((channel) => {
+                                          const list =
+                                            stakeholderDraft.notificationSettings.integrationChannels || [];
+                                          const selected = list.includes(channel.key);
+                                          return (
+                                            <button
+                                              key={channel.key}
+                                              type="button"
+                                              onClick={() => {
+                                                const current =
+                                                  stakeholderDraft.notificationSettings
+                                                    .integrationChannels || [];
+                                                const next = selected
+                                                  ? current.filter((c) => c !== channel.key)
+                                                  : [...current, channel.key];
+                                                setStakeholderDraft({
+                                                  ...stakeholderDraft,
+                                                  notificationSettings: {
+                                                    ...stakeholderDraft.notificationSettings,
+                                                    integrationChannels: next,
+                                                  },
+                                                });
+                                              }}
+                                              className={`${channelChipClass} ${
+                                                selected
+                                                  ? 'border-purple-400/60 text-purple-500 bg-purple-500/10'
+                                                  : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                              }`}
+                                              title={channel.scope}
+                                            >
+                                              {channel.label}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                    {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                                    <input
+                                      value={(stakeholderDraft.notificationSettings.syncTargets || []).join(', ')}
+                                      onChange={(e) =>
+                                        setStakeholderDraft({
+                                          ...stakeholderDraft,
+                                          notificationSettings: {
+                                            ...stakeholderDraft.notificationSettings,
+                                            syncTargets: e.target.value
+                                              .split(',')
+                                              .map((item) => item.trim())
+                                              .filter(Boolean),
+                                          },
+                                        })
+                                      }
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      placeholder="slack:#ops, jira:DRD"
+                                    />
+                                  </label>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setEditingStakeholderId(null);
+                                      setStakeholderDraft(null);
+                                    }}
+                                    className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                                  >
+                                    {isPolish ? 'Anuluj' : 'Cancel'}
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (!stakeholderDraft) return;
+                                      if (editingStakeholderId === '__new__') {
+                                        setStakeholders([
+                                          ...stakeholders,
+                                          { ...stakeholderDraft, id: Math.random().toString(36).slice(2, 11) },
+                                        ]);
+                                      } else {
+                                        setStakeholders(
+                                          stakeholders.map((item) =>
+                                            item.id === editingStakeholderId
+                                              ? { ...stakeholderDraft, id: item.id }
+                                              : item
+                                          )
+                                        );
+                                      }
+                                      setEditingStakeholderId(null);
+                                      setStakeholderDraft(null);
+                                    }}
+                                    className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                                  >
+                                    {isPolish ? 'Zapisz' : 'Save'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Reminder modal */}
+                          {reminderDraft && (
+                            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                              <div
+                                className="absolute inset-0 bg-black/60"
+                                onClick={() => {
+                                  setEditingReminderId(null);
+                                  setReminderDraft(null);
+                                }}
+                              />
+                              <div className={`${governanceModalClass} min-h-[380px]`}>
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    {editingReminderId === '__new__'
+                                      ? isPolish
+                                        ? 'Dodaj reminder'
+                                        : 'Add reminder'
+                                      : isPolish
+                                        ? 'Edytuj reminder'
+                                        : 'Edit reminder'}
+                                  </h4>
+                                  <div className="inline-flex items-center gap-2">
+                                    <button
+                                      disabled={isDecisionStageLocked || isSuggestingReminders}
+                                      onClick={suggestReminderDraftAI}
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-purple-300/40 dark:border-purple-500/30 text-purple-500 hover:text-purple-600 hover:border-purple-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                    >
+                                      {isSuggestingReminders ? (
+                                        <Loader2 size={12} className="animate-spin" />
+                                      ) : (
+                                        <Sparkles size={12} />
+                                      )}
+                                      AI
+                                    </button>
+                                    <button
+                                      className="p-1 text-slate-400 hover:text-slate-600"
+                                      onClick={() => {
+                                        setEditingReminderId(null);
+                                        setReminderDraft(null);
+                                      }}
+                                    >
+                                      <X size={16} />
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className={governanceModalHintClass}>
+                                  {isPolish
+                                    ? 'Tutaj opisujemy cel remindera: kiedy ma się uruchamiać, do kogo trafić i jaką wiadomość wysłać.'
+                                    : 'Use this window to describe reminder intent: when it should trigger, recipients, and the message.'}
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    {isPolish ? 'Typ' : 'Type'}
+                                    <select
+                                      value={reminderDraft.type}
+                                      onChange={(e) =>
+                                        setReminderDraft({
+                                          ...reminderDraft,
+                                          type: e.target.value as 'before_due' | 'after_due',
+                                        })
+                                      }
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                    >
+                                      <option value="before_due">
+                                        {isPolish ? 'Przed terminem' : 'Before due'}
+                                      </option>
+                                      <option value="after_due">
+                                        {isPolish ? 'Po terminie' : 'After due'}
+                                      </option>
+                                    </select>
+                                  </label>
+                                  <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    {isPolish ? 'Dni' : 'Days'}
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      value={reminderDraft.days}
+                                      onChange={(e) =>
+                                        setReminderDraft({
+                                          ...reminderDraft,
+                                          days: Number(e.target.value) || 0,
+                                        })
+                                      }
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                    />
+                                  </label>
+                                </div>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  {isPolish ? 'Odbiorcy' : 'Recipients'}
+                                  <select
+                                    value={reminderDraft.recipients}
+                                    onChange={(e) =>
+                                      setReminderDraft({
+                                        ...reminderDraft,
+                                        recipients: e.target.value as
+                                          | 'requester'
+                                          | 'decider'
+                                          | 'both'
+                                          | 'stakeholders',
+                                      })
+                                    }
+                                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                  >
+                                    <option value="requester">Requester</option>
+                                    <option value="decider">Decider</option>
+                                    <option value="both">{isPolish ? 'Obaj' : 'Both'}</option>
+                                    <option value="stakeholders">
+                                      {isPolish ? 'Interesariusze' : 'Stakeholders'}
+                                    </option>
+                                  </select>
+                                </label>
+                                <div className="space-y-3">
+                                  <label className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                                    <input
+                                      type="checkbox"
+                                      checked={reminderDraft.enabled}
+                                      onChange={(e) =>
+                                        setReminderDraft({ ...reminderDraft, enabled: e.target.checked })
+                                      }
+                                    />
+                                    {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
+                                  </label>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                        {isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                                      </div>
+                                      <div className="flex flex-wrap gap-2">
+                                        {([
+                                          { key: 'in_app', label: 'In-app' },
+                                          { key: 'email', label: 'Email' },
+                                        ] as Array<{ key: CoreDeliveryChannel; label: string }>).map((channel) => {
+                                          const delivery = ensureDeliveryConfig(
+                                            reminderDraft.delivery,
+                                            reminderDraft
+                                          );
+                                          const enabled = delivery.coreChannels.includes(channel.key);
+                                          return (
+                                            <button
+                                              key={channel.key}
+                                              type="button"
+                                              onClick={() =>
+                                                setReminderDraft({
+                                                  ...reminderDraft,
+                                                  delivery: {
+                                                    ...delivery,
+                                                    coreChannels: toggleChannel(
+                                                      delivery.coreChannels,
+                                                      channel.key,
+                                                      !enabled
+                                                    ),
+                                                  },
+                                                  inAppNotification:
+                                                    channel.key === 'in_app'
+                                                      ? !enabled
+                                                      : delivery.coreChannels.includes('in_app'),
+                                                  emailNotification:
+                                                    channel.key === 'email'
+                                                      ? !enabled
+                                                      : delivery.coreChannels.includes('email'),
+                                                })
+                                              }
+                                              className={`${channelChipClass} ${
+                                                enabled
+                                                  ? 'border-purple-400/60 text-purple-500 bg-purple-500/10'
+                                                  : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                              }`}
+                                            >
+                                              {channel.label}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                    <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                        {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                                      </div>
+                                      <div className="flex flex-wrap gap-2">
+                                        {integrationChannelCatalog.map((channel) => {
+                                          const delivery = ensureDeliveryConfig(
+                                            reminderDraft.delivery,
+                                            reminderDraft
+                                          );
+                                          const enabled = delivery.integrationChannels.includes(channel.key);
+                                          return (
+                                            <button
+                                              key={channel.key}
+                                              type="button"
+                                              onClick={() =>
+                                                setReminderDraft({
+                                                  ...reminderDraft,
+                                                  delivery: {
+                                                    ...delivery,
+                                                    integrationChannels: toggleChannel(
+                                                      delivery.integrationChannels,
+                                                      channel.key,
+                                                      !enabled
+                                                    ),
+                                                  },
+                                                })
+                                              }
+                                              className={`${channelChipClass} ${
+                                                enabled
+                                                  ? 'border-purple-400/60 text-purple-500 bg-purple-500/10'
+                                                  : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                              }`}
+                                              title={channel.scope}
+                                            >
+                                              {channel.label}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                    {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                                    <input
+                                      value={ensureDeliveryConfig(reminderDraft.delivery, reminderDraft).syncTargets.join(
+                                        ', '
+                                      )}
+                                      onChange={(e) =>
+                                        setReminderDraft({
+                                          ...reminderDraft,
+                                          delivery: {
+                                            ...ensureDeliveryConfig(reminderDraft.delivery, reminderDraft),
+                                            syncTargets: e.target.value
+                                              .split(',')
+                                              .map((item) => item.trim())
+                                              .filter(Boolean),
+                                          },
+                                        })
+                                      }
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      placeholder="slack:#delivery, jira:PROJ, webhook:ops"
+                                    />
+                                  </label>
+                                </div>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  {isPolish ? 'Wiadomość' : 'Message'}
+                                  <textarea
+                                    value={reminderDraft.message || ''}
+                                    onChange={(e) =>
+                                      setReminderDraft({ ...reminderDraft, message: e.target.value })
+                                    }
+                                    rows={3}
+                                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                  />
+                                </label>
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setEditingReminderId(null);
+                                      setReminderDraft(null);
+                                    }}
+                                    className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                                  >
+                                    {isPolish ? 'Anuluj' : 'Cancel'}
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (!reminderDraft) return;
+                                      const normalized = normalizeReminderRule(reminderDraft);
+                                      if (editingReminderId === '__new__') {
+                                        setReminders([
+                                          ...reminders,
+                                          {
+                                            ...normalized,
+                                            id: Math.random().toString(36).slice(2, 11),
+                                          },
+                                        ]);
+                                      } else {
+                                        setReminders(
+                                          reminders.map((item) =>
+                                            item.id === editingReminderId
+                                              ? { ...normalized, id: item.id }
+                                              : item
+                                          )
+                                        );
+                                      }
+                                      setEditingReminderId(null);
+                                      setReminderDraft(null);
+                                    }}
+                                    className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                                  >
+                                    {isPolish ? 'Zapisz' : 'Save'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Escalation modal */}
+                          {editingEscalationId && escalationDraft && (
+                            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                              <div
+                                className="absolute inset-0 bg-black/60"
+                                onClick={() => {
+                                  setEditingEscalationId(null);
+                                  setEscalationDraft(null);
+                                }}
+                              />
+                              <div className={governanceModalClass}>
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    {editingEscalationId === '__new__'
+                                      ? isPolish
+                                        ? 'Dodaj regułę eskalacji'
+                                        : 'Add escalation rule'
+                                      : isPolish
+                                        ? 'Edytuj regułę eskalacji'
+                                        : 'Edit escalation rule'}
+                                  </h4>
+                                  <div className="inline-flex items-center gap-2">
+                                    <button
+                                      disabled={isDecisionStageLocked || isSuggestingEscalations}
+                                      onClick={suggestEscalationDraftAI}
+                                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-purple-300/40 dark:border-purple-500/30 text-purple-500 hover:text-purple-600 hover:border-purple-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                    >
+                                      {isSuggestingEscalations ? (
+                                        <Loader2 size={12} className="animate-spin" />
+                                      ) : (
+                                        <Sparkles size={12} />
+                                      )}
+                                      AI
+                                    </button>
+                                    <button
+                                      className="p-1 text-slate-400 hover:text-slate-600"
+                                      onClick={() => {
+                                        setEditingEscalationId(null);
+                                        setEscalationDraft(null);
+                                      }}
+                                    >
+                                      <X size={16} />
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className={governanceModalHintClass}>
+                                  {isPolish
+                                    ? 'Tutaj opisujemy regułę eskalacji: progi, czas eskalacji, osobę docelową i komunikat.'
+                                    : 'Use this window to describe escalation rule settings: thresholds, timing, assignee, and message.'}
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    {isPolish ? 'Próg ostrzeżenia (dni)' : 'Warning threshold (days)'}
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      value={escalationDraft.warningDays}
+                                      onChange={(e) =>
+                                        setEscalationDraft({
+                                          ...escalationDraft,
+                                          warningDays: Number(e.target.value) || 0,
+                                        })
+                                      }
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                    />
+                                  </label>
+                                  <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    {isPolish ? 'Próg krytyczny (dni)' : 'Critical threshold (days)'}
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      value={escalationDraft.criticalDays}
+                                      onChange={(e) =>
+                                        setEscalationDraft({
+                                          ...escalationDraft,
+                                          criticalDays: Number(e.target.value) || 0,
+                                        })
+                                      }
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                    />
+                                  </label>
+                                  <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    {isPolish ? 'Eskaluj po (dni)' : 'Escalate after (days)'}
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      value={escalationDraft.afterDays}
+                                      onChange={(e) =>
+                                        setEscalationDraft({
+                                          ...escalationDraft,
+                                          afterDays: Number(e.target.value) || 1,
+                                        })
+                                      }
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                    />
+                                  </label>
+                                  <label className="text-xs text-slate-500 dark:text-slate-400">
+                                    {isPolish ? 'Eskaluj do' : 'Escalate to'}
+                                    <select
+                                      value={escalationDraft.escalateTo}
+                                      onChange={(e) => {
+                                        const selected = users.find((u) => u.id === e.target.value);
+                                        setEscalationDraft({
+                                          ...escalationDraft,
+                                          escalateTo: e.target.value,
+                                          escalateToName: selected
+                                            ? `${selected.firstName} ${selected.lastName}`
+                                            : escalationDraft.escalateToName,
+                                        });
+                                      }}
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                    >
+                                      <option value="">{isPolish ? 'Wybierz' : 'Select'}</option>
+                                      {users.map((u) => (
+                                        <option key={u.id} value={u.id}>
+                                          {u.firstName} {u.lastName}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                </div>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  {isPolish ? 'Tryb eskalacji' : 'Escalation mode'}
+                                  <select
+                                    value={escalationDraft.escalationMode}
+                                    onChange={(e) =>
+                                      setEscalationDraft({
+                                        ...escalationDraft,
+                                        escalationMode: e.target.value as EscalationMode,
+                                      })
+                                    }
+                                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                  >
+                                    {escalationModeOptions.map((mode) => (
+                                      <option key={mode.value} value={mode.value}>
+                                        {mode.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                                <label className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                                  <input
+                                    type="checkbox"
+                                    checked={escalationDraft.enabled}
+                                    onChange={(e) =>
+                                      setEscalationDraft({
+                                        ...escalationDraft,
+                                        enabled: e.target.checked,
+                                      })
+                                    }
+                                  />
+                                  {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
+                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                      {isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                      {([
+                                        { key: 'in_app', label: 'In-app' },
+                                        { key: 'email', label: 'Email' },
+                                      ] as Array<{ key: CoreDeliveryChannel; label: string }>).map((channel) => {
+                                        const delivery = ensureDeliveryConfig(escalationDraft.delivery);
+                                        const enabled = delivery.coreChannels.includes(channel.key);
+                                        return (
+                                          <button
+                                            key={channel.key}
+                                            type="button"
+                                            onClick={() =>
+                                              setEscalationDraft({
+                                                ...escalationDraft,
+                                                delivery: {
+                                                  ...delivery,
+                                                  coreChannels: toggleChannel(
+                                                    delivery.coreChannels,
+                                                    channel.key,
+                                                    !enabled
+                                                  ),
+                                                },
+                                              })
+                                            }
+                                            className={`${channelChipClass} ${
+                                              enabled
+                                                ? 'border-purple-400/60 text-purple-500 bg-purple-500/10'
+                                                : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                            }`}
+                                          >
+                                            {channel.label}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                  <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                      {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                      {integrationChannelCatalog.map((channel) => {
+                                        const delivery = ensureDeliveryConfig(escalationDraft.delivery);
+                                        const enabled = delivery.integrationChannels.includes(channel.key);
+                                        return (
+                                          <button
+                                            key={channel.key}
+                                            type="button"
+                                            onClick={() =>
+                                              setEscalationDraft({
+                                                ...escalationDraft,
+                                                delivery: {
+                                                  ...delivery,
+                                                  integrationChannels: toggleChannel(
+                                                    delivery.integrationChannels,
+                                                    channel.key,
+                                                    !enabled
+                                                  ),
+                                                },
+                                              })
+                                            }
+                                            className={`${channelChipClass} ${
+                                              enabled
+                                                ? 'border-purple-400/60 text-purple-500 bg-purple-500/10'
+                                                : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'
+                                            }`}
+                                            title={channel.scope}
+                                          >
+                                            {channel.label}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                                  <input
+                                    value={ensureDeliveryConfig(escalationDraft.delivery).syncTargets.join(', ')}
+                                    onChange={(e) =>
+                                      setEscalationDraft({
+                                        ...escalationDraft,
+                                        delivery: {
+                                          ...ensureDeliveryConfig(escalationDraft.delivery),
+                                          syncTargets: e.target.value
+                                            .split(',')
+                                            .map((item) => item.trim())
+                                            .filter(Boolean),
+                                        },
+                                      })
+                                    }
+                                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                    placeholder="slack:#incident, jira:OPS, webhook:oncall"
+                                  />
+                                </label>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  {isPolish ? 'Komunikat eskalacji' : 'Escalation message'}
+                                  <textarea
+                                    value={escalationDraft.message || ''}
+                                    onChange={(e) =>
+                                      setEscalationDraft({
+                                        ...escalationDraft,
+                                        message: e.target.value,
+                                      })
+                                    }
+                                    rows={3}
+                                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                  />
+                                </label>
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setEditingEscalationId(null);
+                                      setEscalationDraft(null);
+                                    }}
+                                    className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                                  >
+                                    {isPolish ? 'Anuluj' : 'Cancel'}
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (!escalationDraft) return;
+                                      const normalized = normalizeEscalationRule(escalationDraft);
+                                      if (editingEscalationId === '__new__') {
+                                        setEscalationRules([
+                                          ...escalationRules,
+                                          {
+                                            ...normalized,
+                                            id: Math.random().toString(36).slice(2, 11),
+                                          },
+                                        ]);
+                                      } else {
+                                        setEscalationRules(
+                                          escalationRules.map((item) =>
+                                            item.id === editingEscalationId
+                                              ? { ...normalized, id: item.id }
+                                              : item
+                                          )
+                                        );
+                                      }
+                                      setEditingEscalationId(null);
+                                      setEscalationDraft(null);
+                                    }}
+                                    className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                                  >
+                                    {isPolish ? 'Zapisz' : 'Save'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -3470,33 +7852,47 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
 
                           {/* Comments — ActivityStream style */}
                           <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                              <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
-                                {isPolish ? 'Komentarze' : 'Comments'}
-                              </h3>
-                              <button
-                                onClick={generateAIComment}
-                                disabled={isDecisionStageLocked || isGeneratingAIComment}
-                                className="inline-flex items-center gap-1 text-[11px] font-medium text-purple-500 dark:text-purple-400 hover:text-purple-600 transition-colors disabled:opacity-50"
-                              >
-                                {isGeneratingAIComment ? (
-                                  <Loader2 size={11} className="animate-spin" />
-                                ) : (
-                                  <Sparkles size={11} />
-                                )}{' '}
-                                AI
-                              </button>
+                            <div className="flex items-center justify-end">
+                              <DateFilterSortControl
+                                options={[
+                                  { id: 'all', label: isPolish ? 'Wszystkie' : 'All' },
+                                  { id: 'today', label: isPolish ? 'Dziś' : 'Today' },
+                                  { id: '7d', label: isPolish ? '7 dni' : '7 days' },
+                                  { id: '30d', label: isPolish ? '30 dni' : '30 days' },
+                                ]}
+                                value={commentDateFilter}
+                                onChange={(next) => setCommentDateFilter(next as CommentDateFilter)}
+                                sortOrder={commentSortOrder}
+                                onToggleSort={() =>
+                                  setCommentSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+                                }
+                                sortAscLabel={
+                                  isPolish
+                                    ? 'Sortowanie: od najstarszych do najnowszych'
+                                    : 'Sort: oldest to newest'
+                                }
+                                sortDescLabel={
+                                  isPolish
+                                    ? 'Sortowanie: od najnowszych do najstarszych'
+                                    : 'Sort: newest to oldest'
+                                }
+                                filterButtonTitle={
+                                  isPolish
+                                    ? 'Filtr daty komentarzy (klikaj, aby zmienić zakres)'
+                                    : 'Comment date filter (click to switch range)'
+                                }
+                              />
                             </div>
 
-                            {comments.length === 0 ? (
+                            {filteredComments.length === 0 ? (
                               <p className="text-xs text-slate-400 dark:text-slate-500 py-4 text-center">
                                 {isPolish
-                                  ? 'Brak komentarzy. Rozpocznij dyskusję.'
-                                  : 'No comments yet. Start the conversation.'}
+                                  ? 'Brak komentarzy dla wybranego zakresu dat.'
+                                  : 'No comments for selected date range.'}
                               </p>
                             ) : (
                               <div className="space-y-4">
-                                {comments.map((c) => (
+                                {filteredComments.map((c) => (
                                   <div key={c.id} className="group">
                                     <div className="flex items-start gap-3">
                                       <div className="w-6 h-6 rounded-full bg-primary-500/15 flex items-center justify-center text-[10px] font-bold text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5">
@@ -3507,6 +7903,14 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                           <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                                             {c.authorName}
                                           </span>
+                                          <span
+                                            className={`w-1.5 h-1.5 rounded-full ${getPriorityDotClass(getCommentPriority(c))}`}
+                                            title={
+                                              isPolish
+                                                ? `Priorytet: ${getCommentPriority(c)}`
+                                                : `Priority: ${getCommentPriority(c)}`
+                                            }
+                                          />
                                           <span className="text-[10px] text-slate-400">
                                             {new Date(c.createdAt).toLocaleDateString()}
                                           </span>
@@ -3534,33 +7938,76 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
 
                             {/* Inline comment input */}
                             <div className="flex items-center gap-3 pt-2 border-t border-slate-200/40 dark:border-navy-700/40">
+                              <div className="relative inline-flex items-center gap-1">
+                                {([
+                                  { id: 'low', label: isPolish ? 'L' : 'L' },
+                                  { id: 'normal', label: isPolish ? 'N' : 'N' },
+                                  { id: 'high', label: isPolish ? 'H' : 'H' },
+                                ] as const).map((prio) => (
+                                  <button
+                                    key={prio.id}
+                                    type="button"
+                                    onClick={() => setCommentDraftPriority(prio.id)}
+                                    onMouseEnter={() => setHoveredCommentPriority(prio.id)}
+                                    onMouseLeave={() => setHoveredCommentPriority(null)}
+                                    onFocus={() => setHoveredCommentPriority(prio.id)}
+                                    onBlur={() => setHoveredCommentPriority(null)}
+                                    className={`w-5 h-5 rounded-full border text-[9px] font-semibold transition-colors ${
+                                      getPriorityButtonClass(prio.id, commentDraftPriority === prio.id)
+                                    }`}
+                                    title={
+                                      isPolish
+                                        ? `Priorytet komentarza: ${getCommentPriorityLabel(prio.id)}`
+                                        : `Comment priority: ${getCommentPriorityLabel(prio.id)}`
+                                    }
+                                  >
+                                    {prio.label}
+                                  </button>
+                                ))}
+                                {hoveredCommentPriority && (
+                                  <div className="absolute left-0 -top-12 z-20 min-w-[190px] rounded-lg border border-slate-300/60 dark:border-navy-600/70 bg-white/95 dark:bg-navy-900/95 px-2.5 py-1.5 shadow-lg">
+                                    <div className="text-[10px] font-semibold text-slate-700 dark:text-slate-200">
+                                      {isPolish ? 'Priorytet' : 'Priority'}:{' '}
+                                      {getCommentPriorityLabel(hoveredCommentPriority)}
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                      {getCommentPriorityHint(hoveredCommentPriority)}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                               <input
                                 type="text"
+                                value={commentDraft}
+                                onChange={(e) => setCommentDraft(e.target.value)}
                                 placeholder={
                                   isPolish ? 'Napisz komentarz...' : 'Write a comment...'
                                 }
                                 className="flex-1 text-sm bg-transparent text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600"
                                 onKeyDown={(e) => {
-                                  if (
-                                    e.key === 'Enter' &&
-                                    (e.target as HTMLInputElement).value.trim()
-                                  ) {
-                                    handleAddComment((e.target as HTMLInputElement).value);
-                                    (e.target as HTMLInputElement).value = '';
+                                  if (e.key === 'Enter' && commentDraft.trim()) {
+                                    void submitCommentDraft();
                                   }
                                 }}
                               />
                               <button
-                                onClick={() => {
-                                  const input = document.querySelector<HTMLInputElement>(
-                                    '[placeholder*="comment"], [placeholder*="komentarz"]'
-                                  );
-                                  if (input?.value.trim()) {
-                                    handleAddComment(input.value);
-                                    input.value = '';
-                                  }
-                                }}
-                                className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors"
+                                onClick={enhanceCommentDraftWithAI}
+                                disabled={isDecisionStageLocked || isEnhancingCommentDraft}
+                                className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40"
+                                title={isPolish ? 'AI pomoże dopracować komentarz' : 'AI helps refine comment'}
+                              >
+                                {isEnhancingCommentDraft ? (
+                                  <Loader2 size={12} className="animate-spin" />
+                                ) : (
+                                  <Sparkles size={12} />
+                                )}
+                                AI
+                              </button>
+                              <button
+                                onClick={() => void submitCommentDraft()}
+                                disabled={!commentDraft.trim()}
+                                className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40"
+                                title={isPolish ? 'Wyślij komentarz' : 'Send comment'}
                               >
                                 {isPolish ? 'Wyślij' : 'Send'}
                               </button>
@@ -3573,131 +8020,1052 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                       {activeNotionSection === 'resources-links' && (
                         <div className="space-y-8">
                           <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                            {isPolish ? 'Załączniki i powiązania' : 'Attachments & Links'}
+                            {isPolish
+                              ? 'Załączniki, linki wewnętrzne i zewnętrzne'
+                              : 'Attachments, Internal Links & External Links'}
                           </h2>
 
                           {/* Attachments — flat file list */}
-                          <div className="space-y-3">
-                            <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
-                              {isPolish ? 'Załączniki' : 'Attachments'}
-                            </h3>
-                            {attachments.length === 0 ? (
-                              <div className="py-6 text-center">
-                                <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
-                                  {isPolish ? 'Brak załączników.' : 'No attachments.'}
-                                </p>
-                                <label className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors cursor-pointer">
+                          <div className="space-y-3" ref={attachmentsSectionRef}>
+                            <div className="flex items-center justify-between gap-2">
+                              <h3 className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                                {isPolish ? 'Załączniki' : 'Attachments'}
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-slate-300/40 dark:border-navy-600/60 text-slate-400">
+                                  {filteredAttachments.length}
+                                </span>
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                <DateFilterSortControl
+                                  options={[
+                                    { id: 'all', label: isPolish ? 'Wszystkie' : 'All' },
+                                    { id: 'today', label: isPolish ? 'Dziś' : 'Today' },
+                                    { id: '7d', label: isPolish ? '7 dni' : '7 days' },
+                                    { id: '30d', label: isPolish ? '30 dni' : '30 days' },
+                                  ]}
+                                  value={attachmentDateFilter}
+                                  onChange={(next) =>
+                                    setAttachmentDateFilter(next as CommentDateFilter)
+                                  }
+                                  sortOrder={attachmentSortOrder}
+                                  onToggleSort={() =>
+                                    setAttachmentSortOrder((prev) =>
+                                      prev === 'asc' ? 'desc' : 'asc'
+                                    )
+                                  }
+                                  sortAscLabel={
+                                    isPolish
+                                      ? 'Sortowanie: od najstarszych do najnowszych'
+                                      : 'Sort: oldest to newest'
+                                  }
+                                  sortDescLabel={
+                                    isPolish
+                                      ? 'Sortowanie: od najnowszych do najstarszych'
+                                      : 'Sort: newest to oldest'
+                                  }
+                                  filterButtonTitle={
+                                    isPolish
+                                      ? 'Filtr daty załączników (klikaj, aby zmienić zakres)'
+                                      : 'Attachment date filter (click to switch range)'
+                                  }
+                                />
+                                <button
+                                  onClick={openAttachmentModal}
+                                  disabled={isDecisionStageLocked}
+                                  className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
                                   + {isPolish ? 'Dodaj plik' : 'Add file'}
-                                  <input
-                                    type="file"
-                                    multiple
-                                    className="hidden"
-                                    onChange={(e) =>
-                                      e.target.files &&
-                                      handleUploadAttachments(Array.from(e.target.files))
-                                    }
-                                  />
-                                </label>
+                                </button>
+                              </div>
+                            </div>
+                            {filteredAttachments.length === 0 ? (
+                              <div className="min-h-[220px] rounded-2xl border border-slate-200/50 dark:border-navy-700/50 bg-slate-50/40 dark:bg-navy-900/30 py-6 text-center flex items-center justify-center">
+                                <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
+                                  {isPolish
+                                    ? 'Brak załączników dla wybranego zakresu.'
+                                    : 'No attachments for selected range.'}
+                                </p>
                               </div>
                             ) : (
-                              <>
+                              <div className="min-h-[220px] max-h-[380px] overflow-y-auto rounded-2xl border border-slate-200/50 dark:border-navy-700/50 bg-slate-50/40 dark:bg-navy-900/30 px-3">
                                 <div className="space-y-0 divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                                  {attachments.map((a) => (
+                                  {filteredAttachments.map((a) => (
                                     <div
                                       key={a.id}
-                                      className="flex items-center justify-between py-2 group"
+                                      className="grid grid-cols-[1fr_auto_auto] items-center gap-3 py-2.5 group"
                                     >
-                                      <div className="flex items-center gap-2 min-w-0">
-                                        <FileText
-                                          size={14}
-                                          className="text-slate-400 flex-shrink-0"
-                                        />
-                                        <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
-                                          {a.name}
-                                        </span>
-                                        <span className="text-[10px] text-slate-400">
-                                          {(a.size / 1024).toFixed(0)}KB
-                                        </span>
-                                      </div>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <FileText
+                                        size={14}
+                                        className="text-slate-400 flex-shrink-0"
+                                      />
                                       <button
-                                        onClick={() => handleDeleteAttachment(a.id)}
-                                        className="p-0.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                        onClick={() => a.url && window.open(a.url, '_blank', 'noopener,noreferrer')}
+                                        className="text-sm text-slate-700 dark:text-slate-300 truncate text-left hover:text-primary-500 transition-colors"
+                                        title={isPolish ? 'Otwórz załącznik' : 'Open attachment'}
                                       >
-                                        <X size={12} />
+                                        {a.name}
                                       </button>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                                      {(a.size / 1024).toFixed(0)} KB
+                                    </span>
+                                    <div
+                                      className="relative justify-self-end"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setResourceMenuKey((prev) =>
+                                            prev === `attachment:${a.id}` ? null : `attachment:${a.id}`
+                                          );
+                                        }}
+                                        className="p-1 rounded-md text-slate-400/85 hover:text-slate-100 hover:bg-slate-100/10 transition-colors"
+                                        title={isPolish ? 'Akcje załącznika' : 'Attachment actions'}
+                                      >
+                                        <MoreVertical size={14} />
+                                      </button>
+                                      {resourceMenuKey === `attachment:${a.id}` && (
+                                        <div className="absolute right-0 top-7 z-20 min-w-[160px] rounded-lg border border-slate-200/60 dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 shadow-lg p-1">
+                                          <button
+                                            onClick={() => {
+                                              setResourceMenuKey(null);
+                                              if (a.url) {
+                                                window.open(a.url, '_blank', 'noopener,noreferrer');
+                                              }
+                                            }}
+                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-navy-800/70"
+                                          >
+                                            <Eye size={12} />
+                                            {isPolish ? 'Podgląd' : 'Preview'}
+                                          </button>
+                                          <button
+                                            onClick={() => openEditAttachmentModal(a)}
+                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-navy-800/70"
+                                          >
+                                            <Edit3 size={12} />
+                                            {isPolish ? 'Edytuj' : 'Edit'}
+                                          </button>
+                                          <button
+                                            onClick={() => {
+                                              setResourceMenuKey(null);
+                                              handleDeleteAttachment(a.id);
+                                            }}
+                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left text-red-500 hover:bg-red-500/10"
+                                          >
+                                            <X size={12} />
+                                            {isPolish ? 'Usuń' : 'Delete'}
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
                                     </div>
                                   ))}
                                 </div>
-                                <label className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors cursor-pointer">
-                                  + {isPolish ? 'Dodaj plik' : 'Add file'}
-                                  <input
-                                    type="file"
-                                    multiple
-                                    className="hidden"
-                                    onChange={(e) =>
-                                      e.target.files &&
-                                      handleUploadAttachments(Array.from(e.target.files))
-                                    }
-                                  />
-                                </label>
-                              </>
+                              </div>
                             )}
                           </div>
 
-                          {/* Linked Items — merged with attachments section */}
-                          <div className="space-y-3">
-                            <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
-                              {isPolish ? 'Powiązane elementy' : 'Linked Items'}
-                            </h3>
-                            {linkedItems.length === 0 ? (
-                              <p className="text-xs text-slate-400 dark:text-slate-500 py-2">
-                                {isPolish ? 'Brak powiązanych elementów.' : 'No linked items.'}
-                              </p>
+                          {/* Linked Externals */}
+                          <div className="space-y-3" ref={externalLinksSectionRef}>
+                            <div className="flex items-center justify-between gap-2">
+                              <h3 className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                                {isPolish ? 'Linki zewnętrzne' : 'Linked externals'}
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-slate-300/40 dark:border-navy-600/60 text-slate-400">
+                                  {filteredExternalLinkedItems.length}
+                                </span>
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                <DateFilterSortControl
+                                  options={[{ id: 'all', label: isPolish ? 'Wszystkie' : 'All' }]}
+                                  value="all"
+                                  onChange={() => {}}
+                                  sortOrder={linkedItemsSortOrder}
+                                  onToggleSort={() =>
+                                    setLinkedItemsSortOrder((prev) =>
+                                      prev === 'asc' ? 'desc' : 'asc'
+                                    )
+                                  }
+                                  sortAscLabel={isPolish ? 'Sortowanie: od A do Z' : 'Sort: A to Z'}
+                                  sortDescLabel={isPolish ? 'Sortowanie: od Z do A' : 'Sort: Z to A'}
+                                  filterButtonTitle={
+                                    isPolish
+                                      ? 'Filtr linków zewnętrznych'
+                                      : 'External link filter'
+                                  }
+                                />
+                                <button
+                                  onClick={openExternalLinkModal}
+                                  disabled={isDecisionStageLocked}
+                                  className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  + {isPolish ? 'Dodaj link' : 'Add link'}
+                                </button>
+                              </div>
+                            </div>
+                            {filteredExternalLinkedItems.length === 0 ? (
+                              <div className="py-2 flex items-center justify-between gap-2">
+                                <p className="text-xs text-slate-400 dark:text-slate-500">
+                                  {isPolish ? 'Brak linków zewnętrznych.' : 'No external links yet.'}
+                                </p>
+                                <button
+                                  onClick={openExternalLinkModal}
+                                  disabled={isDecisionStageLocked}
+                                  className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  + {isPolish ? 'Dodaj link' : 'Add link'}
+                                </button>
+                              </div>
                             ) : (
                               <div className="space-y-0 divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                                {linkedItems.map((item) => (
+                                {filteredExternalLinkedItems.map((item) => (
                                   <div
                                     key={item.id}
-                                    className="flex items-center justify-between py-2 group"
+                                    className="grid grid-cols-[1fr_auto_auto] items-center gap-3 py-2.5 group"
                                   >
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <span className="text-[10px] font-mono uppercase text-slate-400 dark:text-slate-500 w-14">
-                                        {item.type}
-                                      </span>
-                                      <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
-                                        {item.title}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      {item.status && (
-                                        <span className="text-[11px] text-slate-400">
-                                          {item.status}
-                                        </span>
-                                      )}
+                                    <div className="min-w-0">
                                       <button
-                                        onClick={() => handleRemoveLinkedItem(item.id)}
-                                        className="p-0.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                        onClick={() => openLinkedItemTarget(item)}
+                                        className="text-sm text-slate-700 dark:text-slate-300 truncate text-left hover:text-primary-500 transition-colors w-full"
+                                        title={isPolish ? 'Otwórz link zewnętrzny' : 'Open external link'}
                                       >
-                                        <X size={12} />
+                                        {item.title}
                                       </button>
+                                      {item.comment && (
+                                        <p
+                                          className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500 truncate"
+                                          title={item.comment}
+                                        >
+                                          {item.comment}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                      <ArtifactPermalinkButton
+                                        artifactType={item.type}
+                                        artifactId={item.id}
+                                        isPolish={isPolish}
+                                        size={12}
+                                        className="p-1 text-slate-400/85"
+                                      />
+                                    </div>
+                                    <div
+                                      className="relative justify-self-end"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setResourceMenuKey((prev) =>
+                                            prev === `external:${item.id}` ? null : `external:${item.id}`
+                                          );
+                                        }}
+                                        className="p-1 rounded-md text-slate-400/85 hover:text-slate-100 hover:bg-slate-100/10 transition-colors"
+                                        title={isPolish ? 'Akcje linku zewnętrznego' : 'External link actions'}
+                                      >
+                                        <MoreVertical size={14} />
+                                      </button>
+                                      {resourceMenuKey === `external:${item.id}` && (
+                                        <div className="absolute right-0 top-7 z-20 min-w-[170px] rounded-lg border border-slate-200/60 dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 shadow-lg p-1">
+                                          <button
+                                            onClick={() => {
+                                              setResourceMenuKey(null);
+                                              openLinkedItemTarget(item);
+                                            }}
+                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-navy-800/70"
+                                          >
+                                            <Eye size={12} />
+                                            {isPolish ? 'Podgląd' : 'Preview'}
+                                          </button>
+                                          <button
+                                            onClick={() => openEditLinkedItemModal(item)}
+                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-navy-800/70"
+                                          >
+                                            <Edit3 size={12} />
+                                            {isPolish ? 'Edytuj' : 'Edit'}
+                                          </button>
+                                          <button
+                                            onClick={() => {
+                                              setResourceMenuKey(null);
+                                              handleRemoveLinkedItem(item);
+                                            }}
+                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left text-red-500 hover:bg-red-500/10"
+                                          >
+                                            <X size={12} />
+                                            {isPolish ? 'Usuń' : 'Delete'}
+                                          </button>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 ))}
                               </div>
                             )}
-                            <button
-                              onClick={() =>
-                                handleAddLinkedItem({
-                                  id: Math.random().toString(36).substr(2, 9),
-                                  type: 'task',
-                                  title: 'New linked item',
-                                })
-                              }
-                              className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors"
-                            >
-                              + {isPolish ? 'Dodaj powiązanie' : 'Link item'}
-                            </button>
                           </div>
+
+                          {/* Linked Internals */}
+                          <div className="space-y-3" ref={internalLinksSectionRef}>
+                            <div className="flex items-center justify-between gap-2">
+                              <h3 className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                                {isPolish ? 'Linki wewnętrzne' : 'Linked internals'}
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-slate-300/40 dark:border-navy-600/60 text-slate-400">
+                                  {filteredInternalLinkedItems.length}
+                                </span>
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                <DateFilterSortControl
+                                  options={[
+                                    { id: 'all', label: isPolish ? 'Wszystkie' : 'All' },
+                                    { id: 'task', label: isPolish ? 'Task' : 'Task' },
+                                    { id: 'decision', label: isPolish ? 'Decision' : 'Decision' },
+                                    { id: 'initiative', label: isPolish ? 'Initiative' : 'Initiative' },
+                                    { id: 'risk', label: isPolish ? 'Risk' : 'Risk' },
+                                    { id: 'project', label: isPolish ? 'Projekt' : 'Project' },
+                                    { id: 'assessment', label: isPolish ? 'Ocena' : 'Assessment' },
+                                    { id: 'report', label: isPolish ? 'Raport' : 'Report' },
+                                    { id: 'tool', label: isPolish ? 'Narzędzie' : 'Tool' },
+                                    { id: 'insight', label: isPolish ? 'Insight' : 'Insight' },
+                                  ]}
+                                  value={linkedItemFilter}
+                                  onChange={(next) => setLinkedItemFilter(next as LinkedItemFilter)}
+                                  sortOrder={linkedItemsSortOrder}
+                                  onToggleSort={() =>
+                                    setLinkedItemsSortOrder((prev) =>
+                                      prev === 'asc' ? 'desc' : 'asc'
+                                    )
+                                  }
+                                  sortAscLabel={
+                                    isPolish
+                                      ? 'Sortowanie: od A do Z'
+                                      : 'Sort: A to Z'
+                                  }
+                                  sortDescLabel={
+                                    isPolish
+                                      ? 'Sortowanie: od Z do A'
+                                      : 'Sort: Z to A'
+                                  }
+                                  filterButtonTitle={
+                                    isPolish
+                                      ? 'Filtr typu powiązań (klikaj, aby zmienić)'
+                                      : 'Linked item type filter (click to switch)'
+                                  }
+                                />
+                                <button
+                                  onClick={openInternalLinkModal}
+                                  disabled={isDecisionStageLocked}
+                                  className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  + {isPolish ? 'Dodaj link' : 'Add link'}
+                                </button>
+                              </div>
+                            </div>
+                            {filteredInternalLinkedItems.length === 0 ? (
+                              <div className="py-2 flex items-center justify-between gap-2">
+                                <p className="text-xs text-slate-400 dark:text-slate-500">
+                                  {isPolish
+                                    ? 'Brak linków wewnętrznych dla wybranego filtra.'
+                                    : 'No internal links for selected filter.'}
+                                </p>
+                                <button
+                                  onClick={openInternalLinkModal}
+                                  disabled={isDecisionStageLocked}
+                                  className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  + {isPolish ? 'Dodaj link' : 'Add link'}
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="space-y-0 divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                                {filteredInternalLinkedItems.map((item) => (
+                                  <div
+                                    key={item.id}
+                                    className="grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-3 py-2.5 group"
+                                  >
+                                    <span className="text-[10px] font-mono uppercase text-slate-400 dark:text-slate-500 w-14">
+                                      {item.type}
+                                    </span>
+                                    <button
+                                      onClick={() => openLinkedItemTarget(item)}
+                                      className="text-sm text-slate-700 dark:text-slate-300 truncate text-left hover:text-primary-500 transition-colors"
+                                      title={isPolish ? 'Otwórz powiązany rekord' : 'Open linked record'}
+                                    >
+                                      {item.title}
+                                    </button>
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                      <ArtifactPermalinkButton
+                                        artifactType={item.type}
+                                        artifactId={item.id}
+                                        isPolish={isPolish}
+                                        size={12}
+                                        className="p-1 text-slate-400/85"
+                                      />
+                                    </div>
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[10px] whitespace-nowrap ${getLinkedStatusBadgeClass(
+                                        item.status
+                                      )}`}
+                                    >
+                                      <span>{item.status || '—'}</span>
+                                      {(item.externalUrl || item.url) && <ExternalLink size={10} />}
+                                    </span>
+                                    <div
+                                      className="relative justify-self-end"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setResourceMenuKey((prev) =>
+                                            prev === `internal:${item.type}:${item.id}`
+                                              ? null
+                                              : `internal:${item.type}:${item.id}`
+                                          );
+                                        }}
+                                        className="p-1 rounded-md text-slate-400/85 hover:text-slate-100 hover:bg-slate-100/10 transition-colors"
+                                        title={isPolish ? 'Akcje linku' : 'Link actions'}
+                                      >
+                                        <MoreVertical size={14} />
+                                      </button>
+                                      {resourceMenuKey === `internal:${item.type}:${item.id}` && (
+                                        <div className="absolute right-0 top-7 z-20 min-w-[170px] rounded-lg border border-slate-200/60 dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 shadow-lg p-1">
+                                          <button
+                                            onClick={() => {
+                                              setResourceMenuKey(null);
+                                              openLinkedItemTarget(item);
+                                            }}
+                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-navy-800/70"
+                                          >
+                                            <Eye size={12} />
+                                            {isPolish ? 'Podgląd' : 'Preview'}
+                                          </button>
+                                          <button
+                                            onClick={() => openEditLinkedItemModal(item)}
+                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-navy-800/70"
+                                          >
+                                            <Edit3 size={12} />
+                                            {isPolish ? 'Edytuj' : 'Edit'}
+                                          </button>
+                                          <button
+                                            onClick={() => {
+                                              setResourceMenuKey(null);
+                                              handleRemoveLinkedItem(item);
+                                            }}
+                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left text-red-500 hover:bg-red-500/10"
+                                          >
+                                            <X size={12} />
+                                            {isPolish ? 'Usuń' : 'Delete'}
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {isAttachmentModalOpen && (
+                            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                              <div
+                                className="absolute inset-0 bg-black/60"
+                                onClick={closeAttachmentModal}
+                              />
+                              <div className={governanceModalClass}>
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    {isPolish ? 'Dodaj załącznik' : 'Add attachment'}
+                                  </h4>
+                                  <button
+                                    className="p-1 text-slate-400 hover:text-slate-600"
+                                    onClick={closeAttachmentModal}
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </div>
+                                <div className="space-y-3">
+                                  <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/40 dark:bg-navy-800/30 p-1 grid grid-cols-2 gap-1">
+                                    <button
+                                      onClick={() => setAttachmentSource('device')}
+                                      className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
+                                        attachmentSource === 'device'
+                                          ? 'bg-primary-500/20 text-primary-300 shadow-[0_0_0_1px_rgba(168,85,247,0.45)]'
+                                          : 'text-slate-500 dark:text-slate-400 hover:bg-white/40 dark:hover:bg-navy-700/60'
+                                      }`}
+                                    >
+                                      <HardDrive size={14} />
+                                      {isPolish ? 'Z komputera' : 'From computer'}
+                                    </button>
+                                    <button
+                                      onClick={() => setAttachmentSource('cloud')}
+                                      className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
+                                        attachmentSource === 'cloud'
+                                          ? 'bg-primary-500/20 text-primary-300 shadow-[0_0_0_1px_rgba(168,85,247,0.45)]'
+                                          : 'text-slate-500 dark:text-slate-400 hover:bg-white/40 dark:hover:bg-navy-700/60'
+                                      }`}
+                                    >
+                                      <Cloud size={14} />
+                                      {isPolish ? 'Z chmury' : 'From cloud'}
+                                    </button>
+                                  </div>
+
+                                  {attachmentSource === 'device' ? (
+                                    <div className="space-y-2">
+                                      <span className="text-xs text-slate-500 dark:text-slate-400 block">
+                                        {isPolish ? 'Wybierz pliki' : 'Choose files'}
+                                      </span>
+                                      <label className="block cursor-pointer">
+                                        <input
+                                          type="file"
+                                          multiple
+                                          className="sr-only"
+                                          onChange={(e) =>
+                                            setAttachmentDiskFiles((prev) => [
+                                              ...prev,
+                                              ...Array.from(e.target.files || []),
+                                            ])
+                                          }
+                                        />
+                                        <div className="rounded-xl border border-dashed border-primary-500/35 bg-gradient-to-br from-primary-500/15 via-slate-50/40 to-transparent dark:from-primary-500/20 dark:via-navy-800/40 dark:to-transparent p-5 min-h-[112px] transition-all hover:border-primary-400/70 hover:shadow-[0_10px_28px_rgba(17,24,39,0.28)] flex items-center justify-center">
+                                          <div className="flex items-center gap-3 text-center">
+                                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/25 text-primary-300">
+                                              <Upload size={16} />
+                                            </span>
+                                            <div className="min-w-0">
+                                              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                                {isPolish
+                                                  ? 'Kliknij, aby dodać pliki z komputera'
+                                                  : 'Click to add files from your computer'}
+                                              </p>
+                                              <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                                                {isPolish
+                                                  ? 'Możesz wybrać wiele plików jednocześnie.'
+                                                  : 'You can select multiple files at once.'}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </label>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-3 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-slate-50/40 dark:bg-navy-800/30 p-3">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                                          {isPolish ? 'Dostawca chmury' : 'Cloud provider'}
+                                        </span>
+                                        {connectedProviderIds.length === 0 && (
+                                          <button
+                                            onClick={openIntegrationsSettings}
+                                            className="inline-flex items-center gap-1 rounded-lg border border-primary-500/40 px-2 py-1 text-[10px] font-medium text-primary-400 hover:bg-primary-500/10"
+                                          >
+                                            <Settings size={12} />
+                                            {isPolish
+                                              ? 'Podłącz w Ustawieniach'
+                                              : 'Connect in Settings'}
+                                          </button>
+                                        )}
+                                      </div>
+                                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                        {cloudProviderCatalog.map((provider) => {
+                                          const connected = connectedProviderIds.includes(provider.id);
+                                          return (
+                                            <button
+                                              key={provider.id}
+                                              onClick={() => setSelectedCloudProvider(provider.id)}
+                                              className={`rounded-xl border px-3 py-2 text-left transition-colors ${
+                                                selectedCloudProvider === provider.id
+                                                  ? 'border-primary-500/60 bg-primary-500/10'
+                                                  : 'border-slate-200 dark:border-navy-700 hover:bg-slate-100/70 dark:hover:bg-navy-800/60'
+                                              }`}
+                                            >
+                                              <div className="flex items-center justify-between gap-2">
+                                                <span className={`text-xs font-semibold ${provider.colorClass} inline-flex items-center gap-1.5`}>
+                                                  <span className="h-1.5 w-1.5 rounded-full bg-current opacity-90" />
+                                                  {provider.name}
+                                                </span>
+                                                <span
+                                                  className={`text-[10px] px-1.5 py-0.5 rounded-full border ${
+                                                    connected
+                                                      ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10'
+                                                      : 'border-slate-300/50 text-slate-400'
+                                                  }`}
+                                                >
+                                                  {connected
+                                                    ? isPolish
+                                                      ? 'Połączono'
+                                                      : 'Connected'
+                                                    : isPolish
+                                                      ? 'Brak połączenia'
+                                                      : 'Not connected'}
+                                                </span>
+                                              </div>
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+
+                                      {!connectedProviderIds.includes(selectedCloudProvider) ? (
+                                        <div className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-2.5 py-2 text-[11px] text-amber-300 flex items-center justify-between gap-2">
+                                          <span>
+                                            {isPolish
+                                              ? 'Wybrana chmura nie jest podłączona.'
+                                              : 'Selected cloud is not connected.'}
+                                          </span>
+                                          <button
+                                            onClick={openIntegrationsSettings}
+                                            className="text-[10px] font-semibold text-amber-200 underline underline-offset-2"
+                                          >
+                                            {isPolish ? 'Podłącz' : 'Connect'}
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          onClick={openCloudProviderPicker}
+                                          className="w-full rounded-lg border border-primary-500/40 bg-primary-500/10 px-3 py-2 text-xs font-medium text-primary-300 hover:bg-primary-500/20 transition-colors"
+                                        >
+                                          {isPolish
+                                            ? 'Wybierz plik z chmury'
+                                            : 'Choose file from cloud'}
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {attachmentDiskFiles.length > 0 && (
+                                    <div className="max-h-44 overflow-y-auto rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/40 dark:bg-navy-800/40 p-2 text-[11px] text-slate-500 dark:text-slate-400 space-y-1.5">
+                                      <p className="px-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                        {isPolish
+                                          ? `Wybrane pliki (${attachmentDiskFiles.length})`
+                                          : `Selected files (${attachmentDiskFiles.length})`}
+                                      </p>
+                                      {attachmentDiskFiles.map((file) => (
+                                        <div
+                                          key={`${file.name}-${file.size}-${file.lastModified}`}
+                                          className="truncate flex items-center justify-between gap-2 rounded-lg border border-slate-200/50 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/50 px-2 py-1.5"
+                                        >
+                                          <div className="min-w-0">
+                                            <span className="block truncate text-slate-600 dark:text-slate-300">
+                                              {file.name}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400">
+                                              {(file.size / 1024).toFixed(0)} KB
+                                            </span>
+                                          </div>
+                                          <button
+                                            onClick={() =>
+                                              setAttachmentDiskFiles((prev) =>
+                                                prev.filter(
+                                                  (existing) =>
+                                                    !(
+                                                      existing.name === file.name &&
+                                                      existing.size === file.size &&
+                                                      existing.lastModified === file.lastModified
+                                                    )
+                                                )
+                                              )
+                                            }
+                                            className="text-slate-400 hover:text-red-400 transition-colors"
+                                            title={isPolish ? 'Usuń z listy' : 'Remove from list'}
+                                          >
+                                            <X size={12} />
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={closeAttachmentModal}
+                                    className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                                  >
+                                    {isPolish ? 'Anuluj' : 'Cancel'}
+                                  </button>
+                                  <button
+                                    onClick={() => void saveAttachmentFromModal()}
+                                    disabled={attachmentDiskFiles.length === 0}
+                                    className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                                  >
+                                    {isPolish ? 'Dodaj' : 'Add'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          {isAttachmentModalOpen && activeProvider && (
+                            <CloudFilePicker
+                              isOpen={isPickerOpen}
+                              onClose={closeFilePicker}
+                              provider={activeProvider}
+                              onFileSelect={handleCloudFilePickerSelect}
+                            />
+                          )}
+
+                          {editingAttachmentDraft && (
+                            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                              <div
+                                className="absolute inset-0 bg-black/60"
+                                onClick={() => {
+                                  setEditingAttachmentId(null);
+                                  setEditingAttachmentDraft(null);
+                                }}
+                              />
+                              <div className={governanceModalClass}>
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    {isPolish ? 'Edytuj załącznik' : 'Edit attachment'}
+                                  </h4>
+                                  <button
+                                    className="p-1 text-slate-400 hover:text-slate-600"
+                                    onClick={() => {
+                                      setEditingAttachmentId(null);
+                                      setEditingAttachmentDraft(null);
+                                    }}
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </div>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  {isPolish ? 'Nazwa' : 'Name'}
+                                  <input
+                                    value={editingAttachmentDraft.name}
+                                    onChange={(e) =>
+                                      setEditingAttachmentDraft({
+                                        ...editingAttachmentDraft,
+                                        name: e.target.value,
+                                      })
+                                    }
+                                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                  />
+                                </label>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  URL
+                                  <input
+                                    value={editingAttachmentDraft.url}
+                                    onChange={(e) =>
+                                      setEditingAttachmentDraft({
+                                        ...editingAttachmentDraft,
+                                        url: e.target.value,
+                                      })
+                                    }
+                                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                  />
+                                </label>
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setEditingAttachmentId(null);
+                                      setEditingAttachmentDraft(null);
+                                    }}
+                                    className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                                  >
+                                    {isPolish ? 'Anuluj' : 'Cancel'}
+                                  </button>
+                                  <button
+                                    onClick={saveEditedAttachment}
+                                    className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                                  >
+                                    {isPolish ? 'Zapisz' : 'Save'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {isInternalLinkModalOpen && (
+                            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                              <div
+                                className="absolute inset-0 bg-black/60"
+                                onClick={() => {
+                                  setIsInternalLinkModalOpen(false);
+                                  setLinkSearchQuery('');
+                                  setLinkSearchResults([]);
+                                }}
+                              />
+                              <div className={`${governanceModalClass} min-h-[380px]`}>
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    {isPolish ? 'Dodaj link wewnętrzny' : 'Add internal link'}
+                                  </h4>
+                                  <button
+                                    className="p-1 text-slate-400 hover:text-slate-600"
+                                    onClick={() => {
+                                      setIsInternalLinkModalOpen(false);
+                                      setLinkSearchQuery('');
+                                      setLinkSearchResults([]);
+                                    }}
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </div>
+                                <div className={governanceModalHintClass}>
+                                  {isPolish
+                                    ? 'Po podlinkowaniu metadane rekordu (np. status i priorytet) powinny pobrać się automatycznie. Jeśli nie, to ważny sygnał problemu z linkowaniem.'
+                                    : 'After linking, record metadata (e.g. status and priority) should load automatically. If not, treat it as an important linking issue signal.'}
+                                </div>
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <Search size={13} className="text-slate-400 dark:text-slate-500" />
+                                    <input
+                                      value={linkSearchQuery}
+                                      onChange={(e) => setLinkSearchQuery(e.target.value)}
+                                      placeholder={
+                                        isPolish
+                                          ? 'Szukaj task/decision/initiative/project/assessment/report/tool/insight...'
+                                          : 'Search task/decision/initiative/project/assessment/report/tool/insight...'
+                                      }
+                                      className="flex-1 text-xs bg-transparent text-slate-700 dark:text-slate-300 border-b border-slate-200/60 dark:border-navy-600/60 focus:outline-none focus:border-primary-400 py-1"
+                                    />
+                                  </div>
+                                  {linkSearchQuery.trim().length < 2 ? (
+                                    <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                                      {isPolish
+                                        ? 'Wpisz min. 2 znaki, aby wyszukać rekordy wewnętrzne.'
+                                        : 'Type at least 2 characters to search internal records.'}
+                                    </p>
+                                  ) : isLinkSearching ? (
+                                    <div className="inline-flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+                                      <Loader2 size={12} className="animate-spin" />
+                                      {isPolish ? 'Wyszukiwanie...' : 'Searching...'}
+                                    </div>
+                                  ) : linkSearchResults.length === 0 ? (
+                                    <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                                      {isPolish
+                                        ? 'Brak wyników lub wszystko jest już podpięte.'
+                                        : 'No results or everything is already linked.'}
+                                    </p>
+                                  ) : (
+                                    <div className="min-h-[180px] max-h-56 overflow-y-auto space-y-0 divide-y divide-slate-200/40 dark:divide-navy-700/40 rounded-lg border border-slate-200/50 dark:border-navy-700/50 px-1">
+                                      {linkSearchResults.slice(0, 16).map((item) => (
+                                        <button
+                                          key={`${item.type}:${item.id}`}
+                                          onClick={() => void handlePickSearchedLinkedItem(item)}
+                                          className="w-full py-2 text-left flex items-center gap-2 hover:bg-slate-100/50 dark:hover:bg-navy-800/40 transition-colors px-1 rounded"
+                                        >
+                                          <span className="text-[10px] font-mono uppercase text-slate-400 dark:text-slate-500 w-14">
+                                            {item.type}
+                                          </span>
+                                          <span className="text-xs text-slate-700 dark:text-slate-300 truncate flex-1">
+                                            {item.title}
+                                          </span>
+                                          <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                                            {item.status || '—'}
+                                          </span>
+                                          <Plus size={11} className="text-primary-500" />
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setIsInternalLinkModalOpen(false);
+                                      setLinkSearchQuery('');
+                                      setLinkSearchResults([]);
+                                    }}
+                                    className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                                  >
+                                    {isPolish ? 'Anuluj' : 'Cancel'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {isExternalLinkModalOpen && (
+                            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                              <div
+                                className="absolute inset-0 bg-black/60"
+                                onClick={() => {
+                                  setIsExternalLinkModalOpen(false);
+                                  setExternalLinkTitle('');
+                                  setExternalLinkUrl('');
+                                  setExternalLinkComment('');
+                                }}
+                              />
+                              <div className={`${governanceModalClass} min-h-[380px]`}>
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    {isPolish ? 'Dodaj link zewnętrzny' : 'Add external link'}
+                                  </h4>
+                                  <button
+                                    className="p-1 text-slate-400 hover:text-slate-600"
+                                    onClick={() => {
+                                      setIsExternalLinkModalOpen(false);
+                                      setExternalLinkTitle('');
+                                      setExternalLinkUrl('');
+                                      setExternalLinkComment('');
+                                    }}
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </div>
+                                <div className="space-y-3">
+                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                    {isPolish ? 'Tytuł linku' : 'Link title'}
+                                    <input
+                                      value={externalLinkTitle}
+                                      onChange={(e) => setExternalLinkTitle(e.target.value)}
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                    />
+                                  </label>
+                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                    URL
+                                    <input
+                                      value={externalLinkUrl}
+                                      onChange={(e) => setExternalLinkUrl(e.target.value)}
+                                      placeholder="https://..."
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                    />
+                                  </label>
+                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                    {isPolish ? 'Komentarz (opcjonalnie)' : 'Comment (optional)'}
+                                    <textarea
+                                      rows={5}
+                                      value={externalLinkComment}
+                                      onChange={(e) => setExternalLinkComment(e.target.value)}
+                                      placeholder={
+                                        isPolish
+                                          ? 'Np. Link do finalnej wersji dokumentu dla zespołu wdrożeniowego.'
+                                          : 'e.g. Final document version for the implementation team.'
+                                      }
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 resize-none"
+                                    />
+                                  </label>
+                                  <div className="flex justify-end gap-2">
+                                    <button
+                                      onClick={() => {
+                                        setIsExternalLinkModalOpen(false);
+                                        setExternalLinkTitle('');
+                                        setExternalLinkUrl('');
+                                        setExternalLinkComment('');
+                                      }}
+                                      className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                                    >
+                                      {isPolish ? 'Anuluj' : 'Cancel'}
+                                    </button>
+                                    <button
+                                      onClick={() => void handleSaveExternalLinkedItem()}
+                                      className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                                    >
+                                      {isPolish ? 'Dodaj link' : 'Add link'}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {editingLinkedItemDraft && (
+                            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                              <div
+                                className="absolute inset-0 bg-black/60"
+                                onClick={() => {
+                                  setEditingLinkedItemKey(null);
+                                  setEditingLinkedItemDraft(null);
+                                }}
+                              />
+                              <div className={governanceModalClass}>
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    {editingLinkedItemDraft?.type === 'external'
+                                      ? isPolish
+                                        ? 'Edytuj link zewnętrzny'
+                                        : 'Edit external link'
+                                      : isPolish
+                                        ? 'Edytuj link wewnętrzny'
+                                        : 'Edit internal link'}
+                                  </h4>
+                                  <button
+                                    className="p-1 text-slate-400 hover:text-slate-600"
+                                    onClick={() => {
+                                      setEditingLinkedItemKey(null);
+                                      setEditingLinkedItemDraft(null);
+                                    }}
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </div>
+                                <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                  {isPolish ? 'Tytuł' : 'Title'}
+                                  <input
+                                    value={editingLinkedItemDraft.title}
+                                    onChange={(e) =>
+                                      setEditingLinkedItemDraft({
+                                        ...editingLinkedItemDraft,
+                                        title: e.target.value,
+                                      })
+                                    }
+                                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                  />
+                                </label>
+                                {editingLinkedItemDraft.type !== 'external' && (
+                                  <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                    {isPolish ? 'Status' : 'Status'}
+                                    <input
+                                      value={editingLinkedItemDraft.status || ''}
+                                      onChange={(e) =>
+                                        setEditingLinkedItemDraft({
+                                          ...editingLinkedItemDraft,
+                                          status: e.target.value,
+                                        })
+                                      }
+                                      className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                    />
+                                  </label>
+                                )}
+                                {editingLinkedItemDraft.type === 'external' && (
+                                  <>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                      URL
+                                      <input
+                                        value={editingLinkedItemDraft.externalUrl || editingLinkedItemDraft.url || ''}
+                                        onChange={(e) =>
+                                          setEditingLinkedItemDraft({
+                                            ...editingLinkedItemDraft,
+                                            externalUrl: e.target.value,
+                                            url: e.target.value,
+                                          })
+                                        }
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                                      />
+                                    </label>
+                                    <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                                      {isPolish ? 'Komentarz' : 'Comment'}
+                                      <textarea
+                                        rows={3}
+                                        value={editingLinkedItemDraft.comment || ''}
+                                        onChange={(e) =>
+                                          setEditingLinkedItemDraft({
+                                            ...editingLinkedItemDraft,
+                                            comment: e.target.value,
+                                          })
+                                        }
+                                        className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 resize-none"
+                                      />
+                                    </label>
+                                  </>
+                                )}
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setEditingLinkedItemKey(null);
+                                      setEditingLinkedItemDraft(null);
+                                    }}
+                                    className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                                  >
+                                    {isPolish ? 'Anuluj' : 'Cancel'}
+                                  </button>
+                                  <button
+                                    onClick={saveEditedLinkedItem}
+                                    className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                                  >
+                                    {isPolish ? 'Zapisz' : 'Save'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -3707,56 +9075,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                           <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
                             {isPolish ? 'Logi aktywności' : 'Activity Log'}
                           </h2>
-                          {activityLog.length === 0 ? (
-                            <p className="text-xs text-slate-400 dark:text-slate-500 py-6 text-center">
-                              {isPolish ? 'Brak wpisów w logu.' : 'No activity entries yet.'}
-                            </p>
-                          ) : (
-                            <div className="space-y-0 divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                              {activityLog.map((entry) => {
-                                const entryIcon =
-                                  entry.type === 'approved' ? (
-                                    <Check size={12} />
-                                  ) : entry.type === 'rejected' ? (
-                                    <X size={12} />
-                                  ) : entry.type === 'escalated' ? (
-                                    <ArrowUp size={12} />
-                                  ) : entry.type === 'deferred' ? (
-                                    <Clock size={12} />
-                                  ) : entry.type === 'assignment' ? (
-                                    <UserCheck size={12} />
-                                  ) : entry.type === 'comment' ? (
-                                    <MessageSquare size={12} />
-                                  ) : entry.type === 'edit' ? (
-                                    <Edit3 size={12} />
-                                  ) : entry.type === 'deadline' ? (
-                                    <Calendar size={12} />
-                                  ) : entry.type === 'priority' ||
-                                    entry.type === 'status_change' ? (
-                                    <Flag size={12} />
-                                  ) : (
-                                    <Plus size={12} />
-                                  );
-
-                                return (
-                                  <div key={entry.id} className="py-3 flex items-start gap-3">
-                                    <div className="mt-0.5 text-slate-400 dark:text-slate-500">
-                                      {entryIcon}
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                      <p className="text-sm text-slate-700 dark:text-slate-300">
-                                        {entry.description}
-                                      </p>
-                                      <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                                        {new Date(entry.timestamp).toLocaleString()}
-                                        {entry.userName ? ` · ${entry.userName}` : ''}
-                                      </p>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
+                          {renderActivityLogPanel()}
                         </div>
                       )}
                     </motion.div>
@@ -3799,9 +9118,17 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                 <div className="space-y-4 min-w-0">
                   {clickupTab === 'overview' && (
                     <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3">
-                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                        {isPolish ? 'Przegląd decyzji' : 'Decision Overview'}
-                      </h3>
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          {isPolish ? 'Przegląd decyzji' : 'Decision Overview'}
+                        </h3>
+                        {renderFieldAIButton(
+                          'c-description',
+                          'Decision Overview',
+                          description,
+                          setDescription
+                        )}
+                      </div>
                       <textarea
                         value={description}
                         onChange={(e) => !isDecisionStageLocked && setDescription(e.target.value)}
@@ -3809,9 +9136,17 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                         rows={6}
                         className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
                       />
-                      <label className="block text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                        {isPolish ? 'Konsekwencje braku decyzji' : 'Consequences of Inaction'}
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                          {isPolish ? 'Konsekwencje braku decyzji' : 'Consequences of Inaction'}
+                        </label>
+                        {renderFieldAIButton(
+                          'c-rationale',
+                          'Consequences of Inaction',
+                          rationale,
+                          setRationale
+                        )}
+                      </div>
                       <textarea
                         value={rationale}
                         onChange={(e) => !isDecisionStageLocked && setRationale(e.target.value)}
@@ -3880,6 +9215,8 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                   triggers: ['on_status_change'],
                                   emailEnabled: false,
                                   inAppEnabled: true,
+                                  integrationChannels: [],
+                                  syncTargets: [],
                                 },
                               };
                               setStakeholders([...stakeholders, newStakeholder]);
@@ -3954,13 +9291,16 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                       {s.userEmail || '—'}
                                     </td>
                                     <td className="py-2 pr-2 text-slate-500 dark:text-slate-400 text-xs">
-                                      {s.notificationSettings?.enabled
-                                        ? `${s.notificationSettings.triggers?.length || 0} ${
-                                            isPolish ? 'triggerów' : 'triggers'
-                                          }`
-                                        : isPolish
-                                          ? 'Wyłączone'
-                                          : 'Disabled'}
+                                      <div className="flex flex-wrap gap-1">
+                                        {stakeholderChannelLabels(s.notificationSettings).map((label) => (
+                                          <span
+                                            key={`${s.id}-clickup-${label}`}
+                                            className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px]"
+                                          >
+                                            {label}
+                                          </span>
+                                        ))}
+                                      </div>
                                     </td>
                                     <td className="py-2 text-right">
                                       <button
@@ -4526,7 +9866,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                                     <td className="py-2 text-right">
                                       <button
                                         disabled={isDecisionStageLocked}
-                                        onClick={() => handleRemoveLinkedItem(item.id)}
+                                        onClick={() => handleRemoveLinkedItem(item)}
                                         className="p-1 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         <Trash2 size={13} />
@@ -4544,45 +9884,10 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
 
                   {clickupTab === 'logs' && (
                     <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3">
-                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
                         {isPolish ? 'Logi aktywności' : 'Activity Log'}
                       </h3>
-                      {activityLog.length === 0 ? (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 py-2 text-center">
-                          {isPolish ? 'Brak wpisów w logu.' : 'No activity entries yet.'}
-                        </p>
-                      ) : (
-                        <div className="space-y-0 divide-y divide-slate-200/50 dark:divide-navy-700/50">
-                          {activityLog.map((entry) => (
-                            <div key={entry.id} className="py-2.5 flex items-start gap-2.5">
-                              <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                                {entry.type === 'approved'
-                                  ? '✓'
-                                  : entry.type === 'rejected'
-                                    ? '✕'
-                                    : entry.type === 'escalated'
-                                      ? '↑'
-                                      : entry.type === 'deferred'
-                                        ? '⏱'
-                                        : entry.type === 'comment'
-                                          ? '💬'
-                                          : entry.type === 'assignment'
-                                            ? '👤'
-                                            : '•'}
-                              </span>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm text-slate-700 dark:text-slate-300">
-                                  {entry.description}
-                                </p>
-                                <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                                  {new Date(entry.timestamp).toLocaleString()}
-                                  {entry.userName ? ` · ${entry.userName}` : ''}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      {renderActivityLogPanel()}
                     </div>
                   )}
                 </div>

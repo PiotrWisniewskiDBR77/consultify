@@ -63,9 +63,11 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { SWOTData, ToolType, useToolStore } from '@/store/useToolStore';
 import { AppView } from '@/types';
+import { buildArtifactPermalink } from '@/utils/artifactLinks';
 import { exportToPDF } from '@/utils/pdfExport';
 
 import { type Comment, CommentsSection } from '../MyWork/shared';
+import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 import { ToolCanvas } from './ToolCanvas';
 import { computeToolCompletionItems, computeToolReviewGaps } from './toolCompletion';
@@ -584,6 +586,16 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     }
   };
 
+  const handleCopyToolPermalink = async () => {
+    if (!toolSessionId) return;
+    try {
+      await navigator.clipboard.writeText(buildArtifactPermalink('tool', toolSessionId));
+      toast.success(isPolish ? 'Link do narzędzia skopiowany' : 'Tool permalink copied');
+    } catch {
+      toast.error(isPolish ? 'Nie udało się skopiować linku' : 'Failed to copy link');
+    }
+  };
+
   const handleRequestReview = async () => {
     if (!toolSessionId || !completionReady) {
       toast.error(
@@ -720,9 +732,20 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 {toolMeta.badge}
               </span>
               <div>
-                <h1 className="font-semibold text-slate-900 dark:text-white">
-                  {isPolish ? toolMeta.namePl : toolMeta.name}
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="font-semibold text-slate-900 dark:text-white">
+                    {isPolish ? toolMeta.namePl : toolMeta.name}
+                  </h1>
+                  {toolSessionId && (
+                    <ArtifactPermalinkButton
+                      artifactType="tool"
+                      artifactId={toolSessionId}
+                      isPolish={isPolish}
+                      size={14}
+                      className="p-1"
+                    />
+                  )}
+                </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{sessionName}</p>
               </div>
             </div>
@@ -775,8 +798,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   >
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(window.location.href);
-                        toast.success('Link copied');
+                        void handleCopyToolPermalink();
                         setShowMoreMenu(false);
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"

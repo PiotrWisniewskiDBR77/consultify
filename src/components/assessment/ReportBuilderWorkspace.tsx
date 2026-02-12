@@ -475,6 +475,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
 
       {/* Header */}
       <ReportHeader
+        reportId={report.id}
         name={report.name}
         status={report.status}
         organizationName={report.organizationName}

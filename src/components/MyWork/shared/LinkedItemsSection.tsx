@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronRight,
   ExternalLink,
+  FileText,
   Flag,
   Link as LinkIcon,
   Loader2,
@@ -25,7 +26,17 @@ import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-export type LinkedItemType = 'task' | 'decision' | 'risk' | 'initiative' | 'project' | 'external';
+export type LinkedItemType =
+  | 'task'
+  | 'decision'
+  | 'risk'
+  | 'initiative'
+  | 'project'
+  | 'assessment'
+  | 'report'
+  | 'tool'
+  | 'insight'
+  | 'external';
 
 export interface LinkedItem {
   id: string;
@@ -35,6 +46,7 @@ export interface LinkedItem {
   priority?: string;
   url?: string;
   externalUrl?: string;
+  comment?: string;
 }
 
 interface LinkedItemsSectionProps {
@@ -83,6 +95,14 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
         return <Target size={size} className="text-emerald-400" />;
       case 'project':
         return <Flag size={size} className="text-indigo-400" />;
+      case 'assessment':
+        return <FileText size={size} className="text-cyan-400" />;
+      case 'report':
+        return <FileText size={size} className="text-violet-400" />;
+      case 'tool':
+        return <Flag size={size} className="text-fuchsia-400" />;
+      case 'insight':
+        return <AlertTriangle size={size} className="text-teal-400" />;
       case 'external':
         return <ExternalLink size={size} className="text-slate-400" />;
       default:
@@ -97,6 +117,10 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
       risk: { en: 'Risk', pl: 'Ryzyko' },
       initiative: { en: 'Initiative', pl: 'Inicjatywa' },
       project: { en: 'Project', pl: 'Projekt' },
+      assessment: { en: 'Assessment', pl: 'Ocena' },
+      report: { en: 'Report', pl: 'Raport' },
+      tool: { en: 'Tool', pl: 'Narzędzie' },
+      insight: { en: 'Insight', pl: 'Insight' },
       external: { en: 'External Link', pl: 'Link zewnętrzny' },
     };
     return isPolish ? labels[type].pl : labels[type].en;

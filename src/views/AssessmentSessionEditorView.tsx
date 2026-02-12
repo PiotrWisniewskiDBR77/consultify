@@ -27,6 +27,7 @@ import { RequestAccessModal, useAssessmentPermissions } from '@/components/asses
 import { SIRIAssessmentEditor } from '@/components/assessment/siri/SIRIAssessmentEditor';
 import { CMPracticeForm } from '@/components/assessment/tools/CMPracticeForm';
 import { LeanForm } from '@/components/assessment/tools/LeanForm';
+import { ArtifactPermalinkButton } from '@/components/shared/ArtifactPermalinkButton';
 import { ADMA_DIMENSIONS } from '@/services/admaStructure';
 import { Api } from '@/services/api';
 import { CMMI_PRACTICE_AREAS } from '@/services/cmmiStructure';
@@ -1401,6 +1402,13 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   >
                     {title}
                   </button>
+                )}
+                {assessmentId && (
+                  <ArtifactPermalinkButton
+                    artifactType="assessment"
+                    artifactId={assessmentId}
+                    size={14}
+                  />
                 )}
                 <span
                   className={`shrink-0 text-[11px] px-2 py-0.5 rounded-full border ${

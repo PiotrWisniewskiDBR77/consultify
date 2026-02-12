@@ -271,7 +271,7 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
 export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentProjectId, setCurrentProjectId, currentOrganization } = useAppStore();
 
   // Permissions hook
@@ -285,6 +285,7 @@ export const InterviewHub: React.FC = () => {
   // Get session ID from URL if provided
   const sessionIdFromUrl = searchParams.get('sessionId');
   const assignmentIdFromUrl = searchParams.get('assignmentId');
+  const insightIdFromUrl = searchParams.get('insightId');
 
   // State - domyślnie Inbox (moje przydziały)
   const [activeTab, setActiveTab] = useState<ModuleTab>('my-assignments');
@@ -413,6 +414,23 @@ export const InterviewHub: React.FC = () => {
       }
     }
   }, [sessionIdFromUrl, sessions]);
+
+  // Open insight from URL
+  useEffect(() => {
+    if (!insightIdFromUrl) return;
+    const insight = insights.find((i) => i.id === insightIdFromUrl);
+    if (!insight) return;
+    handleOpenDocument({
+      id: insight.id,
+      type: 'insight',
+      name: insight.title || 'Insight',
+      status: (insight.status as ItemStatus) || 'approved',
+      data: insight,
+    });
+    const next = new URLSearchParams(searchParams);
+    next.delete('insightId');
+    setSearchParams(next, { replace: true });
+  }, [insightIdFromUrl, insights, searchParams, setSearchParams]);
 
   // Load template questions when a template doc is opened
   useEffect(() => {

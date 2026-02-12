@@ -40,6 +40,10 @@ export interface StakeholderNotificationSettings {
   triggers: NotificationTrigger[];
   emailEnabled: boolean;
   inAppEnabled: boolean;
+  // Optional external channels for cross-system synchronization.
+  integrationChannels?: Array<'slack' | 'teams' | 'jira' | 'webhook'>;
+  // Optional sync destinations, e.g. "jira:PROJ", "asana:workspace-a", webhook aliases.
+  syncTargets?: string[];
 }
 
 export interface Stakeholder {
