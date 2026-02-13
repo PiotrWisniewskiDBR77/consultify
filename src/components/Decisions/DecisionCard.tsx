@@ -92,14 +92,14 @@ const PriorityBadge: React.FC<{ priority?: string }> = ({ priority }) => {
   const config = {
     CRITICAL: {
       bg: 'bg-red-500',
-      text: 'text-white',
+      text: 'text-slate-900 dark:text-white',
       icon: Zap,
       label: 'Critical',
       animate: true,
     },
     HIGH: {
       bg: 'bg-orange-500',
-      text: 'text-white',
+      text: 'text-slate-900 dark:text-white',
       icon: Flag,
       label: 'High',
       animate: false,
@@ -289,7 +289,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           </span>
           <ChevronRight
             size={14}
-            className="text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors shrink-0"
+            className="text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors shrink-0"
           />
         </div>
       </motion.div>
@@ -328,7 +328,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           </div>
           <ChevronRight
             size={14}
-            className="text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors"
+            className="text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors"
           />
         </div>
 

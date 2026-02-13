@@ -95,13 +95,13 @@ const TAB_BASE = `
 
 const TAB_INACTIVE = `
   ${TAB_BASE}
-  bg-navy-800 border-navy-600 text-slate-400
-  hover:bg-navy-700 hover:border-slate-500 hover:text-white
+  bg-slate-50 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400
+  hover:bg-slate-100 dark:hover:bg-navy-700 hover:border-slate-500 hover:text-slate-900 dark:hover:text-white
 `;
 
 const TAB_ACTIVE = `
   ${TAB_BASE}
-  bg-primary-500/15 border-primary-500 text-primary-400
+  bg-primary-500/15 border-primary-500 text-primary-600 dark:text-primary-400
   shadow-sm shadow-primary-500/10
 `;
 
@@ -137,7 +137,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
   const isListActive = activeDocumentId === null;
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-navy-900/50 border-b border-navy-700">
+    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
       {/* List button - same style as tabs */}
       <button
         onClick={onShowList}
@@ -152,7 +152,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
       </button>
 
       {/* Separator */}
-      {documents.length > 0 && <div className="w-px h-6 bg-navy-600" />}
+      {documents.length > 0 && <div className="w-px h-6 bg-slate-300 dark:bg-navy-600" />}
 
       {/* Visible Document Tabs */}
       {visibleDocs.map((doc) => {
@@ -171,7 +171,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
           >
             {/* Type Badge */}
             <span
-              className={`font-mono text-xs ${isActive ? 'text-primary-300' : 'text-slate-500'}`}
+              className={`font-mono text-xs ${isActive ? 'text-primary-600 dark:text-primary-300' : 'text-slate-500'}`}
             >
               {doc.subType}
             </span>
@@ -198,7 +198,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
               }}
               className="
                 p-0.5 rounded opacity-0 group-hover:opacity-100
-                text-slate-400 hover:text-white hover:bg-navy-600
+                text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-600
                 transition-all
               "
             >
@@ -217,9 +217,9 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
               flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium
               border transition-all duration-200
               ${
-                activeInOverflow
-                  ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                  : 'bg-navy-800 border-navy-600 text-slate-400 hover:text-white hover:border-slate-500'
+                  activeInOverflow
+                  ? 'bg-primary-500/15 border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'bg-slate-50 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-500'
               }
             `}
           >
@@ -231,7 +231,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
           {showOverflowMenu && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowOverflowMenu(false)} />
-              <div className="absolute top-full right-0 mt-1 z-50 min-w-[200px] bg-navy-800 border border-navy-600 rounded-lg shadow-xl overflow-hidden">
+              <div className="absolute top-full right-0 mt-1 z-50 min-w-[200px] bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
                 {overflowDocs.map((doc) => {
                   const isActive = doc.id === activeDocumentId;
                   const statusColor = STATUS_COLORS[doc.status];
@@ -247,12 +247,12 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
                         flex items-center gap-2 px-3 py-2 cursor-pointer
                         ${
                           isActive
-                            ? 'bg-primary-500/15 text-primary-400'
-                            : 'text-slate-300 hover:bg-navy-700'
+                            ? 'bg-primary-500/15 text-primary-600 dark:text-primary-400'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700'
                         }
                       `}
                     >
-                      <span className="font-mono text-xs text-slate-500">{doc.subType}</span>
+                      <span className="font-mono text-xs text-slate-500 dark:text-slate-400">{doc.subType}</span>
                       <span className="flex-1 truncate">{doc.name}</span>
                       <span className={`w-2 h-2 rounded-full ${statusColor}`} />
                       <button
@@ -260,7 +260,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
                           e.stopPropagation();
                           onCloseDocument(doc.id);
                         }}
-                        className="p-0.5 rounded text-slate-400 hover:text-white hover:bg-navy-600"
+                        className="p-0.5 rounded text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-600"
                       >
                         <X size={14} />
                       </button>

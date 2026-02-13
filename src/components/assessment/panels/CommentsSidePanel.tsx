@@ -118,7 +118,7 @@ export const CommentsSidePanel: React.FC<CommentsSidePanelProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               aria-label="Zamknij panel komentarzy"
             >
               <X size={20} />

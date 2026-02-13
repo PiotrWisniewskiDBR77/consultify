@@ -232,7 +232,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
   }
 
   return (
-    <div className="flex w-full h-full min-h-0 overflow-hidden bg-gray-50 dark:bg-navy-950 relative">
+    <div className="flex w-full h-full min-h-0 overflow-hidden bg-slate-50 dark:bg-navy-950 relative">
       {/* Desktop Left Panel: Consultant Chat */}
       {!isChatCollapsed && !hideSidebar && (
         <div
@@ -245,7 +245,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             <div className="absolute top-2 right-2 z-10">
               <button
                 onClick={() => toggleChatCollapse()}
-                className="p-1 rounded bg-slate-100 dark:bg-navy-800/40 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400"
+                className="p-1 rounded bg-slate-100 dark:bg-navy-800/40 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400"
                 title="Collapse AI Panel"
               >
                 <svg
@@ -279,7 +279,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
         </div>
       )}
       {/* Desktop Collapsed Trigger */}
-      {isChatCollapsed && (
+      {isChatCollapsed && !hideSidebar && (
         <div className="hidden lg:flex w-12 shadow-sm bg-white dark:bg-navy-900 flex-col items-center py-4 gap-4 h-full shrink-0">
           <button
             onClick={() => toggleChatCollapse()}
@@ -299,13 +299,13 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
           </button>
-          <div className="writing-vertical-rl text-xs text-slate-500 dark:text-slate-400 font-bold tracking-widest uppercase rotate-180 flex-1 text-center">
+          <div className="writing-vertical-rl text-xs text-slate-400 font-bold tracking-widest uppercase rotate-180 flex-1 text-center">
             AI Consultant
           </div>
         </div>
       )}
       {/* Resizer Handle (Only when visible) */}
-      {!isChatCollapsed && (
+      {!isChatCollapsed && !hideSidebar && (
         <div
           className={`hidden lg:block w-1 hover:w-1.5 -ml-0.5 z-10 cursor-col-resize bg-transparent hover:bg-brand/50 active:bg-brand transition-all duration-150 relative ${isResizing ? 'bg-brand w-1.5' : ''}`}
           onMouseDown={startResizing}
@@ -337,19 +337,19 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             {/* Drawer Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700 shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                  <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
+                <div className="w-8 h-8 rounded-lg bg-purple-900/30 flex items-center justify-center">
+                  <Sparkles size={16} className="text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-navy-900 dark:text-white">AI Consultant</h3>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">AI Consultant</h3>
+                  <p className="text-[10px] text-slate-500">
                     Twój asystent transformacji
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsMobileChatOpen(false)}
-                className="touch-target flex items-center justify-center w-10 h-10 rounded-lg bg-slate-100 dark:bg-navy-800/40 dark:bg-white/10 text-slate-500 dark:text-slate-400"
+                className="touch-target flex items-center justify-center w-10 h-10 rounded-lg bg-white/10 text-slate-400"
               >
                 <X size={20} />
               </button>
@@ -376,7 +376,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
       <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
         {/* Focus Mode Selector - Only for legacy ChatPanel (UnifiedChatPanel has built-in) */}
         {!useUnifiedChat && !hideSidebar && !isChatCollapsed && (
-          <div className="hidden lg:flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950">
+          <div className="hidden lg:flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
             <FocusModeSelector value={focusMode} onChange={setFocusMode} />
 
             {/* Artifacts toggle button */}
@@ -402,7 +402,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
 
         {/* Artifacts toggle for UnifiedChatPanel */}
         {useUnifiedChat && !hideSidebar && !isChatCollapsed && artifacts.length > 0 && (
-          <div className="hidden lg:flex items-center justify-end px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950">
+          <div className="hidden lg:flex items-center justify-end px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
             <button
               onClick={() => toggleArtifactsPanel()}
               className={`
@@ -442,7 +442,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             {activeChatMessages.length > 0 &&
               activeChatMessages[activeChatMessages.length - 1]?.role === 'ai' && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                  <span className="w-2 h-2 bg-white dark:bg-navy-900 rounded-full animate-ping" />
+                  <span className="w-2 h-2 bg-slate-900 dark:bg-navy-900 rounded-full animate-ping" />
                 </span>
               )}
           </button>

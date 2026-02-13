@@ -3,13 +3,16 @@ import {
   AlertTriangle,
   ArrowRight,
   Bell,
+  BookOpen,
   Bot,
   Check,
   CheckCircle,
   CheckSquare,
   Clock,
+  CreditCard,
   Flag,
   Info,
+  Megaphone,
   MessageSquare,
   Scale,
   Sparkles,
@@ -29,6 +32,10 @@ import { AppView } from '@/types';
 
 import { Api } from '../../services/api';
 import { Notification } from '../../types';
+import {
+  isNotificationTypeMuted,
+  NOTIFICATION_MUTE_SESSION_CHANGED_EVENT,
+} from '@/utils/notificationMuteSession';
 
 export const NotificationDropdown = () => {
   const { i18n } = useTranslation();
@@ -50,7 +57,7 @@ export const NotificationDropdown = () => {
         Api.getNotifications(false, 20), // Get recent 20
         Api.getUnreadNotificationCount(),
       ]);
-      setNotifications(data);
+      setNotifications((Array.isArray(data) ? data : []).filter((n: any) => !isNotificationTypeMuted(n.type)));
       setUnreadCount(count);
     } catch (error) {
       console.error('Failed to fetch notifications', error);
@@ -67,6 +74,13 @@ export const NotificationDropdown = () => {
     return () => {
       clearInterval(interval);
     };
+  }, []);
+
+  // Refresh immediately when session mute changes
+  useEffect(() => {
+    const handle = () => fetchNotifications();
+    window.addEventListener(NOTIFICATION_MUTE_SESSION_CHANGED_EVENT, handle as any);
+    return () => window.removeEventListener(NOTIFICATION_MUTE_SESSION_CHANGED_EVENT, handle as any);
   }, []);
 
   useEffect(() => {
@@ -187,8 +201,8 @@ export const NotificationDropdown = () => {
     const presetLabels: Record<SnoozePreset, { en: string; pl: string }> = {
       '1h': { en: '1 hour', pl: '1 godzinę' },
       '4h': { en: '4 hours', pl: '4 godziny' },
-      tomorrow: { en: 'tomorrow', pl: 'jutro' },
-      next_week: { en: 'next week', pl: 'za tydzień' },
+      '1d': { en: '1 day', pl: '1 dzień' },
+      '3d': { en: '3 days', pl: '3 dni' },
     };
     toast.success(
       isPolish
@@ -240,6 +254,14 @@ export const NotificationDropdown = () => {
       return <Bot size={16} className="text-purple-400" />;
     if (t.includes('AI')) return <Sparkles size={16} className="text-indigo-500" />;
     if (t === 'SYSTEM_ALERT') return <AlertCircle size={16} className="text-red-500" />;
+    if (t === 'PAYMENT_FAILED') return <CreditCard size={16} className="text-red-500" />;
+    if (t === 'USAGE_ALERT' || t.includes('LIMIT'))
+      return <AlertTriangle size={16} className="text-amber-400" />;
+    if (t === 'SUBSCRIPTION_CHANGE') return <CreditCard size={16} className="text-indigo-400" />;
+    if (t.startsWith('DBR77_')) {
+      if (t.includes('KB')) return <BookOpen size={16} className="text-emerald-400" />;
+      return <Megaphone size={16} className="text-purple-400" />;
+    }
     if (t === 'MILESTONE_COMPLETED') return <CheckCircle size={16} className="text-emerald-500" />;
     if (t.includes('TASK')) return <CheckSquare size={16} className="text-blue-400" />;
     if (t.includes('FEEDBACK') || t.includes('TICKET'))
@@ -257,7 +279,8 @@ export const NotificationDropdown = () => {
       severity === 'CRITICAL' ||
       type.includes('BLOCKED') ||
       type === 'DECISION_OVERDUE' ||
-      type === 'SYSTEM_ALERT'
+      type === 'SYSTEM_ALERT' ||
+      type === 'PAYMENT_FAILED'
     )
       return 'bg-red-500';
     if (
@@ -266,9 +289,12 @@ export const NotificationDropdown = () => {
       type.includes('ESCALAT') ||
       type === 'DECISION_REQUIRED' ||
       type === 'GATE_PENDING_APPROVAL' ||
-      type.includes('AI_RISK')
+      type.includes('AI_RISK') ||
+      type === 'USAGE_ALERT' ||
+      type.includes('LIMIT')
     )
       return 'bg-amber-500';
+    if (type.startsWith('DBR77_')) return 'bg-purple-500';
     return 'bg-blue-500';
   };
 
@@ -500,12 +526,12 @@ export const NotificationDropdown = () => {
                                         label: isPolish ? '4 godz.' : '4 hours',
                                       },
                                       {
-                                        preset: 'tomorrow' as SnoozePreset,
-                                        label: isPolish ? 'Jutro' : 'Tomorrow',
+                                        preset: '1d' as SnoozePreset,
+                                        label: isPolish ? '1 dzień' : '1 day',
                                       },
                                       {
-                                        preset: 'next_week' as SnoozePreset,
-                                        label: isPolish ? 'Za tydzień' : 'Next week',
+                                        preset: '3d' as SnoozePreset,
+                                        label: isPolish ? '3 dni' : '3 days',
                                       },
                                     ].map(({ preset, label }) => (
                                       <button

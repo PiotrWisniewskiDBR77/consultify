@@ -33,6 +33,7 @@ export const TaskTypeEnum = z.enum([
   'interview',
   'other',
 ]);
+export const TaskSourceEnum = z.enum(['manual', 'ai']);
 
 // ==========================================
 // REQUEST SCHEMAS
@@ -57,6 +58,7 @@ export const CreateTaskSchema = z.object({
   estimatedHours: z.number().min(0).optional().nullable(),
   tags: z.array(z.string()).optional(),
   taskType: TaskTypeEnum.optional().default('execution'),
+  source: TaskSourceEnum.optional().default('manual'),
   initiativeId: z.string().uuid().optional().nullable(),
   ownerId: z.string().uuid().optional().nullable(),
   requiresAcceptance: z.boolean().optional(),

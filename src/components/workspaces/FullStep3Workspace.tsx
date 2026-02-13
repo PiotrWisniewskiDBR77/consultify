@@ -139,7 +139,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
             <AIFeedbackButton context="roadmap" data={initiatives} />
           </div>
         </div>
-        <div className="w-full h-0.5 bg-navy-800 rounded-full overflow-hidden mt-1">
+        <div className="w-full h-0.5 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden mt-1">
           <div className="h-full bg-blue-500 w-3/4 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
         </div>
       </div>
@@ -204,7 +204,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                   }`}
                 >
                   {/* ZONE C1: Quarter Actions (On Hover) */}
-                  <div className="absolute inset-0 bg-navy-950/90 rounded flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 gap-1 backdrop-blur-sm">
+                  <div className="absolute inset-0 bg-slate-900/90 dark:bg-navy-950/90 rounded flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 gap-1 backdrop-blur-sm">
                     <button className="text-[9px] font-bold text-white bg-blue-600 px-2 py-1 rounded-full w-20 hover:scale-105 transition-transform">
                       Review
                     </button>
@@ -237,8 +237,8 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
 
                   {/* Tooltip */}
                   {count > 0 && (
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-32 bg-navy-900 text-white text-[10px] p-2 rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-opacity">
-                      <div className="font-bold border-b border-white/10 pb-1 mb-1">
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-32 bg-white dark:bg-navy-900 text-slate-900 dark:text-white text-[10px] p-2 rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-opacity">
+                      <div className="font-bold border-b border-slate-200 dark:border-white/10 pb-1 mb-1">
                         {q} Analysis
                       </div>
                       <div className="flex justify-between">

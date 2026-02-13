@@ -118,7 +118,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {assessmentDate || new Date().toLocaleDateString('pl-PL')}
             </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
               Model: {data.metadata?.model || 'DEV'}
             </p>
           </div>
@@ -160,7 +160,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
                 className={`text-3xl font-bold ${
                   level.level <= data.maturityLevel
                     ? `text-${level.color}-600`
-                    : 'text-slate-300 dark:text-slate-600'
+                    : 'text-slate-700 dark:text-slate-300 dark:text-slate-600'
                 }`}
               >
                 {level.level}
@@ -407,7 +407,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
                     >
                       L{pa.current}: {currentLevelInfo?.name || 'N/A'}
                     </span>
-                    <ArrowRight size={14} className="text-slate-400 dark:text-slate-500" />
+                    <ArrowRight size={14} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
                     <span
                       className={`px-2 py-1 rounded ${getLevelBgColor(pa.target)} text-${getLevelColor(pa.target)}-700 font-medium`}
                     >
@@ -416,7 +416,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-slate-400 dark:text-slate-500">Luka</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Luka</div>
                   <div className="text-lg font-bold text-red-600">
                     +{pa.gap} poziom{pa.gap > 1 ? 'y' : ''}
                   </div>
@@ -471,7 +471,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 dark:border-navy-700 pt-4 text-center text-xs text-slate-400 dark:text-slate-500">
+      <footer className="border-t border-slate-200 dark:border-navy-700 pt-4 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
         <p>Raport wygenerowany przez Consultinity • {new Date().toLocaleDateString('pl-PL')}</p>
         <p className="mt-1">CMMI Assessment (Educational) • {organizationName}</p>
         <p className="mt-1 text-[10px]">CMMI® is a registered trademark of ISACA</p>

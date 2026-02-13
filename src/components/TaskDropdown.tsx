@@ -131,7 +131,7 @@ export const TaskDropdown = () => {
         <CheckSquare size={20} />
         {stats.pending > 0 && (
           <span
-            className={`absolute top-0.5 right-0.5 min-w-[16px] h-4 text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-white dark:border-navy-950 shadow-sm
+            className={`absolute top-0.5 right-0.5 min-w-[16px] h-4 text-slate-900 dark:text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-white dark:border-navy-950 shadow-sm
                         ${stats.overdue > 0 ? 'bg-red-500' : 'bg-blue-500'}`}
           >
             {stats.pending > 99 ? '99+' : stats.pending}
@@ -191,7 +191,7 @@ export const TaskDropdown = () => {
             ) : tasks.length === 0 ? (
               <div className="p-8 text-center flex flex-col items-center">
                 <div className="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-3">
-                  <CheckSquare size={20} className="text-slate-300" />
+                  <CheckSquare size={20} className="text-slate-700 dark:text-slate-300" />
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
                   No tasks found

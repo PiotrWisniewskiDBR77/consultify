@@ -17,7 +17,7 @@ export const SubAreaNavigator: React.FC<SubAreaNavigatorProps> = ({
   return (
     <div className="w-64 bg-white dark:bg-navy-900 shadow-sm flex flex-col h-full shrink-0">
       <div className="p-4 border-b border-slate-100 dark:border-navy-800">
-        <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">
           Focus Areas
         </h3>
       </div>
@@ -34,7 +34,7 @@ export const SubAreaNavigator: React.FC<SubAreaNavigatorProps> = ({
               className={`w-full text-left px-3 py-3 rounded-lg flex items-center gap-3 transition-all ${
                 isActive
                   ? 'bg-blue-600/20 border border-blue-500/30 text-white'
-                  : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-navy-800/20 hover:text-slate-200'
+                  : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-navy-800/20 hover:text-slate-200'
               }`}
             >
               <div

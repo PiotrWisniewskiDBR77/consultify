@@ -59,6 +59,7 @@ interface TaskRow {
   project_name?: string;
   organization_id: string;
   title: string;
+  source?: string;
   description?: string;
   status: string;
   priority: string;
@@ -340,6 +341,7 @@ export class TaskController {
         projectName: getMultilingualText(t.project_name, lang),
         organizationId: t.organization_id,
         title: getMultilingualText(t.title, lang),
+        source: t.source || 'manual',
         description: getMultilingualText(t.description, lang),
         status: t.status,
         priority: t.priority,
@@ -513,6 +515,7 @@ export class TaskController {
         projectName: getMultilingualText(t.project_name, lang),
         organizationId: t.organization_id,
         title: getMultilingualText(t.title, lang),
+        source: t.source || 'manual',
         description: getMultilingualText(t.description, lang),
         status: t.status,
         priority: t.priority,
@@ -600,6 +603,7 @@ export class TaskController {
       const {
         projectId,
         title,
+        source,
         description,
         status,
         priority,
@@ -631,7 +635,16 @@ export class TaskController {
         blockedReason,
       } = body;
 
-      if (!projectId) {
+      let effectiveProjectId = projectId || null;
+      if (!effectiveProjectId && initiativeId) {
+        const parentInitiative = await DbPromise.get<{ project_id?: string }>(
+          `SELECT project_id FROM initiatives WHERE id = ? AND organization_id = ?`,
+          [initiativeId, orgId]
+        );
+        effectiveProjectId = parentInitiative?.project_id || null;
+      }
+
+      if (!effectiveProjectId) {
         res.status(400).json({ error: 'projectId is required' });
         return;
       }
@@ -643,6 +656,7 @@ export class TaskController {
       const finalStatus = status || 'todo';
       const finalPriority = priority || 'medium';
       const finalTaskType = taskType || 'execution';
+      const finalSource = source === 'ai' ? 'ai' : 'manual';
       const finalExpectedOutcome = expectedOutcome || '';
       const finalDecisionImpact = decisionImpact ? JSON.stringify(decisionImpact) : '{}';
       const finalEvidenceRequired = evidenceRequired ? JSON.stringify(evidenceRequired) : '[]';
@@ -665,6 +679,7 @@ export class TaskController {
                 status, priority, assignee_id, backup_assignee_id, reporter_id,
                 due_date, started_at, estimated_hours, tags,
                 task_type, initiative_id, why,
+                source,
                 owner_id, requires_acceptance, acceptance_type, acceptor_id,
                 weight, weight_reason,
                 expected_outcome, decision_impact, evidence_required, strategic_contribution,
@@ -672,12 +687,12 @@ export class TaskController {
                 progress, blocked_reason, blocked_by_decision_id, blocked_at,
                 created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
       const result = await DbPromise.run(sql, [
         id,
-        projectId,
+        effectiveProjectId,
         orgId,
         title,
         description,
@@ -693,6 +708,7 @@ export class TaskController {
         finalTaskType,
         initiativeId,
         why,
+        finalSource,
         effectiveOwnerId,
         finalRequiresAcceptance,
         finalRequiresAcceptance ? acceptanceType || 'manual' : null,
@@ -727,7 +743,7 @@ export class TaskController {
           .create({
             userId: assigneeId,
             organizationId: orgId,
-            projectId,
+            projectId: effectiveProjectId,
             type: 'task_assigned',
             title: 'New Task Assignment',
             message: `You have been assigned to task "${title}"`,
@@ -756,7 +772,7 @@ export class TaskController {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           uuidv4(),
-          projectId,
+          effectiveProjectId,
           PMO_DOMAIN_IDS.SCOPE_CHANGE_CONTROL,
           'TASK',
           id,

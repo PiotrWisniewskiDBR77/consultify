@@ -52,19 +52,19 @@ export const ChatLanguageSelector: React.FC<ChatLanguageSelectorProps> = ({
         className={`
           flex items-center gap-2 rounded-lg border transition-colors
           ${compact ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm'}
-          bg-white/70 dark:bg-navy-950/40
+          bg-slate-50 dark:bg-navy-950/40
           border-slate-200 dark:border-navy-800
-          text-slate-600 dark:text-slate-300
-          hover:bg-slate-50 dark:hover:bg-navy-900
+          text-slate-700 dark:text-slate-300
+          hover:bg-slate-100 dark:hover:bg-navy-900
         `}
         title={t('aiChat.language', 'Język rozmowy')}
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <Globe size={compact ? 14 : 16} className="text-slate-400" />
+        <Globe size={compact ? 14 : 16} className="text-slate-500 dark:text-slate-400" />
         <span className="font-medium tabular-nums">{LANGUAGE_DISPLAY_CODES[value] || value}</span>
         {!compact && <span className="text-slate-500">{LANGUAGE_NAMES[value] || value}</span>}
-        <ChevronDown size={compact ? 14 : 16} className="text-slate-400" />
+        <ChevronDown size={compact ? 14 : 16} className="text-slate-500 dark:text-slate-400" />
       </button>
 
       {open && (
@@ -77,10 +77,10 @@ export const ChatLanguageSelector: React.FC<ChatLanguageSelectorProps> = ({
             rounded-xl shadow-xl py-1
           "
         >
-          <div className="px-3 py-2 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+          <div className="px-3 py-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             {t('aiChat.language', 'Język rozmowy')}
           </div>
-          <div className="h-px bg-slate-100 dark:bg-navy-800 my-1" />
+          <div className="h-px bg-slate-200 dark:bg-navy-800 my-1" />
 
           {SUPPORTED_LANGUAGES.map((lang) => (
             <button

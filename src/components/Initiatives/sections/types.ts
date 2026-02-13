@@ -53,8 +53,13 @@ export interface TaskItem {
   priority?: string;
   dueDate?: string;
   assigneeName?: string;
+  assigneeId?: string;
   isMilestone?: boolean;
   milestoneDate?: string;
+  description?: string;
+  taskType?: string;
+  estimatedHours?: number | null;
+  source?: 'manual' | 'ai';
 }
 
 export interface UserInfo {

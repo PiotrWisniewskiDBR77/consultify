@@ -471,16 +471,16 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-navy-900 border border-navy-700 rounded-xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-navy-700 shrink-0">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700 shrink-0">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Sparkles size={20} className="text-amber-400" />
             {isPolish ? 'Kreator Wniosków AI' : 'AI Insight Creator'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-navy-700 text-slate-400 hover:text-white transition-colors"
+            className="p-1 rounded hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <X size={20} />
           </button>
@@ -490,7 +490,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         <form onSubmit={handleSubmit} className="flex-1 overflow-auto p-4 space-y-5">
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1.5">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
               {isPolish ? 'Tytuł wniosków' : 'Insight Title'} *
             </label>
             <input
@@ -502,13 +502,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                   ? 'np. Analiza transformacji cyfrowej Q1 2024'
                   : 'e.g. Digital Transformation Analysis Q1 2024'
               }
-              className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-600 text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+              className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
             />
           </div>
 
           {/* Analysis Type Selector */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1.5">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
               {isPolish ? 'Typ analizy' : 'Analysis Type'} *
             </label>
             <div className="relative">
@@ -547,7 +547,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 </div>
                 <ChevronDown
                   size={18}
-                  className={`text-slate-400 transition-transform ${showTypeDropdown ? 'rotate-180' : ''}`}
+                  className={`text-slate-500 dark:text-slate-400 transition-transform ${showTypeDropdown ? 'rotate-180' : ''}`}
                 />
               </button>
 
@@ -555,7 +555,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               {showTypeDropdown && (
                 <div className="absolute z-10 mt-2 w-full bg-navy-800 border border-navy-600 rounded-lg shadow-xl max-h-80 overflow-auto">
                   {/* Basic */}
-                  <div className="px-3 py-2 border-b border-navy-700">
+                  <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700">
                     <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                       {isPolish ? 'Podstawowe' : 'Basic'}
                     </span>
@@ -568,8 +568,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                         handleTypeChange(type.id);
                         setShowTypeDropdown(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-navy-700 transition-colors ${
-                        selectedType === type.id ? 'bg-navy-700' : ''
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors ${
+                        selectedType === type.id ? 'bg-slate-100 dark:bg-navy-700' : ''
                       }`}
                     >
                       <div
@@ -605,8 +605,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                         handleTypeChange(type.id);
                         setShowTypeDropdown(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-navy-700 transition-colors ${
-                        selectedType === type.id ? 'bg-navy-700' : ''
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors ${
+                        selectedType === type.id ? 'bg-slate-100 dark:bg-navy-700' : ''
                       }`}
                     >
                       <div
@@ -642,8 +642,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                         handleTypeChange(type.id);
                         setShowTypeDropdown(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-navy-700 transition-colors ${
-                        selectedType === type.id ? 'bg-navy-700' : ''
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors ${
+                        selectedType === type.id ? 'bg-slate-100 dark:bg-navy-700' : ''
                       }`}
                     >
                       <div
@@ -674,7 +674,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             <button
               type="button"
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+              className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               <Filter size={16} />
               <span>{isPolish ? 'Filtry' : 'Filters'}</span>
@@ -739,7 +739,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           {/* Session Selection */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-medium text-slate-400">
+              <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
                 {isPolish ? 'Wybierz sesje źródłowe' : 'Select source sessions'} *
               </label>
               {filteredSessions.length > 0 && (
@@ -840,7 +840,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
           {/* Custom Prompt */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1.5">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
               {isPolish
                 ? 'Dodatkowe instrukcje (opcjonalnie)'
                 : 'Additional instructions (optional)'}

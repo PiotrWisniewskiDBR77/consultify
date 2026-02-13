@@ -188,7 +188,7 @@ const LevelSuggestionCard: React.FC<{
           )}
           <button
             onClick={() => setExpanded(!expanded)}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
           >
             <ChevronDown
               size={18}
@@ -273,7 +273,7 @@ const TechnologyCard: React.FC<{
           </span>
           <button
             onClick={() => setExpanded(!expanded)}
-            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
           >
             <ChevronDown
               size={16}
@@ -392,7 +392,7 @@ const GapAnalysisCard: React.FC<{
         </div>
         <button
           onClick={() => setExpanded(!expanded)}
-          className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
         >
           <ChevronDown
             size={18}

@@ -135,7 +135,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
     >
       {/* Header */}
       <motion.button
@@ -154,12 +154,12 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {activeRemindersCount > 0 && (
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
               {activeRemindersCount}
             </span>
           )}
           <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={18} className="text-slate-400" />
+            <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
           </motion.div>
         </div>
       </motion.button>
@@ -196,8 +196,8 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
 
                 {reminders.length === 0 ? (
                   <div className="text-center py-8 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-                    <Bell size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                    <Bell size={24} className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600" />
+                    <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Brak przypomnień' : 'No reminders'}
                     </p>
                     {!readOnly && (
@@ -221,7 +221,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                         className={`rounded-xl border p-4 transition-all ${
                           reminder.enabled
                             ? 'border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800/50'
-                            : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/30 opacity-60'
+                            : 'border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/30 opacity-60'
                         }`}
                       >
                         {/* Header */}
@@ -247,7 +247,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                           {!readOnly && (
                             <button
                               onClick={() => removeReminder(reminder.id)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors"
+                              className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -337,7 +337,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                                   className={
                                     reminder.inAppNotification
                                       ? 'text-purple-500'
-                                      : 'text-slate-400'
+                                      : 'text-slate-500 dark:text-slate-400'
                                   }
                                 />
                                 <span>{isPolish ? 'W aplikacji' : 'In-app'}</span>
@@ -375,7 +375,7 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                                 <Mail
                                   size={14}
                                   className={
-                                    reminder.emailNotification ? 'text-blue-500' : 'text-slate-400'
+                                    reminder.emailNotification ? 'text-blue-500' : 'text-slate-500 dark:text-slate-400'
                                   }
                                 />
                                 <span>{isPolish ? 'Wyślij email' : 'Send email'}</span>
@@ -550,9 +550,9 @@ export const EscalationRulesSection: React.FC<EscalationRulesSectionProps> = ({
                   <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                     <ArrowUpCircle
                       size={24}
-                      className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                      className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
                     />
-                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Eskalacja wyłączona' : 'Escalation disabled'}
                     </p>
                   </div>

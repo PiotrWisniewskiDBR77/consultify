@@ -96,8 +96,8 @@ const DashboardSection: React.FC = () => {
       setLoading(true);
       setError(null);
       const response = await Api.get('/api/partners/dashboard');
-      if (response?.data?.success && response?.data?.data) {
-        setDashboardData(response.data.data);
+      if (response?.success && response?.data) {
+        setDashboardData(response.data);
       } else {
         throw new Error('Invalid response');
       }
@@ -145,8 +145,8 @@ const DashboardSection: React.FC = () => {
   // Error state
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
-        <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+      <div className="bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+        <p className="text-red-400 mb-4">{error}</p>
         <button
           onClick={fetchDashboard}
           className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
@@ -199,17 +199,17 @@ const DashboardSection: React.FC = () => {
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-navy-900 dark:text-white">
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
             {t('partner.dashboard.welcome', 'Welcome back, Partner')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-slate-400">
             {t('partner.dashboard.subtitle', "Here's your partnership overview")}
           </p>
         </div>
         <button
           onClick={fetchDashboard}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors disabled:opacity-50"
         >
           <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
           {t('common.refresh', 'Refresh')}
@@ -227,15 +227,15 @@ const DashboardSection: React.FC = () => {
               <div className="p-2 rounded-lg bg-violet-100 dark:bg-violet-900/30">
                 <stat.icon className="w-5 h-5 text-violet-600 dark:text-violet-400" />
               </div>
-              <span className="text-sm text-slate-500 dark:text-slate-400">{stat.label}</span>
+              <span className="text-sm text-slate-400">{stat.label}</span>
             </div>
-            <p className="text-2xl font-bold text-navy-900 dark:text-white">{stat.value}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
             <p
               className={cn(
                 'text-sm mt-1',
                 stat.changeType === 'positive' && 'text-emerald-600 dark:text-emerald-400',
-                stat.changeType === 'negative' && 'text-red-600 dark:text-red-400',
-                stat.changeType === 'neutral' && 'text-slate-500 dark:text-slate-400'
+                stat.changeType === 'negative' && 'text-red-400',
+                stat.changeType === 'neutral' && 'text-slate-400'
               )}
             >
               {stat.change}
@@ -246,17 +246,17 @@ const DashboardSection: React.FC = () => {
 
       {/* Quick Actions */}
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-        <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
           {t('partner.dashboard.quickActions', 'Quick Actions')}
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {quickActions.map((action, index) => (
             <button
               key={index}
-              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-slate-50 dark:bg-navy-700/50 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors group"
+              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-slate-100 dark:bg-navy-700/50 hover:bg-violet-900/20 transition-colors group"
             >
-              <action.icon className="w-6 h-6 text-slate-500 dark:text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400" />
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-violet-600 dark:group-hover:text-violet-400">
+              <action.icon className="w-6 h-6 text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400" />
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-violet-600 dark:group-hover:text-violet-400">
                 {action.label}
               </span>
             </button>
@@ -269,8 +269,8 @@ const DashboardSection: React.FC = () => {
         {/* Recent Activity */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <Clock className="w-5 h-5 text-slate-500" />
               {t('partner.dashboard.recentActivity', 'Recent Activity')}
             </h3>
             <button className="text-sm text-violet-600 dark:text-violet-400 hover:underline">
@@ -282,17 +282,17 @@ const DashboardSection: React.FC = () => {
               recentActivity.map((activity, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-700/30"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-slate-100/50 dark:bg-navy-700/30"
                 >
                   <div className="w-2 h-2 rounded-full bg-violet-500" />
                   <div className="flex-1">
-                    <p className="text-sm text-navy-900 dark:text-white">{activity.text}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{activity.time}</p>
+                    <p className="text-sm text-slate-900 dark:text-white">{activity.text}</p>
+                    <p className="text-xs text-slate-400">{activity.time}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
+              <p className="text-sm text-slate-400 text-center py-4">
                 {t('partner.dashboard.noActivity', 'No recent activity')}
               </p>
             )}
@@ -302,8 +302,8 @@ const DashboardSection: React.FC = () => {
         {/* Certification Progress */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <GraduationCap className="w-5 h-5 text-slate-500" />
               {t('partner.dashboard.certificationProgress', 'Certification Progress')}
             </h3>
             <span className="text-sm text-violet-600 dark:text-violet-400 font-medium">
@@ -316,7 +316,7 @@ const DashboardSection: React.FC = () => {
               certificationCourses.map((cert, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-700/30"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-slate-100/50 dark:bg-navy-700/30"
                 >
                   {cert.status === 'completed' ? (
                     <CheckCircle2 className="w-5 h-5 text-emerald-500" />
@@ -328,9 +328,9 @@ const DashboardSection: React.FC = () => {
                   <span
                     className={cn(
                       'text-sm flex-1',
-                      cert.status === 'completed' && 'text-navy-900 dark:text-white',
+                      cert.status === 'completed' && 'text-slate-900 dark:text-white',
                       cert.status === 'in-progress' && 'text-violet-600 dark:text-violet-400',
-                      cert.status === 'locked' && 'text-slate-400 dark:text-slate-500'
+                      cert.status === 'locked' && 'text-slate-500'
                     )}
                   >
                     {cert.name}
@@ -343,7 +343,7 @@ const DashboardSection: React.FC = () => {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
+              <p className="text-sm text-slate-400 text-center py-4">
                 {t('partner.dashboard.noCertifications', 'No certifications available')}
               </p>
             )}
@@ -398,8 +398,8 @@ const MetricsSection: React.FC = () => {
       setLoading(true);
       setError(null);
       const response = await Api.get('/api/partners/metrics');
-      if (response?.data?.success && response?.data?.data) {
-        setMetricsData(response.data.data);
+      if (response?.success && response?.data) {
+        setMetricsData(response.data);
       } else {
         throw new Error('Invalid response');
       }
@@ -440,8 +440,8 @@ const MetricsSection: React.FC = () => {
   // Error state
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
-        <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+      <div className="bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+        <p className="text-red-400 mb-4">{error}</p>
         <button
           onClick={fetchMetrics}
           className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
@@ -491,17 +491,17 @@ const MetricsSection: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.metrics.title', 'Partnership Metrics')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-slate-400">
             {t('partner.metrics.subtitle', 'Key performance indicators for your partnership')}
           </p>
         </div>
         <button
           onClick={fetchMetrics}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors disabled:opacity-50"
         >
           <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
           {t('common.refresh', 'Refresh')}
@@ -514,20 +514,20 @@ const MetricsSection: React.FC = () => {
             key={index}
             className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4"
           >
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">{metric.label}</p>
-            <p className="text-2xl font-bold text-navy-900 dark:text-white">{metric.value}</p>
+            <p className="text-sm text-slate-400 mb-2">{metric.label}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{metric.value}</p>
             <div className="flex items-center gap-2 mt-2">
               <span
                 className={cn(
                   'text-sm',
                   metric.isPositive
                     ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-amber-600 dark:text-amber-400'
+                    : 'text-amber-400'
                 )}
               >
                 {metric.change}
               </span>
-              <span className="text-xs text-slate-400 dark:text-slate-500">{metric.period}</span>
+              <span className="text-xs text-slate-500">{metric.period}</span>
             </div>
           </div>
         ))}
@@ -537,7 +537,7 @@ const MetricsSection: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Performance Score */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-          <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-4">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             {t('partner.metrics.performanceScore', 'Partner Performance Score')}
           </h3>
           <div className="flex items-center justify-center">
@@ -561,21 +561,21 @@ const MetricsSection: React.FC = () => {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-navy-900 dark:text-white">
+                <span className="text-3xl font-bold text-slate-900 dark:text-white">
                   {metricsData?.performance?.score || 0}
                 </span>
-                <span className="text-sm text-slate-500 dark:text-slate-400">/ 100</span>
+                <span className="text-sm text-slate-400">/ 100</span>
               </div>
             </div>
           </div>
-          <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-4">
+          <p className="text-center text-sm text-slate-400 mt-4">
             {metricsData?.performance?.ranking || 'Calculating...'}
           </p>
         </div>
 
         {/* Performance Breakdown */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-          <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-4">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             {t('partner.metrics.scoreBreakdown', 'Score Breakdown')}
           </h3>
           <div className="space-y-4">
@@ -603,8 +603,8 @@ const MetricsSection: React.FC = () => {
             ].map((item, index) => (
               <div key={index}>
                 <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-slate-600 dark:text-slate-400">{item.label}</span>
-                  <span className="font-medium text-navy-900 dark:text-white">{item.score}%</span>
+                  <span className="text-slate-400">{item.label}</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{item.score}%</span>
                 </div>
                 <div className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                   <div
@@ -620,7 +620,7 @@ const MetricsSection: React.FC = () => {
 
       {/* Revenue Chart Placeholder */}
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-        <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
           {t('partner.metrics.revenueOverTime', 'Revenue Over Time')}
         </h3>
         {metricsData?.revenue?.byMonth && metricsData.revenue.byMonth.length > 0 ? (
@@ -641,8 +641,8 @@ const MetricsSection: React.FC = () => {
         ) : (
           <div className="flex items-center justify-center h-40">
             <div className="text-center">
-              <BarChart3 className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-500 dark:text-slate-400">
+              <BarChart3 className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+              <p className="text-slate-400">
                 {t('partner.metrics.noRevenueData', 'No revenue data available yet')}
               </p>
             </div>
@@ -663,10 +663,10 @@ const PerformanceSection: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
           {t('partner.performance.title', 'Performance Analytics')}
         </h2>
-        <p className="text-slate-500 dark:text-slate-400">
+        <p className="text-slate-400">
           {t('partner.performance.subtitle', 'Detailed performance analysis and reports')}
         </p>
       </div>
@@ -674,7 +674,7 @@ const PerformanceSection: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Performance Score */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-          <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-4">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             Partner Performance Score
           </h3>
           <div className="flex items-center justify-center">
@@ -698,19 +698,19 @@ const PerformanceSection: React.FC = () => {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-navy-900 dark:text-white">85</span>
-                <span className="text-sm text-slate-500 dark:text-slate-400">/ 100</span>
+                <span className="text-3xl font-bold text-slate-900 dark:text-white">85</span>
+                <span className="text-sm text-slate-400">/ 100</span>
               </div>
             </div>
           </div>
-          <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-4">
+          <p className="text-center text-sm text-slate-400 mt-4">
             Excellent performance! Top 15% of partners.
           </p>
         </div>
 
         {/* Performance Breakdown */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-          <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-4">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             Score Breakdown
           </h3>
           <div className="space-y-4">
@@ -722,8 +722,8 @@ const PerformanceSection: React.FC = () => {
             ].map((item, index) => (
               <div key={index}>
                 <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-slate-600 dark:text-slate-400">{item.label}</span>
-                  <span className="font-medium text-navy-900 dark:text-white">{item.score}%</span>
+                  <span className="text-slate-400">{item.label}</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{item.score}%</span>
                 </div>
                 <div className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                   <div
@@ -784,15 +784,15 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
 
       if (subsection === 'organizations' || subsection === 'users') {
         const response = await Api.get('/api/partners/clients');
-        if (response?.data?.success && response?.data?.data) {
-          setOrganizations(response.data.data);
+        if (response?.success && response?.data) {
+          setOrganizations(response.data);
         }
       }
 
       if (subsection === 'projects') {
         const response = await Api.get('/api/partners/projects');
-        if (response?.data?.success && response?.data?.data) {
-          setProjects(response.data.data);
+        if (response?.success && response?.data) {
+          setProjects(response.data);
         }
       }
     } catch (err: any) {
@@ -812,7 +812,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
   const TableSkeleton = () => (
     <div className="animate-pulse">
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="bg-slate-50 dark:bg-navy-700/50 h-12" />
+        <div className="bg-slate-100 dark:bg-navy-700/50 h-12" />
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex gap-4 p-4 border-t border-slate-200 dark:border-navy-700">
             <div className="w-10 h-10 bg-slate-200 dark:bg-navy-700 rounded-lg" />
@@ -828,8 +828,8 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
 
   // Error component
   const ErrorDisplay = () => (
-    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
-      <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+    <div className="bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+      <p className="text-red-400 mb-4">{error}</p>
       <button
         onClick={fetchData}
         className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
@@ -847,10 +847,10 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
               {t('partner.clients.organizations', 'Client Organizations')}
             </h2>
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-slate-400">
               {t(
                 'partner.clients.organizationsDesc',
                 'Manage organizations under your partnership'
@@ -860,7 +860,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
           <div className="flex gap-2">
             <button
               onClick={fetchData}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -873,32 +873,32 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
 
         {organizations.length === 0 ? (
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-            <Building2 className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-500 dark:text-slate-400">
+            <Building2 className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-400">
               {t('partner.clients.noOrganizations', 'No client organizations yet')}
             </p>
           </div>
         ) : (
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
             <table className="w-full">
-              <thead className="bg-slate-50 dark:bg-navy-700/50">
+              <thead className="bg-slate-100 dark:bg-navy-700/50">
                 <tr>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Organization
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Industry
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Users
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Projects
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Assessment
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-4 py-3"></th>
@@ -906,24 +906,24 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
                 {organizations.map((org) => (
-                  <tr key={org.id} className="hover:bg-slate-50 dark:hover:bg-navy-700/30">
+                  <tr key={org.id} className="hover:bg-slate-100/50 dark:hover:bg-navy-700/30">
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
                           <Building2 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                         </div>
-                        <span className="font-medium text-navy-900 dark:text-white">
+                        <span className="font-medium text-slate-900 dark:text-white">
                           {org.name}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-4 text-sm text-slate-400">
                       {org.industry}
                     </td>
-                    <td className="px-4 py-4 text-sm text-center text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-4 text-sm text-center text-slate-400">
                       {org.users}
                     </td>
-                    <td className="px-4 py-4 text-sm text-center text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-4 text-sm text-center text-slate-400">
                       {org.projects}
                     </td>
                     <td className="px-4 py-4 text-center">
@@ -938,16 +938,16 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                           org.status === 'active' &&
                             'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
                           org.status === 'onboarding' &&
-                            'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+                            'bg-amber-900/30 text-amber-400',
                           org.status === 'inactive' &&
-                            'bg-slate-100 dark:bg-slate-900/30 text-slate-600 dark:text-slate-400'
+                            'bg-slate-900/30 text-slate-400'
                         )}
                       >
                         {org.status}
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <button className="text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400">
+                      <button className="text-slate-500 hover:text-violet-600 dark:hover:text-violet-400">
                         <ChevronRight className="w-5 h-5" />
                       </button>
                     </td>
@@ -969,16 +969,16 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
               {t('partner.clients.projects', 'Active Projects')}
             </h2>
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-slate-400">
               {t('partner.clients.projectsDesc', 'Transformation projects in progress')}
             </p>
           </div>
           <button
             onClick={fetchData}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             {t('common.refresh', 'Refresh')}
@@ -987,8 +987,8 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
 
         {projects.length === 0 ? (
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-            <FolderKanban className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-500 dark:text-slate-400">
+            <FolderKanban className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-400">
               {t('partner.clients.noProjects', 'No active projects yet')}
             </p>
           </div>
@@ -997,12 +997,12 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
             {projects.map((project) => (
               <div
                 key={project.id}
-                className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 hover:border-violet-300 dark:hover:border-violet-700 transition-colors"
+                className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 hover:border-violet-700 transition-colors"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h4 className="font-medium text-navy-900 dark:text-white">{project.name}</h4>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <h4 className="font-medium text-slate-900 dark:text-white">{project.name}</h4>
+                    <p className="text-sm text-slate-400">
                       {project.clientName}
                     </p>
                   </div>
@@ -1012,8 +1012,8 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                 </div>
                 <div className="mt-4">
                   <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-slate-500 dark:text-slate-400">Progress</span>
-                    <span className="font-medium text-navy-900 dark:text-white">
+                    <span className="text-slate-400">Progress</span>
+                    <span className="font-medium text-slate-900 dark:text-white">
                       {project.progress}%
                     </span>
                   </div>
@@ -1025,7 +1025,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                   </div>
                 </div>
                 {project.targetEndDate && (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">
+                  <p className="text-xs text-slate-500 mt-3">
                     Target: {new Date(project.targetEndDate).toLocaleDateString()}
                   </p>
                 )}
@@ -1045,18 +1045,18 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.clients.users', 'User Management')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-slate-400">
             {t('partner.clients.usersDesc', 'Manage users across client organizations')}
           </p>
         </div>
       </div>
       {organizations.length === 0 ? (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-          <Users className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-500 dark:text-slate-400">
+          <Users className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-400">
             {t('partner.clients.usersEmpty', 'Select an organization to manage users')}
           </p>
         </div>
@@ -1065,18 +1065,18 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
           {organizations.map((org) => (
             <div
               key={org.id}
-              className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 flex items-center justify-between hover:border-violet-300 dark:hover:border-violet-700 cursor-pointer transition-colors"
+              className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 flex items-center justify-between hover:border-violet-700 cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
                   <Building2 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                 </div>
                 <div>
-                  <span className="font-medium text-navy-900 dark:text-white">{org.name}</span>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{org.users} users</p>
+                  <span className="font-medium text-slate-900 dark:text-white">{org.name}</span>
+                  <p className="text-sm text-slate-400">{org.users} users</p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <ChevronRight className="w-5 h-5 text-slate-500" />
             </div>
           ))}
         </div>
@@ -1116,8 +1116,8 @@ const CertificationSection: React.FC<{
       setLoading(true);
       setError(null);
       const response = await Api.get('/api/partners/certifications');
-      if (response?.data?.success && response?.data?.data) {
-        setCertifications(response.data.data);
+      if (response?.success && response?.data) {
+        setCertifications(response.data);
       } else {
         throw new Error('Invalid response');
       }
@@ -1157,8 +1157,8 @@ const CertificationSection: React.FC<{
 
   // Error component
   const ErrorDisplay = () => (
-    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
-      <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+    <div className="bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+      <p className="text-red-400 mb-4">{error}</p>
       <button
         onClick={fetchCertifications}
         className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
@@ -1198,10 +1198,10 @@ const CertificationSection: React.FC<{
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
               {t('partner.certification.learningPath', 'Learning Path')}
             </h2>
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-slate-400">
               {t(
                 'partner.certification.learningPathDesc',
                 'Complete courses to earn certifications'
@@ -1210,7 +1210,7 @@ const CertificationSection: React.FC<{
           </div>
           <button
             onClick={fetchCertifications}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             {t('common.refresh', 'Refresh')}
@@ -1219,8 +1219,8 @@ const CertificationSection: React.FC<{
 
         {certifications.length === 0 ? (
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-            <GraduationCap className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-500 dark:text-slate-400">
+            <GraduationCap className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-400">
               {t('partner.certification.noCourses', 'No courses available yet')}
             </p>
           </div>
@@ -1232,7 +1232,7 @@ const CertificationSection: React.FC<{
                 <div
                   key={course.id}
                   className={cn(
-                    'bg-white dark:bg-navy-800 rounded-xl border p-5',
+                    'bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-5',
                     status === 'locked'
                       ? 'border-slate-200 dark:border-navy-700 opacity-60'
                       : 'border-slate-200 dark:border-navy-700'
@@ -1247,14 +1247,14 @@ const CertificationSection: React.FC<{
                         status === 'in-progress' &&
                           'bg-violet-100 dark:bg-violet-900/30 text-violet-600',
                         status === 'locked' &&
-                          'bg-slate-100 dark:bg-navy-700 text-slate-400 dark:text-slate-500'
+                          'bg-slate-200 dark:bg-navy-700 text-slate-500'
                       )}
                     >
                       {status === 'completed' ? <CheckCircle2 className="w-6 h-6" /> : index + 1}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-navy-900 dark:text-white">{course.name}</h4>
+                        <h4 className="font-medium text-slate-900 dark:text-white">{course.name}</h4>
                         <span
                           className={cn(
                             'px-2 py-1 text-xs font-medium rounded-full',
@@ -1263,16 +1263,16 @@ const CertificationSection: React.FC<{
                             status === 'in-progress' &&
                               'bg-violet-100 dark:bg-violet-900/30 text-violet-600',
                             status === 'locked' &&
-                              'bg-slate-100 dark:bg-navy-700 text-slate-400 dark:text-slate-500'
+                              'bg-slate-200 dark:bg-navy-700 text-slate-500'
                           )}
                         >
                           {getDisplayStatus(course.status)}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                      <p className="text-sm text-slate-400 mt-1">
                         {course.type}
                       </p>
-                      <div className="flex items-center gap-4 mt-3 text-sm text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-4 mt-3 text-sm text-slate-400">
                         <span className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
                           {course.duration}
@@ -1285,8 +1285,8 @@ const CertificationSection: React.FC<{
                       {status !== 'locked' && (
                         <div className="mt-3">
                           <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-slate-500 dark:text-slate-400">Progress</span>
-                            <span className="font-medium text-navy-900 dark:text-white">
+                            <span className="text-slate-400">Progress</span>
+                            <span className="font-medium text-slate-900 dark:text-white">
                               {course.progress}%
                             </span>
                           </div>
@@ -1307,7 +1307,7 @@ const CertificationSection: React.FC<{
                         </button>
                       )}
                       {status === 'locked' && (
-                        <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+                        <p className="mt-3 text-xs text-slate-500">
                           Complete previous courses to unlock
                         </p>
                       )}
@@ -1334,10 +1334,10 @@ const CertificationSection: React.FC<{
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.certification.exams', 'Certification Exams')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-slate-400">
             {t('partner.certification.examsDesc', 'Take exams to earn official certifications')}
           </p>
         </div>
@@ -1354,10 +1354,10 @@ const CertificationSection: React.FC<{
                       <FileText className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-navy-900 dark:text-white">
+                      <h4 className="font-medium text-slate-900 dark:text-white">
                         {course.name} Exam
                       </h4>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                      <p className="text-sm text-slate-400">
                         {course.certificateId ? 'Passed' : 'Available to take'}
                       </p>
                     </div>
@@ -1377,8 +1377,8 @@ const CertificationSection: React.FC<{
           </div>
         ) : (
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-            <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-500 dark:text-slate-400">
+            <FileText className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-400">
               {t('partner.certification.examsEmpty', 'Complete learning path to unlock exams')}
             </p>
           </div>
@@ -1399,24 +1399,24 @@ const CertificationSection: React.FC<{
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.certification.certificates', 'Your Certificates')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-slate-400">
             {t('partner.certification.certificatesDesc', 'Download and share your certifications')}
           </p>
         </div>
         <button
           onClick={fetchCertifications}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>
       {completedWithCerts.length === 0 ? (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-          <Award className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-500 dark:text-slate-400">
+          <Award className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-400">
             {t(
               'partner.certification.noCertificates',
               'Complete courses and pass exams to earn certificates'
@@ -1428,19 +1428,19 @@ const CertificationSection: React.FC<{
           {completedWithCerts.map((cert) => (
             <div
               key={cert.id}
-              className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 hover:border-violet-300 dark:hover:border-violet-700 transition-colors"
+              className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 hover:border-violet-700 transition-colors"
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
                   <Award className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-navy-900 dark:text-white">{cert.name}</h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <h4 className="font-medium text-slate-900 dark:text-white">{cert.name}</h4>
+                  <p className="text-sm text-slate-400">
                     Issued:{' '}
                     {cert.completedAt ? new Date(cert.completedAt).toLocaleDateString() : 'N/A'}
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                  <p className="text-xs text-slate-500 mt-1">
                     ID: {cert.certificateId}
                   </p>
                 </div>
@@ -1452,7 +1452,7 @@ const CertificationSection: React.FC<{
                       toast.success('Certificate download started');
                     }
                   }}
-                  className="p-2 text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400"
+                  className="p-2 text-slate-500 hover:text-violet-600 dark:hover:text-violet-400"
                 >
                   <Download className="w-5 h-5" />
                 </button>
@@ -1498,8 +1498,8 @@ const ResourcesSection: React.FC<{
       setLoading(true);
       setError(null);
       const response = await Api.get('/api/partners/resources');
-      if (response?.data?.success && response?.data?.data) {
-        setResources(response.data.data);
+      if (response?.success && response?.data) {
+        setResources(response.data);
       } else {
         throw new Error('Invalid response');
       }
@@ -1520,8 +1520,8 @@ const ResourcesSection: React.FC<{
     try {
       setDownloading(resourceId);
       const response = await Api.get(`/api/partners/resources/${resourceId}/download`);
-      if (response?.data?.success && response?.data?.data?.downloadUrl) {
-        window.open(response.data.data.downloadUrl, '_blank');
+      if (response?.success && response?.data?.downloadUrl) {
+        window.open(response.data.downloadUrl, '_blank');
         toast.success(`Downloading ${title}`);
       } else {
         toast.error('Download link not available');
@@ -1567,8 +1567,8 @@ const ResourcesSection: React.FC<{
   // Error state
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
-        <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+      <div className="bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+        <p className="text-red-400 mb-4">{error}</p>
         <button
           onClick={fetchResources}
           className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
@@ -1587,16 +1587,16 @@ const ResourcesSection: React.FC<{
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {titles[subsection]}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-slate-400">
             {t('partner.resources.desc', 'Download resources for your partnership')}
           </p>
         </div>
         <button
           onClick={fetchResources}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
         </button>
@@ -1604,8 +1604,8 @@ const ResourcesSection: React.FC<{
 
       {items.length === 0 ? (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-          <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-500 dark:text-slate-400">
+          <FileText className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-400">
             {t('partner.resources.empty', 'No resources available in this category')}
           </p>
         </div>
@@ -1615,23 +1615,23 @@ const ResourcesSection: React.FC<{
             <div
               key={item.id}
               onClick={() => handleDownload(item.id, item.title)}
-              className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 flex items-center gap-4 hover:border-violet-300 dark:hover:border-violet-700 transition-colors cursor-pointer group"
+              className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 flex items-center gap-4 hover:border-violet-700 transition-colors cursor-pointer group"
             >
-              <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-navy-700 flex items-center justify-center">
-                <FileText className="w-6 h-6 text-slate-400 dark:text-slate-500" />
+              <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-navy-700 flex items-center justify-center">
+                <FileText className="w-6 h-6 text-slate-500" />
               </div>
               <div className="flex-1">
-                <h4 className="font-medium text-navy-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400">
+                <h4 className="font-medium text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400">
                   {item.title}
                 </h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-400">
                   {item.type} • {item.size}
                 </p>
               </div>
               {downloading === item.id ? (
                 <RefreshCw className="w-5 h-5 text-violet-600 animate-spin" />
               ) : (
-                <Download className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400" />
+                <Download className="w-5 h-5 text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400" />
               )}
             </div>
           ))}
@@ -1654,30 +1654,30 @@ const BillingSection: React.FC<{
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.billing.licenses', 'License Management')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-slate-400">
             {t('partner.billing.licensesDesc', 'Manage licenses for your clients')}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-            <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">Total Licenses</div>
-            <div className="text-3xl font-bold text-navy-900 dark:text-white">150</div>
+            <div className="text-sm text-slate-400 mb-2">Total Licenses</div>
+            <div className="text-3xl font-bold text-slate-900 dark:text-white">150</div>
             <div className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">
               +20 this month
             </div>
           </div>
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-            <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">Active</div>
-            <div className="text-3xl font-bold text-navy-900 dark:text-white">142</div>
-            <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">95% utilization</div>
+            <div className="text-sm text-slate-400 mb-2">Active</div>
+            <div className="text-3xl font-bold text-slate-900 dark:text-white">142</div>
+            <div className="text-sm text-slate-400 mt-1">95% utilization</div>
           </div>
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-            <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">Available</div>
-            <div className="text-3xl font-bold text-navy-900 dark:text-white">8</div>
+            <div className="text-sm text-slate-400 mb-2">Available</div>
+            <div className="text-3xl font-bold text-slate-900 dark:text-white">8</div>
             <button className="text-sm text-violet-600 dark:text-violet-400 mt-1 hover:underline">
               Order more →
             </button>
@@ -1691,28 +1691,28 @@ const BillingSection: React.FC<{
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.billing.invoices', 'Invoices')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-slate-400">
             {t('partner.billing.invoicesDesc', 'View and download your invoices')}
           </p>
         </div>
 
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-slate-50 dark:bg-navy-700/50">
+            <thead className="bg-slate-100 dark:bg-navy-700/50">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase">
                   Invoice
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase">
                   Date
                 </th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="text-right px-4 py-3 text-xs font-medium text-slate-400 uppercase">
                   Amount
                 </th>
-                <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="text-center px-4 py-3 text-xs font-medium text-slate-400 uppercase">
                   Status
                 </th>
                 <th className="px-4 py-3"></th>
@@ -1724,12 +1724,12 @@ const BillingSection: React.FC<{
                 { id: 'INV-2025-012', date: 'Dec 1, 2025', amount: '€7,200', status: 'paid' },
                 { id: 'INV-2025-011', date: 'Nov 1, 2025', amount: '€6,800', status: 'paid' },
               ].map((invoice, index) => (
-                <tr key={index} className="hover:bg-slate-50 dark:hover:bg-navy-700/30">
-                  <td className="px-4 py-4 font-medium text-navy-900 dark:text-white">
+                <tr key={index} className="hover:bg-slate-100/50 dark:hover:bg-navy-700/30">
+                  <td className="px-4 py-4 font-medium text-slate-900 dark:text-white">
                     {invoice.id}
                   </td>
-                  <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{invoice.date}</td>
-                  <td className="px-4 py-4 text-right font-medium text-navy-900 dark:text-white">
+                  <td className="px-4 py-4 text-slate-400">{invoice.date}</td>
+                  <td className="px-4 py-4 text-right font-medium text-slate-900 dark:text-white">
                     {invoice.amount}
                   </td>
                   <td className="px-4 py-4 text-center">
@@ -1739,7 +1739,7 @@ const BillingSection: React.FC<{
                         invoice.status === 'paid' &&
                           'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
                         invoice.status === 'pending' &&
-                          'bg-amber-100 dark:bg-amber-900/30 text-amber-600'
+                          'bg-amber-900/30 text-amber-600'
                       )}
                     >
                       {invoice.status}
@@ -1763,10 +1763,10 @@ const BillingSection: React.FC<{
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.billing.commissions', 'Commission Earnings')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-slate-400">
             {t('partner.billing.commissionsDesc', 'Track your commission earnings')}
           </p>
         </div>
@@ -1778,9 +1778,9 @@ const BillingSection: React.FC<{
               <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
                 <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <span className="text-sm text-slate-500 dark:text-slate-400">Total Earned (YTD)</span>
+              <span className="text-sm text-slate-400">Total Earned (YTD)</span>
             </div>
-            <p className="text-2xl font-bold text-navy-900 dark:text-white">€18,450</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">€18,450</p>
             <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">+32% vs last year</p>
           </div>
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
@@ -1788,41 +1788,41 @@ const BillingSection: React.FC<{
               <div className="p-2 rounded-lg bg-violet-100 dark:bg-violet-900/30">
                 <TrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400" />
               </div>
-              <span className="text-sm text-slate-500 dark:text-slate-400">This Month</span>
+              <span className="text-sm text-slate-400">This Month</span>
             </div>
-            <p className="text-2xl font-bold text-navy-900 dark:text-white">€2,340</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">From 8 referrals</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">€2,340</p>
+            <p className="text-sm text-slate-400 mt-1">From 8 referrals</p>
           </div>
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
                 <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
-              <span className="text-sm text-slate-500 dark:text-slate-400">Pending</span>
+              <span className="text-sm text-slate-400">Pending</span>
             </div>
-            <p className="text-2xl font-bold text-navy-900 dark:text-white">€1,200</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Next payout: Jan 15</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">€1,200</p>
+            <p className="text-sm text-slate-400 mt-1">Next payout: Jan 15</p>
           </div>
         </div>
 
         {/* Commission Table */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-slate-50 dark:bg-navy-700/50">
+            <thead className="bg-slate-100 dark:bg-navy-700/50">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase">
                   Client
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase">
                   Type
                 </th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="text-right px-4 py-3 text-xs font-medium text-slate-400 uppercase">
                   Amount
                 </th>
-                <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="text-center px-4 py-3 text-xs font-medium text-slate-400 uppercase">
                   Status
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase">
                   Date
                 </th>
               </tr>
@@ -1851,14 +1851,14 @@ const BillingSection: React.FC<{
                   date: 'Jan 7, 2026',
                 },
               ].map((commission, index) => (
-                <tr key={index} className="hover:bg-slate-50 dark:hover:bg-navy-700/30">
-                  <td className="px-4 py-4 font-medium text-navy-900 dark:text-white">
+                <tr key={index} className="hover:bg-slate-100/50 dark:hover:bg-navy-700/30">
+                  <td className="px-4 py-4 font-medium text-slate-900 dark:text-white">
                     {commission.client}
                   </td>
-                  <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-400">
+                  <td className="px-4 py-4 text-sm text-slate-400">
                     {commission.type}
                   </td>
-                  <td className="px-4 py-4 text-right font-medium text-navy-900 dark:text-white">
+                  <td className="px-4 py-4 text-right font-medium text-slate-900 dark:text-white">
                     {commission.amount}
                   </td>
                   <td className="px-4 py-4 text-center">
@@ -1868,13 +1868,13 @@ const BillingSection: React.FC<{
                         commission.status === 'paid' &&
                           'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
                         commission.status === 'pending' &&
-                          'bg-amber-100 dark:bg-amber-900/30 text-amber-600'
+                          'bg-amber-900/30 text-amber-600'
                       )}
                     >
                       {commission.status}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-400">
+                  <td className="px-4 py-4 text-sm text-slate-400">
                     {commission.date}
                   </td>
                 </tr>
@@ -1890,10 +1890,10 @@ const BillingSection: React.FC<{
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
           {t('partner.billing.discounts', 'Partner Discounts')}
         </h2>
-        <p className="text-slate-500 dark:text-slate-400">
+        <p className="text-slate-400">
           {t('partner.billing.discountsDesc', 'Your current discount tier and benefits')}
         </p>
       </div>
@@ -1923,21 +1923,21 @@ const BillingSection: React.FC<{
       </div>
 
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-        <h4 className="font-medium text-navy-900 dark:text-white mb-4">
+        <h4 className="font-medium text-slate-900 dark:text-white mb-4">
           Next Tier: Premier Partner
         </h4>
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            <span className="text-slate-600 dark:text-slate-400">10+ active projects (8/10)</span>
+            <span className="text-slate-400">10+ active projects (8/10)</span>
           </div>
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            <span className="text-slate-600 dark:text-slate-400">Published case study (1/1)</span>
+            <span className="text-slate-400">Published case study (1/1)</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600" />
-            <span className="text-slate-600 dark:text-slate-400">
+            <span className="text-slate-400">
               All certifications complete (2/4)
             </span>
           </div>
@@ -1996,8 +1996,8 @@ const ProfileSection: React.FC<{
       setLoading(true);
       setError(null);
       const response = await Api.get('/api/partners/organization');
-      if (response?.data?.success && response?.data?.data) {
-        const org = response.data.data;
+      if (response?.success && response?.data) {
+        const org = response.data;
         setOrganization(org);
         setFormData({
           name: org.name || '',
@@ -2029,7 +2029,7 @@ const ProfileSection: React.FC<{
     try {
       setSaving(true);
       const response = await Api.put('/api/partners/organization', formData);
-      if (response?.data?.success) {
+      if (response?.success) {
         toast.success('Company information updated');
         fetchOrganization();
       } else {
@@ -2049,7 +2049,7 @@ const ProfileSection: React.FC<{
       const response = await Api.put('/api/partners/organization/specializations', {
         specializations: selectedSpecializations,
       });
-      if (response?.data?.success) {
+      if (response?.success) {
         toast.success('Specializations updated');
       } else {
         throw new Error('Failed to save');
@@ -2068,7 +2068,7 @@ const ProfileSection: React.FC<{
       const response = await Api.put('/api/partners/organization/regions', {
         regions: selectedRegions,
       });
-      if (response?.data?.success) {
+      if (response?.success) {
         toast.success('Regions updated');
       } else {
         throw new Error('Failed to save');
@@ -2088,7 +2088,7 @@ const ProfileSection: React.FC<{
       const response = await Api.put('/api/partners/organization/listing', {
         publicListingEnabled: newValue,
       });
-      if (response?.data?.success) {
+      if (response?.success) {
         setPublicListingEnabled(newValue);
         toast.success(newValue ? 'Public listing enabled' : 'Public listing disabled');
       } else {
@@ -2133,8 +2133,8 @@ const ProfileSection: React.FC<{
 
   // Error component
   const ErrorDisplay = () => (
-    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
-      <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+    <div className="bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+      <p className="text-red-400 mb-4">{error}</p>
       <button
         onClick={fetchOrganization}
         className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
@@ -2173,16 +2173,16 @@ const ProfileSection: React.FC<{
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
               {t('partner.profile.companyInfo', 'Company Information')}
             </h2>
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-slate-400">
               {t('partner.profile.companyInfoDesc', 'Manage your company details')}
             </p>
           </div>
           <button
             onClick={fetchOrganization}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -2191,51 +2191,51 @@ const ProfileSection: React.FC<{
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Company Name
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Tax ID / VAT
               </label>
               <input
                 type="text"
                 value={formData.taxId}
                 onChange={(e) => setFormData((prev) => ({ ...prev, taxId: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Contact Email
               </label>
               <input
                 type="email"
                 value={formData.contactEmail}
                 onChange={(e) => setFormData((prev) => ({ ...prev, contactEmail: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Phone
               </label>
               <input
                 type="tel"
                 value={formData.contactPhone}
                 onChange={(e) => setFormData((prev) => ({ ...prev, contactPhone: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Website
               </label>
               <input
@@ -2243,7 +2243,7 @@ const ProfileSection: React.FC<{
                 value={formData.website}
                 onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
                 placeholder="https://"
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
               />
             </div>
           </div>
@@ -2266,10 +2266,10 @@ const ProfileSection: React.FC<{
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.profile.specializations', 'Specializations')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-slate-400">
             {t('partner.profile.specializationsDesc', 'Select frameworks you specialize in')}
           </p>
         </div>
@@ -2292,7 +2292,7 @@ const ProfileSection: React.FC<{
                     'w-8 h-8 mx-auto mb-2',
                     selectedSpecializations.includes(fw)
                       ? 'text-violet-600'
-                      : 'text-slate-400 dark:text-slate-500'
+                      : 'text-slate-500'
                   )}
                 />
                 <span
@@ -2300,7 +2300,7 @@ const ProfileSection: React.FC<{
                     'font-medium',
                     selectedSpecializations.includes(fw)
                       ? 'text-violet-600'
-                      : 'text-slate-600 dark:text-slate-400'
+                      : 'text-slate-400'
                   )}
                 >
                   {fw}
@@ -2327,10 +2327,10 @@ const ProfileSection: React.FC<{
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.profile.regions', 'Operating Regions')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-slate-400">
             {t('partner.profile.regionsDesc', 'Select regions where you operate')}
           </p>
         </div>
@@ -2340,7 +2340,7 @@ const ProfileSection: React.FC<{
             {allRegions.map((region) => (
               <label
                 key={region}
-                className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-700/30"
+                className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-navy-700/30"
               >
                 <input
                   type="checkbox"
@@ -2348,7 +2348,7 @@ const ProfileSection: React.FC<{
                   onChange={() => toggleRegion(region)}
                   className="rounded text-violet-600 focus:ring-violet-500"
                 />
-                <span className="text-slate-700 dark:text-slate-300">{region}</span>
+                <span className="text-slate-600 dark:text-slate-300">{region}</span>
               </label>
             ))}
           </div>
@@ -2371,10 +2371,10 @@ const ProfileSection: React.FC<{
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-navy-900 dark:text-white">
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
           {t('partner.profile.publicListing', 'Public Listing')}
         </h2>
-        <p className="text-slate-500 dark:text-slate-400">
+        <p className="text-slate-400">
           {t('partner.profile.publicListingDesc', 'Manage your visibility in partner directory')}
         </p>
       </div>
@@ -2382,8 +2382,8 @@ const ProfileSection: React.FC<{
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h4 className="font-medium text-navy-900 dark:text-white">Directory Visibility</h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <h4 className="font-medium text-slate-900 dark:text-white">Directory Visibility</h4>
+            <p className="text-sm text-slate-400">
               Show your profile in the public partner directory
             </p>
           </div>
@@ -2397,7 +2397,7 @@ const ProfileSection: React.FC<{
           >
             <span
               className={cn(
-                'inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition',
+                'inline-block h-4 w-4 transform rounded-full bg-slate-50 dark:bg-navy-900 transition',
                 publicListingEnabled ? 'translate-x-6' : 'translate-x-1'
               )}
             />
@@ -2405,17 +2405,17 @@ const ProfileSection: React.FC<{
         </div>
 
         <div className="border-t border-slate-200 dark:border-navy-700 pt-6">
-          <h4 className="font-medium text-navy-900 dark:text-white mb-4">Preview</h4>
-          <div className="bg-slate-50 dark:bg-navy-700/30 rounded-xl p-4">
+          <h4 className="font-medium text-slate-900 dark:text-white mb-4">Preview</h4>
+          <div className="bg-slate-100/50 dark:bg-navy-700/30 rounded-xl p-4">
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
                 <Building2 className="w-8 h-8 text-violet-600" />
               </div>
               <div>
-                <h5 className="font-semibold text-navy-900 dark:text-white">
+                <h5 className="font-semibold text-slate-900 dark:text-white">
                   {organization?.name || 'Your Company'}
                 </h5>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-400">
                   {organization?.tier || 'Partner'} •{' '}
                   {selectedRegions.join(', ') || 'No regions selected'}
                 </p>
@@ -2430,7 +2430,7 @@ const ProfileSection: React.FC<{
                       </span>
                     ))
                   ) : (
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <span className="text-xs text-slate-500">
                       No specializations selected
                     </span>
                   )}

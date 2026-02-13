@@ -181,7 +181,7 @@ const UploadStep: React.FC<{
           }`}
         >
           <Upload
-            className={`w-12 h-12 mx-auto mb-4 ${isDragging ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500'}`}
+            className={`w-12 h-12 mx-auto mb-4 ${isDragging ? 'text-blue-500' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
           />
           <p className="text-slate-600 dark:text-slate-400">
             {isPolish ? (
@@ -196,7 +196,7 @@ const UploadStep: React.FC<{
               </>
             )}
           </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-2">
             Maksymalny rozmiar: 10MB
           </p>
           <input
@@ -260,7 +260,7 @@ const DetectionStep: React.FC<{
         <p className="text-slate-600 dark:text-slate-400">
           {isPolish ? 'Analizuję dokument...' : 'Analyzing document...'}
         </p>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+        <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-2">
           {isPolish ? 'AI identyfikuje typ raportu' : 'AI is identifying report type'}
         </p>
       </div>
@@ -344,7 +344,7 @@ const ExtractionStep: React.FC<{
         <p className="text-slate-600 dark:text-slate-400">
           {isPolish ? 'AI analizuje raport...' : 'AI is analyzing report...'}
         </p>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+        <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-2">
           {isPolish ? 'Ekstraktuję oceny z dokumentu' : 'Extracting scores from document'}
         </p>
       </div>

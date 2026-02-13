@@ -69,7 +69,7 @@ export const ToolVideoModal: React.FC<ToolVideoModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-4xl bg-white dark:bg-navy-900 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-[90vh]"
+            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-4xl bg-slate-50 dark:bg-navy-900 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-[90vh]"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
@@ -153,7 +153,7 @@ export const ToolVideoModal: React.FC<ToolVideoModalProps> = ({
                 </button>
                 <button
                   onClick={onClose}
-                  className="px-6 py-3 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 font-medium rounded-xl hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                  className="px-6 py-3 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 font-medium rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                 >
                   Maybe Later
                 </button>

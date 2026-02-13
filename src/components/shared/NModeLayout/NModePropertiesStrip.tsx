@@ -20,6 +20,17 @@ interface NModePropertiesStripProps {
   maxColumns?: number;
 }
 
+// Static class map so Tailwind JIT can detect all variants at build time
+const LG_GRID_MAP: Record<number, string> = {
+  4: 'lg:grid-cols-4',
+  5: 'lg:grid-cols-5',
+  6: 'lg:grid-cols-6',
+  7: 'lg:grid-cols-7',
+  8: 'lg:grid-cols-8',
+  9: 'lg:grid-cols-9',
+  10: 'lg:grid-cols-10',
+};
+
 export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
   fields,
   maxColumns = 6,
@@ -27,7 +38,8 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
-  const gridClass = `grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-${maxColumns} gap-3`;
+  const lgCols = LG_GRID_MAP[maxColumns] || 'lg:grid-cols-6';
+  const gridClass = `grid grid-cols-2 sm:grid-cols-3 ${lgCols} gap-3`;
 
   return (
     <div className="mb-4 p-4 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60">

@@ -77,6 +77,44 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
         </motion.button>
       }
     >
+      {filledCount === 0 && (
+        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl mb-4">
+          <AlertTriangle size={32} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            {isPolish ? 'Brak zdefiniowanego problemu' : 'No problem definition yet'}
+          </p>
+          <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+            {isPolish
+              ? 'Opisz symptom, przyczynę źródłową i koszt bezczynności — lub użyj AI, aby wygenerować analizę'
+              : 'Describe the symptom, root cause, and cost of inaction — or use AI to generate the analysis'}
+          </p>
+          <motion.button
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={async (e) => {
+              e.preventDefault();
+              const result = await handleGenerateAI('problem_definition');
+              if (result?.parsedContent) {
+                const data = result.parsedContent;
+                if (data.symptom) setSymptom(data.symptom);
+                if (data.rootCause) setRootCause(data.rootCause);
+                if (data.costOfInaction) setCostOfInaction(data.costOfInaction);
+              }
+            }}
+            disabled={isGeneratingAI === 'problemDefinition'}
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-sm font-medium transition-all disabled:opacity-50"
+          >
+            {isGeneratingAI === 'problemDefinition' ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Sparkles size={16} />
+            )}
+            <span>{isPolish ? 'Wygeneruj z AI' : 'Generate with AI'}</span>
+          </motion.button>
+        </div>
+      )}
       <div className="space-y-4">
         {/* Symptom */}
         <div>

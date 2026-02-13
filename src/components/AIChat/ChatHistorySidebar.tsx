@@ -453,7 +453,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
         data-testid="chat-history-sidebar"
         className={`
                 fixed top-0 h-full z-40
-                bg-white dark:bg-navy-900 
+                bg-slate-50 dark:bg-navy-900 
                 border-r border-slate-200 dark:border-navy-800
                 shadow-2xl
                 flex flex-col

@@ -355,7 +355,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Configuration Management</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Configuration Management</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
             Manage system settings and environment configurations
           </p>
@@ -363,14 +363,14 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={handleExportConfig}
-            className="flex items-center gap-2 px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 text-slate-300 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
           >
             <Download className="w-4 h-4" />
             Export
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
             Add Config
@@ -379,7 +379,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       </div>
 
       {/* Environment Selector */}
-      <div className="flex items-center gap-2 p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10 w-fit">
+      <div className="flex items-center gap-2 p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 w-fit">
         {ENVIRONMENTS.map((env) => (
           <button
             key={env}
@@ -391,7 +391,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
                   : env === 'staging'
                     ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                     : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
             }`}
           >
             {env.charAt(0).toUpperCase() + env.slice(1)}
@@ -411,18 +411,18 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             placeholder="Search configurations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
           />
         </div>
-        <div className="flex gap-1 p-1 bg-white/5 rounded-lg">
+        <div className="flex gap-1 p-1 bg-slate-50 dark:bg-white/5 rounded-lg">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 selectedCategory === cat.id
-                  ? 'bg-cyan-600 text-white'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-white'
+                  ? 'bg-cyan-600 text-slate-900 dark:text-white'
+                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {cat.icon} {cat.label}
@@ -433,9 +433,9 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
 
       {/* Config Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="text-sm text-slate-400 dark:text-slate-500">Total Configs</div>
-          <div className="text-2xl font-bold text-white">{configs.length}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">{configs.length}</div>
         </div>
         <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
           <div className="text-sm text-slate-400 dark:text-slate-500">Sensitive</div>
@@ -473,7 +473,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             return (
               <div
                 key={category}
-                className="bg-white/5 rounded-xl border border-white/10 overflow-hidden"
+                className="bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden"
               >
                 <button
                   onClick={() => toggleCategory(category)}
@@ -481,8 +481,8 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{catInfo.icon}</span>
-                    <span className="font-medium text-white">{catInfo.label}</span>
-                    <span className="px-2 py-0.5 text-xs bg-slate-700 text-slate-300 rounded">
+                    <span className="font-medium text-slate-900 dark:text-white">{catInfo.label}</span>
+                    <span className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">
                       {items.length}
                     </span>
                   </div>
@@ -494,7 +494,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
                 </button>
 
                 {isExpanded && (
-                  <div className="border-t border-white/10">
+                  <div className="border-t border-slate-200 dark:border-white/10">
                     {items.map((config) => (
                       <ConfigRow
                         key={config.id}
@@ -562,7 +562,7 @@ const ConfigRow: React.FC<{
   const displayValue = config.is_sensitive && !isRevealed ? '••••••••••••••••' : config.value;
 
   return (
-    <div className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors border-b border-white/5 last:border-b-0">
+    <div className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors border-b border-slate-200 dark:border-white/5 last:border-b-0">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <code className="text-sm text-cyan-400 font-mono">{config.key}</code>
@@ -582,7 +582,7 @@ const ConfigRow: React.FC<{
                 ? config.value === 'true'
                   ? 'text-emerald-400'
                   : 'text-red-400'
-                : 'text-slate-300'
+                : 'text-slate-700 dark:text-slate-300'
             } font-mono truncate max-w-md`}
           >
             {displayValue}
@@ -649,9 +649,9 @@ const ConfigEditModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-navy-900 rounded-xl border border-white/10 p-6 w-full max-w-lg">
+      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-white">Edit Configuration</h3>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Edit Configuration</h3>
           <button
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
@@ -662,21 +662,21 @@ const ConfigEditModal: React.FC<{
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Key</label>
-            <code className="block w-full px-3 py-2 bg-slate-800 text-cyan-400 rounded-lg font-mono">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Key</label>
+            <code className="block w-full px-3 py-2 bg-slate-200 dark:bg-slate-800 text-cyan-400 rounded-lg font-mono">
               {config.key}
             </code>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Value ({config.type})
             </label>
             {config.type === 'boolean' ? (
               <select
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               >
                 <option value="true">True</option>
                 <option value="false">False</option>
@@ -686,7 +686,7 @@ const ConfigEditModal: React.FC<{
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 rows={6}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white font-mono text-sm"
+                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white font-mono text-sm"
               />
             ) : (
               <input
@@ -699,13 +699,13 @@ const ConfigEditModal: React.FC<{
                 }
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               />
             )}
           </div>
 
           {config.description && (
-            <div className="p-3 bg-slate-800/50 rounded-lg">
+            <div className="p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg">
               <p className="text-sm text-slate-400 dark:text-slate-500">{config.description}</p>
             </div>
           )}
@@ -714,14 +714,14 @@ const ConfigEditModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white"
+              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Save Changes
@@ -765,9 +765,9 @@ const ConfigAddModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-navy-900 rounded-xl border border-white/10 p-6 w-full max-w-lg">
+      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-white">Add Configuration</h3>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Add Configuration</h3>
           <button
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
@@ -778,26 +778,26 @@ const ConfigAddModal: React.FC<{
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Key *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Key *</label>
             <input
               type="text"
               required
               value={formData.key}
               onChange={(e) => setFormData({ ...formData, key: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white font-mono"
+              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white font-mono"
               placeholder="my_config_key"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Type</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Type</label>
               <select
                 value={formData.type}
                 onChange={(e) =>
                   setFormData({ ...formData, type: e.target.value as ConfigItem['type'] })
                 }
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               >
                 <option value="string">String</option>
                 <option value="number">Number</option>
@@ -807,11 +807,11 @@ const ConfigAddModal: React.FC<{
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Category</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               >
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -823,12 +823,12 @@ const ConfigAddModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Value *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Value *</label>
             {formData.type === 'boolean' ? (
               <select
                 value={formData.value}
                 onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               >
                 <option value="">Select...</option>
                 <option value="true">True</option>
@@ -840,18 +840,18 @@ const ConfigAddModal: React.FC<{
                 required
                 value={formData.value}
                 onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               />
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
             <input
               type="text"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               placeholder="Optional description"
             />
           </div>
@@ -861,23 +861,23 @@ const ConfigAddModal: React.FC<{
               type="checkbox"
               checked={formData.is_sensitive}
               onChange={(e) => setFormData({ ...formData, is_sensitive: e.target.checked })}
-              className="rounded border-slate-600 bg-slate-800 text-cyan-500"
+              className="rounded border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-cyan-500"
             />
-            <span className="text-sm text-slate-300">Sensitive value (will be masked)</span>
+            <span className="text-sm text-slate-700 dark:text-slate-300">Sensitive value (will be masked)</span>
           </label>
 
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white"
+              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Create
@@ -896,10 +896,10 @@ const ConfigHistoryModal: React.FC<{
   onClose: () => void;
 }> = ({ config, versions, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-navy-900 rounded-xl border border-white/10 p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+    <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-white">Version History</h3>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Version History</h3>
           <code className="text-sm text-cyan-400">{config.key}</code>
         </div>
         <button
@@ -920,7 +920,7 @@ const ConfigHistoryModal: React.FC<{
           {versions.map((version, index) => (
             <div
               key={version.id}
-              className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-white/10"
+              className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-white/10"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -928,7 +928,7 @@ const ConfigHistoryModal: React.FC<{
                     className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium ${
                       index === 0
                         ? 'bg-cyan-500/20 text-cyan-400'
-                        : 'bg-slate-700 text-slate-400 dark:text-slate-500'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                     }`}
                   >
                     {versions.length - index}

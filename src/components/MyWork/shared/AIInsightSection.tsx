@@ -75,7 +75,7 @@ const INSIGHT_TYPES = {
 const CONFIDENCE_CONFIG = {
   low: {
     label: { en: 'Low confidence', pl: 'Niska pewność' },
-    color: 'text-slate-400',
+    color: 'text-slate-500 dark:text-slate-400',
     dots: 1,
   },
   medium: {
@@ -109,7 +109,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
     >
       {/* Collapsible Header */}
       <motion.button
@@ -134,12 +134,12 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {insights.length > 0 && (
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
               {insights.length}
             </span>
           )}
           <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={18} className="text-slate-400" />
+            <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
           </motion.div>
         </div>
       </motion.button>
@@ -180,7 +180,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
                     </span>
                   </motion.button>
                   {lastGeneratedAt && (
-                    <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 flex items-center gap-1">
                       <Clock size={10} />
                       {new Date(lastGeneratedAt).toLocaleTimeString()}
                     </span>
@@ -191,11 +191,11 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
               {/* Insights List */}
               {insights.length === 0 ? (
                 <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-                  <Brain size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                  <Brain size={32} className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600" />
+                  <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {isPolish ? 'Brak wskazówek AI' : 'No AI insights yet'}
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
                     {isPolish
                       ? 'Kliknij "Generuj wskazówki" aby uzyskać rekomendacje'
                       : 'Click "Generate Insights" to get recommendations'}
@@ -257,7 +257,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
 
                           {/* Actions */}
                           {(insight.actionable || onDismissInsight) && (
-                            <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-200/50 dark:border-navy-600/50">
+                            <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-200 dark:border-navy-600/50">
                               {insight.actionable && onActionInsight && (
                                 <button
                                   onClick={() => onActionInsight(insight.id)}
@@ -286,7 +286,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
 
               {/* AI Disclaimer */}
               <div className="text-center pt-2">
-                <p className="text-xs text-slate-400 dark:text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                   {isPolish
                     ? 'Wskazówki generowane przez AI. Zweryfikuj przed zastosowaniem.'
                     : 'AI-generated insights. Verify before applying.'}

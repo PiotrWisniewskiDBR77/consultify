@@ -211,7 +211,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
               </div>
               <button
                 onClick={onClose}
-                className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               >
                 <X size={20} />
               </button>
@@ -243,11 +243,11 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
               </div>
             ) : versions.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
-                <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
+                <FileText className="w-12 h-12 text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-3" />
                 <p className="text-slate-500 dark:text-slate-400 font-medium">
                   Brak zapisanych wersji
                 </p>
-                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
                   Historia pojawi się po zapisaniu zmian
                 </p>
               </div>
@@ -306,7 +306,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                               )}
                             </div>
                             <div className="flex items-center gap-1.5 mt-1">
-                              <User size={14} className="text-slate-400 dark:text-slate-500" />
+                              <User size={14} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
                               <span className="text-sm text-navy-900 dark:text-white font-medium">
                                 {version.createdByName || 'Użytkownik'}
                               </span>
@@ -316,7 +316,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                 {version.description}
                               </p>
                             )}
-                            <div className="flex items-center gap-1 mt-2 text-xs text-slate-400 dark:text-slate-500">
+                            <div className="flex items-center gap-1 mt-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                               <Clock size={12} />
                               {formatDate(version.createdAt)}
                             </div>
@@ -332,7 +332,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                                                 ${
                                                                   restoringVersion ===
                                                                   version.version
-                                                                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-wait'
+                                                                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500 cursor-wait'
                                                                     : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-purple-100 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400'
                                                                 }
                                                             `}

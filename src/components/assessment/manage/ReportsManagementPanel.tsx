@@ -360,7 +360,7 @@ const ReportRow: FC<{
           {['APPROVED', 'SENT_INTERNAL', 'SENT_EXTERNAL', 'UTILIZED'].includes(report.status) && (
             <button
               onClick={() => onExportPDF(report.id, report.name)}
-              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-navy-700 rounded transition-colors"
+              className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-navy-700 rounded transition-colors"
               title="Download PDF"
             >
               <Download size={14} />
@@ -371,7 +371,7 @@ const ReportRow: FC<{
           <div className="relative">
             <button
               onClick={() => setShowActions(!showActions)}
-              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 rounded transition-colors"
+              className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 rounded transition-colors"
             >
               <MoreHorizontal size={14} />
             </button>
@@ -685,7 +685,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                     onCreateReport
                       ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                      : 'bg-slate-200 dark:bg-navy-700 text-slate-400 cursor-not-allowed'
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                   }`}
                   title={!onCreateReport ? 'Report creation not available' : undefined}
                 >
@@ -701,7 +701,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         {!isApproved && (
           <div className="px-4 py-3 bg-slate-50 dark:bg-navy-900/40 border-b border-slate-200 dark:border-navy-800">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-slate-500 dark:text-slate-400 flex-shrink-0 mt-0.5" />
               <div className="text-xs text-slate-600 dark:text-slate-300">
                 You can draft reports before approval. A report becomes visible in the global
                 Reports tab after it is <strong>finalized</strong>.
@@ -743,7 +743,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         {/* Search */}
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800">
           <div className="relative max-w-md">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
             <input
               type="text"
               value={searchQuery}
@@ -763,7 +763,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
           ) : filteredReports.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 mb-3">
-                <FileOutput size={24} className="text-slate-400" />
+                <FileOutput size={24} className="text-slate-500 dark:text-slate-400" />
               </div>
               <p className="text-sm font-medium text-slate-900 dark:text-white">
                 {searchQuery ? 'No reports match your search' : 'No reports yet'}
@@ -839,7 +839,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-900/50">
           <div className="flex items-center gap-6 text-[11px] text-slate-500 dark:text-slate-400 flex-wrap">
             <div className="flex items-center gap-1.5">
-              <Edit3 size={12} className="text-slate-500" />
+              <Edit3 size={12} className="text-slate-500 dark:text-slate-400" />
               <span>Draft - Editable</span>
             </div>
             <div className="flex items-center gap-1.5">

@@ -359,11 +359,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   });
 
   const governanceTableCardClass =
-    'bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3 h-[340px] flex flex-col';
+    'bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3 h-[340px] flex flex-col';
   const governanceModalClass =
-    'relative w-full max-w-2xl rounded-3xl border border-slate-200/50 dark:border-navy-700/50 bg-white/95 dark:bg-navy-900/95 shadow-2xl p-6 space-y-5';
+    'relative w-full max-w-2xl rounded-3xl border border-slate-200 dark:border-navy-700/50 bg-white/95 dark:bg-navy-900/95 shadow-2xl p-6 space-y-5';
   const governanceModalHintClass =
-    'rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 px-3 py-2 text-xs text-slate-600 dark:text-slate-300';
+    'rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 px-3 py-2 text-xs text-slate-600 dark:text-slate-300';
   const channelChipClass =
     'px-2 py-1 rounded-md border text-[11px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
 
@@ -1670,7 +1670,7 @@ Return ONLY the final comment text.`;
           ? 'border-blue-400/70 dark:border-blue-500/50'
           : status === 'review'
             ? 'border-purple-400/70 dark:border-purple-500/50'
-            : 'border-slate-200/60 dark:border-navy-600/60';
+            : 'border-slate-200 dark:border-navy-600/60';
   const priorityAlertBorderClass =
     priority === 'critical'
       ? 'border-red-400/70 dark:border-red-500/50'
@@ -1678,7 +1678,7 @@ Return ONLY the final comment text.`;
         ? 'border-orange-400/70 dark:border-orange-500/50'
         : priority === 'medium'
           ? 'border-blue-400/70 dark:border-blue-500/50'
-          : 'border-slate-200/60 dark:border-navy-600/60';
+          : 'border-slate-200 dark:border-navy-600/60';
   const dueDateAlertBorderClass = useMemo(() => {
     if (!dueDate) return undefined;
     const d = new Date(dueDate);
@@ -1790,7 +1790,7 @@ Return ONLY the final comment text.`;
         : p === 'low'
           ? 'border-emerald-400/80 text-emerald-300 bg-emerald-500/20 shadow-[0_0_0_1px_rgba(16,185,129,0.3)]'
           : 'border-indigo-400/70 text-indigo-300 bg-indigo-500/15 shadow-[0_0_0_1px_rgba(129,140,248,0.2)]'
-      : 'border-slate-300/55 dark:border-navy-600/60 text-slate-400 dark:text-slate-500 hover:border-slate-400/70 hover:text-slate-300';
+      : 'border-slate-300/55 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:border-slate-400/70 hover:text-slate-700 dark:text-slate-300';
   const getCommentPriorityLabel = (p: CommentPriority) =>
     p === 'high' ? 'High' : p === 'low' ? 'Low' : 'Normal';
   const getCommentPriorityHint = (p: CommentPriority) =>
@@ -1929,7 +1929,7 @@ Return ONLY the final comment text.`;
 
                 {/* 1) Related to — initiative, assessment, survey, etc. */}
                 <div className="space-y-2">
-                  <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {isPolish ? 'Wynika z' : 'Related to'}
                   </label>
                   {relatedTaskItems.length === 0 ? (
@@ -1965,7 +1965,7 @@ Return ONLY the final comment text.`;
                 {/* 2) Task Description */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Opis zadania' : 'Task description'}
                     </label>
                     <AIFieldEnhancer
@@ -1980,7 +1980,7 @@ Return ONLY the final comment text.`;
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={10}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200/40 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[200px]"
+                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[200px]"
                     placeholder={
                       isPolish
                         ? 'Opisz zadanie szczegółowo — co należy zrobić, dlaczego jest to ważne, jakie są ograniczenia...'
@@ -1992,7 +1992,7 @@ Return ONLY the final comment text.`;
                 {/* 3) Expected Outcome */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Oczekiwany rezultat' : 'Expected outcome'}
                     </label>
                     <AIFieldEnhancer
@@ -2007,7 +2007,7 @@ Return ONLY the final comment text.`;
                     value={expectedOutcome}
                     onChange={(e) => setExpectedOutcome(e.target.value)}
                     rows={8}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200/40 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[160px]"
+                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[160px]"
                     placeholder={
                       isPolish
                         ? 'Zdefiniuj mierzalny rezultat — co oznacza sukces, jakie kryteria akceptacji...'
@@ -2034,7 +2034,7 @@ Return ONLY the final comment text.`;
                 </h2>
                 <button
                   onClick={addChecklistItem}
-                  className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                  className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
                 >
                   <Plus size={13} />
                   {isPolish ? 'Dodaj element' : 'Add item'}
@@ -2044,7 +2044,7 @@ Return ONLY the final comment text.`;
               {/* Progress counter */}
               {totalCount > 0 && (
                 <div className="flex items-center justify-end">
-                  <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 tabular-nums">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 tabular-nums">
                     {completedCount}/{totalCount}
                   </span>
                 </div>
@@ -2055,9 +2055,9 @@ Return ONLY the final comment text.`;
                 <div className="py-10 text-center">
                   <CheckSquare
                     size={28}
-                    className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                    className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
                   />
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {isPolish
                       ? 'Brak elementów — wygeneruj przez AI lub dodaj ręcznie'
                       : 'No items yet — generate with AI or add manually'}
@@ -2102,8 +2102,8 @@ Return ONLY the final comment text.`;
                         <span
                           className={`text-[11px] font-medium mt-0.5 mr-0.5 tabular-nums select-none ${
                             done
-                              ? 'text-slate-300 dark:text-slate-600'
-                              : 'text-slate-400 dark:text-slate-500'
+                              ? 'text-slate-700 dark:text-slate-300 dark:text-slate-600'
+                              : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'
                           }`}
                         >
                           {idx + 1}.
@@ -2115,7 +2115,7 @@ Return ONLY the final comment text.`;
                           placeholder={isPolish ? 'Wprowadź element...' : 'Enter item...'}
                           className={`flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 transition-colors ${
                             done
-                              ? 'line-through text-slate-400 dark:text-slate-500'
+                              ? 'line-through text-slate-500 dark:text-slate-400 dark:text-slate-500'
                               : 'text-slate-700 dark:text-slate-300'
                           }`}
                         />
@@ -2123,7 +2123,7 @@ Return ONLY the final comment text.`;
                         {/* Delete */}
                         <button
                           onClick={() => removeChecklistItem(item.id)}
-                          className="mt-0.5 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+                          className="mt-0.5 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-all"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -2137,7 +2137,7 @@ Return ONLY the final comment text.`;
               {totalCount > 0 && (
                 <button
                   onClick={addChecklistItem}
-                  className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 hover:text-emerald-500 dark:hover:text-emerald-400 py-1.5 px-3 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-colors"
+                  className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-emerald-500 dark:hover:text-emerald-400 py-1.5 px-3 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-colors"
                 >
                   <Plus size={13} />
                   <span>{isPolish ? 'Dodaj kolejny element' : 'Add another item'}</span>
@@ -2196,7 +2196,7 @@ Return ONLY the final comment text.`;
                 </h2>
                 <button
                   onClick={addIdea}
-                  className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                  className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
                 >
                   <Plus size={13} />
                   {isPolish ? 'Dodaj pomysł' : 'Add idea'}
@@ -2205,7 +2205,7 @@ Return ONLY the final comment text.`;
 
               {/* Ideas list */}
               <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                   {isPolish
                     ? `Propozycje (${implementationIdeas.length})`
                     : `Proposals (${implementationIdeas.length})`}
@@ -2215,9 +2215,9 @@ Return ONLY the final comment text.`;
                   <div className="py-8 text-center">
                     <Lightbulb
                       size={28}
-                      className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                      className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
                     />
-                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {isPolish
                         ? 'Brak pomysłów — wygeneruj przez AI lub dodaj ręcznie'
                         : 'No ideas yet — generate with AI or add manually'}
@@ -2236,7 +2236,7 @@ Return ONLY the final comment text.`;
                           className={`rounded-xl border transition-all ${
                             idea.status === 'selected'
                               ? 'border-emerald-300/60 dark:border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-500/5'
-                              : 'border-slate-200/50 dark:border-navy-700/50 hover:border-slate-300 dark:hover:border-navy-600'
+                              : 'border-slate-200 dark:border-navy-700/50 hover:border-slate-300 dark:hover:border-navy-600'
                           }`}
                         >
                           <div className="px-4 py-4">
@@ -2256,7 +2256,7 @@ Return ONLY the final comment text.`;
                                   className={`p-1 rounded-md transition-colors ${
                                     idea.votedByMe
                                       ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-500/10'
-                                      : 'text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-emerald-500/10'
+                                      : 'text-slate-500 dark:text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-emerald-500/10'
                                   }`}
                                   title={isPolish ? 'Głosuj za' : 'Vote up'}
                                 >
@@ -2279,7 +2279,7 @@ Return ONLY the final comment text.`;
                                       )
                                     )
                                   }
-                                  className="p-1 rounded-md text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                  className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors"
                                   title={isPolish ? 'Głosuj przeciw' : 'Vote down'}
                                 >
                                   <ThumbsDown size={14} />
@@ -2318,7 +2318,7 @@ Return ONLY the final comment text.`;
                                     {sConfig.label}
                                   </span>
                                   {idea.createdBy && (
-                                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                       {idea.createdBy}
                                     </span>
                                   )}
@@ -2390,7 +2390,7 @@ Return ONLY the final comment text.`;
                                       implementationIdeas.filter((i) => i.id !== idea.id)
                                     )
                                   }
-                                  className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-colors"
+                                  className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
                                 >
                                   <Trash2 size={13} />
                                 </button>
@@ -2524,7 +2524,7 @@ Return ONLY the final comment text.`;
                   <div className="overflow-auto flex-1">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                        <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                           <th className="text-left py-2 pr-2">{isPolish ? 'Osoba' : 'Person'}</th>
                           <th className="text-left py-2 pr-2">{isPolish ? 'Rola' : 'Role'}</th>
                           <th className="text-left py-2 pr-2">Email</th>
@@ -2537,7 +2537,7 @@ Return ONLY the final comment text.`;
                       <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                         {stakeholders.length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="py-6 text-center text-xs text-slate-400">
+                            <td colSpan={5} className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
                               {isPolish ? 'Brak interesariuszy.' : 'No stakeholders yet.'}
                             </td>
                           </tr>
@@ -2558,7 +2558,7 @@ Return ONLY the final comment text.`;
                                   {stakeholderChannelLabels(s.notificationSettings).map((label) => (
                                     <span
                                       key={`${s.id}-${label}`}
-                                      className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
                                     >
                                       {label}
                                     </span>
@@ -2572,7 +2572,7 @@ Return ONLY the final comment text.`;
                                       setEditingStakeholderId(s.id);
                                       setStakeholderDraft({ ...s });
                                     }}
-                                    className="p-1 text-slate-400 hover:text-primary-500"
+                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
                                     title={isPolish ? 'Edytuj' : 'Edit'}
                                   >
                                     <Edit3 size={13} />
@@ -2583,7 +2583,7 @@ Return ONLY the final comment text.`;
                                         stakeholders.filter((item) => item.id !== s.id)
                                       )
                                     }
-                                    className="p-1 text-slate-400 hover:text-red-500"
+                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500"
                                     title={isPolish ? 'Usuń' : 'Delete'}
                                   >
                                     <Trash2 size={13} />
@@ -2627,7 +2627,7 @@ Return ONLY the final comment text.`;
                   <div className="overflow-auto flex-1">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                        <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                           <th className="text-left py-2 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
                           <th className="text-left py-2 pr-2">{isPolish ? 'Dni' : 'Days'}</th>
                           <th className="text-left py-2 pr-2">
@@ -2642,7 +2642,7 @@ Return ONLY the final comment text.`;
                       <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                         {reminders.length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="py-6 text-center text-xs text-slate-400">
+                            <td colSpan={5} className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
                               {isPolish ? 'Brak reminderów.' : 'No reminders yet.'}
                             </td>
                           </tr>
@@ -2667,7 +2667,7 @@ Return ONLY the final comment text.`;
                               <td className="py-2 pr-2 text-xs">
                                 <div className="flex flex-wrap gap-1">
                                   {!r.enabled && (
-                                    <span className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400">
+                                    <span className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400">
                                       {isPolish ? 'Wyłączone' : 'Disabled'}
                                     </span>
                                   )}
@@ -2677,7 +2677,7 @@ Return ONLY the final comment text.`;
                                   ).map((label) => (
                                     <span
                                       key={`${r.id}-${label}`}
-                                      className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
                                     >
                                       {label}
                                     </span>
@@ -2693,7 +2693,7 @@ Return ONLY the final comment text.`;
                                         normalizeReminderRule({ ...r } as ReminderRuleWithDelivery)
                                       );
                                     }}
-                                    className="p-1 text-slate-400 hover:text-primary-500"
+                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
                                     title={isPolish ? 'Edytuj' : 'Edit'}
                                   >
                                     <Edit3 size={13} />
@@ -2702,7 +2702,7 @@ Return ONLY the final comment text.`;
                                     onClick={() =>
                                       setReminders(reminders.filter((item) => item.id !== r.id))
                                     }
-                                    className="p-1 text-slate-400 hover:text-red-500"
+                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500"
                                     title={isPolish ? 'Usuń' : 'Delete'}
                                   >
                                     <Trash2 size={13} />
@@ -2751,7 +2751,7 @@ Return ONLY the final comment text.`;
                   <div className="overflow-auto flex-1">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                        <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                           <th className="text-left py-2 pr-2">Status</th>
                           <th className="text-left py-2 pr-2">
                             {isPolish ? 'Progi W/C' : 'W/C thresholds'}
@@ -2775,7 +2775,7 @@ Return ONLY the final comment text.`;
                       <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                         {escalationRules.length === 0 ? (
                           <tr>
-                            <td colSpan={8} className="py-6 text-center text-xs text-slate-400">
+                            <td colSpan={8} className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
                               {isPolish ? 'Brak reguł eskalacji.' : 'No escalation rules yet.'}
                             </td>
                           </tr>
@@ -2817,7 +2817,7 @@ Return ONLY the final comment text.`;
                                   {deliveryBadgeLabels(rule.delivery).map((label) => (
                                     <span
                                       key={`${rule.id}-ch-${label}`}
-                                      className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                      className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
                                     >
                                       {label}
                                     </span>
@@ -2831,7 +2831,7 @@ Return ONLY the final comment text.`;
                                       setEditingEscalationId(rule.id);
                                       setEscalationDraft({ ...rule });
                                     }}
-                                    className="p-1 text-slate-400 hover:text-primary-500"
+                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500"
                                     title={isPolish ? 'Edytuj' : 'Edit'}
                                   >
                                     <Edit3 size={13} />
@@ -2842,7 +2842,7 @@ Return ONLY the final comment text.`;
                                         escalationRules.filter((item) => item.id !== rule.id)
                                       )
                                     }
-                                    className="p-1 text-slate-400 hover:text-red-500"
+                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500"
                                     title={isPolish ? 'Usuń' : 'Delete'}
                                   >
                                     <Trash2 size={13} />
@@ -3118,7 +3118,7 @@ Return ONLY the final comment text.`;
                       <select
                         value={ownerId}
                         onChange={(e) => setOwnerId(e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
+                        className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
                       >
                         <option value="">{isPolish ? 'Wybierz' : 'Select'}</option>
                         {users.map((u) => (
@@ -3159,7 +3159,7 @@ Return ONLY the final comment text.`;
                             setInitiativeName(null);
                           }
                         }}
-                        className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
+                        className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
                       >
                         <option value="">
                           {isPolish ? 'Samodzielne zadanie' : 'Standalone task'}
@@ -3176,7 +3176,7 @@ Return ONLY the final comment text.`;
               />
 
               {/* ── Task Action Bar ──────────────────────────────── */}
-              <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60">
+              <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
                 <div className="flex items-center gap-2">
                   {/* Start / Resume — shown when todo or blocked */}
                   {(status === 'todo' || status === 'blocked') && (
@@ -3540,7 +3540,7 @@ Return ONLY the final comment text.`;
                     AI
                   </button>
                   <button
-                    className="p-1 text-slate-400 hover:text-slate-600"
+                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
                     onClick={() => {
                       setEditingStakeholderId(null);
                       setStakeholderDraft(null);
@@ -3604,7 +3604,7 @@ Return ONLY the final comment text.`;
                   {isPolish ? 'Kanały notyfikacji' : 'Notification channels'}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       {isPolish ? 'Kanały podstawowe' : 'Core channels'}
                     </div>
@@ -3661,7 +3661,7 @@ Return ONLY the final comment text.`;
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
                     </div>
@@ -3790,7 +3790,7 @@ Return ONLY the final comment text.`;
                     <Sparkles size={12} /> AI
                   </button>
                   <button
-                    className="p-1 text-slate-400 hover:text-slate-600"
+                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
                     onClick={() => {
                       setEditingReminderId(null);
                       setReminderDraft(null);
@@ -3863,7 +3863,7 @@ Return ONLY the final comment text.`;
                   {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       {isPolish ? 'Kanały podstawowe' : 'Core channels'}
                     </div>
@@ -3912,7 +3912,7 @@ Return ONLY the final comment text.`;
                       })}
                     </div>
                   </div>
-                  <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
                     </div>
@@ -4053,7 +4053,7 @@ Return ONLY the final comment text.`;
                     <Sparkles size={12} /> AI
                   </button>
                   <button
-                    className="p-1 text-slate-400 hover:text-slate-600"
+                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
                     onClick={() => {
                       setEditingEscalationId(null);
                       setEscalationDraft(null);
@@ -4169,7 +4169,7 @@ Return ONLY the final comment text.`;
                 {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                   <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     {isPolish ? 'Kanały podstawowe' : 'Core channels'}
                   </div>
@@ -4207,7 +4207,7 @@ Return ONLY the final comment text.`;
                     })}
                   </div>
                 </div>
-                <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                   <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
                   </div>
@@ -4340,7 +4340,7 @@ Return ONLY the final comment text.`;
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onClose}
-                className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-navy-800/80 transition-all"
+                className="p-2 -ml-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-navy-800/80 transition-all"
               >
                 <ChevronLeft size={20} />
               </motion.button>
@@ -4401,7 +4401,7 @@ Return ONLY the final comment text.`;
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
             >
               <div
                 className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
@@ -4417,7 +4417,7 @@ Return ONLY the final comment text.`;
                 </div>
                 <div className="flex items-center gap-2">
                   {description && (
-                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       ✓
                     </span>
                   )}
@@ -4451,7 +4451,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('description') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-400" />
+                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
                   </motion.div>
                 </div>
               </div>
@@ -4469,7 +4469,7 @@ Return ONLY the final comment text.`;
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={4}
-                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 resize-none transition-all"
+                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 resize-none transition-all"
                         placeholder={
                           isPolish ? 'Opisz szczegóły zadania...' : 'Describe task details...'
                         }
@@ -4485,7 +4485,7 @@ Return ONLY the final comment text.`;
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
             >
               <div
                 className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
@@ -4501,7 +4501,7 @@ Return ONLY the final comment text.`;
                 </div>
                 <div className="flex items-center gap-2">
                   {expectedOutcome && (
-                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       ✓
                     </span>
                   )}
@@ -4535,7 +4535,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('expectedOutcome') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-400" />
+                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
                   </motion.div>
                 </div>
               </div>
@@ -4553,7 +4553,7 @@ Return ONLY the final comment text.`;
                         value={expectedOutcome}
                         onChange={(e) => setExpectedOutcome(e.target.value)}
                         rows={3}
-                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/80 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10 resize-none transition-all"
+                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10 resize-none transition-all"
                         placeholder={
                           isPolish
                             ? 'Co ma być efektem tego zadania?'
@@ -4614,7 +4614,7 @@ Return ONLY the final comment text.`;
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
             >
               <div
                 className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
@@ -4630,7 +4630,7 @@ Return ONLY the final comment text.`;
                 </div>
                 <div className="flex items-center gap-2">
                   {relatedDecisions.length > 0 && (
-                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {relatedDecisions.length}
                     </span>
                   )}
@@ -4643,7 +4643,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('relatedDecisions') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-400" />
+                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
                   </motion.div>
                 </div>
               </div>
@@ -4664,12 +4664,12 @@ Return ONLY the final comment text.`;
                         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                           <Scale
                             size={24}
-                            className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
                           />
-                          <p className="text-sm text-slate-400 dark:text-slate-500">
+                          <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                             {isPolish ? 'Brak powiązanych decyzji' : 'No related decisions'}
                           </p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
                             {isPolish
                               ? 'Powiąż istniejącą lub utwórz nową decyzję'
                               : 'Link existing or create new decision'}
@@ -4733,7 +4733,7 @@ Return ONLY the final comment text.`;
                                             ? relationLabels[rel.relationshipType]?.pl
                                             : relationLabels[rel.relationshipType]?.en}
                                         </span>
-                                        <span className="text-xs text-slate-400 dark:text-slate-500">
+                                        <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                           {isPolish
                                             ? statusLabels[rel.decisionStatus]?.pl
                                             : statusLabels[rel.decisionStatus]?.en}
@@ -4750,7 +4750,7 @@ Return ONLY the final comment text.`;
                                     {onOpenDecision && (
                                       <button
                                         onClick={() => onOpenDecision(rel.decisionId)}
-                                        className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-600 text-slate-400 hover:text-blue-500 transition-all"
+                                        className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-blue-500 transition-all"
                                         title={isPolish ? 'Otwórz decyzję' : 'Open decision'}
                                       >
                                         <ExternalLink size={14} />
@@ -4762,7 +4762,7 @@ Return ONLY the final comment text.`;
                                           relatedDecisions.filter((d) => d.id !== rel.id)
                                         )
                                       }
-                                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+                                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-all"
                                     >
                                       <X size={14} />
                                     </button>
@@ -4944,7 +4944,7 @@ Return ONLY the final comment text.`;
                           </div>
 
                           {/* Info about full editor */}
-                          <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 text-center">
                             {isPolish
                               ? 'Decyzja zostanie utworzona w trybie szkicu. Możesz ją uzupełnić w pełnym edytorze.'
                               : 'Decision will be created as draft. You can complete it in full editor.'}
@@ -4962,7 +4962,7 @@ Return ONLY the final comment text.`;
                           <div className="relative">
                             <Search
                               size={16}
-                              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                             />
                             <input
                               type="text"
@@ -5030,7 +5030,7 @@ Return ONLY the final comment text.`;
                                 d.title.toLowerCase().includes(decisionSearchQuery.toLowerCase()) &&
                                 !relatedDecisions.some((r) => r.decisionId === d.id)
                             ).length === 0 && (
-                              <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-4">
+                              <p className="text-center text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 py-4">
                                 {isPolish ? 'Brak pasujących decyzji' : 'No matching decisions'}
                               </p>
                             )}
@@ -5041,7 +5041,7 @@ Return ONLY the final comment text.`;
                               setShowDecisionSearch(false);
                               setDecisionSearchQuery('');
                             }}
-                            className="w-full text-center text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 py-1"
+                            className="w-full text-center text-xs text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 py-1"
                           >
                             {isPolish ? 'Anuluj' : 'Cancel'}
                           </button>
@@ -5115,7 +5115,7 @@ Return ONLY the final comment text.`;
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
             >
               <div
                 className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
@@ -5138,7 +5138,7 @@ Return ONLY the final comment text.`;
                           style={{ width: `${checklistProgress}%` }}
                         />
                       </div>
-                      <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
                         {checklist.filter((c) => c.completed).length}/{checklist.length}
                       </span>
                     </>
@@ -5173,7 +5173,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('checklist') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-400" />
+                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
                   </motion.div>
                 </div>
               </div>
@@ -5191,9 +5191,9 @@ Return ONLY the final comment text.`;
                         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                           <CheckSquare
                             size={24}
-                            className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
                           />
-                          <p className="text-sm text-slate-400 dark:text-slate-500">
+                          <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                             {isPolish ? 'Brak elementów' : 'No items'}
                           </p>
                           <button
@@ -5225,13 +5225,13 @@ Return ONLY the final comment text.`;
                                 placeholder={isPolish ? 'Wprowadź element...' : 'Enter item...'}
                                 className={`flex-1 px-2 py-1.5 rounded-lg text-sm bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-navy-600 focus:border-emerald-400 dark:focus:border-emerald-500 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none transition-colors ${
                                   item.completed
-                                    ? 'line-through text-slate-400 dark:text-slate-500'
+                                    ? 'line-through text-slate-500 dark:text-slate-400 dark:text-slate-500'
                                     : ''
                                 }`}
                               />
                               <button
                                 onClick={() => removeChecklistItem(item.id)}
-                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-all"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -5256,7 +5256,7 @@ Return ONLY the final comment text.`;
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
             >
               <motion.button
                 whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
@@ -5274,7 +5274,7 @@ Return ONLY the final comment text.`;
                 </div>
                 <div className="flex items-center gap-2">
                   {activityLog.length > 0 && (
-                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {activityLog.length}
                     </span>
                   )}
@@ -5282,7 +5282,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('activityLog') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-400" />
+                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
                   </motion.div>
                 </div>
               </motion.button>
@@ -5300,9 +5300,9 @@ Return ONLY the final comment text.`;
                         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                           <History
                             size={24}
-                            className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
                           />
-                          <p className="text-sm text-slate-400 dark:text-slate-500">
+                          <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                             {isPolish ? 'Brak historii' : 'No activity yet'}
                           </p>
                         </div>
@@ -5347,13 +5347,13 @@ Return ONLY the final comment text.`;
                                   case 'comment':
                                     return 'bg-amber-500 text-white';
                                   case 'edit':
-                                    return 'bg-slate-500 text-white';
+                                    return 'bg-slate-500 text-slate-900 dark:text-white';
                                   case 'deadline':
                                     return 'bg-red-500 text-white';
                                   case 'priority':
                                     return 'bg-orange-500 text-white';
                                   default:
-                                    return 'bg-slate-400 text-white';
+                                    return 'bg-slate-400 text-slate-900 dark:text-white';
                                 }
                               };
 
@@ -5371,7 +5371,7 @@ Return ONLY the final comment text.`;
                                     <p className="text-sm text-slate-700 dark:text-slate-300">
                                       {entry.description}
                                       {entry.oldValue && entry.newValue && (
-                                        <span className="text-slate-400 dark:text-slate-500">
+                                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                           {' '}
                                           <span className="line-through">
                                             {entry.oldValue}
@@ -5388,7 +5388,7 @@ Return ONLY the final comment text.`;
                                           {entry.userName}
                                         </span>
                                       )}
-                                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                                      <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                         {new Date(entry.timestamp).toLocaleString(
                                           isPolish ? 'pl-PL' : 'en-US',
                                           {
@@ -5424,7 +5424,7 @@ Return ONLY the final comment text.`;
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.15 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
             >
               <motion.button
                 whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
@@ -5442,7 +5442,7 @@ Return ONLY the final comment text.`;
                 </div>
                 <div className="flex items-center gap-2">
                   {taskId && (
-                    <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100/80 dark:bg-navy-800/80 px-2 py-0.5 rounded-lg">
+                    <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-100/80 dark:bg-navy-800/80 px-2 py-0.5 rounded-lg">
                       #{taskId.slice(0, 8)}
                     </span>
                   )}
@@ -5450,7 +5450,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-400" />
+                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
                   </motion.div>
                 </div>
               </motion.button>
@@ -5487,15 +5487,15 @@ Return ONLY the final comment text.`;
                             ) : (
                               <>
                                 <div className="p-1 rounded bg-slate-200 dark:bg-navy-700">
-                                  <Minus size={12} className="text-slate-400" />
+                                  <Minus size={12} className="text-slate-500 dark:text-slate-400" />
                                 </div>
-                                <span className="text-sm text-slate-400 dark:text-slate-500">
+                                <span className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                   {isPolish ? 'Samodzielne zadanie' : 'Standalone task'}
                                 </span>
                               </>
                             )}
                           </div>
-                          <ChevronDown size={16} className="text-slate-400" />
+                          <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
                         </button>
                         <AnimatePresence>
                           {showInitiativeDropdown && (
@@ -5516,7 +5516,7 @@ Return ONLY the final comment text.`;
                                 }`}
                               >
                                 <div className="p-1 rounded bg-slate-200 dark:bg-navy-700">
-                                  <Minus size={12} className="text-slate-400" />
+                                  <Minus size={12} className="text-slate-500 dark:text-slate-400" />
                                 </div>
                                 <span className="text-slate-500 dark:text-slate-400">
                                   {isPolish ? 'Samodzielne zadanie' : 'Standalone task'}
@@ -5563,7 +5563,7 @@ Return ONLY the final comment text.`;
                               {isPolish ? statusConfig.label.pl : statusConfig.label.en}
                             </span>
                           </div>
-                          <ChevronDown size={16} className="text-slate-400" />
+                          <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
                         </button>
                         <AnimatePresence>
                           {showStatusDropdown && (
@@ -5610,7 +5610,7 @@ Return ONLY the final comment text.`;
                               {isPolish ? priorityConfig.label.pl : priorityConfig.label.en}
                             </span>
                           </div>
-                          <ChevronDown size={16} className="text-slate-400" />
+                          <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
                         </button>
                         <AnimatePresence>
                           {showPriorityDropdown && (
@@ -5648,7 +5648,7 @@ Return ONLY the final comment text.`;
                           {isPolish ? 'Termin' : 'Due Date'}
                         </label>
                         <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
-                          <Calendar size={14} className="text-slate-400" />
+                          <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
                           <input
                             type="date"
                             value={dueDate}
@@ -5793,7 +5793,7 @@ Return ONLY the final comment text.`;
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.18 }}
-              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+              className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
             >
               <motion.button
                 whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
@@ -5811,7 +5811,7 @@ Return ONLY the final comment text.`;
                 </div>
                 <div className="flex items-center gap-2">
                   {tags.length > 0 && (
-                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {tags.length}
                     </span>
                   )}
@@ -5819,7 +5819,7 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('tags') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-slate-400" />
+                    <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
                   </motion.div>
                 </div>
               </motion.button>

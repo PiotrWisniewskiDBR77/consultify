@@ -82,7 +82,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
           ${
             activeCount > 0
               ? 'text-primary-500 bg-primary-500/10'
-              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
           }
         `}
         title={`Filter ${column.label}`}
@@ -113,7 +113,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
               </span>
               <button
                 onClick={onClose}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-400"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400"
               >
                 <X size={12} />
               </button>

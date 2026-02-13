@@ -299,7 +299,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-          <ShieldCheck className="w-6 h-6 text-white" />
+          <ShieldCheck className="w-6 h-6 text-slate-900 dark:text-white" />
         </div>
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -328,9 +328,9 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             </div>
           </div>
           {expandedSections.password ? (
-            <ChevronDown className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <ChevronRight className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           )}
         </button>
 
@@ -342,7 +342,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 {t('settings.security.currentPassword', 'Current Password')}
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
                 <input
                   type={showCurrentPassword ? 'text' : 'password'}
                   value={currentPassword}
@@ -353,7 +353,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 <button
                   type="button"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400"
                 >
                   {showCurrentPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -370,7 +370,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 {t('settings.security.newPassword', 'New Password')}
               </label>
               <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
                 <input
                   type={showNewPassword ? 'text' : 'password'}
                   value={newPassword}
@@ -381,7 +381,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400"
                 >
                   {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -442,7 +442,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 {t('settings.security.confirmPassword', 'Confirm New Password')}
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
                 <input
                   type="password"
                   value={confirmPassword}
@@ -531,9 +531,9 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             </div>
           </div>
           {expandedSections.mfa ? (
-            <ChevronDown className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <ChevronRight className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           )}
         </button>
 
@@ -564,9 +564,9 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             </div>
           </div>
           {expandedSections.sessions ? (
-            <ChevronDown className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <ChevronRight className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           )}
         </button>
 
@@ -666,9 +666,9 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             </div>
           </div>
           {expandedSections.recovery ? (
-            <ChevronDown className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <ChevronRight className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           )}
         </button>
 
@@ -813,9 +813,9 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             </div>
           </div>
           {expandedSections.events ? (
-            <ChevronDown className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <ChevronRight className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           )}
         </button>
 

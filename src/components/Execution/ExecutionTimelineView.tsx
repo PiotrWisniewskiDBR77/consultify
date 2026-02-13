@@ -87,7 +87,7 @@ const STATUS_COLORS: Record<
   [InitiativeStatus.DRAFT]: {
     bg: 'bg-slate-500/20',
     border: 'border-slate-500/50',
-    text: 'text-slate-400',
+    text: 'text-slate-500 dark:text-slate-400',
     progress: 'bg-slate-500',
   },
   [InitiativeStatus.PLANNING]: {
@@ -111,7 +111,7 @@ const STATUS_COLORS: Record<
   [InitiativeStatus.ARCHIVED]: {
     bg: 'bg-slate-500/20',
     border: 'border-slate-500/50',
-    text: 'text-slate-400',
+    text: 'text-slate-500 dark:text-slate-400',
     progress: 'bg-slate-500',
   },
 };
@@ -397,7 +397,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
           className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center z-20"
           title={warningMessage}
         >
-          <AlertTriangle size={10} className="text-white" />
+          <AlertTriangle size={10} className="text-slate-900 dark:text-white" />
         </div>
       )}
 
@@ -417,7 +417,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
         {initiative.priority === 'Critical' && (
           <AlertTriangle size={14} className="shrink-0 text-red-500" />
         )}
-        <span className="ml-auto text-xs text-slate-400 shrink-0">{progress}%</span>
+        <span className="ml-auto text-xs text-slate-500 dark:text-slate-400 shrink-0">{progress}%</span>
       </div>
     </motion.div>
   );
@@ -634,26 +634,26 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
   const ROW_HEIGHT = 56; // h-14
 
   return (
-    <div className="h-full flex flex-col bg-navy-950">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
       {/* Timeline Controls */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-navy-700 bg-navy-900">
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
         {/* Left: Navigation */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigateTimeline('prev')}
-            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
+            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
           >
             <ChevronLeft size={18} />
           </button>
           <button
             onClick={goToToday}
-            className="px-3 py-1 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 rounded transition-colors"
+            className="px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/10 rounded transition-colors"
           >
             Today
           </button>
           <button
             onClick={() => navigateTimeline('next')}
-            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
+            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
           >
             <ChevronRight size={18} />
           </button>
@@ -661,7 +661,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           {/* D4.1: Warning count */}
           {depWarnings.length > 0 && (
             <>
-              <div className="w-px h-4 bg-navy-700 mx-1" />
+              <div className="w-px h-4 bg-slate-200 dark:bg-navy-700 mx-1" />
               <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-900/30 text-amber-400">
                 <AlertTriangle size={11} />
                 {depWarnings.length} warning{depWarnings.length !== 1 ? 's' : ''}
@@ -678,17 +678,17 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
             className={`p-1.5 rounded-lg transition-colors ${
               showCriticalPath
                 ? 'bg-red-900/30 text-red-400'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/10'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10'
             }`}
             title={showCriticalPath ? 'Hide critical path' : 'Show critical path'}
           >
             <Route size={16} />
           </button>
 
-          <div className="w-px h-4 bg-navy-700" />
+          <div className="w-px h-4 bg-slate-200 dark:bg-navy-700" />
 
           {/* Week range selector */}
-          <div className="flex items-center gap-1 bg-navy-800 rounded-lg p-1 border border-navy-700">
+          <div className="flex items-center gap-1 bg-slate-50 dark:bg-navy-800 rounded-lg p-1 border border-slate-200 dark:border-navy-700">
             {[8, 12, 16].map((w) => (
               <button
                 key={w}
@@ -696,7 +696,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                 className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                   viewWeeks === w
                     ? 'bg-cyan-500/20 text-cyan-400'
-                    : 'text-slate-400 hover:text-slate-200'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
               >
                 {w}W
@@ -710,14 +710,14 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
       <div ref={containerRef} className="flex-1 overflow-auto">
         <div className="min-w-[800px]">
           {/* Month Headers */}
-          <div className="sticky top-0 z-20 flex bg-navy-900 border-b border-navy-700">
+          <div className="sticky top-0 z-20 flex bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
             {months.map((m, idx) => (
               <div
                 key={`${m.month}-${m.year}-${idx}`}
-                className="text-center py-2 border-r border-navy-700 last:border-r-0"
+                className="text-center py-2 border-r border-slate-200 dark:border-navy-700 last:border-r-0"
                 style={{ width: `${(m.span / viewWeeks) * 100}%` }}
               >
-                <span className="text-sm font-semibold text-white">
+                <span className="text-sm font-semibold text-slate-900 dark:text-white">
                   {m.month} {m.year}
                 </span>
               </div>
@@ -725,14 +725,14 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           </div>
 
           {/* Week Headers */}
-          <div className="sticky top-[40px] z-10 flex bg-navy-800 border-b border-navy-700">
+          <div className="sticky top-[40px] z-10 flex bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700">
             {weeks.map((week, idx) => (
               <div
                 key={`week-${idx}`}
-                className="flex-1 px-1 py-2 text-center border-r border-navy-700 last:border-r-0"
+                className="flex-1 px-1 py-2 text-center border-r border-slate-200 dark:border-navy-700 last:border-r-0"
               >
-                <div className="text-xs font-medium text-slate-400">{week.label}</div>
-                <div className="text-[10px] text-slate-500">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{week.label}</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">
                   {week.date.toLocaleDateString('en-US', { day: 'numeric' })}
                 </div>
               </div>
@@ -758,7 +758,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
               {weeks.map((_, idx) => (
                 <div
                   key={`grid-${idx}`}
-                  className="flex-1 border-r border-navy-800 last:border-r-0"
+                  className="flex-1 border-r border-slate-200 dark:border-navy-800 last:border-r-0"
                 />
               ))}
             </div>
@@ -838,7 +838,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
 
             {/* Initiative rows */}
             {initiativeRows.length === 0 ? (
-              <div className="flex items-center justify-center h-48 text-slate-400">
+              <div className="flex items-center justify-center h-48 text-slate-500 dark:text-slate-400">
                 <div className="text-center">
                   <Calendar className="w-10 h-10 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">No initiatives with timeline data</p>
@@ -849,7 +849,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
               </div>
             ) : (
               initiativeRows.map((row, rowIdx) => (
-                <div key={rowIdx} className="relative h-14 border-b border-navy-800">
+                <div key={rowIdx} className="relative h-14 border-b border-slate-200 dark:border-navy-800">
                   {row.map((initiative) => {
                     const initWarnings = warningsByInit.get(initiative.id) || [];
                     return (
@@ -879,7 +879,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="shrink-0 flex items-center gap-6 px-4 py-2 border-t border-navy-700 bg-navy-900 text-xs flex-wrap">
+      <div className="shrink-0 flex items-center gap-6 px-4 py-2 border-t border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-xs flex-wrap">
         <div className="flex items-center gap-4">
           {[
             { status: InitiativeStatus.APPROVED, label: 'Ready' },
@@ -889,23 +889,23 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           ].map(({ status, label }) => (
             <div key={status} className="flex items-center gap-1.5">
               <div className={`w-3 h-3 rounded ${STATUS_COLORS[status].progress}`} />
-              <span className="text-slate-400">{label}</span>
+              <span className="text-slate-500 dark:text-slate-400">{label}</span>
             </div>
           ))}
         </div>
         <div className="flex items-center gap-1.5 ml-auto">
           <div className="w-3 h-3 rounded ring-2 ring-red-500/50 bg-red-500/20" />
-          <span className="text-slate-400">Critical/Overdue</span>
+          <span className="text-slate-500 dark:text-slate-400">Critical/Overdue</span>
         </div>
         {depWarnings.length > 0 && (
           <div className="flex items-center gap-1.5">
             <AlertTriangle size={12} className="text-amber-500" />
-            <span className="text-slate-400">Schedule Warning</span>
+            <span className="text-slate-500 dark:text-slate-400">Schedule Warning</span>
           </div>
         )}
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-0.5 bg-red-500" />
-          <span className="text-slate-400">Today</span>
+          <span className="text-slate-500 dark:text-slate-400">Today</span>
         </div>
       </div>
     </div>

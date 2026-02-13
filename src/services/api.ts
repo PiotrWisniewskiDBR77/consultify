@@ -555,6 +555,53 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to delete notification');
   },
 
+  dismissNotification: async (id: string): Promise<void> => {
+    const res = await fetchWithRetry(`${API_URL}/notifications/${id}/dismiss`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to dismiss notification');
+  },
+
+  // Preferences (notification_preferences table; per-type mute lives here)
+  getNotificationPreferencesV2: async (): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/notifications/preferences`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) return null;
+    return res.json();
+  },
+
+  updateNotificationPreferencesV2: async (updates: any): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/notifications/preferences`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) throw new Error('Failed to update notification preferences');
+    return res.json();
+  },
+
+  // Admin-only: broadcast app/DBR77 communication
+  broadcastNotification: async (payload: {
+    type: string;
+    title: string;
+    body?: string;
+    message?: string;
+    severity?: 'INFO' | 'WARNING' | 'CRITICAL';
+    category?: string;
+    actionUrl?: string;
+    data?: Record<string, unknown>;
+    userIds?: string[];
+  }): Promise<{ success: true; sent: number; failed: number }> => {
+    const res = await fetchWithRetry(`${API_URL}/notifications/broadcast`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to broadcast notification');
+  },
+
   // --- SETTINGS (NotificationSettings, IntegrationSettings) ---
   getNotificationPreferences: async (userId: string): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/settings/notifications?userId=${userId}`, {
@@ -2107,6 +2154,19 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to update checklist');
   },
 
+  // Get a single notification by ID (direct fetch instead of filter-all)
+  getNotificationById: async (id: string): Promise<any | null> => {
+    try {
+      const res = await fetch(`${API_URL}/notifications/${id}`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) return null;
+      return res.json();
+    } catch {
+      return null;
+    }
+  },
+
   // Get source entity (task/decision/initiative) linked to a notification
   getNotificationSourceEntity: async (id: string): Promise<Record<string, any> | null> => {
     try {
@@ -2118,6 +2178,73 @@ export const Api = {
     } catch {
       return null;
     }
+  },
+
+  // Get comments for a notification
+  getNotificationComments: async (
+    id: string
+  ): Promise<
+    {
+      id: string;
+      notificationId: string;
+      userId: string;
+      user: { id: string; firstName: string; lastName: string; avatarUrl?: string };
+      content: string;
+      priority?: string;
+      createdAt: string;
+      updatedAt: string;
+    }[]
+  > => {
+    const res = await fetch(`${API_URL}/notifications/${id}/comments`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  // Add a comment to a notification
+  addNotificationComment: async (
+    id: string,
+    content: string,
+    priority?: string
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/notifications/${id}/comments`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ content, priority }),
+    });
+    if (!res.ok) throw new Error('Failed to add comment');
+    return res.json();
+  },
+
+  // Delete a notification comment
+  deleteNotificationComment: async (notificationId: string, commentId: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/notifications/${notificationId}/comments/${commentId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to delete comment');
+  },
+
+  // Get activity log for a notification
+  getNotificationActivityLog: async (
+    id: string
+  ): Promise<
+    {
+      id: string;
+      notificationId: string;
+      userId: string;
+      userName?: string;
+      action: string;
+      description: string;
+      createdAt: string;
+    }[]
+  > => {
+    const res = await fetch(`${API_URL}/notifications/${id}/activity-log`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) return [];
+    return res.json();
   },
 
   createNotification: async (notification: {

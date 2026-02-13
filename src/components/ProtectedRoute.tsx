@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
+import { LoadingScreen } from '@/components/ui/LoadingScreen';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -45,8 +46,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
   requireAuth = true,
 }) => {
-  const { currentUser } = useAppStore();
+  const { currentUser, isAuthInitializing } = useAppStore();
   const location = useLocation();
+
+  // While auth is initializing (token being verified), show nothing instead of
+  // redirecting away. This prevents a flash-redirect on page refresh where the
+  // user would briefly lose their intended route.
+  if (isAuthInitializing) {
+    return <LoadingScreen message="Initializing session..." />;
+  }
 
   // Check authentication
   if (requireAuth && !currentUser?.isAuthenticated) {

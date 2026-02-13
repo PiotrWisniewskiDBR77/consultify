@@ -46,7 +46,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
 import { Api } from '@/services/api';
-import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
+import { getStatusActions, getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
@@ -152,6 +152,7 @@ interface DraggableTaskCardProps {
 }
 
 const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }) => {
+  const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: 'task', task },
@@ -167,7 +168,7 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 bg-navy-800 border border-navy-700 rounded-lg hover:border-cyan-500/40 transition-colors cursor-grab active:cursor-grabbing ${
+      className={`p-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-cyan-500/40 transition-colors cursor-grab active:cursor-grabbing ${
         isDragging ? 'shadow-lg ring-2 ring-cyan-500/50' : ''
       }`}
       {...attributes}
@@ -176,18 +177,18 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <GripVertical size={14} className="text-slate-500 flex-shrink-0" />
-          <h4 className="text-sm font-medium text-white line-clamp-2">{task.title}</h4>
+          <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2">{task.title}</h4>
         </div>
         {isPastDue(task.dueDate) && (
           <span className="text-[10px] text-rose-400 uppercase tracking-wide flex-shrink-0">
-            Overdue
+            {t('execution.badges.overdue')}
           </span>
         )}
       </div>
       {task.initiativeName && (
-        <div className="text-xs text-slate-400 mb-2 ml-6">{task.initiativeName}</div>
+        <div className="text-xs text-slate-500 dark:text-slate-400 mb-2 ml-6">{task.initiativeName}</div>
       )}
-      <div className="flex items-center justify-between text-xs text-slate-400 ml-6">
+      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 ml-6">
         <span className="capitalize">{task.priority}</span>
         {task.dueDate && (
           <span className="flex items-center gap-1">
@@ -218,6 +219,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   tasks,
   isPastDue,
 }) => {
+  const { t } = useTranslation();
   const { setNodeRef, isOver } = useSortable({
     id: `column-${id}`,
     data: { type: 'column', columnId: id },
@@ -226,19 +228,19 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[260px] bg-navy-900/50 rounded-xl border transition-colors ${
-        isOver ? 'border-cyan-500 bg-cyan-500/5' : 'border-navy-700'
+      className={`flex-1 min-w-[260px] bg-white/80 dark:bg-navy-900/50 rounded-xl border transition-colors ${
+        isOver ? 'border-cyan-500 bg-cyan-500/5' : 'border-slate-200 dark:border-navy-700'
       }`}
       data-testid={`kanban-column-${id}`}
     >
       <div
-        className={`flex items-center justify-between px-3 py-2 border-b border-navy-700 ${accent}`}
+        className={`flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-700 ${accent}`}
       >
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
           {icon}
           {label}
         </div>
-        <span className="text-xs text-slate-400 bg-navy-800 px-2 py-0.5 rounded-full">
+        <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
           {tasks.length}
         </span>
       </div>
@@ -251,10 +253,10 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         {tasks.length === 0 && (
           <div
             className={`text-center text-xs py-6 border-2 border-dashed rounded-lg transition-colors ${
-              isOver ? 'border-cyan-500/50 text-cyan-400' : 'border-navy-700 text-slate-500'
+              isOver ? 'border-cyan-500/50 text-cyan-400' : 'border-slate-300 dark:border-navy-700 text-slate-500 dark:text-slate-400'
             }`}
           >
-            {isOver ? 'Drop here' : 'No tasks'}
+            {isOver ? t('execution.kanban.dropHere') : t('execution.kanban.noTasks')}
           </div>
         )}
       </div>
@@ -564,48 +566,78 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     () => [
       {
         id: 'type',
-        label: 'Type',
+        label: t('execution.table.type'),
         width: '80px',
         render: (row) => {
           const code = getTypeCode(row.axis);
           return (
             <div className="flex items-center gap-2">
               <Target size={14} className="text-cyan-400" />
-              <span className="font-mono text-xs font-bold text-slate-300">{code}</span>
+              <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">{code}</span>
             </div>
           );
         },
       },
       {
         id: 'name',
-        label: 'Name',
-        render: (row) => <span className="text-sm text-white font-medium">{row.name}</span>,
+        label: t('execution.table.name'),
+        render: (row) => <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>,
       },
       {
         id: 'status',
-        label: 'Status',
-        width: '130px',
+        label: t('execution.table.status'),
+        width: '160px',
         filterable: true,
         filterOptions: EXECUTION_STATUSES.map((status) => ({
           value: status,
           label: STATUS_METADATA[status].label,
           color: STATUS_METADATA[status].dotColor,
         })),
+        render: (row) => {
+          const meta = STATUS_METADATA[row.status as InitiativeStatus];
+          const actions = getStatusActions(row.status as InitiativeStatus);
+          return (
+            <div className="relative group">
+              <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${meta?.bgColor || ''} ${meta?.color || ''}`}>
+                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${meta?.dotColor || 'bg-slate-400'}`} />
+                {meta?.label || row.status}
+              </div>
+              {actions.length > 0 && (
+                <select
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleInlineStatusChange(row.id, e.target.value);
+                    }
+                  }}
+                >
+                  <option value="">{meta?.label || row.status}</option>
+                  {actions.map((a) => (
+                    <option key={a.targetStatus} value={a.targetStatus}>
+                      {a.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: 'assignee',
-        label: 'Assignee',
+        label: t('execution.table.assignee'),
         width: '150px',
         render: (row) => {
           const owner = row.ownerBusiness || row.ownerTechnical;
-          if (!owner) return <span className="text-slate-500 text-sm">Unassigned</span>;
+          if (!owner) return <span className="text-slate-500 text-sm">{t('execution.table.unassigned')}</span>;
           return (
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-navy-700 flex items-center justify-center text-xs text-white">
+              <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-xs text-slate-400 dark:text-white">
                 {owner.firstName?.[0]}
                 {owner.lastName?.[0]}
               </div>
-              <span className="text-sm text-slate-300">
+              <span className="text-sm text-slate-700 dark:text-slate-300">
                 {owner.firstName} {owner.lastName}
               </span>
             </div>
@@ -614,7 +646,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'progress',
-        label: 'Progress',
+        label: t('execution.table.progress'),
         width: '140px',
         render: (row) => {
           const progress = row.progress || 0;
@@ -632,20 +664,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 : 'bg-cyan-500';
           return (
             <div className="flex items-center gap-2">
-              <div className="flex-1 h-2 bg-navy-700 rounded-full overflow-hidden">
+              <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                 <div
                   className={`h-full ${color} rounded-full transition-all`}
                   style={{ width: `${Math.min(progress, 100)}%` }}
                 />
               </div>
-              <span className="text-xs text-slate-400 w-8 text-right">{progress}%</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-right">{progress}%</span>
             </div>
           );
         },
       },
       {
         id: 'timeRemaining',
-        label: 'Time Left',
+        label: t('execution.table.timeLeft'),
         width: '120px',
         render: (row) => {
           if (!row.plannedEndDate) {
@@ -660,7 +692,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             return (
               <span className="text-xs text-emerald-400 flex items-center gap-1">
                 <CheckCircle2 size={12} />
-                Done
+                {t('execution.badges.done')}
               </span>
             );
           }
@@ -669,7 +701,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             return (
               <span className="text-xs text-rose-400 font-medium flex items-center gap-1">
                 <AlertTriangle size={12} />
-                {Math.abs(diffDays)}d overdue
+                {Math.abs(diffDays)}{t('execution.time.daysOverdue')}
               </span>
             );
           }
@@ -678,22 +710,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             return (
               <span className="text-xs text-amber-400 flex items-center gap-1">
                 <Clock size={12} />
-                {diffDays}d left
+                {diffDays}{t('execution.time.daysLeft')}
               </span>
             );
           }
 
           if (diffDays <= 30) {
-            return <span className="text-xs text-slate-300">{diffDays}d left</span>;
+            return <span className="text-xs text-slate-700 dark:text-slate-300">{diffDays}{t('execution.time.daysLeft')}</span>;
           }
 
           const weeks = Math.ceil(diffDays / 7);
-          return <span className="text-xs text-slate-400">{weeks}w left</span>;
+          return <span className="text-xs text-slate-500 dark:text-slate-400">{weeks}{t('execution.time.weeksLeft')}</span>;
         },
       },
       {
         id: 'alerts',
-        label: 'Alerts',
+        label: t('execution.table.alerts'),
         width: '130px',
         render: (row) => {
           const badges: React.ReactNode[] = [];
@@ -713,7 +745,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/20 text-red-400"
               >
                 <AlertTriangle size={10} />
-                Blocked
+                {t('execution.badges.blocked')}
               </span>
             );
           }
@@ -729,7 +761,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/20 text-amber-400"
               >
                 <Clock size={10} />
-                Overdue
+                {t('execution.badges.overdue')}
               </span>
             );
           }
@@ -740,7 +772,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 key="btasks"
                 className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-500/15 text-rose-400"
               >
-                {blockedTasks} blocked
+                {blockedTasks} {t('execution.badges.blocked')}
               </span>
             );
           }
@@ -751,7 +783,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 key="odecisions"
                 className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-400"
               >
-                {overdueDecisions} decision
+                {overdueDecisions} {t('execution.badges.decision')}
               </span>
             );
           }
@@ -760,7 +792,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             return (
               <span className="text-xs text-emerald-400/70 flex items-center gap-1">
                 <CheckCircle2 size={12} />
-                OK
+                {t('execution.badges.ok')}
               </span>
             );
           }
@@ -770,7 +802,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'tasks',
-        label: 'Tasks',
+        label: t('execution.table.tasks'),
         width: '90px',
         render: (row) => {
           const initiativeTasks = tasksByInitiative[row.id] || [];
@@ -781,7 +813,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             (task) => normalizeTaskStatus(task.status) === 'done'
           ).length;
           return (
-            <span className="text-xs text-slate-300">
+            <span className="text-xs text-slate-700 dark:text-slate-300">
               {doneCount}/{initiativeTasks.length}
             </span>
           );
@@ -789,7 +821,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'deadline',
-        label: 'Deadline',
+        label: t('execution.table.deadline'),
         width: '100px',
         render: (row) => {
           if (!row.plannedEndDate && !row.slaDeadline) {
@@ -798,19 +830,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const deadline = row.slaDeadline || row.plannedEndDate;
           const isOverdue = new Date(deadline) < new Date() && row.status !== InitiativeStatus.DONE;
           return (
-            <span className={`text-sm ${isOverdue ? 'text-red-400' : 'text-slate-300'}`}>
+            <span className={`text-sm ${isOverdue ? 'text-red-400' : 'text-slate-700 dark:text-slate-300'}`}>
               {new Date(deadline).toLocaleDateString()}
             </span>
           );
         },
       },
     ],
-    [decisionsByInitiative, tasksByInitiative]
+    [t, decisionsByInitiative, tasksByInitiative]
   );
 
   const statusFilters = useMemo(
     () => [
-      { id: 'all', label: 'All', color: 'bg-slate-400', count: initiatives.length },
+      { id: 'all', label: t('execution.filters.all'), color: 'bg-slate-400', count: initiatives.length },
       ...EXECUTION_STATUSES.map((status) => ({
         id: status,
         label: STATUS_METADATA[status].label,
@@ -818,7 +850,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         count: statusCounts[status] ?? 0,
       })),
     ],
-    [initiatives.length, statusCounts]
+    [t, initiatives.length, statusCounts]
   );
 
   const portfolioMetrics = useMemo(() => {
@@ -1172,7 +1204,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         console.error('Error updating task status:', error);
       }
     },
-    [tasks, normalizeTaskStatus]
+    [t, tasks]
   );
 
   const renderTaskBoard = () => {
@@ -1201,21 +1233,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     const columns: { id: KanbanColumnId; label: string; accent: string; icon: React.ReactNode }[] =
       [
-        { id: 'todo', label: 'To Do', accent: 'text-slate-300', icon: <ClipboardList size={14} /> },
+        { id: 'todo', label: t('execution.kanban.toDo'), accent: 'text-slate-300', icon: <ClipboardList size={14} /> },
         {
           id: 'in_progress',
-          label: 'In Progress',
+          label: t('execution.kanban.inProgress'),
           accent: 'text-cyan-300',
           icon: <Target size={14} />,
         },
-        { id: 'review', label: 'Review', accent: 'text-amber-300', icon: <Scale size={14} /> },
+        { id: 'review', label: t('execution.kanban.review'), accent: 'text-amber-300', icon: <Scale size={14} /> },
         {
           id: 'blocked',
-          label: 'Blocked',
+          label: t('execution.kanban.blocked'),
           accent: 'text-rose-300',
           icon: <AlertTriangle size={14} />,
         },
-        { id: 'done', label: 'Done', accent: 'text-emerald-300', icon: <CheckCircle2 size={14} /> },
+        { id: 'done', label: t('execution.kanban.done'), accent: 'text-emerald-300', icon: <CheckCircle2 size={14} /> },
       ];
 
     return (
@@ -1245,11 +1277,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {/* Drag overlay for smooth dragging experience */}
         <DragOverlay>
           {activeTask ? (
-            <div className="p-3 bg-navy-800 border-2 border-cyan-500 rounded-lg shadow-xl w-[240px]">
+            <div className="p-3 bg-white dark:bg-navy-800 border-2 border-cyan-500 rounded-lg shadow-xl w-[240px]">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
                   <GripVertical size={14} className="text-cyan-400" />
-                  <h4 className="text-sm font-medium text-white line-clamp-2">
+                  <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2">
                     {activeTask.title}
                   </h4>
                 </div>
@@ -1257,7 +1289,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               {activeTask.initiativeName && (
                 <div className="text-xs text-slate-400 mb-2 ml-6">{activeTask.initiativeName}</div>
               )}
-              <div className="flex items-center justify-between text-xs text-slate-400 ml-6">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 ml-6">
                 <span className="capitalize">{activeTask.priority}</span>
                 {activeTask.dueDate && (
                   <span className="flex items-center gap-1">
@@ -1281,6 +1313,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       );
     },
     [activeDocumentId]
+  );
+
+  // Handle inline status change from table/grid
+  const handleInlineStatusChange = useCallback(
+    async (initiativeId: string, newStatus: string) => {
+      try {
+        await Api.patch(`/initiatives/${initiativeId}`, { status: newStatus });
+        setInitiatives((prev) =>
+          prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus as InitiativeStatus } : i))
+        );
+        toast.success(t('execution.toast.statusUpdated', 'Status updated'));
+      } catch (e: any) {
+        toast.error(e?.message || t('execution.toast.statusUpdateFailed', 'Failed to update status'));
+      }
+    },
+    [t]
   );
 
   const handleInitiativeUpdate = useCallback((updated: FullInitiative) => {
@@ -1333,60 +1381,60 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         loading={portfolioMetrics.isHealthLoading}
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide">On Track</p>
-              <p className="text-2xl font-semibold text-white">{portfolioMetrics.onTrackCount}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.onTrack')}</p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">{portfolioMetrics.onTrackCount}</p>
             </div>
             <CheckCircle2 className="text-emerald-400" />
           </div>
         </div>
-        <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide">Blocked</p>
-              <p className="text-2xl font-semibold text-white">{portfolioMetrics.blockedCount}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.blocked')}</p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">{portfolioMetrics.blockedCount}</p>
             </div>
             <AlertTriangle className="text-rose-400" />
           </div>
         </div>
-        <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide">Overdue Decisions</p>
-              <p className="text-2xl font-semibold text-white">
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.overdueDecisions')}</p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                 {portfolioMetrics.overdueDecisions}
               </p>
             </div>
             <Scale className="text-amber-400" />
           </div>
         </div>
-        <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide">Avg Progress</p>
-              <p className="text-2xl font-semibold text-white">{portfolioMetrics.avgProgress}%</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.avgProgress')}</p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">{portfolioMetrics.avgProgress}%</p>
             </div>
             <Target className="text-cyan-400" />
           </div>
         </div>
-        <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide">Budget Health</p>
-              <p className="text-2xl font-semibold text-white">
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.budgetHealth')}</p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                 {portfolioMetrics.budgetHealth === null ? '—' : `${portfolioMetrics.budgetHealth}%`}
               </p>
             </div>
             <LayoutDashboard className="text-violet-400" />
           </div>
         </div>
-        <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide">Decision SLA</p>
-              <p className="text-2xl font-semibold text-white">
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.decisionSla')}</p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                 {portfolioMetrics.totalDecisions === 0
                   ? '—'
                   : `${portfolioMetrics.totalDecisions - portfolioMetrics.overdueDecisions}/${portfolioMetrics.totalDecisions}`}
@@ -1395,21 +1443,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <Clock className="text-amber-400" />
           </div>
         </div>
-        <div className="bg-navy-900 border border-navy-700 rounded-xl p-4 sm:col-span-2 lg:col-span-3">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 sm:col-span-2 lg:col-span-3">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-slate-400 uppercase tracking-wide">Escalations & Gates</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.escalationsGates')}</p>
             <span className="text-xs text-slate-500">
               {portfolioMetrics.stageGate?.gateType || 'No gate info'}
             </span>
           </div>
           {portfolioMetrics.blockers.length === 0 ? (
-            <p className="text-sm text-slate-400">No active escalations.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('execution.portfolio.noActiveEscalations')}</p>
           ) : (
             <div className="space-y-2">
               {portfolioMetrics.blockers.slice(0, 4).map((blocker, idx) => (
                 <div
                   key={`${blocker.type}-${idx}`}
-                  className="flex items-start gap-2 text-sm text-slate-300"
+                  className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"
                 >
                   <AlertTriangle className="text-rose-400 mt-0.5" size={14} />
                   <span>{blocker.message}</span>
@@ -1424,45 +1472,45 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   const renderAIInsights = () => (
     <div className="grid gap-4 lg:grid-cols-3">
-      <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-white mb-3">AI Priority Recommendations</h3>
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">{t('execution.ai.priorityRecommendations')}</h3>
         {aiInsights.priorityRecommendations.length === 0 ? (
-          <p className="text-xs text-slate-400">No upcoming priorities detected.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('execution.ai.noPriorities')}</p>
         ) : (
           <div className="space-y-2">
             {aiInsights.priorityRecommendations.map((item, idx) => (
-              <div key={`${item.title}-${idx}`} className="text-xs text-slate-300">
-                <span className="font-medium text-white">{item.title}</span>
+              <div key={`${item.title}-${idx}`} className="text-xs text-slate-700 dark:text-slate-300">
+                <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
                 <span className="text-slate-500"> · {item.context}</span>
               </div>
             ))}
           </div>
         )}
       </div>
-      <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-white mb-3">AI Timeline Conflicts</h3>
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">{t('execution.ai.timelineConflicts')}</h3>
         {aiInsights.timelineConflicts.length === 0 ? (
-          <p className="text-xs text-slate-400">No timeline conflicts detected.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('execution.ai.noConflicts')}</p>
         ) : (
           <div className="space-y-2">
             {aiInsights.timelineConflicts.map((item, idx) => (
-              <div key={`${item.title}-${idx}`} className="text-xs text-slate-300">
-                <span className="font-medium text-white">{item.title}</span>
+              <div key={`${item.title}-${idx}`} className="text-xs text-slate-700 dark:text-slate-300">
+                <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
                 <span className="text-slate-500"> · {item.context}</span>
               </div>
             ))}
           </div>
         )}
       </div>
-      <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-white mb-3">AI Risk Suggestions</h3>
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">{t('execution.ai.riskSuggestions')}</h3>
         {aiInsights.riskAlerts.length === 0 ? (
-          <p className="text-xs text-slate-400">No active risks detected.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('execution.ai.noRisks')}</p>
         ) : (
           <div className="space-y-2">
             {aiInsights.riskAlerts.map((item, idx) => (
-              <div key={`${item.title}-${idx}`} className="text-xs text-slate-300">
-                <span className="font-medium text-white">{item.title}</span>
+              <div key={`${item.title}-${idx}`} className="text-xs text-slate-700 dark:text-slate-300">
+                <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
                 <span className="text-slate-500"> · {item.context}</span>
               </div>
             ))}
@@ -1483,11 +1531,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     if (calendarItems.length === 0) {
       return (
-        <div className="flex items-center justify-center h-80 text-slate-500">
+        <div className="flex items-center justify-center h-80 text-slate-500 dark:text-slate-400">
           <div className="text-center">
             <CalendarDays className="w-12 h-12 mx-auto mb-4 text-cyan-400/50" />
-            <p className="text-lg text-white">No deadlines scheduled</p>
-            <p className="text-sm text-slate-400">Tasks and decisions will appear here</p>
+            <p className="text-lg text-slate-900 dark:text-white">{t('execution.empty.noDeadlines')}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('execution.empty.deadlinesWillAppear')}</p>
           </div>
         </div>
       );
@@ -1503,8 +1551,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return (
       <div className="p-4 space-y-4">
         {Object.entries(grouped).map(([dateKey, items]) => (
-          <div key={dateKey} className="bg-navy-900 border border-navy-700 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-3 text-slate-300">
+          <div key={dateKey} className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3 text-slate-700 dark:text-slate-300">
               <Calendar size={16} className="text-cyan-400" />
               <span className="text-sm font-semibold">
                 {new Date(dateKey).toLocaleDateString('en-US', {
@@ -1521,11 +1569,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                   className={`flex items-start justify-between gap-4 p-3 rounded-lg border ${
                     isPastDue(item.dueDate)
                       ? 'border-rose-500/40 bg-rose-500/10'
-                      : 'border-navy-700 bg-navy-800'
+                      : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800'
                   }`}
                 >
                   <div>
-                    <div className="flex items-center gap-2 text-sm font-medium text-white">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-white">
                       {item.type === 'task' ? (
                         <ClipboardList size={14} className="text-cyan-400" />
                       ) : (
@@ -1533,13 +1581,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                       )}
                       {item.title}
                     </div>
-                    <div className="text-xs text-slate-400 mt-1">
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       {item.initiativeName || 'Execution Center'}
                     </div>
                   </div>
                   <div className="text-right text-xs text-slate-400">
-                    <div>{item.ownerName || 'Unassigned'}</div>
-                    {isPastDue(item.dueDate) && <div className="text-rose-400">Overdue</div>}
+                    <div>{item.ownerName || t('execution.table.unassigned')}</div>
+                    {isPastDue(item.dueDate) && <div className="text-rose-400">{t('execution.badges.overdue')}</div>}
                   </div>
                 </div>
               ))}
@@ -1560,7 +1608,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           onRowAction={(action, row) => handleRowAction(action, row as unknown as FullInitiative)}
           activeFilters={activeFilters}
           onFilterChange={setActiveFilters}
-          emptyMessage="No initiatives in execution. Move initiatives to execution first."
+          emptyMessage={t('execution.empty.noInExecution')}
         />
       );
     }
@@ -1577,7 +1625,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             const initiative = filteredInitiatives.find((entry) => entry.id === item.id);
             if (initiative) handleRowAction(action, initiative);
           }}
-          emptyMessage="No initiatives available."
+          emptyMessage={t('execution.empty.noAvailable')}
         />
       );
     }
@@ -1608,16 +1656,28 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const renderRAIDTab = () => (
     <div className="p-4">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-white">RAID Log</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('execution.raidLog.title')}</h2>
         <p className="text-sm text-slate-400">
-          Track Risks, Assumptions, Issues, and Decisions across all execution initiatives
+          {t('execution.raidLog.description')}
         </p>
       </div>
-      <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden p-4">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden p-4">
         <RAIDLog
           initiativeId={selectedInitiative?.id}
           projectId={currentProjectId || undefined}
-          onItemClick={(item) => console.log('RAID item clicked:', item)}
+          onItemClick={(item) => {
+            // Navigate to the initiative that owns this RAID item
+            const initiativeId = item?.initiativeId || selectedInitiative?.id;
+            if (initiativeId) {
+              const full = initiatives.find((i) => i.id === initiativeId);
+              if (full) {
+                handleOpenDocument(full);
+              } else {
+                // Fallback: open directly by ID
+                setActiveDocumentId(initiativeId);
+              }
+            }
+          }}
         />
       </div>
     </div>
@@ -1626,7 +1686,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Render Decisions tab
   const renderDecisionsTab = () => (
     <div className="p-4 h-full">
-      <DecisionsPanel onDecisionClick={(id) => console.log('Decision clicked:', id)} />
+      <DecisionsPanel onDecisionClick={(id) => {
+        // Open the decision detail — navigate to related initiative if possible
+        if (id) {
+          setActiveDocumentId(null);
+          // Decisions panel handles its own detail view, but we can try to find the related initiative
+          const relatedInitiative = initiatives.find((i) =>
+            (i as any).decisions?.some?.((d: any) => d.id === id)
+          );
+          if (relatedInitiative) {
+            handleOpenDocument(relatedInitiative);
+          }
+        }
+      }} />
     </div>
   );
 
@@ -1727,7 +1799,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 showWorkloadHeatmap
                   ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                  : 'bg-navy-800 text-slate-300 border border-navy-700 hover:text-white hover:border-cyan-500/50'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-navy-700 hover:text-slate-900 dark:hover:text-white hover:border-cyan-500/50'
               }`}
             >
               <CalendarDays size={16} />
@@ -1785,31 +1857,31 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                   t('execution.toast.openTasksView', 'Otwórz widok Zadań, aby dodać nowe zadanie.')
                 );
               }}
-              className="px-3 py-2 rounded-lg bg-navy-800 border border-navy-700 text-sm text-slate-300 hover:text-white hover:border-cyan-500/50 transition-colors"
+              className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-cyan-500/50 transition-colors"
             >
-              New Task
+              {t('execution.actions.newTask')}
             </button>
             <button
               onClick={() => {
                 setActiveTab('decisions' as ModuleTab);
               }}
-              className="px-3 py-2 rounded-lg bg-navy-800 border border-navy-700 text-sm text-slate-300 hover:text-white hover:border-amber-500/50 transition-colors"
+              className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-amber-500/50 transition-colors"
             >
-              New Decision
+              {t('execution.actions.newDecision')}
             </button>
             <button
               onClick={() => {
                 setActiveTab('raid' as ModuleTab);
               }}
-              className="px-3 py-2 rounded-lg bg-navy-800 border border-navy-700 text-sm text-slate-300 hover:text-white hover:border-rose-500/50 transition-colors"
+              className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-rose-500/50 transition-colors"
             >
-              RAID Log
+              {t('execution.actions.raidLog')}
             </button>
             <button
               onClick={handleExport}
-              className="px-3 py-2 rounded-lg bg-navy-800 border border-navy-700 text-sm text-slate-300 hover:text-white hover:border-emerald-500/50 transition-colors"
+              className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-emerald-500/50 transition-colors"
             >
-              Export
+              {t('execution.actions.export')}
             </button>
             {/* D6.5: Report button — executive summary of all initiatives */}
             <button
@@ -1822,7 +1894,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               }}
               className="px-3 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 border border-indigo-500/50 text-sm text-white font-medium hover:from-indigo-500 hover:to-purple-500 transition-colors"
             >
-              Report
+              {t('execution.actions.report')}
             </button>
             <button
               onClick={() => {
@@ -1834,13 +1906,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               title="Open AI Chat for execution context"
             >
               <MessageSquare size={14} />
-              AI Chat
+              {t('execution.actions.aiChat')}
             </button>
           </div>
         </div>
         {renderPortfolioHealth()}
         {renderAIInsights()}
-        <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
           {renderExecutionView()}
         </div>
       </div>

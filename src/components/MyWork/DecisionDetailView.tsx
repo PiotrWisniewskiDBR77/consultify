@@ -827,11 +827,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [isSuggestingEscalations, setIsSuggestingEscalations] = useState(false);
 
   const governanceModalClass =
-    'relative w-full max-w-2xl rounded-3xl border border-slate-200/50 dark:border-navy-700/50 bg-white/95 dark:bg-navy-900/95 shadow-2xl p-6 space-y-5';
+    'relative w-full max-w-2xl rounded-3xl border border-slate-200 dark:border-navy-700/50 bg-white/95 dark:bg-navy-900/95 shadow-2xl p-6 space-y-5';
   const governanceTableCardClass =
-    'bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3 h-[340px] flex flex-col';
+    'bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3 h-[340px] flex flex-col';
   const governanceModalHintClass =
-    'rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 px-3 py-2 text-xs text-slate-600 dark:text-slate-300';
+    'rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 px-3 py-2 text-xs text-slate-600 dark:text-slate-300';
   const channelChipClass =
     'px-2 py-1 rounded-md border text-[11px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
 
@@ -1296,32 +1296,32 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const renderActivityLogPanel = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-        <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
             {isPolish ? 'Wpisy' : 'Entries'}
           </p>
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             {activityStats.total}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
             {isPolish ? 'Zmiany' : 'Changes'}
           </p>
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             {activityStats.edited}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
             {isPolish ? 'Eskalacje' : 'Escalations'}
           </p>
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             {activityStats.escalations}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
             {isPolish ? 'Współpraca' : 'Collaboration'}
           </p>
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -1331,11 +1331,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       </div>
 
       {activityLogSorted.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300/60 dark:border-navy-700/70 bg-white/40 dark:bg-navy-900/40 p-6 text-center text-xs text-slate-400 dark:text-slate-500">
+        <div className="rounded-2xl border border-dashed border-slate-300/60 dark:border-navy-700/70 bg-white/40 dark:bg-navy-900/40 p-6 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
           {isPolish ? 'Brak wpisów w logu.' : 'No activity entries yet.'}
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
+        <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
           <div className="space-y-1">
             {activityLogSorted.map((entry) => {
               const meta = activityTypeMeta(entry.type);
@@ -1353,10 +1353,10 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
                     <p className="text-sm text-slate-700 dark:text-slate-200">
                       {entry.description}
                     </p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       <span>{new Date(entry.timestamp).toLocaleString()}</span>
                       {entry.userName && <span>{`· ${entry.userName}`}</span>}
-                      <span className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60">
+                      <span className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60">
                         {meta.label}
                       </span>
                     </div>
@@ -1368,7 +1368,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
                       </div>
                     )}
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-wide text-slate-300 dark:text-slate-600">
+                  <span className="text-[10px] font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300 dark:text-slate-600">
                     {entry.type}
                   </span>
                 </div>
@@ -3535,7 +3535,7 @@ Context: ${JSON.stringify(projectContext)}`;
         AI
       </button>
       {aiMenuOpenField === fieldKey && !isDecisionStageLocked && !aiFieldLoading[fieldKey] && (
-        <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-44 rounded-lg border border-slate-200/70 dark:border-navy-700/70 bg-white/95 dark:bg-navy-900/95 backdrop-blur p-1 shadow-xl">
+        <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-44 rounded-lg border border-slate-200 dark:border-navy-700/70 bg-white/95 dark:bg-navy-900/95 backdrop-blur p-1 shadow-xl">
           {[
             ['improve', isPolish ? 'Improve' : 'Improve'],
             ['shorten', isPolish ? 'Shorten' : 'Shorten'],
@@ -3594,7 +3594,7 @@ Context: ${JSON.stringify(projectContext)}`;
         ? 'border-amber-400/70 dark:border-amber-500/50'
         : status === 'approved'
           ? 'border-emerald-400/70 dark:border-emerald-500/50'
-          : 'border-slate-200/60 dark:border-navy-600/60';
+          : 'border-slate-200 dark:border-navy-600/60';
   const priorityAlertBorderClass =
     priority === 'critical'
       ? 'border-red-400/70 dark:border-red-500/50'
@@ -3602,13 +3602,13 @@ Context: ${JSON.stringify(projectContext)}`;
         ? 'border-amber-400/70 dark:border-amber-500/50'
         : priority === 'medium'
           ? 'border-blue-400/70 dark:border-blue-500/50'
-          : 'border-slate-200/60 dark:border-navy-600/60';
+          : 'border-slate-200 dark:border-navy-600/60';
   const dueDateAlertBorderClass = useMemo(() => {
-    if (!dueDate) return 'border-slate-200/60 dark:border-navy-600/60';
+    if (!dueDate) return 'border-slate-200 dark:border-navy-600/60';
     if (status === 'approved' || status === 'rejected')
-      return 'border-slate-200/60 dark:border-navy-600/60';
+      return 'border-slate-200 dark:border-navy-600/60';
     const due = new Date(dueDate);
-    if (Number.isNaN(due.getTime())) return 'border-slate-200/60 dark:border-navy-600/60';
+    if (Number.isNaN(due.getTime())) return 'border-slate-200 dark:border-navy-600/60';
     const now = new Date();
     const daysDiff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     if (daysDiff < 0) return 'border-red-400/70 dark:border-red-500/50';
@@ -3756,7 +3756,7 @@ Context: ${JSON.stringify(projectContext)}`;
     if (isActive && priority === 'low') {
       return 'border-emerald-400/80 text-emerald-300 bg-emerald-500/20 shadow-[0_0_0_1px_rgba(16,185,129,0.3)]';
     }
-    return 'border-slate-300/55 dark:border-navy-600/60 text-slate-400 dark:text-slate-500 hover:border-slate-400/70 hover:text-slate-300';
+    return 'border-slate-300/55 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:border-slate-400/70 hover:text-slate-700 dark:text-slate-300';
   };
 
   const enhanceCommentDraftWithAI = async () => {
@@ -4287,7 +4287,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       <select
                         value={deciderId}
                         onChange={(e) => setDeciderId(e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
+                        className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
                       >
                         <option value="">—</option>
                         {users.map((u) => (
@@ -4301,7 +4301,7 @@ Context: ${JSON.stringify(projectContext)}`;
                 ]}
               />
               {/* ── Inline ActionBar (kept for now, will migrate to NModeActionBar) */}
-              <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60">
+              <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
                 {/* Action buttons for pending decisions */}
                 {decisionId && isPending && (
                   <div className="flex items-center gap-2">
@@ -4473,7 +4473,7 @@ Context: ${JSON.stringify(projectContext)}`;
 
                           {/* 1) Related item from linked records */}
                           <div className="space-y-2">
-                            <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                            <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                               {isPolish ? 'Dotyczy' : 'Related to'}
                             </label>
                             {relatedDecisionItems.length === 0 ? (
@@ -4505,7 +4505,7 @@ Context: ${JSON.stringify(projectContext)}`;
                           {/* 2) Decision scope */}
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                              <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                              <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                 {isPolish ? 'Zakres decyzji' : 'Decision scope'}
                               </label>
                               <AIFieldEnhancer
@@ -4525,7 +4525,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                 }
                                 readOnly={isDecisionStageLocked}
                                 rows={isDescriptionExpanded ? 10 : 6}
-                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200/40 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
+                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
                                 placeholder={
                                   isPolish
                                     ? 'Opisz zakres decyzji (co dokładnie podlega decyzji)...'
@@ -4559,7 +4559,7 @@ Context: ${JSON.stringify(projectContext)}`;
                           {/* 3) Additional context */}
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                              <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                              <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                 {isPolish ? 'Kontekst uzupełniający' : 'Additional context'}
                               </label>
                               <AIFieldEnhancer
@@ -4579,7 +4579,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                 }
                                 readOnly={isDecisionStageLocked}
                                 rows={isContextExpanded ? 8 : 5}
-                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200/40 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
+                                className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
                                 placeholder={
                                   isPolish
                                     ? 'Dodatkowe wyjaśnienie, założenia, ograniczenia (opcjonalnie)...'
@@ -4626,9 +4626,9 @@ Context: ${JSON.stringify(projectContext)}`;
                             <div className="py-10 text-center">
                               <Lightbulb
                                 size={28}
-                                className="mx-auto mb-3 text-slate-300 dark:text-slate-600"
+                                className="mx-auto mb-3 text-slate-700 dark:text-slate-300 dark:text-slate-600"
                               />
-                              <p className="text-sm text-slate-400 dark:text-slate-500 mb-3">
+                              <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-3">
                                 {isPolish
                                   ? 'Brak zdefiniowanych opcji.'
                                   : 'No options defined yet.'}
@@ -4669,7 +4669,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       {!alt.isRecommended && (
                                         <button
                                           onClick={() => setRecommendedAlternative(alt.id)}
-                                          className="p-1 text-slate-400 hover:text-emerald-500 transition-colors"
+                                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-emerald-500 transition-colors"
                                           title="Set recommended"
                                         >
                                           <Star size={13} />
@@ -4677,7 +4677,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       )}
                                       <button
                                         onClick={() => removeAlternative(alt.id)}
-                                        className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -4732,7 +4732,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                           />
                                           <button
                                             onClick={() => removeAlternativePro(alt.id, idx)}
-                                            className="p-0.5 text-slate-400 hover:text-red-500 transition-colors"
+                                            className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
                                           >
                                             <X size={11} />
                                           </button>
@@ -4753,7 +4753,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                               addAlternativePro(alt.id, altProsDraft[alt.id] || '');
                                             }
                                           }}
-                                          className="flex-1 text-[11px] bg-transparent border-b border-slate-200/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
+                                          className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
                                           placeholder={
                                             isPolish ? '+ Dodaj argument za' : '+ Add pro'
                                           }
@@ -4793,7 +4793,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                           />
                                           <button
                                             onClick={() => removeAlternativeCon(alt.id, idx)}
-                                            className="p-0.5 text-slate-400 hover:text-red-500 transition-colors"
+                                            className="p-0.5 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
                                           >
                                             <X size={11} />
                                           </button>
@@ -4814,7 +4814,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                               addAlternativeCon(alt.id, altConsDraft[alt.id] || '');
                                             }
                                           }}
-                                          className="flex-1 text-[11px] bg-transparent border-b border-slate-200/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
+                                          className="flex-1 text-[11px] bg-transparent border-b border-slate-200 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400"
                                           placeholder={
                                             isPolish ? '+ Dodaj argument przeciw' : '+ Add con'
                                           }
@@ -4834,7 +4834,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     </div>
                                     {alt.riskLevel && (
                                       <span
-                                        className={`font-medium ${alt.riskLevel === 'high' ? 'text-red-500' : alt.riskLevel === 'medium' ? 'text-amber-500' : 'text-slate-400'}`}
+                                        className={`font-medium ${alt.riskLevel === 'high' ? 'text-red-500' : alt.riskLevel === 'medium' ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}
                                       >
                                         {isPolish ? 'ryzyko' : 'risk'}: {alt.riskLevel}
                                       </span>
@@ -4847,7 +4847,7 @@ Context: ${JSON.stringify(projectContext)}`;
 
                           <button
                             onClick={addAlternative}
-                            className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors"
+                            className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors"
                           >
                             + {isPolish ? 'Dodaj opcję' : 'Add option'}
                           </button>
@@ -4887,7 +4887,7 @@ Context: ${JSON.stringify(projectContext)}`;
                             />
                           </div>
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
+                            <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
                               <span>
                                 {isPolish
                                   ? 'Scenariusze AI (real-time)'
@@ -4903,7 +4903,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     : 'Source: fallback'}
                               </span>
                             </div>
-                            <div className="text-[11px] text-slate-400 dark:text-slate-500">
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
                               {isGeneratingConsequenceScenarios
                                 ? isPolish
                                   ? 'AI aktualizuje scenariusze...'
@@ -4935,7 +4935,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                                       {label}
                                     </h3>
-                                    <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                    <span className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                       7 / 30 / 90
                                     </span>
                                   </div>
@@ -4949,9 +4949,9 @@ Context: ${JSON.stringify(projectContext)}`;
                                     ).map(([timelineKey, timelineLabel]) => (
                                       <div
                                         key={`${scenarioKey}-${timelineKey}`}
-                                        className="rounded-lg border border-slate-200/40 dark:border-navy-700/50 bg-white/30 dark:bg-navy-900/25 p-2"
+                                        className="rounded-lg border border-slate-200 dark:border-navy-700/50 bg-white/30 dark:bg-navy-900/25 p-2"
                                       >
-                                        <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                        <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                           {timelineLabel}
                                         </p>
                                         <textarea
@@ -4976,7 +4976,7 @@ Context: ${JSON.stringify(projectContext)}`;
                           </div>
                           <div className="pl-4 border-l-2 border-amber-400 dark:border-amber-500/60">
                             <div className="mb-2 flex items-center justify-between">
-                              <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                              <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                 {isPolish ? 'Notatka decyzyjna' : 'Decision note'}
                               </label>
                               <AIFieldEnhancer
@@ -5054,7 +5054,7 @@ Context: ${JSON.stringify(projectContext)}`;
                               <div className="overflow-auto flex-1">
                                 <table className="w-full text-sm">
                                   <thead>
-                                    <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                                    <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                       <th className="text-left py-2 pr-2">
                                         {isPolish ? 'Osoba' : 'Person'}
                                       </th>
@@ -5077,7 +5077,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       <tr>
                                         <td
                                           colSpan={5}
-                                          className="py-6 text-center text-xs text-slate-400"
+                                          className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                         >
                                           {isPolish
                                             ? 'Brak interesariuszy.'
@@ -5102,7 +5102,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                 (label) => (
                                                   <span
                                                     key={`${s.id}-${label}`}
-                                                    className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                                    className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
                                                   >
                                                     {label}
                                                   </span>
@@ -5118,7 +5118,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                   setEditingStakeholderId(s.id);
                                                   setStakeholderDraft({ ...s });
                                                 }}
-                                                className="p-1 text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
                                                 title={isPolish ? 'Edytuj' : 'Edit'}
                                               >
                                                 <Edit3 size={13} />
@@ -5130,7 +5130,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                     stakeholders.filter((item) => item.id !== s.id)
                                                   )
                                                 }
-                                                className="p-1 text-slate-400 hover:text-red-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 disabled:opacity-40"
                                                 title={isPolish ? 'Usuń' : 'Delete'}
                                               >
                                                 <Trash2 size={13} />
@@ -5179,7 +5179,7 @@ Context: ${JSON.stringify(projectContext)}`;
                               <div className="overflow-auto flex-1">
                                 <table className="w-full text-sm">
                                   <thead>
-                                    <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                                    <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                       <th className="text-left py-2 pr-2">
                                         {isPolish ? 'Typ' : 'Type'}
                                       </th>
@@ -5202,7 +5202,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       <tr>
                                         <td
                                           colSpan={5}
-                                          className="py-6 text-center text-xs text-slate-400"
+                                          className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                         >
                                           {isPolish ? 'Brak reminderów.' : 'No reminders yet.'}
                                         </td>
@@ -5228,14 +5228,14 @@ Context: ${JSON.stringify(projectContext)}`;
                                           <td className="py-2 pr-2 text-xs">
                                             <div className="flex flex-wrap gap-1">
                                               {!r.enabled && (
-                                                <span className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400">
+                                                <span className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400">
                                                   {isPolish ? 'Wyłączone' : 'Disabled'}
                                                 </span>
                                               )}
                                               {deliveryBadgeLabels(r.delivery, r).map((label) => (
                                                 <span
                                                   key={`${r.id}-${label}`}
-                                                  className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                                  className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
                                                 >
                                                   {label}
                                                 </span>
@@ -5250,7 +5250,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                   setEditingReminderId(r.id);
                                                   setReminderDraft(normalizeReminderRule({ ...r }));
                                                 }}
-                                                className="p-1 text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
                                                 title={isPolish ? 'Edytuj' : 'Edit'}
                                               >
                                                 <Edit3 size={13} />
@@ -5262,7 +5262,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                     reminders.filter((item) => item.id !== r.id)
                                                   )
                                                 }
-                                                className="p-1 text-slate-400 hover:text-red-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 disabled:opacity-40"
                                                 title={isPolish ? 'Usuń' : 'Delete'}
                                               >
                                                 <Trash2 size={13} />
@@ -5316,7 +5316,7 @@ Context: ${JSON.stringify(projectContext)}`;
                               <div className="overflow-auto flex-1">
                                 <table className="w-full text-sm">
                                   <thead>
-                                    <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                                    <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                       <th className="text-left py-2 pr-2">
                                         {isPolish ? 'Status' : 'Status'}
                                       </th>
@@ -5348,7 +5348,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       <tr>
                                         <td
                                           colSpan={8}
-                                          className="py-6 text-center text-xs text-slate-400"
+                                          className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                         >
                                           {isPolish
                                             ? 'Brak reguł eskalacji.'
@@ -5397,7 +5397,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                               {deliveryBadgeLabels(rule.delivery).map((label) => (
                                                 <span
                                                   key={`${rule.id}-ch-${label}`}
-                                                  className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                                  className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
                                                 >
                                                   {label}
                                                 </span>
@@ -5412,7 +5412,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                   setEditingEscalationId(rule.id);
                                                   setEscalationDraft({ ...rule });
                                                 }}
-                                                className="p-1 text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-primary-500 disabled:opacity-40"
                                                 title={isPolish ? 'Edytuj' : 'Edit'}
                                               >
                                                 <Edit3 size={13} />
@@ -5426,7 +5426,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                                     )
                                                   )
                                                 }
-                                                className="p-1 text-slate-400 hover:text-red-500 disabled:opacity-40"
+                                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 disabled:opacity-40"
                                                 title={isPolish ? 'Usuń' : 'Delete'}
                                               >
                                                 <Trash2 size={13} />
@@ -5477,7 +5477,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       AI
                                     </button>
                                     <button
-                                      className="p-1 text-slate-400 hover:text-slate-600"
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
                                       onClick={() => {
                                         setEditingStakeholderId(null);
                                         setStakeholderDraft(null);
@@ -5541,7 +5541,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     {isPolish ? 'Kanały notyfikacji' : 'Notification channels'}
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                    <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                         {isPolish ? 'Kanały podstawowe' : 'Core channels'}
                                       </div>
@@ -5609,7 +5609,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                         ))}
                                       </div>
                                     </div>
-                                    <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                    <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                         {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
                                       </div>
@@ -5752,7 +5752,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       AI
                                     </button>
                                     <button
-                                      className="p-1 text-slate-400 hover:text-slate-600"
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
                                       onClick={() => {
                                         setEditingReminderId(null);
                                         setReminderDraft(null);
@@ -5843,7 +5843,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                     {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
                                   </label>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                    <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                         {isPolish ? 'Kanały podstawowe' : 'Core channels'}
                                       </div>
@@ -5898,7 +5898,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                         })}
                                       </div>
                                     </div>
-                                    <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                    <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                         {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
                                       </div>
@@ -6061,7 +6061,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       AI
                                     </button>
                                     <button
-                                      className="p-1 text-slate-400 hover:text-slate-600"
+                                      className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
                                       onClick={() => {
                                         setEditingEscalationId(null);
                                         setEscalationDraft(null);
@@ -6184,7 +6184,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                   {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                       {isPolish ? 'Kanały podstawowe' : 'Core channels'}
                                     </div>
@@ -6228,7 +6228,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       })}
                                     </div>
                                   </div>
-                                  <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
                                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                       {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
                                     </div>
@@ -6437,7 +6437,7 @@ Context: ${JSON.stringify(projectContext)}`;
           {/* ═══════════ CLICKUP MODE (action-first) ═════════════════════════ */}
           {presentationMode === 'c' && (
             <div className="col-span-full space-y-4">
-              <div className="flex flex-wrap items-center gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/60 border border-slate-200/60 dark:border-navy-700/60">
+              <div className="flex flex-wrap items-center gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/60 border border-slate-200 dark:border-navy-700/60">
                 {(
                   [
                     ['overview', isPolish ? 'Overview' : 'Overview'],
@@ -6466,7 +6466,7 @@ Context: ${JSON.stringify(projectContext)}`;
               <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.9fr)_330px] gap-4">
                 <div className="space-y-4 min-w-0">
                   {clickupTab === 'overview' && (
-                    <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3">
+                    <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                           {isPolish ? 'Przegląd decyzji' : 'Decision Overview'}
@@ -6546,7 +6546,7 @@ Context: ${JSON.stringify(projectContext)}`;
                   {clickupTab === 'governance' && (
                     <div className="space-y-4">
                       {/* RACI table */}
-                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3">
+                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                             {isPolish ? 'RACI' : 'RACI'}
@@ -6582,7 +6582,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
-                              <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                              <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                 <th className="text-left py-2 pr-2">
                                   {isPolish ? 'Rola' : 'Role'}
                                 </th>
@@ -6605,7 +6605,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                 <tr>
                                   <td
                                     colSpan={5}
-                                    className="py-6 text-center text-xs text-slate-400"
+                                    className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                   >
                                     {isPolish ? 'Brak interesariuszy.' : 'No stakeholders yet.'}
                                   </td>
@@ -6649,7 +6649,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                           (label) => (
                                             <span
                                               key={`${s.id}-clickup-${label}`}
-                                              className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px]"
+                                              className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px]"
                                             >
                                               {label}
                                             </span>
@@ -6665,7 +6665,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                             stakeholders.filter((item) => item.id !== s.id)
                                           )
                                         }
-                                        className="p-1 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -6679,7 +6679,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       </div>
 
                       {/* Reminders table */}
-                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3">
+                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                             {isPolish ? 'Reminders' : 'Reminders'}
@@ -6709,7 +6709,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
-                              <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                              <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                 <th className="text-left py-2 pr-2">
                                   {isPolish ? 'Aktywne' : 'Active'}
                                 </th>
@@ -6736,7 +6736,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                 <tr>
                                   <td
                                     colSpan={7}
-                                    className="py-6 text-center text-xs text-slate-400"
+                                    className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                   >
                                     {isPolish ? 'Brak reminderów.' : 'No reminders yet.'}
                                   </td>
@@ -6901,7 +6901,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                         onClick={() =>
                                           setReminders(reminders.filter((item) => item.id !== r.id))
                                         }
-                                        className="p-1 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -6915,7 +6915,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       </div>
 
                       {/* Escalation table */}
-                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3">
+                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                             {isPolish ? 'Escalation' : 'Escalation'}
@@ -6944,7 +6944,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
-                              <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                              <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                 <th className="text-left py-2 pr-2">
                                   {isPolish ? 'Aktywne' : 'Enabled'}
                                 </th>
@@ -6964,13 +6964,13 @@ Context: ${JSON.stringify(projectContext)}`;
                                 <tr>
                                   <td
                                     colSpan={4}
-                                    className="py-6 text-center text-xs text-slate-400"
+                                    className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                   >
                                     {isPolish ? 'Brak reguły eskalacji.' : 'No escalation rule.'}
                                   </td>
                                 </tr>
                               ) : (
-                                <tr className="border-b border-slate-200/40 dark:border-navy-700/40">
+                                <tr className="border-b border-slate-200 dark:border-navy-700/40">
                                   <td className="py-2 pr-2">
                                     <input
                                       type="checkbox"
@@ -7061,7 +7061,7 @@ Context: ${JSON.stringify(projectContext)}`;
                   {clickupTab === 'resources' && (
                     <div className="space-y-4">
                       {/* Attachments table */}
-                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3">
+                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                             {isPolish ? 'Załączniki' : 'Attachments'}
@@ -7069,7 +7069,7 @@ Context: ${JSON.stringify(projectContext)}`;
                           <label
                             className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
                               isDecisionStageLocked
-                                ? 'border-slate-300/40 dark:border-navy-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                ? 'border-slate-300/40 dark:border-navy-700 text-slate-500 dark:text-slate-400 dark:text-slate-500 cursor-not-allowed'
                                 : 'border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 cursor-pointer'
                             }`}
                           >
@@ -7089,7 +7089,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
-                              <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                              <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                 <th className="text-left py-2 pr-2">
                                   {isPolish ? 'Nazwa' : 'Name'}
                                 </th>
@@ -7111,7 +7111,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                 <tr>
                                   <td
                                     colSpan={6}
-                                    className="py-6 text-center text-xs text-slate-400"
+                                    className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                   >
                                     {isPolish ? 'Brak załączników.' : 'No attachments.'}
                                   </td>
@@ -7140,7 +7140,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       <button
                                         disabled={isDecisionStageLocked}
                                         onClick={() => handleDeleteAttachment(a.id)}
-                                        className="p-1 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -7154,7 +7154,7 @@ Context: ${JSON.stringify(projectContext)}`;
                       </div>
 
                       {/* Linked items table */}
-                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3">
+                      <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                             {isPolish ? 'Powiązane elementy' : 'Linked Items'}
@@ -7177,7 +7177,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
-                              <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                              <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700/50">
                                 <th className="text-left py-2 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
                                 <th className="text-left py-2 pr-2">
                                   {isPolish ? 'Tytuł' : 'Title'}
@@ -7198,7 +7198,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                 <tr>
                                   <td
                                     colSpan={5}
-                                    className="py-6 text-center text-xs text-slate-400"
+                                    className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
                                   >
                                     {isPolish ? 'Brak powiązanych elementów.' : 'No linked items.'}
                                   </td>
@@ -7222,7 +7222,7 @@ Context: ${JSON.stringify(projectContext)}`;
                                       <button
                                         disabled={isDecisionStageLocked}
                                         onClick={() => handleRemoveLinkedItem(item)}
-                                        className="p-1 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         <Trash2 size={13} />
                                       </button>
@@ -7238,7 +7238,7 @@ Context: ${JSON.stringify(projectContext)}`;
                   )}
 
                   {clickupTab === 'logs' && (
-                    <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3">
+                    <div className="bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                       <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
                         {isPolish ? 'Logi aktywności' : 'Activity Log'}
                       </h3>
@@ -7277,13 +7277,13 @@ Context: ${JSON.stringify(projectContext)}`;
                     </div>
                   )}
 
-                  <div className="bg-white/80 dark:bg-navy-900/80 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3">
+                  <div className="bg-white/80 dark:bg-navy-900/80 rounded-2xl border border-slate-200 dark:border-navy-700/60 p-4 space-y-3">
                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                       {isPolish ? 'Panel informacji' : 'Information pane'}
                     </h3>
                     <div className="space-y-2.5 text-sm">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
                           {isPolish ? 'Status' : 'Status'}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200 font-medium">
@@ -7293,7 +7293,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
                           {isPolish ? 'Priorytet' : 'Priority'}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200 font-medium">
@@ -7303,13 +7303,13 @@ Context: ${JSON.stringify(projectContext)}`;
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
                           {isPolish ? 'Termin' : 'Deadline'}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200">{dueDate || '—'}</span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
                           {isPolish ? 'Wnioskodawca' : 'Requester'}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200 text-right truncate">
@@ -7317,7 +7317,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
                           {isPolish ? 'Decydent' : 'Decider'}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200 text-right truncate">
@@ -7328,7 +7328,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         </span>
                       </div>
                       <div className="flex items-start justify-between gap-3">
-                        <span className="text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
                           {isPolish ? 'Dotyczy' : 'Related to'}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200 text-right max-w-[65%] break-words">
@@ -7336,7 +7336,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         </span>
                       </div>
                       <div className="flex items-start justify-between gap-3">
-                        <span className="text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
+                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">
                           {isPolish ? 'Indeks decyzji' : 'Decision index'}
                         </span>
                         <span className="text-slate-700 dark:text-slate-200 text-right max-w-[65%] break-all text-xs font-mono">

@@ -339,7 +339,7 @@ export const AssessmentStageGate: React.FC<Props> = ({
           <div className="mt-6 pt-4 border-t border-slate-200 dark:border-navy-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Info className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                <Info className="w-4 h-4 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
                 <span className="text-sm text-slate-600 dark:text-slate-400">
                   Next phase: <span className="font-medium">{phases[currentPhaseIndex + 1]}</span>
                 </span>
@@ -442,7 +442,7 @@ const GateDetailsPanel: React.FC<{
         </div>
         <button
           onClick={onClose}
-          className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+          className="text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
         >
           ✕
         </button>

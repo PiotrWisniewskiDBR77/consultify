@@ -155,7 +155,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
     return (
       <>
         <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm">
-          <Building2 size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+          <Building2 size={48} className="mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-4" />
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
             No Organization Found
           </h3>
@@ -259,7 +259,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2 mb-4">
-            <CreditCard size={20} className="text-slate-400 dark:text-slate-500" />
+            <CreditCard size={20} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
             Billing Status
           </h3>
           <div className="flex items-center justify-between mb-4">
@@ -300,7 +300,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
 
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2 mb-4">
-            <Coins size={20} className="text-slate-400 dark:text-slate-500" />
+            <Coins size={20} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
             Token Balance & Usage
           </h3>
           <div className="flex flex-col items-center justify-center py-4">
@@ -368,7 +368,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-            <Coins size={20} className="text-slate-400 dark:text-slate-500" />
+            <Coins size={20} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
             Recent Token Activity
           </h3>
         </div>
@@ -431,7 +431,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-            <Users size={20} className="text-slate-400 dark:text-slate-500" />
+            <Users size={20} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
             Team Members
           </h3>
           <button
@@ -480,7 +480,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                 Send Invite
               </button>
             </div>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2">
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-2">
               * Note: For this release, please use User ID if Email lookup is not configured.
             </p>
           </div>
@@ -519,7 +519,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                   {member.role === 'OWNER' && <ShieldCheck size={12} className="mr-1" />}
                   {member.role}
                 </span>
-                <div className="text-xs text-slate-400 dark:text-slate-500">
+                <div className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                   Joined {new Date(member.created_at).toLocaleDateString()}
                 </div>
               </div>

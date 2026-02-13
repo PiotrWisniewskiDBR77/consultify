@@ -102,7 +102,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={onComplete}
-            className="flex items-center gap-2 px-4 py-1.5 bg-navy-900 dark:bg-white text-white dark:text-[#0B1120] rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-shadow"
+            className="flex items-center gap-2 px-4 py-1.5 bg-white dark:bg-navy-900 text-slate-900 dark:text-white rounded-full text-xs font-bold shadow-lg hover:shadow-xl transition-shadow"
           >
             Complete Assessment <ArrowRight size={14} />
           </motion.button>

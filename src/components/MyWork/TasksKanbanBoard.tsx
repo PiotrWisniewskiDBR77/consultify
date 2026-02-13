@@ -92,7 +92,7 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
     statuses: ['todo', 'pending', 'new'],
     apiStatus: 'TODO',
     icon: <Circle size={14} />,
-    headerColor: 'text-slate-400',
+    headerColor: 'text-slate-500 dark:text-slate-400',
     dotColor: 'bg-slate-400',
     dropHighlight: 'ring-slate-400/40 bg-slate-400/5',
   },
@@ -172,7 +172,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-slate-400',
         bg: 'bg-slate-500/5 dark:bg-slate-500/10',
-        badge: 'bg-slate-500/15 text-slate-400 border border-slate-500/20',
+        badge: 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/20',
         label: 'Low',
         dot: 'bg-slate-400',
       };
@@ -180,7 +180,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-slate-300',
         bg: 'bg-slate-500/5 dark:bg-slate-500/10',
-        badge: 'bg-slate-500/15 text-slate-400 border border-slate-500/20',
+        badge: 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/20',
         label: 'Normal',
         dot: 'bg-slate-400',
       };
@@ -241,7 +241,7 @@ const KanbanCardContent: React.FC<{
       `}
     >
       <div className="flex items-start gap-1.5">
-        <div className="mt-0.5 text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
+        <div className="mt-0.5 text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-500 dark:text-slate-400 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
           <GripVertical size={14} />
         </div>
         <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-2 line-clamp-2 leading-snug flex-1">
@@ -263,7 +263,7 @@ const KanbanCardContent: React.FC<{
           {priorityStyle.label}
         </span>
         {task.projectName && (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-400 dark:text-slate-500 border border-slate-500/10 truncate max-w-[120px]">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 border border-slate-500/10 truncate max-w-[120px]">
             {task.projectName}
           </span>
         )}
@@ -298,7 +298,7 @@ const KanbanCardContent: React.FC<{
           </div>
         ) : (
           <div className="w-5 h-5 rounded-full bg-slate-500/10 flex items-center justify-center">
-            <User size={10} className="text-slate-400" />
+            <User size={10} className="text-slate-500 dark:text-slate-400" />
           </div>
         )}
       </div>
@@ -373,7 +373,7 @@ const DroppableColumn: React.FC<{
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${column.dotColor}`} />
           <span className={`text-sm font-semibold ${column.headerColor}`}>{column.label}</span>
-          <span className="ml-1 text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-navy-700/50 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+          <span className="ml-1 text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-navy-700/50 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
             {taskIds.length}
           </span>
         </div>
@@ -383,7 +383,7 @@ const DroppableColumn: React.FC<{
               e.stopPropagation();
               onCreateTask();
             }}
-            className="p-1 rounded-md text-slate-400 hover:text-primary-400 hover:bg-primary-500/10 transition-colors"
+            className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-primary-400 hover:bg-primary-500/10 transition-colors"
             title="Add task"
           >
             <Plus size={14} />
@@ -410,7 +410,7 @@ const DroppableColumn: React.FC<{
         {taskIds.length === 0 && !isOver && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className={`mb-2 ${column.headerColor} opacity-30`}>{column.icon}</div>
-            <p className="text-xs text-slate-400 dark:text-slate-500">No tasks</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">No tasks</p>
           </div>
         )}
       </div>
@@ -829,7 +829,7 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
         <div className="flex-1 p-4">
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
             <CheckCircle2 size={48} className="text-slate-600 mb-4" />
-            <h3 className="text-lg font-medium text-slate-400 mb-2">No tasks yet</h3>
+            <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">No tasks yet</h3>
             <p className="text-sm text-slate-500 mb-4">Create your first task to get started</p>
             <button
               onClick={onCreateTask}

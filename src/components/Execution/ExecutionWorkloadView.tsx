@@ -135,7 +135,7 @@ const generateMonths = (startDate: Date, numMonths: number): TimePeriod[] => {
 
 // D5.2: Green → Yellow → Red color scale
 const getHeatmapColor = (percentage: number): string => {
-  if (percentage === 0) return 'bg-navy-800/50';
+  if (percentage === 0) return 'bg-slate-100/50 dark:bg-navy-800/50';
   if (percentage <= 30) return 'bg-emerald-500/20';
   if (percentage <= 50) return 'bg-emerald-500/35';
   if (percentage <= 70) return 'bg-emerald-500/50';
@@ -239,15 +239,15 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-md shadow-2xl"
+        className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-md shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-navy-700 flex items-center justify-center">
-            <User size={20} className="text-slate-400" />
+          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center">
+            <User size={20} className="text-slate-500 dark:text-slate-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-white">{person.userName}</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-white">{person.userName}</h3>
             <p className="text-sm text-slate-400">
               {periodLabel} — <span className={textColor}>{totalPercentage}% allocated</span>
             </p>
@@ -262,10 +262,10 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
               <button
                 key={idx}
                 onClick={() => onInitiativeClick(allocation.initiativeId)}
-                className="w-full p-3 bg-navy-800 rounded-lg text-left hover:bg-navy-700 transition-colors"
+                className="w-full p-3 bg-slate-50 dark:bg-navy-800 rounded-lg text-left hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-white truncate">
+                  <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
                     {allocation.initiativeName}
                   </span>
                   <span
@@ -294,7 +294,7 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
 
         <button
           onClick={onClose}
-          className="w-full mt-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+          className="w-full mt-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
         >
           Close
         </button>
@@ -453,9 +453,9 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
   );
 
   return (
-    <div className="h-full flex flex-col bg-navy-950">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
       {/* Controls */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-navy-700 bg-navy-900">
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
         {/* Left: Navigation */}
         <div className="flex items-center gap-2">
           <button
@@ -464,7 +464,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
           >
             <ChevronLeft size={18} />
           </button>
-          <span className="text-sm font-medium text-white min-w-[140px] text-center">
+          <span className="text-sm font-medium text-slate-900 dark:text-white min-w-[140px] text-center">
             {periods[0]?.label} — {periods[periods.length - 1]?.label}
           </span>
           <button
@@ -478,7 +478,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
         {/* Right: View controls */}
         <div className="flex items-center gap-3">
           {/* View mode toggle */}
-          <div className="flex items-center bg-navy-800 rounded-lg p-0.5 border border-navy-700">
+          <div className="flex items-center bg-slate-100 dark:bg-navy-800 rounded-lg p-0.5 border border-slate-200 dark:border-navy-700">
             <button
               onClick={() => setViewMode('weekly')}
               className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
@@ -503,10 +503,10 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
             </button>
           </div>
 
-          <div className="w-px h-4 bg-navy-700" />
+          <div className="w-px h-4 bg-slate-300 dark:bg-navy-700" />
 
           {/* Period count */}
-          <div className="flex items-center gap-1 bg-navy-800 rounded-lg p-1 border border-navy-700">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-800 rounded-lg p-1 border border-slate-200 dark:border-navy-700">
             {viewMode === 'weekly'
               ? [6, 8, 12].map((w) => (
                   <button
@@ -541,7 +541,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
       {/* Workload Grid */}
       <div className="flex-1 overflow-auto">
         {workloadData.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-slate-400">
+          <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
             <div className="text-center">
               <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p className="text-sm">No resource allocations found</p>
@@ -553,16 +553,16 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
         ) : (
           <div className="min-w-[800px]">
             {/* Header */}
-            <div className="sticky top-0 z-10 flex bg-navy-900 border-b border-navy-700">
-              <div className="w-52 shrink-0 px-4 py-3 border-r border-navy-700">
-                <span className="text-sm font-semibold text-white">Team Member</span>
+            <div className="sticky top-0 z-10 flex bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+              <div className="w-52 shrink-0 px-4 py-3 border-r border-slate-200 dark:border-navy-700">
+                <span className="text-sm font-semibold text-slate-900 dark:text-white">Team Member</span>
               </div>
               {periods.map((period) => (
                 <div
                   key={period.key}
-                  className="flex-1 px-2 py-3 text-center border-r border-navy-700 last:border-r-0"
+                  className="flex-1 px-2 py-3 text-center border-r border-slate-200 dark:border-navy-700 last:border-r-0"
                 >
-                  <div className="text-sm font-medium text-white">
+                  <div className="text-sm font-medium text-slate-900 dark:text-white">
                     {viewMode === 'monthly' ? period.shortLabel : period.label}
                   </div>
                   {viewMode === 'monthly' && (
@@ -586,10 +586,10 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
             {workloadData.map((person) => (
               <div
                 key={person.userId}
-                className="flex border-b border-navy-800 hover:bg-navy-900/50"
+                className="flex border-b border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-900/50"
               >
-                <div className="w-52 shrink-0 px-4 py-3 border-r border-navy-700 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-navy-700 flex items-center justify-center text-xs text-white shrink-0">
+                <div className="w-52 shrink-0 px-4 py-3 border-r border-slate-200 dark:border-navy-700 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-xs text-slate-900 dark:text-white shrink-0">
                     {person.userName
                       .split(' ')
                       .map((n) => n[0])
@@ -598,7 +598,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                       .slice(0, 2)}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{person.userName}</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{person.userName}</p>
                     {person.role && (
                       <p className="text-xs text-slate-500 truncate">{person.role}</p>
                     )}
@@ -623,8 +623,8 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
             ))}
 
             {/* Totals Row */}
-            <div className="flex bg-navy-900 border-t border-navy-700">
-              <div className="w-52 shrink-0 px-4 py-3 border-r border-navy-700">
+            <div className="flex bg-white dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700">
+              <div className="w-52 shrink-0 px-4 py-3 border-r border-slate-200 dark:border-navy-700">
                 <span className="text-sm font-semibold text-slate-400">Team Average</span>
               </div>
               {periods.map((period) => {
@@ -632,7 +632,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                 return (
                   <div
                     key={period.key}
-                    className="flex-1 p-2 text-center border-r border-navy-700 last:border-r-0"
+                    className="flex-1 p-2 text-center border-r border-slate-200 dark:border-navy-700 last:border-r-0"
                   >
                     <span className={`text-sm font-bold ${getHeatmapTextColor(avgAllocation)}`}>
                       {avgAllocation}%
@@ -646,7 +646,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
       </div>
 
       {/* D5.2: Enhanced Legend with heatmap scale */}
-      <div className="shrink-0 px-4 py-2 border-t border-navy-700 bg-navy-900">
+      <div className="shrink-0 px-4 py-2 border-t border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
         <div className="flex items-center gap-4 text-xs flex-wrap">
           <span className="text-slate-400 font-medium">Load:</span>
           <div className="flex items-center gap-1">
@@ -667,24 +667,24 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
               ))}
             </div>
           </div>
-          <div className="w-px h-3 bg-navy-700 mx-1" />
+          <div className="w-px h-3 bg-slate-300 dark:bg-navy-700 mx-1" />
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-4 h-3 rounded-sm bg-emerald-500/35" />
-              <span className="text-slate-400">Low</span>
+              <span className="text-slate-500 dark:text-slate-400">Low</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-4 h-3 rounded-sm bg-amber-500/45" />
-              <span className="text-slate-400">Medium</span>
+              <span className="text-slate-500 dark:text-slate-400">Medium</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-4 h-3 rounded-sm bg-red-500/50" />
-              <span className="text-slate-400">Overallocated</span>
+              <span className="text-slate-500 dark:text-slate-400">Overallocated</span>
             </div>
           </div>
           {maxAllocation > 100 && (
             <>
-              <div className="w-px h-3 bg-navy-700 mx-1" />
+              <div className="w-px h-3 bg-slate-300 dark:bg-navy-700 mx-1" />
               <div className="flex items-center gap-1.5">
                 <AlertTriangle size={11} className="text-red-500" />
                 <span className="text-red-400">Peak: {maxAllocation}%</span>

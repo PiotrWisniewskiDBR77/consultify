@@ -259,7 +259,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/25">
-            <Activity className="w-6 h-6 text-white" />
+            <Activity className="w-6 h-6 text-slate-900 dark:text-white" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -305,7 +305,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
             </h4>
             <button
               onClick={() => setShowAlertSettings(false)}
-              className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
             >
               <XCircle className="w-5 h-5" />
             </button>
@@ -380,7 +380,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
       {/* Search & Filter */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           <input
             type="text"
             value={searchQuery}
@@ -394,11 +394,11 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
             onClick={() => setShowFilterDropdown(!showFilterDropdown)}
             className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors"
           >
-            <Filter className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+            <Filter className="w-4 h-4 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
               {EVENT_TYPES.find((t) => t.value === filter)?.label}
             </span>
-            <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+            <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           </button>
           {showFilterDropdown && (
             <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-lg z-10">
@@ -424,7 +424,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
         </div>
         <button
           onClick={fetchEvents}
-          className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+          className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
         >
           <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
         </button>
@@ -438,7 +438,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
       ) : filteredEvents.length === 0 ? (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-            <Activity className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+            <Activity className="w-8 h-8 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           </div>
           <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
             {searchQuery || filter !== 'all'

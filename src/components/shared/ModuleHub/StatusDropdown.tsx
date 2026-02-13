@@ -458,24 +458,24 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         className={`
           flex items-center gap-2 rounded-lg font-medium
-          bg-navy-800 border border-navy-600 text-slate-300
-          hover:bg-navy-700 hover:border-slate-500 hover:text-white
+          bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300
+          hover:bg-slate-100 dark:hover:bg-navy-700 hover:border-slate-500 hover:text-slate-900 dark:hover:text-white
           transition-all duration-200
           ${sizeClasses[size]}
-          ${isOpen ? 'border-primary-500 bg-navy-700' : ''}
+          ${isOpen ? 'border-primary-500 bg-slate-200 dark:bg-navy-700' : ''}
         `}
       >
-        {showIcon && <Filter size={iconSize} className="text-slate-400" />}
+        {showIcon && <Filter size={iconSize} className="text-slate-500 dark:text-slate-400" />}
         <span className={`w-2 h-2 rounded-full ${selectedOption.bgColor}`} />
         <span>{getLabel(selectedOption)}</span>
         {counts && counts[value] !== undefined && (
-          <span className="px-1.5 py-0.5 text-xs rounded-full bg-navy-700 text-slate-400">
+          <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
             {counts[value]}
           </span>
         )}
         <ChevronDown
           size={iconSize}
-          className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-slate-500 dark:text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -485,8 +485,8 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
           className="
             absolute top-full left-0 mt-1 z-50
             min-w-[200px] py-1
-            bg-navy-800 border border-navy-600 rounded-lg
-            shadow-xl shadow-black/30
+            bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg
+            shadow-xl shadow-black/10 dark:shadow-black/30
           "
         >
           {options.map((option) => {
@@ -500,12 +500,12 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
                 className={`
                   w-full flex items-center gap-3 px-3 py-2 text-left
                   transition-colors duration-150
-                  ${isSelected ? 'bg-primary-500/15 text-white' : 'text-slate-300 hover:bg-navy-700 hover:text-white'}
+                  ${isSelected ? 'bg-primary-500/15 text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 hover:text-slate-900 dark:hover:text-white'}
                 `}
               >
                 <span className={`w-2.5 h-2.5 rounded-full ${option.bgColor}`} />
                 <span className="flex-1 text-sm">{getLabel(option)}</span>
-                {count !== undefined && <span className="text-xs text-slate-500">{count}</span>}
+                {count !== undefined && <span className="text-xs text-slate-500 dark:text-slate-400">{count}</span>}
                 {isSelected && <Check size={14} className="text-primary-400" />}
               </button>
             );

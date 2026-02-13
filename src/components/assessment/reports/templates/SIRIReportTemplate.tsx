@@ -368,7 +368,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 dark:border-navy-700 pt-4 text-center text-xs text-slate-400 dark:text-slate-500">
+      <footer className="border-t border-slate-200 dark:border-navy-700 pt-4 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
         <p>Raport wygenerowany przez Consultinity • {new Date().toLocaleDateString('pl-PL')}</p>
         <p className="mt-1">SIRI Assessment • {organizationName}</p>
       </footer>

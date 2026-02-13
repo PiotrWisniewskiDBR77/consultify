@@ -148,7 +148,7 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
         <div className="space-y-6">
           {/* Quick Templates */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-3">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
               {t('settings.ai.quickTemplates', 'Quick Templates')}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -156,9 +156,9 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
                 <button
                   key={template.name}
                   onClick={() => applyTemplate(template)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-navy-700/50 hover:bg-navy-700 
-                                             border border-white/10 rounded-lg text-sm text-slate-300 
-                                             hover:text-white transition-all duration-200"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-200/50 dark:bg-navy-700/50 hover:bg-slate-200 dark:hover:bg-navy-700 
+                                             border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-700 dark:text-slate-300 
+                                             hover:text-slate-900 dark:hover:text-white transition-all duration-200"
                 >
                   <Wand2 size={14} />
                   {template.name}
@@ -248,8 +248,8 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
                       maxContextLength: parseInt(e.target.value),
                     })
                   }
-                  className="w-full px-4 py-2.5 bg-navy-800 border border-white/10 rounded-lg 
-                                             text-white transition-all duration-200
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg 
+                                             text-slate-900 dark:text-white transition-all duration-200
                                              focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                 >
                   {contextLengthOptions.map((opt) => (

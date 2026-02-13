@@ -71,7 +71,7 @@ const ForecastDay: React.FC<{
           >
             {forecast.dayLabel}
           </p>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500">
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
             {forecast.date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
           </p>
         </div>
@@ -116,11 +116,11 @@ const ForecastDay: React.FC<{
       {/* Stats */}
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div className="flex items-center gap-1">
-          <Clock size={10} className="text-slate-400 dark:text-slate-500" />
+          <Clock size={10} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           <span className="text-slate-600 dark:text-slate-400">{forecast.estimatedHours}h</span>
         </div>
         <div className="flex items-center gap-1">
-          <Zap size={10} className="text-slate-400 dark:text-slate-500" />
+          <Zap size={10} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           <span className="text-slate-600 dark:text-slate-400">
             {forecast.plannedTasks} {t('team.forecast.tasks', 'tasks')}
           </span>
@@ -195,7 +195,7 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
-              <Calendar size={20} className="text-white" />
+              <Calendar size={20} className="text-slate-900 dark:text-white" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-navy-900 dark:text-white">
@@ -248,8 +248,8 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-slate-400 dark:text-slate-500">
-            <Calendar size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+          <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-500">
+            <Calendar size={32} className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600" />
             <p className="text-sm">{t('team.forecast.noData', 'No capacity data available')}</p>
           </div>
         )}

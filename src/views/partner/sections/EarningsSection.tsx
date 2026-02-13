@@ -102,22 +102,22 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
       // Fetch earnings summary
       const summaryResponse = await Api.get('/api/partners/earnings');
-      if (summaryResponse?.data?.success && summaryResponse?.data?.data) {
-        setSummary(summaryResponse.data.data);
-        setBankInfoComplete(summaryResponse.data.data.bankInfoComplete !== false);
-        setNextPaymentDate(summaryResponse.data.data.nextPaymentDate || null);
+      if (summaryResponse?.success && summaryResponse?.data) {
+        setSummary(summaryResponse.data);
+        setBankInfoComplete(summaryResponse.data.bankInfoComplete !== false);
+        setNextPaymentDate(summaryResponse.data.nextPaymentDate || null);
       }
 
       // Fetch commission transactions
       const txResponse = await Api.get('/api/partners/commission-transactions');
-      if (txResponse?.data?.success && txResponse?.data?.data) {
-        setTransactions(txResponse.data.data);
+      if (txResponse?.success && txResponse?.data) {
+        setTransactions(txResponse.data);
       }
 
       // Fetch payouts
       const payoutsResponse = await Api.get('/api/partners/payouts');
-      if (payoutsResponse?.data?.success && payoutsResponse?.data?.data) {
-        setPayouts(payoutsResponse.data.data);
+      if (payoutsResponse?.success && payoutsResponse?.data) {
+        setPayouts(payoutsResponse.data);
       }
     } catch (err: any) {
       console.error('Error fetching earnings:', err);
@@ -154,13 +154,13 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         amount: summary.readyForPayout,
       });
 
-      if (response?.data?.success) {
+      if (response?.success) {
         toast.success(t('partner.earnings.payoutRequested', 'Payout request submitted!'));
         // Refresh data
         await fetchEarnings();
       } else {
         toast.error(
-          response?.data?.error || t('partner.earnings.payoutFailed', 'Failed to request payout')
+          response?.error || t('partner.earnings.payoutFailed', 'Failed to request payout')
         );
       }
     } catch (err: any) {
@@ -234,7 +234,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         {/* Header with Next Payment Date */}
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
               {t('partner.earnings.title', 'Partner Commission')}
             </h2>
             <p className="text-slate-400 dark:text-slate-500">
@@ -246,7 +246,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wide">
                 {t('partner.earnings.nextPayment', 'NEXT COMMISSION PAYMENT')}
               </p>
-              <p className="text-lg font-semibold text-white">{nextPaymentDate}</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-white">{nextPaymentDate}</p>
             </div>
           )}
         </div>
@@ -259,8 +259,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               className={cn(
                 'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
                 activeTab === 'statements'
-                  ? 'text-white border-violet-500'
-                  : 'text-slate-400 dark:text-slate-500 border-transparent hover:text-white'
+                  ? 'text-slate-900 dark:text-white border-violet-500'
+                  : 'text-slate-400 dark:text-slate-500 border-transparent hover:text-slate-900 dark:hover:text-white'
               )}
             >
               {t('partner.earnings.statements', 'Statements')}
@@ -270,8 +270,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               className={cn(
                 'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
                 activeTab === 'payments'
-                  ? 'text-white border-violet-500'
-                  : 'text-slate-400 dark:text-slate-500 border-transparent hover:text-white'
+                  ? 'text-slate-900 dark:text-white border-violet-500'
+                  : 'text-slate-400 dark:text-slate-500 border-transparent hover:text-slate-900 dark:hover:text-white'
               )}
             >
               {t('partner.earnings.payments', 'Payments')}
@@ -294,14 +294,14 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-emerald-500/20">
                 <DollarSign className="w-5 h-5 text-emerald-400" />
               </div>
               <span className="text-sm text-slate-400 dark:text-slate-500">Total Earned (YTD)</span>
             </div>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
               €{summary?.totalEarned.toLocaleString()}
             </p>
             <div className="flex items-center gap-1 mt-1 text-sm text-emerald-400">
@@ -310,40 +310,40 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             </div>
           </div>
 
-          <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-violet-500/20">
                 <TrendingUp className="w-5 h-5 text-violet-400" />
               </div>
               <span className="text-sm text-slate-400 dark:text-slate-500">This Month</span>
             </div>
-            <p className="text-2xl font-bold text-white">€{summary?.thisMonth.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">€{summary?.thisMonth.toLocaleString()}</p>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               From {summary?.thisMonthCount} referrals
             </p>
           </div>
 
-          <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-amber-500/20">
                 <Clock className="w-5 h-5 text-amber-400" />
               </div>
               <span className="text-sm text-slate-400 dark:text-slate-500">Pending Approval</span>
             </div>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
               €{summary?.totalPending.toLocaleString()}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Processing...</p>
           </div>
 
-          <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-blue-500/20">
                 <Banknote className="w-5 h-5 text-blue-400" />
               </div>
               <span className="text-sm text-slate-400 dark:text-slate-500">Ready for Payout</span>
             </div>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
               €{summary?.readyForPayout.toLocaleString()}
             </p>
             <button
@@ -364,9 +364,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         {/* Tab Content */}
         {activeTab === 'statements' ? (
           /* Statements Tab - Recent Transactions */
-          <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {t('partner.earnings.recentTransactions', 'Recent Commission Statements')}
               </h3>
               <button className="flex items-center gap-2 text-sm text-violet-400 hover:text-violet-300">
@@ -404,7 +404,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                     {transactions.map((tx) => (
                       <tr key={tx.id} className="hover:bg-white/5">
                         <td className="px-3 py-3">
-                          <span className="font-medium text-white">{tx.organizationName}</span>
+                          <span className="font-medium text-slate-900 dark:text-white">{tx.organizationName}</span>
                         </td>
                         <td className="px-3 py-3">
                           <span className="text-sm text-slate-400 dark:text-slate-500 capitalize">
@@ -412,7 +412,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                           </span>
                         </td>
                         <td className="px-3 py-3 text-right">
-                          <span className="text-slate-300">€{tx.grossAmount.toLocaleString()}</span>
+                          <span className="text-slate-600 dark:text-slate-300">€{tx.grossAmount.toLocaleString()}</span>
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="font-medium text-emerald-400">
@@ -461,9 +461,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
           </div>
         ) : (
           /* Payments Tab - Payout History */
-          <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {t('partner.earnings.paymentHistory', 'Payment History')}
               </h3>
               <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
@@ -479,7 +479,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                 {payouts.map((payout) => (
                   <div
                     key={payout.id}
-                    className="flex items-center justify-between p-4 bg-navy-900/50 rounded-lg border border-white/5"
+                    className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-900/50 rounded-lg border border-white/5"
                   >
                     <div className="flex items-center gap-4">
                       <div
@@ -497,7 +497,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                         )}
                       </div>
                       <div>
-                        <p className="font-medium text-white">
+                        <p className="font-medium text-slate-900 dark:text-white">
                           €{payout.netAmount.toLocaleString()}
                         </p>
                         <p className="text-sm text-slate-400 dark:text-slate-500">
@@ -552,7 +552,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.payouts.title', 'Payout History')}
           </h2>
           <p className="text-slate-400 dark:text-slate-500">
@@ -563,7 +563,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         {/* Payout List */}
         <div className="space-y-4">
           {payouts.map((payout) => (
-            <div key={payout.id} className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+            <div key={payout.id} className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div
@@ -581,7 +581,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-white">€{payout.netAmount.toLocaleString()}</p>
+                    <p className="font-medium text-slate-900 dark:text-white">€{payout.netAmount.toLocaleString()}</p>
                     <p className="text-sm text-slate-400 dark:text-slate-500">
                       {payout.transactionCount} transactions • {payout.periodStart} to{' '}
                       {payout.periodEnd}
@@ -623,7 +623,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold text-white">
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
           {t('partner.payoutSettings.title', 'Payout Settings')}
         </h2>
         <p className="text-slate-400 dark:text-slate-500">
@@ -635,32 +635,32 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       </div>
 
       {/* Payout Method */}
-      <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
-        <h3 className="text-lg font-semibold text-white mb-4">Payout Method</h3>
+      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Payout Method</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button className="p-4 rounded-xl border-2 border-violet-500 bg-violet-500/10 text-left">
             <Wallet className="w-6 h-6 text-violet-400 mb-2" />
-            <p className="font-medium text-white">Bank Transfer</p>
+            <p className="font-medium text-slate-900 dark:text-white">Bank Transfer</p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
               Direct to your bank account
             </p>
           </button>
           <button className="p-4 rounded-xl border border-white/10 hover:border-white/20 text-left">
             <DollarSign className="w-6 h-6 text-slate-400 dark:text-slate-500 mb-2" />
-            <p className="font-medium text-slate-300">PayPal</p>
+            <p className="font-medium text-slate-600 dark:text-slate-300">PayPal</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">PayPal business account</p>
           </button>
           <button className="p-4 rounded-xl border border-white/10 hover:border-white/20 text-left">
             <ExternalLink className="w-6 h-6 text-slate-400 dark:text-slate-500 mb-2" />
-            <p className="font-medium text-slate-300">Stripe</p>
+            <p className="font-medium text-slate-600 dark:text-slate-300">Stripe</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">Stripe Connect</p>
           </button>
         </div>
       </div>
 
       {/* Bank Details */}
-      <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
-        <h3 className="text-lg font-semibold text-white mb-4">Bank Account Details</h3>
+      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Bank Account Details</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="text-sm text-slate-400 dark:text-slate-500 mb-1 block">
@@ -709,12 +709,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       </div>
 
       {/* Payout Preferences */}
-      <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
-        <h3 className="text-lg font-semibold text-white mb-4">Payout Preferences</h3>
+      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Payout Preferences</h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-white">Minimum Payout Threshold</p>
+              <p className="font-medium text-slate-900 dark:text-white">Minimum Payout Threshold</p>
               <p className="text-sm text-slate-400 dark:text-slate-500">
                 Minimum amount before requesting payout
               </p>
@@ -728,7 +728,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-white">Auto-request Payout</p>
+              <p className="font-medium text-slate-900 dark:text-white">Auto-request Payout</p>
               <p className="text-sm text-slate-400 dark:text-slate-500">
                 Automatically request payout when threshold is reached
               </p>

@@ -261,7 +261,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
                     ? `bg-${color}-500 text-white shadow-lg shadow-${color}-500/30`
                     : isBelow
                       ? `bg-${color}-500/30 text-${color}-300`
-                      : 'bg-navy-700 text-slate-400 hover:bg-navy-600'
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-600'
                 }
                 ${readOnly ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
               `}
@@ -285,14 +285,14 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
     return (
       <div
         key={dimension.id}
-        className={`bg-navy-800 border border-navy-700 rounded-xl overflow-hidden transition-all ${
+        className={`bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden transition-all ${
           isExpanded ? 'ring-1 ring-' + color + '-500/30' : ''
         }`}
       >
         {/* Dimension Header */}
         <button
           onClick={() => toggleDimension(dimension.id)}
-          className="w-full flex items-center justify-between p-4 hover:bg-navy-750 transition-colors"
+          className="w-full flex items-center justify-between p-4 hover:bg-slate-100 dark:hover:bg-navy-750 transition-colors"
         >
           <div className="flex items-center gap-3">
             <div
@@ -303,10 +303,10 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
               </span>
             </div>
             <div className="text-left">
-              <h4 className="text-white font-medium">
+              <h4 className="text-slate-900 dark:text-white font-medium">
                 {isPolish ? dimension.namePL : dimension.name}
               </h4>
-              <p className="text-xs text-slate-400 mt-0.5">{dimension.description}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{dimension.description}</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -326,25 +326,25 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
               </div>
             )}
             {isExpanded ? (
-              <ChevronUp size={20} className="text-slate-400" />
+              <ChevronUp size={20} className="text-slate-500 dark:text-slate-400" />
             ) : (
-              <ChevronDown size={20} className="text-slate-400" />
+              <ChevronDown size={20} className="text-slate-500 dark:text-slate-400" />
             )}
           </div>
         </button>
 
         {/* Expanded Content */}
         {isExpanded && (
-          <div className="px-4 pb-4 space-y-4 border-t border-navy-700 pt-4">
+          <div className="px-4 pb-4 space-y-4 border-t border-slate-200 dark:border-navy-700 pt-4">
             {/* Current Level */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Current Level (Stan Obecny)
               </label>
               {renderLevelSelector(dimension, 'current', dimScore.current)}
               {dimScore.current > 0 && (
-                <p className="mt-2 text-sm text-slate-400">
-                  <span className="font-medium text-white">
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  <span className="font-medium text-slate-900 dark:text-white">
                     {ADMA_MATURITY_LEVELS[dimScore.current - 1]?.title}:
                   </span>{' '}
                   {ADMA_MATURITY_LEVELS[dimScore.current - 1]?.description}
@@ -354,13 +354,13 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
 
             {/* Target Level */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Target Level (Cel)
               </label>
               {renderLevelSelector(dimension, 'target', dimScore.target)}
               {dimScore.target > 0 && (
-                <p className="mt-2 text-sm text-slate-400">
-                  <span className="font-medium text-white">
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  <span className="font-medium text-slate-900 dark:text-white">
                     {ADMA_MATURITY_LEVELS[dimScore.target - 1]?.title}:
                   </span>{' '}
                   {ADMA_MATURITY_LEVELS[dimScore.target - 1]?.description}
@@ -369,8 +369,8 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
             </div>
 
             {/* Maturity Level Reference */}
-            <div className="bg-navy-900 rounded-lg p-3">
-              <h5 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+            <div className="bg-slate-100 dark:bg-navy-900 rounded-lg p-3">
+              <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                 Maturity Levels Reference
               </h5>
               <div className="grid grid-cols-5 gap-2 text-xs">
@@ -380,12 +380,12 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
                       className={`w-6 h-6 rounded mx-auto mb-1 flex items-center justify-center ${
                         level.level <= dimScore.current
                           ? `bg-${color}-500 text-white`
-                          : 'bg-navy-700 text-slate-500'
+                          : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       {level.level}
                     </div>
-                    <span className="text-slate-400">{level.title}</span>
+                    <span className="text-slate-500 dark:text-slate-400">{level.title}</span>
                   </div>
                 ))}
               </div>
@@ -397,23 +397,23 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-navy-950">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
       {/* Progress Bar */}
       {showProgress && (
-        <div className="bg-navy-900 border-b border-navy-700 px-6 py-4">
+        <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700 px-6 py-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-4">
               <BarChart3 size={20} className="text-primary-400" />
-              <span className="text-sm text-slate-300">
+              <span className="text-sm text-slate-700 dark:text-slate-300">
                 {progress.completedDimensions} / {progress.totalDimensions} dimensions completed
               </span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
                 Overall Maturity:{' '}
                 <span className="text-white font-medium">{data.overallMaturity || '-'}</span>
               </span>
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
                 Avg Score:{' '}
                 <span className="text-white font-medium">{progress.avgScore || '-'}</span>
               </span>
@@ -429,7 +429,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
       )}
 
       {/* Pillar Navigation */}
-      <div className="bg-navy-900 border-b border-navy-700 px-6 py-3">
+      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700 px-6 py-3">
         <div className="flex items-center gap-2 overflow-x-auto">
           {pillarIds.map((pillarId, index) => {
             const pillar = ADMA_PILLARS[pillarId];
@@ -449,8 +449,8 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
                     isActive
                       ? `bg-${color}-500/15 border-${color}-500 text-${color}-400`
                       : isCompleted
-                        ? `bg-navy-800 border-${color}-500/30 text-slate-300`
-                        : 'bg-navy-800 border-navy-600 text-slate-400 hover:border-slate-500'
+                        ? `bg-slate-100 dark:bg-navy-800 border-${color}-500/30 text-slate-700 dark:text-slate-300`
+                        : 'bg-slate-100 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500'
                   }
                 `}
               >
@@ -484,7 +484,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
               </span>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                 {isPolish ? currentPillar.namePL : currentPillar.name}
               </h2>
               <p className="text-sm text-slate-400">
@@ -494,7 +494,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
           </div>
 
           {/* Pillar Score Summary */}
-          <div className="flex items-center gap-6 mt-4 p-4 bg-navy-800 rounded-lg">
+          <div className="flex items-center gap-6 mt-4 p-4 bg-slate-100 dark:bg-navy-800 rounded-lg">
             <div>
               <span className="text-xs text-slate-400 uppercase tracking-wider">Current</span>
               <div className={`text-2xl font-bold text-${PILLAR_COLORS[activePillarId]}-400`}>
@@ -504,7 +504,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
             <ArrowRight size={20} className="text-slate-600" />
             <div>
               <span className="text-xs text-slate-400 uppercase tracking-wider">Target</span>
-              <div className="text-2xl font-bold text-white">{currentPillarData.target || '-'}</div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">{currentPillarData.target || '-'}</div>
             </div>
             {currentPillarData.gap !== 0 && (
               <div className="ml-auto">
@@ -524,7 +524,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
 
         {/* Dimensions */}
         <div className="space-y-4">
-          <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
+          <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             Dimensions ({currentDimensions.length})
           </h3>
           {currentDimensions.map(renderDimensionCard)}
@@ -532,14 +532,14 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
       </div>
 
       {/* Navigation Footer */}
-      <div className="bg-navy-900 border-t border-navy-700 px-6 py-4">
+      <div className="bg-white dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <button
             onClick={() => goToPillar('prev')}
             disabled={pillarIds.indexOf(activePillarId) === 0}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-              bg-navy-800 border border-navy-600 text-slate-300
-              hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed
+              bg-slate-100 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300
+              hover:bg-slate-200 dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed
               transition-colors"
           >
             <ChevronLeft size={16} />

@@ -6,6 +6,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { Api } from '@/services/api';
+
 const STORAGE_KEY = 'consultinity-snoozed-notifications';
 
 export interface SnoozedNotification {
@@ -15,7 +17,7 @@ export interface SnoozedNotification {
   reason?: string;
 }
 
-export type SnoozePreset = '1h' | '4h' | 'tomorrow' | 'next_week';
+export type SnoozePreset = '1h' | '4h' | '1d' | '3d';
 
 const getSnoozeUntilDate = (preset: SnoozePreset): Date => {
   const now = new Date();
@@ -25,18 +27,10 @@ const getSnoozeUntilDate = (preset: SnoozePreset): Date => {
       return new Date(now.getTime() + 60 * 60 * 1000);
     case '4h':
       return new Date(now.getTime() + 4 * 60 * 60 * 1000);
-    case 'tomorrow': {
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(9, 0, 0, 0); // 9 AM next day
-      return tomorrow;
-    }
-    case 'next_week': {
-      const nextWeek = new Date(now);
-      nextWeek.setDate(nextWeek.getDate() + 7);
-      nextWeek.setHours(9, 0, 0, 0); // 9 AM next week
-      return nextWeek;
-    }
+    case '1d':
+      return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    case '3d':
+      return new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
     default:
       return new Date(now.getTime() + 60 * 60 * 1000);
   }
@@ -48,10 +42,10 @@ const getSnoozeHours = (preset: SnoozePreset): number => {
       return 1;
     case '4h':
       return 4;
-    case 'tomorrow':
+    case '1d':
       return 24;
-    case 'next_week':
-      return 168;
+    case '3d':
+      return 72;
     default:
       return 1;
   }
@@ -111,8 +105,10 @@ export const useNotificationSnooze = () => {
         return updated;
       });
 
-      // TODO: Sync with API when online
-      // Api.snoozeNotification(notificationId, getSnoozeHours(preset));
+      // Sync with API (best-effort)
+      Api.snoozeNotification(notificationId, preset).catch(() => {
+        // ignore offline/401; local storage still works
+      });
 
       return snoozedUntil;
     },

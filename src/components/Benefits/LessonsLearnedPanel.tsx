@@ -112,23 +112,23 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson }) => {
               >
                 {typeConfig.label}
               </span>
-              <span className="text-xs text-slate-500 px-2 py-0.5 rounded-full bg-navy-700">
+              <span className="text-xs text-slate-500 px-2 py-0.5 rounded-full bg-slate-200 dark:bg-navy-700">
                 {categoryConfig.label}
               </span>
             </div>
-            <p className="text-sm text-white line-clamp-2">{lesson.description}</p>
+            <p className="text-sm text-slate-900 dark:text-white line-clamp-2">{lesson.description}</p>
             {lesson.initiativeName && (
               <p className="text-xs text-slate-500 mt-1">From: {lesson.initiativeName}</p>
             )}
           </div>
-          <div className="text-slate-400">
+          <div className="text-slate-500 dark:text-slate-400">
             {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </div>
         </div>
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 border-t border-navy-700/50 pt-3">
+        <div className="px-4 pb-4 border-t border-slate-200 dark:border-navy-700/50 pt-3">
           {lesson.actionTaken && (
             <div className="mb-3">
               <h4 className="text-xs font-medium text-slate-400 mb-1">Action Taken</h4>
@@ -143,7 +143,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson }) => {
                 {lesson.applicableTo.map((tag, idx) => (
                   <span
                     key={idx}
-                    className="text-xs px-2 py-0.5 bg-navy-700 text-slate-300 rounded"
+                    className="text-xs px-2 py-0.5 bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 rounded"
                   >
                     {tag}
                   </span>
@@ -152,7 +152,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson }) => {
             </div>
           )}
 
-          <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-navy-700/50">
+          <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-200 dark:border-navy-700/50">
             <span>
               Added {new Date(lesson.createdAt).toLocaleDateString()}
               {lesson.createdByName && ` by ${lesson.createdByName}`}
@@ -228,15 +228,15 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-navy-900 border border-navy-700 rounded-xl w-full max-w-lg shadow-2xl"
+        className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl w-full max-w-lg shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-navy-700">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
           <div>
-            <h2 className="text-lg font-semibold text-white">Add Lesson Learned</h2>
-            <p className="text-sm text-slate-400">{initiativeName}</p>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Add Lesson Learned</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{initiativeName}</p>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-white rounded-lg">
+          <button onClick={onClose} className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg">
             <X size={20} />
           </button>
         </div>
@@ -244,7 +244,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
         <div className="p-6 space-y-4">
           {/* Type Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">Type</label>
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Type</label>
             <div className="flex gap-2">
               {(
                 Object.entries(LESSON_TYPE_CONFIG) as [
@@ -258,7 +258,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                     formData.type === key
                       ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                      : 'bg-navy-800 text-slate-400 hover:bg-navy-700'
+                      : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700'
                   }`}
                 >
                   {config.icon}
@@ -270,7 +270,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
 
           {/* Category Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">Category</label>
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Category</label>
             <div className="flex flex-wrap gap-2">
               {(
                 Object.entries(LESSON_CATEGORY_CONFIG) as [
@@ -284,7 +284,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
                   className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
                     formData.category === key
                       ? 'bg-cyan-500 text-white'
-                      : 'bg-navy-800 text-slate-400 hover:bg-navy-700'
+                      : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700'
                   }`}
                 >
                   {config.label}
@@ -295,19 +295,19 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">Description *</label>
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Description *</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
               placeholder="Describe the lesson learned..."
               rows={3}
-              className="w-full px-4 py-3 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 resize-none"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 resize-none"
             />
           </div>
 
           {/* Action Taken */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
               Action Taken (optional)
             </label>
             <textarea
@@ -315,13 +315,13 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
               onChange={(e) => setFormData((prev) => ({ ...prev, actionTaken: e.target.value }))}
               placeholder="What was done as a result of this learning?"
               rows={2}
-              className="w-full px-4 py-3 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 resize-none"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 resize-none"
             />
           </div>
 
           {/* Applicable To */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
               Applicable To (optional)
             </label>
             <input
@@ -329,19 +329,19 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
               value={formData.applicableTo}
               onChange={(e) => setFormData((prev) => ({ ...prev, applicableTo: e.target.value }))}
               placeholder="e.g., Digital Projects, IT Implementation (comma-separated)"
-              className="w-full px-4 py-3 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
             />
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-navy-700">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-slate-400 hover:text-white">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-navy-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+            className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-200 dark:disabled:bg-navy-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
           >
             {isSubmitting && <Loader2 size={16} className="animate-spin" />}
             Add Lesson
@@ -409,13 +409,13 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
   };
 
   return (
-    <div className={`bg-navy-900 rounded-xl border border-navy-700 ${className}`}>
+    <div className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}>
       {/* Header */}
-      <div className="px-5 py-4 border-b border-navy-700">
+      <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Lightbulb size={20} className="text-amber-400" />
-            <h3 className="text-lg font-semibold text-white">Lessons Learned</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Lessons Learned</h3>
           </div>
           {initiativeId && (
             <button
@@ -430,8 +430,8 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-2 mb-4">
-          <div className="text-center p-2 bg-navy-800 rounded-lg">
-            <p className="text-xl font-bold text-white">{stats.total}</p>
+          <div className="text-center p-2 bg-slate-50 dark:bg-navy-800 rounded-lg">
+            <p className="text-xl font-bold text-slate-900 dark:text-white">{stats.total}</p>
             <p className="text-xs text-slate-500">Total</p>
           </div>
           <div className="text-center p-2 bg-green-500/10 rounded-lg">
@@ -457,7 +457,7 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search lessons..."
-              className="w-full pl-9 pr-4 py-2 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
             />
           </div>
           <div className="flex gap-1">
@@ -468,7 +468,7 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
                 className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
                   filterType === type
                     ? 'bg-cyan-500 text-white'
-                    : 'bg-navy-800 text-slate-400 hover:bg-navy-700'
+                    : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700'
                 }`}
               >
                 {type === 'ALL' ? 'All' : LESSON_TYPE_CONFIG[type].label}

@@ -313,7 +313,7 @@ export const DecisionReadinessBar: React.FC<DecisionReadinessBarProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <span className={`text-2xl font-bold ${colorClasses.text}`}>{score}</span>
-            <span className="text-sm text-slate-400">/100</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">/100</span>
           </div>
         </div>
 
@@ -335,7 +335,7 @@ export const DecisionReadinessBar: React.FC<DecisionReadinessBarProps> = ({
             {STAGES.slice(1).map((stage) => (
               <div
                 key={stage.id}
-                className="absolute h-3 w-0.5 bg-white/50 dark:bg-navy-600/50"
+                className="absolute h-3 w-0.5 bg-slate-50 dark:bg-white/50 dark:bg-navy-600/50"
                 style={{ left: `${stage.minScore}%` }}
               />
             ))}
@@ -350,7 +350,7 @@ export const DecisionReadinessBar: React.FC<DecisionReadinessBarProps> = ({
               className={`text-xs ${
                 score >= stage.minScore
                   ? getColorClasses(stage).text
-                  : 'text-slate-400 dark:text-slate-600'
+                  : 'text-slate-500 dark:text-slate-400 dark:text-slate-600'
               }`}
               style={{
                 width: index === 0 ? 'auto' : index === STAGES.length - 1 ? 'auto' : undefined,
@@ -375,7 +375,7 @@ export const DecisionReadinessBar: React.FC<DecisionReadinessBarProps> = ({
                   className={`flex items-center gap-2 text-xs ${
                     isMet
                       ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-slate-400 dark:text-slate-500'
+                      : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'
                   }`}
                 >
                   {isMet ? (

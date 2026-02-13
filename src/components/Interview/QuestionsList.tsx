@@ -445,7 +445,7 @@ Rules:
           className={`w-6 h-6 rounded text-xs font-medium transition-all ${
             currentScore >= score
               ? 'bg-amber-400 text-white'
-              : 'bg-slate-100 dark:bg-navy-800 text-slate-400'
+              : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
           } ${readOnly ? 'cursor-default' : 'hover:scale-110'}`}
           title={`${isPolish ? 'Pewność' : 'Confidence'}: ${score}/5`}
         >
@@ -950,19 +950,19 @@ Rules:
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-navy-900 w-full max-w-lg rounded-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-navy-700 flex flex-col max-h-[80vh]">
             {/* Header */}
-            <div className="p-4 bg-navy-900 flex justify-between items-center text-white border-b border-navy-700">
+            <div className="p-4 bg-white dark:bg-navy-900 flex justify-between items-center text-slate-900 dark:text-white border-b border-slate-200 dark:border-navy-700">
               <div className="flex items-center gap-2">
                 <Bot size={18} />
                 <div className="min-w-0">
                   <div className="font-semibold text-sm truncate">
                     {isPolish ? 'Czat do pytania' : 'Chat for question'}
                   </div>
-                  <div className="text-xs text-slate-300 truncate">{chatQuestion.questionText}</div>
+                  <div className="text-xs text-slate-700 dark:text-slate-300 truncate">{chatQuestion.questionText}</div>
                 </div>
               </div>
               <button
                 onClick={closeChat}
-                className="p-1 rounded hover:bg-navy-800 transition-colors"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               >
                 <X size={18} />
               </button>

@@ -27,7 +27,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
     <div className="space-y-3 relative">
       {/* Connecting Line - hidden on mobile for cleaner look */}
       <div
-        className={`absolute left-[27px] top-4 bottom-4 w-0.5 bg-white/5 -z-0 ${isCompact ? 'hidden' : ''}`}
+        className={`absolute left-[27px] top-4 bottom-4 w-0.5 bg-slate-50 dark:bg-white/5 -z-0 ${isCompact ? 'hidden' : ''}`}
       ></div>
 
       {Object.entries(levels).map(([key, desc]) => {
@@ -46,7 +46,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                             ${isCompact ? 'p-3' : 'flex items-start gap-4 p-3'}
                             ${
                               isActual || isTarget
-                                ? 'bg-navy-900 border-white/10 shadow-lg'
+                                ? 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 shadow-lg'
                                 : isInGap
                                   ? 'bg-navy-900/40 border-purple-500/10'
                                   : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-navy-800/20 active:bg-white/10'
@@ -60,14 +60,14 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                 <div className="flex items-center gap-3">
                   {/* Number Bubble - smaller on mobile */}
                   <div
-                    className={`shrink-0 w-10 h-10 rounded-full border-2 flex items-center justify-center text-base font-bold bg-navy-950 z-10 transition-colors ${getLevelBubbleClasses(isActual, isTarget, !!isInGap)}`}
+                    className={`shrink-0 w-10 h-10 rounded-full border-2 flex items-center justify-center text-base font-bold bg-slate-50 dark:bg-navy-950 z-10 transition-colors ${getLevelBubbleClasses(isActual, isTarget, !!isInGap)}`}
                   >
                     {levelNum}
                   </div>
 
                   {/* Description */}
                   <div
-                    className={`flex-1 text-sm font-medium transition-colors ${isActual || isTarget ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`}
+                    className={`flex-1 text-sm font-medium transition-colors ${isActual || isTarget ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
                   >
                     {desc}
                   </div>
@@ -86,7 +86,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                                                 ${
                                                   isActual
                                                     ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-600/20'
-                                                    : 'bg-navy-950 border-white/10 text-slate-400 dark:text-slate-500 active:bg-blue-600/20 active:border-blue-500/50'
+                                                    : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 active:bg-blue-600/20 active:border-blue-500/50'
                                                 }
                                             `}
                     >
@@ -104,7 +104,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                                                 ${
                                                   isTarget
                                                     ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-600/20'
-                                                    : 'bg-navy-950 border-white/10 text-slate-400 dark:text-slate-500 active:bg-purple-600/20 active:border-purple-500/50'
+                                                    : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 active:bg-purple-600/20 active:border-purple-500/50'
                                                 }
                                             `}
                     >
@@ -119,7 +119,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
               <>
                 {/* Number Bubble */}
                 <div
-                  className={`shrink-0 w-14 h-14 rounded-full border-2 flex items-center justify-center text-xl font-bold bg-navy-950 z-10 transition-colors ${getLevelBubbleClasses(isActual, isTarget, !!isInGap)}`}
+                  className={`shrink-0 w-14 h-14 rounded-full border-2 flex items-center justify-center text-xl font-bold bg-slate-50 dark:bg-navy-950 z-10 transition-colors ${getLevelBubbleClasses(isActual, isTarget, !!isInGap)}`}
                 >
                   {levelNum}
                 </div>
@@ -127,7 +127,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                 {/* Content */}
                 <div className="flex-1 pt-1 min-w-0">
                   <div
-                    className={`text-lg font-medium transition-colors ${isActual || isTarget ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-200'}`}
+                    className={`text-lg font-medium transition-colors ${isActual || isTarget ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 group-hover:text-slate-200'}`}
                   >
                     {desc}
                   </div>
@@ -140,7 +140,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                     <button
                       onClick={() => onSelect('actual', levelNum)}
                       disabled={readOnly}
-                      className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isActual ? getAssessmentButtonClasses('actual', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-navy-950 border-white/10 text-slate-500 dark:text-slate-400 hover:border-blue-500/50 hover:text-blue-400 opacity-0 group-hover:opacity-100'}`}
+                      className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isActual ? getAssessmentButtonClasses('actual', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:border-blue-500/50 hover:text-blue-400 opacity-0 group-hover:opacity-100'}`}
                     >
                       {isActual && <Check size={12} />}
                       ACTUAL
@@ -150,7 +150,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                     <button
                       onClick={() => onSelect('target', levelNum)}
                       disabled={readOnly}
-                      className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isTarget ? getAssessmentButtonClasses('target', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-navy-950 border-white/10 text-slate-500 dark:text-slate-400 hover:border-purple-500/50 hover:text-purple-400 opacity-0 group-hover:opacity-100'}`}
+                      className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isTarget ? getAssessmentButtonClasses('target', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:border-purple-500/50 hover:text-purple-400 opacity-0 group-hover:opacity-100'}`}
                     >
                       {isTarget && <Check size={12} />}
                       TARGET

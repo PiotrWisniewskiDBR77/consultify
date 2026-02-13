@@ -107,7 +107,7 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
   }, [navigate, onBack]);
 
   return (
-    <div className={cn('flex h-full bg-navy-950', className)}>
+    <div className={cn('flex h-full bg-slate-100 dark:bg-navy-950', className)}>
       {/* Mobile Overlay */}
       {isMobile && sidebarOpen && (
         <div
@@ -133,9 +133,9 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
       </aside>
 
       {/* Main Content - Navy Background */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-navy-900">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50 dark:bg-navy-900">
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-navy-900 border-b border-white/5">
+        <header className="sticky top-0 z-30 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-white/5">
           <div className="flex items-center justify-between px-4 lg:px-6 h-14">
             {/* Left side: Mobile menu + Breadcrumbs/Title */}
             <div className="flex items-center gap-4">
@@ -143,7 +143,7 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
               {isMobile && (
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-2 rounded-lg text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
+                  className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-800/20 transition-colors"
                 >
                   {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </button>
@@ -156,17 +156,17 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
                     {breadcrumbs.map((crumb, index) => (
                       <React.Fragment key={index}>
                         {index > 0 && (
-                          <ChevronRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                          <ChevronRight className="w-4 h-4 text-slate-400" />
                         )}
                         {index < breadcrumbs.length - 1 ? (
                           <button
                             onClick={() => crumb.section && onSectionChange(crumb.section)}
-                            className="text-slate-400 dark:text-slate-500 hover:text-violet-400 transition-colors"
+                            className="text-slate-500 hover:text-violet-400 transition-colors"
                           >
                             {crumb.label}
                           </button>
                         ) : (
-                          <span className="font-medium text-white">{crumb.label}</span>
+                          <span className="font-medium text-slate-900 dark:text-white">{crumb.label}</span>
                         )}
                       </React.Fragment>
                     ))}
@@ -174,9 +174,9 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
                 ) : (
                   title && (
                     <div>
-                      <h1 className="text-lg font-semibold text-white">{title}</h1>
+                      <h1 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h1>
                       {subtitle && (
-                        <p className="text-sm text-slate-400 dark:text-slate-500">{subtitle}</p>
+                        <p className="text-sm text-slate-500">{subtitle}</p>
                       )}
                     </div>
                   )
@@ -192,7 +192,7 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 lg:p-6">
-            <div className="bg-navy-800/50 rounded-xl border border-white/5 p-6">{children}</div>
+            <div className="bg-white dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-6">{children}</div>
           </div>
         </div>
       </main>

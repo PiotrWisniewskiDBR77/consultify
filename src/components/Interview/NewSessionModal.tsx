@@ -231,14 +231,14 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-lg bg-navy-900 border border-navy-700 rounded-xl shadow-2xl overflow-hidden">
+        <div className="w-full max-w-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl overflow-hidden">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-navy-700 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
             <div>
-              <h2 className="text-white font-semibold text-lg">
+              <h2 className="text-slate-900 dark:text-white font-semibold text-lg">
                 {isPolish ? 'Utwórz wywiad' : 'Create Interview'}
               </h2>
-              <p className="text-slate-400 text-sm">
+              <p className="text-slate-500 dark:text-slate-400 text-sm">
                 {isPolish
                   ? 'Rozpocznij dla siebie lub przydziel zespolowi'
                   : 'Start for yourself or assign to team'}
@@ -246,7 +246,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-navy-800 transition-colors"
+              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             >
               <X size={20} />
             </button>
@@ -256,7 +256,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
           <div className="p-6 space-y-6">
             {/* Mode Selection */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300">
+              <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
                 {isPolish ? 'Tryb' : 'Mode'}
               </label>
               <div className="flex gap-3">
@@ -268,7 +268,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                     ${
                       mode === 'myself'
                         ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                        : 'bg-navy-800 border-navy-700 text-slate-300 hover:border-slate-500'
+                        : 'bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:border-slate-500'
                     }
                   `}
                 >
@@ -283,7 +283,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                     ${
                       mode === 'team'
                         ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                        : 'bg-navy-800 border-navy-700 text-slate-300 hover:border-slate-500'
+                        : 'bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:border-slate-500'
                     }
                   `}
                 >
@@ -295,18 +295,18 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
 
             {/* Template Selection */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300">
+              <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
                 {isPolish ? 'Szablon' : 'Template'} *
               </label>
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-navy-800 border border-navy-700 text-left hover:border-slate-500 transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-left hover:border-slate-500 transition-colors"
                 >
                   {selectedTemplate ? (
                     <div>
-                      <span className="text-white">{selectedTemplate.name}</span>
+                      <span className="text-slate-900 dark:text-white">{selectedTemplate.name}</span>
                       {selectedTemplate.questionCount && (
                         <span className="ml-2 text-xs text-slate-500">
                           ({selectedTemplate.questionCount} {isPolish ? 'pytań' : 'questions'})
@@ -318,11 +318,11 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                       {isPolish ? 'Wybierz szablon...' : 'Select template...'}
                     </span>
                   )}
-                  <ChevronDown size={16} className="text-slate-400" />
+                  <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
                 </button>
 
                 {showTemplateDropdown && (
-                  <div className="absolute top-full left-0 right-0 mt-1 z-10 max-h-60 overflow-auto bg-navy-800 border border-navy-700 rounded-lg shadow-xl">
+                  <div className="absolute top-full left-0 right-0 mt-1 z-10 max-h-60 overflow-auto bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-xl">
                     {templates
                       .filter((t) => (t as any).status === 'approved')
                       .map((template) => (
@@ -338,7 +338,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                           ${
                             selectedTemplateId === template.id
                               ? 'bg-primary-500/10 text-primary-400'
-                              : 'text-slate-300 hover:bg-navy-700'
+                              : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700'
                           }
                         `}
                         >
@@ -363,16 +363,16 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             {/* Team Assignment - Assignees */}
             {mode === 'team' && (
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-300">
+                <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
                   {isPolish ? 'Przypisani' : 'Assignees'} *
                 </label>
                 {loadingMembers ? (
-                  <div className="flex items-center gap-2 text-slate-400 text-sm">
+                  <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                     <Loader2 size={14} className="animate-spin" />
                     {isPolish ? 'Ladowanie...' : 'Loading...'}
                   </div>
                 ) : (
-                  <div className="max-h-40 overflow-auto space-y-1 bg-navy-800/50 rounded-lg p-2 border border-navy-700">
+                  <div className="max-h-40 overflow-auto space-y-1 bg-slate-50 dark:bg-navy-800/50 rounded-lg p-2 border border-slate-200 dark:border-navy-700">
                     {teamMembers.length === 0 ? (
                       <p className="text-slate-500 text-sm p-2">
                         {isPolish
@@ -390,7 +390,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                             ${
                               selectedAssignees.includes(member.id)
                                 ? 'bg-primary-500/15 text-primary-400'
-                                : 'text-slate-300 hover:bg-navy-700'
+                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700'
                             }
                           `}
                         >
@@ -426,13 +426,13 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                 {/* Team Lead Selection */}
                 {selectedAssignees.length > 1 && (
                   <div className="mt-2">
-                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                    <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                       {isPolish ? 'Lider zespolu' : 'Team Lead'}
                     </label>
                     <select
                       value={teamLeadId}
                       onChange={(e) => setTeamLeadId(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-700 text-white text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white text-sm"
                     >
                       <option value="">{isPolish ? 'Wybierz lidera...' : 'Select lead...'}</option>
                       {selectedAssignees.map((id) => {
@@ -451,20 +451,20 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
 
             {/* Due Date */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300">
+              <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
                 {isPolish ? 'Termin' : 'Due Date'} *
               </label>
               <div className="relative">
                 <Calendar
                   size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                 />
                 <input
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-navy-800 border border-navy-700 text-white text-sm"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white text-sm"
                 />
               </div>
             </div>
@@ -472,14 +472,14 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             {/* Priority (only for team assignments) */}
             {mode === 'team' && (
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-300">
+                <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
                   {isPolish ? 'Priorytet' : 'Priority'}
                 </label>
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
-                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-navy-800 border border-navy-700 text-left hover:border-slate-500 transition-colors"
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-left hover:border-slate-500 transition-colors"
                   >
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${PRIORITY_CONFIG[priority].color}`}
@@ -488,11 +488,11 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                         ? PRIORITY_CONFIG[priority].labelPl
                         : PRIORITY_CONFIG[priority].label}
                     </span>
-                    <ChevronDown size={16} className="text-slate-400" />
+                    <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
                   </button>
 
                   {showPriorityDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-1 z-10 bg-navy-800 border border-navy-700 rounded-lg shadow-xl">
+                    <div className="absolute top-full left-0 right-0 mt-1 z-10 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-xl">
                       {(Object.keys(PRIORITY_CONFIG) as Priority[]).map((p) => (
                         <button
                           key={p}
@@ -523,7 +523,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             {/* Notes (only for team assignments) */}
             {mode === 'team' && (
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-300">
+                <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
                   {isPolish ? 'Notatki (opcjonalnie)' : 'Notes (optional)'}
                 </label>
                 <textarea
@@ -535,19 +535,19 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                       : 'Add instructions for assignees...'
                   }
                   rows={3}
-                  className="w-full px-4 py-3 rounded-lg bg-navy-800 border border-navy-700 text-white text-sm placeholder-slate-500 resize-none"
+                  className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white text-sm placeholder-slate-500 resize-none"
                 />
               </div>
             )}
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-navy-700 flex items-center justify-end gap-3">
+          <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-lg bg-navy-800 border border-navy-700 text-slate-300 hover:bg-navy-700 hover:text-white text-sm font-medium transition-colors disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 hover:text-slate-900 dark:hover:text-white text-sm font-medium transition-colors disabled:opacity-50"
             >
               {isPolish ? 'Anuluj' : 'Cancel'}
             </button>

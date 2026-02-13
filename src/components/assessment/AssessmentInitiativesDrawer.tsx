@@ -1,6 +1,9 @@
 import { ArrowRight, X } from 'lucide-react';
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
+import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, InitiativeStatus } from '../../types';
 import { InitiativesTable } from './InitiativesTable';
@@ -24,9 +27,12 @@ export const AssessmentInitiativesDrawer: React.FC<AssessmentInitiativesDrawerPr
   framework,
 }) => {
   const { setCurrentView } = useAppStore();
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
   const [activeInitiativeId, setActiveInitiativeId] = useState<string | null>(null);
   const [activeInitiativeStatus, setActiveInitiativeStatus] = useState<string | null>(null);
   const [showListView, setShowListView] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const canGoToInitiatives = activeInitiativeStatus === InitiativeStatus.PLANNING;
 
@@ -42,6 +48,37 @@ export const AssessmentInitiativesDrawer: React.FC<AssessmentInitiativesDrawerPr
     setShowListView(true);
   };
 
+  const handleEdit = (id: string) => {
+    // Navigate to the full initiative document view from assessment context
+    setCurrentView(AppView.FULL_STEP2_INITIATIVES, { initiativeId: id, mode: 'doc' });
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      await Api.post(`/initiatives/${id}/submit-review`);
+      toast.success(isPolish ? 'Inicjatywa przesłana do przeglądu' : 'Initiative submitted for review');
+      setRefreshKey((k) => k + 1);
+      handleCloseDetails();
+    } catch (e: any) {
+      toast.error(
+        e?.message || (isPolish ? 'Nie udało się zatwierdzić' : 'Failed to approve initiative')
+      );
+    }
+  };
+
+  const handleAddToRoadmap = async (id: string) => {
+    try {
+      await Api.post(`/initiatives/${id}/transfer-to-roadmap`, {});
+      toast.success(isPolish ? 'Dodano do roadmapy' : 'Added to roadmap');
+      setRefreshKey((k) => k + 1);
+      handleCloseDetails();
+    } catch (e: any) {
+      toast.error(
+        e?.message || (isPolish ? 'Nie udało się przenieść do roadmapy' : 'Failed to add to roadmap')
+      );
+    }
+  };
+
   return (
     <>
       {isOpen && (
@@ -49,7 +86,7 @@ export const AssessmentInitiativesDrawer: React.FC<AssessmentInitiativesDrawerPr
           type="button"
           className="absolute inset-0 bg-black/20 z-20"
           onClick={onClose}
-          aria-label="Zamknij drawer"
+          aria-label={isPolish ? 'Zamknij drawer' : 'Close drawer'}
         />
       )}
       <div
@@ -60,9 +97,11 @@ export const AssessmentInitiativesDrawer: React.FC<AssessmentInitiativesDrawerPr
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
           <div>
-            <h3 className="text-sm font-semibold text-navy-900 dark:text-white">Initiatives</h3>
+            <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
+              {isPolish ? 'Inicjatywy' : 'Initiatives'}
+            </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Powiazane z aktualnym assessmentem
+              {isPolish ? 'Powiązane z aktualnym assessmentem' : 'Related to the current assessment'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -73,18 +112,18 @@ export const AssessmentInitiativesDrawer: React.FC<AssessmentInitiativesDrawerPr
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 canGoToInitiatives
                   ? 'bg-purple-600 text-white hover:bg-purple-500'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 dark:text-slate-500 cursor-not-allowed'
               }`}
-              title="Przejdz do Initiatives po PLANNING"
+              title={isPolish ? 'Przejdź do Inicjatyw po PLANNING' : 'Go to Initiatives after PLANNING'}
             >
-              Go to Initiatives
+              {isPolish ? 'Idź do Inicjatyw' : 'Go to Initiatives'}
               <ArrowRight size={14} />
             </button>
             <button
               type="button"
               onClick={onClose}
               className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400"
-              aria-label="Zamknij drawer"
+              aria-label={isPolish ? 'Zamknij drawer' : 'Close drawer'}
             >
               <X size={16} />
             </button>
@@ -97,14 +136,15 @@ export const AssessmentInitiativesDrawer: React.FC<AssessmentInitiativesDrawerPr
               initiativeId={activeInitiativeId}
               embedded={true}
               onClose={handleCloseDetails}
-              onEdit={() => {}}
-              onApprove={() => {}}
+              onEdit={handleEdit}
+              onApprove={handleApprove}
               onDelete={handleCloseDetails}
-              onAddToRoadmap={() => {}}
+              onAddToRoadmap={handleAddToRoadmap}
             />
           ) : (
             <div className="h-full overflow-y-auto">
               <InitiativesTable
+                key={refreshKey}
                 projectId={projectId}
                 framework={framework}
                 assessmentId={assessmentId || undefined}

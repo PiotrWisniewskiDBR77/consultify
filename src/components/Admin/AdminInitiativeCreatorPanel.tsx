@@ -350,7 +350,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             {filteredAssessments.length === 0 && (
               <div className="text-center py-8 bg-white/5 rounded-xl">
                 <Target className="w-10 h-10 mx-auto text-slate-500 mb-3" />
-                <p className="text-slate-400">
+                <p className="text-slate-500 dark:text-slate-400">
                   {t('admin.initiativeCreator.noAssessments', 'Brak ocen do wyboru')}
                 </p>
               </div>
@@ -497,7 +497,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             </h3>
             {progress && (
               <div className="space-y-2 mt-4">
-                <p className="text-slate-400">
+                <p className="text-slate-500 dark:text-slate-400">
                   Wygenerowano: {progress.generatedCount} / {progress.requestedCount}
                 </p>
                 <div className="w-64 mx-auto h-2 bg-white/10 rounded-full overflow-hidden">

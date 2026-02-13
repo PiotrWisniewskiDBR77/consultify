@@ -302,6 +302,20 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
   })();
 
   // ============================================================
+  // LLM CONFIG INITIALIZATION - Create tables & sync providers
+  // ============================================================
+  (async () => {
+    try {
+      const { llmConfigService } = await import('./services/ai/llmConfigService.js');
+      await llmConfigService.initialize();
+      logger.info('[Server] ✅ LLM Config Service initialized (tables + providers synced)');
+    } catch (err: any) {
+      const error = err as Error;
+      logger.error('[Server] LLM Config initialization failed:', error.message);
+    }
+  })();
+
+  // ============================================================
   // LLM STARTUP VALIDATION - Single Source of Truth
   // ============================================================
   // Validate LLM configuration

@@ -57,6 +57,10 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import {
+  isNotificationTypeMuted,
+  NOTIFICATION_MUTE_SESSION_CHANGED_EVENT,
+} from '@/utils/notificationMuteSession';
 
 /* ─── Notification type ─── */
 
@@ -120,7 +124,7 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
     id: 'read',
     label: 'Read',
     icon: <Eye size={14} />,
-    headerColor: 'text-slate-400',
+    headerColor: 'text-slate-500 dark:text-slate-400',
     dotColor: 'bg-slate-400',
     dropHighlight: 'ring-slate-400/40 bg-slate-400/5',
   },
@@ -225,7 +229,7 @@ const KanbanCardContent: React.FC<{
       `}
     >
       <div className="flex items-start gap-1.5">
-        <div className="mt-0.5 text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
+        <div className="mt-0.5 text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-500 dark:text-slate-400 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
           <GripVertical size={14} />
         </div>
         <h4
@@ -252,12 +256,12 @@ const KanbanCardContent: React.FC<{
           <SeverityIcon size={10} />
           {severityStyle.label}
         </span>
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-400 dark:text-slate-500 border border-slate-500/10">
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 border border-slate-500/10">
           <TypeIcon size={10} />
           {typeConfig.label}
         </span>
         {notification.projectName && (
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-400 dark:text-slate-500 border border-slate-500/10 truncate max-w-[120px]">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 border border-slate-500/10 truncate max-w-[120px]">
             <FolderOpen size={10} />
             {notification.projectName}
           </span>
@@ -342,7 +346,7 @@ const DroppableColumn: React.FC<{
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${column.dotColor}`} />
           <span className={`text-sm font-semibold ${column.headerColor}`}>{column.label}</span>
-          <span className="ml-1 text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-navy-700/50 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+          <span className="ml-1 text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-navy-700/50 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
             {itemIds.length}
           </span>
         </div>
@@ -367,7 +371,7 @@ const DroppableColumn: React.FC<{
         {itemIds.length === 0 && !isOver && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className={`mb-2 ${column.headerColor} opacity-30`}>{column.icon}</div>
-            <p className="text-xs text-slate-400 dark:text-slate-500">No notifications</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">No notifications</p>
           </div>
         )}
       </div>
@@ -497,7 +501,7 @@ export const NotificationsKanbanBoard: React.FC<NotificationsKanbanBoardProps> =
         isRead: n.isRead ?? (n.read === true || n.read === 1),
         data: n.data || n.metadata || {},
       }));
-      setNotifications(mapped);
+      setNotifications(mapped.filter((n: any) => !isNotificationTypeMuted(n.type)));
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
       toast.error('Failed to load notifications');
@@ -508,6 +512,13 @@ export const NotificationsKanbanBoard: React.FC<NotificationsKanbanBoardProps> =
 
   useEffect(() => {
     fetchNotifications();
+  }, [fetchNotifications]);
+
+  // Refresh on session mute changes
+  useEffect(() => {
+    const handle = () => fetchNotifications();
+    window.addEventListener(NOTIFICATION_MUTE_SESSION_CHANGED_EVENT, handle as any);
+    return () => window.removeEventListener(NOTIFICATION_MUTE_SESSION_CHANGED_EVENT, handle as any);
   }, [fetchNotifications]);
 
   /* ─── Filtering ─── */
@@ -743,8 +754,8 @@ export const NotificationsKanbanBoard: React.FC<NotificationsKanbanBoardProps> =
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
         <div className="flex-1 p-4">
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
-            <Bell size={48} className="text-slate-400 dark:text-slate-600 mb-4" />
-            <h3 className="text-lg font-medium text-slate-400 mb-2">No notifications</h3>
+            <Bell size={48} className="text-slate-500 dark:text-slate-400 dark:text-slate-600 mb-4" />
+            <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">No notifications</h3>
             <p className="text-sm text-slate-500">You're all caught up!</p>
           </div>
         </div>

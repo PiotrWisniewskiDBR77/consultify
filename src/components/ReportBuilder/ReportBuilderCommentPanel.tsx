@@ -281,7 +281,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
 
         {/* Filter */}
         <div className="flex items-center gap-2 mt-3">
-          <Filter size={14} className="text-slate-400" />
+          <Filter size={14} className="text-slate-500 dark:text-slate-400" />
           <div className="flex gap-1">
             {(['all', 'open', 'resolved'] as const).map((f) => (
               <button
@@ -367,7 +367,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
 
                   {/* Section indicator */}
                   {comment.sectionKey && sectionKey === undefined && (
-                    <div className="mt-2 text-xs text-slate-400">
+                    <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                       {isPl ? 'Sekcja:' : 'Section:'} {comment.sectionKey}
                     </div>
                   )}
@@ -420,7 +420,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                     {comment.resolutionNotes && (
                       <button
                         onClick={() => toggleExpanded(comment.id)}
-                        className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded"
+                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded"
                       >
                         {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                       </button>
@@ -499,7 +499,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
             {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
           </button>
         </div>
-        <p className="text-xs text-slate-400 mt-2">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
           {isPl ? 'Cmd+Enter aby wysłać' : 'Cmd+Enter to submit'}
         </p>
       </div>

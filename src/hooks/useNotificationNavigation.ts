@@ -132,17 +132,17 @@ export const useNotificationNavigation = (
   const getNavigationLabel = useCallback((type?: string): string => {
     switch (type) {
       case 'TASK':
-        return 'Open Task';
+        return 'Open document';
       case 'INITIATIVE':
-        return 'View Initiative';
+        return 'Open document';
       case 'DECISION':
-        return 'Open Decision';
+        return 'Open document';
       case 'GATE':
-        return 'View Gate';
+        return 'Open document';
       case 'PROJECT':
-        return 'Go to Project';
+        return 'Open document';
       default:
-        return 'View Details';
+        return 'Open document';
     }
   }, []);
 

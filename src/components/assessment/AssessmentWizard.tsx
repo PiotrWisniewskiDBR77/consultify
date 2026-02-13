@@ -39,7 +39,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
   if (areaKeys.length === 0) {
     return (
       <div className="p-8 text-center">
-        <p className="text-slate-400 dark:text-slate-500 mb-4">
+        <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-4">
           No detailed areas defined for this axis yet.
         </p>
         <button onClick={onCancel} className="text-purple-400 hover:text-purple-300">
@@ -219,7 +219,7 @@ export const AssessmentWizard: React.FC<AssessmentWizardProps> = ({
             <div className="space-y-4">
               <button
                 onClick={handleComplete}
-                className="w-full bg-navy-900 dark:bg-white text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-slate-200 dark:hover:bg-navy-700 px-8 py-4 rounded-xl font-bold text-lg shadow-xl transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-white dark:bg-navy-900 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-navy-800 px-8 py-4 rounded-xl font-bold text-lg shadow-xl transition-colors flex items-center justify-center gap-2"
               >
                 <Check size={20} />
                 {wizT.acceptResult}

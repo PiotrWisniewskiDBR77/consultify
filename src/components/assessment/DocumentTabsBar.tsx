@@ -138,7 +138,7 @@ export const DocumentTabsBar: React.FC<DocumentTabsBarProps> = ({
               >
                 <X
                   size={12}
-                  className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+                  className="text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
                 />
               </button>
             </div>
@@ -149,7 +149,7 @@ export const DocumentTabsBar: React.FC<DocumentTabsBarProps> = ({
         {openDocuments.length > 1 && onCloseAll && (
           <button
             onClick={onCloseAll}
-            className="ml-2 px-2 py-1 text-xs text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors shrink-0"
+            className="ml-2 px-2 py-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors shrink-0"
             title="Zamknij wszystkie"
           >
             Zamknij wszystkie

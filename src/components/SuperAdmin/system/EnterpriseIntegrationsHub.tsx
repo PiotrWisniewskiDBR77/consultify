@@ -346,7 +346,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Integrations Hub</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Integrations Hub</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
             Connect Consultinity with your existing tools and workflows
           </p>
@@ -355,9 +355,9 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
+        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="text-sm text-slate-400 dark:text-slate-500">Connected</div>
-          <div className="text-2xl font-bold text-white">
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">
             {integrations.filter((i) => i.status === 'connected').length}
           </div>
         </div>
@@ -382,7 +382,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-white/10 pb-1">
+      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
         {[
           { id: 'integrations', label: 'Connected', icon: Link, count: integrations.length },
           { id: 'webhooks', label: 'Webhooks', icon: Webhook, count: webhooks.length },
@@ -393,13 +393,13 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
             onClick={() => setActiveTab(id as any)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
-                ? 'bg-white/10 text-white border-b-2 border-cyan-500'
-                : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                ? 'bg-slate-50 dark:bg-white/10 text-slate-900 dark:text-white border-b-2 border-cyan-500'
+                : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
             }`}
           >
             <Icon className="w-4 h-4" />
             {label}
-            <span className="px-1.5 py-0.5 text-xs bg-slate-700 rounded">{count}</span>
+            <span className="px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">{count}</span>
           </button>
         ))}
       </div>
@@ -414,10 +414,10 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           {activeTab === 'integrations' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-white">Connected Integrations</h3>
+                <h3 className="text-lg font-medium text-slate-900 dark:text-white">Connected Integrations</h3>
                 <button
                   onClick={() => setActiveTab('catalog')}
-                  className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Add Integration
@@ -440,14 +440,14 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                     return (
                       <div
                         key={integration.id}
-                        className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10 hover:border-white/20 transition-colors"
+                        className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-white/20 transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <div className="text-3xl">{connector?.icon || '🔗'}</div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-white">{integration.name}</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{integration.name}</span>
                                 <span
                                   className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded ${statusConfig.bg} ${statusConfig.color}`}
                                 >
@@ -514,10 +514,10 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           {activeTab === 'webhooks' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-white">Webhooks</h3>
+                <h3 className="text-lg font-medium text-slate-900 dark:text-white">Webhooks</h3>
                 <button
                   onClick={() => setShowAddWebhook(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Create Webhook
@@ -537,12 +537,12 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                   {webhooks.map((webhook) => (
                     <div
                       key={webhook.id}
-                      className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10 hover:border-white/20 transition-colors"
+                      className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-white/20 transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-white">{webhook.name}</span>
+                            <span className="font-medium text-slate-900 dark:text-white">{webhook.name}</span>
                             {webhook.is_active ? (
                               <CheckCircle className="w-4 h-4 text-emerald-400" />
                             ) : (
@@ -556,7 +556,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                             {webhook.events.map((event) => (
                               <span
                                 key={event}
-                                className="px-2 py-0.5 text-xs bg-slate-700 text-slate-300 rounded"
+                                className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded"
                               >
                                 {WEBHOOK_EVENTS.find((e) => e.id === event)?.label || event}
                               </span>
@@ -617,13 +617,13 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                     placeholder="Search connectors..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                    className="w-full pl-10 pr-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                   />
                 </div>
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                  className="px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
                 >
                   <option value="all">All Categories</option>
                   {categories.map((cat) => (
@@ -643,7 +643,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                       className={`p-4 rounded-xl border transition-colors ${
                         isConnected
                           ? 'bg-emerald-500/10 border-emerald-500/30'
-                          : 'bg-white/5 border-white/10 hover:border-white/20'
+                          : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-white/20'
                       }`}
                     >
                       <div className="flex items-start justify-between mb-3">
@@ -651,14 +651,14 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                           <span className="text-3xl">{connector.icon}</span>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-white">{connector.name}</span>
+                              <span className="font-medium text-slate-900 dark:text-white">{connector.name}</span>
                               {connector.status === 'beta' && (
                                 <span className="px-1.5 py-0.5 text-xs bg-amber-500/20 text-amber-400 rounded">
                                   Beta
                                 </span>
                               )}
                               {connector.status === 'coming_soon' && (
-                                <span className="px-1.5 py-0.5 text-xs bg-slate-50 dark:bg-navy-800/300/20 text-slate-400 dark:text-slate-500 rounded">
+                                <span className="px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-navy-800/20 text-slate-400 dark:text-slate-500 rounded">
                                   Planned
                                 </span>
                               )}
@@ -688,8 +688,8 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                           <button
                             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                               isConnected
-                                ? 'bg-slate-700 text-slate-300'
-                                : 'bg-cyan-600 hover:bg-cyan-700 text-white'
+                                ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                                : 'bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white'
                             }`}
                             disabled={isConnected}
                           >
@@ -763,9 +763,9 @@ const WebhookModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-navy-900 rounded-xl border border-white/10 p-6 w-full max-w-lg">
+      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-white">Create Webhook</h3>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Create Webhook</h3>
           <button
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
@@ -776,44 +776,44 @@ const WebhookModal: React.FC<{
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Name *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name *</label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               placeholder="My Webhook"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">URL *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">URL *</label>
             <input
               type="url"
               required
               value={formData.url}
               onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               placeholder="https://api.example.com/webhook"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Secret (for signature verification)
             </label>
             <input
               type="text"
               value={formData.secret}
               onChange={(e) => setFormData({ ...formData, secret: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               placeholder="Optional secret key"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Events *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Events *</label>
             <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-slate-800/50 rounded-lg">
               {events.map((event) => (
                 <label key={event.id} className="flex items-center gap-2">
@@ -832,7 +832,7 @@ const WebhookModal: React.FC<{
                     }}
                     className="rounded border-slate-600 bg-slate-800 text-cyan-500"
                   />
-                  <span className="text-sm text-slate-300">{event.label}</span>
+                  <span className="text-sm text-slate-700 dark:text-slate-300">{event.label}</span>
                 </label>
               ))}
             </div>
@@ -842,14 +842,14 @@ const WebhookModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white"
+              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving || formData.events.length === 0}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Create
@@ -868,10 +868,10 @@ const DeliveriesModal: React.FC<{
   onClose: () => void;
 }> = ({ webhook, deliveries, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-navy-900 rounded-xl border border-white/10 p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
+    <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-white">Webhook Deliveries</h3>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Webhook Deliveries</h3>
           <p className="text-sm text-slate-400 dark:text-slate-500">{webhook.name}</p>
         </div>
         <button
@@ -892,7 +892,7 @@ const DeliveriesModal: React.FC<{
           {deliveries.map((delivery) => (
             <div
               key={delivery.id}
-              className="p-3 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-white/10"
+              className="p-3 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-white/10"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -903,7 +903,7 @@ const DeliveriesModal: React.FC<{
                   ) : (
                     <Clock className="w-4 h-4 text-amber-400" />
                   )}
-                  <span className="text-sm text-white">{delivery.event_type}</span>
+                  <span className="text-sm text-slate-900 dark:text-white">{delivery.event_type}</span>
                   {delivery.response_code && (
                     <span
                       className={`text-xs ${

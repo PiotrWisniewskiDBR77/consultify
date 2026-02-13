@@ -751,7 +751,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                             <Flag className="w-2 h-2" style={{ color: phase.color }} />
                           </div>
                           {/* Tooltip */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-navy-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white dark:bg-navy-900 text-slate-900 dark:text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                             {isPolish ? milestone.labelPl : milestone.label}
                           </div>
                         </div>

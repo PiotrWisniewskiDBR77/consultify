@@ -263,7 +263,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
                 {statusConfig.label}
               </span>
               {initiative.axis && (
-                <span className="px-2 py-0.5 bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-800 text-slate-600 dark:text-slate-400 rounded-full text-xs">
+                <span className="px-2 py-0.5 bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 rounded-full text-xs">
                   {AXIS_LABELS[initiative.axis] || initiative.axis}
                 </span>
               )}
@@ -279,7 +279,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
           >
             <X size={20} />
           </button>
@@ -463,7 +463,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
         )}
 
         {/* Stats */}
-        <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 pt-4 border-t border-slate-200 dark:border-navy-700">
+        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-4 border-t border-slate-200 dark:border-navy-700">
           <span>Utworzono: {formatDate(initiative.createdAt)}</span>
           <span>{initiative.taskCount} zadań</span>
         </div>
@@ -487,7 +487,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
             {onEdit && (
               <button
                 onClick={() => onEdit(initiative.id)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 rounded-lg text-sm font-medium transition-colors"
               >
                 <Edit size={16} />
                 Edytuj

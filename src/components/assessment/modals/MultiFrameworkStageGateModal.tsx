@@ -350,7 +350,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
       {/* Modal */}
       <div className="relative bg-white dark:bg-navy-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-navy-700">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
             <div
               className={`
@@ -373,21 +373,21 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
               )}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {targetStatus === 'IN_REVIEW'
                   ? 'Submit for Review'
                   : targetStatus === 'APPROVED'
                     ? 'Approve Assessment'
                     : 'Reject Assessment'}
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 {framework} Assessment Stage Gate
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:bg-navy-800 dark:hover:bg-navy-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -397,7 +397,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
         <div className="p-6 overflow-y-auto max-h-[60vh]">
           {/* Validation Checks */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
               <FileCheck className="w-4 h-4" />
               Validation Checks
             </h3>
@@ -405,7 +405,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
             {isValidating ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-                <span className="ml-2 text-gray-500 dark:text-gray-400">
+                <span className="ml-2 text-slate-500 dark:text-slate-400">
                   Validating assessment...
                 </span>
               </div>
@@ -449,7 +449,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                           {check.label}
                         </span>
                         {check.message && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                             {check.message}
                           </p>
                         )}
@@ -464,7 +464,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
           {/* Reviewer Selection (for submission) */}
           {targetStatus === 'IN_REVIEW' && requirements.requiresReviewer && (
             <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 Select Reviewers
               </h3>
@@ -479,7 +479,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                                                 ${
                                                   selectedReviewers.includes(reviewer.id)
                                                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                                    : 'border-gray-200 dark:border-navy-600 hover:border-blue-300'
+                                                    : 'border-slate-200 dark:border-navy-600 hover:border-blue-300'
                                                 }
                                             `}
                     >
@@ -496,13 +496,13 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                               );
                             }
                           }}
-                          className="w-4 h-4 rounded border-gray-300 dark:border-gray-600"
+                          className="w-4 h-4 rounded border-slate-300 dark:border-navy-600"
                         />
                         <div>
-                          <div className="font-medium text-gray-900 dark:text-white">
+                          <div className="font-medium text-slate-900 dark:text-white">
                             {reviewer.name}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
                             {reviewer.email}
                           </div>
                         </div>
@@ -516,7 +516,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-4 text-slate-500 dark:text-slate-400">
                   <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p>No reviewers available</p>
                 </div>
@@ -544,7 +544,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
 
           {/* Comment/Reason */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               {targetStatus === 'REJECTED' ? 'Rejection Reason' : 'Comment (optional)'}
             </label>
             <textarea
@@ -556,8 +556,8 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                   : 'Add any additional notes...'
               }
               rows={3}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-navy-600 rounded-lg
-                                bg-white dark:bg-navy-700 text-gray-900 dark:text-white
+              className="w-full px-4 py-3 border border-slate-200 dark:border-navy-600 rounded-lg
+                                bg-white dark:bg-navy-700 text-slate-900 dark:text-white
                                 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required={targetStatus === 'REJECTED'}
             />
@@ -575,10 +575,10 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-navy-700 bg-gray-50 dark:bg-navy-900">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-navy-700 rounded-lg transition-colors"
+            className="px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
           >
             Cancel
           </button>
@@ -595,7 +595,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                                 ? targetStatus === 'REJECTED'
                                   ? 'bg-red-600 hover:bg-red-700 text-white'
                                   : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                : 'bg-gray-300 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                                : 'bg-slate-300 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                             }
                         `}
           >

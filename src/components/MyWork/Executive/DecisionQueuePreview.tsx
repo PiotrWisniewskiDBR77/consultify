@@ -100,7 +100,7 @@ const DecisionItem: React.FC<{
         <div className="flex-1 min-w-0">
           {/* Type & Priority */}
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               {decision.type.replace(/_/g, ' ')}
             </span>
             <PriorityBadge priority={decision.priority} />
@@ -231,7 +231,7 @@ export const DecisionQueuePreview: React.FC<DecisionQueuePreviewProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
-              <FileQuestion size={20} className="text-white" />
+              <FileQuestion size={20} className="text-slate-900 dark:text-white" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">

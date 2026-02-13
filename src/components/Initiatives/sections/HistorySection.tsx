@@ -31,8 +31,16 @@ export const HistorySection: React.FC<InitiativeSectionProps> = ({
       }
     >
       {history.length === 0 ? (
-        <div className="text-sm text-slate-400">
-          {isPolish ? 'Brak historii.' : 'No history yet.'}
+        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
+          <History size={32} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            {isPolish ? 'Brak historii aktywności' : 'No activity history yet'}
+          </p>
+          <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+            {isPolish
+              ? 'Historia zmian pojawi się tutaj po zapisaniu inicjatywy lub wykonaniu akcji (np. zmiana statusu, dodanie zadania)'
+              : 'Activity history will appear here after saving the initiative or performing actions (e.g. status change, adding tasks)'}
+          </p>
         </div>
       ) : (
         <div className="space-y-3 max-h-80 overflow-y-auto">

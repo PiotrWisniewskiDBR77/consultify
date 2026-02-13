@@ -18,11 +18,13 @@ import { FinancialAnalysisSection } from './FinancialAnalysisSection';
 import { FinancialImpactSection } from './FinancialImpactSection';
 import { GateReadinessSection } from './GateReadinessSection';
 import { HistorySection } from './HistorySection';
+import { InitiativeTeamSection } from './InitiativeTeamSection';
 import { KpisSection } from './KpisSection';
 import { LinkedItemsSection } from './LinkedItemsSection';
 import { OverviewSection } from './OverviewSection';
 import { PilotSection } from './PilotSection';
 import { ProblemDefinitionSection } from './ProblemDefinitionSection';
+import { RaciEscalationSection } from './RaciEscalationSection';
 import { RaidSection } from './RaidSection';
 import { RemindersSection } from './RemindersSection';
 import { ResourcesSection } from './ResourcesSection';
@@ -63,6 +65,8 @@ export const SECTION_REGISTRY: Record<string, React.ComponentType<InitiativeSect
   // Right column - Control/Meta
   control: ControlSection,
   team: TeamSection,
+  initiativeTeam: InitiativeTeamSection,
+  raciEscalation: RaciEscalationSection,
   timeline: TimelineSection,
   resources: ResourcesSection,
   stakeholders: StakeholdersSection,

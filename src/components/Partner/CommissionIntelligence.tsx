@@ -266,7 +266,7 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
 
         <button className="flex items-center justify-between rounded-xl border border-slate-200 bg-white/80 p-4 text-left transition hover:border-brand/30 dark:border-navy-700 dark:bg-navy-900/40">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800/40 dark:bg-white/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10">
               <TrendingUp size={18} className="text-slate-600 dark:text-slate-300" />
             </div>
             <div>
@@ -372,7 +372,7 @@ const DealRow: React.FC<{ deal: PartnerDeal; onView: () => void }> = ({ deal, on
       className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-100 p-4 transition hover:border-brand/30 dark:border-navy-700"
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800/40 text-sm font-bold text-slate-600 dark:bg-white/10 dark:text-slate-300">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 text-sm font-bold text-slate-600 dark:text-slate-300">
           {deal.clientName.substring(0, 2).toUpperCase()}
         </div>
         <div>

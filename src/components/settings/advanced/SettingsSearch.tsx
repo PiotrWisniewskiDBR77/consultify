@@ -382,7 +382,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
                         e.stopPropagation();
                         toggleFavorite(result.id);
                       }}
-                      className={`p-1 rounded ${favorites.includes(result.id) ? 'text-amber-500' : 'text-slate-300 hover:text-amber-400'}`}
+                      className={`p-1 rounded ${favorites.includes(result.id) ? 'text-amber-500' : 'text-slate-700 dark:text-slate-300 hover:text-amber-400'}`}
                     >
                       <Star
                         size={16}

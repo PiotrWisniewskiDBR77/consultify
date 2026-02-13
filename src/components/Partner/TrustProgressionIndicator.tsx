@@ -83,7 +83,7 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
           <span>Progress</span>
           <span>{Math.round(((currentIndex + 1) / trustProgression.length) * 100)}%</span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-navy-800/40 dark:bg-white/10">
+        <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
           <div
             className="h-full rounded-full bg-gradient-to-r from-brand to-emerald-500 transition-all duration-500"
             style={{ width: `${((currentIndex + 1) / trustProgression.length) * 100}%` }}

@@ -30,9 +30,9 @@ export const ResourcesView: React.FC = () => {
           {resourceCards.map((card) => (
             <article
               key={card.title}
-              className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900/60"
+              className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/60 p-4 shadow-sm"
             >
-              <div className="flex items-center gap-2 text-sm font-semibold text-navy-900 dark:text-white">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
                 <BookOpen size={16} />
                 {card.title}
               </div>
@@ -44,8 +44,8 @@ export const ResourcesView: React.FC = () => {
           ))}
         </div>
 
-        <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900/60">
-          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <section className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/60 p-4 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
             <Video size={16} />
             Video series
           </div>
@@ -56,7 +56,7 @@ export const ResourcesView: React.FC = () => {
             {['Intro hero', 'Co-sell scripts', 'Revenue intelligence'].map((item) => (
               <div
                 key={item}
-                className="rounded-xl border border-slate-100 bg-white/70 px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 dark:border-navy-700 dark:bg-navy-950/40"
+                className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950/40 px-3 py-2 text-xs font-semibold text-slate-400"
               >
                 {item}
               </div>
@@ -64,12 +64,12 @@ export const ResourcesView: React.FC = () => {
           </div>
         </section>
 
-        <section className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900/60">
-          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <section className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/60 p-4 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
             <HelpCircle size={16} />
             Partner docs & forms
           </div>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-xs text-slate-400">
             Wszystkie formularze (Payout, Deal Registration, Tax & Bank) są dostępne w jednym
             miejscu i zawierają checklisty zgodne z PMO domain SCOPE_CHANGE_CONTROL.
           </p>
@@ -89,8 +89,8 @@ export const ResourcesView: React.FC = () => {
           </div>
         </section>
 
-        <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900/60">
-          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <section className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/60 p-4 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
             <MessageCircle size={16} />
             Community & help
           </div>
@@ -103,7 +103,7 @@ export const ResourcesView: React.FC = () => {
             ))}
           </ul>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 dark:border-navy-700 dark:text-slate-200">
+            <button className="rounded-xl border border-slate-200 dark:border-navy-700 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
               Request partner docs
             </button>
             <button className="rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white">
@@ -112,8 +112,8 @@ export const ResourcesView: React.FC = () => {
           </div>
         </section>
 
-        <section className="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900/60">
-          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <section className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/60 p-4 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
             <MessageCircle size={16} />
             Community & support
           </div>
@@ -126,7 +126,7 @@ export const ResourcesView: React.FC = () => {
             ))}
           </ul>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 dark:border-navy-700 dark:text-slate-200">
+            <button className="rounded-xl border border-slate-200 dark:border-navy-700 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
               Request partner docs
             </button>
             <button className="rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white">

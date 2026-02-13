@@ -82,6 +82,26 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
   const [selectedType, setSelectedType] = useState<'all' | BenefitType>('all');
   const [localBenefits, setLocalBenefits] = useState<Benefit[]>(benefits);
   const [isLoading, setIsLoading] = useState(!benefits.length);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const fetchBenefits = React.useCallback(async () => {
+    setIsLoading(true);
+    setFetchError(null);
+    try {
+      const response = await fetch(`/api/pmo/projects/${projectId}/benefits`);
+      if (response.ok) {
+        const data = await response.json();
+        setLocalBenefits(Array.isArray(data) ? data : data?.benefits || []);
+      } else {
+        setLocalBenefits([]);
+      }
+    } catch {
+      setFetchError('Failed to load benefits data');
+      setLocalBenefits([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId]);
 
   // Fetch benefits from API when props don't provide them
   React.useEffect(() => {
@@ -90,25 +110,8 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
       setIsLoading(false);
       return;
     }
-    const fetchBenefits = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/pmo/projects/${projectId}/benefits`);
-        if (response.ok) {
-          const data = await response.json();
-          setLocalBenefits(Array.isArray(data) ? data : data?.benefits || []);
-        } else {
-          setLocalBenefits([]);
-        }
-      } catch {
-        console.warn('[BenefitsTracker] No benefits data available from API');
-        setLocalBenefits([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchBenefits();
-  }, [projectId, benefits]);
+  }, [projectId, benefits, fetchBenefits]);
 
   const filteredBenefits =
     selectedType === 'all' ? localBenefits : localBenefits.filter((b) => b.type === selectedType);
@@ -138,7 +141,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
     return (
       <div className="space-y-6">
         <div>
-          <h3 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <TrendingUp className="text-green-500" size={24} />
             Benefits Realization
           </h3>
@@ -153,11 +156,33 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
     );
   }
 
+  if (fetchError) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <TrendingUp className="text-green-500" size={24} />
+            Benefits Realization
+          </h3>
+        </div>
+        <div className="flex flex-col items-center justify-center h-48 gap-3">
+          <p className="text-sm text-red-500 dark:text-red-400">{fetchError}</p>
+          <button
+            onClick={fetchBenefits}
+            className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-500 rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (localBenefits.length === 0) {
     return (
       <div className="space-y-6">
         <div>
-          <h3 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <TrendingUp className="text-green-500" size={24} />
             Benefits Realization
           </h3>
@@ -165,9 +190,9 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
             Track transformation benefits and ROI
           </p>
         </div>
-        <div className="flex flex-col items-center justify-center h-48 text-slate-400 dark:text-slate-500">
+        <div className="flex flex-col items-center justify-center h-48 text-slate-500">
           <TrendingUp size={48} className="mb-4 opacity-50" />
-          <p className="text-lg font-medium text-navy-900 dark:text-white">
+          <p className="text-lg font-medium text-slate-900 dark:text-white">
             No benefits tracked yet
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -183,7 +208,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <TrendingUp className="text-green-500" size={24} />
             Benefits Realization
           </h3>
@@ -204,19 +229,19 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Avg. Realization</div>
-          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+          <div className="text-2xl font-bold text-purple-400">
             {stats.avgRealization}%
           </div>
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Benefits Achieved</div>
-          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+          <div className="text-2xl font-bold text-green-400">
             {stats.achieved} / {stats.total}
           </div>
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">In Progress</div>
-          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+          <div className="text-2xl font-bold text-amber-400">
             {stats.partial}
           </div>
         </div>
@@ -233,8 +258,8 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                 onClick={() => setSelectedType(type)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                   selectedType === type
-                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                    ? 'bg-purple-900/30 text-purple-400'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-navy-800'
                 }`}
               >
                 {config && <config.icon size={14} className={config.color} />}
@@ -271,7 +296,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-navy-900 dark:text-white">{benefit.name}</h4>
+                      <h4 className="font-bold text-slate-900 dark:text-white">{benefit.name}</h4>
                       <span
                         className={`px-2 py-0.5 rounded text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}
                       >
@@ -299,12 +324,12 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                 <div className="flex-1">
                   <div className="flex items-end justify-between mb-2">
                     <div>
-                      <span className="text-2xl font-bold text-navy-900 dark:text-white">
+                      <span className="text-2xl font-bold text-slate-900 dark:text-white">
                         {benefit.type === 'FINANCIAL'
                           ? `${(benefit.currentValue / 1000).toFixed(0)}k`
                           : benefit.currentValue}
                       </span>
-                      <span className="text-sm text-slate-400 dark:text-slate-500 ml-1">
+                      <span className="text-sm text-slate-500 ml-1">
                         {benefit.unit}
                       </span>
                     </div>
@@ -320,7 +345,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="h-3 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+                  <div className="h-3 bg-slate-50 dark:bg-navy-800 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${
                         isOverAchieved
@@ -346,7 +371,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                       stroke="currentColor"
                       strokeWidth="6"
                       fill="transparent"
-                      className="text-slate-100 dark:text-navy-800"
+                      className="text-navy-800"
                     />
                     <circle
                       cx="40"
@@ -386,7 +411,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
               </div>
 
               {/* Footer */}
-              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700 flex items-center justify-between">
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between">
                 <div className="text-xs text-slate-500 dark:text-slate-400">
                   <strong>Measurement:</strong> {benefit.measurementCriteria}
                 </div>

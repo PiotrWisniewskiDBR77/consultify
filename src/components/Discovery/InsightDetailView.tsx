@@ -346,9 +346,9 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
     <div className="h-full overflow-auto">
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         {/* Header Card */}
-        <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
           {/* Type Banner */}
-          <div className={`px-6 py-3 ${typeConfig.bgColor} border-b border-navy-700`}>
+          <div className={`px-6 py-3 ${typeConfig.bgColor} border-b border-slate-200 dark:border-navy-700`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className={typeConfig.color}>{typeConfig.icon}</span>
@@ -374,7 +374,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
 
           {/* Title & Meta */}
           <div className="p-6">
-            <h1 className="text-2xl font-bold text-white mb-4">{insight.title}</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">{insight.title}</h1>
 
             {/* Metadata Row */}
             <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -431,7 +431,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
 
         {/* Source Quote */}
         {insight.sourceQuote && (
-          <div className="bg-navy-900/50 border border-navy-700 rounded-xl p-5">
+          <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-5">
             <div className="flex gap-4">
               <Quote size={24} className="text-amber-500/60 flex-shrink-0 mt-1" />
               <div>
@@ -446,23 +446,23 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
 
         {/* Main Content */}
         {content ? (
-          <div className="bg-navy-900 border border-navy-700 rounded-xl p-6">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
             <div
               className="prose prose-invert prose-sm max-w-none
-              prose-headings:text-white prose-headings:font-semibold
-              prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-navy-700
+              prose-headings:text-slate-900 dark:prose-headings:text-white prose-headings:font-semibold
+              prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-slate-200 dark:prose-h2:border-navy-700
               prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3
               prose-h4:text-base prose-h4:mt-4 prose-h4:mb-2
               prose-p:text-slate-300 prose-p:leading-relaxed
-              prose-strong:text-white prose-strong:font-semibold
+              prose-strong:text-slate-900 dark:prose-strong:text-white prose-strong:font-semibold
               prose-ul:text-slate-300 prose-ol:text-slate-300
               prose-li:marker:text-slate-500
               prose-table:border-collapse prose-table:w-full
-              prose-th:bg-navy-800 prose-th:text-slate-200 prose-th:font-semibold prose-th:text-left prose-th:px-4 prose-th:py-2 prose-th:border prose-th:border-navy-600
-              prose-td:px-4 prose-td:py-2 prose-td:border prose-td:border-navy-700 prose-td:text-slate-300
-              prose-code:bg-navy-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-cyan-400 prose-code:text-sm
-              prose-pre:bg-navy-950 prose-pre:border prose-pre:border-navy-700 prose-pre:rounded-lg
-              prose-blockquote:border-l-4 prose-blockquote:border-amber-500/50 prose-blockquote:bg-navy-800/50 prose-blockquote:px-4 prose-blockquote:py-2 prose-blockquote:rounded-r-lg prose-blockquote:not-italic
+              prose-th:bg-slate-100 dark:prose-th:bg-navy-800 prose-th:text-slate-200 prose-th:font-semibold prose-th:text-left prose-th:px-4 prose-th:py-2 prose-th:border prose-th:border-slate-300 dark:prose-th:border-navy-600
+              prose-td:px-4 prose-td:py-2 prose-td:border prose-td:border-slate-200 dark:prose-td:border-navy-700 prose-td:text-slate-300
+              prose-code:bg-slate-100 dark:prose-code:bg-navy-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-cyan-400 prose-code:text-sm
+              prose-pre:bg-slate-50 dark:prose-pre:bg-navy-950 prose-pre:border prose-pre:border-navy-700 prose-pre:rounded-lg
+              prose-blockquote:border-l-4 prose-blockquote:border-amber-500/50 prose-blockquote:bg-slate-100/50 dark:prose-blockquote:bg-navy-800/50 prose-blockquote:px-4 prose-blockquote:py-2 prose-blockquote:rounded-r-lg prose-blockquote:not-italic
               prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
             "
             >
@@ -470,9 +470,9 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
             </div>
           </div>
         ) : (
-          <div className="bg-navy-900 border border-navy-700 rounded-xl p-12 text-center">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-12 text-center">
             <Lightbulb size={48} className="mx-auto mb-4 text-slate-600" />
-            <p className="text-slate-400">No content available</p>
+            <p className="text-slate-500 dark:text-slate-400">No content available</p>
             {insight.status === 'generating' && (
               <p className="text-amber-400 text-sm mt-2">Content is being generated...</p>
             )}
@@ -480,7 +480,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="bg-navy-900 border border-navy-700 rounded-xl p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex flex-wrap items-center gap-3">
             {/* Export to Tools */}
             <button
@@ -490,7 +490,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
                 ${
                   insight.exportedToTools
                     ? 'bg-emerald-500/20 text-emerald-400 cursor-default'
-                    : 'bg-navy-800 hover:bg-navy-700 border border-navy-600 text-white'
+                    : 'bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white'
                 }
                 disabled:opacity-50`}
             >
@@ -515,7 +515,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
                 ${
                   insight.exportedToAssessment
                     ? 'bg-emerald-500/20 text-emerald-400 cursor-default'
-                    : 'bg-navy-800 hover:bg-navy-700 border border-navy-600 text-white'
+                    : 'bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white'
                 }
                 disabled:opacity-50`}
             >
@@ -549,7 +549,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
               <button
                 onClick={handleRegenerate}
                 disabled={!!exporting}
-                className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 border border-navy-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ml-auto"
+                className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ml-auto"
               >
                 <RefreshCw size={16} />
                 {exporting === 'regenerate' ? 'Starting...' : 'Regenerate'}
@@ -558,7 +558,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
 
             {/* Download */}
             <button
-              className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 border border-navy-600 text-white rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white rounded-lg text-sm font-medium transition-colors"
               onClick={() => {
                 // Create markdown download
                 const blob = new Blob([`# ${insight.title}\n\n${content}`], {

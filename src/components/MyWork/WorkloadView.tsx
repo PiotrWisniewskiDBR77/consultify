@@ -300,8 +300,8 @@ export const WorkloadView: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-slate-400 dark:text-slate-500">
-            <User size={32} className="mx-auto mb-2 text-slate-300" />
+          <div className="text-center py-8 text-slate-500 dark:text-slate-400 dark:text-slate-500">
+            <User size={32} className="mx-auto mb-2 text-slate-700 dark:text-slate-300" />
             <p className="text-sm">{t('workload.noMembers', 'No team members found')}</p>
           </div>
         )}

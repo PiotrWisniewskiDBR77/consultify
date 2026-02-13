@@ -244,8 +244,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
                 <div
                   className={`
                     px-3 py-2
-                    bg-navy-900 dark:bg-slate-100
-                    text-white dark:text-navy-900
+                    bg-white dark:bg-navy-900
+                    text-slate-900 dark:text-white
                     text-sm
                     rounded-lg
                     shadow-lg

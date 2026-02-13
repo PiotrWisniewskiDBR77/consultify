@@ -2017,7 +2017,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   return (
     <div
-      className={`flex flex-col h-full bg-white dark:bg-navy-950 ${className}`}
+      className={`flex flex-col h-full bg-slate-50 dark:bg-navy-950 ${className}`}
       style={{ maxHeight: maxHeight || '100%' }}
     >
       {/* Skip links for keyboard users */}
@@ -2030,7 +2030,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       {/* Header - Simplified */}
       <div
-        className={`flex items-center justify-between ${isCompact ? 'px-3 py-2' : 'px-4 py-3'} border-b border-slate-200 dark:border-navy-800 bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm`}
+        className={`flex items-center justify-between ${isCompact ? 'px-3 py-2' : 'px-4 py-3'} border-b border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-950/50 backdrop-blur-sm`}
       >
         <div className="flex items-center gap-1">
           {/* New Chat button - first from left */}
@@ -2172,7 +2172,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       {/* Input Area */}
       <div
         id="chat-input"
-        className={`${isCompact ? 'p-2' : 'p-3'} border-t border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950`}
+        className={`${isCompact ? 'p-2' : 'p-3'} border-t border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-950`}
       >
         {!!lastError && !isStreaming && (
           <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
@@ -2188,7 +2188,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               </button>
               <button
                 onClick={() => clearLastError()}
-                className="px-3 py-1 rounded-md text-xs font-medium bg-white/60 dark:bg-white/10 hover:bg-white/80 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
+                className="px-3 py-1 rounded-md text-xs font-medium bg-slate-50 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
               >
                 {t('common.dismiss', 'Dismiss')}
               </button>

@@ -10,14 +10,18 @@ import {
   AlertTriangle,
   ArrowRight,
   Bell,
+  BellOff,
+  BookOpen,
   Bot,
   Check,
   CheckSquare,
   Clock,
+  CreditCard,
   Eye,
   FolderOpen,
   Info,
   Loader2,
+  Megaphone,
   MessageSquare,
   Minus,
   MoreVertical,
@@ -25,6 +29,7 @@ import {
   Square,
   Target,
   Trash2,
+  X,
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -43,6 +48,13 @@ import {
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { type SnoozePreset, useNotificationSnooze } from '@/hooks/useNotificationSnooze';
 import { Api } from '@/services/api';
+import {
+  clearMutedNotificationTypesForSession,
+  getMutedNotificationTypes,
+  isNotificationTypeMuted,
+  NOTIFICATION_MUTE_SESSION_CHANGED_EVENT,
+  unmuteNotificationTypeForSession,
+} from '@/utils/notificationMuteSession';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
@@ -176,6 +188,30 @@ const getTypeConfig = (type: string) => {
       bg: 'bg-slate-100 dark:bg-slate-500/20',
     };
   }
+  if (
+    typeUpper.includes('BILLING') ||
+    typeUpper.includes('PAYMENT') ||
+    typeUpper.includes('SUBSCRIPTION') ||
+    typeUpper.includes('USAGE') ||
+    typeUpper.includes('INVOICE') ||
+    typeUpper.includes('LIMIT')
+  ) {
+    return {
+      label: 'Billing',
+      icon: CreditCard,
+      color: 'text-indigo-700 dark:text-indigo-400',
+      bg: 'bg-indigo-100 dark:bg-indigo-500/20',
+    };
+  }
+  if (typeUpper.startsWith('DBR77_') || typeUpper.includes('DBR77')) {
+    const icon = typeUpper.includes('KB') || typeUpper.includes('INSTRUCTION') ? BookOpen : Megaphone;
+    return {
+      label: 'DBR77',
+      icon,
+      color: 'text-purple-700 dark:text-purple-400',
+      bg: 'bg-purple-100 dark:bg-purple-500/20',
+    };
+  }
   return {
     label: 'Alert',
     icon: Bell,
@@ -262,9 +298,9 @@ const NOTIFICATION_COLUMNS: ColumnDef[] = [
   {
     id: 'type',
     label: 'Type',
-    width: 100,
-    minWidth: 80,
-    maxWidth: 130,
+    width: 130,
+    minWidth: 100,
+    maxWidth: 170,
     resizable: true,
     filterable: true,
     filterType: 'multiselect',
@@ -273,35 +309,35 @@ const NOTIFICATION_COLUMNS: ColumnDef[] = [
   {
     id: 'content',
     label: 'Notification',
-    width: 300,
-    minWidth: 200,
+    width: 999, // flex — will stretch to fill remaining space
+    minWidth: 300,
     resizable: false,
     filterable: false,
   },
   {
     id: 'source',
     label: 'Source',
-    width: 120,
-    minWidth: 80,
-    maxWidth: 160,
+    width: 140,
+    minWidth: 100,
+    maxWidth: 200,
     resizable: true,
     filterable: false,
   },
   {
     id: 'time',
     label: 'Time',
-    width: 100,
-    minWidth: 80,
-    maxWidth: 140,
+    width: 120,
+    minWidth: 90,
+    maxWidth: 160,
     resizable: true,
     filterable: false,
   },
   {
     id: 'actions',
     label: 'Actions',
-    width: 100,
-    minWidth: 80,
-    maxWidth: 120,
+    width: 80,
+    minWidth: 60,
+    maxWidth: 100,
     resizable: false,
     filterable: false,
     align: 'right',
@@ -424,7 +460,7 @@ const NotificationTableRow: React.FC<{
       </td>
 
       {/* Notification Content */}
-      <td className="px-3 py-2.5" style={{ minWidth: 200 }}>
+      <td className="px-3 py-2.5 w-full" style={{ minWidth: 300 }}>
         <div className="flex flex-col">
           <span
             className={`text-sm ${
@@ -456,7 +492,7 @@ const NotificationTableRow: React.FC<{
             <span className="truncate max-w-[80px]">{notification.projectName}</span>
           </div>
         ) : (
-          <span className="text-xs text-slate-400 dark:text-slate-600">-</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-600">-</span>
         )}
       </td>
 
@@ -488,7 +524,7 @@ const NotificationTableRow: React.FC<{
                   e.stopPropagation();
                   onOpenChat(notification);
                 }}
-                className="p-1.5 rounded hover:bg-purple-100 dark:hover:bg-purple-900/30 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                className="p-1.5 rounded hover:bg-purple-100 dark:hover:bg-purple-900/30 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
                 title={isPolish ? 'Czat' : 'Chat'}
               >
                 <MessageSquare size={14} />
@@ -503,7 +539,7 @@ const NotificationTableRow: React.FC<{
                     e.stopPropagation();
                     setShowSnoozeMenu(!showSnoozeMenu);
                   }}
-                  className="p-1.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                  className="p-1.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
                   title={isPolish ? 'Odłóż' : 'Snooze'}
                 >
                   <Clock size={14} />
@@ -516,12 +552,12 @@ const NotificationTableRow: React.FC<{
                         { preset: '1h' as SnoozePreset, label: isPolish ? '1 godz.' : '1 hour' },
                         { preset: '4h' as SnoozePreset, label: isPolish ? '4 godz.' : '4 hours' },
                         {
-                          preset: 'tomorrow' as SnoozePreset,
-                          label: isPolish ? 'Jutro' : 'Tomorrow',
+                          preset: '1d' as SnoozePreset,
+                          label: isPolish ? '1 dzień' : '1 day',
                         },
                         {
-                          preset: 'next_week' as SnoozePreset,
-                          label: isPolish ? 'Za tydzień' : 'Next week',
+                          preset: '3d' as SnoozePreset,
+                          label: isPolish ? '3 dni' : '3 days',
                         },
                       ].map(({ preset, label }) => (
                         <button
@@ -549,7 +585,7 @@ const NotificationTableRow: React.FC<{
                   e.stopPropagation();
                   onMarkRead(notification.id);
                 }}
-                className="p-1.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                className="p-1.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                 title={isPolish ? 'Oznacz jako przeczytane' : 'Mark as read'}
               >
                 <Check size={14} />
@@ -682,6 +718,14 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
   // Open filter dropdown state
   const [openFilterId, setOpenFilterId] = useState<string | null>(null);
 
+  // Session-muted types UI
+  const [mutedTypesOpen, setMutedTypesOpen] = useState(false);
+  const [mutedTypes, setMutedTypes] = useState<string[]>(() => getMutedNotificationTypes());
+
+  useEffect(() => {
+    if (mutedTypes.length === 0 && mutedTypesOpen) setMutedTypesOpen(false);
+  }, [mutedTypes.length, mutedTypesOpen]);
+
   // Snooze hook
   const { snooze, isSnoozed, formatRemainingTime, getSnoozedIds } = useNotificationSnooze();
 
@@ -702,7 +746,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
         isRead: n.isRead ?? (n.read === true || n.read === 1),
         data: n.data || n.metadata || {},
       }));
-      setNotifications(mapped);
+      setNotifications(mapped.filter((n: any) => !isNotificationTypeMuted(n.type)));
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
       toast.error('Failed to load notifications');
@@ -713,6 +757,16 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
 
   useEffect(() => {
     fetchNotifications();
+  }, [fetchNotifications]);
+
+  // Refresh on session mute changes
+  useEffect(() => {
+    const handle = () => {
+      setMutedTypes(getMutedNotificationTypes());
+      fetchNotifications();
+    };
+    window.addEventListener(NOTIFICATION_MUTE_SESSION_CHANGED_EVENT, handle as any);
+    return () => window.removeEventListener(NOTIFICATION_MUTE_SESSION_CHANGED_EVENT, handle as any);
   }, [fetchNotifications]);
 
   // Filter notifications
@@ -856,8 +910,8 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     const presetLabels: Record<SnoozePreset, { en: string; pl: string }> = {
       '1h': { en: '1 hour', pl: '1 godzinę' },
       '4h': { en: '4 hours', pl: '4 godziny' },
-      tomorrow: { en: 'tomorrow', pl: 'jutro' },
-      next_week: { en: 'next week', pl: 'za tydzień' },
+      '1d': { en: '1 day', pl: '1 dzień' },
+      '3d': { en: '3 days', pl: '3 dni' },
     };
     toast.success(
       isPolish
@@ -1019,7 +1073,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
   if (filteredNotifications.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
-        <Bell size={48} className="text-slate-400 dark:text-slate-600 mb-4" />
+        <Bell size={48} className="text-slate-500 dark:text-slate-400 dark:text-slate-600 mb-4" />
         <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
           No notifications
         </h3>
@@ -1032,7 +1086,72 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
       <div className="flex-1 overflow-y-auto p-4">
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-          <table className="w-full" style={{ minWidth: 800 }}>
+          {/* Session-muted types (lightweight control) */}
+          {mutedTypes.length > 0 && (
+            <div className="flex items-center justify-end px-3 py-2 border-b border-slate-200 dark:border-navy-700/50 bg-slate-50/50 dark:bg-navy-900/40">
+              <div className="relative" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => setMutedTypesOpen((v) => !v)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  title={isPolish ? 'Wyciszone typy (sesja)' : 'Muted types (session)'}
+                >
+                  <BellOff size={13} className="text-slate-500 dark:text-slate-400" />
+                  {isPolish ? 'Wyciszone' : 'Muted'} ({mutedTypes.length})
+                </button>
+
+                {mutedTypesOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setMutedTypesOpen(false)}
+                    />
+                    <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/60 shadow-xl overflow-hidden">
+                      <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700/60 flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                          {isPolish ? 'Wyciszone typy (sesja)' : 'Muted types (session)'}
+                        </span>
+                        <button
+                          onClick={() => setMutedTypesOpen(false)}
+                          className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+                        >
+                          <X size={14} className="text-slate-500 dark:text-slate-400" />
+                        </button>
+                      </div>
+
+                      <div className="max-h-56 overflow-auto">
+                        {mutedTypes.map((t) => (
+                          <div
+                            key={t}
+                            className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-navy-800/60"
+                          >
+                            <span className="text-xs text-slate-600 dark:text-slate-300 truncate">
+                              {t.replace(/_/g, ' ')}
+                            </span>
+                            <button
+                              onClick={() => unmuteNotificationTypeForSession(t)}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                            >
+                              {isPolish ? 'Odblokuj' : 'Unmute'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-700/60 flex justify-end">
+                        <button
+                          onClick={() => clearMutedNotificationTypesForSession()}
+                          className="text-[11px] font-medium text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white"
+                        >
+                          {isPolish ? 'Wyczyść wszystko' : 'Clear all'}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+          <table className="w-full table-fixed" style={{ minWidth: 800 }}>
             <thead>
               <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
                 {/* Select All */}
@@ -1046,7 +1165,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                           ? 'bg-primary-500 border-primary-500 text-white'
                           : someSelected
                             ? 'bg-primary-500/50 border-primary-500 text-white'
-                            : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
+                            : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-500 dark:text-slate-400'
                       }
                     `}
                   >
@@ -1122,7 +1241,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                   />
                 </th>
 
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-full">
                   Notification
                 </th>
                 <th
@@ -1176,7 +1295,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                                 {isPolish
                                   ? TIME_GROUP_LABELS[group].pl
                                   : TIME_GROUP_LABELS[group].en}
-                                <span className="ml-2 text-slate-400 dark:text-slate-500 font-normal">
+                                <span className="ml-2 text-slate-500 dark:text-slate-400 dark:text-slate-500 font-normal">
                                   ({groupNotifications.length})
                                 </span>
                               </span>

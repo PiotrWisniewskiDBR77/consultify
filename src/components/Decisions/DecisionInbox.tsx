@@ -286,7 +286,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
         <div className="shrink-0 p-4 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-lg shadow-sm">
+              <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 text-slate-900 dark:text-white rounded-lg shadow-sm">
                 <Bell size={20} />
               </div>
               <div>
@@ -313,7 +313,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
               <button
                 onClick={() => fetchDecisions(true)}
                 disabled={refreshing}
-                className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               >
                 <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
               </button>

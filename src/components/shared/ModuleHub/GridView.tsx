@@ -206,7 +206,7 @@ export const GridView: React.FC<GridViewProps> = ({
           >
             {/* Header */}
             <div className="flex items-start justify-between p-4 pb-2">
-              <span className="font-mono text-xs font-bold text-slate-400 uppercase">
+              <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
                 {item.type}
               </span>
               <div className="relative">
@@ -215,7 +215,7 @@ export const GridView: React.FC<GridViewProps> = ({
                     e.stopPropagation();
                     setMenuItemId(menuItemId === item.id ? null : item.id);
                   }}
-                  className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-navy-700/50 text-slate-400 hover:text-white transition-all"
+                  className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-navy-700/50 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
                 >
                   <MoreVertical size={16} />
                 </button>
@@ -230,14 +230,14 @@ export const GridView: React.FC<GridViewProps> = ({
                         setMenuItemId(null);
                       }}
                     />
-                    <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-navy-800 border border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                    <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           onItemAction?.('edit', item);
                           setMenuItemId(null);
                         }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
                       >
                         <Maximize2 size={14} />
                         Open
@@ -248,7 +248,7 @@ export const GridView: React.FC<GridViewProps> = ({
                           onItemAction?.('duplicate', item);
                           setMenuItemId(null);
                         }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
                       >
                         <Copy size={14} />
                         Duplicate
@@ -259,19 +259,19 @@ export const GridView: React.FC<GridViewProps> = ({
                           onItemAction?.('rename', item);
                           setMenuItemId(null);
                         }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
                       >
                         <Edit size={14} />
                         Edit
                       </button>
-                      <div className="border-t border-navy-600" />
+                      <div className="border-t border-slate-300 dark:border-navy-600" />
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           onItemAction?.('delete', item);
                           setMenuItemId(null);
                         }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-400 hover:bg-navy-700"
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-400 hover:bg-slate-100 dark:hover:bg-navy-700"
                       >
                         <Trash2 size={14} />
                         Delete
@@ -284,13 +284,13 @@ export const GridView: React.FC<GridViewProps> = ({
 
             {/* Content */}
             <div className="px-4 pb-2">
-              <h3 className="text-white font-medium leading-tight line-clamp-2">{item.name}</h3>
+              <h3 className="text-slate-900 dark:text-white font-medium leading-tight line-clamp-2">{item.name}</h3>
             </div>
 
             {/* Progress */}
             <div className="px-4 py-2">
               <div className="flex items-center gap-2">
-                <div className="flex-1 h-1 bg-navy-700/50 rounded-full overflow-hidden">
+                <div className="flex-1 h-1 bg-slate-200 dark:bg-navy-700/50 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full ${
                       item.progress === 100
@@ -304,17 +304,17 @@ export const GridView: React.FC<GridViewProps> = ({
                     style={{ width: `${item.progress}%` }}
                   />
                 </div>
-                <span className="text-xs text-slate-400">{item.progress}%</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">{item.progress}%</span>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between px-4 py-3 border-t border-navy-700/50">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-navy-700/50">
               <div className={`flex items-center gap-1.5 ${statusConfig.text}`}>
                 <span className={`w-2 h-2 rounded-full ${statusConfig.dot}`} />
                 <span className="text-xs font-medium">{statusConfig.label}</span>
               </div>
-              <span className="text-xs text-slate-500">{formatRelativeTime(item.updatedAt)}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{formatRelativeTime(item.updatedAt)}</span>
             </div>
 
             {/* Quick Preview Button (on hover) */}
@@ -344,7 +344,7 @@ export const GridView: React.FC<GridViewProps> = ({
           onClick={onNewItem}
           className="
             flex flex-col items-center justify-center gap-2
-            min-h-[180px] rounded-xl border-2 border-dashed border-navy-600
+            min-h-[180px] rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600
             text-slate-500 hover:text-primary-400 hover:border-primary-500/50
             transition-all
           "

@@ -354,7 +354,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
                     ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
                     : isBelow
                       ? 'bg-green-500/30 text-green-300'
-                      : 'bg-navy-700 text-slate-400 hover:bg-navy-600'
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-600'
                 }
                 ${readOnly ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
               `}
@@ -387,7 +387,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
                 ${
                   isSelected
                     ? `bg-${waste.color}-500/20 border border-${waste.color}-500 text-${waste.color}-400`
-                    : 'bg-navy-700 border border-navy-600 text-slate-400 hover:bg-navy-600'
+                    : 'bg-slate-200 dark:bg-navy-700 border border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-600'
                 }
                 ${readOnly ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
               `}
@@ -409,11 +409,11 @@ export const LeanForm: React.FC<LeanFormProps> = ({
     return (
       <div
         key={`process-${index}`}
-        className="bg-navy-800 border border-navy-700 rounded-xl overflow-hidden"
+        className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden"
       >
         <button
           onClick={() => toggleItem(`process-${index}`)}
-          className="w-full flex items-center justify-between p-4 hover:bg-navy-750 transition-colors"
+          className="w-full flex items-center justify-between p-4 hover:bg-slate-100 dark:hover:bg-navy-750 transition-colors"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
@@ -422,8 +422,8 @@ export const LeanForm: React.FC<LeanFormProps> = ({
               </span>
             </div>
             <div className="text-left">
-              <h4 className="text-white font-medium">{process.name}</h4>
-              <p className="text-xs text-slate-400">{process.department || 'No department'}</p>
+              <h4 className="text-slate-900 dark:text-white font-medium">{process.name}</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{process.department || 'No department'}</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -433,18 +433,18 @@ export const LeanForm: React.FC<LeanFormProps> = ({
               </span>
             )}
             {isExpanded ? (
-              <ChevronUp size={20} className="text-slate-400" />
+              <ChevronUp size={20} className="text-slate-500 dark:text-slate-400" />
             ) : (
-              <ChevronDown size={20} className="text-slate-400" />
+              <ChevronDown size={20} className="text-slate-500 dark:text-slate-400" />
             )}
           </div>
         </button>
 
         {isExpanded && (
-          <div className="px-4 pb-4 space-y-4 border-t border-navy-700 pt-4">
+          <div className="px-4 pb-4 space-y-4 border-t border-slate-200 dark:border-navy-700 pt-4">
             {/* Lean Maturity */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Lean Maturity (Dojrzałość Lean)
               </label>
               {renderLevelSelector(process.leanMaturity, (level) =>
@@ -454,7 +454,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
 
             {/* Automation Potential */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Automation Potential (Potencjał Automatyzacji)
               </label>
               {renderLevelSelector(process.automationPotential, (level) =>
@@ -464,7 +464,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
 
             {/* Wastes */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Identified Wastes (Zidentyfikowane Marnotrawstwa)
               </label>
               {renderWasteSelector(process.wastesIdentified, (waste) =>
@@ -474,7 +474,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
 
             {/* Priority */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Priority (Priorytet)
               </label>
               {renderLevelSelector(process.priority, (level) =>
@@ -494,11 +494,11 @@ export const LeanForm: React.FC<LeanFormProps> = ({
     return (
       <div
         key={`workstation-${index}`}
-        className="bg-navy-800 border border-navy-700 rounded-xl overflow-hidden"
+        className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden"
       >
         <button
           onClick={() => toggleItem(`workstation-${index}`)}
-          className="w-full flex items-center justify-between p-4 hover:bg-navy-750 transition-colors"
+          className="w-full flex items-center justify-between p-4 hover:bg-slate-100 dark:hover:bg-navy-750 transition-colors"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
@@ -507,8 +507,8 @@ export const LeanForm: React.FC<LeanFormProps> = ({
               </span>
             </div>
             <div className="text-left">
-              <h4 className="text-white font-medium">{workstation.name}</h4>
-              <p className="text-xs text-slate-400">
+              <h4 className="text-slate-900 dark:text-white font-medium">{workstation.name}</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {workstation.department || 'No department'} • {workstation.headcount} FTE
               </p>
             </div>
@@ -520,18 +520,18 @@ export const LeanForm: React.FC<LeanFormProps> = ({
               </span>
             )}
             {isExpanded ? (
-              <ChevronUp size={20} className="text-slate-400" />
+              <ChevronUp size={20} className="text-slate-500 dark:text-slate-400" />
             ) : (
-              <ChevronDown size={20} className="text-slate-400" />
+              <ChevronDown size={20} className="text-slate-500 dark:text-slate-400" />
             )}
           </div>
         </button>
 
         {isExpanded && (
-          <div className="px-4 pb-4 space-y-4 border-t border-navy-700 pt-4">
+          <div className="px-4 pb-4 space-y-4 border-t border-slate-200 dark:border-navy-700 pt-4">
             {/* Lean Maturity */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Lean Maturity (Dojrzałość Lean)
               </label>
               {renderLevelSelector(workstation.leanMaturity, (level) =>
@@ -541,7 +541,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
 
             {/* Automation Potential */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Automation Potential (Potencjał Automatyzacji)
               </label>
               {renderLevelSelector(workstation.automationPotential, (level) =>
@@ -551,7 +551,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
 
             {/* Wastes */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Identified Wastes (Zidentyfikowane Marnotrawstwa)
               </label>
               {renderWasteSelector(workstation.wastesIdentified, (waste) =>
@@ -561,7 +561,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
 
             {/* Headcount */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Headcount (FTE)
               </label>
               <input
@@ -605,8 +605,8 @@ export const LeanForm: React.FC<LeanFormProps> = ({
     return (
       <div className="space-y-4">
         {areas.map((area) => (
-          <div key={area.key} className="bg-navy-800 border border-navy-700 rounded-xl p-4">
-            <label className="block text-sm font-medium text-white mb-3">
+          <div key={area.key} className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+            <label className="block text-sm font-medium text-slate-900 dark:text-white mb-3">
               {isPolish ? area.namePL : area.name}
             </label>
             {renderLevelSelector(data.management[area.key], (level) =>
@@ -619,23 +619,23 @@ export const LeanForm: React.FC<LeanFormProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-navy-950">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
       {/* Progress Bar */}
       {showProgress && (
-        <div className="bg-navy-900 border-b border-navy-700 px-6 py-4">
+        <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700 px-6 py-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-4">
               <BarChart3 size={20} className="text-primary-400" />
-              <span className="text-sm text-slate-300">
+              <span className="text-sm text-slate-700 dark:text-slate-300">
                 {progress.totalProcesses} processes, {progress.totalWorkstations} workstations
               </span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
                 Lean Maturity:{' '}
                 <span className="text-white font-medium">{data.overallLeanMaturity || '-'}</span>
               </span>
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
                 Automation:{' '}
                 <span className="text-white font-medium">
                   {data.overallAutomationPotential || '-'}
@@ -653,7 +653,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
       )}
 
       {/* Phase Navigation */}
-      <div className="bg-navy-900 border-b border-navy-700 px-6 py-3">
+      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700 px-6 py-3">
         <div className="flex items-center gap-2 overflow-x-auto">
           {DBR77_PHASES.map((phase) => {
             const isActive = activePhaseId === phase.id;
@@ -669,7 +669,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
                   ${
                     isActive
                       ? `bg-${color}-500/15 border-${color}-500 text-${color}-400`
-                      : 'bg-navy-800 border-navy-600 text-slate-400 hover:border-slate-500'
+                      : 'bg-slate-100 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500'
                   }
                 `}
               >
@@ -696,10 +696,10 @@ export const LeanForm: React.FC<LeanFormProps> = ({
               </span>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                 {isPolish ? currentPhase.name : currentPhase.nameEN}
               </h2>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 {isPolish ? currentPhase.description : currentPhase.descriptionEN}
               </p>
             </div>
@@ -713,7 +713,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'processes'
                 ? 'bg-blue-500/20 text-blue-400 border border-blue-500'
-                : 'bg-navy-800 text-slate-400 border border-navy-600 hover:border-slate-500'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-navy-600 hover:border-slate-400 dark:hover:border-slate-500'
             }`}
           >
             Processes ({data.processes.length})
@@ -723,7 +723,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'workstations'
                 ? 'bg-purple-500/20 text-purple-400 border border-purple-500'
-                : 'bg-navy-800 text-slate-400 border border-navy-600 hover:border-slate-500'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-navy-600 hover:border-slate-400 dark:hover:border-slate-500'
             }`}
           >
             Workstations ({data.workstations.length})
@@ -733,7 +733,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'management'
                 ? 'bg-green-500/20 text-green-400 border border-green-500'
-                : 'bg-navy-800 text-slate-400 border border-navy-600 hover:border-slate-500'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-navy-600 hover:border-slate-400 dark:hover:border-slate-500'
             }`}
           >
             Management
@@ -747,7 +747,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
 
             {/* Add Process Button */}
             {!readOnly && (
-              <div className="bg-navy-800/50 border border-dashed border-navy-600 rounded-xl p-4">
+              <div className="bg-slate-50 dark:bg-navy-800/50 border border-dashed border-slate-300 dark:border-navy-600 rounded-xl p-4">
                 {showAddForm && activeTab === 'processes' ? (
                   <div className="space-y-3">
                     <input
@@ -755,14 +755,14 @@ export const LeanForm: React.FC<LeanFormProps> = ({
                       value={newItemName}
                       onChange={(e) => setNewItemName(e.target.value)}
                       placeholder="Process name..."
-                      className="w-full px-3 py-2 bg-navy-700 border border-navy-600 rounded-lg text-white"
+                      className="w-full px-3 py-2 bg-slate-100 dark:bg-navy-700 border border-slate-300 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                     />
                     <input
                       type="text"
                       value={newItemDepartment}
                       onChange={(e) => setNewItemDepartment(e.target.value)}
                       placeholder="Department..."
-                      className="w-full px-3 py-2 bg-navy-700 border border-navy-600 rounded-lg text-white"
+                      className="w-full px-3 py-2 bg-slate-100 dark:bg-navy-700 border border-slate-300 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                     />
                     <div className="flex gap-2">
                       <button
@@ -773,7 +773,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
                       </button>
                       <button
                         onClick={() => setShowAddForm(false)}
-                        className="px-4 py-2 bg-navy-700 text-slate-300 rounded-lg hover:bg-navy-600"
+                        className="px-4 py-2 bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-navy-600"
                       >
                         Cancel
                       </button>
@@ -782,7 +782,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
                 ) : (
                   <button
                     onClick={() => setShowAddForm(true)}
-                    className="w-full py-2 text-slate-400 hover:text-white transition-colors"
+                    className="w-full py-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     + Add Process
                   </button>
@@ -800,7 +800,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
 
             {/* Add Workstation Button */}
             {!readOnly && (
-              <div className="bg-navy-800/50 border border-dashed border-navy-600 rounded-xl p-4">
+              <div className="bg-slate-50 dark:bg-navy-800/50 border border-dashed border-slate-300 dark:border-navy-600 rounded-xl p-4">
                 {showAddForm && activeTab === 'workstations' ? (
                   <div className="space-y-3">
                     <input
@@ -808,14 +808,14 @@ export const LeanForm: React.FC<LeanFormProps> = ({
                       value={newItemName}
                       onChange={(e) => setNewItemName(e.target.value)}
                       placeholder="Workstation name..."
-                      className="w-full px-3 py-2 bg-navy-700 border border-navy-600 rounded-lg text-white"
+                      className="w-full px-3 py-2 bg-slate-100 dark:bg-navy-700 border border-slate-300 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                     />
                     <input
                       type="text"
                       value={newItemDepartment}
                       onChange={(e) => setNewItemDepartment(e.target.value)}
                       placeholder="Department..."
-                      className="w-full px-3 py-2 bg-navy-700 border border-navy-600 rounded-lg text-white"
+                      className="w-full px-3 py-2 bg-slate-100 dark:bg-navy-700 border border-slate-300 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                     />
                     <div className="flex gap-2">
                       <button
@@ -826,7 +826,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
                       </button>
                       <button
                         onClick={() => setShowAddForm(false)}
-                        className="px-4 py-2 bg-navy-700 text-slate-300 rounded-lg hover:bg-navy-600"
+                        className="px-4 py-2 bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-navy-600"
                       >
                         Cancel
                       </button>
@@ -835,7 +835,7 @@ export const LeanForm: React.FC<LeanFormProps> = ({
                 ) : (
                   <button
                     onClick={() => setShowAddForm(true)}
-                    className="w-full py-2 text-slate-400 hover:text-white transition-colors"
+                    className="w-full py-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     + Add Workstation
                   </button>
@@ -849,14 +849,14 @@ export const LeanForm: React.FC<LeanFormProps> = ({
       </div>
 
       {/* Navigation Footer */}
-      <div className="bg-navy-900 border-t border-navy-700 px-6 py-4">
+      <div className="bg-white dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <button
             onClick={() => goToPhase('prev')}
             disabled={phaseIds.indexOf(activePhaseId) === 0}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-              bg-navy-800 border border-navy-600 text-slate-300
-              hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed
+              bg-slate-100 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300
+              hover:bg-slate-200 dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed
               transition-colors"
           >
             <ChevronLeft size={16} />

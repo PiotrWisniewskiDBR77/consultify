@@ -37,7 +37,7 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
       <div className="mb-8">
         <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
           Additional Audits
-          <span className="text-xs font-normal text-slate-500 dark:text-slate-400 border border-white/10 px-2 py-0.5 rounded ml-2">
+          <span className="text-xs font-normal text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10 px-2 py-0.5 rounded ml-2">
             ADMA, SIRI, ISO, Lean
           </span>
         </h2>
@@ -90,7 +90,7 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
         {!isAdding && (
           <button
             onClick={() => setIsAdding(true)}
-            className="border border-dashed border-slate-300 dark:border-navy-700 rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all min-h-[160px]"
+            className="border border-dashed border-slate-300 dark:border-navy-700 rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all min-h-[160px]"
           >
             <Plus size={32} />
             <span className="text-sm font-medium">Add Audit Result</span>

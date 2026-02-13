@@ -167,7 +167,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
         {compact && (
           <button
             onClick={() => setIsExpanded(false)}
-            className="text-slate-400 hover:text-slate-600 dark:text-slate-400"
+            className="text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400"
           >
             <X size={16} />
           </button>
@@ -241,7 +241,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
               </button>
             </div>
 
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
               Allowed: PDF, Word, Excel, PowerPoint, images, CSV, TXT, JSON (max 25MB)
             </p>
           </div>
@@ -277,7 +277,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                   <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
                     {attachment.fileName}
                   </p>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500">
+                  <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     <span>{formatFileSize(attachment.fileSize)}</span>
                     <span>•</span>
                     <span>
@@ -297,7 +297,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => handleDownload(attachment)}
-                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-500 transition-colors"
+                    className="p-1.5 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-blue-500 transition-colors"
                     title="Download"
                   >
                     <Download size={14} />
@@ -307,7 +307,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
                     <button
                       onClick={() => handleDelete(attachment.id)}
                       disabled={isCurrentDeleting}
-                      className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors disabled:opacity-50"
+                      className="p-1.5 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors disabled:opacity-50"
                       title="Delete"
                     >
                       {isCurrentDeleting ? (
@@ -323,7 +323,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
           })}
         </div>
       ) : (
-        <div className="text-center py-4 text-sm text-slate-400 dark:text-slate-500">
+        <div className="text-center py-4 text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
           No attachments for this level
         </div>
       )}

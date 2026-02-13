@@ -456,7 +456,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                 className={`touch-target flex items-center justify-center w-10 h-10 rounded-lg transition-all ${
                   data.actual && data.target
                     ? 'bg-purple-600 text-white shadow-lg'
-                    : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500'
+                    : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
                 }`}
               >
                 <ArrowRight size={18} />
@@ -470,14 +470,14 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                 className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 touch-target"
               >
                 <div className="flex-1 text-left">
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest block">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest block">
                     {workspaceT.functionalArea || 'FUNCTIONAL AREA'}
                   </span>
                   <span className="text-sm font-bold text-navy-900 dark:text-white">
                     {activeArea?.title || workspaceT.selectArea || 'Select Area'}
                   </span>
                 </div>
-                <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+                <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
               </button>
             )}
 
@@ -489,7 +489,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                     AI Actions
                   </span>
                   <button onClick={() => setShowAiMenu(false)} className="p-1">
-                    <X size={14} className="text-slate-400 dark:text-slate-500" />
+                    <X size={14} className="text-slate-500 dark:text-slate-400" />
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -571,7 +571,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                   {/* Dropdown Trigger */}
                   <div className="flex items-center gap-2 cursor-pointer text-navy-900 dark:text-white font-bold text-sm bg-slate-100 dark:bg-navy-950/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20 transition-all">
                     {activeArea?.title || workspaceT.selectArea || 'Select Area'}
-                    <ChevronDown size={14} className="text-slate-400 dark:text-slate-500" />
+                    <ChevronDown size={14} className="text-slate-500 dark:text-slate-400" />
                   </div>
 
                   {/* Dropdown Menu */}
@@ -651,7 +651,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
 
               {/* Overall Progress (Desktop) */}
               <div className="flex items-center gap-3 bg-slate-100 dark:bg-navy-950/50 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700">
-                <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">
+                <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">
                   {workspaceT.axisProgress || 'AXIS PROGRESS'}
                 </span>
                 <div className="h-8 w-px bg-slate-200 dark:bg-white/10 mx-2"></div>
@@ -679,7 +679,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                 className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg ${
                   data.actual && data.target
                     ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30'
-                    : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                    : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                 }`}
               >
                 {workspaceT.confirmNext || 'Potwierdź i Dalej'}
@@ -703,7 +703,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                 {workspaceT.selectArea || 'Select Area'}
               </h3>
               <button onClick={() => setShowAreaSelector(false)} className="p-2">
-                <X size={20} className="text-slate-400 dark:text-slate-500" />
+                <X size={20} className="text-slate-500 dark:text-slate-400" />
               </button>
             </div>
             <div className="overflow-y-auto max-h-[calc(70vh-60px)] momentum-scroll">

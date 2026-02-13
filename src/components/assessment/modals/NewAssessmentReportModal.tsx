@@ -70,7 +70,7 @@ export function NewAssessmentReportModal(props: {
           <button
             type="button"
             onClick={() => !busy && onClose()}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500"
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400"
             aria-label="Close"
           >
             <X className="w-4 h-4" />

@@ -263,7 +263,7 @@ export function ReportTemplatePickerModal(props: {
                 <option value="bank">Bank</option>
                 <option value="team">Team</option>
               </select>
-              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500 dark:text-slate-400 pointer-events-none" />
             </div>
 
             {/* Framework filter */}
@@ -285,7 +285,7 @@ export function ReportTemplatePickerModal(props: {
                 <option value="siri">SIRI</option>
                 <option value="adma">ADMA</option>
               </select>
-              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500 dark:text-slate-400 pointer-events-none" />
             </div>
 
             {/* Clear filters (only when active) */}
@@ -293,7 +293,7 @@ export function ReportTemplatePickerModal(props: {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
               >
                 Clear
               </button>
@@ -311,7 +311,7 @@ export function ReportTemplatePickerModal(props: {
                   'p-1 rounded transition-colors',
                   viewMode === 'grid'
                     ? 'bg-white dark:bg-navy-700 text-purple-600 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 )}
                 title="Grid view"
               >
@@ -324,7 +324,7 @@ export function ReportTemplatePickerModal(props: {
                   'p-1 rounded transition-colors',
                   viewMode === 'table'
                     ? 'bg-white dark:bg-navy-700 text-purple-600 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 )}
                 title="Table view"
               >
@@ -435,7 +435,7 @@ export function ReportTemplatePickerModal(props: {
                       >
                         {framework.toUpperCase()}
                       </span>
-                      <span className="text-[9px] text-slate-400 dark:text-slate-500 capitalize">
+                      <span className="text-[9px] text-slate-500 dark:text-slate-400 capitalize">
                         {recipient}
                       </span>
                     </div>
@@ -470,7 +470,7 @@ export function ReportTemplatePickerModal(props: {
                           <option value="siri">SIRI</option>
                           <option value="adma">ADMA</option>
                         </select>
-                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500 dark:text-slate-400 pointer-events-none" />
                       </div>
                     </th>
                     <th className="px-4 py-2 font-medium hidden md:table-cell">
@@ -491,7 +491,7 @@ export function ReportTemplatePickerModal(props: {
                           <option value="bank">Bank</option>
                           <option value="team">Team</option>
                         </select>
-                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500 dark:text-slate-400 pointer-events-none" />
                       </div>
                     </th>
                     <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 w-20">
@@ -520,7 +520,7 @@ export function ReportTemplatePickerModal(props: {
                           <div className="font-medium text-sm text-slate-900 dark:text-white">
                             {tpl.name}
                           </div>
-                          <div className="text-[11px] text-slate-400 dark:text-slate-500 line-clamp-1 mt-0.5">
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
                             {tpl.description || 'No description'}
                           </div>
                         </td>

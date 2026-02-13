@@ -71,14 +71,14 @@ export const ClientAccessView: React.FC = () => {
 
       // Fetch clients
       const clientsResponse = await Api.get('/api/partners/clients');
-      if (clientsResponse?.data?.success && clientsResponse?.data?.data) {
-        setClients(clientsResponse.data.data);
+      if (clientsResponse?.success && clientsResponse?.data) {
+        setClients(clientsResponse.data);
       }
 
       // Fetch employees
       const employeesResponse = await Api.get('/api/partners/employees');
-      if (employeesResponse?.data?.success && employeesResponse?.data?.data) {
-        setEmployees(employeesResponse.data.data);
+      if (employeesResponse?.success && employeesResponse?.data) {
+        setEmployees(employeesResponse.data);
       }
     } catch (err: any) {
       console.error('Error fetching client access data:', err);
@@ -99,12 +99,12 @@ export const ClientAccessView: React.FC = () => {
     try {
       setGeneratingLink(true);
       const response = await Api.post('/api/partners/access-links', {});
-      if (response?.data?.success && response?.data?.data?.link) {
-        setAccessLink(response.data.data.link);
+      if (response?.success && response?.data?.link) {
+        setAccessLink(response.data.link);
         toast.success(t('partner.clientAccess.linkGenerated', 'Access link generated!'));
       } else {
         toast.error(
-          response?.data?.error || t('partner.clientAccess.linkFailed', 'Failed to generate link')
+          response?.error || t('partner.clientAccess.linkFailed', 'Failed to generate link')
         );
       }
     } catch (err: any) {
@@ -152,7 +152,7 @@ export const ClientAccessView: React.FC = () => {
         <div className="p-4 rounded-full bg-red-500/10 mb-4">
           <Users className="w-8 h-8 text-red-400" />
         </div>
-        <p className="text-slate-400 dark:text-slate-500 mb-4">{error}</p>
+        <p className="text-slate-500 mb-4">{error}</p>
         <button
           onClick={fetchData}
           className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors"
@@ -167,10 +167,10 @@ export const ClientAccessView: React.FC = () => {
     <div className="space-y-6">
       {/* Header - HubSpot Style */}
       <div>
-        <h2 className="text-xl font-semibold text-white">
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
           {t('partner.clientAccess.title', 'Client Access Manager')}
         </h2>
-        <p className="text-slate-400 dark:text-slate-500">
+        <p className="text-slate-500">
           {t(
             'partner.clientAccess.subtitle',
             "Manage your employees' client account access from one place"
@@ -186,8 +186,8 @@ export const ClientAccessView: React.FC = () => {
             className={cn(
               'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
               activeTab === 'clients'
-                ? 'text-white border-violet-500'
-                : 'text-slate-400 dark:text-slate-500 border-transparent hover:text-white'
+                ? 'text-slate-900 dark:text-white border-violet-500'
+                : 'text-slate-500 border-transparent hover:text-slate-900 dark:hover:text-white'
             )}
           >
             {t('partner.clientAccess.clients', 'Clients')}
@@ -197,8 +197,8 @@ export const ClientAccessView: React.FC = () => {
             className={cn(
               'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
               activeTab === 'employees'
-                ? 'text-white border-violet-500'
-                : 'text-slate-400 dark:text-slate-500 border-transparent hover:text-white'
+                ? 'text-slate-900 dark:text-white border-violet-500'
+                : 'text-slate-500 border-transparent hover:text-slate-900 dark:hover:text-white'
             )}
           >
             {t('partner.clientAccess.employees', 'Employees')}
@@ -226,7 +226,7 @@ export const ClientAccessView: React.FC = () => {
               <p className="text-sm text-violet-300 mb-1">
                 {t('partner.clientAccess.generatedLink', 'Your access link is ready:')}
               </p>
-              <code className="text-sm text-white bg-navy-900/50 px-3 py-1.5 rounded block truncate">
+              <code className="text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-navy-900/50 px-3 py-1.5 rounded block truncate">
                 {accessLink}
               </code>
             </div>
@@ -243,7 +243,7 @@ export const ClientAccessView: React.FC = () => {
       {/* Tab Content */}
       {activeTab === 'clients' ? (
         /* Clients Tab */
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
           {/* Filters */}
           {regions.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
@@ -253,7 +253,7 @@ export const ClientAccessView: React.FC = () => {
                   'rounded-full px-4 py-1.5 text-xs font-medium transition',
                   selectedRegion === null
                     ? 'bg-violet-600 text-white'
-                    : 'bg-navy-700 text-slate-400 dark:text-slate-500 hover:text-white'
+                    : 'bg-slate-200 dark:bg-navy-700 text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 )}
               >
                 All Regions
@@ -266,7 +266,7 @@ export const ClientAccessView: React.FC = () => {
                     'flex items-center gap-1 rounded-full px-4 py-1.5 text-xs font-medium transition',
                     selectedRegion === region
                       ? 'bg-violet-600 text-white'
-                      : 'bg-navy-700 text-slate-400 dark:text-slate-500 hover:text-white'
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-500 hover:text-slate-900 dark:hover:text-white'
                   )}
                 >
                   <MapPin className="w-3 h-3" />
@@ -285,11 +285,11 @@ export const ClientAccessView: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <Users className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-slate-400 dark:text-slate-500 font-medium">
+              <Users className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+              <p className="text-slate-500 font-medium">
                 {t('partner.clientAccess.noClients', 'Nobody here')}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-slate-400 mt-1">
                 {t('partner.clientAccess.noClientsDesc', "You don't have any client access.")}
               </p>
             </div>
@@ -297,9 +297,9 @@ export const ClientAccessView: React.FC = () => {
         </div>
       ) : (
         /* Employees Tab */
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-500">
               {t(
                 'partner.clientAccess.employeesDesc',
                 "Manage your employees' client account access from one place"
@@ -320,16 +320,16 @@ export const ClientAccessView: React.FC = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-white/5">
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500 uppercase">
                       {t('partner.clientAccess.employeeName', 'Employee Name')}
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500 uppercase">
                       {t('partner.clientAccess.permissionSet', 'Permission Set')}
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-500 uppercase">
                       {t('partner.clientAccess.totalClients', 'Total Clients')}
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500 uppercase">
                       {t('partner.clientAccess.lastActive', 'Last Active')}
                     </th>
                   </tr>
@@ -344,13 +344,13 @@ export const ClientAccessView: React.FC = () => {
                               'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold',
                               employee.status === 'ACTIVE'
                                 ? 'bg-violet-500/20 text-violet-400'
-                                : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                                : 'bg-slate-700 text-slate-400'
                             )}
                           >
                             {employee.employeeName.substring(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-medium text-white flex items-center gap-2">
+                            <p className="font-medium text-slate-900 dark:text-white flex items-center gap-2">
                               {employee.employeeName}
                               <span
                                 className={cn(
@@ -359,7 +359,7 @@ export const ClientAccessView: React.FC = () => {
                                 )}
                               />
                             </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <p className="text-xs text-slate-400">
                               {employee.status === 'ACTIVE' ? 'Active' : 'Deactivated'} |{' '}
                               {employee.email}
                             </p>
@@ -367,17 +367,17 @@ export const ClientAccessView: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-3 py-3">
-                        <span className="text-slate-400 dark:text-slate-500">
+                        <span className="text-slate-500">
                           {employee.permissionSet || employee.accessType?.replace('_', ' ') || '--'}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-center">
-                        <span className="text-white">
+                        <span className="text-slate-900 dark:text-white">
                           {employee.clientCount ?? employee.clients?.length ?? 0}
                         </span>
                       </td>
                       <td className="px-3 py-3">
-                        <span className="text-slate-400 dark:text-slate-500">
+                        <span className="text-slate-500">
                           {employee.lastActive || '--'}
                         </span>
                       </td>
@@ -388,11 +388,11 @@ export const ClientAccessView: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <UserPlus className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-slate-400 dark:text-slate-500 font-medium">
+              <UserPlus className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+              <p className="text-slate-500 font-medium">
                 {t('partner.clientAccess.noEmployees', 'No team members yet')}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-slate-400 mt-1">
                 {t(
                   'partner.clientAccess.noEmployeesDesc',
                   'Add team members to manage client access.'
@@ -404,14 +404,14 @@ export const ClientAccessView: React.FC = () => {
       )}
 
       {/* PMO Compliance Info */}
-      <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
         <div className="flex items-center gap-3 mb-3">
           <Shield className="w-5 h-5 text-orange-400" />
-          <h3 className="font-semibold text-white">
+          <h3 className="font-semibold text-slate-900 dark:text-white">
             {t('partner.clientAccess.compliance', 'Access Control Compliance')}
           </h3>
         </div>
-        <p className="text-sm text-slate-400 dark:text-slate-500">
+        <p className="text-sm text-slate-500">
           {t(
             'partner.clientAccess.complianceDesc',
             'All access changes are logged according to PMO domain RESOURCE_RESPONSIBILITY and mapped to ISO 21500 Resource Subject Group (Clause 4.6).'
@@ -439,27 +439,27 @@ const ClientRow: React.FC<ClientRowProps> = ({ client }) => {
   };
 
   return (
-    <div className="flex items-center justify-between rounded-xl border border-white/5 bg-navy-900/30 p-4 transition hover:border-violet-500/30">
+    <div className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-50/50 dark:bg-navy-900/30 p-4 transition hover:border-violet-500/30">
       <div className="flex items-center gap-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/20 text-sm font-bold text-violet-400">
           {(client.clientName || client.organizationName || 'UN').substring(0, 2).toUpperCase()}
         </div>
         <div>
-          <div className="font-medium text-white">
+          <div className="font-medium text-slate-900 dark:text-white">
             {client.clientName || client.organizationName}
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
             {client.region && (
               <>
                 <MapPin className="w-3 h-3" />
                 {client.region}
-                <span className="text-slate-600 dark:text-slate-400">·</span>
+                <span className="text-slate-400">·</span>
               </>
             )}
             {client.plan && <span>{client.plan}</span>}
             {client.userCount !== undefined && (
               <>
-                <span className="text-slate-600 dark:text-slate-400">·</span>
+                <span className="text-slate-400">·</span>
                 <span>{client.userCount} users</span>
               </>
             )}

@@ -41,6 +41,8 @@ export interface Notification {
   readAt?: string;
   snoozedUntil?: string;
   checklist?: { id: string; text: string; completed: boolean }[];
+  commentsCount?: number;
+  activityCount?: number;
   createdAt: string;
 }
 
@@ -160,6 +162,16 @@ class NotificationService {
       return 'decision';
     if (t.includes('AI')) return 'ai';
     if (t.includes('INITIATIVE')) return 'initiative';
+    if (
+      t.includes('BILLING') ||
+      t.includes('PAYMENT') ||
+      t.includes('SUBSCRIPTION') ||
+      t.includes('USAGE') ||
+      t.includes('INVOICE') ||
+      t.includes('LIMIT')
+    )
+      return 'billing';
+    if (t.startsWith('DBR77_') || t.includes('DBR77')) return 'dbr77';
     if (t.includes('SYSTEM') || t.includes('ADMIN')) return 'system';
     if (t.includes('FEEDBACK') || t.includes('TICKET')) return 'feedback';
     return 'system';
@@ -285,6 +297,9 @@ class NotificationService {
     let query = `SELECT * FROM notifications WHERE user_id = ?`;
     const params: (string | number)[] = [userId];
 
+    // Exclude dismissed notifications
+    query += ` AND (is_dismissed IS NULL OR is_dismissed = 0)`;
+
     if (options?.unreadOnly) {
       query += ` AND (read = 0 OR is_read = 0)`;
     }
@@ -383,6 +398,10 @@ class NotificationService {
       readAt: r.read_at,
       snoozedUntil: r.snoozed_until || null,
       checklist,
+      commentsCount:
+        typeof r.comments_count === 'number' ? r.comments_count : Number(r.comments_count || 0),
+      activityCount:
+        typeof r.activity_count === 'number' ? r.activity_count : Number(r.activity_count || 0),
       createdAt: r.created_at,
     };
   }
@@ -394,7 +413,7 @@ class NotificationService {
     const db = await this.getDb();
 
     const result = await db.get<{ count: number }>(
-      `SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND read = 0`,
+      `SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND read = 0 AND (is_dismissed IS NULL OR is_dismissed = 0)`,
       [userId]
     );
 
@@ -421,6 +440,8 @@ class NotificationService {
       notificationId,
       userId,
     ]);
+
+    await this.addActivityLogEntry(notificationId, userId, 'marked_read', 'Notification marked as read');
   }
 
   /**
@@ -474,6 +495,8 @@ class NotificationService {
       notificationId,
       userId,
     ]);
+
+    await this.addActivityLogEntry(notificationId, userId, 'snoozed', `Snoozed until ${until}`);
   }
 
   /**
@@ -500,7 +523,12 @@ class NotificationService {
     const db = await this.getDb();
 
     const row = await db.get<Record<string, any>>(
-      `SELECT * FROM notifications WHERE id = ? AND user_id = ?`,
+      `SELECT
+          n.*,
+          (SELECT COUNT(1) FROM notification_comments nc WHERE nc.notification_id = n.id) as comments_count,
+          (SELECT COUNT(1) FROM notification_activity_log nal WHERE nal.notification_id = n.id) as activity_count
+        FROM notifications n
+        WHERE n.id = ? AND n.user_id = ?`,
       [notificationId, userId]
     );
 
@@ -718,6 +746,196 @@ class NotificationService {
           JSON.stringify(updates.typeSettings || {}),
         ]
       );
+    }
+  }
+
+  // ==========================================
+  // COMMENTS
+  // ==========================================
+
+  /**
+   * Get comments for a notification
+   */
+  async getComments(
+    notificationId: string,
+    userId: string
+  ): Promise<
+    {
+      id: string;
+      notificationId: string;
+      userId: string;
+      user: { id: string; firstName: string; lastName: string; avatarUrl?: string };
+      content: string;
+      priority?: string;
+      createdAt: string;
+      updatedAt: string;
+    }[]
+  > {
+    const db = await this.getDb();
+
+    // Verify notification belongs to user
+    const notif = await db.get<{ id: string }>(
+      'SELECT id FROM notifications WHERE id = ? AND user_id = ?',
+      [notificationId, userId]
+    );
+    if (!notif) return [];
+
+    const rows = await db.all<Record<string, any>[]>(
+      `SELECT nc.id, nc.notification_id, nc.user_id, nc.content, nc.priority,
+              nc.created_at, nc.updated_at,
+              u.first_name, u.last_name, u.avatar_url
+       FROM notification_comments nc
+       LEFT JOIN users u ON u.id = nc.user_id
+       WHERE nc.notification_id = ?
+       ORDER BY nc.created_at ASC`,
+      [notificationId]
+    );
+
+    return (rows || []).map((c: Record<string, any>) => ({
+      id: c.id,
+      notificationId: c.notification_id,
+      userId: c.user_id,
+      user: {
+        id: c.user_id,
+        firstName: c.first_name || 'Unknown',
+        lastName: c.last_name || '',
+        avatarUrl: c.avatar_url,
+      },
+      content: c.content,
+      priority: c.priority,
+      createdAt: c.created_at,
+      updatedAt: c.updated_at,
+    }));
+  }
+
+  /**
+   * Add a comment to a notification
+   */
+  async addComment(
+    notificationId: string,
+    userId: string,
+    content: string,
+    priority?: string
+  ): Promise<{
+    id: string;
+    notificationId: string;
+    userId: string;
+    content: string;
+    priority?: string;
+    createdAt: string;
+    updatedAt: string;
+  }> {
+    const db = await this.getDb();
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    await db.run(
+      `INSERT INTO notification_comments (id, notification_id, user_id, content, priority, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, notificationId, userId, content, priority || null, now, now]
+    );
+
+    // Add activity log entry
+    await this.addActivityLogEntry(notificationId, userId, 'comment_added', `Comment added`);
+
+    return { id, notificationId, userId, content, priority, createdAt: now, updatedAt: now };
+  }
+
+  /**
+   * Delete a comment
+   */
+  async deleteComment(commentId: string, userId: string): Promise<void> {
+    const db = await this.getDb();
+
+    const comment = await db.get<{ user_id: string; notification_id: string }>(
+      'SELECT user_id, notification_id FROM notification_comments WHERE id = ?',
+      [commentId]
+    );
+
+    if (!comment) throw new Error('Comment not found');
+    if (comment.user_id !== userId) throw new Error('Unauthorized');
+
+    await db.run('DELETE FROM notification_comments WHERE id = ?', [commentId]);
+
+    // Add activity log entry
+    await this.addActivityLogEntry(
+      comment.notification_id,
+      userId,
+      'comment_deleted',
+      'Comment deleted'
+    );
+  }
+
+  // ==========================================
+  // ACTIVITY LOG
+  // ==========================================
+
+  /**
+   * Get activity log for a notification
+   */
+  async getActivityLog(
+    notificationId: string,
+    userId: string
+  ): Promise<
+    {
+      id: string;
+      notificationId: string;
+      userId: string;
+      userName?: string;
+      action: string;
+      description: string;
+      createdAt: string;
+    }[]
+  > {
+    const db = await this.getDb();
+
+    // Verify notification belongs to user
+    const notif = await db.get<{ id: string }>(
+      'SELECT id FROM notifications WHERE id = ? AND user_id = ?',
+      [notificationId, userId]
+    );
+    if (!notif) return [];
+
+    const rows = await db.all<Record<string, any>[]>(
+      `SELECT nal.id, nal.notification_id, nal.user_id, nal.action, nal.description,
+              nal.created_at, u.first_name, u.last_name
+       FROM notification_activity_log nal
+       LEFT JOIN users u ON u.id = nal.user_id
+       WHERE nal.notification_id = ?
+       ORDER BY nal.created_at DESC`,
+      [notificationId]
+    );
+
+    return (rows || []).map((r: Record<string, any>) => ({
+      id: r.id,
+      notificationId: r.notification_id,
+      userId: r.user_id,
+      userName: r.first_name ? `${r.first_name} ${r.last_name || ''}`.trim() : undefined,
+      action: r.action,
+      description: r.description,
+      createdAt: r.created_at,
+    }));
+  }
+
+  /**
+   * Add an activity log entry for a notification
+   */
+  async addActivityLogEntry(
+    notificationId: string,
+    userId: string,
+    action: string,
+    description: string
+  ): Promise<void> {
+    const db = await this.getDb();
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    try {
+      await db.run(
+        `INSERT INTO notification_activity_log (id, notification_id, user_id, action, description, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+        [id, notificationId, userId, action, description, now]
+      );
+    } catch (err) {
+      logger.warn(`[NotificationService] Failed to add activity log: ${err}`);
     }
   }
 
@@ -962,3 +1180,11 @@ export const getById = (notificationId: string, userId: string) =>
   notificationService.getById(notificationId, userId);
 export const getSourceEntity = (notificationId: string, userId: string) =>
   notificationService.getSourceEntity(notificationId, userId);
+export const getComments = (notificationId: string, userId: string) =>
+  notificationService.getComments(notificationId, userId);
+export const addComment = (notificationId: string, userId: string, content: string, priority?: string) =>
+  notificationService.addComment(notificationId, userId, content, priority);
+export const deleteComment = (commentId: string, userId: string) =>
+  notificationService.deleteComment(commentId, userId);
+export const getActivityLog = (notificationId: string, userId: string) =>
+  notificationService.getActivityLog(notificationId, userId);

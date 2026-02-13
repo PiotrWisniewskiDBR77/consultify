@@ -208,7 +208,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
             >
               <X size={20} />
             </button>
@@ -259,11 +259,11 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
             </div>
           ) : assessments.length === 0 ? (
             <div className="text-center py-8">
-              <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <FileText className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
               <p className="text-slate-500 dark:text-slate-400 font-medium">
                 Brak zatwierdzonych assessmentów
               </p>
-              <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 Najpierw zatwierdź assessment w procesie recenzji
               </p>
             </div>
@@ -279,7 +279,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                   value={reportName}
                   onChange={(e) => setReportName(e.target.value)}
                   placeholder="np. Raport DRD Q1 2025"
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400"
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400"
                 />
               </div>
 
@@ -287,7 +287,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
               {assessments.length > 3 && (
                 <div className="relative mb-4">
                   <Search
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                     size={16}
                   />
                   <input
@@ -295,7 +295,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Szukaj assessmentu..."
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white text-sm"
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 text-sm"
                   />
                 </div>
               )}
@@ -349,7 +349,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                               <CheckCircle2 size={10} />
                               Zatwierdzony
                             </span>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                               {assessment.completedAt ? formatDate(assessment.completedAt) : ''}
                             </p>
                           </div>

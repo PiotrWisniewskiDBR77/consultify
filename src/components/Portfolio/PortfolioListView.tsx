@@ -397,7 +397,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                           e.target.value as InitiativeStatus
                         )
                       }
-                      className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-slate-700 dark:text-slate-300 hover:text-white focus:outline-none"
+                      className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white focus:outline-none"
                     >
                       {ALL_INITIATIVE_STATUSES.map((s) => (
                         <option key={s} value={s}>
@@ -407,7 +407,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                     </select>
                     <ChevronDown
                       size={12}
-                      className="absolute right-0 text-slate-400 pointer-events-none"
+                      className="absolute right-0 text-slate-500 dark:text-slate-400 pointer-events-none"
                     />
                   </div>
                 </td>
@@ -500,7 +500,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
       </table>
 
       {sortedInitiatives.length === 0 && (
-        <div className="flex items-center justify-center h-64 text-slate-400">
+        <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
           No initiatives found
         </div>
       )}

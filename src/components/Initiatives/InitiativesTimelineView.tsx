@@ -439,9 +439,9 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
 
   return (
     <div className="h-full p-4" data-testid="initiatives-timeline">
-      <div className="mb-4 rounded-xl border border-navy-700 bg-navy-900 px-4 py-3">
+      <div className="mb-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs font-semibold uppercase text-slate-400">AI Assist</span>
+          <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">AI Assist</span>
           <button
             onClick={handleAiSchedule}
             className="px-3 py-1.5 text-xs font-medium rounded-lg bg-purple-600 text-white hover:bg-purple-500 transition-colors"
@@ -451,14 +451,14 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
           </button>
           <button
             onClick={handleAiConflicts}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-navy-800 text-slate-200 hover:bg-navy-700 transition-colors"
+            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
             disabled={aiLoading !== null}
           >
             {aiLoading === 'conflicts' ? 'Analyzing...' : 'AI Conflicts'}
           </button>
           <button
             onClick={handleAiPriorities}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-navy-800 text-slate-200 hover:bg-navy-700 transition-colors"
+            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
             disabled={aiLoading !== null}
           >
             {aiLoading === 'priorities' ? 'Recommending...' : 'AI Priorities'}
@@ -494,9 +494,58 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
           />
         )}
         {aiPriorities && (
-          <pre className="mt-3 text-xs text-slate-400 whitespace-pre-wrap">
-            {JSON.stringify(aiPriorities, null, 2)}
-          </pre>
+          <div className="mt-3 space-y-2">
+            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              AI Priority Recommendations
+            </h4>
+            {Array.isArray(aiPriorities) ? (
+              <div className="space-y-1.5">
+                {aiPriorities.map((item: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-2 p-2 bg-slate-50 dark:bg-navy-800/50 rounded-lg border border-slate-200/50 dark:border-navy-700/50"
+                  >
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-purple-500/20 text-purple-500 text-[10px] font-bold flex items-center justify-center">
+                      {idx + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
+                        {item.name || item.initiativeName || item.title || `Initiative #${idx + 1}`}
+                      </p>
+                      {(item.reason || item.rationale) && (
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          {item.reason || item.rationale}
+                        </p>
+                      )}
+                      {item.priority && (
+                        <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                          item.priority === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' :
+                          item.priority === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400' :
+                          'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                        }`}>
+                          {item.priority}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : typeof aiPriorities === 'object' ? (
+              <div className="space-y-1.5">
+                {Object.entries(aiPriorities).map(([key, value]: [string, any]) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between p-2 bg-slate-50 dark:bg-navy-800/50 rounded-lg border border-slate-200/50 dark:border-navy-700/50"
+                  >
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{key}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {typeof value === 'string' ? value : JSON.stringify(value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
         )}
       </div>
       <RoadmapGantt

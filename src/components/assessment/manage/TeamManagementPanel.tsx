@@ -273,7 +273,7 @@ const AddMemberModal: FC<{
             <div className="relative">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
               />
               <input
                 type="text"
@@ -291,7 +291,7 @@ const AddMemberModal: FC<{
               {searching && (
                 <Loader2
                   size={16}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 animate-spin"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 animate-spin"
                 />
               )}
             </div>
@@ -625,7 +625,7 @@ const TeamMemberRow: FC<{
             <button
               onClick={() => setIsEditing(true)}
               disabled={isEditing || busy}
-              className="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-navy-700 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
+              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
               title="Edit role"
             >
               <Edit3 size={14} />
@@ -822,7 +822,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                       <td colSpan={6} className="px-4 py-12 text-center">
                         <div className="flex flex-col items-center gap-3">
                           <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800">
-                            <Users size={24} className="text-slate-400" />
+                            <Users size={24} className="text-slate-500 dark:text-slate-400" />
                           </div>
                           <div>
                             <p className="text-sm font-medium text-slate-900 dark:text-white">
@@ -867,7 +867,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
             {assignments.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-12">
                 <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800">
-                  <ClipboardList size={24} className="text-slate-400" />
+                  <ClipboardList size={24} className="text-slate-500 dark:text-slate-400" />
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-medium text-slate-900 dark:text-white">
@@ -923,7 +923,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                       {canManageTeam && (
                         <button
                           onClick={() => onRemoveAssignment(assignment.id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                          className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -952,7 +952,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
               <span>Editor - Edit content</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Eye size={12} className="text-slate-400" />
+              <Eye size={12} className="text-slate-500 dark:text-slate-400" />
               <span>Viewer - Read only</span>
             </div>
           </div>

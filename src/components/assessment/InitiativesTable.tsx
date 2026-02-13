@@ -322,7 +322,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
         {/* Filters Row */}
         <div className="flex flex-wrap items-center gap-3 mt-4">
           {/* Status Tabs */}
-          <div className="flex items-center bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-950 rounded-lg p-1">
+          <div className="flex items-center bg-slate-100 dark:bg-navy-950 rounded-lg p-1">
             <button
               onClick={() => setFilterStatus('all')}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${

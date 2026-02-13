@@ -304,7 +304,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                             <div className="flex items-center gap-1 mb-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                               <ThumbsUp size={12} />
                               <span>{isPolish ? 'Zalety' : 'Pros'}</span>
-                              <span className="text-slate-400">
+                              <span className="text-slate-500 dark:text-slate-400">
                                 ({alt.pros.filter((p) => p.trim()).length})
                               </span>
                             </div>
@@ -350,7 +350,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                             <div className="flex items-center gap-1 mb-2 text-xs font-medium text-red-600 dark:text-red-400">
                               <ThumbsDown size={12} />
                               <span>{isPolish ? 'Wady' : 'Cons'}</span>
-                              <span className="text-slate-400">
+                              <span className="text-slate-500 dark:text-slate-400">
                                 ({alt.cons.filter((c) => c.trim()).length})
                               </span>
                             </div>

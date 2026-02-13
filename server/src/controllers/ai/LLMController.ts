@@ -731,6 +731,23 @@ export class LLMController {
 
       const healthResults = await Promise.all(
         providers.map(async (provider: any) => {
+          // Skip providers without API keys (avoids circuit breaker spam)
+          const hasKey = provider.api_key && provider.api_key.trim() &&
+            !provider.api_key.includes('placeholder') &&
+            !provider.api_key.startsWith('sk-demo-');
+          // Ollama is local and doesn't need an API key but needs a running server
+          const isLocal = provider.provider === 'ollama';
+
+          if (!hasKey && !isLocal) {
+            return {
+              id: provider.id,
+              name: provider.name,
+              provider: provider.provider,
+              status: 'unconfigured',
+              lastCheck: new Date().toISOString(),
+            };
+          }
+
           try {
             const result = await llmService.testConnection({
               provider: provider.provider,
@@ -760,9 +777,14 @@ export class LLMController {
         })
       );
 
+      const configuredProviders = healthResults.filter((p) => p.status !== 'unconfigured');
       return res.json({
         providers: healthResults,
-        overall: healthResults.every((p) => p.status === 'healthy') ? 'healthy' : 'degraded',
+        overall: configuredProviders.length > 0 && configuredProviders.every((p) => p.status === 'healthy')
+          ? 'healthy'
+          : configuredProviders.some((p) => p.status === 'healthy')
+            ? 'degraded'
+            : 'unhealthy',
         lastCheck: Date.now(),
       });
     } catch (error: any) {

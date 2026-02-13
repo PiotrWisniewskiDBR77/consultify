@@ -105,7 +105,7 @@ const TaskItem: React.FC<{
   const isDone = task.status === TaskStatus.DONE;
 
   return (
-    <div className="flex items-start gap-3 p-3 bg-navy-800/50 rounded-lg hover:bg-navy-800 transition-colors">
+    <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
       <button
         onClick={() => onToggle(task.id, !isDone)}
         className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
@@ -115,7 +115,7 @@ const TaskItem: React.FC<{
         {isDone && <CheckCircle2 size={12} className="text-white" />}
       </button>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm ${isDone ? 'text-slate-500 line-through' : 'text-white'}`}>
+        <p className={`text-sm ${isDone ? 'text-slate-500 line-through' : 'text-slate-900 dark:text-white'}`}>
           {task.title}
         </p>
         {task.dueDate && (
@@ -154,11 +154,11 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
       onClick={onCancel}
     >
       <div
-        className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-md shadow-2xl"
+        className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-md shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold text-white mb-2">{action.label}</h3>
-        <p className="text-sm text-slate-400 mb-4">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">{action.label}</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
           {action.requiresReason
             ? 'Please provide a reason for this change.'
             : 'Are you sure you want to proceed?'}
@@ -169,7 +169,7 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Enter reason..."
-            className="w-full p-3 bg-navy-800 border border-navy-700 rounded-lg text-white text-sm resize-none focus:outline-none focus:border-cyan-500"
+            className="w-full p-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm resize-none focus:outline-none focus:border-cyan-500"
             rows={3}
           />
         )}
@@ -177,7 +177,7 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
         <div className="flex justify-end gap-3 mt-4">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+            className="px-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
             disabled={isLoading}
           >
             Cancel
@@ -190,7 +190,7 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
                 ? 'bg-red-600 hover:bg-red-500 text-white'
                 : action.variant === 'primary'
                   ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
-                  : 'bg-navy-700 hover:bg-navy-600 text-white'
+                  : 'bg-slate-200 dark:bg-navy-700 hover:bg-slate-300 dark:hover:bg-navy-600 text-slate-900 dark:text-white'
             }`}
           >
             {isLoading && <Loader2 size={14} className="animate-spin" />}
@@ -293,19 +293,19 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
   );
 
   return (
-    <div className="h-full flex flex-col bg-navy-950">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
       {/* Header */}
-      <div className="shrink-0 px-6 py-4 border-b border-navy-700 bg-navy-900">
+      <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={onBack}
-              className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
             >
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-xl font-bold text-white">{initiative.name}</h1>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white">{initiative.name}</h1>
               <div className="flex items-center gap-3 mt-1">
                 <StatusBadge status={initiative.status} />
                 {initiative.priority && (
@@ -315,7 +315,7 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                         ? 'text-red-400'
                         : initiative.priority === 'High'
                           ? 'text-amber-400'
-                          : 'text-slate-400'
+                          : 'text-slate-500 dark:text-slate-400'
                     }`}
                   >
                     {initiative.priority} Priority
@@ -325,21 +325,26 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Quick actions based on status */}
-            {statusActions.slice(0, 2).map((action) => (
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* All status actions — primary first, then secondary, then danger */}
+            {statusActions
+              .sort((a, b) => {
+                const order = { primary: 0, secondary: 1, danger: 2 };
+                return (order[a.variant] ?? 1) - (order[b.variant] ?? 1);
+              })
+              .map((action) => (
               <button
                 key={action.targetStatus}
                 onClick={() =>
                   action.requiresReason ? setSelectedAction(action) : handleStatusChange(action)
                 }
                 disabled={isUpdating}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
                   action.variant === 'danger'
                     ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
                     : action.variant === 'primary'
                       ? 'bg-cyan-600 text-white hover:bg-cyan-500'
-                      : 'bg-navy-700 text-slate-300 hover:bg-navy-600'
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600'
                 }`}
               >
                 {action.label}
@@ -356,12 +361,12 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
           <div className="col-span-2 space-y-6">
             {/* Description */}
             {initiative.description && (
-              <div className="bg-navy-900 rounded-xl p-5 border border-navy-700">
-                <h3 className="text-sm font-semibold text-slate-400 mb-3 flex items-center gap-2">
+              <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-navy-700">
+                <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
                   <FileText size={16} />
                   Description
                 </h3>
-                <p className="text-sm text-slate-300 whitespace-pre-wrap">
+                <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
                   {initiative.description}
                 </p>
               </div>
@@ -379,9 +384,9 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
             )}
 
             {/* Tasks */}
-            <div className="bg-navy-900 rounded-xl p-5 border border-navy-700">
+            <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-navy-700">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-slate-400 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2">
                   <CheckCircle2 size={16} />
                   Tasks ({completedTasks}/{tasks.length})
                 </h3>
@@ -406,16 +411,16 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
 
             {/* Key Risks */}
             {initiative.keyRisks && initiative.keyRisks.length > 0 && (
-              <div className="bg-navy-900 rounded-xl p-5 border border-navy-700">
-                <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
+              <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-navy-700">
+                <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-2">
                   <AlertTriangle size={16} />
                   Key Risks
                 </h3>
                 <div className="space-y-3">
                   {initiative.keyRisks.map((risk, idx) => (
-                    <div key={idx} className="p-3 bg-navy-800 rounded-lg">
+                    <div key={idx} className="p-3 bg-slate-50 dark:bg-navy-800 rounded-lg">
                       <div className="flex items-start justify-between gap-3">
-                        <p className="text-sm text-white">{risk.risk}</p>
+                        <p className="text-sm text-slate-900 dark:text-white">{risk.risk}</p>
                         <span
                           className={`text-xs px-2 py-0.5 rounded ${
                             risk.metric === 'High'
@@ -429,7 +434,7 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                         </span>
                       </div>
                       {risk.mitigation && (
-                        <p className="text-xs text-slate-400 mt-2">Mitigation: {risk.mitigation}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Mitigation: {risk.mitigation}</p>
                       )}
                     </div>
                   ))}
@@ -441,16 +446,16 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
           {/* Right Column - Stats & Info */}
           <div className="space-y-6">
             {/* Progress */}
-            <div className="bg-navy-900 rounded-xl p-5 border border-navy-700">
-              <h3 className="text-sm font-semibold text-slate-400 mb-4">Progress</h3>
+            <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-navy-700">
+              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">Progress</h3>
               <div className="flex justify-center">
                 <ProgressRing progress={progress} />
               </div>
             </div>
 
             {/* Timeline */}
-            <div className="bg-navy-900 rounded-xl p-5 border border-navy-700">
-              <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-navy-700">
+              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-2">
                 <Calendar size={16} />
                 Timeline
               </h3>
@@ -458,7 +463,7 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                 {initiative.startDate && (
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-500">Start</span>
-                    <span className="text-sm text-white">
+                        <span className="text-sm text-slate-900 dark:text-white">
                       {new Date(initiative.startDate).toLocaleDateString()}
                     </span>
                   </div>
@@ -471,7 +476,7 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                         new Date(initiative.plannedEndDate) < new Date() &&
                         initiative.status !== InitiativeStatus.DONE
                           ? 'text-red-400'
-                          : 'text-white'
+                          : 'text-slate-900 dark:text-white'
                       }`}
                     >
                       {new Date(initiative.plannedEndDate).toLocaleDateString()}
@@ -480,7 +485,7 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                 )}
                 {initiative.actualEndDate && (
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-500">Actual End</span>
+                    <span className="text-xs text-slate-500">{t('execution.detail.actualEnd')}</span>
                     <span className="text-sm text-green-400">
                       {new Date(initiative.actualEndDate).toLocaleDateString()}
                     </span>
@@ -490,10 +495,10 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
             </div>
 
             {/* Owners */}
-            <div className="bg-navy-900 rounded-xl p-5 border border-navy-700">
-              <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-navy-700">
+              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-2">
                 <User size={16} />
-                Owners
+                {t('execution.detail.owners')}
               </h3>
               <div className="space-y-3">
                 {initiative.ownerBusiness && (
@@ -505,10 +510,10 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm text-white">
+                      <p className="text-sm text-slate-900 dark:text-white">
                         {initiative.ownerBusiness.firstName} {initiative.ownerBusiness.lastName}
                       </p>
-                      <p className="text-xs text-slate-500">Business Owner</p>
+                      <p className="text-xs text-slate-500">{t('execution.detail.businessOwner')}</p>
                     </div>
                   </div>
                 )}
@@ -521,38 +526,38 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm text-white">
+                      <p className="text-sm text-slate-900 dark:text-white">
                         {initiative.ownerTechnical.firstName} {initiative.ownerTechnical.lastName}
                       </p>
-                      <p className="text-xs text-slate-500">Technical Owner</p>
+                      <p className="text-xs text-slate-500">{t('execution.detail.technicalOwner')}</p>
                     </div>
                   </div>
                 )}
                 {!initiative.ownerBusiness && !initiative.ownerTechnical && (
-                  <p className="text-sm text-slate-500">No owners assigned</p>
+                  <p className="text-sm text-slate-500">{t('execution.detail.noOwners')}</p>
                 )}
               </div>
             </div>
 
             {/* Economics */}
             {(initiative.costCapex || initiative.expectedRoi) && (
-              <div className="bg-navy-900 rounded-xl p-5 border border-navy-700">
-                <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
+              <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-navy-700">
+                <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-2">
                   <TrendingUp size={16} />
-                  Economics
+                  {t('execution.detail.economics')}
                 </h3>
                 <div className="space-y-3">
                   {initiative.costCapex && (
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-500">Budget (CAPEX)</span>
-                      <span className="text-sm text-white">
+                      <span className="text-xs text-slate-500">{t('execution.detail.budgetCapex')}</span>
+                        <span className="text-sm text-slate-900 dark:text-white">
                         {initiative.costCapex.toLocaleString()} PLN
                       </span>
                     </div>
                   )}
                   {initiative.expectedRoi && (
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-500">Expected ROI</span>
+                      <span className="text-xs text-slate-500">{t('execution.detail.expectedRoi')}</span>
                       <span className="text-sm text-green-400">{initiative.expectedRoi}x</span>
                     </div>
                   )}

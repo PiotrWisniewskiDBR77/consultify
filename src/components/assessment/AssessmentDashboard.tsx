@@ -351,7 +351,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                           <span className="text-xs text-red-500 font-medium">Overdue</span>
                         )}
                       </div>
-                      <ArrowRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                      <ArrowRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                     </div>
                   </div>
                 ))
@@ -386,7 +386,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
             <div className="divide-y divide-slate-200 dark:divide-white/10">
               {recentAssessments.length === 0 ? (
                 <div className="p-8 text-center">
-                  <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                  <FileText className="w-12 h-12 text-slate-700 dark:text-slate-300 mx-auto mb-3" />
                   <p className="text-slate-500 dark:text-slate-400 mb-4">
                     No assessments yet. Start your first assessment!
                   </p>
@@ -436,7 +436,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
                             />
                           </div>
                         </div>
-                        <ArrowRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                        <ArrowRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                       </div>
                     </div>
                   </div>
