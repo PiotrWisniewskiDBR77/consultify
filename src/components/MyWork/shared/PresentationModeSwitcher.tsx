@@ -1,7 +1,7 @@
 /**
  * PresentationModeSwitcher
  *
- * 3-button toggle between D / N / C presentation modes.
+ * 2-button toggle between N / C presentation modes (D mode removed).
  * Placed between Chat and AI buttons in detail view headers.
  *
  * @see docs/ui-standards/detail-view-presentation-modes.md (5.1-5.3)
@@ -11,7 +11,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { Columns3, LayoutList, PanelTop } from 'lucide-react';
+import { Columns3, PanelTop } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -27,14 +27,6 @@ const MODE_CONFIG: Record<
     tooltip: { en: string; pl: string };
   }
 > = {
-  d: {
-    icon: LayoutList,
-    label: { en: 'D', pl: 'D' },
-    tooltip: {
-      en: 'D presentation mode: collapsible sections (2/3 + 1/3)',
-      pl: 'D presentation mode: sekcje zwijane (2/3 + 1/3)',
-    },
-  },
   n: {
     icon: PanelTop,
     label: { en: 'N', pl: 'N' },
@@ -53,7 +45,7 @@ const MODE_CONFIG: Record<
   },
 };
 
-const MODES: PresentationMode[] = ['d', 'n', 'c'];
+const MODES: PresentationMode[] = ['n', 'c'];
 
 // ── Component ────────────────────────────────────────────────────────────────
 

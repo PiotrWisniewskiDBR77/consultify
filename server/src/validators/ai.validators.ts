@@ -430,7 +430,25 @@ export const ActionTypeParamSchema = z.object({
   actionType: z.string(),
 });
 
+// Refine Text Request (AI Field Enhancer)
+export const RefineTextRequestSchema = z.object({
+  text: z.string().min(1, 'Text to refine is required'),
+  mode: z.enum(['improve', 'shorten', 'expand', 'formal']),
+  systemInstruction: z.string().optional(),
+  fieldLabel: z.string().optional(),
+  artifactContext: z
+    .object({
+      title: z.string().optional(),
+      status: z.string().optional(),
+      priority: z.string().optional(),
+      type: z.string(),
+    })
+    .optional(),
+  language: z.string().optional(),
+});
+
 // Type exports
+export type RefineTextRequest = z.infer<typeof RefineTextRequestSchema>;
 export type ChatRequest = z.infer<typeof ChatRequestSchema>;
 export type ChatStreamRequest = z.infer<typeof ChatStreamRequestSchema>;
 export type UpdatePolicyRequest = z.infer<typeof UpdatePolicyRequestSchema>;

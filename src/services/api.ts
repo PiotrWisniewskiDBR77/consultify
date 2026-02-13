@@ -2083,6 +2083,43 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to delete read notifications');
   },
 
+  // Snooze a notification (backend-persisted)
+  snoozeNotification: async (id: string, preset: string): Promise<{ snoozedUntil: string }> => {
+    const res = await fetch(`${API_URL}/notifications/${id}/snooze`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ preset }),
+    });
+    if (!res.ok) throw new Error('Failed to snooze notification');
+    return res.json();
+  },
+
+  // Update notification action checklist
+  updateNotificationChecklist: async (
+    id: string,
+    checklist: { id: string; text: string; completed: boolean }[]
+  ): Promise<void> => {
+    const res = await fetch(`${API_URL}/notifications/${id}/checklist`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ checklist }),
+    });
+    if (!res.ok) throw new Error('Failed to update checklist');
+  },
+
+  // Get source entity (task/decision/initiative) linked to a notification
+  getNotificationSourceEntity: async (id: string): Promise<Record<string, any> | null> => {
+    try {
+      const res = await fetch(`${API_URL}/notifications/${id}/source-entity`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) return null;
+      return res.json();
+    } catch {
+      return null;
+    }
+  },
+
   createNotification: async (notification: {
     userId?: string; // If null, broadcast to all
     type: string;
@@ -2142,9 +2179,92 @@ export const Api = {
 
   getDecisionHistory: async (id: string): Promise<any[]> => {
     const res = await fetch(`${API_URL}/decisions/${id}/history`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch decision history');
-    const data = await res.json();
-    return Array.isArray(data) ? data : data?.history || [];
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data) ? data : data?.history || [];
+    }
+
+    // Some deployments expose history inside GET /decisions/:id (auditTrail) but not /history route.
+    if (res.status === 404) {
+      const detailsRes = await fetch(`${API_URL}/decisions/${id}`, { headers: getHeaders() });
+      if (!detailsRes.ok) throw new Error('Failed to fetch decision history');
+      const detailsData = await detailsRes.json();
+      const decision = detailsData?.decision || detailsData || {};
+
+      const fromAuditTrail = Array.isArray(decision?.auditTrail) ? decision.auditTrail : null;
+      if (fromAuditTrail) {
+        return fromAuditTrail.map((entry: any) => ({
+          id: entry?.id || `${entry?.action || 'history'}-${entry?.at || Date.now()}`,
+          action: entry?.action || 'updated',
+          changedBy: entry?.by || entry?.changedBy || 'system',
+          changedByName: entry?.userName || entry?.changedByName || undefined,
+          changedAt: entry?.at || entry?.changedAt || new Date().toISOString(),
+          oldStatus: entry?.oldStatus || entry?.old_status || undefined,
+          newStatus: entry?.newStatus || entry?.new_status || undefined,
+          details:
+            entry?.details && typeof entry.details === 'object'
+              ? entry.details
+              : entry?.notes
+                ? { notes: entry.notes }
+                : {},
+        }));
+      }
+
+      try {
+        const rawAudit = decision?.audit_trail ? JSON.parse(decision.audit_trail) : [];
+        if (Array.isArray(rawAudit)) {
+          return rawAudit.map((entry: any) => ({
+            id: entry?.id || `${entry?.action || 'history'}-${entry?.at || Date.now()}`,
+            action: entry?.action || 'updated',
+            changedBy: entry?.by || entry?.changedBy || 'system',
+            changedByName: entry?.userName || entry?.changedByName || undefined,
+            changedAt: entry?.at || entry?.changedAt || new Date().toISOString(),
+            oldStatus: entry?.oldStatus || entry?.old_status || undefined,
+            newStatus: entry?.newStatus || entry?.new_status || undefined,
+            details:
+              entry?.details && typeof entry.details === 'object'
+                ? entry.details
+                : entry?.notes
+                  ? { notes: entry.notes }
+                  : {},
+          }));
+        }
+      } catch {
+        // ignore malformed audit trail payload
+      }
+      return [];
+    }
+
+    throw new Error('Failed to fetch decision history');
+  },
+
+  decideDecision: async (
+    id: string,
+    decision: 'approved' | 'rejected' | 'deferred',
+    rationale?: string,
+    notes?: string
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/decisions/${id}/decide`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ decision, rationale, notes }),
+    });
+    if (!res.ok) throw new Error('Failed to decide decision');
+    return res.json();
+  },
+
+  escalateDecision: async (
+    id: string,
+    reason?: string,
+    escalateToUserId?: string
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/decisions/${id}/escalate`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ reason, escalateToUserId }),
+    });
+    if (!res.ok) throw new Error('Failed to escalate decision');
+    return res.json();
   },
 
   updateDecision: async (id: string, updates: any): Promise<void> => {

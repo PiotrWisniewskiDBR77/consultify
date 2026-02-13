@@ -4,16 +4,17 @@
  * Shared hook for detail view presentation mode persistence.
  * Implements the contract from docs/ui-standards/detail-view-presentation-modes.md
  *
- * Modes: 'd' (D mode) | 'n' (N mode) | 'c' (C mode)
+ * Modes: 'n' (N mode) | 'c' (C mode)
+ * Note: D mode (accordion) has been removed. Legacy 'd' values redirect to 'n'.
  *
  * Priority:
- *   1) URL override (?view=d|n|c) [also accepts legacy values]
+ *   1) URL override (?view=n|c) [also accepts legacy values]
  *   2) Persisted user preference (localStorage per entityType)
- *   3) Fallback: 'd'
+ *   3) Fallback: 'n'
  *
  * Backward compatibility:
- *   Reads: 'accordion'|'notion'|'clickup' → normalizes to d|n|c
- *   Writes: always d|n|c only
+ *   Reads: 'd'|'accordion'|'notion'|'clickup' → normalizes to n|c
+ *   Writes: always n|c only
  *
  * Persistence key: `consultinity:presentationMode:<entityType>`
  */
@@ -21,11 +22,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 // ── Canonical enum ───────────────────────────────────────────────────────────
-export type PresentationMode = 'd' | 'n' | 'c';
+export type PresentationMode = 'n' | 'c';
 export type EntityType = 'task' | 'decision' | 'notification' | 'initiative';
 
-const VALID_MODES: PresentationMode[] = ['d', 'n', 'c'];
-const FALLBACK_MODE: PresentationMode = 'd';
+const VALID_MODES: PresentationMode[] = ['n', 'c'];
+const FALLBACK_MODE: PresentationMode = 'n';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -33,17 +34,16 @@ function storageKey(entityType: EntityType): string {
   return `consultinity:presentationMode:${entityType}`;
 }
 
-/** Normalize any legacy or current value to d|n|c */
+/** Normalize any legacy or current value to n|c */
 function normalizeMode(raw: string | null): PresentationMode | null {
   if (!raw) return null;
   const value = raw.toLowerCase().trim();
 
   // Direct match
-  if (value === 'd' || value === 'n' || value === 'c') return value;
+  if (value === 'n' || value === 'c') return value;
 
-  // Legacy aliases
-  if (value === 'accordion') return 'd';
-  if (value === 'notion') return 'n';
+  // Legacy aliases → redirect to 'n' (D mode removed)
+  if (value === 'd' || value === 'accordion' || value === 'notion') return 'n';
   if (value === 'clickup') return 'c';
 
   return null;
@@ -65,7 +65,7 @@ function readFromStorage(entityType: EntityType): PresentationMode | null {
   return null;
 }
 
-/** Always writes canonical d|n|c */
+/** Always writes canonical n|c */
 function writeToStorage(entityType: EntityType, mode: PresentationMode): void {
   if (typeof window === 'undefined') return;
   try {
@@ -75,7 +75,7 @@ function writeToStorage(entityType: EntityType, mode: PresentationMode): void {
   }
 }
 
-/** Always writes canonical d|n|c */
+/** Always writes canonical n|c */
 function updateURLParam(mode: PresentationMode): void {
   if (typeof window === 'undefined') return;
   try {
@@ -98,7 +98,6 @@ interface UsePresentationModeOptions {
 interface UsePresentationModeReturn {
   mode: PresentationMode;
   setMode: (next: PresentationMode) => void;
-  isD: boolean;
   isN: boolean;
   isC: boolean;
 }
@@ -136,7 +135,6 @@ export function usePresentationMode({
   return {
     mode,
     setMode,
-    isD: mode === 'd',
     isN: mode === 'n',
     isC: mode === 'c',
   };

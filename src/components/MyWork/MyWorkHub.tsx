@@ -22,7 +22,9 @@ import {
   Flame,
   Hourglass,
   Inbox,
+  Kanban,
   LayoutGrid,
+  LayoutList,
   List,
   Loader2,
   Plus,
@@ -42,6 +44,7 @@ import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
 import { DecisionDetailView } from './DecisionDetailView';
+import { DecisionsKanbanBoard } from './DecisionsKanbanBoard';
 import { DecisionsPanelContent } from './DecisionsPanelContent';
 import { ExecutiveDashboard } from './Executive/ExecutiveDashboard';
 import { type FocusItem, FocusView } from './Focus/FocusView';
@@ -49,11 +52,16 @@ import { InboxContent } from './InboxContent';
 import { MyTasksListContent } from './MyTasksListContent';
 import { NotificationDetailView } from './NotificationDetailView';
 import { NotificationsContent } from './NotificationsContent';
+import { NotificationsKanbanBoard } from './NotificationsKanbanBoard';
 import { TaskDetailView } from './TaskDetailView';
+import { TasksKanbanBoard } from './TasksKanbanBoard';
 
 // Types
 type ModuleTab = 'executive' | 'inbox' | 'focus' | 'tasks' | 'decisions' | 'notifications';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
+type TasksViewMode = 'table' | 'kanban';
+type DecisionsViewMode = 'list' | 'kanban';
+type NotificationsViewMode = 'list' | 'kanban';
 type DecisionFilter = 'my' | 'awaiting';
 type NotificationFilter = 'all' | 'unread' | 'today' | 'week';
 type ItemStatus =
@@ -187,6 +195,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   // Filter states
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
+  const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
+  const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('list');
+  const [notificationsViewMode, setNotificationsViewMode] = useState<NotificationsViewMode>('list');
   const [decisionFilter, setDecisionFilter] = useState<DecisionFilter>('my');
   const [notificationFilter, setNotificationFilter] = useState<NotificationFilter>('all');
 
@@ -864,7 +875,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           />
         );
       case 'tasks':
-        return (
+        return tasksViewMode === 'kanban' ? (
+          <TasksKanbanBoard
+            activeFilter={taskFilter}
+            searchQuery={searchQuery}
+            onTaskClick={handleTaskClick}
+            onCreateTask={handleCreateTask}
+            onCountsChange={handleTaskCountsChange}
+          />
+        ) : (
           <MyTasksListContent
             activeFilter={taskFilter}
             searchQuery={searchQuery}
@@ -874,7 +893,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           />
         );
       case 'decisions':
-        return (
+        return decisionsViewMode === 'kanban' ? (
+          <DecisionsKanbanBoard
+            viewMode={decisionFilter}
+            searchQuery={searchQuery}
+            onDecisionClick={handleDecisionClick}
+            onCreateDecision={handleCreateDecision}
+            onCountsChange={handleDecisionCountsChange}
+          />
+        ) : (
           <DecisionsPanelContent
             viewMode={decisionFilter}
             searchQuery={searchQuery}
@@ -883,7 +910,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           />
         );
       case 'notifications':
-        return (
+        return notificationsViewMode === 'kanban' ? (
+          <NotificationsKanbanBoard
+            filter={notificationFilter}
+            searchQuery={searchQuery}
+            onNotificationClick={handleNotificationClick}
+            onCountsChange={handleNotificationCountsChange}
+          />
+        ) : (
           <NotificationsContent
             filter={notificationFilter}
             searchQuery={searchQuery}
@@ -961,8 +995,116 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Right: Context Filters + Action Buttons */}
+          {/* Right: View Toggle + Context Filters + Action Buttons */}
           <div className="flex items-center gap-3">
+            {/* Tasks View Mode Toggle (table / kanban) — only on Tasks tab */}
+            {activeTab === 'tasks' && !activeDocumentId && (
+              <div
+                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
+              >
+                <button
+                  onClick={() => setTasksViewMode('table')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    tasksViewMode === 'table'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok tabeli' : 'Table view'}
+                  role="radio"
+                  aria-checked={tasksViewMode === 'table'}
+                >
+                  <LayoutList size={16} />
+                </button>
+                <button
+                  onClick={() => setTasksViewMode('kanban')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    tasksViewMode === 'kanban'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok kanban' : 'Kanban view'}
+                  role="radio"
+                  aria-checked={tasksViewMode === 'kanban'}
+                >
+                  <Kanban size={16} />
+                </button>
+              </div>
+            )}
+
+            {/* Decisions View Mode Toggle (list / kanban) — only on Decisions tab */}
+            {activeTab === 'decisions' && !activeDocumentId && (
+              <div
+                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
+              >
+                <button
+                  onClick={() => setDecisionsViewMode('list')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    decisionsViewMode === 'list'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok listy' : 'List view'}
+                  role="radio"
+                  aria-checked={decisionsViewMode === 'list'}
+                >
+                  <LayoutList size={16} />
+                </button>
+                <button
+                  onClick={() => setDecisionsViewMode('kanban')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    decisionsViewMode === 'kanban'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok kanban' : 'Kanban view'}
+                  role="radio"
+                  aria-checked={decisionsViewMode === 'kanban'}
+                >
+                  <Kanban size={16} />
+                </button>
+              </div>
+            )}
+
+            {/* Notifications View Mode Toggle (list / kanban) — only on Notifications tab */}
+            {activeTab === 'notifications' && !activeDocumentId && (
+              <div
+                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
+              >
+                <button
+                  onClick={() => setNotificationsViewMode('list')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    notificationsViewMode === 'list'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok listy' : 'List view'}
+                  role="radio"
+                  aria-checked={notificationsViewMode === 'list'}
+                >
+                  <LayoutList size={16} />
+                </button>
+                <button
+                  onClick={() => setNotificationsViewMode('kanban')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    notificationsViewMode === 'kanban'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok kanban' : 'Kanban view'}
+                  role="radio"
+                  aria-checked={notificationsViewMode === 'kanban'}
+                >
+                  <Kanban size={16} />
+                </button>
+              </div>
+            )}
+
             {/* Context-sensitive Filter Dropdown (only show when viewing list) */}
             {currentFilters.length > 0 && (
               <div className="relative">

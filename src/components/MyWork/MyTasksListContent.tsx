@@ -25,10 +25,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
-import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
-import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
 import {
   BulkActionBar,
   type ColumnDef,
@@ -167,73 +164,6 @@ const isOverdue = (dueDate?: string | Date, status?: string): boolean => {
   today.setHours(0, 0, 0, 0);
   return date < today;
 };
-
-/* ─────────────── Task → GenericListItem mapping ─────────────── */
-
-const getStatusVariant = (status?: string): GenericListItem['statusVariant'] => {
-  switch (status?.toLowerCase()) {
-    case 'done':
-    case 'completed':
-    case 'validated':
-      return 'success';
-    case 'in_progress':
-    case 'in progress':
-      return 'info';
-    case 'pending_approval':
-    case 'review':
-      return 'purple';
-    case 'blocked':
-      return 'danger';
-    case 'cancelled':
-      return 'neutral';
-    default:
-      return 'warning';
-  }
-};
-
-const getPriorityVariant = (priority?: string): GenericListItem['priorityVariant'] => {
-  switch (priority?.toLowerCase()) {
-    case 'urgent':
-    case 'critical':
-      return 'critical';
-    case 'high':
-      return 'high';
-    case 'medium':
-      return 'medium';
-    case 'low':
-      return 'low';
-    default:
-      return 'medium';
-  }
-};
-
-const taskToGenericItem = (task: Task): GenericListItem => ({
-  id: task.id,
-  title: task.title || 'Untitled task',
-  subtitle: task.description || undefined,
-  status: getStatusConfig(task.status).label,
-  statusVariant: getStatusVariant(task.status),
-  priority: getPriorityConfig(task.priority).label,
-  priorityVariant: getPriorityVariant(task.priority),
-  dueDate: formatDueDate(task.dueDate),
-  isOverdue: isOverdue(task.dueDate, task.status),
-  assignee: task.assignee
-    ? `${task.assignee.firstName || ''} ${task.assignee.lastName || ''}`.trim()
-    : undefined,
-  assigneeAvatar: (task.assignee as any)?.avatarUrl,
-  secondaryLabel: (task as any).initiativeName || (task as any).projectName || undefined,
-  _raw: task,
-});
-
-/** C-style (dense) columns for tasks */
-const TASK_CLICKUP_COLUMNS: ListColumn[] = [
-  { key: 'title', label: 'Task', width: 'flex-1 min-w-0' },
-  { key: 'status', label: 'Status', width: 'w-28' },
-  { key: 'priority', label: 'Priority', width: 'w-24' },
-  { key: 'assignee', label: 'Assignee', width: 'w-36' },
-  { key: 'dueDate', label: 'Due', width: 'w-24' },
-  { key: 'secondaryLabel', label: 'Initiative', width: 'w-32' },
-];
 
 // Categorize task by time
 const categorizeTask = (task: Task): TaskTimeGroup => {
@@ -563,7 +493,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('d');
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -980,75 +909,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     return result;
   }, [groupedTasks, tableFilters]);
 
-  /* ─── Sections for Notion / ClickUp views ─── */
-  const viewSections: ListSection[] = useMemo(() => {
-    const overdueItems = groupedTasks.overdue.map(taskToGenericItem);
-    const todayItems = groupedTasks.today.map(taskToGenericItem);
-    const weekItems = groupedTasks.week.map(taskToGenericItem);
-    const laterItems = groupedTasks.later.map(taskToGenericItem);
-    const noDateItems = groupedTasks['no-date'].map(taskToGenericItem);
-
-    return [
-      ...(overdueItems.length > 0
-        ? [
-            {
-              id: 'overdue',
-              label: t('myWork.groups.overdue', 'Overdue'),
-              items: overdueItems,
-              accentColor: 'text-red-500',
-            },
-          ]
-        : []),
-      ...(todayItems.length > 0
-        ? [
-            {
-              id: 'today',
-              label: t('myWork.groups.today', 'Today'),
-              items: todayItems,
-              accentColor: 'text-cyan-500',
-            },
-          ]
-        : []),
-      ...(weekItems.length > 0
-        ? [
-            {
-              id: 'week',
-              label: t('myWork.groups.thisWeek', 'This Week'),
-              items: weekItems,
-              accentColor: 'text-blue-500',
-            },
-          ]
-        : []),
-      ...(laterItems.length > 0
-        ? [
-            {
-              id: 'later',
-              label: t('myWork.groups.later', 'Later / Done'),
-              items: laterItems,
-              accentColor: 'text-slate-400',
-            },
-          ]
-        : []),
-      ...(noDateItems.length > 0
-        ? [
-            {
-              id: 'no-date',
-              label: t('myWork.groups.noDate', 'No Date'),
-              items: noDateItems,
-              accentColor: 'text-slate-400',
-            },
-          ]
-        : []),
-    ];
-  }, [groupedTasks, t]);
-
-  const handleGenericItemClick = useCallback(
-    (item: GenericListItem) => {
-      onTaskClick(item.id, item._raw as Task);
-    },
-    [onTaskClick]
-  );
-
   if (loading) {
     return (
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
@@ -1208,18 +1068,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
           </div>
         </div>
 
-        {/* A7.1: View style switcher — header stays constant (A7.5) */}
-        {tasks.length > 0 && (
-          <div className="flex items-center justify-end mb-3">
-            <CardViewSwitcher
-              moduleId="my-work-tasks"
-              value={cardViewStyle}
-              onChange={setCardViewStyle}
-              compact
-            />
-          </div>
-        )}
-
         {tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
             <CheckCircle2 size={48} className="text-slate-600 mb-4" />
@@ -1233,21 +1081,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               Create Task
             </button>
           </div>
-        ) : cardViewStyle === 'n' ? (
-          /* N view — same data, different layout */
-          <NotionListView
-            sections={viewSections}
-            onItemClick={handleGenericItemClick}
-            emptyMessage={t('myWork.tasks.empty', 'No tasks match your filters')}
-          />
-        ) : cardViewStyle === 'c' ? (
-          /* C view — dense */
-          <ClickUpListView
-            sections={viewSections}
-            columns={TASK_CLICKUP_COLUMNS}
-            onItemClick={handleGenericItemClick}
-            emptyMessage={t('myWork.tasks.empty', 'No tasks match your filters')}
-          />
         ) : (
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
             <table className="w-full" style={{ minWidth: 900 }}>

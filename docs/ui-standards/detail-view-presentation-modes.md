@@ -478,6 +478,13 @@ Każdy N mode powinien korzystać z tych samych “bloków” UI, żeby zachowa�
 - `ChecklistBlock` — checklista + progress
 - `ActivityStream` — log aktywności (z minimalnym UI)
 - `EmptyStateInline` — puste stany w obrębie sekcji (z CTA)
+- `CommentsCanvas` — wątek komentarzy (shared, §2.5.5.1)
+- `ActivityLogCanvas` — log aktywności (shared, §2.5.5.1)
+- `AttachmentsLinksCanvas` — załączniki + linked items (shared, §2.5.5.1)
+- `RiskCanvas` — rejestr ryzyk z score P×I (shared, §2.5.5.1)
+- `GovernanceCanvas` — RACI macierz + reminders + escalation rules (shared, §2.5.5.1)
+
+> **Współdzielone sekcje N-mode (`NModeSections/`):** sekcje powtarzające się w 2+ artefaktach MUSZĄ korzystać z komponentów w `src/components/shared/NModeSections/`. NIGDY nie kopiuj kodu sekcji inline. Pełna specyfikacja: `docs/ui-standards/shared-nmode-sections-standard.md`.
 
 > Wizualnie: te bloki używają naszych tokenów (`rounded-2xl`, `dark:bg-navy-900/..`, purple accents), ale zachowują “quiet UI” charakterystyczny dla N mode.
 
@@ -657,10 +664,25 @@ Ta sekcja jest pisana tak, aby implementacja była możliwa bez “domysłów”
 
 - `Header` (stały, wspólny dla 3 trybów)
 - `PropertiesStrip` (pod headerem)
+- `ActionBar` (primary actions + AI context actions)
 - `Body` jako układ:
   - `LeftNav` (sections)
   - `Canvas` (sections content)
   - `MiniRail` (opcjonalnie)
+
+**Vertical spacing standard (MUST):**
+
+Oddech między warstwami jest krytyczny dla czytelności. Poniższe reguły są obowiązujące:
+
+- Root container N mode: `space-y-4` — zapewnia 1rem gap między PropertiesStrip → ActionBar → Body (2-Pane).
+- ActionBar:
+  - Container: `px-4 py-3 rounded-2xl` z glass background (`bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl`).
+  - **Zakazane** ujemne marginy (`-mt-*`) — niszczą oddech między sekcjami.
+  - Przyciski akcji (Approve, Reject, etc.) siedzą bezpośrednio w kontenerze — bez dodatkowych `mt-*`, `pt-*`, `border-t` wrapperów.
+  - AI buttons sekcyjne używają `ml-auto` by dociągnąć w prawo.
+- Canvas area: `pl-6 pt-1` — lewy gutter + mały top padding, żeby nagłówki sekcji nie były przyklejone do górnej krawędzi.
+- LeftNav sidebar: sticky container z `pt-1` aby wyrównać się pionowo z początkiem Canvas.
+- Tab items w LeftNav: `py-2.5 px-3` dla komfortowych klikanych celów.
 
 **Scroll behavior (MUST):**
 
@@ -2856,3 +2878,4 @@ muszą być kontrolowane przez backend (RBAC) i zapisywać audyt w Activity.
 - 2026-02-11: dopisano pełny copy deck i18n, spec properties per encja, presety embedded views oraz reguły walidacji — implementation-ready pod kodowanie.
 - 2026-02-11: dopisano kontrakty backend/API, model danych i wymagania enterprise (RBAC/audit/performance) dla C mode (Right Rail, Relationships, Watchers, Activity).
 - 2026-02-11: dopisano kanoniczny standard minimalistycznego C mode dla 4 narzędzi (layout + minimalizm + happy paths) oraz adapter/normalization layer (legacy→kanon) dla statusów/priorities/severity.
+- 2026-02-12: dodano §2.5.5.1 — standard współdzielonych sekcji N-mode (CommentsCanvas, ActivityLogCanvas, AttachmentsLinksCanvas, RiskCanvas). Pełna specyfikacja w `docs/ui-standards/shared-nmode-sections-standard.md`.

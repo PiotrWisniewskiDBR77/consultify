@@ -20,15 +20,27 @@ export interface Notification {
   type: string;
   title: string;
   body: string;
+  message?: string;
   icon?: string;
-  priority: 'low' | 'normal' | 'high' | 'urgent';
+  priority: 'low' | 'normal' | 'high' | 'urgent' | 'critical';
+  severity?: 'INFO' | 'WARNING' | 'CRITICAL';
+  category?: string;
   entityType?: string;
   entityId?: string;
+  relatedObjectType?: string;
+  relatedObjectId?: string;
+  projectId?: string;
+  projectName?: string;
   actionUrl?: string;
   actorId?: string;
   actorName?: string;
   isRead: boolean;
+  isActionable?: boolean;
+  data?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
   readAt?: string;
+  snoozedUntil?: string;
+  checklist?: { id: string; text: string; completed: boolean }[];
   createdAt: string;
 }
 
@@ -50,13 +62,20 @@ export interface SendNotificationInput {
   type: string;
   title: string;
   body: string;
+  message?: string;
+  severity?: 'INFO' | 'WARNING' | 'CRITICAL';
   entityType?: string;
   entityId?: string;
+  relatedObjectType?: string;
+  relatedObjectId?: string;
+  projectId?: string;
   actionUrl?: string;
   actorId?: string;
   actorName?: string;
+  isActionable?: boolean;
   metadata?: Record<string, unknown>;
-  priority?: 'low' | 'normal' | 'high' | 'urgent';
+  data?: Record<string, unknown>;
+  priority?: 'low' | 'normal' | 'high' | 'urgent' | 'critical';
 }
 
 // ==========================================
@@ -71,6 +90,79 @@ class NotificationService {
       this.db = await getDatabase();
     }
     return this.db;
+  }
+
+  /**
+   * Compute severity automatically from notification type + context
+   */
+  private computeSeverity(
+    type: string,
+    data?: Record<string, unknown>,
+    explicitSeverity?: string
+  ): 'INFO' | 'WARNING' | 'CRITICAL' {
+    if (explicitSeverity) {
+      const s = explicitSeverity.toUpperCase();
+      if (s === 'CRITICAL') return 'CRITICAL';
+      if (s === 'WARNING' || s === 'HIGH') return 'WARNING';
+      if (s === 'INFO') return 'INFO';
+    }
+
+    const t = (type || '').toUpperCase();
+    const daysOverdue = Number(data?.days_overdue || data?.daysOverdue || 0);
+
+    // Critical severity
+    if (t.includes('BLOCKED') && data?.blocking_count && Number(data.blocking_count) > 0)
+      return 'CRITICAL';
+    if (t === 'DECISION_OVERDUE') return 'CRITICAL';
+    if (t === 'TASK_OVERDUE' && daysOverdue > 3) return 'CRITICAL';
+    if (t === 'SYSTEM_ALERT') return 'CRITICAL';
+
+    // Warning severity
+    if (t === 'TASK_OVERDUE') return 'WARNING';
+    if (t === 'TASK_BLOCKED') return 'WARNING';
+    if (t.includes('ESCALAT')) return 'WARNING';
+    if (t === 'DECISION_REQUIRED') return 'WARNING';
+    if (t === 'GATE_PENDING_APPROVAL') return 'WARNING';
+    if (t === 'AI_RISK_DETECTED') return 'WARNING';
+    if (t === 'AI_OVERLOAD_DETECTED') return 'WARNING';
+    if (t === 'AI_DEPENDENCY_CONFLICT') return 'WARNING';
+    if (t === 'CLIENT_TICKET') return 'WARNING';
+
+    // Info severity (default)
+    return 'INFO';
+  }
+
+  /**
+   * Compute priority from severity
+   */
+  private computePriority(
+    severity: 'INFO' | 'WARNING' | 'CRITICAL',
+    type: string
+  ): 'low' | 'normal' | 'high' | 'urgent' | 'critical' {
+    if (severity === 'CRITICAL') return 'critical';
+    if (severity === 'WARNING') {
+      const t = (type || '').toUpperCase();
+      if (t.includes('OVERDUE') || t.includes('ESCALAT') || t.includes('BLOCKED')) return 'urgent';
+      return 'high';
+    }
+    const t = (type || '').toUpperCase();
+    if (t.includes('ASSIGN') || t.includes('REQUIRED')) return 'normal';
+    return 'low';
+  }
+
+  /**
+   * Infer category from notification type
+   */
+  private inferCategory(type: string): string {
+    const t = (type || '').toUpperCase();
+    if (t.includes('TASK')) return 'task';
+    if (t.includes('DECISION') || t.includes('GATE') || t.includes('CHANGE_REQUEST'))
+      return 'decision';
+    if (t.includes('AI')) return 'ai';
+    if (t.includes('INITIATIVE')) return 'initiative';
+    if (t.includes('SYSTEM') || t.includes('ADMIN')) return 'system';
+    if (t.includes('FEEDBACK') || t.includes('TICKET')) return 'feedback';
+    return 'system';
   }
 
   /**
@@ -110,13 +202,34 @@ class NotificationService {
       channels = typePref.channels;
     }
 
-    // Save notification
+    // Auto-compute severity from type + data
+    const severity = this.computeSeverity(input.type, input.data || input.metadata, input.severity);
+    const priority = input.priority || this.computePriority(severity, input.type);
+
+    // Entity Enrichment: fetch context from source entity at creation time
+    let enrichedData: Record<string, unknown> = {};
+    const entityType = input.relatedObjectType || input.entityType;
+    const entityId = input.relatedObjectId || input.entityId;
+    if (entityType && entityId) {
+      try {
+        enrichedData = await this.enrichEntityData(entityType, entityId);
+      } catch (err) {
+        logger.warn(`[NotificationService] Entity enrichment failed: ${err}`);
+      }
+    }
+
+    // Merge data and metadata with enrichment (enrichment has lowest priority)
+    const mergedData = { ...enrichedData, ...(input.metadata || {}), ...(input.data || {}) };
+
+    // Save notification with all enriched fields
     await db.run(
       `INSERT INTO notifications (
-                id, user_id, organization_id, type, title, body, icon,
-                priority, entity_type, entity_id, action_url,
-                actor_id, actor_name, metadata, channels_sent, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                id, user_id, organization_id, type, title, body, message, icon,
+                severity, priority, entity_type, entity_id,
+                related_object_type, related_object_id, project_id,
+                action_url, actor_id, actor_name,
+                is_actionable, data, metadata, channels_sent, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.userId,
@@ -124,13 +237,20 @@ class NotificationService {
         input.type,
         input.title,
         input.body,
+        input.message || input.body,
         typeConfig?.icon || null,
-        input.priority || 'normal',
-        input.entityType || null,
-        input.entityId || null,
+        severity,
+        priority,
+        input.entityType || input.relatedObjectType || null,
+        input.entityId || input.relatedObjectId || null,
+        input.relatedObjectType || input.entityType || null,
+        input.relatedObjectId || input.entityId || null,
+        input.projectId || null,
         input.actionUrl || null,
         input.actorId || null,
         input.actorName || null,
+        input.isActionable ? 1 : 0,
+        JSON.stringify(mergedData),
         JSON.stringify(input.metadata || {}),
         JSON.stringify(channels),
         now,
@@ -141,7 +261,7 @@ class NotificationService {
     await this.dispatchToChannels(id, input, channels, prefs);
 
     logger.info(
-      `[NotificationService] Sent notification ${id} type=${input.type} to user=${input.userId}`
+      `[NotificationService] Sent notification ${id} type=${input.type} severity=${severity} to user=${input.userId}`
     );
 
     return id;
@@ -152,7 +272,13 @@ class NotificationService {
    */
   async getNotifications(
     userId: string,
-    options?: { limit?: number; unreadOnly?: boolean; type?: string; projectId?: string }
+    options?: {
+      limit?: number;
+      unreadOnly?: boolean;
+      type?: string;
+      projectId?: string;
+      severity?: string;
+    }
   ): Promise<Notification[]> {
     const db = await this.getDb();
 
@@ -160,7 +286,7 @@ class NotificationService {
     const params: (string | number)[] = [userId];
 
     if (options?.unreadOnly) {
-      query += ` AND read = 0`;
+      query += ` AND (read = 0 OR is_read = 0)`;
     }
 
     if (options?.type) {
@@ -168,10 +294,18 @@ class NotificationService {
       params.push(options.type);
     }
 
-    if (options?.projectId) {
-      query += ` AND entity_id = ? AND entity_type = 'project'`;
-      params.push(options.projectId);
+    if (options?.severity) {
+      query += ` AND severity = ?`;
+      params.push(options.severity);
     }
+
+    if (options?.projectId) {
+      query += ` AND (project_id = ? OR (entity_id = ? AND entity_type = 'project'))`;
+      params.push(options.projectId, options.projectId);
+    }
+
+    // Exclude snoozed notifications that haven't expired
+    query += ` AND (snoozed_until IS NULL OR snoozed_until < datetime('now'))`;
 
     query += ` ORDER BY created_at DESC`;
 
@@ -180,43 +314,77 @@ class NotificationService {
       params.push(options.limit);
     }
 
-    const rows = await db.all<{
-      id: string;
-      user_id: string;
-      organization_id: string;
-      type: string;
-      title: string;
-      body: string;
-      icon: string;
-      priority: string;
-      entity_type: string;
-      entity_id: string;
-      action_url: string;
-      actor_id: string;
-      actor_name: string;
-      read: number;
-      read_at: string;
-      created_at: string;
-    }>(query, params);
+    const rows = await db.all<Record<string, any>>(query, params);
 
-    return (rows || []).map((r) => ({
+    return (rows || []).map((r) => this.mapNotificationRow(r));
+  }
+
+  /**
+   * Map a raw DB row to a Notification object, handling both old and new column schemas
+   */
+  private mapNotificationRow(r: Record<string, any>): Notification {
+    // Parse data/metadata JSON safely
+    let data: Record<string, unknown> = {};
+    let metadata: Record<string, unknown> = {};
+    try {
+      data = r.data ? JSON.parse(r.data) : {};
+    } catch {
+      data = {};
+    }
+    try {
+      metadata = r.metadata ? JSON.parse(r.metadata) : {};
+    } catch {
+      metadata = {};
+    }
+
+    // Parse checklist JSON safely
+    let checklist: { id: string; text: string; completed: boolean }[] | undefined;
+    try {
+      checklist = r.checklist ? JSON.parse(r.checklist) : undefined;
+    } catch {
+      checklist = undefined;
+    }
+
+    // Determine severity: prefer explicit column, then compute from type
+    const severity =
+      r.severity && ['INFO', 'WARNING', 'CRITICAL'].includes(r.severity?.toUpperCase?.())
+        ? (r.severity.toUpperCase() as 'INFO' | 'WARNING' | 'CRITICAL')
+        : this.computeSeverity(r.type, data);
+
+    // Related object: prefer dedicated columns, fall back to entity columns
+    const relatedObjectType = r.related_object_type || r.entity_type || null;
+    const relatedObjectId = r.related_object_id || r.entity_id || null;
+
+    return {
       id: r.id,
       userId: r.user_id,
       organizationId: r.organization_id,
       type: r.type,
       title: r.title,
-      body: r.body,
+      body: r.body || r.message || '',
+      message: r.message || r.body || '',
       icon: r.icon,
       priority: r.priority as Notification['priority'],
-      entityType: r.entity_type,
-      entityId: r.entity_id,
+      severity,
+      category: this.inferCategory(r.type),
+      entityType: r.entity_type || null,
+      entityId: r.entity_id || null,
+      relatedObjectType: relatedObjectType,
+      relatedObjectId: relatedObjectId,
+      projectId: r.project_id || null,
+      projectName: (data.projectName as string) || (data.project_name as string) || null,
       actionUrl: r.action_url,
       actorId: r.actor_id,
       actorName: r.actor_name,
-      isRead: r.read === 1,
+      isRead: r.read === 1 || r.is_read === 1,
+      isActionable: r.is_actionable === 1,
+      data: { ...metadata, ...data },
+      metadata,
       readAt: r.read_at,
+      snoozedUntil: r.snoozed_until || null,
+      checklist,
       createdAt: r.created_at,
-    }));
+    };
   }
 
   /**
@@ -293,6 +461,135 @@ class NotificationService {
       notificationId,
       userId,
     ]);
+  }
+
+  /**
+   * Snooze a notification until a given time
+   */
+  async snoozeNotification(notificationId: string, userId: string, until: string): Promise<void> {
+    const db = await this.getDb();
+
+    await db.run(`UPDATE notifications SET snoozed_until = ? WHERE id = ? AND user_id = ?`, [
+      until,
+      notificationId,
+      userId,
+    ]);
+  }
+
+  /**
+   * Update action checklist for a notification
+   */
+  async updateChecklist(
+    notificationId: string,
+    userId: string,
+    checklist: { id: string; text: string; completed: boolean }[]
+  ): Promise<void> {
+    const db = await this.getDb();
+
+    await db.run(`UPDATE notifications SET checklist = ? WHERE id = ? AND user_id = ?`, [
+      JSON.stringify(checklist),
+      notificationId,
+      userId,
+    ]);
+  }
+
+  /**
+   * Get a single notification by ID
+   */
+  async getById(notificationId: string, userId: string): Promise<Notification | null> {
+    const db = await this.getDb();
+
+    const row = await db.get<Record<string, any>>(
+      `SELECT * FROM notifications WHERE id = ? AND user_id = ?`,
+      [notificationId, userId]
+    );
+
+    if (!row) return null;
+    return this.mapNotificationRow(row);
+  }
+
+  /**
+   * Get source entity data for a notification
+   */
+  async getSourceEntity(
+    notificationId: string,
+    userId: string
+  ): Promise<Record<string, any> | null> {
+    const db = await this.getDb();
+
+    const notif = await db.get<Record<string, any>>(
+      `SELECT related_object_type, related_object_id, entity_type, entity_id FROM notifications WHERE id = ? AND user_id = ?`,
+      [notificationId, userId]
+    );
+
+    if (!notif) return null;
+
+    const entityType = (notif.related_object_type || notif.entity_type || '').toLowerCase();
+    const entityId = notif.related_object_id || notif.entity_id;
+
+    if (!entityType || !entityId) return null;
+
+    try {
+      if (entityType === 'task') {
+        const task = await db.get<Record<string, any>>(
+          `SELECT id, title, status, priority, assigned_to, due_date, progress, description FROM tasks WHERE id = ?`,
+          [entityId]
+        );
+        if (task) {
+          return {
+            type: 'task',
+            id: task.id,
+            title: task.title,
+            status: task.status,
+            priority: task.priority,
+            assignee: task.assigned_to,
+            dueDate: task.due_date,
+            progress: task.progress,
+            description: task.description?.substring(0, 200),
+          };
+        }
+      }
+
+      if (entityType === 'decision') {
+        const decision = await db.get<Record<string, any>>(
+          `SELECT id, title, status, priority, assigned_to, due_date, description FROM decisions WHERE id = ?`,
+          [entityId]
+        );
+        if (decision) {
+          return {
+            type: 'decision',
+            id: decision.id,
+            title: decision.title,
+            status: decision.status,
+            priority: decision.priority,
+            decider: decision.assigned_to,
+            dueDate: decision.due_date,
+            description: decision.description?.substring(0, 200),
+          };
+        }
+      }
+
+      if (entityType === 'initiative') {
+        const initiative = await db.get<Record<string, any>>(
+          `SELECT id, title, status, owner_id, target_date FROM initiatives WHERE id = ?`,
+          [entityId]
+        );
+        if (initiative) {
+          return {
+            type: 'initiative',
+            id: initiative.id,
+            title: initiative.title,
+            status: initiative.status,
+            owner: initiative.owner_id,
+            targetDate: initiative.target_date,
+          };
+        }
+      }
+    } catch (error) {
+      logger.warn(`[NotificationService] Failed to fetch source entity: ${error}`);
+    }
+
+    return { type: entityType, id: entityId };
   }
 
   /**
@@ -428,6 +725,126 @@ class NotificationService {
   // PRIVATE HELPERS
   // ==========================================
 
+  /**
+   * Enrich notification data with context from the source entity at creation time.
+   * This snapshot is stored in the notification's `data` field so the frontend
+   * can display meaningful context without additional API calls.
+   */
+  private async enrichEntityData(
+    entityType: string,
+    entityId: string
+  ): Promise<Record<string, unknown>> {
+    const db = await this.getDb();
+    const type = (entityType || '').toLowerCase();
+    const result: Record<string, unknown> = {};
+
+    try {
+      if (type === 'task') {
+        const task = await db.get<Record<string, any>>(
+          `SELECT id, title, status, priority, assigned_to, due_date, progress FROM tasks WHERE id = ?`,
+          [entityId]
+        );
+        if (task) {
+          result.entityName = task.title;
+          result.entityStatus = task.status;
+          result.entityAssignee = task.assigned_to;
+          result.entityDeadline = task.due_date;
+          result.entityProgress = task.progress;
+          result.task_title = task.title;
+
+          // Compute days overdue
+          if (task.due_date) {
+            const dueDate = new Date(task.due_date);
+            const now = new Date();
+            const diffDays = Math.floor(
+              (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            if (diffDays > 0) {
+              result.days_overdue = diffDays;
+              result.daysOverdue = diffDays;
+            }
+          }
+
+          // Try to get project name
+          try {
+            const project = await db.get<{ title: string }>(
+              `SELECT title FROM projects WHERE id = (SELECT project_id FROM tasks WHERE id = ?)`,
+              [entityId]
+            );
+            if (project) result.projectName = project.title;
+          } catch {
+            // ignore
+          }
+
+          // Check blocked items
+          try {
+            const blocked = await db.get<{ cnt: number }>(
+              `SELECT COUNT(*) as cnt FROM task_dependencies WHERE blocking_task_id = ?`,
+              [entityId]
+            );
+            if (blocked && blocked.cnt > 0) {
+              result.blocking_count = blocked.cnt;
+              result.blockedItems = `Blocks ${blocked.cnt} other task(s)`;
+            }
+          } catch {
+            // ignore — table may not exist
+          }
+
+          // Build contextLine
+          const parts: string[] = [];
+          if (result.days_overdue && Number(result.days_overdue) > 0) {
+            parts.push(`${result.days_overdue}d overdue`);
+          }
+          if (task.assigned_to) parts.push(task.assigned_to);
+          if (result.blocking_count) parts.push(`blocks ${result.blocking_count} tasks`);
+          result.contextLine =
+            parts.length > 0 ? `${task.title} — ${parts.join(' · ')}` : task.title;
+        }
+      }
+
+      if (type === 'decision') {
+        const decision = await db.get<Record<string, any>>(
+          `SELECT id, title, status, priority, assigned_to, due_date FROM decisions WHERE id = ?`,
+          [entityId]
+        );
+        if (decision) {
+          result.entityName = decision.title;
+          result.entityStatus = decision.status;
+          result.entityAssignee = decision.assigned_to;
+          result.entityDeadline = decision.due_date;
+          result.decision_title = decision.title;
+
+          if (decision.due_date) {
+            const dueDate = new Date(decision.due_date);
+            const now = new Date();
+            const diffDays = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+            result.deadline_days = Math.max(0, diffDays);
+          }
+
+          result.contextLine = decision.title;
+        }
+      }
+
+      if (type === 'initiative') {
+        const initiative = await db.get<Record<string, any>>(
+          `SELECT id, title, status, owner_id FROM initiatives WHERE id = ?`,
+          [entityId]
+        );
+        if (initiative) {
+          result.entityName = initiative.title;
+          result.entityStatus = initiative.status;
+          result.contextLine = initiative.title;
+        }
+      }
+    } catch (err) {
+      logger.warn(
+        `[NotificationService] enrichEntityData failed for ${entityType}/${entityId}: ${err}`
+      );
+    }
+
+    return result;
+  }
+
   private async getNotificationTypeConfig(type: string): Promise<{
     defaultChannels: string[];
     icon?: string;
@@ -534,3 +951,14 @@ export const getCounts = (userId: string) => notificationService.getCounts(userI
 export const getPreferences = (userId: string) => notificationService.getPreferences(userId);
 export const updatePreferences = (userId: string, updates: Partial<NotificationPreferences>) =>
   notificationService.updatePreferences(userId, updates);
+export const snoozeNotification = (notificationId: string, userId: string, until: string) =>
+  notificationService.snoozeNotification(notificationId, userId, until);
+export const updateChecklist = (
+  notificationId: string,
+  userId: string,
+  checklist: { id: string; text: string; completed: boolean }[]
+) => notificationService.updateChecklist(notificationId, userId, checklist);
+export const getById = (notificationId: string, userId: string) =>
+  notificationService.getById(notificationId, userId);
+export const getSourceEntity = (notificationId: string, userId: string) =>
+  notificationService.getSourceEntity(notificationId, userId);

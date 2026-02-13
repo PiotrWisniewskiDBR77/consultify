@@ -13,7 +13,7 @@ export { DraggableTaskRow } from './DraggableTaskRow';
 export type { EscalationRule, ReminderRule, WarningThresholds } from './EscalationRulesSection';
 export { EscalationRulesSection } from './EscalationRulesSection';
 export { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
-export type { LinkedItem, LinkedItemType } from './LinkedItemsSection';
+export type { LinkedItem, LinkedItemType, LinkRelationType } from './LinkedItemsSection';
 export { LinkedItemsSection } from './LinkedItemsSection';
 export { QuickActions } from './QuickActions';
 export type {
@@ -44,7 +44,7 @@ export { PresentationModeSwitcher } from './PresentationModeSwitcher';
 // Task-specific components
 export type { AIInsight } from './AIInsightSection';
 export { AIInsightSection } from './AIInsightSection';
-export type { TaskDependency } from './DependenciesSection';
+export type { DependencyType, TaskDependency } from './DependenciesSection';
 export { DependenciesSection } from './DependenciesSection';
 export type { EvidenceItem, EvidenceType } from './EvidenceSection';
 export { EvidenceSection } from './EvidenceSection';

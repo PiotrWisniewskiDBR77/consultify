@@ -1,13 +1,19 @@
 import {
   AlertCircle,
+  AlertTriangle,
   ArrowRight,
   Bell,
+  Bot,
   Check,
   CheckCircle,
+  CheckSquare,
   Clock,
+  Flag,
   Info,
   MessageSquare,
+  Scale,
   Sparkles,
+  Target,
   Trash2,
   X,
 } from 'lucide-react';
@@ -216,12 +222,68 @@ export const NotificationDropdown = () => {
     }
   };
 
+  // Type-aware icon mapping (matches NotificationDetailView TYPE_ICONS)
   const getIcon = (type: string) => {
-    if (type === 'ai_insight' || type === 'ai_message')
-      return <Sparkles size={16} className="text-indigo-500" />;
-    if (type.includes('task')) return <CheckCircle size={16} className="text-emerald-500" />;
-    if (type === 'alert') return <AlertCircle size={16} className="text-amber-500" />;
-    return <Info size={16} className="text-blue-500" />;
+    const t = (type || '').toUpperCase();
+    if (t === 'TASK_ASSIGNED') return <CheckSquare size={16} className="text-blue-400" />;
+    if (t === 'TASK_OVERDUE') return <Clock size={16} className="text-red-400" />;
+    if (t === 'TASK_BLOCKED') return <AlertCircle size={16} className="text-red-400" />;
+    if (t === 'DECISION_REQUIRED') return <Scale size={16} className="text-purple-400" />;
+    if (t === 'DECISION_OVERDUE') return <Scale size={16} className="text-red-400" />;
+    if (t === 'GATE_PENDING_APPROVAL') return <Flag size={16} className="text-amber-400" />;
+    if (t.includes('INITIATIVE_STARTED') || t.includes('INITIATIVE_COMPLETED'))
+      return <Target size={16} className="text-emerald-400" />;
+    if (t.includes('INITIATIVE_STALLED')) return <Target size={16} className="text-amber-400" />;
+    if (t === 'AI_RISK_DETECTED' || t === 'AI_OVERLOAD_DETECTED')
+      return <AlertTriangle size={16} className="text-amber-400" />;
+    if (t === 'AI_RECOMMENDATION' || t === 'AI_DEPENDENCY_CONFLICT')
+      return <Bot size={16} className="text-purple-400" />;
+    if (t.includes('AI')) return <Sparkles size={16} className="text-indigo-500" />;
+    if (t === 'SYSTEM_ALERT') return <AlertCircle size={16} className="text-red-500" />;
+    if (t === 'MILESTONE_COMPLETED') return <CheckCircle size={16} className="text-emerald-500" />;
+    if (t.includes('TASK')) return <CheckSquare size={16} className="text-blue-400" />;
+    if (t.includes('FEEDBACK') || t.includes('TICKET'))
+      return <MessageSquare size={16} className="text-amber-400" />;
+    return <Bell size={16} className="text-slate-400" />;
+  };
+
+  // Severity color dot
+  const getSeverityColor = (notification: Notification): string => {
+    const severity = ((notification as any).severity || '').toUpperCase();
+    const type = (notification.type || '').toUpperCase();
+
+    // Auto-compute from type if no severity
+    if (
+      severity === 'CRITICAL' ||
+      type.includes('BLOCKED') ||
+      type === 'DECISION_OVERDUE' ||
+      type === 'SYSTEM_ALERT'
+    )
+      return 'bg-red-500';
+    if (
+      severity === 'WARNING' ||
+      type.includes('OVERDUE') ||
+      type.includes('ESCALAT') ||
+      type === 'DECISION_REQUIRED' ||
+      type === 'GATE_PENDING_APPROVAL' ||
+      type.includes('AI_RISK')
+    )
+      return 'bg-amber-500';
+    return 'bg-blue-500';
+  };
+
+  // Priority badge color
+  const getPriorityBadgeStyle = (priority: string): string => {
+    switch (priority) {
+      case 'CRITICAL':
+        return 'bg-red-500/10 text-red-500 border-red-500/30';
+      case 'HIGH':
+        return 'bg-amber-500/10 text-amber-500 border-amber-500/30';
+      case 'MEDIUM':
+        return 'bg-blue-500/10 text-blue-500 border-blue-500/30';
+      default:
+        return 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-navy-700';
+    }
   };
 
   const formatTime = (dateStr: string) => {
@@ -353,15 +415,21 @@ export const NotificationDropdown = () => {
                           onClick={() => openInMyWork(notification)}
                         >
                           <div className="flex gap-3 pr-8">
-                            <div
-                              className={`mt-0.5 shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${!notification.isRead ? 'bg-white dark:bg-white/10 shadow-sm border border-slate-200 dark:border-navy-700' : 'bg-slate-100 dark:bg-white/5'}`}
-                            >
-                              {getIcon(notification.type)}
+                            {/* Icon with severity color dot */}
+                            <div className="relative mt-0.5 shrink-0">
+                              <div
+                                className={`w-9 h-9 rounded-full flex items-center justify-center ${!notification.isRead ? 'bg-white dark:bg-white/10 shadow-sm border border-slate-200 dark:border-navy-700' : 'bg-slate-100 dark:bg-white/5'}`}
+                              >
+                                {getIcon(notification.type)}
+                              </div>
+                              <div
+                                className={`absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-navy-900 ${getSeverityColor(notification)}`}
+                              />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2 mb-1">
                                 <p
-                                  className={`text-sm font-semibold leading-tight ${!notification.isRead ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}
+                                  className={`text-sm font-semibold leading-tight line-clamp-2 ${!notification.isRead ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}
                                 >
                                   {notification.title}
                                 </p>
@@ -370,12 +438,14 @@ export const NotificationDropdown = () => {
                                 </span>
                               </div>
                               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
-                                {contract.whyImportant}
+                                {contract.contextLine || contract.whyImportant}
                               </p>
 
-                              {/* Action Button */}
+                              {/* Priority badge + Primary CTA */}
                               <div className="mt-2 inline-flex items-center gap-2">
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
+                                <span
+                                  className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${getPriorityBadgeStyle(contract.priority)}`}
+                                >
                                   {contract.priority}
                                 </span>
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 bg-purple-50 dark:bg-purple-900/20 px-2.5 py-1 rounded-md transition-colors hover:bg-purple-100 dark:hover:bg-purple-900/30">
@@ -471,9 +541,7 @@ export const NotificationDropdown = () => {
 
                           {!notification.isRead && (
                             <div
-                              className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${
-                                notification.type.includes('ai') ? 'bg-indigo-500' : 'bg-purple-500'
-                              }`}
+                              className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${getSeverityColor(notification)}`}
                             ></div>
                           )}
                         </div>

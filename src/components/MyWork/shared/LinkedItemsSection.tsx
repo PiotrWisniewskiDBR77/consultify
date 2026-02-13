@@ -38,6 +38,14 @@ export type LinkedItemType =
   | 'insight'
   | 'external';
 
+export type LinkRelationType =
+  | 'related'
+  | 'blocks'
+  | 'depends_on'
+  | 'parent_of'
+  | 'informs'
+  | 'duplicates';
+
 export interface LinkedItem {
   id: string;
   type: LinkedItemType;
@@ -47,6 +55,8 @@ export interface LinkedItem {
   url?: string;
   externalUrl?: string;
   comment?: string;
+  linkRelation?: LinkRelationType;
+  linkDirection?: 'outgoing' | 'incoming';
 }
 
 interface LinkedItemsSectionProps {

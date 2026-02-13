@@ -252,6 +252,19 @@ const parseHistoryNotes = (value?: string | null): string | undefined => {
   }
 };
 
+const parseHistoryDetails = (value?: string | null): Record<string, unknown> | undefined => {
+  if (!value) return undefined;
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 // ==========================================
 // CONTROLLER METHODS
 // ==========================================
@@ -510,8 +523,19 @@ export class DecisionController {
       );
 
       const history = await queryHelpers.queryAll(
-        `SELECT action, changed_by, created_at, details
-         FROM decision_history WHERE decision_id = ? ORDER BY created_at ASC`,
+        `SELECT
+            dh.id,
+            dh.action,
+            dh.old_status,
+            dh.new_status,
+            dh.changed_by,
+            dh.created_at,
+            dh.details,
+            TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) AS changed_by_name
+         FROM decision_history dh
+         LEFT JOIN users u ON dh.changed_by = u.id
+         WHERE dh.decision_id = ?
+         ORDER BY dh.created_at ASC`,
         [id]
       );
 
@@ -566,17 +590,27 @@ export class DecisionController {
           isBlocker: impact.is_blocker === 1,
         })),
         auditTrail: history.map((entry: any) => ({
+          id: entry.id,
           action: entry.action,
           by: entry.changed_by,
+          userName: entry.changed_by_name || undefined,
+          oldStatus: normalizeStatus(entry.old_status || null),
+          newStatus: normalizeStatus(entry.new_status || null),
           at: entry.created_at,
           notes: parseHistoryNotes(entry.details),
+          details: parseHistoryDetails(entry.details),
         })),
         audit_trail: JSON.stringify(
           history.map((entry: any) => ({
+            id: entry.id,
             action: entry.action,
             by: entry.changed_by,
+            userName: entry.changed_by_name || undefined,
+            oldStatus: normalizeStatus(entry.old_status || null),
+            newStatus: normalizeStatus(entry.new_status || null),
             at: entry.created_at,
             notes: parseHistoryNotes(entry.details),
+            details: parseHistoryDetails(entry.details),
           }))
         ),
       });
@@ -843,6 +877,8 @@ export class DecisionController {
         res.status(400).json({ error: 'Invalid decision' });
         return;
       }
+      const requestedStatus = String(statusInput || '').toLowerCase();
+      const isDeferredAction = requestedStatus === 'deferred';
       const normalizedStatus = normalizeStatus(statusInput || '');
       if (!['approved', 'rejected', 'pending'].includes(normalizedStatus)) {
         res.status(400).json({ error: 'Invalid decision' });
@@ -896,11 +932,14 @@ export class DecisionController {
         [
           uuidv4(),
           id,
-          normalizedStatus,
+          isDeferredAction ? 'deferred' : normalizedStatus,
           normalizeStatus(currentDecision.status || null),
           normalizedStatus,
           userId,
-          JSON.stringify({ notes: rationaleText, outcome: normalizedStatus }),
+          JSON.stringify({
+            notes: rationaleText || (isDeferredAction ? 'Deferred' : undefined),
+            outcome: isDeferredAction ? 'deferred' : normalizedStatus,
+          }),
         ]
       );
 

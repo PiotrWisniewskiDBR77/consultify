@@ -32,9 +32,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
-import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
-import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
 import {
   BulkActionBar,
   type ColumnDef,
@@ -937,9 +934,6 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   // Open filter dropdown state
   const [openFilterId, setOpenFilterId] = useState<string | null>(null);
 
-  // Card view style
-  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('d');
-
   // Fetch decisions
   const fetchDecisions = useCallback(async () => {
     try {
@@ -1015,7 +1009,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   // Handlers
   const handleApprove = async (id: string) => {
     try {
-      await Api.updateDecision(id, { status: 'APPROVED' });
+      await Api.decideDecision(id, 'approved');
       setDecisions((prev) => prev.map((d) => (d.id === id ? { ...d, status: 'APPROVED' } : d)));
       toast.success('Decision approved');
     } catch (error) {
@@ -1025,7 +1019,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   const handleReject = async (id: string) => {
     try {
-      await Api.updateDecision(id, { status: 'REJECTED' });
+      await Api.decideDecision(id, 'rejected');
       setDecisions((prev) => prev.map((d) => (d.id === id ? { ...d, status: 'REJECTED' } : d)));
       toast.success('Decision rejected');
     } catch (error) {
@@ -1078,10 +1072,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
     try {
       // Update decision status to ESCALATED
-      await Api.updateDecision(id, {
-        status: 'ESCALATED',
-        escalatedAt: new Date().toISOString(),
-      });
+      await Api.escalateDecision(id, 'Manual escalation from decisions panel');
 
       // Create an escalation notification
       await Api.post('/api/notifications', {
@@ -1166,9 +1157,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   // Bulk actions
   const handleBulkApprove = async () => {
     try {
-      await Promise.all(
-        Array.from(selectedIds).map((id) => Api.updateDecision(id, { status: 'APPROVED' }))
-      );
+      await Promise.all(Array.from(selectedIds).map((id) => Api.decideDecision(id, 'approved')));
       setDecisions((prev) =>
         prev.map((d) => (selectedIds.has(d.id) ? { ...d, status: 'APPROVED' } : d))
       );
@@ -1238,101 +1227,6 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     return result;
   }, [filteredDecisions, tableFilters]);
 
-  /* ─── Mapping for N / C views ─── */
-  const decisionToGenericItem = (d: Decision): GenericListItem => {
-    const statusUpper = d.status?.toUpperCase();
-    const statusVariant: GenericListItem['statusVariant'] =
-      statusUpper === 'APPROVED'
-        ? 'success'
-        : statusUpper === 'REJECTED'
-          ? 'danger'
-          : statusUpper === 'DEFERRED'
-            ? 'warning'
-            : statusUpper === 'ESCALATED'
-              ? 'purple'
-              : 'info';
-    const priorityVariant: GenericListItem['priorityVariant'] =
-      d.priority?.toUpperCase() === 'CRITICAL'
-        ? 'critical'
-        : d.priority?.toUpperCase() === 'HIGH'
-          ? 'high'
-          : d.priority?.toUpperCase() === 'LOW'
-            ? 'low'
-            : 'medium';
-    const dueDate = d.dueDate || d.deadline;
-    return {
-      id: d.id,
-      title: d.title || 'Untitled decision',
-      subtitle: d.description || undefined,
-      status: getStatusConfig(d.status).label,
-      statusVariant,
-      priority: getPriorityConfig(d.priority).label,
-      priorityVariant,
-      dueDate: dueDate ? formatDate(dueDate) : undefined,
-      isOverdue: isOverdue(dueDate),
-      assignee: d.ownerName || undefined,
-      secondaryLabel: d.projectName || undefined,
-      tertiaryLabel: d.decisionType || d.type || undefined,
-      indicator: getDaysWaiting(d.createdAt),
-      indicatorLabel: `${getDaysWaiting(d.createdAt)}d waiting`,
-      isHighlighted: isOverdue(dueDate) || d.priority?.toUpperCase() === 'CRITICAL',
-      _raw: d,
-    };
-  };
-
-  const decisionViewSections: ListSection[] = useMemo(() => {
-    const overdue = displayedDecisions
-      .filter((d) => isOverdue(d.dueDate || d.deadline) && d.status?.toUpperCase() === 'PENDING')
-      .map(decisionToGenericItem);
-    const critical = displayedDecisions
-      .filter(
-        (d) => !isOverdue(d.dueDate || d.deadline) && d.priority?.toUpperCase() === 'CRITICAL'
-      )
-      .map(decisionToGenericItem);
-    const pending = displayedDecisions
-      .filter(
-        (d) =>
-          d.status?.toUpperCase() === 'PENDING' &&
-          !isOverdue(d.dueDate || d.deadline) &&
-          d.priority?.toUpperCase() !== 'CRITICAL'
-      )
-      .map(decisionToGenericItem);
-    const decided = displayedDecisions
-      .filter((d) =>
-        ['APPROVED', 'REJECTED', 'DEFERRED', 'ESCALATED'].includes(d.status?.toUpperCase() || '')
-      )
-      .map(decisionToGenericItem);
-    return [
-      ...(overdue.length
-        ? [{ id: 'overdue', label: 'Overdue', items: overdue, accentColor: 'text-red-500' }]
-        : []),
-      ...(critical.length
-        ? [{ id: 'critical', label: 'Critical', items: critical, accentColor: 'text-orange-500' }]
-        : []),
-      ...(pending.length
-        ? [{ id: 'pending', label: 'Pending', items: pending, accentColor: 'text-blue-500' }]
-        : []),
-      ...(decided.length
-        ? [{ id: 'decided', label: 'Decided', items: decided, accentColor: 'text-emerald-500' }]
-        : []),
-    ];
-  }, [displayedDecisions]);
-
-  const DECISIONS_CLICKUP_COLUMNS: ListColumn[] = [
-    { key: 'title', label: 'Decision', width: 'flex-1 min-w-0' },
-    { key: 'status', label: 'Status', width: 'w-28' },
-    { key: 'priority', label: 'Priority', width: 'w-24' },
-    { key: 'assignee', label: 'Owner', width: 'w-32' },
-    { key: 'dueDate', label: 'Due', width: 'w-24' },
-    { key: 'indicatorLabel', label: 'Waiting', width: 'w-24' },
-    { key: 'secondaryLabel', label: 'Project', width: 'w-32' },
-  ];
-
-  const handleDecisionItemClick = (item: GenericListItem) => {
-    const raw = item._raw as Decision;
-    onDecisionClick?.(item.id, raw);
-  };
-
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center h-64">
@@ -1355,44 +1249,16 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
-      {/* View switcher toolbar */}
-      <div className="flex items-center justify-end px-4 pt-3 pb-1">
-        <CardViewSwitcher
-          moduleId="my-work-decisions-content"
-          value={cardViewStyle}
-          onChange={setCardViewStyle}
-          compact
-        />
-      </div>
-
-      {cardViewStyle === 'n' ? (
-        <div className="flex-1 overflow-hidden p-4">
-          <NotionListView
-            sections={decisionViewSections}
-            onItemClick={handleDecisionItemClick}
-            emptyMessage="No decisions found"
-          />
-        </div>
-      ) : cardViewStyle === 'c' ? (
-        <div className="flex-1 overflow-y-auto p-4">
-          <ClickUpListView
-            sections={decisionViewSections}
-            columns={DECISIONS_CLICKUP_COLUMNS}
-            onItemClick={handleDecisionItemClick}
-            emptyMessage="No decisions found"
-          />
-        </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            <table className="w-full" style={{ minWidth: 900 }}>
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
-                  {/* Select All */}
-                  <th className="w-10 px-2 py-2">
-                    <button
-                      onClick={() => handleSelectAll(!allSelected)}
-                      className={`
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+          <table className="w-full" style={{ minWidth: 900 }}>
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
+                {/* Select All */}
+                <th className="w-10 px-2 py-2">
+                  <button
+                    onClick={() => handleSelectAll(!allSelected)}
+                    className={`
                       w-5 h-5 rounded border flex items-center justify-center transition-colors
                       ${
                         allSelected
@@ -1402,168 +1268,165 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                             : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
                       }
                     `}
-                    >
-                      {allSelected ? (
-                        <CheckSquare size={14} />
-                      ) : someSelected ? (
-                        <Minus size={14} />
-                      ) : (
-                        <Square size={14} />
-                      )}
-                    </button>
-                  </th>
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.type }}
                   >
-                    <span>Type</span>
-                    <ColumnResizer
-                      columnId="type"
-                      currentWidth={columnWidths.type}
-                      minWidth={80}
-                      maxWidth={140}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
-                  <th className="w-8 px-1 py-2"></th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Decision
-                  </th>
-                  {/* Show Owner column for awaiting mode, Project for my decisions */}
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.project }}
-                  >
-                    <span>{viewMode === 'awaiting' ? 'Owner' : 'Project'}</span>
-                    <ColumnResizer
-                      columnId="project"
-                      currentWidth={columnWidths.project}
-                      minWidth={100}
-                      maxWidth={180}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
-
-                  {/* Status with Filter */}
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.status }}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={
-                          (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
-                        }
-                      >
-                        Status
-                      </span>
-                      <FilterDropdown
-                        column={DECISION_COLUMNS.find((c) => c.id === 'status')!}
-                        value={tableFilters.status as string[]}
-                        onChange={(val) => handleFilterChange('status', val as string[])}
-                        isOpen={openFilterId === 'status'}
-                        onToggle={() =>
-                          setOpenFilterId(openFilterId === 'status' ? null : 'status')
-                        }
-                        onClose={() => setOpenFilterId(null)}
-                      />
-                    </div>
-                    <ColumnResizer
-                      columnId="status"
-                      currentWidth={columnWidths.status}
-                      minWidth={90}
-                      maxWidth={140}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
-
-                  {/* Priority with Filter */}
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.priority }}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={
-                          (tableFilters.priority as string[])?.length ? 'text-primary-500' : ''
-                        }
-                      >
-                        Priority
-                      </span>
-                      <FilterDropdown
-                        column={DECISION_COLUMNS.find((c) => c.id === 'priority')!}
-                        value={tableFilters.priority as string[]}
-                        onChange={(val) => handleFilterChange('priority', val as string[])}
-                        isOpen={openFilterId === 'priority'}
-                        onToggle={() =>
-                          setOpenFilterId(openFilterId === 'priority' ? null : 'priority')
-                        }
-                        onClose={() => setOpenFilterId(null)}
-                      />
-                    </div>
-                    <ColumnResizer
-                      columnId="priority"
-                      currentWidth={columnWidths.priority}
-                      minWidth={80}
-                      maxWidth={130}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
-
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.date }}
-                  >
-                    <span>Due Date</span>
-                    <ColumnResizer
-                      columnId="date"
-                      currentWidth={columnWidths.date}
-                      minWidth={90}
-                      maxWidth={140}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
-                  <th
-                    className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
-                    style={{ width: columnWidths.actions }}
-                  >
-                    {viewMode === 'awaiting' ? 'Response / Actions' : 'Actions'}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {displayedDecisions.map((decision) =>
-                    viewMode === 'awaiting' ? (
-                      <AwaitingDecisionTableRow
-                        key={decision.id}
-                        decision={decision}
-                        isSelected={selectedIds.has(decision.id)}
-                        onSelect={handleSelectDecision}
-                        onRemind={handleRemind}
-                        onEscalate={handleEscalate}
-                        onClick={onDecisionClick}
-                        columnWidths={columnWidths}
-                      />
+                    {allSelected ? (
+                      <CheckSquare size={14} />
+                    ) : someSelected ? (
+                      <Minus size={14} />
                     ) : (
-                      <DecisionTableRow
-                        key={decision.id}
-                        decision={decision}
-                        isSelected={selectedIds.has(decision.id)}
-                        onSelect={handleSelectDecision}
-                        onApprove={handleApprove}
-                        onReject={handleReject}
-                        onClick={onDecisionClick}
-                        columnWidths={columnWidths}
-                      />
-                    )
-                  )}
-                </AnimatePresence>
-              </tbody>
-            </table>
-          </div>
+                      <Square size={14} />
+                    )}
+                  </button>
+                </th>
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.type }}
+                >
+                  <span>Type</span>
+                  <ColumnResizer
+                    columnId="type"
+                    currentWidth={columnWidths.type}
+                    minWidth={80}
+                    maxWidth={140}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                <th className="w-8 px-1 py-2"></th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Decision
+                </th>
+                {/* Show Owner column for awaiting mode, Project for my decisions */}
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.project }}
+                >
+                  <span>{viewMode === 'awaiting' ? 'Owner' : 'Project'}</span>
+                  <ColumnResizer
+                    columnId="project"
+                    currentWidth={columnWidths.project}
+                    minWidth={100}
+                    maxWidth={180}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+
+                {/* Status with Filter */}
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.status }}
+                >
+                  <div className="flex items-center gap-1">
+                    <span
+                      className={
+                        (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
+                      }
+                    >
+                      Status
+                    </span>
+                    <FilterDropdown
+                      column={DECISION_COLUMNS.find((c) => c.id === 'status')!}
+                      value={tableFilters.status as string[]}
+                      onChange={(val) => handleFilterChange('status', val as string[])}
+                      isOpen={openFilterId === 'status'}
+                      onToggle={() => setOpenFilterId(openFilterId === 'status' ? null : 'status')}
+                      onClose={() => setOpenFilterId(null)}
+                    />
+                  </div>
+                  <ColumnResizer
+                    columnId="status"
+                    currentWidth={columnWidths.status}
+                    minWidth={90}
+                    maxWidth={140}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+
+                {/* Priority with Filter */}
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.priority }}
+                >
+                  <div className="flex items-center gap-1">
+                    <span
+                      className={
+                        (tableFilters.priority as string[])?.length ? 'text-primary-500' : ''
+                      }
+                    >
+                      Priority
+                    </span>
+                    <FilterDropdown
+                      column={DECISION_COLUMNS.find((c) => c.id === 'priority')!}
+                      value={tableFilters.priority as string[]}
+                      onChange={(val) => handleFilterChange('priority', val as string[])}
+                      isOpen={openFilterId === 'priority'}
+                      onToggle={() =>
+                        setOpenFilterId(openFilterId === 'priority' ? null : 'priority')
+                      }
+                      onClose={() => setOpenFilterId(null)}
+                    />
+                  </div>
+                  <ColumnResizer
+                    columnId="priority"
+                    currentWidth={columnWidths.priority}
+                    minWidth={80}
+                    maxWidth={130}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+
+                <th
+                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  style={{ width: columnWidths.date }}
+                >
+                  <span>Due Date</span>
+                  <ColumnResizer
+                    columnId="date"
+                    currentWidth={columnWidths.date}
+                    minWidth={90}
+                    maxWidth={140}
+                    onResize={handleColumnResize}
+                  />
+                </th>
+                <th
+                  className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  style={{ width: columnWidths.actions }}
+                >
+                  {viewMode === 'awaiting' ? 'Response / Actions' : 'Actions'}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <AnimatePresence>
+                {displayedDecisions.map((decision) =>
+                  viewMode === 'awaiting' ? (
+                    <AwaitingDecisionTableRow
+                      key={decision.id}
+                      decision={decision}
+                      isSelected={selectedIds.has(decision.id)}
+                      onSelect={handleSelectDecision}
+                      onRemind={handleRemind}
+                      onEscalate={handleEscalate}
+                      onClick={onDecisionClick}
+                      columnWidths={columnWidths}
+                    />
+                  ) : (
+                    <DecisionTableRow
+                      key={decision.id}
+                      decision={decision}
+                      isSelected={selectedIds.has(decision.id)}
+                      onSelect={handleSelectDecision}
+                      onApprove={handleApprove}
+                      onReject={handleReject}
+                      onClick={onDecisionClick}
+                      columnWidths={columnWidths}
+                    />
+                  )
+                )}
+              </AnimatePresence>
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
       {/* Bulk Action Bar */}
       <BulkActionBar

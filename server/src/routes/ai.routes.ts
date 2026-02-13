@@ -16,6 +16,12 @@ import {
   validateQuery,
 } from '../middleware/validation.middleware.js';
 import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
+import {
+  triggerAIDependencyConflict,
+  triggerAIOverloadDetected,
+  triggerAIRecommendation,
+  triggerAIRiskDetected,
+} from '../services/aiNotificationTriggers.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -54,6 +60,7 @@ import {
   RecordDecisionRequestSchema,
   RecordFeedbackRequestSchema,
   RecordSuggestionActionRequestSchema,
+  RefineTextRequestSchema,
   RejectActionRequestSchema,
   ReportMessageRequestSchema,
   RoadmapRequestSchema,
@@ -2663,6 +2670,118 @@ router.get(
   })
 );
 
+// ==================== REFINE TEXT (AI Field Enhancer) ====================
+/**
+ * Lightweight text-refinement endpoint for the AIFieldEnhancer component.
+ * Sends the user's field text + mode instruction to an LLM and returns
+ * plain refined text — no orchestrator, no deep thinking, no streaming.
+ */
+router.post(
+  '/refine-text',
+  verifyToken,
+  validateBody(RefineTextRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { text, mode, systemInstruction, fieldLabel, artifactContext, language } = req.body;
+
+    // --- Provider check ---
+    const hasEnvProvider =
+      !!process.env.OPENAI_API_KEY ||
+      !!process.env.GEMINI_API_KEY ||
+      !!process.env.GOOGLE_AI_API_KEY ||
+      !!process.env.ANTHROPIC_API_KEY ||
+      !!process.env.MISTRAL_API_KEY;
+
+    if (!hasEnvProvider) {
+      return res.status(500).json({
+        error: 'No LLM provider configured. Set OPENAI_API_KEY or GEMINI_API_KEY.',
+        code: 'NO_LLM_PROVIDER',
+      });
+    }
+
+    // --- Access policy ---
+    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+    const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
+    if (!aiAccessCheck.allowed) {
+      return res.status(403).json({
+        error: aiAccessCheck.reason || 'Access blocked',
+        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
+      });
+    }
+
+    // Count the call
+    AccessPolicyService.incrementUsage(req.organizationId!, 'ai_calls', 1).catch((err: any) => {
+      logger.warn('[AI RefineText] Failed to increment ai_calls usage:', err?.message || err);
+    });
+
+    // --- Build prompts ---
+    const langCode = (language || 'pl').split('-')[0];
+    const langMap: Record<string, string> = {
+      pl: 'Polish',
+      en: 'English',
+      de: 'German',
+      es: 'Spanish',
+    };
+    const langName = langMap[langCode] || 'Polish';
+
+    const sys = [
+      systemInstruction ||
+        `You are a professional PMO content editor. Return ONLY the refined text — no commentary, no explanations, no quotes, no prefixes. Keep the original language.`,
+      `\n[LANGUAGE INSTRUCTION: Always respond in ${langName}.]`,
+    ].join('\n');
+
+    const ctx = artifactContext
+      ? `Artifact type: ${artifactContext.type}, Title: ${artifactContext.title || '-'}, Status: ${artifactContext.status || '-'}, Priority: ${artifactContext.priority || '-'}`
+      : '';
+
+    const userPrompt = [
+      fieldLabel ? `Field: ${fieldLabel}` : '',
+      ctx ? `Context: ${ctx}` : '',
+      `Edit mode: ${mode}`,
+      '',
+      `Text to refine:`,
+      text,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    // --- Call LLM ---
+    const { modelRouter } = await import('../services/ai/modelRouter.js');
+    const { llmService } = await import('../services/ai/llmService.js');
+
+    const modelCfg = await modelRouter.select({
+      capability: 'chat_confirm',
+      organizationId: req.organizationId,
+      tier: 'BUDGET',
+    } as any);
+
+    logger.info('[AI RefineText] Using model:', modelCfg.id, 'provider:', modelCfg.provider);
+
+    const result = (await llmService.callText({
+      type: 'chat',
+      modelConfig: {
+        provider: modelCfg.provider,
+        id: modelCfg.id,
+        endpoint: (modelCfg as any).endpoint,
+        apiKey: (modelCfg as any).apiKey,
+      },
+      systemPrompt: sys,
+      messages: [{ role: 'user', content: userPrompt }],
+    } as any)) as any;
+
+    const refinedText = String(result?.content || result?.text || '').trim();
+
+    if (!refinedText) {
+      return res.status(502).json({
+        error: 'LLM returned empty response',
+        code: 'EMPTY_LLM_RESPONSE',
+      });
+    }
+
+    return res.json({ text: refinedText });
+  })
+);
+
+// ==================== CHAT (AI Orchestrator) ====================
 router.post(
   '/chat',
   verifyToken,
@@ -4727,6 +4846,91 @@ router.get(
       return res.json({ success: true, benchmarks: getAllIndustryBenchmarks() });
     } catch (err: any) {
       return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+/**
+ * POST /api/ai/trigger-notification
+ * Manually or programmatically trigger an AI notification
+ * Used by AI pipelines to create risk, recommendation, overload, or conflict notifications
+ */
+router.post(
+  '/trigger-notification',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = (req as any).userId || req.user?.id;
+    const organizationId = (req as any).organizationId || req.user?.organizationId || 'system';
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const { type, title, description, projectId, relatedObjectType, relatedObjectId, details } =
+        req.body;
+
+      if (!type || !title || !description) {
+        return res.status(400).json({ error: 'type, title, and description are required' });
+      }
+
+      const ctx = {
+        userId,
+        organizationId,
+        projectId,
+        relatedObjectType,
+        relatedObjectId,
+      };
+
+      let notifId: string | null = null;
+
+      switch (type) {
+        case 'AI_RISK_DETECTED':
+          notifId = await triggerAIRiskDetected(ctx, {
+            title,
+            description,
+            riskLevel: details?.riskLevel || 'medium',
+            affectedEntity: details?.affectedEntity,
+            recommendation: details?.recommendation,
+            confidence: details?.confidence,
+          });
+          break;
+        case 'AI_RECOMMENDATION':
+          notifId = await triggerAIRecommendation(ctx, {
+            title,
+            description,
+            impact: details?.impact,
+            savings: details?.savings,
+            confidence: details?.confidence,
+            actionLabel: details?.actionLabel,
+          });
+          break;
+        case 'AI_OVERLOAD_DETECTED':
+          notifId = await triggerAIOverloadDetected(ctx, {
+            title,
+            description,
+            affectedResource: details?.affectedResource || 'unknown',
+            currentLoad: details?.currentLoad || 0,
+            threshold: details?.threshold || 0,
+            recommendation: details?.recommendation,
+          });
+          break;
+        case 'AI_DEPENDENCY_CONFLICT':
+          notifId = await triggerAIDependencyConflict(ctx, {
+            title,
+            description,
+            conflictingEntities: details?.conflictingEntities || [],
+            suggestedResolution: details?.suggestedResolution,
+          });
+          break;
+        default:
+          return res.status(400).json({
+            error: `Unknown AI notification type: ${type}. Supported: AI_RISK_DETECTED, AI_RECOMMENDATION, AI_OVERLOAD_DETECTED, AI_DEPENDENCY_CONFLICT`,
+          });
+      }
+
+      return res.json({ success: true, notificationId: notifId });
+    } catch (err: any) {
+      logger.error('[AI Routes] Failed to trigger AI notification:', err);
+      return res.status(500).json({ error: err.message });
     }
   })
 );
