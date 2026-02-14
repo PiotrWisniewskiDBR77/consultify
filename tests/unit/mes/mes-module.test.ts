@@ -1,4 +1,8 @@
 /**
+ * @test-quality PLACEHOLDER - needs real implementation
+ * @see docs/TEST_REMEDIATION_PLAN.md
+ */
+/**
  * MES (Manufacturing Execution System) - Unit Tests
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
