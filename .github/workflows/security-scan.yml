@@ -1,0 +1,150 @@
+name: OWASP Security Scan
+
+on:
+  schedule:
+    # Run weekly on Sundays at midnight UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL for scanning'
+        required: false
+        default: 'http://localhost:3000'
+      scan_type:
+        description: 'Type of scan to run'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - quick
+          - api-only
+
+env:
+  NODE_VERSION: '20.x'
+  CI: true
+
+jobs:
+  owasp-scan:
+    name: 🔒 OWASP ZAP Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build application
+        run: npm run build
+        continue-on-error: true
+      
+      - name: Start application
+        run: |
+          npm start &
+          echo $! > app.pid
+          # Wait for application to be ready
+          timeout 60 bash -c 'until curl -f http://localhost:3000/api/health 2>/dev/null; do sleep 2; done' || true
+          sleep 5
+        env:
+          PORT: 3000
+          NODE_ENV: test
+      
+      - name: Verify application is running
+        run: |
+          if ! curl -f http://localhost:3000/api/health; then
+            echo "Application failed to start"
+            exit 1
+          fi
+      
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: ${{ github.event.inputs.target_url || 'http://localhost:3000' }}
+          rules_file_name: 'tests/security/zap-config.yaml'
+        continue-on-error: true
+      
+      - name: OWASP ZAP Full Scan
+        if: github.event.inputs.scan_type == 'full' || github.event.schedule
+        uses: zaproxy/action-full-scan@v0.10.0
+        with:
+          target: ${{ github.event.inputs.target_url || 'http://localhost:3000' }}
+          rules_file_name: 'tests/security/zap-config.yaml'
+        continue-on-error: true
+      
+      - name: Stop application
+        if: always()
+        run: |
+          if [ -f app.pid ]; then
+            kill $(cat app.pid) || true
+            rm app.pid
+          fi
+          pkill -f "node.*start" || true
+      
+      - name: Upload ZAP Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: |
+            report_html.html
+            report_json.json
+            report_md.md
+            report_xml.xml
+          retention-days: 90
+      
+      - name: Upload SARIF Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-sarif-report
+          path: report_sarif.json
+          retention-days: 90
+      
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            let reportContent = '## 🔒 OWASP ZAP Security Scan Results\n\n';
+            
+            // Try to read markdown report if available
+            if (fs.existsSync('report_md.md')) {
+              const mdReport = fs.readFileSync('report_md.md', 'utf8');
+              reportContent += mdReport;
+            } else {
+              reportContent += 'Security scan completed. Check artifacts for detailed reports.\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: reportContent
+            });
+      
+      - name: Run OWASP Top 10 Test Suite
+        run: |
+          npm run test:security -- tests/security/owasp-scan.ts --reporter=verbose
+        continue-on-error: true
+      
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-test-results
+          path: |
+            test-results/
+            coverage/
+          retention-days: 30
