@@ -20,6 +20,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = () => {
       externalDependencies={dependencies}
       onOpenTask={onOpenTask}
       readOnly={false}
+      showSampleDataWhenEmpty
     />
   );
 };

@@ -644,11 +644,6 @@ export class TaskController {
         effectiveProjectId = parentInitiative?.project_id || null;
       }
 
-      if (!effectiveProjectId) {
-        res.status(400).json({ error: 'projectId is required' });
-        return;
-      }
-
       const id = uuidv4();
       const now = new Date().toISOString();
 

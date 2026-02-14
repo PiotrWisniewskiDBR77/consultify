@@ -133,6 +133,16 @@ interface CommentItem {
 | **Input border**             | `border-t border-slate-200/40 dark:border-navy-700/40`          |
 | **Pagination**               | Max 4 widocznych, po "More" → max 8                             |
 
+### 3.4.1 Composer i interakcje (alignment v1.4)
+
+- Composer action order:
+  - `Send` po lewej stronie,
+  - `AI` po prawej stronie.
+- Hover na wierszu komentarza ujawnia akcję usunięcia.
+- Edycja komentarza jest dozwolona (inline lub przez dedykowaną akcję edit).
+- Metadane wpisu są obowiązkowe: autor + data/czas.
+- Komentarze AI muszą mieć widoczny znacznik `AI`.
+
 ### 3.5 Integracja (wzorzec)
 
 Komponent rodzica odpowiada za:
@@ -211,6 +221,14 @@ interface ActivityLogCanvasProps {
   stats: ActivityStats;
   /** Function resolving entry type → icon, label, CSS style */
   typeMeta: (type: string) => ActivityTypeMeta;
+  /** Current time filter value */
+  timeFilter?: 'all' | '7d' | '30d' | '90d';
+  /** Time filter change handler */
+  onTimeFilterChange?: (filter: 'all' | '7d' | '30d' | '90d') => void;
+  /** Current sort direction */
+  sortOrder?: 'desc' | 'asc';
+  /** Sort direction change handler */
+  onSortOrderChange?: (order: 'desc' | 'asc') => void;
   /** Optional custom stat cards (overrides default 4-card grid) */
   customStats?: { label: { en: string; pl: string }; value: number }[];
 }
@@ -250,6 +268,7 @@ interface ActivityTypeMeta {
 | **Stat cards**     | `grid grid-cols-1 md:grid-cols-4 gap-2` — `rounded-xl border`       |
 | **Stat label**     | `text-[11px] uppercase tracking-wide text-slate-400`                |
 | **Stat value**     | `text-sm font-semibold text-slate-700 dark:text-slate-200`          |
+| **Header controls**| Prawy górny róg: time filter (`All/7/30/90`) + sort toggle          |
 | **Feed container** | `rounded-2xl border` z `p-3`                                        |
 | **Feed entry**     | `grid grid-cols-[auto_1fr_auto] gap-3` — ikona + treść + type badge |
 | **Icon badge**     | `w-6 h-6 rounded-lg border` — kolor z `typeMeta.style`              |
@@ -333,6 +352,10 @@ const nModeActivityTypeMeta = (type: string): ActivityTypeMeta => {
   entries={nModeActivityEntries}
   stats={nModeActivityStats}
   typeMeta={nModeActivityTypeMeta}
+  timeFilter={activityTimeFilter}
+  onTimeFilterChange={setActivityTimeFilter}
+  sortOrder={activitySortOrder}
+  onSortOrderChange={setActivitySortOrder}
 />;
 ```
 
@@ -397,6 +420,31 @@ interface AttachmentsLinksCanvasProps {
 | **Read-only**        | Ukrywa przyciski add/delete/edit                         |
 
 ---
+
+## 8) GovernanceCanvas / Dependencies / Checklist — alignment notes (v1.4+)
+
+### 8.1 GovernanceCanvas (RACI + Reminders + Escalation)
+
+- Układ referencyjny: 3 tabele widoczne od razu (`RACI`, `Reminders`, `Escalation`).
+- Akcje `+ Add ...` w prawym górnym rogu kart tabel (wariant outlined/framed).
+- Powiadomienia jako chipy kanałów mogą być kolorowane dla czytelności.
+- Pilność nie jest kodowana tym samym kolorem; pilność ma osobny badge.
+- Dozwolone multi-role assignment; email może być ukryty na rzecz kontekstu organizacji.
+
+### 8.2 Dependencies presentation
+
+- Sekcja ma utrzymywać nagłówek tabeli nawet w stanie pustym.
+- `+ Add dependency` w prawym górnym rogu, bez ciężkiego tła (outlined/light).
+- Globalna akcja AI (`Analyze dependencies`) pozostaje w górnym CTA,
+  a nie obok lokalnego przycisku add.
+- Sugestie AI są edytowalne przed zatwierdzeniem.
+
+### 8.3 ChecklistBlock presentation
+
+- Jedyny manualny add action: top-right `+ Add item` (bez duplikatu pod listą).
+- W stanie pustym renderowany jest 1 domyślny pusty wiersz do edycji.
+- Na hover elementu listy ujawnia się usuwanie (ikona kosza).
+- Widoczny licznik postępu (`done/total`) obok nagłówka sekcji.
 
 ## 5b) RiskCanvas — specyfikacja
 
@@ -521,7 +569,7 @@ Poniższe sekcje **różnią się** między artefaktami i NIE powinny być w `NM
 
 | Sekcja               | ID                  | Opis                                            |
 | -------------------- | ------------------- | ----------------------------------------------- |
-| Description & Scope  | `description-scope` | Opis zadania + expected outcome + related items |
+| Task Scope           | `description-scope` | Scope + expected outcome + related items         |
 | Implementation Ideas | `implementation`    | Lista pomysłów implementacyjnych z votingiem    |
 | Checklist            | `checklist`         | Checklista z progress counter                   |
 | Dependencies         | `dependencies`      | Gantt-style dependency management               |
@@ -534,11 +582,33 @@ Poniższe sekcje **różnią się** między artefaktami i NIE powinny być w `NM
 | Options & Trade-offs | `options-tradeoffs` | Tabela alternatyw z pros/cons                   |
 | Consequences         | `consequences`      | Scenariusze AI (optimistic/neutral/pessimistic) |
 
+#### Decision `Options & Trade-offs` — standard interakcji (v1.7)
+
+- Sekcja zachowuje model dual-path:
+  - manual: lokalny przycisk `+ Add option` w prawym górnym rogu sekcji,
+  - AI: globalna akcja CTA `Generate options`.
+- AI nie zastępuje manualnej ścieżki tworzenia opcji.
+- `+ Add option` w wariancie outlined/light, spójnie z innymi sekcjami tabelarycznymi.
+- Minimalny kontrakt danych opcji:
+  - tytuł opcji,
+  - `Pros`,
+  - `Cons`.
+- Każda akcja na opcji (add/edit/delete/generate) powinna zasilać `Activity Log`.
+
 ### Zrealizowane ekstrakcje (z inline do shared):
 
 | Sekcja            | ID (Task)    | ID (Decision)           | Status           | Uwagi                                                                                                  |
 | ----------------- | ------------ | ----------------------- | ---------------- | ------------------------------------------------------------------------------------------------------ |
 | RACI & Escalation | `governance` | `governance-escalation` | **Zrealizowane** | `GovernanceCanvas` — pełny CRUD RACI/Reminders/Escalation z modali, delivery channels, AI suggestions. |
+
+### Nazewnictwo pierwszej sekcji (scope-first)
+
+Pierwsza sekcja każdego artefaktu używa wspólnej konwencji `... Scope`:
+
+- `Task Scope`
+- `Decision Scope`
+- `Notification Scope`
+- `Initiative Scope`
 
 ---
 

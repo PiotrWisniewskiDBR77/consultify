@@ -1,21 +1,37 @@
-/**
- * RaciEscalationSection
- *
- * Composite section for RACI & Escalation.
- * Reuses initiative wrappers that directly map to MyWork shared components,
- * so behavior stays aligned with Task/Decision artifacts.
- */
-
 import React from 'react';
-import { RemindersSection } from './RemindersSection';
-import { StakeholdersSection } from './StakeholdersSection';
+
+import { GovernanceCanvas } from '../../shared/NModeSections';
+import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
 
-export const RaciEscalationSection: React.FC<InitiativeSectionProps> = (props) => {
+export const RaciEscalationSection: React.FC<InitiativeSectionProps> = ({ readonly }) => {
+  const {
+    stakeholders,
+    setStakeholders,
+    reminders,
+    setReminders,
+    escalationRules,
+    setEscalationRules,
+    users,
+    initiativeId,
+  } = useInitiativeContext();
+
   return (
-    <div className="space-y-6">
-      <StakeholdersSection {...props} />
-      <RemindersSection {...props} />
-    </div>
+    <GovernanceCanvas
+      stakeholders={stakeholders}
+      setStakeholders={setStakeholders}
+      reminders={reminders}
+      setReminders={setReminders}
+      escalationRules={escalationRules}
+      setEscalationRules={setEscalationRules}
+      users={users.map((u) => ({
+        id: u.id,
+        firstName: u.firstName || '',
+        lastName: u.lastName || '',
+        email: u.email || '',
+      }))}
+      artifactId={initiativeId}
+      locked={readonly}
+    />
   );
 };

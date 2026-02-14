@@ -80,6 +80,46 @@ flowchart LR
 - Execution is tracked in Implementation (tasks + decisions + RAID)
 - Benefits are tracked via KPIs in Benefits
 
+## Initiative card structure (N-mode, canonical)
+
+The Initiative detail card in N-mode uses a canonical navigation order.  
+Visibility is controlled by initiative template (`visibleSections`), but ordering remains stable.
+
+1. Initiative Definition
+2. Target State & Scope
+3. KPI
+4. Financial Analysis
+5. Financial Impact
+6. Team
+7. RACI
+8. Resources
+9. Dependencies
+10. Risk & RAID
+11. Milestones
+12. Timeline
+13. Tasks
+14. Decisions
+15. Gates
+16. Technical Specification
+17. Attachments
+18. Comments
+19. Activity Log
+
+### Visibility rules (template-driven)
+
+- `visibleSections[key] = true` -> corresponding tab visible
+- `visibleSections[key] = false` -> corresponding tab hidden
+- If template provides explicit `visibleSections`, this map is authoritative (no fallback "show all")
+
+### Key mapping notes
+
+- `problemDefinition` and legacy `overview` map to **Initiative Definition**
+- `targetState` and `scope` map to **Target State & Scope**
+- `financialAnalysis` and `financialImpact` are distinct tabs
+- RAID stays explicit as **Risk & RAID**
+- `stakeholders` is presented as **RACI**
+- `history` is presented as **Activity Log**
+
 ## Actors
 
 | Actor | Role |

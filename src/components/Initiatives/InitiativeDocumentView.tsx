@@ -62,9 +62,7 @@ import { INITIATIVE_STATUS_METADATA, InitiativeStatus } from '../../types';
 import {
   type Attachment,
   type Comment,
-  type EscalationRule,
   type LinkedItem,
-  type ReminderRule,
   type Stakeholder,
   type StakeholderNotificationSettings,
   type StakeholderRole,
@@ -73,6 +71,7 @@ import {
 } from '../MyWork/shared';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
+import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shared/NModeSections';
 import {
   NModeCanvas,
   NModeHeader,
@@ -165,6 +164,34 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [inScopeItems, setInScopeItems] = useState<string[]>([]);
   const [outScopeItems, setOutScopeItems] = useState<string[]>([]);
   const [killCriteriaItems, setKillCriteriaItems] = useState<string[]>([]);
+  const [technicalSpecDraft, setTechnicalSpecDraft] = useState('');
+  const [isTechnicalSpecExpanded, setIsTechnicalSpecExpanded] = useState(false);
+  const [localKpis, setLocalKpis] = useState<
+    Array<{
+      id: string;
+      name: string;
+      unit: string;
+      baseline: string;
+      target: string;
+      current: string;
+    }>
+  >([]);
+  const [showCreateKpi, setShowCreateKpi] = useState(false);
+  const [newKpiName, setNewKpiName] = useState('');
+  const [newKpiUnit, setNewKpiUnit] = useState('');
+  const [newKpiBaseline, setNewKpiBaseline] = useState('');
+  const [newKpiTarget, setNewKpiTarget] = useState('');
+  const [newKpiCurrent, setNewKpiCurrent] = useState('');
+  const [resourceItems, setResourceItems] = useState<
+    Array<{ id: string; name: string; role: string; allocation: number }>
+  >([]);
+  const [budgetDraft, setBudgetDraft] = useState('');
+  const [resourceTools, setResourceTools] = useState<string[]>([]);
+  const [showCreateResource, setShowCreateResource] = useState(false);
+  const [newResourceName, setNewResourceName] = useState('');
+  const [newResourceRole, setNewResourceRole] = useState('');
+  const [newResourceAllocation, setNewResourceAllocation] = useState('50');
+  const [newResourceTool, setNewResourceTool] = useState('');
   const [comments, setComments] = useState<Comment[]>([]);
   const [linkedItems, setLinkedItems] = useState<LinkedItem[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -172,8 +199,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
-  const [reminders, setReminders] = useState<ReminderRule[]>([]);
-  const [escalation, setEscalation] = useState<EscalationRule | null>(null);
+  const [reminders, setReminders] = useState<ReminderRuleWithDelivery[]>([]);
+  const [escalationRules, setEscalationRules] = useState<EscalationRuleWithConfig[]>([]);
   const [thresholds, setThresholds] = useState<WarningThresholds>({
     warningDays: 3,
     criticalDays: 1,
@@ -198,7 +225,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // C-mode layout variant (cards = accordion grid, scroll = single column)
   const cModeLayout = 'cards' as const;
   const [showAssessmentPanel, setShowAssessmentPanel] = useState(false);
-  const [activeNSection, setActiveNSection] = useState<string>('description-context');
+  const [activeNSection, setActiveNSection] = useState<string>('initiative-definition');
+  const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [isGeneratingAI, setIsGeneratingAI] = useState<string | null>(null);
   const [showCreateTask, setShowCreateTask] = useState(false);
@@ -228,6 +256,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const currentUser = useAppStore((s) => s.currentUser);
   const currentUserId = currentUser?.id || 'current-user';
+  const nModeOrderStorageKey = `initiative:nmode:section-order:${initiativeId}`;
 
   // ==========================================
   // COMPUTED VALUES
@@ -292,18 +321,53 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     [requiredGates, decisions]
   );
 
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(nModeOrderStorageKey);
+      if (!raw) {
+        setNModeSectionOrder(null);
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter((id): id is string => typeof id === 'string' && id.length > 0);
+        setNModeSectionOrder(cleaned.length > 0 ? cleaned : null);
+      } else {
+        setNModeSectionOrder(null);
+      }
+    } catch {
+      setNModeSectionOrder(null);
+    }
+  }, [nModeOrderStorageKey]);
+
+  const handleNModeSectionReorder = useCallback(
+    (sectionIds: string[]) => {
+      setNModeSectionOrder(sectionIds);
+      try {
+        localStorage.setItem(nModeOrderStorageKey, JSON.stringify(sectionIds));
+      } catch {
+        // Ignore storage errors; drag-and-drop still works for this session.
+      }
+    },
+    [nModeOrderStorageKey]
+  );
+
   // ==========================================
   // VISIBLE SECTIONS (template-driven)
   // ==========================================
 
   const visibleSections = useMemo(() => {
-    const templateVS = initiativeTemplate?.visibleSections || {};
-    // Merge: template overrides defaults
-    return { ...DEFAULT_VISIBLE_SECTIONS, ...templateVS };
+    const templateVS = initiativeTemplate?.visibleSections || initiativeTemplate?.visible_sections || {};
+    const hasExplicitTemplateVisibility =
+      templateVS && typeof templateVS === 'object' && Object.keys(templateVS).length > 0;
+    // If template defines visibility explicitly, treat it as source-of-truth.
+    // Otherwise keep legacy "show defaults" behavior.
+    if (hasExplicitTemplateVisibility) return templateVS;
+    return { ...DEFAULT_VISIBLE_SECTIONS };
   }, [initiativeTemplate]);
 
   const sectionOrder = useMemo(() => {
-    const templateOrder = initiativeTemplate?.sectionOrder || {};
+    const templateOrder = initiativeTemplate?.sectionOrder || initiativeTemplate?.section_order || {};
     return { ...DEFAULT_SECTION_ORDER, ...templateOrder };
   }, [initiativeTemplate]);
 
@@ -427,6 +491,46 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         data.killCriteria || data.kill_criteria ||
         (typeof scopeObj === 'object' ? scopeObj.killCriteria || [] : [])
       );
+      const rawKpis = Array.isArray(data.kpis)
+        ? data.kpis
+        : Array.isArray(data.kpi)
+          ? data.kpi
+          : [];
+      setLocalKpis(
+        rawKpis.map((k: any, idx: number) => ({
+          id: String(k.id || `kpi-${idx}`),
+          name: String(k.name || k.title || ''),
+          unit: String(k.unit || ''),
+          baseline: String(k.baseline || ''),
+          target: String(k.target || ''),
+          current: String(k.current || ''),
+        }))
+      );
+      const rawResources = Array.isArray(data.resources) ? data.resources : [];
+      setResourceItems(
+        rawResources.map((r: any, idx: number) => ({
+          id: String(r.id || `res-${idx}`),
+          name: String(r.name || r.person || r.role || ''),
+          role: String(r.role || ''),
+          allocation: Number(r.allocation || r.percent || 0),
+        }))
+      );
+      setBudgetDraft(
+        String(data.budget || data.budgetEstimate || data.costCapex || data.cost_capex || '')
+      );
+      const rawTools = Array.isArray(data.tools)
+        ? data.tools
+        : Array.isArray(data.toolsNeeded)
+          ? data.toolsNeeded
+          : [];
+      setResourceTools(rawTools.map((t: any) => String(t)));
+      setTechnicalSpecDraft(
+        data.technicalSpecification ||
+          data.technical_specification ||
+          data.intelligence ||
+          data.intelligenceBrief ||
+          ''
+      );
       const rawPriority = (data.priority || 'medium').toLowerCase();
       setPriority(rawPriority);
       setOwnerId(data.ownerId || data.owner_id || '');
@@ -487,7 +591,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     : s.role === 'C'
                       ? 'consulted'
                       : 'informed') as StakeholderRole,
-                notificationSettings: { email: true, inApp: true, slack: false },
+                notificationSettings: {
+                  enabled: true,
+                  triggers: ['on_status_change'],
+                  emailEnabled: true,
+                  inAppEnabled: true,
+                  integrationChannels: [],
+                  syncTargets: [],
+                },
               })
             );
             setStakeholders(mapped);
@@ -575,6 +686,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       stakeholders.length === 0 &&
       dependencies.length === 0 &&
       reminders.length === 0 &&
+      escalationRules.length === 0 &&
       raidItems.length === 0 &&
       decisions.length === 0 &&
       comments.length === 0 &&
@@ -728,7 +840,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             },
           ];
 
-    const demoReminders: ReminderRule[] = [
+    const demoReminders: ReminderRuleWithDelivery[] = [
       {
         id: `demo-rem-1-${idSuffix}`,
         type: 'before_due',
@@ -752,16 +864,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     ];
 
     const escalationUser = users[1] || users[0];
-    const demoEscalation: EscalationRule = {
-      id: `demo-esc-${idSuffix}`,
-      enabled: true,
-      escalateTo: escalationUser?.id || 'demo-escalation-owner',
-      escalateToName: escalationUser
-        ? `${escalationUser.firstName} ${escalationUser.lastName}`.trim()
-        : 'Program Sponsor',
-      afterDays: 3,
-      message: 'Escalate if initiative critical path slips.',
-    };
+    const demoEscalationRules: EscalationRuleWithConfig[] = [
+      {
+        id: `demo-esc-${idSuffix}`,
+        enabled: true,
+        escalateTo: escalationUser?.id || 'demo-escalation-owner',
+        escalateToName: escalationUser
+          ? `${escalationUser.firstName} ${escalationUser.lastName}`.trim()
+          : 'Program Sponsor',
+        afterDays: 3,
+        message: 'Escalate if initiative critical path slips.',
+        warningDays: 4,
+        criticalDays: 2,
+        escalationMode: 'manager_review',
+        delivery: {
+          coreChannels: ['in_app'],
+          integrationChannels: [],
+          syncTargets: [],
+        },
+      },
+    ];
 
     const demoRaid: RaidItem[] = [
       {
@@ -890,7 +1012,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     if (dependencies.length === 0) setDependencies(demoDependencies);
     if (stakeholders.length === 0) setStakeholders(demoStakeholders);
     if (reminders.length === 0) setReminders(demoReminders);
-    if (!escalation) setEscalation(demoEscalation);
+    if (escalationRules.length === 0) setEscalationRules(demoEscalationRules);
     if (raidItems.length === 0) setRaidItems(demoRaid);
     if (decisions.length === 0) setDecisions(demoDecisions);
     if (comments.length === 0) setComments(demoComments);
@@ -929,6 +1051,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     ownerId,
     raidItems.length,
     reminders.length,
+    escalationRules.length,
     sponsorId,
     stakeholders.length,
     startDate,
@@ -1425,8 +1548,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setEndDate,
       reminders,
       setReminders,
-      escalation,
-      setEscalation,
+      escalationRules,
+      setEscalationRules,
       thresholds,
       setThresholds,
       expandedSections,
@@ -1530,7 +1653,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       startDate,
       endDate,
       reminders,
-      escalation,
+      escalationRules,
       thresholds,
       expandedSections,
       toggleSection,
@@ -1591,34 +1714,103 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   );
 
   // ==========================================
-  // N-MODE: SECTION DEFINITIONS (10 sections)
+  // N-MODE: SECTION DEFINITIONS (template-driven visibility)
   // ==========================================
 
+  const templateToNModeSectionIds: Record<string, string[]> = useMemo(
+    () => ({
+      overview: ['initiative-definition'],
+      problemDefinition: ['initiative-definition'],
+      targetState: ['target-state-scope'],
+      scope: ['target-state-scope'],
+      tasks: ['tasks'],
+      milestones: ['milestones'],
+      dependencies: ['dependencies'],
+      team: ['team'],
+      stakeholders: ['raci'],
+      timeline: ['timeline'],
+      resources: ['resources'],
+      financialAnalysis: ['financial-analysis'],
+      financialImpact: ['financial-impact'],
+      raid: ['risk-raid'],
+      decisions: ['decisions'],
+      gates: ['gates'],
+      comments: ['comments'],
+      history: ['activity-log'],
+      attachments: ['attachments'],
+      linkedItems: ['attachments'],
+      kpis: ['kpi'],
+      intelligence: ['technical-specification'],
+    }),
+    []
+  );
+
+  const enabledNModeSectionIds = useMemo(() => {
+    const templateVS = initiativeTemplate?.visibleSections || initiativeTemplate?.visible_sections || {};
+    const hasExplicitTemplateVisibility =
+      templateVS && typeof templateVS === 'object' && Object.keys(templateVS).length > 0;
+    if (!hasExplicitTemplateVisibility) return null;
+
+    const enabledIds = new Set<string>();
+    for (const [key, isVisible] of Object.entries(templateVS)) {
+      if (isVisible === false) continue;
+      const mappedIds = templateToNModeSectionIds[key];
+      if (!mappedIds) continue;
+      for (const sectionId of mappedIds) enabledIds.add(sectionId);
+    }
+    return enabledIds;
+  }, [initiativeTemplate, templateToNModeSectionIds]);
+
   const initiativeNSections: NModeSection[] = useMemo(
-    () => [
+    () => {
+      const allSections: NModeSection[] = [
       {
-        id: 'description-context',
+        id: 'initiative-definition',
         icon: Search,
-        label: { en: 'Description & Context', pl: 'Opis i kontekst' },
+        label: { en: 'Initiative Scope', pl: 'Zakres inicjatywy' },
         component: null,
       },
       {
-        id: 'target-success',
+        id: 'target-state-scope',
         icon: Target,
         label: { en: 'Success Criteria', pl: 'Kryteria sukcesu' },
         component: null,
       },
       {
-        id: 'scope-boundaries',
-        icon: Crosshair,
-        label: { en: 'Scope & Boundaries', pl: 'Zakres i ograniczenia' },
+        id: 'kpi',
+        icon: TrendingUp,
+        label: { en: 'KPIs & Benefits', pl: 'KPI i korzyści' },
         component: null,
       },
       {
-        id: 'delivery-plan',
-        icon: ListChecks,
-        label: { en: 'Tasks', pl: 'Zadania' },
-        badge: tasks.length > 0 ? tasks.length : undefined,
+        id: 'financial-analysis',
+        icon: DollarSign,
+        label: { en: 'Financial Analysis', pl: 'Analiza finansowa' },
+        component: null,
+      },
+      {
+        id: 'financial-impact',
+        icon: DollarSign,
+        label: { en: 'Financial Impact', pl: 'Wpływ finansowy' },
+        component: null,
+      },
+      {
+        id: 'team',
+        icon: Users,
+        label: { en: 'Team', pl: 'Zespół' },
+        component: null,
+      },
+      {
+        id: 'raci',
+        icon: ShieldCheck,
+        label: { en: 'RACI', pl: 'RACI' },
+        badge: stakeholders.length > 0 ? stakeholders.length : undefined,
+        component: null,
+      },
+      {
+        id: 'resources',
+        icon: FolderOpen,
+        label: { en: 'Resources', pl: 'Zasoby' },
         component: null,
       },
       {
@@ -1629,43 +1821,50 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         component: null,
       },
       {
-        id: 'team',
-        icon: Users,
-        label: { en: 'Team', pl: 'Zespół' },
-        component: null,
-      },
-      {
-        id: 'raci-escalation',
-        icon: ShieldCheck,
-        label: { en: 'RACI & Escalation', pl: 'RACI i eskalacja' },
-        badge: stakeholders.length > 0 ? stakeholders.length : undefined,
-        component: null,
-      },
-      {
-        id: 'timeline-resources',
-        icon: Calendar,
-        label: { en: 'Timeline & Resources', pl: 'Harmonogram i zasoby' },
-        component: null,
-      },
-      {
-        id: 'economics-risk',
-        icon: TrendingUp,
-        label: { en: 'Economics & Risk', pl: 'Ekonomia i ryzyko' },
+        id: 'risk-raid',
+        icon: Scale,
+        label: { en: 'Risk & RAID', pl: 'Ryzyko i RAID' },
         badge: raidItems.length > 0 ? raidItems.length : undefined,
         component: null,
       },
       {
-        id: 'governance-gates',
+        id: 'milestones',
+        icon: CheckSquare,
+        label: { en: 'Milestones', pl: 'Kamienie milowe' },
+        badge: milestones.length > 0 ? milestones.length : undefined,
+        component: null,
+      },
+      {
+        id: 'timeline',
+        icon: Calendar,
+        label: { en: 'Timeline', pl: 'Harmonogram' },
+        component: null,
+      },
+      {
+        id: 'tasks',
+        icon: ListChecks,
+        label: { en: 'Tasks', pl: 'Zadania' },
+        badge: tasks.length > 0 ? tasks.length : undefined,
+        component: null,
+      },
+      {
+        id: 'decisions',
+        icon: Scale,
+        label: { en: 'Decisions', pl: 'Decyzje' },
+        badge: decisions.length > 0 ? decisions.length : undefined,
+        component: null,
+      },
+      {
+        id: 'gates',
         icon: Shield,
-        label: { en: 'Governance & Gates', pl: 'Governance i bramy' },
+        label: { en: 'Gates', pl: 'Bramy' },
         badge: pendingGates.length > 0 ? pendingGates.length : undefined,
         component: null,
       },
       {
-        id: 'collaboration-audit',
-        icon: History,
-        label: { en: 'Collaboration & Audit', pl: 'Współpraca i audyt' },
-        badge: comments.length > 0 ? comments.length : undefined,
+        id: 'technical-specification',
+        icon: FileCode,
+        label: { en: 'Technical Specification', pl: 'Specyfikacja techniczna' },
         component: null,
       },
       {
@@ -1676,20 +1875,40 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         component: null,
       },
       {
-        id: 'links',
-        icon: Link2,
-        label: { en: 'Links', pl: 'Linki' },
-        badge: linkedItems.length > 0 ? linkedItems.length : undefined,
+        id: 'comments',
+        icon: MessageSquare,
+        label: { en: 'Comments', pl: 'Komentarze' },
+        badge: comments.length > 0 ? comments.length : undefined,
         component: null,
       },
       {
-        id: 'technical-description',
-        icon: FileCode,
-        label: { en: 'Technical Description', pl: 'Opis techniczny' },
+        id: 'activity-log',
+        icon: History,
+        label: { en: 'Activity Log', pl: 'Dziennik aktywności' },
+        badge: history.length > 0 ? history.length : undefined,
         component: null,
       },
-    ],
-    [tasks.length, dependencies.length, stakeholders.length, raidItems.length, pendingGates.length, comments.length, attachments.length, linkedItems.length]
+      ];
+
+      if (!enabledNModeSectionIds || enabledNModeSectionIds.size === 0) {
+        return allSections;
+      }
+
+      return allSections.filter((section) => enabledNModeSectionIds.has(section.id));
+    },
+    [
+      tasks.length,
+      milestones.length,
+      dependencies.length,
+      stakeholders.length,
+      raidItems.length,
+      decisions.length,
+      pendingGates.length,
+      comments.length,
+      history.length,
+      attachments.length,
+      enabledNModeSectionIds,
+    ]
   );
 
   // ==========================================
@@ -1914,7 +2133,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       let component: React.ReactNode = null;
 
       switch (section.id) {
-        case 'description-context': {
+        case 'initiative-definition': {
           component = (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
@@ -2034,6 +2253,216 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   placeholder={isPolish ? 'Kontekst rynkowy, konkurencja, trendy...' : 'Market context, competition, trends...'}
                 />
               </div>
+            </div>
+          );
+          break;
+        }
+
+        case 'target-state-scope': {
+          const mkId = () => Math.random().toString(36).slice(2, 10);
+          const addTarget = () =>
+            setTargetStateItems((prev) => [...prev, { id: mkId(), text: '', done: false }]);
+          const addCriteria = () =>
+            setSuccessCriteriaItems((prev) => [...prev, { id: mkId(), text: '', done: false }]);
+          const addDeliverable = () =>
+            setDeliverableItems((prev) => [...prev, { id: mkId(), text: '', done: false }]);
+
+          const updateTarget = (id: string, patch: Partial<{ text: string; done: boolean }>) =>
+            setTargetStateItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+          const updateCriteria = (id: string, patch: Partial<{ text: string; done: boolean }>) =>
+            setSuccessCriteriaItems((prev) =>
+              prev.map((item) => (item.id === id ? { ...item, ...patch } : item))
+            );
+          const updateDeliverable = (id: string, patch: Partial<{ text: string; done: boolean }>) =>
+            setDeliverableItems((prev) =>
+              prev.map((item) => (item.id === id ? { ...item, ...patch } : item))
+            );
+
+          const removeTarget = (id: string) =>
+            setTargetStateItems((prev) => prev.filter((item) => item.id !== id));
+          const removeCriteria = (id: string) =>
+            setSuccessCriteriaItems((prev) => prev.filter((item) => item.id !== id));
+          const removeDeliverable = (id: string) =>
+            setDeliverableItems((prev) => prev.filter((item) => item.id !== id));
+
+          const renderChecklistRow = (
+            item: { id: string; text: string; done: boolean },
+            onUpdate: (id: string, patch: Partial<{ text: string; done: boolean }>) => void,
+            onRemove: (id: string) => void,
+            placeholder: string
+          ) => (
+            <div key={item.id} className="group flex items-center gap-2 py-1.5">
+              <button
+                onClick={() => onUpdate(item.id, { done: !item.done })}
+                className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                  item.done
+                    ? 'border-emerald-500 bg-emerald-500 text-white'
+                    : 'border-slate-300 dark:border-navy-600'
+                }`}
+              >
+                {item.done ? (
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M2.5 6L5 8.5L9.5 3.5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ) : null}
+              </button>
+              <input
+                value={item.text}
+                onChange={(e) => onUpdate(item.id, { text: e.target.value })}
+                placeholder={placeholder}
+                className={`flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 ${
+                  item.done
+                    ? 'line-through text-slate-400 dark:text-slate-500'
+                    : 'text-slate-700 dark:text-slate-300'
+                }`}
+              />
+              <button
+                onClick={() => onRemove(item.id)}
+                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+              >
+                <Trash2 size={12} />
+              </button>
+            </div>
+          );
+
+          const renderChecklistCard = (
+            titleEn: string,
+            titlePl: string,
+            helperEn: string,
+            helperPl: string,
+            items: Array<{ id: string; text: string; done: boolean }>,
+            onAdd: () => void,
+            onUpdate: (id: string, patch: Partial<{ text: string; done: boolean }>) => void,
+            onRemove: (id: string) => void,
+            aiFieldKey: string,
+            setItems: (items: Array<{ id: string; text: string; done: boolean }>) => void,
+            placeholderEn: string,
+            placeholderPl: string
+          ) => (
+            <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {isPolish ? titlePl : titleEn}
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    {isPolish ? helperPl : helperEn}
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-2">
+                  <button
+                    onClick={onAdd}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium"
+                  >
+                    <Plus size={12} />
+                    {isPolish ? 'Dodaj' : 'Add item'}
+                  </button>
+                  <AIFieldEnhancer
+                    fieldKey={aiFieldKey}
+                    sectionLabel={isPolish ? titlePl : titleEn}
+                    currentValue={items.map((item) => item.text).filter(Boolean).join('\n')}
+                    onApply={(value) => {
+                      const rows = value
+                        .split('\n')
+                        .map((line: string) => line.replace(/^[-•*]\s*/, '').trim())
+                        .filter(Boolean);
+                      setItems(rows.map((row: string) => ({ id: mkId(), text: row, done: false })));
+                    }}
+                    artifactContext={{
+                      title: initiative?.name || '',
+                      status,
+                      priority,
+                      type: 'initiative',
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="min-h-[56px] border-b border-slate-200/70 dark:border-navy-700/60 pb-2">
+                {items.length === 0 ? (
+                  <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
+                    {isPolish ? 'Brak pozycji' : 'No items yet'}
+                  </p>
+                ) : (
+                  items.map((item) =>
+                    renderChecklistRow(
+                      item,
+                      onUpdate,
+                      onRemove,
+                      isPolish ? placeholderPl : placeholderEn
+                    )
+                  )
+                )}
+              </div>
+            </div>
+          );
+
+          component = (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Kryteria sukcesu' : 'Success Criteria'}
+                </h2>
+                <button
+                  onClick={() => handleGenerateAI('target-state-scope')}
+                  disabled={isGeneratingAI === 'target-state-scope'}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
+                >
+                  {isGeneratingAI === 'target-state-scope' ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={12} />
+                  )}
+                  AI
+                </button>
+              </div>
+              {renderChecklistCard(
+                'Target State',
+                'Stan docelowy',
+                'Desired end state after initiative completion',
+                'Pożądany stan końcowy po wdrożeniu inicjatywy',
+                targetStateItems,
+                addTarget,
+                updateTarget,
+                removeTarget,
+                'initiative-target-state',
+                setTargetStateItems,
+                'Target state item...',
+                'Element stanu docelowego...'
+              )}
+              {renderChecklistCard(
+                'Success Criteria',
+                'Kryteria sukcesu',
+                'Measurable conditions to consider initiative successful',
+                'Mierzalne warunki uznania inicjatywy za udaną',
+                successCriteriaItems,
+                addCriteria,
+                updateCriteria,
+                removeCriteria,
+                'initiative-success-criteria',
+                setSuccessCriteriaItems,
+                'Success criterion...',
+                'Kryterium sukcesu...'
+              )}
+              {renderChecklistCard(
+                'Deliverables',
+                'Produkty',
+                'Specific outputs and results to be delivered',
+                'Konkretne produkty i wyniki do dostarczenia',
+                deliverableItems,
+                addDeliverable,
+                updateDeliverable,
+                removeDeliverable,
+                'initiative-deliverables',
+                setDeliverableItems,
+                'Deliverable...',
+                'Element dostarczany...'
+              )}
             </div>
           );
           break;
@@ -2400,26 +2829,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           break;
         }
 
-        case 'delivery-plan': {
+        case 'tasks': {
           const TasksComp = SECTION_REGISTRY['tasks'];
           const tasksST = [...leftSections, ...rightSections].find((s) => s.key === 'tasks');
           component = (
             <div className="space-y-6">
-              {/* Progress bar */}
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-emerald-500 transition-all"
-                    style={{ width: `${tasks.length > 0 ? Math.round((tasksDone / tasks.length) * 100) : 0}%` }}
-                  />
-                </div>
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {tasksDone}/{tasks.length} {isPolish ? 'wykonane' : 'done'}
-                </span>
-                {tasksInProgress > 0 && (
-                  <span className="text-xs text-blue-500">{tasksInProgress} {isPolish ? 'w toku' : 'in progress'}</span>
-                )}
-              </div>
               {/* Tasks section */}
               {tasksST && TasksComp && (
                 <TasksComp sectionType={tasksST} expanded={true} onToggle={() => {}} />
@@ -2441,6 +2855,71 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'milestones': {
+          const milestoneTasks = tasks.filter((t) => t.isMilestone);
+          component = (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Kamienie milowe' : 'Milestones'}
+                </h2>
+                <div className="inline-flex items-center gap-2">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {milestoneTasks.length} {isPolish ? 'elementów' : 'items'}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setNewTaskIsMilestone(true);
+                      setShowCreateTask(true);
+                    }}
+                    className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
+                  >
+                    <Plus size={12} />
+                    {isPolish ? 'Nowy' : 'New'}
+                  </button>
+                </div>
+              </div>
+              {milestoneTasks.length === 0 ? (
+                <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-5 text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Brak kamieni milowych. Dodaj je przyciskiem "Nowy".'
+                    : 'No milestones yet. Add them using "New".'}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Kamień milowy' : 'Milestone'}</th>
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Status' : 'Status'}</th>
+                        <th className="text-left py-2">{isPolish ? 'Data' : 'Date'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                      {milestoneTasks.map((task) => (
+                        <tr key={task.id}>
+                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">{task.title}</td>
+                          <td className="py-2 pr-2">
+                            <span className="text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
+                              {task.status}
+                            </span>
+                          </td>
+                          <td className="py-2 text-slate-500 dark:text-slate-400">
+                            {task.milestoneDate
+                              ? new Date(task.milestoneDate).toLocaleDateString(isPolish ? 'pl-PL' : 'en-GB')
+                              : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
@@ -2509,7 +2988,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           break;
         }
 
-        case 'raci-escalation': {
+        case 'raci': {
           const RaciComp = SECTION_REGISTRY['raciEscalation'];
           const raciFallbackST = {
             id: 'raciEscalation',
@@ -2538,149 +3017,752 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           break;
         }
 
-        case 'timeline-resources': {
-          const TimelineComp = SECTION_REGISTRY['timeline'];
-          const timelineST = [...leftSections, ...rightSections].find((s) => s.key === 'timeline');
-          const ResourcesComp = SECTION_REGISTRY['resources'];
-          const resourcesST = [...leftSections, ...rightSections].find((s) => s.key === 'resources');
+        case 'timeline': {
+          const computedDuration =
+            startDate && endDate
+              ? Math.max(
+                  0,
+                  Math.ceil(
+                    (new Date(endDate).getTime() - new Date(startDate).getTime()) /
+                      (1000 * 60 * 60 * 24)
+                  )
+                )
+              : null;
           component = (
-            <div className="space-y-6">
-              {/* Timeline summary */}
-              <div className="p-4 rounded-xl bg-white/70 dark:bg-navy-900/70 border border-slate-200 dark:border-navy-700/60">
-                <div className="flex items-center gap-3 text-sm">
-                  <span className="text-slate-500 dark:text-slate-400">{isPolish ? 'Start:' : 'Start:'}</span>
-                  <span className="font-medium text-slate-700 dark:text-slate-300">
-                    {startDate ? new Date(startDate).toLocaleDateString(isPolish ? 'pl-PL' : 'en-GB') : '—'}
-                  </span>
-                  <span className="text-slate-700 dark:text-slate-300 dark:text-slate-600">→</span>
-                  <span className="text-slate-500 dark:text-slate-400">{isPolish ? 'Termin:' : 'Target:'}</span>
-                  <span className="font-medium text-slate-700 dark:text-slate-300">
-                    {endDate ? new Date(endDate).toLocaleDateString(isPolish ? 'pl-PL' : 'en-GB') : (targetDate ? new Date(targetDate).toLocaleDateString(isPolish ? 'pl-PL' : 'en-GB') : '—')}
-                  </span>
-                  {initiative?.quarter && (
-                    <>
-                      <span className="text-slate-700 dark:text-slate-300 dark:text-slate-600">|</span>
-                      <span className="px-2 py-0.5 rounded-lg text-[11px] bg-blue-500/10 text-blue-600 dark:text-blue-400">{initiative.quarter}</span>
-                    </>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Harmonogram' : 'Timeline'}
+                </h2>
+                <button
+                  onClick={() => handleGenerateAI('timeline')}
+                  disabled={isGeneratingAI === 'timeline'}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
+                >
+                  {isGeneratingAI === 'timeline' ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={12} />
                   )}
+                  AI
+                </button>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
+                      {isPolish ? 'Data startu' : 'Start date'}
+                    </label>
+                    <input
+                      type="date"
+                      value={startDate || ''}
+                      onChange={(e) => setStartDate(e.target.value || null)}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm text-slate-700 dark:text-slate-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
+                      {isPolish ? 'Data końca' : 'End date'}
+                    </label>
+                    <input
+                      type="date"
+                      value={endDate || targetDate || ''}
+                      onChange={(e) => setEndDate(e.target.value || null)}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm text-slate-700 dark:text-slate-300"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex items-center justify-between rounded-lg border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 px-3 py-2">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Czas trwania' : 'Duration'}
+                    </span>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {computedDuration !== null
+                        ? `${computedDuration} ${isPolish ? 'dni' : 'days'}`
+                        : '—'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 px-3 py-2">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Kwartał' : 'Quarter'}
+                    </span>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {initiative?.quarter || '—'}
+                    </span>
+                  </div>
                 </div>
               </div>
-              {/* Timeline section */}
-              {timelineST && TimelineComp && (
-                <TimelineComp sectionType={timelineST} expanded={true} onToggle={() => {}} />
-              )}
-              {/* Resources section */}
-              {resourcesST && ResourcesComp && (
-                <ResourcesComp sectionType={resourcesST} expanded={true} onToggle={() => {}} />
-              )}
             </div>
           );
           break;
         }
 
-        case 'economics-risk': {
-          const FinAnalComp = SECTION_REGISTRY['financialAnalysis'];
-          const finAnalST = [...leftSections, ...rightSections].find((s) => s.key === 'financialAnalysis');
-          const FinImpComp = SECTION_REGISTRY['financialImpact'];
-          const finImpST = [...leftSections, ...rightSections].find((s) => s.key === 'financialImpact');
-          const RaidComp = SECTION_REGISTRY['raid'];
-          const raidST = [...leftSections, ...rightSections].find((s) => s.key === 'raid');
-          const PilotComp = SECTION_REGISTRY['pilot'];
-          const pilotST = [...leftSections, ...rightSections].find((s) => s.key === 'pilot');
+        case 'resources': {
+          const totalFte = resourceItems.reduce((acc, r) => acc + (Number(r.allocation) || 0), 0) / 100;
           component = (
-            <div className="space-y-6">
-              {/* Financial summary cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                  { label: 'CAPEX', value: initiative?.costCapex, format: 'currency' },
-                  { label: 'OPEX', value: initiative?.costOpex || initiative?.firstYearOpex, format: 'currency' },
-                  { label: isPolish ? 'Roczna korzyść' : 'Annual Benefit', value: initiative?.annualBenefit, format: 'currency' },
-                  { label: 'ROI', value: initiative?.expectedRoi || initiative?.roi, format: 'multiplier' },
-                ].map((card) => (
-                  <div key={card.label} className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 border border-slate-200 dark:border-navy-700/60 text-center">
-                    <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{card.label}</p>
-                    <p className="text-lg font-bold text-slate-800 dark:text-white">
-                      {card.value != null
-                        ? card.format === 'currency'
-                          ? (card.value as number) >= 1_000_000 ? `$${((card.value as number) / 1_000_000).toFixed(1)}M` : (card.value as number) >= 1_000 ? `$${((card.value as number) / 1_000).toFixed(0)}K` : `$${card.value}`
-                          : `${(card.value as number).toFixed(1)}x`
-                        : '—'}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Zasoby' : 'Resources'}
+                </h2>
+                <div className="inline-flex items-center gap-2">
+                  <button
+                    onClick={() => setShowCreateResource((prev) => !prev)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium"
+                  >
+                    <Plus size={12} />
+                    {isPolish ? 'Dodaj' : 'Add'}
+                  </button>
+                  <button
+                    onClick={() => handleGenerateAI('resources')}
+                    disabled={isGeneratingAI === 'resources'}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
+                  >
+                    {isGeneratingAI === 'resources' ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={12} />
+                    )}
+                    AI
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4 space-y-3">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
+                    {isPolish ? 'Budżet' : 'Budget'}
+                  </label>
+                  <input
+                    value={budgetDraft}
+                    onChange={(e) => setBudgetDraft(e.target.value)}
+                    placeholder={isPolish ? 'np. $50,000' : 'e.g. $50,000'}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm text-slate-700 dark:text-slate-300"
+                  />
+                </div>
+
+                {showCreateResource && (
+                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 p-3 grid grid-cols-1 md:grid-cols-[1fr_1fr_120px_auto] gap-2">
+                    <input
+                      value={newResourceName}
+                      onChange={(e) => setNewResourceName(e.target.value)}
+                      placeholder={isPolish ? 'Osoba / zasób' : 'Person / resource'}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                    />
+                    <input
+                      value={newResourceRole}
+                      onChange={(e) => setNewResourceRole(e.target.value)}
+                      placeholder={isPolish ? 'Rola' : 'Role'}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                    />
+                    <input
+                      value={newResourceAllocation}
+                      onChange={(e) => setNewResourceAllocation(e.target.value)}
+                      placeholder="%"
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        if (!newResourceName.trim()) return;
+                        setResourceItems((prev) => [
+                          ...prev,
+                          {
+                            id: `res-${Date.now()}`,
+                            name: newResourceName.trim(),
+                            role: newResourceRole.trim(),
+                            allocation: Number(newResourceAllocation) || 0,
+                          },
+                        ]);
+                        setNewResourceName('');
+                        setNewResourceRole('');
+                        setNewResourceAllocation('50');
+                        setShowCreateResource(false);
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-300 hover:bg-primary-500/10 text-xs font-medium"
+                    >
+                      {isPolish ? 'Dodaj' : 'Add'}
+                    </button>
+                  </div>
+                )}
+
+                {resourceItems.length === 0 ? (
+                  <div className="border border-dashed border-slate-300/60 dark:border-navy-700/70 rounded-xl p-6 text-center text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Brak przypisanych zasobów' : 'No resources assigned'}
+                  </div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Zasób' : 'Resource'}</th>
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Rola' : 'Role'}</th>
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Alokacja' : 'Allocation'}</th>
+                        <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                      {resourceItems.map((res) => (
+                        <tr key={res.id}>
+                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">{res.name}</td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">{res.role || '—'}</td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                            {res.allocation || 0}%
+                          </td>
+                          <td className="py-2 text-right">
+                            <button
+                              onClick={() =>
+                                setResourceItems((prev) => prev.filter((item) => item.id !== res.id))
+                              }
+                              className="inline-flex p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Łączne FTE' : 'Total FTE'}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    {totalFte.toFixed(1)} FTE
+                  </span>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/60 dark:border-navy-700/60">
+                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
+                    {isPolish ? 'Narzędzia i infrastruktura' : 'Tools & Infrastructure'}
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {resourceTools.map((tool, idx) => (
+                      <span
+                        key={`${tool}-${idx}`}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 text-xs text-slate-500 dark:text-slate-400"
+                      >
+                        {tool}
+                        <button
+                          onClick={() =>
+                            setResourceTools((prev) => prev.filter((_, i) => i !== idx))
+                          }
+                          className="hover:text-red-500"
+                        >
+                          <X size={11} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      value={newResourceTool}
+                      onChange={(e) => setNewResourceTool(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && newResourceTool.trim()) {
+                          setResourceTools((prev) => [...prev, newResourceTool.trim()]);
+                          setNewResourceTool('');
+                        }
+                      }}
+                      placeholder={isPolish ? 'Dodaj narzędzie...' : 'Add tool...'}
+                      className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        if (!newResourceTool.trim()) return;
+                        setResourceTools((prev) => [...prev, newResourceTool.trim()]);
+                        setNewResourceTool('');
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+          break;
+        }
+
+        case 'financial-analysis': {
+          const capexValue = initiative?.costCapex || initiative?.cost_capex || null;
+          const opexValue = initiative?.costOpex || initiative?.cost_opex || null;
+          const roiValue = initiative?.expectedRoi || initiative?.expected_roi || null;
+          const npvValue = initiative?.npv || null;
+          const paybackValue = initiative?.paybackMonths || null;
+          component = (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Analiza finansowa' : 'Financial Analysis'}
+                </h2>
+                <button
+                  onClick={() => handleGenerateAI('financial-analysis')}
+                  disabled={isGeneratingAI === 'financial-analysis'}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
+                >
+                  {isGeneratingAI === 'financial-analysis' ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={12} />
+                  )}
+                  AI
+                </button>
+              </div>
+              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/60 p-3">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">CAPEX</p>
+                    <p className="text-xl font-semibold text-slate-700 dark:text-slate-300">
+                      {capexValue ? `$${Number(capexValue).toLocaleString()}` : '—'}
                     </p>
                   </div>
-                ))}
+                  <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/60 p-3">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">OPEX</p>
+                    <p className="text-xl font-semibold text-slate-700 dark:text-slate-300">
+                      {opexValue ? `$${Number(opexValue).toLocaleString()}` : '—'}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="rounded-xl border border-emerald-200/40 dark:border-emerald-500/20 bg-emerald-50/40 dark:bg-emerald-500/5 p-3 text-center">
+                    <p className="text-[11px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400 mb-1">ROI</p>
+                    <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+                      {roiValue ? `${Number(roiValue).toFixed(1)}x` : '—'}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-blue-200/40 dark:border-blue-500/20 bg-blue-50/40 dark:bg-blue-500/5 p-3 text-center">
+                    <p className="text-[11px] uppercase tracking-wide text-blue-600 dark:text-blue-400 mb-1">NPV</p>
+                    <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                      {npvValue ? `$${Number(npvValue).toLocaleString()}` : '—'}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-purple-200/40 dark:border-purple-500/20 bg-purple-50/40 dark:bg-purple-500/5 p-3 text-center">
+                    <p className="text-[11px] uppercase tracking-wide text-purple-600 dark:text-purple-400 mb-1">
+                      {isPolish ? 'Zwrot' : 'Payback'}
+                    </p>
+                    <p className="text-lg font-semibold text-purple-600 dark:text-purple-400">
+                      {paybackValue ? `${paybackValue}m` : '—'}
+                    </p>
+                  </div>
+                </div>
               </div>
-              {/* Financial Analysis */}
-              {finAnalST && FinAnalComp && (
-                <FinAnalComp sectionType={finAnalST} expanded={true} onToggle={() => {}} />
-              )}
-              {/* Financial Impact */}
-              {finImpST && FinImpComp && (
-                <FinImpComp sectionType={finImpST} expanded={true} onToggle={() => {}} />
-              )}
-              {/* RAID Log */}
-              {raidST && RaidComp && (
-                <RaidComp sectionType={raidST} expanded={true} onToggle={() => {}} />
-              )}
-              {/* Pilot */}
-              {pilotST && PilotComp && (
-                <PilotComp sectionType={pilotST} expanded={true} onToggle={() => {}} />
-              )}
             </div>
           );
           break;
         }
 
-        case 'governance-gates': {
-          const GatesComp = SECTION_REGISTRY['gates'];
-          const gatesST = [...leftSections, ...rightSections].find((s) => s.key === 'gates');
-          const DecisionsComp = SECTION_REGISTRY['decisions'];
-          const decisionsST = [...leftSections, ...rightSections].find((s) => s.key === 'decisions');
-          const RemindersComp = SECTION_REGISTRY['reminders'];
-          const remindersST = [...leftSections, ...rightSections].find((s) => s.key === 'reminders');
+        case 'financial-impact': {
+          const revenueImpact = initiative?.revenueImpact || 0;
+          const costSavings = initiative?.costSavings || 0;
+          const benefitsRealized = initiative?.benefitsRealized || 0;
           component = (
-            <div className="space-y-6">
-              {/* Pending gates alert */}
-              {pendingGates.length > 0 && (
-                <div className="p-4 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-300/40 dark:border-amber-500/30">
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle size={18} className="text-amber-500" />
-                    <div>
-                      <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                        {isPolish ? 'Wymagana decyzja bramkowa' : 'Gate decision required'}
-                      </p>
-                      <p className="text-xs text-amber-600/80 dark:text-amber-400/80">
-                        {pendingGates.map((g) => g.label).join(', ')}
-                      </p>
-                    </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Wpływ finansowy' : 'Financial Impact'}
+                </h2>
+                <button
+                  onClick={() => handleGenerateAI('financial-impact')}
+                  disabled={isGeneratingAI === 'financial-impact'}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
+                >
+                  {isGeneratingAI === 'financial-impact' ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={12} />
+                  )}
+                  AI
+                </button>
+              </div>
+              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/60 p-3">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                      {isPolish ? 'Przychody' : 'Revenue'}
+                    </p>
+                    <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+                      {revenueImpact ? `+$${Number(revenueImpact).toLocaleString()}` : '—'}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/60 p-3">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                      {isPolish ? 'Oszczędności' : 'Cost savings'}
+                    </p>
+                    <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                      {costSavings ? `$${Number(costSavings).toLocaleString()}` : '—'}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Realizacja korzyści' : 'Benefits realization'}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {benefitsRealized}%
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+                      style={{ width: `${Math.max(0, Math.min(100, Number(benefitsRealized)))}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+          break;
+        }
+
+        case 'risk-raid': {
+          const sortedRaid = [...raidItems].sort((a, b) => {
+            const order: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+            return (
+              (order[(a.severity || 'MEDIUM').toUpperCase()] ?? 2) -
+              (order[(b.severity || 'MEDIUM').toUpperCase()] ?? 2)
+            );
+          });
+          component = (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Ryzyko i RAID' : 'Risk & RAID'}
+                </h2>
+                <div className="inline-flex items-center gap-2">
+                  <button
+                    onClick={() => setShowCreateRaid((prev) => !prev)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium"
+                  >
+                    <Plus size={12} />
+                    {isPolish ? 'Dodaj' : 'Add'}
+                  </button>
+                  <button
+                    onClick={() => handleGenerateAI('raid')}
+                    disabled={isGeneratingAI === 'raid'}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
+                  >
+                    {isGeneratingAI === 'raid' ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={12} />
+                    )}
+                    AI
+                  </button>
+                </div>
+              </div>
+
+              {showCreateRaid && (
+                <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3 space-y-2">
+                  <input
+                    value={newRaidTitle}
+                    onChange={(e) => setNewRaidTitle(e.target.value)}
+                    placeholder={isPolish ? 'Tytuł elementu RAID...' : 'RAID item title...'}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm"
+                  />
+                  <textarea
+                    value={newRaidDescription}
+                    onChange={(e) => setNewRaidDescription(e.target.value)}
+                    rows={2}
+                    placeholder={isPolish ? 'Opis (opcjonalnie)...' : 'Description (optional)...'}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm resize-none"
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <select
+                      value={newRaidType}
+                      onChange={(e) =>
+                        setNewRaidType(
+                          e.target.value as 'risk' | 'issue' | 'assumption' | 'dependency'
+                        )
+                      }
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm"
+                    >
+                      <option value="risk">{isPolish ? 'Ryzyko' : 'Risk'}</option>
+                      <option value="issue">{isPolish ? 'Problem' : 'Issue'}</option>
+                      <option value="assumption">{isPolish ? 'Założenie' : 'Assumption'}</option>
+                      <option value="dependency">{isPolish ? 'Zależność' : 'Dependency'}</option>
+                    </select>
+                    <select
+                      value={newRaidSeverity}
+                      onChange={(e) =>
+                        setNewRaidSeverity(
+                          e.target.value as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+                        )
+                      }
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm"
+                    >
+                      <option value="LOW">{isPolish ? 'Niski' : 'Low'}</option>
+                      <option value="MEDIUM">{isPolish ? 'Średni' : 'Medium'}</option>
+                      <option value="HIGH">{isPolish ? 'Wysoki' : 'High'}</option>
+                      <option value="CRITICAL">{isPolish ? 'Krytyczny' : 'Critical'}</option>
+                    </select>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleCreateRaid}
+                      disabled={isMutating || !newRaidTitle.trim()}
+                      className="px-3 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-300 hover:bg-primary-500/10 text-xs font-medium disabled:opacity-50"
+                    >
+                      {isPolish ? 'Utwórz' : 'Create'}
+                    </button>
                   </div>
                 </div>
               )}
-              {/* Gates */}
-              {gatesST && GatesComp && (
-                <GatesComp sectionType={gatesST} expanded={true} onToggle={() => {}} />
+
+              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
+                {sortedRaid.length === 0 ? (
+                  <div className="border border-dashed border-slate-300/60 dark:border-navy-700/70 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Brak pozycji RAID' : 'No RAID items'}
+                  </div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Tytuł' : 'Title'}</th>
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Waga' : 'Severity'}</th>
+                        <th className="text-left py-2">{isPolish ? 'Status' : 'Status'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                      {sortedRaid.map((item) => (
+                        <tr key={item.id}>
+                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">{item.title}</td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">{item.type}</td>
+                          <td className="py-2 pr-2">
+                            <span className="text-[11px] px-2 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 text-slate-500 dark:text-slate-400">
+                              {item.severity || 'MEDIUM'}
+                            </span>
+                          </td>
+                          <td className="py-2 text-slate-500 dark:text-slate-400">
+                            {item.status || 'OPEN'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          );
+          break;
+        }
+
+        case 'decisions': {
+          const sortedDecisions = [...decisions].sort((a, b) => {
+            const aTs = a.dueDate ? new Date(a.dueDate).getTime() : 0;
+            const bTs = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+            return bTs - aTs;
+          });
+          component = (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Decyzje' : 'Decisions'}
+                </h2>
+                <div className="inline-flex items-center gap-2">
+                  <button
+                    onClick={() => setShowCreateDecision((prev) => !prev)}
+                    className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
+                  >
+                    <Plus size={12} />
+                    {isPolish ? 'Nowa' : 'New'}
+                  </button>
+                  <button
+                    onClick={() => handleGenerateAI('decisions')}
+                    disabled={isGeneratingAI === 'decisions'}
+                    className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                  >
+                    {isGeneratingAI === 'decisions' ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={12} />
+                    )}
+                    AI
+                  </button>
+                </div>
+              </div>
+
+              {showCreateDecision && (
+                <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3 flex flex-col md:flex-row gap-2">
+                  <input
+                    value={newDecisionTitle}
+                    onChange={(e) => setNewDecisionTitle(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                    placeholder={isPolish ? 'Tytuł decyzji...' : 'Decision title...'}
+                  />
+                  <button
+                    onClick={handleCreateDecision}
+                    disabled={!newDecisionTitle.trim() || isMutating}
+                    className="px-3 py-2 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-300 hover:bg-primary-500/10 disabled:opacity-50"
+                  >
+                    {isPolish ? 'Utwórz' : 'Create'}
+                  </button>
+                </div>
               )}
-              {/* Decisions */}
-              {decisionsST && DecisionsComp && (
-                <DecisionsComp sectionType={decisionsST} expanded={true} onToggle={() => {}} />
-              )}
-              {/* Reminders */}
-              {remindersST && RemindersComp && (
-                <RemindersComp sectionType={remindersST} expanded={true} onToggle={() => {}} />
+
+              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
+                {sortedDecisions.length === 0 ? (
+                  <div className="border border-dashed border-slate-300/60 dark:border-navy-700/70 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Brak decyzji. Dodaj pierwszą pozycję.' : 'No decisions yet. Add the first item.'}
+                  </div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Decyzja' : 'Decision'}</th>
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Status' : 'Status'}</th>
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Termin' : 'Due'}</th>
+                        <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                      {sortedDecisions.map((decision) => (
+                        <tr key={decision.id}>
+                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">{decision.title}</td>
+                          <td className="py-2 pr-2 text-xs text-slate-500 dark:text-slate-400">{decision.type}</td>
+                          <td className="py-2 pr-2">
+                            <span className="text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
+                              {decision.status}
+                            </span>
+                          </td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                            {decision.dueDate
+                              ? new Date(decision.dueDate).toLocaleDateString(isPolish ? 'pl-PL' : 'en-GB')
+                              : '—'}
+                          </td>
+                          <td className="py-2 text-right">
+                            <button
+                              onClick={() => onOpenDecision?.(decision.id)}
+                              className="inline-flex items-center gap-1 text-xs text-primary-600 dark:text-primary-300 hover:underline"
+                            >
+                              <ExternalLink size={12} />
+                              {isPolish ? 'Otwórz' : 'Open'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          );
+          break;
+        }
+
+        case 'gates': {
+          const nextGateId = getNextGateForStatus(status);
+          const nextGateConfig = nextGateId ? GATE_CONFIG[nextGateId] : null;
+          const readyRequirements = nextGateConfig
+            ? nextGateConfig.requirements.filter((req) => {
+                switch (req) {
+                  case 'owner':
+                    return Boolean(ownerId);
+                  case 'sponsor':
+                    return Boolean(sponsorId);
+                  case 'timeline':
+                    return Boolean(endDate || targetDate);
+                  case 'scope':
+                    return Boolean(summary || description);
+                  case 'risks':
+                    return raidItems.some((r) => r.type === 'risk');
+                  case 'all_tasks_done':
+                    return tasks.length > 0 && tasks.every((t) => t.status === 'DONE');
+                  default:
+                    return true;
+                }
+              }).length
+            : 0;
+          const readinessPercent = nextGateConfig
+            ? Math.round((readyRequirements / nextGateConfig.requirements.length) * 100)
+            : 100;
+          component = (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Bramy' : 'Gates'}
+                </h2>
+                <button
+                  onClick={() => handleGenerateAI('gates')}
+                  disabled={isGeneratingAI === 'gates'}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
+                >
+                  {isGeneratingAI === 'gates' ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={12} />
+                  )}
+                  AI
+                </button>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4 space-y-3">
+                {pendingGates.length > 0 ? (
+                  <div className="rounded-xl border border-amber-300/40 dark:border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10 p-3">
+                    <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                      {isPolish ? 'Wymagana decyzja bramkowa' : 'Gate decision required'}
+                    </p>
+                    <p className="text-xs text-amber-600/80 dark:text-amber-400/80 mt-1">
+                      {pendingGates.map((g) => g.label).join(', ')}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-emerald-300/30 dark:border-emerald-500/25 bg-emerald-500/5 dark:bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">
+                    {isPolish ? 'Brak blokujących bram.' : 'No blocking gates.'}
+                  </div>
+                )}
+
+                <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Gotowość do następnej bramy' : 'Next gate readiness'}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {readinessPercent}%
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
+                      style={{ width: `${Math.max(0, Math.min(100, readinessPercent))}%` }}
+                    />
+                  </div>
+                  <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    {nextGateConfig
+                      ? `${isPolish ? 'Następna brama' : 'Next gate'}: ${isPolish ? nextGateConfig.namePl : nextGateConfig.name}`
+                      : isPolish
+                        ? 'Brak kolejnych bram'
+                        : 'No upcoming gates'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+          break;
+        }
+
+        case 'comments': {
+          const CommentsComp = SECTION_REGISTRY['comments'];
+          const commentsST = [...leftSections, ...rightSections].find((s) => s.key === 'comments');
+          component = (
+            <div className="space-y-6">
+              {commentsST && CommentsComp && (
+                <CommentsComp sectionType={commentsST} expanded={true} onToggle={() => {}} />
               )}
             </div>
           );
           break;
         }
 
-        case 'collaboration-audit': {
-          const CommentsComp = SECTION_REGISTRY['comments'];
-          const commentsST = [...leftSections, ...rightSections].find((s) => s.key === 'comments');
+        case 'activity-log': {
           const HistoryComp = SECTION_REGISTRY['history'];
           const historyST = [...leftSections, ...rightSections].find((s) => s.key === 'history');
-          const AttachComp = SECTION_REGISTRY['attachments'];
-          const attachST = [...leftSections, ...rightSections].find((s) => s.key === 'attachments');
-          const LinkedComp = SECTION_REGISTRY['linkedItems'];
-          const linkedST = [...leftSections, ...rightSections].find((s) => s.key === 'linkedItems');
           const TagsComp = SECTION_REGISTRY['tags'];
           const tagsST = [...leftSections, ...rightSections].find((s) => s.key === 'tags');
           component = (
@@ -2728,21 +3810,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   </div>
                 </div>
               )}
-              {/* Comments */}
-              {commentsST && CommentsComp && (
-                <CommentsComp sectionType={commentsST} expanded={true} onToggle={() => {}} />
-              )}
               {/* History */}
               {historyST && HistoryComp && (
                 <HistoryComp sectionType={historyST} expanded={true} onToggle={() => {}} />
-              )}
-              {/* Attachments */}
-              {attachST && AttachComp && (
-                <AttachComp sectionType={attachST} expanded={true} onToggle={() => {}} />
-              )}
-              {/* Linked Items */}
-              {linkedST && LinkedComp && (
-                <LinkedComp sectionType={linkedST} expanded={true} onToggle={() => {}} />
               )}
               {/* Tags */}
               {tagsST && TagsComp && (
@@ -2753,29 +3823,199 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           break;
         }
 
+        case 'kpi': {
+          component = (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'KPI i korzyści' : 'KPIs & Benefits'}
+                </h2>
+                <div className="inline-flex items-center gap-2">
+                  <button
+                    onClick={() => setShowCreateKpi((prev) => !prev)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium"
+                  >
+                    <Plus size={12} />
+                    {isPolish ? 'Nowy' : 'New'}
+                  </button>
+                  <button
+                    onClick={() => handleGenerateAI('kpis')}
+                    disabled={isGeneratingAI === 'kpis'}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
+                  >
+                    {isGeneratingAI === 'kpis' ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={12} />
+                    )}
+                    AI
+                  </button>
+                </div>
+              </div>
+              {showCreateKpi && (
+                <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3 grid grid-cols-1 md:grid-cols-6 gap-2">
+                  <input
+                    value={newKpiName}
+                    onChange={(e) => setNewKpiName(e.target.value)}
+                    placeholder={isPolish ? 'Nazwa KPI' : 'KPI name'}
+                    className="md:col-span-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                  />
+                  <input
+                    value={newKpiUnit}
+                    onChange={(e) => setNewKpiUnit(e.target.value)}
+                    placeholder={isPolish ? 'Jednostka' : 'Unit'}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                  />
+                  <input
+                    value={newKpiBaseline}
+                    onChange={(e) => setNewKpiBaseline(e.target.value)}
+                    placeholder="Baseline"
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                  />
+                  <input
+                    value={newKpiCurrent}
+                    onChange={(e) => setNewKpiCurrent(e.target.value)}
+                    placeholder={isPolish ? 'Obecnie' : 'Current'}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                  />
+                  <input
+                    value={newKpiTarget}
+                    onChange={(e) => setNewKpiTarget(e.target.value)}
+                    placeholder="Target"
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
+                  />
+                  <div className="md:col-span-6 flex justify-end">
+                    <button
+                      onClick={() => {
+                        if (!newKpiName.trim()) return;
+                        setLocalKpis((prev) => [
+                          ...prev,
+                          {
+                            id: `kpi-${Date.now()}`,
+                            name: newKpiName.trim(),
+                            unit: newKpiUnit.trim(),
+                            baseline: newKpiBaseline.trim(),
+                            target: newKpiTarget.trim(),
+                            current: newKpiCurrent.trim(),
+                          },
+                        ]);
+                        setNewKpiName('');
+                        setNewKpiUnit('');
+                        setNewKpiBaseline('');
+                        setNewKpiTarget('');
+                        setNewKpiCurrent('');
+                        setShowCreateKpi(false);
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-300 hover:bg-primary-500/10 text-xs font-medium"
+                    >
+                      {isPolish ? 'Dodaj KPI' : 'Add KPI'}
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
+                {localKpis.length === 0 ? (
+                  <div className="border border-dashed border-slate-300/60 dark:border-navy-700/70 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Brak KPI' : 'No KPIs defined yet'}
+                  </div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
+                        <th className="text-left py-2 pr-2">{isPolish ? 'KPI' : 'KPI'}</th>
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Jednostka' : 'Unit'}</th>
+                        <th className="text-left py-2 pr-2">Baseline</th>
+                        <th className="text-left py-2 pr-2">{isPolish ? 'Obecnie' : 'Current'}</th>
+                        <th className="text-left py-2 pr-2">Target</th>
+                        <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                      {localKpis.map((kpi) => (
+                        <tr key={kpi.id}>
+                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">{kpi.name}</td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">{kpi.unit || '—'}</td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">{kpi.baseline || '—'}</td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">{kpi.current || '—'}</td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">{kpi.target || '—'}</td>
+                          <td className="py-2 text-right">
+                            <button
+                              onClick={() =>
+                                setLocalKpis((prev) => prev.filter((item) => item.id !== kpi.id))
+                              }
+                              className="inline-flex p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          );
+          break;
+        }
+
+        case 'watchers': {
+          component = (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Obserwatorzy' : 'Watchers'}
+                </h2>
+                <span className="text-xs text-slate-500 dark:text-slate-400">{watchers.length}</span>
+              </div>
+              {watchers.length === 0 ? (
+                <div className="p-5 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Brak obserwatorów dla tej inicjatywy.' : 'No watchers for this initiative yet.'}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {watchers.map((watcher) => (
+                    <div key={watcher.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70">
+                      <div>
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                          {watcher.name || users.find((u) => u.id === watcher.userId)?.firstName || watcher.userId}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {watcher.email || users.find((u) => u.id === watcher.userId)?.email || '—'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+          break;
+        }
+
         case 'attachments': {
+          const AttachComp = SECTION_REGISTRY['attachments'];
+          const attachST = [...leftSections, ...rightSections].find((s) => s.key === 'attachments');
           component = (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
                   {isPolish ? 'Załączniki' : 'Attachments'}
                 </h2>
-                <button className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/15 px-3 py-1.5 rounded-lg transition-all">
-                  <Plus size={13} />
-                  {isPolish ? 'Dodaj załącznik' : 'Add attachment'}
-                </button>
               </div>
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-3">
-                  <Paperclip size={20} className="text-slate-400 dark:text-slate-500" />
+              {/* Attachments */}
+              {attachST && AttachComp ? (
+                <AttachComp sectionType={attachST} expanded={true} onToggle={() => {}} />
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-3">
+                    <Paperclip size={20} className="text-slate-400 dark:text-slate-500" />
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
+                    {isPolish ? 'Brak załączników' : 'No attachments yet'}
+                  </p>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                  {isPolish ? 'Brak załączników' : 'No attachments yet'}
-                </p>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                  {isPolish ? 'Dodaj pliki, dokumenty lub inne zasoby' : 'Add files, documents, or other resources'}
-                </p>
-              </div>
+              )}
             </div>
           );
           break;
@@ -2809,28 +4049,82 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           break;
         }
 
-        case 'technical-description': {
+        case 'technical-specification': {
+          const trimmedSpec = technicalSpecDraft.trim();
+          const shouldClampSpec = trimmedSpec.split('\n').length > 8 || trimmedSpec.length > 680;
           component = (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Opis techniczny' : 'Technical Description'}
+                  {isPolish ? 'Specyfikacja techniczna' : 'Technical Specification'}
                 </h2>
-                <button className="inline-flex items-center gap-1.5 text-xs font-medium text-purple-500 dark:text-purple-400 hover:text-purple-600 bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/15 px-3 py-1.5 rounded-lg transition-all">
-                  <Sparkles size={13} />
-                  {isPolish ? 'Generuj z AI' : 'Generate with AI'}
-                </button>
-              </div>
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-3">
-                  <FileCode size={20} className="text-slate-400 dark:text-slate-500" />
+                <div className="inline-flex items-center gap-2">
+                  <button
+                    onClick={() => setTechnicalSpecDraft('')}
+                    className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                  >
+                    {isPolish ? 'Wyczyść' : 'Clear'}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const result = await handleGenerateAI('technical-specification');
+                      const content = result?.parsedContent || result?.content;
+                      if (typeof content === 'string' && content.trim()) {
+                        setTechnicalSpecDraft(content.trim());
+                      }
+                    }}
+                    disabled={isGeneratingAI === 'technical-specification'}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-purple-500 dark:text-purple-400 hover:text-purple-600 bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/15 px-3 py-1.5 rounded-lg transition-all disabled:opacity-50"
+                  >
+                    {isGeneratingAI === 'technical-specification' ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={13} />
+                    )}
+                    {isPolish ? 'Generuj z AI' : 'Generate with AI'}
+                  </button>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                  {isPolish ? 'Brak opisu technicznego' : 'No technical description yet'}
-                </p>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                  {isPolish ? 'Dodaj specyfikację techniczną, architekturę lub wymagania' : 'Add technical specification, architecture, or requirements'}
-                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4 relative">
+                <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-2">
+                  {isPolish
+                    ? 'Założenia techniczne, architektura, wymagania wdrożeniowe'
+                    : 'Technical assumptions, architecture, implementation requirements'}
+                </label>
+                <textarea
+                  value={technicalSpecDraft}
+                  onChange={(e) => setTechnicalSpecDraft(e.target.value)}
+                  rows={isTechnicalSpecExpanded ? 14 : 8}
+                  className="w-full min-h-[180px] px-0 py-1 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y"
+                  placeholder={
+                    isPolish
+                      ? 'Opisz architekturę, interfejsy, wymagania niefunkcjonalne, ograniczenia i plan implementacji...'
+                      : 'Describe architecture, interfaces, non-functional requirements, constraints, and implementation plan...'
+                  }
+                />
+                {shouldClampSpec && (
+                  <div className="mt-2 flex justify-end">
+                    <button
+                      onClick={() => setIsTechnicalSpecExpanded((prev) => !prev)}
+                      className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-primary-500 transition-colors"
+                    >
+                      {isTechnicalSpecExpanded
+                        ? (isPolish ? 'Pokaż mniej' : 'Less')
+                        : (isPolish ? 'Pokaż więcej' : 'More')}
+                    </button>
+                  </div>
+                )}
+                {!trimmedSpec && (
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-3">
+                      <FileCode size={20} className="text-slate-400 dark:text-slate-500" />
+                    </div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
+                      {isPolish ? 'Brak specyfikacji technicznej' : 'No technical specification yet'}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -2845,12 +4139,41 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     tasks, tasksDone, tasksInProgress, ownerName, startDate, endDate, targetDate,
     riskCount, criticalRaids, pendingGates, comments, users, sponsorId,
     leftSections, rightSections, decisions, raidItems, stakeholders,
-    attachments, linkedItems,
+    attachments, linkedItems, watchers, history,
     // Checklist & draft states — required so useMemo re-computes when items change
     targetStateItems, successCriteriaItems, deliverableItems,
     inScopeItems, outScopeItems, killCriteriaItems,
     symptomDraft, rootCauseDraft, costOfInactionDraft, marketContextDraft,
+    technicalSpecDraft, isTechnicalSpecExpanded,
+    localKpis, showCreateKpi, newKpiName, newKpiUnit, newKpiBaseline, newKpiTarget, newKpiCurrent,
+    resourceItems, budgetDraft, resourceTools, showCreateResource, newResourceName, newResourceRole,
+    newResourceAllocation, newResourceTool,
+    showCreateDecision, newDecisionTitle,
+    showCreateRaid, newRaidTitle, newRaidType, newRaidSeverity, newRaidDescription,
+    isGeneratingAI, isMutating,
+    handleCreateDecision, onOpenDecision,
+    setStartDate, setEndDate,
+    handleCreateRaid,
   ]);
+
+  const orderedNModeSectionsWithContent: NModeSection[] = useMemo(() => {
+    if (!nModeSectionOrder || nModeSectionOrder.length === 0) return nModeSectionsWithContent;
+
+    const byId = new Map(nModeSectionsWithContent.map((section) => [section.id, section]));
+    const ordered = nModeSectionOrder
+      .map((id) => byId.get(id))
+      .filter((section): section is NModeSection => Boolean(section));
+    const missing = nModeSectionsWithContent.filter((section) => !nModeSectionOrder.includes(section.id));
+
+    return [...ordered, ...missing];
+  }, [nModeSectionsWithContent, nModeSectionOrder]);
+
+  useEffect(() => {
+    if (orderedNModeSectionsWithContent.length === 0) return;
+    if (!orderedNModeSectionsWithContent.some((section) => section.id === activeNSection)) {
+      setActiveNSection(orderedNModeSectionsWithContent[0].id);
+    }
+  }, [orderedNModeSectionsWithContent, activeNSection]);
 
   // N-mode status actions for NModeActionBar
   // Dynamically built from statusActions (workflow transitions) + contextActions (create buttons)
@@ -3070,23 +4393,39 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
                           {/* Right-aligned AI Generate button */}
                           <div className="flex-1" />
-                          <button
-                            onClick={async () => {
-                              const result = await handleGenerateAI('overview');
-                              if (result?.parsedContent || result?.content) {
-                                toast.success(isPolish ? 'AI wygenerował treść' : 'AI generated content');
-                              }
-                            }}
-                            disabled={isGeneratingAI === 'overview'}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
-                          >
-                            {isGeneratingAI === 'overview' ? (
-                              <Loader2 size={13} className="animate-spin" />
-                            ) : (
-                              <Sparkles size={13} />
-                            )}
-                            <span>{isPolish ? 'Analyze with AI' : 'Analyze with AI'}</span>
-                          </button>
+                          {(() => {
+                            const aiSectionKey =
+                              activeNSection === 'initiative-definition' ? 'scope' : activeNSection;
+                            const aiLabel =
+                              activeNSection === 'initiative-definition'
+                                ? isPolish
+                                  ? 'Generuj scope'
+                                  : 'Generate scope'
+                                : isPolish
+                                  ? 'Analyze with AI'
+                                  : 'Analyze with AI';
+                            return (
+                              <button
+                                onClick={async () => {
+                                  const result = await handleGenerateAI(aiSectionKey);
+                                  if (result?.parsedContent || result?.content) {
+                                    toast.success(
+                                      isPolish ? 'AI wygenerował treść' : 'AI generated content'
+                                    );
+                                  }
+                                }}
+                                disabled={isGeneratingAI === aiSectionKey}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                              >
+                                {isGeneratingAI === aiSectionKey ? (
+                                  <Loader2 size={13} className="animate-spin" />
+                                ) : (
+                                  <Sparkles size={13} />
+                                )}
+                                <span>{aiLabel}</span>
+                              </button>
+                            );
+                          })()}
                         </>
                       );
                     })()}
@@ -3096,12 +4435,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 {/* LeftNav + Canvas */}
                 <div className="flex gap-0 min-h-[60vh]">
                   <NModeLeftNav
-                    sections={nModeSectionsWithContent}
+                    sections={orderedNModeSectionsWithContent}
                     activeSection={activeNSection}
                     onSectionChange={setActiveNSection}
+                    onSectionReorder={handleNModeSectionReorder}
                   />
                   <NModeCanvas
-                    sections={nModeSectionsWithContent}
+                    sections={orderedNModeSectionsWithContent}
                     activeSection={activeNSection}
                   />
                 </div>

@@ -9,6 +9,7 @@
 > - `docs/00_foundation/COLOR_SYSTEM_STANDARD.md`
 > - `docs/00_foundation/DBR77_VISUAL_LANGUAGE_STANDARD.md`
 > - tokeny w kodzie: `tailwind.config.js`, `src/index.css`
+> - future shell standard: `docs/ui-standards/artifact-shell-future-standard.md`
 
 ---
 
@@ -24,10 +25,9 @@ Każdy detail view (Initiative/Task/Decision/Notification) MUSI mieć ten sam na
 - Nagłówek zawiera:
   - **Tytuł encji** + (opcjonalnie) breadcrumb/moduł.
   - **Primary actions** (np. Save/Mark Read) + **Chat**.
-  - **Toggle trybu prezentacji**: 3 przyciski **pomiędzy Chat a AI**, wybierające:
-    - `D` (D presentation mode)
-    - `N` (N presentation mode)
-    - `C` (C presentation mode)
+  - **Toggle trybu prezentacji**:
+    - docelowo: `N` + `C`
+    - przejściowo (legacy): `D` może pozostać w wybranych ekranach
   - (Opcjonalnie) **AI button** (jeśli w danym ekranie występuje).
 - Zmiana trybu:
   - NIE zmienia encji,
@@ -310,42 +310,89 @@ Każda zamknięta sekcja pokazuje w nagłówku:
 
 ---
 
-## 2) N mode — kanoniczne bloki nawigacji (8–10)
+## 2) N mode — kanoniczne bloki nawigacji
 
 Poniższy podział jest kanoniczny dla N mode i ma zastąpić “przypadkowe” grupowanie sekcji.  
 Wszystkie istniejące elementy z aplikacji muszą być mapowane do jednego z bloków (nic nie znika).
 
-### 2.1 Initiative — 10 bloków (Strategic PMO Gold Standard)
+### 2.1 Initiative — canonical N-mode navigation (v2026-02-13)
 
-1. **Executive Summary**  
-   Cel 1 zdanie, status, health, owners, priorytet, ryzyko, kluczowe fakty.
+This is the canonical order for Initiative detail in N mode.  
+Template configuration (`visibleSections`) controls visibility, but order remains stable.
 
-2. **Problem & Context**  
-   Problem definition, kontekst, ograniczenia, “dlaczego teraz”.
+1. **Initiative Definition**  
+   Core initiative definition and context.
 
-3. **Target State & Success Criteria**  
-   Kryteria sukcesu, KPI, definicja sukcesu / DoD.
+2. **Target State & Scope**  
+   Desired outcome, success target, scope boundaries.
 
-4. **Scope & Kill Criteria**  
-   Scope / out-of-scope, kill criteria, założenia krytyczne.
+3. **KPI**  
+   KPI definition and baseline/target alignment.
 
-5. **Delivery Plan (Tasks & Milestones)**  
-   Embedded view: taski, milestones, zależności w planie (table/board/timeline).
+4. **Financial Analysis**  
+   Cost/benefit assumptions and financial model inputs.
 
-6. **Governance (Gates & Readiness)**  
-   Gate readiness, wymagane artefakty, następna bramka, reguły przejść.
+5. **Financial Impact**  
+   Expected business and financial impact outcomes.
 
-7. **Org & Stakeholders (Team + RACI)**  
-   Team, stakeholders, RACI, sponsorzy, role decyzyjne.
+6. **Team**  
+   Core team ownership and assignments.
 
-8. **Timeline, Resources & Capacity**  
-   Timeline, zasoby, capacity, ograniczenia wykonawcze.
+7. **RACI**  
+   Stakeholder accountability matrix.
 
-9. **Economics / Finance & Risk Posture**  
-   Finance, ROI/value, risk posture inicjatywy.
+8. **Resources**  
+   Capacity, budget envelope, and key resource constraints.
 
-10. **RAID + Dependencies + Evidence & Audit**  
-    RAID log, dependencies, attachments, activity/audit trail.
+9. **Dependencies**  
+   Cross-task / cross-initiative dependencies.
+
+10. **Risk & RAID**  
+    Risks, assumptions, issues, dependencies (RAID) in one block.
+
+11. **Milestones**  
+    Milestone checkpoints and gate-preparation points.
+
+12. **Timeline**  
+    Planned dates, sequence, and delivery pacing.
+
+13. **Tasks**  
+    Execution work package and operational task list.
+
+14. **Decisions**  
+    Decision records tied to initiative progress.
+
+15. **Gates**  
+    Gate readiness and approval transitions.
+
+16. **Technical Specification**  
+    Technical implementation notes and architecture constraints.
+
+17. **Attachments**  
+    Files and evidence artifacts.
+
+18. **Comments**  
+    Collaboration thread.
+
+19. **Activity Log**  
+    Chronological audit/activity trail.
+
+#### 2.1.1 Initiative visibility contract (MUST)
+
+- Initiative N-mode visibility is template-driven:
+  - `visibleSections[key] = true` -> mapped tab is visible.
+  - `visibleSections[key] = false` -> mapped tab is hidden.
+- If template provides explicit `visibleSections`, it is the source of truth.
+- No automatic "show all defaults" override when explicit template visibility exists.
+
+#### 2.1.2 Explicit exclusions for current canonical Initiative N mode
+
+The following are intentionally excluded from the Initiative N-mode navigation list:
+
+- `Overview` (replaced by `Initiative Definition`)
+- `Pilot`
+- `Watchers` (covered operationally by governance/RACI flow)
+- standalone `Intelligence` tab (captured via `Technical Specification` and related AI actions)
 
 ### 2.2 Task — 8 bloków (Unit of Change)
 

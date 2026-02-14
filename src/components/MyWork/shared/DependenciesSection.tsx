@@ -17,7 +17,6 @@ import {
   ArrowDown,
   ArrowUp,
   CheckCircle2,
-  Copy,
   Edit3,
   ExternalLink,
   MessageSquare,
@@ -28,7 +27,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -79,6 +78,8 @@ interface DependenciesSectionProps {
   connectedTasks?: ConnectedTask[];
   /** External dependencies — when provided, skip API fetch and use these directly */
   externalDependencies?: TaskDependency[];
+  /** Show read-only sample rows when dependency list is empty */
+  showSampleDataWhenEmpty?: boolean;
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -148,6 +149,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   readOnly = false,
   connectedTasks = [],
   externalDependencies,
+  showSampleDataWhenEmpty = false,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -167,11 +169,47 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   const [noteText, setNoteText] = useState('');
   const [addingTaskId, setAddingTaskId] = useState<string | null>(null);
   const [editingDependency, setEditingDependency] = useState<TaskDependency | null>(null);
-  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const displayedDependencies = [...predecessors, ...successors];
+  const sampleDependencies = useMemo<TaskDependency[]>(
+    () => [
+      {
+        id: 'sample-dep-1',
+        taskId: 'sample-task-1',
+        taskTitle: 'Kick-off workshop with key stakeholders',
+        taskStatus: 'done',
+        taskPriority: 'high',
+        taskIndexCode: 'sample-task-1',
+        dependencyType: 'FS',
+        lagDays: 0,
+        notes:
+          'Sample data: process definition starts after the stakeholder kick-off is completed.',
+        direction: 'predecessor',
+      },
+      {
+        id: 'sample-dep-2',
+        taskId: 'sample-task-2',
+        taskTitle: 'Configure pilot environment and integrations',
+        taskStatus: 'in_progress',
+        taskPriority: 'medium',
+        taskIndexCode: 'sample-task-2',
+        dependencyType: 'SS',
+        lagDays: 2,
+        notes: 'Sample data: pilot setup starts with a 2-day lead overlap.',
+        direction: 'successor',
+      },
+    ],
+    []
+  );
+  const isShowingSampleData =
+    showSampleDataWhenEmpty && !loading && displayedDependencies.length === 0;
+  const visibleDependencies = isShowingSampleData ? sampleDependencies : displayedDependencies;
+  const visiblePredecessors = isShowingSampleData
+    ? sampleDependencies.filter((d) => d.direction === 'predecessor')
+    : predecessors;
   const availableConnectedTasks = connectedTasks.filter(
     (t) => t.id && t.id !== taskId && !displayedDependencies.some((d) => d.taskId === t.id)
   );
@@ -212,16 +250,16 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
     }
   }, [fetchDependencies, externalDependencies]);
 
-  // Close action menu on click outside
+  // Close action menu on outside click
   useEffect(() => {
-    if (!openActionMenuId) return;
-    const handler = () => setOpenActionMenuId(null);
+    if (!openMenuId) return;
+    const handler = () => setOpenMenuId(null);
     const timer = setTimeout(() => document.addEventListener('click', handler), 0);
     return () => {
       clearTimeout(timer);
       document.removeEventListener('click', handler);
     };
-  }, [openActionMenuId]);
+  }, [openMenuId]);
 
   // ── Search tasks ─────────────────────────────────────────────
   const doSearch = useCallback(
@@ -378,7 +416,6 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
     setLagDays(depToEdit?.lagDays ?? 0);
     setNoteText(depToEdit?.notes || '');
     setEditingDependency(depToEdit || null);
-    setOpenActionMenuId(null);
   };
 
   const closeModal = () => {
@@ -444,9 +481,12 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
             <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
               {isPolish ? 'Zależności' : 'Dependencies'}
             </h2>
-            {displayedDependencies.length > 0 && (
-              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
-                {displayedDependencies.length}
+            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+              {visibleDependencies.length}
+            </span>
+            {isShowingSampleData && (
+              <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-full">
+                {isPolish ? 'dane przykładowe' : 'sample data'}
               </span>
             )}
           </div>
@@ -467,7 +507,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
             <div className="flex items-center justify-center py-6">
               <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
             </div>
-          ) : displayedDependencies.length === 0 ? (
+          ) : visibleDependencies.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-3">
                 <ArrowDown size={18} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
@@ -502,7 +542,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                    {displayedDependencies.map((dep) => {
+                    {visibleDependencies.map((dep) => {
                       const code = buildArtifactCode('task', dep.taskIndexCode || dep.taskId);
                       const statusLabel = STATUS_LABELS[dep.taskStatus || 'todo'];
                       const isPredecessor = dep.direction === 'predecessor';
@@ -593,85 +633,69 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                             )}
                           </td>
                           <td className="py-2.5 pr-3 text-right relative">
-                            <div className="inline-flex items-center gap-2">
-                              <button
-                                onClick={() =>
-                                  setOpenActionMenuId((prev) => (prev === dep.id ? null : dep.id))
-                                }
-                                className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200 hover:bg-slate-100/10 transition-colors"
-                                title={isPolish ? 'Akcje' : 'Actions'}
-                              >
-                                <MoreVertical size={14} />
-                              </button>
-                            </div>
-                            {openActionMenuId === dep.id && (
-                              <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 backdrop-blur-lg p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
+                            {isShowingSampleData ? (
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                                {isPolish ? 'podgląd' : 'preview'}
+                              </span>
+                            ) : (
+                              <>
                                 <button
-                                  onClick={() => {
-                                    openModal(dep.direction, dep);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                                >
-                                  <Edit3 size={13} className="text-slate-500 dark:text-slate-400" />
-                                  {isPolish ? 'Edytuj' : 'Edit'}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    openModal(dep.direction);
-                                    setSelectedDepType(dep.dependencyType);
-                                    setLagDays(dep.lagDays);
-                                    setNoteText(dep.notes || '');
-                                    setOpenActionMenuId(null);
-                                    toast(
-                                      isPolish
-                                        ? 'Skopiowano ustawienia zależności'
-                                        : 'Dependency settings copied',
-                                      { icon: '📋' }
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId((prev) =>
+                                      prev === dep.id ? null : dep.id
                                     );
                                   }}
-                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                                  className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                                  title={isPolish ? 'Akcje' : 'Actions'}
                                 >
-                                  <Copy size={13} className="text-slate-500 dark:text-slate-400" />
-                                  {isPolish ? 'Kopiuj' : 'Copy'}
+                                  <MoreVertical size={14} />
                                 </button>
-                                <button
-                                  onClick={() => {
-                                    setOpenActionMenuId(null);
-                                    handleDuplicate(dep);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                                >
-                                  <Copy size={13} className="text-slate-500 dark:text-slate-400" />
-                                  {isPolish ? 'Duplikat' : 'Duplicate'}
-                                </button>
-                                {onOpenTask && (
-                                  <button
-                                    onClick={() => {
-                                      setOpenActionMenuId(null);
-                                      onOpenTask(dep.taskId);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                                  >
-                                    <ExternalLink size={13} className="text-slate-500 dark:text-slate-400" />
-                                    {isPolish ? 'Otwórz' : 'Open'}
-                                  </button>
+
+                                {openMenuId === dep.id && (
+                                  <div className="absolute right-3 top-9 z-30 w-44 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 backdrop-blur-lg p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
+                                    {onOpenTask && (
+                                      <button
+                                        onClick={() => {
+                                          setOpenMenuId(null);
+                                          onOpenTask(dep.taskId);
+                                        }}
+                                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                                      >
+                                        <ExternalLink size={13} className="text-slate-500 dark:text-slate-400" />
+                                        {isPolish ? 'Otwórz kartę' : 'Open card'}
+                                      </button>
+                                    )}
+                                    {!readOnly && (
+                                      <button
+                                        onClick={() => {
+                                          setOpenMenuId(null);
+                                          openModal(dep.direction, dep);
+                                        }}
+                                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                                      >
+                                        <Edit3 size={13} className="text-slate-500 dark:text-slate-400" />
+                                        {isPolish ? 'Edytuj' : 'Edit'}
+                                      </button>
+                                    )}
+                                    {!readOnly && (
+                                      <>
+                                        <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
+                                        <button
+                                          onClick={() => {
+                                            setOpenMenuId(null);
+                                            handleRemove(dep);
+                                          }}
+                                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                        >
+                                          <Trash2 size={13} />
+                                          {isPolish ? 'Kasuj' : 'Delete'}
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
                                 )}
-                                {!readOnly && (
-                                  <>
-                                    <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
-                                    <button
-                                      onClick={() => {
-                                        setOpenActionMenuId(null);
-                                        handleRemove(dep);
-                                      }}
-                                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                                    >
-                                      <Trash2 size={13} />
-                                      {isPolish ? 'Usuń' : 'Delete'}
-                                    </button>
-                                  </>
-                                )}
-                              </div>
+                              </>
                             )}
                           </td>
                         </tr>
@@ -682,7 +706,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
               </div>
 
               {/* ── Blocking warning ──────────────────── */}
-              {predecessors.some(
+              {visiblePredecessors.some(
                 (d) => d.taskStatus !== 'done' && d.taskStatus !== 'cancelled'
               ) && (
                 <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">

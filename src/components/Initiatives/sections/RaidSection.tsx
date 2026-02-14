@@ -67,7 +67,7 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
               e.stopPropagation();
               setShowCreateRaid(true);
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-medium transition-all"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium transition-colors"
           >
             <Plus size={14} />
             <span>{isPolish ? 'Dodaj' : 'Add'}</span>
@@ -82,7 +82,7 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
               handleGenerateAI('raid');
             }}
             disabled={isGeneratingAI === 'raid'}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium transition-colors disabled:opacity-50"
             title={isPolish ? 'AI zidentyfikuje ryzyka' : 'AI will identify risks'}
           >
             {isGeneratingAI === 'raid' ? (
@@ -194,7 +194,7 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setShowCreateRaid(true)}
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-sm font-medium transition-all"
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             <span>{isPolish ? 'Dodaj element RAID' : 'Add RAID item'}</span>

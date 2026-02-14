@@ -182,7 +182,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                 );
               }}
               disabled={isMutating}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 text-xs font-medium transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium transition-colors disabled:opacity-50"
             >
               <Send size={14} />
               <span>{isPolish ? 'Wyślij' : 'Request'}</span>
@@ -198,7 +198,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               handleGenerateAI('gates');
             }}
             disabled={isGeneratingAI === 'gates'}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium transition-colors disabled:opacity-50"
           >
             {isGeneratingAI === 'gates' ? (
               <Loader2 size={14} className="animate-spin" />
@@ -279,7 +279,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
 
       {/* Current Gate Details */}
       {nextGateConfig && (
-        <div className="mb-4 p-4 rounded-xl bg-gradient-to-br from-purple-500/5 to-indigo-500/5 dark:from-purple-500/10 dark:to-indigo-500/10 border border-purple-200/50 dark:border-purple-500/20">
+        <div className="mb-4 p-4 rounded-xl bg-slate-50/60 dark:bg-navy-800/40 border border-slate-200/60 dark:border-navy-700/60">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-purple-500/20">

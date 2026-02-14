@@ -393,7 +393,13 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     source?: Partial<DeliveryConfig> | null,
     fallback?: ReminderRule
   ): DeliveryConfig => {
-    if (source?.coreChannels) return source as DeliveryConfig;
+    if (source?.coreChannels) {
+      return {
+        coreChannels: source.coreChannels,
+        integrationChannels: (source.integrationChannels || []) as IntegrationChannel[],
+        syncTargets: (source.syncTargets || []) as string[],
+      };
+    }
     const channels: CoreDeliveryChannel[] = [];
     if (fallback) {
       if ((fallback as any).inAppNotification !== false) channels.push('in_app');
@@ -2473,6 +2479,7 @@ Return ONLY the final comment text.`;
                     status: item.status,
                     priority: item.priority,
                   }))}
+                showSampleDataWhenEmpty
               />
             </div>
           );

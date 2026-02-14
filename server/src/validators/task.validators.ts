@@ -34,6 +34,7 @@ export const TaskTypeEnum = z.enum([
   'other',
 ]);
 export const TaskSourceEnum = z.enum(['manual', 'ai']);
+const FlexibleId = z.string().min(1);
 
 // ==========================================
 // REQUEST SCHEMAS
@@ -41,13 +42,13 @@ export const TaskSourceEnum = z.enum(['manual', 'ai']);
 
 export const CreateTaskSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
-  projectId: z.string().uuid().optional().nullable(),
-  organizationId: z.string().uuid().optional(),
+  projectId: FlexibleId.optional().nullable(),
+  organizationId: FlexibleId.optional(),
   description: z.string().optional().nullable(),
   status: TaskStatusEnum.optional().default('todo'),
   priority: PriorityEnum.optional().default('medium'),
-  assigneeId: z.string().uuid().optional().nullable(),
-  backupAssigneeId: z.string().uuid().optional().nullable(),
+  assigneeId: FlexibleId.optional().nullable(),
+  backupAssigneeId: FlexibleId.optional().nullable(),
   dueDate: z.string().datetime().optional().nullable().or(z.string()),
   startedAt: z.string().datetime().optional().nullable().or(z.string()),
   // PMO notifications (optional flags)
@@ -59,13 +60,13 @@ export const CreateTaskSchema = z.object({
   tags: z.array(z.string()).optional(),
   taskType: TaskTypeEnum.optional().default('execution'),
   source: TaskSourceEnum.optional().default('manual'),
-  initiativeId: z.string().uuid().optional().nullable(),
-  ownerId: z.string().uuid().optional().nullable(),
+  initiativeId: FlexibleId.optional().nullable(),
+  ownerId: FlexibleId.optional().nullable(),
   requiresAcceptance: z.boolean().optional(),
   acceptanceType: z.enum(['manual', 'automatic']).optional().nullable(),
-  acceptorId: z.string().uuid().optional().nullable(),
+  acceptorId: FlexibleId.optional().nullable(),
   why: z.string().optional().nullable(),
-  assignees: z.array(z.string().uuid()).optional(),
+  assignees: z.array(FlexibleId).optional(),
   checklist: z.array(z.unknown()).optional(),
   expectedOutcome: z.string().optional(),
   decisionImpact: z.unknown().optional(),
@@ -73,32 +74,32 @@ export const CreateTaskSchema = z.object({
   strategicContribution: z.unknown().optional(),
   progress: z.number().min(0).max(100).optional(),
   blockedReason: z.string().optional(),
-  blockedByDecisionId: z.string().uuid().optional().nullable(),
+  blockedByDecisionId: FlexibleId.optional().nullable(),
   weight: z.number().min(0.1).max(100).optional(),
   weightReason: z.string().max(500).optional().nullable(),
-  roadmapInitiativeId: z.string().uuid().optional().nullable(),
-  kpiId: z.string().uuid().optional().nullable(),
-  raidItemId: z.string().uuid().optional().nullable(),
+  roadmapInitiativeId: FlexibleId.optional().nullable(),
+  kpiId: FlexibleId.optional().nullable(),
+  raidItemId: FlexibleId.optional().nullable(),
 });
 
 export const UpdateTaskSchema = CreateTaskSchema.partial().omit({ organizationId: true });
 
 export const AssignTaskSchema = z.object({
-  assigneeId: z.string().uuid(),
+  assigneeId: FlexibleId,
   notify: z.boolean().optional().default(true),
   slaHours: z.number().positive().optional(),
 });
 
 export const ReassignTaskSchema = z.object({
-  fromAssigneeId: z.string().uuid(),
-  toAssigneeId: z.string().uuid(),
+  fromAssigneeId: FlexibleId,
+  toAssigneeId: FlexibleId,
   reason: z.string().optional(),
 });
 
 export const EscalateTaskSchema = z.object({
   reason: z.string().min(1, 'Escalation reason is required'),
   priority: PriorityEnum.optional(),
-  assignTo: z.string().uuid().optional(),
+  assignTo: FlexibleId.optional(),
 });
 
 export const ResolveEscalationSchema = z.object({
@@ -107,7 +108,7 @@ export const ResolveEscalationSchema = z.object({
 
 export const AddTaskCommentSchema = z.object({
   content: z.string().min(1, 'Comment content is required').max(5000),
-  mentions: z.array(z.string().uuid()).optional(),
+  mentions: z.array(FlexibleId).optional(),
 });
 
 // ==========================================
@@ -115,12 +116,12 @@ export const AddTaskCommentSchema = z.object({
 // ==========================================
 
 export const GetTasksQuerySchema = z.object({
-  projectId: z.string().uuid().optional(),
+  projectId: FlexibleId.optional(),
   status: TaskStatusEnum.optional(),
-  assigneeId: z.string().uuid().optional(),
-  reporterId: z.string().uuid().optional(),
+  assigneeId: FlexibleId.optional(),
+  reporterId: FlexibleId.optional(),
   priority: PriorityEnum.optional(),
-  initiativeId: z.string().uuid().optional(),
+  initiativeId: FlexibleId.optional(),
   taskType: TaskTypeEnum.optional(),
   search: z.string().optional(),
   page: z.coerce.number().int().min(1).optional().default(1),

@@ -9,12 +9,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Calendar,
-  CheckSquare,
-  ChevronDown,
-  Clock,
   ExternalLink,
-  Loader2,
-  Milestone,
+  MoreVertical,
   Plus,
   Sparkles,
   Trash2,
@@ -25,7 +21,6 @@ import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
 
-import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps, TaskItem } from './types';
 
@@ -82,17 +77,6 @@ const PRIORITY_CONFIG: Record<string, { label: { en: string; pl: string }; color
   critical: { label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-red-600 font-bold' },
 };
 
-const TASK_TYPE_OPTIONS = [
-  { value: 'execution', label: { en: 'Execution', pl: 'Realizacja' } },
-  { value: 'analysis', label: { en: 'Analysis', pl: 'Analiza' } },
-  { value: 'decision', label: { en: 'Decision', pl: 'Decyzja' } },
-  { value: 'design', label: { en: 'Design', pl: 'Projekt' } },
-  { value: 'build', label: { en: 'Build', pl: 'Budowa' } },
-  { value: 'test', label: { en: 'Test', pl: 'Test' } },
-  { value: 'deploy', label: { en: 'Deploy', pl: 'Wdrożenie' } },
-  { value: 'other', label: { en: 'Other', pl: 'Inne' } },
-];
-
 // ==========================================
 // SOURCE CONFIG (Manual / AI)
 // ==========================================
@@ -126,370 +110,11 @@ function normalizeStatus(s: string): string {
   return lower;
 }
 
-// ==========================================
-// TASK CARD COMPONENT
-// ==========================================
-
-interface TaskCardProps {
-  task: TaskItem;
-  isPolish: boolean;
-  isNew?: boolean;
-  users: { id: string; firstName: string; lastName: string; email?: string }[];
-  onUpdate: (id: string, updates: Partial<TaskItem> & Record<string, any>) => void;
-  onRemove: (id: string) => void;
-  onOpen?: (id: string) => void;
-  readOnly?: boolean;
-}
-
-const TaskCard: React.FC<TaskCardProps> = ({
-  task,
-  isPolish,
-  isNew,
-  users,
-  onUpdate,
-  onRemove,
-  onOpen,
-  readOnly,
-}) => {
-  const [expanded, setExpanded] = useState(isNew || false);
-  const status = normalizeStatus(task.status);
-  const statusConfig = TASK_STATUS_CONFIG[status] || TASK_STATUS_CONFIG.todo;
-  const isDone = status === 'done';
-  const isBlocked = status === 'blocked';
-
-  return (
-    <motion.div
-      initial={isNew ? { opacity: 0, y: 10 } : false}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      className={`rounded-xl border transition-all ${
-        isDone
-          ? 'border-emerald-300/50 dark:border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-500/5'
-          : isBlocked
-            ? 'border-red-300/50 dark:border-red-500/30 bg-red-50/30 dark:bg-red-500/5'
-            : task.source === 'ai'
-              ? expanded
-                ? 'border-violet-300 dark:border-violet-500/50 bg-violet-50/30 dark:bg-violet-500/5'
-                : 'border-violet-200/60 dark:border-violet-500/30 bg-violet-50/20 dark:bg-violet-500/5'
-              : expanded
-                ? 'border-emerald-300 dark:border-emerald-500/50 bg-white dark:bg-navy-900/80'
-                : 'border-slate-200 dark:border-navy-600 bg-slate-50/50 dark:bg-navy-800/50'
-      }`}
-    >
-      {/* Card Header */}
-      <div
-        className="flex items-center gap-3 px-4 py-3 cursor-pointer"
-        onClick={() => setExpanded((prev) => !prev)}
-      >
-        {/* Status indicator (left side) */}
-        <div className="flex flex-col items-center gap-1 flex-shrink-0">
-          <div className={`w-3 h-3 rounded-full ${statusConfig.dotColor}`} />
-          <div className={`w-0.5 flex-1 min-h-[12px] rounded-full ${statusConfig.color} opacity-30`} />
-        </div>
-
-        {/* Title + tags */}
-        <div className="flex-1 min-w-0">
-          <input
-            type="text"
-            value={task.title}
-            onChange={(e) => {
-              e.stopPropagation();
-              onUpdate(task.id, { title: e.target.value });
-            }}
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full text-sm font-medium bg-transparent focus:outline-none truncate ${
-              isDone
-                ? 'text-slate-400 line-through'
-                : 'text-slate-700 dark:text-slate-200'
-            }`}
-            placeholder={isPolish ? 'Nazwa zadania...' : 'Task name...'}
-            readOnly={readOnly}
-          />
-          <div className="flex items-center gap-2 mt-1">
-            {/* Source badge (Manual / AI) */}
-            {(() => {
-              const src = task.source || 'manual';
-              const srcConfig = SOURCE_CONFIG[src] || SOURCE_CONFIG.manual;
-              const SrcIcon = srcConfig.icon;
-              return (
-                <span className={`flex items-center gap-0.5 text-[10px] font-medium ${srcConfig.color}`}>
-                  <SrcIcon size={9} />
-                  {isPolish ? srcConfig.label.pl : srcConfig.label.en}
-                </span>
-              );
-            })()}
-            {/* Priority badge */}
-            {task.priority && (
-              <span className={`text-[10px] font-medium ${PRIORITY_CONFIG[task.priority.toLowerCase()]?.color || 'text-slate-500'}`}>
-                {isPolish
-                  ? PRIORITY_CONFIG[task.priority.toLowerCase()]?.label.pl || task.priority
-                  : PRIORITY_CONFIG[task.priority.toLowerCase()]?.label.en || task.priority}
-              </span>
-            )}
-            {/* Assignee */}
-            {task.assigneeName && (
-              <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
-                <User size={9} />
-                {task.assigneeName}
-              </span>
-            )}
-            {/* Due date */}
-            {task.dueDate && (
-              <span
-                className={`text-[10px] flex items-center gap-0.5 ${
-                  !isDone && new Date(task.dueDate) < new Date()
-                    ? 'text-red-500 font-medium'
-                    : 'text-slate-400'
-                }`}
-              >
-                <Calendar size={9} />
-                {new Date(task.dueDate).toLocaleDateString()}
-              </span>
-            )}
-            {/* Milestone badge */}
-            {task.isMilestone && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 flex items-center gap-0.5">
-                <Milestone size={9} />
-                {isPolish ? 'Kamień milowy' : 'Milestone'}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Right side: status dropdown + actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <select
-            value={status}
-            onChange={(e) => {
-              e.stopPropagation();
-              onUpdate(task.id, { status: e.target.value });
-            }}
-            onClick={(e) => e.stopPropagation()}
-            disabled={readOnly}
-            className={`px-2 py-0.5 rounded text-[10px] font-medium border-0 cursor-pointer focus:outline-none ${statusConfig.bgColor} ${statusConfig.textColor}`}
-          >
-            {Object.entries(TASK_STATUS_CONFIG).map(([key, config]) => (
-              <option key={key} value={key}>
-                {isPolish ? config.label.pl : config.label.en}
-              </option>
-            ))}
-          </select>
-
-          {onOpen && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpen(task.id);
-              }}
-              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPolish ? 'Otwórz w pełnym widoku' : 'Open full view'}
-            >
-              <ExternalLink size={14} />
-            </button>
-          )}
-
-          {!readOnly && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove(task.id);
-              }}
-              className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-colors"
-            >
-              <Trash2 size={14} />
-            </button>
-          )}
-
-          <ChevronDown
-            size={16}
-            className={`text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
-          />
-        </div>
-      </div>
-
-      {/* Expanded Details */}
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: 'auto' }}
-            exit={{ height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 pt-2 border-t border-slate-200 dark:border-navy-600 space-y-3">
-              {/* Description */}
-              <div>
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
-                  {isPolish ? 'Opis / podejście' : 'Description / approach'}
-                </label>
-                <textarea
-                  value={task.description || ''}
-                  onChange={(e) => onUpdate(task.id, { description: e.target.value })}
-                  rows={3}
-                  disabled={readOnly}
-                  className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-y"
-                  placeholder={isPolish ? 'Opisz podejście, kroki, narzędzia...' : 'Describe the approach, steps, tools...'}
-                />
-              </div>
-
-              {/* Row: Priority + Task Type + Estimated Hours */}
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
-                    {isPolish ? 'Priorytet' : 'Priority'}
-                  </label>
-                  <select
-                    value={(task.priority || 'medium').toLowerCase()}
-                    onChange={(e) => onUpdate(task.id, { priority: e.target.value })}
-                    disabled={readOnly}
-                    className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
-                  >
-                    {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
-                      <option key={key} value={key}>
-                        {isPolish ? config.label.pl : config.label.en}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
-                    {isPolish ? 'Typ zadania' : 'Task type'}
-                  </label>
-                  <select
-                    value={(task as any).taskType || 'execution'}
-                    onChange={(e) => onUpdate(task.id, { taskType: e.target.value })}
-                    disabled={readOnly}
-                    className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
-                  >
-                    {TASK_TYPE_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {isPolish ? opt.label.pl : opt.label.en}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
-                    {isPolish ? 'Estymacja (h)' : 'Estimate (h)'}
-                  </label>
-                  <div className="flex items-center gap-1.5">
-                    <Clock size={14} className="text-slate-400 flex-shrink-0" />
-                    <input
-                      type="number"
-                      min={0}
-                      step={0.5}
-                      value={(task as any).estimatedHours || ''}
-                      onChange={(e) =>
-                        onUpdate(task.id, {
-                          estimatedHours: e.target.value ? parseFloat(e.target.value) : null,
-                        })
-                      }
-                      disabled={readOnly}
-                      className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Row: Assignee + Due Date */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
-                    {isPolish ? 'Przypisany do' : 'Assignee'}
-                  </label>
-                  <select
-                    value={(task as any).assigneeId || ''}
-                    onChange={(e) => {
-                      const userId = e.target.value;
-                      const user = users.find((u) => u.id === userId);
-                      onUpdate(task.id, {
-                        assigneeId: userId || null,
-                        assigneeName: user
-                          ? `${user.firstName} ${user.lastName}`.trim()
-                          : undefined,
-                      });
-                    }}
-                    disabled={readOnly}
-                    className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
-                  >
-                    <option value="">{isPolish ? '— Nie przypisano —' : '— Unassigned —'}</option>
-                    {users.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.firstName} {u.lastName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
-                    {isPolish ? 'Termin' : 'Due date'}
-                  </label>
-                  <input
-                    type="date"
-                    value={task.dueDate ? task.dueDate.split('T')[0] : ''}
-                    onChange={(e) => onUpdate(task.id, { dueDate: e.target.value || null })}
-                    disabled={readOnly}
-                    className="w-full px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
-                  />
-                </div>
-              </div>
-
-              {/* Milestone toggle */}
-              <div className="flex items-center gap-3 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={task.isMilestone || false}
-                    onChange={(e) => onUpdate(task.id, { isMilestone: e.target.checked })}
-                    disabled={readOnly}
-                    className="w-4 h-4 rounded border-slate-300 text-purple-500 focus:ring-purple-500"
-                  />
-                  <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                    <Milestone size={12} />
-                    {isPolish ? 'Kamień milowy' : 'Milestone'}
-                  </span>
-                </label>
-                {task.isMilestone && (
-                  <input
-                    type="date"
-                    value={task.milestoneDate ? task.milestoneDate.split('T')[0] : ''}
-                    onChange={(e) => onUpdate(task.id, { milestoneDate: e.target.value || null })}
-                    disabled={readOnly}
-                    className="px-2 py-1 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
-                  />
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-};
-
-interface TaskDraft {
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  taskType: string;
-  source: 'manual' | 'ai';
-  dueDate?: string;
-  assigneeId?: string;
-  estimatedHours?: number | null;
-}
-
-const EMPTY_TASK_DRAFT: TaskDraft = {
-  title: '',
-  description: '',
-  status: 'todo',
-  priority: 'medium',
-  taskType: 'execution',
-  source: 'manual',
-  dueDate: '',
-  assigneeId: '',
-  estimatedHours: null,
+const formatDueDate = (value?: string) => {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString();
 };
 
 // ==========================================
@@ -497,18 +122,13 @@ const EMPTY_TASK_DRAFT: TaskDraft = {
 // ==========================================
 
 export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
-  expanded,
-  onToggle,
   readonly,
 }) => {
   const {
     tasks,
     setTasks,
     tasksDone,
-    milestones,
     isPolish,
-    isGeneratingAI,
-    handleGenerateAI,
     onOpenTask,
     users,
     initiative,
@@ -516,138 +136,115 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
     setShowCreateTask,
   } = useInitiativeContext();
 
-  const [activeFilter, setActiveFilter] = useState<'all' | 'open' | 'blocked' | 'done'>('all');
-  const [newTaskIds, setNewTaskIds] = useState<Set<string>>(new Set());
-  const [taskDraft, setTaskDraft] = useState<TaskDraft | null>(null);
+  const [menuTaskId, setMenuTaskId] = useState<string | null>(null);
+  const [isAddingInline, setIsAddingInline] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [demoRowsInjected, setDemoRowsInjected] = useState(false);
   const addTriggered = useRef(false);
+  const quickInputRef = useRef<HTMLInputElement | null>(null);
   const initiativeId = initiative?.id;
   const projectId =
     initiative?.projectId || initiative?.project_id || initiative?.project?.id || null;
 
-  const filteredTasks = useMemo(() => {
-    const nonMilestone = tasks.filter((t) => !t.isMilestone);
-    switch (activeFilter) {
-      case 'open':
-        return nonMilestone.filter(
-          (t) => !['done', 'DONE', 'blocked', 'BLOCKED'].includes(t.status)
-        );
-      case 'blocked':
-        return nonMilestone.filter((t) => ['blocked', 'BLOCKED'].includes(t.status));
-      case 'done':
-        return nonMilestone.filter((t) => ['done', 'DONE'].includes(t.status));
-      default:
-        return nonMilestone;
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      const ad = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+      const bd = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+      return ad - bd;
+    });
+  }, [tasks]);
+
+  const closeMenu = useCallback(() => setMenuTaskId(null), []);
+
+  useEffect(() => {
+    if (!menuTaskId) return;
+    const onDocClick = () => setMenuTaskId(null);
+    const t = setTimeout(() => document.addEventListener('click', onDocClick), 0);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener('click', onDocClick);
+    };
+  }, [menuTaskId]);
+
+  useEffect(() => {
+    if (isAddingInline) {
+      setTimeout(() => quickInputRef.current?.focus(), 20);
     }
-  }, [tasks, activeFilter]);
+  }, [isAddingInline]);
 
-  const openTaskDraft = useCallback(
-    (overrides?: Partial<TaskDraft>) => {
-      const defaultTitle = isPolish ? 'Nowe zadanie' : 'New task';
-      setTaskDraft({
-        ...EMPTY_TASK_DRAFT,
-        title: defaultTitle,
-        ...overrides,
-      });
-    },
-    [isPolish]
-  );
-
-  const createTaskArtifact = useCallback(async (draft: TaskDraft) => {
+  const createTaskArtifact = useCallback(async (
+    title: string,
+    source: 'manual' | 'ai' = 'manual',
+    options?: {
+      description?: string;
+      status?: string;
+      priority?: string;
+      dueDate?: string | null;
+      assigneeId?: string | null;
+    }
+  ) => {
     if (!initiativeId) return;
-    const safeTitle = (draft.title || '').trim() || (isPolish ? 'Nowe zadanie' : 'New task');
+    const safeTitle = (title || '').trim() || (isPolish ? 'Nowe zadanie' : 'New task');
 
     const res = await Api.post('/tasks', {
       title: safeTitle,
-      description: draft.description || '',
+      description: options?.description || '',
       projectId,
       initiativeId,
-      status: draft.status || 'todo',
-      priority: draft.priority || 'medium',
-      taskType: draft.taskType || 'execution',
-      source: draft.source || 'manual',
-      dueDate: draft.dueDate || null,
-      assigneeId: draft.assigneeId || null,
-      estimatedHours: draft.estimatedHours ?? null,
+      status: options?.status || 'todo',
+      priority: options?.priority || 'medium',
+      taskType: 'execution',
+      source,
+      dueDate: options?.dueDate || null,
+      assigneeId: options?.assigneeId || null,
+      estimatedHours: null,
     });
 
-    const selectedUser = users.find((u) => u.id === (draft.assigneeId || ''));
+    const selectedUser = users.find((u) => u.id === (options?.assigneeId || ''));
+
     const newTask: TaskItem = {
       id: res.id,
       title: safeTitle,
-      description: draft.description || '',
-      status: draft.status || 'todo',
-      priority: draft.priority || 'medium',
-      taskType: draft.taskType || 'execution',
-      dueDate: draft.dueDate || undefined,
-      assigneeId: draft.assigneeId || undefined,
+      description: options?.description || '',
+      status: options?.status || 'todo',
+      priority: options?.priority || 'medium',
+      taskType: 'execution',
+      dueDate: options?.dueDate || undefined,
+      assigneeId: options?.assigneeId || undefined,
       assigneeName: selectedUser
         ? `${selectedUser.firstName} ${selectedUser.lastName}`.trim()
         : undefined,
-      estimatedHours: draft.estimatedHours ?? null,
+      estimatedHours: null,
       isMilestone: false,
       milestoneDate: undefined,
-      source: draft.source || 'manual',
+      source,
     };
 
     setTasks((prev) => [...prev, newTask]);
-    setNewTaskIds((prev) => new Set(prev).add(res.id));
+    return newTask;
   }, [initiativeId, isPolish, projectId, setTasks, users]);
 
-  // Open create frame (manual source)
-  const handleAddTask = useCallback(() => {
-    openTaskDraft({ source: 'manual' });
-  }, [openTaskDraft]);
+  const handleStartInlineAdd = useCallback(() => {
+    if (readonly) return;
+    setIsAddingInline(true);
+    setNewTaskTitle('');
+  }, [readonly]);
 
-  const handleCreateTaskFromDraft = useCallback(async () => {
-    if (!taskDraft || isCreatingTask) return;
+  const handleCreateInlineTask = useCallback(async () => {
+    if (isCreatingTask) return;
     setIsCreatingTask(true);
     try {
-      await createTaskArtifact(taskDraft);
-      setTaskDraft(null);
+      const created = await createTaskArtifact(newTaskTitle, 'manual');
+      setIsAddingInline(false);
+      setNewTaskTitle('');
+      if (created?.id && onOpenTask) onOpenTask(created.id);
     } catch (e: any) {
       toast.error(isPolish ? 'Nie udało się utworzyć zadania' : 'Failed to create task');
     } finally {
       setIsCreatingTask(false);
     }
-  }, [taskDraft, isCreatingTask, createTaskArtifact, isPolish]);
-
-  // Add AI-generated task (creates artifact via API)
-  const handleAddAITask = useCallback(
-    async (aiTask: { title: string; description?: string; priority?: string; taskType?: string }) => {
-      if (!initiativeId) return;
-      try {
-        await createTaskArtifact({
-          ...EMPTY_TASK_DRAFT,
-          title: aiTask.title || '',
-          description: aiTask.description || '',
-          priority: aiTask.priority || 'medium',
-          taskType: aiTask.taskType || 'execution',
-          source: 'ai',
-        });
-      } catch {
-        // silent — toast already shown by handleGenerateAI
-      }
-    },
-    [initiativeId, createTaskArtifact]
-  );
-
-  // Update task locally + persist to API
-  const handleUpdateTask = useCallback(
-    async (id: string, updates: Partial<TaskItem> & Record<string, any>) => {
-      // Optimistic update
-      setTasks((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
-      );
-      // Persist (debounced would be better, but simple approach for now)
-      try {
-        await Api.patch(`/tasks/${id}`, updates);
-      } catch {
-        // Revert would be complex; leave optimistic for now
-      }
-    },
-    [setTasks]
-  );
+  }, [isCreatingTask, createTaskArtifact, newTaskTitle, isPolish, onOpenTask]);
 
   // Remove task
   const handleRemoveTask = useCallback(
@@ -655,11 +252,6 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
       try {
         await Api.delete(`/tasks/${id}`);
         setTasks((prev) => prev.filter((t) => t.id !== id));
-        setNewTaskIds((prev) => {
-          const next = new Set(prev);
-          next.delete(id);
-          return next;
-        });
         toast.success(isPolish ? 'Zadanie usunięte' : 'Task removed');
       } catch {
         toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to remove');
@@ -672,391 +264,276 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
   useEffect(() => {
     if (showCreateTask && !addTriggered.current) {
       addTriggered.current = true;
-      openTaskDraft({ source: 'manual' });
+      handleStartInlineAdd();
       setShowCreateTask(false);
       setTimeout(() => {
         addTriggered.current = false;
       }, 300);
     }
-  }, [showCreateTask, openTaskDraft, setShowCreateTask]);
+  }, [showCreateTask, handleStartInlineAdd, setShowCreateTask]);
+
+  useEffect(() => {
+    setDemoRowsInjected(false);
+  }, [initiativeId]);
+
+  useEffect(() => {
+    if (!initiativeId || demoRowsInjected) return;
+    const hasLegacyDemo = tasks.some((t) => String(t.id).startsWith('demo-task-'));
+    const nonDemoCount = tasks.filter((t) => !String(t.id).startsWith('demo-task-')).length;
+    if (tasks.length > 0 && !hasLegacyDemo) return;
+    let cancelled = false;
+    const run = async () => {
+      const now = Date.now();
+      const inDays = (days: number) => new Date(now + days * 24 * 60 * 60 * 1000).toISOString();
+      let createdAny = false;
+      try {
+        if (hasLegacyDemo) {
+          if (nonDemoCount > 0) {
+            setTasks((prev) => prev.filter((t) => !String(t.id).startsWith('demo-task-')));
+            setDemoRowsInjected(true);
+            return;
+          }
+          setTasks([]);
+        }
+        await createTaskArtifact('Kick-off and scope alignment', 'manual', {
+          description: 'Initial workshop and scope confirmation.',
+          status: 'done',
+          priority: 'high',
+          dueDate: inDays(-2),
+          assigneeId: users[0]?.id || null,
+        });
+        createdAny = true;
+        await createTaskArtifact('Define target process and acceptance criteria', 'manual', {
+          description: 'Define measurable criteria for successful rollout.',
+          status: 'in_progress',
+          priority: 'critical',
+          dueDate: inDays(5),
+          assigneeId: users[1]?.id || null,
+        });
+        createdAny = true;
+        await createTaskArtifact('Prepare pilot environment', 'ai', {
+          description: 'Create pilot environment and validate readiness checklist.',
+          status: 'todo',
+          priority: 'medium',
+          dueDate: inDays(12),
+          assigneeId: users[2]?.id || null,
+        });
+        createdAny = true;
+      } catch {
+        // keep silent; UI works without demo seed
+      } finally {
+        if (!cancelled && (createdAny || tasks.length > 0)) setDemoRowsInjected(true);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [initiativeId, demoRowsInjected, tasks, createTaskArtifact, users, setTasks]);
 
   return (
-    <CollapsibleSection
-      id="tasks"
-      title={isPolish ? 'Zadania i kamienie milowe' : 'Tasks & Milestones'}
-      icon={<CheckSquare size={18} className="text-emerald-500 dark:text-emerald-400" />}
-      iconBg="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20"
-      expanded={expanded}
-      onToggle={onToggle}
-      badge={
-        <div className="flex items-center gap-2">
-          {milestones.length > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 flex items-center gap-1">
-              <Milestone size={10} />
-              {milestones.length}
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-4"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+            {isPolish ? 'Tasks' : 'Tasks'}
+          </h2>
+          {tasks.length > 0 && (
+            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+              {tasks.length}
             </span>
           )}
-          <span className="text-xs text-slate-400">
-            {tasksDone}/{tasks.length}
-          </span>
         </div>
-      }
-      actions={
         <div className="flex items-center gap-2">
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAddTask();
-            }}
-            disabled={readonly}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-all"
-          >
-            <Plus size={14} />
-            <span>{isPolish ? 'Nowe' : 'New'}</span>
-          </motion.button>
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={async (e) => {
-              e.stopPropagation();
-              const result = await handleGenerateAI('tasks');
-              // Process AI result and create task artifacts
-              if (result) {
-                const content = result.parsedContent || result.content;
-                let aiTasks: any[] = [];
-                if (Array.isArray(content)) {
-                  aiTasks = content;
-                } else if (typeof content === 'object' && content?.tasks) {
-                  aiTasks = content.tasks;
-                } else if (typeof content === 'string') {
-                  try {
-                    const parsed = JSON.parse(content);
-                    aiTasks = Array.isArray(parsed) ? parsed : parsed?.tasks || [];
-                  } catch {
-                    // Not JSON — ignore
-                  }
-                }
-                for (const t of aiTasks) {
-                  await handleAddAITask({
-                    title: t.title || t.name || '',
-                    description: t.description || t.approach || '',
-                    priority: t.priority || 'medium',
-                    taskType: t.taskType || t.type || 'execution',
-                  });
-                }
-              }
-            }}
-            disabled={readonly || isGeneratingAI === 'tasks'}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
-            title={isPolish ? 'AI zasugeruje zadania' : 'AI will suggest tasks'}
-          >
-            {isGeneratingAI === 'tasks' ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Sparkles size={14} />
-            )}
-            <span>AI</span>
-          </motion.button>
-        </div>
-      }
-    >
-      {/* Create Task Frame */}
-      {!readonly && taskDraft && (
-        <div className="mb-3 rounded-xl border border-emerald-300 dark:border-emerald-500/50 bg-white dark:bg-navy-900/80">
-          <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-600">
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                <div className="w-0.5 h-4 rounded-full bg-emerald-500/30" />
-              </div>
-              <input
-                type="text"
-                value={taskDraft.title}
-                onChange={(e) => setTaskDraft((prev) => (prev ? { ...prev, title: e.target.value } : prev))}
-                className="w-full text-sm font-medium bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none"
-                placeholder={isPolish ? 'Nazwa zadania...' : 'Task name...'}
-              />
-            </div>
-          </div>
-
-          <div className="px-4 py-3 space-y-3">
-            <textarea
-              value={taskDraft.description}
-              onChange={(e) =>
-                setTaskDraft((prev) => (prev ? { ...prev, description: e.target.value } : prev))
-              }
-              rows={3}
-              className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 resize-y"
-              placeholder={isPolish ? 'Opisz podejście, kroki, narzędzia...' : 'Describe the approach, steps, tools...'}
-            />
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <select
-                value={taskDraft.status}
-                onChange={(e) => setTaskDraft((prev) => (prev ? { ...prev, status: e.target.value } : prev))}
-                className="px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
-              >
-                {Object.entries(TASK_STATUS_CONFIG).map(([key, config]) => (
-                  <option key={key} value={key}>
-                    {isPolish ? config.label.pl : config.label.en}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={taskDraft.priority}
-                onChange={(e) => setTaskDraft((prev) => (prev ? { ...prev, priority: e.target.value } : prev))}
-                className="px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
-              >
-                {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
-                  <option key={key} value={key}>
-                    {isPolish ? config.label.pl : config.label.en}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={taskDraft.taskType}
-                onChange={(e) => setTaskDraft((prev) => (prev ? { ...prev, taskType: e.target.value } : prev))}
-                className="px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
-              >
-                {TASK_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {isPolish ? opt.label.pl : opt.label.en}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={taskDraft.source}
-                onChange={(e) =>
-                  setTaskDraft((prev) =>
-                    prev ? { ...prev, source: e.target.value === 'ai' ? 'ai' : 'manual' } : prev
-                  )
-                }
-                className="px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
-              >
-                <option value="manual">{isPolish ? 'Ręcznie' : 'Manual'}</option>
-                <option value="ai">AI</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <input
-                type="date"
-                value={taskDraft.dueDate || ''}
-                onChange={(e) => setTaskDraft((prev) => (prev ? { ...prev, dueDate: e.target.value } : prev))}
-                className="px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
-              />
-              <select
-                value={taskDraft.assigneeId || ''}
-                onChange={(e) => setTaskDraft((prev) => (prev ? { ...prev, assigneeId: e.target.value } : prev))}
-                className="px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
-              >
-                <option value="">{isPolish ? '— Nie przypisano —' : '— Unassigned —'}</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.firstName} {u.lastName}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                min={0}
-                step={0.5}
-                value={taskDraft.estimatedHours ?? ''}
-                onChange={(e) =>
-                  setTaskDraft((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          estimatedHours: e.target.value ? parseFloat(e.target.value) : null,
-                        }
-                      : prev
-                  )
-                }
-                placeholder={isPolish ? 'Estymacja (h)' : 'Estimate (h)'}
-                className="px-2 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-400"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-1">
-              <button
-                onClick={() => setTaskDraft(null)}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-              >
-                {isPolish ? 'Anuluj' : 'Cancel'}
-              </button>
-              <button
-                onClick={handleCreateTaskFromDraft}
-                disabled={isCreatingTask}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/90 text-white hover:bg-emerald-500 disabled:opacity-60 transition-colors"
-              >
-                {isCreatingTask
-                  ? isPolish
-                    ? 'Tworzenie...'
-                    : 'Creating...'
-                  : isPolish
-                    ? 'Zapisz task'
-                    : 'Save task'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Counter */}
-      {tasks.length > 0 && (
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 dark:text-slate-400">
-            {isPolish ? 'ZADANIA' : 'TASKS'} ({filteredTasks.length})
-          </span>
-        </div>
-      )}
-
-      {/* Filter Tabs */}
-      {tasks.length > 0 && (
-        <div className="flex items-center gap-1 mb-3 p-1 bg-slate-100/50 dark:bg-navy-800/50 rounded-lg">
-          {[
-            {
-              key: 'all' as const,
-              label: isPolish ? 'Wszystkie' : 'All',
-              count: tasks.filter((t) => !t.isMilestone).length,
-            },
-            {
-              key: 'open' as const,
-              label: isPolish ? 'Otwarte' : 'Open',
-              count: tasks.filter(
-                (t) => !t.isMilestone && !['done', 'DONE'].includes(t.status)
-              ).length,
-            },
-            {
-              key: 'blocked' as const,
-              label: isPolish ? 'Zablokowane' : 'Blocked',
-              count: tasks.filter((t) => ['blocked', 'BLOCKED'].includes(t.status)).length,
-            },
-            {
-              key: 'done' as const,
-              label: isPolish ? 'Ukończone' : 'Done',
-              count: tasks.filter((t) => ['done', 'DONE'].includes(t.status)).length,
-            },
-          ].map((tab) => (
+          {!readonly && (
             <button
-              key={tab.key}
-              onClick={() => setActiveFilter(tab.key)}
-              className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-medium transition-all ${
-                activeFilter === tab.key
-                  ? 'bg-white dark:bg-navy-700 text-slate-900 dark:text-white shadow-sm'
-                  : tab.count > 0 || tab.key === 'all'
-                    ? 'text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-navy-700/50'
-                    : 'text-slate-300 dark:text-slate-600 cursor-default'
-              }`}
+              onClick={handleStartInlineAdd}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/15 px-3 py-1.5 rounded-lg transition-all"
             >
-              {tab.label}
-              {tab.count > 0 && (
-                <span className="ml-1 text-[9px] text-slate-400">({tab.count})</span>
-              )}
+              <Plus size={13} />
+              {isPolish ? 'Dodaj task' : 'Add task'}
             </button>
-          ))}
+          )}
         </div>
-      )}
-
-      {/* Task Cards */}
-      {tasks.length === 0 ? (
-        <div className="text-center py-8 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-          <CheckSquare size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak zadań' : 'No tasks yet'}
-          </p>
-          <p className="text-xs text-slate-400 mt-1">
-            {isPolish
-              ? 'Dodaj zadanie ręcznie lub pozwól AI zasugerować'
-              : 'Add tasks manually or let AI suggest them'}
-          </p>
-        </div>
-      ) : filteredTasks.length === 0 ? (
-        <div className="text-center py-4">
-          <p className="text-sm text-slate-400">
-            {isPolish ? 'Brak zadań w tym filtrze' : 'No tasks match this filter'}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <AnimatePresence mode="popLayout">
-            {filteredTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                isPolish={isPolish}
-                isNew={newTaskIds.has(task.id)}
-                users={users}
-                onUpdate={handleUpdateTask}
-                onRemove={handleRemoveTask}
-                onOpen={onOpenTask}
-                readOnly={readonly}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* Add Task Button */}
-      <div className="mt-3">
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
-          onClick={handleAddTask}
-          disabled={readonly}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-emerald-400 dark:hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-        >
-          <Plus size={18} />
-          <span className="text-sm font-medium">
-            {isPolish ? 'Dodaj zadanie' : 'Add task'}
-          </span>
-        </motion.button>
       </div>
 
-      {/* Progress Bar */}
+      <div className="overflow-auto rounded-xl border border-slate-200 dark:border-navy-700/40">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200 dark:border-navy-700/40">
+              <th className="text-left py-2.5 pl-3 pr-2">{isPolish ? 'Task' : 'Task'}</th>
+              <th className="text-left py-2.5 pr-2">{isPolish ? 'Status' : 'Status'}</th>
+              <th className="text-left py-2.5 pr-2">{isPolish ? 'Owner' : 'Owner'}</th>
+              <th className="text-left py-2.5 pr-2">{isPolish ? 'Due' : 'Due'}</th>
+              <th className="text-left py-2.5 pr-2">{isPolish ? 'Priority' : 'Priority'}</th>
+              <th className="text-left py-2.5 pr-2">{isPolish ? 'Source' : 'Source'}</th>
+              <th className="text-right py-2.5 pr-3"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+            <AnimatePresence mode="popLayout">
+              {sortedTasks.map((task) => {
+                const status = normalizeStatus(task.status || 'todo');
+                const statusConfig = TASK_STATUS_CONFIG[status] || TASK_STATUS_CONFIG.todo;
+                const source = task.source || 'manual';
+                const sourceCfg = SOURCE_CONFIG[source] || SOURCE_CONFIG.manual;
+                const priorityKey = String(task.priority || 'medium').toLowerCase();
+                return (
+                  <motion.tr
+                    key={task.id}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
+                  >
+                    <td className="py-2.5 pl-3 pr-2">
+                      <button
+                        onClick={() => onOpenTask?.(task.id)}
+                        className="text-left text-slate-700 dark:text-slate-200 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
+                      >
+                        {task.title || (isPolish ? 'Bez nazwy' : 'Untitled')}
+                      </button>
+                    </td>
+                    <td className="py-2.5 pr-2">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs ${statusConfig.bgColor} ${statusConfig.textColor}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.color}`} />
+                        {isPolish ? statusConfig.label.pl : statusConfig.label.en}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                      {task.assigneeName || '—'}
+                    </td>
+                    <td className="py-2.5 pr-2 text-xs text-slate-500 dark:text-slate-400">
+                      {task.dueDate ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar size={11} />
+                          {formatDueDate(task.dueDate)}
+                        </span>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-2 text-xs">
+                      <span className={PRIORITY_CONFIG[priorityKey]?.color || 'text-slate-500'}>
+                        {isPolish
+                          ? PRIORITY_CONFIG[priorityKey]?.label.pl || task.priority || '—'
+                          : PRIORITY_CONFIG[priorityKey]?.label.en || task.priority || '—'}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-2 text-xs">
+                      <span className={`inline-flex items-center gap-1 ${sourceCfg.color}`}>
+                        <sourceCfg.icon size={10} />
+                        {isPolish ? sourceCfg.label.pl : sourceCfg.label.en}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-3 text-right relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMenuTaskId((prev) => (prev === task.id ? null : task.id));
+                        }}
+                        className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/10 transition-colors"
+                        title={isPolish ? 'Akcje' : 'Actions'}
+                      >
+                        <MoreVertical size={14} />
+                      </button>
+                      {menuTaskId === task.id && (
+                        <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
+                          <button
+                            onClick={() => {
+                              closeMenu();
+                              onOpenTask?.(task.id);
+                            }}
+                            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                          >
+                            <ExternalLink size={13} />
+                            {isPolish ? 'Otwórz kartę' : 'Open card'}
+                          </button>
+                          {!readonly && (
+                            <>
+                              <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
+                              <button
+                                onClick={() => {
+                                  closeMenu();
+                                  void handleRemoveTask(task.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                              >
+                                <Trash2 size={13} />
+                                {isPolish ? 'Usuń' : 'Delete'}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                  </motion.tr>
+                );
+              })}
+            </AnimatePresence>
+            {!readonly && isAddingInline && (
+              <tr className="bg-emerald-50/30 dark:bg-emerald-500/5">
+                <td className="py-2.5 pl-3 pr-2" colSpan={6}>
+                  <input
+                    ref={quickInputRef}
+                    type="text"
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        void handleCreateInlineTask();
+                      }
+                      if (e.key === 'Escape') {
+                        setIsAddingInline(false);
+                        setNewTaskTitle('');
+                      }
+                    }}
+                    placeholder={isPolish ? 'Wpisz nazwę taska i Enter...' : 'Type task name and press Enter...'}
+                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-emerald-300 dark:border-emerald-500/40 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-emerald-500"
+                  />
+                </td>
+                <td className="py-2.5 pr-3 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => {
+                        setIsAddingInline(false);
+                        setNewTaskTitle('');
+                      }}
+                      className="px-2.5 py-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
+                    >
+                      {isPolish ? 'Anuluj' : 'Cancel'}
+                    </button>
+                    <button
+                      onClick={() => void handleCreateInlineTask()}
+                      disabled={isCreatingTask}
+                      className="px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50"
+                    >
+                      {isCreatingTask ? (isPolish ? 'Tworzenie...' : 'Creating...') : (isPolish ? 'Utwórz' : 'Create')}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )}
+            {sortedTasks.length === 0 && readonly && (
+              <tr>
+                <td colSpan={7} className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Brak tasków' : 'No tasks yet'}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
       {tasks.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500">{isPolish ? 'Postęp' : 'Progress'}</span>
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-              {Math.round((tasksDone / tasks.length) * 100)}%
-            </span>
-          </div>
-          <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${(tasksDone / tasks.length) * 100}%` }}
-              className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
-            />
-          </div>
+        <div className="pt-2 border-t border-slate-200/70 dark:border-navy-700/50 text-xs text-slate-500 dark:text-slate-400">
+          {tasksDone}/{tasks.length} {isPolish ? 'ukończone' : 'done'}
         </div>
       )}
-
-      {/* Source counter (AI vs Manual) */}
-      {tasks.length > 0 && (() => {
-        const aiCount = tasks.filter((t) => t.source === 'ai').length;
-        const manualCount = tasks.length - aiCount;
-        return (
-          <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500">
-            <span className="flex items-center gap-1">
-              <User size={10} className="text-slate-400" />
-              {manualCount} {isPolish ? 'ręcznych' : 'manual'}
-            </span>
-            {aiCount > 0 && (
-              <span className="flex items-center gap-1">
-                <Sparkles size={10} className="text-violet-400" />
-                {aiCount} AI
-              </span>
-            )}
-          </div>
-        );
-      })()}
-    </CollapsibleSection>
+    </motion.div>
   );
 };

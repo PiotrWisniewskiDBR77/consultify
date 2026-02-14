@@ -12,15 +12,17 @@ import type { StatusAction } from '@/services/initiativeLifecycle';
 import type {
   Attachment,
   Comment,
-  EscalationRule,
   LinkedItem,
-  ReminderRule,
   Stakeholder,
   StakeholderNotificationSettings,
   StakeholderRole,
   TaskDependency,
   WarningThresholds,
 } from '../../MyWork/shared';
+import type {
+  EscalationRuleWithConfig,
+  ReminderRuleWithDelivery,
+} from '../../shared/NModeSections';
 import type {
   Decision,
   HistoryEvent,
@@ -80,10 +82,10 @@ export interface InitiativeContextValue {
   setStartDate: (v: string | null) => void;
   endDate: string | null;
   setEndDate: (v: string | null) => void;
-  reminders: ReminderRule[];
-  setReminders: React.Dispatch<React.SetStateAction<ReminderRule[]>>;
-  escalation: EscalationRule | null;
-  setEscalation: React.Dispatch<React.SetStateAction<EscalationRule | null>>;
+  reminders: ReminderRuleWithDelivery[];
+  setReminders: React.Dispatch<React.SetStateAction<ReminderRuleWithDelivery[]>>;
+  escalationRules: EscalationRuleWithConfig[];
+  setEscalationRules: React.Dispatch<React.SetStateAction<EscalationRuleWithConfig[]>>;
   thresholds: WarningThresholds;
   setThresholds: React.Dispatch<React.SetStateAction<WarningThresholds>>;
 

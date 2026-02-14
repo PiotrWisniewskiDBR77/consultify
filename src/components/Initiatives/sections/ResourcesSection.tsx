@@ -63,7 +63,7 @@ export const ResourcesSection: React.FC<InitiativeSectionProps> = ({
               e.stopPropagation();
               setShowAdd(true);
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 text-xs font-medium transition-all"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium transition-colors"
           >
             <Plus size={14} />
             <span>{isPolish ? 'Dodaj' : 'Add'}</span>
@@ -94,7 +94,7 @@ export const ResourcesSection: React.FC<InitiativeSectionProps> = ({
               }
             }}
             disabled={isGeneratingAI === 'resources'}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium transition-colors disabled:opacity-50"
           >
             {isGeneratingAI === 'resources' ? (
               <Loader2 size={14} className="animate-spin" />

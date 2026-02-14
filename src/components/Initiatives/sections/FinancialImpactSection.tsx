@@ -3,7 +3,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { TrendingDown, TrendingUp } from 'lucide-react';
+import { Loader2, Sparkles, TrendingDown, TrendingUp } from 'lucide-react';
 import React from 'react';
 
 import { CollapsibleSection } from './CollapsibleSection';
@@ -15,7 +15,7 @@ export const FinancialImpactSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
-  const { initiative, isPolish } = useInitiativeContext();
+  const { initiative, isPolish, isGeneratingAI, handleGenerateAI } = useInitiativeContext();
 
   return (
     <CollapsibleSection
@@ -25,9 +25,26 @@ export const FinancialImpactSection: React.FC<InitiativeSectionProps> = ({
       iconBg="bg-gradient-to-br from-emerald-500/10 to-green-500/10 dark:from-emerald-500/20 dark:to-green-500/20"
       expanded={expanded}
       onToggle={onToggle}
+      actions={
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleGenerateAI('financial-impact');
+          }}
+          disabled={isGeneratingAI === 'financial-impact'}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium transition-colors disabled:opacity-50"
+        >
+          {isGeneratingAI === 'financial-impact' ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Sparkles size={14} />
+          )}
+          AI
+        </button>
+      }
     >
       <div className="space-y-4">
-        <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-500/10 dark:to-teal-500/10 border border-emerald-200/50 dark:border-emerald-500/20">
+        <div className="p-4 rounded-xl bg-emerald-50/40 dark:bg-emerald-500/5 border border-emerald-200/40 dark:border-emerald-500/20">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
               {isPolish ? 'Wpływ na P&L' : 'P&L Impact'}

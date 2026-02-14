@@ -3,7 +3,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { Calendar, Clock } from 'lucide-react';
+import { Calendar, Clock, Loader2, Sparkles } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { CollapsibleSection } from './CollapsibleSection';
@@ -15,7 +15,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
-  const { initiative, isPolish, startDate, setStartDate, endDate, setEndDate } =
+  const { initiative, isPolish, startDate, setStartDate, endDate, setEndDate, isGeneratingAI, handleGenerateAI } =
     useInitiativeContext();
 
   const plannedStart = startDate || initiative?.plannedStartDate || initiative?.planned_start_date;
@@ -61,6 +61,23 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
       iconBg="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/20"
       expanded={expanded}
       onToggle={onToggle}
+      actions={
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleGenerateAI('timeline');
+          }}
+          disabled={isGeneratingAI === 'timeline'}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium transition-colors disabled:opacity-50"
+        >
+          {isGeneratingAI === 'timeline' ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Sparkles size={14} />
+          )}
+          AI
+        </button>
+      }
       badge={
         daysRemaining !== null ? (
           <span
@@ -88,7 +105,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
               type="date"
               value={plannedStart ? new Date(plannedStart).toISOString().split('T')[0] : ''}
               onChange={(e) => setStartDate?.(e.target.value || null)}
-              className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-colors"
+              className="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-colors"
             />
           </div>
           <div>
@@ -99,7 +116,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
               type="date"
               value={plannedEnd ? new Date(plannedEnd).toISOString().split('T')[0] : ''}
               onChange={(e) => setEndDate?.(e.target.value || null)}
-              className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-colors"
+              className="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/20 transition-colors"
             />
           </div>
         </div>
