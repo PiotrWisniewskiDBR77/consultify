@@ -122,14 +122,14 @@ className="p-2 rounded-xl bg-gradient-to-br from-[color]-500/10 to-[color2]-500/
 
 ## Historia zmian
 
-| Data       | Zmiana                                                                                                                                                |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-01-29 | Utworzono standard Notification Detail View                                                                                                           |
-| 2026-01-29 | Dodano sekcję AI Analysis                                                                                                                             |
-| 2026-01-29 | Dodano interaktywną checklistę akcji                                                                                                                  |
-| 2026-01-29 | Dodano sekcje: Related Items, Comments, Activity Log                                                                                                  |
-| 2026-01-29 | Ujednolicono z Task Detail View Golden Standard                                                                                                       |
-| 2026-02-11 | Ustandaryzowano nagłówek jako stały dla 3 trybów prezentacji (D/N/C presentation modes) — patrz `docs/ui-standards/detail-view-presentation-modes.md` |
+| Data       | Zmiana                                                                                                                                                    |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-01-29 | Utworzono standard Notification Detail View                                                                                                               |
+| 2026-01-29 | Dodano sekcję AI Analysis                                                                                                                                 |
+| 2026-01-29 | Dodano interaktywną checklistę akcji                                                                                                                      |
+| 2026-01-29 | Dodano sekcje: Related Items, Comments, Activity Log                                                                                                      |
+| 2026-01-29 | Ujednolicono z Task Detail View Golden Standard                                                                                                           |
+| 2026-02-11 | Ustandaryzowano nagłówek jako stały dla 3 trybów prezentacji (D/N/C presentation modes) — patrz `docs/ui-standards/01-shell-layout/presentation-modes.md` |
 
 ---
 

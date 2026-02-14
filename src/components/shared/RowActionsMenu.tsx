@@ -7,7 +7,7 @@
  * AC (A2, A3, A6): Row actions as "⋯" or dropdown; always readable.
  */
 
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, MoreVertical } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface RowAction {
@@ -26,12 +26,15 @@ interface RowActionsMenuProps {
   /** Size variant */
   size?: 'sm' | 'md';
   className?: string;
+  /** Icon variant: horizontal "⋯" or vertical "⋮" */
+  iconVariant?: 'horizontal' | 'vertical';
 }
 
 export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   actions,
   size = 'sm',
   className = '',
+  iconVariant = 'horizontal',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -69,6 +72,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
 
   const iconSize = size === 'sm' ? 14 : 16;
   const buttonPadding = size === 'sm' ? 'p-1' : 'p-1.5';
+  const MenuIcon = iconVariant === 'vertical' ? MoreVertical : MoreHorizontal;
 
   const variantStyles: Record<string, string> = {
     default: 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700',
@@ -87,7 +91,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
         aria-label="Row actions"
         aria-expanded={isOpen}
       >
-        <MoreHorizontal size={iconSize} />
+        <MenuIcon size={iconSize} />
       </button>
 
       {isOpen && (

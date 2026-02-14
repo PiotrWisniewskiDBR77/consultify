@@ -9,7 +9,7 @@
  * import { Callout, ToggleBlock, ChecklistBlock, InlineTable, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
  * ```
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.5
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.5
  */
 
 // ── Building blocks ─────────────────────────────────────────────────────────

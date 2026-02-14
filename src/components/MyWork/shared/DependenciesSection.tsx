@@ -17,6 +17,7 @@ import {
   ArrowDown,
   ArrowUp,
   CheckCircle2,
+  Copy,
   Edit3,
   ExternalLink,
   MessageSquare,
@@ -40,6 +41,8 @@ export type DependencyType = 'FS' | 'SS' | 'FF' | 'SF';
 
 export interface TaskDependency {
   id: string;
+  /** When rendered outside a single task context (e.g. initiative aggregation), this is the "current" task id for API ops */
+  sourceTaskId?: string;
   taskId: string;
   taskTitle: string;
   taskStatus?: string;
@@ -78,6 +81,8 @@ interface DependenciesSectionProps {
   connectedTasks?: ConnectedTask[];
   /** External dependencies — when provided, skip API fetch and use these directly */
   externalDependencies?: TaskDependency[];
+  /** Optional refresher for externalDependencies after mutations (initiative aggregation) */
+  onRefreshExternalDependencies?: () => void | Promise<void>;
   /** Show read-only sample rows when dependency list is empty */
   showSampleDataWhenEmpty?: boolean;
 }
@@ -149,6 +154,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   readOnly = false,
   connectedTasks = [],
   externalDependencies,
+  onRefreshExternalDependencies,
   showSampleDataWhenEmpty = false,
 }) => {
   const { i18n } = useTranslation();
@@ -366,22 +372,35 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
   // ── Remove dependency ────────────────────────────────────────
   const handleRemove = async (dep: TaskDependency) => {
+    const baseTaskId = taskId || dep.sourceTaskId;
+    if (!baseTaskId) {
+      toast.error(
+        isPolish ? 'Brak kontekstu zadania do usunięcia zależności' : 'Missing task context'
+      );
+      return;
+    }
     try {
-      await Api.delete(`/tasks/${taskId}/dependencies/${dep.id}`);
-      if (dep.direction === 'predecessor') {
-        setPredecessors((prev) => prev.filter((d) => d.id !== dep.id));
-      } else {
-        setSuccessors((prev) => prev.filter((d) => d.id !== dep.id));
-      }
+      await Api.delete(`/tasks/${baseTaskId}/dependencies/${dep.id}`);
+      // Remove from both lists (initiative aggregation can render same dep.id in both arrays)
+      setPredecessors((prev) => prev.filter((d) => d.id !== dep.id));
+      setSuccessors((prev) => prev.filter((d) => d.id !== dep.id));
       toast.success(isPolish ? 'Zależność usunięta' : 'Dependency removed');
+      await onRefreshExternalDependencies?.();
     } catch {
       toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to remove');
     }
   };
 
   const handleDuplicate = async (dep: TaskDependency) => {
+    const baseTaskId = taskId || dep.sourceTaskId;
+    if (!baseTaskId) {
+      toast.error(
+        isPolish ? 'Brak kontekstu zadania do skopiowania zależności' : 'Missing task context'
+      );
+      return;
+    }
     try {
-      const res = await Api.post(`/tasks/${taskId}/dependencies`, {
+      const res = await Api.post(`/tasks/${baseTaskId}/dependencies`, {
         targetTaskId: dep.taskId,
         direction: dep.direction,
         dependencyType: dep.dependencyType,
@@ -389,7 +408,8 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
       });
       if (res?.success) {
         toast.success(isPolish ? 'Dodano duplikat' : 'Duplicate added');
-        fetchDependencies();
+        if (taskId) fetchDependencies();
+        await onRefreshExternalDependencies?.();
       } else {
         toast.error(
           isPolish ? 'Nie udało się zduplikować zależności' : 'Failed to duplicate dependency'
@@ -429,6 +449,13 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
   const handleEditDependency = async () => {
     if (!editingDependency || !addDirection) return;
+    const baseTaskId = taskId || editingDependency.sourceTaskId;
+    if (!baseTaskId) {
+      toast.error(
+        isPolish ? 'Brak kontekstu zadania do edycji zależności' : 'Missing task context'
+      );
+      return;
+    }
 
     const unchanged =
       editingDependency.direction === addDirection &&
@@ -442,8 +469,8 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
     try {
       // No PATCH endpoint exists for dependencies, so recreate link.
-      await Api.delete(`/tasks/${taskId}/dependencies/${editingDependency.id}`);
-      await Api.post(`/tasks/${taskId}/dependencies`, {
+      await Api.delete(`/tasks/${baseTaskId}/dependencies/${editingDependency.id}`);
+      await Api.post(`/tasks/${baseTaskId}/dependencies`, {
         targetTaskId: editingDependency.taskId,
         direction: addDirection,
         dependencyType: selectedDepType,
@@ -452,7 +479,8 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
       });
       toast.success(isPolish ? 'Zależność zaktualizowana' : 'Dependency updated');
       closeModal();
-      fetchDependencies();
+      if (taskId) fetchDependencies();
+      await onRefreshExternalDependencies?.();
     } catch {
       toast.error(
         isPolish ? 'Nie udało się zaktualizować zależności' : 'Failed to update dependency'
@@ -490,7 +518,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
               </span>
             )}
           </div>
-          {!readOnly && (
+          {!readOnly && Boolean(taskId) && (
             <button
               onClick={() => openModal('predecessor')}
               className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/15 px-3 py-1.5 rounded-lg transition-all"
@@ -510,7 +538,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
           ) : visibleDependencies.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-3">
-                <ArrowDown size={18} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+                <ArrowDown
+                  size={18}
+                  className="text-slate-500 dark:text-slate-400 dark:text-slate-500"
+                />
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
                 {isPolish ? 'Brak zależności' : 'No dependencies yet'}
@@ -552,7 +583,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                         dep.taskStatus !== 'cancelled';
                       return (
                         <tr
-                          key={dep.id}
+                          key={`${dep.id}-${dep.direction}-${dep.taskId}`}
                           className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
                         >
                           <td className="py-2.5 pl-3 pr-2 text-xs">
@@ -633,69 +664,85 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                             )}
                           </td>
                           <td className="py-2.5 pr-3 text-right relative">
-                            {isShowingSampleData ? (
-                              <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                                {isPolish ? 'podgląd' : 'preview'}
-                              </span>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setOpenMenuId((prev) =>
-                                      prev === dep.id ? null : dep.id
-                                    );
-                                  }}
-                                  className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                                  title={isPolish ? 'Akcje' : 'Actions'}
-                                >
-                                  <MoreVertical size={14} />
-                                </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId((prev) => (prev === dep.id ? null : dep.id));
+                              }}
+                              className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                              title={isPolish ? 'Akcje' : 'Actions'}
+                            >
+                              <MoreVertical size={14} />
+                            </button>
 
-                                {openMenuId === dep.id && (
-                                  <div className="absolute right-3 top-9 z-30 w-44 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 backdrop-blur-lg p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
-                                    {onOpenTask && (
-                                      <button
-                                        onClick={() => {
-                                          setOpenMenuId(null);
-                                          onOpenTask(dep.taskId);
-                                        }}
-                                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                                      >
-                                        <ExternalLink size={13} className="text-slate-500 dark:text-slate-400" />
-                                        {isPolish ? 'Otwórz kartę' : 'Open card'}
-                                      </button>
-                                    )}
-                                    {!readOnly && (
-                                      <button
-                                        onClick={() => {
-                                          setOpenMenuId(null);
-                                          openModal(dep.direction, dep);
-                                        }}
-                                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                                      >
-                                        <Edit3 size={13} className="text-slate-500 dark:text-slate-400" />
-                                        {isPolish ? 'Edytuj' : 'Edit'}
-                                      </button>
-                                    )}
-                                    {!readOnly && (
-                                      <>
-                                        <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
-                                        <button
-                                          onClick={() => {
-                                            setOpenMenuId(null);
-                                            handleRemove(dep);
-                                          }}
-                                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                                        >
-                                          <Trash2 size={13} />
-                                          {isPolish ? 'Kasuj' : 'Delete'}
-                                        </button>
-                                      </>
-                                    )}
+                            {openMenuId === dep.id && (
+                              <div className="absolute right-3 top-9 z-30 w-44 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 backdrop-blur-lg p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
+                                {isShowingSampleData && (
+                                  <div className="px-2.5 py-1.5 text-[10px] text-slate-500 dark:text-slate-400 italic">
+                                    {isPolish ? 'Dane przykładowe' : 'Sample data'}
                                   </div>
                                 )}
-                              </>
+                                {onOpenTask && (
+                                  <button
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      onOpenTask(dep.taskId);
+                                    }}
+                                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${isShowingSampleData ? 'opacity-50 pointer-events-none' : ''}`}
+                                  >
+                                    <ExternalLink
+                                      size={13}
+                                      className="text-slate-500 dark:text-slate-400"
+                                    />
+                                    {isPolish ? 'Otwórz kartę' : 'Open card'}
+                                  </button>
+                                )}
+                                {!readOnly && (
+                                  <button
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      openModal(dep.direction, dep);
+                                    }}
+                                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${isShowingSampleData ? 'opacity-50 pointer-events-none' : ''}`}
+                                  >
+                                    <Edit3
+                                      size={13}
+                                      className="text-slate-500 dark:text-slate-400"
+                                    />
+                                    {isPolish ? 'Edytuj' : 'Edit'}
+                                  </button>
+                                )}
+                                {!readOnly && (
+                                  <button
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      handleDuplicate(dep);
+                                    }}
+                                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${isShowingSampleData ? 'opacity-50 pointer-events-none' : ''}`}
+                                  >
+                                    <Copy
+                                      size={13}
+                                      className="text-slate-500 dark:text-slate-400"
+                                    />
+                                    {isPolish ? 'Kopiuj' : 'Copy'}
+                                  </button>
+                                )}
+                                {!readOnly && (
+                                  <>
+                                    <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
+                                    <button
+                                      onClick={() => {
+                                        setOpenMenuId(null);
+                                        handleRemove(dep);
+                                      }}
+                                      className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors ${isShowingSampleData ? 'opacity-50 pointer-events-none' : ''}`}
+                                    >
+                                      <Trash2 size={13} />
+                                      {isPolish ? 'Kasuj' : 'Delete'}
+                                    </button>
+                                  </>
+                                )}
+                              </div>
                             )}
                           </td>
                         </tr>
@@ -728,7 +775,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 </p>
                 <div className="flex flex-wrap gap-x-4 gap-y-1">
                   {(Object.keys(DEP_TYPE_LABELS) as DependencyType[]).map((dt) => (
-                    <span key={dt} className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                    <span
+                      key={dt}
+                      className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500"
+                    >
                       <span className="font-mono font-medium text-slate-500 dark:text-slate-400">
                         {dt}
                       </span>{' '}
@@ -880,7 +930,9 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                       <ArrowDown
                         size={16}
                         className={
-                          addDirection === 'predecessor' ? 'text-blue-500' : 'text-slate-500 dark:text-slate-400'
+                          addDirection === 'predecessor'
+                            ? 'text-blue-500'
+                            : 'text-slate-500 dark:text-slate-400'
                         }
                       />
                       <span
@@ -905,7 +957,9 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                       <ArrowUp
                         size={16}
                         className={
-                          addDirection === 'successor' ? 'text-orange-500' : 'text-slate-500 dark:text-slate-400'
+                          addDirection === 'successor'
+                            ? 'text-orange-500'
+                            : 'text-slate-500 dark:text-slate-400'
                         }
                       />
                       <span

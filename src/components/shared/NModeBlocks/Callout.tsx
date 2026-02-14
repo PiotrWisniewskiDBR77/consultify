@@ -11,8 +11,8 @@
  * - success (emerald) — completed actions, positive outcomes
  * - purple (purple) — AI-generated content, insights
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.5
- * @see docs/00_foundation/COLOR_SYSTEM_STANDARD.md
+ * @see docs/ui-standards/02-components/building-blocks.md
+ * @see docs/ui-standards/00-foundation/color-system.md
  */
 
 import {

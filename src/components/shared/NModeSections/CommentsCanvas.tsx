@@ -9,7 +9,7 @@
  * - Comment thread with avatars, priorities, timestamps
  * - Inline comment input with priority selector (L/N/H) and AI enhance
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.3
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.3
  */
 
 import { Loader2, MessageSquare, Plus, Sparkles, X } from 'lucide-react';

@@ -18,6 +18,20 @@ Rejestr audytu systemu testów automatycznych z 5 poziomami pokrycia.
 
 ## 📝 Historia Audytów
 
+### 2026-02-14 | Automated Audit
+
+| Poziom        | Pliki | Pokrycie | Pass Rate | Zmiana          |
+| ------------- | ----- | -------- | --------- | --------------- |
+| Unit          | 435   | ~96%     | N/A       | Automated audit |
+| Component     | 244   | ~96%     | 100.0%    | Automated audit |
+| Integration   | 168   | ~96%     | 100.0%    | Automated audit |
+| E2E           | 105   | ~96%     | N/A       | Automated audit |
+| Security+Perf | 51    | ~96%     | N/A       | Automated audit |
+
+**Totals:** 198 passed / 0 failed (100.0%)
+
+---
+
 ### 2026-02-01 | Automated Audit
 
 | Poziom        | Pliki | Pokrycie | Pass Rate | Zmiana          |

@@ -61,83 +61,95 @@ Wszystkie widoki szczegółowe (Task/Decision/Notification) stosują identyczny 
 ## Tasks - Zarządzanie zadaniami
 
 ### Plik źródłowy
+
 `src/components/MyWork/TaskDetailView.tsx`
 
 ### Statusy zadań
 
-| Status | Label PL | Label EN | Kolor | Ikona |
-|--------|----------|----------|-------|-------|
-| `todo` | Do zrobienia | To Do | slate-400 | CheckSquare |
-| `in_progress` | W trakcie | In Progress | blue-500 | Clock |
-| `review` | Przegląd | Review | purple-500 | Edit3 |
-| `done` | Ukończone | Done | emerald-500 | CheckCircle2 |
-| `blocked` | Zablokowane | Blocked | red-500 | AlertCircle |
+| Status        | Label PL     | Label EN    | Kolor       | Ikona        |
+| ------------- | ------------ | ----------- | ----------- | ------------ |
+| `todo`        | Do zrobienia | To Do       | slate-400   | CheckSquare  |
+| `in_progress` | W trakcie    | In Progress | blue-500    | Clock        |
+| `review`      | Przegląd     | Review      | purple-500  | Edit3        |
+| `done`        | Ukończone    | Done        | emerald-500 | CheckCircle2 |
+| `blocked`     | Zablokowane  | Blocked     | red-500     | AlertCircle  |
 
 ### Priorytety
 
-| Priorytet | Label PL | Label EN | Kolor |
-|-----------|----------|----------|-------|
-| `low` | Niski | Low | slate-400 |
-| `medium` | Średni | Medium | blue-400 |
-| `high` | Wysoki | High | orange-400 |
-| `critical` | Krytyczny | Critical | red-500 |
+| Priorytet  | Label PL  | Label EN | Kolor      |
+| ---------- | --------- | -------- | ---------- |
+| `low`      | Niski     | Low      | slate-400  |
+| `medium`   | Średni    | Medium   | blue-400   |
+| `high`     | Wysoki    | High     | orange-400 |
+| `critical` | Krytyczny | Critical | red-500    |
 
 ### Sekcje w lewej kolumnie
 
 #### 1. Task Description
+
 - Pole tekstowe z opisem zadania
 - Placeholder: "Describe the task..."
 
 #### 2. Expected Outcome
+
 - Oczekiwany rezultat zadania
 - Pole tekstowe
 
 #### 3. Comments (Collapsible)
+
 - Lista komentarzy z możliwością odpowiedzi
 - Lajkowanie komentarzy
 - Licznik przy nagłówku
 
 #### 4. Risk Analysis (Collapsible)
+
 - Lista ryzyk z macierzą probability/impact
 - Kategorie: technical, business, operational, financial, legal
 - AI Generate button
 - Mitigation i contingency plans
 
 #### 5. Alternatives (Collapsible)
+
 - Alternatywne podejścia do realizacji
 - Pros/Cons dla każdej alternatywy
 - Możliwość oznaczenia jako recommended
 - AI Generate button
 
 #### 6. Implementation Ideas (Collapsible)
+
 - Pomysły na realizację zadania
 - Głosowanie na pomysły
 - Status: idea → considered → selected → rejected
 - Źródło: manual / ai / team
 
 #### 7. Checklist (Collapsible)
+
 - Interaktywna lista kontrolna
 - Progress bar w nagłówku
 - Dodawanie/usuwanie elementów
 - Checkbox dla każdego elementu
 
 #### 8. Tags (Collapsible)
+
 - Kolorowe tagi
 - Dodawanie/usuwanie tagów
 
 ### Sekcje w prawej kolumnie
 
 #### 1. Deadline Alert Banner
+
 - Wyświetla się gdy task jest przeterminowany
 - Czerwony alert z liczbą dni spóźnienia
 
 #### 2. Action Buttons (Header)
-| Przycisk | Kolor ramki | Kolor tekstu | Funkcja |
-|----------|-------------|--------------|---------|
-| Save | blue-500/40 | blue-700 | Zapisuje task + draft offline |
-| Chat | purple-500/40 | purple-700 | Otwiera AI chat z kontekstem |
+
+| Przycisk | Kolor ramki   | Kolor tekstu | Funkcja                       |
+| -------- | ------------- | ------------ | ----------------------------- |
+| Save     | blue-500/40   | blue-700     | Zapisuje task + draft offline |
+| Chat     | purple-500/40 | purple-700   | Otwiera AI chat z kontekstem  |
 
 #### 3. Control Panel (Collapsible)
+
 - **Badge** `#task-XXX` - po prawej stronie nagłówka
 - **Initiative** - dropdown z dostępnymi inicjatywami
 - **Status** - dropdown ze statusami
@@ -149,42 +161,50 @@ Wszystkie widoki szczegółowe (Task/Decision/Notification) stosują identyczny 
 - **Blocked Reason** - tylko gdy status = blocked
 
 #### 4. AI Insights (Collapsible)
+
 - Wskazówki wygenerowane przez AI
 - Typy: recommendation, warning, prediction, optimization
 - Wskaźnik pewności (low/medium/high)
 - Akcje: Apply, Dismiss
 
 #### 5. Dependencies (Collapsible)
+
 - Sekcja "Blokuje" - taski blokowane przez ten task
 - Sekcja "Blokowane przez" - taski blokujące ten task
 - Warning gdy blokowane przez nieukończone taski
 
 #### 6. Stakeholders (RACI) (Collapsible)
+
 - Role: Responsible, Accountable, Consulted, Informed
 - Ustawienia powiadomień per stakeholder
 
 #### 7. Reminders & Escalation (Collapsible)
+
 - Przypomnienia przed/po terminie
 - Reguły eskalacji
 - Progi czasowe
 
 #### 8. Attachments (Collapsible)
+
 - Upload plików
 - Podgląd miniatur
 - Download/Delete
 
 #### 9. Linked Items (Collapsible)
+
 - Powiązania z innymi elementami
 - Typy: task, decision, risk, issue, document, external
 - Relacje: blocks, blocked_by, relates_to, duplicates, parent, child
 
 #### 10. Evidence & Acceptance (Collapsible)
+
 - Wymagane typy dowodów: DOCUMENT, DATA, DEMO, APPROVAL
 - Lista załączonych dowodów z weryfikacją
 - Toggle "Wymaga akceptacji"
 - Wybór akceptującego
 
 #### 11. Strategic Contribution (Collapsible)
+
 - PROCESS_CHANGE - Zmiana procesu
 - BEHAVIOR_CHANGE - Zmiana zachowania
 - CAPABILITY_CHANGE - Zmiana zdolności
@@ -207,46 +227,51 @@ Wszystkie widoki szczegółowe (Task/Decision/Notification) stosują identyczny 
 ## Decisions - Zarządzanie decyzjami
 
 ### Plik źródłowy
+
 `src/components/MyWork/DecisionDetailView.tsx`
 
 ### Statusy decyzji
 
-| Status | Label PL | Label EN | Kolor |
-|--------|----------|----------|-------|
-| `pending` | Oczekująca | Pending | amber-500 |
-| `approved` | Zatwierdzona | Approved | emerald-500 |
-| `rejected` | Odrzucona | Rejected | red-500 |
-| `deferred` | Odroczona | Deferred | slate-500 |
-| `escalated` | Eskalowana | Escalated | orange-500 |
+| Status      | Label PL     | Label EN  | Kolor       |
+| ----------- | ------------ | --------- | ----------- |
+| `pending`   | Oczekująca   | Pending   | amber-500   |
+| `approved`  | Zatwierdzona | Approved  | emerald-500 |
+| `rejected`  | Odrzucona    | Rejected  | red-500     |
+| `deferred`  | Odroczona    | Deferred  | slate-500   |
+| `escalated` | Eskalowana   | Escalated | orange-500  |
 
 ### Kategorie decyzji
 
-| Kategoria | Label PL | Label EN |
-|-----------|----------|----------|
-| `scope_change` | Zmiana zakresu | Scope Change |
-| `budget_change` | Zmiana budżetu | Budget Change |
-| `schedule_change` | Zmiana harmonogramu | Schedule Change |
-| `resource_allocation` | Alokacja zasobów | Resource Allocation |
-| `risk_response` | Odpowiedź na ryzyko | Risk Response |
-| `technical` | Techniczna | Technical |
-| `strategic` | Strategiczna | Strategic |
+| Kategoria             | Label PL            | Label EN            |
+| --------------------- | ------------------- | ------------------- |
+| `scope_change`        | Zmiana zakresu      | Scope Change        |
+| `budget_change`       | Zmiana budżetu      | Budget Change       |
+| `schedule_change`     | Zmiana harmonogramu | Schedule Change     |
+| `resource_allocation` | Alokacja zasobów    | Resource Allocation |
+| `risk_response`       | Odpowiedź na ryzyko | Risk Response       |
+| `technical`           | Techniczna          | Technical           |
+| `strategic`           | Strategiczna        | Strategic           |
 
 ### Sekcje w lewej kolumnie
 
 #### 1. Problem Description / Context
+
 - Opis problemu wymagającego decyzji
 - Kontekst sytuacyjny
 
 #### 2. Comments (Collapsible)
+
 - Dyskusja nad decyzją
 - Odpowiedzi i lajki
 
 #### 3. Risk Analysis (Collapsible)
+
 - Ryzyka związane z decyzją
 - Macierz probability/impact
 - AI Generate
 
 #### 4. Alternatives (Collapsible)
+
 - Alternatywne opcje decyzyjne
 - Pros/Cons
 - Impact Score (scope, schedule, cost, quality)
@@ -256,18 +281,21 @@ Wszystkie widoki szczegółowe (Task/Decision/Notification) stosują identyczny 
 ### Sekcje w prawej kolumnie
 
 #### 1. Deadline Alert Banner
+
 - Alert o przeterminowanej decyzji
 
 #### 2. Action Buttons
-| Przycisk | Kolor | Warunek |
-|----------|-------|---------|
-| Approve | emerald | status = pending |
-| Reject | red | status = pending |
-| Request Info | slate | status = pending |
-| Delegate | slate | status = pending |
-| Save | purple | zawsze |
+
+| Przycisk     | Kolor   | Warunek          |
+| ------------ | ------- | ---------------- |
+| Approve      | emerald | status = pending |
+| Reject       | red     | status = pending |
+| Request Info | slate   | status = pending |
+| Delegate     | slate   | status = pending |
+| Save         | purple  | zawsze           |
 
 #### 3. Control Panel (Collapsible)
+
 - Initiative
 - Status
 - Priority
@@ -277,17 +305,21 @@ Wszystkie widoki szczegółowe (Task/Decision/Notification) stosują identyczny 
 - Decider (editable)
 
 #### 4. Stakeholders (RACI)
+
 - Interesariusze z rolami RACI
 - Ustawienia powiadomień
 
 #### 5. Reminders & Escalation
+
 - Przypomnienia
 - Reguły eskalacji
 
 #### 6. Attachments
+
 - Dokumenty wspierające decyzję
 
 #### 7. Linked Items
+
 - Powiązane taski, ryzyka, dokumenty
 
 ### Workflow decyzji
@@ -314,11 +346,13 @@ Wszystkie widoki szczegółowe (Task/Decision/Notification) stosują identyczny 
 ## Notifications - System powiadomień
 
 ### Plik źródłowy
+
 `src/components/MyWork/NotificationDetailView.tsx`
 
 ### Cel notyfikacji (Kanon)
 
 Notyfikacje istnieją po to, aby:
+
 - **Zapobiegać bezruchowi** w organizacji
 - **Eskalować brak decyzji**
 - **Utrzymywać napięcie decyzyjne**
@@ -328,67 +362,73 @@ Notyfikacje istnieją po to, aby:
 
 ### Poziomy ważności (Severity)
 
-| Severity | Label PL | Label EN | Kolor | Znaczenie |
-|----------|----------|----------|-------|-----------|
-| `INFO` | Informacja | Info | blue-500 | Informacyjne |
-| `WARNING` | Ostrzeżenie | Warning | amber-500 | Wymaga uwagi |
-| `CRITICAL` | Krytyczne | Critical | red-500 | Wymaga natychmiastowej reakcji |
+| Severity   | Label PL    | Label EN | Kolor     | Znaczenie                      |
+| ---------- | ----------- | -------- | --------- | ------------------------------ |
+| `INFO`     | Informacja  | Info     | blue-500  | Informacyjne                   |
+| `WARNING`  | Ostrzeżenie | Warning  | amber-500 | Wymaga uwagi                   |
+| `CRITICAL` | Krytyczne   | Critical | red-500   | Wymaga natychmiastowej reakcji |
 
 ### Kategorie notyfikacji
 
-| Kategoria | Opis |
-|-----------|------|
-| `ai` | Rekomendacje i alerty AI |
-| `task` | Powiadomienia o zadaniach |
-| `decision` | Powiadomienia o decyzjach |
-| `system` | Alerty systemowe |
-| `project` | Powiadomienia projektowe |
+| Kategoria    | Opis                         |
+| ------------ | ---------------------------- |
+| `ai`         | Rekomendacje i alerty AI     |
+| `task`       | Powiadomienia o zadaniach    |
+| `decision`   | Powiadomienia o decyzjach    |
+| `system`     | Alerty systemowe             |
+| `project`    | Powiadomienia projektowe     |
 | `initiative` | Powiadomienia o inicjatywach |
 
 ### Typy notyfikacji
 
-| Typ | Ikona | Kolor | Opis |
-|-----|-------|-------|------|
-| `TASK_ASSIGNED` | CheckSquare | blue | Przypisano zadanie |
-| `TASK_OVERDUE` | Clock | red | Zadanie przeterminowane |
-| `TASK_BLOCKED` | AlertCircle | red | Zadanie zablokowane |
-| `DECISION_REQUIRED` | Scale | purple | Wymagana decyzja |
-| `DECISION_OVERDUE` | Scale | red | Decyzja przeterminowana |
-| `INITIATIVE_STARTED` | Target | emerald | Inicjatywa rozpoczęta |
-| `INITIATIVE_STALLED` | Target | amber | Inicjatywa wstrzymana |
-| `INITIATIVE_COMPLETED` | Target | emerald | Inicjatywa ukończona |
-| `AI_RISK_DETECTED` | AlertTriangle | amber | AI wykryło ryzyko |
-| `AI_RECOMMENDATION` | Info | purple | Rekomendacja AI |
-| `SYSTEM_ALERT` | Bell | slate | Alert systemowy |
+| Typ                    | Ikona         | Kolor   | Opis                    |
+| ---------------------- | ------------- | ------- | ----------------------- |
+| `TASK_ASSIGNED`        | CheckSquare   | blue    | Przypisano zadanie      |
+| `TASK_OVERDUE`         | Clock         | red     | Zadanie przeterminowane |
+| `TASK_BLOCKED`         | AlertCircle   | red     | Zadanie zablokowane     |
+| `DECISION_REQUIRED`    | Scale         | purple  | Wymagana decyzja        |
+| `DECISION_OVERDUE`     | Scale         | red     | Decyzja przeterminowana |
+| `INITIATIVE_STARTED`   | Target        | emerald | Inicjatywa rozpoczęta   |
+| `INITIATIVE_STALLED`   | Target        | amber   | Inicjatywa wstrzymana   |
+| `INITIATIVE_COMPLETED` | Target        | emerald | Inicjatywa ukończona    |
+| `AI_RISK_DETECTED`     | AlertTriangle | amber   | AI wykryło ryzyko       |
+| `AI_RECOMMENDATION`    | Info          | purple  | Rekomendacja AI         |
+| `SYSTEM_ALERT`         | Bell          | slate   | Alert systemowy         |
 
 ### Sekcje w lewej kolumnie
 
 #### 1. What's Happening (Collapsible)
+
 - **Co się dzieje** - główny komunikat
 - **Dlaczego to ważne** - kontekst biznesowy
 - **Co jest blokowane** - wpływ na inne elementy
 
 #### 2. AI Analysis (Collapsible) ⭐ NOWE
+
 - **Priorytet** - CRITICAL/HIGH/MEDIUM/LOW
 - **Analiza wpływu** - opis konsekwencji
 - **Rekomendacja AI** - sugerowane działanie
 - **Przycisk "Zapytaj AI"** - otwiera chat z kontekstem
 
 #### 3. Expected Action / Checklist (Collapsible)
+
 - **Oczekiwana akcja** - co użytkownik powinien zrobić
 - **Interaktywna checklista** - kroki do wykonania
 - Automatycznie generowana na podstawie typu notyfikacji
 
 #### 4. Related Items (Collapsible)
+
 - Powiązane zadania/decyzje/inicjatywy
 - Projekt źródłowy
 - Linki do nawigacji
 
 #### 5. Comments (Collapsible)
+
 - Komentarze do notyfikacji
 - Przygotowane do rozbudowy
 
 #### 6. Activity Log (Collapsible)
+
 - Historia aktywności
 - Kiedy utworzono
 - Kiedy przeczytano
@@ -396,12 +436,14 @@ Notyfikacje istnieją po to, aby:
 ### Sekcje w prawej kolumnie
 
 #### 1. Action Buttons (Header)
-| Przycisk | Kolor ramki | Funkcja |
-|----------|-------------|---------|
-| Mark Read | blue-500/40 | Oznacza jako przeczytane |
-| Chat | purple-500/40 | Otwiera AI chat z kontekstem |
+
+| Przycisk  | Kolor ramki   | Funkcja                      |
+| --------- | ------------- | ---------------------------- |
+| Mark Read | blue-500/40   | Oznacza jako przeczytane     |
+| Chat      | purple-500/40 | Otwiera AI chat z kontekstem |
 
 #### 2. Control Panel (Collapsible)
+
 - **Badge** `#notif-XXX` - identyfikator
 - **Type** - typ notyfikacji
 - **Severity** - poziom ważności
@@ -413,10 +455,12 @@ Notyfikacje istnieją po to, aby:
 - **Delete** - usuń notyfikację
 
 #### 3. Stakeholders (Collapsible)
+
 - Interesariusze powiązani z notyfikacją
 - Przygotowane do rozbudowy
 
 #### 4. Why You Got It
+
 - Wyjaśnienie dlaczego użytkownik otrzymał notyfikację
 - Rola użytkownika (decider/owner/manager/sponsor)
 
@@ -432,6 +476,7 @@ Każda notyfikacja MUSI odpowiadać na:
 ### Triggery notyfikacji
 
 Notyfikacje MUSZĄ powstawać z:
+
 - Brak decyzji / decyzja overdue
 - Blokada taska (blocked by decision)
 - Przekroczony próg kosztu opóźnienia
@@ -440,16 +485,17 @@ Notyfikacje MUSZĄ powstawać z:
 
 ### Routing (adresaci)
 
-| Rola | Typ notyfikacji | CTA |
-|------|-----------------|-----|
-| Decydent | Presja, koszt | Decide/Delegate/Escalate |
-| Manager | Blokady zespołu | Unblock/Reassign |
-| Wykonawca | Na co czeka | Complete/Update |
-| Sponsor | Ryzyko strategiczne | Review/Approve |
+| Rola      | Typ notyfikacji     | CTA                      |
+| --------- | ------------------- | ------------------------ |
+| Decydent  | Presja, koszt       | Decide/Delegate/Escalate |
+| Manager   | Blokady zespołu     | Unblock/Reassign         |
+| Wykonawca | Na co czeka         | Complete/Update          |
+| Sponsor   | Ryzyko strategiczne | Review/Approve           |
 
 ### Snooze Mechanism
 
 Użytkownik może odroczyć notyfikację:
+
 - **1 godzina**
 - **4 godziny**
 - **Jutro**
@@ -457,6 +503,7 @@ Użytkownik może odroczyć notyfikację:
 - **Custom** - własna data/godzina
 
 Snoozed notifications:
+
 - Znikają z głównej listy
 - Wracają po upływie czasu
 - Persystowane w localStorage (offline support)
@@ -516,11 +563,7 @@ shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50
   {/* Content - animowany */}
   <AnimatePresence>
     {expanded && (
-      <motion.div
-        initial={{ height: 0 }}
-        animate={{ height: 'auto' }}
-        exit={{ height: 0 }}
-      >
+      <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}>
         {children}
       </motion.div>
     )}
@@ -530,13 +573,13 @@ shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50
 
 ### Przyciski akcji
 
-| Typ | Ramka | Tekst | Użycie |
-|-----|-------|-------|--------|
-| Primary (Save) | blue-500/40 | blue-700 | Zapisywanie |
-| Primary (Chat) | purple-500/40 | purple-700 | Otwieranie czatu |
-| Success | emerald-400/60 | emerald-500 | Approve, Complete |
-| Danger | red-400/60 | red-500 | Reject, Delete |
-| Neutral | slate-300 | slate-500 | Secondary actions |
+| Typ            | Ramka          | Tekst       | Użycie            |
+| -------------- | -------------- | ----------- | ----------------- |
+| Primary (Save) | blue-500/40    | blue-700    | Zapisywanie       |
+| Primary (Chat) | purple-500/40  | purple-700  | Otwieranie czatu  |
+| Success        | emerald-400/60 | emerald-500 | Approve, Complete |
+| Danger         | red-400/60     | red-500     | Reject, Delete    |
+| Neutral        | slate-300      | slate-500   | Secondary actions |
 
 ### Internacjonalizacja
 
@@ -545,7 +588,9 @@ const { i18n } = useTranslation();
 const isPolish = i18n.language === 'pl';
 
 // Użycie
-{isPolish ? 'Tekst polski' : 'English text'}
+{
+  isPolish ? 'Tekst polski' : 'English text';
+}
 ```
 
 ---
@@ -562,6 +607,7 @@ const isPolish = i18n.language === 'pl';
 ### Kontekst przekazywany do AI
 
 #### Task Context
+
 ```typescript
 {
   type: 'task',
@@ -578,6 +624,7 @@ const isPolish = i18n.language === 'pl';
 ```
 
 #### Decision Context
+
 ```typescript
 {
   type: 'decision',
@@ -592,6 +639,7 @@ const isPolish = i18n.language === 'pl';
 ```
 
 #### Notification Context
+
 ```typescript
 {
   type: 'notification',
@@ -652,34 +700,34 @@ Wszystkie widoki zapisują draft do localStorage:
 
 ## Historia zmian
 
-| Data | Zmiana |
-|------|--------|
-| 2026-01-29 | Utworzono dokumentację modułu My Work |
-| 2026-01-29 | Dodano specyfikację Tasks (Golden Standard) |
-| 2026-01-29 | Dodano specyfikację Decisions |
-| 2026-01-29 | Dodano specyfikację Notifications z AI Analysis |
+| Data       | Zmiana                                                                              |
+| ---------- | ----------------------------------------------------------------------------------- |
+| 2026-01-29 | Utworzono dokumentację modułu My Work                                               |
+| 2026-01-29 | Dodano specyfikację Tasks (Golden Standard)                                         |
+| 2026-01-29 | Dodano specyfikację Decisions                                                       |
+| 2026-01-29 | Dodano specyfikację Notifications z AI Analysis                                     |
 | 2026-01-29 | Dodano sekcje: AI Analysis, Related Items, Action Checklist, Comments, Activity Log |
-| 2026-01-29 | Ujednolicono layout wszystkich widoków szczegółowych |
+| 2026-01-29 | Ujednolicono layout wszystkich widoków szczegółowych                                |
 
 ---
 
 ## Pliki źródłowe
 
-| Komponent | Ścieżka |
-|-----------|---------|
-| TaskDetailView | `src/components/MyWork/TaskDetailView.tsx` |
-| DecisionDetailView | `src/components/MyWork/DecisionDetailView.tsx` |
-| NotificationDetailView | `src/components/MyWork/NotificationDetailView.tsx` |
-| NotificationsContent | `src/components/MyWork/NotificationsContent.tsx` |
+| Komponent                | Ścieżka                                                            |
+| ------------------------ | ------------------------------------------------------------------ |
+| TaskDetailView           | `src/components/MyWork/TaskDetailView.tsx`                         |
+| DecisionDetailView       | `src/components/MyWork/DecisionDetailView.tsx`                     |
+| NotificationDetailView   | `src/components/MyWork/NotificationDetailView.tsx`                 |
+| NotificationsContent     | `src/components/MyWork/NotificationsContent.tsx`                   |
 | NotificationQuickActions | `src/components/MyWork/Notifications/NotificationQuickActions.tsx` |
-| NotificationDropdown | `src/components/layout/NotificationDropdown.tsx` |
-| useNotificationSnooze | `src/hooks/useNotificationSnooze.ts` |
+| NotificationDropdown     | `src/components/layout/NotificationDropdown.tsx`                   |
+| useNotificationSnooze    | `src/hooks/useNotificationSnooze.ts`                               |
 
 ---
 
 ## Powiązana dokumentacja
 
-- [Task Panel Specification](./TASK_PANEL_SPECIFICATION.md)
-- [Decision Panel Specification](./DECISION_PANEL_SPECIFICATION.md)
-- [Task Detail View UI Standard](./ui-standards/task-detail-view.md)
+- [Task Panel Specification](./ui-standards/02-components/task-panel.md)
+- [Decision Panel Specification](./ui-standards/02-components/decision-panel.md)
+- [Task Detail View UI Standard](./ui-standards/02-components/task-panel.md)
 - [Notification Entity Standard](../wdrozenia/standards/entities/06-NOTIFICATION.md)

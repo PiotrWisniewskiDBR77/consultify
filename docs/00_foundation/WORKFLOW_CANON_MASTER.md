@@ -163,7 +163,7 @@ Terminalnie: `CANCELLED`.
 - `WARNING`
 - `CRITICAL`
 
-**MUST:** jeżeli w legacy API występuje `priority` (np. `high/normal/low`), UI mapuje to do severity zgodnie z adapterem (patrz `docs/ui-standards/detail-view-presentation-modes.md` / adapter spec).
+**MUST:** jeżeli w legacy API występuje `priority` (np. `high/normal/low`), UI mapuje to do severity zgodnie z adapterem (patrz `docs/ui-standards/01-shell-layout/presentation-modes.md` / adapter spec).
 
 ---
 
@@ -446,7 +446,7 @@ Detail view dla `Initiative/Task/Decision/Notification` ma 3 tryby renderu (D/N/
 - UI nie dubluje “mocy” gate’ów w różnych miejscach (jedno miejsce na akcje, jedno na treść),
 - wszystkie akcje mutujące (gate, unblock, approve) generują audit/Activity.
 
-Źródło trybów prezentacji: `docs/ui-standards/detail-view-presentation-modes.md`.
+Źródło trybów prezentacji: `docs/ui-standards/01-shell-layout/presentation-modes.md`.
 
 ---
 

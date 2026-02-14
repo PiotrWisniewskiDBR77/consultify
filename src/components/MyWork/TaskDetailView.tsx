@@ -4,7 +4,7 @@
  * N mode: NModeHeader + PropertiesStrip + LeftNav (9 sections) + Canvas
  * D mode (accordion): legacy — kept until N mode is fully rolled out
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
@@ -2544,7 +2544,10 @@ Return ONLY the final comment text.`;
                       <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                         {stakeholders.length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+                            <td
+                              colSpan={5}
+                              className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                            >
                               {isPolish ? 'Brak interesariuszy.' : 'No stakeholders yet.'}
                             </td>
                           </tr>
@@ -2649,7 +2652,10 @@ Return ONLY the final comment text.`;
                       <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                         {reminders.length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+                            <td
+                              colSpan={5}
+                              className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                            >
                               {isPolish ? 'Brak reminderów.' : 'No reminders yet.'}
                             </td>
                           </tr>
@@ -2782,7 +2788,10 @@ Return ONLY the final comment text.`;
                       <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                         {escalationRules.length === 0 ? (
                           <tr>
-                            <td colSpan={8} className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+                            <td
+                              colSpan={8}
+                              className="py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+                            >
                               {isPolish ? 'Brak reguł eskalacji.' : 'No escalation rules yet.'}
                             </td>
                           </tr>
@@ -3885,7 +3894,10 @@ Return ONLY the final comment text.`;
                           reminderDraft.delivery,
                           reminderDraft
                         );
-                        const enabled = delivery.coreChannels.includes(channel.key);
+                        const coreChannels = Array.isArray(delivery.coreChannels)
+                          ? delivery.coreChannels
+                          : [];
+                        const enabled = coreChannels.includes(channel.key);
                         return (
                           <button
                             key={channel.key}
@@ -3895,20 +3907,16 @@ Return ONLY the final comment text.`;
                                 ...reminderDraft,
                                 delivery: {
                                   ...delivery,
-                                  coreChannels: toggleChannel(
-                                    delivery.coreChannels,
-                                    channel.key,
-                                    !enabled
-                                  ),
+                                  coreChannels: toggleChannel(coreChannels, channel.key, !enabled),
                                 },
                                 inAppNotification:
                                   channel.key === 'in_app'
                                     ? !enabled
-                                    : delivery.coreChannels.includes('in_app'),
+                                    : coreChannels.includes('in_app'),
                                 emailNotification:
                                   channel.key === 'email'
                                     ? !enabled
-                                    : delivery.coreChannels.includes('email'),
+                                    : coreChannels.includes('email'),
                               })
                             }
                             className={`${channelChipClass} ${enabled ? 'border-purple-400/60 text-purple-500 bg-purple-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
@@ -3929,7 +3937,10 @@ Return ONLY the final comment text.`;
                           reminderDraft.delivery,
                           reminderDraft
                         );
-                        const enabled = delivery.integrationChannels.includes(channel.key);
+                        const integrationChannels = Array.isArray(delivery.integrationChannels)
+                          ? delivery.integrationChannels
+                          : [];
+                        const enabled = integrationChannels.includes(channel.key);
                         return (
                           <button
                             key={channel.key}
@@ -3940,7 +3951,7 @@ Return ONLY the final comment text.`;
                                 delivery: {
                                   ...delivery,
                                   integrationChannels: toggleChannel(
-                                    delivery.integrationChannels,
+                                    integrationChannels,
                                     channel.key,
                                     !enabled
                                   ),
@@ -4188,7 +4199,10 @@ Return ONLY the final comment text.`;
                       ] as Array<{ key: CoreDeliveryChannel; label: string }>
                     ).map((channel) => {
                       const delivery = ensureDeliveryConfig(escalationDraft.delivery);
-                      const enabled = delivery.coreChannels.includes(channel.key);
+                      const coreChannels = Array.isArray(delivery.coreChannels)
+                        ? delivery.coreChannels
+                        : [];
+                      const enabled = coreChannels.includes(channel.key);
                       return (
                         <button
                           key={channel.key}
@@ -4198,11 +4212,7 @@ Return ONLY the final comment text.`;
                               ...escalationDraft,
                               delivery: {
                                 ...delivery,
-                                coreChannels: toggleChannel(
-                                  delivery.coreChannels,
-                                  channel.key,
-                                  !enabled
-                                ),
+                                coreChannels: toggleChannel(coreChannels, channel.key, !enabled),
                               },
                             })
                           }
@@ -4221,7 +4231,10 @@ Return ONLY the final comment text.`;
                   <div className="flex flex-wrap gap-2">
                     {integrationChannelCatalog.map((channel) => {
                       const delivery = ensureDeliveryConfig(escalationDraft.delivery);
-                      const enabled = delivery.integrationChannels.includes(channel.key);
+                      const integrationChannels = Array.isArray(delivery.integrationChannels)
+                        ? delivery.integrationChannels
+                        : [];
+                      const enabled = integrationChannels.includes(channel.key);
                       return (
                         <button
                           key={channel.key}
@@ -4232,7 +4245,7 @@ Return ONLY the final comment text.`;
                               delivery: {
                                 ...delivery,
                                 integrationChannels: toggleChannel(
-                                  delivery.integrationChannels,
+                                  integrationChannels,
                                   channel.key,
                                   !enabled
                                 ),

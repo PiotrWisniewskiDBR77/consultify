@@ -4,8 +4,8 @@
  * Supports 2 presentation modes: N (notion/page-first) / C (clickup/action-first)
  * Note: D mode (accordion) has been removed — N mode is primary
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md
- * @see docs/00_foundation/DBR77_VISUAL_LANGUAGE_STANDARD.md
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md
+ * @see docs/ui-standards/00-foundation/visual-language.md
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
@@ -4220,7 +4220,7 @@ Context: ${JSON.stringify(projectContext)}`;
           />
 
           {/* ═══════════ N MODE (page-first, 2-pane) ═════════════════════════
-               Layout per docs/ui-standards/detail-view-presentation-modes.md §2.5:
+               Layout per docs/ui-standards/01-shell-layout/presentation-modes.md §2.5:
                - PropertiesStrip (full-width, under header)
                - 2-pane: LeftNav (fixed ~220px) | Canvas (selected section only)
                Left nav click → shows ONE section at a time (no scroll-all).

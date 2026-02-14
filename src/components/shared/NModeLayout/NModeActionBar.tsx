@@ -4,7 +4,7 @@
  * Contextual action bar displayed between PropertiesStrip and the 2-pane area.
  * Shows primary actions (Approve, Reject, etc.) and section-specific AI actions.
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.5
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.5
  */
 
 import { Loader2 } from 'lucide-react';

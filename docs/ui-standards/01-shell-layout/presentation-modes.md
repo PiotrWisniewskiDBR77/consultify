@@ -6,10 +6,10 @@
 
 > **Spójność wizualna (MUST):** wszystkie 3 tryby muszą trzymać się DBR77 Visual Language:
 >
-> - `docs/00_foundation/COLOR_SYSTEM_STANDARD.md`
-> - `docs/00_foundation/DBR77_VISUAL_LANGUAGE_STANDARD.md`
+> - `docs/ui-standards/00-foundation/color-system.md`
+> - `docs/ui-standards/00-foundation/visual-language.md`
 > - tokeny w kodzie: `tailwind.config.js`, `src/index.css`
-> - future shell standard: `docs/ui-standards/artifact-shell-future-standard.md`
+> - shell standard: `docs/ui-standards/01-shell-layout/artifact-shell.md`
 
 ---
 
@@ -272,7 +272,7 @@ Każda zamknięta sekcja pokazuje w nagłówku:
 
 ### 1.2.1 Motion & microinteractions (N feel w DBR77) (SHOULD)
 
-Źródło tokenów motion: `docs/00_foundation/DBR77_VISUAL_LANGUAGE_STANDARD.md` (sekcja 9).
+Źródło tokenów motion: `docs/ui-standards/00-foundation/visual-language.md` (sekcja 9).
 
 **SHOULD (N mode):**
 
@@ -531,7 +531,7 @@ Każdy N mode powinien korzystać z tych samych “bloków” UI, żeby zachowa�
 - `RiskCanvas` — rejestr ryzyk z score P×I (shared, §2.5.5.1)
 - `GovernanceCanvas` — RACI macierz + reminders + escalation rules (shared, §2.5.5.1)
 
-> **Współdzielone sekcje N-mode (`NModeSections/`):** sekcje powtarzające się w 2+ artefaktach MUSZĄ korzystać z komponentów w `src/components/shared/NModeSections/`. NIGDY nie kopiuj kodu sekcji inline. Pełna specyfikacja: `docs/ui-standards/shared-nmode-sections-standard.md`.
+> **Współdzielone sekcje N-mode (`NModeSections/`):** sekcje powtarzające się w 2+ artefaktach MUSZĄ korzystać z komponentów w `src/components/shared/NModeSections/`. NIGDY nie kopiuj kodu sekcji inline. Pełna specyfikacja: `docs/ui-standards/02-components/shared-sections.md`.
 
 > Wizualnie: te bloki używają naszych tokenów (`rounded-2xl`, `dark:bg-navy-900/..`, purple accents), ale zachowują “quiet UI” charakterystyczny dla N mode.
 
@@ -1292,7 +1292,7 @@ Done gdy:
 
 ### 4.3.7 Motion & microinteractions (tech‑sexy, ale minimalistyczne) (MUST)
 
-Źródło tokenów motion: `docs/00_foundation/DBR77_VISUAL_LANGUAGE_STANDARD.md` (sekcja 9).
+Źródło tokenów motion: `docs/ui-standards/00-foundation/visual-language.md` (sekcja 9).
 
 **MUST (C mode):**
 

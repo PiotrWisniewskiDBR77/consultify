@@ -4,7 +4,7 @@
  * Respects prefers-reduced-motion media query.
  * When true, animations should be instant / disabled.
  *
- * @see docs/00_foundation/DBR77_VISUAL_LANGUAGE_STANDARD.md (9.2)
+ * @see docs/ui-standards/00-foundation/visual-language.md (9.2)
  */
 
 import { useEffect, useState } from 'react';

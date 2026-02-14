@@ -25,10 +25,15 @@ import type {
 } from '../../shared/NModeSections';
 import type {
   Decision,
+  GateReadinessCheck,
+  GateRoleAssignment,
   HistoryEvent,
   PendingApproval,
   RaidItem,
+  StatusHistoryEntry,
   TaskItem,
+  TimelineMilestone,
+  TimelinePhase,
   UserInfo,
   Watcher,
 } from './types';
@@ -65,6 +70,13 @@ export interface InitiativeContextValue {
   users: UserInfo[];
   pendingApprovals: PendingApproval[];
 
+  // Gate governance
+  gateRoles: GateRoleAssignment[];
+  setGateRoles: React.Dispatch<React.SetStateAction<GateRoleAssignment[]>>;
+  userGateRoles: string[]; // Current user's gate roles on this initiative
+  statusHistory: StatusHistoryEntry[];
+  gateReadiness: GateReadinessCheck | null;
+
   // Editable fields
   summary: string;
   setSummary: (v: string) => void;
@@ -96,6 +108,16 @@ export interface InitiativeContextValue {
   isMutating: boolean;
   currentUserId: string;
 
+  // Timeline milestones & phases
+  timelineMilestones: TimelineMilestone[];
+  setTimelineMilestones: React.Dispatch<React.SetStateAction<TimelineMilestone[]>>;
+  timelinePhases: TimelinePhase[];
+  setTimelinePhases: React.Dispatch<React.SetStateAction<TimelinePhase[]>>;
+  timelineLocked: boolean;
+  baselineVersion: number | null;
+  estimatedDurationMonths: number | null;
+  setEstimatedDurationMonths: (v: number | null) => void;
+
   // Computed values
   status: string;
   ownerName: string;
@@ -119,6 +141,8 @@ export interface InitiativeContextValue {
   handleCreateTask: () => Promise<void>;
   handleCreateDecision: () => Promise<void>;
   handleCreateRaid: () => Promise<void>;
+  handleUpdateRaid: (id: string, updates: Partial<RaidItem>) => void;
+  handleDeleteRaid: (id: string) => Promise<void>;
   handleAddComment: (content: string) => Promise<void>;
   handleRequestApproval: (role: 'owner' | 'sponsor', gateType: string) => Promise<void>;
   handleOpenChat: () => void;

@@ -12,7 +12,7 @@
  * import { ActivityLogCanvas, CommentsCanvas, AttachmentsLinksCanvas } from '@/components/shared/NModeSections';
  * ```
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.3
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.3
  */
 
 // ── Generic canvas sections ─────────────────────────────────────────────────
@@ -33,6 +33,15 @@ export type {
   ReminderRuleWithDelivery,
 } from './GovernanceCanvas';
 export { GovernanceCanvas } from './GovernanceCanvas';
+export type {
+  RaidItem as NModeRaidItem,
+  RaidCanvasProps,
+  RaidLevel,
+  RaidStatus,
+  RaidType,
+  RaidTypeFilter,
+} from './RaidCanvas';
+export { getRaidScore, RaidCanvas } from './RaidCanvas';
 export type {
   RiskItem as NModeRiskItem,
   RiskCanvasProps,

@@ -303,10 +303,18 @@ export function getTargetModule(to: InitiativeStatus): ModuleConfig {
 }
 
 /**
- * Get status metadata
+ * Get status metadata (with safe fallback for unknown statuses)
  */
+const FALLBACK_STATUS_META: StatusMeta = {
+  label: 'Unknown',
+  color: 'text-slate-500',
+  bgColor: 'bg-slate-500/10',
+  dotColor: 'bg-slate-400',
+  description: 'Unknown status',
+};
+
 export function getStatusMeta(status: InitiativeStatus): StatusMeta {
-  return STATUS_METADATA[status];
+  return STATUS_METADATA[status] ?? FALLBACK_STATUS_META;
 }
 
 /**
@@ -589,10 +597,204 @@ export function getContextActions(status: InitiativeStatus): ContextActionId[] {
   }
 }
 
+// ============================================
+// GATE ROLE CONSTANTS (mirrored from server/src/constants/initiativeStatuses.ts)
+// ============================================
+
+/**
+ * Gate types for status transitions
+ */
+export const GateType = {
+  SUBMIT_FOR_REVIEW: 'SUBMIT_FOR_REVIEW',
+  SEND_BACK: 'SEND_BACK',
+  APPROVE_TO_INITIATIVE: 'APPROVE_TO_INITIATIVE',
+  ACCEPT: 'ACCEPT',
+  REJECT: 'REJECT',
+  START_PLANNING: 'START_PLANNING',
+  APPROVE: 'APPROVE',
+  SCHEDULE: 'SCHEDULE',
+  START: 'START',
+  BLOCK: 'BLOCK',
+  UNBLOCK: 'UNBLOCK',
+  COMPLETE: 'COMPLETE',
+  START_TRACKING: 'START_TRACKING',
+  CANCEL: 'CANCEL',
+} as const;
+
+export type GateTypeValue = (typeof GateType)[keyof typeof GateType];
+
+/**
+ * Role identifiers for gate permissions
+ */
+export const GateRole = {
+  ADMIN: 'ADMIN',
+  CONSULTANT: 'CONSULTANT',
+  PROJECT_MANAGER: 'PROJECT_MANAGER',
+  PROJECT_LEAD: 'PROJECT_LEAD',
+  INITIATIVE_OWNER: 'INITIATIVE_OWNER',
+  PROJECT_SPONSOR: 'PROJECT_SPONSOR',
+  PMO: 'PMO',
+  STEERING_COMMITTEE: 'STEERING_COMMITTEE',
+  TEAM_MEMBER: 'TEAM_MEMBER',
+  BUSINESS_OWNER: 'BUSINESS_OWNER',
+} as const;
+
+export type GateRoleValue = (typeof GateRole)[keyof typeof GateRole];
+
+/**
+ * Gate permissions — which roles can execute which gates.
+ * Mirrors server-side GATE_PERMISSIONS.
+ */
+export const GATE_PERMISSIONS: Record<GateTypeValue, GateRoleValue[]> = {
+  [GateType.SUBMIT_FOR_REVIEW]: [GateRole.CONSULTANT, GateRole.INITIATIVE_OWNER],
+  [GateType.SEND_BACK]: [GateRole.PROJECT_MANAGER, GateRole.PROJECT_LEAD, GateRole.PMO],
+  [GateType.APPROVE_TO_INITIATIVE]: [GateRole.PROJECT_MANAGER, GateRole.PROJECT_LEAD, GateRole.PMO],
+  [GateType.ACCEPT]: [GateRole.PROJECT_SPONSOR, GateRole.STEERING_COMMITTEE],
+  [GateType.REJECT]: [GateRole.PROJECT_SPONSOR, GateRole.STEERING_COMMITTEE],
+  [GateType.START_PLANNING]: [GateRole.PMO],
+  [GateType.APPROVE]: [GateRole.STEERING_COMMITTEE],
+  [GateType.SCHEDULE]: [GateRole.PMO],
+  [GateType.START]: [GateRole.PMO],
+  [GateType.BLOCK]: [GateRole.INITIATIVE_OWNER, GateRole.PMO],
+  [GateType.UNBLOCK]: [GateRole.PROJECT_SPONSOR, GateRole.STEERING_COMMITTEE],
+  [GateType.COMPLETE]: [GateRole.INITIATIVE_OWNER, GateRole.PMO],
+  [GateType.START_TRACKING]: [GateRole.BUSINESS_OWNER],
+  [GateType.CANCEL]: [GateRole.PMO, GateRole.STEERING_COMMITTEE],
+};
+
+/**
+ * Gate to transition mapping
+ */
+export const GATE_TRANSITIONS: Record<
+  GateTypeValue,
+  { from: InitiativeStatus[]; to: InitiativeStatus }
+> = {
+  [GateType.SUBMIT_FOR_REVIEW]: {
+    from: [InitiativeStatus.DRAFT],
+    to: InitiativeStatus.PENDING_REVIEW,
+  },
+  [GateType.SEND_BACK]: { from: [InitiativeStatus.PENDING_REVIEW], to: InitiativeStatus.DRAFT },
+  [GateType.APPROVE_TO_INITIATIVE]: {
+    from: [InitiativeStatus.PENDING_REVIEW],
+    to: InitiativeStatus.REVIEW,
+  },
+  [GateType.ACCEPT]: { from: [InitiativeStatus.REVIEW], to: InitiativeStatus.PROMOTED },
+  [GateType.REJECT]: { from: [InitiativeStatus.REVIEW], to: InitiativeStatus.DRAFT },
+  [GateType.START_PLANNING]: { from: [InitiativeStatus.PROMOTED], to: InitiativeStatus.PLANNING },
+  [GateType.APPROVE]: { from: [InitiativeStatus.PLANNING], to: InitiativeStatus.APPROVED },
+  [GateType.SCHEDULE]: { from: [InitiativeStatus.APPROVED], to: InitiativeStatus.SCHEDULED },
+  [GateType.START]: { from: [InitiativeStatus.SCHEDULED], to: InitiativeStatus.EXECUTING },
+  [GateType.BLOCK]: { from: [InitiativeStatus.EXECUTING], to: InitiativeStatus.BLOCKED },
+  [GateType.UNBLOCK]: { from: [InitiativeStatus.BLOCKED], to: InitiativeStatus.EXECUTING },
+  [GateType.COMPLETE]: { from: [InitiativeStatus.EXECUTING], to: InitiativeStatus.DONE },
+  [GateType.START_TRACKING]: { from: [InitiativeStatus.DONE], to: InitiativeStatus.TRACKING },
+  [GateType.CANCEL]: {
+    from: [
+      InitiativeStatus.DRAFT,
+      InitiativeStatus.PENDING_REVIEW,
+      InitiativeStatus.REVIEW,
+      InitiativeStatus.PROMOTED,
+      InitiativeStatus.PLANNING,
+      InitiativeStatus.APPROVED,
+      InitiativeStatus.SCHEDULED,
+      InitiativeStatus.EXECUTING,
+      InitiativeStatus.BLOCKED,
+    ],
+    to: InitiativeStatus.CANCELLED,
+  },
+};
+
+/**
+ * Get the gate required for a status transition
+ */
+export function getGateForTransition(
+  from: InitiativeStatus,
+  to: InitiativeStatus
+): GateTypeValue | null {
+  for (const [gate, config] of Object.entries(GATE_TRANSITIONS)) {
+    if (config.from.includes(from) && config.to === to) {
+      return gate as GateTypeValue;
+    }
+  }
+  return null;
+}
+
+/**
+ * Check if a user with given gate roles can execute a specific gate.
+ */
+export function canUserExecuteGate(userGateRoles: string[], gate: GateTypeValue): boolean {
+  if (userGateRoles.includes('ADMIN') || userGateRoles.includes('SUPERADMIN')) return true;
+  const requiredRoles = GATE_PERMISSIONS[gate] || [];
+  return requiredRoles.some((role) => userGateRoles.includes(role));
+}
+
+/**
+ * Filter status actions based on the current user's gate roles.
+ * Returns only actions the user is authorized to perform.
+ *
+ * @param status - Current initiative status
+ * @param userGateRoles - Gate roles assigned to the current user on this initiative
+ * @returns Filtered StatusAction[] with an additional `gate` and `requiredRoles` field
+ */
+export function getFilteredStatusActions(
+  status: InitiativeStatus,
+  userGateRoles: string[]
+): (StatusAction & { gate?: GateTypeValue | null; requiredRoles?: string[] })[] {
+  const allActions = getStatusActions(status);
+  const isAdmin = userGateRoles.includes('ADMIN') || userGateRoles.includes('SUPERADMIN');
+
+  return allActions.map((action) => {
+    const gate = getGateForTransition(status, action.targetStatus);
+    const requiredRoles = gate ? GATE_PERMISSIONS[gate] || [] : [];
+    const canExecute =
+      isAdmin || !gate || requiredRoles.some((role) => userGateRoles.includes(role));
+
+    return {
+      ...action,
+      gate,
+      requiredRoles: requiredRoles as string[],
+      // Override variant to disable if user can't execute
+      variant: canExecute ? action.variant : ('disabled' as any),
+    };
+  });
+}
+
+/**
+ * Get the required gate roles for the next transition from a given status.
+ * Useful for showing "who needs to approve" in the Gates table.
+ */
+export function getRequiredRolesForNextGate(
+  currentStatus: InitiativeStatus
+): { gate: GateTypeValue; requiredRoles: GateRoleValue[]; targetStatus: InitiativeStatus }[] {
+  const validNext = getValidNextStatuses(currentStatus);
+  const result: {
+    gate: GateTypeValue;
+    requiredRoles: GateRoleValue[];
+    targetStatus: InitiativeStatus;
+  }[] = [];
+
+  for (const nextStatus of validNext) {
+    const gate = getGateForTransition(currentStatus, nextStatus);
+    if (gate) {
+      result.push({
+        gate,
+        requiredRoles: GATE_PERMISSIONS[gate] || [],
+        targetStatus: nextStatus,
+      });
+    }
+  }
+
+  return result;
+}
+
 export default {
   VALID_TRANSITIONS,
   MODULES,
   STATUS_METADATA,
+  GateType,
+  GateRole,
+  GATE_PERMISSIONS,
+  GATE_TRANSITIONS,
   getModuleForStatus,
   getModuleConfigForStatus,
   isValidTransition,
@@ -608,5 +810,9 @@ export default {
   isActiveStatus,
   needsAttention,
   getStatusActions,
+  getFilteredStatusActions,
   getContextActions,
+  getGateForTransition,
+  canUserExecuteGate,
+  getRequiredRolesForNextGate,
 };

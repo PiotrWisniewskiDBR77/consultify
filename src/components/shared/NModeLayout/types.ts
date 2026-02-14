@@ -17,7 +17,7 @@
  *   │          │                               │
  *   └──────────┴───────────────────────────────┘
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5
  */
 
 import type React from 'react';

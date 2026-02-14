@@ -1010,4 +1010,23 @@ router.delete('/:id/raid/:raidId', InitiativeController.deleteRaidItem);
 
 router.get('/:id/history', InitiativeController.getHistory);
 
+// ==========================================
+// INITIATIVE TASK DEPENDENCIES (aggregated)
+// ==========================================
+
+/**
+ * GET /api/initiatives/:id/task-dependencies
+ * Aggregate task dependencies within the initiative (for Dependencies section).
+ */
+router.get('/:id/task-dependencies', InitiativeController.getInitiativeTaskDependencies);
+
+// ==========================================
+// Gate Roles & Governance
+// ==========================================
+
+router.get('/:id/gate-roles', InitiativeController.getGateRoles);
+router.put('/:id/gate-roles', InitiativeController.updateGateRoles);
+router.get('/:id/gate-readiness-check', InitiativeController.getGateReadinessCheck);
+router.get('/:id/status-history', InitiativeController.getStatusHistory);
+
 export default router;

@@ -13,6 +13,7 @@
     "dev:stable": "VITE_STABLE_DEV=1 LOG_LEVEL=info AI_LOG_LEVEL=INFO concurrently \"npm run dev:backend:fast\" \"npm run dev:frontend\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",
     "dev:watch": "concurrently \"npm run dev:backend:watch\" \"npm run dev:frontend\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",
     "dev:londyn": "bash ./start-londyn.sh",
+    "dev:londyn:live": "bash ./start-londyn.sh --live",
     "dev:frontend": "vite --port 3000 --strictPort",
     "lint": "eslint . --report-unused-disable-directives",
     "type-check": "node --max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit",

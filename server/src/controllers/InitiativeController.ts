@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import {
   canExecuteGate,
+  GATE_PERMISSIONS,
   GateType,
   getGateForTransition,
   isValidTransition,
@@ -1143,6 +1144,7 @@ export class InitiativeController {
           (currentStatus === 'SCHEDULED' && nextStatus === 'EXECUTING') ||
           (currentStatus === 'DONE' && nextStatus === 'TRACKING');
 
+        // 1. General status change notification to all stakeholders
         await Promise.allSettled(
           recipients
             .filter((uid) => uid && uid !== actorId)
@@ -1166,6 +1168,104 @@ export class InitiativeController {
               })
             )
         );
+
+        // 2. Gate-specific notification: notify users who hold the gate role for the NEXT gate
+        // This tells the approver "this initiative is now waiting for your decision"
+        try {
+          const nextTransitions =
+            VALID_TRANSITIONS[nextStatus as keyof typeof VALID_TRANSITIONS] || [];
+          const nextGates = nextTransitions
+            .map((to: string) => getGateForTransition(nextStatus as any, to as any))
+            .filter(Boolean)
+            .filter((g: any) => g !== 'CANCEL'); // Don't notify for cancel gate
+
+          if (nextGates.length > 0) {
+            // Get gate role assignments for this initiative
+            let gateRoleUsers: Array<{ gateRole: string; userId: string }> = [];
+            try {
+              const rows = await queryHelpers.queryAll(
+                `SELECT gate_role as "gateRole", user_id as "userId"
+                 FROM initiative_gate_roles WHERE initiative_id = ?`,
+                [id]
+              );
+              gateRoleUsers = rows as any[];
+            } catch {
+              // Table may not exist yet
+            }
+
+            // Add auto-derived roles
+            const ini = await queryHelpers.queryOne(
+              `SELECT owner_business_id, owner_execution_id, sponsor_id FROM initiatives WHERE id = ?`,
+              [id]
+            );
+            if (ini) {
+              const iniAny = ini as any;
+              if (iniAny.owner_business_id) {
+                gateRoleUsers.push({
+                  gateRole: 'INITIATIVE_OWNER',
+                  userId: iniAny.owner_business_id,
+                });
+                gateRoleUsers.push({
+                  gateRole: 'BUSINESS_OWNER',
+                  userId: iniAny.owner_business_id,
+                });
+              }
+              if (iniAny.owner_execution_id) {
+                gateRoleUsers.push({
+                  gateRole: 'INITIATIVE_OWNER',
+                  userId: iniAny.owner_execution_id,
+                });
+              }
+              if (iniAny.sponsor_id) {
+                gateRoleUsers.push({ gateRole: 'PROJECT_SPONSOR', userId: iniAny.sponsor_id });
+              }
+            }
+
+            // Find users who need to approve the next gate
+            const nextGateApprovers = new Set<string>();
+            for (const nextGate of nextGates) {
+              const requiredRoles =
+                GATE_PERMISSIONS[nextGate as keyof typeof GATE_PERMISSIONS] || [];
+              for (const roleUser of gateRoleUsers) {
+                if (
+                  requiredRoles.includes(roleUser.gateRole as any) &&
+                  roleUser.userId !== actorId
+                ) {
+                  nextGateApprovers.add(roleUser.userId);
+                }
+              }
+            }
+
+            // Send targeted "gate ready for your action" notifications
+            const nextGateLabel = nextGates[0] || 'NEXT_GATE';
+            await Promise.allSettled(
+              Array.from(nextGateApprovers).map((userId) =>
+                notificationService.send({
+                  userId,
+                  organizationId: orgId,
+                  type: 'initiative.gate_action_required',
+                  title: 'Gate action required',
+                  body: `${initiativeName} is now in ${nextStatus} and requires your gate decision (${nextGateLabel})`,
+                  entityType: 'initiative',
+                  entityId: id,
+                  actionUrl: '/initiatives',
+                  actorId,
+                  actorName,
+                  priority: 'high',
+                  isActionable: true,
+                  metadata: {
+                    from: currentStatus,
+                    to: nextStatus,
+                    nextGate: nextGateLabel,
+                    previousGate: gate,
+                  },
+                })
+              )
+            );
+          }
+        } catch {
+          // best-effort — gate notifications are nice-to-have
+        }
       } catch {
         // best-effort
       }
@@ -1177,6 +1277,148 @@ export class InitiativeController {
         gate: gate || null,
         message: 'Status updated',
       });
+    }
+  );
+
+  // ==========================================
+  // INITIATIVE: TASK DEPENDENCIES (aggregated)
+  // ==========================================
+
+  /**
+   * Get all task dependencies within an initiative, formatted for the UI table.
+   *
+   * Returns rows compatible with `TaskDependency` (frontend), including `sourceTaskId`
+   * so the UI can call existing task dependency endpoints for edit/copy/delete.
+   *
+   * GET /api/initiatives/:id/task-dependencies
+   */
+  static getInitiativeTaskDependencies = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const initiative = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, orgId]
+      );
+      if (!initiative) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      const dbToShort: Record<string, 'FS' | 'SS' | 'FF' | 'SF'> = {
+        finish_to_start: 'FS',
+        start_to_start: 'SS',
+        finish_to_finish: 'FF',
+        start_to_finish: 'SF',
+        FS: 'FS',
+        SS: 'SS',
+        FF: 'FF',
+        SF: 'SF',
+      };
+
+      let rows: any[] = [];
+      try {
+        // Preferred (current dev DB): predecessor_id / successor_id
+        rows = await queryHelpers.queryAll(
+          `SELECT
+            td.id,
+            td.predecessor_id as fromTaskId,
+            td.successor_id as toTaskId,
+            COALESCE(td.dependency_type, 'finish_to_start') as dependencyType,
+            COALESCE(td.lag_days, 0) as lagDays,
+            td.notes,
+            td.created_at as createdAt,
+            f.title as fromTitle,
+            f.status as fromStatus,
+            f.priority as fromPriority,
+            t.title as toTitle,
+            t.status as toStatus,
+            t.priority as toPriority
+          FROM task_dependencies td
+          JOIN tasks f ON f.id = td.predecessor_id
+          JOIN tasks t ON t.id = td.successor_id
+          WHERE f.organization_id = ?
+            AND t.organization_id = ?
+            AND f.initiative_id = ?
+            AND t.initiative_id = ?
+          ORDER BY td.created_at DESC`,
+          [orgId, orgId, initiativeId, initiativeId]
+        );
+      } catch (err: any) {
+        const msg = String(err?.message || '').toLowerCase();
+        if (!msg.includes('no such column')) throw err;
+        // Legacy fallback: from_task_id / to_task_id
+        rows = await queryHelpers.queryAll(
+          `SELECT
+            td.id,
+            td.from_task_id as fromTaskId,
+            td.to_task_id as toTaskId,
+            COALESCE(td.dependency_type, 'finish_to_start') as dependencyType,
+            COALESCE(td.lag_days, 0) as lagDays,
+            td.notes,
+            td.created_at as createdAt,
+            f.title as fromTitle,
+            f.status as fromStatus,
+            f.priority as fromPriority,
+            t.title as toTitle,
+            t.status as toStatus,
+            t.priority as toPriority
+          FROM task_dependencies td
+          JOIN tasks f ON f.id = td.from_task_id
+          JOIN tasks t ON t.id = td.to_task_id
+          WHERE f.organization_id = ?
+            AND t.organization_id = ?
+            AND f.initiative_id = ?
+            AND t.initiative_id = ?
+          ORDER BY td.created_at DESC`,
+          [orgId, orgId, initiativeId, initiativeId]
+        );
+      }
+
+      const dependencies = (rows || []).flatMap((r: any) => {
+        const type = dbToShort[String(r.dependencyType || 'FS')] || 'FS';
+        const common = {
+          dependencyType: type,
+          lagDays: Number(r.lagDays || 0) || 0,
+          notes: r.notes || undefined,
+          createdAt: r.createdAt || undefined,
+        };
+
+        // For the shared DependenciesSection UI:
+        // - "predecessor" row is relative to the successor (sourceTaskId = toTaskId)
+        // - "successor" row is relative to the predecessor (sourceTaskId = fromTaskId)
+        return [
+          {
+            id: String(r.id),
+            sourceTaskId: String(r.toTaskId),
+            taskId: String(r.fromTaskId),
+            taskTitle: String(r.fromTitle || ''),
+            taskStatus: String(r.fromStatus || 'todo'),
+            taskPriority: String(r.fromPriority || 'medium'),
+            taskIndexCode: String(r.fromTaskId),
+            direction: 'predecessor' as const,
+            ...common,
+          },
+          {
+            id: String(r.id),
+            sourceTaskId: String(r.fromTaskId),
+            taskId: String(r.toTaskId),
+            taskTitle: String(r.toTitle || ''),
+            taskStatus: String(r.toStatus || 'todo'),
+            taskPriority: String(r.toPriority || 'medium'),
+            taskIndexCode: String(r.toTaskId),
+            direction: 'successor' as const,
+            ...common,
+          },
+        ];
+      });
+
+      res.json({ dependencies });
     }
   );
 
@@ -2352,37 +2594,120 @@ export class InitiativeController {
         return;
       }
 
-      const kpis = await queryHelpers.queryAll(
-        `SELECT 
-          id,
-          initiative_id as initiativeId,
-          name,
-          description,
-          category,
-          unit,
-          baseline_value as baselineValue,
-          target_value as targetValue,
-          current_value as currentValue,
-          progress_percentage as progressPercentage,
-          status,
-          measurement_frequency as measurementFrequency,
-          trend_data as trendData,
-          created_at as createdAt,
-          updated_at as updatedAt,
-          CASE WHEN current_value >= target_value THEN 1 ELSE 0 END as isOnTarget,
-          current_value as latestValue
-        FROM initiative_kpis 
-        WHERE initiative_id = ?
-        ORDER BY created_at DESC`,
-        [initiativeId]
-      );
+      let kpis: any[] = [];
+      try {
+        kpis = await queryHelpers.queryAll(
+          `SELECT 
+            id,
+            initiative_id as initiativeId,
+            name,
+            description,
+            category,
+            unit,
+            baseline_value as baselineValue,
+            target_value as targetValue,
+            current_value as currentValue,
+            progress_percentage as progressPercentage,
+            status,
+            measurement_frequency as measurementFrequency,
+            trend_data as trendData,
+            created_at as createdAt,
+            updated_at as updatedAt,
+            CASE WHEN current_value >= target_value THEN 1 ELSE 0 END as isOnTarget,
+            current_value as latestValue
+          FROM initiative_kpis 
+          WHERE initiative_id = ?
+          ORDER BY created_at DESC`,
+          [initiativeId]
+        );
+      } catch (err: any) {
+        const msg = String(err?.message || '').toLowerCase();
+        if (!msg.includes('no such column')) {
+          throw err;
+        }
+        // Backward-compatible fallback for legacy SQLite schema
+        kpis = await queryHelpers.queryAll(
+          `SELECT
+            ik.id,
+            ik.initiative_id as initiativeId,
+            ik.name,
+            ik.description,
+            'benefits' as category,
+            ik.unit,
+            0 as baselineValue,
+            ik.target_value as targetValue,
+            COALESCE(
+              (
+                SELECT km.value
+                FROM kpi_measurements km
+                WHERE km.kpi_id = ik.id
+                ORDER BY km.measured_at DESC, km.created_at DESC
+                LIMIT 1
+              ),
+              0
+            ) as currentValue,
+            0 as progressPercentage,
+            'on_track' as status,
+            LOWER(COALESCE(ik.measurement_frequency, 'monthly')) as measurementFrequency,
+            '[]' as trendData,
+            ik.created_at as createdAt,
+            ik.updated_at as updatedAt,
+            CASE
+              WHEN COALESCE(
+                (
+                  SELECT km.value
+                  FROM kpi_measurements km
+                  WHERE km.kpi_id = ik.id
+                  ORDER BY km.measured_at DESC, km.created_at DESC
+                  LIMIT 1
+                ),
+                0
+              ) >= COALESCE(ik.target_value, 0)
+              THEN 1 ELSE 0
+            END as isOnTarget,
+            COALESCE(
+              (
+                SELECT km.value
+                FROM kpi_measurements km
+                WHERE km.kpi_id = ik.id
+                ORDER BY km.measured_at DESC, km.created_at DESC
+                LIMIT 1
+              ),
+              0
+            ) as latestValue
+          FROM initiative_kpis ik
+          WHERE ik.initiative_id = ?
+          ORDER BY ik.created_at DESC`,
+          [initiativeId]
+        );
+      }
 
       // Parse trend_data JSON
-      const parsedKpis = kpis.map((kpi: any) => ({
-        ...kpi,
-        trendData: safeJsonParse(kpi.trendData, []),
-        isOnTarget: Boolean(kpi.isOnTarget),
-      }));
+      const parsedKpis = kpis.map((kpi: any) => {
+        const baselineValue = Number(kpi.baselineValue ?? 0) || 0;
+        const targetValue = Number(kpi.targetValue ?? 0) || 0;
+        const currentValue = Number(kpi.currentValue ?? kpi.latestValue ?? baselineValue) || 0;
+        const progressPercentageRaw = Number(kpi.progressPercentage);
+        const progressPercentage = Number.isFinite(progressPercentageRaw)
+          ? progressPercentageRaw
+          : targetValue > 0
+            ? Number(((currentValue / targetValue) * 100).toFixed(1))
+            : 0;
+        return {
+          ...kpi,
+          category: kpi.category || 'benefits',
+          baselineValue,
+          targetValue,
+          currentValue,
+          latestValue: Number(kpi.latestValue ?? currentValue) || currentValue,
+          progressPercentage,
+          status: kpi.status || 'on_track',
+          trendData: safeJsonParse(kpi.trendData, []),
+          isOnTarget: Boolean(
+            kpi.isOnTarget ?? (targetValue > 0 ? currentValue >= targetValue : false)
+          ),
+        };
+      });
 
       res.json({ kpis: parsedKpis });
     }
@@ -2429,28 +2754,67 @@ export class InitiativeController {
       const kpiId = uuidv4();
       const now = new Date().toISOString();
 
-      await queryHelpers.queryRun(
-        `INSERT INTO initiative_kpis (
-          id, initiative_id, organization_id, name, description, category, unit, 
-          baseline_value, target_value, current_value, progress_percentage, status,
-          measurement_frequency, trend_data, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'on_track', ?, '[]', ?, ?)`,
-        [
-          kpiId,
-          initiativeId,
-          orgId,
-          name,
-          description || null,
-          category,
-          unit,
-          baselineValue || 0,
-          targetValue || 0,
-          baselineValue || 0,
-          measurementFrequency || 'monthly',
-          now,
-          now,
-        ]
-      );
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO initiative_kpis (
+            id, initiative_id, organization_id, name, description, category, unit, 
+            baseline_value, target_value, current_value, progress_percentage, status,
+            measurement_frequency, trend_data, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'on_track', ?, '[]', ?, ?)`,
+          [
+            kpiId,
+            initiativeId,
+            orgId,
+            name,
+            description || null,
+            category,
+            unit,
+            baselineValue || 0,
+            targetValue || 0,
+            baselineValue || 0,
+            measurementFrequency || 'monthly',
+            now,
+            now,
+          ]
+        );
+      } catch (err: any) {
+        const msg = String(err?.message || '').toLowerCase();
+        if (!msg.includes('no column named')) {
+          throw err;
+        }
+        // Backward-compatible insert for legacy SQLite schema
+        await queryHelpers.queryRun(
+          `INSERT INTO initiative_kpis (
+            id, initiative_id, name, description, target_value, unit, measurement_frequency, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            kpiId,
+            initiativeId,
+            name,
+            description || null,
+            targetValue || 0,
+            unit,
+            String(measurementFrequency || 'monthly').toUpperCase(),
+            now,
+            now,
+          ]
+        );
+        if (Number.isFinite(Number(baselineValue))) {
+          await queryHelpers.queryRun(
+            `INSERT INTO kpi_measurements (id, kpi_id, value, measured_at, notes, created_by, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+              uuidv4(),
+              kpiId,
+              Number(baselineValue || 0),
+              now,
+              'Initial baseline',
+              req.user?.id || null,
+              now,
+            ]
+          );
+        }
+      }
 
       res.status(201).json({
         success: true,
@@ -3257,14 +3621,368 @@ export class InitiativeController {
           h.new_value as newValue,
           h.notes
         FROM initiative_history h
-        JOIN initiatives i ON i.id = h.initiative_id
-        WHERE h.initiative_id = ? AND i.organization_id = ?
+        LEFT JOIN initiatives i ON i.id = h.initiative_id
+        WHERE h.initiative_id = ? AND (i.organization_id = ? OR i.id IS NULL)
         ORDER BY h.changed_at DESC
         LIMIT 200`,
         [initiativeId, orgId]
       );
 
       res.json({ events: rows });
+    }
+  );
+
+  // ============================================================
+  // GATE ROLES MANAGEMENT
+  // ============================================================
+
+  /**
+   * GET /initiatives/:id/gate-roles
+   * Returns all gate role assignments for an initiative.
+   * Also auto-derives roles from initiative fields (owner → INITIATIVE_OWNER, sponsor → SPONSOR).
+   */
+  static getGateRoles = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const initiative = await queryHelpers.queryOne(
+        `SELECT owner_business_id, owner_execution_id, sponsor_id
+         FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, orgId]
+      );
+      if (!initiative) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      // Explicit gate role assignments from table
+      let explicitRoles: any[] = [];
+      try {
+        explicitRoles = await queryHelpers.queryAll(
+          `SELECT
+            gr.id,
+            gr.initiative_id as initiativeId,
+            gr.gate_role as gateRole,
+            gr.user_id as userId,
+            gr.assigned_by as assignedBy,
+            gr.assigned_at as assignedAt,
+            u.first_name as firstName,
+            u.last_name as lastName,
+            u.email
+          FROM initiative_gate_roles gr
+          LEFT JOIN users u ON u.id = gr.user_id
+          WHERE gr.initiative_id = ?
+          ORDER BY gr.gate_role, gr.assigned_at`,
+          [initiativeId]
+        );
+      } catch {
+        // Table may not exist yet
+      }
+
+      // Auto-derived roles from initiative fields
+      const derived: any[] = [];
+      const ini = initiative as any;
+      if (ini.owner_business_id) {
+        derived.push({
+          gateRole: 'INITIATIVE_OWNER',
+          userId: ini.owner_business_id,
+          source: 'auto',
+        });
+        derived.push({ gateRole: 'BUSINESS_OWNER', userId: ini.owner_business_id, source: 'auto' });
+      }
+      if (ini.owner_execution_id) {
+        derived.push({
+          gateRole: 'INITIATIVE_OWNER',
+          userId: ini.owner_execution_id,
+          source: 'auto',
+        });
+      }
+      if (ini.sponsor_id) {
+        derived.push({ gateRole: 'PROJECT_SPONSOR', userId: ini.sponsor_id, source: 'auto' });
+      }
+
+      // Merge: explicit roles take priority, add derived ones that don't overlap
+      const explicitKeys = new Set(explicitRoles.map((r: any) => `${r.gateRole}::${r.userId}`));
+      const mergedDerived = derived
+        .filter((d) => !explicitKeys.has(`${d.gateRole}::${d.userId}`))
+        .map((d) => ({ ...d, id: `derived-${d.gateRole}-${d.userId}` }));
+
+      res.json({
+        roles: [...explicitRoles.map((r: any) => ({ ...r, source: 'explicit' })), ...mergedDerived],
+      });
+    }
+  );
+
+  /**
+   * PUT /initiatives/:id/gate-roles
+   * Bulk upsert gate role assignments.
+   * Body: { roles: [{ gateRole: string, userId: string }] }
+   */
+  static updateGateRoles = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const { id: initiativeId } = req.params;
+      const { roles } = req.body || {};
+
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const initiative = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, orgId]
+      );
+      if (!initiative) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      if (!Array.isArray(roles)) {
+        res.status(400).json({ error: 'roles must be an array of { gateRole, userId }' });
+        return;
+      }
+
+      // Delete all explicit roles and re-insert
+      try {
+        await queryHelpers.queryRun(`DELETE FROM initiative_gate_roles WHERE initiative_id = ?`, [
+          initiativeId,
+        ]);
+      } catch {
+        // Table may not exist — will be created by migration
+      }
+
+      const inserted: any[] = [];
+      for (const role of roles) {
+        if (!role.gateRole || !role.userId) continue;
+        const id = uuidv4();
+        try {
+          await queryHelpers.queryRun(
+            `INSERT INTO initiative_gate_roles (id, initiative_id, gate_role, user_id, assigned_by)
+             VALUES (?, ?, ?, ?, ?)`,
+            [id, initiativeId, role.gateRole, role.userId, actorId]
+          );
+          inserted.push({ id, gateRole: role.gateRole, userId: role.userId });
+        } catch {
+          // Skip duplicates / errors
+        }
+      }
+
+      // Audit
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO initiative_history (id, initiative_id, action, new_value, changed_by)
+           VALUES (?, ?, ?, ?, ?)`,
+          [uuidv4(), initiativeId, 'gate_roles_updated', JSON.stringify(inserted), actorId]
+        );
+      } catch {
+        // best-effort
+      }
+
+      res.json({ success: true, roles: inserted });
+    }
+  );
+
+  /**
+   * GET /initiatives/:id/gate-readiness-check
+   * Comprehensive gate readiness check for the current status.
+   * Returns: which gates are available, who can approve, what's blocking.
+   */
+  static getGateReadinessCheck = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const currentUserId = req.user?.id;
+      const { id: initiativeId } = req.params;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const initiative = await queryHelpers.queryOne(
+        `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, orgId]
+      );
+      if (!initiative) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      const ini = initiative as any;
+      const currentStatus = String(ini.status || 'DRAFT').toUpperCase();
+
+      // Get gate roles for this initiative
+      let gateRoles: any[] = [];
+      try {
+        gateRoles = await queryHelpers.queryAll(
+          `SELECT gate_role as gateRole, user_id as userId
+           FROM initiative_gate_roles WHERE initiative_id = ?`,
+          [initiativeId]
+        );
+      } catch {
+        // table may not exist
+      }
+
+      // Also add derived roles
+      if (ini.owner_business_id) {
+        gateRoles.push({ gateRole: 'INITIATIVE_OWNER', userId: ini.owner_business_id });
+        gateRoles.push({ gateRole: 'BUSINESS_OWNER', userId: ini.owner_business_id });
+      }
+      if (ini.owner_execution_id) {
+        gateRoles.push({ gateRole: 'INITIATIVE_OWNER', userId: ini.owner_execution_id });
+      }
+      if (ini.sponsor_id) {
+        gateRoles.push({ gateRole: 'PROJECT_SPONSOR', userId: ini.sponsor_id });
+      }
+
+      // Find the current user's roles on this initiative
+      const userRoles = gateRoles
+        .filter((r: any) => r.userId === currentUserId)
+        .map((r: any) => r.gateRole);
+
+      // Check current user's system role
+      const userRecord = await queryHelpers.queryOne(`SELECT role FROM users WHERE id = ?`, [
+        currentUserId,
+      ]);
+      const systemRole = String((userRecord as any)?.role || '').toUpperCase();
+      if (systemRole === 'ADMIN' || systemRole === 'SUPERADMIN') {
+        userRoles.push('ADMIN');
+      }
+
+      // Get valid next transitions and check which ones the user can execute
+      const validNext = VALID_TRANSITIONS[currentStatus as keyof typeof VALID_TRANSITIONS] || [];
+      const availableTransitions: any[] = [];
+
+      for (const nextStatus of validNext) {
+        const gate = getGateForTransition(currentStatus as any, nextStatus as any);
+        const requiredRoles = gate ? GATE_PERMISSIONS[gate] || [] : [];
+        const canExecute =
+          userRoles.includes('ADMIN') ||
+          (gate ? requiredRoles.some((r: string) => userRoles.includes(r)) : true);
+
+        // Get assigned users for the required roles
+        const assignedApprovers = requiredRoles.flatMap((role: string) =>
+          gateRoles.filter((gr: any) => gr.gateRole === role)
+        );
+
+        availableTransitions.push({
+          targetStatus: nextStatus,
+          gate: gate || null,
+          requiredRoles,
+          assignedApprovers,
+          canCurrentUserExecute: canExecute,
+          hasAssignedApprover: assignedApprovers.length > 0,
+        });
+      }
+
+      // Readiness criteria for current stage
+      const readiness: any[] = [];
+      const addCheck = (key: string, label: string, pass: boolean, severity: string) => {
+        readiness.push({ key, label, pass, severity });
+      };
+
+      addCheck('title', 'Title defined', !!ini.name, 'blocking');
+      addCheck(
+        'owner',
+        'Owner assigned',
+        !!(ini.owner_business_id || ini.owner_execution_id),
+        'blocking'
+      );
+
+      if (['PENDING_REVIEW', 'REVIEW', 'PROMOTED', 'PLANNING'].includes(currentStatus)) {
+        addCheck(
+          'summary',
+          'Summary / problem statement',
+          !!(ini.summary || ini.problem_statement),
+          'warning'
+        );
+      }
+      if (['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED'].includes(currentStatus)) {
+        addCheck('sponsor', 'Sponsor assigned', !!ini.sponsor_id, 'warning');
+      }
+      if (['APPROVED', 'SCHEDULED'].includes(currentStatus)) {
+        addCheck(
+          'timeline',
+          'Timeline set',
+          !!(ini.start_date || ini.planned_start_date),
+          'blocking'
+        );
+      }
+
+      // Check if required gate roles are assigned
+      const nextGates = availableTransitions.filter((t: any) => t.gate && t.gate !== 'CANCEL');
+      for (const transition of nextGates) {
+        const missingRoles = (transition.requiredRoles as string[]).filter(
+          (role: string) => !gateRoles.some((gr: any) => gr.gateRole === role)
+        );
+        if (missingRoles.length > 0) {
+          addCheck(
+            `gate_role_${transition.gate}`,
+            `Gate approver assigned for ${transition.gate}: ${missingRoles.join(', ')}`,
+            false,
+            'warning'
+          );
+        }
+      }
+
+      res.json({
+        currentStatus,
+        userRoles,
+        availableTransitions,
+        readiness,
+        allBlocking:
+          readiness.filter((r: any) => r.severity === 'blocking' && !r.pass).length === 0,
+        allWarnings: readiness.filter((r: any) => r.severity === 'warning' && !r.pass).length === 0,
+      });
+    }
+  );
+
+  /**
+   * GET /initiatives/:id/status-history
+   * Returns gate audit trail from initiative_status_history.
+   */
+  static getStatusHistory = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      let rows: any[] = [];
+      try {
+        rows = await queryHelpers.queryAll(
+          `SELECT
+            h.id,
+            h.initiative_id as initiativeId,
+            h.from_status as fromStatus,
+            h.to_status as toStatus,
+            h.changed_by as changedBy,
+            h.reason,
+            h.gate_type as gateType,
+            h.created_at as createdAt,
+            u.first_name as changedByFirstName,
+            u.last_name as changedByLastName,
+            u.email as changedByEmail
+          FROM initiative_status_history h
+          LEFT JOIN users u ON u.id = h.changed_by
+          WHERE h.initiative_id = ? AND h.organization_id = ?
+          ORDER BY h.created_at DESC
+          LIMIT 100`,
+          [initiativeId, orgId]
+        );
+      } catch {
+        // Table may not exist
+      }
+
+      res.json({ history: rows });
     }
   );
 }

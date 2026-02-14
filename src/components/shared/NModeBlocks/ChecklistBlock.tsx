@@ -6,7 +6,7 @@
  *
  * Follows DBR77 Visual Language — quiet UI, minimal chrome.
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.5
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.5
  */
 
 import { Check, Loader2, Plus, Sparkles, Trash2 } from 'lucide-react';

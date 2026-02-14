@@ -3,7 +3,7 @@
  *
  * Manages accordion expand/collapse state with smart-open, persistence, and
  * expand-all / collapse-all. Implements section 1.1.1 of
- * docs/ui-standards/detail-view-presentation-modes.md
+ * docs/ui-standards/01-shell-layout/presentation-modes.md
  *
  * Priority of expanded state:
  *   1) Persisted state (if exists for this entityType:entityId)

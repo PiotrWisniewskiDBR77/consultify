@@ -263,20 +263,20 @@ interface ActivityTypeMeta {
 
 ### 4.4 Visual standard (MUST)
 
-| Element            | Specyfikacja                                                        |
-| ------------------ | ------------------------------------------------------------------- |
-| **Stat cards**     | `grid grid-cols-1 md:grid-cols-4 gap-2` — `rounded-xl border`       |
-| **Stat label**     | `text-[11px] uppercase tracking-wide text-slate-400`                |
-| **Stat value**     | `text-sm font-semibold text-slate-700 dark:text-slate-200`          |
-| **Header controls**| Prawy górny róg: time filter (`All/7/30/90`) + sort toggle          |
-| **Feed container** | `rounded-2xl border` z `p-3`                                        |
-| **Feed entry**     | `grid grid-cols-[auto_1fr_auto] gap-3` — ikona + treść + type badge |
-| **Icon badge**     | `w-6 h-6 rounded-lg border` — kolor z `typeMeta.style`              |
-| **Timestamp**      | `text-[11px] text-slate-400` — `toLocaleString()`                   |
-| **Type badge**     | `text-[10px] font-mono uppercase tracking-wide text-slate-300`      |
-| **Old→New**        | `text-[11px] text-slate-500` — "From: X → To: Y"                    |
-| **Empty state**    | `rounded-2xl border-dashed p-6 text-center text-xs`                 |
-| **Section title**  | `text-lg font-semibold` — rendered inside component                 |
+| Element             | Specyfikacja                                                        |
+| ------------------- | ------------------------------------------------------------------- |
+| **Stat cards**      | `grid grid-cols-1 md:grid-cols-4 gap-2` — `rounded-xl border`       |
+| **Stat label**      | `text-[11px] uppercase tracking-wide text-slate-400`                |
+| **Stat value**      | `text-sm font-semibold text-slate-700 dark:text-slate-200`          |
+| **Header controls** | Prawy górny róg: time filter (`All/7/30/90`) + sort toggle          |
+| **Feed container**  | `rounded-2xl border` z `p-3`                                        |
+| **Feed entry**      | `grid grid-cols-[auto_1fr_auto] gap-3` — ikona + treść + type badge |
+| **Icon badge**      | `w-6 h-6 rounded-lg border` — kolor z `typeMeta.style`              |
+| **Timestamp**       | `text-[11px] text-slate-400` — `toLocaleString()`                   |
+| **Type badge**      | `text-[10px] font-mono uppercase tracking-wide text-slate-300`      |
+| **Old→New**         | `text-[11px] text-slate-500` — "From: X → To: Y"                    |
+| **Empty state**     | `rounded-2xl border-dashed p-6 text-center text-xs`                 |
+| **Section title**   | `text-lg font-semibold` — rendered inside component                 |
 
 ### 4.5 Obsługiwane typy aktywności
 
@@ -567,12 +567,12 @@ Poniższe sekcje **różnią się** między artefaktami i NIE powinny być w `NM
 
 ### Task-specific:
 
-| Sekcja               | ID                  | Opis                                            |
-| -------------------- | ------------------- | ----------------------------------------------- |
-| Task Scope           | `description-scope` | Scope + expected outcome + related items         |
-| Implementation Ideas | `implementation`    | Lista pomysłów implementacyjnych z votingiem    |
-| Checklist            | `checklist`         | Checklista z progress counter                   |
-| Dependencies         | `dependencies`      | Gantt-style dependency management               |
+| Sekcja               | ID                  | Opis                                         |
+| -------------------- | ------------------- | -------------------------------------------- |
+| Task Scope           | `description-scope` | Scope + expected outcome + related items     |
+| Implementation Ideas | `implementation`    | Lista pomysłów implementacyjnych z votingiem |
+| Checklist            | `checklist`         | Checklista z progress counter                |
+| Dependencies         | `dependencies`      | Gantt-style dependency management            |
 
 ### Decision-specific:
 
@@ -609,6 +609,15 @@ Pierwsza sekcja każdego artefaktu używa wspólnej konwencji `... Scope`:
 - `Decision Scope`
 - `Notification Scope`
 - `Initiative Scope`
+
+### Initiative `Success Criteria` card (N-mode baseline)
+
+- Karta składa się z 3 podkart: `Target State`, `Success Criteria`, `Deliverables`.
+- W nagłówku całej karty nie pokazujemy dodatkowego przycisku `AI`.
+- W podkartach:
+  - `+ Add item` jest lekką akcją tekstową (bez ramki),
+  - `AI` pozostaje lokalną akcją podkarty.
+- Wiersz checklisty: checkbox -> tekst inline -> delete na hover.
 
 ---
 

@@ -5,7 +5,7 @@
  * Renders a responsive grid of form fields (select, date, text, custom).
  * Supports alert border highlighting (e.g. overdue deadline).
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.4
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.4
  */
 
 import React from 'react';

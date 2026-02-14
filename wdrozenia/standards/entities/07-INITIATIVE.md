@@ -144,7 +144,7 @@ Tryby prezentacji (KANON):
 - `N` (N presentation mode: nawigacja + treść strony + properties)
 - `C` (C presentation mode: action-first: command bar + taby)
 
-Źródło prawdy: `docs/ui-standards/detail-view-presentation-modes.md`.
+Źródło prawdy: `docs/ui-standards/01-shell-layout/presentation-modes.md`.
 
 **Układ UI/UX (jak Task/Decision Golden Standard):**
 

@@ -693,6 +693,343 @@ async function seedReportBuilderBlockLibrary(
   }
 }
 
+async function upsertDynamicRow(
+  db: any,
+  table: string,
+  values: Record<string, unknown>,
+  conflictCol: string = 'id'
+) {
+  const cols = await getColumns(db, table).catch(() => []);
+  const existing = new Set(cols.map((c) => c.name));
+  if (existing.size === 0) return;
+
+  const filteredEntries = Object.entries(values).filter(
+    ([k, v]) => existing.has(k) && v !== undefined
+  );
+  if (filteredEntries.length === 0) return;
+
+  const insertCols = filteredEntries.map(([k]) => k);
+  const params = filteredEntries.map(([, v]) => v);
+
+  const updateCols = insertCols.filter((c) => c !== conflictCol);
+  const updates =
+    updateCols.length === 0
+      ? ''
+      : ` DO UPDATE SET ${updateCols
+          .map((c) => `${safeSqlIdent(c)} = excluded.${safeSqlIdent(c)}`)
+          .join(', ')}`;
+
+  const sql = `INSERT INTO ${safeSqlIdent(table)} (${insertCols
+    .map(safeSqlIdent)
+    .join(', ')}) VALUES (${insertCols.map(() => '?').join(', ')})
+    ON CONFLICT(${safeSqlIdent(conflictCol)})${updates}`;
+
+  await db.run(sql, params);
+}
+
+async function seedInitiativeModuleDemoData(
+  db: any,
+  anchors: { orgId: string; userId: string; projectId: string }
+) {
+  // Seed one "realistic" initiative with real tasks + dependencies + KPIs,
+  // so the initiative view can be tested against live DB-backed behavior.
+  const now = new Date().toISOString();
+
+  // Ensure initiatives table exists in this DB (older DBs may not have it)
+  const hasInitiatives = await db
+    .get(`SELECT name FROM sqlite_master WHERE type='table' AND name='initiatives' LIMIT 1`, [])
+    .catch(() => null);
+  if (!hasInitiatives) return;
+
+  const initiativeId = 'init-adma-09';
+  await upsertDynamicRow(db, 'initiatives', {
+    id: initiativeId,
+    organization_id: anchors.orgId,
+    project_id: anchors.projectId,
+    title: 'Automated Changeover Optimization',
+    name: 'Automated Changeover Optimization',
+    summary:
+      'Automate and standardize key handover activities to reduce cycle time and improve quality.',
+    description:
+      'This initiative introduces a structured handover flow with clear ownership, checkpoints and escalation.',
+    status: 'draft',
+    priority: 'low',
+    risk_level: 'medium',
+    progress: 25,
+    planned_start_date: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+    planned_end_date: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+    owner_business_id: anchors.userId,
+    owner_execution_id: anchors.userId,
+    sponsor_id: anchors.userId,
+    created_by: anchors.userId,
+    updated_by: anchors.userId,
+    created_at: now,
+    updated_at: now,
+  });
+
+  // Tasks
+  const tasks = [
+    {
+      id: 'task-adma-0901',
+      title: 'Kick-off workshop with key stakeholders',
+      status: 'done',
+      priority: 'high',
+      due_date: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
+      description: 'Align goals, scope and success metrics.',
+      estimated_hours: 6,
+    },
+    {
+      id: 'task-adma-0902',
+      title: 'Define target process and acceptance criteria',
+      status: 'in_progress',
+      priority: 'high',
+      due_date: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
+      description: 'Document future-state flow and measurable outcomes.',
+      estimated_hours: 12,
+    },
+    {
+      id: 'task-adma-0903',
+      title: 'Configure pilot environment and integrations',
+      status: 'todo',
+      priority: 'medium',
+      due_date: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString(),
+      description: 'Prepare pilot setup and data exchange between systems.',
+      estimated_hours: 16,
+    },
+  ];
+
+  for (const t of tasks) {
+    await upsertDynamicRow(db, 'tasks', {
+      id: t.id,
+      organization_id: anchors.orgId,
+      project_id: anchors.projectId,
+      initiative_id: initiativeId,
+      title: t.title,
+      description: t.description,
+      status: t.status,
+      priority: t.priority,
+      due_date: t.due_date,
+      estimated_hours: t.estimated_hours,
+      created_by: anchors.userId,
+      reporter_id: anchors.userId,
+      created_at: now,
+      updated_at: now,
+    });
+  }
+
+  // Task dependencies (Gantt-style) — use from_task_id / to_task_id (migration 533)
+  const hasTaskDeps = await db
+    .get(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name='task_dependencies' LIMIT 1`,
+      []
+    )
+    .catch(() => null);
+  if (hasTaskDeps) {
+    await upsertDynamicRow(db, 'task_dependencies', {
+      id: 'dep-adma-0901',
+      // Support both schema variants (predecessor/successor OR from/to)
+      predecessor_id: tasks[0].id,
+      successor_id: tasks[1].id,
+      from_task_id: tasks[0].id,
+      to_task_id: tasks[1].id,
+      dependency_type: 'finish_to_start',
+      lag_days: 0,
+      notes: 'Process definition starts after kick-off alignment.',
+      created_by: anchors.userId,
+      created_at: now,
+    });
+    await upsertDynamicRow(db, 'task_dependencies', {
+      id: 'dep-adma-0902',
+      predecessor_id: tasks[1].id,
+      successor_id: tasks[2].id,
+      from_task_id: tasks[1].id,
+      to_task_id: tasks[2].id,
+      dependency_type: 'start_to_start',
+      lag_days: 2,
+      notes: 'Pilot setup can start 2 days after process definition starts.',
+      created_by: anchors.userId,
+      created_at: now,
+    });
+  }
+
+  // KPIs (Benefits)
+  const hasKpis = await db
+    .get(`SELECT name FROM sqlite_master WHERE type='table' AND name='initiative_kpis' LIMIT 1`, [])
+    .catch(() => null);
+  if (hasKpis) {
+    const kpis = [
+      {
+        id: 'kpi-adma-0901',
+        name: 'Changeover time reduction',
+        unit: 'min',
+        baseline_value: 92,
+        current_value: 92,
+        target_value: 75,
+        status: 'on_track',
+      },
+      {
+        id: 'kpi-adma-0902',
+        name: 'Startup scrap reduction',
+        unit: '%',
+        baseline_value: 5.2,
+        current_value: 5.2,
+        target_value: 4.0,
+        status: 'at_risk',
+      },
+      {
+        id: 'kpi-adma-0903',
+        name: 'Post-changeover OEE',
+        unit: '%',
+        baseline_value: 76,
+        current_value: 76,
+        target_value: 80,
+        status: 'on_track',
+      },
+    ];
+    for (const k of kpis) {
+      await upsertDynamicRow(db, 'initiative_kpis', {
+        id: k.id,
+        initiative_id: initiativeId,
+        organization_id: anchors.orgId,
+        name: k.name,
+        description: null,
+        category: 'benefits',
+        unit: k.unit,
+        baseline_value: k.baseline_value,
+        current_value: k.current_value,
+        target_value: k.target_value,
+        progress_percentage:
+          k.target_value && Number(k.target_value) !== 0
+            ? Number(((Number(k.current_value) / Number(k.target_value)) * 100).toFixed(1))
+            : 0,
+        status: k.status,
+        measurement_frequency: 'monthly',
+        trend_data: JSON.stringify([]),
+        created_at: now,
+        updated_at: now,
+      });
+    }
+
+    // Measurements (optional)
+    const hasMeasurements = await db
+      .get(
+        `SELECT name FROM sqlite_master WHERE type='table' AND name='kpi_measurements' LIMIT 1`,
+        []
+      )
+      .catch(() => null);
+    if (hasMeasurements) {
+      for (const k of kpis) {
+        await upsertDynamicRow(db, 'kpi_measurements', {
+          id: `${k.id}-m1`,
+          kpi_id: k.id,
+          value: k.current_value,
+          measured_at: now,
+          notes: 'Seeded baseline measurement',
+          created_by: anchors.userId,
+          created_at: now,
+        });
+      }
+    }
+  }
+
+  // RACI stakeholders + watchers (if tables exist)
+  const hasStakeholders = await db
+    .get(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name='initiative_stakeholders' LIMIT 1`,
+      []
+    )
+    .catch(() => null);
+  const hasWatchers = await db
+    .get(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name='initiative_watchers' LIMIT 1`,
+      []
+    )
+    .catch(() => null);
+  if (hasStakeholders || hasWatchers) {
+    const users = (await db.query(
+      `SELECT id FROM users WHERE organization_id = ? ORDER BY created_at DESC LIMIT 6`,
+      [anchors.orgId]
+    )) as any;
+    const userIds = (users?.rows || []).map((r: any) => String(r.id)).filter(Boolean);
+    const pick = (idx: number) => userIds[idx] || anchors.userId;
+
+    if (hasStakeholders) {
+      const stakeholderRows = [
+        { id: 'stk-adma-0901', user_id: pick(0), role: 'A', raci_type: 'owner' },
+        { id: 'stk-adma-0902', user_id: pick(1), role: 'R', raci_type: 'lead' },
+        { id: 'stk-adma-0903', user_id: pick(2), role: 'C', raci_type: 'expert' },
+        { id: 'stk-adma-0904', user_id: pick(3), role: 'I', raci_type: 'stakeholder' },
+      ];
+      for (const s of stakeholderRows) {
+        await upsertDynamicRow(db, 'initiative_stakeholders', {
+          id: s.id,
+          initiative_id: initiativeId,
+          organization_id: anchors.orgId,
+          user_id: s.user_id,
+          role: s.role,
+          raci_type: s.raci_type,
+          created_by: anchors.userId,
+          created_at: now,
+        });
+      }
+    }
+
+    if (hasWatchers) {
+      const watcherIds = [pick(0), pick(1)];
+      for (let i = 0; i < watcherIds.length; i += 1) {
+        await upsertDynamicRow(db, 'initiative_watchers', {
+          id: `watch-adma-09${i + 1}`,
+          initiative_id: initiativeId,
+          organization_id: anchors.orgId,
+          user_id: watcherIds[i],
+          created_at: now,
+        });
+      }
+    }
+  }
+
+  // RAID items (if table exists)
+  const hasRaid = await db
+    .get(`SELECT name FROM sqlite_master WHERE type='table' AND name='raid_items' LIMIT 1`, [])
+    .catch(() => null);
+  if (hasRaid) {
+    await upsertDynamicRow(db, 'raid_items', {
+      id: 'raid-adma-0901',
+      initiative_id: initiativeId,
+      organization_id: anchors.orgId,
+      type: 'RISK',
+      title: 'Data quality may delay pilot readiness',
+      description: 'Source systems still contain inconsistent master data.',
+      severity: 'HIGH',
+      status: 'OPEN',
+      created_at: now,
+      updated_at: now,
+    });
+  }
+
+  // Initiative history (activity log)
+  const hasHistory = await db
+    .get(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name='initiative_history' LIMIT 1`,
+      []
+    )
+    .catch(() => null);
+  if (hasHistory) {
+    await upsertDynamicRow(db, 'initiative_history', {
+      id: 'hist-adma-0901',
+      initiative_id: initiativeId,
+      organization_id: anchors.orgId,
+      action: 'seeded',
+      actor_id: anchors.userId,
+      actor_name: 'Seeder',
+      changes: JSON.stringify({ seeded: true }),
+      created_at: now,
+    });
+  }
+
+  log.step(`Seeded initiative module demo data: ${initiativeId}`);
+}
+
 async function main() {
   console.log('\n🧩 DBR77: Fill All Tables Seeder (SQLite)\n');
 
@@ -807,6 +1144,7 @@ async function main() {
   // Key, app-visible data first
   await seedKeyDbr77Data(db, anchors);
   await seedReportBuilderBlockLibrary(db, anchors);
+  await seedInitiativeModuleDemoData(db, anchors);
 
   // Baseline table inventory (before fill)
   const tables = await getTables(db);

@@ -13,6 +13,7 @@ import { getStatusMeta } from '@/services/initiativeLifecycle';
 
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
+import { InitiativeGatesWorkflowTable } from './InitiativeGatesWorkflowTable';
 import type { InitiativeSectionProps } from './types';
 import { GATE_CONFIG, GATE_DEFINITIONS, getNextGateForStatus, getRoleLabel } from './types';
 
@@ -210,6 +211,11 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
         </div>
       }
     >
+      {/* Full lifecycle gate workflow table (13 stages) */}
+      <div className="mb-6">
+        <InitiativeGatesWorkflowTable />
+      </div>
+
       {/* Gate Timeline Visual */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">

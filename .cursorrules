@@ -38,11 +38,17 @@
 
 ## UI/UX Standards & Documentation
 
-This project has formal UI/UX standards. Before modifying any UI components:
+**KANONICZNE ŹRÓDŁO:** `docs/ui-standards/README.md`
+
+**⚠️ NIE WYMYŚLAJ NOWYCH STANDARDÓW ANI KOMPONENTÓW.** Wszystkie komponenty UI MUSZĄ być zgodne z dokumentacją w `docs/ui-standards/`. Jeśli standard nie opisuje przypadku — ZAPYTAJ, nie wymyślaj.
+
+Before modifying any UI components:
 
 1. **Read the documentation** — standards are in `docs/ui-standards/`:
-   - `detail-view-presentation-modes.md` — architecture of D/N/C modes, N blocks kit, DBR77 visual tokens
-   - `shared-nmode-sections-standard.md` — specs for all shared sections and building blocks
+   - `README.md` — index wszystkiego
+   - `01-shell-layout/presentation-modes.md` — architecture D/N/C, N blocks kit
+   - `02-components/shared-sections.md` — NModeSections (Comments, Activity, Risk, Governance, Attachments)
+   - `02-components/building-blocks.md` — NModeBlocks (Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView)
 
 2. **Use shared components** — NEVER duplicate UI code:
    - `src/components/shared/NModeSections/` — CommentsCanvas, ActivityLogCanvas, AttachmentsLinksCanvas, RiskCanvas, GovernanceCanvas

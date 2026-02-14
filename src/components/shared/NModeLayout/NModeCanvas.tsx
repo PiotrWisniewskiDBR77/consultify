@@ -4,7 +4,7 @@
  * Content area that shows the currently selected section with AnimatePresence transitions.
  * Follows "N BLOCKS KIT" — flat, quiet UI with typography + whitespace, NOT frames.
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.3
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.3
  */
 
 import { AnimatePresence, motion } from 'framer-motion';

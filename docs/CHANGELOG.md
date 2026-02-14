@@ -2,6 +2,54 @@
 
 All notable changes to Consultinity will be documented in this file.
 
+## [Unreleased] - 2026-02-14
+
+### Fixed - Task / Initiative Dependencies (N-mode UX + behavior)
+
+- **Dependencies actions menu restored as vertical three-dots** in `src/components/MyWork/shared/DependenciesSection.tsx`:
+  - right-side per-row trigger uses `MoreVertical`
+  - dropdown actions include: **Open card**, **Edit**, **Delete**
+  - outside click closes the menu reliably
+- **"Open card" action is now explicitly wired** to `onOpenTask(dep.taskId)` from the same dependency row menu.
+- **Initiative wrapper passes sample-data mode** in `src/components/Initiatives/sections/DependenciesSection.tsx`, so the section can render meaningful preview content for empty initiatives.
+- **Task view passes sample-data mode** in `src/components/MyWork/TaskDetailView.tsx` for empty dependency states in both render contexts.
+
+### Added - Dependency sample data (preview mode only)
+
+- In `src/components/MyWork/shared/DependenciesSection.tsx` added `showSampleDataWhenEmpty?: boolean`:
+  - when enabled and there are no real dependencies, UI shows two read-only sample rows
+  - sample mode includes badge (`dane przykładowe` / `sample data`) and disables row mutating actions
+  - sample rows do not call API and are not persisted
+- Sample data is displayed only after loading finishes (`!loading`) to avoid flashing preview during fetch.
+
+### Fixed - RACI / Reminders crash loop in Task detail
+
+- Root cause: runtime error `delivery.integrationChannels.includes` when legacy/incomplete `delivery` shape was present.
+- Hardened handling in `src/components/MyWork/TaskDetailView.tsx`:
+  - `ensureDeliveryConfig(...)` now always returns complete arrays (`coreChannels`, `integrationChannels`, `syncTargets`)
+  - additional defensive guards before `.includes(...)` and `toggleChannel(...)` ensure array fallback even for malformed payloads
+- Result: no repeated error-boundary resets when entering RACI & Escalation or adding reminders.
+
+### Fixed - KPI API compatibility with legacy SQLite schema
+
+- `server/src/controllers/InitiativeController.ts` updated to support both new and old `initiative_kpis` table layouts:
+  - `getInitiativeKpis` now has fallback query path when newer columns (for example `baseline_value`, `current_value`, `category`, `trend_data`) do not exist
+  - legacy fallback enriches response with safe defaults and latest value from `kpi_measurements`
+  - `createInitiativeKpi` now falls back to legacy insert shape when modern insert fails due to missing columns
+  - for legacy flow, initial baseline snapshot is inserted into `kpi_measurements`
+- Purpose: prevent KPI section failures on environments with schema drift and keep frontend contract stable.
+
+### Data Seed - Local development sample KPIs
+
+- Seeded sample KPI data in local SQLite dev DB (`data/dev/consultinity.db`) for initiative:
+  - `id: init-adma-09`
+  - `title: Automated Changeover Optimization`
+- Inserted 3 sample KPIs + corresponding entries in `kpi_measurements`:
+  - `Skrócenie czasu changeover` (target 75 min, current 92)
+  - `Redukcja odpadów rozruchowych` (target 4.0%, current 5.2)
+  - `OEE po changeover` (target 80%, current 76)
+- Note: this seed is local runtime data (DB content), not a committed migration.
+
 ## [Unreleased] - 2026-02-08
 
 ### Added - AI Chat: Text-to-Speech (Auto-Read Responses)

@@ -6,7 +6,7 @@
  *
  * Follows DBR77 Visual Language — quiet UI with subtle transitions.
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.5
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.5
  */
 
 import { ChevronDown } from 'lucide-react';

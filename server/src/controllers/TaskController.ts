@@ -162,6 +162,36 @@ const getMultilingualText = (text: string | null | undefined, userLang: string =
 };
 
 // ==========================================
+// TASK DEPENDENCIES: SCHEMA COMPATIBILITY
+// ==========================================
+
+type TaskDepsSchema = {
+  fromCol: 'predecessor_id' | 'from_task_id';
+  toCol: 'successor_id' | 'to_task_id';
+};
+let taskDepsSchemaCache: TaskDepsSchema | null = null;
+
+async function getTaskDepsSchema(): Promise<TaskDepsSchema> {
+  if (taskDepsSchemaCache) return taskDepsSchemaCache;
+  try {
+    const cols = await DbPromise.all<{ name: string }>('PRAGMA table_info(task_dependencies)', []);
+    const names = new Set((cols || []).map((c) => String(c.name || '')));
+    if (names.has('predecessor_id') && names.has('successor_id')) {
+      taskDepsSchemaCache = { fromCol: 'predecessor_id', toCol: 'successor_id' };
+      return taskDepsSchemaCache;
+    }
+    if (names.has('from_task_id') && names.has('to_task_id')) {
+      taskDepsSchemaCache = { fromCol: 'from_task_id', toCol: 'to_task_id' };
+      return taskDepsSchemaCache;
+    }
+  } catch {
+    // ignore; fall back
+  }
+  taskDepsSchemaCache = { fromCol: 'predecessor_id', toCol: 'successor_id' };
+  return taskDepsSchemaCache;
+}
+
+// ==========================================
 // CONTROLLER METHODS
 // ==========================================
 
@@ -1845,6 +1875,7 @@ export class TaskController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
       const taskId = req.params.id;
+      const schema = await getTaskDepsSchema();
 
       // DB stores dependency_type as 'finish_to_start' etc. — map to short form FS/SS/FF/SF
       const dbToShort: Record<string, string> = {
@@ -1858,67 +1889,122 @@ export class TaskController {
         SF: 'SF', // accept both
       };
 
-      // Outgoing: this task is predecessor → other tasks are successors
-      const outgoing = await DbPromise.all<{
-        id: string;
-        predecessor_id: string;
-        successor_id: string;
-        dependency_type: string;
-        lag_days: number;
-        notes: string;
-        created_at: string;
-        created_by: string;
-        task_title: string;
-        task_status: string;
-        task_priority: string;
-        task_index_code: string;
-      }>(
-        `SELECT td.id, td.predecessor_id, td.successor_id,
-                COALESCE(td.dependency_type, 'finish_to_start') as dependency_type,
-                COALESCE(td.lag_days, 0) as lag_days,
-                td.notes, td.created_at, td.created_by,
-                t.title as task_title, t.status as task_status,
-                t.priority as task_priority, t.id as task_index_code
-         FROM task_dependencies td
-         JOIN tasks t ON t.id = td.successor_id
-         WHERE td.predecessor_id = ? AND t.organization_id = ?
-         ORDER BY td.created_at DESC`,
-        [taskId, orgId]
-      );
+      const outgoing =
+        schema.fromCol === 'predecessor_id'
+          ? await DbPromise.all<{
+              id: string;
+              predecessor_id: string;
+              successor_id: string;
+              dependency_type: string;
+              lag_days: number;
+              notes: string;
+              created_at: string;
+              created_by: string;
+              task_title: string;
+              task_status: string;
+              task_priority: string;
+              task_index_code: string;
+            }>(
+              `SELECT td.id, td.predecessor_id, td.successor_id,
+                      COALESCE(td.dependency_type, 'finish_to_start') as dependency_type,
+                      COALESCE(td.lag_days, 0) as lag_days,
+                      td.notes, td.created_at, td.created_by,
+                      t.title as task_title, t.status as task_status,
+                      t.priority as task_priority, t.id as task_index_code
+               FROM task_dependencies td
+               JOIN tasks t ON t.id = td.successor_id
+               WHERE td.predecessor_id = ? AND t.organization_id = ?
+               ORDER BY td.created_at DESC`,
+              [taskId, orgId]
+            )
+          : await DbPromise.all<{
+              id: string;
+              from_task_id: string;
+              to_task_id: string;
+              dependency_type: string;
+              lag_days: number;
+              notes: string;
+              created_at: string;
+              created_by: string;
+              task_title: string;
+              task_status: string;
+              task_priority: string;
+              task_index_code: string;
+            }>(
+              `SELECT td.id, td.from_task_id, td.to_task_id,
+                      COALESCE(td.dependency_type, 'finish_to_start') as dependency_type,
+                      COALESCE(td.lag_days, 0) as lag_days,
+                      td.notes, td.created_at, td.created_by,
+                      t.title as task_title, t.status as task_status,
+                      t.priority as task_priority, t.id as task_index_code
+               FROM task_dependencies td
+               JOIN tasks t ON t.id = td.to_task_id
+               WHERE td.from_task_id = ? AND t.organization_id = ?
+               ORDER BY td.created_at DESC`,
+              [taskId, orgId]
+            );
 
-      // Incoming: other tasks are predecessors → this task is successor
-      const incoming = await DbPromise.all<{
-        id: string;
-        predecessor_id: string;
-        successor_id: string;
-        dependency_type: string;
-        lag_days: number;
-        notes: string;
-        created_at: string;
-        created_by: string;
-        task_title: string;
-        task_status: string;
-        task_priority: string;
-        task_index_code: string;
-      }>(
-        `SELECT td.id, td.predecessor_id, td.successor_id,
-                COALESCE(td.dependency_type, 'finish_to_start') as dependency_type,
-                COALESCE(td.lag_days, 0) as lag_days,
-                td.notes, td.created_at, td.created_by,
-                t.title as task_title, t.status as task_status,
-                t.priority as task_priority, t.id as task_index_code
-         FROM task_dependencies td
-         JOIN tasks t ON t.id = td.predecessor_id
-         WHERE td.successor_id = ? AND t.organization_id = ?
-         ORDER BY td.created_at DESC`,
-        [taskId, orgId]
-      );
+      const incoming =
+        schema.fromCol === 'predecessor_id'
+          ? await DbPromise.all<{
+              id: string;
+              predecessor_id: string;
+              successor_id: string;
+              dependency_type: string;
+              lag_days: number;
+              notes: string;
+              created_at: string;
+              created_by: string;
+              task_title: string;
+              task_status: string;
+              task_priority: string;
+              task_index_code: string;
+            }>(
+              `SELECT td.id, td.predecessor_id, td.successor_id,
+                      COALESCE(td.dependency_type, 'finish_to_start') as dependency_type,
+                      COALESCE(td.lag_days, 0) as lag_days,
+                      td.notes, td.created_at, td.created_by,
+                      t.title as task_title, t.status as task_status,
+                      t.priority as task_priority, t.id as task_index_code
+               FROM task_dependencies td
+               JOIN tasks t ON t.id = td.predecessor_id
+               WHERE td.successor_id = ? AND t.organization_id = ?
+               ORDER BY td.created_at DESC`,
+              [taskId, orgId]
+            )
+          : await DbPromise.all<{
+              id: string;
+              from_task_id: string;
+              to_task_id: string;
+              dependency_type: string;
+              lag_days: number;
+              notes: string;
+              created_at: string;
+              created_by: string;
+              task_title: string;
+              task_status: string;
+              task_priority: string;
+              task_index_code: string;
+            }>(
+              `SELECT td.id, td.from_task_id, td.to_task_id,
+                      COALESCE(td.dependency_type, 'finish_to_start') as dependency_type,
+                      COALESCE(td.lag_days, 0) as lag_days,
+                      td.notes, td.created_at, td.created_by,
+                      t.title as task_title, t.status as task_status,
+                      t.priority as task_priority, t.id as task_index_code
+               FROM task_dependencies td
+               JOIN tasks t ON t.id = td.from_task_id
+               WHERE td.to_task_id = ? AND t.organization_id = ?
+               ORDER BY td.created_at DESC`,
+              [taskId, orgId]
+            );
 
       res.json({
         success: true,
         successors: outgoing.map((d) => ({
           id: d.id,
-          taskId: d.successor_id,
+          taskId:
+            schema.fromCol === 'predecessor_id' ? (d as any).successor_id : (d as any).to_task_id,
           taskTitle: d.task_title,
           taskStatus: d.task_status,
           taskPriority: d.task_priority,
@@ -1930,7 +2016,10 @@ export class TaskController {
         })),
         predecessors: incoming.map((d) => ({
           id: d.id,
-          taskId: d.predecessor_id,
+          taskId:
+            schema.fromCol === 'predecessor_id'
+              ? (d as any).predecessor_id
+              : (d as any).from_task_id,
           taskTitle: d.task_title,
           taskStatus: d.task_status,
           taskPriority: d.task_priority,
@@ -2009,10 +2098,13 @@ export class TaskController {
       //   → predecessor_id = taskId, successor_id = targetTaskId
       const predecessorId = direction === 'predecessor' ? targetTaskId : taskId;
       const successorId = direction === 'predecessor' ? taskId : targetTaskId;
+      const schema = await getTaskDepsSchema();
 
       // Check for duplicate
       const existing = await DbPromise.get<{ id: string }>(
-        'SELECT id FROM task_dependencies WHERE predecessor_id = ? AND successor_id = ?',
+        schema.fromCol === 'predecessor_id'
+          ? 'SELECT id FROM task_dependencies WHERE predecessor_id = ? AND successor_id = ?'
+          : 'SELECT id FROM task_dependencies WHERE from_task_id = ? AND to_task_id = ?',
         [predecessorId, successorId]
       );
       if (existing) {
@@ -2035,13 +2127,15 @@ export class TaskController {
         if (visited.has(current)) continue;
         visited.add(current);
 
-        const nextDeps = await DbPromise.all<{ successor_id: string }>(
-          'SELECT successor_id FROM task_dependencies WHERE predecessor_id = ?',
+        const nextDeps = await DbPromise.all<{ next_id: string }>(
+          schema.fromCol === 'predecessor_id'
+            ? 'SELECT successor_id as next_id FROM task_dependencies WHERE predecessor_id = ?'
+            : 'SELECT to_task_id as next_id FROM task_dependencies WHERE from_task_id = ?',
           [current]
         );
         for (const nd of nextDeps) {
-          if (!visited.has(nd.successor_id)) {
-            queue.push(nd.successor_id);
+          if (!visited.has(nd.next_id)) {
+            queue.push(nd.next_id);
           }
         }
       }
@@ -2058,11 +2152,19 @@ export class TaskController {
       const depType = shortToDb[dependencyType || 'FS'] || 'finish_to_start';
       const lag = lagDays || 0;
 
-      await DbPromise.run(
-        `INSERT INTO task_dependencies (id, predecessor_id, successor_id, dependency_type, lag_days, notes, created_by, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-        [depId, predecessorId, successorId, depType, lag, notes || null, userId || null]
-      );
+      if (schema.fromCol === 'predecessor_id') {
+        await DbPromise.run(
+          `INSERT INTO task_dependencies (id, predecessor_id, successor_id, dependency_type, lag_days, notes, created_by, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+          [depId, predecessorId, successorId, depType, lag, notes || null, userId || null]
+        );
+      } else {
+        await DbPromise.run(
+          `INSERT INTO task_dependencies (id, from_task_id, to_task_id, dependency_type, lag_days, notes, created_by, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+          [depId, predecessorId, successorId, depType, lag, notes || null, userId || null]
+        );
+      }
 
       // Log activity
       try {
@@ -2119,17 +2221,25 @@ export class TaskController {
       const userId = req.user?.id;
       const taskId = req.params.id;
       const depId = req.params.depId;
+      const schema = await getTaskDepsSchema();
 
       // Verify the dependency exists and involves this task
       const dep = await DbPromise.get<{
         id: string;
-        predecessor_id: string;
-        successor_id: string;
+        predecessor_id?: string;
+        successor_id?: string;
+        from_task_id?: string;
+        to_task_id?: string;
       }>(
-        `SELECT td.id, td.predecessor_id, td.successor_id
-         FROM task_dependencies td
-         JOIN tasks t1 ON t1.id = td.predecessor_id AND t1.organization_id = ?
-         WHERE td.id = ? AND (td.predecessor_id = ? OR td.successor_id = ?)`,
+        schema.fromCol === 'predecessor_id'
+          ? `SELECT td.id, td.predecessor_id, td.successor_id
+             FROM task_dependencies td
+             JOIN tasks t1 ON t1.id = td.predecessor_id AND t1.organization_id = ?
+             WHERE td.id = ? AND (td.predecessor_id = ? OR td.successor_id = ?)`
+          : `SELECT td.id, td.from_task_id, td.to_task_id
+             FROM task_dependencies td
+             JOIN tasks t1 ON t1.id = td.from_task_id AND t1.organization_id = ?
+             WHERE td.id = ? AND (td.from_task_id = ? OR td.to_task_id = ?)`,
         [orgId, depId, taskId, taskId]
       );
 

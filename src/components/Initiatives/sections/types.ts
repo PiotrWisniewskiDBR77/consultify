@@ -82,6 +82,68 @@ export interface PendingApproval {
 }
 
 // ==========================================
+// GATE ROLES
+// ==========================================
+
+/**
+ * Gate role assignment — maps a governance role to a user for this initiative.
+ * Roles align with GATE_PERMISSIONS in server/src/constants/initiativeStatuses.ts.
+ */
+export interface GateRoleAssignment {
+  id: string;
+  initiativeId?: string;
+  gateRole: string; // PMO, STEERING_COMMITTEE, INITIATIVE_OWNER, SPONSOR, etc.
+  userId: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  assignedBy?: string;
+  assignedAt?: string;
+  source: 'explicit' | 'auto'; // 'auto' = derived from owner/sponsor fields
+}
+
+/**
+ * Status history entry — gate audit trail.
+ */
+export interface StatusHistoryEntry {
+  id: string;
+  initiativeId: string;
+  fromStatus: string;
+  toStatus: string;
+  changedBy?: string;
+  changedByFirstName?: string;
+  changedByLastName?: string;
+  changedByEmail?: string;
+  reason?: string;
+  gateType?: string;
+  createdAt: string;
+}
+
+/**
+ * Gate readiness check result from the backend.
+ */
+export interface GateReadinessCheck {
+  currentStatus: string;
+  userRoles: string[];
+  availableTransitions: Array<{
+    targetStatus: string;
+    gate: string | null;
+    requiredRoles: string[];
+    assignedApprovers: Array<{ gateRole: string; userId: string }>;
+    canCurrentUserExecute: boolean;
+    hasAssignedApprover: boolean;
+  }>;
+  readiness: Array<{
+    key: string;
+    label: string;
+    pass: boolean;
+    severity: string;
+  }>;
+  allBlocking: boolean;
+  allWarnings: boolean;
+}
+
+// ==========================================
 // SECTION TYPE from API
 // ==========================================
 
@@ -124,6 +186,224 @@ export interface InitiativeSectionProps {
   /** Whether the view is read-only */
   readonly?: boolean;
 }
+
+// ==========================================
+// TIMELINE TYPES
+// ==========================================
+
+export type TimelineMode =
+  | 'ESTIMATE'
+  | 'PLANNING'
+  | 'READY_TO_LOCK'
+  | 'BASELINED'
+  | 'TRACKING'
+  | 'COMPLETED';
+
+export interface TimelineMilestone {
+  id: string;
+  name: string;
+  date: string; // Planned date
+  actualDate?: string; // Actual completion date
+  status: 'pending' | 'in_progress' | 'completed' | 'missed';
+  description?: string;
+  linkedTaskIds?: string[];
+}
+
+export interface TimelinePhase {
+  id: string;
+  name: string;
+  namePl?: string;
+  startDate: string;
+  endDate: string;
+  order: number;
+  color?: string;
+}
+
+export type TimelineRowType =
+  | 'start' // Initiative start anchor
+  | 'task' // Work item with duration
+  | 'milestone' // Point-in-time marker (no duration)
+  | 'decision' // Go / No-Go / Escalate checkpoint
+  | 'info_event' // Informational event (report, presentation, status update)
+  | 'notification' // Cyclical communication notification rule
+  | 'meeting' // Recurring meeting item
+  | 'pause' // Planned pause in execution
+  | 'escalation' // Escalation requiring higher-level attention
+  | 'finish'; // Initiative end anchor
+
+export type SchedulingMode = 'after_previous' | 'fixed_date';
+export type DecisionOutcome = 'GO' | 'NO_GO' | 'ESCALATE' | null;
+export type StartTriggerType = 'date' | 'event' | 'dependency';
+export type EndSchedulingMode = 'from_duration' | 'manual_date' | 'from_successor';
+
+/**
+ * Unified row for the Timeline planning table / Gantt.
+ * Merges tasks, milestones, decisions, events, and initiative start/finish
+ * into a single chronologically ordered list.
+ */
+export interface TimelineRow {
+  id: string;
+  type: TimelineRowType;
+  name: string;
+
+  // ── Time ──
+  startDate: string | null;
+  endDate: string | null;
+  /** Manual duration in days — auto-computes endDate when set */
+  durationDays?: number | null;
+  /** Controls how end date is set */
+  endSchedulingMode?: EndSchedulingMode;
+  /** Optional successor row used as end trigger */
+  successorId?: string | null;
+
+  // ── Scheduling ──
+  /** How this row's start date is determined */
+  schedulingMode: SchedulingMode;
+  /** High-level start trigger semantics for UI */
+  startTriggerType?: StartTriggerType;
+  startTriggerEvent?: string;
+  /** ID of another TimelineRow this row depends on */
+  dependsOnId?: string | null;
+  dependencyType?: 'FS' | 'SS' | 'FF' | 'SF';
+
+  // ── Assignment ──
+  status?: string;
+  assigneeId?: string;
+  assigneeName?: string;
+
+  // ── Budget / effort ──
+  estimatedHours?: number | null;
+  actualHours?: number | null;
+
+  // ── Decision-specific ──
+  decisionOutcome?: DecisionOutcome;
+  /** If true, downstream rows won't start until outcome = GO */
+  decisionBlocksNext?: boolean;
+
+  // ── Info / Escalation-specific ──
+  audience?: string;
+  escalationLevel?: string;
+  pauseReason?: string;
+  infoAssetType?: 'external_link' | 'internal_report' | 'generated_presentation' | 'other';
+  infoAssetLabel?: string;
+  infoAssetUrl?: string;
+  /** Placeholder binding until Reports module integration is ready */
+  linkedReportPlaceholderId?: string;
+  infoEventMode?: 'cyclical' | 'specific_date' | 'after_event';
+  infoEventCadence?: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'custom';
+  infoEventReferenceEvent?: string;
+  infoEventParticipantMode?: 'person' | 'group';
+  infoEventParticipantUserId?: string;
+  infoEventParticipantGroupKey?:
+    | 'project_team'
+    | 'steering_committee'
+    | 'sponsor_group'
+    | 'all_stakeholders'
+    | 'custom_group';
+
+  // ── Notification-specific ──
+  notificationCadence?: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'custom';
+  notificationChannel?: 'email' | 'slack' | 'meeting' | 'dashboard' | 'other';
+  /** Human-readable cyclical communication rule */
+  notificationRule?: string;
+  notificationRecipientMode?: 'person' | 'group';
+  notificationRecipientUserId?: string;
+  notificationRecipientUserName?: string;
+  notificationRecipientGroupKey?:
+    | 'project_team'
+    | 'steering_committee'
+    | 'sponsor_group'
+    | 'all_stakeholders'
+    | 'custom_group';
+  notificationTriggerMode?: 'event_based' | 'cyclical';
+  notificationTriggerEvent?: 'on_start' | 'on_complete' | 'before_next_action' | 'manual_gate';
+  /** Lead time before next action (for before_next_action trigger) */
+  notificationLeadDays?: number | null;
+  notificationMessage?: string;
+  notificationAiAutoSend?: boolean;
+  notificationAiInstruction?: string;
+
+  // ── Meeting-specific ──
+  meetingCadence?: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'custom';
+  meetingChannel?: 'online' | 'onsite' | 'hybrid';
+  meetingAgenda?: string;
+
+  // ── Links to existing entities ──
+  linkedTaskId?: string;
+  linkedMilestoneId?: string;
+  linkedDecisionId?: string;
+
+  /** Manual ordering within the table */
+  order: number;
+}
+
+/**
+ * Derive timeline mode from initiative status.
+ * The mode controls which sub-view the TimelineSection renders.
+ */
+export function getTimelineMode(status: string): TimelineMode {
+  const modeMap: Record<string, TimelineMode> = {
+    DRAFT: 'ESTIMATE',
+    PENDING_REVIEW: 'ESTIMATE',
+    REVIEW: 'ESTIMATE',
+    PROMOTED: 'PLANNING',
+    PLANNING: 'PLANNING',
+    APPROVED: 'READY_TO_LOCK',
+    SCHEDULED: 'BASELINED',
+    EXECUTING: 'TRACKING',
+    BLOCKED: 'TRACKING',
+    DONE: 'COMPLETED',
+    TRACKING: 'COMPLETED',
+    CANCELLED: 'COMPLETED',
+    ARCHIVED: 'COMPLETED',
+  };
+  return modeMap[status] || 'ESTIMATE';
+}
+
+/**
+ * Timeline mode display metadata.
+ */
+export const TIMELINE_MODE_META: Record<
+  TimelineMode,
+  { label: string; labelPl: string; color: string; icon: string }
+> = {
+  ESTIMATE: {
+    label: 'Estimate',
+    labelPl: 'Szacunek',
+    color: 'text-slate-500 bg-slate-500/10',
+    icon: 'Clock',
+  },
+  PLANNING: {
+    label: 'Planning',
+    labelPl: 'Planowanie',
+    color: 'text-blue-500 bg-blue-500/10',
+    icon: 'Edit3',
+  },
+  READY_TO_LOCK: {
+    label: 'Awaiting Lock',
+    labelPl: 'Do zamrożenia',
+    color: 'text-amber-500 bg-amber-500/10',
+    icon: 'Lock',
+  },
+  BASELINED: {
+    label: 'Baselined',
+    labelPl: 'Bazowy plan',
+    color: 'text-emerald-500 bg-emerald-500/10',
+    icon: 'Shield',
+  },
+  TRACKING: {
+    label: 'Tracking',
+    labelPl: 'Śledzenie',
+    color: 'text-purple-500 bg-purple-500/10',
+    icon: 'Activity',
+  },
+  COMPLETED: {
+    label: 'Completed',
+    labelPl: 'Zakończony',
+    color: 'text-emerald-500 bg-emerald-500/10',
+    icon: 'CheckCircle',
+  },
+};
 
 // ==========================================
 // CONFIGURATION CONSTANTS

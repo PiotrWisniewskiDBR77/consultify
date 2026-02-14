@@ -11,8 +11,8 @@
  * and passes them + setters. GovernanceCanvas manages its own editing state
  * (drafts, modals, channel toggles) internally.
  *
- * @see docs/ui-standards/shared-nmode-sections-standard.md
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.5
+ * @see docs/ui-standards/02-components/shared-sections.md
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.5
  */
 
 import { Edit3, Loader2, Plus, Sparkles, Trash2, X } from 'lucide-react';

@@ -5,21 +5,21 @@
  * Shows icons + labels with active state highlighting.
  * Click → shows ONE section at a time in the Canvas (no scroll-all).
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.2
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.2
  */
 
 import {
+  closestCenter,
   DndContext,
+  type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
-  closestCenter,
   useSensor,
   useSensors,
-  type DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  SortableContext,
   arrayMove,
+  SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
@@ -56,14 +56,9 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
   onSectionChange,
 }) => {
   const Icon = section.icon;
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: section.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: section.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -179,8 +174,15 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
             );
           })
         ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={sections.map((s) => s.id)}
+              strategy={verticalListSortingStrategy}
+            >
               {sections.map((section) => (
                 <SortableNavItem
                   key={section.id}

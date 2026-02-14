@@ -14,14 +14,18 @@ import {
   AlertTriangle,
   Archive,
   Calendar,
+  CheckCircle,
   CheckSquare,
   ChevronLeft,
+  Clock,
   Copy,
   Crosshair,
   DollarSign,
   Download,
+  Edit3,
   ExternalLink,
   FileCode,
+  Flag,
   FolderOpen,
   GitBranch,
   History,
@@ -29,6 +33,7 @@ import {
   ListChecks,
   Loader2,
   MessageSquare,
+  MoreVertical,
   Paperclip,
   Play,
   Plus,
@@ -42,6 +47,7 @@ import {
   Trash2,
   TrendingUp,
   Undo2,
+  User,
   Users,
   X,
   XCircle,
@@ -52,7 +58,15 @@ import { useTranslation } from 'react-i18next';
 
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
-import { getContextActions, getModuleForStatus, getStatusActions, getStatusMeta, StatusAction, willChangeModule } from '@/services/initiativeLifecycle';
+import {
+  getContextActions,
+  getFilteredStatusActions,
+  getModuleForStatus,
+  getStatusActions,
+  getStatusMeta,
+  StatusAction,
+  willChangeModule,
+} from '@/services/initiativeLifecycle';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
@@ -71,16 +85,28 @@ import {
 } from '../MyWork/shared';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
-import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shared/NModeSections';
 import {
+  type NModeAction,
   NModeCanvas,
   NModeHeader,
   NModeLeftNav,
   NModePropertiesStrip,
-  type NModeAction,
   type NModePropertyField,
   type NModeSection,
 } from '../shared/NModeLayout';
+import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shared/NModeSections';
+import {
+  ActivityLogCanvas,
+  type ActivityLogEntry as NModeActivityLogEntry,
+  type ActivityStats,
+  type ActivityTypeMeta,
+  type CommentItem,
+  type CommentPriority,
+  CommentsCanvas,
+  type DateFilter,
+  RaidCanvas as NModeRaidCanvas,
+  type SortOrder,
+} from '../shared/NModeSections';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { InitiativeScrollView } from './InitiativeScrollView';
 import {
@@ -94,12 +120,16 @@ import {
   MODULE_CONFIG,
   SECTION_REGISTRY,
 } from './sections';
+import { InitiativeGatesWorkflowTable } from './sections/InitiativeGatesWorkflowTable';
 import type {
   Decision,
+  GateReadinessCheck,
+  GateRoleAssignment,
   HistoryEvent,
   PendingApproval,
   RaidItem,
   SectionTypeInfo,
+  StatusHistoryEntry,
   TaskItem,
   UserInfo,
   Watcher,
@@ -113,6 +143,26 @@ interface InitiativeDocumentViewProps {
   onOpenTask?: (taskId: string) => void;
   onOpenDecision?: (decisionId: string) => void;
 }
+
+const KPI_NAME_EN_MAP: Record<string, string> = {
+  'Skrócenie czasu changeover': 'Changeover time reduction',
+  'Redukcja odpadów rozruchowych': 'Startup scrap reduction',
+  'OEE po changeover': 'Post-changeover OEE',
+};
+
+const toEnglishKpiName = (name: string, isPolish: boolean): string => {
+  if (isPolish) return name;
+  return KPI_NAME_EN_MAP[name] || name;
+};
+
+const toKpiNumber = (value: string): number => {
+  const normalized = String(value || '')
+    .replace(',', '.')
+    .trim();
+  if (!normalized) return 0;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   initiativeId,
@@ -157,9 +207,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Target state description
   const [targetDescriptionDraft, setTargetDescriptionDraft] = useState('');
   // Success criteria fields (checklist-style)
-  const [targetStateItems, setTargetStateItems] = useState<{ id: string; text: string; done: boolean }[]>([]);
-  const [successCriteriaItems, setSuccessCriteriaItems] = useState<{ id: string; text: string; done: boolean }[]>([]);
-  const [deliverableItems, setDeliverableItems] = useState<{ id: string; text: string; done: boolean }[]>([]);
+  const [targetStateItems, setTargetStateItems] = useState<
+    { id: string; text: string; done: boolean }[]
+  >([]);
+  const [successCriteriaItems, setSuccessCriteriaItems] = useState<
+    { id: string; text: string; done: boolean }[]
+  >([]);
+  const [deliverableItems, setDeliverableItems] = useState<
+    { id: string; text: string; done: boolean }[]
+  >([]);
   // Scope & boundaries fields
   const [inScopeItems, setInScopeItems] = useState<string[]>([]);
   const [outScopeItems, setOutScopeItems] = useState<string[]>([]);
@@ -170,6 +226,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     Array<{
       id: string;
       name: string;
+      category?: string;
       unit: string;
       baseline: string;
       target: string;
@@ -177,11 +234,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }>
   >([]);
   const [showCreateKpi, setShowCreateKpi] = useState(false);
-  const [newKpiName, setNewKpiName] = useState('');
-  const [newKpiUnit, setNewKpiUnit] = useState('');
-  const [newKpiBaseline, setNewKpiBaseline] = useState('');
-  const [newKpiTarget, setNewKpiTarget] = useState('');
-  const [newKpiCurrent, setNewKpiCurrent] = useState('');
+  const [kpiMenuId, setKpiMenuId] = useState<string | null>(null);
+  const [editingKpiId, setEditingKpiId] = useState<string | null>(null);
+  const [editKpiName, setEditKpiName] = useState('');
+  const [editKpiUnit, setEditKpiUnit] = useState('');
+  const [editKpiBaseline, setEditKpiBaseline] = useState('');
+  const [editKpiCurrent, setEditKpiCurrent] = useState('');
+  const [editKpiTarget, setEditKpiTarget] = useState('');
   const [resourceItems, setResourceItems] = useState<
     Array<{ id: string; name: string; role: string; allocation: number }>
   >([]);
@@ -216,6 +275,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
 
+  // Timeline milestones & phases
+  const [timelineMilestones, setTimelineMilestones] = useState<
+    import('./sections/types').TimelineMilestone[]
+  >([]);
+  const [timelinePhases, setTimelinePhases] = useState<import('./sections/types').TimelinePhase[]>(
+    []
+  );
+  const [estimatedDurationMonths, setEstimatedDurationMonths] = useState<number | null>(null);
+
   // Presentation mode (N/C) — shared hook with URL sync and localStorage persistence
   const { mode: presentationMode, setMode: setPresentationMode } = usePresentationMode({
     entityType: 'initiative',
@@ -229,6 +297,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [isGeneratingAI, setIsGeneratingAI] = useState<string | null>(null);
+
+  // N-mode comment state (for CommentsCanvas — identical to Task)
+  const [nCommentDraft, setNCommentDraft] = useState('');
+  const [nCommentPriority, setNCommentPriority] = useState<CommentPriority>('normal');
+  const [nCommentDateFilter, setNCommentDateFilter] = useState<DateFilter>('all');
+  const [nCommentSortOrder, setNCommentSortOrder] = useState<SortOrder>('desc');
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showCreateDecision, setShowCreateDecision] = useState(false);
   const [showCreateRaid, setShowCreateRaid] = useState(false);
@@ -238,6 +312,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [showPhaseDropdown, setShowPhaseDropdown] = useState(false);
   const [showApprovalWorkflow, setShowApprovalWorkflow] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
+  const [gateRoles, setGateRoles] = useState<GateRoleAssignment[]>([]);
+  const [userGateRoles, setUserGateRoles] = useState<string[]>([]);
+  const [statusHistory, setStatusHistory] = useState<StatusHistoryEntry[]>([]);
+  const [gateReadiness, setGateReadiness] = useState<GateReadinessCheck | null>(null);
   const [demoDataInjected, setDemoDataInjected] = useState(false);
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -264,7 +342,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const status = (initiative?.status || 'DRAFT') as InitiativeStatus;
   const statusMeta = getStatusMeta(status);
-  const statusActions = getStatusActions(status);
+  // Role-aware status actions: filter based on current user's gate roles
+  const statusActions = useMemo(() => {
+    if (userGateRoles.length > 0) {
+      return getFilteredStatusActions(status, userGateRoles).filter(
+        (a) => (a as any).variant !== 'disabled'
+      );
+    }
+    // Fallback: show all actions if gate roles not yet loaded
+    return getStatusActions(status);
+  }, [status, userGateRoles]);
   const primaryActions = statusActions.filter((a) => a.variant === 'primary').slice(0, 2);
   const contextActions = getContextActions(status);
   const currentModule = getModuleFromStatus(status);
@@ -278,6 +365,130 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       return next;
     });
   }, []);
+
+  useEffect(() => {
+    if (!kpiMenuId) return;
+    const onDocClick = () => setKpiMenuId(null);
+    const t = setTimeout(() => document.addEventListener('click', onDocClick), 0);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener('click', onDocClick);
+    };
+  }, [kpiMenuId]);
+
+  const startEditKpi = useCallback(
+    (kpi: {
+      id: string;
+      name: string;
+      unit: string;
+      baseline: string;
+      current: string;
+      target: string;
+    }) => {
+      setEditingKpiId(kpi.id);
+      setEditKpiName(kpi.name || '');
+      setEditKpiUnit(kpi.unit || '');
+      setEditKpiBaseline(kpi.baseline || '');
+      setEditKpiCurrent(kpi.current || '');
+      setEditKpiTarget(kpi.target || '');
+    },
+    []
+  );
+
+  const cancelEditKpi = useCallback(() => {
+    setEditingKpiId(null);
+    setEditKpiName('');
+    setEditKpiUnit('');
+    setEditKpiBaseline('');
+    setEditKpiCurrent('');
+    setEditKpiTarget('');
+  }, []);
+
+  const saveEditKpi = useCallback(() => {
+    if (!editingKpiId || !editKpiName.trim() || !editKpiUnit.trim()) return;
+    setLocalKpis((prev) =>
+      prev.map((k) =>
+        k.id === editingKpiId
+          ? {
+              ...k,
+              name: editKpiName.trim(),
+              unit: editKpiUnit.trim(),
+              baseline: editKpiBaseline.trim(),
+              current: editKpiCurrent.trim(),
+              target: editKpiTarget.trim(),
+            }
+          : k
+      )
+    );
+    toast.success(isPolish ? 'KPI zaktualizowane' : 'KPI updated');
+    cancelEditKpi();
+  }, [
+    cancelEditKpi,
+    editKpiBaseline,
+    editKpiCurrent,
+    editKpiName,
+    editKpiTarget,
+    editKpiUnit,
+    editingKpiId,
+    isPolish,
+  ]);
+
+  const duplicateKpi = useCallback(
+    async (kpi: {
+      name: string;
+      unit: string;
+      baseline: string;
+      target: string;
+      category?: string;
+    }) => {
+      if (!initiativeId) return;
+      setIsMutating(true);
+      try {
+        const baselineValue = toKpiNumber(kpi.baseline);
+        const targetValue = toKpiNumber(kpi.target);
+        const res = await Api.post(`/initiatives/${initiativeId}/kpis`, {
+          name: `${kpi.name} (${isPolish ? 'kopia' : 'copy'})`,
+          category: String(kpi.category || 'benefits'),
+          unit: kpi.unit || '%',
+          description: null,
+          baselineValue,
+          targetValue,
+          measurementFrequency: 'monthly',
+        });
+
+        const created = res?.kpi || {};
+        setLocalKpis((prev) => [
+          {
+            id: String(created.id || `kpi-${Date.now()}`),
+            name: String(created.name || `${kpi.name} (${isPolish ? 'kopia' : 'copy'})`),
+            category: String(created.category || 'benefits'),
+            unit: String(created.unit || kpi.unit || '%'),
+            baseline: String(created.baselineValue ?? baselineValue),
+            target: String(created.targetValue ?? targetValue),
+            current: String(created.currentValue ?? baselineValue),
+          },
+          ...prev,
+        ]);
+        toast.success(isPolish ? 'KPI zduplikowane' : 'KPI duplicated');
+      } catch (e: any) {
+        toast.error(
+          e?.message || (isPolish ? 'Nie udało się zduplikować KPI' : 'Failed to duplicate KPI')
+        );
+      } finally {
+        setIsMutating(false);
+      }
+    },
+    [initiativeId, isPolish]
+  );
+
+  const removeKpi = useCallback(
+    (kpiId: string) => {
+      setLocalKpis((prev) => prev.filter((k) => k.id !== kpiId));
+      if (editingKpiId === kpiId) cancelEditKpi();
+      toast.success(isPolish ? 'KPI usunięte' : 'KPI removed');
+    },
+    [cancelEditKpi, editingKpiId, isPolish]
+  );
 
   const tasksDone = useMemo(
     () => tasks.filter((t) => t.status === 'done' || t.status === 'DONE').length,
@@ -330,7 +541,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       }
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        const cleaned = parsed.filter((id): id is string => typeof id === 'string' && id.length > 0);
+        const cleaned = parsed.filter(
+          (id): id is string => typeof id === 'string' && id.length > 0
+        );
         setNModeSectionOrder(cleaned.length > 0 ? cleaned : null);
       } else {
         setNModeSectionOrder(null);
@@ -357,7 +570,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // ==========================================
 
   const visibleSections = useMemo(() => {
-    const templateVS = initiativeTemplate?.visibleSections || initiativeTemplate?.visible_sections || {};
+    const templateVS =
+      initiativeTemplate?.visibleSections || initiativeTemplate?.visible_sections || {};
     const hasExplicitTemplateVisibility =
       templateVS && typeof templateVS === 'object' && Object.keys(templateVS).length > 0;
     // If template defines visibility explicitly, treat it as source-of-truth.
@@ -367,7 +581,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   }, [initiativeTemplate]);
 
   const sectionOrder = useMemo(() => {
-    const templateOrder = initiativeTemplate?.sectionOrder || initiativeTemplate?.section_order || {};
+    const templateOrder =
+      initiativeTemplate?.sectionOrder || initiativeTemplate?.section_order || {};
     return { ...DEFAULT_SECTION_ORDER, ...templateOrder };
   }, [initiativeTemplate]);
 
@@ -446,7 +661,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setDescription(data.description || '');
       // Sync problem definition fields — try structured object first, then parse JSON string
       let pd: Record<string, string> = {};
-      const rawPd = data.problemDefinition || data.problem_definition || data.problemStatement || data.problem_statement;
+      const rawPd =
+        data.problemDefinition ||
+        data.problem_definition ||
+        data.problemStatement ||
+        data.problem_statement;
       if (rawPd && typeof rawPd === 'object') {
         pd = rawPd;
       } else if (rawPd && typeof rawPd === 'string') {
@@ -471,14 +690,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         setTargetDescriptionDraft(tsDesc);
         if (tsDesc) {
           const tsLines = tsDesc.split('\n').filter((l: string) => l.trim());
-          setTargetStateItems(tsLines.length > 0
-            ? tsLines.map((t: string, i: number) => ({ id: `ts-${i}`, text: t.replace(/^[-•*]\s*/, ''), done: false }))
-            : [{ id: 'ts-0', text: tsDesc, done: false }]);
+          setTargetStateItems(
+            tsLines.length > 0
+              ? tsLines.map((t: string, i: number) => ({
+                  id: `ts-${i}`,
+                  text: t.replace(/^[-•*]\s*/, ''),
+                  done: false,
+                }))
+              : [{ id: 'ts-0', text: tsDesc, done: false }]
+          );
         }
         const sc = td.successCriteria || [];
-        setSuccessCriteriaItems(sc.map((t: string, i: number) => ({ id: `sc-${i}`, text: t, done: false })));
+        setSuccessCriteriaItems(
+          sc.map((t: string, i: number) => ({ id: `sc-${i}`, text: t, done: false }))
+        );
         const dl = td.deliverables || data.deliverables || [];
-        setDeliverableItems(dl.map((t: string, i: number) => ({ id: `dl-${i}`, text: t, done: false })));
+        setDeliverableItems(
+          dl.map((t: string, i: number) => ({ id: `dl-${i}`, text: t, done: false }))
+        );
       }
       setTags(data.tags || []);
       // Sync scope & boundaries fields
@@ -488,8 +717,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         setOutScopeItems(scopeObj.outScope || []);
       }
       setKillCriteriaItems(
-        data.killCriteria || data.kill_criteria ||
-        (typeof scopeObj === 'object' ? scopeObj.killCriteria || [] : [])
+        data.killCriteria ||
+          data.kill_criteria ||
+          (typeof scopeObj === 'object' ? scopeObj.killCriteria || [] : [])
       );
       const rawKpis = Array.isArray(data.kpis)
         ? data.kpis
@@ -500,10 +730,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         rawKpis.map((k: any, idx: number) => ({
           id: String(k.id || `kpi-${idx}`),
           name: String(k.name || k.title || ''),
+          category: String(k.category || 'benefits'),
           unit: String(k.unit || ''),
-          baseline: String(k.baseline || ''),
-          target: String(k.target || ''),
-          current: String(k.current || ''),
+          baseline: String(k.baselineValue ?? k.baseline ?? ''),
+          target: String(k.targetValue ?? k.target ?? ''),
+          current: String(k.currentValue ?? k.current ?? ''),
         }))
       );
       const rawResources = Array.isArray(data.resources) ? data.resources : [];
@@ -539,6 +770,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setStartDate(data.plannedStartDate || data.planned_start_date || null);
       setEndDate(data.plannedEndDate || data.planned_end_date || null);
 
+      // Timeline milestones & phases from initiative data
+      if (Array.isArray(data.milestones)) {
+        setTimelineMilestones(
+          data.milestones.map((m: any, idx: number) => ({
+            id: m.id || `ms-${idx}`,
+            name: m.name || m.title || '',
+            date: m.date || m.plannedDate || '',
+            actualDate: m.actualDate || undefined,
+            status: m.status || 'pending',
+            description: m.description || undefined,
+          }))
+        );
+      }
+      if (Array.isArray(data.timelinePhases)) {
+        setTimelinePhases(data.timelinePhases);
+      }
+      if (data.estimatedDurationMonths != null) {
+        setEstimatedDurationMonths(data.estimatedDurationMonths);
+      }
+
       // Fetch related data (best-effort, parallel)
       const fetches = [
         Api.get(`/decisions?relatedObjectId=${initiativeId}&relatedObjectType=initiative`)
@@ -550,6 +801,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         Api.get(`/initiatives/${initiativeId}/watchers`)
           .then((w: any) => setWatchers(w?.watchers || (Array.isArray(w) ? w : [])))
           .catch(() => setWatchers([])),
+        Api.get(`/initiatives/${initiativeId}/kpis`)
+          .then((res: any) => {
+            const rows = Array.isArray(res?.kpis) ? res.kpis : [];
+            setLocalKpis(
+              rows.map((k: any, idx: number) => ({
+                id: String(k.id || `kpi-${idx}`),
+                name: String(k.name || ''),
+                category: String(k.category || 'benefits'),
+                unit: String(k.unit || ''),
+                baseline: String(k.baselineValue ?? ''),
+                target: String(k.targetValue ?? ''),
+                current: String(k.latestValue ?? k.currentValue ?? ''),
+              }))
+            );
+          })
+          .catch(() => {
+            // keep fallback KPI mapping from initiative payload
+          }),
         Api.get(`/initiatives/${initiativeId}/history`)
           .then((h: any) => setHistory(h?.events || h?.history || (Array.isArray(h) ? h : [])))
           .catch(() => setHistory([])),
@@ -575,6 +844,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             );
           })
           .catch(() => setTasks([])),
+        Api.get(`/initiatives/${initiativeId}/task-dependencies`)
+          .then((d: any) => setDependencies(Array.isArray(d?.dependencies) ? d.dependencies : []))
+          .catch(() => setDependencies([])),
         Api.get(`/initiatives/${initiativeId}/stakeholders`)
           .then((st: any) => {
             const mapped: Stakeholder[] = (st?.stakeholders || (Array.isArray(st) ? st : [])).map(
@@ -627,6 +899,36 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             setPendingApprovals(approvals);
           })
           .catch(() => setPendingApprovals([])),
+        // Gate roles & governance
+        Api.get(`/initiatives/${initiativeId}/gate-roles`)
+          .then((gr: any) => {
+            const roles: GateRoleAssignment[] = (gr?.roles || []).map((r: any) => ({
+              id: r.id,
+              initiativeId: r.initiativeId || initiativeId,
+              gateRole: r.gateRole,
+              userId: r.userId,
+              firstName: r.firstName,
+              lastName: r.lastName,
+              email: r.email,
+              assignedBy: r.assignedBy,
+              assignedAt: r.assignedAt,
+              source: r.source || 'explicit',
+            }));
+            setGateRoles(roles);
+          })
+          .catch(() => setGateRoles([])),
+        Api.get(`/initiatives/${initiativeId}/gate-readiness-check`)
+          .then((rc: any) => {
+            setGateReadiness(rc || null);
+            setUserGateRoles(rc?.userRoles || []);
+          })
+          .catch(() => {
+            setGateReadiness(null);
+            setUserGateRoles([]);
+          }),
+        Api.get(`/initiatives/${initiativeId}/status-history`)
+          .then((sh: any) => setStatusHistory(sh?.history || []))
+          .catch(() => setStatusHistory([])),
       ];
 
       await Promise.allSettled(fetches);
@@ -1256,9 +1558,28 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   };
 
+  const handleUpdateRaid = useCallback((id: string, updates: Partial<RaidItem>) => {
+    setRaidItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)));
+  }, []);
+
+  const handleDeleteRaid = useCallback(
+    async (id: string) => {
+      setRaidItems((prev) => prev.filter((item) => item.id !== id));
+      toast.success(isPolish ? 'Element RAID usunięty' : 'RAID item removed');
+      try {
+        await Api.delete(`/initiatives/${initiativeId}/raid/${id}`);
+      } catch {
+        // Best-effort backend delete — item already removed from UI
+      }
+    },
+    [initiativeId, isPolish]
+  );
+
   const handleAddComment = async (content: string) => {
     const authorName = currentUser
-      ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.email || 'User'
+      ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() ||
+        currentUser.email ||
+        'User'
       : 'User';
 
     // Optimistic local update
@@ -1279,9 +1600,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       const saved = await Api.post(`/initiatives/${initiativeId}/comments`, { content });
       // Replace temp ID with server-generated ID
       if (saved?.id) {
-        setComments((prev) =>
-          prev.map((c) => (c.id === tempId ? { ...c, id: saved.id } : c))
-        );
+        setComments((prev) => prev.map((c) => (c.id === tempId ? { ...c, id: saved.id } : c)));
       }
     } catch {
       // Comment is shown locally even if persist fails (best-effort)
@@ -1332,11 +1651,31 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           setSummary(result.parsedContent || result.content);
 
           // Also generate content for Description & Context sub-fields if they are empty
-          const subFieldsToGenerate: { key: string; setter: (v: string) => void; current: string }[] = [
-            { key: 'problem_definition', setter: (v: string) => setSymptomDraft(v), current: symptomDraft },
-            { key: 'proposed_solution', setter: (v: string) => setRootCauseDraft(v), current: rootCauseDraft },
-            { key: 'cost_of_inaction', setter: (v: string) => setCostOfInactionDraft(v), current: costOfInactionDraft },
-            { key: 'market_context', setter: (v: string) => setMarketContextDraft(v), current: marketContextDraft },
+          const subFieldsToGenerate: {
+            key: string;
+            setter: (v: string) => void;
+            current: string;
+          }[] = [
+            {
+              key: 'problem_definition',
+              setter: (v: string) => setSymptomDraft(v),
+              current: symptomDraft,
+            },
+            {
+              key: 'proposed_solution',
+              setter: (v: string) => setRootCauseDraft(v),
+              current: rootCauseDraft,
+            },
+            {
+              key: 'cost_of_inaction',
+              setter: (v: string) => setCostOfInactionDraft(v),
+              current: costOfInactionDraft,
+            },
+            {
+              key: 'market_context',
+              setter: (v: string) => setMarketContextDraft(v),
+              current: marketContextDraft,
+            },
           ];
 
           // Generate sub-fields in parallel (only empty ones)
@@ -1351,7 +1690,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     ? `Jesteś ekspertem strategicznym PMO. Wygeneruj profesjonalną treść dla sekcji "${f.key}" inicjatywy "${initiative?.name || ''}". Zwróć TYLKO treść — bez komentarzy, bez cudzysłowów, bez prefiksów. Pisz zwięźle (2-4 zdania). Język: polski.`
                     : `You are a strategic PMO expert. Generate professional content for the "${f.key}" section of initiative "${initiative?.name || ''}". Return ONLY the content — no commentary, no quotes, no prefixes. Write concisely (2-4 sentences). Language: English.`,
                   fieldLabel: f.key,
-                  artifactContext: { title: initiative?.name || '', status, priority, type: 'initiative' },
+                  artifactContext: {
+                    title: initiative?.name || '',
+                    status,
+                    priority,
+                    type: 'initiative',
+                  },
                   language: isPolish ? 'pl' : 'en',
                 })
               )
@@ -1365,6 +1709,72 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           }
 
           toast.success(isPolish ? 'Opis wygenerowany przez AI' : 'Description generated by AI');
+        } else if (section === 'raid') {
+          // Parse RAID JSON and insert items into state
+          const parsed =
+            result.parsedContent ||
+            (() => {
+              try {
+                const jsonMatch = (result.content || '').match(
+                  /```(?:json)?\s*([\s\S]*?)\s*```/
+                ) || [null, result.content];
+                return JSON.parse(jsonMatch[1] || result.content || '{}');
+              } catch {
+                return null;
+              }
+            })();
+          if (parsed) {
+            const now = Date.now();
+            const newItems: any[] = [];
+            const mapItem = (item: any, type: string, idx: number) => ({
+              id: `raid-ai-${now}-${type}-${idx}`,
+              type,
+              title: item.title || '',
+              description: item.description || '',
+              severity: (item.impact || item.severity || 'MEDIUM').toUpperCase(),
+              status: (item.status || 'OPEN').toUpperCase(),
+              owner: item.owner || '',
+              mitigationPlan: item.mitigation || item.proposedAction || '',
+              probability: item.probability || undefined,
+              category: item.category || 'business',
+              contingency: item.contingency || '',
+              proposedAction: item.proposedAction || '',
+              dueDate: item.dueDate || '',
+              source: item.source || 'AI analysis',
+            });
+            if (Array.isArray(parsed.risks)) {
+              parsed.risks.forEach((r: any, i: number) => newItems.push(mapItem(r, 'risk', i)));
+            }
+            if (Array.isArray(parsed.assumptions)) {
+              parsed.assumptions.forEach((r: any, i: number) =>
+                newItems.push(mapItem(r, 'assumption', i))
+              );
+            }
+            if (Array.isArray(parsed.issues)) {
+              parsed.issues.forEach((r: any, i: number) => newItems.push(mapItem(r, 'issue', i)));
+            }
+            if (Array.isArray(parsed.dependencies)) {
+              parsed.dependencies.forEach((r: any, i: number) =>
+                newItems.push(mapItem(r, 'dependency', i))
+              );
+            }
+            if (newItems.length > 0) {
+              setRaidItems((prev) => [...newItems, ...prev]);
+              toast.success(
+                isPolish
+                  ? `AI wygenerował ${newItems.length} elementów RAID`
+                  : `AI generated ${newItems.length} RAID items`
+              );
+            } else {
+              toast.error(
+                isPolish ? 'AI nie wygenerował elementów RAID' : 'AI generated no RAID items'
+              );
+            }
+          } else {
+            toast.error(
+              isPolish ? 'Nie udało się sparsować odpowiedzi AI' : 'Failed to parse AI response'
+            );
+          }
         } else if (section === 'comments') {
           const aiComment: Comment = {
             id: `ai-${Date.now()}`,
@@ -1530,6 +1940,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setTags,
       users,
       pendingApprovals,
+      gateRoles,
+      setGateRoles,
+      userGateRoles,
+      statusHistory,
+      gateReadiness,
       summary,
       setSummary,
       description,
@@ -1546,6 +1961,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setStartDate,
       endDate,
       setEndDate,
+      timelineMilestones,
+      setTimelineMilestones,
+      timelinePhases,
+      setTimelinePhases,
+      timelineLocked: ['SCHEDULED', 'EXECUTING', 'BLOCKED', 'DONE', 'TRACKING'].includes(status),
+      baselineVersion: initiative?.baselineVersion ?? null,
+      estimatedDurationMonths,
+      setEstimatedDurationMonths,
       reminders,
       setReminders,
       escalationRules,
@@ -1577,6 +2000,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       handleCreateTask,
       handleCreateDecision,
       handleCreateRaid,
+      handleUpdateRaid,
+      handleDeleteRaid,
       handleAddComment,
       handleRequestApproval,
       handleOpenChat,
@@ -1644,6 +2069,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       tags,
       users,
       pendingApprovals,
+      gateRoles,
+      userGateRoles,
+      statusHistory,
+      gateReadiness,
       summary,
       description,
       priority,
@@ -1652,6 +2081,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       targetDate,
       startDate,
       endDate,
+      timelineMilestones,
+      timelinePhases,
+      estimatedDurationMonths,
       reminders,
       escalationRules,
       thresholds,
@@ -1680,6 +2112,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       handleCreateTask,
       handleCreateDecision,
       handleCreateRaid,
+      handleUpdateRaid,
+      handleDeleteRaid,
       handleAddComment,
       handleRequestApproval,
       handleOpenChat,
@@ -1724,7 +2158,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       targetState: ['target-state-scope'],
       scope: ['target-state-scope'],
       tasks: ['tasks'],
-      milestones: ['milestones'],
       dependencies: ['dependencies'],
       team: ['team'],
       stakeholders: ['raci'],
@@ -1746,7 +2179,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   );
 
   const enabledNModeSectionIds = useMemo(() => {
-    const templateVS = initiativeTemplate?.visibleSections || initiativeTemplate?.visible_sections || {};
+    const templateVS =
+      initiativeTemplate?.visibleSections || initiativeTemplate?.visible_sections || {};
     const hasExplicitTemplateVisibility =
       templateVS && typeof templateVS === 'object' && Object.keys(templateVS).length > 0;
     if (!hasExplicitTemplateVisibility) return null;
@@ -1761,9 +2195,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     return enabledIds;
   }, [initiativeTemplate, templateToNModeSectionIds]);
 
-  const initiativeNSections: NModeSection[] = useMemo(
-    () => {
-      const allSections: NModeSection[] = [
+  const initiativeNSections: NModeSection[] = useMemo(() => {
+    const allSections: NModeSection[] = [
       {
         id: 'initiative-definition',
         icon: Search,
@@ -1828,13 +2261,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         component: null,
       },
       {
-        id: 'milestones',
-        icon: CheckSquare,
-        label: { en: 'Milestones', pl: 'Kamienie milowe' },
-        badge: milestones.length > 0 ? milestones.length : undefined,
-        component: null,
-      },
-      {
         id: 'timeline',
         icon: Calendar,
         label: { en: 'Timeline', pl: 'Harmonogram' },
@@ -1888,28 +2314,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         badge: history.length > 0 ? history.length : undefined,
         component: null,
       },
-      ];
+    ];
 
-      if (!enabledNModeSectionIds || enabledNModeSectionIds.size === 0) {
-        return allSections;
-      }
+    if (!enabledNModeSectionIds || enabledNModeSectionIds.size === 0) {
+      return allSections;
+    }
 
-      return allSections.filter((section) => enabledNModeSectionIds.has(section.id));
-    },
-    [
-      tasks.length,
-      milestones.length,
-      dependencies.length,
-      stakeholders.length,
-      raidItems.length,
-      decisions.length,
-      pendingGates.length,
-      comments.length,
-      history.length,
-      attachments.length,
-      enabledNModeSectionIds,
-    ]
-  );
+    return allSections.filter((section) => enabledNModeSectionIds.has(section.id));
+  }, [
+    tasks.length,
+    milestones.length,
+    dependencies.length,
+    stakeholders.length,
+    raidItems.length,
+    decisions.length,
+    pendingGates.length,
+    comments.length,
+    history.length,
+    attachments.length,
+    enabledNModeSectionIds,
+  ]);
 
   // ==========================================
   // N-MODE: PROPERTIES STRIP FIELDS
@@ -1940,13 +2364,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     const nextGate = getNextGateForStatus(status);
     const gateConf = nextGate ? GATE_CONFIG[nextGate] : null;
-    const gateLabel = gateConf
-      ? { en: gateConf.name, pl: gateConf.namePl }
-      : { en: '—', pl: '—' };
+    const gateLabel = gateConf ? { en: gateConf.name, pl: gateConf.namePl } : { en: '—', pl: '—' };
 
     // Gate color — depends on whether there's a pending gate and what it targets
     const gateVisual = (() => {
-      if (!gateConf) return { dot: 'bg-slate-300', bg: 'bg-slate-100 dark:bg-navy-800', text: 'text-slate-400 dark:text-slate-500' };
+      if (!gateConf)
+        return {
+          dot: 'bg-slate-300',
+          bg: 'bg-slate-100 dark:bg-navy-800',
+          text: 'text-slate-400 dark:text-slate-500',
+        };
       // Map target status to module color
       const targetModule = getModuleFromStatus(gateConf.toStatus);
       const targetModConf = MODULE_CONFIG[targetModule];
@@ -1982,15 +2409,44 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     const currentStatusBg = currentStatusMeta?.bgColor || 'bg-slate-50';
     const currentStatusColor = currentStatusMeta?.color || 'text-slate-700';
     const currentStatusLabel = currentStatusMeta
-      ? isPolish ? currentStatusMeta.labelPL : currentStatusMeta.label
+      ? isPolish
+        ? currentStatusMeta.labelPL
+        : currentStatusMeta.label
       : status;
 
     // Helper: get metadata for current priority
-    const priorityMeta: Record<string, { dot: string; bg: string; text: string; label: string; labelPl: string }> = {
-      critical: { dot: 'bg-red-500', bg: 'bg-red-500/10', text: 'text-red-600', label: 'Critical', labelPl: 'Krytyczny' },
-      high: { dot: 'bg-orange-500', bg: 'bg-orange-500/10', text: 'text-orange-600', label: 'High', labelPl: 'Wysoki' },
-      medium: { dot: 'bg-amber-400', bg: 'bg-amber-400/10', text: 'text-amber-600', label: 'Medium', labelPl: 'Średni' },
-      low: { dot: 'bg-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-600', label: 'Low', labelPl: 'Niski' },
+    const priorityMeta: Record<
+      string,
+      { dot: string; bg: string; text: string; label: string; labelPl: string }
+    > = {
+      critical: {
+        dot: 'bg-red-500',
+        bg: 'bg-red-500/10',
+        text: 'text-red-600',
+        label: 'Critical',
+        labelPl: 'Krytyczny',
+      },
+      high: {
+        dot: 'bg-orange-500',
+        bg: 'bg-orange-500/10',
+        text: 'text-orange-600',
+        label: 'High',
+        labelPl: 'Wysoki',
+      },
+      medium: {
+        dot: 'bg-amber-400',
+        bg: 'bg-amber-400/10',
+        text: 'text-amber-600',
+        label: 'Medium',
+        labelPl: 'Średni',
+      },
+      low: {
+        dot: 'bg-emerald-500',
+        bg: 'bg-emerald-500/10',
+        text: 'text-emerald-600',
+        label: 'Low',
+        labelPl: 'Niski',
+      },
     };
     const currentPriorityMeta = priorityMeta[priority] || priorityMeta.medium;
 
@@ -2007,7 +2463,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         alertBorderClass: statusAlertBorder,
         render: () => (
           <div className="relative">
-            <div className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold ${currentStatusBg} border ${statusAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'} ${currentStatusColor}`}>
+            <div
+              className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold ${currentStatusBg} border ${statusAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'} ${currentStatusColor}`}
+            >
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${currentStatusDot}`} />
               <span className="flex-1 truncate">{currentStatusLabel}</span>
             </div>
@@ -2023,7 +2481,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 const meta = INITIATIVE_STATUS_METADATA[opt.value as InitiativeStatus];
                 return (
                   <option key={opt.value} value={opt.value}>
-                    {isPolish ? (meta?.labelPL || opt.label.pl) : (meta?.label || opt.label.en)}
+                    {isPolish ? meta?.labelPL || opt.label.pl : meta?.label || opt.label.en}
                   </option>
                 );
               })}
@@ -2039,9 +2497,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         onChange: () => {},
         readOnly: true,
         render: () => (
-          <div className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold ${moduleConfig.bgLight} ${moduleConfig.textColor}`}>
+          <div
+            className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold ${moduleConfig.bgLight} ${moduleConfig.textColor}`}
+          >
             <span className={`w-2 h-2 rounded-full flex-shrink-0 ${moduleConfig.color}`} />
-            <span className="flex-1 truncate">{isPolish ? moduleConfig.labelPl : moduleConfig.label}</span>
+            <span className="flex-1 truncate">
+              {isPolish ? moduleConfig.labelPl : moduleConfig.label}
+            </span>
           </div>
         ),
       },
@@ -2053,7 +2515,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         onChange: () => {},
         readOnly: true,
         render: () => (
-          <div className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold ${gateVisual.bg} ${gateVisual.text} ${gateAlertBorder ? `border ${gateAlertBorder}` : ''}`}>
+          <div
+            className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold ${gateVisual.bg} ${gateVisual.text} ${gateAlertBorder ? `border ${gateAlertBorder}` : ''}`}
+          >
             <span className={`w-2 h-2 rounded-full flex-shrink-0 ${gateVisual.dot}`} />
             <span className="flex-1 truncate">{isPolish ? gateLabel.pl : gateLabel.en}</span>
           </div>
@@ -2068,9 +2532,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         alertBorderClass: priorityAlertBorder,
         render: () => (
           <div className="relative">
-            <div className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold ${currentPriorityMeta.bg} border ${priorityAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'} ${currentPriorityMeta.text}`}>
+            <div
+              className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold ${currentPriorityMeta.bg} border ${priorityAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'} ${currentPriorityMeta.text}`}
+            >
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${currentPriorityMeta.dot}`} />
-              <span className="flex-1 truncate">{isPolish ? currentPriorityMeta.labelPl : currentPriorityMeta.label}</span>
+              <span className="flex-1 truncate">
+                {isPolish ? currentPriorityMeta.labelPl : currentPriorityMeta.label}
+              </span>
             </div>
             <select
               value={priority}
@@ -2081,7 +2549,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 const pm = priorityMeta[opt.value];
                 return (
                   <option key={opt.value} value={opt.value}>
-                    {isPolish ? (pm?.labelPl || opt.label.pl) : (pm?.label || opt.label.en)}
+                    {isPolish ? pm?.labelPl || opt.label.pl : pm?.label || opt.label.en}
                   </option>
                 );
               })}
@@ -2119,10 +2587,227 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       },
     ];
   }, [
-    status, priority, ownerId, sponsorId, startDate, targetDate, tasks.length, tasksDone,
-    users, isPolish, moduleConfig, statusActions, handleStatusAction, setPriority,
-    setOwnerId, setSponsorId, setStartDate, setTargetDate, pendingGates.length,
+    status,
+    priority,
+    ownerId,
+    sponsorId,
+    startDate,
+    targetDate,
+    tasks.length,
+    tasksDone,
+    users,
+    isPolish,
+    moduleConfig,
+    statusActions,
+    handleStatusAction,
+    setPriority,
+    setOwnerId,
+    setSponsorId,
+    setStartDate,
+    setTargetDate,
+    pendingGates.length,
   ]);
+
+  // ==========================================
+  // N-MODE: COMMENTS CANVAS ADAPTERS (identical to Task)
+  // ==========================================
+
+  const nModeComments: CommentItem[] = useMemo(
+    () =>
+      comments
+        .filter((c) => {
+          if (nCommentDateFilter === 'all') return true;
+          const d = new Date(c.createdAt);
+          const now = new Date();
+          if (nCommentDateFilter === 'today') return d.toDateString() === now.toDateString();
+          if (nCommentDateFilter === '7d') return now.getTime() - d.getTime() < 7 * 86400000;
+          if (nCommentDateFilter === '30d') return now.getTime() - d.getTime() < 30 * 86400000;
+          return true;
+        })
+        .sort((a, b) =>
+          nCommentSortOrder === 'desc'
+            ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        )
+        .map((c) => ({
+          id: c.id,
+          authorName: c.authorName,
+          content: c.content,
+          createdAt: c.createdAt,
+          isAIGenerated: c.authorId === 'ai-assistant',
+          priority: 'normal' as CommentPriority,
+        })),
+    [comments, nCommentDateFilter, nCommentSortOrder]
+  );
+
+  const getPriorityDotClass = (p: CommentPriority) =>
+    p === 'high' ? 'bg-red-500' : p === 'low' ? 'bg-slate-400' : 'bg-blue-500';
+  const getCommentPriority = (_c: CommentItem): CommentPriority => 'normal';
+  const getPriorityButtonClass = (p: CommentPriority, active: boolean) =>
+    active
+      ? p === 'high'
+        ? 'border-red-400/80 text-red-300 bg-red-500/20 shadow-[0_0_0_1px_rgba(239,68,68,0.3)]'
+        : p === 'low'
+          ? 'border-emerald-400/80 text-emerald-300 bg-emerald-500/20 shadow-[0_0_0_1px_rgba(16,185,129,0.3)]'
+          : 'border-indigo-400/70 text-indigo-300 bg-indigo-500/15 shadow-[0_0_0_1px_rgba(129,140,248,0.2)]'
+      : 'border-slate-300/55 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:border-slate-400/70 hover:text-slate-700 dark:text-slate-300';
+  const getCommentPriorityLabel = (p: CommentPriority) =>
+    p === 'high' ? 'High' : p === 'low' ? 'Low' : 'Normal';
+  const getCommentPriorityHint = (p: CommentPriority) =>
+    p === 'high'
+      ? isPolish
+        ? 'Wymagana natychmiastowa uwaga'
+        : 'Requires immediate attention'
+      : p === 'low'
+        ? isPolish
+          ? 'Informacyjny komentarz'
+          : 'Informational comment'
+        : isPolish
+          ? 'Standardowy komentarz'
+          : 'Standard comment';
+
+  const handleNModeSubmitComment = () => {
+    if (!nCommentDraft.trim()) return;
+    handleAddComment(nCommentDraft);
+    setNCommentDraft('');
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+  };
+
+  // ==========================================
+  // N-MODE: ACTIVITY LOG ADAPTERS (shared ActivityLogCanvas)
+  // ==========================================
+
+  const nModeActivityEntries: NModeActivityLogEntry[] = useMemo(
+    () =>
+      [...history]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .map((e) => {
+          // API returns: eventType, actorId, createdAt, oldValue, newValue, notes
+          const raw = e as any;
+          const notes = raw.notes as string | undefined;
+          const description =
+            notes || e.eventType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+          return {
+            id: e.id,
+            type: e.eventType,
+            description,
+            timestamp: e.createdAt,
+            userName: e.actorName || raw.actorId || undefined,
+            oldValue: raw.oldValue || e.payload?.oldValue,
+            newValue: raw.newValue || e.payload?.newValue,
+          };
+        }),
+    [history]
+  );
+
+  const nModeActivityStats: ActivityStats = useMemo(() => {
+    const total = history.length;
+    const edited = history.filter((e) =>
+      ['edit', 'status_change', 'update', 'field_change'].includes(e.eventType)
+    ).length;
+    const escalations = history.filter((e) =>
+      ['deadline', 'priority', 'escalated', 'gate_review', 'risk_added'].includes(e.eventType)
+    ).length;
+    const collaboration = history.filter((e) =>
+      ['comment', 'assignment', 'task_added', 'decision_added', 'stakeholder_added'].includes(
+        e.eventType
+      )
+    ).length;
+    return { total, edited, escalations, collaboration };
+  }, [history]);
+
+  const nModeActivityTypeMeta = useCallback(
+    (type: string): ActivityTypeMeta => {
+      const MAP: Record<string, ActivityTypeMeta> = {
+        created: {
+          icon: <Plus size={12} />,
+          label: isPolish ? 'Utworzono' : 'Created',
+          style: 'text-emerald-500 bg-emerald-500/10 border-emerald-400/30',
+        },
+        status_change: {
+          icon: <CheckCircle size={12} />,
+          label: isPolish ? 'Zmiana statusu' : 'Status change',
+          style: 'text-blue-500 bg-blue-500/10 border-blue-400/30',
+        },
+        update: {
+          icon: <Edit3 size={12} />,
+          label: isPolish ? 'Aktualizacja' : 'Update',
+          style: 'text-cyan-500 bg-cyan-500/10 border-cyan-400/30',
+        },
+        field_change: {
+          icon: <Edit3 size={12} />,
+          label: isPolish ? 'Edycja' : 'Edit',
+          style: 'text-slate-500 bg-slate-500/10 border-slate-400/30',
+        },
+        edit: {
+          icon: <Edit3 size={12} />,
+          label: isPolish ? 'Edycja' : 'Edit',
+          style: 'text-slate-500 bg-slate-500/10 border-slate-400/30',
+        },
+        comment: {
+          icon: <MessageSquare size={12} />,
+          label: isPolish ? 'Komentarz' : 'Comment',
+          style: 'text-indigo-500 bg-indigo-500/10 border-indigo-400/30',
+        },
+        assignment: {
+          icon: <User size={12} />,
+          label: isPolish ? 'Przypisanie' : 'Assignment',
+          style: 'text-purple-500 bg-purple-500/10 border-purple-400/30',
+        },
+        task_added: {
+          icon: <CheckSquare size={12} />,
+          label: isPolish ? 'Zadanie' : 'Task added',
+          style: 'text-sky-500 bg-sky-500/10 border-sky-400/30',
+        },
+        decision_added: {
+          icon: <Scale size={12} />,
+          label: isPolish ? 'Decyzja' : 'Decision added',
+          style: 'text-violet-500 bg-violet-500/10 border-violet-400/30',
+        },
+        risk_added: {
+          icon: <AlertTriangle size={12} />,
+          label: isPolish ? 'Ryzyko' : 'Risk added',
+          style: 'text-amber-500 bg-amber-500/10 border-amber-400/30',
+        },
+        stakeholder_added: {
+          icon: <Users size={12} />,
+          label: isPolish ? 'Interesariusz' : 'Stakeholder',
+          style: 'text-sky-500 bg-sky-500/10 border-sky-400/30',
+        },
+        gate_review: {
+          icon: <ShieldCheck size={12} />,
+          label: isPolish ? 'Przegląd bramki' : 'Gate review',
+          style: 'text-emerald-500 bg-emerald-500/10 border-emerald-400/30',
+        },
+        deadline: {
+          icon: <Calendar size={12} />,
+          label: isPolish ? 'Termin' : 'Deadline',
+          style: 'text-red-500 bg-red-500/10 border-red-400/30',
+        },
+        priority: {
+          icon: <Flag size={12} />,
+          label: isPolish ? 'Priorytet' : 'Priority',
+          style: 'text-orange-500 bg-orange-500/10 border-orange-400/30',
+        },
+        escalated: {
+          icon: <AlertTriangle size={12} />,
+          label: isPolish ? 'Eskalacja' : 'Escalation',
+          style: 'text-amber-500 bg-amber-500/10 border-amber-400/30',
+        },
+      };
+      return (
+        MAP[type] || {
+          icon: <Clock size={12} />,
+          label: type.replace(/_/g, ' '),
+          style: 'text-slate-400 bg-slate-400/10 border-slate-300/30',
+        }
+      );
+    },
+    [isPolish]
+  );
 
   // ==========================================
   // N-MODE: SECTION CONTENT BUILDER
@@ -2150,7 +2835,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       {isPolish ? 'Problem' : 'Problem'}
                     </label>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                      {isPolish ? 'Jaki problem rozwiązuje ta inicjatywa' : 'What problem does this initiative solve'}
+                      {isPolish
+                        ? 'Jaki problem rozwiązuje ta inicjatywa'
+                        : 'What problem does this initiative solve'}
                     </p>
                   </div>
                   <AIFieldEnhancer
@@ -2158,7 +2845,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     sectionLabel={isPolish ? 'Problem' : 'Problem'}
                     currentValue={symptomDraft}
                     onApply={setSymptomDraft}
-                    artifactContext={{ title: initiative?.name || '', status, priority, type: 'initiative' }}
+                    artifactContext={{
+                      title: initiative?.name || '',
+                      status,
+                      priority,
+                      type: 'initiative',
+                    }}
                   />
                 </div>
                 <textarea
@@ -2166,7 +2858,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   onChange={(e) => setSymptomDraft(e.target.value)}
                   rows={3}
                   className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[60px]"
-                  placeholder={isPolish ? 'Jaki problem rozwiązujemy? Co jest nie tak?' : 'What problem are we solving? What is wrong?'}
+                  placeholder={
+                    isPolish
+                      ? 'Jaki problem rozwiązujemy? Co jest nie tak?'
+                      : 'What problem are we solving? What is wrong?'
+                  }
                 />
               </div>
 
@@ -2178,7 +2874,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       {isPolish ? 'Opis rozwiązania' : 'Proposed Solution'}
                     </label>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                      {isPolish ? 'Proponowane podejście i sposób realizacji' : 'Proposed approach and implementation method'}
+                      {isPolish
+                        ? 'Proponowane podejście i sposób realizacji'
+                        : 'Proposed approach and implementation method'}
                     </p>
                   </div>
                   <AIFieldEnhancer
@@ -2186,7 +2884,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     sectionLabel={isPolish ? 'Opis rozwiązania' : 'Proposed Solution'}
                     currentValue={rootCauseDraft}
                     onApply={setRootCauseDraft}
-                    artifactContext={{ title: initiative?.name || '', status, priority, type: 'initiative' }}
+                    artifactContext={{
+                      title: initiative?.name || '',
+                      status,
+                      priority,
+                      type: 'initiative',
+                    }}
                   />
                 </div>
                 <textarea
@@ -2194,7 +2897,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   onChange={(e) => setRootCauseDraft(e.target.value)}
                   rows={3}
                   className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[60px]"
-                  placeholder={isPolish ? 'Jakie rozwiązanie proponujemy? Jakie podejście?' : 'What solution do we propose? What approach?'}
+                  placeholder={
+                    isPolish
+                      ? 'Jakie rozwiązanie proponujemy? Jakie podejście?'
+                      : 'What solution do we propose? What approach?'
+                  }
                 />
               </div>
 
@@ -2206,7 +2913,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       {isPolish ? 'Koszt bezczynności' : 'Cost of Inaction'}
                     </label>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                      {isPolish ? 'Konsekwencje braku działania' : 'Consequences of not taking action'}
+                      {isPolish
+                        ? 'Konsekwencje braku działania'
+                        : 'Consequences of not taking action'}
                     </p>
                   </div>
                   <AIFieldEnhancer
@@ -2214,7 +2923,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     sectionLabel={isPolish ? 'Koszt bezczynności' : 'Cost of Inaction'}
                     currentValue={costOfInactionDraft}
                     onApply={setCostOfInactionDraft}
-                    artifactContext={{ title: initiative?.name || '', status, priority, type: 'initiative' }}
+                    artifactContext={{
+                      title: initiative?.name || '',
+                      status,
+                      priority,
+                      type: 'initiative',
+                    }}
                   />
                 </div>
                 <textarea
@@ -2222,7 +2936,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   onChange={(e) => setCostOfInactionDraft(e.target.value)}
                   rows={3}
                   className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[60px]"
-                  placeholder={isPolish ? 'Co się stanie jeśli nie podejmiemy działań?' : 'What happens if we do nothing?'}
+                  placeholder={
+                    isPolish
+                      ? 'Co się stanie jeśli nie podejmiemy działań?'
+                      : 'What happens if we do nothing?'
+                  }
                 />
               </div>
 
@@ -2234,7 +2952,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       {isPolish ? 'Kontekst rynkowy' : 'Market Context'}
                     </label>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                      {isPolish ? 'Otoczenie rynkowe, konkurencja i trendy' : 'Market environment, competition and trends'}
+                      {isPolish
+                        ? 'Otoczenie rynkowe, konkurencja i trendy'
+                        : 'Market environment, competition and trends'}
                     </p>
                   </div>
                   <AIFieldEnhancer
@@ -2242,7 +2962,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     sectionLabel={isPolish ? 'Kontekst rynkowy' : 'Market Context'}
                     currentValue={marketContextDraft}
                     onApply={setMarketContextDraft}
-                    artifactContext={{ title: initiative?.name || '', status, priority, type: 'initiative' }}
+                    artifactContext={{
+                      title: initiative?.name || '',
+                      status,
+                      priority,
+                      type: 'initiative',
+                    }}
                   />
                 </div>
                 <textarea
@@ -2250,7 +2975,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   onChange={(e) => setMarketContextDraft(e.target.value)}
                   rows={3}
                   className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[60px]"
-                  placeholder={isPolish ? 'Kontekst rynkowy, konkurencja, trendy...' : 'Market context, competition, trends...'}
+                  placeholder={
+                    isPolish
+                      ? 'Kontekst rynkowy, konkurencja, trendy...'
+                      : 'Market context, competition, trends...'
+                  }
                 />
               </div>
             </div>
@@ -2268,7 +2997,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             setDeliverableItems((prev) => [...prev, { id: mkId(), text: '', done: false }]);
 
           const updateTarget = (id: string, patch: Partial<{ text: string; done: boolean }>) =>
-            setTargetStateItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+            setTargetStateItems((prev) =>
+              prev.map((item) => (item.id === id ? { ...item, ...patch } : item))
+            );
           const updateCriteria = (id: string, patch: Partial<{ text: string; done: boolean }>) =>
             setSuccessCriteriaItems((prev) =>
               prev.map((item) => (item.id === id ? { ...item, ...patch } : item))
@@ -2358,7 +3089,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <div className="inline-flex items-center gap-2">
                   <button
                     onClick={onAdd}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-primary-500 transition-colors"
                   >
                     <Plus size={12} />
                     {isPolish ? 'Dodaj' : 'Add item'}
@@ -2366,7 +3097,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <AIFieldEnhancer
                     fieldKey={aiFieldKey}
                     sectionLabel={isPolish ? titlePl : titleEn}
-                    currentValue={items.map((item) => item.text).filter(Boolean).join('\n')}
+                    currentValue={items
+                      .map((item) => item.text)
+                      .filter(Boolean)
+                      .join('\n')}
                     onApply={(value) => {
                       const rows = value
                         .split('\n')
@@ -2408,18 +3142,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
                   {isPolish ? 'Kryteria sukcesu' : 'Success Criteria'}
                 </h2>
-                <button
-                  onClick={() => handleGenerateAI('target-state-scope')}
-                  disabled={isGeneratingAI === 'target-state-scope'}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
-                >
-                  {isGeneratingAI === 'target-state-scope' ? (
-                    <Loader2 size={12} className="animate-spin" />
-                  ) : (
-                    <Sparkles size={12} />
-                  )}
-                  AI
-                </button>
               </div>
               {renderChecklistCard(
                 'Target State',
@@ -2470,22 +3192,36 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
         case 'target-success': {
           const mkId = () => Math.random().toString(36).substr(2, 9);
-          const addTS = () => setTargetStateItems([...targetStateItems, { id: mkId(), text: '', done: false }]);
-          const addSC = () => setSuccessCriteriaItems([...successCriteriaItems, { id: mkId(), text: '', done: false }]);
-          const addDL = () => setDeliverableItems([...deliverableItems, { id: mkId(), text: '', done: false }]);
-          const updateTS = (id: string, p: Partial<{ text: string; done: boolean }>) => setTargetStateItems(targetStateItems.map((c) => c.id === id ? { ...c, ...p } : c));
-          const updateSC = (id: string, p: Partial<{ text: string; done: boolean }>) => setSuccessCriteriaItems(successCriteriaItems.map((c) => c.id === id ? { ...c, ...p } : c));
-          const updateDL = (id: string, p: Partial<{ text: string; done: boolean }>) => setDeliverableItems(deliverableItems.map((d) => d.id === id ? { ...d, ...p } : d));
-          const removeTS = (id: string) => setTargetStateItems(targetStateItems.filter((c) => c.id !== id));
-          const removeSC = (id: string) => setSuccessCriteriaItems(successCriteriaItems.filter((c) => c.id !== id));
-          const removeDL = (id: string) => setDeliverableItems(deliverableItems.filter((d) => d.id !== id));
+          const addTS = () =>
+            setTargetStateItems([...targetStateItems, { id: mkId(), text: '', done: false }]);
+          const addSC = () =>
+            setSuccessCriteriaItems([
+              ...successCriteriaItems,
+              { id: mkId(), text: '', done: false },
+            ]);
+          const addDL = () =>
+            setDeliverableItems([...deliverableItems, { id: mkId(), text: '', done: false }]);
+          const updateTS = (id: string, p: Partial<{ text: string; done: boolean }>) =>
+            setTargetStateItems(targetStateItems.map((c) => (c.id === id ? { ...c, ...p } : c)));
+          const updateSC = (id: string, p: Partial<{ text: string; done: boolean }>) =>
+            setSuccessCriteriaItems(
+              successCriteriaItems.map((c) => (c.id === id ? { ...c, ...p } : c))
+            );
+          const updateDL = (id: string, p: Partial<{ text: string; done: boolean }>) =>
+            setDeliverableItems(deliverableItems.map((d) => (d.id === id ? { ...d, ...p } : d)));
+          const removeTS = (id: string) =>
+            setTargetStateItems(targetStateItems.filter((c) => c.id !== id));
+          const removeSC = (id: string) =>
+            setSuccessCriteriaItems(successCriteriaItems.filter((c) => c.id !== id));
+          const removeDL = (id: string) =>
+            setDeliverableItems(deliverableItems.filter((d) => d.id !== id));
 
           /* ── Reusable checklist item row ── */
           const renderItem = (
             item: { id: string; text: string; done: boolean },
             onUpdate: (id: string, p: Partial<{ text: string; done: boolean }>) => void,
             onRemove: (id: string) => void,
-            placeholder: string,
+            placeholder: string
           ) => (
             <div
               key={item.id}
@@ -2494,12 +3230,20 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <button
                 onClick={() => onUpdate(item.id, { done: !item.done })}
                 className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                  item.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-navy-600 hover:border-emerald-400'
+                  item.done
+                    ? 'bg-emerald-500 border-emerald-500 text-white'
+                    : 'border-slate-300 dark:border-navy-600 hover:border-emerald-400'
                 }`}
               >
                 {item.done && (
                   <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
-                    <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M2.5 6L5 8.5L9.5 3.5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 )}
               </button>
@@ -2534,7 +3278,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             placeholderEN: string,
             placeholderPL: string,
             aiFieldKey: string,
-            setItems: (items: { id: string; text: string; done: boolean }[]) => void,
+            setItems: (items: { id: string; text: string; done: boolean }[]) => void
           ) => (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -2557,17 +3301,33 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <AIFieldEnhancer
                     fieldKey={aiFieldKey}
                     sectionLabel={isPolish ? labelPL : labelEN}
-                    currentValue={items.map((c) => c.text).filter(Boolean).join('\n')}
+                    currentValue={items
+                      .map((c) => c.text)
+                      .filter(Boolean)
+                      .join('\n')}
                     onApply={(val) => {
                       const lines = val.split('\n').filter((l: string) => l.trim());
-                      setItems(lines.map((t: string) => ({ id: mkId(), text: t.replace(/^[-•*]\s*/, ''), done: false })));
+                      setItems(
+                        lines.map((t: string) => ({
+                          id: mkId(),
+                          text: t.replace(/^[-•*]\s*/, ''),
+                          done: false,
+                        }))
+                      );
                     }}
-                    artifactContext={{ title: initiative?.name || '', status, priority, type: 'initiative' }}
+                    artifactContext={{
+                      title: initiative?.name || '',
+                      status,
+                      priority,
+                      type: 'initiative',
+                    }}
                   />
                 </div>
               </div>
               <div className="border-b border-slate-200 dark:border-navy-700/40 pb-2 min-h-[40px]">
-                {items.map((item) => renderItem(item, onUpdate, onRemove, isPolish ? placeholderPL : placeholderEN))}
+                {items.map((item) =>
+                  renderItem(item, onUpdate, onRemove, isPolish ? placeholderPL : placeholderEN)
+                )}
               </div>
             </div>
           );
@@ -2581,27 +3341,48 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </div>
 
               {renderBlock(
-                'Target State', 'Stan docelowy',
-                'Desired end state after initiative completion', 'Pożądany stan końcowy po wdrożeniu inicjatywy',
-                targetStateItems, updateTS, removeTS, addTS,
-                'Target state item...', 'Element stanu docelowego...',
-                'initiative-target-state', setTargetStateItems,
+                'Target State',
+                'Stan docelowy',
+                'Desired end state after initiative completion',
+                'Pożądany stan końcowy po wdrożeniu inicjatywy',
+                targetStateItems,
+                updateTS,
+                removeTS,
+                addTS,
+                'Target state item...',
+                'Element stanu docelowego...',
+                'initiative-target-state',
+                setTargetStateItems
               )}
 
               {renderBlock(
-                'Success Criteria', 'Kryteria sukcesu',
-                'Measurable conditions to consider the initiative successful', 'Mierzalne warunki uznania inicjatywy za udaną',
-                successCriteriaItems, updateSC, removeSC, addSC,
-                'Success criterion...', 'Kryterium sukcesu...',
-                'initiative-success-criteria', setSuccessCriteriaItems,
+                'Success Criteria',
+                'Kryteria sukcesu',
+                'Measurable conditions to consider the initiative successful',
+                'Mierzalne warunki uznania inicjatywy za udaną',
+                successCriteriaItems,
+                updateSC,
+                removeSC,
+                addSC,
+                'Success criterion...',
+                'Kryterium sukcesu...',
+                'initiative-success-criteria',
+                setSuccessCriteriaItems
               )}
 
               {renderBlock(
-                'Deliverables', 'Produkty',
-                'Specific outputs and results to be delivered', 'Konkretne produkty i wyniki do dostarczenia',
-                deliverableItems, updateDL, removeDL, addDL,
-                'Deliverable...', 'Deliverable...',
-                'initiative-deliverables', setDeliverableItems,
+                'Deliverables',
+                'Produkty',
+                'Specific outputs and results to be delivered',
+                'Konkretne produkty i wyniki do dostarczenia',
+                deliverableItems,
+                updateDL,
+                removeDL,
+                addDL,
+                'Deliverable...',
+                'Deliverable...',
+                'initiative-deliverables',
+                setDeliverableItems
               )}
             </div>
           );
@@ -2613,12 +3394,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           const addInScope = () => setInScopeItems([...inScopeItems, '']);
           const addOutScope = () => setOutScopeItems([...outScopeItems, '']);
           const addKillCriteria = () => setKillCriteriaItems([...killCriteriaItems, '']);
-          const updateInScope = (idx: number, val: string) => setInScopeItems(inScopeItems.map((v, i) => i === idx ? val : v));
-          const updateOutScope = (idx: number, val: string) => setOutScopeItems(outScopeItems.map((v, i) => i === idx ? val : v));
-          const updateKill = (idx: number, val: string) => setKillCriteriaItems(killCriteriaItems.map((v, i) => i === idx ? val : v));
-          const removeInScope = (idx: number) => setInScopeItems(inScopeItems.filter((_, i) => i !== idx));
-          const removeOutScope = (idx: number) => setOutScopeItems(outScopeItems.filter((_, i) => i !== idx));
-          const removeKill = (idx: number) => setKillCriteriaItems(killCriteriaItems.filter((_, i) => i !== idx));
+          const updateInScope = (idx: number, val: string) =>
+            setInScopeItems(inScopeItems.map((v, i) => (i === idx ? val : v)));
+          const updateOutScope = (idx: number, val: string) =>
+            setOutScopeItems(outScopeItems.map((v, i) => (i === idx ? val : v)));
+          const updateKill = (idx: number, val: string) =>
+            setKillCriteriaItems(killCriteriaItems.map((v, i) => (i === idx ? val : v)));
+          const removeInScope = (idx: number) =>
+            setInScopeItems(inScopeItems.filter((_, i) => i !== idx));
+          const removeOutScope = (idx: number) =>
+            setOutScopeItems(outScopeItems.filter((_, i) => i !== idx));
+          const removeKill = (idx: number) =>
+            setKillCriteriaItems(killCriteriaItems.filter((_, i) => i !== idx));
 
           /* ── Scope item row with colored dot ── */
           const renderScopeItem = (
@@ -2627,12 +3414,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             onUpdate: (idx: number, val: string) => void,
             onRemove: (idx: number) => void,
             dotColor: 'emerald' | 'red',
-            placeholder: string,
+            placeholder: string
           ) => (
             <div key={idx} className="group flex items-center gap-2 py-1">
-              <span className={`w-2 h-2 rounded-full shrink-0 ${
-                dotColor === 'emerald' ? 'bg-emerald-500' : 'bg-red-400'
-              }`} />
+              <span
+                className={`w-2 h-2 rounded-full shrink-0 ${
+                  dotColor === 'emerald' ? 'bg-emerald-500' : 'bg-red-400'
+                }`}
+              />
               <input
                 type="text"
                 value={item}
@@ -2670,7 +3459,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           {isPolish ? 'W zakresie' : 'In Scope'}
                         </label>
                         <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                          {isPolish ? 'Elementy, procesy i obszary objęte inicjatywą' : 'Elements, processes and areas included in this initiative'}
+                          {isPolish
+                            ? 'Elementy, procesy i obszary objęte inicjatywą'
+                            : 'Elements, processes and areas included in this initiative'}
                         </p>
                       </div>
                     </div>
@@ -2690,15 +3481,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           const lines = val.split('\n').filter((l: string) => l.trim());
                           setInScopeItems(lines.map((t: string) => t.replace(/^[-•*✓]\s*/, '')));
                         }}
-                        artifactContext={{ title: initiative?.name || '', status, priority, type: 'initiative' }}
+                        artifactContext={{
+                          title: initiative?.name || '',
+                          status,
+                          priority,
+                          type: 'initiative',
+                        }}
                       />
                     </div>
                   </div>
                   <div className="border-b border-slate-200 dark:border-navy-700/40 pb-2 min-h-[40px]">
-                    {inScopeItems.map((item, i) => renderScopeItem(
-                      item, i, updateInScope, removeInScope, 'emerald',
-                      isPolish ? 'Element zakresu...' : 'Scope item...',
-                    ))}
+                    {inScopeItems.map((item, i) =>
+                      renderScopeItem(
+                        item,
+                        i,
+                        updateInScope,
+                        removeInScope,
+                        'emerald',
+                        isPolish ? 'Element zakresu...' : 'Scope item...'
+                      )
+                    )}
                     {inScopeItems.length === 0 && (
                       <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
                         {isPolish ? 'Brak elementów' : 'No items yet'}
@@ -2720,7 +3522,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           {isPolish ? 'Poza zakresem' : 'Out of Scope'}
                         </label>
                         <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                          {isPolish ? 'Wykluczenia i ograniczenia poza zakresem' : 'Exclusions and boundaries not covered'}
+                          {isPolish
+                            ? 'Wykluczenia i ograniczenia poza zakresem'
+                            : 'Exclusions and boundaries not covered'}
                         </p>
                       </div>
                     </div>
@@ -2740,15 +3544,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           const lines = val.split('\n').filter((l: string) => l.trim());
                           setOutScopeItems(lines.map((t: string) => t.replace(/^[-•*✗]\s*/, '')));
                         }}
-                        artifactContext={{ title: initiative?.name || '', status, priority, type: 'initiative' }}
+                        artifactContext={{
+                          title: initiative?.name || '',
+                          status,
+                          priority,
+                          type: 'initiative',
+                        }}
                       />
                     </div>
                   </div>
                   <div className="border-b border-slate-200 dark:border-navy-700/40 pb-2 min-h-[40px]">
-                    {outScopeItems.map((item, i) => renderScopeItem(
-                      item, i, updateOutScope, removeOutScope, 'red',
-                      isPolish ? 'Wykluczenie...' : 'Exclusion...',
-                    ))}
+                    {outScopeItems.map((item, i) =>
+                      renderScopeItem(
+                        item,
+                        i,
+                        updateOutScope,
+                        removeOutScope,
+                        'red',
+                        isPolish ? 'Wykluczenie...' : 'Exclusion...'
+                      )
+                    )}
                     {outScopeItems.length === 0 && (
                       <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
                         {isPolish ? 'Brak elementów' : 'No items yet'}
@@ -2793,7 +3608,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         const lines = val.split('\n').filter((l: string) => l.trim());
                         setKillCriteriaItems(lines.map((t: string) => t.replace(/^[-•*!]\s*/, '')));
                       }}
-                      artifactContext={{ title: initiative?.name || '', status, priority, type: 'initiative' }}
+                      artifactContext={{
+                        title: initiative?.name || '',
+                        status,
+                        priority,
+                        type: 'initiative',
+                      }}
                     />
                   </div>
                 </div>
@@ -2846,12 +3666,22 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   </label>
                   <div className="grid grid-cols-3 gap-3">
                     {Object.entries(initiative.effortProfile).map(([key, val]) => (
-                      <div key={key} className="p-2.5 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700/60">
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 capitalize mb-1">{key}</p>
+                      <div
+                        key={key}
+                        className="p-2.5 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700/60"
+                      >
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 capitalize mb-1">
+                          {key}
+                        </p>
                         <div className="h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                          <div className="h-full rounded-full bg-purple-500" style={{ width: `${val as number}%` }} />
+                          <div
+                            className="h-full rounded-full bg-purple-500"
+                            style={{ width: `${val as number}%` }}
+                          />
                         </div>
-                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-0.5">{val as number}%</p>
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-0.5">
+                          {val as number}%
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -2862,74 +3692,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           break;
         }
 
-        case 'milestones': {
-          const milestoneTasks = tasks.filter((t) => t.isMilestone);
-          component = (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Kamienie milowe' : 'Milestones'}
-                </h2>
-                <div className="inline-flex items-center gap-2">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {milestoneTasks.length} {isPolish ? 'elementów' : 'items'}
-                  </span>
-                  <button
-                    onClick={() => {
-                      setNewTaskIsMilestone(true);
-                      setShowCreateTask(true);
-                    }}
-                    className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
-                  >
-                    <Plus size={12} />
-                    {isPolish ? 'Nowy' : 'New'}
-                  </button>
-                </div>
-              </div>
-              {milestoneTasks.length === 0 ? (
-                <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-5 text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Brak kamieni milowych. Dodaj je przyciskiem "Nowy".'
-                    : 'No milestones yet. Add them using "New".'}
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Kamień milowy' : 'Milestone'}</th>
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Status' : 'Status'}</th>
-                        <th className="text-left py-2">{isPolish ? 'Data' : 'Date'}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                      {milestoneTasks.map((task) => (
-                        <tr key={task.id}>
-                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">{task.title}</td>
-                          <td className="py-2 pr-2">
-                            <span className="text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
-                              {task.status}
-                            </span>
-                          </td>
-                          <td className="py-2 text-slate-500 dark:text-slate-400">
-                            {task.milestoneDate
-                              ? new Date(task.milestoneDate).toLocaleDateString(isPolish ? 'pl-PL' : 'en-GB')
-                              : '—'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          );
-          break;
-        }
-
         case 'dependencies': {
           const DepsTabComp = SECTION_REGISTRY['dependencies'];
-          const depsTabST = [...leftSections, ...rightSections].find((s) => s.key === 'dependencies');
+          const depsTabST = [...leftSections, ...rightSections].find(
+            (s) => s.key === 'dependencies'
+          );
           const depsFallbackST = {
             id: 'dependencies',
             key: 'dependencies',
@@ -2979,11 +3746,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             isActive: true,
           };
           component = InitTeamComp ? (
-            <InitTeamComp
-              sectionType={initTeamFallbackST}
-              expanded={true}
-              onToggle={() => {}}
-            />
+            <InitTeamComp sectionType={initTeamFallbackST} expanded={true} onToggle={() => {}} />
           ) : null;
           break;
         }
@@ -3008,99 +3771,39 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             isActive: true,
           };
           component = RaciComp ? (
-            <RaciComp
-              sectionType={raciFallbackST}
-              expanded={true}
-              onToggle={() => {}}
-            />
+            <RaciComp sectionType={raciFallbackST} expanded={true} onToggle={() => {}} />
           ) : null;
           break;
         }
 
         case 'timeline': {
-          const computedDuration =
-            startDate && endDate
-              ? Math.max(
-                  0,
-                  Math.ceil(
-                    (new Date(endDate).getTime() - new Date(startDate).getTime()) /
-                      (1000 * 60 * 60 * 24)
-                  )
-                )
-              : null;
-          component = (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Harmonogram' : 'Timeline'}
-                </h2>
-                <button
-                  onClick={() => handleGenerateAI('timeline')}
-                  disabled={isGeneratingAI === 'timeline'}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
-                >
-                  {isGeneratingAI === 'timeline' ? (
-                    <Loader2 size={12} className="animate-spin" />
-                  ) : (
-                    <Sparkles size={12} />
-                  )}
-                  AI
-                </button>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
-                      {isPolish ? 'Data startu' : 'Start date'}
-                    </label>
-                    <input
-                      type="date"
-                      value={startDate || ''}
-                      onChange={(e) => setStartDate(e.target.value || null)}
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm text-slate-700 dark:text-slate-300"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
-                      {isPolish ? 'Data końca' : 'End date'}
-                    </label>
-                    <input
-                      type="date"
-                      value={endDate || targetDate || ''}
-                      onChange={(e) => setEndDate(e.target.value || null)}
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm text-slate-700 dark:text-slate-300"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="flex items-center justify-between rounded-lg border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 px-3 py-2">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Czas trwania' : 'Duration'}
-                    </span>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {computedDuration !== null
-                        ? `${computedDuration} ${isPolish ? 'dni' : 'days'}`
-                        : '—'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-lg border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 px-3 py-2">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Kwartał' : 'Quarter'}
-                    </span>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {initiative?.quarter || '—'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
+          const TimelineComp = SECTION_REGISTRY['timeline'];
+          const timelineFallbackST = {
+            id: 'timeline',
+            key: 'timeline',
+            name: 'Timeline',
+            namePl: 'Harmonogram',
+            description: null,
+            descriptionPl: null,
+            category: 'control' as const,
+            columnPosition: 'right' as const,
+            defaultOrder: 30,
+            icon: null,
+            iconColor: null,
+            iconBg: null,
+            componentKey: 'timeline',
+            isSystem: false,
+            isActive: true,
+          };
+          component = TimelineComp ? (
+            <TimelineComp sectionType={timelineFallbackST} expanded={true} onToggle={() => {}} />
+          ) : null;
           break;
         }
 
         case 'resources': {
-          const totalFte = resourceItems.reduce((acc, r) => acc + (Number(r.allocation) || 0), 0) / 100;
+          const totalFte =
+            resourceItems.reduce((acc, r) => acc + (Number(r.allocation) || 0), 0) / 100;
           component = (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -3197,22 +3900,30 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
                         <th className="text-left py-2 pr-2">{isPolish ? 'Zasób' : 'Resource'}</th>
                         <th className="text-left py-2 pr-2">{isPolish ? 'Rola' : 'Role'}</th>
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Alokacja' : 'Allocation'}</th>
+                        <th className="text-left py-2 pr-2">
+                          {isPolish ? 'Alokacja' : 'Allocation'}
+                        </th>
                         <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                       {resourceItems.map((res) => (
                         <tr key={res.id}>
-                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">{res.name}</td>
-                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">{res.role || '—'}</td>
+                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
+                            {res.name}
+                          </td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                            {res.role || '—'}
+                          </td>
                           <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
                             {res.allocation || 0}%
                           </td>
                           <td className="py-2 text-right">
                             <button
                               onClick={() =>
-                                setResourceItems((prev) => prev.filter((item) => item.id !== res.id))
+                                setResourceItems((prev) =>
+                                  prev.filter((item) => item.id !== res.id)
+                                )
                               }
                               className="inline-flex p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500"
                             >
@@ -3288,66 +3999,48 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
 
         case 'financial-analysis': {
-          const capexValue = initiative?.costCapex || initiative?.cost_capex || null;
-          const opexValue = initiative?.costOpex || initiative?.cost_opex || null;
-          const roiValue = initiative?.expectedRoi || initiative?.expected_roi || null;
-          const npvValue = initiative?.npv || null;
-          const paybackValue = initiative?.paybackMonths || null;
           component = (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Analiza finansowa' : 'Financial Analysis'}
-                </h2>
-                <button
-                  onClick={() => handleGenerateAI('financial-analysis')}
-                  disabled={isGeneratingAI === 'financial-analysis'}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
-                >
-                  {isGeneratingAI === 'financial-analysis' ? (
-                    <Loader2 size={12} className="animate-spin" />
-                  ) : (
-                    <Sparkles size={12} />
-                  )}
-                  AI
-                </button>
-              </div>
-              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/60 p-3">
-                    <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">CAPEX</p>
-                    <p className="text-xl font-semibold text-slate-700 dark:text-slate-300">
-                      {capexValue ? `$${Number(capexValue).toLocaleString()}` : '—'}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/60 p-3">
-                    <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">OPEX</p>
-                    <p className="text-xl font-semibold text-slate-700 dark:text-slate-300">
-                      {opexValue ? `$${Number(opexValue).toLocaleString()}` : '—'}
-                    </p>
-                  </div>
+            <div className="flex flex-col items-center justify-center py-16 space-y-5">
+              {/* Fun accountant illustration */}
+              <div className="relative">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-violet-100 via-purple-50 to-fuchsia-100 dark:from-violet-500/15 dark:via-purple-500/10 dark:to-fuchsia-500/15 flex items-center justify-center shadow-lg shadow-violet-200/40 dark:shadow-violet-500/10">
+                  <span className="text-5xl" role="img" aria-label="accountant">
+                    🧮
+                  </span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="rounded-xl border border-emerald-200/40 dark:border-emerald-500/20 bg-emerald-50/40 dark:bg-emerald-500/5 p-3 text-center">
-                    <p className="text-[11px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400 mb-1">ROI</p>
-                    <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
-                      {roiValue ? `${Number(roiValue).toFixed(1)}x` : '—'}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-blue-200/40 dark:border-blue-500/20 bg-blue-50/40 dark:bg-blue-500/5 p-3 text-center">
-                    <p className="text-[11px] uppercase tracking-wide text-blue-600 dark:text-blue-400 mb-1">NPV</p>
-                    <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                      {npvValue ? `$${Number(npvValue).toLocaleString()}` : '—'}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-purple-200/40 dark:border-purple-500/20 bg-purple-50/40 dark:bg-purple-500/5 p-3 text-center">
-                    <p className="text-[11px] uppercase tracking-wide text-purple-600 dark:text-purple-400 mb-1">
-                      {isPolish ? 'Zwrot' : 'Payback'}
-                    </p>
-                    <p className="text-lg font-semibold text-purple-600 dark:text-purple-400">
-                      {paybackValue ? `${paybackValue}m` : '—'}
-                    </p>
-                  </div>
+                {/* Floating decorations */}
+                <span
+                  className="absolute -top-2 -right-3 text-2xl animate-bounce"
+                  style={{ animationDelay: '0.1s', animationDuration: '2s' }}
+                >
+                  📊
+                </span>
+                <span
+                  className="absolute -bottom-1 -left-3 text-xl animate-bounce"
+                  style={{ animationDelay: '0.5s', animationDuration: '2.5s' }}
+                >
+                  💰
+                </span>
+                <span
+                  className="absolute -top-1 -left-4 text-lg animate-bounce"
+                  style={{ animationDelay: '0.8s', animationDuration: '3s' }}
+                >
+                  ✨
+                </span>
+              </div>
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
+                  {isPolish ? 'Analiza finansowa' : 'Financial Analysis'}
+                </h3>
+                <p className="text-sm text-slate-400 dark:text-slate-500">
+                  {isPolish
+                    ? 'Nasz księgowy jeszcze liczy... 🤓'
+                    : 'Our accountant is still crunching numbers... 🤓'}
+                </p>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-50 dark:bg-violet-500/10 border border-violet-200/60 dark:border-violet-500/20">
+                  <span className="text-xs font-medium text-violet-600 dark:text-violet-400">
+                    Coming soon
+                  </span>
                 </div>
               </div>
             </div>
@@ -3356,62 +4049,48 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
 
         case 'financial-impact': {
-          const revenueImpact = initiative?.revenueImpact || 0;
-          const costSavings = initiative?.costSavings || 0;
-          const benefitsRealized = initiative?.benefitsRealized || 0;
           component = (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Wpływ finansowy' : 'Financial Impact'}
-                </h2>
-                <button
-                  onClick={() => handleGenerateAI('financial-impact')}
-                  disabled={isGeneratingAI === 'financial-impact'}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
-                >
-                  {isGeneratingAI === 'financial-impact' ? (
-                    <Loader2 size={12} className="animate-spin" />
-                  ) : (
-                    <Sparkles size={12} />
-                  )}
-                  AI
-                </button>
-              </div>
-              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/60 p-3">
-                    <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
-                      {isPolish ? 'Przychody' : 'Revenue'}
-                    </p>
-                    <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
-                      {revenueImpact ? `+$${Number(revenueImpact).toLocaleString()}` : '—'}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/60 p-3">
-                    <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
-                      {isPolish ? 'Oszczędności' : 'Cost savings'}
-                    </p>
-                    <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                      {costSavings ? `$${Number(costSavings).toLocaleString()}` : '—'}
-                    </p>
-                  </div>
+            <div className="flex flex-col items-center justify-center py-16 space-y-5">
+              {/* Fun money impact illustration */}
+              <div className="relative">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-100 via-teal-50 to-cyan-100 dark:from-emerald-500/15 dark:via-teal-500/10 dark:to-cyan-500/15 flex items-center justify-center shadow-lg shadow-emerald-200/40 dark:shadow-emerald-500/10">
+                  <span className="text-5xl" role="img" aria-label="money chart">
+                    📈
+                  </span>
                 </div>
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Realizacja korzyści' : 'Benefits realization'}
-                    </span>
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      {benefitsRealized}%
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
-                      style={{ width: `${Math.max(0, Math.min(100, Number(benefitsRealized)))}%` }}
-                    />
-                  </div>
+                {/* Floating decorations */}
+                <span
+                  className="absolute -top-2 -right-3 text-2xl animate-bounce"
+                  style={{ animationDelay: '0.2s', animationDuration: '2.2s' }}
+                >
+                  🪙
+                </span>
+                <span
+                  className="absolute -bottom-1 -left-3 text-xl animate-bounce"
+                  style={{ animationDelay: '0.6s', animationDuration: '2.8s' }}
+                >
+                  💸
+                </span>
+                <span
+                  className="absolute top-0 -left-4 text-lg animate-bounce"
+                  style={{ animationDelay: '1s', animationDuration: '3s' }}
+                >
+                  🎯
+                </span>
+              </div>
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
+                  {isPolish ? 'Wpływ finansowy' : 'Financial Impact'}
+                </h3>
+                <p className="text-sm text-slate-400 dark:text-slate-500">
+                  {isPolish
+                    ? 'Pieniądze się liczą... dosłownie! 💵'
+                    : 'The money is counting itself... literally! 💵'}
+                </p>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20">
+                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    Coming soon
+                  </span>
                 </div>
               </div>
             </div>
@@ -3420,134 +4099,78 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
 
         case 'risk-raid': {
-          const sortedRaid = [...raidItems].sort((a, b) => {
-            const order: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
-            return (
-              (order[(a.severity || 'MEDIUM').toUpperCase()] ?? 2) -
-              (order[(b.severity || 'MEDIUM').toUpperCase()] ?? 2)
-            );
-          });
+          // N-mode Risk & RAID — uses shared RaidCanvas component
+          const nModeRaidItems = raidItems.map((r: any) => ({
+            id: r.id,
+            type: r.type as any,
+            title: r.title,
+            probability: r.probability || undefined,
+            impact: (r.severity || 'MEDIUM').toLowerCase(),
+            category: r.category || undefined,
+            mitigation: r.mitigation || r.mitigationPlan || '',
+            contingency: r.contingency || '',
+            proposedAction: r.proposedAction || '',
+            status: (r.status || 'OPEN').toLowerCase(),
+            owner: r.owner || r.ownerName || '',
+            dueDate: r.dueDate || '',
+            source: r.source || '',
+          }));
+          const nModeRaidUsers = users.map((u: any) => ({
+            id: u.id,
+            name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || u.id,
+          }));
           component = (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Ryzyko i RAID' : 'Risk & RAID'}
-                </h2>
-                <div className="inline-flex items-center gap-2">
-                  <button
-                    onClick={() => setShowCreateRaid((prev) => !prev)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium"
-                  >
-                    <Plus size={12} />
-                    {isPolish ? 'Dodaj' : 'Add'}
-                  </button>
-                  <button
-                    onClick={() => handleGenerateAI('raid')}
-                    disabled={isGeneratingAI === 'raid'}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
-                  >
-                    {isGeneratingAI === 'raid' ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={12} />
-                    )}
-                    AI
-                  </button>
-                </div>
-              </div>
-
-              {showCreateRaid && (
-                <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3 space-y-2">
-                  <input
-                    value={newRaidTitle}
-                    onChange={(e) => setNewRaidTitle(e.target.value)}
-                    placeholder={isPolish ? 'Tytuł elementu RAID...' : 'RAID item title...'}
-                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm"
-                  />
-                  <textarea
-                    value={newRaidDescription}
-                    onChange={(e) => setNewRaidDescription(e.target.value)}
-                    rows={2}
-                    placeholder={isPolish ? 'Opis (opcjonalnie)...' : 'Description (optional)...'}
-                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm resize-none"
-                  />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <select
-                      value={newRaidType}
-                      onChange={(e) =>
-                        setNewRaidType(
-                          e.target.value as 'risk' | 'issue' | 'assumption' | 'dependency'
-                        )
-                      }
-                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm"
-                    >
-                      <option value="risk">{isPolish ? 'Ryzyko' : 'Risk'}</option>
-                      <option value="issue">{isPolish ? 'Problem' : 'Issue'}</option>
-                      <option value="assumption">{isPolish ? 'Założenie' : 'Assumption'}</option>
-                      <option value="dependency">{isPolish ? 'Zależność' : 'Dependency'}</option>
-                    </select>
-                    <select
-                      value={newRaidSeverity}
-                      onChange={(e) =>
-                        setNewRaidSeverity(
-                          e.target.value as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-                        )
-                      }
-                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm"
-                    >
-                      <option value="LOW">{isPolish ? 'Niski' : 'Low'}</option>
-                      <option value="MEDIUM">{isPolish ? 'Średni' : 'Medium'}</option>
-                      <option value="HIGH">{isPolish ? 'Wysoki' : 'High'}</option>
-                      <option value="CRITICAL">{isPolish ? 'Krytyczny' : 'Critical'}</option>
-                    </select>
-                  </div>
-                  <div className="flex justify-end">
-                    <button
-                      onClick={handleCreateRaid}
-                      disabled={isMutating || !newRaidTitle.trim()}
-                      className="px-3 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-300 hover:bg-primary-500/10 text-xs font-medium disabled:opacity-50"
-                    >
-                      {isPolish ? 'Utwórz' : 'Create'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
-                {sortedRaid.length === 0 ? (
-                  <div className="border border-dashed border-slate-300/60 dark:border-navy-700/70 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Brak pozycji RAID' : 'No RAID items'}
-                  </div>
-                ) : (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Tytuł' : 'Title'}</th>
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Waga' : 'Severity'}</th>
-                        <th className="text-left py-2">{isPolish ? 'Status' : 'Status'}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                      {sortedRaid.map((item) => (
-                        <tr key={item.id}>
-                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">{item.title}</td>
-                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">{item.type}</td>
-                          <td className="py-2 pr-2">
-                            <span className="text-[11px] px-2 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 text-slate-500 dark:text-slate-400">
-                              {item.severity || 'MEDIUM'}
-                            </span>
-                          </td>
-                          <td className="py-2 text-slate-500 dark:text-slate-400">
-                            {item.status || 'OPEN'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
+            <NModeRaidCanvas
+              items={nModeRaidItems}
+              onAddItem={(type: any) => {
+                const newItem = {
+                  id: `raid-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                  type,
+                  title: '',
+                  severity: 'MEDIUM' as const,
+                  status: 'OPEN',
+                  owner: '',
+                  mitigationPlan: '',
+                };
+                setRaidItems((prev: any) => [newItem, ...prev]);
+              }}
+              onUpdateItem={(id: string, updates: any) => {
+                setRaidItems((prev: any) =>
+                  prev.map((item: any) => {
+                    if (item.id !== id) return item;
+                    const patch: any = { ...item };
+                    if (updates.title !== undefined) patch.title = updates.title;
+                    if (updates.type !== undefined) patch.type = updates.type;
+                    if (updates.impact !== undefined) patch.severity = updates.impact.toUpperCase();
+                    if (updates.status !== undefined) patch.status = updates.status.toUpperCase();
+                    if (updates.owner !== undefined) patch.owner = updates.owner;
+                    if (updates.mitigation !== undefined) patch.mitigationPlan = updates.mitigation;
+                    if (updates.probability !== undefined) patch.probability = updates.probability;
+                    if (updates.category !== undefined) patch.category = updates.category;
+                    if (updates.contingency !== undefined) patch.contingency = updates.contingency;
+                    if (updates.proposedAction !== undefined)
+                      patch.proposedAction = updates.proposedAction;
+                    if (updates.dueDate !== undefined) patch.dueDate = updates.dueDate;
+                    if (updates.source !== undefined) patch.source = updates.source;
+                    return patch;
+                  })
+                );
+              }}
+              onRemoveItem={(id: string) => {
+                setRaidItems((prev: any) => prev.filter((item: any) => item.id !== id));
+              }}
+              onAIGenerate={() => handleGenerateAI('raid')}
+              isGeneratingAI={isGeneratingAI === 'raid'}
+              locked={false}
+              artifactContext={{
+                title: initiative?.title || initiative?.name || '',
+                status: status || '',
+                priority: priority || '',
+                type: 'initiative',
+              }}
+              fieldKeyPrefix="init"
+              users={nModeRaidUsers}
+            />
           );
           break;
         }
@@ -3608,7 +4231,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
                 {sortedDecisions.length === 0 ? (
                   <div className="border border-dashed border-slate-300/60 dark:border-navy-700/70 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Brak decyzji. Dodaj pierwszą pozycję.' : 'No decisions yet. Add the first item.'}
+                    {isPolish
+                      ? 'Brak decyzji. Dodaj pierwszą pozycję.'
+                      : 'No decisions yet. Add the first item.'}
                   </div>
                 ) : (
                   <table className="w-full text-sm">
@@ -3624,8 +4249,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                       {sortedDecisions.map((decision) => (
                         <tr key={decision.id}>
-                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">{decision.title}</td>
-                          <td className="py-2 pr-2 text-xs text-slate-500 dark:text-slate-400">{decision.type}</td>
+                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
+                            {decision.title}
+                          </td>
+                          <td className="py-2 pr-2 text-xs text-slate-500 dark:text-slate-400">
+                            {decision.type}
+                          </td>
                           <td className="py-2 pr-2">
                             <span className="text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
                               {decision.status}
@@ -3633,7 +4262,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           </td>
                           <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
                             {decision.dueDate
-                              ? new Date(decision.dueDate).toLocaleDateString(isPolish ? 'pl-PL' : 'en-GB')
+                              ? new Date(decision.dueDate).toLocaleDateString(
+                                  isPolish ? 'pl-PL' : 'en-GB'
+                                )
                               : '—'}
                           </td>
                           <td className="py-2 text-right">
@@ -3657,168 +4288,54 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
 
         case 'gates': {
-          const nextGateId = getNextGateForStatus(status);
-          const nextGateConfig = nextGateId ? GATE_CONFIG[nextGateId] : null;
-          const readyRequirements = nextGateConfig
-            ? nextGateConfig.requirements.filter((req) => {
-                switch (req) {
-                  case 'owner':
-                    return Boolean(ownerId);
-                  case 'sponsor':
-                    return Boolean(sponsorId);
-                  case 'timeline':
-                    return Boolean(endDate || targetDate);
-                  case 'scope':
-                    return Boolean(summary || description);
-                  case 'risks':
-                    return raidItems.some((r) => r.type === 'risk');
-                  case 'all_tasks_done':
-                    return tasks.length > 0 && tasks.every((t) => t.status === 'DONE');
-                  default:
-                    return true;
-                }
-              }).length
-            : 0;
-          const readinessPercent = nextGateConfig
-            ? Math.round((readyRequirements / nextGateConfig.requirements.length) * 100)
-            : 100;
           component = (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
                   {isPolish ? 'Bramy' : 'Gates'}
                 </h2>
-                <button
-                  onClick={() => handleGenerateAI('gates')}
-                  disabled={isGeneratingAI === 'gates'}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
-                >
-                  {isGeneratingAI === 'gates' ? (
-                    <Loader2 size={12} className="animate-spin" />
-                  ) : (
-                    <Sparkles size={12} />
-                  )}
-                  AI
-                </button>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4 space-y-3">
-                {pendingGates.length > 0 ? (
-                  <div className="rounded-xl border border-amber-300/40 dark:border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10 p-3">
-                    <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                      {isPolish ? 'Wymagana decyzja bramkowa' : 'Gate decision required'}
-                    </p>
-                    <p className="text-xs text-amber-600/80 dark:text-amber-400/80 mt-1">
-                      {pendingGates.map((g) => g.label).join(', ')}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-emerald-300/30 dark:border-emerald-500/25 bg-emerald-500/5 dark:bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">
-                    {isPolish ? 'Brak blokujących bram.' : 'No blocking gates.'}
-                  </div>
-                )}
-
-                <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Gotowość do następnej bramy' : 'Next gate readiness'}
-                    </span>
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      {readinessPercent}%
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
-                      style={{ width: `${Math.max(0, Math.min(100, readinessPercent))}%` }}
-                    />
-                  </div>
-                  <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                    {nextGateConfig
-                      ? `${isPolish ? 'Następna brama' : 'Next gate'}: ${isPolish ? nextGateConfig.namePl : nextGateConfig.name}`
-                      : isPolish
-                        ? 'Brak kolejnych bram'
-                        : 'No upcoming gates'}
-                  </div>
-                </div>
-              </div>
+              {/* Full lifecycle gate workflow table (13 stages) */}
+              <InitiativeGatesWorkflowTable />
             </div>
           );
           break;
         }
 
         case 'comments': {
-          const CommentsComp = SECTION_REGISTRY['comments'];
-          const commentsST = [...leftSections, ...rightSections].find((s) => s.key === 'comments');
           component = (
-            <div className="space-y-6">
-              {commentsST && CommentsComp && (
-                <CommentsComp sectionType={commentsST} expanded={true} onToggle={() => {}} />
-              )}
-            </div>
+            <CommentsCanvas
+              comments={nModeComments}
+              onDeleteComment={handleDeleteComment}
+              dateFilter={nCommentDateFilter}
+              onDateFilterChange={setNCommentDateFilter}
+              sortOrder={nCommentSortOrder}
+              onToggleSort={() => setNCommentSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+              commentDraft={nCommentDraft}
+              onCommentDraftChange={setNCommentDraft}
+              onSubmitComment={handleNModeSubmitComment}
+              draftPriority={nCommentPriority}
+              onDraftPriorityChange={setNCommentPriority}
+              onAIEnhance={() => handleGenerateAI('comments')}
+              isAIEnhancing={isGeneratingAI === 'comments'}
+              getPriorityDotClass={getPriorityDotClass}
+              getCommentPriority={getCommentPriority}
+              getPriorityButtonClass={getPriorityButtonClass}
+              getCommentPriorityLabel={getCommentPriorityLabel}
+              getCommentPriorityHint={getCommentPriorityHint}
+            />
           );
           break;
         }
 
         case 'activity-log': {
-          const HistoryComp = SECTION_REGISTRY['history'];
-          const historyST = [...leftSections, ...rightSections].find((s) => s.key === 'history');
-          const TagsComp = SECTION_REGISTRY['tags'];
-          const tagsST = [...leftSections, ...rightSections].find((s) => s.key === 'tags');
           component = (
-            <div className="space-y-6">
-              {/* Lessons Learned */}
-              {(initiative?.lessonsLearned || initiative?.strategicSurprises || initiative?.nextTimeAvoid) && (
-                <div className="space-y-3">
-                  <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
-                    {isPolish ? 'Wyciągnięte wnioski' : 'Lessons Learned'}
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {initiative?.lessonsLearned && (
-                      <div className="p-3 rounded-xl bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-300/40 dark:border-emerald-500/30">
-                        <p className="text-[10px] font-semibold text-emerald-500 uppercase mb-1">{isPolish ? 'Czego się nauczyliśmy' : 'What We Learned'}</p>
-                        <p className="text-xs text-slate-700 dark:text-slate-300">{initiative.lessonsLearned}</p>
-                      </div>
-                    )}
-                    {initiative?.strategicSurprises && (
-                      <div className="p-3 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-300/40 dark:border-amber-500/30">
-                        <p className="text-[10px] font-semibold text-amber-500 uppercase mb-1">{isPolish ? 'Co zaskoczyło' : 'Surprises'}</p>
-                        <p className="text-xs text-slate-700 dark:text-slate-300">{initiative.strategicSurprises}</p>
-                      </div>
-                    )}
-                    {initiative?.nextTimeAvoid && (
-                      <div className="p-3 rounded-xl bg-red-500/5 dark:bg-red-500/10 border border-red-300/40 dark:border-red-500/30">
-                        <p className="text-[10px] font-semibold text-red-500 uppercase mb-1">{isPolish ? 'Czego unikać' : 'Avoid Next Time'}</p>
-                        <p className="text-xs text-slate-700 dark:text-slate-300">{initiative.nextTimeAvoid}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-              {/* Pattern Tags */}
-              {initiative?.patternTags && initiative.patternTags.length > 0 && (
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 block">
-                    {isPolish ? 'Wzorce cross-initiative' : 'Cross-Initiative Patterns'}
-                  </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {initiative.patternTags.map((tag: string, i: number) => (
-                      <span key={i} className="px-2 py-0.5 rounded-lg text-[11px] bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200/50 dark:border-purple-500/30">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {/* History */}
-              {historyST && HistoryComp && (
-                <HistoryComp sectionType={historyST} expanded={true} onToggle={() => {}} />
-              )}
-              {/* Tags */}
-              {tagsST && TagsComp && (
-                <TagsComp sectionType={tagsST} expanded={true} onToggle={() => {}} />
-              )}
-            </div>
+            <ActivityLogCanvas
+              entries={nModeActivityEntries}
+              stats={nModeActivityStats}
+              typeMeta={nModeActivityTypeMeta}
+            />
           );
           break;
         }
@@ -3833,126 +4350,173 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <div className="inline-flex items-center gap-2">
                   <button
                     onClick={() => setShowCreateKpi((prev) => !prev)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-primary-500 transition-colors"
                   >
-                    <Plus size={12} />
-                    {isPolish ? 'Nowy' : 'New'}
-                  </button>
-                  <button
-                    onClick={() => handleGenerateAI('kpis')}
-                    disabled={isGeneratingAI === 'kpis'}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
-                  >
-                    {isGeneratingAI === 'kpis' ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={12} />
-                    )}
-                    AI
+                    <Plus size={12} />+ Add KPI
                   </button>
                 </div>
               </div>
               {showCreateKpi && (
-                <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3 grid grid-cols-1 md:grid-cols-6 gap-2">
+                <div className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-4 py-3">
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    {isPolish
+                      ? 'W przygotowaniu. Finalnie KPI będą zarządzane w zakładce Benefits.'
+                      : 'In progress. KPI management will be handled in the Benefits tab.'}
+                  </p>
+                </div>
+              )}
+              {editingKpiId && (
+                <div className="rounded-2xl border border-indigo-300/70 dark:border-indigo-500/40 bg-indigo-50/30 dark:bg-indigo-500/5 p-3 grid grid-cols-1 md:grid-cols-6 gap-2">
                   <input
-                    value={newKpiName}
-                    onChange={(e) => setNewKpiName(e.target.value)}
+                    value={editKpiName}
+                    onChange={(e) => setEditKpiName(e.target.value)}
                     placeholder={isPolish ? 'Nazwa KPI' : 'KPI name'}
                     className="md:col-span-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
                   />
                   <input
-                    value={newKpiUnit}
-                    onChange={(e) => setNewKpiUnit(e.target.value)}
+                    value={editKpiUnit}
+                    onChange={(e) => setEditKpiUnit(e.target.value)}
                     placeholder={isPolish ? 'Jednostka' : 'Unit'}
                     className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
                   />
                   <input
-                    value={newKpiBaseline}
-                    onChange={(e) => setNewKpiBaseline(e.target.value)}
+                    value={editKpiBaseline}
+                    onChange={(e) => setEditKpiBaseline(e.target.value)}
                     placeholder="Baseline"
                     className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
                   />
                   <input
-                    value={newKpiCurrent}
-                    onChange={(e) => setNewKpiCurrent(e.target.value)}
+                    value={editKpiCurrent}
+                    onChange={(e) => setEditKpiCurrent(e.target.value)}
                     placeholder={isPolish ? 'Obecnie' : 'Current'}
                     className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
                   />
                   <input
-                    value={newKpiTarget}
-                    onChange={(e) => setNewKpiTarget(e.target.value)}
+                    value={editKpiTarget}
+                    onChange={(e) => setEditKpiTarget(e.target.value)}
                     placeholder="Target"
                     className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
                   />
-                  <div className="md:col-span-6 flex justify-end">
+                  <div className="md:col-span-6 flex justify-end gap-2">
                     <button
-                      onClick={() => {
-                        if (!newKpiName.trim()) return;
-                        setLocalKpis((prev) => [
-                          ...prev,
-                          {
-                            id: `kpi-${Date.now()}`,
-                            name: newKpiName.trim(),
-                            unit: newKpiUnit.trim(),
-                            baseline: newKpiBaseline.trim(),
-                            target: newKpiTarget.trim(),
-                            current: newKpiCurrent.trim(),
-                          },
-                        ]);
-                        setNewKpiName('');
-                        setNewKpiUnit('');
-                        setNewKpiBaseline('');
-                        setNewKpiTarget('');
-                        setNewKpiCurrent('');
-                        setShowCreateKpi(false);
-                      }}
-                      className="px-3 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-300 hover:bg-primary-500/10 text-xs font-medium"
+                      onClick={cancelEditKpi}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                     >
-                      {isPolish ? 'Dodaj KPI' : 'Add KPI'}
+                      {isPolish ? 'Anuluj' : 'Cancel'}
+                    </button>
+                    <button
+                      onClick={saveEditKpi}
+                      disabled={!editKpiName.trim() || !editKpiUnit.trim()}
+                      className="px-3 py-1.5 rounded-lg border border-indigo-400/50 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-500/10 text-xs font-medium disabled:opacity-50"
+                    >
+                      {isPolish ? 'Zapisz zmiany' : 'Save changes'}
                     </button>
                   </div>
                 </div>
               )}
               <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
-                {localKpis.length === 0 ? (
-                  <div className="border border-dashed border-slate-300/60 dark:border-navy-700/70 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Brak KPI' : 'No KPIs defined yet'}
-                  </div>
-                ) : (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
-                        <th className="text-left py-2 pr-2">{isPolish ? 'KPI' : 'KPI'}</th>
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Jednostka' : 'Unit'}</th>
-                        <th className="text-left py-2 pr-2">Baseline</th>
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Obecnie' : 'Current'}</th>
-                        <th className="text-left py-2 pr-2">Target</th>
-                        <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
+                      <th className="text-left py-2 pr-2">{isPolish ? 'KPI' : 'KPI'}</th>
+                      <th className="text-left py-2 pr-2">{isPolish ? 'Jednostka' : 'Unit'}</th>
+                      <th className="text-left py-2 pr-2">Baseline</th>
+                      <th className="text-left py-2 pr-2">{isPolish ? 'Obecnie' : 'Current'}</th>
+                      <th className="text-left py-2 pr-2">Target</th>
+                      <th className="text-right py-2">{isPolish ? 'Tracking' : 'Tracking'}</th>
+                      <th className="text-right py-2 w-10" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                    {localKpis.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="py-8 text-center text-xs text-slate-500 dark:text-slate-400"
+                        >
+                          {isPolish
+                            ? 'Brak KPI. Kliknij "+ Nowy", aby dodać pierwszy KPI.'
+                            : 'No KPIs defined yet. Click "+ New" to add the first KPI.'}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                      {localKpis.map((kpi) => (
+                    ) : (
+                      localKpis.map((kpi) => (
                         <tr key={kpi.id}>
-                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">{kpi.name}</td>
-                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">{kpi.unit || '—'}</td>
-                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">{kpi.baseline || '—'}</td>
-                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">{kpi.current || '—'}</td>
-                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">{kpi.target || '—'}</td>
+                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
+                            {toEnglishKpiName(kpi.name, isPolish)}
+                          </td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                            {kpi.unit || '—'}
+                          </td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                            {kpi.baseline || '—'}
+                          </td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                            {kpi.current || '—'}
+                          </td>
+                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                            {kpi.target || '—'}
+                          </td>
                           <td className="py-2 text-right">
+                            <span className="inline-flex items-center rounded-md border border-emerald-300/50 dark:border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
+                              {isPolish ? 'Benefits' : 'Benefits'}
+                            </span>
+                          </td>
+                          <td className="py-2 text-right relative">
                             <button
-                              onClick={() =>
-                                setLocalKpis((prev) => prev.filter((item) => item.id !== kpi.id))
-                              }
-                              className="inline-flex p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setKpiMenuId((prev) => (prev === kpi.id ? null : kpi.id));
+                              }}
+                              className="inline-flex items-center justify-center p-1 rounded-md text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-navy-700/60 transition-colors"
+                              title={isPolish ? 'Akcje KPI' : 'KPI actions'}
                             >
-                              <Trash2 size={13} />
+                              <MoreVertical size={14} />
                             </button>
+                            {kpiMenuId === kpi.id && (
+                              <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
+                                <button
+                                  onClick={() => {
+                                    setKpiMenuId(null);
+                                    startEditKpi(kpi);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                                >
+                                  <Edit3 size={13} />
+                                  {isPolish ? 'Edytuj' : 'Edit'}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setKpiMenuId(null);
+                                    void duplicateKpi(kpi);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                                >
+                                  <Copy size={13} />
+                                  {isPolish ? 'Duplikuj' : 'Duplicate'}
+                                </button>
+                                <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
+                                <button
+                                  onClick={() => {
+                                    setKpiMenuId(null);
+                                    const ok = window.confirm(
+                                      isPolish ? 'Usunąć to KPI?' : 'Delete this KPI?'
+                                    );
+                                    if (ok) removeKpi(kpi.id);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                >
+                                  <Trash2 size={13} />
+                                  {isPolish ? 'Usuń' : 'Delete'}
+                                </button>
+                              </div>
+                            )}
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           );
@@ -3966,22 +4530,33 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
                   {isPolish ? 'Obserwatorzy' : 'Watchers'}
                 </h2>
-                <span className="text-xs text-slate-500 dark:text-slate-400">{watchers.length}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {watchers.length}
+                </span>
               </div>
               {watchers.length === 0 ? (
                 <div className="p-5 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Brak obserwatorów dla tej inicjatywy.' : 'No watchers for this initiative yet.'}
+                  {isPolish
+                    ? 'Brak obserwatorów dla tej inicjatywy.'
+                    : 'No watchers for this initiative yet.'}
                 </div>
               ) : (
                 <div className="space-y-2">
                   {watchers.map((watcher) => (
-                    <div key={watcher.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70">
+                    <div
+                      key={watcher.id}
+                      className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70"
+                    >
                       <div>
                         <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                          {watcher.name || users.find((u) => u.id === watcher.userId)?.firstName || watcher.userId}
+                          {watcher.name ||
+                            users.find((u) => u.id === watcher.userId)?.firstName ||
+                            watcher.userId}
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {watcher.email || users.find((u) => u.id === watcher.userId)?.email || '—'}
+                          {watcher.email ||
+                            users.find((u) => u.id === watcher.userId)?.email ||
+                            '—'}
                         </p>
                       </div>
                     </div>
@@ -4041,7 +4616,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   {isPolish ? 'Brak linków' : 'No links yet'}
                 </p>
                 <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                  {isPolish ? 'Dodaj linki do zewnętrznych zasobów, dokumentów lub narzędzi' : 'Add links to external resources, documents, or tools'}
+                  {isPolish
+                    ? 'Dodaj linki do zewnętrznych zasobów, dokumentów lub narzędzi'
+                    : 'Add links to external resources, documents, or tools'}
                 </p>
               </div>
             </div>
@@ -4110,8 +4687,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-primary-500 transition-colors"
                     >
                       {isTechnicalSpecExpanded
-                        ? (isPolish ? 'Pokaż mniej' : 'Less')
-                        : (isPolish ? 'Pokaż więcej' : 'More')}
+                        ? isPolish
+                          ? 'Pokaż mniej'
+                          : 'Less'
+                        : isPolish
+                          ? 'Pokaż więcej'
+                          : 'More'}
                     </button>
                   </div>
                 )}
@@ -4121,7 +4702,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <FileCode size={20} className="text-slate-400 dark:text-slate-500" />
                     </div>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                      {isPolish ? 'Brak specyfikacji technicznej' : 'No technical specification yet'}
+                      {isPolish
+                        ? 'Brak specyfikacji technicznej'
+                        : 'No technical specification yet'}
                     </p>
                   </div>
                 )}
@@ -4135,25 +4718,91 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       return { ...section, component };
     });
   }, [
-    initiativeNSections, initiative, isPolish, summary, setSummary,
-    tasks, tasksDone, tasksInProgress, ownerName, startDate, endDate, targetDate,
-    riskCount, criticalRaids, pendingGates, comments, users, sponsorId,
-    leftSections, rightSections, decisions, raidItems, stakeholders,
-    attachments, linkedItems, watchers, history,
+    initiativeNSections,
+    initiative,
+    isPolish,
+    summary,
+    setSummary,
+    tasks,
+    tasksDone,
+    tasksInProgress,
+    ownerName,
+    startDate,
+    endDate,
+    targetDate,
+    riskCount,
+    criticalRaids,
+    pendingGates,
+    comments,
+    users,
+    sponsorId,
+    leftSections,
+    rightSections,
+    decisions,
+    raidItems,
+    stakeholders,
+    attachments,
+    linkedItems,
+    watchers,
+    history,
+    nModeActivityEntries,
+    nModeActivityStats,
+    nModeActivityTypeMeta,
+    // CommentsCanvas state
+    nModeComments,
+    nCommentDraft,
+    nCommentPriority,
+    nCommentDateFilter,
+    nCommentSortOrder,
     // Checklist & draft states — required so useMemo re-computes when items change
-    targetStateItems, successCriteriaItems, deliverableItems,
-    inScopeItems, outScopeItems, killCriteriaItems,
-    symptomDraft, rootCauseDraft, costOfInactionDraft, marketContextDraft,
-    technicalSpecDraft, isTechnicalSpecExpanded,
-    localKpis, showCreateKpi, newKpiName, newKpiUnit, newKpiBaseline, newKpiTarget, newKpiCurrent,
-    resourceItems, budgetDraft, resourceTools, showCreateResource, newResourceName, newResourceRole,
-    newResourceAllocation, newResourceTool,
-    showCreateDecision, newDecisionTitle,
-    showCreateRaid, newRaidTitle, newRaidType, newRaidSeverity, newRaidDescription,
-    isGeneratingAI, isMutating,
-    handleCreateDecision, onOpenDecision,
-    setStartDate, setEndDate,
+    targetStateItems,
+    successCriteriaItems,
+    deliverableItems,
+    inScopeItems,
+    outScopeItems,
+    killCriteriaItems,
+    symptomDraft,
+    rootCauseDraft,
+    costOfInactionDraft,
+    marketContextDraft,
+    technicalSpecDraft,
+    isTechnicalSpecExpanded,
+    localKpis,
+    showCreateKpi,
+    kpiMenuId,
+    editingKpiId,
+    editKpiName,
+    editKpiUnit,
+    editKpiBaseline,
+    editKpiCurrent,
+    editKpiTarget,
+    resourceItems,
+    budgetDraft,
+    resourceTools,
+    showCreateResource,
+    newResourceName,
+    newResourceRole,
+    newResourceAllocation,
+    newResourceTool,
+    showCreateDecision,
+    newDecisionTitle,
+    showCreateRaid,
+    newRaidTitle,
+    newRaidType,
+    newRaidSeverity,
+    newRaidDescription,
+    isGeneratingAI,
+    isMutating,
+    handleCreateDecision,
+    onOpenDecision,
+    setStartDate,
+    setEndDate,
     handleCreateRaid,
+    startEditKpi,
+    cancelEditKpi,
+    saveEditKpi,
+    duplicateKpi,
+    removeKpi,
   ]);
 
   const orderedNModeSectionsWithContent: NModeSection[] = useMemo(() => {
@@ -4163,7 +4812,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     const ordered = nModeSectionOrder
       .map((id) => byId.get(id))
       .filter((section): section is NModeSection => Boolean(section));
-    const missing = nModeSectionsWithContent.filter((section) => !nModeSectionOrder.includes(section.id));
+    const missing = nModeSectionsWithContent.filter(
+      (section) => !nModeSectionOrder.includes(section.id)
+    );
 
     return [...ordered, ...missing];
   }, [nModeSectionsWithContent, nModeSectionOrder]);
@@ -4185,7 +4836,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       if (sa.variant === 'danger' && sa.targetStatus === InitiativeStatus.CANCELLED) return XCircle;
       if (sa.variant === 'danger') return AlertTriangle;
       if (sa.variant === 'secondary' && sa.targetStatus === InitiativeStatus.DRAFT) return Undo2;
-      if (sa.variant === 'secondary' && sa.targetStatus === InitiativeStatus.ARCHIVED) return Archive;
+      if (sa.variant === 'secondary' && sa.targetStatus === InitiativeStatus.ARCHIVED)
+        return Archive;
       if (sa.targetStatus === InitiativeStatus.EXECUTING) return Play;
       return CheckSquare;
     };
@@ -4216,7 +4868,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'New Task', pl: 'Nowe zadanie' },
         icon: CheckSquare,
         variant: 'neutral',
-        onClick: () => { toggleSection('tasks'); setShowCreateTask(true); },
+        onClick: () => {
+          toggleSection('tasks');
+          setShowCreateTask(true);
+        },
       });
     }
     if (contextActions.includes('decision')) {
@@ -4225,7 +4880,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'New Decision', pl: 'Nowa decyzja' },
         icon: Scale,
         variant: 'neutral',
-        onClick: () => { toggleSection('decisions'); setShowCreateDecision(true); },
+        onClick: () => {
+          toggleSection('decisions');
+          setShowCreateDecision(true);
+        },
       });
     }
     if (contextActions.includes('raid')) {
@@ -4234,7 +4892,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'Add RAID', pl: 'Dodaj RAID' },
         icon: AlertTriangle,
         variant: 'neutral',
-        onClick: () => { toggleSection('raid'); setShowCreateRaid(true); },
+        onClick: () => {
+          toggleSection('raid');
+          setShowCreateRaid(true);
+        },
       });
     }
 
@@ -4263,7 +4924,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
 
     return actions;
-  }, [statusActions, contextActions, handleStatusAction, isMutating, toggleSection, setShowCreateTask, setShowCreateDecision, setShowCreateRaid]);
+  }, [
+    statusActions,
+    contextActions,
+    handleStatusAction,
+    isMutating,
+    toggleSection,
+    setShowCreateTask,
+    setShowCreateDecision,
+    setShowCreateRaid,
+  ]);
 
   // ==========================================
   // LOADING & ERROR STATES
@@ -4303,26 +4973,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             ═══════════════════════════════════════════════════════════════ */}
         {presentationMode === 'n' ? (
           <div className="min-h-screen">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-              {/* Breadcrumb showing source module context */}
-              {sourceModule && sourceModule !== 'initiatives' && (
-                <div className="flex items-center gap-1.5 mb-3 text-xs text-slate-400 dark:text-slate-500">
-                  <button
-                    onClick={onBack}
-                    className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                  >
-                    {sourceModule === 'assessment' ? (isPolish ? 'Ocena' : 'Assessment') :
-                     sourceModule === 'execution' ? (isPolish ? 'Realizacja' : 'Execution') :
-                     sourceModule === 'benefits' ? (isPolish ? 'Korzyści' : 'Benefits') :
-                     sourceModule === 'tools' ? (isPolish ? 'Narzędzia' : 'Tools') :
-                     sourceModule}
-                  </button>
-                  <span className="text-slate-300 dark:text-slate-600">/</span>
-                  <span className="text-slate-600 dark:text-slate-300 font-medium">
-                    {initiative?.name || (isPolish ? 'Inicjatywa' : 'Initiative')}
-                  </span>
-                </div>
-              )}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
               <NModeHeader
                 title={initiative?.name || ''}
                 onTitleChange={() => {}}
@@ -4361,11 +5012,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
                       const renderButton = (action: NModeAction) => {
                         const Icon = action.icon;
-                        const variantClasses = action.variant === 'success'
-                          ? 'border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
-                          : action.variant === 'danger'
-                            ? 'border-red-400/50 text-red-600 dark:text-red-400 hover:bg-red-500/10'
-                            : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60';
+                        const variantClasses =
+                          action.variant === 'success'
+                            ? 'border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
+                            : action.variant === 'danger'
+                              ? 'border-red-400/50 text-red-600 dark:text-red-400 hover:bg-red-500/10'
+                              : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60';
                         return (
                           <button
                             key={action.id}
@@ -4383,12 +5035,19 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         <>
                           {primaryGroup.map(renderButton)}
                           {primaryGroup.length > 0 && contextGroup.length > 0 && (
-                            <div key="sep-1" className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5" />
+                            <div
+                              key="sep-1"
+                              className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5"
+                            />
                           )}
                           {contextGroup.map(renderButton)}
-                          {(primaryGroup.length > 0 || contextGroup.length > 0) && dangerGroup.length > 0 && (
-                            <div key="sep-2" className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5" />
-                          )}
+                          {(primaryGroup.length > 0 || contextGroup.length > 0) &&
+                            dangerGroup.length > 0 && (
+                              <div
+                                key="sep-2"
+                                className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5"
+                              />
+                            )}
                           {dangerGroup.map(renderButton)}
 
                           {/* Right-aligned AI Generate button */}
@@ -4449,474 +5108,457 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             </div>
           </div>
         ) : (
-        /* ═══════════════════════════════════════════════════════════════
+          /* ═══════════════════════════════════════════════════════════════
             C-MODE RENDER (legacy D-mode cards + scroll)
             ═══════════════════════════════════════════════════════════════ */
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div
-            className={
-              cModeLayout === 'cards' ? 'grid grid-cols-1 lg:grid-cols-3 gap-6' : 'flex flex-col gap-6'
-            }
-          >
-            {/* ====== HEADER - Full Width ====== */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="lg:col-span-3 bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 p-5"
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div
+              className={
+                cModeLayout === 'cards'
+                  ? 'grid grid-cols-1 lg:grid-cols-3 gap-6'
+                  : 'flex flex-col gap-6'
+              }
             >
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  {onBack && (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={onBack}
-                      className="p-2 rounded-xl bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
-                    >
-                      <ChevronLeft size={20} className="text-slate-500" />
-                    </motion.button>
-                  )}
-                  <div
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold ${moduleConfig.bgLight} ${moduleConfig.textColor}`}
-                  >
-                    {isPolish ? moduleConfig.labelPl : moduleConfig.label}
-                  </div>
-                  <input
-                    type="text"
-                    value={initiative.name || ''}
-                    readOnly
-                    className="flex-1 text-xl font-bold text-slate-800 dark:text-white bg-transparent border-none focus:outline-none truncate"
-                  />
-                  <ArtifactPermalinkButton
-                    artifactType="initiative"
-                    artifactId={initiativeId}
-                    isPolish={isPolish}
-                    size={13}
-                  />
-                </div>
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border-2 ${statusMeta.bgColor} ${statusMeta.dotColor.replace('bg-', 'border-').replace('-400', '-500/50')} transition-all`}
-                  >
-                    <div
-                      className={`w-2.5 h-2.5 rounded-full ${statusMeta.dotColor} animate-pulse`}
-                    />
-                    <span className={`text-sm font-semibold ${statusMeta.color}`}>
-                      {statusMeta.label}
-                    </span>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleSave}
-                    disabled={isMutating}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {isMutating ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <Save size={16} />
-                    )}
-                    <span>{isPolish ? 'Zapisz' : 'Save'}</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleOpenChat}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-purple-500/40 dark:border-purple-400/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-sm font-semibold transition-all shadow-sm"
-                  >
-                    <MessageSquare size={16} />
-                    <span>{isPolish ? 'Czat' : 'Chat'}</span>
-                  </motion.button>
-                  {/* Presentation mode switcher (N/C) */}
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700/60">
-                    <button
-                      onClick={() => setPresentationMode('n')}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${presentationMode === 'n' ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                    >
-                      N
-                    </button>
-                    <button
-                      onClick={() => setPresentationMode('c')}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${presentationMode === 'c' ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                    >
-                      C
-                    </button>
-                  </div>
-                  {/* B7.4: Toggle assessment summary panel */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setShowAssessmentPanel((p) => !p)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
-                      showAssessmentPanel
-                        ? 'bg-violet-500/15 border-violet-500/40 text-violet-600 dark:text-violet-400'
-                        : 'bg-white/70 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-600'
-                    }`}
-                    title={isPolish ? 'Panel oceny' : 'Assessment panel'}
-                  >
-                    <Sparkles size={16} />
-                  </motion.button>
-                  {/* B7.3: RowActionsMenu — z-50, no overlay issues */}
-                  <RowActionsMenu
-                    actions={
-                      [
-                        {
-                          id: 'new-task',
-                          label: isPolish ? 'Nowe zadanie' : 'New Task',
-                          icon: CheckSquare,
-                          variant: 'primary',
-                          onClick: () => {
-                            toggleSection('tasks');
-                            setShowCreateTask(true);
-                          },
-                        },
-                        {
-                          id: 'new-decision',
-                          label: isPolish ? 'Nowa decyzja' : 'New Decision',
-                          icon: Scale,
-                          onClick: () => {
-                            toggleSection('decisions');
-                            setShowCreateDecision(true);
-                          },
-                        },
-                        {
-                          id: 'add-raid',
-                          label: isPolish ? 'Dodaj RAID' : 'Add RAID',
-                          icon: AlertTriangle,
-                          onClick: () => {
-                            toggleSection('raid');
-                            setShowCreateRaid(true);
-                          },
-                        },
-                        {
-                          id: 'new-tab',
-                          label: isPolish ? 'Nowa karta' : 'New tab',
-                          icon: ExternalLink,
-                          divider: true,
-                          onClick: () => window.open(window.location.href, '_blank'),
-                        },
-                        {
-                          id: 'copy-link',
-                          label: isPolish ? 'Kopiuj link' : 'Copy link',
-                          icon: Copy,
-                          onClick: handleCopyLink,
-                        },
-                        {
-                          id: 'export-pdf',
-                          label: 'PDF',
-                          icon: Download,
-                          onClick: handleExportPDF,
-                        },
-                        {
-                          id: 'archive',
-                          label: isPolish ? 'Archiwizuj' : 'Archive',
-                          icon: Archive,
-                          variant: 'danger' as const,
-                          divider: true,
-                          onClick: handleArchive,
-                        },
-                        ...(status === 'DRAFT'
-                          ? [
-                              {
-                                id: 'delete',
-                                label: isPolish ? 'Usuń' : 'Delete',
-                                icon: Trash2,
-                                variant: 'danger' as const,
-                                onClick: handleDelete,
-                              },
-                            ]
-                          : []),
-                      ] as RowAction[]
-                    }
-                    size="md"
-                  />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* ====== B7.2: Key Info Bar — 5 sections always visible ====== */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-              className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
-            >
-              {/* 1. Goal / Objective */}
-              <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <div className="p-1 rounded-lg bg-blue-500/10">
-                    <Target size={14} className="text-blue-500" />
-                  </div>
-                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {isPolish ? 'Cel' : 'Goal'}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
-                  {summary ||
-                    initiative?.strategicIntent ||
-                    initiative?.description ||
-                    (isPolish ? 'Brak opisu' : 'No description')}
-                </p>
-              </div>
-
-              {/* 2. Tasks */}
-              <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <div className="p-1 rounded-lg bg-emerald-500/10">
-                    <CheckSquare size={14} className="text-emerald-500" />
-                  </div>
-                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {isPolish ? 'Zadania' : 'Tasks'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-slate-800 dark:text-white">
-                    {tasksDone}/{tasks.length}
-                  </span>
-                  {tasks.length > 0 && (
-                    <div className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-emerald-500 transition-all"
-                        style={{
-                          width: `${tasks.length > 0 ? Math.round((tasksDone / tasks.length) * 100) : 0}%`,
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-                {tasksInProgress > 0 && (
-                  <p className="text-[10px] text-blue-500 mt-0.5">
-                    {tasksInProgress} {isPolish ? 'w toku' : 'in progress'}
-                  </p>
-                )}
-              </div>
-
-              {/* 3. Team */}
-              <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <div className="p-1 rounded-lg bg-purple-500/10">
-                    <Users size={14} className="text-purple-500" />
-                  </div>
-                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {isPolish ? 'Zespół' : 'Team'}
-                  </span>
-                </div>
-                <div className="space-y-0.5">
-                  {ownerName ? (
-                    <p className="text-xs text-slate-700 dark:text-slate-300 truncate">
-                      <span className="text-slate-500 dark:text-slate-400">{isPolish ? 'Właściciel:' : 'Owner:'}</span>{' '}
-                      {ownerName}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Brak właściciela' : 'No owner'}
-                    </p>
-                  )}
-                  {sponsorName && (
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                      {isPolish ? 'Sponsor:' : 'Sponsor:'} {sponsorName}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* 4. Resources */}
-              <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <div className="p-1 rounded-lg bg-cyan-500/10">
-                    <Calendar size={14} className="text-cyan-500" />
-                  </div>
-                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {isPolish ? 'Zasoby' : 'Resources'}
-                  </span>
-                </div>
-                <div className="space-y-0.5">
-                  {startDate || endDate ? (
-                    <p className="text-xs text-slate-700 dark:text-slate-300">
-                      {startDate
-                        ? new Date(startDate).toLocaleDateString('en-GB', {
-                            day: '2-digit',
-                            month: 'short',
-                          })
-                        : '?'}
-                      {' → '}
-                      {endDate
-                        ? new Date(endDate).toLocaleDateString('en-GB', {
-                            day: '2-digit',
-                            month: 'short',
-                          })
-                        : '?'}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{isPolish ? 'Brak dat' : 'No dates'}</p>
-                  )}
-                  {milestones.length > 0 && (
-                    <p className="text-[10px] text-purple-500">
-                      {milestones.length} {isPolish ? 'kamieni milowych' : 'milestones'}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* 5. Finances / Risk */}
-              <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <div className="p-1 rounded-lg bg-amber-500/10">
-                    <DollarSign size={14} className="text-amber-500" />
-                  </div>
-                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {isPolish ? 'Finanse / Ryzyko' : 'Finance / Risk'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  {initiative?.costCapex || initiative?.cost_capex ? (
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      {(() => {
-                        const amt = initiative.costCapex || initiative.cost_capex || 0;
-                        if (amt >= 1_000_000) return `$${(amt / 1_000_000).toFixed(1)}M`;
-                        if (amt >= 1_000) return `$${(amt / 1_000).toFixed(0)}K`;
-                        return `$${amt}`;
-                      })()}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
-                  )}
-                  {(riskCount > 0 || issueCount > 0) && (
-                    <span
-                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${criticalRaids > 0 ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}
-                    >
-                      {riskCount}R / {issueCount}I
-                    </span>
-                  )}
-                </div>
-                {initiative?.expectedRoi || initiative?.expected_roi ? (
-                  <p className="text-[10px] text-emerald-500 mt-0.5">
-                    ROI: {(initiative.expectedRoi || initiative.expected_roi || 0).toFixed(1)}x
-                  </p>
-                ) : null}
-              </div>
-            </motion.div>
-
-            {cModeLayout === 'cards' ? (
-              <>
-                {/* ====== LEFT COLUMN - Dynamic Content Sections ====== */}
-                <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
-                  {leftSections.map((sectionType) => {
-                    const Component = SECTION_REGISTRY[sectionType.componentKey];
-                    if (!Component) return null;
-                    return (
-                      <Component
-                        key={sectionType.key}
-                        sectionType={sectionType}
-                        expanded={expandedSections.has(sectionType.key)}
-                        onToggle={() => toggleSection(sectionType.key)}
-                      />
-                    );
-                  })}
-                </div>
-
-                {/* ====== RIGHT COLUMN - Dynamic Control/Meta Sections ====== */}
-                <div className="lg:col-span-1 space-y-4 order-1 lg:order-2">
-                  {/* Gate Alert Banner (always check, regardless of sections) */}
-                  {pendingGates.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 border border-amber-300/50 dark:border-amber-500/30"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-amber-500/20">
-                          <AlertTriangle size={18} className="text-amber-500" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                            {isPolish ? 'Wymagana decyzja bramkowa' : 'Gate decision required'}
-                          </p>
-                          <p className="text-xs text-amber-600/80 dark:text-amber-400/80">
-                            {pendingGates.map((g) => g.label).join(', ')}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {rightSections.map((sectionType) => {
-                    const Component = SECTION_REGISTRY[sectionType.componentKey];
-                    if (!Component) return null;
-                    return (
-                      <Component
-                        key={sectionType.key}
-                        sectionType={sectionType}
-                        expanded={expandedSections.has(sectionType.key)}
-                        onToggle={() => toggleSection(sectionType.key)}
-                      />
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              /* ====== SCROLL DOCUMENT VIEW ====== */
-              <InitiativeScrollView leftSections={leftSections} rightSections={rightSections} />
-            )}
-          </div>
-
-          {/* ====== B7.4: Assessment Summary Panel (right side, C-mode only) ====== */}
-          <AnimatePresence>
-            {showAssessmentPanel && (
-              <motion.aside
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 40 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className="fixed right-0 top-0 h-full w-80 bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-navy-700 shadow-2xl z-40 overflow-y-auto"
+              {/* ====== HEADER - Full Width ====== */}
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="lg:col-span-3 bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 p-5"
               >
-                <div className="p-5 space-y-5">
-                  {/* Panel Header */}
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                      <Sparkles size={16} className="text-violet-500" />
-                      {isPolish ? 'Podsumowanie oceny' : 'Assessment Summary'}
-                    </h3>
-                    <button
-                      onClick={() => setShowAssessmentPanel(false)}
-                      className="p-1 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    {onBack && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={onBack}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                      >
+                        <ChevronLeft size={20} className="text-slate-500" />
+                      </motion.button>
+                    )}
+                    <div
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold ${moduleConfig.bgLight} ${moduleConfig.textColor}`}
                     >
-                      <X size={14} />
-                    </button>
+                      {isPolish ? moduleConfig.labelPl : moduleConfig.label}
+                    </div>
+                    <input
+                      type="text"
+                      value={initiative.name || ''}
+                      readOnly
+                      className="flex-1 text-xl font-bold text-slate-800 dark:text-white bg-transparent border-none focus:outline-none truncate"
+                    />
+                    <ArtifactPermalinkButton
+                      artifactType="initiative"
+                      artifactId={initiativeId}
+                      isPolish={isPolish}
+                      size={13}
+                    />
                   </div>
-
-                  {/* Readiness Score */}
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-violet-500/5 to-purple-500/5 dark:from-violet-500/10 dark:to-purple-500/10 border border-violet-200/50 dark:border-violet-500/20">
-                    <p className="text-[10px] font-semibold text-violet-500 uppercase tracking-wider mb-2">
-                      {isPolish ? 'Gotowość inicjatywy' : 'Initiative Readiness'}
-                    </p>
-                    <div className="flex items-end gap-2 mb-2">
-                      <span className="text-3xl font-bold text-slate-800 dark:text-white">
-                        {(() => {
-                          let score = 0;
-                          if (summary) score += 15;
-                          if (ownerName) score += 15;
-                          if (sponsorName) score += 10;
-                          if (tasks.length > 0) score += 15;
-                          if (startDate && endDate) score += 10;
-                          if (initiative?.costCapex || initiative?.cost_capex) score += 10;
-                          if (raidItems.length > 0) score += 10;
-                          if (decisions.length > 0) score += 10;
-                          if (stakeholders.length > 0) score += 5;
-                          return Math.min(score, 100);
-                        })()}
-                        %
-                      </span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-                        {isPolish ? 'kompletność' : 'completeness'}
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border-2 ${statusMeta.bgColor} ${statusMeta.dotColor.replace('bg-', 'border-').replace('-400', '-500/50')} transition-all`}
+                    >
+                      <div
+                        className={`w-2.5 h-2.5 rounded-full ${statusMeta.dotColor} animate-pulse`}
+                      />
+                      <span className={`text-sm font-semibold ${statusMeta.color}`}>
+                        {statusMeta.label}
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all"
-                        style={{
-                          width: `${(() => {
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleSave}
+                      disabled={isMutating}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {isMutating ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <Save size={16} />
+                      )}
+                      <span>{isPolish ? 'Zapisz' : 'Save'}</span>
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleOpenChat}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-purple-500/40 dark:border-purple-400/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-sm font-semibold transition-all shadow-sm"
+                    >
+                      <MessageSquare size={16} />
+                      <span>{isPolish ? 'Czat' : 'Chat'}</span>
+                    </motion.button>
+                    {/* Presentation mode switcher (N/C) */}
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700/60">
+                      <button
+                        onClick={() => setPresentationMode('n')}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${presentationMode === 'n' ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                      >
+                        N
+                      </button>
+                      <button
+                        onClick={() => setPresentationMode('c')}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${presentationMode === 'c' ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                      >
+                        C
+                      </button>
+                    </div>
+                    {/* B7.4: Toggle assessment summary panel */}
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setShowAssessmentPanel((p) => !p)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
+                        showAssessmentPanel
+                          ? 'bg-violet-500/15 border-violet-500/40 text-violet-600 dark:text-violet-400'
+                          : 'bg-white/70 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-600'
+                      }`}
+                      title={isPolish ? 'Panel oceny' : 'Assessment panel'}
+                    >
+                      <Sparkles size={16} />
+                    </motion.button>
+                    {/* B7.3: RowActionsMenu — z-50, no overlay issues */}
+                    <RowActionsMenu
+                      actions={
+                        [
+                          {
+                            id: 'new-task',
+                            label: isPolish ? 'Nowe zadanie' : 'New Task',
+                            icon: CheckSquare,
+                            variant: 'primary',
+                            onClick: () => {
+                              toggleSection('tasks');
+                              setShowCreateTask(true);
+                            },
+                          },
+                          {
+                            id: 'new-decision',
+                            label: isPolish ? 'Nowa decyzja' : 'New Decision',
+                            icon: Scale,
+                            onClick: () => {
+                              toggleSection('decisions');
+                              setShowCreateDecision(true);
+                            },
+                          },
+                          {
+                            id: 'add-raid',
+                            label: isPolish ? 'Dodaj RAID' : 'Add RAID',
+                            icon: AlertTriangle,
+                            onClick: () => {
+                              toggleSection('raid');
+                              setShowCreateRaid(true);
+                            },
+                          },
+                          {
+                            id: 'new-tab',
+                            label: isPolish ? 'Nowa karta' : 'New tab',
+                            icon: ExternalLink,
+                            divider: true,
+                            onClick: () => window.open(window.location.href, '_blank'),
+                          },
+                          {
+                            id: 'copy-link',
+                            label: isPolish ? 'Kopiuj link' : 'Copy link',
+                            icon: Copy,
+                            onClick: handleCopyLink,
+                          },
+                          {
+                            id: 'export-pdf',
+                            label: 'PDF',
+                            icon: Download,
+                            onClick: handleExportPDF,
+                          },
+                          {
+                            id: 'archive',
+                            label: isPolish ? 'Archiwizuj' : 'Archive',
+                            icon: Archive,
+                            variant: 'danger' as const,
+                            divider: true,
+                            onClick: handleArchive,
+                          },
+                          ...(status === 'DRAFT'
+                            ? [
+                                {
+                                  id: 'delete',
+                                  label: isPolish ? 'Usuń' : 'Delete',
+                                  icon: Trash2,
+                                  variant: 'danger' as const,
+                                  onClick: handleDelete,
+                                },
+                              ]
+                            : []),
+                        ] as RowAction[]
+                      }
+                      size="md"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* ====== B7.2: Key Info Bar — 5 sections always visible ====== */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
+              >
+                {/* 1. Goal / Objective */}
+                <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="p-1 rounded-lg bg-blue-500/10">
+                      <Target size={14} className="text-blue-500" />
+                    </div>
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {isPolish ? 'Cel' : 'Goal'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                    {summary ||
+                      initiative?.strategicIntent ||
+                      initiative?.description ||
+                      (isPolish ? 'Brak opisu' : 'No description')}
+                  </p>
+                </div>
+
+                {/* 2. Tasks */}
+                <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="p-1 rounded-lg bg-emerald-500/10">
+                      <CheckSquare size={14} className="text-emerald-500" />
+                    </div>
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {isPolish ? 'Zadania' : 'Tasks'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-slate-800 dark:text-white">
+                      {tasksDone}/{tasks.length}
+                    </span>
+                    {tasks.length > 0 && (
+                      <div className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-emerald-500 transition-all"
+                          style={{
+                            width: `${tasks.length > 0 ? Math.round((tasksDone / tasks.length) * 100) : 0}%`,
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {tasksInProgress > 0 && (
+                    <p className="text-[10px] text-blue-500 mt-0.5">
+                      {tasksInProgress} {isPolish ? 'w toku' : 'in progress'}
+                    </p>
+                  )}
+                </div>
+
+                {/* 3. Team */}
+                <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="p-1 rounded-lg bg-purple-500/10">
+                      <Users size={14} className="text-purple-500" />
+                    </div>
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {isPolish ? 'Zespół' : 'Team'}
+                    </span>
+                  </div>
+                  <div className="space-y-0.5">
+                    {ownerName ? (
+                      <p className="text-xs text-slate-700 dark:text-slate-300 truncate">
+                        <span className="text-slate-500 dark:text-slate-400">
+                          {isPolish ? 'Właściciel:' : 'Owner:'}
+                        </span>{' '}
+                        {ownerName}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Brak właściciela' : 'No owner'}
+                      </p>
+                    )}
+                    {sponsorName && (
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                        {isPolish ? 'Sponsor:' : 'Sponsor:'} {sponsorName}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* 4. Resources */}
+                <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="p-1 rounded-lg bg-cyan-500/10">
+                      <Calendar size={14} className="text-cyan-500" />
+                    </div>
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {isPolish ? 'Zasoby' : 'Resources'}
+                    </span>
+                  </div>
+                  <div className="space-y-0.5">
+                    {startDate || endDate ? (
+                      <p className="text-xs text-slate-700 dark:text-slate-300">
+                        {startDate
+                          ? new Date(startDate).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                            })
+                          : '?'}
+                        {' → '}
+                        {endDate
+                          ? new Date(endDate).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                            })
+                          : '?'}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Brak dat' : 'No dates'}
+                      </p>
+                    )}
+                    {milestones.length > 0 && (
+                      <p className="text-[10px] text-purple-500">
+                        {milestones.length} {isPolish ? 'kamieni milowych' : 'milestones'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* 5. Finances / Risk */}
+                <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="p-1 rounded-lg bg-amber-500/10">
+                      <DollarSign size={14} className="text-amber-500" />
+                    </div>
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {isPolish ? 'Finanse / Ryzyko' : 'Finance / Risk'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {initiative?.costCapex || initiative?.cost_capex ? (
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        {(() => {
+                          const amt = initiative.costCapex || initiative.cost_capex || 0;
+                          if (amt >= 1_000_000) return `$${(amt / 1_000_000).toFixed(1)}M`;
+                          if (amt >= 1_000) return `$${(amt / 1_000).toFixed(0)}K`;
+                          return `$${amt}`;
+                        })()}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+                    )}
+                    {(riskCount > 0 || issueCount > 0) && (
+                      <span
+                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${criticalRaids > 0 ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}
+                      >
+                        {riskCount}R / {issueCount}I
+                      </span>
+                    )}
+                  </div>
+                  {initiative?.expectedRoi || initiative?.expected_roi ? (
+                    <p className="text-[10px] text-emerald-500 mt-0.5">
+                      ROI: {(initiative.expectedRoi || initiative.expected_roi || 0).toFixed(1)}x
+                    </p>
+                  ) : null}
+                </div>
+              </motion.div>
+
+              {cModeLayout === 'cards' ? (
+                <>
+                  {/* ====== LEFT COLUMN - Dynamic Content Sections ====== */}
+                  <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
+                    {leftSections.map((sectionType) => {
+                      const Component = SECTION_REGISTRY[sectionType.componentKey];
+                      if (!Component) return null;
+                      return (
+                        <Component
+                          key={sectionType.key}
+                          sectionType={sectionType}
+                          expanded={expandedSections.has(sectionType.key)}
+                          onToggle={() => toggleSection(sectionType.key)}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {/* ====== RIGHT COLUMN - Dynamic Control/Meta Sections ====== */}
+                  <div className="lg:col-span-1 space-y-4 order-1 lg:order-2">
+                    {/* Gate Alert Banner (always check, regardless of sections) */}
+                    {pendingGates.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 border border-amber-300/50 dark:border-amber-500/30"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-amber-500/20">
+                            <AlertTriangle size={18} className="text-amber-500" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                              {isPolish ? 'Wymagana decyzja bramkowa' : 'Gate decision required'}
+                            </p>
+                            <p className="text-xs text-amber-600/80 dark:text-amber-400/80">
+                              {pendingGates.map((g) => g.label).join(', ')}
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {rightSections.map((sectionType) => {
+                      const Component = SECTION_REGISTRY[sectionType.componentKey];
+                      if (!Component) return null;
+                      return (
+                        <Component
+                          key={sectionType.key}
+                          sectionType={sectionType}
+                          expanded={expandedSections.has(sectionType.key)}
+                          onToggle={() => toggleSection(sectionType.key)}
+                        />
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                /* ====== SCROLL DOCUMENT VIEW ====== */
+                <InitiativeScrollView leftSections={leftSections} rightSections={rightSections} />
+              )}
+            </div>
+
+            {/* ====== B7.4: Assessment Summary Panel (right side, C-mode only) ====== */}
+            <AnimatePresence>
+              {showAssessmentPanel && (
+                <motion.aside
+                  initial={{ opacity: 0, x: 40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 40 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                  className="fixed right-0 top-0 h-full w-80 bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-navy-700 shadow-2xl z-40 overflow-y-auto"
+                >
+                  <div className="p-5 space-y-5">
+                    {/* Panel Header */}
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                        <Sparkles size={16} className="text-violet-500" />
+                        {isPolish ? 'Podsumowanie oceny' : 'Assessment Summary'}
+                      </h3>
+                      <button
+                        onClick={() => setShowAssessmentPanel(false)}
+                        className="p-1 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+
+                    {/* Readiness Score */}
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-violet-500/5 to-purple-500/5 dark:from-violet-500/10 dark:to-purple-500/10 border border-violet-200/50 dark:border-violet-500/20">
+                      <p className="text-[10px] font-semibold text-violet-500 uppercase tracking-wider mb-2">
+                        {isPolish ? 'Gotowość inicjatywy' : 'Initiative Readiness'}
+                      </p>
+                      <div className="flex items-end gap-2 mb-2">
+                        <span className="text-3xl font-bold text-slate-800 dark:text-white">
+                          {(() => {
                             let score = 0;
                             if (summary) score += 15;
                             if (ownerName) score += 15;
@@ -4928,125 +5570,153 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             if (decisions.length > 0) score += 10;
                             if (stakeholders.length > 0) score += 5;
                             return Math.min(score, 100);
-                          })()}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Checklist */}
-                  <div>
-                    <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                      {isPolish ? 'Lista kontrolna' : 'Checklist'}
-                    </p>
-                    <div className="space-y-1.5">
-                      {[
-                        { label: isPolish ? 'Opis / cel' : 'Description / goal', done: !!summary },
-                        { label: isPolish ? 'Właściciel' : 'Owner assigned', done: !!ownerName },
-                        { label: isPolish ? 'Sponsor' : 'Sponsor assigned', done: !!sponsorName },
-                        { label: isPolish ? 'Zadania' : 'Tasks defined', done: tasks.length > 0 },
-                        {
-                          label: isPolish ? 'Harmonogram' : 'Timeline set',
-                          done: !!(startDate && endDate),
-                        },
-                        {
-                          label: isPolish ? 'Budżet' : 'Budget defined',
-                          done: !!(initiative?.costCapex || initiative?.cost_capex),
-                        },
-                        {
-                          label: isPolish ? 'Ryzyka' : 'Risks identified',
-                          done: raidItems.filter((r) => r.type === 'risk').length > 0,
-                        },
-                        {
-                          label: isPolish ? 'Decyzje' : 'Decisions linked',
-                          done: decisions.length > 0,
-                        },
-                        {
-                          label: isPolish ? 'Interesariusze' : 'Stakeholders',
-                          done: stakeholders.length > 0,
-                        },
-                      ].map((item) => (
-                        <div key={item.label} className="flex items-center gap-2 text-xs">
-                          <div
-                            className={`w-4 h-4 rounded-full flex items-center justify-center ${item.done ? 'bg-emerald-500/20 text-emerald-500' : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'}`}
-                          >
-                            {item.done ? '✓' : '○'}
-                          </div>
-                          <span
-                            className={
-                              item.done ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'
-                            }
-                          >
-                            {item.label}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Quick Stats */}
-                  <div>
-                    <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                      {isPolish ? 'Statystyki' : 'Quick Stats'}
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
-                        <p className="text-lg font-bold text-slate-800 dark:text-white">
-                          {tasks.length}
-                        </p>
-                        <p className="text-[9px] text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Zadania' : 'Tasks'}
-                        </p>
+                          })()}
+                          %
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          {isPolish ? 'kompletność' : 'completeness'}
+                        </span>
                       </div>
-                      <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
-                        <p className="text-lg font-bold text-slate-800 dark:text-white">
-                          {decisions.length}
-                        </p>
-                        <p className="text-[9px] text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Decyzje' : 'Decisions'}
-                        </p>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
-                        <p
-                          className={`text-lg font-bold ${criticalRaids > 0 ? 'text-red-500' : 'text-slate-800 dark:text-white'}`}
-                        >
-                          {raidItems.length}
-                        </p>
-                        <p className="text-[9px] text-slate-500 dark:text-slate-400">RAID</p>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
-                        <p className="text-lg font-bold text-slate-800 dark:text-white">
-                          {stakeholders.length}
-                        </p>
-                        <p className="text-[9px] text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Interesariusze' : 'Stakeholders'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Pending Gates */}
-                  {pendingGates.length > 0 && (
-                    <div className="p-3 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-500/20">
-                      <p className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider mb-1.5">
-                        {isPolish ? 'Oczekujące bramki' : 'Pending Gates'}
-                      </p>
-                      {pendingGates.map((g) => (
+                      <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                         <div
-                          key={g.id}
-                          className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400"
-                        >
-                          <AlertTriangle size={12} />
-                          <span>{g.label}</span>
-                        </div>
-                      ))}
+                          className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all"
+                          style={{
+                            width: `${(() => {
+                              let score = 0;
+                              if (summary) score += 15;
+                              if (ownerName) score += 15;
+                              if (sponsorName) score += 10;
+                              if (tasks.length > 0) score += 15;
+                              if (startDate && endDate) score += 10;
+                              if (initiative?.costCapex || initiative?.cost_capex) score += 10;
+                              if (raidItems.length > 0) score += 10;
+                              if (decisions.length > 0) score += 10;
+                              if (stakeholders.length > 0) score += 5;
+                              return Math.min(score, 100);
+                            })()}%`,
+                          }}
+                        />
+                      </div>
                     </div>
-                  )}
-                </div>
-              </motion.aside>
-            )}
-          </AnimatePresence>
-        </div>
+
+                    {/* Checklist */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                        {isPolish ? 'Lista kontrolna' : 'Checklist'}
+                      </p>
+                      <div className="space-y-1.5">
+                        {[
+                          {
+                            label: isPolish ? 'Opis / cel' : 'Description / goal',
+                            done: !!summary,
+                          },
+                          { label: isPolish ? 'Właściciel' : 'Owner assigned', done: !!ownerName },
+                          { label: isPolish ? 'Sponsor' : 'Sponsor assigned', done: !!sponsorName },
+                          { label: isPolish ? 'Zadania' : 'Tasks defined', done: tasks.length > 0 },
+                          {
+                            label: isPolish ? 'Harmonogram' : 'Timeline set',
+                            done: !!(startDate && endDate),
+                          },
+                          {
+                            label: isPolish ? 'Budżet' : 'Budget defined',
+                            done: !!(initiative?.costCapex || initiative?.cost_capex),
+                          },
+                          {
+                            label: isPolish ? 'Ryzyka' : 'Risks identified',
+                            done: raidItems.filter((r) => r.type === 'risk').length > 0,
+                          },
+                          {
+                            label: isPolish ? 'Decyzje' : 'Decisions linked',
+                            done: decisions.length > 0,
+                          },
+                          {
+                            label: isPolish ? 'Interesariusze' : 'Stakeholders',
+                            done: stakeholders.length > 0,
+                          },
+                        ].map((item) => (
+                          <div key={item.label} className="flex items-center gap-2 text-xs">
+                            <div
+                              className={`w-4 h-4 rounded-full flex items-center justify-center ${item.done ? 'bg-emerald-500/20 text-emerald-500' : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'}`}
+                            >
+                              {item.done ? '✓' : '○'}
+                            </div>
+                            <span
+                              className={
+                                item.done
+                                  ? 'text-slate-700 dark:text-slate-300'
+                                  : 'text-slate-500 dark:text-slate-400'
+                              }
+                            >
+                              {item.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Quick Stats */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                        {isPolish ? 'Statystyki' : 'Quick Stats'}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
+                          <p className="text-lg font-bold text-slate-800 dark:text-white">
+                            {tasks.length}
+                          </p>
+                          <p className="text-[9px] text-slate-500 dark:text-slate-400">
+                            {isPolish ? 'Zadania' : 'Tasks'}
+                          </p>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
+                          <p className="text-lg font-bold text-slate-800 dark:text-white">
+                            {decisions.length}
+                          </p>
+                          <p className="text-[9px] text-slate-500 dark:text-slate-400">
+                            {isPolish ? 'Decyzje' : 'Decisions'}
+                          </p>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
+                          <p
+                            className={`text-lg font-bold ${criticalRaids > 0 ? 'text-red-500' : 'text-slate-800 dark:text-white'}`}
+                          >
+                            {raidItems.length}
+                          </p>
+                          <p className="text-[9px] text-slate-500 dark:text-slate-400">RAID</p>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
+                          <p className="text-lg font-bold text-slate-800 dark:text-white">
+                            {stakeholders.length}
+                          </p>
+                          <p className="text-[9px] text-slate-500 dark:text-slate-400">
+                            {isPolish ? 'Interesariusze' : 'Stakeholders'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pending Gates */}
+                    {pendingGates.length > 0 && (
+                      <div className="p-3 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-500/20">
+                        <p className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider mb-1.5">
+                          {isPolish ? 'Oczekujące bramki' : 'Pending Gates'}
+                        </p>
+                        {pendingGates.map((g) => (
+                          <div
+                            key={g.id}
+                            className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400"
+                          >
+                            <AlertTriangle size={12} />
+                            <span>{g.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </motion.aside>
+              )}
+            </AnimatePresence>
+          </div>
         )}
       </div>
     </InitiativeContext.Provider>

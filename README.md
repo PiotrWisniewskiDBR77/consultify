@@ -70,6 +70,13 @@ Optional (safe) cleanup: move iCloud duplicates into `_quarantine/` (undoable by
 npm run cleanup:quarantine-duplicates
 ```
 
+**Londyn branch** — for immediate hot reload (frontend HMR + backend auto-restart on file changes):
+
+```bash
+npm run dev:londyn:live
+# or: ./start-londyn.sh --live
+```
+
 ### Option 1: Using Startup Script (Recommended)
 
 ```bash

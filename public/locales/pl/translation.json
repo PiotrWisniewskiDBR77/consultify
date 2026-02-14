@@ -1046,10 +1046,11 @@
     "becomePartner": "Become Partner"
   },
   "thinking": {
-    "processing": "Myślę…",
-    "analyzing": "Analizuję Twoje pytanie…",
-    "context": "Zbieram kontekst…",
-    "drafting": "Przygotowuję odpowiedź…"
+    "processing": "Myślę...",
+    "analyzing": "Analizuję...",
+    "structuring": "Strukturyzuję...",
+    "synthesizing": "Syntezuję...",
+    "finalizing": "Finalizuję..."
   },
   "contextBadge": {
     "aiSees": "AI widzi",
@@ -1164,19 +1165,40 @@
       "cloudStorage": "Chmura",
       "connectInSettings": "Połącz więcej w Ustawieniach → Integracje",
       "modes": {
-        "deepResearch": { "label": "Głęboka analiza", "desc": "Dogłębne badanie tematu" },
+        "deepResearch": {
+          "label": "Głęboka analiza",
+          "desc": "Dogłębne badanie tematu"
+        },
         "webSearch": {
           "label": "Wyszukiwanie w sieci",
           "desc": "Informacje w czasie rzeczywistym"
         },
-        "showReasoning": { "label": "Pokaż rozumowanie", "desc": "Widoczny tok myślenia AI" },
-        "multiAgent": { "label": "Analiza wieloagentowa", "desc": "Perspektywy CFO/CTO/CHRO/COO" },
-        "textToSpeech": { "label": "Czytaj odpowiedzi", "desc": "Automatyczne czytanie na głos" }
+        "showReasoning": {
+          "label": "Pokaż rozumowanie",
+          "desc": "Widoczny tok myślenia AI"
+        },
+        "multiAgent": {
+          "label": "Analiza wieloagentowa",
+          "desc": "Perspektywy CFO/CTO/CHRO/COO"
+        },
+        "textToSpeech": {
+          "label": "Czytaj odpowiedzi",
+          "desc": "Automatyczne czytanie na głos"
+        }
       },
       "sources": {
-        "pmoDocuments": { "label": "Dokumenty PMO", "desc": "ISO 21500, PMBOK, PRINCE2" },
-        "projectData": { "label": "Dane projektu", "desc": "Inicjatywy, zadania, decyzje" },
-        "organizationData": { "label": "Dane organizacji", "desc": "Zespoły, role, procesy" }
+        "pmoDocuments": {
+          "label": "Dokumenty PMO",
+          "desc": "ISO 21500, PMBOK, PRINCE2"
+        },
+        "projectData": {
+          "label": "Dane projektu",
+          "desc": "Inicjatywy, zadania, decyzje"
+        },
+        "organizationData": {
+          "label": "Dane organizacji",
+          "desc": "Zespoły, role, procesy"
+        }
       },
       "styles": {
         "normal": "Normalny",
@@ -1360,12 +1382,5 @@
     "searchQueries": "Zapytania wyszukiwania",
     "topSources": "Najlepsze źródła",
     "researching": "Badanie"
-  },
-  "thinking": {
-    "processing": "Myślę...",
-    "analyzing": "Analizuję...",
-    "structuring": "Strukturyzuję...",
-    "synthesizing": "Syntezuję...",
-    "finalizing": "Finalizuję..."
   }
 }

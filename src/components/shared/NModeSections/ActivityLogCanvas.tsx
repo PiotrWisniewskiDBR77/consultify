@@ -8,7 +8,7 @@
  * - Summary stat cards (entries, changes, escalations, collaboration)
  * - Chronological activity feed with type icons, timestamps, old→new values
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.3
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.3
  */
 
 import React from 'react';

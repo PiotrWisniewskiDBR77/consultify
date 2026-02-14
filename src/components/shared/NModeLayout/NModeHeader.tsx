@@ -4,7 +4,7 @@
  * Standard header bar for all N-mode artifact detail views.
  * Contains: back button, title input, artifact code, permalink, save, chat, mode switcher.
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.1
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.1
  */
 
 import { motion } from 'framer-motion';
