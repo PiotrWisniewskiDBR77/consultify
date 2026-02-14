@@ -118,17 +118,47 @@ const ROLE_CONFIG: Record<
 };
 
 // Derive permissions from role
-function getPermissionsForRole(role: TeamRole): Omit<TeamMember, 'id' | 'userId' | 'role' | 'assignedAt' | 'userName' | 'userEmail'> {
+function getPermissionsForRole(
+  role: TeamRole
+): Omit<TeamMember, 'id' | 'userId' | 'role' | 'assignedAt' | 'userName' | 'userEmail'> {
   switch (role) {
     case 'admin':
-      return { canEdit: true, canApprove: true, canManageTeam: true, canChangeStatus: true, canGenerateReport: true, canGenerateInitiatives: true };
+      return {
+        canEdit: true,
+        canApprove: true,
+        canManageTeam: true,
+        canChangeStatus: true,
+        canGenerateReport: true,
+        canGenerateInitiatives: true,
+      };
     case 'manager':
-      return { canEdit: true, canApprove: true, canManageTeam: true, canChangeStatus: true, canGenerateReport: false, canGenerateInitiatives: false };
+      return {
+        canEdit: true,
+        canApprove: true,
+        canManageTeam: true,
+        canChangeStatus: true,
+        canGenerateReport: false,
+        canGenerateInitiatives: false,
+      };
     case 'editor':
-      return { canEdit: true, canApprove: false, canManageTeam: false, canChangeStatus: false, canGenerateReport: false, canGenerateInitiatives: false };
+      return {
+        canEdit: true,
+        canApprove: false,
+        canManageTeam: false,
+        canChangeStatus: false,
+        canGenerateReport: false,
+        canGenerateInitiatives: false,
+      };
     case 'viewer':
     default:
-      return { canEdit: false, canApprove: false, canManageTeam: false, canChangeStatus: false, canGenerateReport: false, canGenerateInitiatives: false };
+      return {
+        canEdit: false,
+        canApprove: false,
+        canManageTeam: false,
+        canChangeStatus: false,
+        canGenerateReport: false,
+        canGenerateInitiatives: false,
+      };
   }
 }
 
@@ -275,11 +305,16 @@ const AddMemberModal: React.FC<{
                   {isPolish ? 'Dodaj członka zespołu' : 'Add Team Member'}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Wyszukaj i dodaj do zespołu inicjatywy' : 'Search and add to the initiative team'}
+                  {isPolish
+                    ? 'Wyszukaj i dodaj do zespołu inicjatywy'
+                    : 'Search and add to the initiative team'}
                 </p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            >
               <X size={18} className="text-slate-500" />
             </button>
           </div>
@@ -293,16 +328,26 @@ const AddMemberModal: React.FC<{
               {isPolish ? 'Szukaj użytkowników' : 'Search Users'}
             </label>
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+              />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={isPolish ? 'Szukaj po nazwisku lub email...' : 'Search by name or email...'}
+                placeholder={
+                  isPolish ? 'Szukaj po nazwisku lub email...' : 'Search by name or email...'
+                }
                 autoComplete="off"
                 className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors"
               />
-              {searching && <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 animate-spin" />}
+              {searching && (
+                <Loader2
+                  size={16}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 animate-spin"
+                />
+              )}
             </div>
 
             {users.length > 0 && (
@@ -317,10 +362,14 @@ const AddMemberModal: React.FC<{
                       {(user.name || user.email).charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 text-left">
-                      <div className="text-sm font-medium text-slate-900 dark:text-white">{user.name}</div>
+                      <div className="text-sm font-medium text-slate-900 dark:text-white">
+                        {user.name}
+                      </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">{user.email}</div>
                     </div>
-                    {selectedUser?.id === user.id && <CheckCircle2 size={18} className="text-purple-500" />}
+                    {selectedUser?.id === user.id && (
+                      <CheckCircle2 size={18} className="text-purple-500" />
+                    )}
                   </button>
                 ))}
               </div>
@@ -347,10 +396,17 @@ const AddMemberModal: React.FC<{
                   {(selectedUser.name || selectedUser.email).charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <div className="font-medium text-slate-900 dark:text-white">{selectedUser.name}</div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">{selectedUser.email}</div>
+                  <div className="font-medium text-slate-900 dark:text-white">
+                    {selectedUser.name}
+                  </div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    {selectedUser.email}
+                  </div>
                 </div>
-                <button onClick={() => setSelectedUser(null)} className="p-1.5 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-500/20 transition-colors">
+                <button
+                  onClick={() => setSelectedUser(null)}
+                  className="p-1.5 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-500/20 transition-colors"
+                >
                   <X size={16} className="text-purple-600 dark:text-purple-400" />
                 </button>
               </div>
@@ -363,33 +419,40 @@ const AddMemberModal: React.FC<{
               {isPolish ? 'Wybierz rolę' : 'Select Role'}
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {(Object.entries(ROLE_CONFIG) as [TeamRole, (typeof ROLE_CONFIG)[TeamRole]][]).map(([role, config]) => {
-                const Icon = config.icon;
-                return (
-                  <button
-                    key={role}
-                    onClick={() => setSelectedRole(role)}
-                    className={`p-3 rounded-xl border-2 text-left transition-all ${selectedRole === role ? `${config.borderColor} ${config.bgColor}` : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'}`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Icon size={16} className={config.color} />
-                      <span className={`text-sm font-semibold ${selectedRole === role ? config.color : 'text-slate-700 dark:text-slate-300'}`}>
-                        {isPolish ? config.label.pl : config.label.en}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {isPolish ? config.description.pl : config.description.en}
-                    </p>
-                  </button>
-                );
-              })}
+              {(Object.entries(ROLE_CONFIG) as [TeamRole, (typeof ROLE_CONFIG)[TeamRole]][]).map(
+                ([role, config]) => {
+                  const Icon = config.icon;
+                  return (
+                    <button
+                      key={role}
+                      onClick={() => setSelectedRole(role)}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${selectedRole === role ? `${config.borderColor} ${config.bgColor}` : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon size={16} className={config.color} />
+                        <span
+                          className={`text-sm font-semibold ${selectedRole === role ? config.color : 'text-slate-700 dark:text-slate-300'}`}
+                        >
+                          {isPolish ? config.label.pl : config.label.en}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {isPolish ? config.description.pl : config.description.en}
+                      </p>
+                    </button>
+                  );
+                }
+              )}
             </div>
           </div>
         </div>
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50 flex items-center justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors">
+          <button
+            onClick={onClose}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          >
             {isPolish ? 'Anuluj' : 'Cancel'}
           </button>
           <button
@@ -397,7 +460,17 @@ const AddMemberModal: React.FC<{
             disabled={!selectedUser || adding}
             className="px-5 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 dark:disabled:bg-purple-500/30 text-white text-sm font-semibold transition-colors flex items-center gap-2"
           >
-            {adding ? <><Loader2 size={16} className="animate-spin" />{isPolish ? 'Dodawanie...' : 'Adding...'}</> : <><UserPlus size={16} />{isPolish ? 'Dodaj' : 'Add Member'}</>}
+            {adding ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                {isPolish ? 'Dodawanie...' : 'Adding...'}
+              </>
+            ) : (
+              <>
+                <UserPlus size={16} />
+                {isPolish ? 'Dodaj' : 'Add Member'}
+              </>
+            )}
           </button>
         </div>
       </motion.div>
@@ -436,7 +509,14 @@ const TeamMemberRow: React.FC<{
   };
 
   const handleRemove = () => {
-    if (!confirm(isPolish ? `Usunąć ${member.userName || member.userEmail}?` : `Remove ${member.userName || member.userEmail}?`)) return;
+    if (
+      !confirm(
+        isPolish
+          ? `Usunąć ${member.userName || member.userEmail}?`
+          : `Remove ${member.userName || member.userEmail}?`
+      )
+    )
+      return;
     onRemove(member.userId);
   };
 
@@ -474,18 +554,32 @@ const TeamMemberRow: React.FC<{
               className="h-8 px-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-xs text-slate-900 dark:text-white"
             >
               {Object.entries(ROLE_CONFIG).map(([role, config]) => (
-                <option key={role} value={role}>{isPolish ? config.label.pl : config.label.en}</option>
+                <option key={role} value={role}>
+                  {isPolish ? config.label.pl : config.label.en}
+                </option>
               ))}
             </select>
-            <button onClick={handleSaveRole} disabled={busy} className="p-1.5 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 disabled:bg-emerald-300 transition-colors">
+            <button
+              onClick={handleSaveRole}
+              disabled={busy}
+              className="p-1.5 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 disabled:bg-emerald-300 transition-colors"
+            >
               {busy ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
             </button>
-            <button onClick={() => { setSelectedRole(member.role); setIsEditing(false); }} className="p-1.5 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors">
+            <button
+              onClick={() => {
+                setSelectedRole(member.role);
+                setIsEditing(false);
+              }}
+              className="p-1.5 rounded-lg bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
+            >
               <X size={12} />
             </button>
           </div>
         ) : (
-          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${roleConfig.bgColor} ${roleConfig.color} ${roleConfig.borderColor} border`}>
+          <div
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${roleConfig.bgColor} ${roleConfig.color} ${roleConfig.borderColor} border`}
+          >
             <RoleIcon size={12} />
             {isPolish ? roleConfig.label.pl : roleConfig.label.en}
           </div>
@@ -497,15 +591,22 @@ const TeamMemberRow: React.FC<{
         <div className="flex flex-wrap gap-1">
           {activePermissions.length > 0 ? (
             activePermissions.slice(0, 4).map((perm) => (
-              <span key={perm} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+              <span
+                key={perm}
+                className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+              >
                 {perm}
               </span>
             ))
           ) : (
-            <span className="text-xs text-slate-400 dark:text-slate-500">{isPolish ? 'Tylko odczyt' : 'View only'}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">
+              {isPolish ? 'Tylko odczyt' : 'View only'}
+            </span>
           )}
           {activePermissions.length > 4 && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400">+{activePermissions.length - 4}</span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400">
+              +{activePermissions.length - 4}
+            </span>
           )}
         </div>
       </td>
@@ -527,7 +628,11 @@ const TeamMemberRow: React.FC<{
       <td className="px-4 py-3">
         <span className="text-xs text-slate-500 dark:text-slate-400">
           {member.assignedAt
-            ? new Date(member.assignedAt).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: 'numeric' })
+            ? new Date(member.assignedAt).toLocaleDateString('pl-PL', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })
             : '—'}
         </span>
       </td>
@@ -584,7 +689,9 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
   // Role stats
   const roleStats = useMemo(() => {
     const stats: Record<TeamRole, number> = { admin: 0, manager: 0, editor: 0, viewer: 0 };
-    members.forEach((m) => { if (stats[m.role] !== undefined) stats[m.role]++; });
+    members.forEach((m) => {
+      if (stats[m.role] !== undefined) stats[m.role]++;
+    });
     return stats;
   }, [members]);
 
@@ -670,9 +777,9 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-xs font-medium transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           >
-            <Plus size={14} />
+            <Plus size={12} />
             {isPolish ? 'Dodaj członka' : 'Add Member'}
           </button>
           {members.length > 0 && (
@@ -685,105 +792,115 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
 
       {/* Content */}
       <div>
-              {/* Role Stats Bar */}
-              {members.length > 0 && (
-                <div className="px-4 py-3 border-b border-slate-200/50 dark:border-navy-700/30 bg-slate-50/30 dark:bg-navy-800/20">
-                  <div className="flex items-center gap-3 overflow-x-auto">
-                    {(Object.entries(ROLE_CONFIG) as [TeamRole, (typeof ROLE_CONFIG)[TeamRole]][]).map(([role, config]) => {
-                      const Icon = config.icon;
-                      const count = roleStats[role];
-                      if (count === 0) return null;
-                      return (
-                        <div key={role} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${config.bgColor} ${config.borderColor} border`}>
-                          <Icon size={12} className={config.color} />
-                          <span className={`text-xs font-medium ${config.color}`}>
-                            {count} {isPolish ? config.label.pl : config.label.en}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+        {/* Role Stats Bar */}
+        {members.length > 0 && (
+          <div className="px-4 py-3 border-b border-slate-200/50 dark:border-navy-700/30 bg-slate-50/30 dark:bg-navy-800/20">
+            <div className="flex items-center gap-3 overflow-x-auto">
+              {(Object.entries(ROLE_CONFIG) as [TeamRole, (typeof ROLE_CONFIG)[TeamRole]][]).map(
+                ([role, config]) => {
+                  const Icon = config.icon;
+                  const count = roleStats[role];
+                  if (count === 0) return null;
+                  return (
+                    <div
+                      key={role}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${config.bgColor} ${config.borderColor} border`}
+                    >
+                      <Icon size={12} className={config.color} />
+                      <span className={`text-xs font-medium ${config.color}`}>
+                        {count} {isPolish ? config.label.pl : config.label.en}
+                      </span>
+                    </div>
+                  );
+                }
               )}
+            </div>
+          </div>
+        )}
 
-              {/* Members Table */}
-              {members.length === 0 ? (
-                <div className="text-center py-10">
-                  <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 inline-block mb-3">
-                    <Users size={24} className="text-slate-400 dark:text-slate-500" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                    {isPolish ? 'Brak członków zespołu' : 'No team members yet'}
-                  </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                    {isPolish ? 'Dodaj członków, aby rozpocząć współpracę' : 'Add members to start collaborating'}
-                  </p>
-                  <button
-                    onClick={() => setShowAddModal(true)}
-                    className="mt-3 flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold transition-colors mx-auto"
-                  >
-                    <Plus size={16} />
-                    {isPolish ? 'Dodaj pierwszego członka' : 'Add First Member'}
-                  </button>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full" style={{ minWidth: 600 }}>
-                    <thead>
-                      <tr className="border-b border-slate-200/50 dark:border-navy-700/30 bg-slate-50/50 dark:bg-navy-800/30">
-                        <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          {isPolish ? 'CZŁONEK' : 'MEMBER'}
-                        </th>
-                        <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          {isPolish ? 'ROLA' : 'ROLE'}
-                        </th>
-                        <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          {isPolish ? 'UPRAWNIENIA' : 'PERMISSIONS'}
-                        </th>
-                        <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          {isPolish ? 'OBSZARY' : 'AREAS'}
-                        </th>
-                        <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          {isPolish ? 'DODANO' : 'ADDED'}
-                        </th>
-                        <th className="px-4 py-2.5 text-right text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          {isPolish ? 'AKCJE' : 'ACTIONS'}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <AnimatePresence>
-                        {members.map((member) => (
-                          <TeamMemberRow
-                            key={member.id}
-                            member={member}
-                            isPolish={isPolish}
-                            onUpdateRole={handleUpdateRole}
-                            onRemove={handleRemoveMember}
-                          />
-                        ))}
-                      </AnimatePresence>
-                    </tbody>
-                  </table>
-                </div>
-              )}
+        {/* Members Table */}
+        {members.length === 0 ? (
+          <div className="text-center py-10">
+            <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 inline-block mb-3">
+              <Users size={24} className="text-slate-400 dark:text-slate-500" />
+            </div>
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              {isPolish ? 'Brak członków zespołu' : 'No team members yet'}
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+              {isPolish
+                ? 'Dodaj członków, aby rozpocząć współpracę'
+                : 'Add members to start collaborating'}
+            </p>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="mt-3 flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold transition-colors mx-auto"
+            >
+              <Plus size={16} />
+              {isPolish ? 'Dodaj pierwszego członka' : 'Add First Member'}
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full" style={{ minWidth: 600 }}>
+              <thead>
+                <tr className="border-b border-slate-200/50 dark:border-navy-700/30 bg-slate-50/50 dark:bg-navy-800/30">
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'CZŁONEK' : 'MEMBER'}
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'ROLA' : 'ROLE'}
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'UPRAWNIENIA' : 'PERMISSIONS'}
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'OBSZARY' : 'AREAS'}
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'DODANO' : 'ADDED'}
+                  </th>
+                  <th className="px-4 py-2.5 text-right text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'AKCJE' : 'ACTIONS'}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <AnimatePresence>
+                  {members.map((member) => (
+                    <TeamMemberRow
+                      key={member.id}
+                      member={member}
+                      isPolish={isPolish}
+                      onUpdateRole={handleUpdateRole}
+                      onRemove={handleRemoveMember}
+                    />
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
+        )}
 
-              {/* Footer: Role legend */}
-              {members.length > 0 && (
-                <div className="px-4 py-3 border-t border-slate-200/50 dark:border-navy-700/30 bg-slate-50/30 dark:bg-navy-800/20">
-                  <div className="flex flex-wrap items-center gap-4 text-[10px] text-slate-500 dark:text-slate-400">
-                    {(Object.entries(ROLE_CONFIG) as [TeamRole, (typeof ROLE_CONFIG)[TeamRole]][]).map(([role, config]) => {
-                      const Icon = config.icon;
-                      return (
-                        <span key={role} className="flex items-center gap-1">
-                          <Icon size={10} className={config.color} />
-                          {isPolish ? config.label.pl : config.label.en} — {isPolish ? config.description.pl : config.description.en}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
+        {/* Footer: Role legend */}
+        {members.length > 0 && (
+          <div className="px-4 py-3 border-t border-slate-200/50 dark:border-navy-700/30 bg-slate-50/30 dark:bg-navy-800/20">
+            <div className="flex flex-wrap items-center gap-4 text-[10px] text-slate-500 dark:text-slate-400">
+              {(Object.entries(ROLE_CONFIG) as [TeamRole, (typeof ROLE_CONFIG)[TeamRole]][]).map(
+                ([role, config]) => {
+                  const Icon = config.icon;
+                  return (
+                    <span key={role} className="flex items-center gap-1">
+                      <Icon size={10} className={config.color} />
+                      {isPolish ? config.label.pl : config.label.en} —{' '}
+                      {isPolish ? config.description.pl : config.description.en}
+                    </span>
+                  );
+                }
               )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add Member Modal */}

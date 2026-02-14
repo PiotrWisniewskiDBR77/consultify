@@ -85,6 +85,9 @@ interface DependenciesSectionProps {
   onRefreshExternalDependencies?: () => void | Promise<void>;
   /** Show read-only sample rows when dependency list is empty */
   showSampleDataWhenEmpty?: boolean;
+  /** Initiative ID + tasks for initiative-level add (when taskId is omitted) */
+  initiativeId?: string;
+  initiativeTasks?: { id: string; title: string }[];
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -156,6 +159,8 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   externalDependencies,
   onRefreshExternalDependencies,
   showSampleDataWhenEmpty = false,
+  initiativeId,
+  initiativeTasks = [],
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -176,8 +181,11 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   const [addingTaskId, setAddingTaskId] = useState<string | null>(null);
   const [editingDependency, setEditingDependency] = useState<TaskDependency | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [selectedSourceTaskId, setSelectedSourceTaskId] = useState<string | null>(null);
 
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const effectiveTaskId = taskId || selectedSourceTaskId;
 
   const displayedDependencies = [...predecessors, ...successors];
   const sampleDependencies = useMemo<TaskDependency[]>(
@@ -315,10 +323,15 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   // ── Add dependency ───────────────────────────────────────────
   const handleAddDependency = async (targetTask: SearchResult) => {
     if (!addDirection || addingTaskId) return;
+    const baseId = effectiveTaskId;
+    if (!baseId) {
+      toast.error(isPolish ? 'Wybierz zadanie źródłowe' : 'Select a source task first');
+      return;
+    }
     setAddingTaskId(targetTask.id);
 
     try {
-      const res = await Api.post(`/tasks/${taskId}/dependencies`, {
+      const res = await Api.post(`/tasks/${baseId}/dependencies`, {
         targetTaskId: targetTask.id,
         direction: addDirection,
         dependencyType: selectedDepType,
@@ -349,6 +362,8 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
         toast.success(isPolish ? 'Zależność dodana' : 'Dependency added');
         closeModal();
+        if (taskId) fetchDependencies();
+        await onRefreshExternalDependencies?.();
       } else {
         toast.error(isPolish ? 'Nie udało się dodać zależności' : 'Failed to add dependency');
       }
@@ -372,7 +387,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
   // ── Remove dependency ────────────────────────────────────────
   const handleRemove = async (dep: TaskDependency) => {
-    const baseTaskId = taskId || dep.sourceTaskId;
+    const baseTaskId = effectiveTaskId || dep.sourceTaskId;
     if (!baseTaskId) {
       toast.error(
         isPolish ? 'Brak kontekstu zadania do usunięcia zależności' : 'Missing task context'
@@ -392,7 +407,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   };
 
   const handleDuplicate = async (dep: TaskDependency) => {
-    const baseTaskId = taskId || dep.sourceTaskId;
+    const baseTaskId = effectiveTaskId || dep.sourceTaskId;
     if (!baseTaskId) {
       toast.error(
         isPolish ? 'Brak kontekstu zadania do skopiowania zależności' : 'Missing task context'
@@ -436,6 +451,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
     setLagDays(depToEdit?.lagDays ?? 0);
     setNoteText(depToEdit?.notes || '');
     setEditingDependency(depToEdit || null);
+    setSelectedSourceTaskId(!taskId && initiativeTasks.length > 0 ? initiativeTasks[0].id : null);
   };
 
   const closeModal = () => {
@@ -445,11 +461,12 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
     setAddingTaskId(null);
     setEditingDependency(null);
     setNoteText('');
+    setSelectedSourceTaskId(null);
   };
 
   const handleEditDependency = async () => {
     if (!editingDependency || !addDirection) return;
-    const baseTaskId = taskId || editingDependency.sourceTaskId;
+    const baseTaskId = effectiveTaskId || editingDependency.sourceTaskId;
     if (!baseTaskId) {
       toast.error(
         isPolish ? 'Brak kontekstu zadania do edycji zależności' : 'Missing task context'
@@ -518,12 +535,12 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
               </span>
             )}
           </div>
-          {!readOnly && Boolean(taskId) && (
+          {!readOnly && (taskId || (externalDependencies && initiativeTasks.length > 0)) && (
             <button
               onClick={() => openModal('predecessor')}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/15 px-3 py-1.5 rounded-lg transition-all"
+              className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
             >
-              <Plus size={13} />
+              <Plus size={12} />
               {isPolish ? 'Dodaj zależność' : 'Add dependency'}
             </button>
           )}
@@ -857,6 +874,25 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
               {/* ── Scrollable body ────────────────────── */}
               <div className="overflow-y-auto max-h-[calc(80vh-140px)]">
+                {/* ── Section: Source task (initiative mode) ─── */}
+                {!taskId && initiativeTasks.length > 0 && !editingDependency && (
+                  <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
+                    <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-2 block">
+                      {isPolish ? 'Zadanie źródłowe' : 'Source task'}
+                    </label>
+                    <select
+                      value={selectedSourceTaskId || ''}
+                      onChange={(e) => setSelectedSourceTaskId(e.target.value || null)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-slate-700 dark:text-slate-200"
+                    >
+                      {initiativeTasks.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.title || t.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 {/* ── Section: Linked Task (edit mode) ─── */}
                 {editingDependency && (
                   <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">

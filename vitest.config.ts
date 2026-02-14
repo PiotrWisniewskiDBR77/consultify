@@ -294,7 +294,7 @@ export default defineConfig({
     outputFile: 'junit.xml',
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
+      reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],
       include: ['src/**/*.{ts,tsx}', 'server/**/*.js'],
       exclude: [
         'src/vite-env.d.ts',

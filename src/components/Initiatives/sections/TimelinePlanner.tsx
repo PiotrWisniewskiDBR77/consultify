@@ -417,6 +417,7 @@ export function useTimelineRows({
   isPolish,
 }: UseTimelineRowsOptions) {
   const [extraRows, setExtraRows] = useState<TimelineRow[]>([]);
+  const [rowOverrides, setRowOverrides] = useState<Record<string, Partial<TimelineRow>>>({});
   const [manualOrder, setManualOrder] = useState<string[]>([]);
 
   const rawRows = useMemo<TimelineRow[]>(() => {
@@ -479,8 +480,13 @@ export function useTimelineRows({
       order: Infinity,
     });
 
+    // Apply in-table edits for source rows (tasks/milestones) and extra rows.
+    const withOverrides = result.map((r) =>
+      rowOverrides[r.id] ? { ...r, ...rowOverrides[r.id] } : r
+    );
+
     // Base sort (date/order) before optional manual ordering
-    result.sort((a, b) => {
+    withOverrides.sort((a, b) => {
       if (a.type === 'start') return -1;
       if (b.type === 'start') return 1;
       if (a.type === 'finish') return 1;
@@ -492,11 +498,11 @@ export function useTimelineRows({
     });
 
     // Keep Start first and Finish last; middle rows can be manually reordered.
-    const startRow = result.find((r) => r.type === 'start') || null;
-    const finishRow = result.find((r) => r.type === 'finish') || null;
-    const middle = result.filter((r) => r.type !== 'start' && r.type !== 'finish');
+    const startRow = withOverrides.find((r) => r.type === 'start') || null;
+    const finishRow = withOverrides.find((r) => r.type === 'finish') || null;
+    const middle = withOverrides.filter((r) => r.type !== 'start' && r.type !== 'finish');
 
-    if (middle.length === 0) return result;
+    if (middle.length === 0) return withOverrides;
 
     const middleIds = middle.map((r) => r.id);
     const kept = manualOrder.filter((id) => middleIds.includes(id));
@@ -510,7 +516,7 @@ export function useTimelineRows({
     ordered.push(...middle);
     if (finishRow) ordered.push(finishRow);
     return ordered;
-  }, [plannedStart, plannedEnd, tasks, milestones, extraRows, isPolish, manualOrder]);
+  }, [plannedStart, plannedEnd, tasks, milestones, extraRows, isPolish, manualOrder, rowOverrides]);
 
   // Apply cascade recalculation
   const rows = useMemo(() => recalculateDates(rawRows), [rawRows]);
@@ -521,7 +527,11 @@ export function useTimelineRows({
   }, []);
 
   const updateRow = useCallback((id: string, patch: Partial<TimelineRow>) => {
-    setExtraRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    if (id.startsWith('tr-')) {
+      setExtraRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    } else {
+      setRowOverrides((prev) => ({ ...prev, [id]: { ...(prev[id] || {}), ...patch } }));
+    }
   }, []);
 
   const removeRow = useCallback((id: string) => {
@@ -672,6 +682,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
   const [selectedTaskId, setSelectedTaskId] = useState('');
   const [selectedDecisionId, setSelectedDecisionId] = useState('');
   const [selectedMilestoneId, setSelectedMilestoneId] = useState('');
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -701,6 +712,16 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
   const taskOptions = useMemo(() => tasks.filter((t) => !t.isMilestone), [tasks]);
   const decisionOptions = useMemo(() => decisions, [decisions]);
   const milestoneOptions = useMemo(() => milestones, [milestones]);
+  const infoEventMaterialValid =
+    (infoAssetType === 'external_link' && !!infoAssetUrl.trim()) ||
+    (infoAssetType === 'internal_report' && !!linkedReportPlaceholderId) ||
+    (infoAssetType === 'generated_presentation' && !!infoAssetLabel.trim()) ||
+    (infoAssetType === 'other' && !!infoAssetLabel.trim());
+  const infoEventDateModeValid = infoEventMode !== 'specific_date' || !!fixedDate;
+  const infoEventReferenceEventValid =
+    infoEventMode !== 'after_event' || !!infoEventReferenceEvent.trim();
+  const infoEventParticipantValid =
+    infoEventParticipantMode === 'group' || !!infoEventParticipantUserId;
 
   const handleSelectType = (type: TimelineRowType) => {
     setSelectedType(type);
@@ -709,24 +730,21 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
     setEndSchedulingMode(
       type === 'task' || type === 'pause' || type === 'meeting' ? 'from_duration' : 'manual_date'
     );
+    setSubmitAttempted(false);
     setTimeout(() => nameRef.current?.focus(), 50);
   };
 
   const handleSubmit = () => {
+    setSubmitAttempted(true);
     if (!selectedType || !name.trim()) return;
     if (selectedType === 'task' && !selectedTaskId) return;
     if (selectedType === 'decision' && !selectedDecisionId) return;
     if (selectedType === 'milestone' && !selectedMilestoneId) return;
     if (selectedType === 'info_event') {
-      const hasExternal = infoAssetType === 'external_link' && !!infoAssetUrl.trim();
-      const hasReportPlaceholder =
-        infoAssetType === 'internal_report' && !!linkedReportPlaceholderId;
-      const hasGenerated = infoAssetType === 'generated_presentation' && !!infoAssetLabel.trim();
-      const hasOther = infoAssetType === 'other' && !!infoAssetLabel.trim();
-      if (!(hasExternal || hasReportPlaceholder || hasGenerated || hasOther)) return;
-      if (infoEventMode === 'specific_date' && !fixedDate) return;
-      if (infoEventMode === 'after_event' && !infoEventReferenceEvent.trim()) return;
-      if (infoEventParticipantMode === 'person' && !infoEventParticipantUserId) return;
+      if (!infoEventMaterialValid) return;
+      if (!infoEventDateModeValid) return;
+      if (!infoEventReferenceEventValid) return;
+      if (!infoEventParticipantValid) return;
     }
     if (selectedType === 'notification') {
       const hasRecipient =
@@ -1234,34 +1252,41 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
 
               {/* Task-specific: duration + hours */}
               {selectedType === 'task' && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Czas trwania (dni)' : 'Duration (days)'}
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={durationDays}
-                      onChange={(e) => setDurationDays(e.target.value)}
-                      placeholder="—"
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
-                    />
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">
+                        {isPolish ? 'Okres realizacji (dni)' : 'Calendar window (days)'}
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={durationDays}
+                        onChange={(e) => setDurationDays(e.target.value)}
+                        placeholder="—"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 block mb-1">
+                        {isPolish ? 'Nakład pracy zespołu (h)' : 'Team effort (h)'}
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.5}
+                        value={estimatedHours}
+                        onChange={(e) => setEstimatedHours(e.target.value)}
+                        placeholder="—"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Szacowane godziny' : 'Estimated hours'}
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      step={0.5}
-                      value={estimatedHours}
-                      onChange={(e) => setEstimatedHours(e.target.value)}
-                      placeholder="—"
-                      className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
-                    />
-                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    {isPolish
+                      ? 'Okres wpływa na harmonogram i datę końca inicjatywy. Effort służy do heatmapy obciążenia zespołu.'
+                      : 'Calendar window affects schedule/end date. Effort is used for team workload heatmaps.'}
+                  </p>
                 </div>
               )}
 
@@ -1348,9 +1373,23 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           }
                           className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
                         />
+                        {submitAttempted && !infoEventReferenceEventValid && (
+                          <p className="mt-1 text-[10px] text-rose-500">
+                            {isPolish
+                              ? 'Uzupełnij nazwę zdarzenia, po którym ma wystąpić ten event.'
+                              : 'Provide the event name that should trigger this event.'}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
+                  {submitAttempted && !infoEventDateModeValid && (
+                    <p className="text-[10px] text-rose-500">
+                      {isPolish
+                        ? 'Dla trybu "W konkretnej dacie" wybierz datę startu.'
+                        : 'For "On specific date" mode, choose a start date.'}
+                    </p>
+                  )}
                   <div>
                     <label className="text-[10px] text-slate-500 block mb-1">
                       {isPolish ? 'Odbiorcy' : 'Audience'}
@@ -1419,6 +1458,13 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           ))}
                         </select>
                       )}
+                      {submitAttempted && !infoEventParticipantValid && (
+                        <p className="mt-1 text-[10px] text-rose-500">
+                          {isPolish
+                            ? 'Wybierz osobę odpowiedzialną za udział w wydarzeniu.'
+                            : 'Select a person who should attend this event.'}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -1448,6 +1494,13 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         {isPolish
                           ? 'Placeholder: finalne podłączenie do modułu raportów będzie dodane później.'
                           : 'Placeholder: final Reports module binding will be added later.'}
+                      </p>
+                    )}
+                    {submitAttempted && !infoEventMaterialValid && (
+                      <p className="mt-1 text-[10px] text-rose-500">
+                        {isPolish
+                          ? 'Uzupełnij wymagane źródło materiału dla tego wydarzenia.'
+                          : 'Provide the required material source for this event.'}
                       </p>
                     )}
                   </div>
@@ -1828,7 +1881,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Czas trwania (dni)' : 'Duration (days)'}
+                      {isPolish ? 'Okres realizacji (dni)' : 'Calendar window (days)'}
                     </label>
                     <input
                       type="number"
@@ -2024,6 +2077,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
   const [selectedTaskId, setSelectedTaskId] = useState(row.linkedTaskId || '');
   const [selectedDecisionId, setSelectedDecisionId] = useState(row.linkedDecisionId || '');
   const [selectedMilestoneId, setSelectedMilestoneId] = useState(row.linkedMilestoneId || '');
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const depOptions = useMemo(
     () =>
@@ -2042,8 +2096,25 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
   const taskOptions = useMemo(() => tasks.filter((t) => !t.isMilestone), [tasks]);
   const decisionOptions = useMemo(() => decisions, [decisions]);
   const milestoneOptions = useMemo(() => milestones, [milestones]);
+  const infoEventMaterialValid =
+    (infoAssetType === 'external_link' && !!infoAssetUrl.trim()) ||
+    (infoAssetType === 'internal_report' && !!linkedReportPlaceholderId) ||
+    (infoAssetType === 'generated_presentation' && !!infoAssetLabel.trim()) ||
+    (infoAssetType === 'other' && !!infoAssetLabel.trim());
+  const infoEventDateModeValid = infoEventMode !== 'specific_date' || !!fixedDate;
+  const infoEventReferenceEventValid =
+    infoEventMode !== 'after_event' || !!infoEventReferenceEvent.trim();
+  const infoEventParticipantValid =
+    infoEventParticipantMode === 'group' || !!infoEventParticipantUserId;
 
   const handleSave = () => {
+    setSubmitAttempted(true);
+    if (row.type === 'info_event') {
+      if (!infoEventMaterialValid) return;
+      if (!infoEventDateModeValid) return;
+      if (!infoEventReferenceEventValid) return;
+      if (!infoEventParticipantValid) return;
+    }
     const dur = durationDays ? parseInt(durationDays, 10) : null;
     const computedSchedulingMode: SchedulingMode =
       startTriggerType === 'dependency' ? 'after_previous' : 'fixed_date';
@@ -2429,34 +2500,41 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
 
         {/* Task-specific */}
         {row.type === 'task' && (
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Dni' : 'Days'}
-              </label>
-              <input
-                type="number"
-                min={1}
-                value={durationDays}
-                onChange={(e) => setDurationDays(e.target.value)}
-                placeholder="—"
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
-              />
+          <div className="space-y-1.5">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] text-slate-500 block mb-1">
+                  {isPolish ? 'Okres (dni)' : 'Window (days)'}
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={durationDays}
+                  onChange={(e) => setDurationDays(e.target.value)}
+                  placeholder="—"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-500 block mb-1">
+                  {isPolish ? 'Effort (h)' : 'Effort (h)'}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  value={estimatedHours}
+                  onChange={(e) => setEstimatedHours(e.target.value)}
+                  placeholder="—"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
+                />
+              </div>
             </div>
-            <div>
-              <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Godziny' : 'Hours'}
-              </label>
-              <input
-                type="number"
-                min={0}
-                step={0.5}
-                value={estimatedHours}
-                onChange={(e) => setEstimatedHours(e.target.value)}
-                placeholder="—"
-                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-cyan-500 focus:outline-none"
-              />
-            </div>
+            <p className="text-[10px] text-slate-400">
+              {isPolish
+                ? 'Okres wpływa na harmonogram i datę końca inicjatywy. Effort służy do heatmapy obciążenia zespołu.'
+                : 'Calendar window affects schedule/end date. Effort is used for team workload heatmaps.'}
+            </p>
           </div>
         )}
 
@@ -2561,9 +2639,23 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     }
                     className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
                   />
+                  {submitAttempted && !infoEventReferenceEventValid && (
+                    <p className="mt-1 text-[10px] text-rose-500">
+                      {isPolish
+                        ? 'Uzupełnij nazwę zdarzenia, po którym ma wystąpić ten event.'
+                        : 'Provide the event name that should trigger this event.'}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
+            {submitAttempted && !infoEventDateModeValid && (
+              <p className="text-[10px] text-rose-500">
+                {isPolish
+                  ? 'Dla trybu "W konkretnej dacie" wybierz datę startu.'
+                  : 'For "On specific date" mode, choose a start date.'}
+              </p>
+            )}
             <div>
               <label className="text-[10px] text-slate-500 block mb-1">
                 {isPolish ? 'Odbiorcy' : 'Audience'}
@@ -2619,6 +2711,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     ))}
                   </select>
                 )}
+                {submitAttempted && !infoEventParticipantValid && (
+                  <p className="mt-1 text-[10px] text-rose-500">
+                    {isPolish
+                      ? 'Wybierz osobę odpowiedzialną za udział w wydarzeniu.'
+                      : 'Select a person who should attend this event.'}
+                  </p>
+                )}
               </div>
             </div>
             <div>
@@ -2646,6 +2745,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   {isPolish
                     ? 'Placeholder: finalne podłączenie do modułu raportów będzie dodane później.'
                     : 'Placeholder: final Reports module binding will be added later.'}
+                </p>
+              )}
+              {submitAttempted && !infoEventMaterialValid && (
+                <p className="mt-1 text-[10px] text-rose-500">
+                  {isPolish
+                    ? 'Uzupełnij wymagane źródło materiału dla tego wydarzenia.'
+                    : 'Provide the required material source for this event.'}
                 </p>
               )}
             </div>
@@ -3087,10 +3193,12 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   const [editNameValue, setEditNameValue] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [startMenuOpenId, setStartMenuOpenId] = useState<string | null>(null);
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const startMenuRef = useRef<HTMLDivElement>(null);
   const editingRow = useMemo(
     () => rows.find((r) => r.id === editingRowId) || null,
     [rows, editingRowId]
@@ -3098,9 +3206,11 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(e.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpenId(null);
+      }
+      if (startMenuRef.current && !startMenuRef.current.contains(e.target as Node)) {
+        setStartMenuOpenId(null);
       }
     };
     document.addEventListener('mousedown', onDocClick);
@@ -3149,8 +3259,8 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
         <div className="px-2 py-2.5">{isPolish ? 'Nazwa' : 'Name'}</div>
         <div className="px-1 py-2.5 text-center">Start</div>
         <div className="px-1 py-2.5 text-center">{isPolish ? 'Koniec' : 'End'}</div>
-        <div className="px-1 py-2.5 text-center">{isPolish ? 'Dni' : 'Days'}</div>
-        <div className="px-1 py-2.5 text-center">h</div>
+        <div className="px-1 py-2.5 text-center">{isPolish ? 'Okres' : 'Window'}</div>
+        <div className="px-1 py-2.5 text-center">{isPolish ? 'Effort h' : 'Effort h'}</div>
         <div className="px-1 py-2.5 text-center">{isPolish ? 'Zależy' : 'Dep'}</div>
         <div className="px-0.5 py-2.5 text-center">⋮</div>
       </div>
@@ -3409,29 +3519,202 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
             </div>
 
             {/* Start date */}
-            <div className="px-0.5 py-1.5 text-center">
-              {editable && isStart ? (
-                <input
-                  type="date"
-                  value={toISO(row.startDate)}
-                  onChange={(e) => onUpdateStart(e.target.value || null)}
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-cyan-500 text-slate-600 dark:text-slate-400 focus:outline-none"
-                />
-              ) : row.schedulingMode === 'after_previous' && row.dependsOnId ? (
-                <span className="text-[10px] text-slate-400 italic">
-                  {fmtDate(row.startDate, isPolish ? 'pl' : 'en')}
-                </span>
-              ) : editable && canEdit && isExtra ? (
-                <input
-                  type="date"
-                  value={toISO(row.startDate)}
-                  onChange={(e) => onUpdateRow(row.id, { startDate: e.target.value || null })}
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-cyan-500 text-slate-600 dark:text-slate-400 focus:outline-none"
-                />
-              ) : (
-                <span className="text-[10px] text-slate-500">
-                  {fmtDate(row.startDate, isPolish ? 'pl' : 'en')}
-                </span>
+            <div
+              className="px-0.5 py-1.5 text-center relative"
+              ref={startMenuOpenId === row.id ? startMenuRef : undefined}
+            >
+              <div className="flex items-center justify-center gap-0.5">
+                {(() => {
+                  const mode =
+                    row.startTriggerType === 'event'
+                      ? 'event'
+                      : row.startTriggerType === 'date'
+                        ? 'date'
+                        : row.schedulingMode === 'after_previous'
+                          ? 'dependency'
+                          : 'date';
+                  const label = mode === 'dependency' ? 'DEP' : mode === 'event' ? 'EVENT' : 'DATE';
+                  const tone =
+                    mode === 'dependency'
+                      ? 'bg-cyan-500/10 text-cyan-600'
+                      : mode === 'event'
+                        ? 'bg-amber-500/10 text-amber-600'
+                        : 'bg-slate-500/10 text-slate-500';
+                  return (
+                    <span
+                      className={`inline-flex items-center rounded px-1 py-0.5 text-[8px] font-medium ${tone}`}
+                      title={
+                        mode === 'dependency'
+                          ? isPolish
+                            ? 'Start z dependency'
+                            : 'Start from dependency'
+                          : mode === 'event'
+                            ? isPolish
+                              ? 'Start po zdarzeniu'
+                              : 'Start on event'
+                            : isPolish
+                              ? 'Start z daty'
+                              : 'Start from date'
+                      }
+                    >
+                      {label}
+                    </span>
+                  );
+                })()}
+                {editable && isStart ? (
+                  <input
+                    type="date"
+                    value={toISO(row.startDate)}
+                    onChange={(e) => onUpdateStart(e.target.value || null)}
+                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-cyan-500 text-slate-600 dark:text-slate-400 focus:outline-none"
+                  />
+                ) : row.schedulingMode === 'after_previous' && row.dependsOnId ? (
+                  <span className="text-[10px] text-slate-400 italic">
+                    {fmtDate(row.startDate, isPolish ? 'pl' : 'en')}
+                  </span>
+                ) : editable && canEdit ? (
+                  <input
+                    type="date"
+                    value={toISO(row.startDate)}
+                    onChange={(e) => onUpdateRow(row.id, { startDate: e.target.value || null })}
+                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-cyan-500 text-slate-600 dark:text-slate-400 focus:outline-none"
+                  />
+                ) : (
+                  <span className="text-[10px] text-slate-500">
+                    {fmtDate(row.startDate, isPolish ? 'pl' : 'en')}
+                  </span>
+                )}
+                {canEdit && (
+                  <button
+                    onClick={() => {
+                      setMenuOpenId(null);
+                      setStartMenuOpenId((curr) => (curr === row.id ? null : row.id));
+                    }}
+                    className="inline-flex items-center justify-center w-4 h-4 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                    aria-label={isPolish ? 'Ustawienia startu' : 'Start settings'}
+                  >
+                    <MoreVertical size={10} />
+                  </button>
+                )}
+              </div>
+              {canEdit && startMenuOpenId === row.id && (
+                <div className="absolute left-1 top-6 z-20 w-[200px] rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 shadow-lg p-2 space-y-2 text-left">
+                  <div className="text-[10px] text-slate-500">
+                    {isPolish ? 'Jak wyznaczyć start' : 'How to determine start'}
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateRow(row.id, {
+                          startTriggerType: 'dependency',
+                          schedulingMode: 'after_previous',
+                          startDate: null,
+                          startTriggerEvent: undefined,
+                          dependsOnId: row.dependsOnId || null,
+                        })
+                      }
+                      className={`px-1 py-1 rounded text-[9px] border transition-colors ${
+                        row.startTriggerType === 'dependency' ||
+                        row.schedulingMode === 'after_previous'
+                          ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600'
+                          : 'border-slate-200 dark:border-navy-600 text-slate-500'
+                      }`}
+                    >
+                      {isPolish ? 'Dependency' : 'Dependency'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateRow(row.id, {
+                          startTriggerType: 'date',
+                          schedulingMode: 'fixed_date',
+                          dependsOnId: null,
+                          startTriggerEvent: undefined,
+                        })
+                      }
+                      className={`px-1 py-1 rounded text-[9px] border transition-colors ${
+                        row.startTriggerType === 'date'
+                          ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600'
+                          : 'border-slate-200 dark:border-navy-600 text-slate-500'
+                      }`}
+                    >
+                      {isPolish ? 'Data' : 'Date'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateRow(row.id, {
+                          startTriggerType: 'event',
+                          schedulingMode: 'fixed_date',
+                          startDate: null,
+                          dependsOnId: null,
+                        })
+                      }
+                      className={`px-1 py-1 rounded text-[9px] border transition-colors ${
+                        row.startTriggerType === 'event'
+                          ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600'
+                          : 'border-slate-200 dark:border-navy-600 text-slate-500'
+                      }`}
+                    >
+                      {isPolish ? 'Zdarzenie' : 'Event'}
+                    </button>
+                  </div>
+                  {(row.startTriggerType === 'dependency' ||
+                    row.schedulingMode === 'after_previous') && (
+                    <select
+                      value={row.dependsOnId || ''}
+                      onChange={(e) =>
+                        onUpdateRow(row.id, {
+                          dependsOnId: e.target.value || null,
+                          startTriggerType: 'dependency',
+                          schedulingMode: 'after_previous',
+                        })
+                      }
+                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                    >
+                      <option value="">
+                        — {isPolish ? 'Wybierz dependency' : 'Select dependency'} —
+                      </option>
+                      {depOptions
+                        .filter((o) => o.id !== row.id)
+                        .map((o) => (
+                          <option key={o.id} value={o.id}>
+                            {o.label}
+                          </option>
+                        ))}
+                    </select>
+                  )}
+                  {row.startTriggerType === 'event' && (
+                    <input
+                      type="text"
+                      value={row.startTriggerEvent || ''}
+                      onChange={(e) =>
+                        onUpdateRow(row.id, {
+                          startTriggerType: 'event',
+                          schedulingMode: 'fixed_date',
+                          startTriggerEvent: e.target.value,
+                        })
+                      }
+                      placeholder={isPolish ? 'Nazwa zdarzenia...' : 'Event name...'}
+                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                    />
+                  )}
+                  {row.startTriggerType === 'date' && (
+                    <input
+                      type="date"
+                      value={toISO(row.startDate)}
+                      onChange={(e) =>
+                        onUpdateRow(row.id, {
+                          startDate: e.target.value || null,
+                          startTriggerType: 'date',
+                          schedulingMode: 'fixed_date',
+                        })
+                      }
+                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 focus:border-cyan-500 focus:outline-none"
+                    />
+                  )}
+                </div>
               )}
             </div>
 
@@ -3443,7 +3726,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 <span className="text-[10px] text-slate-500">
                   {fmtDate(row.startDate, isPolish ? 'pl' : 'en')}
                 </span>
-              ) : editable && canEdit && isExtra ? (
+              ) : editable && canEdit ? (
                 <input
                   type="date"
                   value={toISO(row.endDate)}
@@ -3459,7 +3742,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
 
             {/* Days */}
             <div className="px-1 py-1.5 text-center">
-              {hasDuration(row.type) && editable && isExtra ? (
+              {hasDuration(row.type) && editable && canEdit ? (
                 <input
                   type="number"
                   min={1}
@@ -3483,7 +3766,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
 
             {/* Hours */}
             <div className="px-1 py-1.5 text-center">
-              {row.type === 'task' && editable && isExtra ? (
+              {row.type === 'task' && editable && canEdit ? (
                 <input
                   type="number"
                   min={0}
@@ -3506,7 +3789,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
 
             {/* Dependency */}
             <div className="px-0.5 py-1.5 text-center">
-              {canEdit && isExtra ? (
+              {canEdit ? (
                 <select
                   value={row.dependsOnId || ''}
                   onChange={(e) =>
@@ -3539,7 +3822,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               {canEdit ? (
                 <>
                   <button
-                    onClick={() => setMenuOpenId((curr) => (curr === row.id ? null : row.id))}
+                    onClick={() => {
+                      setStartMenuOpenId(null);
+                      setMenuOpenId((curr) => (curr === row.id ? null : row.id));
+                    }}
                     className="inline-flex items-center justify-center w-6 h-6 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                     aria-label={isPolish ? 'Opcje wiersza' : 'Row options'}
                   >

@@ -1,25 +1,33 @@
 /**
- * RaidCanvas
+ * RaidCanvas — Enterprise RAID Log (Big4 / McKinsey / PMBOK standard)
  *
  * Full RAID (Risk, Assumption, Issue, Dependency) management canvas.
- * Based on the proven RiskCanvas pattern from Decision/Task, extended with:
- * - 4 RAID types with conditional rendering per type
- * - RAID counter cards + filter tabs
- * - Status, owner, due date per item
- * - "Proposed Action" textarea for all types
- * - Risk-specific: full P×I scoring + contingency + mitigation
- * - A/I/D: impact-only + type-specific action textarea
+ * Implements industry-standard RAID methodology used by:
+ * - PRINCE2 (mandatory project artifact)
+ * - PMI/PMBOK (Risk Register + Issue Log + Assumption Log + Dependency Matrix)
+ * - SAFe ROAM (Resolved/Owned/Accepted/Mitigated)
+ * - Big4 consulting (Deloitte, PwC, EY, KPMG)
+ * - McKinsey / BCG transformation frameworks
+ *
+ * Features:
+ * - Executive Summary Strip (health score, critical counts, overdue, unowned)
+ * - Risk Heatmap (Probability × Impact matrix — PMBOK standard)
+ * - 4 RAID types with type-specific status workflows
+ * - PMBOK response strategies per type
+ * - Risk→Issue auto-conversion on materialization
+ * - Overdue visual warnings
  * - AI field enhancement per field
+ * - Counter cards with trend indicators
  *
- * Reusable across Initiative and potentially other artifact types.
- *
- * @see docs/ui-standards/02-components/shared-sections.md
- * @see docs/ui-standards/02-components/initiative-sections.md §7
+ * @see docs/ui-standards/02-components/shared-sections.md §5c
  */
 
 import {
+  AlertCircle,
   AlertTriangle,
+  ArrowRight,
   Calendar,
+  Clock,
   GitBranch,
   HelpCircle,
   Loader2,
@@ -30,7 +38,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
@@ -39,18 +47,45 @@ import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 
 export type RaidType = 'risk' | 'assumption' | 'issue' | 'dependency';
 export type RaidLevel = 'low' | 'medium' | 'high' | 'critical';
-export type RaidStatus = 'open' | 'mitigated' | 'accepted' | 'closed' | 'resolved' | 'transferred';
 export type RaidTypeFilter = 'all' | RaidType;
+
+/**
+ * PMBOK-aligned status values per RAID type:
+ * Risk:       open → mitigated → accepted → closed | materialized (→ becomes Issue)
+ * Assumption: open → validated → invalidated (→ becomes Issue) → closed
+ * Issue:      open → in_progress → resolved → closed | escalated
+ * Dependency: open → on_track → at_risk → met → not_met
+ */
+export type RaidStatus =
+  | 'open'
+  | 'mitigated'
+  | 'accepted'
+  | 'closed'
+  | 'resolved'
+  | 'transferred'
+  | 'materialized'
+  | 'validated'
+  | 'invalidated'
+  | 'in_progress'
+  | 'escalated'
+  | 'on_track'
+  | 'at_risk'
+  | 'met'
+  | 'not_met';
+
+/** PMBOK Risk Response Strategy */
+export type RiskResponseStrategy = 'avoid' | 'transfer' | 'mitigate' | 'accept' | 'escalate';
 
 export interface RaidItem {
   id: string;
   type: RaidType;
   title: string;
+  description?: string;
   /** Risk-specific: probability level */
   probability?: RaidLevel;
   /** Impact level — used by all types */
   impact: RaidLevel;
-  /** Category (technical, business, financial, operational, security) */
+  /** Category (technical, business, financial, operational, security, legal, regulatory) */
   category?: string;
   /** Risk-specific: mitigation plan */
   mitigation?: string;
@@ -60,12 +95,18 @@ export interface RaidItem {
   proposedAction?: string;
   /** Current status */
   status: RaidStatus;
+  /** PMBOK risk response strategy */
+  responseStrategy?: RiskResponseStrategy;
   /** Owner name or ID */
   owner?: string;
   /** Due date (ISO string) */
   dueDate?: string;
-  /** Source of this item (e.g. meeting, audit, AI) */
+  /** Source of this item (e.g. meeting, audit, AI, workshop) */
   source?: string;
+  /** Date when item was created */
+  createdAt?: string;
+  /** Date when item was last reviewed */
+  lastReviewedAt?: string;
 }
 
 export interface RaidCanvasProps {
@@ -77,6 +118,8 @@ export interface RaidCanvasProps {
   onUpdateItem: (id: string, updates: Partial<RaidItem>) => void;
   /** Remove an item by id */
   onRemoveItem: (id: string) => void;
+  /** Convert Risk→Issue or Assumption→Issue */
+  onConvertToIssue?: (id: string) => void;
   /** AI generate items handler (omit to hide AI button) */
   onAIGenerate?: () => void;
   /** Whether AI generation is in progress */
@@ -95,13 +138,21 @@ export interface RaidCanvasProps {
 
 const RAID_LEVEL_OPTIONS: readonly RaidLevel[] = ['low', 'medium', 'high', 'critical'];
 
-const RAID_STATUS_OPTIONS: readonly RaidStatus[] = [
-  'open',
-  'mitigated',
-  'accepted',
-  'closed',
-  'resolved',
-  'transferred',
+/** Type-specific allowed statuses (PMBOK workflow) */
+const STATUS_BY_TYPE: Record<RaidType, readonly RaidStatus[]> = {
+  risk: ['open', 'mitigated', 'accepted', 'materialized', 'transferred', 'closed'],
+  assumption: ['open', 'validated', 'invalidated', 'closed'],
+  issue: ['open', 'in_progress', 'escalated', 'resolved', 'closed'],
+  dependency: ['open', 'on_track', 'at_risk', 'met', 'not_met', 'closed'],
+};
+
+/** PMBOK Risk Response Strategies */
+const RESPONSE_STRATEGIES: readonly RiskResponseStrategy[] = [
+  'avoid',
+  'transfer',
+  'mitigate',
+  'accept',
+  'escalate',
 ];
 
 const RAID_TYPE_META: Record<
@@ -162,7 +213,6 @@ const getScoreClass = (score: number, isRisk: boolean): string => {
       return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
     return 'text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border-emerald-500/30';
   }
-  // For non-risk: just use impact level coloring
   return getLevelClass(
     String(score <= 1 ? 'low' : score === 2 ? 'medium' : score === 3 ? 'high' : 'critical')
   );
@@ -180,12 +230,38 @@ const getLevelClass = (level?: string): string => {
 
 const getStatusClass = (status: string): string => {
   const s = status.toLowerCase();
-  if (s === 'closed' || s === 'resolved')
-    return 'bg-slate-500/15 text-slate-400 border-slate-400/30';
-  if (s === 'mitigated') return 'bg-emerald-500/15 text-emerald-500 border-emerald-400/30';
+  if (s === 'closed' || s === 'resolved' || s === 'met' || s === 'validated')
+    return 'bg-emerald-500/15 text-emerald-500 border-emerald-400/30';
+  if (s === 'mitigated' || s === 'on_track')
+    return 'bg-green-500/15 text-green-500 border-green-400/30';
   if (s === 'accepted') return 'bg-amber-500/15 text-amber-500 border-amber-400/30';
   if (s === 'transferred') return 'bg-purple-500/15 text-purple-500 border-purple-400/30';
+  if (s === 'materialized' || s === 'invalidated' || s === 'not_met')
+    return 'bg-red-500/20 text-red-500 border-red-400/40';
+  if (s === 'escalated' || s === 'at_risk')
+    return 'bg-orange-500/15 text-orange-500 border-orange-400/30';
+  if (s === 'in_progress') return 'bg-cyan-500/15 text-cyan-500 border-cyan-400/30';
   return 'bg-blue-500/15 text-blue-500 border-blue-400/30'; // open
+};
+
+const isOverdue = (item: RaidItem): boolean => {
+  if (!item.dueDate) return false;
+  const closedStatuses: RaidStatus[] = ['closed', 'resolved', 'met', 'validated'];
+  if (closedStatuses.includes(item.status)) return false;
+  return new Date(item.dueDate) < new Date();
+};
+
+const isUnowned = (item: RaidItem): boolean => {
+  const closedStatuses: RaidStatus[] = ['closed', 'resolved', 'met', 'validated'];
+  if (closedStatuses.includes(item.status)) return false;
+  return !item.owner || item.owner.trim() === '';
+};
+
+/** Can this item be converted to an Issue? (Risk materialized or Assumption invalidated) */
+const canConvertToIssue = (item: RaidItem): boolean => {
+  if (item.type === 'risk' && item.status === 'materialized') return true;
+  if (item.type === 'assumption' && item.status === 'invalidated') return true;
+  return false;
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -195,6 +271,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
   onAddItem,
   onUpdateItem,
   onRemoveItem,
+  onConvertToIssue,
   onAIGenerate,
   isGeneratingAI = false,
   locked = false,
@@ -206,6 +283,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
   const isPolish = i18n.language === 'pl';
 
   const [typeFilter, setTypeFilter] = useState<RaidTypeFilter>('all');
+  const [showHeatmap, setShowHeatmap] = useState(false);
 
   // ── i18n helpers ─────────────────────────────────────────────────────────
 
@@ -240,15 +318,34 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
       closed: { en: 'Closed', pl: 'Zamknięty' },
       resolved: { en: 'Resolved', pl: 'Rozwiązany' },
       transferred: { en: 'Transferred', pl: 'Przekazany' },
+      materialized: { en: 'Materialized', pl: 'Zmaterializowany' },
+      validated: { en: 'Validated', pl: 'Zwalidowany' },
+      invalidated: { en: 'Invalidated', pl: 'Obalony' },
+      in_progress: { en: 'In Progress', pl: 'W toku' },
+      escalated: { en: 'Escalated', pl: 'Eskalowany' },
+      on_track: { en: 'On Track', pl: 'Na dobrej drodze' },
+      at_risk: { en: 'At Risk', pl: 'Zagrożony' },
+      met: { en: 'Met', pl: 'Spełniony' },
+      not_met: { en: 'Not Met', pl: 'Niespełniony' },
     };
-    return isPolish ? map[status].pl : map[status].en;
+    return isPolish ? map[status]?.pl || status : map[status]?.en || status;
   };
 
-  /** Label for the "proposed action" field, varies by RAID type */
+  const getResponseStrategyLabel = (strategy: RiskResponseStrategy): string => {
+    const map: Record<RiskResponseStrategy, { en: string; pl: string }> = {
+      avoid: { en: 'Avoid', pl: 'Unikaj' },
+      transfer: { en: 'Transfer', pl: 'Transferuj' },
+      mitigate: { en: 'Mitigate', pl: 'Mitiguj' },
+      accept: { en: 'Accept', pl: 'Akceptuj' },
+      escalate: { en: 'Escalate', pl: 'Eskaluj' },
+    };
+    return isPolish ? map[strategy].pl : map[strategy].en;
+  };
+
   const getActionLabel = (type: RaidType): string => {
     const map: Record<RaidType, { en: string; pl: string }> = {
       risk: { en: 'Proposed Action', pl: 'Proponowana akcja' },
-      assumption: { en: 'Action to Validate', pl: 'Akcja walidacyjna' },
+      assumption: { en: 'Validation Plan', pl: 'Plan walidacji' },
       issue: { en: 'Resolution Plan', pl: 'Plan rozwiązania' },
       dependency: { en: 'Management Plan', pl: 'Plan zarządzania' },
     };
@@ -262,16 +359,16 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         pl: 'Jaką akcję proponujemy w odpowiedzi na to ryzyko?',
       },
       assumption: {
-        en: 'How will we validate this assumption?',
-        pl: 'Jak zwalidujemy to założenie?',
+        en: 'How will we validate this assumption? What evidence do we need?',
+        pl: 'Jak zwalidujemy to założenie? Jakich dowodów potrzebujemy?',
       },
       issue: {
-        en: 'What is the resolution plan for this issue?',
-        pl: 'Jaki jest plan rozwiązania tego problemu?',
+        en: 'What is the resolution plan? Who needs to be involved?',
+        pl: 'Jaki jest plan rozwiązania? Kto musi być zaangażowany?',
       },
       dependency: {
-        en: 'How will we manage this dependency?',
-        pl: 'Jak będziemy zarządzać tą zależnością?',
+        en: 'How will we manage this dependency? What is the fallback?',
+        pl: 'Jak zarządzamy tą zależnością? Jaki jest plan awaryjny?',
       },
     };
     return isPolish ? map[type].pl : map[type].en;
@@ -281,29 +378,23 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
   const categoryOptions = useMemo(
     () =>
-      ['technical', 'business', 'financial', 'operational', 'security'].map((c) => ({
-        value: c,
-        label:
-          c === 'technical'
-            ? isPolish
-              ? 'Techniczne'
-              : 'Technical'
-            : c === 'business'
-              ? isPolish
-                ? 'Biznesowe'
-                : 'Business'
-              : c === 'financial'
-                ? isPolish
-                  ? 'Finansowe'
-                  : 'Financial'
-                : c === 'operational'
-                  ? isPolish
-                    ? 'Operacyjne'
-                    : 'Operational'
-                  : isPolish
-                    ? 'Bezpieczeństwo'
-                    : 'Security',
-      })),
+      ['technical', 'business', 'financial', 'operational', 'security', 'legal', 'regulatory'].map(
+        (c) => ({
+          value: c,
+          label:
+            (
+              {
+                technical: isPolish ? 'Techniczne' : 'Technical',
+                business: isPolish ? 'Biznesowe' : 'Business',
+                financial: isPolish ? 'Finansowe' : 'Financial',
+                operational: isPolish ? 'Operacyjne' : 'Operational',
+                security: isPolish ? 'Bezpieczeństwo' : 'Security',
+                legal: isPolish ? 'Prawne' : 'Legal',
+                regulatory: isPolish ? 'Regulacyjne' : 'Regulatory',
+              } as Record<string, string>
+            )[c] || c,
+        })
+      ),
     [isPolish]
   );
 
@@ -312,23 +403,32 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
   const getQuickActions = (type: RaidType): string[] => {
     if (type === 'risk') {
       return isPolish
-        ? ['Przegląd tygodniowy', 'Eskalacja do PMO', 'POC przed wdrożeniem']
-        : ['Weekly review', 'Escalate to PMO', 'POC before rollout'];
+        ? [
+            'Przegląd tygodniowy',
+            'Eskalacja do PMO',
+            'POC przed wdrożeniem',
+            'Transfer na dostawcę',
+          ]
+        : ['Weekly review', 'Escalate to PMO', 'POC before rollout', 'Transfer to vendor'];
     }
     if (type === 'assumption') {
       return isPolish
-        ? ['Walidacja z interesariuszem', 'Analiza danych', 'Prototyp / POC']
-        : ['Validate with stakeholder', 'Data analysis', 'Prototype / POC'];
+        ? ['Walidacja z interesariuszem', 'Analiza danych', 'Prototyp / POC', 'Wywiad z ekspertem']
+        : ['Validate with stakeholder', 'Data analysis', 'Prototype / POC', 'Expert interview'];
     }
     if (type === 'issue') {
       return isPolish
-        ? ['Hotfix natychmiast', 'Eskalacja', 'Rollback']
-        : ['Hotfix immediately', 'Escalate', 'Rollback'];
+        ? ['Hotfix natychmiast', 'Eskalacja do sponsora', 'Rollback', 'War room']
+        : ['Hotfix immediately', 'Escalate to sponsor', 'Rollback', 'War room'];
     }
-    // dependency
     return isPolish
-      ? ['Spotkanie synchronizacyjne', 'Mock API / stub', 'Eskalacja do managera']
-      : ['Sync meeting', 'Mock API / stub', 'Escalate to manager'];
+      ? [
+          'Spotkanie synchronizacyjne',
+          'Mock API / stub',
+          'Eskalacja do managera',
+          'Plan alternatywny',
+        ]
+      : ['Sync meeting', 'Mock API / stub', 'Escalate to manager', 'Alternative plan'];
   };
 
   const quickContingencyArgs = useMemo(
@@ -347,7 +447,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
     [isPolish]
   );
 
-  // ── Computed ─────────────────────────────────────────────────────────────
+  // ── Computed metrics ─────────────────────────────────────────────────────
 
   const typeCounts = useMemo(() => {
     const counts: Record<RaidType, number> = { risk: 0, assumption: 0, issue: 0, dependency: 0 };
@@ -357,19 +457,72 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
     return counts;
   }, [items]);
 
+  const openItems = useMemo(
+    () => items.filter((i) => !['closed', 'resolved', 'met', 'validated'].includes(i.status)),
+    [items]
+  );
+
+  const overdueItems = useMemo(() => items.filter(isOverdue), [items]);
+  const unownedItems = useMemo(() => openItems.filter(isUnowned), [openItems]);
+  const criticalItems = useMemo(
+    () => openItems.filter((i) => i.impact === 'critical' || i.impact === 'high'),
+    [openItems]
+  );
+
+  /** RAID Health Score (0-100) — PMBOK-inspired */
+  const healthScore = useMemo(() => {
+    if (items.length === 0) return 100;
+    let score = 100;
+    // Penalty for critical/high open items
+    score -= criticalItems.length * 8;
+    // Penalty for overdue items
+    score -= overdueItems.length * 12;
+    // Penalty for unowned items
+    score -= unownedItems.length * 5;
+    // Penalty for materialized risks / invalidated assumptions
+    const materializedCount = items.filter(
+      (i) => i.status === 'materialized' || i.status === 'invalidated' || i.status === 'not_met'
+    ).length;
+    score -= materializedCount * 10;
+    // Bonus for closed items
+    const closedCount = items.filter((i) =>
+      ['closed', 'resolved', 'met', 'validated', 'mitigated'].includes(i.status)
+    ).length;
+    score += closedCount * 2;
+    return Math.max(0, Math.min(100, score));
+  }, [items, criticalItems, overdueItems, unownedItems]);
+
+  const healthColor =
+    healthScore >= 70 ? 'text-emerald-500' : healthScore >= 40 ? 'text-amber-500' : 'text-red-500';
+  const healthBg =
+    healthScore >= 70
+      ? 'bg-emerald-500/10 border-emerald-500/30'
+      : healthScore >= 40
+        ? 'bg-amber-500/10 border-amber-500/30'
+        : 'bg-red-500/10 border-red-500/30';
+
   const filteredItems = useMemo(() => {
     const filtered = typeFilter === 'all' ? items : items.filter((i) => i.type === typeFilter);
     return [...filtered].sort((a, b) => getRaidScore(b) - getRaidScore(a));
   }, [items, typeFilter]);
 
-  const criticalCount = useMemo(
-    () =>
-      items.filter((i) => {
-        const imp = (i.impact || 'low').toLowerCase();
-        return imp === 'critical' || imp === 'high';
-      }).length,
-    [items]
-  );
+  // ── Risk Heatmap data ────────────────────────────────────────────────────
+
+  const heatmapData = useMemo(() => {
+    const risks = items.filter((i) => i.type === 'risk');
+    const levels: RaidLevel[] = ['critical', 'high', 'medium', 'low'];
+    const matrix: Record<string, RaidItem[]> = {};
+    levels.forEach((p) =>
+      levels.forEach((i) => {
+        matrix[`${p}-${i}`] = [];
+      })
+    );
+    risks.forEach((r) => {
+      const key = `${r.probability || 'medium'}-${r.impact}`;
+      if (matrix[key]) matrix[key].push(r);
+    });
+    return { levels, matrix, riskCount: risks.length };
+  }, [items]);
 
   // ── Filter tabs ──────────────────────────────────────────────────────────
 
@@ -392,14 +545,35 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
     [isPolish, items.length, typeCounts]
   );
 
+  // ── Convert to Issue handler ─────────────────────────────────────────────
+
+  const handleConvertToIssue = useCallback(
+    (item: RaidItem) => {
+      if (onConvertToIssue) {
+        onConvertToIssue(item.id);
+      } else {
+        // Default: update type to issue, reset status
+        onUpdateItem(item.id, {
+          type: 'issue',
+          status: 'open',
+          source: `${isPolish ? 'Konwersja z' : 'Converted from'} ${getTypeLabel(item.type)}: ${item.title}`,
+        });
+      }
+    },
+    [onConvertToIssue, onUpdateItem, isPolish]
+  );
+
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-          {isPolish ? 'Ryzyko i RAID' : 'Risk & RAID'}
+          {isPolish ? 'RAID Log' : 'RAID Log'}
+          <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
+            PMBOK / PRINCE2
+          </span>
         </h2>
         {onAIGenerate && (
           <button
@@ -417,55 +591,191 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         )}
       </div>
 
+      {/* ── Executive Summary Strip ─────────────────────────────────────── */}
+      <div className="grid grid-cols-5 gap-2">
+        {/* Health Score */}
+        <div className={`p-2.5 rounded-xl text-center border ${healthBg}`}>
+          <div className={`text-xl font-bold ${healthColor}`}>{healthScore}</div>
+          <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Zdrowie' : 'Health'}
+          </div>
+        </div>
+        {/* Open */}
+        <div className="p-2.5 rounded-xl text-center border border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30">
+          <div className="text-xl font-bold text-slate-700 dark:text-slate-200">
+            {openItems.length}
+          </div>
+          <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Otwarte' : 'Open'}
+          </div>
+        </div>
+        {/* Critical/High */}
+        <div
+          className={`p-2.5 rounded-xl text-center border ${criticalItems.length > 0 ? 'border-red-400/40 bg-red-500/10' : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30'}`}
+        >
+          <div
+            className={`text-xl font-bold ${criticalItems.length > 0 ? 'text-red-500' : 'text-slate-700 dark:text-slate-200'}`}
+          >
+            {criticalItems.length}
+          </div>
+          <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Krytyczne' : 'Critical'}
+          </div>
+        </div>
+        {/* Overdue */}
+        <div
+          className={`p-2.5 rounded-xl text-center border ${overdueItems.length > 0 ? 'border-orange-400/40 bg-orange-500/10' : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30'}`}
+        >
+          <div
+            className={`text-xl font-bold ${overdueItems.length > 0 ? 'text-orange-500' : 'text-slate-700 dark:text-slate-200'}`}
+          >
+            {overdueItems.length}
+          </div>
+          <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Po terminie' : 'Overdue'}
+          </div>
+        </div>
+        {/* Unowned */}
+        <div
+          className={`p-2.5 rounded-xl text-center border ${unownedItems.length > 0 ? 'border-amber-400/40 bg-amber-500/10' : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30'}`}
+        >
+          <div
+            className={`text-xl font-bold ${unownedItems.length > 0 ? 'text-amber-500' : 'text-slate-700 dark:text-slate-200'}`}
+          >
+            {unownedItems.length}
+          </div>
+          <div className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Bez właściciela' : 'Unowned'}
+          </div>
+        </div>
+      </div>
+
       {/* ── RAID Counter Cards ──────────────────────────────────────────── */}
-      {items.length > 0 && (
-        <div className="grid grid-cols-4 gap-2">
-          {(['risk', 'assumption', 'issue', 'dependency'] as const).map((type) => {
-            const meta = RAID_TYPE_META[type];
-            const TypeIcon = meta.icon;
-            const isActive = typeFilter === type;
-            return (
-              <button
-                key={type}
-                onClick={() => setTypeFilter((prev) => (prev === type ? 'all' : type))}
-                className={`p-3 rounded-xl text-center transition-all border ${
-                  isActive
-                    ? `${meta.borderActive} ${meta.bgLight} ring-1`
-                    : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30 hover:border-slate-300/60 dark:hover:border-navy-600/60'
-                }`}
-              >
-                <TypeIcon size={16} className={`mx-auto mb-1 ${meta.color}`} />
-                <div className="text-lg font-bold text-slate-700 dark:text-slate-200">
-                  {typeCounts[type]}
-                </div>
-                <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {getTypeLabel(type)}
-                </div>
-              </button>
-            );
-          })}
+      <div className="grid grid-cols-4 gap-2">
+        {(['risk', 'assumption', 'issue', 'dependency'] as const).map((type) => {
+          const meta = RAID_TYPE_META[type];
+          const TypeIcon = meta.icon;
+          const isActive = typeFilter === type;
+          const typeOverdue = overdueItems.filter((i) => i.type === type).length;
+          return (
+            <button
+              key={type}
+              onClick={() => setTypeFilter((prev) => (prev === type ? 'all' : type))}
+              className={`p-3 rounded-xl text-center transition-all border relative ${
+                isActive
+                  ? `${meta.borderActive} ${meta.bgLight} ring-1`
+                  : 'border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-900/30 hover:border-slate-300/60 dark:hover:border-navy-600/60'
+              }`}
+            >
+              <TypeIcon size={16} className={`mx-auto mb-1 ${meta.color}`} />
+              <div className="text-lg font-bold text-slate-700 dark:text-slate-200">
+                {typeCounts[type]}
+              </div>
+              <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {getTypeLabel(type)}
+              </div>
+              {/* Overdue badge */}
+              {typeOverdue > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-orange-500 text-white text-[8px] font-bold flex items-center justify-center">
+                  {typeOverdue}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Risk Heatmap (PMBOK P×I Matrix) ─────────────────────────────── */}
+      {heatmapData.riskCount > 0 && (
+        <div>
+          <button
+            onClick={() => setShowHeatmap((p) => !p)}
+            className="text-[11px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors mb-2"
+          >
+            {showHeatmap
+              ? isPolish
+                ? '▾ Ukryj macierz ryzyk'
+                : '▾ Hide risk matrix'
+              : isPolish
+                ? '▸ Pokaż macierz P×I (PMBOK)'
+                : '▸ Show P×I matrix (PMBOK)'}
+          </button>
+          {showHeatmap && (
+            <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 p-3 bg-slate-50/20 dark:bg-navy-900/15">
+              <div className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-2 text-center">
+                {isPolish ? 'Macierz Prawdopodobieństwo × Wpływ' : 'Probability × Impact Matrix'}
+              </div>
+              <div className="grid grid-cols-[auto_1fr_1fr_1fr_1fr] gap-px">
+                {/* Header row */}
+                <div className="text-[9px] text-slate-400 p-1" />
+                {(['low', 'medium', 'high', 'critical'] as const).map((i) => (
+                  <div
+                    key={`h-${i}`}
+                    className="text-[9px] text-center font-semibold text-slate-400 dark:text-slate-500 p-1 uppercase"
+                  >
+                    {getLevelLabel(i)}
+                  </div>
+                ))}
+                {/* Rows (probability: critical→low) */}
+                {(['critical', 'high', 'medium', 'low'] as const).map((p) => (
+                  <React.Fragment key={`row-${p}`}>
+                    <div className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 p-1 uppercase flex items-center">
+                      {getLevelLabel(p)}
+                    </div>
+                    {(['low', 'medium', 'high', 'critical'] as const).map((i) => {
+                      const cellItems = heatmapData.matrix[`${p}-${i}`] || [];
+                      const score = raidLevelToScore(p) * raidLevelToScore(i);
+                      const bgClass =
+                        score >= 12
+                          ? 'bg-red-500/25'
+                          : score >= 8
+                            ? 'bg-orange-500/20'
+                            : score >= 4
+                              ? 'bg-amber-500/15'
+                              : 'bg-emerald-500/10';
+                      return (
+                        <div
+                          key={`${p}-${i}`}
+                          className={`${bgClass} rounded-md p-1.5 min-h-[28px] flex items-center justify-center`}
+                          title={cellItems.map((r) => r.title).join(', ') || `P:${p} I:${i}`}
+                        >
+                          {cellItems.length > 0 && (
+                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
+                              {cellItems.length}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </React.Fragment>
+                ))}
+              </div>
+              <div className="flex items-center justify-between mt-2 text-[9px] text-slate-400 dark:text-slate-500">
+                <span>← {isPolish ? 'Wpływ' : 'Impact'} →</span>
+                <span>↑ {isPolish ? 'Prawdopodobieństwo' : 'Probability'}</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* ── Filter Tabs ─────────────────────────────────────────────────── */}
-      {items.length > 0 && (
-        <div className="flex items-center gap-1 border-b border-slate-200/50 dark:border-navy-700/50 pb-0.5">
-          {filterTabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setTypeFilter(tab.key)}
-              className={`px-2.5 py-1.5 text-[11px] font-medium rounded-t-lg transition-colors ${
-                typeFilter === tab.key
-                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
-              }`}
-            >
-              {tab.label}
-              {tab.count > 0 && <span className="ml-1 text-[10px] opacity-60">({tab.count})</span>}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="flex items-center gap-1 border-b border-slate-200/50 dark:border-navy-700/50 pb-0.5">
+        {filterTabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setTypeFilter(tab.key)}
+            className={`px-2.5 py-1.5 text-[11px] font-medium rounded-t-lg transition-colors ${
+              typeFilter === tab.key
+                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+                : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+            }`}
+          >
+            {tab.label}
+            {tab.count > 0 && <span className="ml-1 text-[10px] opacity-60">({tab.count})</span>}
+          </button>
+        ))}
+      </div>
 
       {/* ── Sort info ───────────────────────────────────────────────────── */}
       {filteredItems.length > 0 && (
@@ -478,33 +788,6 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
           <span>
             {filteredItems.length} / {items.length} {isPolish ? 'elementów' : 'items'}
           </span>
-        </div>
-      )}
-
-      {/* ── Empty state ─────────────────────────────────────────────────── */}
-      {items.length === 0 && (
-        <div className="py-8 text-center">
-          <AlertTriangle size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-          <p className="text-sm text-slate-400 dark:text-slate-500 mb-1">
-            {isPolish ? 'Brak elementów RAID.' : 'No RAID items yet.'}
-          </p>
-          <p className="text-xs text-slate-300 dark:text-slate-600 mb-4">
-            {isPolish
-              ? 'Dodaj ryzyka, założenia, problemy lub zależności.'
-              : 'Add risks, assumptions, issues, or dependencies.'}
-          </p>
-          <div className="inline-flex items-center gap-2">
-            {(['risk', 'assumption', 'issue', 'dependency'] as const).map((type) => (
-              <button
-                key={type}
-                onClick={() => onAddItem(type)}
-                disabled={locked}
-                className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40"
-              >
-                + {getTypeLabel(type)}
-              </button>
-            ))}
-          </div>
         </div>
       )}
 
@@ -532,6 +815,21 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         )}
       </div>
 
+      {/* ── Empty state ─────────────────────────────────────────────────── */}
+      {items.length === 0 && (
+        <div className="py-6 text-center rounded-xl border border-dashed border-slate-300/50 dark:border-navy-600/50 bg-slate-50/10 dark:bg-navy-900/10">
+          <AlertTriangle size={20} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+          <p className="text-sm text-slate-400 dark:text-slate-500 mb-1">
+            {isPolish ? 'Brak elementów RAID.' : 'No RAID items yet.'}
+          </p>
+          <p className="text-xs text-slate-300 dark:text-slate-600">
+            {isPolish
+              ? 'Kliknij „Analizuj RAID" aby AI wygenerował pełną analizę RAID (Ryzyka, Założenia, Problemy, Zależności).'
+              : 'Click "Analyze RAID" to let AI generate a full RAID analysis (Risks, Assumptions, Issues, Dependencies).'}
+          </p>
+        </div>
+      )}
+
       {/* ── RAID Item Cards ─────────────────────────────────────────────── */}
       {filteredItems.length > 0 && (
         <div className="space-y-0 divide-y divide-slate-300/55 dark:divide-navy-600/65">
@@ -540,15 +838,63 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
             const meta = RAID_TYPE_META[item.type];
             const TypeIcon = meta.icon;
             const score = getRaidScore(item);
+            const itemOverdue = isOverdue(item);
+            const itemUnowned = isUnowned(item);
+            const showConvert = canConvertToIssue(item);
+            const allowedStatuses = STATUS_BY_TYPE[item.type] || STATUS_BY_TYPE.risk;
 
             return (
               <div key={item.id} className="py-5 first:pt-2 group">
-                <div className="p-5 rounded-xl bg-slate-50/20 dark:bg-navy-900/25 space-y-5">
-                  {/* ── Row 1: Type badge + Title + Score/Impact + Delete ── */}
+                <div
+                  className={`p-5 rounded-xl space-y-5 ${
+                    itemOverdue
+                      ? 'bg-orange-500/5 dark:bg-orange-500/5 ring-1 ring-orange-400/30'
+                      : showConvert
+                        ? 'bg-red-500/5 dark:bg-red-500/5 ring-1 ring-red-400/20'
+                        : 'bg-slate-50/20 dark:bg-navy-900/25'
+                  }`}
+                >
+                  {/* ── Overdue / Materialized banner ──────────────────── */}
+                  {(itemOverdue || showConvert) && (
+                    <div
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-medium ${
+                        showConvert
+                          ? 'bg-red-500/15 text-red-500 dark:text-red-400'
+                          : 'bg-orange-500/15 text-orange-600 dark:text-orange-400'
+                      }`}
+                    >
+                      {showConvert ? (
+                        <>
+                          <AlertCircle size={12} />
+                          {item.type === 'risk'
+                            ? isPolish
+                              ? 'Ryzyko zmaterializowane — przekonwertuj na Issue'
+                              : 'Risk materialized — convert to Issue'
+                            : isPolish
+                              ? 'Założenie obalone — przekonwertuj na Issue'
+                              : 'Assumption invalidated — convert to Issue'}
+                          <button
+                            onClick={() => handleConvertToIssue(item)}
+                            disabled={locked}
+                            className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 text-[10px] font-semibold transition-colors disabled:opacity-40"
+                          >
+                            <ArrowRight size={10} />
+                            {isPolish ? 'Konwertuj na Issue' : 'Convert to Issue'}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <Clock size={12} />
+                          {isPolish ? `Po terminie: ${item.dueDate}` : `Overdue: ${item.dueDate}`}
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── Row 1: Type badge + Title + Score + Status + Delete */}
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        {/* Type badge */}
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] uppercase font-semibold flex-shrink-0 ${meta.bgLight} ${meta.color}`}
                         >
@@ -568,11 +914,9 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                         />
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        {/* Score badge */}
+                        {/* Score / Impact badge */}
                         <span
-                          className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold ${
-                            isRisk ? getScoreClass(score, true) : getLevelClass(item.impact)
-                          }`}
+                          className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold ${isRisk ? getScoreClass(score, true) : getLevelClass(item.impact)}`}
                         >
                           {isRisk
                             ? `Score ${score}`
@@ -584,6 +928,10 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                         >
                           {getStatusLabel(item.status)}
                         </span>
+                        {/* Overdue indicator */}
+                        {itemOverdue && <Clock size={12} className="text-orange-500" />}
+                        {/* Unowned indicator */}
+                        {itemUnowned && <User size={12} className="text-amber-400 opacity-60" />}
                         <button
                           onClick={() => onRemoveItem(item.id)}
                           disabled={locked}
@@ -596,9 +944,9 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
                     {/* ── Row 2: Selectors grid ─────────────────────────── */}
                     <div
-                      className={`grid gap-2 ${isRisk ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4'}`}
+                      className={`grid gap-2 ${isRisk ? 'grid-cols-2 md:grid-cols-6' : 'grid-cols-2 md:grid-cols-4'}`}
                     >
-                      {/* Type selector */}
+                      {/* Type */}
                       <div className="space-y-1">
                         <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
                           {isPolish ? 'Typ' : 'Type'}
@@ -606,7 +954,10 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                         <select
                           value={item.type}
                           onChange={(e) =>
-                            onUpdateItem(item.id, { type: e.target.value as RaidType })
+                            onUpdateItem(item.id, {
+                              type: e.target.value as RaidType,
+                              status: 'open',
+                            })
                           }
                           disabled={locked}
                           className={`w-full text-[11px] px-2 py-1 rounded-md border ${meta.bgLight} ${meta.color} border-current/20 focus:outline-none focus:border-primary-400 disabled:opacity-60`}
@@ -642,7 +993,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                         </div>
                       )}
 
-                      {/* Impact — all types */}
+                      {/* Impact */}
                       <div className="space-y-1">
                         <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
                           {isPolish ? 'Wpływ' : 'Impact'}
@@ -682,7 +1033,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                         </select>
                       </div>
 
-                      {/* Status */}
+                      {/* Status — type-specific options */}
                       <div className="space-y-1">
                         <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
                           Status
@@ -695,29 +1046,61 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           disabled={locked}
                           className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-primary-400 ${getStatusClass(item.status)} disabled:opacity-60`}
                         >
-                          {RAID_STATUS_OPTIONS.map((s) => (
+                          {allowedStatuses.map((s) => (
                             <option key={`s-${item.id}-${s}`} value={s}>
                               {getStatusLabel(s)}
                             </option>
                           ))}
                         </select>
                       </div>
+
+                      {/* Response Strategy — Risk only (PMBOK) */}
+                      {isRisk && (
+                        <div className="space-y-1">
+                          <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                            {isPolish ? 'Strategia (PMBOK)' : 'Response (PMBOK)'}
+                          </span>
+                          <select
+                            value={item.responseStrategy || 'mitigate'}
+                            onChange={(e) =>
+                              onUpdateItem(item.id, {
+                                responseStrategy: e.target.value as RiskResponseStrategy,
+                              })
+                            }
+                            disabled={locked}
+                            className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 disabled:opacity-60"
+                          >
+                            {RESPONSE_STRATEGIES.map((s) => (
+                              <option key={`rs-${item.id}-${s}`} value={s}>
+                                {getResponseStrategyLabel(s)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                     </div>
 
                     {/* ── Row 3: Owner + Due Date + Source ───────────────── */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       {/* Owner */}
                       <div className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                        <span
+                          className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemUnowned ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}
+                        >
                           <User size={9} />
                           {isPolish ? 'Właściciel' : 'Owner'}
+                          {itemUnowned && (
+                            <span className="text-[8px] normal-case">
+                              ({isPolish ? 'wymagany' : 'required'})
+                            </span>
+                          )}
                         </span>
                         {users && users.length > 0 ? (
                           <select
                             value={item.owner || ''}
                             onChange={(e) => onUpdateItem(item.id, { owner: e.target.value })}
                             disabled={locked}
-                            className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 disabled:opacity-60"
+                            className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 disabled:opacity-60 ${itemUnowned ? 'border-amber-400/50' : 'border-slate-200/60 dark:border-navy-600/60'}`}
                           >
                             <option value="">{isPolish ? '— Wybierz —' : '— Select —'}</option>
                             {users.map((u) => (
@@ -731,7 +1114,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                             value={item.owner || ''}
                             onChange={(e) => onUpdateItem(item.id, { owner: e.target.value })}
                             readOnly={locked}
-                            className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                            className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 ${itemUnowned ? 'border-amber-400/50' : 'border-slate-200/60 dark:border-navy-600/60'}`}
                             placeholder={isPolish ? 'Imię i nazwisko...' : 'Name...'}
                           />
                         )}
@@ -739,19 +1122,26 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
                       {/* Due Date */}
                       <div className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                        <span
+                          className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemOverdue ? 'text-orange-500' : 'text-slate-400 dark:text-slate-500'}`}
+                        >
                           <Calendar size={9} />
                           {isPolish ? 'Termin' : 'Due Date'}
+                          {itemOverdue && (
+                            <span className="text-[8px] normal-case">
+                              ({isPolish ? 'po terminie!' : 'overdue!'})
+                            </span>
+                          )}
                         </span>
                         <input
                           type="date"
                           value={item.dueDate || ''}
                           onChange={(e) => onUpdateItem(item.id, { dueDate: e.target.value })}
                           readOnly={locked}
-                          className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 ${
-                            item.dueDate && new Date(item.dueDate) < new Date()
-                              ? 'text-red-500 dark:text-red-400 border-red-400/40'
-                              : ''
+                          className={`w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 ${
+                            itemOverdue
+                              ? 'border-orange-400/60 text-orange-500 dark:text-orange-400'
+                              : 'border-slate-200/60 dark:border-navy-600/60'
                           }`}
                         />
                       </div>
@@ -768,7 +1158,9 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                           readOnly={locked}
                           className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                           placeholder={
-                            isPolish ? 'np. spotkanie, audyt, AI' : 'e.g. meeting, audit, AI'
+                            isPolish
+                              ? 'np. spotkanie, audyt, AI, warsztat'
+                              : 'e.g. meeting, audit, AI, workshop'
                           }
                         />
                       </div>
@@ -782,7 +1174,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                            {isPolish ? 'Ryzyko (materializacja)' : 'Risk (materialized)'}
+                            {isPolish ? 'Plan awaryjny (contingency)' : 'Contingency Plan'}
                           </span>
                           <AIFieldEnhancer
                             fieldKey={`${fieldKeyPrefix}-raid-con-${item.id}`}
@@ -796,9 +1188,9 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                         <textarea
                           value={item.contingency || ''}
                           onChange={(e) => onUpdateItem(item.id, { contingency: e.target.value })}
-                          rows={4}
+                          rows={3}
                           readOnly={locked}
-                          className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
+                          className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
                           placeholder={
                             isPolish
                               ? 'Co robimy, gdy ryzyko się zmaterializuje?'
@@ -829,7 +1221,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                            {isPolish ? 'Mitigacja' : 'Mitigation'}
+                            {isPolish ? 'Plan mitigacji' : 'Mitigation Plan'}
                           </span>
                           <AIFieldEnhancer
                             fieldKey={`${fieldKeyPrefix}-raid-mit-${item.id}`}
@@ -843,13 +1235,13 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                         <textarea
                           value={item.mitigation || ''}
                           onChange={(e) => onUpdateItem(item.id, { mitigation: e.target.value })}
-                          rows={4}
+                          rows={3}
                           readOnly={locked}
-                          className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
+                          className="w-full min-h-[72px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
                           placeholder={
                             isPolish
-                              ? 'Jak ograniczamy to ryzyko?'
-                              : 'How do we mitigate this risk?'
+                              ? 'Jak ograniczamy prawdopodobieństwo tego ryzyka?'
+                              : 'How do we reduce the probability of this risk?'
                           }
                         />
                         <div className="flex flex-wrap gap-1">
@@ -909,7 +1301,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                             })
                           }
                           disabled={locked}
-                          className={`px-1.5 py-0.5 rounded border text-[10px] hover:bg-opacity-10 transition-colors disabled:opacity-40 ${
+                          className={`px-1.5 py-0.5 rounded border text-[10px] transition-colors disabled:opacity-40 ${
                             item.type === 'risk'
                               ? 'border-amber-400/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10'
                               : item.type === 'assumption'

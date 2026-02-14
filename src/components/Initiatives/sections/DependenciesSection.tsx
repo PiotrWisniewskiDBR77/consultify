@@ -15,7 +15,7 @@ import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
 
 export const DependenciesSection: React.FC<InitiativeSectionProps> = () => {
-  const { initiativeId, dependencies, setDependencies, onOpenTask } = useInitiativeContext();
+  const { initiativeId, dependencies, setDependencies, onOpenTask, tasks } = useInitiativeContext();
 
   const refresh = React.useCallback(async () => {
     if (!initiativeId) return;
@@ -27,6 +27,11 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = () => {
     }
   }, [initiativeId, setDependencies]);
 
+  const initiativeTasks = React.useMemo(
+    () => (tasks || []).map((t) => ({ id: t.id, title: t.title || '' })),
+    [tasks]
+  );
+
   return (
     <SharedDependenciesSection
       externalDependencies={dependencies}
@@ -34,6 +39,8 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = () => {
       readOnly={false}
       onRefreshExternalDependencies={refresh}
       showSampleDataWhenEmpty
+      initiativeId={initiativeId}
+      initiativeTasks={initiativeTasks}
     />
   );
 };

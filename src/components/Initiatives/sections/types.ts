@@ -12,11 +12,20 @@ import type { InitiativeStatus } from '../../../types';
 
 export interface Decision {
   id: string;
-  type: string;
   title: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  dueDate?: string;
+  description?: string;
+  /** Decision type / category from API (decisionType field) */
+  type: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ESCALATED' | 'DEFERRED';
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  decisionMakerId?: string;
   ownerName?: string;
+  requestedByName?: string;
+  dueDate?: string;
+  createdAt?: string;
+  isOverdue?: boolean;
+  daysOverdue?: number;
+  source?: 'manual' | 'ai';
 }
 
 export interface RaidItem {

@@ -24,17 +24,14 @@ import {
   Download,
   Edit3,
   ExternalLink,
-  FileCode,
   Flag,
   FolderOpen,
   GitBranch,
   History,
-  Link2,
   ListChecks,
   Loader2,
   MessageSquare,
   MoreVertical,
-  Paperclip,
   Play,
   Plus,
   Save,
@@ -100,6 +97,7 @@ import {
   type ActivityLogEntry as NModeActivityLogEntry,
   type ActivityStats,
   type ActivityTypeMeta,
+  AttachmentsLinksCanvas,
   type CommentItem,
   type CommentPriority,
   CommentsCanvas,
@@ -220,8 +218,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [inScopeItems, setInScopeItems] = useState<string[]>([]);
   const [outScopeItems, setOutScopeItems] = useState<string[]>([]);
   const [killCriteriaItems, setKillCriteriaItems] = useState<string[]>([]);
-  const [technicalSpecDraft, setTechnicalSpecDraft] = useState('');
-  const [isTechnicalSpecExpanded, setIsTechnicalSpecExpanded] = useState(false);
   const [localKpis, setLocalKpis] = useState<
     Array<{
       id: string;
@@ -334,7 +330,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const currentUser = useAppStore((s) => s.currentUser);
   const currentUserId = currentUser?.id || 'current-user';
-  const nModeOrderStorageKey = `initiative:nmode:section-order:${initiativeId}`;
+  const nModeOrderStorageKey = `initiative:nmode:section-order:v2:${initiativeId}`;
 
   // ==========================================
   // COMPUTED VALUES
@@ -755,13 +751,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           ? data.toolsNeeded
           : [];
       setResourceTools(rawTools.map((t: any) => String(t)));
-      setTechnicalSpecDraft(
-        data.technicalSpecification ||
-          data.technical_specification ||
-          data.intelligence ||
-          data.intelligenceBrief ||
-          ''
-      );
       const rawPriority = (data.priority || 'medium').toLowerCase();
       setPriority(rawPriority);
       setOwnerId(data.ownerId || data.owner_id || '');
@@ -793,7 +782,27 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // Fetch related data (best-effort, parallel)
       const fetches = [
         Api.get(`/decisions?relatedObjectId=${initiativeId}&relatedObjectType=initiative`)
-          .then((ds: any) => setDecisions(Array.isArray(ds) ? ds : ds?.decisions || []))
+          .then((ds: any) => {
+            const raw = Array.isArray(ds) ? ds : ds?.decisions || [];
+            setDecisions(
+              raw.map((d: any) => ({
+                id: d.id,
+                title: d.title || '',
+                description: d.description || undefined,
+                type: d.decisionType || d.type || 'GENERAL',
+                status: d.status || 'PENDING',
+                priority: d.priority || undefined,
+                decisionMakerId: d.decisionOwnerId || d.decisionMakerId || undefined,
+                ownerName: d.ownerName || undefined,
+                requestedByName: d.requestedByName || undefined,
+                dueDate: d.dueDate || undefined,
+                createdAt: d.createdAt || undefined,
+                isOverdue: d.isOverdue || false,
+                daysOverdue: d.daysOverdue || 0,
+                source: d.source || 'manual',
+              }))
+            );
+          })
           .catch(() => setDecisions([])),
         Api.get(`/initiatives/${initiativeId}/raid`)
           .then((r: any) => setRaidItems(r?.items || r?.raid || (Array.isArray(r) ? r : [])))
@@ -1520,7 +1529,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         relatedObjectType: 'initiative',
         status: 'PENDING',
       });
-      setDecisions((prev) => [...prev, res]);
+      const mapped = {
+        id: res.id,
+        title: res.title || newDecisionTitle,
+        description: res.description || undefined,
+        type: res.decisionType || res.type || newDecisionType,
+        status: res.status || 'PENDING',
+        priority: res.priority || undefined,
+        decisionMakerId: res.decisionOwnerId || res.decisionMakerId || undefined,
+        ownerName: res.ownerName || undefined,
+        requestedByName: res.requestedByName || undefined,
+        dueDate: res.dueDate || undefined,
+        createdAt: res.createdAt || new Date().toISOString(),
+        isOverdue: false,
+        daysOverdue: 0,
+        source: 'manual' as const,
+      };
+      setDecisions((prev) => [...prev, mapped]);
       setNewDecisionTitle('');
       setShowCreateDecision(false);
       toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
@@ -1530,6 +1555,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       );
     } finally {
       setIsMutating(false);
+    }
+  };
+
+  const handleRemoveDecision = async (id: string) => {
+    try {
+      await Api.delete(`/decisions/${id}`);
+      setDecisions((prev) => prev.filter((d) => d.id !== id));
+      toast.success(isPolish ? 'Decyzja usunięta' : 'Decision removed');
+    } catch {
+      toast.error(isPolish ? 'Nie udało się usunąć decyzji' : 'Failed to remove decision');
     }
   };
 
@@ -1607,6 +1642,274 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // Endpoint may not exist yet — no toast to avoid noise
     }
   };
+
+  // ── Attachment handlers (for AttachmentsLinksCanvas) ──────────────────────
+  const handleUploadAttachments = useCallback(async (files: FileList) => {
+    const newAttachments: Attachment[] = Array.from(files).map((file) => ({
+      id: Math.random().toString(36).substr(2, 9),
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      url: URL.createObjectURL(file),
+      uploadedAt: new Date().toISOString(),
+    }));
+    setAttachments((prev) => [...prev, ...newAttachments]);
+  }, []);
+
+  const handleDeleteAttachment = useCallback(async (id: string) => {
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
+  }, []);
+
+  // ── Linked items handlers (for AttachmentsLinksCanvas) ──────────────────
+  const handleAddLinkedItem = useCallback(
+    async (item: LinkedItem) => {
+      const isDuplicate = linkedItems.some((li) => li.id === item.id && li.type === item.type);
+      if (isDuplicate) {
+        toast(isPolish ? 'Ten element jest już powiązany' : 'This item is already linked', {
+          icon: '⚠️',
+        });
+        return;
+      }
+      setLinkedItems((prev) => [...prev, item]);
+    },
+    [linkedItems, isPolish]
+  );
+
+  const handleRemoveLinkedItem = useCallback(async (item: Pick<LinkedItem, 'id' | 'type'>) => {
+    setLinkedItems((prev) =>
+      prev.filter((i) =>
+        item.type ? !(i.id === item.id && i.type === item.type) : i.id !== item.id
+      )
+    );
+  }, []);
+
+  const searchLinkedItems = useCallback(async (query: string): Promise<LinkedItem[]> => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    try {
+      const [
+        tasksRes,
+        initiativesRes,
+        decisionsRes,
+        projectsRes,
+        assessmentsRes,
+        reportsRes,
+        toolsRes,
+        insightsRes,
+      ] = await Promise.allSettled([
+        Api.get('/tasks?limit=50'),
+        Api.get('/initiatives'),
+        Api.getDecisions(),
+        Api.getProjects(),
+        Api.get('/assessments'),
+        Api.get('/reports'),
+        Api.listToolSessions({ limit: 50 }),
+        Api.get('/interview/insights'),
+      ]);
+
+      const tasks =
+        tasksRes.status === 'fulfilled'
+          ? Array.isArray(tasksRes.value)
+            ? tasksRes.value
+            : tasksRes.value?.tasks || []
+          : [];
+      const initiatives =
+        initiativesRes.status === 'fulfilled'
+          ? Array.isArray(initiativesRes.value)
+            ? initiativesRes.value
+            : initiativesRes.value?.initiatives || []
+          : [];
+      const decisions = decisionsRes.status === 'fulfilled' ? decisionsRes.value || [] : [];
+      const projects =
+        projectsRes.status === 'fulfilled'
+          ? Array.isArray(projectsRes.value)
+            ? projectsRes.value
+            : projectsRes.value?.projects || []
+          : [];
+      const assessments =
+        assessmentsRes.status === 'fulfilled'
+          ? Array.isArray(assessmentsRes.value)
+            ? assessmentsRes.value
+            : assessmentsRes.value?.assessments || []
+          : [];
+      const reports =
+        reportsRes.status === 'fulfilled'
+          ? Array.isArray(reportsRes.value)
+            ? reportsRes.value
+            : reportsRes.value?.reports || []
+          : [];
+      const tools =
+        toolsRes.status === 'fulfilled'
+          ? Array.isArray(toolsRes.value)
+            ? toolsRes.value
+            : toolsRes.value?.items || []
+          : [];
+      const insights =
+        insightsRes.status === 'fulfilled'
+          ? Array.isArray(insightsRes.value)
+            ? insightsRes.value
+            : insightsRes.value?.insights || []
+          : [];
+
+      const mappedTasks: LinkedItem[] = tasks
+        .filter((t: any) =>
+          String(t.title || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 10)
+        .map((t: any) => ({
+          id: String(t.id),
+          type: 'task' as const,
+          title: String(t.title || 'Task'),
+          status: t.status,
+          priority: t.priority,
+        }));
+      const mappedInitiatives: LinkedItem[] = initiatives
+        .filter((i: any) =>
+          String(i.name || i.title || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 10)
+        .map((i: any) => ({
+          id: String(i.id),
+          type: 'initiative' as const,
+          title: String(i.name || i.title || 'Initiative'),
+          status: i.status,
+          priority: i.priority,
+        }));
+      const mappedDecisions: LinkedItem[] = decisions
+        .filter((d: any) =>
+          String(d.title || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 10)
+        .map((d: any) => ({
+          id: String(d.id),
+          type: 'decision' as const,
+          title: String(d.title || 'Decision'),
+          status: d.status,
+          priority: d.priority,
+        }));
+      const mappedProjects: LinkedItem[] = projects
+        .filter((p: any) =>
+          String(p.name || p.title || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 10)
+        .map((p: any) => ({
+          id: String(p.id),
+          type: 'project' as const,
+          title: String(p.name || p.title || 'Project'),
+          status: p.status,
+          priority: p.priority,
+        }));
+      const mappedAssessments: LinkedItem[] = assessments
+        .filter((a: any) =>
+          String(a.title || a.name || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((a: any) => ({
+          id: String(a.id),
+          type: 'assessment' as const,
+          title: String(a.title || a.name || 'Assessment'),
+          status: a.status,
+          url: '/assessment',
+        }));
+      const mappedReports: LinkedItem[] = reports
+        .filter((r: any) =>
+          String(r.title || r.name || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((r: any) => ({
+          id: String(r.id),
+          type: 'report' as const,
+          title: String(r.title || r.name || 'Report'),
+          status: r.status,
+          url: `/assessment-reports/${String(r.id)}`,
+        }));
+      const mappedTools: LinkedItem[] = tools
+        .filter((tool: any) =>
+          String(tool.name || tool.title || tool.toolType || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((tool: any) => ({
+          id: String(tool.id),
+          type: 'tool' as const,
+          title: String(tool.name || tool.title || tool.toolType || 'Tool'),
+          status: tool.status,
+          url: '/tools',
+        }));
+      const mappedInsights: LinkedItem[] = insights
+        .filter((insight: any) =>
+          String(insight.title || insight.name || insight.summary || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((insight: any) => ({
+          id: String(insight.id),
+          type: 'insight' as const,
+          title: String(insight.title || insight.name || 'Insight'),
+          status: insight.status,
+          url: '/interview',
+        }));
+
+      return [
+        ...mappedTasks,
+        ...mappedInitiatives,
+        ...mappedDecisions,
+        ...mappedProjects,
+        ...mappedAssessments,
+        ...mappedReports,
+        ...mappedTools,
+        ...mappedInsights,
+      ].slice(0, 24);
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const openLinkedItemTarget = useCallback(
+    (item: LinkedItem) => {
+      const explicitUrl = item.externalUrl || item.url;
+      const normalizedItemId = String(item.id);
+      const fallbackPath =
+        item.type === 'task'
+          ? `/my-work/tasks/${normalizedItemId}`
+          : item.type === 'decision'
+            ? `/my-work/decisions/${normalizedItemId}`
+            : item.type === 'initiative'
+              ? `/initiatives/${normalizedItemId}`
+              : item.type === 'project'
+                ? `/projects/${normalizedItemId}`
+                : item.type === 'assessment'
+                  ? '/assessment'
+                  : item.type === 'report'
+                    ? `/assessment-reports/${normalizedItemId}`
+                    : item.type === 'tool'
+                      ? '/tools'
+                      : item.type === 'insight'
+                        ? '/interview'
+                        : null;
+      const target = explicitUrl || fallbackPath;
+      if (!target) {
+        toast(isPolish ? 'Brak docelowego linku' : 'No target link available', { icon: 'ℹ️' });
+        return;
+      }
+      window.open(target, '_blank', 'noopener,noreferrer');
+    },
+    [isPolish]
+  );
 
   const handleCopyLink = () => {
     navigator.clipboard
@@ -1739,6 +2042,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               category: item.category || 'business',
               contingency: item.contingency || '',
               proposedAction: item.proposedAction || '',
+              responseStrategy: item.responseStrategy || undefined,
               dueDate: item.dueDate || '',
               source: item.source || 'AI analysis',
             });
@@ -1999,6 +2303,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       handleGenerateAI,
       handleCreateTask,
       handleCreateDecision,
+      handleRemoveDecision,
       handleCreateRaid,
       handleUpdateRaid,
       handleDeleteRaid,
@@ -2111,6 +2416,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       handleGenerateAI,
       handleCreateTask,
       handleCreateDecision,
+      handleRemoveDecision,
       handleCreateRaid,
       handleUpdateRaid,
       handleDeleteRaid,
@@ -2170,10 +2476,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       gates: ['gates'],
       comments: ['comments'],
       history: ['activity-log'],
-      attachments: ['attachments'],
-      linkedItems: ['attachments'],
+      attachments: ['attachments-links'],
+      linkedItems: ['attachments-links'],
       kpis: ['kpi'],
-      intelligence: ['technical-specification'],
     }),
     []
   );
@@ -2197,75 +2502,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const initiativeNSections: NModeSection[] = useMemo(() => {
     const allSections: NModeSection[] = [
+      // --- Definicja (zawsze na górze) ---
       {
         id: 'initiative-definition',
         icon: Search,
         label: { en: 'Initiative Scope', pl: 'Zakres inicjatywy' },
         component: null,
       },
-      {
-        id: 'target-state-scope',
-        icon: Target,
-        label: { en: 'Success Criteria', pl: 'Kryteria sukcesu' },
-        component: null,
-      },
-      {
-        id: 'kpi',
-        icon: TrendingUp,
-        label: { en: 'KPIs & Benefits', pl: 'KPI i korzyści' },
-        component: null,
-      },
-      {
-        id: 'financial-analysis',
-        icon: DollarSign,
-        label: { en: 'Financial Analysis', pl: 'Analiza finansowa' },
-        component: null,
-      },
-      {
-        id: 'financial-impact',
-        icon: DollarSign,
-        label: { en: 'Financial Impact', pl: 'Wpływ finansowy' },
-        component: null,
-      },
-      {
-        id: 'team',
-        icon: Users,
-        label: { en: 'Team', pl: 'Zespół' },
-        component: null,
-      },
-      {
-        id: 'raci',
-        icon: ShieldCheck,
-        label: { en: 'RACI', pl: 'RACI' },
-        badge: stakeholders.length > 0 ? stakeholders.length : undefined,
-        component: null,
-      },
-      {
-        id: 'resources',
-        icon: FolderOpen,
-        label: { en: 'Resources', pl: 'Zasoby' },
-        component: null,
-      },
-      {
-        id: 'dependencies',
-        icon: GitBranch,
-        label: { en: 'Dependencies', pl: 'Zależności' },
-        badge: dependencies.length > 0 ? dependencies.length : undefined,
-        component: null,
-      },
-      {
-        id: 'risk-raid',
-        icon: Scale,
-        label: { en: 'Risk & RAID', pl: 'Ryzyko i RAID' },
-        badge: raidItems.length > 0 ? raidItems.length : undefined,
-        component: null,
-      },
-      {
-        id: 'timeline',
-        icon: Calendar,
-        label: { en: 'Timeline', pl: 'Harmonogram' },
-        component: null,
-      },
+      // --- Codzienne operacje ---
       {
         id: 'tasks',
         icon: ListChecks,
@@ -2281,6 +2525,66 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         component: null,
       },
       {
+        id: 'team',
+        icon: Users,
+        label: { en: 'Team', pl: 'Zespół' },
+        component: null,
+      },
+      {
+        id: 'timeline',
+        icon: Calendar,
+        label: { en: 'Timeline', pl: 'Harmonogram' },
+        component: null,
+      },
+      {
+        id: 'risk-raid',
+        icon: Scale,
+        label: { en: 'Risk & RAID', pl: 'Ryzyko i RAID' },
+        badge: raidItems.length > 0 ? raidItems.length : undefined,
+        component: null,
+      },
+      // --- Cele i mierniki ---
+      {
+        id: 'target-state-scope',
+        icon: Target,
+        label: { en: 'Success Criteria', pl: 'Kryteria sukcesu' },
+        component: null,
+      },
+      {
+        id: 'kpi',
+        icon: TrendingUp,
+        label: { en: 'KPIs & Benefits', pl: 'KPI i korzyści' },
+        component: null,
+      },
+      {
+        id: 'dependencies',
+        icon: GitBranch,
+        label: { en: 'Dependencies', pl: 'Zależności' },
+        badge: dependencies.length > 0 ? dependencies.length : undefined,
+        component: null,
+      },
+      // --- Finanse ---
+      {
+        id: 'financial-analysis',
+        icon: DollarSign,
+        label: { en: 'Financial Analysis', pl: 'Analiza finansowa' },
+        component: null,
+      },
+      {
+        id: 'financial-impact',
+        icon: DollarSign,
+        label: { en: 'Financial Impact', pl: 'Wpływ finansowy' },
+        component: null,
+      },
+      // --- Governance (rzadko używane) ---
+      {
+        id: 'raci',
+        icon: ShieldCheck,
+        label: { en: 'RACI', pl: 'RACI' },
+        badge: stakeholders.length > 0 ? stakeholders.length : undefined,
+        component: null,
+      },
+      {
         id: 'gates',
         icon: Shield,
         label: { en: 'Gates', pl: 'Bramy' },
@@ -2288,16 +2592,20 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         component: null,
       },
       {
-        id: 'technical-specification',
-        icon: FileCode,
-        label: { en: 'Technical Specification', pl: 'Specyfikacja techniczna' },
+        id: 'resources',
+        icon: FolderOpen,
+        label: { en: 'Resources', pl: 'Zasoby' },
         component: null,
       },
+      // --- Dokumentacja i logi (dół) ---
       {
-        id: 'attachments',
-        icon: Paperclip,
-        label: { en: 'Attachments', pl: 'Załączniki' },
-        badge: attachments.length > 0 ? attachments.length : undefined,
+        id: 'attachments-links',
+        icon: FolderOpen,
+        label: { en: 'Attachments & Links', pl: 'Załączniki i powiązania' },
+        badge:
+          attachments.length + linkedItems.length > 0
+            ? attachments.length + linkedItems.length
+            : undefined,
         component: null,
       },
       {
@@ -2332,6 +2640,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     comments.length,
     history.length,
     attachments.length,
+    linkedItems.length,
     enabledNModeSectionIds,
   ]);
 
@@ -4104,6 +4413,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             id: r.id,
             type: r.type as any,
             title: r.title,
+            description: r.description || '',
             probability: r.probability || undefined,
             impact: (r.severity || 'MEDIUM').toLowerCase(),
             category: r.category || undefined,
@@ -4111,6 +4421,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             contingency: r.contingency || '',
             proposedAction: r.proposedAction || '',
             status: (r.status || 'OPEN').toLowerCase(),
+            responseStrategy: r.responseStrategy || undefined,
             owner: r.owner || r.ownerName || '',
             dueDate: r.dueDate || '',
             source: r.source || '',
@@ -4152,6 +4463,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       patch.proposedAction = updates.proposedAction;
                     if (updates.dueDate !== undefined) patch.dueDate = updates.dueDate;
                     if (updates.source !== undefined) patch.source = updates.source;
+                    if (updates.responseStrategy !== undefined)
+                      patch.responseStrategy = updates.responseStrategy;
+                    if (updates.description !== undefined) patch.description = updates.description;
                     return patch;
                   })
                 );
@@ -4159,8 +4473,19 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               onRemoveItem={(id: string) => {
                 setRaidItems((prev: any) => prev.filter((item: any) => item.id !== id));
               }}
-              onAIGenerate={() => handleGenerateAI('raid')}
-              isGeneratingAI={isGeneratingAI === 'raid'}
+              onConvertToIssue={(id: string) => {
+                setRaidItems((prev: any) =>
+                  prev.map((item: any) => {
+                    if (item.id !== id) return item;
+                    return {
+                      ...item,
+                      type: 'issue',
+                      status: 'OPEN',
+                      source: `${isPolish ? 'Konwersja z' : 'Converted from'} ${item.type}: ${item.title}`,
+                    };
+                  })
+                );
+              }}
               locked={false}
               artifactContext={{
                 title: initiative?.title || initiative?.name || '',
@@ -4176,114 +4501,34 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
 
         case 'decisions': {
-          const sortedDecisions = [...decisions].sort((a, b) => {
-            const aTs = a.dueDate ? new Date(a.dueDate).getTime() : 0;
-            const bTs = b.dueDate ? new Date(b.dueDate).getTime() : 0;
-            return bTs - aTs;
-          });
-          component = (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Decyzje' : 'Decisions'}
-                </h2>
-                <div className="inline-flex items-center gap-2">
-                  <button
-                    onClick={() => setShowCreateDecision((prev) => !prev)}
-                    className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
-                  >
-                    <Plus size={12} />
-                    {isPolish ? 'Nowa' : 'New'}
-                  </button>
-                  <button
-                    onClick={() => handleGenerateAI('decisions')}
-                    disabled={isGeneratingAI === 'decisions'}
-                    className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
-                  >
-                    {isGeneratingAI === 'decisions' ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={12} />
-                    )}
-                    AI
-                  </button>
-                </div>
-              </div>
-
-              {showCreateDecision && (
-                <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3 flex flex-col md:flex-row gap-2">
-                  <input
-                    value={newDecisionTitle}
-                    onChange={(e) => setNewDecisionTitle(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
-                    placeholder={isPolish ? 'Tytuł decyzji...' : 'Decision title...'}
-                  />
-                  <button
-                    onClick={handleCreateDecision}
-                    disabled={!newDecisionTitle.trim() || isMutating}
-                    className="px-3 py-2 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-300 hover:bg-primary-500/10 disabled:opacity-50"
-                  >
-                    {isPolish ? 'Utwórz' : 'Create'}
-                  </button>
-                </div>
-              )}
-
-              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
-                {sortedDecisions.length === 0 ? (
-                  <div className="border border-dashed border-slate-300/60 dark:border-navy-700/70 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
-                    {isPolish
-                      ? 'Brak decyzji. Dodaj pierwszą pozycję.'
-                      : 'No decisions yet. Add the first item.'}
-                  </div>
-                ) : (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Decyzja' : 'Decision'}</th>
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Status' : 'Status'}</th>
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Termin' : 'Due'}</th>
-                        <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                      {sortedDecisions.map((decision) => (
-                        <tr key={decision.id}>
-                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
-                            {decision.title}
-                          </td>
-                          <td className="py-2 pr-2 text-xs text-slate-500 dark:text-slate-400">
-                            {decision.type}
-                          </td>
-                          <td className="py-2 pr-2">
-                            <span className="text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
-                              {decision.status}
-                            </span>
-                          </td>
-                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
-                            {decision.dueDate
-                              ? new Date(decision.dueDate).toLocaleDateString(
-                                  isPolish ? 'pl-PL' : 'en-GB'
-                                )
-                              : '—'}
-                          </td>
-                          <td className="py-2 text-right">
-                            <button
-                              onClick={() => onOpenDecision?.(decision.id)}
-                              className="inline-flex items-center gap-1 text-xs text-primary-600 dark:text-primary-300 hover:underline"
-                            >
-                              <ExternalLink size={12} />
-                              {isPolish ? 'Otwórz' : 'Open'}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
+          const DecisionsComp = SECTION_REGISTRY['decisions'];
+          const decisionsST = [...leftSections, ...rightSections].find(
+            (s) => s.key === 'decisions'
           );
+          const decisionsFallbackST = {
+            id: 'decisions',
+            key: 'decisions',
+            name: 'Decisions',
+            namePl: 'Decyzje',
+            description: null,
+            descriptionPl: null,
+            category: 'content' as const,
+            columnPosition: 'left' as const,
+            defaultOrder: 60,
+            icon: 'Scale',
+            iconColor: 'text-amber-500',
+            iconBg: null,
+            componentKey: 'decisions',
+            isSystem: false,
+            isActive: true,
+          };
+          component = DecisionsComp ? (
+            <DecisionsComp
+              sectionType={decisionsST || decisionsFallbackST}
+              expanded={true}
+              onToggle={() => {}}
+            />
+          ) : null;
           break;
         }
 
@@ -4568,148 +4813,30 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           break;
         }
 
-        case 'attachments': {
-          const AttachComp = SECTION_REGISTRY['attachments'];
-          const attachST = [...leftSections, ...rightSections].find((s) => s.key === 'attachments');
+        // ── Attachments & Links (shared AttachmentsLinksCanvas — same as Task) ──
+        case 'attachments-links': {
           component = (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Załączniki' : 'Attachments'}
-                </h2>
-              </div>
-              {/* Attachments */}
-              {attachST && AttachComp ? (
-                <AttachComp sectionType={attachST} expanded={true} onToggle={() => {}} />
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-3">
-                    <Paperclip size={20} className="text-slate-400 dark:text-slate-500" />
-                  </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                    {isPolish ? 'Brak załączników' : 'No attachments yet'}
-                  </p>
-                </div>
-              )}
-            </div>
-          );
-          break;
-        }
-
-        case 'links': {
-          component = (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Linki' : 'Links'}
-                </h2>
-                <button className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/15 px-3 py-1.5 rounded-lg transition-all">
-                  <Plus size={13} />
-                  {isPolish ? 'Dodaj link' : 'Add link'}
-                </button>
-              </div>
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-3">
-                  <Link2 size={20} className="text-slate-400 dark:text-slate-500" />
-                </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                  {isPolish ? 'Brak linków' : 'No links yet'}
-                </p>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                  {isPolish
-                    ? 'Dodaj linki do zewnętrznych zasobów, dokumentów lub narzędzi'
-                    : 'Add links to external resources, documents, or tools'}
-                </p>
-              </div>
-            </div>
-          );
-          break;
-        }
-
-        case 'technical-specification': {
-          const trimmedSpec = technicalSpecDraft.trim();
-          const shouldClampSpec = trimmedSpec.split('\n').length > 8 || trimmedSpec.length > 680;
-          component = (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Specyfikacja techniczna' : 'Technical Specification'}
-                </h2>
-                <div className="inline-flex items-center gap-2">
-                  <button
-                    onClick={() => setTechnicalSpecDraft('')}
-                    className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
-                  >
-                    {isPolish ? 'Wyczyść' : 'Clear'}
-                  </button>
-                  <button
-                    onClick={async () => {
-                      const result = await handleGenerateAI('technical-specification');
-                      const content = result?.parsedContent || result?.content;
-                      if (typeof content === 'string' && content.trim()) {
-                        setTechnicalSpecDraft(content.trim());
-                      }
-                    }}
-                    disabled={isGeneratingAI === 'technical-specification'}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-purple-500 dark:text-purple-400 hover:text-purple-600 bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/15 px-3 py-1.5 rounded-lg transition-all disabled:opacity-50"
-                  >
-                    {isGeneratingAI === 'technical-specification' ? (
-                      <Loader2 size={13} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={13} />
-                    )}
-                    {isPolish ? 'Generuj z AI' : 'Generate with AI'}
-                  </button>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4 relative">
-                <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-2">
-                  {isPolish
-                    ? 'Założenia techniczne, architektura, wymagania wdrożeniowe'
-                    : 'Technical assumptions, architecture, implementation requirements'}
-                </label>
-                <textarea
-                  value={technicalSpecDraft}
-                  onChange={(e) => setTechnicalSpecDraft(e.target.value)}
-                  rows={isTechnicalSpecExpanded ? 14 : 8}
-                  className="w-full min-h-[180px] px-0 py-1 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y"
-                  placeholder={
-                    isPolish
-                      ? 'Opisz architekturę, interfejsy, wymagania niefunkcjonalne, ograniczenia i plan implementacji...'
-                      : 'Describe architecture, interfaces, non-functional requirements, constraints, and implementation plan...'
-                  }
-                />
-                {shouldClampSpec && (
-                  <div className="mt-2 flex justify-end">
-                    <button
-                      onClick={() => setIsTechnicalSpecExpanded((prev) => !prev)}
-                      className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-primary-500 transition-colors"
-                    >
-                      {isTechnicalSpecExpanded
-                        ? isPolish
-                          ? 'Pokaż mniej'
-                          : 'Less'
-                        : isPolish
-                          ? 'Pokaż więcej'
-                          : 'More'}
-                    </button>
-                  </div>
-                )}
-                {!trimmedSpec && (
-                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-3">
-                      <FileCode size={20} className="text-slate-400 dark:text-slate-500" />
-                    </div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                      {isPolish
-                        ? 'Brak specyfikacji technicznej'
-                        : 'No technical specification yet'}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <AttachmentsLinksCanvas
+              attachments={attachments}
+              onUploadAttachments={handleUploadAttachments}
+              onDeleteAttachment={handleDeleteAttachment}
+              onEditAttachment={(id, patch) => {
+                setAttachments((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+              }}
+              linkedItems={linkedItems}
+              onAddLinkedItem={handleAddLinkedItem}
+              onRemoveLinkedItem={handleRemoveLinkedItem}
+              onEditLinkedItem={(key, patch) => {
+                const [type, id] = key.split(':');
+                setLinkedItems((prev) =>
+                  prev.map((item) =>
+                    item.type === type && item.id === id ? { ...item, ...patch } : item
+                  )
+                );
+              }}
+              onNavigateLinkedItem={openLinkedItemTarget}
+              searchLinkedItems={searchLinkedItems}
+            />
           );
           break;
         }
@@ -4765,8 +4892,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     rootCauseDraft,
     costOfInactionDraft,
     marketContextDraft,
-    technicalSpecDraft,
-    isTechnicalSpecExpanded,
     localKpis,
     showCreateKpi,
     kpiMenuId,
@@ -4803,6 +4928,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     saveEditKpi,
     duplicateKpi,
     removeKpi,
+    // AttachmentsLinksCanvas handlers
+    handleUploadAttachments,
+    handleDeleteAttachment,
+    handleAddLinkedItem,
+    handleRemoveLinkedItem,
+    searchLinkedItems,
+    openLinkedItemTarget,
   ]);
 
   const orderedNModeSectionsWithContent: NModeSection[] = useMemo(() => {
@@ -5050,41 +5182,50 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             )}
                           {dangerGroup.map(renderButton)}
 
-                          {/* Right-aligned AI Generate button */}
+                          {/* Right-aligned AI Generate button (hidden for activity-log — no analysis) */}
                           <div className="flex-1" />
-                          {(() => {
-                            const aiSectionKey =
-                              activeNSection === 'initiative-definition' ? 'scope' : activeNSection;
-                            const aiLabel =
-                              activeNSection === 'initiative-definition'
-                                ? isPolish
-                                  ? 'Generuj scope'
-                                  : 'Generate scope'
-                                : isPolish
-                                  ? 'Analyze with AI'
-                                  : 'Analyze with AI';
-                            return (
-                              <button
-                                onClick={async () => {
-                                  const result = await handleGenerateAI(aiSectionKey);
-                                  if (result?.parsedContent || result?.content) {
-                                    toast.success(
-                                      isPolish ? 'AI wygenerował treść' : 'AI generated content'
-                                    );
-                                  }
-                                }}
-                                disabled={isGeneratingAI === aiSectionKey}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
-                              >
-                                {isGeneratingAI === aiSectionKey ? (
-                                  <Loader2 size={13} className="animate-spin" />
-                                ) : (
-                                  <Sparkles size={13} />
-                                )}
-                                <span>{aiLabel}</span>
-                              </button>
-                            );
-                          })()}
+                          {activeNSection !== 'activity-log' &&
+                            (() => {
+                              const aiSectionKey =
+                                activeNSection === 'initiative-definition'
+                                  ? 'scope'
+                                  : activeNSection === 'risk-raid'
+                                    ? 'raid'
+                                    : activeNSection;
+                              const aiLabel =
+                                activeNSection === 'initiative-definition'
+                                  ? isPolish
+                                    ? 'Generuj scope'
+                                    : 'Generate scope'
+                                  : activeNSection === 'risk-raid'
+                                    ? isPolish
+                                      ? 'Analizuj RAID'
+                                      : 'Analyze RAID'
+                                    : isPolish
+                                      ? 'Analyze with AI'
+                                      : 'Analyze with AI';
+                              return (
+                                <button
+                                  onClick={async () => {
+                                    const result = await handleGenerateAI(aiSectionKey);
+                                    if (result?.parsedContent || result?.content) {
+                                      toast.success(
+                                        isPolish ? 'AI wygenerował treść' : 'AI generated content'
+                                      );
+                                    }
+                                  }}
+                                  disabled={isGeneratingAI === aiSectionKey}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                >
+                                  {isGeneratingAI === aiSectionKey ? (
+                                    <Loader2 size={13} className="animate-spin" />
+                                  ) : (
+                                    <Sparkles size={13} />
+                                  )}
+                                  <span>{aiLabel}</span>
+                                </button>
+                              );
+                            })()}
                         </>
                       );
                     })()}

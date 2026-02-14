@@ -13,7 +13,11 @@
 import { AlertTriangle } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
-import type { RaidItem, RaidType } from '@/components/shared/NModeSections/RaidCanvas';
+import type {
+  RaidItem,
+  RaidType,
+  RiskResponseStrategy,
+} from '@/components/shared/NModeSections/RaidCanvas';
 import { RaidCanvas } from '@/components/shared/NModeSections/RaidCanvas';
 
 import { CollapsibleSection } from './CollapsibleSection';
@@ -54,9 +58,11 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
         contingency: (r as any).contingency || '',
         proposedAction: (r as any).proposedAction || '',
         status: (r.status || 'OPEN').toLowerCase() as RaidItem['status'],
+        responseStrategy: (r as any).responseStrategy || undefined,
         owner: r.owner || (r as any).ownerName || '',
         dueDate: (r as any).dueDate || '',
         source: (r as any).source || '',
+        description: (r as any).description || r.description || '',
       })),
     [raidItems]
   );
@@ -98,6 +104,9 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
           if (updates.proposedAction !== undefined) patch.proposedAction = updates.proposedAction;
           if (updates.dueDate !== undefined) patch.dueDate = updates.dueDate;
           if (updates.source !== undefined) patch.source = updates.source;
+          if (updates.responseStrategy !== undefined)
+            patch.responseStrategy = updates.responseStrategy;
+          if (updates.description !== undefined) patch.description = updates.description;
           return patch;
         })
       );
@@ -110,6 +119,24 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
       setRaidItems((prev) => prev.filter((item) => item.id !== id));
     },
     [setRaidItems]
+  );
+
+  const handleConvertToIssue = useCallback(
+    (id: string) => {
+      setRaidItems((prev) =>
+        prev.map((item) => {
+          if (item.id !== id) return item;
+          const patch: any = { ...item };
+          const oldType = patch.type;
+          const oldTitle = patch.title;
+          patch.type = 'issue';
+          patch.status = 'OPEN';
+          patch.source = `${isPolish ? 'Konwersja z' : 'Converted from'} ${oldType}: ${oldTitle}`;
+          return patch;
+        })
+      );
+    },
+    [setRaidItems, isPolish]
   );
 
   const handleAIGenerate = useCallback(() => {
@@ -165,6 +192,7 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
         onAddItem={handleAddItem}
         onUpdateItem={handleUpdateItem}
         onRemoveItem={handleRemoveItem}
+        onConvertToIssue={handleConvertToIssue}
         onAIGenerate={handleAIGenerate}
         isGeneratingAI={isGeneratingAI === 'raid'}
         locked={readonly}

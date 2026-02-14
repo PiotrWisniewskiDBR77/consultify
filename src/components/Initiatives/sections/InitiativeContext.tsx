@@ -140,6 +140,7 @@ export interface InitiativeContextValue {
   handleGenerateAI: (section: string) => Promise<any>;
   handleCreateTask: () => Promise<void>;
   handleCreateDecision: () => Promise<void>;
+  handleRemoveDecision: (id: string) => Promise<void>;
   handleCreateRaid: () => Promise<void>;
   handleUpdateRaid: (id: string, updates: Partial<RaidItem>) => void;
   handleDeleteRaid: (id: string) => Promise<void>;

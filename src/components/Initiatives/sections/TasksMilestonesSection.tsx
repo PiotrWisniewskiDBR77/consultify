@@ -7,15 +7,7 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-  Calendar,
-  ExternalLink,
-  MoreVertical,
-  Plus,
-  Sparkles,
-  Trash2,
-  User,
-} from 'lucide-react';
+import { Calendar, ExternalLink, MoreVertical, Plus, Sparkles, Trash2, User } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -30,7 +22,13 @@ import type { InitiativeSectionProps, TaskItem } from './types';
 
 const TASK_STATUS_CONFIG: Record<
   string,
-  { label: { en: string; pl: string }; color: string; dotColor: string; bgColor: string; textColor: string }
+  {
+    label: { en: string; pl: string };
+    color: string;
+    dotColor: string;
+    bgColor: string;
+    textColor: string;
+  }
 > = {
   todo: {
     label: { en: 'To Do', pl: 'Do zrobienia' },
@@ -121,9 +119,7 @@ const formatDueDate = (value?: string) => {
 // MAIN SECTION COMPONENT
 // ==========================================
 
-export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
-  readonly,
-}) => {
+export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ readonly }) => {
   const {
     tasks,
     setTasks,
@@ -173,57 +169,60 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
     }
   }, [isAddingInline]);
 
-  const createTaskArtifact = useCallback(async (
-    title: string,
-    source: 'manual' | 'ai' = 'manual',
-    options?: {
-      description?: string;
-      status?: string;
-      priority?: string;
-      dueDate?: string | null;
-      assigneeId?: string | null;
-    }
-  ) => {
-    if (!initiativeId) return;
-    const safeTitle = (title || '').trim() || (isPolish ? 'Nowe zadanie' : 'New task');
+  const createTaskArtifact = useCallback(
+    async (
+      title: string,
+      source: 'manual' | 'ai' = 'manual',
+      options?: {
+        description?: string;
+        status?: string;
+        priority?: string;
+        dueDate?: string | null;
+        assigneeId?: string | null;
+      }
+    ) => {
+      if (!initiativeId) return;
+      const safeTitle = (title || '').trim() || (isPolish ? 'Nowe zadanie' : 'New task');
 
-    const res = await Api.post('/tasks', {
-      title: safeTitle,
-      description: options?.description || '',
-      projectId,
-      initiativeId,
-      status: options?.status || 'todo',
-      priority: options?.priority || 'medium',
-      taskType: 'execution',
-      source,
-      dueDate: options?.dueDate || null,
-      assigneeId: options?.assigneeId || null,
-      estimatedHours: null,
-    });
+      const res = await Api.post('/tasks', {
+        title: safeTitle,
+        description: options?.description || '',
+        projectId,
+        initiativeId,
+        status: options?.status || 'todo',
+        priority: options?.priority || 'medium',
+        taskType: 'execution',
+        source,
+        dueDate: options?.dueDate || null,
+        assigneeId: options?.assigneeId || null,
+        estimatedHours: null,
+      });
 
-    const selectedUser = users.find((u) => u.id === (options?.assigneeId || ''));
+      const selectedUser = users.find((u) => u.id === (options?.assigneeId || ''));
 
-    const newTask: TaskItem = {
-      id: res.id,
-      title: safeTitle,
-      description: options?.description || '',
-      status: options?.status || 'todo',
-      priority: options?.priority || 'medium',
-      taskType: 'execution',
-      dueDate: options?.dueDate || undefined,
-      assigneeId: options?.assigneeId || undefined,
-      assigneeName: selectedUser
-        ? `${selectedUser.firstName} ${selectedUser.lastName}`.trim()
-        : undefined,
-      estimatedHours: null,
-      isMilestone: false,
-      milestoneDate: undefined,
-      source,
-    };
+      const newTask: TaskItem = {
+        id: res.id,
+        title: safeTitle,
+        description: options?.description || '',
+        status: options?.status || 'todo',
+        priority: options?.priority || 'medium',
+        taskType: 'execution',
+        dueDate: options?.dueDate || undefined,
+        assigneeId: options?.assigneeId || undefined,
+        assigneeName: selectedUser
+          ? `${selectedUser.firstName} ${selectedUser.lastName}`.trim()
+          : undefined,
+        estimatedHours: null,
+        isMilestone: false,
+        milestoneDate: undefined,
+        source,
+      };
 
-    setTasks((prev) => [...prev, newTask]);
-    return newTask;
-  }, [initiativeId, isPolish, projectId, setTasks, users]);
+      setTasks((prev) => [...prev, newTask]);
+      return newTask;
+    },
+    [initiativeId, isPolish, projectId, setTasks, users]
+  );
 
   const handleStartInlineAdd = useCallback(() => {
     if (readonly) return;
@@ -332,11 +331,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
   }, [initiativeId, demoRowsInjected, tasks, createTaskArtifact, users, setTasks]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-4"
-    >
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
@@ -352,9 +347,9 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
           {!readonly && (
             <button
               onClick={handleStartInlineAdd}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/15 px-3 py-1.5 rounded-lg transition-all"
+              className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
             >
-              <Plus size={13} />
+              <Plus size={12} />
               {isPolish ? 'Dodaj task' : 'Add task'}
             </button>
           )}
@@ -398,7 +393,9 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
                       </button>
                     </td>
                     <td className="py-2.5 pr-2">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs ${statusConfig.bgColor} ${statusConfig.textColor}`}>
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs ${statusConfig.bgColor} ${statusConfig.textColor}`}
+                      >
                         <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.color}`} />
                         {isPolish ? statusConfig.label.pl : statusConfig.label.en}
                       </span>
@@ -492,7 +489,11 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
                         setNewTaskTitle('');
                       }
                     }}
-                    placeholder={isPolish ? 'Wpisz nazwę taska i Enter...' : 'Type task name and press Enter...'}
+                    placeholder={
+                      isPolish
+                        ? 'Wpisz nazwę taska i Enter...'
+                        : 'Type task name and press Enter...'
+                    }
                     className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-emerald-300 dark:border-emerald-500/40 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-emerald-500"
                   />
                 </td>
@@ -512,7 +513,13 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
                       disabled={isCreatingTask}
                       className="px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50"
                     >
-                      {isCreatingTask ? (isPolish ? 'Tworzenie...' : 'Creating...') : (isPolish ? 'Utwórz' : 'Create')}
+                      {isCreatingTask
+                        ? isPolish
+                          ? 'Tworzenie...'
+                          : 'Creating...'
+                        : isPolish
+                          ? 'Utwórz'
+                          : 'Create'}
                     </button>
                   </div>
                 </td>
@@ -520,7 +527,10 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
             )}
             {sortedTasks.length === 0 && readonly && (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                <td
+                  colSpan={7}
+                  className="py-8 text-center text-sm text-slate-500 dark:text-slate-400"
+                >
                   {isPolish ? 'Brak tasków' : 'No tasks yet'}
                 </td>
               </tr>

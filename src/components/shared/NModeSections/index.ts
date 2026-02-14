@@ -40,6 +40,7 @@ export type {
   RaidStatus,
   RaidType,
   RaidTypeFilter,
+  RiskResponseStrategy,
 } from './RaidCanvas';
 export { getRaidScore, RaidCanvas } from './RaidCanvas';
 export type {
