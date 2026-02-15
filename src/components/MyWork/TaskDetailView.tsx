@@ -202,6 +202,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const { updateWorkspaceFromView } = useConversationStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [lastSavedSnapshot, setLastSavedSnapshot] = useState<string>('');
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -615,6 +617,29 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         const init = availableInitiatives.find((i) => i.id === task.initiativeId);
         setInitiativeName(init?.name || null);
       }
+
+      // Baseline snapshot for dirty-check (only persisted fields)
+      try {
+        const baseline = {
+          title: task.title || '',
+          description: task.description || '',
+          status: task.status || 'todo',
+          priority: normalizePriority(task.priority),
+          dueDate: task.dueDate ? String(task.dueDate).split('T')[0] : '',
+          startedAt: task.startedAt ? String(task.startedAt).split('T')[0] : '',
+          blockedReason: task.status === 'blocked' ? task.blockedReason || '' : '',
+          tags: task.tags || [],
+          checklist: task.checklist || [],
+          initiativeId: task.initiativeId || null,
+          assigneeId: task.assigneeId || null,
+          ownerId: task.ownerId || task.assigneeId || null,
+        };
+        setLastSavedSnapshot(JSON.stringify(baseline));
+        setLastSavedAt(new Date().toISOString());
+      } catch {
+        setLastSavedSnapshot('');
+        setLastSavedAt(null);
+      }
     } catch (error) {
       console.error('Failed to load task', error);
       toast.error(isPolish ? 'Nie udało się załadować zadania' : 'Failed to load task');
@@ -648,9 +673,9 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setBlockedByDecisionId('');
   };
 
-  const handleSave = async () => {
+  const handleSave = async (silent = false) => {
     if (!title.trim()) {
-      toast.error(isPolish ? 'Tytuł jest wymagany' : 'Title is required');
+      if (!silent) toast.error(isPolish ? 'Tytuł jest wymagany' : 'Title is required');
       return;
     }
 
@@ -709,15 +734,24 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
       if (taskId) {
         await Api.put(`/tasks/${taskId}`, payload);
-        toast.success(isPolish ? 'Zadanie zaktualizowane' : 'Task updated');
+        if (!silent) toast.success(isPolish ? 'Zadanie zaktualizowane' : 'Task updated');
+        onSaved?.({ ...payload, id: taskId });
       } else {
-        await Api.post('/tasks', { ...payload, projectId: projectId || null });
-        toast.success(isPolish ? 'Zadanie utworzone' : 'Task created');
+        const created = await Api.post('/tasks', { ...payload, projectId: projectId || null });
+        if (!silent) toast.success(isPolish ? 'Zadanie utworzone' : 'Task created');
+        onSaved?.({ ...payload, id: created?.id || null });
       }
-      onSaved?.({ ...payload, id: taskId });
+
+      // Update dirty baseline after a successful save
+      try {
+        setLastSavedSnapshot(JSON.stringify({ ...payload, startedAt: startDate || null }));
+        setLastSavedAt(new Date().toISOString());
+      } catch {
+        /* ignore */
+      }
     } catch (error) {
       console.error('Failed to save task', error);
-      toast.error(isPolish ? 'Nie udało się zapisać zadania' : 'Failed to save task');
+      if (!silent) toast.error(isPolish ? 'Nie udało się zapisać zadania' : 'Failed to save task');
     } finally {
       setSaving(false);
     }
@@ -3000,8 +3034,70 @@ Return ONLY the final comment text.`;
     blockedReason,
   ]);
 
-  // ── isDirty (for NModeHeader save button) ────────────────────────────────
-  const isDirty = title.trim().length > 0 || description.trim().length > 0;
+  // ── Dirty tracking + autosave (SaaS online persistence) ───────────────────
+  const persistedDraft = useMemo(
+    () => ({
+      title,
+      description,
+      status,
+      priority,
+      dueDate: dueDate || null,
+      startedAt: startDate || null,
+      blockedReason: status === 'blocked' ? blockedReason : '',
+      tags,
+      checklist,
+      initiativeId: initiativeId || null,
+      assigneeId: assigneeId || null,
+      ownerId: ownerId || null,
+    }),
+    [
+      title,
+      description,
+      status,
+      priority,
+      dueDate,
+      startDate,
+      blockedReason,
+      tags,
+      checklist,
+      initiativeId,
+      assigneeId,
+      ownerId,
+    ]
+  );
+
+  const draftSnapshot = useMemo(() => {
+    try {
+      return JSON.stringify(persistedDraft);
+    } catch {
+      return '';
+    }
+  }, [persistedDraft]);
+
+  const isDirty = useMemo(() => {
+    // For existing tasks: compare against last saved baseline
+    if (taskId) return lastSavedSnapshot.length > 0 && draftSnapshot !== lastSavedSnapshot;
+    // For new tasks: enable Save when there's a valid title
+    return title.trim().length > 0;
+  }, [taskId, lastSavedSnapshot, draftSnapshot, title]);
+
+  const autosaveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!taskId) return; // don't autosave until the task exists
+    if (!isDirty) return;
+    if (saving) return;
+    if (!title.trim()) return;
+
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      handleSave(true);
+    }, 900);
+
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskId, isDirty, saving, title, draftSnapshot]);
 
   // ── Loading guard (AFTER all hooks to respect Rules of Hooks) ────────────
   if (loading) {
@@ -3029,6 +3125,13 @@ Return ONLY the final comment text.`;
               onSave={handleSave}
               saving={saving}
               isDirty={isDirty}
+              draftSavedLabel={
+                lastSavedAt
+                  ? isPolish
+                    ? `Zapisano ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    : `Saved ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  : undefined
+              }
               onChat={handleOpenChat}
               onClose={onClose}
               statusDotColor={statusConfig.color}
@@ -3076,6 +3179,13 @@ Return ONLY the final comment text.`;
               onSave={handleSave}
               saving={saving}
               isDirty={isDirty}
+              draftSavedLabel={
+                lastSavedAt
+                  ? isPolish
+                    ? `Zapisano ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    : `Saved ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  : undefined
+              }
               onChat={handleOpenChat}
               onClose={onClose}
               statusDotColor={statusConfig.color}
