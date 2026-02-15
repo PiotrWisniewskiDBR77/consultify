@@ -16,7 +16,9 @@ import {
   Calendar,
   CheckCircle,
   CheckSquare,
+  ChevronDown,
   ChevronLeft,
+  ChevronUp,
   Clock,
   Copy,
   Crosshair,
@@ -49,10 +51,11 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Callout } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
 import {
@@ -119,6 +122,7 @@ import {
   SECTION_REGISTRY,
 } from './sections';
 import { InitiativeGatesWorkflowTable } from './sections/InitiativeGatesWorkflowTable';
+import { ResourcesSection } from './sections/ResourcesSection';
 import type {
   Decision,
   GateReadinessCheck,
@@ -162,6 +166,76 @@ const toKpiNumber = (value: string): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+interface ExpandableNarrativeFieldProps {
+  value: string;
+  onChange: (next: string) => void;
+  placeholder: string;
+  isPolish: boolean;
+}
+
+const ExpandableNarrativeField: React.FC<ExpandableNarrativeFieldProps> = ({
+  value,
+  onChange,
+  placeholder,
+  isPolish,
+}) => {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+
+    const updateOverflow = () => {
+      if (isExpanded) {
+        // While expanded, keep the toggle visible when content is non-trivial.
+        setIsOverflowing(value.trim().length > 220 || el.scrollHeight > 120);
+        return;
+      }
+      setIsOverflowing(el.scrollHeight > el.clientHeight + 2);
+    };
+
+    updateOverflow();
+    if (typeof ResizeObserver === 'undefined') return;
+
+    const observer = new ResizeObserver(updateOverflow);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isExpanded, value]);
+
+  useEffect(() => {
+    if (!isOverflowing && isExpanded) {
+      setIsExpanded(false);
+    }
+  }, [isOverflowing, isExpanded]);
+
+  return (
+    <div className="relative">
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={3}
+        className={`w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[60px] ${
+          isExpanded ? 'min-h-[220px] overflow-visible resize-y' : 'h-24 overflow-hidden resize-y'
+        }`}
+        placeholder={placeholder}
+      />
+      {isOverflowing && (
+        <button
+          type="button"
+          onClick={() => setIsExpanded((prev) => !prev)}
+          className="absolute -bottom-4 right-4 inline-flex items-center gap-1 px-1 py-0.5 text-[10px] font-medium text-slate-500/90 dark:text-slate-400/90 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+        >
+          {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+          {isExpanded ? (isPolish ? 'Mniej' : 'Less') : isPolish ? 'Więcej' : 'More'}
+        </button>
+      )}
+    </div>
+  );
+};
+
 export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   initiativeId,
   onBack,
@@ -172,7 +246,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { isChatCollapsed, toggleChatCollapse, setCurrentView, setMyWorkIntent } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
 
   // ==========================================
@@ -247,6 +321,69 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [newResourceRole, setNewResourceRole] = useState('');
   const [newResourceAllocation, setNewResourceAllocation] = useState('50');
   const [newResourceTool, setNewResourceTool] = useState('');
+  // Resources: Team/FTE, Budget Items, Tools (persisted via API)
+  const [apiResourceItems, setApiResourceItems] = useState<
+    Array<{
+      id: string;
+      initiativeId?: string;
+      userId?: string;
+      name: string;
+      role: string;
+      allocationPercentage: number;
+      startDate?: string;
+      endDate?: string;
+      notes?: string;
+      firstName?: string;
+      lastName?: string;
+      avatarUrl?: string;
+      source?: 'manual' | 'ai';
+    }>
+  >([]);
+  const [apiBudgetItems, setApiBudgetItems] = useState<
+    Array<{
+      id: string;
+      initiativeId?: string;
+      category: string;
+      costType: 'CAPEX' | 'OPEX';
+      amount: number;
+      currency: string;
+      description?: string;
+      source?: 'manual' | 'ai';
+    }>
+  >([]);
+  const [apiToolItems, setApiToolItems] = useState<
+    Array<{
+      id: string;
+      initiativeId?: string;
+      name: string;
+      category: string;
+      vendor?: string;
+      licenseCost: number;
+      licenseType: string;
+      status: string;
+      notes?: string;
+      costType?: 'CAPEX' | 'OPEX';
+      source?: 'manual' | 'ai';
+    }>
+  >([]);
+  const [apiIntangibleAssets, setApiIntangibleAssets] = useState<
+    Array<{
+      id: string;
+      initiativeId?: string;
+      assetType: string;
+      name: string;
+      provider?: string;
+      cost: number;
+      currency: string;
+      validFrom?: string;
+      validUntil?: string;
+      status: string;
+      beneficiaries?: string;
+      notes?: string;
+      costType?: 'CAPEX' | 'OPEX';
+      source?: 'manual' | 'ai';
+    }>
+  >([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [linkedItems, setLinkedItems] = useState<LinkedItem[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -302,6 +439,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showCreateDecision, setShowCreateDecision] = useState(false);
   const [showCreateRaid, setShowCreateRaid] = useState(false);
+  const [tasksAiRequest, setTasksAiRequest] = useState<{
+    mode: 'analyze' | 'addOne';
+    nonce: number;
+  } | null>(null);
+  const [decisionsAiRequest, setDecisionsAiRequest] = useState<{
+    mode: 'analyze' | 'addOne';
+    nonce: number;
+  } | null>(null);
+  const [resourcesAiRequest, setResourcesAiRequest] = useState<{ nonce: number } | null>(null);
+  const [teamAiRequest, setTeamAiRequest] = useState<{ nonce: number } | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
@@ -331,27 +478,79 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const currentUser = useAppStore((s) => s.currentUser);
   const currentUserId = currentUser?.id || 'current-user';
   const nModeOrderStorageKey = `initiative:nmode:section-order:v2:${initiativeId}`;
+  const initiativeDefinitionDraftStorageKey = `consultinity-initiative-definition-draft:v1:${initiativeId}`;
+  const definitionDraftRestoredRef = useRef(false);
+  const decodeHtmlEntities = useCallback((value: string): string => {
+    return value
+      .replace(/&quot;/g, '"')
+      .replace(/&#34;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
+  }, []);
+
+  const requestTasksAi = useCallback((mode: 'analyze' | 'addOne') => {
+    setTasksAiRequest({ mode, nonce: Date.now() });
+  }, []);
+  const clearTasksAiRequest = useCallback(() => setTasksAiRequest(null), []);
+
+  const requestDecisionsAi = useCallback((mode: 'analyze' | 'addOne') => {
+    setDecisionsAiRequest({ mode, nonce: Date.now() });
+  }, []);
+  const clearDecisionsAiRequest = useCallback(() => setDecisionsAiRequest(null), []);
+
+  const requestResourcesAi = useCallback(() => {
+    setResourcesAiRequest({ nonce: Date.now() });
+  }, []);
+  const clearResourcesAiRequest = useCallback(() => setResourcesAiRequest(null), []);
+
+  const requestTeamAi = useCallback(() => {
+    setTeamAiRequest({ nonce: Date.now() });
+  }, []);
+  const clearTeamAiRequest = useCallback(() => setTeamAiRequest(null), []);
 
   // ==========================================
   // COMPUTED VALUES
   // ==========================================
 
-  const status = (initiative?.status || 'DRAFT') as InitiativeStatus;
+  const rawStatus = String(initiative?.status || InitiativeStatus.DRAFT).toUpperCase();
+  const status = (
+    (Object.values(InitiativeStatus) as string[]).includes(rawStatus)
+      ? rawStatus
+      : InitiativeStatus.DRAFT
+  ) as InitiativeStatus;
   const statusMeta = getStatusMeta(status);
-  // Role-aware status actions: filter based on current user's gate roles
+  // Status actions are driven by backend `gate-readiness-check` (source of truth).
   const statusActions = useMemo(() => {
-    if (userGateRoles.length > 0) {
-      return getFilteredStatusActions(status, userGateRoles).filter(
-        (a) => (a as any).variant !== 'disabled'
-      );
-    }
-    // Fallback: show all actions if gate roles not yet loaded
-    return getStatusActions(status);
-  }, [status, userGateRoles]);
+    const transitions = gateReadiness?.availableTransitions || [];
+    if (!transitions || transitions.length === 0) return [];
+
+    const byTarget = new Map<string, any>();
+    transitions.forEach((t: any) => byTarget.set(String(t.targetStatus).toUpperCase(), t));
+
+    return getStatusActions(status)
+      .map((a) => {
+        const tr = byTarget.get(String(a.targetStatus).toUpperCase());
+        if (!tr || !tr.canCurrentUserExecute) return null;
+        return { ...a, gate: tr.gate || null, requiredRoles: tr.requiredRoles || [] };
+      })
+      .filter(Boolean) as any[];
+  }, [status, gateReadiness]);
   const primaryActions = statusActions.filter((a) => a.variant === 'primary').slice(0, 2);
-  const contextActions = getContextActions(status);
+  const contextActions = useMemo(() => {
+    return gateReadiness?.capabilities?.ctaBar?.contextCreateActions || [];
+  }, [gateReadiness]);
   const currentModule = getModuleFromStatus(status);
   const moduleConfig = MODULE_CONFIG[currentModule];
+
+  const topBarCaps = gateReadiness?.capabilities?.topBar;
+  const canEditPriority = !!topBarCaps?.canEditPriority;
+  const canEditOwner = !!topBarCaps?.canEditOwner;
+  const canEditTargetDate = !!topBarCaps?.canEditTargetDate;
+  const canEditCards = !!gateReadiness?.capabilities?.cards?.canEditCards;
+  const canUseAi = !!gateReadiness?.capabilities?.ctaBar?.canUseAi;
 
   const toggleSection = useCallback((id: string) => {
     setExpandedSections((prev) => {
@@ -600,11 +799,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             [
               'control',
               'team',
-              'timeline',
+              'initiativeTeam',
+              'raciEscalation',
               'resources',
               'stakeholders',
               'dependencies',
-              'attachments',
               'linkedItems',
               'tags',
               'reminders',
@@ -671,14 +870,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             pd = parsed;
           }
         } catch {
-          // Not JSON — treat as plain text problem statement (legacy)
-          pd = { symptom: rawPd };
+          // Some payloads are HTML-escaped by sanitization middleware (e.g. &quot;).
+          // Decode and try parsing once more.
+          try {
+            const decoded = decodeHtmlEntities(rawPd);
+            const parsedDecoded = JSON.parse(decoded);
+            if (typeof parsedDecoded === 'object' && parsedDecoded !== null) {
+              pd = parsedDecoded;
+            } else {
+              pd = { symptom: decoded };
+            }
+          } catch {
+            // Not JSON — treat as plain text problem statement (legacy)
+            pd = { symptom: decodeHtmlEntities(rawPd) };
+          }
         }
       }
       setSymptomDraft(pd.symptom || '');
       setRootCauseDraft(pd.rootCause || '');
       setCostOfInactionDraft(pd.costOfInaction || '');
-      setMarketContextDraft(data.marketContext || '');
+      setMarketContextDraft(data.marketContext || data.market_context || '');
       // Sync success criteria fields
       const td = data.targetState || data.target_state || {};
       if (typeof td === 'object' && td !== null) {
@@ -717,6 +928,92 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           data.kill_criteria ||
           (typeof scopeObj === 'object' ? scopeObj.killCriteria || [] : [])
       );
+
+      // Restore local draft if user refreshed before autosave persisted to backend.
+      // Only restore fields where server values are empty to avoid overwriting saved data.
+      if (!definitionDraftRestoredRef.current) {
+        try {
+          const rawDraft = localStorage.getItem(initiativeDefinitionDraftStorageKey);
+          if (rawDraft) {
+            const draft = JSON.parse(rawDraft) as {
+              symptomDraft?: string;
+              rootCauseDraft?: string;
+              costOfInactionDraft?: string;
+              marketContextDraft?: string;
+              inScopeItems?: string[];
+              outScopeItems?: string[];
+              killCriteriaItems?: string[];
+            };
+
+            const serverSymptom = String(pd.symptom || '').trim();
+            const serverRoot = String(pd.rootCause || '').trim();
+            const serverCost = String(pd.costOfInaction || '').trim();
+            const serverMarket = String(data.marketContext || data.market_context || '').trim();
+            const serverInScopeRaw =
+              typeof scopeObj === 'object' ? (scopeObj as any).inScope || [] : [];
+            const serverOutScopeRaw =
+              typeof scopeObj === 'object' ? (scopeObj as any).outScope || [] : [];
+            const serverKillRaw =
+              data.killCriteria ||
+              data.kill_criteria ||
+              (typeof scopeObj === 'object' ? (scopeObj as any).killCriteria || [] : []);
+
+            const serverInScope = normalizeStringList(serverInScopeRaw);
+            const serverOutScope = normalizeStringList(serverOutScopeRaw);
+            const serverKill = normalizeStringList(serverKillRaw);
+
+            let restoredAny = false;
+            if (!serverSymptom && String(draft.symptomDraft || '').trim()) {
+              setSymptomDraft(String(draft.symptomDraft || ''));
+              restoredAny = true;
+            }
+            if (!serverRoot && String(draft.rootCauseDraft || '').trim()) {
+              setRootCauseDraft(String(draft.rootCauseDraft || ''));
+              restoredAny = true;
+            }
+            if (!serverCost && String(draft.costOfInactionDraft || '').trim()) {
+              setCostOfInactionDraft(String(draft.costOfInactionDraft || ''));
+              restoredAny = true;
+            }
+            if (!serverMarket && String(draft.marketContextDraft || '').trim()) {
+              setMarketContextDraft(String(draft.marketContextDraft || ''));
+              restoredAny = true;
+            }
+            if (
+              serverInScope.length === 0 &&
+              Array.isArray(draft.inScopeItems) &&
+              draft.inScopeItems.length > 0
+            ) {
+              setInScopeItems(draft.inScopeItems);
+              restoredAny = true;
+            }
+            if (
+              serverOutScope.length === 0 &&
+              Array.isArray(draft.outScopeItems) &&
+              draft.outScopeItems.length > 0
+            ) {
+              setOutScopeItems(draft.outScopeItems);
+              restoredAny = true;
+            }
+            if (
+              serverKill.length === 0 &&
+              Array.isArray(draft.killCriteriaItems) &&
+              draft.killCriteriaItems.length > 0
+            ) {
+              setKillCriteriaItems(draft.killCriteriaItems);
+              restoredAny = true;
+            }
+
+            if (restoredAny) {
+              definitionDraftRestoredRef.current = true;
+              toast.success(isPolish ? 'Przywrócono lokalny szkic' : 'Restored local draft');
+            }
+          }
+        } catch {
+          // ignore local draft parse errors
+        }
+      }
+
       const rawKpis = Array.isArray(data.kpis)
         ? data.kpis
         : Array.isArray(data.kpi)
@@ -743,19 +1040,31 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }))
       );
       setBudgetDraft(
-        String(data.budget || data.budgetEstimate || data.costCapex || data.cost_capex || '')
+        String(
+          data.estimatedBudget ||
+            data.estimated_budget ||
+            data.budget ||
+            data.budgetEstimate ||
+            data.costCapex ||
+            data.cost_capex ||
+            ''
+        )
       );
-      const rawTools = Array.isArray(data.tools)
-        ? data.tools
-        : Array.isArray(data.toolsNeeded)
-          ? data.toolsNeeded
-          : [];
+      const rawTools = Array.isArray(data.resourceTools)
+        ? data.resourceTools
+        : Array.isArray(data.resource_tools)
+          ? data.resource_tools
+          : Array.isArray(data.tools)
+            ? data.tools
+            : Array.isArray(data.toolsNeeded)
+              ? data.toolsNeeded
+              : [];
       setResourceTools(rawTools.map((t: any) => String(t)));
       const rawPriority = (data.priority || 'medium').toLowerCase();
       setPriority(rawPriority);
       setOwnerId(data.ownerId || data.owner_id || '');
       setSponsorId(data.sponsorId || data.sponsor_id || '');
-      setTargetDate(data.plannedEndDate || data.targetDate || '');
+      setTargetDate(data.plannedEndDate || data.planned_end_date || data.targetDate || '');
       setStartDate(data.plannedStartDate || data.planned_start_date || null);
       setEndDate(data.plannedEndDate || data.planned_end_date || null);
 
@@ -859,28 +1168,34 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         Api.get(`/initiatives/${initiativeId}/stakeholders`)
           .then((st: any) => {
             const mapped: Stakeholder[] = (st?.stakeholders || (Array.isArray(st) ? st : [])).map(
-              (s: any) => ({
-                id: s.id,
-                decisionId: initiativeId,
-                userId: s.userId || s.user_id,
-                userName: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim(),
-                userEmail: s.email,
-                role: (s.role === 'R'
-                  ? 'responsible'
-                  : s.role === 'A'
-                    ? 'accountable'
-                    : s.role === 'C'
-                      ? 'consulted'
-                      : 'informed') as StakeholderRole,
-                notificationSettings: {
-                  enabled: true,
-                  triggers: ['on_status_change'],
-                  emailEnabled: true,
-                  inAppEnabled: true,
-                  integrationChannels: [],
-                  syncTargets: [],
-                },
-              })
+              (s: any) => {
+                const raci =
+                  String(s.raciType || s.raci_type || s.raci || s.role || '').toUpperCase() || 'I';
+                const role: StakeholderRole =
+                  raci === 'R'
+                    ? 'responsible'
+                    : raci === 'A'
+                      ? 'accountable'
+                      : raci === 'C'
+                        ? 'consulted'
+                        : 'informed';
+                return {
+                  id: s.id,
+                  decisionId: initiativeId,
+                  userId: s.userId || s.user_id,
+                  userName: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim(),
+                  userEmail: s.email,
+                  role,
+                  notificationSettings: {
+                    enabled: true,
+                    triggers: ['on_status_change'],
+                    emailEnabled: true,
+                    inAppEnabled: true,
+                    integrationChannels: [],
+                    syncTargets: [],
+                  },
+                };
+              }
             );
             setStakeholders(mapped);
           })
@@ -908,6 +1223,22 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             setPendingApprovals(approvals);
           })
           .catch(() => setPendingApprovals([])),
+        Api.get(`/initiatives/${initiativeId}/comments`)
+          .then((c: any) => {
+            const rows = Array.isArray(c?.comments) ? c.comments : Array.isArray(c) ? c : [];
+            setComments(
+              rows.map((x: any) => ({
+                id: String(x.id),
+                content: String(x.content || ''),
+                authorId: String(x.authorId || x.userId || x.user_id || ''),
+                authorName: String(x.authorName || x.author_name || ''),
+                createdAt: String(x.createdAt || x.created_at || new Date().toISOString()),
+                likes: Number.isFinite(Number(x.likes)) ? Number(x.likes) : 0,
+                likedByMe: !!x.likedByMe,
+              }))
+            );
+          })
+          .catch(() => setComments([])),
         // Gate roles & governance
         Api.get(`/initiatives/${initiativeId}/gate-roles`)
           .then((gr: any) => {
@@ -938,6 +1269,86 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         Api.get(`/initiatives/${initiativeId}/status-history`)
           .then((sh: any) => setStatusHistory(sh?.history || []))
           .catch(() => setStatusHistory([])),
+        // Resources: Team / FTE
+        Api.get(`/initiatives/${initiativeId}/resources`)
+          .then((r: any) => {
+            const rows = Array.isArray(r?.resources) ? r.resources : Array.isArray(r) ? r : [];
+            setApiResourceItems(
+              rows.map((item: any) => ({
+                id: item.id,
+                initiativeId: item.initiativeId,
+                userId: item.userId,
+                name: item.name || `${item.firstName || ''} ${item.lastName || ''}`.trim() || '',
+                role: item.role || 'member',
+                allocationPercentage: item.allocationPercentage || 100,
+                startDate: item.startDate || undefined,
+                endDate: item.endDate || undefined,
+                notes: item.notes || undefined,
+                firstName: item.firstName,
+                lastName: item.lastName,
+                avatarUrl: item.avatarUrl,
+              }))
+            );
+          })
+          .catch(() => setApiResourceItems([])),
+        // Resources: Budget Items
+        Api.get(`/initiatives/${initiativeId}/budget-items`)
+          .then((r: any) => {
+            const rows = Array.isArray(r?.budgetItems) ? r.budgetItems : [];
+            setApiBudgetItems(
+              rows.map((item: any) => ({
+                id: item.id,
+                initiativeId: item.initiativeId,
+                category: item.category || 'other',
+                costType: item.costType || 'OPEX',
+                amount: item.amount || 0,
+                currency: item.currency || 'PLN',
+                description: item.description || undefined,
+              }))
+            );
+          })
+          .catch(() => setApiBudgetItems([])),
+        // Resources: Tools
+        Api.get(`/initiatives/${initiativeId}/tools`)
+          .then((r: any) => {
+            const rows = Array.isArray(r?.tools) ? r.tools : [];
+            setApiToolItems(
+              rows.map((item: any) => ({
+                id: item.id,
+                initiativeId: item.initiativeId,
+                name: item.name || '',
+                category: item.category || 'software',
+                vendor: item.vendor || undefined,
+                licenseCost: item.licenseCost || 0,
+                licenseType: item.licenseType || 'subscription',
+                status: item.status || 'planned',
+                notes: item.notes || undefined,
+              }))
+            );
+          })
+          .catch(() => setApiToolItems([])),
+        // Resources: Intangible Assets (Licenses, Training, Knowledge)
+        Api.get(`/initiatives/${initiativeId}/intangible-assets`)
+          .then((r: any) => {
+            const rows = Array.isArray(r?.intangibleAssets) ? r.intangibleAssets : [];
+            setApiIntangibleAssets(
+              rows.map((item: any) => ({
+                id: item.id,
+                initiativeId: item.initiativeId,
+                assetType: item.assetType || 'license',
+                name: item.name || '',
+                provider: item.provider || undefined,
+                cost: item.cost || 0,
+                currency: item.currency || 'PLN',
+                validFrom: item.validFrom || undefined,
+                validUntil: item.validUntil || undefined,
+                status: item.status || 'planned',
+                beneficiaries: item.beneficiaries || undefined,
+                notes: item.notes || undefined,
+              }))
+            );
+          })
+          .catch(() => setApiIntangibleAssets([])),
       ];
 
       await Promise.allSettled(fetches);
@@ -946,7 +1357,51 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [initiativeId]);
+  }, [initiativeId, decodeHtmlEntities, initiativeDefinitionDraftStorageKey, isPolish]);
+
+  // Persist local draft continuously so refresh won't lose edits (even before autosave).
+  useEffect(() => {
+    if (!initiativeId) return;
+    try {
+      const hasAny =
+        !!symptomDraft.trim() ||
+        !!rootCauseDraft.trim() ||
+        !!costOfInactionDraft.trim() ||
+        !!marketContextDraft.trim() ||
+        inScopeItems.length > 0 ||
+        outScopeItems.length > 0 ||
+        killCriteriaItems.length > 0;
+      if (!hasAny) {
+        localStorage.removeItem(initiativeDefinitionDraftStorageKey);
+        return;
+      }
+      localStorage.setItem(
+        initiativeDefinitionDraftStorageKey,
+        JSON.stringify({
+          savedAt: new Date().toISOString(),
+          symptomDraft,
+          rootCauseDraft,
+          costOfInactionDraft,
+          marketContextDraft,
+          inScopeItems,
+          outScopeItems,
+          killCriteriaItems,
+        })
+      );
+    } catch {
+      // ignore localStorage errors (private mode / quota)
+    }
+  }, [
+    initiativeId,
+    initiativeDefinitionDraftStorageKey,
+    symptomDraft,
+    rootCauseDraft,
+    costOfInactionDraft,
+    marketContextDraft,
+    inScopeItems,
+    outScopeItems,
+    killCriteriaItems,
+  ]);
 
   // Fetch section types once
   useEffect(() => {
@@ -1441,7 +1896,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (silent = false) => {
     setIsMutating(true);
     try {
       // Build structured problem definition as JSON for the problemStatement field
@@ -1454,25 +1909,198 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             })
           : undefined;
 
+      const normalizedDeliverables = deliverableItems
+        .map((d) => String(d.text || '').trim())
+        .filter(Boolean);
+      const normalizedSuccessCriteria = successCriteriaItems
+        .map((c) => String(c.text || '').trim())
+        .filter(Boolean);
+      const normalizedScopeIn = inScopeItems.map((v) => String(v || '').trim()).filter(Boolean);
+      const normalizedScopeOut = outScopeItems.map((v) => String(v || '').trim()).filter(Boolean);
+      const normalizedKillCriteria = killCriteriaItems
+        .map((v) => String(v || '').trim())
+        .filter(Boolean);
+
       await Api.patch(`/initiatives/${initiativeId}`, {
+        // Core narrative
         summary,
-        description,
-        tags,
+        description, // backend alias → hypothesis
+        // Top-bar fields
         priority,
         ownerId,
         sponsorId,
+        plannedStartDate: startDate || undefined,
         plannedEndDate: targetDate,
+        // Definition / scope
         problemStatement: problemDefinitionPayload,
+        marketContext: marketContextDraft || undefined,
+        deliverables: normalizedDeliverables,
+        successCriteria: normalizedSuccessCriteria,
+        scopeIn: normalizedScopeIn,
+        scopeOut: normalizedScopeOut,
+        killCriteria: normalizedKillCriteria,
+        // Financials / tools / tags
+        estimatedBudget: budgetDraft ? parseFloat(budgetDraft.replace(/[^0-9.]/g, '')) : undefined,
+        resourceTools,
+        tags,
+        // Target state (stored as JSON)
+        targetState: {
+          description: targetDescriptionDraft || undefined,
+        },
       });
-      toast.success(isPolish ? 'Zapisano' : 'Saved');
+
+      // Keep local baseline in sync so dirty-check resets immediately.
+      setInitiative((prev: any) => ({
+        ...prev,
+        summary,
+        description,
+        priority,
+        ownerId,
+        owner_id: ownerId,
+        sponsorId,
+        sponsor_id: sponsorId,
+        plannedStartDate: startDate || null,
+        planned_start_date: startDate || null,
+        plannedEndDate: targetDate || null,
+        planned_end_date: targetDate || null,
+        targetDate: targetDate || null,
+        problemStatement: problemDefinitionPayload || null,
+        problem_statement: problemDefinitionPayload || null,
+        marketContext: marketContextDraft || null,
+        market_context: marketContextDraft || null,
+        estimatedBudget: budgetDraft ? parseFloat(budgetDraft.replace(/[^0-9.]/g, '')) : null,
+        estimated_budget: budgetDraft ? parseFloat(budgetDraft.replace(/[^0-9.]/g, '')) : null,
+        resourceTools,
+        resource_tools: resourceTools,
+        deliverables: normalizedDeliverables,
+        successCriteria: normalizedSuccessCriteria,
+        scopeIn: normalizedScopeIn,
+        scopeOut: normalizedScopeOut,
+        killCriteria: normalizedKillCriteria,
+        kill_criteria: normalizedKillCriteria,
+        tags,
+        targetState: { description: targetDescriptionDraft || '' },
+        target_state: { description: targetDescriptionDraft || '' },
+      }));
+
+      // Clear local draft backup after a successful save.
+      try {
+        localStorage.removeItem(initiativeDefinitionDraftStorageKey);
+      } catch {
+        // ignore
+      }
+
+      if (!silent) {
+        toast.success(isPolish ? 'Zapisano' : 'Saved');
+      }
     } catch (e: any) {
-      toast.error(e?.message || t('initiatives.toast.saveError', 'Nie udało się zapisać'));
+      if (!silent) {
+        toast.error(e?.message || t('initiatives.toast.saveError', 'Nie udało się zapisać'));
+      }
     } finally {
       setIsMutating(false);
     }
   };
 
+  const hasUnsavedChanges = useMemo(() => {
+    const savedProblemRaw = initiative?.problemStatement || initiative?.problem_statement || '';
+    let savedSymptom = '';
+    let savedRootCause = '';
+    let savedCost = '';
+    if (savedProblemRaw && typeof savedProblemRaw === 'string') {
+      try {
+        const parsed = JSON.parse(savedProblemRaw);
+        savedSymptom = parsed?.symptom || '';
+        savedRootCause = parsed?.rootCause || '';
+        savedCost = parsed?.costOfInaction || '';
+      } catch {
+        try {
+          const decoded = decodeHtmlEntities(savedProblemRaw);
+          const parsedDecoded = JSON.parse(decoded);
+          savedSymptom = parsedDecoded?.symptom || '';
+          savedRootCause = parsedDecoded?.rootCause || '';
+          savedCost = parsedDecoded?.costOfInaction || '';
+        } catch {
+          savedSymptom = decodeHtmlEntities(savedProblemRaw);
+        }
+      }
+    }
+
+    const savedBudget = String(
+      initiative?.estimatedBudget ||
+        initiative?.estimated_budget ||
+        initiative?.budget ||
+        initiative?.budgetEstimate ||
+        initiative?.costCapex ||
+        initiative?.cost_capex ||
+        ''
+    );
+    const savedTools = Array.isArray(initiative?.resourceTools)
+      ? initiative.resourceTools
+      : Array.isArray(initiative?.resource_tools)
+        ? initiative.resource_tools
+        : Array.isArray(initiative?.tools)
+          ? initiative.tools
+          : [];
+
+    return (
+      summary !== (initiative?.summary || initiative?.description || '') ||
+      description !== (initiative?.description || '') ||
+      priority !== (initiative?.priority || 'medium').toLowerCase() ||
+      ownerId !== (initiative?.ownerId || initiative?.owner_id || '') ||
+      sponsorId !== (initiative?.sponsorId || initiative?.sponsor_id || '') ||
+      targetDate !== (initiative?.plannedEndDate || initiative?.targetDate || '') ||
+      (startDate || '') !==
+        (initiative?.plannedStartDate || initiative?.planned_start_date || '') ||
+      symptomDraft !== savedSymptom ||
+      rootCauseDraft !== savedRootCause ||
+      costOfInactionDraft !== savedCost ||
+      marketContextDraft !== (initiative?.marketContext || initiative?.market_context || '') ||
+      budgetDraft !== savedBudget ||
+      JSON.stringify(resourceTools) !== JSON.stringify(savedTools) ||
+      JSON.stringify(tags) !== JSON.stringify(initiative?.tags || [])
+    );
+  }, [
+    initiative,
+    summary,
+    description,
+    priority,
+    ownerId,
+    sponsorId,
+    targetDate,
+    startDate,
+    symptomDraft,
+    rootCauseDraft,
+    costOfInactionDraft,
+    marketContextDraft,
+    budgetDraft,
+    resourceTools,
+    tags,
+    decodeHtmlEntities,
+  ]);
+
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!hasUnsavedChanges || isMutating || !initiativeId) return;
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      handleSave(true);
+    }, 1500);
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasUnsavedChanges, isMutating, initiativeId]);
+
   const handleCreateTask = async () => {
+    if (!canEditCards) {
+      toast.error(
+        isPolish
+          ? 'Nie masz uprawnień do edycji na tym etapie inicjatywy.'
+          : 'You do not have edit permissions at this initiative stage.'
+      );
+      return;
+    }
     if (!newTaskTitle.trim()) return;
     setIsMutating(true);
     try {
@@ -1519,6 +2147,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   };
 
   const handleCreateDecision = async () => {
+    if (!canEditCards) {
+      toast.error(
+        isPolish
+          ? 'Nie masz uprawnień do edycji na tym etapie inicjatywy.'
+          : 'You do not have edit permissions at this initiative stage.'
+      );
+      return;
+    }
     if (!newDecisionTitle.trim()) return;
     setIsMutating(true);
     try {
@@ -1569,6 +2205,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   };
 
   const handleCreateRaid = async () => {
+    if (!canEditCards) {
+      toast.error(
+        isPolish
+          ? 'Nie masz uprawnień do edycji na tym etapie inicjatywy.'
+          : 'You do not have edit permissions at this initiative stage.'
+      );
+      return;
+    }
     if (!newRaidTitle.trim()) return;
     setIsMutating(true);
     try {
@@ -1605,6 +2249,190 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         await Api.delete(`/initiatives/${initiativeId}/raid/${id}`);
       } catch {
         // Best-effort backend delete — item already removed from UI
+      }
+    },
+    [initiativeId, isPolish]
+  );
+
+  // ── Resource CRUD handlers (Team / Budget / Tools) ──────────────────────
+  const handleAddResource = useCallback(
+    async (data: Omit<(typeof apiResourceItems)[0], 'id'>) => {
+      try {
+        const res = await Api.post(`/initiatives/${initiativeId}/resources`, {
+          name: data.name,
+          role: data.role,
+          allocationPercentage: data.allocationPercentage,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          notes: data.notes,
+          userId: data.userId,
+        });
+        const newItem = res?.resource || res;
+        setApiResourceItems((prev) => [
+          ...prev,
+          { ...data, id: newItem.id || `res-${Date.now()}` },
+        ]);
+        toast.success(isPolish ? 'Zasób dodany' : 'Resource added');
+      } catch (e: any) {
+        toast.error(
+          e?.message || (isPolish ? 'Nie udało się dodać zasobu' : 'Failed to add resource')
+        );
+      }
+    },
+    [initiativeId, isPolish]
+  );
+
+  const handleUpdateResource = useCallback(
+    async (id: string, data: Partial<(typeof apiResourceItems)[0]>) => {
+      setApiResourceItems((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, ...data } : item))
+      );
+      try {
+        await Api.put(`/initiatives/${initiativeId}/resources/${id}`, data);
+      } catch {
+        // best-effort
+      }
+    },
+    [initiativeId]
+  );
+
+  const handleDeleteResource = useCallback(
+    async (id: string) => {
+      setApiResourceItems((prev) => prev.filter((item) => item.id !== id));
+      toast.success(isPolish ? 'Zasób usunięty' : 'Resource removed');
+      try {
+        await Api.delete(`/initiatives/${initiativeId}/resources/${id}`);
+      } catch {
+        // best-effort
+      }
+    },
+    [initiativeId, isPolish]
+  );
+
+  const handleAddBudgetItem = useCallback(
+    async (data: Omit<(typeof apiBudgetItems)[0], 'id'>) => {
+      try {
+        const res = await Api.post(`/initiatives/${initiativeId}/budget-items`, data);
+        const newItem = res?.budgetItem || res;
+        setApiBudgetItems((prev) => [...prev, { ...data, id: newItem.id || `bi-${Date.now()}` }]);
+        toast.success(isPolish ? 'Pozycja budżetowa dodana' : 'Budget item added');
+      } catch (e: any) {
+        toast.error(
+          e?.message || (isPolish ? 'Nie udało się dodać pozycji' : 'Failed to add budget item')
+        );
+      }
+    },
+    [initiativeId, isPolish]
+  );
+
+  const handleUpdateBudgetItem = useCallback(
+    async (id: string, data: Partial<(typeof apiBudgetItems)[0]>) => {
+      setApiBudgetItems((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, ...data } : item))
+      );
+      try {
+        await Api.put(`/initiatives/${initiativeId}/budget-items/${id}`, data);
+      } catch {
+        // best-effort
+      }
+    },
+    [initiativeId]
+  );
+
+  const handleDeleteBudgetItem = useCallback(
+    async (id: string) => {
+      setApiBudgetItems((prev) => prev.filter((item) => item.id !== id));
+      toast.success(isPolish ? 'Pozycja usunięta' : 'Budget item removed');
+      try {
+        await Api.delete(`/initiatives/${initiativeId}/budget-items/${id}`);
+      } catch {
+        // best-effort
+      }
+    },
+    [initiativeId, isPolish]
+  );
+
+  const handleAddTool = useCallback(
+    async (data: Omit<(typeof apiToolItems)[0], 'id'>) => {
+      try {
+        const res = await Api.post(`/initiatives/${initiativeId}/tools`, data);
+        const newItem = res?.tool || res;
+        setApiToolItems((prev) => [...prev, { ...data, id: newItem.id || `tool-${Date.now()}` }]);
+        toast.success(isPolish ? 'Narzędzie dodane' : 'Tool added');
+      } catch (e: any) {
+        toast.error(
+          e?.message || (isPolish ? 'Nie udało się dodać narzędzia' : 'Failed to add tool')
+        );
+      }
+    },
+    [initiativeId, isPolish]
+  );
+
+  const handleUpdateTool = useCallback(
+    async (id: string, data: Partial<(typeof apiToolItems)[0]>) => {
+      setApiToolItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...data } : item)));
+      try {
+        await Api.put(`/initiatives/${initiativeId}/tools/${id}`, data);
+      } catch {
+        // best-effort
+      }
+    },
+    [initiativeId]
+  );
+
+  const handleDeleteTool = useCallback(
+    async (id: string) => {
+      setApiToolItems((prev) => prev.filter((item) => item.id !== id));
+      toast.success(isPolish ? 'Narzędzie usunięte' : 'Tool removed');
+      try {
+        await Api.delete(`/initiatives/${initiativeId}/tools/${id}`);
+      } catch {
+        // best-effort
+      }
+    },
+    [initiativeId, isPolish]
+  );
+
+  // ── Intangible Assets CRUD handlers ──────────────────────
+  const handleAddIntangibleAsset = useCallback(
+    async (data: Omit<(typeof apiIntangibleAssets)[0], 'id'>) => {
+      try {
+        const res = await Api.post(`/initiatives/${initiativeId}/intangible-assets`, data);
+        const newItem = res?.intangibleAsset || res;
+        setApiIntangibleAssets((prev) => [
+          ...prev,
+          { ...data, id: newItem.id || `ia-${Date.now()}` },
+        ]);
+        toast.success(isPolish ? 'Zasób niematerialny dodany' : 'Intangible asset added');
+      } catch (e: any) {
+        toast.error(e?.message || (isPolish ? 'Nie udało się dodać' : 'Failed to add asset'));
+      }
+    },
+    [initiativeId, isPolish]
+  );
+
+  const handleUpdateIntangibleAsset = useCallback(
+    async (id: string, data: Partial<(typeof apiIntangibleAssets)[0]>) => {
+      setApiIntangibleAssets((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, ...data } : item))
+      );
+      try {
+        await Api.put(`/initiatives/${initiativeId}/intangible-assets/${id}`, data);
+      } catch {
+        // best-effort
+      }
+    },
+    [initiativeId]
+  );
+
+  const handleDeleteIntangibleAsset = useCallback(
+    async (id: string) => {
+      setApiIntangibleAssets((prev) => prev.filter((item) => item.id !== id));
+      toast.success(isPolish ? 'Zasób niematerialny usunięty' : 'Asset removed');
+      try {
+        await Api.delete(`/initiatives/${initiativeId}/intangible-assets/${id}`);
+      } catch {
+        // best-effort
       }
     },
     [initiativeId, isPolish]
@@ -1724,7 +2552,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         projectsRes.status === 'fulfilled'
           ? Array.isArray(projectsRes.value)
             ? projectsRes.value
-            : projectsRes.value?.projects || []
+            : (projectsRes.value as any)?.projects || []
           : [];
       const assessments =
         assessmentsRes.status === 'fulfilled'
@@ -1931,6 +2759,258 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setShowMoreMenu(false);
   };
 
+  const handleGenerateScopeCard = async (): Promise<void> => {
+    setIsGeneratingAI('scope');
+    const targetLanguageName = isPolish ? 'Polish' : 'English';
+
+    const buildParagraphSystemInstruction = (
+      fieldLabel: string,
+      mode: 'generate' | 'improve',
+      opts?: {
+        /** Minimum number of sentences when using paragraph format */
+        minSentences?: number;
+        /** Suggested sentence range when using paragraph format */
+        sentenceRangeHint?: string;
+        /** Allow simple hyphen bullets as an alternative */
+        allowBullets?: boolean;
+        /** If bullets are used, suggested range */
+        bulletRangeHint?: string;
+      }
+    ) =>
+      [
+        mode === 'generate'
+          ? `You are a senior PMO consultant and an expert business writer.`
+          : `You are a professional PMO content editor.`,
+        mode === 'generate'
+          ? `Generate professional content for the field "${fieldLabel}".`
+          : `Refine the user's text for the field "${fieldLabel}".`,
+        `Rules:`,
+        `- Output language MUST be ${targetLanguageName}, even if the input/context is in a different language (translate as needed).`,
+        `- Do NOT invent new facts, numbers, dates, systems, or KPI values that are not present in the provided context. If information is missing, keep it generic and/or explicitly mark what needs confirmation in a single short sentence.`,
+        `- Return ONLY the final field text. No commentary, no quotes, no prefixes, no markdown.`,
+        `- Length: ${
+          opts?.sentenceRangeHint || '2–5 sentences'
+        } (minimum ${opts?.minSentences ?? 2} sentences).`,
+        `- Do NOT return a single sentence.`,
+        opts?.allowBullets
+          ? [
+              `- You MAY use a simple hyphen bullet list instead if there are multiple distinct arguments.`,
+              `  - Bullets: ${opts?.bulletRangeHint || '3–7 bullets'}`,
+              `  - Each bullet must start with "- " and be a standalone point`,
+              `  - No numbering, no headings, no bold/italics, no empty lines`,
+            ].join('\n')
+          : ``,
+        mode === 'generate'
+          ? `- Style: concrete, delivery-oriented, executive/PMO. Prefer specific operational/business impacts over generic filler.`
+          : `- Keep the same meaning, but make it clearer, more decision-oriented, and more actionable.`,
+      ].join('\n');
+
+    const buildListSystemInstruction = (fieldLabel: string, mode: 'generate' | 'improve') =>
+      [
+        mode === 'generate'
+          ? `You are a senior PMO consultant and an expert business writer.`
+          : `You are a professional PMO content editor.`,
+        mode === 'generate'
+          ? `Generate a list for the field "${fieldLabel}".`
+          : `Refine the list items for the field "${fieldLabel}".`,
+        `Rules:`,
+        `- Output language MUST be ${targetLanguageName}, even if the input/context is in a different language (translate as needed).`,
+        `- Do NOT invent new facts, numbers, dates, systems, or KPI values that are not present in the provided context.`,
+        `- Return ONLY the final list text. No commentary, no quotes, no prefixes, no markdown.`,
+        `Formatting requirements:`,
+        `- ONE item per line`,
+        `- No bullets, no numbering`,
+        `- No empty lines`,
+        mode === 'generate'
+          ? `- Return 5–8 distinct items.`
+          : `- Make items clearer and more action-oriented.`,
+      ].join('\n');
+
+    const refineOrGenerate = async (
+      fieldLabel: string,
+      current: string,
+      output: 'paragraph' | 'list'
+    ) => {
+      const sanitizedCurrent = String(current || '')
+        .replace(/&quot;/g, '"')
+        .trim();
+      const looksLikeJsonObject =
+        sanitizedCurrent.startsWith('{') &&
+        (sanitizedCurrent.includes('"symptom"') ||
+          sanitizedCurrent.includes('"rootCause"') ||
+          sanitizedCurrent.includes('"costOfInaction"') ||
+          sanitizedCurrent.includes('"marketContext"'));
+
+      const mode: 'generate' | 'improve' =
+        sanitizedCurrent && !looksLikeJsonObject ? 'improve' : 'generate';
+      const systemInstruction =
+        output === 'list'
+          ? buildListSystemInstruction(fieldLabel, mode)
+          : buildParagraphSystemInstruction(fieldLabel, mode);
+
+      const text =
+        mode === 'generate'
+          ? [
+              `[GENERATE FROM SCRATCH]`,
+              `Field: ${fieldLabel}`,
+              `Initiative: ${initiative?.name || ''}`,
+              `Known summary: ${String(summary || initiative?.description || '').trim()}`,
+              `Known problem: ${String(symptomDraft || '').trim()}`,
+              `Known solution: ${String(rootCauseDraft || '').trim()}`,
+              `Known cost of inaction: ${String(costOfInactionDraft || '').trim()}`,
+              `Known market context: ${String(marketContextDraft || '').trim()}`,
+            ].join('\n')
+          : sanitizedCurrent;
+
+      const aiRes = await Api.post('/ai/refine-text', {
+        text,
+        mode,
+        systemInstruction,
+        fieldLabel,
+        artifactContext: {
+          title: initiative?.name || '',
+          status,
+          priority,
+          type: 'initiative',
+        },
+        language: 'en',
+      });
+      return String(aiRes?.text || '').trim();
+    };
+
+    try {
+      // 1) Fill the Description & Context fields (generate if empty, improve if present)
+      const [problem, solution, cost, market] = await Promise.all([
+        refineOrGenerate(isPolish ? 'Problem' : 'Problem', symptomDraft, 'paragraph'),
+        refineOrGenerate(
+          isPolish ? 'Opis rozwiązania' : 'Proposed Solution',
+          rootCauseDraft,
+          'paragraph'
+        ),
+        // Cost of inaction tends to have multiple arguments → allow bullets
+        (async () => {
+          const current = costOfInactionDraft;
+          const mode: 'generate' | 'improve' = String(current || '').trim()
+            ? 'improve'
+            : 'generate';
+          const fieldLabel = isPolish ? 'Koszt bezczynności' : 'Cost of Inaction';
+          const systemInstruction = buildParagraphSystemInstruction(fieldLabel, mode, {
+            minSentences: 2,
+            sentenceRangeHint: '2–6 sentences',
+            allowBullets: true,
+            bulletRangeHint: '3–8 bullets',
+          });
+          const text =
+            mode === 'generate'
+              ? [
+                  `[GENERATE FROM SCRATCH]`,
+                  `Field: ${fieldLabel}`,
+                  `Initiative: ${initiative?.name || ''}`,
+                  `Known summary: ${String(summary || initiative?.description || '').trim()}`,
+                  `Known problem: ${String(symptomDraft || '').trim()}`,
+                  `Known solution: ${String(rootCauseDraft || '').trim()}`,
+                  `Known market context: ${String(marketContextDraft || '').trim()}`,
+                  ``,
+                  `Hint: If multiple distinct impacts exist, prefer hyphen bullets. Mix quantitative and qualitative impacts. If a number is unknown, mark it as [confirm].`,
+                ].join('\n')
+              : String(current || '')
+                  .replace(/&quot;/g, '"')
+                  .trim();
+
+          const aiRes = await Api.post('/ai/refine-text', {
+            text,
+            mode,
+            systemInstruction,
+            fieldLabel,
+            artifactContext: {
+              title: initiative?.name || '',
+              status,
+              priority,
+              type: 'initiative',
+            },
+            language: 'en',
+          });
+          return String(aiRes?.text || '').trim();
+        })(),
+        refineOrGenerate(
+          isPolish ? 'Kontekst rynkowy' : 'Market Context',
+          marketContextDraft,
+          'paragraph'
+        ),
+      ]);
+
+      if (problem) setSymptomDraft(problem);
+      if (solution) setRootCauseDraft(solution);
+      if (cost) setCostOfInactionDraft(cost);
+      if (market) setMarketContextDraft(market);
+
+      // 2) Scope boundaries lists: if all empty -> use structured section prompt; otherwise refine/generate lists
+      const safeInScope = normalizeStringList(inScopeItems);
+      const safeOutScope = normalizeStringList(outScopeItems);
+      const safeKillCriteria = normalizeStringList(killCriteriaItems);
+
+      const hasAnyScope =
+        safeInScope.filter(Boolean).length > 0 ||
+        safeOutScope.filter(Boolean).length > 0 ||
+        safeKillCriteria.filter(Boolean).length > 0;
+
+      if (!hasAnyScope) {
+        const context = {
+          sectionKey: 'scope',
+          initiativeId,
+          initiativeName: initiative?.name || '',
+          summary: summary || initiative?.description || '',
+          problemStatement: initiative?.problem_statement || '',
+          category: initiative?.category || '',
+          module: initiative?.module || '',
+          status: initiative?.status || '',
+          language: 'en',
+        };
+        const res = await Api.post('/initiatives/generate-section', context);
+        const parsed = res?.parsedContent || res?.content;
+        const parsedInScope = normalizeStringList(parsed?.inScope);
+        const parsedOutScope = normalizeStringList(parsed?.outOfScope ?? parsed?.outScope);
+        const parsedKillCriteria = normalizeStringList(
+          parsed?.killCriteria ?? parsed?.kill_criteria ?? parsed?.killCriteriaItems
+        );
+
+        if (parsedInScope.length) setInScopeItems(parsedInScope);
+        if (parsedOutScope.length) setOutScopeItems(parsedOutScope);
+        if (parsedKillCriteria.length) setKillCriteriaItems(parsedKillCriteria);
+      } else {
+        const [inScopeText, outScopeText, killText] = await Promise.all([
+          refineOrGenerate(
+            isPolish ? 'W zakresie (lista)' : 'In Scope (list)',
+            safeInScope.filter(Boolean).join('\n'),
+            'list'
+          ),
+          refineOrGenerate(
+            isPolish ? 'Poza zakresem (lista)' : 'Out of Scope (list)',
+            safeOutScope.filter(Boolean).join('\n'),
+            'list'
+          ),
+          refineOrGenerate(
+            isPolish ? 'Kryteria rezygnacji (lista)' : 'Kill Criteria (list)',
+            safeKillCriteria.filter(Boolean).join('\n'),
+            'list'
+          ),
+        ]);
+
+        if (inScopeText) setInScopeItems(normalizeStringList(inScopeText));
+        if (outScopeText) setOutScopeItems(normalizeStringList(outScopeText));
+        if (killText) setKillCriteriaItems(normalizeStringList(killText));
+      }
+
+      toast.success(isPolish ? 'Scope wygenerowany przez AI' : 'Scope generated by AI');
+    } catch (e: any) {
+      toast.error(
+        e?.message || (isPolish ? 'Generowanie scope nie powiodło się' : 'Generate scope failed')
+      );
+    } finally {
+      setIsGeneratingAI(null);
+    }
+  };
+
   const handleGenerateAI = async (section: string): Promise<any> => {
     setIsGeneratingAI(section);
     try {
@@ -1943,7 +3023,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         category: initiative?.category || '',
         module: initiative?.module || '',
         status: initiative?.status || '',
-        language: isPolish ? 'pl' : 'en',
+        language: 'en',
       };
 
       const result = await Api.post('/initiatives/generate-section', context);
@@ -1989,9 +3069,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 Api.post('/ai/refine-text', {
                   text: `[GENERATE FROM SCRATCH] Section: ${f.key}. Initiative: ${initiative?.name || ''}. Summary: ${result.parsedContent || result.content}`,
                   mode: 'generate',
-                  systemInstruction: isPolish
-                    ? `Jesteś ekspertem strategicznym PMO. Wygeneruj profesjonalną treść dla sekcji "${f.key}" inicjatywy "${initiative?.name || ''}". Zwróć TYLKO treść — bez komentarzy, bez cudzysłowów, bez prefiksów. Pisz zwięźle (2-4 zdania). Język: polski.`
-                    : `You are a strategic PMO expert. Generate professional content for the "${f.key}" section of initiative "${initiative?.name || ''}". Return ONLY the content — no commentary, no quotes, no prefixes. Write concisely (2-4 sentences). Language: English.`,
+                  systemInstruction: `You are a strategic PMO expert. Generate professional content for the "${f.key}" section of initiative "${initiative?.name || ''}". Return ONLY the content — no commentary, no quotes, no prefixes. Write concisely (2-4 sentences). Output language: English. Translate any non-English input to English.`,
                   fieldLabel: f.key,
                   artifactContext: {
                     title: initiative?.name || '',
@@ -1999,7 +3077,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     priority,
                     type: 'initiative',
                   },
-                  language: isPolish ? 'pl' : 'en',
+                  language: 'en',
                 })
               )
             );
@@ -2163,6 +3241,46 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     });
   };
 
+  const handleOpenTaskArtifact = useCallback(
+    (taskId: string) => {
+      if (onOpenTask) {
+        onOpenTask(taskId);
+        return;
+      }
+      // Fallback: open task artifact in My Work floating document panel
+      setMyWorkIntent({
+        tab: 'tasks',
+        open: {
+          type: 'task',
+          id: taskId,
+          name: isPolish ? 'Zadanie' : 'Task',
+        },
+      });
+      setCurrentView(AppView.MY_WORK);
+    },
+    [onOpenTask, setMyWorkIntent, setCurrentView, isPolish]
+  );
+
+  const handleOpenDecisionArtifact = useCallback(
+    (decisionId: string) => {
+      if (onOpenDecision) {
+        onOpenDecision(decisionId);
+        return;
+      }
+      // Fallback: open decision artifact in My Work floating document panel
+      setMyWorkIntent({
+        tab: 'decisions',
+        open: {
+          type: 'decision',
+          id: decisionId,
+          name: isPolish ? 'Decyzja' : 'Decision',
+        },
+      });
+      setCurrentView(AppView.MY_WORK);
+    },
+    [onOpenDecision, setMyWorkIntent, setCurrentView, isPolish]
+  );
+
   const handleArchive = async () => {
     if (
       !confirm(
@@ -2273,6 +3391,30 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       baselineVersion: initiative?.baselineVersion ?? null,
       estimatedDurationMonths,
       setEstimatedDurationMonths,
+      budgetDraft,
+      setBudgetDraft,
+      resourceTools,
+      setResourceTools,
+      resourceItems: apiResourceItems,
+      setResourceItems: setApiResourceItems,
+      budgetItems: apiBudgetItems,
+      setBudgetItems: setApiBudgetItems,
+      toolItems: apiToolItems,
+      setToolItems: setApiToolItems,
+      handleAddResource,
+      handleUpdateResource,
+      handleDeleteResource,
+      handleAddBudgetItem,
+      handleUpdateBudgetItem,
+      handleDeleteBudgetItem,
+      handleAddTool,
+      handleUpdateTool,
+      handleDeleteTool,
+      intangibleAssets: apiIntangibleAssets,
+      setIntangibleAssets: setApiIntangibleAssets,
+      handleAddIntangibleAsset,
+      handleUpdateIntangibleAsset,
+      handleDeleteIntangibleAsset,
       reminders,
       setReminders,
       escalationRules,
@@ -2301,6 +3443,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       handleStatusAction,
       handleToggleWatch,
       handleGenerateAI,
+      tasksAiRequest,
+      requestTasksAi,
+      clearTasksAiRequest,
+      decisionsAiRequest,
+      requestDecisionsAi,
+      clearDecisionsAiRequest,
+      resourcesAiRequest,
+      requestResourcesAi,
+      clearResourcesAiRequest,
+      teamAiRequest,
+      requestTeamAi,
+      clearTeamAiRequest,
       handleCreateTask,
       handleCreateDecision,
       handleRemoveDecision,
@@ -2353,8 +3507,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setNewTag,
       onBack,
       onStatusChange,
-      onOpenTask,
-      onOpenDecision,
+      onOpenTask: handleOpenTaskArtifact,
+      onOpenDecision: handleOpenDecisionArtifact,
     }),
     [
       initiative,
@@ -2389,6 +3543,22 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       timelineMilestones,
       timelinePhases,
       estimatedDurationMonths,
+      apiResourceItems,
+      apiBudgetItems,
+      apiToolItems,
+      handleAddResource,
+      handleUpdateResource,
+      handleDeleteResource,
+      handleAddBudgetItem,
+      handleUpdateBudgetItem,
+      handleDeleteBudgetItem,
+      handleAddTool,
+      handleUpdateTool,
+      handleDeleteTool,
+      apiIntangibleAssets,
+      handleAddIntangibleAsset,
+      handleUpdateIntangibleAsset,
+      handleDeleteIntangibleAsset,
       reminders,
       escalationRules,
       thresholds,
@@ -2414,6 +3584,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       handleStatusAction,
       handleToggleWatch,
       handleGenerateAI,
+      tasksAiRequest,
+      requestTasksAi,
+      clearTasksAiRequest,
+      decisionsAiRequest,
+      requestDecisionsAi,
+      clearDecisionsAiRequest,
+      resourcesAiRequest,
+      requestResourcesAi,
+      clearResourcesAiRequest,
+      teamAiRequest,
+      requestTeamAi,
+      clearTeamAiRequest,
       handleCreateTask,
       handleCreateDecision,
       handleRemoveDecision,
@@ -2448,8 +3630,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       newTag,
       onBack,
       onStatusChange,
-      onOpenTask,
-      onOpenDecision,
+      handleOpenTaskArtifact,
+      handleOpenDecisionArtifact,
     ]
   );
 
@@ -2651,6 +3833,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const nModePropertyFields: NModePropertyField[] = useMemo(() => {
     const statusOptions = [
       { value: 'DRAFT', label: { en: 'Draft', pl: 'Szkic' } },
+      { value: 'PENDING_REVIEW', label: { en: 'Pending Review', pl: 'Oczekuje na przegląd' } },
       { value: 'REVIEW', label: { en: 'Review', pl: 'Przegląd' } },
       { value: 'PROMOTED', label: { en: 'Promoted', pl: 'Promowana' } },
       { value: 'PLANNING', label: { en: 'Planning', pl: 'Planowanie' } },
@@ -2673,10 +3856,38 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     const nextGate = getNextGateForStatus(status);
     const gateConf = nextGate ? GATE_CONFIG[nextGate] : null;
-    const gateLabel = gateConf ? { en: gateConf.name, pl: gateConf.namePl } : { en: '—', pl: '—' };
+    const fallbackNextAction =
+      statusActions.find((a) => a.variant === 'primary') || statusActions[0];
+    const gateLabel = gateConf
+      ? { en: gateConf.name, pl: gateConf.namePl }
+      : fallbackNextAction
+        ? { en: fallbackNextAction.label, pl: fallbackNextAction.labelPl }
+        : { en: 'Not defined', pl: 'Nie zdefiniowano' };
+    const gateValue = fallbackNextAction?.targetStatus || 'NONE';
+    const gateOptions =
+      statusActions.length > 0
+        ? statusActions.map((action) => ({
+            value: action.targetStatus,
+            label: { en: action.label, pl: action.labelPl },
+          }))
+        : [{ value: 'NONE', label: { en: 'Not defined', pl: 'Nie zdefiniowano' } }];
+    const phaseOptions = Object.entries(MODULE_CONFIG).map(([moduleKey, cfg]) => ({
+      value: moduleKey,
+      label: { en: cfg.label, pl: cfg.labelPl },
+    }));
 
     // Gate color — depends on whether there's a pending gate and what it targets
     const gateVisual = (() => {
+      if (!gateConf)
+        if (fallbackNextAction?.targetStatus) {
+          const fallbackTargetModule = getModuleFromStatus(fallbackNextAction.targetStatus);
+          const fallbackModConf = MODULE_CONFIG[fallbackTargetModule];
+          return {
+            dot: fallbackModConf.color,
+            bg: fallbackModConf.bgLight,
+            text: fallbackModConf.textColor,
+          };
+        }
       if (!gateConf)
         return {
           dot: 'bg-slate-300',
@@ -2765,35 +3976,28 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'Status', pl: 'Status' },
         type: 'custom' as const,
         value: status,
-        onChange: (val: string) => {
-          const action = statusActions.find((a) => a.targetStatus === val);
-          if (action) handleStatusAction(action);
-        },
+        onChange: () => {},
+        readOnly: true,
         alertBorderClass: statusAlertBorder,
         render: () => (
           <div className="relative">
             <div
-              className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold ${currentStatusBg} border ${statusAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'} ${currentStatusColor}`}
+              className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${currentStatusBg} border ${statusAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'} ${currentStatusColor}`}
             >
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${currentStatusDot}`} />
               <span className="flex-1 truncate">{currentStatusLabel}</span>
             </div>
             <select
               value={status}
-              onChange={(e) => {
-                const action = statusActions.find((a) => a.targetStatus === e.target.value);
-                if (action) handleStatusAction(action);
-              }}
+              onChange={() => {}}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              title={isPolish ? 'Podgląd listy statusów' : 'Preview status list'}
             >
-              {statusOptions.map((opt) => {
-                const meta = INITIATIVE_STATUS_METADATA[opt.value as InitiativeStatus];
-                return (
-                  <option key={opt.value} value={opt.value}>
-                    {isPolish ? meta?.labelPL || opt.label.pl : meta?.label || opt.label.en}
-                  </option>
-                );
-              })}
+              {statusOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {isPolish ? opt.label.pl : opt.label.en}
+                </option>
+              ))}
             </select>
           </div>
         ),
@@ -2806,13 +4010,27 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         onChange: () => {},
         readOnly: true,
         render: () => (
-          <div
-            className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold ${moduleConfig.bgLight} ${moduleConfig.textColor}`}
-          >
-            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${moduleConfig.color}`} />
-            <span className="flex-1 truncate">
-              {isPolish ? moduleConfig.labelPl : moduleConfig.label}
-            </span>
+          <div className="relative">
+            <div
+              className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${moduleConfig.bgLight} ${moduleConfig.textColor} border border-slate-200/60 dark:border-navy-600/60`}
+            >
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${moduleConfig.color}`} />
+              <span className="flex-1 truncate">
+                {isPolish ? moduleConfig.labelPl : moduleConfig.label}
+              </span>
+            </div>
+            <select
+              value={currentModule}
+              onChange={() => {}}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              title={isPolish ? 'Podgląd listy faz' : 'Preview phase list'}
+            >
+              {phaseOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {isPolish ? opt.label.pl : opt.label.en}
+                </option>
+              ))}
+            </select>
           </div>
         ),
       },
@@ -2824,11 +4042,25 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         onChange: () => {},
         readOnly: true,
         render: () => (
-          <div
-            className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold ${gateVisual.bg} ${gateVisual.text} ${gateAlertBorder ? `border ${gateAlertBorder}` : ''}`}
-          >
-            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${gateVisual.dot}`} />
-            <span className="flex-1 truncate">{isPolish ? gateLabel.pl : gateLabel.en}</span>
+          <div className="relative">
+            <div
+              className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${gateVisual.bg} ${gateVisual.text} border ${gateAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'}`}
+            >
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${gateVisual.dot}`} />
+              <span className="flex-1 truncate">{isPolish ? gateLabel.pl : gateLabel.en}</span>
+            </div>
+            <select
+              value={gateValue}
+              onChange={() => {}}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              title={isPolish ? 'Podgląd możliwych kolejnych bram' : 'Preview possible next gates'}
+            >
+              {gateOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {isPolish ? opt.label.pl : opt.label.en}
+                </option>
+              ))}
+            </select>
           </div>
         ),
       },
@@ -2837,32 +4069,46 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'Priority', pl: 'Priorytet' },
         type: 'custom' as const,
         value: priority,
-        onChange: setPriority,
+        onChange: canEditPriority ? setPriority : () => {},
+        readOnly: !canEditPriority,
         alertBorderClass: priorityAlertBorder,
         render: () => (
-          <div className="relative">
+          <div
+            className="relative"
+            title={
+              !canEditPriority
+                ? isPolish
+                  ? 'Nie masz uprawnień do edycji priorytetu na tym etapie.'
+                  : 'You cannot edit priority at this stage.'
+                : undefined
+            }
+          >
             <div
-              className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold ${currentPriorityMeta.bg} border ${priorityAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'} ${currentPriorityMeta.text}`}
+              className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${currentPriorityMeta.bg} border ${priorityAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'} ${currentPriorityMeta.text} ${
+                !canEditPriority ? 'opacity-60' : ''
+              }`}
             >
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${currentPriorityMeta.dot}`} />
               <span className="flex-1 truncate">
                 {isPolish ? currentPriorityMeta.labelPl : currentPriorityMeta.label}
               </span>
             </div>
-            <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            >
-              {priorityOptions.map((opt) => {
-                const pm = priorityMeta[opt.value];
-                return (
-                  <option key={opt.value} value={opt.value}>
-                    {isPolish ? pm?.labelPl || opt.label.pl : pm?.label || opt.label.en}
-                  </option>
-                );
-              })}
-            </select>
+            {canEditPriority && (
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              >
+                {priorityOptions.map((opt) => {
+                  const pm = priorityMeta[opt.value];
+                  return (
+                    <option key={opt.value} value={opt.value}>
+                      {isPolish ? pm?.labelPl || opt.label.pl : pm?.label || opt.label.en}
+                    </option>
+                  );
+                })}
+              </select>
+            )}
           </div>
         ),
       },
@@ -2871,12 +4117,21 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'Owner', pl: 'Właściciel' },
         type: 'custom' as const,
         value: ownerId,
-        onChange: setOwnerId,
+        onChange: canEditOwner ? setOwnerId : () => {},
+        readOnly: !canEditOwner,
         render: () => (
           <select
             value={ownerId}
             onChange={(e) => setOwnerId(e.target.value)}
-            className="w-full px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
+            disabled={!canEditOwner}
+            title={
+              !canEditOwner
+                ? isPolish
+                  ? 'Nie masz uprawnień do edycji właściciela na tym etapie.'
+                  : 'You cannot edit owner at this stage.'
+                : undefined
+            }
+            className="w-full h-8 px-2.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
           >
             <option value="">{isPolish ? '— Wybierz —' : '— Select —'}</option>
             {users.map((u) => (
@@ -2890,9 +4145,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       {
         id: 'targetDate',
         label: { en: 'Target', pl: 'Termin' },
-        type: 'date' as const,
+        type: 'custom' as const,
         value: targetDate,
-        onChange: setTargetDate,
+        onChange: canEditTargetDate ? setTargetDate : () => {},
+        readOnly: !canEditTargetDate,
+        render: () => (
+          <input
+            type="date"
+            value={targetDate}
+            onChange={(e) => setTargetDate(e.target.value)}
+            disabled={!canEditTargetDate}
+            title={
+              !canEditTargetDate
+                ? isPolish
+                  ? 'Nie masz uprawnień do edycji terminu na tym etapie.'
+                  : 'You cannot edit target date at this stage.'
+                : undefined
+            }
+            className="w-full h-8 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors disabled:opacity-60"
+          />
+        ),
       },
     ];
   }, [
@@ -2915,6 +4187,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setStartDate,
     setTargetDate,
     pendingGates.length,
+    canEditPriority,
+    canEditOwner,
+    canEditTargetDate,
   ]);
 
   // ==========================================
@@ -2983,6 +4258,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const handleDeleteComment = (commentId: string) => {
     setComments((prev) => prev.filter((c) => c.id !== commentId));
+    // Best-effort backend delete (comments are stored in initiative_comments)
+    Api.delete(`/initiatives/${initiativeId}/comments/${commentId}`).catch(() => {});
   };
 
   // ==========================================
@@ -3162,11 +4439,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     }}
                   />
                 </div>
-                <textarea
+                <ExpandableNarrativeField
                   value={symptomDraft}
-                  onChange={(e) => setSymptomDraft(e.target.value)}
-                  rows={3}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[60px]"
+                  onChange={setSymptomDraft}
+                  isPolish={isPolish}
                   placeholder={
                     isPolish
                       ? 'Jaki problem rozwiązujemy? Co jest nie tak?'
@@ -3201,11 +4477,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     }}
                   />
                 </div>
-                <textarea
+                <ExpandableNarrativeField
                   value={rootCauseDraft}
-                  onChange={(e) => setRootCauseDraft(e.target.value)}
-                  rows={3}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[60px]"
+                  onChange={setRootCauseDraft}
+                  isPolish={isPolish}
                   placeholder={
                     isPolish
                       ? 'Jakie rozwiązanie proponujemy? Jakie podejście?'
@@ -3240,11 +4515,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     }}
                   />
                 </div>
-                <textarea
+                <ExpandableNarrativeField
                   value={costOfInactionDraft}
-                  onChange={(e) => setCostOfInactionDraft(e.target.value)}
-                  rows={3}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[60px]"
+                  onChange={setCostOfInactionDraft}
+                  isPolish={isPolish}
                   placeholder={
                     isPolish
                       ? 'Co się stanie jeśli nie podejmiemy działań?'
@@ -3279,11 +4553,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     }}
                   />
                 </div>
-                <textarea
+                <ExpandableNarrativeField
                   value={marketContextDraft}
-                  onChange={(e) => setMarketContextDraft(e.target.value)}
-                  rows={3}
-                  className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[60px]"
+                  onChange={setMarketContextDraft}
+                  isPolish={isPolish}
                   placeholder={
                     isPolish
                       ? 'Kontekst rynkowy, konkurencja, trendy...'
@@ -3329,7 +4602,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             item: { id: string; text: string; done: boolean },
             onUpdate: (id: string, patch: Partial<{ text: string; done: boolean }>) => void,
             onRemove: (id: string) => void,
-            placeholder: string
+            placeholder: string,
+            aiLabel: string,
+            aiFieldKey: string
           ) => (
             <div key={item.id} className="group flex items-center gap-2 py-1.5">
               <button
@@ -3361,6 +4636,20 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     ? 'line-through text-slate-400 dark:text-slate-500'
                     : 'text-slate-700 dark:text-slate-300'
                 }`}
+              />
+              <AIFieldEnhancer
+                fieldKey={`${aiFieldKey}.${item.id}`}
+                sectionLabel={aiLabel}
+                currentValue={item.text}
+                onApply={(v) => onUpdate(item.id, { text: v })}
+                artifactContext={{
+                  title: initiative?.name || '',
+                  status,
+                  priority,
+                  type: 'initiative',
+                }}
+                iconOnly
+                outputFormat="short"
               />
               <button
                 onClick={() => onRemove(item.id)}
@@ -3423,6 +4712,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       priority,
                       type: 'initiative',
                     }}
+                    outputFormat="list"
                   />
                 </div>
               </div>
@@ -3437,7 +4727,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       item,
                       onUpdate,
                       onRemove,
-                      isPolish ? placeholderPl : placeholderEn
+                      isPolish ? placeholderPl : placeholderEn,
+                      isPolish ? `${titlePl} — element listy` : `${titleEn} — list item`,
+                      aiFieldKey
                     )
                   )
                 )}
@@ -3630,6 +4922,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       priority,
                       type: 'initiative',
                     }}
+                    outputFormat="list"
                   />
                 </div>
               </div>
@@ -3723,7 +5016,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             onUpdate: (idx: number, val: string) => void,
             onRemove: (idx: number) => void,
             dotColor: 'emerald' | 'red',
-            placeholder: string
+            placeholder: string,
+            aiLabel: string
           ) => (
             <div key={idx} className="group flex items-center gap-2 py-1">
               <span
@@ -3738,6 +5032,20 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 placeholder={placeholder}
                 autoFocus={!item}
                 className="flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 text-slate-700 dark:text-slate-300"
+              />
+              <AIFieldEnhancer
+                fieldKey={`initiative.scope.${dotColor}.${idx}`}
+                sectionLabel={aiLabel}
+                currentValue={item}
+                onApply={(v) => onUpdate(idx, v)}
+                artifactContext={{
+                  title: initiative?.name || '',
+                  status,
+                  priority,
+                  type: 'initiative',
+                }}
+                iconOnly
+                outputFormat="short"
               />
               <button
                 onClick={() => onRemove(idx)}
@@ -3796,6 +5104,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           priority,
                           type: 'initiative',
                         }}
+                        outputFormat="list"
                       />
                     </div>
                   </div>
@@ -3807,7 +5116,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         updateInScope,
                         removeInScope,
                         'emerald',
-                        isPolish ? 'Element zakresu...' : 'Scope item...'
+                        isPolish ? 'Element zakresu...' : 'Scope item...',
+                        isPolish ? 'W zakresie — element listy' : 'In Scope — list item'
                       )
                     )}
                     {inScopeItems.length === 0 && (
@@ -3859,6 +5169,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           priority,
                           type: 'initiative',
                         }}
+                        outputFormat="list"
                       />
                     </div>
                   </div>
@@ -3870,7 +5181,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         updateOutScope,
                         removeOutScope,
                         'red',
-                        isPolish ? 'Wykluczenie...' : 'Exclusion...'
+                        isPolish ? 'Wykluczenie...' : 'Exclusion...',
+                        isPolish ? 'Poza zakresem — element listy' : 'Out of Scope — list item'
                       )
                     )}
                     {outScopeItems.length === 0 && (
@@ -3923,6 +5235,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         priority,
                         type: 'initiative',
                       }}
+                      outputFormat="list"
                     />
                   </div>
                 </div>
@@ -3937,6 +5250,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         placeholder={isPolish ? 'Kryterium rezygnacji...' : 'Kill criteria...'}
                         autoFocus={!item}
                         className="flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 text-slate-700 dark:text-slate-300"
+                      />
+                      <AIFieldEnhancer
+                        fieldKey={`initiative.scope.killCriteria.${i}`}
+                        sectionLabel={
+                          isPolish
+                            ? 'Kryteria rezygnacji — element listy'
+                            : 'Kill Criteria — list item'
+                        }
+                        currentValue={item}
+                        onApply={(v) => updateKill(i, v)}
+                        artifactContext={{
+                          title: initiative?.name || '',
+                          status,
+                          priority,
+                          type: 'initiative',
+                        }}
+                        iconOnly
+                        outputFormat="short"
                       />
                       <button
                         onClick={() => removeKill(i)}
@@ -4111,199 +5442,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
 
         case 'resources': {
-          const totalFte =
-            resourceItems.reduce((acc, r) => acc + (Number(r.allocation) || 0), 0) / 100;
-          component = (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Zasoby' : 'Resources'}
-                </h2>
-                <div className="inline-flex items-center gap-2">
-                  <button
-                    onClick={() => setShowCreateResource((prev) => !prev)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium"
-                  >
-                    <Plus size={12} />
-                    {isPolish ? 'Dodaj' : 'Add'}
-                  </button>
-                  <button
-                    onClick={() => handleGenerateAI('resources')}
-                    disabled={isGeneratingAI === 'resources'}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium disabled:opacity-50"
-                  >
-                    {isGeneratingAI === 'resources' ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={12} />
-                    )}
-                    AI
-                  </button>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4 space-y-3">
-                <div>
-                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
-                    {isPolish ? 'Budżet' : 'Budget'}
-                  </label>
-                  <input
-                    value={budgetDraft}
-                    onChange={(e) => setBudgetDraft(e.target.value)}
-                    placeholder={isPolish ? 'np. $50,000' : 'e.g. $50,000'}
-                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm text-slate-700 dark:text-slate-300"
-                  />
-                </div>
-
-                {showCreateResource && (
-                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 p-3 grid grid-cols-1 md:grid-cols-[1fr_1fr_120px_auto] gap-2">
-                    <input
-                      value={newResourceName}
-                      onChange={(e) => setNewResourceName(e.target.value)}
-                      placeholder={isPolish ? 'Osoba / zasób' : 'Person / resource'}
-                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
-                    />
-                    <input
-                      value={newResourceRole}
-                      onChange={(e) => setNewResourceRole(e.target.value)}
-                      placeholder={isPolish ? 'Rola' : 'Role'}
-                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
-                    />
-                    <input
-                      value={newResourceAllocation}
-                      onChange={(e) => setNewResourceAllocation(e.target.value)}
-                      placeholder="%"
-                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/90 dark:bg-navy-900/70 text-sm"
-                    />
-                    <button
-                      onClick={() => {
-                        if (!newResourceName.trim()) return;
-                        setResourceItems((prev) => [
-                          ...prev,
-                          {
-                            id: `res-${Date.now()}`,
-                            name: newResourceName.trim(),
-                            role: newResourceRole.trim(),
-                            allocation: Number(newResourceAllocation) || 0,
-                          },
-                        ]);
-                        setNewResourceName('');
-                        setNewResourceRole('');
-                        setNewResourceAllocation('50');
-                        setShowCreateResource(false);
-                      }}
-                      className="px-3 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-300 hover:bg-primary-500/10 text-xs font-medium"
-                    >
-                      {isPolish ? 'Dodaj' : 'Add'}
-                    </button>
-                  </div>
-                )}
-
-                {resourceItems.length === 0 ? (
-                  <div className="border border-dashed border-slate-300/60 dark:border-navy-700/70 rounded-xl p-6 text-center text-xs text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Brak przypisanych zasobów' : 'No resources assigned'}
-                  </div>
-                ) : (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Zasób' : 'Resource'}</th>
-                        <th className="text-left py-2 pr-2">{isPolish ? 'Rola' : 'Role'}</th>
-                        <th className="text-left py-2 pr-2">
-                          {isPolish ? 'Alokacja' : 'Allocation'}
-                        </th>
-                        <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                      {resourceItems.map((res) => (
-                        <tr key={res.id}>
-                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
-                            {res.name}
-                          </td>
-                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
-                            {res.role || '—'}
-                          </td>
-                          <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
-                            {res.allocation || 0}%
-                          </td>
-                          <td className="py-2 text-right">
-                            <button
-                              onClick={() =>
-                                setResourceItems((prev) =>
-                                  prev.filter((item) => item.id !== res.id)
-                                )
-                              }
-                              className="inline-flex p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Łączne FTE' : 'Total FTE'}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    {totalFte.toFixed(1)} FTE
-                  </span>
-                </div>
-
-                <div className="pt-2 border-t border-slate-200/60 dark:border-navy-700/60">
-                  <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
-                    {isPolish ? 'Narzędzia i infrastruktura' : 'Tools & Infrastructure'}
-                  </label>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {resourceTools.map((tool, idx) => (
-                      <span
-                        key={`${tool}-${idx}`}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-200 dark:border-navy-700/60 text-xs text-slate-500 dark:text-slate-400"
-                      >
-                        {tool}
-                        <button
-                          onClick={() =>
-                            setResourceTools((prev) => prev.filter((_, i) => i !== idx))
-                          }
-                          className="hover:text-red-500"
-                        >
-                          <X size={11} />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      value={newResourceTool}
-                      onChange={(e) => setNewResourceTool(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && newResourceTool.trim()) {
-                          setResourceTools((prev) => [...prev, newResourceTool.trim()]);
-                          setNewResourceTool('');
-                        }
-                      }}
-                      placeholder={isPolish ? 'Dodaj narzędzie...' : 'Add tool...'}
-                      className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/70 text-sm"
-                    />
-                    <button
-                      onClick={() => {
-                        if (!newResourceTool.trim()) return;
-                        setResourceTools((prev) => [...prev, newResourceTool.trim()]);
-                        setNewResourceTool('');
-                      }}
-                      className="px-3 py-1.5 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50"
-                    >
-                      <Plus size={14} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
+          component = <ResourcesSection />;
           break;
         }
 
@@ -5093,6 +6232,51 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     );
   }
 
+  // Temporary: C-mode placeholder (under construction)
+  if (presentationMode === 'c') {
+    return (
+      <InitiativeContext.Provider value={contextValue}>
+        <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+          <div className="min-h-screen">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <NModeHeader
+                title={initiative?.name || ''}
+                onTitleChange={() => {}}
+                titleReadOnly
+                artifactId={initiativeId}
+                artifactType="initiative"
+                onSave={() => handleSave(false)}
+                saving={isMutating}
+                isDirty={hasUnsavedChanges}
+                onChat={handleOpenChat}
+                onClose={onBack || (() => {})}
+                statusDotColor={statusMeta.dotColor}
+                presentationMode={presentationMode}
+                onPresentationModeChange={setPresentationMode}
+                buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
+              />
+
+              <div className="mt-4">
+                <Callout
+                  variant="warning"
+                  title={isPolish ? 'Tryb C jest w budowie' : 'C mode is under construction'}
+                  action={{
+                    label: isPolish ? 'Przełącz na N' : 'Switch to N',
+                    onClick: () => setPresentationMode('n'),
+                  }}
+                >
+                  {isPolish
+                    ? 'Ten widok zostanie przebudowany. Na teraz korzystaj z trybu N (page-first).'
+                    : 'This view will be rebuilt. For now, please use N mode (page-first).'}
+                </Callout>
+              </div>
+            </div>
+          </div>
+        </div>
+      </InitiativeContext.Provider>
+    );
+  }
+
   // ==========================================
   // RENDER
   // ==========================================
@@ -5112,23 +6296,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 titleReadOnly
                 artifactId={initiativeId}
                 artifactType="initiative"
-                onSave={handleSave}
+                onSave={() => handleSave(false)}
                 saving={isMutating}
-                isDirty={
-                  summary !== (initiative?.summary || initiative?.description || '') ||
-                  description !== (initiative?.description || '') ||
-                  priority !== (initiative?.priority || 'medium').toLowerCase() ||
-                  ownerId !== (initiative?.ownerId || initiative?.owner_id || '') ||
-                  sponsorId !== (initiative?.sponsorId || initiative?.sponsor_id || '') ||
-                  targetDate !== (initiative?.plannedEndDate || initiative?.targetDate || '') ||
-                  JSON.stringify(tags) !== JSON.stringify(initiative?.tags || [])
-                }
+                isDirty={hasUnsavedChanges}
                 onChat={handleOpenChat}
                 onClose={onBack || (() => {})}
                 statusDotColor={statusMeta.dotColor}
                 presentationMode={presentationMode}
                 onPresentationModeChange={setPresentationMode}
-                buildArtifactCode={buildArtifactCode}
+                buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
               />
 
               <div className="col-span-full space-y-4 mt-4">
@@ -5186,6 +6362,181 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           <div className="flex-1" />
                           {activeNSection !== 'activity-log' &&
                             (() => {
+                              if (activeNSection === 'tasks') {
+                                return (
+                                  <div className="inline-flex items-center gap-2">
+                                    <button
+                                      onClick={() => {
+                                        if (!canUseAi) {
+                                          toast.error(
+                                            isPolish
+                                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                              : 'AI is unavailable because you have no edit permissions in this context.'
+                                          );
+                                          return;
+                                        }
+                                        requestTasksAi('analyze');
+                                      }}
+                                      disabled={!canUseAi}
+                                      title={
+                                        !canUseAi
+                                          ? isPolish
+                                            ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                            : 'No permission to use AI in this context.'
+                                          : undefined
+                                      }
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                    >
+                                      <Sparkles size={13} />
+                                      <span>{isPolish ? 'Analizuj z AI' : 'Analyze with AI'}</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        if (!canUseAi) {
+                                          toast.error(
+                                            isPolish
+                                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                              : 'AI is unavailable because you have no edit permissions in this context.'
+                                          );
+                                          return;
+                                        }
+                                        requestTasksAi('addOne');
+                                      }}
+                                      disabled={!canUseAi}
+                                      title={
+                                        !canUseAi
+                                          ? isPolish
+                                            ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                            : 'No permission to use AI in this context.'
+                                          : undefined
+                                      }
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                    >
+                                      <Sparkles size={13} />
+                                      <span>{isPolish ? 'AI: dodaj task' : 'AI: Add task'}</span>
+                                    </button>
+                                  </div>
+                                );
+                              }
+                              if (activeNSection === 'decisions') {
+                                return (
+                                  <div className="inline-flex items-center gap-2">
+                                    <button
+                                      onClick={() => {
+                                        if (!canUseAi) {
+                                          toast.error(
+                                            isPolish
+                                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                              : 'AI is unavailable because you have no edit permissions in this context.'
+                                          );
+                                          return;
+                                        }
+                                        requestDecisionsAi('analyze');
+                                      }}
+                                      disabled={!canUseAi}
+                                      title={
+                                        !canUseAi
+                                          ? isPolish
+                                            ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                            : 'No permission to use AI in this context.'
+                                          : undefined
+                                      }
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                    >
+                                      <Sparkles size={13} />
+                                      <span>{isPolish ? 'Analizuj z AI' : 'Analyze with AI'}</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        if (!canUseAi) {
+                                          toast.error(
+                                            isPolish
+                                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                              : 'AI is unavailable because you have no edit permissions in this context.'
+                                          );
+                                          return;
+                                        }
+                                        requestDecisionsAi('addOne');
+                                      }}
+                                      disabled={!canUseAi}
+                                      title={
+                                        !canUseAi
+                                          ? isPolish
+                                            ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                            : 'No permission to use AI in this context.'
+                                          : undefined
+                                      }
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                    >
+                                      <Sparkles size={13} />
+                                      <span>
+                                        {isPolish ? 'AI: dodaj decyzję' : 'AI: Add decision'}
+                                      </span>
+                                    </button>
+                                  </div>
+                                );
+                              }
+                              if (activeNSection === 'resources') {
+                                return (
+                                  <button
+                                    onClick={() => {
+                                      if (!canUseAi) {
+                                        toast.error(
+                                          isPolish
+                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                            : 'AI is unavailable because you have no edit permissions in this context.'
+                                        );
+                                        return;
+                                      }
+                                      requestResourcesAi();
+                                    }}
+                                    disabled={!canUseAi}
+                                    title={
+                                      !canUseAi
+                                        ? isPolish
+                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                          : 'No permission to use AI in this context.'
+                                        : undefined
+                                    }
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                  >
+                                    <Sparkles size={13} />
+                                    <span>{isPolish ? 'Analizuj z AI' : 'Analyze with AI'}</span>
+                                  </button>
+                                );
+                              }
+                              if (activeNSection === 'team') {
+                                return (
+                                  <button
+                                    onClick={() => {
+                                      if (!canUseAi) {
+                                        toast.error(
+                                          isPolish
+                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                            : 'AI is unavailable because you have no edit permissions in this context.'
+                                        );
+                                        return;
+                                      }
+                                      requestTeamAi();
+                                    }}
+                                    disabled={!canUseAi}
+                                    title={
+                                      !canUseAi
+                                        ? isPolish
+                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                          : 'No permission to use AI in this context.'
+                                        : undefined
+                                    }
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                  >
+                                    <Sparkles size={13} />
+                                    <span>{isPolish ? 'Analizuj z AI' : 'Analyze with AI'}</span>
+                                  </button>
+                                );
+                              }
+
                               const aiSectionKey =
                                 activeNSection === 'initiative-definition'
                                   ? 'scope'
@@ -5207,14 +6558,28 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                               return (
                                 <button
                                   onClick={async () => {
-                                    const result = await handleGenerateAI(aiSectionKey);
-                                    if (result?.parsedContent || result?.content) {
-                                      toast.success(
-                                        isPolish ? 'AI wygenerował treść' : 'AI generated content'
+                                    if (!canUseAi) {
+                                      toast.error(
+                                        isPolish
+                                          ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                          : 'AI is unavailable because you have no edit permissions in this context.'
                                       );
+                                      return;
                                     }
+                                    if (activeNSection === 'initiative-definition') {
+                                      await handleGenerateScopeCard();
+                                      return;
+                                    }
+                                    await handleGenerateAI(aiSectionKey);
                                   }}
-                                  disabled={isGeneratingAI === aiSectionKey}
+                                  disabled={!canUseAi || isGeneratingAI === aiSectionKey}
+                                  title={
+                                    !canUseAi
+                                      ? isPolish
+                                        ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                        : 'No permission to use AI in this context.'
+                                      : undefined
+                                  }
                                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
                                 >
                                   {isGeneratingAI === aiSectionKey ? (
@@ -5310,8 +6675,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={handleSave}
-                      disabled={isMutating}
+                      onClick={() => handleSave(false)}
+                      disabled={isMutating || !hasUnsavedChanges}
                       className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {isMutating ? (
@@ -5319,7 +6684,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       ) : (
                         <Save size={16} />
                       )}
-                      <span>{isPolish ? 'Zapisz' : 'Save'}</span>
+                      <span>
+                        {hasUnsavedChanges
+                          ? isPolish
+                            ? 'Zapisz'
+                            : 'Save'
+                          : isPolish
+                            ? 'Zapisane'
+                            : 'Saved'}
+                      </span>
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
@@ -5334,13 +6707,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700/60">
                       <button
                         onClick={() => setPresentationMode('n')}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${presentationMode === 'n' ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${(presentationMode as any) === 'n' ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                       >
                         N
                       </button>
                       <button
                         onClick={() => setPresentationMode('c')}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${presentationMode === 'c' ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${(presentationMode as any) === 'c' ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                       >
                         C
                       </button>
@@ -5617,6 +6990,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           sectionType={sectionType}
                           expanded={expandedSections.has(sectionType.key)}
                           onToggle={() => toggleSection(sectionType.key)}
+                          readonly={!canEditCards}
                         />
                       );
                     })}
@@ -5656,6 +7030,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           sectionType={sectionType}
                           expanded={expandedSections.has(sectionType.key)}
                           onToggle={() => toggleSection(sectionType.key)}
+                          readonly={!canEditCards}
                         />
                       );
                     })}
@@ -5663,7 +7038,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 </>
               ) : (
                 /* ====== SCROLL DOCUMENT VIEW ====== */
-                <InitiativeScrollView leftSections={leftSections} rightSections={rightSections} />
+                <InitiativeScrollView
+                  leftSections={leftSections}
+                  rightSections={rightSections}
+                  readonly={!canEditCards}
+                />
               )}
             </div>
 

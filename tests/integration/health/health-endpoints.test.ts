@@ -1,105 +1,87 @@
 /**
- * Health Integration Tests
- * Testing health check endpoints
+ * Health Integration Tests (REAL)
  *
- * @module tests/integration/health/health-endpoints.test.ts
+ * These tests intentionally avoid spinning up an HTTP server (sandbox may forbid listen()).
+ * They validate the real controller behavior directly with request/response mocks.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import express from 'express';
-import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-describe('Health Endpoints Integration', () => {
-  let app: express.Application;
+vi.mock('../../../server/src/database/Database.js', () => ({
+  getDatabase: () => ({
+    query: vi.fn().mockResolvedValue([{ '1': 1 }]),
+  }),
+}));
 
-  beforeAll(() => {
-    app = express();
-    app.use(express.json());
+vi.mock('../../../server/src/services/metricsService.js', () => ({
+  getMetricsService: () => ({
+    getMetrics: vi.fn().mockResolvedValue({ ok: true }),
+  }),
+}));
 
-    app.get('/health', (req, res) => {
-      res.json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-      });
-    });
+import { HealthCheckController } from '../../../server/src/controllers/HealthCheckController.js';
 
-    app.get('/health/ready', (req, res) => {
-      res.json({
-        ready: true,
-        checks: {
-          database: 'connected',
-          cache: 'connected',
-          queue: 'connected',
-        },
-      });
-    });
+function createRes() {
+  const res: any = {};
+  res.statusCode = 200;
+  res.status = vi.fn((code: number) => {
+    res.statusCode = code;
+    return res;
+  });
+  res.json = vi.fn((body: any) => {
+    res.body = body;
+    return res;
+  });
+  res.send = vi.fn((body: any) => {
+    res.body = body;
+    return res;
+  });
+  return res;
+}
 
-    app.get('/health/live', (req, res) => {
-      res.json({ alive: true });
-    });
-
-    app.get('/health/detailed', (req, res) => {
-      res.json({
-        status: 'healthy',
-        version: '1.0.0',
-        services: {
-          api: { status: 'up', latency: 5 },
-          database: { status: 'up', latency: 10 },
-          cache: { status: 'up', latency: 2 },
-        },
-        memory: {
-          used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-          total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-        },
-      });
-    });
+describe('Health Endpoints Integration (controller-level)', () => {
+  beforeEach(() => {
+    process.env.MOCK_REDIS = 'true';
   });
 
-  describe('GET /health', () => {
-    it('should return health status', async () => {
-      const response = await request(app).get('/health');
-
-      expect(response.status).toBe(200);
-      expect(response.body.status).toBe('healthy');
-    });
-
-    it('should include timestamp', async () => {
-      const response = await request(app).get('/health');
-      expect(response.body.timestamp).toBeDefined();
-    });
+  it('GET /ping returns pong', () => {
+    const res = createRes();
+    HealthCheckController.ping({} as any, res as any);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith('pong');
   });
 
-  describe('GET /health/ready', () => {
-    it('should return readiness status', async () => {
-      const response = await request(app).get('/health/ready');
-
-      expect(response.status).toBe(200);
-      expect(response.body.ready).toBe(true);
-    });
-
-    it('should include service checks', async () => {
-      const response = await request(app).get('/health/ready');
-      expect(response.body.checks.database).toBe('connected');
-    });
+  it('GET /api/health returns ok + timestamp + redis mock', async () => {
+    const res = createRes();
+    await HealthCheckController.checkHealth({} as any, res as any);
+    expect(res.json).toHaveBeenCalled();
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        status: 'ok',
+        timestamp: expect.any(String),
+        redis: 'mock',
+      })
+    );
   });
 
-  describe('GET /health/live', () => {
-    it('should return liveness status', async () => {
-      const response = await request(app).get('/health/live');
-
-      expect(response.status).toBe(200);
-      expect(response.body.alive).toBe(true);
-    });
+  it('GET /api/health/ready returns ready when DB+metrics+redis are ok', async () => {
+    const res = createRes();
+    await HealthCheckController.checkReadiness({} as any, res as any);
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        status: 'ready',
+        checks: { database: true, redis: true, metrics: true },
+      })
+    );
   });
 
-  describe('GET /health/detailed', () => {
-    it('should return detailed health', async () => {
-      const response = await request(app).get('/health/detailed');
-
-      expect(response.status).toBe(200);
-      expect(response.body.services).toBeDefined();
-      expect(response.body.memory).toBeDefined();
-    });
+  it('GET /api/health/live returns alive', async () => {
+    const res = createRes();
+    await HealthCheckController.checkLiveness({} as any, res as any);
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual(
+      expect.objectContaining({ status: 'alive', uptime: expect.any(Number) })
+    );
   });
 });

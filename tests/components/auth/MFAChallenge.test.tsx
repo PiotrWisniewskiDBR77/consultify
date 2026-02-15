@@ -105,6 +105,30 @@ describe('MFAChallenge Component', () => {
 
       expect(document.activeElement).toBe(inputs[1]);
     });
+
+    it('focuses previous input on Backspace when current is empty', () => {
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+      const inputs = screen.getAllByRole('textbox');
+
+      inputs[1].focus();
+      fireEvent.keyDown(inputs[1], { key: 'Backspace' });
+
+      expect(document.activeElement).toBe(inputs[0]);
+    });
+
+    it('on paste focuses next input after pasted digits', () => {
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+      const inputs = screen.getAllByRole('textbox');
+
+      const container = inputs[0].parentElement!;
+      fireEvent.paste(container, {
+        clipboardData: { getData: () => '123' },
+        preventDefault: () => {},
+      });
+
+      // focusIndex = Math.min(3, 5) => 3 (next slot after 3 digits)
+      expect(document.activeElement).toBe(inputs[3]);
+    });
   });
 
   describe('Mode Switching', () => {
@@ -213,6 +237,41 @@ describe('MFAChallenge Component', () => {
         expect(screen.getByText('Invalid code')).toBeInTheDocument();
       });
     });
+
+    it('shows blocked message when API responds blocked', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({ blocked: true }),
+      });
+
+      const user = userEvent.setup();
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+
+      const inputs = screen.getAllByRole('textbox');
+      for (let i = 0; i < 6; i++) {
+        await user.type(inputs[i], String(i + 1));
+      }
+
+      await waitFor(() => {
+        expect(screen.getByText('Too many attempts. Please try again later.')).toBeInTheDocument();
+      });
+    });
+
+    it('shows error when TOTP verification throws', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network down'));
+
+      const user = userEvent.setup();
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+
+      const inputs = screen.getAllByRole('textbox');
+      for (let i = 0; i < 6; i++) {
+        await user.type(inputs[i], String(i + 1));
+      }
+
+      await waitFor(() => {
+        expect(screen.getByText('Network down')).toBeInTheDocument();
+      });
+    });
   });
 
   describe('Backup Code Verification', () => {
@@ -238,6 +297,67 @@ describe('MFAChallenge Component', () => {
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith('/api/mfa/backup-code', expect.any(Object));
       });
+    });
+
+    it('disables Verify button when backup code is empty', async () => {
+      const user = userEvent.setup();
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+
+      await user.click(screen.getByText(/Use a backup code instead/i));
+      expect(screen.getByText('Verify')).toBeDisabled();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('shows invalid backup code error when API rejects', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Invalid backup code' }),
+      });
+
+      const user = userEvent.setup();
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+
+      await user.click(screen.getByText(/Use a backup code instead/i));
+      const input = screen.getByPlaceholderText('XXXX-XXXX');
+      await user.type(input, 'ABCD-1234');
+      await user.click(screen.getByText('Verify'));
+
+      expect(await screen.findByText('Invalid backup code')).toBeInTheDocument();
+      expect((input as HTMLInputElement).value).toBe('');
+    });
+
+    it('shows blocked message and clears backup code when API responds blocked', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({ blocked: true }),
+      });
+
+      const user = userEvent.setup();
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+
+      await user.click(screen.getByText(/Use a backup code instead/i));
+      const input = screen.getByPlaceholderText('XXXX-XXXX');
+      await user.type(input, 'ABCD-1234');
+      await user.click(screen.getByText('Verify'));
+
+      expect(
+        await screen.findByText('Too many attempts. Please try again later.')
+      ).toBeInTheDocument();
+      expect((input as HTMLInputElement).value).toBe('');
+    });
+
+    it('shows error when backup verification throws', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network down'));
+
+      const user = userEvent.setup();
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+
+      await user.click(screen.getByText(/Use a backup code instead/i));
+      const input = screen.getByPlaceholderText('XXXX-XXXX');
+      await user.type(input, 'ABCD-1234');
+      await user.click(screen.getByText('Verify'));
+
+      expect(await screen.findByText('Network down')).toBeInTheDocument();
     });
   });
 

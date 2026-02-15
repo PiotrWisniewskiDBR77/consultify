@@ -10,9 +10,37 @@ import { motion } from 'framer-motion';
 import { AlertTriangle, Loader2, Plus, Scale, Sparkles, Trash2, X } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
+
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
+
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((v) => typeof v === 'string');
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    // Sometimes legacy fields are persisted as JSON strings.
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed.map((x) => String(x)).filter(Boolean);
+      } catch {
+        // ignore
+      }
+    }
+    // Heuristic: treat multi-line as multiple items
+    if (trimmed.includes('\n')) {
+      return trimmed
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+    return [trimmed];
+  }
+  return [];
+}
 
 export const ScopeSection: React.FC<InitiativeSectionProps> = ({
   sectionType,
@@ -20,29 +48,44 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
   onToggle,
 }) => {
   const { initiative, isPolish, isGeneratingAI, handleGenerateAI } = useInitiativeContext();
+  const artifactContext = {
+    type: 'initiative',
+    title: initiative?.name || '',
+    status: initiative?.status || '',
+    priority: initiative?.priority || '',
+  };
 
   const scopeData = initiative?.scope || {};
   const [inScope, setInScope] = useState<string[]>(
-    typeof scopeData === 'object' ? scopeData.inScope || [] : []
+    typeof scopeData === 'object' ? toStringArray((scopeData as any).inScope) : []
   );
   const [outScope, setOutScope] = useState<string[]>(
-    typeof scopeData === 'object' ? scopeData.outScope || [] : []
+    typeof scopeData === 'object' ? toStringArray((scopeData as any).outScope) : []
   );
   const [killCriteria, setKillCriteria] = useState<string[]>(
-    initiative?.killCriteria ||
-      initiative?.kill_criteria ||
-      (typeof scopeData === 'object' ? scopeData.killCriteria || [] : [])
+    toStringArray(
+      (initiative as any)?.killCriteria ??
+        (initiative as any)?.kill_criteria ??
+        (typeof scopeData === 'object' ? (scopeData as any).killCriteria : [])
+    )
   );
 
-  const addInScope = () => setInScope([...inScope, '']);
-  const addOutScope = () => setOutScope([...outScope, '']);
-  const addKill = () => setKillCriteria([...killCriteria, '']);
-  const updateInScope = (idx: number, val: string) => setInScope(inScope.map((v, i) => i === idx ? val : v));
-  const updateOutScope = (idx: number, val: string) => setOutScope(outScope.map((v, i) => i === idx ? val : v));
-  const updateKill = (idx: number, val: string) => setKillCriteria(killCriteria.map((v, i) => i === idx ? val : v));
-  const removeInScope = (idx: number) => setInScope(inScope.filter((_, i) => i !== idx));
-  const removeOutScope = (idx: number) => setOutScope(outScope.filter((_, i) => i !== idx));
-  const removeKill = (idx: number) => setKillCriteria(killCriteria.filter((_, i) => i !== idx));
+  // Defensive updates: these lists may come from legacy/AI data and must always behave like arrays.
+  const addInScope = () => setInScope((prev) => [...toStringArray(prev), '']);
+  const addOutScope = () => setOutScope((prev) => [...toStringArray(prev), '']);
+  const addKill = () => setKillCriteria((prev) => [...toStringArray(prev), '']);
+  const updateInScope = (idx: number, val: string) =>
+    setInScope((prev) => toStringArray(prev).map((v, i) => (i === idx ? val : v)));
+  const updateOutScope = (idx: number, val: string) =>
+    setOutScope((prev) => toStringArray(prev).map((v, i) => (i === idx ? val : v)));
+  const updateKill = (idx: number, val: string) =>
+    setKillCriteria((prev) => toStringArray(prev).map((v, i) => (i === idx ? val : v)));
+  const removeInScope = (idx: number) =>
+    setInScope((prev) => toStringArray(prev).filter((_, i) => i !== idx));
+  const removeOutScope = (idx: number) =>
+    setOutScope((prev) => toStringArray(prev).filter((_, i) => i !== idx));
+  const removeKill = (idx: number) =>
+    setKillCriteria((prev) => toStringArray(prev).filter((_, i) => i !== idx));
 
   const renderScopeItem = (
     item: string,
@@ -51,11 +94,14 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
     onRemove: (idx: number) => void,
     dotColor: 'emerald' | 'red',
     placeholder: string,
+    aiLabel: string
   ) => (
     <div key={idx} className="group flex items-center gap-2 py-1">
-      <span className={`w-2 h-2 rounded-full shrink-0 ${
-        dotColor === 'emerald' ? 'bg-emerald-500' : 'bg-red-400'
-      }`} />
+      <span
+        className={`w-2 h-2 rounded-full shrink-0 ${
+          dotColor === 'emerald' ? 'bg-emerald-500' : 'bg-red-400'
+        }`}
+      />
       <input
         type="text"
         value={item}
@@ -63,6 +109,15 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
         placeholder={placeholder}
         autoFocus={!item}
         className="flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 text-slate-700 dark:text-slate-300"
+      />
+      <AIFieldEnhancer
+        fieldKey={`scope.${dotColor}.${idx}`}
+        sectionLabel={aiLabel}
+        currentValue={item}
+        onApply={(v) => onUpdate(idx, v)}
+        artifactContext={artifactContext}
+        iconOnly
+        outputFormat="short"
       />
       <button
         onClick={() => onRemove(idx)}
@@ -97,9 +152,10 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
             const result = await handleGenerateAI('scope');
             if (result?.parsedContent) {
               const data = result.parsedContent;
-              if (data.inScope?.length) setInScope(data.inScope);
-              if (data.outOfScope?.length) setOutScope(data.outOfScope);
-              if (data.killCriteria?.length) setKillCriteria(data.killCriteria);
+              // Normalize AI output (can be string/array/missing).
+              setInScope(toStringArray(data.inScope));
+              setOutScope(toStringArray(data.outOfScope));
+              setKillCriteria(toStringArray(data.killCriteria));
             }
           }}
           disabled={isGeneratingAI === 'scope'}
@@ -127,7 +183,9 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                     {isPolish ? 'W zakresie' : 'In Scope'}
                   </label>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                    {isPolish ? 'Elementy, procesy i obszary objęte inicjatywą' : 'Elements, processes and areas included in this initiative'}
+                    {isPolish
+                      ? 'Elementy, procesy i obszary objęte inicjatywą'
+                      : 'Elements, processes and areas included in this initiative'}
                   </p>
                 </div>
               </div>
@@ -140,10 +198,17 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
               </button>
             </div>
             <div className="min-h-[40px]">
-              {inScope.map((item, i) => renderScopeItem(
-                item, i, updateInScope, removeInScope, 'emerald',
-                isPolish ? 'Element zakresu...' : 'Scope item...',
-              ))}
+              {inScope.map((item, i) =>
+                renderScopeItem(
+                  item,
+                  i,
+                  updateInScope,
+                  removeInScope,
+                  'emerald',
+                  isPolish ? 'Element zakresu...' : 'Scope item...',
+                  isPolish ? 'W zakresie — element listy' : 'In Scope — list item'
+                )
+              )}
               {inScope.length === 0 && (
                 <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
                   {isPolish ? 'Brak elementów' : 'No items yet'}
@@ -165,7 +230,9 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                     {isPolish ? 'Poza zakresem' : 'Out of Scope'}
                   </label>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                    {isPolish ? 'Wykluczenia i ograniczenia poza zakresem' : 'Exclusions and boundaries not covered'}
+                    {isPolish
+                      ? 'Wykluczenia i ograniczenia poza zakresem'
+                      : 'Exclusions and boundaries not covered'}
                   </p>
                 </div>
               </div>
@@ -178,10 +245,17 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
               </button>
             </div>
             <div className="min-h-[40px]">
-              {outScope.map((item, i) => renderScopeItem(
-                item, i, updateOutScope, removeOutScope, 'red',
-                isPolish ? 'Wykluczenie...' : 'Exclusion...',
-              ))}
+              {outScope.map((item, i) =>
+                renderScopeItem(
+                  item,
+                  i,
+                  updateOutScope,
+                  removeOutScope,
+                  'red',
+                  isPolish ? 'Wykluczenie...' : 'Exclusion...',
+                  isPolish ? 'Poza zakresem — element listy' : 'Out of Scope — list item'
+                )
+              )}
               {outScope.length === 0 && (
                 <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
                   {isPolish ? 'Brak elementów' : 'No items yet'}
@@ -229,6 +303,17 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                   placeholder={isPolish ? 'Kryterium rezygnacji...' : 'Kill criteria...'}
                   autoFocus={!item}
                   className="flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 text-slate-700 dark:text-slate-300"
+                />
+                <AIFieldEnhancer
+                  fieldKey={`scope.killCriteria.${i}`}
+                  sectionLabel={
+                    isPolish ? 'Kryteria rezygnacji — element listy' : 'Kill Criteria — list item'
+                  }
+                  currentValue={item}
+                  onApply={(v) => updateKill(i, v)}
+                  artifactContext={artifactContext}
+                  iconOnly
+                  outputFormat="short"
                 />
                 <button
                   onClick={() => removeKill(i)}

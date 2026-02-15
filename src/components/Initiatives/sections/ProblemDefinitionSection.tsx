@@ -11,6 +11,8 @@ import { motion } from 'framer-motion';
 import { AlertTriangle, Loader2, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
+
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
@@ -21,6 +23,12 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
   onToggle,
 }) => {
   const { initiative, isPolish, isGeneratingAI, handleGenerateAI } = useInitiativeContext();
+  const artifactContext = {
+    type: 'initiative',
+    title: initiative?.name || '',
+    status: initiative?.status || '',
+    priority: initiative?.priority || '',
+  };
 
   // Local state for structured problem fields (stored in initiative.problemDefinition JSON)
   const problemData = initiative?.problemDefinition || initiative?.problem_definition || {};
@@ -57,7 +65,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
           whileTap={{ scale: 0.95 }}
           onClick={async (e) => {
             e.stopPropagation();
-            const result = await handleGenerateAI('problem_definition');
+            const result = await handleGenerateAI('problemDefinition');
             if (result?.parsedContent) {
               const data = result.parsedContent;
               if (data.symptom) setSymptom(data.symptom);
@@ -95,7 +103,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             whileTap={{ scale: 0.98 }}
             onClick={async (e) => {
               e.preventDefault();
-              const result = await handleGenerateAI('problem_definition');
+              const result = await handleGenerateAI('problemDefinition');
               if (result?.parsedContent) {
                 const data = result.parsedContent;
                 if (data.symptom) setSymptom(data.symptom);
@@ -125,6 +133,19 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               {isPolish ? 'Symptom / Co obserwujemy' : 'Symptom / What is observed'}
             </span>
+            <div className="ml-auto">
+              <AIFieldEnhancer
+                fieldKey="problemDefinition.symptom"
+                sectionLabel={
+                  isPolish ? 'Definicja problemu — symptom' : 'Problem Definition — symptom'
+                }
+                currentValue={symptom}
+                onApply={setSymptom}
+                artifactContext={artifactContext}
+                iconOnly
+                outputFormat="paragraph"
+              />
+            </div>
           </label>
           <p className="text-xs text-slate-400 mb-2">
             {isPolish
@@ -153,6 +174,21 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               {isPolish ? 'Przyczyna źródłowa' : 'Root Cause'}
             </span>
+            <div className="ml-auto">
+              <AIFieldEnhancer
+                fieldKey="problemDefinition.rootCause"
+                sectionLabel={
+                  isPolish
+                    ? 'Definicja problemu — przyczyna źródłowa'
+                    : 'Problem Definition — root cause'
+                }
+                currentValue={rootCause}
+                onApply={setRootCause}
+                artifactContext={artifactContext}
+                iconOnly
+                outputFormat="paragraph"
+              />
+            </div>
           </label>
           <p className="text-xs text-slate-400 mb-2">
             {isPolish
@@ -181,6 +217,21 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               {isPolish ? 'Koszt bezczynności' : 'Cost of Inaction'}
             </span>
+            <div className="ml-auto">
+              <AIFieldEnhancer
+                fieldKey="problemDefinition.costOfInaction"
+                sectionLabel={
+                  isPolish
+                    ? 'Definicja problemu — koszt bezczynności'
+                    : 'Problem Definition — cost of inaction'
+                }
+                currentValue={costOfInaction}
+                onApply={setCostOfInaction}
+                artifactContext={artifactContext}
+                iconOnly
+                outputFormat="paragraph"
+              />
+            </div>
           </label>
           <p className="text-xs text-slate-400 mb-2">
             {isPolish

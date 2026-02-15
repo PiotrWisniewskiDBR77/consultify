@@ -23,19 +23,22 @@ interface NModeActionBarProps {
 }
 
 const VARIANT_CLASSES: Record<ActionVariant, string> = {
-  success: 'border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10',
-  danger: 'border-red-400/50 text-red-600 dark:text-red-400 hover:bg-red-500/10',
+  success:
+    'border-emerald-400/30 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10',
+  danger:
+    'border-red-400/30 dark:border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/10',
   neutral:
-    'border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800',
-  ai: 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15',
+    'border-slate-300/40 dark:border-navy-600/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60',
+  ai: 'border-primary-400/30 dark:border-primary-500/20 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15',
 };
 
 const VARIANT_LOADING_CLASS: Record<ActionVariant, string> = {
-  success: 'border-emerald-400/50 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10',
-  danger: 'border-red-400/50 text-red-600 dark:text-red-400 bg-red-500/10',
+  success:
+    'border-emerald-400/30 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10',
+  danger: 'border-red-400/30 dark:border-red-500/20 text-red-600 dark:text-red-400 bg-red-500/10',
   neutral:
-    'border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800',
-  ai: 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10',
+    'border-slate-300/40 dark:border-navy-600/30 text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-navy-800/60',
+  ai: 'border-primary-400/30 dark:border-primary-500/20 text-primary-600 dark:text-primary-300 bg-primary-500/10',
 };
 
 const ActionButton: React.FC<{ action: NModeAction; isPolish: boolean; className?: string }> = ({
@@ -75,7 +78,7 @@ export const NModeActionBar: React.FC<NModeActionBarProps> = ({
   const sectionAIAction = aiContextActions.find((a) => a.sectionId === activeSection);
 
   return (
-    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200/40 dark:border-navy-700/40">
+    <div className="flex items-center gap-2">
       {/* Primary actions */}
       {actions.map((action) => (
         <ActionButton key={action.id} action={action} isPolish={isPolish} />

@@ -78,6 +78,68 @@ export interface UserInfo {
   email?: string;
 }
 
+// ==========================================
+// RESOURCE TYPES
+// ==========================================
+
+export interface ResourceItem {
+  id: string;
+  initiativeId?: string;
+  userId?: string;
+  name: string;
+  role: string;
+  allocationPercentage: number;
+  startDate?: string;
+  endDate?: string;
+  notes?: string;
+  firstName?: string;
+  lastName?: string;
+  avatarUrl?: string;
+  source?: 'manual' | 'ai';
+}
+
+export interface BudgetItem {
+  id: string;
+  initiativeId?: string;
+  category: string;
+  costType: 'CAPEX' | 'OPEX';
+  amount: number;
+  currency: string;
+  description?: string;
+  source?: 'manual' | 'ai';
+}
+
+export interface ToolItem {
+  id: string;
+  initiativeId?: string;
+  name: string;
+  category: string;
+  vendor?: string;
+  licenseCost: number;
+  costType?: 'CAPEX' | 'OPEX';
+  licenseType: string;
+  status: string;
+  notes?: string;
+  source?: 'manual' | 'ai';
+}
+
+export interface IntangibleAssetItem {
+  id: string;
+  initiativeId?: string;
+  assetType: string; // 'license', 'training', 'certification', 'knowledge', 'ip', 'legal_right', 'other'
+  name: string;
+  provider?: string;
+  cost: number;
+  costType?: 'CAPEX' | 'OPEX';
+  currency: string;
+  validFrom?: string;
+  validUntil?: string;
+  status: string;
+  beneficiaries?: string;
+  notes?: string;
+  source?: 'manual' | 'ai';
+}
+
 export interface PendingApproval {
   id: string;
   gateType: string;
@@ -142,6 +204,30 @@ export interface GateReadinessCheck {
     canCurrentUserExecute: boolean;
     hasAssignedApprover: boolean;
   }>;
+  capabilities?: {
+    version: number;
+    source: 'backend';
+    topBar: {
+      canEditPriority: boolean;
+      canEditOwner: boolean;
+      canEditTargetDate: boolean;
+    };
+    cards?: {
+      canEditCards: boolean;
+      reasonCode: string | null;
+    };
+    reasonCodes?: {
+      topBar?: { priority?: string | null; owner?: string | null; targetDate?: string | null };
+      cards?: { edit?: string | null };
+      ai?: { use?: string | null };
+    };
+    ctaBar: {
+      workflowActions: Array<{ targetStatus: string; gate: string | null }>;
+      contextCreateActions: string[];
+      canUseAi: boolean;
+      aiAllowedSectionKeys?: string[];
+    };
+  };
   readiness: Array<{
     key: string;
     label: string;

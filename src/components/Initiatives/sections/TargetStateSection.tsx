@@ -13,17 +13,10 @@
  */
 
 import { motion } from 'framer-motion';
-import {
-  ChevronDown,
-  ChevronUp,
-  GripVertical,
-  Loader2,
-  Plus,
-  Sparkles,
-  Target,
-  X,
-} from 'lucide-react';
+import { ChevronDown, ChevronUp, GripVertical, Plus, Target, X } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
+
+import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
@@ -36,12 +29,8 @@ interface ResizablePanelProps {
   title: string;
   /** Description below title in lighter font */
   description: string;
-  /** AI generation key */
-  aiKey: string;
-  /** Whether AI is currently generating for this panel */
-  isGenerating: boolean;
-  /** AI click handler */
-  onAIClick: () => void;
+  /** AI control (dropdown) */
+  aiControl: React.ReactNode;
   /** Add item label */
   addLabel: string;
   /** Add item handler */
@@ -61,8 +50,7 @@ const COLLAPSED_HEIGHT = 120;
 const ResizablePanel: React.FC<ResizablePanelProps> = ({
   title,
   description,
-  isGenerating,
-  onAIClick,
+  aiControl,
   addLabel,
   onAdd,
   children,
@@ -74,9 +62,7 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
 
-  const isOverflowing = contentRef.current
-    ? contentRef.current.scrollHeight > height - 60
-    : false;
+  const isOverflowing = contentRef.current ? contentRef.current.scrollHeight > height - 60 : false;
 
   const effectiveHeight = isExpanded ? 'auto' : height;
 
@@ -122,18 +108,7 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
 
         {/* Right: AI button + Add item */}
         <div className="flex flex-col items-end gap-1 shrink-0 ml-3">
-          <button
-            onClick={onAIClick}
-            disabled={isGenerating}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-[10px] font-medium transition-all disabled:opacity-50"
-          >
-            {isGenerating ? (
-              <Loader2 size={11} className="animate-spin" />
-            ) : (
-              <Sparkles size={11} />
-            )}
-            AI
-          </button>
+          {aiControl}
           <button
             onClick={onAdd}
             className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
@@ -197,19 +172,25 @@ interface ItemRowProps {
 }
 
 const ItemRow: React.FC<ItemRowProps> = ({ children, onRemove, color, badge }) => {
-  const bg = color === 'emerald'
-    ? 'bg-emerald-50/50 dark:bg-emerald-500/5 border-emerald-200/50 dark:border-emerald-500/20'
-    : 'bg-blue-50/50 dark:bg-blue-500/5 border-blue-200/50 dark:border-blue-500/20';
-  const badgeBg = color === 'emerald'
-    ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
-    : 'bg-blue-500/20 text-blue-600 dark:text-blue-400';
+  const bg =
+    color === 'emerald'
+      ? 'bg-emerald-50/50 dark:bg-emerald-500/5 border-emerald-200/50 dark:border-emerald-500/20'
+      : 'bg-blue-50/50 dark:bg-blue-500/5 border-blue-200/50 dark:border-blue-500/20';
+  const badgeBg =
+    color === 'emerald'
+      ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+      : 'bg-blue-500/20 text-blue-600 dark:text-blue-400';
 
   return (
     <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border ${bg}`}>
-      <div className={`w-4 h-4 rounded-full ${badgeBg} flex items-center justify-center text-[9px] font-bold shrink-0`}>
+      <div
+        className={`w-4 h-4 rounded-full ${badgeBg} flex items-center justify-center text-[9px] font-bold shrink-0`}
+      >
         {badge}
       </div>
-      <span className="flex-1 text-xs text-slate-700 dark:text-slate-300 leading-snug">{children}</span>
+      <span className="flex-1 text-xs text-slate-700 dark:text-slate-300 leading-snug">
+        {children}
+      </span>
       <button
         onClick={onRemove}
         className="text-slate-400 hover:text-red-500 transition-colors shrink-0"
@@ -249,7 +230,13 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
-  const { initiative, isPolish, isGeneratingAI, handleGenerateAI } = useInitiativeContext();
+  const { initiative, isPolish } = useInitiativeContext();
+  const artifactContext = {
+    type: 'initiative',
+    title: initiative?.name || '',
+    status: initiative?.status || '',
+    priority: initiative?.priority || '',
+  };
 
   const targetData = initiative?.targetState || initiative?.target_state || {};
   const [targetDescription, setTargetDescription] = useState(
@@ -298,14 +285,16 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
               ? 'Opisz pożądany stan końcowy po wdrożeniu inicjatywy'
               : 'Describe the desired end state after initiative completion'
           }
-          aiKey="target_description"
-          isGenerating={isGeneratingAI === 'targetState'}
-          onAIClick={async () => {
-            const result = await handleGenerateAI('target_state');
-            if (result?.parsedContent?.targetDescription) {
-              setTargetDescription(result.parsedContent.targetDescription);
-            }
-          }}
+          aiControl={
+            <AIFieldEnhancer
+              fieldKey="targetState.description"
+              sectionLabel={isPolish ? 'Stan docelowy — opis' : 'Target State — description'}
+              currentValue={targetDescription}
+              onApply={setTargetDescription}
+              artifactContext={artifactContext}
+              outputFormat="paragraph"
+            />
+          }
           addLabel={isPolish ? 'Edytuj' : 'Edit'}
           onAdd={() => setShowTargetInput(true)}
           hasContent={!!targetDescription}
@@ -322,9 +311,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
               rows={3}
               className="w-full px-2.5 py-2 rounded-lg bg-slate-50/60 dark:bg-navy-800/40 border border-slate-200/80 dark:border-navy-700/50 text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-500/20 resize-none transition-all"
               placeholder={
-                isPolish
-                  ? 'Opisz pożądany stan końcowy...'
-                  : 'Describe the desired end state...'
+                isPolish ? 'Opisz pożądany stan końcowy...' : 'Describe the desired end state...'
               }
               onBlur={() => {
                 if (!targetDescription) setShowTargetInput(false);
@@ -332,7 +319,9 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
             />
           ) : (
             <p className="text-xs text-slate-400 dark:text-slate-500 italic">
-              {isPolish ? 'Brak opisu. Kliknij „Edytuj" lub „AI" aby dodać.' : 'No description. Click "Edit" or "AI" to add.'}
+              {isPolish
+                ? 'Brak opisu. Kliknij „Edytuj" lub „AI" aby dodać.'
+                : 'No description. Click "Edit" or "AI" to add.'}
             </p>
           )}
         </ResizablePanel>
@@ -345,14 +334,22 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
               ? 'Mierzalne warunki uznania inicjatywy za zakończoną sukcesem'
               : 'Measurable conditions for considering the initiative successful'
           }
-          aiKey="success_criteria"
-          isGenerating={isGeneratingAI === 'targetState'}
-          onAIClick={async () => {
-            const result = await handleGenerateAI('target_state');
-            if (result?.parsedContent?.successCriteria?.length) {
-              setSuccessCriteria(result.parsedContent.successCriteria);
-            }
-          }}
+          aiControl={
+            <AIFieldEnhancer
+              fieldKey="targetState.successCriteria"
+              sectionLabel={isPolish ? 'Kryteria sukcesu — lista' : 'Success Criteria — list'}
+              currentValue={successCriteria.join('\n')}
+              onApply={(v) => {
+                const items = String(v || '')
+                  .split('\n')
+                  .map((l) => l.trim())
+                  .filter(Boolean);
+                setSuccessCriteria(items);
+              }}
+              artifactContext={artifactContext}
+              outputFormat="list"
+            />
+          }
           addLabel={isPolish ? 'Dodaj' : 'Add item'}
           onAdd={() => {
             // Focus the inline input by scrolling to it
@@ -394,14 +391,22 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
               ? 'Konkretne produkty i rezultaty do dostarczenia'
               : 'Specific outputs and results to be delivered'
           }
-          aiKey="deliverables"
-          isGenerating={isGeneratingAI === 'targetState'}
-          onAIClick={async () => {
-            const result = await handleGenerateAI('target_state');
-            if (result?.parsedContent?.deliverables?.length) {
-              setDeliverables(result.parsedContent.deliverables);
-            }
-          }}
+          aiControl={
+            <AIFieldEnhancer
+              fieldKey="targetState.deliverables"
+              sectionLabel={isPolish ? 'Produkty — lista' : 'Deliverables — list'}
+              currentValue={deliverables.join('\n')}
+              onApply={(v) => {
+                const items = String(v || '')
+                  .split('\n')
+                  .map((l) => l.trim())
+                  .filter(Boolean);
+                setDeliverables(items);
+              }}
+              artifactContext={artifactContext}
+              outputFormat="list"
+            />
+          }
           addLabel={isPolish ? 'Dodaj' : 'Add item'}
           onAdd={() => {
             const input = document.getElementById('add-deliverable-input');

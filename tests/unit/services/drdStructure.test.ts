@@ -39,15 +39,10 @@ describe('DRD Structure Service', () => {
   });
 
   describe('Axis 6: Cybersecurity', () => {
-    it('should have Axis 6 named "Cybersecurity" if present', () => {
+    it('should have Axis 6 named "Cybersecurity"', () => {
       const axis6 = DRD_STRUCTURE.find((axis) => axis.id === 6);
-      // Axis 6 may or may not exist depending on data source
-      if (axis6) {
-        expect(axis6.name).toBe('Cybersecurity');
-      } else {
-        // Skip if axis 6 doesn't exist
-        expect(true).toBe(true);
-      }
+      expect(axis6).toBeDefined();
+      expect(axis6?.name).toBe('Cybersecurity');
     });
   });
 

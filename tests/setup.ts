@@ -10,6 +10,29 @@ setupAutoCleanup();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis as any).jest = vi;
 
+// --------------------------------------------------------
+// JSDOM navigation stubs
+// --------------------------------------------------------
+// Some components trigger window.location navigation (assign/replace/reload),
+// which JSDOM implements as "Not implemented: navigation to another Document".
+// Stub these to no-op so tests stay signal-rich and deterministic.
+if (typeof window !== 'undefined') {
+  try {
+    const noop = () => {};
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...window.location,
+        assign: vi.fn(noop),
+        replace: vi.fn(noop),
+        reload: vi.fn(noop),
+      },
+      writable: true,
+    });
+  } catch {
+    // If JSDOM makes window.location non-configurable in a given environment, skip.
+  }
+}
+
 // Global mock for react-i18next to prevent "Cannot read properties of undefined (reading 'en')" errors
 vi.mock('react-i18next', () => {
   // NOTE:

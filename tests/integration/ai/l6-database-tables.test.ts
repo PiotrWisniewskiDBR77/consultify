@@ -8,7 +8,7 @@
  * @module tests/integration/ai/l6-database-tables.test.ts
  */
 
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 
 // ============================================================================
 // Database handling — attempt real DB, fall back to spec verification
@@ -88,23 +88,23 @@ describe('L6.14: AI Database Tables', () => {
     });
 
     it('should verify conversations table in database (if available)', async () => {
-      if (!dbAvailable) {
-        console.log('[L6.14] DB not available - schema spec verified');
-      } else {
-        const exists = await tableExists('conversations');
-        console.log(`[L6.14] conversations table: ${exists ? 'EXISTS' : 'NOT FOUND'}`);
-      }
-      expect(true).toBe(true);
+      if (!dbAvailable) return;
+      const exists = await tableExists('conversations');
+      expect(exists).toBe(true);
+      const columns = await getColumnNames('conversations');
+      expect(columns).toEqual(
+        expect.arrayContaining(['id', 'user_id', 'organization_id', 'title', 'created_at'])
+      );
     });
 
     it('should verify conversation_messages table in database (if available)', async () => {
-      if (!dbAvailable) {
-        console.log('[L6.14] DB not available - schema spec verified');
-      } else {
-        const exists = await tableExists('conversation_messages');
-        console.log(`[L6.14] conversation_messages table: ${exists ? 'EXISTS' : 'NOT FOUND'}`);
-      }
-      expect(true).toBe(true);
+      if (!dbAvailable) return;
+      const exists = await tableExists('conversation_messages');
+      expect(exists).toBe(true);
+      const columns = await getColumnNames('conversation_messages');
+      expect(columns).toEqual(
+        expect.arrayContaining(['id', 'conversation_id', 'role', 'content', 'created_at'])
+      );
     });
   });
 
@@ -303,11 +303,7 @@ describe('L6.14: AI Database Tables', () => {
     });
 
     it('should verify database tables if available', async () => {
-      if (!dbAvailable) {
-        console.log('[L6.14] ✓ Schema specification verified (DB not available for live check)');
-        expect(true).toBe(true);
-        return;
-      }
+      if (!dbAvailable) return;
 
       const aiTables = [
         'conversations',
@@ -328,9 +324,8 @@ describe('L6.14: AI Database Tables', () => {
         aiTables.map(async (t) => ({ table: t, exists: await tableExists(t) }))
       );
 
-      const existing = results.filter((r) => r.exists).length;
-      console.log(`[L6.14] AI Tables in DB: ${existing}/${aiTables.length}`);
-      expect(existing).toBeGreaterThanOrEqual(0); // informational - tables may not be migrated in test env
+      const missing = results.filter((r) => !r.exists).map((r) => r.table);
+      expect(missing).toEqual([]);
     });
   });
 });

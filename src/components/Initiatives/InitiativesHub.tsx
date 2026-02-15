@@ -19,6 +19,9 @@ import { useAppStore } from '../../store/useAppStore';
 import { InitiativeStatus, PortfolioFilters, PortfolioInitiative } from '../../types';
 // Initiative Card component
 import { InitiativeCard } from '../InitiativeCard';
+// Detail views
+import { DecisionDetailView } from '../MyWork/DecisionDetailView';
+import { TaskDetailView } from '../MyWork/TaskDetailView';
 // Portfolio view components
 import { PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 import { PortfolioListView } from '../Portfolio/PortfolioListView';
@@ -363,6 +366,72 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [openDocuments]
   );
 
+  // Open decision as dynamic tab (called from InitiativeDocumentView → DecisionsSection)
+  const handleOpenDecision = useCallback(
+    async (decisionId: string) => {
+      try {
+        // Fetch decision details to get the name
+        const response = await Api.get(`/decisions/${decisionId}`);
+        const decision = response?.decision || response;
+
+        // Add to open documents if not already open
+        const existingDoc = openDocuments.find((d) => d.id === decisionId && d.type === 'decision');
+        if (!existingDoc) {
+          const newDoc: OpenDocument = {
+            id: decisionId,
+            name: decision?.title || t('initiatives.decisions.decision', 'Decision'),
+            type: 'decision',
+            subType: decision?.type || 'GENERAL',
+            status: (decision?.status?.toUpperCase() || 'PENDING') as any,
+          };
+          setOpenDocuments((prev) => [...prev, newDoc]);
+        }
+        // Set as active document - this will render DecisionDetailView
+        setActiveDocumentId(decisionId);
+      } catch (e: any) {
+        toast.error(
+          e?.response?.data?.error ||
+            e?.message ||
+            t('initiatives.decisions.openFailed', 'Failed to open decision')
+        );
+      }
+    },
+    [openDocuments, t]
+  );
+
+  // Open task as dynamic tab (called from InitiativeDocumentView → TasksMilestonesSection)
+  const handleOpenTask = useCallback(
+    async (taskId: string) => {
+      try {
+        // Fetch task details to get the name
+        const response = await Api.get(`/tasks/${taskId}`);
+        const task = response?.task || response;
+
+        // Add to open documents if not already open
+        const existingDoc = openDocuments.find((d) => d.id === taskId && d.type === 'task');
+        if (!existingDoc) {
+          const newDoc: OpenDocument = {
+            id: taskId,
+            name: task?.title || t('initiatives.tasks.task', 'Task'),
+            type: 'task',
+            subType: task?.type || 'TASK',
+            status: (task?.status?.toUpperCase() || 'OPEN') as any,
+          };
+          setOpenDocuments((prev) => [...prev, newDoc]);
+        }
+        // Set as active document - this will render TaskDetailView
+        setActiveDocumentId(taskId);
+      } catch (e: any) {
+        toast.error(
+          e?.response?.data?.error ||
+            e?.message ||
+            t('initiatives.tasks.openFailed', 'Failed to open task')
+        );
+      }
+    },
+    [openDocuments, t]
+  );
+
   // Deep link: open initiative drawer/full card via URL params
   // Supported: /initiatives?open=<initiativeId>&mode=drawer|doc
   useEffect(() => {
@@ -589,14 +658,40 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // ============================================
 
   const renderContent = () => {
-    // If there's an active document, show the dynamic card
+    // If there's an active document, show the appropriate view based on type
     if (activeDocumentId) {
+      const activeDoc = openDocuments.find((d) => d.id === activeDocumentId);
+
+      if (activeDoc?.type === 'decision') {
+        return (
+          <DecisionDetailView
+            decisionId={activeDocumentId}
+            onClose={handleShowList}
+            onSaved={() => fetchData(true)}
+          />
+        );
+      }
+
+      if (activeDoc?.type === 'task') {
+        return (
+          <TaskDetailView
+            taskId={activeDocumentId}
+            onClose={handleShowList}
+            onSaved={() => fetchData(true)}
+            onOpenDecision={handleOpenDecision}
+          />
+        );
+      }
+
+      // Default: initiative document view
       return (
         <InitiativeDocumentView
           initiativeId={activeDocumentId}
           onBack={handleShowList}
           onStatusChange={() => fetchData(true)}
           sourceModule="initiatives"
+          onOpenDecision={handleOpenDecision}
+          onOpenTask={handleOpenTask}
         />
       );
     }
@@ -640,7 +735,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <div className="text-center">
             <Lightbulb className="w-12 h-12 mx-auto mb-4 text-purple-400/50" />
             <p className="text-lg text-slate-900 dark:text-white">{t('initiatives.empty.title')}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">{t('initiatives.empty.description')}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+              {t('initiatives.empty.description')}
+            </p>
             <button
               onClick={() => setShowNewModal(true)}
               className="mt-6 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-slate-900 dark:text-white rounded-lg text-sm font-medium hover:from-primary-400 hover:to-primary-500 transition-all"
@@ -879,7 +976,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               {/* D1.1: Level info callout */}
               {newLevel && (
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600">
-                  <Shield size={14} className="text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0" />
+                  <Shield
+                    size={14}
+                    className="text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0"
+                  />
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     <span className="font-medium text-slate-700 dark:text-slate-300">
                       {INITIATIVE_LEVELS.find((l) => l.id === newLevel)?.label}

@@ -70,14 +70,14 @@
 /* Admin Module Styles - Clean Enterprise Design */
 @layer components {
 
-  /* Admin Card - Base container with clear boundaries */
+  /* Admin Card - Base container (v2.0: border-free, bg-layer separation) */
   .admin-card {
-    @apply bg-white dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm;
+    @apply bg-slate-50 dark:bg-navy-900/50 rounded-xl;
   }
 
-  /* Admin Metric Card - Stats display with clear separation */
+  /* Admin Metric Card - Stats display (v2.0: hover bg-only, no border) */
   .admin-metric {
-    @apply bg-white dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-white/10 p-4 shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-white/20;
+    @apply bg-slate-50 dark:bg-navy-900/50 rounded-xl p-4 transition-all hover:bg-slate-100 dark:hover:bg-navy-800/50;
   }
 
   .admin-metric-label {
@@ -85,20 +85,20 @@
   }
 
   .admin-metric-value {
-    @apply text-2xl font-bold text-slate-900 dark:text-white mt-2;
+    @apply text-2xl font-semibold text-slate-800 dark:text-slate-100 mt-2;
   }
 
   .admin-metric-subtitle {
     @apply text-xs text-slate-500 dark:text-slate-500 mt-0.5;
   }
 
-  /* Admin Section Headers */
+  /* Admin Section Headers (v2.0: spacing separator, no border) */
   .admin-section-header {
-    @apply flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5;
+    @apply flex items-center justify-between pb-3 mb-3;
   }
 
   .admin-section-title {
-    @apply flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white;
+    @apply flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100;
   }
 
   /* Admin Table Styles */
@@ -111,15 +111,15 @@
   }
 
   .admin-table th {
-    @apply px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-white/10;
+    @apply px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200/60 dark:border-white/5;
   }
 
   .admin-table td {
-    @apply px-4 py-3 text-sm text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-white/5;
+    @apply px-4 py-3 text-sm text-slate-700 dark:text-slate-300 border-b border-slate-100/60 dark:border-white/[0.03];
   }
 
   .admin-table tbody tr:hover {
-    @apply bg-slate-50 dark:bg-white/[0.02];
+    @apply bg-slate-100/50 dark:bg-white/[0.03];
   }
 
   .admin-table tbody tr:last-child td {

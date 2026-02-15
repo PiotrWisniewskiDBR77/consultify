@@ -51,37 +51,29 @@ export interface CalloutProps {
 
 // ── Variant config ──────────────────────────────────────────────────────────
 
-const VARIANT_STYLES: Record<
-  CalloutVariant,
-  { bg: string; border: string; text: string; icon: LucideIcon }
-> = {
+const VARIANT_STYLES: Record<CalloutVariant, { bg: string; text: string; icon: LucideIcon }> = {
   info: {
-    bg: 'bg-blue-500/5 dark:bg-blue-500/10',
-    border: 'border-blue-200/60 dark:border-blue-500/30',
+    bg: 'bg-blue-500/[0.06] dark:bg-blue-500/10',
     text: 'text-blue-700 dark:text-blue-300',
     icon: Info,
   },
   warning: {
-    bg: 'bg-amber-500/5 dark:bg-amber-500/10',
-    border: 'border-amber-200/60 dark:border-amber-500/30',
+    bg: 'bg-amber-500/[0.06] dark:bg-amber-500/10',
     text: 'text-amber-700 dark:text-amber-300',
     icon: AlertTriangle,
   },
   critical: {
-    bg: 'bg-red-500/5 dark:bg-red-500/10',
-    border: 'border-red-200/60 dark:border-red-500/30',
+    bg: 'bg-red-500/[0.06] dark:bg-red-500/10',
     text: 'text-red-600 dark:text-red-400',
     icon: AlertCircle,
   },
   success: {
-    bg: 'bg-emerald-500/5 dark:bg-emerald-500/10',
-    border: 'border-emerald-200/60 dark:border-emerald-500/30',
+    bg: 'bg-emerald-500/[0.06] dark:bg-emerald-500/10',
     text: 'text-emerald-700 dark:text-emerald-300',
     icon: CheckCircle2,
   },
   purple: {
-    bg: 'bg-purple-500/5 dark:bg-purple-500/10',
-    border: 'border-purple-200/60 dark:border-purple-500/30',
+    bg: 'bg-purple-500/[0.06] dark:bg-purple-500/10',
     text: 'text-purple-700 dark:text-purple-300',
     icon: Sparkles,
   },
@@ -105,7 +97,7 @@ export const Callout: React.FC<CalloutProps> = ({
 
   return (
     <div
-      className={`${padding} rounded-xl ${styles.bg} border ${styles.border} ${styles.text} ${className}`}
+      className={`${padding} rounded-xl ${styles.bg} ${styles.text} ${className}`}
       role={variant === 'critical' ? 'alert' : 'status'}
     >
       <div className="flex items-start gap-2.5">

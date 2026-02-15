@@ -402,10 +402,14 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get status options based on context
-  const options = getStatusesForModule(context);
+  const rawOptions = getStatusesForModule(context);
+  // Defensive: never allow empty/invalid options to crash rendering.
+  const options = (Array.isArray(rawOptions) ? rawOptions : [ALL_OPTION]).filter(
+    (opt): opt is StatusOption => !!opt && typeof opt.id === 'string'
+  );
 
   // Find current selected option
-  const selectedOption = options.find((opt) => opt.id === value) || options[0];
+  const selectedOption = options.find((opt) => opt.id === value) || options[0] || ALL_OPTION;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -466,7 +470,7 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
         `}
       >
         {showIcon && <Filter size={iconSize} className="text-slate-500 dark:text-slate-400" />}
-        <span className={`w-2 h-2 rounded-full ${selectedOption.bgColor}`} />
+        <span className={`w-2 h-2 rounded-full ${selectedOption?.bgColor || ALL_OPTION.bgColor}`} />
         <span>{getLabel(selectedOption)}</span>
         {counts && counts[value] !== undefined && (
           <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
@@ -505,7 +509,9 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
               >
                 <span className={`w-2.5 h-2.5 rounded-full ${option.bgColor}`} />
                 <span className="flex-1 text-sm">{getLabel(option)}</span>
-                {count !== undefined && <span className="text-xs text-slate-500 dark:text-slate-400">{count}</span>}
+                {count !== undefined && (
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{count}</span>
+                )}
                 {isSelected && <Check size={14} className="text-primary-400" />}
               </button>
             );

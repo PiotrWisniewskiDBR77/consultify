@@ -32,6 +32,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 import { Api } from '@/services/api';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
@@ -643,18 +644,20 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                 </span>
                               )}
                               {dep.notes && (
-                                <MessageSquare
-                                  size={12}
-                                  className="text-slate-500 dark:text-slate-400 shrink-0"
-                                  title={dep.notes}
-                                />
+                                <span title={dep.notes} className="shrink-0">
+                                  <MessageSquare
+                                    size={12}
+                                    className="text-slate-500 dark:text-slate-400"
+                                  />
+                                </span>
                               )}
                               {isBlocking && (
-                                <AlertTriangle
-                                  size={13}
-                                  className="text-amber-500 shrink-0"
+                                <span
                                   title={isPolish ? 'Blokuje ten task' : 'Blocking this task'}
-                                />
+                                  className="shrink-0"
+                                >
+                                  <AlertTriangle size={13} className="text-amber-500" />
+                                </span>
                               )}
                             </div>
                           </td>
@@ -1127,6 +1130,22 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                     {isPolish ? 'Notatki' : 'Notes'}
                     <span className="text-[9px] font-normal text-slate-700 dark:text-slate-300 dark:text-slate-600 ml-1">
                       ({isPolish ? 'opcjonalne' : 'optional'})
+                    </span>
+                    <span className="ml-auto">
+                      <AIFieldEnhancer
+                        fieldKey="dependencies.notes"
+                        sectionLabel={isPolish ? 'Zależność — notatki' : 'Dependency — notes'}
+                        currentValue={noteText}
+                        onApply={setNoteText}
+                        artifactContext={{
+                          type: taskId ? 'task' : 'initiative',
+                          title: editingDependency?.taskTitle || 'dependency',
+                          status: editingDependency?.taskStatus || '',
+                          priority: editingDependency?.taskPriority || '',
+                        }}
+                        iconOnly
+                        outputFormat="paragraph"
+                      />
                     </span>
                   </label>
                   <textarea

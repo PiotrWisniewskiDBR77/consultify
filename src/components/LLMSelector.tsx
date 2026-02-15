@@ -70,6 +70,9 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
   const menuRef = useRef<HTMLDivElement>(null);
   const [activeModelName, setActiveModelName] = useState<string>('');
   const [isAIAvailable, setIsAIAvailable] = useState<boolean>(true);
+  const [isNetworkOnline, setIsNetworkOnline] = useState<boolean>(
+    typeof navigator === 'undefined' ? true : navigator.onLine
+  );
 
   // Close on click outside
   useEffect(() => {
@@ -146,14 +149,27 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
     return () => clearInterval(interval);
   }, [checkAIAvailability]);
 
+  useEffect(() => {
+    const handleOnline = () => setIsNetworkOnline(true);
+    const handleOffline = () => setIsNetworkOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const isDisconnected = !isNetworkOnline || !isAIAvailable;
+
   return (
     <div className="relative z-50" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         data-testid="llm-tier-selector"
-        title={isAIAvailable ? 'AI providers available' : 'AI currently unavailable'}
+        title={isDisconnected ? 'AI currently unavailable' : 'AI providers available'}
         className={`flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-lg border transition-all duration-200 ${
-          isAIAvailable
+          !isDisconnected
             ? isOpen
               ? 'bg-slate-100 dark:bg-white/10 border-brand/50'
               : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'
@@ -162,7 +178,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
       >
         {/* Status Dot / Icon */}
         <div
-          className={`w-2 h-2 rounded-full animate-pulse ${isAIAvailable ? activeTier.color : 'bg-red-500'}`}
+          className={`w-2 h-2 rounded-full animate-pulse ${!isDisconnected ? activeTier.color : 'bg-red-500'}`}
         />
 
         {!compact && <span>{activeTier.name}</span>}
@@ -181,10 +197,14 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
             <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
               Model Routing per Tier
             </div>
-            {!isAIAvailable && (
+            {isDisconnected && (
               <div className="mb-2 flex items-center gap-1.5 text-[10px] text-red-600 dark:text-red-400">
                 <AlertTriangle size={11} />
-                <span>AI unavailable - check provider health</span>
+                <span>
+                  {!isNetworkOnline
+                    ? 'Offline - check network connection'
+                    : 'AI unavailable - check provider health'}
+                </span>
               </div>
             )}
             <p className="text-[10px] text-slate-400 dark:text-slate-500">

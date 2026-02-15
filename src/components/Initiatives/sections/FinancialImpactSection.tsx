@@ -29,12 +29,12 @@ export const FinancialImpactSection: React.FC<InitiativeSectionProps> = ({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            handleGenerateAI('financial-impact');
+            handleGenerateAI('financialImpact');
           }}
-          disabled={isGeneratingAI === 'financial-impact'}
+          disabled={isGeneratingAI === 'financialImpact'}
           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium transition-colors disabled:opacity-50"
         >
-          {isGeneratingAI === 'financial-impact' ? (
+          {isGeneratingAI === 'financialImpact' ? (
             <Loader2 size={14} className="animate-spin" />
           ) : (
             <Sparkles size={14} />

@@ -333,8 +333,33 @@ export default defineConfig({
         // Per-file thresholds for critical files
         // @ts-expect-error: perFile thresholds is valid in vitest but types lag behind
         perFile: {
+          // Critical middleware (security boundary) — must be 95%+
+          'server/src/middleware/auth.middleware.ts': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
+          'server/src/middleware/csrf.middleware.ts': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
+          'server/src/middleware/permission.middleware.ts': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
+          'server/src/middleware/inputSanitization.middleware.ts': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
           // Critical security service - highest priority
-          'server/services/accessPolicyService.js': {
+          'server/src/services/accessPolicyService.ts': {
             statements: 95, // CRITICAL SECURITY - must be 95%+
             branches: 90,
             functions: 95,
@@ -355,7 +380,7 @@ export default defineConfig({
             lines: 75,
           },
           // Middleware - critical security code
-          'server/middleware/**/*.{js,ts}': {
+          'server/src/middleware/**/*.{js,ts}': {
             statements: 85,
             branches: 80,
             functions: 85,

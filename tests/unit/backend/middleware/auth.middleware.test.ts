@@ -189,6 +189,18 @@ describe('AuthMiddleware', () => {
       expect(mockReq.user).toBeUndefined();
       expect(mockNext).toHaveBeenCalled();
     });
+
+    it('should continue without user if token is invalid', async () => {
+      mockReq.headers!['authorization'] = 'Bearer bad-token';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(new Error('invalid'), null);
+      });
+
+      await optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.user).toBeUndefined();
+      expect(mockNext).toHaveBeenCalled();
+    });
   });
 
   describe('requireRole', () => {

@@ -501,10 +501,10 @@ export const Api = {
     apiCallsUsed?: number;
     apiCallsLimit?: number;
   }> => {
-    const res = await fetch(`${API_URL}/health`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Health check failed');
-    return data;
+    // Use the same robust request path as the rest of the API layer.
+    // This avoids false "Offline" when a proxy returns non-JSON errors, etc.
+    const res = await fetchWithRetry(`${API_URL}/health`, { headers: getHeaders() });
+    return handleResponse(res, 'Health check failed');
   },
 
   // --- ANALYTICS (Leadership Dashboard) ---
@@ -1857,7 +1857,10 @@ export const Api = {
     lastCheck: number;
     overall?: string;
   }> => {
-    const res = await fetch(`${API_URL}/llm/providers/health`);
+    // Keep it fast in UI polls (local providers like Ollama can hang if not running).
+    const res = await fetchWithRetry(`${API_URL}/llm/providers/health?timeoutMs=1200`, {
+      headers: getHeaders(),
+    });
     if (!res.ok) throw new Error('Health check failed');
     return res.json();
   },
@@ -2203,11 +2206,7 @@ export const Api = {
   },
 
   // Add a comment to a notification
-  addNotificationComment: async (
-    id: string,
-    content: string,
-    priority?: string
-  ): Promise<any> => {
+  addNotificationComment: async (id: string, content: string, priority?: string): Promise<any> => {
     const res = await fetch(`${API_URL}/notifications/${id}/comments`, {
       method: 'POST',
       headers: getHeaders(),

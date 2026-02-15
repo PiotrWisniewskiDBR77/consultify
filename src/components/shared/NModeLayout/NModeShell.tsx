@@ -73,7 +73,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       <div className="p-6">
         <div className="max-w-6xl mx-auto space-y-0">
           {/* ── Header ──────────────────────────────────────────── */}
@@ -92,7 +92,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
 
               {/* Action Bar (conditional) */}
               {actionsVisible && actions.length > 0 && (
-                <div className="mb-4 px-4 py-2 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60">
+                <div className="mb-4 px-4 py-2 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
                   <NModeActionBar
                     actions={actions}
                     aiContextActions={aiContextActions}

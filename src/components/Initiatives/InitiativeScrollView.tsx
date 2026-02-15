@@ -140,11 +140,13 @@ const TableOfContents: React.FC<TOCProps> = ({
 interface InitiativeScrollViewProps {
   leftSections: SectionTypeInfo[];
   rightSections: SectionTypeInfo[];
+  readonly?: boolean;
 }
 
 export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
   leftSections,
   rightSections,
+  readonly = false,
 }) => {
   const ctx = useInitiativeContext();
   const { isPolish, pendingGates } = ctx;
@@ -371,6 +373,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
                   onToggle={() => {
                     /* No-op in scroll view — sections are always expanded */
                   }}
+                  readonly={readonly}
                 />
               </motion.div>
             </div>

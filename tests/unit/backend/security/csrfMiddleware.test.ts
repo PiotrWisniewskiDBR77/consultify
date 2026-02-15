@@ -103,6 +103,59 @@ describe('CSRF middleware (L1)', () => {
         expect(res.cookie.mock.calls[0][1]).not.toBe('test-csrf-token');
       }
     });
+
+    it('is a no-op in test env unless ENABLE_CSRF_IN_TESTS=true', () => {
+      delete process.env.ENABLE_CSRF_IN_TESTS;
+      const { req, res, next } = createMocks();
+      csrfTokenMiddleware(req, res, next);
+      expect(res.cookie).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('enforces in NODE_ENV=test even when VITEST is unset', () => {
+      const origVitest = process.env.VITEST;
+      try {
+        delete process.env.VITEST;
+        process.env.NODE_ENV = 'test';
+        process.env.ENABLE_CSRF_IN_TESTS = 'true';
+        const { req, res, next } = createMocks();
+        csrfTokenMiddleware(req, res, next);
+        expect(res.cookie).toHaveBeenCalled();
+        expect(next).toHaveBeenCalled();
+      } finally {
+        if (origVitest !== undefined) process.env.VITEST = origVitest;
+      }
+    });
+
+    it('sets secure cookie when req.secure is true', () => {
+      const { req, res, next } = createMocks();
+      (req as any).secure = true;
+      csrfTokenMiddleware(req, res, next);
+      const opts = res.cookie.mock.calls[0][2];
+      expect(opts.secure).toBe(true);
+    });
+
+    it('sets secure cookie when x-forwarded-proto is https', () => {
+      const { req, res, next } = createMocks({
+        headers: { 'x-forwarded-proto': 'https' },
+      });
+      csrfTokenMiddleware(req, res, next);
+      const opts = res.cookie.mock.calls[0][2];
+      expect(opts.secure).toBe(true);
+    });
+
+    it('sets secure cookie in production env', () => {
+      const origNodeEnv = process.env.NODE_ENV;
+      try {
+        process.env.NODE_ENV = 'production';
+        const { req, res, next } = createMocks();
+        csrfTokenMiddleware(req, res, next);
+        const opts = res.cookie.mock.calls[0][2];
+        expect(opts.secure).toBe(true);
+      } finally {
+        process.env.NODE_ENV = origNodeEnv;
+      }
+    });
   });
 
   // ── csrfValidationMiddleware ──
@@ -237,6 +290,27 @@ describe('CSRF middleware (L1)', () => {
       csrfValidationMiddleware(req, res, next);
       expect(res.status).toHaveBeenCalledWith(403);
     });
+
+    it('handles multi-byte strings safely (timingSafeEqual throw path)', () => {
+      const { req, res, next } = createMocks({
+        method: 'POST',
+        path: '/api/test',
+        cookies: { csrf_token: 'ą' }, // length 1, byteLength 2
+        headers: { 'x-csrf-token': 'a' }, // length 1, byteLength 1
+      });
+      csrfValidationMiddleware(req, res, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'CSRF_INVALID' }));
+    });
+
+    it('treats undefined path as non-exempt', () => {
+      const { req, res, next } = createMocks({ method: 'POST' });
+      (req as any).path = undefined;
+      csrfValidationMiddleware(req, res, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'CSRF_MISSING' }));
+      expect(next).not.toHaveBeenCalled();
+    });
   });
 
   // ── getCsrfTokenHandler ──
@@ -266,6 +340,24 @@ describe('CSRF middleware (L1)', () => {
       const { req, res } = createMocks();
       getCsrfTokenHandler(req, res);
       expect(res.cookie.mock.calls[0][2].maxAge).toBe(24 * 60 * 60 * 1000);
+    });
+
+    it('returns deterministic test token when CSRF is disabled in test env', () => {
+      delete process.env.ENABLE_CSRF_IN_TESTS;
+      const { req, res } = createMocks();
+      getCsrfTokenHandler(req, res);
+      expect(res.json).toHaveBeenCalledWith({ token: expect.any(String) });
+      const token = res.json.mock.calls[0][0].token as string;
+      expect(token.length).toBeGreaterThanOrEqual(32);
+      expect(res.cookie).not.toHaveBeenCalled();
+    });
+
+    it('returns existing cookie token when CSRF is disabled in test env', () => {
+      delete process.env.ENABLE_CSRF_IN_TESTS;
+      const { req, res } = createMocks({ cookies: { csrf_token: 'existing-disabled' } });
+      getCsrfTokenHandler(req, res);
+      expect(res.json).toHaveBeenCalledWith({ token: 'existing-disabled' });
+      expect(res.cookie).not.toHaveBeenCalled();
     });
   });
 });

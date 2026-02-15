@@ -15,6 +15,7 @@ const {
   requireOrganization,
   requirePermission,
   setDependencies,
+  __private__,
   verifyToken,
 } = await vi.importActual<typeof import('../../../../server/src/middleware/auth.middleware')>(
   '../../../../server/src/middleware/auth.middleware'
@@ -281,6 +282,35 @@ describe('setDependencies (L1)', () => {
 
   it('does not throw when called with empty object', () => {
     expect(() => setDependencies({})).not.toThrow();
+  });
+});
+
+// ═══════════════════════════════════════════════
+// __private__ helpers (targeting coverage gaps)
+// ═══════════════════════════════════════════════
+describe('__private__ helpers (L1)', () => {
+  it('lazy-loads default dependencies via getDeps()', async () => {
+    __private__.resetDepsForTests();
+    const deps = await __private__.getDeps();
+    expect(deps).toBeTruthy();
+    expect(deps.jwt).toBeTruthy();
+    expect(deps.config).toBeTruthy();
+    expect(deps.PermissionService).toBeTruthy();
+    expect(typeof deps.dbGet).toBe('function');
+  });
+
+  it('covers role mapping edge cases', () => {
+    expect(__private__.mapRole('super_admin')).toBe('owner');
+    expect(__private__.mapRole('member')).toBe('team_member');
+    expect(__private__.mapRole('weird_role')).toBe('weird_role' as any);
+  });
+
+  it('covers permission-role normalization edge cases', () => {
+    expect(__private__.normalizePermissionRole(undefined)).toBe('VIEWER');
+    expect(__private__.normalizePermissionRole('owner')).toBe('SUPERADMIN');
+    expect(__private__.normalizePermissionRole('administrator')).toBe('ADMIN');
+    expect(__private__.normalizePermissionRole('client')).toBe('VIEWER');
+    expect(__private__.normalizePermissionRole('custom_role')).toBe('CUSTOM_ROLE');
   });
 });
 
@@ -568,5 +598,162 @@ describe('verifyToken (L1)', () => {
     await verifyToken(req, res, next);
     expect(next).toHaveBeenCalled();
     expect(req.userId).toBe('nobearer-user');
+  });
+
+  it('rejects token issued before a revoke-all marker', async () => {
+    const iatSec = Math.floor(Date.now() / 1000) - 10; // issued 10s ago
+    const tokenIssuedAt = iatSec * 1000;
+    const revokeTime = tokenIssuedAt + 1000; // revoke-all happened 1s after issuance
+    setDependencies({
+      jwt: jwt.default || jwt,
+      config: { JWT_SECRET: jwtSecret },
+      PermissionService: { can: () => true },
+      dbGet: vi.fn().mockImplementation(async (sql: string) => {
+        if (sql.includes('SELECT jti FROM revoked_tokens WHERE jti = ?')) return undefined;
+        if (sql.includes("reason = 'revoke-all'")) return { jti: `revoke-all-${revokeTime}` };
+        return undefined;
+      }),
+    });
+
+    const token = (jwt.default || (jwt as any)).sign(
+      { id: 'revall-user', email: 'ra@test.com', jti: 'jti-1', iat: iatSec },
+      jwtSecret,
+      { expiresIn: '1h' }
+    );
+    const req = mockReq({ headers: { authorization: `Bearer ${token}` } });
+    const res = mockRes();
+    const next = vi.fn();
+
+    await verifyToken(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'All sessions have been revoked. Please log in again.' })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('allows token issued after a revoke-all marker', async () => {
+    const revokeTime = Date.now() - 10_000; // revoke-all happened 10s ago
+    const iatSec = Math.floor(Date.now() / 1000) - 5; // issued 5s ago (after revokeTime)
+    setDependencies({
+      jwt: jwt.default || jwt,
+      config: { JWT_SECRET: jwtSecret },
+      PermissionService: { can: () => true },
+      dbGet: vi.fn().mockImplementation(async (sql: string) => {
+        if (sql.includes('SELECT jti FROM revoked_tokens WHERE jti = ?')) return undefined;
+        if (sql.includes("reason = 'revoke-all'")) return { jti: `revoke-all-${revokeTime}` };
+        return undefined;
+      }),
+    });
+
+    const token = (jwt.default || (jwt as any)).sign(
+      { id: 'revall-user2', email: 'ra2@test.com', jti: 'jti-2', iat: iatSec },
+      jwtSecret,
+      { expiresIn: '1h' }
+    );
+    const req = mockReq({ headers: { authorization: `Bearer ${token}` } });
+    const res = mockRes();
+    const next = vi.fn();
+
+    await verifyToken(req, res, next);
+    expect(next).toHaveBeenCalled();
+    expect(req.userId).toBe('revall-user2');
+  });
+
+  it('continues when DB revocation checks error', async () => {
+    setDependencies({
+      jwt: jwt.default || jwt,
+      config: { JWT_SECRET: jwtSecret },
+      PermissionService: { can: () => true },
+      dbGet: vi.fn().mockRejectedValue(new Error('db down')),
+    });
+
+    const token = (jwt.default || (jwt as any)).sign(
+      { id: 'dberr-user', email: 'd@test.com', jti: 'jti-3' },
+      jwtSecret,
+      { expiresIn: '1h' }
+    );
+    const req = mockReq({ headers: { authorization: `Bearer ${token}` } });
+    const res = mockRes();
+    const next = vi.fn();
+
+    await verifyToken(req, res, next);
+    expect(next).toHaveBeenCalled();
+    expect(req.userId).toBe('dberr-user');
+  });
+
+  it('bypasses signature verification in E2E_MODE for explicit e2e token (seed succeeds)', async () => {
+    const origE2E = process.env.E2E_MODE;
+    process.env.E2E_MODE = 'true';
+    try {
+      vi.resetModules();
+      vi.doMock('../../../../server/src/utils/DbPromise.js', () => ({
+        run: vi.fn().mockResolvedValue({ success: true, changes: 1 }),
+        get: vi.fn(),
+        all: vi.fn(),
+        exec: vi.fn(),
+      }));
+
+      const mod = await import('../../../../server/src/middleware/auth.middleware.ts');
+      mod.setDependencies({
+        jwt: {
+          decode: () => ({
+            e2e: true,
+            id: 'e2e-user',
+            email: 'e2e@local.test',
+            role: 'admin',
+            organizationId: 'e2e-org',
+            name: 'E2E User',
+          }),
+        } as any,
+        config: { JWT_SECRET: jwtSecret },
+        PermissionService: { can: () => true },
+        dbGet: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const req = mockReq({ headers: { authorization: 'Bearer e2e-token' } });
+      const res = mockRes();
+      const next = vi.fn();
+      await mod.verifyToken(req, res, next);
+      expect(next).toHaveBeenCalled();
+      expect(req.userId).toBe('e2e-user');
+    } finally {
+      if (origE2E !== undefined) process.env.E2E_MODE = origE2E;
+      else delete process.env.E2E_MODE;
+    }
+  });
+
+  it('bypasses in E2E_MODE even when seed fails (continues)', async () => {
+    const origE2E = process.env.E2E_MODE;
+    process.env.E2E_MODE = 'true';
+    try {
+      vi.resetModules();
+      vi.doMock('../../../../server/src/utils/DbPromise.js', () => ({
+        run: vi.fn().mockRejectedValue(new Error('seed-fail')),
+        get: vi.fn(),
+        all: vi.fn(),
+        exec: vi.fn(),
+      }));
+
+      const mod = await import('../../../../server/src/middleware/auth.middleware.ts');
+      mod.setDependencies({
+        jwt: {
+          decode: () => ({ e2e: true, id: 'e2e-user2', role: 'admin' }),
+        } as any,
+        config: { JWT_SECRET: jwtSecret },
+        PermissionService: { can: () => true },
+        dbGet: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const req = mockReq({ headers: { authorization: 'Bearer e2e-token' } });
+      const res = mockRes();
+      const next = vi.fn();
+      await mod.verifyToken(req, res, next);
+      expect(next).toHaveBeenCalled();
+      expect(req.userId).toBe('e2e-user2');
+    } finally {
+      if (origE2E !== undefined) process.env.E2E_MODE = origE2E;
+      else delete process.env.E2E_MODE;
+    }
   });
 });

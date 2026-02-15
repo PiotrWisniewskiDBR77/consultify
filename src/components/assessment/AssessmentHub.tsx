@@ -32,6 +32,8 @@ import { Api } from '@/services/api';
 
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
+import { DecisionDetailView } from '../MyWork/DecisionDetailView';
+import { TaskDetailView } from '../MyWork/TaskDetailView';
 import {
   ASSESSMENT_STATUSES,
   FilterableTable,
@@ -492,11 +494,16 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       })),
       render: (row) => {
         const meta = FRAMEWORK_META[row.framework as AssessmentFramework];
-        if (!meta) return <span className="text-xs text-slate-500 dark:text-slate-400">{row.framework}</span>;
+        if (!meta)
+          return (
+            <span className="text-xs text-slate-500 dark:text-slate-400">{row.framework}</span>
+          );
         return (
           <div className="flex items-center gap-2">
             <span className={`text-${meta.color}-400`}>{meta.icon}</span>
-            <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">{meta.shortName}</span>
+            <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+              {meta.shortName}
+            </span>
           </div>
         );
       },
@@ -504,7 +511,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     const nameCol: TableColumn = {
       id: 'name',
       label: 'Name',
-      render: (row) => <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>,
+      render: (row) => (
+        <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
+      ),
     };
     const progressCol: TableColumn = { id: 'progress', label: 'Progress', width: '150px' };
     const updatedCol: TableColumn = {
@@ -702,6 +711,36 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
+  }, []);
+
+  const handleOpenTaskFromInitiative = useCallback((taskId: string) => {
+    const doc: OpenDocument = {
+      id: taskId,
+      type: 'task',
+      subType: 'TASK',
+      name: `Task ${taskId.slice(0, 8)}`,
+      status: 'DRAFT',
+    };
+    setOpenDocuments((prev) => {
+      if (prev.find((d) => d.id === doc.id)) return prev;
+      return [...prev, doc];
+    });
+    setActiveDocumentId(taskId);
+  }, []);
+
+  const handleOpenDecisionFromInitiative = useCallback((decisionId: string) => {
+    const doc: OpenDocument = {
+      id: decisionId,
+      type: 'decision',
+      subType: 'DECISION',
+      name: `Decision ${decisionId.slice(0, 8)}`,
+      status: 'DRAFT',
+    };
+    setOpenDocuments((prev) => {
+      if (prev.find((d) => d.id === doc.id)) return prev;
+      return [...prev, doc];
+    });
+    setActiveDocumentId(decisionId);
   }, []);
 
   const handleRemoveFilter = useCallback((id: string) => {
@@ -969,14 +1008,38 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     if (activeDocumentId) {
       const doc = openDocuments.find((d) => d.id === activeDocumentId);
 
+      // Show Task artifact in dynamic tab inside Assessment module
+      if (doc && doc.type === 'task') {
+        return (
+          <TaskDetailView
+            taskId={doc.id}
+            onClose={() => handleCloseDocument(doc.id)}
+            onSaved={() => refreshData()}
+          />
+        );
+      }
+
+      // Show Decision artifact in dynamic tab inside Assessment module
+      if (doc && doc.type === 'decision') {
+        return (
+          <DecisionDetailView
+            decisionId={doc.id}
+            onClose={() => handleCloseDocument(doc.id)}
+            onSaved={() => refreshData()}
+          />
+        );
+      }
+
       // Show Initiative Document View for initiatives
-      if (doc && (doc.type === 'initiative' || activeTab === 'initiatives')) {
+      if (doc && doc.type === 'initiative') {
         return (
           <InitiativeDocumentView
             initiativeId={doc.id}
             onBack={handleShowList}
             onStatusChange={refreshData}
             sourceModule="assessment"
+            onOpenTask={handleOpenTaskFromInitiative}
+            onOpenDecision={handleOpenDecisionFromInitiative}
           />
         );
       }
@@ -1241,7 +1304,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 <div className="w-7 h-7 rounded-lg bg-purple-500/20 flex items-center justify-center">
                   <FileText size={14} className="text-purple-400" />
                 </div>
-                <h3 className="text-slate-900 dark:text-white font-semibold text-sm">Report Summary</h3>
+                <h3 className="text-slate-900 dark:text-white font-semibold text-sm">
+                  Report Summary
+                </h3>
               </div>
               <button
                 onClick={() => {
@@ -1511,7 +1576,9 @@ const ReportSlideOverContent: React.FC<{
     <div className="space-y-4">
       {/* Report title & framework */}
       <div>
-        <h4 className="text-slate-900 dark:text-white font-semibold text-base leading-snug mb-1.5">{reportName}</h4>
+        <h4 className="text-slate-900 dark:text-white font-semibold text-base leading-snug mb-1.5">
+          {reportName}
+        </h4>
         {frameworkMeta && (
           <div className="flex items-center gap-1.5">
             <span className={`text-${frameworkMeta.color}-400`}>{frameworkMeta.icon}</span>
@@ -1550,7 +1617,9 @@ const ReportSlideOverContent: React.FC<{
         {templateId && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
             <span className="text-xs text-slate-500">Template</span>
-            <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">{templateId}</span>
+            <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+              {templateId}
+            </span>
           </div>
         )}
         {report.assessmentName && (
@@ -1564,7 +1633,9 @@ const ReportSlideOverContent: React.FC<{
         {sectionCount > 0 && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
             <span className="text-xs text-slate-500">Sections</span>
-            <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">{sectionCount}</span>
+            <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+              {sectionCount}
+            </span>
           </div>
         )}
         <div className="flex items-center justify-between px-3.5 py-2.5">
@@ -1617,7 +1688,9 @@ const ReportSlideOverContent: React.FC<{
                     {cfg.icon}
                   </div>
                   <div className="flex-1 text-left min-w-0">
-                    <div className="text-xs font-medium text-slate-700 dark:text-slate-300">{cfg.label}</div>
+                    <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      {cfg.label}
+                    </div>
                     <div className="text-[10px] text-slate-500">
                       {exportDate
                         ? new Date(exportDate).toLocaleDateString('pl-PL', {
@@ -1688,7 +1761,9 @@ const ReportSlideOverContent: React.FC<{
               <Monitor size={14} />
             </div>
             <div className="flex-1 text-left">
-              <div className="text-xs font-medium text-slate-700 dark:text-slate-300">Web Preview</div>
+              <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                Web Preview
+              </div>
               <div className="text-[10px] text-slate-500">Open in editor</div>
             </div>
             <ArrowRight
@@ -1728,7 +1803,9 @@ const ReportSlideOverContent: React.FC<{
                   <span className="w-4 h-4 rounded bg-purple-500/15 text-purple-400 text-[10px] font-bold flex items-center justify-center shrink-0">
                     {idx + 1}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 truncate">{sectionTitle}</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    {sectionTitle}
+                  </span>
                 </div>
               );
             })}

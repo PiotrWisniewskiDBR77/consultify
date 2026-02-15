@@ -322,7 +322,9 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
     }
 
     try {
-      await Api.patch(`/initiatives/${id}`, { status: action.targetStatus });
+      // Keep in sync with InitiativesHub API routes.
+      // The backend exposes a dedicated status endpoint.
+      await Api.patch(`/initiatives/${id}/status`, { status: action.targetStatus });
       toast.success(
         t('initiatives.toast.statusChangedLabel', 'Status zmieniony na {{label}}', {
           label: action.label,
@@ -467,7 +469,11 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             icon={Users}
             label={t('initiatives.compact.team')}
             value={(initiative as any)?.ownerBusiness ? '✓' : '—'}
-            color={(initiative as any)?.ownerBusiness ? 'text-purple-500' : 'text-slate-500 dark:text-slate-400'}
+            color={
+              (initiative as any)?.ownerBusiness
+                ? 'text-purple-500'
+                : 'text-slate-500 dark:text-slate-400'
+            }
           />
           <MetricBox
             icon={Calendar}
@@ -650,15 +656,31 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
       {/* Key Info Grid */}
       <div className="grid grid-cols-2 gap-2">
         {[
-          { labelKey: 'initiatives.compact.owner', value: init.ownerName || init.owner?.name || '—', icon: Users },
-          { labelKey: 'initiatives.compact.sponsor', value: init.sponsorName || init.sponsor?.name || '—', icon: Shield },
+          {
+            labelKey: 'initiatives.compact.owner',
+            value: init.ownerName || init.owner?.name || '—',
+            icon: Users,
+          },
+          {
+            labelKey: 'initiatives.compact.sponsor',
+            value: init.sponsorName || init.sponsor?.name || '—',
+            icon: Shield,
+          },
           {
             labelKey: 'initiatives.compact.targetDate',
             value: formatDate(init.plannedEndDate || init.targetDate),
             icon: Calendar,
           },
-          { labelKey: 'initiatives.compact.created', value: formatDate(init.createdAt || init.created_at), icon: Clock },
-          { labelKey: 'initiatives.compact.strategicAxis', value: init.strategicAxis || init.axis || '—', icon: Target },
+          {
+            labelKey: 'initiatives.compact.created',
+            value: formatDate(init.createdAt || init.created_at),
+            icon: Clock,
+          },
+          {
+            labelKey: 'initiatives.compact.strategicAxis',
+            value: init.strategicAxis || init.axis || '—',
+            icon: Target,
+          },
           {
             labelKey: 'initiatives.compact.budget',
             value: init.estimatedBudget ? `${init.estimatedBudget.toLocaleString()} PLN` : '—',
@@ -668,7 +690,9 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
           <div key={item.labelKey} className="p-2 rounded-lg bg-slate-50 dark:bg-navy-800/50">
             <div className="flex items-center gap-1.5 mb-0.5">
               <item.icon size={10} className="text-slate-500 dark:text-slate-400" />
-              <span className="text-[9px] text-slate-500 dark:text-slate-400 font-medium">{t(item.labelKey)}</span>
+              <span className="text-[9px] text-slate-500 dark:text-slate-400 font-medium">
+                {t(item.labelKey)}
+              </span>
             </div>
             <p className="text-xs text-slate-700 dark:text-slate-300 font-medium truncate">
               {item.value}
@@ -781,7 +805,9 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
               <span className="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate">
                 {ms.title}
               </span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400">{formatDate(ms.dueDate)}</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                {formatDate(ms.dueDate)}
+              </span>
             </div>
           ))}
         </div>
@@ -803,7 +829,9 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
             >
               {showAllBlocked
                 ? t('initiatives.compact.showLess')
-                : t('initiatives.compact.showMore', { count: byStatus.blocked.length - MAX_VISIBLE_TASKS })}
+                : t('initiatives.compact.showMore', {
+                    count: byStatus.blocked.length - MAX_VISIBLE_TASKS,
+                  })}
             </button>
           )}
         </div>
@@ -825,7 +853,9 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
             >
               {showAllActive
                 ? t('initiatives.compact.showLess')
-                : t('initiatives.compact.showMore', { count: byStatus.active.length - MAX_VISIBLE_TASKS })}
+                : t('initiatives.compact.showMore', {
+                    count: byStatus.active.length - MAX_VISIBLE_TASKS,
+                  })}
             </button>
           )}
         </div>
@@ -861,7 +891,9 @@ const CompactTaskRow: React.FC<{ task: TaskItem }> = ({ task }) => {
         {task.title}
       </span>
       {task.dueDate && (
-        <span className="text-[9px] text-slate-500 dark:text-slate-400 flex-shrink-0">{formatDate(task.dueDate)}</span>
+        <span className="text-[9px] text-slate-500 dark:text-slate-400 flex-shrink-0">
+          {formatDate(task.dueDate)}
+        </span>
       )}
     </div>
   );
@@ -988,7 +1020,9 @@ const RaidTab: React.FC<{ items: RaidItem[] }> = ({ items }) => {
             <div className="flex-1 min-w-0">
               <p className="text-xs text-slate-700 dark:text-slate-300">{item.title}</p>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[9px] text-slate-500 dark:text-slate-400 uppercase">{item.type}</span>
+                <span className="text-[9px] text-slate-500 dark:text-slate-400 uppercase">
+                  {item.type}
+                </span>
                 {item.severity && (
                   <span
                     className={`text-[9px] font-medium ${item.severity === 'CRITICAL' || item.severity === 'HIGH' ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'}`}
@@ -1053,7 +1087,9 @@ const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ init
           >
             <item.icon size={16} className={`mx-auto mb-1 ${item.color}`} />
             <p className={`text-sm font-bold ${item.color}`}>{item.value}</p>
-            <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">{t(item.labelKey)}</p>
+            <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
+              {t(item.labelKey)}
+            </p>
           </div>
         ))}
       </div>

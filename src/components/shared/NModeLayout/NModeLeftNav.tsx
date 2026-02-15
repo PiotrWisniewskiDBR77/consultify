@@ -70,10 +70,10 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
     <div ref={setNodeRef} style={style}>
       <button
         onClick={() => onSectionChange(section.id)}
-        className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-[180ms] ${
+        className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
           isActive
             ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border-l-2 border-primary-500'
-            : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-navy-800/60 border-l-2 border-transparent'
+            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-navy-800/60 border-l-2 border-transparent'
         } ${isDragging ? 'opacity-90 shadow-lg shadow-slate-300/20 dark:shadow-navy-900/40' : ''}`}
       >
         <span className="flex items-center gap-2">
@@ -137,7 +137,7 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
   };
 
   return (
-    <nav className="w-[220px] flex-shrink-0 pr-4 border-r border-slate-200/40 dark:border-navy-700/40">
+    <nav className="w-[220px] flex-shrink-0 pr-4">
       <div className="sticky top-28 pt-1 space-y-1">
         {!onSectionReorder ? (
           sections.map((section) => {
@@ -148,10 +148,10 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
               <button
                 key={section.id}
                 onClick={() => onSectionChange(section.id)}
-                className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-[180ms] ${
+                className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
                   isActive
                     ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border-l-2 border-primary-500'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-navy-800/60 border-l-2 border-transparent'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-navy-800/60 border-l-2 border-transparent'
                 }`}
               >
                 <span className="flex items-center gap-2">

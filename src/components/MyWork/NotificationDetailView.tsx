@@ -49,6 +49,7 @@ import {
   type SuggestedChecklistItem,
 } from '@/components/Notifications/notificationContent';
 import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
+import { Callout } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useAppStore } from '@/store/useAppStore';
@@ -2380,10 +2381,28 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             </div>
           )}
 
+          {/* Temporary: C-mode placeholder */}
+          {presentationMode === 'c' && (
+            <div className="col-span-full mt-4">
+              <Callout
+                variant="warning"
+                title={isPolish ? 'Tryb C jest w budowie' : 'C mode is under construction'}
+                action={{
+                  label: isPolish ? 'Przełącz na N' : 'Switch to N',
+                  onClick: () => setPresentationMode('n'),
+                }}
+              >
+                {isPolish
+                  ? 'Ten widok zostanie przebudowany. Na teraz korzystaj z trybu N (page-first).'
+                  : 'This view will be rebuilt. For now, please use N mode (page-first).'}
+              </Callout>
+            </div>
+          )}
+
           {/* ═══════════ C MODE (legacy accordion / D-style) ═══════════════
                Preserved for backward compatibility — full accordion layout.
                ═══════════════════════════════════════════════════════════════ */}
-          {presentationMode === 'c' && (
+          {presentationMode === 'c' && import.meta.env.VITE_ENABLE_LEGACY_C_MODE === 'true' && (
             <div className="mt-6">
               <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Column - 2/3 width */}

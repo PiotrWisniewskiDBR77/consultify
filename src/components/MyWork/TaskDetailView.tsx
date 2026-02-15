@@ -53,6 +53,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Callout } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Api } from '@/services/api';
@@ -3007,6 +3008,51 @@ Return ONLY the final comment text.`;
     return (
       <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
         <Loader2 className="animate-spin text-primary-500" size={32} />
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // C-MODE PLACEHOLDER (TEMP)
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (presentationMode === 'c') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto space-y-0">
+            <NModeHeader
+              title={title}
+              onTitleChange={setTitle}
+              titlePlaceholder={{ en: 'Task title...', pl: 'Tytuł zadania...' }}
+              artifactId={taskId || undefined}
+              artifactType="task"
+              onSave={handleSave}
+              saving={saving}
+              isDirty={isDirty}
+              onChat={handleOpenChat}
+              onClose={onClose}
+              statusDotColor={statusConfig.color}
+              presentationMode={presentationMode}
+              onPresentationModeChange={setPresentationMode}
+              buildArtifactCode={buildArtifactCode}
+            />
+
+            <div className="mt-4">
+              <Callout
+                variant="warning"
+                title={isPolish ? 'Tryb C jest w budowie' : 'C mode is under construction'}
+                action={{
+                  label: isPolish ? 'Przełącz na N' : 'Switch to N',
+                  onClick: () => setPresentationMode('n'),
+                }}
+              >
+                {isPolish
+                  ? 'Ten widok zostanie przebudowany. Na teraz korzystaj z trybu N (page-first).'
+                  : 'This view will be rebuilt. For now, please use N mode (page-first).'}
+              </Callout>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

@@ -9,11 +9,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 const mockQueryAll = vi.fn();
 const mockQueryOne = vi.fn();
 const mockQueryRun = vi.fn();
+const mockResolveInitiativeAccessContext = vi.fn();
 
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
   queryOne: (...args: unknown[]) => mockQueryOne(...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
+}));
+
+vi.mock('../../../../server/src/services/initiative/initiativeAccessResolver.js', () => ({
+  resolveInitiativeAccessContext: (...args: unknown[]) =>
+    mockResolveInitiativeAccessContext(...args),
 }));
 
 vi.mock('../../../../server/src/utils/asyncHandler.js', () => ({
@@ -39,6 +45,7 @@ describe('InitiativeController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockResolveInitiativeAccessContext.mockReset();
 
     mockReq = {
       user: {
@@ -227,8 +234,18 @@ describe('InitiativeController', () => {
       mockReq.body = { title: 'Updated Title' };
       // Controller first fetches existing initiative
       mockQueryOne
-        .mockResolvedValueOnce({ id: 'i1', title: 'Old Title', status: 'PLANNING', organization_id: 'org-123' })
-        .mockResolvedValueOnce({ id: 'i1', title: 'Updated Title', status: 'PLANNING', organization_id: 'org-123' });
+        .mockResolvedValueOnce({
+          id: 'i1',
+          title: 'Old Title',
+          status: 'PLANNING',
+          organization_id: 'org-123',
+        })
+        .mockResolvedValueOnce({
+          id: 'i1',
+          title: 'Updated Title',
+          status: 'PLANNING',
+          organization_id: 'org-123',
+        });
       mockQueryRun.mockResolvedValue({ changes: 1 });
 
       const { InitiativeController } =
@@ -258,8 +275,18 @@ describe('InitiativeController', () => {
       mockReq.params.id = 'i1';
       mockReq.body = { status: 'PENDING_REVIEW', reason: 'Ready for review' };
       // Controller queries existing initiative first
-      mockQueryOne.mockResolvedValue({ status: 'DRAFT', name: 'Test Initiative', created_by: 'user-123' });
+      mockQueryOne.mockResolvedValue({
+        status: 'DRAFT',
+        name: 'Test Initiative',
+        created_by: 'user-123',
+      });
       mockQueryRun.mockResolvedValue({ changes: 1 });
+      mockResolveInitiativeAccessContext.mockResolvedValue({
+        effectiveRoles: ['CONSULTANT'],
+        steeringBoard: { enabled: false, memberType: null },
+        roleAssignments: [],
+        projectId: null,
+      });
 
       const { InitiativeController } =
         await import('../../../../server/src/controllers/InitiativeController.js');
@@ -269,6 +296,35 @@ describe('InitiativeController', () => {
       const jsonCalled = mockRes.json.mock.calls.length > 0;
       const statusCalled = mockRes.status.mock.calls.length > 0;
       expect(jsonCalled || statusCalled).toBe(true);
+    });
+
+    it('should block DONE -> TRACKING when Benefits KPIs are missing', async () => {
+      mockReq.params.id = 'i1';
+      mockReq.body = { status: 'TRACKING' };
+      // Existing initiative status lookup
+      mockQueryOne
+        .mockResolvedValueOnce({ status: 'DONE', name: 'Test Initiative', created_by: 'user-123' }) // existing
+        .mockResolvedValueOnce({ ownerBusinessId: 'bo-1' }) // owner_business_id lookup
+        .mockResolvedValueOnce({ c: 0 }); // KPI count
+
+      mockResolveInitiativeAccessContext.mockResolvedValue({
+        effectiveRoles: ['BUSINESS_OWNER'],
+        steeringBoard: { enabled: false, memberType: null },
+        roleAssignments: [],
+        projectId: null,
+      });
+
+      const { InitiativeController } =
+        await import('../../../../server/src/controllers/InitiativeController.js');
+      await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rule: 'BENEFITS_KPI_REQUIRED',
+        })
+      );
+      expect(mockQueryRun).not.toHaveBeenCalled();
     });
 
     it('should return 401 when user not authenticated', async () => {
@@ -281,6 +337,106 @@ describe('InitiativeController', () => {
       await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(401);
+    });
+  });
+
+  describe('getGateReadinessCheck capabilities', () => {
+    it('should return capabilities contract (v1)', async () => {
+      mockReq.params.id = 'i1';
+      mockQueryOne.mockResolvedValueOnce({
+        id: 'i1',
+        organization_id: 'org-123',
+        status: 'PLANNING',
+        owner_business_id: null,
+        owner_execution_id: null,
+        sponsor_id: null,
+      });
+      mockResolveInitiativeAccessContext.mockResolvedValue({
+        effectiveRoles: ['PMO'],
+        steeringBoard: { enabled: false, memberType: null },
+        roleAssignments: [],
+        projectId: null,
+      });
+
+      const { InitiativeController } =
+        await import('../../../../server/src/controllers/InitiativeController.js');
+      await InitiativeController.getGateReadinessCheck(mockReq, mockRes, mockNext);
+
+      expect(mockRes.json).toHaveBeenCalled();
+      const payload = mockRes.json.mock.calls[0][0];
+      expect(payload.capabilities).toEqual(
+        expect.objectContaining({
+          version: 1,
+          source: 'backend',
+          topBar: expect.objectContaining({
+            canEditPriority: true,
+            canEditOwner: true,
+            canEditTargetDate: true,
+          }),
+          cards: expect.objectContaining({ canEditCards: true }),
+          ctaBar: expect.objectContaining({
+            contextCreateActions: expect.arrayContaining(['task', 'decision', 'raid']),
+            canUseAi: true,
+          }),
+        })
+      );
+    });
+  });
+
+  describe('quickUpdateInitiative enforcement', () => {
+    it('should block status updates via quick-update', async () => {
+      mockReq.params.id = 'i1';
+      mockReq.body = { status: 'DONE' };
+      mockQueryOne.mockResolvedValueOnce({
+        status: 'PLANNING',
+        planned_start_date: null,
+        planned_end_date: null,
+        owner_business_id: null,
+        owner_execution_id: null,
+        name: 'Initiative',
+      });
+
+      const { InitiativeController } =
+        await import('../../../../server/src/controllers/InitiativeController.js');
+      await InitiativeController.quickUpdateInitiative(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          field: 'status',
+        })
+      );
+    });
+
+    it('should block priority update when top-bar capability denies it', async () => {
+      mockReq.params.id = 'i1';
+      mockReq.body = { priority: 'high' };
+      mockQueryOne.mockResolvedValueOnce({
+        status: 'DONE',
+        planned_start_date: null,
+        planned_end_date: null,
+        owner_business_id: null,
+        owner_execution_id: null,
+        name: 'Initiative',
+      });
+      mockResolveInitiativeAccessContext.mockResolvedValue({
+        effectiveRoles: ['TEAM_MEMBER'],
+        steeringBoard: { enabled: false, memberType: null },
+        roleAssignments: [],
+        projectId: null,
+      });
+
+      const { InitiativeController } =
+        await import('../../../../server/src/controllers/InitiativeController.js');
+      await InitiativeController.quickUpdateInitiative(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          field: 'priority',
+        })
+      );
+      expect(mockQueryRun).not.toHaveBeenCalled();
     });
   });
 });

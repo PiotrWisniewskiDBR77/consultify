@@ -24,16 +24,20 @@ import type {
   ReminderRuleWithDelivery,
 } from '../../shared/NModeSections';
 import type {
+  BudgetItem,
   Decision,
   GateReadinessCheck,
   GateRoleAssignment,
   HistoryEvent,
+  IntangibleAssetItem,
   PendingApproval,
   RaidItem,
+  ResourceItem,
   StatusHistoryEntry,
   TaskItem,
   TimelineMilestone,
   TimelinePhase,
+  ToolItem,
   UserInfo,
   Watcher,
 } from './types';
@@ -101,6 +105,28 @@ export interface InitiativeContextValue {
   thresholds: WarningThresholds;
   setThresholds: React.Dispatch<React.SetStateAction<WarningThresholds>>;
 
+  // Resources data (Team / Budget / Tools)
+  resourceItems: ResourceItem[];
+  setResourceItems: React.Dispatch<React.SetStateAction<ResourceItem[]>>;
+  budgetItems: BudgetItem[];
+  setBudgetItems: React.Dispatch<React.SetStateAction<BudgetItem[]>>;
+  toolItems: ToolItem[];
+  setToolItems: React.Dispatch<React.SetStateAction<ToolItem[]>>;
+  handleAddResource: (data: Omit<ResourceItem, 'id'>) => Promise<void>;
+  handleUpdateResource: (id: string, data: Partial<ResourceItem>) => Promise<void>;
+  handleDeleteResource: (id: string) => Promise<void>;
+  handleAddBudgetItem: (data: Omit<BudgetItem, 'id'>) => Promise<void>;
+  handleUpdateBudgetItem: (id: string, data: Partial<BudgetItem>) => Promise<void>;
+  handleDeleteBudgetItem: (id: string) => Promise<void>;
+  handleAddTool: (data: Omit<ToolItem, 'id'>) => Promise<void>;
+  handleUpdateTool: (id: string, data: Partial<ToolItem>) => Promise<void>;
+  handleDeleteTool: (id: string) => Promise<void>;
+  intangibleAssets: IntangibleAssetItem[];
+  setIntangibleAssets: React.Dispatch<React.SetStateAction<IntangibleAssetItem[]>>;
+  handleAddIntangibleAsset: (data: Omit<IntangibleAssetItem, 'id'>) => Promise<void>;
+  handleUpdateIntangibleAsset: (id: string, data: Partial<IntangibleAssetItem>) => Promise<void>;
+  handleDeleteIntangibleAsset: (id: string) => Promise<void>;
+
   // UI state
   expandedSections: Set<string>;
   toggleSection: (id: string) => void;
@@ -117,6 +143,12 @@ export interface InitiativeContextValue {
   baselineVersion: number | null;
   estimatedDurationMonths: number | null;
   setEstimatedDurationMonths: (v: number | null) => void;
+
+  // Resources (budget/tools) drafts
+  budgetDraft: string;
+  setBudgetDraft: (v: string) => void;
+  resourceTools: string[];
+  setResourceTools: React.Dispatch<React.SetStateAction<string[]>>;
 
   // Computed values
   status: string;
@@ -138,6 +170,22 @@ export interface InitiativeContextValue {
   handleStatusAction: (action: StatusAction) => Promise<void>;
   handleToggleWatch: () => Promise<void>;
   handleGenerateAI: (section: string) => Promise<any>;
+  // Tasks AI actions (triggered from CTA)
+  tasksAiRequest: { mode: 'analyze' | 'addOne'; nonce: number } | null;
+  requestTasksAi: (mode: 'analyze' | 'addOne') => void;
+  clearTasksAiRequest: () => void;
+  // Decisions AI actions (triggered from CTA)
+  decisionsAiRequest: { mode: 'analyze' | 'addOne'; nonce: number } | null;
+  requestDecisionsAi: (mode: 'analyze' | 'addOne') => void;
+  clearDecisionsAiRequest: () => void;
+  // Resources AI actions (triggered from CTA)
+  resourcesAiRequest: { nonce: number } | null;
+  requestResourcesAi: () => void;
+  clearResourcesAiRequest: () => void;
+  // Team AI actions (triggered from CTA)
+  teamAiRequest: { nonce: number } | null;
+  requestTeamAi: () => void;
+  clearTeamAiRequest: () => void;
   handleCreateTask: () => Promise<void>;
   handleCreateDecision: () => Promise<void>;
   handleRemoveDecision: (id: string) => Promise<void>;

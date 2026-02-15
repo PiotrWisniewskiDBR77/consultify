@@ -7,6 +7,7 @@ import { Copy, Edit3, MoreVertical, Plus, Trash2, TrendingUp } from 'lucide-reac
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 import { InlineTable } from '@/components/shared/NModeBlocks';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
@@ -15,7 +16,7 @@ import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
 
-interface KPI {
+interface KPI extends Record<string, unknown> {
   id: string;
   name: string;
   category?: string;
@@ -53,7 +54,13 @@ const toEnglishKpiName = (name: string, isPolish: boolean): string => {
 };
 
 export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onToggle, readonly }) => {
-  const { initiativeId, isPolish } = useInitiativeContext();
+  const { initiative, initiativeId, isPolish } = useInitiativeContext();
+  const artifactContext = {
+    type: 'initiative',
+    title: initiative?.name || '',
+    status: initiative?.status || '',
+    priority: initiative?.priority || '',
+  };
 
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -444,22 +451,44 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
             animate={{ opacity: 1, y: 0 }}
             className="p-4 rounded-xl border border-cyan-300/70 dark:border-cyan-500/50 bg-cyan-50/30 dark:bg-cyan-500/5 space-y-3"
           >
-            <input
-              type="text"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder={isPolish ? 'Nazwa KPI...' : 'KPI name...'}
-              className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
-              autoFocus
-            />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="text"
-                value={newUnit}
-                onChange={(e) => setNewUnit(e.target.value)}
-                placeholder={isPolish ? 'Jednostka' : 'Unit'}
-                className="px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder={isPolish ? 'Nazwa KPI...' : 'KPI name...'}
+                className="flex-1 w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                autoFocus
               />
+              <AIFieldEnhancer
+                fieldKey="kpis.create.name"
+                sectionLabel={isPolish ? 'KPI — nazwa' : 'KPI — name'}
+                currentValue={newName}
+                onApply={setNewName}
+                artifactContext={artifactContext}
+                iconOnly
+                outputFormat="short"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newUnit}
+                  onChange={(e) => setNewUnit(e.target.value)}
+                  placeholder={isPolish ? 'Jednostka' : 'Unit'}
+                  className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                />
+                <AIFieldEnhancer
+                  fieldKey="kpis.create.unit"
+                  sectionLabel={isPolish ? 'KPI — jednostka' : 'KPI — unit'}
+                  currentValue={newUnit}
+                  onApply={setNewUnit}
+                  artifactContext={artifactContext}
+                  iconOnly
+                  outputFormat="short"
+                />
+              </div>
               <input
                 type="text"
                 value={newBaseline}
@@ -505,21 +534,43 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
             animate={{ opacity: 1, y: 0 }}
             className="p-4 rounded-xl border border-indigo-300/70 dark:border-indigo-500/40 bg-indigo-50/30 dark:bg-indigo-500/5 space-y-3"
           >
-            <input
-              type="text"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              placeholder={isPolish ? 'Nazwa KPI...' : 'KPI name...'}
-              className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
-            />
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="text"
-                value={editUnit}
-                onChange={(e) => setEditUnit(e.target.value)}
-                placeholder={isPolish ? 'Jednostka' : 'Unit'}
-                className="px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder={isPolish ? 'Nazwa KPI...' : 'KPI name...'}
+                className="flex-1 w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
               />
+              <AIFieldEnhancer
+                fieldKey="kpis.edit.name"
+                sectionLabel={isPolish ? 'KPI — nazwa' : 'KPI — name'}
+                currentValue={editName}
+                onApply={setEditName}
+                artifactContext={artifactContext}
+                iconOnly
+                outputFormat="short"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={editUnit}
+                  onChange={(e) => setEditUnit(e.target.value)}
+                  placeholder={isPolish ? 'Jednostka' : 'Unit'}
+                  className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
+                />
+                <AIFieldEnhancer
+                  fieldKey="kpis.edit.unit"
+                  sectionLabel={isPolish ? 'KPI — jednostka' : 'KPI — unit'}
+                  currentValue={editUnit}
+                  onApply={setEditUnit}
+                  artifactContext={artifactContext}
+                  iconOnly
+                  outputFormat="short"
+                />
+              </div>
               <input
                 type="text"
                 value={editBaseline}

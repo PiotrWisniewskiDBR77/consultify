@@ -42,7 +42,7 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
   const gridClass = `grid grid-cols-2 sm:grid-cols-3 ${lgCols} gap-3`;
 
   return (
-    <div className="mb-4 p-4 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60">
+    <div className="mb-4 p-4 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
       <div className={gridClass}>
         {fields.map((field) => {
           // Tailwind needs static class names — map colSpan to known utilities
@@ -63,9 +63,9 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
                   value={field.value}
                   onChange={(e) => field.onChange(e.target.value)}
                   disabled={field.readOnly}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-navy-800 border ${
-                    field.alertBorderClass || 'border-slate-200/60 dark:border-navy-600/60'
-                  } text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors disabled:opacity-60`}
+                  className={`w-full h-8 px-2.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-800 border ${
+                    field.alertBorderClass || 'border-slate-300/60 dark:border-navy-600/40'
+                  } text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors disabled:opacity-60`}
                 >
                   {(field.options || []).map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -80,9 +80,9 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
                   value={field.value}
                   onChange={(e) => field.onChange(e.target.value)}
                   readOnly={field.readOnly}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border ${
-                    field.alertBorderClass || 'border-slate-200/60 dark:border-navy-600/60'
-                  } text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors`}
+                  className={`w-full h-8 px-2.5 rounded-lg text-xs bg-white dark:bg-navy-800 border ${
+                    field.alertBorderClass || 'border-slate-300/60 dark:border-navy-600/40'
+                  } text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors`}
                 />
               ) : (
                 /* Text field */
@@ -98,9 +98,9 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
                         : field.placeholder.en
                       : undefined
                   }
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border ${
-                    field.alertBorderClass || 'border-slate-200/60 dark:border-navy-600/60'
-                  } text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors`}
+                  className={`w-full h-8 px-2.5 rounded-lg text-xs bg-white dark:bg-navy-800 border ${
+                    field.alertBorderClass || 'border-slate-300/60 dark:border-navy-600/40'
+                  } text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors`}
                 />
               )}
             </div>

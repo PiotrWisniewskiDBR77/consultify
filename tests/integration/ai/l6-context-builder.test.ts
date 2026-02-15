@@ -8,6 +8,8 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 // ============================================================================
 // Mock Dependencies
@@ -197,16 +199,17 @@ describe('L6.13: Context Builder', () => {
   });
 
   describe('Context Response Mapper', () => {
-    it('should import contextResponseMapper service', async () => {
-      try {
-        const mod = await import('../../../server/src/services/ai/contextResponseMapper');
-        expect(mod).toBeDefined();
-        console.log('[L6.13] ✓ contextResponseMapper module loaded');
-      } catch (_e) {
-        // Module may not exist as standalone export
-        console.log('[L6.13] ⚠ contextResponseMapper uses inline implementation');
-        expect(true).toBe(true); // Still valid — context mapper is part of pipeline
-      }
+    const mapperCandidates = [
+      path.resolve(process.cwd(), 'server/src/services/ai/contextResponseMapper.ts'),
+      path.resolve(process.cwd(), 'server/src/services/ai/contextResponseMapper.js'),
+      path.resolve(process.cwd(), 'server/src/services/ai/contextResponseMapper/index.ts'),
+      path.resolve(process.cwd(), 'server/src/services/ai/contextResponseMapper/index.js'),
+    ];
+    const mapperExists = mapperCandidates.some((p) => fs.existsSync(p));
+
+    it.skipIf(!mapperExists)('should import contextResponseMapper service', async () => {
+      const mod = await import('../../../server/src/services/ai/contextResponseMapper');
+      expect(mod).toBeDefined();
     });
   });
 
