@@ -1,14 +1,18 @@
 # DBR77 Color System Standard
 
-> **Wersja**: 1.0  
-> **Data**: 2026-01-02  
+> **Wersja**: 2.0 — "Tech Sexy" Edition  
+> **Data**: 2026-02-15  
 > **Autor**: Consultinity Design System  
 > **Lokalizacja:** `docs/ui-standards/00-foundation/color-system.md`
+>
+> **Changelog v2.0:** Doprecyzowanie neutralnych kolorów (nigdy pure black/white), dodanie zasady monochromatycznego UI chrome, refinement tekstu w dark mode.
 
 ## Zasada nadrzędna
 
 > **Minimalizm kolorystyczny**: Używamy tylko 4 kolorów semantycznych + neutralne szarości.
 > Każdy kolor ma JEDNĄ jasno określoną funkcję. Nie ma wyjątków.
+>
+> **Zasada monochromatycznego chrome (NOWA):** Cały UI chrome (sidebar, nawigacja, toolbary, headery) jest **monochromatyczny** (skala szarości/navy). Na ekranie jest **maksymalnie 1 kolorowy element** — Primary CTA button. Kolory semantyczne (success/danger/warning) pojawiają się TYLKO przy danych/statusach, nigdy jako dekoracja chrome.
 
 ---
 
@@ -113,25 +117,40 @@ ale ich użycie jest ściśle ograniczone.
 
 ---
 
-### ⚪ NEUTRAL (Szarości Navy)
+### ⚪ NEUTRAL (Szarości Navy) — "Warm darks, soft lights"
+
+**MUST (Dark mode):**
+
+- **Nigdy pure black (`#000000`)** — zawsze warm navy-dark (`#020617` i cieplejsze)
+- **Nigdy pure white (`#ffffff`) jako tekst** — najjaśniejszy tekst = `#f1f5f9` (slate-100)
+- Te subtelne "ciepłe" odcienie są kluczowe dla premium feel — ekran nie męczy oczu
 
 ```css
-/* Dark Mode */
---neutral-950: #020617; /* Deepest background */
---neutral-900: #0b1121; /* Panel background */
---neutral-800: #151e32; /* Card background */
---neutral-700: #2a3655; /* Borders */
+/* Dark Mode — warm navy grays */
+--neutral-950: #020617; /* Deepest background (sidebar) — Layer 0 */
+--neutral-900: #0b1121; /* Panel background (content area) — Layer 1 */
+--neutral-800: #151e32; /* Elevated surfaces (cards, sections) — Layer 2 */
+--neutral-700: #2a3655; /* Borders (tylko gdy konieczne!) */
 --neutral-600: #374151; /* Muted text */
 --neutral-500: #64748b; /* Secondary text */
---neutral-400: #94a3b8; /* Placeholder */
+--neutral-400: #94a3b8; /* Placeholder, tertiary text */
 
 /* Light Mode */
---neutral-300: #cbd5e1; /* Borders */
+--neutral-300: #cbd5e1; /* Borders (subtelne) */
 --neutral-200: #e2e8f0; /* Hover bg */
---neutral-100: #f1f5f9; /* Subtle bg */
+--neutral-100: #f1f5f9; /* Subtle bg, sidebar */
 --neutral-50: #f8fafc; /* Main bg */
---neutral-0: #ffffff; /* Cards */
+--neutral-0: #ffffff; /* Cards (elevated surfaces) */
 ```
+
+**Hierarchia tekstu w dark mode (refinement):**
+
+| Rola           | Wartość   | Klasa Tailwind   | Uwaga             |
+| -------------- | --------- | ---------------- | ----------------- |
+| Primary text   | `#f1f5f9` | `text-slate-100` | NIE `#ffffff`     |
+| Secondary text | `#94a3b8` | `text-slate-400` | Opisy, etykiety   |
+| Muted/tertiary | `#64748b` | `text-slate-500` | Hinty, timestamps |
+| Disabled       | `#475569` | `text-slate-600` | Nieaktywne        |
 
 ---
 
@@ -139,12 +158,14 @@ ale ich użycie jest ściśle ograniczone.
 
 ### 2.1 Hierarchia kolorów tekstu
 
-| Poziom        | Dark Mode | Light Mode | Użycie                 |
-| ------------- | --------- | ---------- | ---------------------- |
-| **Primary**   | `#FFFFFF` | `#0F172A`  | Nagłówki, główna treść |
-| **Secondary** | `#94A3B8` | `#475569`  | Opisy, etykiety        |
-| **Muted**     | `#64748B` | `#64748B`  | Hinty, placeholdery    |
-| **Disabled**  | `#475569` | `#94A3B8`  | Nieaktywne elementy    |
+| Poziom        | Dark Mode | Light Mode | Użycie                                             |
+| ------------- | --------- | ---------- | -------------------------------------------------- |
+| **Primary**   | `#F1F5F9` | `#0F172A`  | Nagłówki, główna treść (**NIE** `#FFFFFF` w dark!) |
+| **Secondary** | `#94A3B8` | `#475569`  | Opisy, etykiety                                    |
+| **Muted**     | `#64748B` | `#64748B`  | Hinty, placeholdery                                |
+| **Disabled**  | `#475569` | `#94A3B8`  | Nieaktywne elementy                                |
+
+> **v2.0 ZMIANA:** Primary text w dark mode zmieniony z `#FFFFFF` na `#F1F5F9` (slate-100). Pure white jest zbyt ostry i nie pasuje do premium "warm dark" aesthetic. Różnica jest subtelna, ale kluczowa dla premium feel.
 
 ### 2.2 Kiedy WOLNO kolorować tekst
 

@@ -411,10 +411,10 @@ jobs:
           }
 
           # Critical path coverage checks (focused, not global total)
-          check_min "/server/src/middleware/csrf.middleware.ts" 90
-          check_min "/server/src/middleware/auth.middleware.ts" 70
-          check_min "/server/src/middleware/permission.middleware.ts" 75
-          check_min "/server/src/middleware/inputSanitization.middleware.ts" 70
+          check_min "/server/src/middleware/csrf.middleware.ts" 95
+          check_min "/server/src/middleware/auth.middleware.ts" 95
+          check_min "/server/src/middleware/permission.middleware.ts" 95
+          check_min "/server/src/middleware/inputSanitization.middleware.ts" 95
 
       - name: Upload critical coverage report
         if: always()
@@ -491,10 +491,10 @@ jobs:
           }
 
           # Same critical coverage checks (focused, not global total)
-          check_min "/server/src/middleware/csrf.middleware.ts" 90
-          check_min "/server/src/middleware/auth.middleware.ts" 70
-          check_min "/server/src/middleware/permission.middleware.ts" 75
-          check_min "/server/src/middleware/inputSanitization.middleware.ts" 70
+          check_min "/server/src/middleware/csrf.middleware.ts" 95
+          check_min "/server/src/middleware/auth.middleware.ts" 95
+          check_min "/server/src/middleware/permission.middleware.ts" 95
+          check_min "/server/src/middleware/inputSanitization.middleware.ts" 95
 
   # ═══════════════════════════════════════════════════════════════
   # FINAL REPORT

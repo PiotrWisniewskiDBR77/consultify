@@ -1,9 +1,11 @@
 # Artifact Shell Future Standard (N/C)
 
 > Status: FUTURE STANDARD (approved for next iterations)  
-> Date: 2026-02-14  
+> Date: 2026-02-15 (v2.0 — "Tech Sexy" refinement)  
 > Scope: All artifact detail views (`initiative`, `task`, `decision`, `notification`, next artifacts)  
 > Goal: Keep a consistent, stable, enterprise-grade shell structure across the app.
+>
+> **Changelog v2.0:** Alignment z "Tech Sexy" visual language — invisible borders, depth layers, refined spacing.
 
 ---
 
@@ -35,9 +37,10 @@ Order from left to right:
 
 Visual:
 
-- Slightly highlighted background
-- Subtle depth/shadow
+- Tło header: Layer 1 (`bg-navy-900`) — separacja od content przez zmianę tła, **nie border-bottom**
+- "Sticky elevation": gdy header jest sticky i treść scrolluje pod nim, pojawia się subtelny `shadow-hig-sm` (jedyny dozwolony cień na non-floating elemencie)
 - Same height across all artifacts
+- **Brak borderu** między headerem a content area — separacja wyłącznie przez tło + opcjonalny sticky shadow
 
 Behavior:
 
@@ -165,6 +168,9 @@ A change to artifact detail UI is done only if:
 - Labels in left nav remain one-line with ellipsis fallback
 - PL/EN labels are provided where applicable
 - Dark mode styling is preserved with equivalent contrast
+- **v2.0:** Separacja między warstwami shell przez zmianę tła, nie border (patrz: visual-language.md sekcja 3-4)
+- **v2.0:** Ikony w shell są outline, mono-weight, kolor = kolor tekstu (patrz: visual-language.md sekcja 10)
+- **v2.0:** Hover states to zmiana tła, nie zmiana koloru tekstu/borderu
 
 ---
 

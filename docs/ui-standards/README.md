@@ -1,7 +1,9 @@
 # UI/UX Standards — Consultify
 
 > **JEDYNE KANONICZNE ŹRÓDŁO** wytycznych UI/UX i specyfikacji komponentów.  
-> **Data konsolidacji:** 2026-02-14
+> **Data konsolidacji:** 2026-02-15 (v2.0 — "Tech Sexy" Edition)
+>
+> **v2.0 Changelog:** Ewolucja visual language na podstawie analizy wzorców UI 2025-2026 (ChatGPT, Notion, ClickUp, Gemini, NotebookLM). Kluczowe zmiany: invisible borders, multi-layer depth, monochromatic chrome, outline-only icons, refined hover/spacing. Nie rewolucja — refinement.
 
 ---
 
@@ -88,9 +90,19 @@ docs/ui-standards/
 1. **NIE twórz duplikatów** — sprawdź najpierw czy istnieje wspólny komponent.
 2. **Nowe detail view** — użyj NModeLayout shell + istniejących NModeSections.
 3. **Nowe sekcje** — jeśli powtarzają się w 2+ widokach, wyekstrahuj do NModeSections.
-4. **Stylowanie** — używaj tokenów DBR77 (rounded-2xl, navy-900, purple accents).
+4. **Stylowanie** — używaj tokenów DBR77 (rounded-xl, navy-900, purple accents).
 5. **i18n** — zawsze PL + EN via `useTranslation`.
 6. **locked prop** — zawsze obsługuj read-only dla artefaktów.
+
+## Zasady v2.0 "Tech Sexy" (NOWE)
+
+7. **Invisible borders** — separacja przez zmianę tła/cień/space, nie `border`. Border tylko na input fields i dividers (ultra-subtelne).
+8. **Monochromatic chrome** — sidebar, nav, toolbary = skala szarości. Max 1 kolorowy element (CTA) na ekranie.
+9. **Ikony = outline, mono-weight** — kolor ikony = kolor tekstu obok. Nigdy filled, nigdy kolorowe w nav.
+10. **Hover = zmiana tła** — nigdy zmiana koloru tekstu/borderu na hover. `bg-white/[0.03]` → `bg-white/[0.06]`.
+11. **Shadow = only floating** — cień tylko na modale/dropdowny. Nigdy na kartach w content.
+12. **Warm darks** — nigdy `#000000` ani `#ffffff`. Primary text dark = `#f1f5f9`, tło = navy-950.
+13. **Typography = architecture** — hierarchia przez size + weight, nie kolor/bordery. Semibold, nie bold.
 
 ---
 

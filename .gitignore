@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# temp
+__tmp_ai_agent__
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
