@@ -1629,18 +1629,18 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     consequenceScenarios,
   ]);
 
-  // Lightweight autosave to local draft while editing; explicit Save remains publish.
+  // SaaS autosave: persist edits to backend (debounced).
   useEffect(() => {
     if (!isLocalHydrated || !hasPublishBaseline || !isDirty) return;
     const timer = setTimeout(() => {
-      persistDraft('autosave');
+      handleSave(true);
     }, 900);
     return () => clearTimeout(timer);
   }, [isLocalHydrated, hasPublishBaseline, isDirty, draftSnapshot]);
 
-  const handleSave = async () => {
+  const handleSave = async (silent = false) => {
     if (!title.trim()) {
-      toast.error(isPolish ? 'Tytuł jest wymagany' : 'Title is required');
+      if (!silent) toast.error(isPolish ? 'Tytuł jest wymagany' : 'Title is required');
       return;
     }
     if (!isDirty) {
@@ -1653,17 +1653,18 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
       if (decisionId) {
         await Api.updateDecision(decisionId, payload);
-        toast.success(isPolish ? 'Decyzja zaktualizowana' : 'Decision updated');
+        if (!silent) toast.success(isPolish ? 'Decyzja zaktualizowana' : 'Decision updated');
       } else {
         await Api.createDecision(payload);
-        toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
+        if (!silent) toast.success(isPolish ? 'Decyzja utworzona' : 'Decision created');
       }
       setLastPublishedSnapshot(draftSnapshot);
-      persistDraft('publish');
+      persistDraft(silent ? 'autosave' : 'publish');
       onSaved?.({ ...payload, id: decisionId });
     } catch (error) {
       console.error('Failed to save decision', error);
-      toast.error(isPolish ? 'Nie udało się zapisać decyzji' : 'Failed to save decision');
+      if (!silent)
+        toast.error(isPolish ? 'Nie udało się zapisać decyzji' : 'Failed to save decision');
     } finally {
       setSaving(false);
     }
