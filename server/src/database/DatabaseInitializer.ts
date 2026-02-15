@@ -138,6 +138,30 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
   users: ['organization_id', 'role', 'status', 'email'],
   organizations: ['plan', 'status', 'name'],
   tasks: ['project_id', 'organization_id', 'status', 'priority'],
+  // Initiative detail views (N-mode) rely on these columns for autosave + persistence.
+  // We auto-repair missing columns in SQLite dev DBs so the app behaves "online-first".
+  initiatives: [
+    'title',
+    'summary',
+    'hypothesis', // UI alias: description
+    'priority',
+    'planned_start_date',
+    'planned_end_date',
+    'owner_execution_id',
+    'sponsor_id',
+    'market_context',
+    'problem_statement',
+    'deliverables',
+    'success_criteria',
+    'scope_in',
+    'scope_out',
+    'kill_criteria',
+    'key_risks',
+    'estimated_budget',
+    'resource_tools',
+    'tags',
+    'target_state',
+  ],
   // Used by audit/activity logging across the app (including AI chat).
   // Older dev SQLite DBs were created from legacy baselines where `activity_logs` had fewer columns.
   // Missing columns cause noisy SQLITE_ERROR warnings and can cascade into 500s depending on call path.

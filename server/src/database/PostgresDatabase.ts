@@ -1076,6 +1076,7 @@ export async function initDb(): Promise<void> {
             organization_id TEXT NOT NULL,
             project_id TEXT,
             name TEXT NOT NULL,
+            title TEXT,
             axis TEXT,
             area TEXT,
             summary TEXT,
@@ -1088,19 +1089,27 @@ export async function initDb(): Promise<void> {
             cost_opex REAL,
             expected_roi REAL,
             social_impact TEXT,
+            planned_start_date TIMESTAMP,
+            planned_end_date TIMESTAMP,
             start_date TIMESTAMP,
             pilot_end_date TIMESTAMP,
             end_date TIMESTAMP,
             owner_business_id TEXT,
             owner_execution_id TEXT,
             sponsor_id TEXT,
+            priority TEXT DEFAULT 'medium',
             market_context TEXT,
             problem_statement TEXT DEFAULT '',
             deliverables TEXT DEFAULT '[]',
             success_criteria TEXT DEFAULT '[]',
             scope_in TEXT DEFAULT '[]',
             scope_out TEXT DEFAULT '[]',
+            kill_criteria TEXT DEFAULT '[]',
             key_risks TEXT DEFAULT '[]',
+            estimated_budget REAL,
+            resource_tools TEXT DEFAULT '[]',
+            tags TEXT DEFAULT '[]',
+            target_state TEXT DEFAULT '{}',
             report_id TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -1109,6 +1118,23 @@ export async function initDb(): Promise<void> {
             FOREIGN KEY(owner_execution_id) REFERENCES users(id) ON DELETE SET NULL,
             FOREIGN KEY(sponsor_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
+
+    // SaaS persistence: ensure initiatives columns exist on older DBs
+    // (CREATE TABLE IF NOT EXISTS won't add new columns).
+    const ensureColumn = async (column: string, ddl: string) => {
+      if (!(await columnExists('initiatives', column))) {
+        await query(`ALTER TABLE initiatives ADD COLUMN ${ddl}`);
+      }
+    };
+    await ensureColumn('title', 'title TEXT');
+    await ensureColumn('planned_start_date', 'planned_start_date TIMESTAMP');
+    await ensureColumn('planned_end_date', 'planned_end_date TIMESTAMP');
+    await ensureColumn('priority', "priority TEXT DEFAULT 'medium'");
+    await ensureColumn('kill_criteria', "kill_criteria TEXT DEFAULT '[]'");
+    await ensureColumn('estimated_budget', 'estimated_budget REAL');
+    await ensureColumn('resource_tools', "resource_tools TEXT DEFAULT '[]'");
+    await ensureColumn('tags', "tags TEXT DEFAULT '[]'");
+    await ensureColumn('target_state', "target_state TEXT DEFAULT '{}'");
 
     // Task Dependencies
     await query(`CREATE TABLE IF NOT EXISTS task_dependencies(

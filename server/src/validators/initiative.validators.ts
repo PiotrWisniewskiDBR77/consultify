@@ -29,6 +29,9 @@ export const InitiativeAxisEnum = z.enum([
   'compliance',
 ]);
 export const ConfidenceLevelEnum = z.enum(['low', 'medium', 'high', 'very_high']);
+export const InitiativePriorityEnum = z
+  .enum(['critical', 'high', 'medium', 'low'])
+  .transform((v) => v.toLowerCase());
 
 // ==========================================
 // REQUEST SCHEMAS
@@ -40,8 +43,14 @@ export const CreateInitiativeSchema = z.object({
   axis: InitiativeAxisEnum.optional(),
   area: z.string().max(255).optional(),
   summary: z.string().max(5000).optional(),
+  /**
+   * UI alias: InitiativeDocumentView uses `description` for the long-form narrative.
+   * Backend historically stored this as `hypothesis`.
+   */
+  description: z.string().max(20000).optional(),
   hypothesis: z.string().max(2000).optional(),
   status: InitiativeStatusEnum.optional().default('DRAFT'),
+  priority: InitiativePriorityEnum.optional(),
   businessValue: z.number().optional(),
   costCapex: z.number().optional(),
   costOpex: z.number().optional(),
@@ -51,15 +60,29 @@ export const CreateInitiativeSchema = z.object({
   valueTiming: z.string().max(255).optional(),
   plannedStartDate: z.string().datetime().optional().nullable(),
   plannedEndDate: z.string().datetime().optional().nullable(),
+  /** UI alias: InitiativeDocumentView uses `ownerId` (single owner). */
+  ownerId: z.string().optional().nullable(),
   ownerBusinessId: z.string().optional().nullable(),
   ownerExecutionId: z.string().optional().nullable(),
+  /** UI alias: InitiativeDocumentView uses `sponsorId`. */
+  sponsorId: z.string().optional().nullable(),
   marketContext: z.string().max(5000).optional(),
   problemStatement: z.string().max(5000).optional(),
   deliverables: z.array(z.string()).optional(),
   successCriteria: z.array(z.string()).optional(),
   scopeIn: z.array(z.string()).optional(),
   scopeOut: z.array(z.string()).optional(),
+  killCriteria: z.array(z.string()).optional(),
   keyRisks: z.array(z.string()).optional(),
+  // SaaS persistence helpers used by the N-mode UI
+  estimatedBudget: z.number().optional().nullable(),
+  resourceTools: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
+  targetState: z
+    .object({
+      description: z.string().max(20000).optional(),
+    })
+    .optional(),
 });
 
 export const UpdateInitiativeSchema = CreateInitiativeSchema.partial().omit({ projectId: true });

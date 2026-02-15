@@ -101,8 +101,8 @@ export const NavItem: React.FC<NavItemProps> = ({
             isHighlighted
               ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
               : isParentActive
-                ? 'text-navy-900 dark:text-white font-medium bg-slate-50 dark:bg-white/5'
-                : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
+                ? 'text-slate-800 dark:text-slate-100 font-medium bg-slate-200/60 dark:bg-white/5'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-white/[0.06]'
           }
         `}
         title={getTooltip()}
@@ -118,7 +118,7 @@ export const NavItem: React.FC<NavItemProps> = ({
                 ${
                   isHighlighted || isParentActive
                     ? 'text-primary-600 dark:text-primary-400'
-                    : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+                    : 'text-slate-400 dark:text-slate-500'
                 }
               `}
             >
@@ -138,10 +138,10 @@ export const NavItem: React.FC<NavItemProps> = ({
             {item.badge && (
               <span
                 className={`
-                  px-2 py-0.5 text-[10px] font-semibold rounded-full tracking-wide shrink-0 border
-                  ${item.badge === 'beta' ? 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 border-amber-500/25 dark:border-amber-400/20' : ''}
-                  ${item.badge === 'new' ? 'bg-green-500/10 text-green-700 dark:bg-green-400/10 dark:text-green-300 border-green-500/25 dark:border-green-400/20' : ''}
-                  ${item.badge === 'soon' ? 'bg-amber-400/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 border-amber-400/25 dark:border-amber-400/20' : ''}
+                  px-2 py-0.5 text-[10px] font-semibold rounded-full tracking-wide shrink-0
+                  ${item.badge === 'beta' ? 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300' : ''}
+                  ${item.badge === 'new' ? 'bg-green-500/10 text-green-700 dark:bg-green-400/10 dark:text-green-300' : ''}
+                  ${item.badge === 'soon' ? 'bg-amber-400/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300' : ''}
                 `}
               >
                 {badgeLabel}

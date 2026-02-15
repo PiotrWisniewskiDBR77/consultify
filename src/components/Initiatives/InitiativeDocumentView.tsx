@@ -249,6 +249,32 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const { isChatCollapsed, toggleChatCollapse, setCurrentView, setMyWorkIntent } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
 
+  const normalizeStringList = (value: any): string[] => {
+    if (Array.isArray(value)) {
+      return value.map((v) => String(v ?? '').trim()).filter(Boolean);
+    }
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return [];
+      return trimmed
+        .split('\n')
+        .map((v) => v.trim())
+        .filter(Boolean);
+    }
+    if (value && typeof value === 'object') {
+      // Common AI / backend wrapper shapes
+      const maybeItems = (value as any).items ?? (value as any).list ?? (value as any).values;
+      if (Array.isArray(maybeItems) || typeof maybeItems === 'string') {
+        return normalizeStringList(maybeItems);
+      }
+      const maybeText = (value as any).text;
+      if (typeof maybeText === 'string') {
+        return normalizeStringList(maybeText);
+      }
+    }
+    return [];
+  };
+
   // ==========================================
   // STATE
   // ==========================================
@@ -919,14 +945,21 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setTags(data.tags || []);
       // Sync scope & boundaries fields
       const scopeObj = data.scope || {};
-      if (typeof scopeObj === 'object') {
-        setInScopeItems(scopeObj.inScope || []);
-        setOutScopeItems(scopeObj.outScope || []);
+      if (typeof scopeObj === 'object' && scopeObj !== null) {
+        setInScopeItems(normalizeStringList((scopeObj as any).inScope));
+        setOutScopeItems(normalizeStringList((scopeObj as any).outScope));
+      } else {
+        setInScopeItems([]);
+        setOutScopeItems([]);
       }
       setKillCriteriaItems(
-        data.killCriteria ||
-          data.kill_criteria ||
-          (typeof scopeObj === 'object' ? scopeObj.killCriteria || [] : [])
+        normalizeStringList(
+          data.killCriteria ||
+            data.kill_criteria ||
+            (typeof scopeObj === 'object' && scopeObj !== null
+              ? (scopeObj as any).killCriteria
+              : [])
+        )
       );
 
       // Restore local draft if user refreshed before autosave persisted to backend.

@@ -306,8 +306,7 @@ export const Sidebar: React.FC = () => {
         data-tour="sidebar-nav"
         className={`
           fixed inset-y-0 left-0 z-[60]
-          bg-white/95 dark:bg-navy-900/95 backdrop-blur-hig
-          border-r border-slate-200 dark:border-navy-700
+          bg-slate-100/95 dark:bg-navy-950/95 backdrop-blur-hig
           flex flex-col
           ${sidebarWidthClass}
           ${

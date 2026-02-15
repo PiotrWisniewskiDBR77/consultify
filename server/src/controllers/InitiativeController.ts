@@ -51,6 +51,20 @@ const safeJsonParse = <T = unknown>(
 const normalizeStatus = (value: string | null | undefined): string =>
   String(value || '').toUpperCase();
 
+const safeJsonParseObject = <T extends Record<string, unknown> = Record<string, unknown>>(
+  str: string | null | undefined,
+  fallback: T
+): T => {
+  if (!str || str === '' || str === 'null' || str === 'undefined') return fallback;
+  try {
+    const parsed = JSON.parse(str);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed as T;
+    return fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 const getTopBarCapabilities = (status: string, userRoles: string[]) => {
   const currentStatus = normalizeStatus(status);
   const isTerminal = currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED';
@@ -388,11 +402,33 @@ export class InitiativeController {
         ...initiative,
         name: getMultilingualText((i.name as string) || (i.title as string), lang),
         summary: getMultilingualText(i.summary as string, lang),
+        // UI expects `description` (long narrative). We store it as `hypothesis` in DB.
+        description: getMultilingualText((i.hypothesis as string) || '', lang),
         deliverables: safeJsonParse(i.deliverables as string, []),
         successCriteria: safeJsonParse(i.success_criteria as string, []),
         scopeIn: safeJsonParse(i.scope_in as string, []),
         scopeOut: safeJsonParse(i.scope_out as string, []),
+        killCriteria: safeJsonParse((i as any).kill_criteria as string, []),
         keyRisks: safeJsonParse(i.key_risks as string, []),
+        tags: safeJsonParse((i as any).tags as string, []),
+        resourceTools: safeJsonParse((i as any).resource_tools as string, []),
+        estimatedBudget:
+          (i as any).estimated_budget ??
+          (i as any).estimatedBudget ??
+          (i as any).budget_estimate ??
+          null,
+        // UI aliases
+        ownerId: (i as any).owner_execution_id ?? (i as any).owner_id ?? null,
+        sponsorId: (i as any).sponsor_id ?? null,
+        plannedStartDate: (i as any).planned_start_date ?? (i as any).start_date ?? null,
+        plannedEndDate: (i as any).planned_end_date ?? (i as any).end_date ?? null,
+        targetState: safeJsonParseObject((i as any).target_state as string, {}),
+        // UI expects a nested scope object in some places
+        scope: {
+          inScope: safeJsonParse(i.scope_in as string, []),
+          outScope: safeJsonParse(i.scope_out as string, []),
+          killCriteria: safeJsonParse((i as any).kill_criteria as string, []),
+        },
         sourceType: i.source_type,
         sourceId: i.source_id,
         initiativeTemplateId: (i as any).initiative_template_id ?? null,
@@ -582,7 +618,10 @@ export class InitiativeController {
       const topBarCaps = getTopBarCapabilities(currentStatus, effectiveRoles);
       const body = req.body as Record<string, unknown>;
       const isOwnerUpdate =
-        body.ownerBusinessId !== undefined || body.ownerExecutionId !== undefined;
+        body.ownerId !== undefined ||
+        body.ownerBusinessId !== undefined ||
+        body.ownerExecutionId !== undefined ||
+        body.sponsorId !== undefined;
       const isTargetDateUpdate =
         body.plannedStartDate !== undefined || body.plannedEndDate !== undefined;
 
@@ -606,11 +645,35 @@ export class InitiativeController {
       }
 
       // 3. Build update map — only include fields that are provided
+      const existingCols = new Set(Object.keys(existing as any));
+      const titleCol = existingCols.has('title')
+        ? 'title'
+        : existingCols.has('name')
+          ? 'name'
+          : 'title';
+      const plannedStartCol = existingCols.has('planned_start_date')
+        ? 'planned_start_date'
+        : existingCols.has('start_date')
+          ? 'start_date'
+          : 'planned_start_date';
+      const plannedEndCol = existingCols.has('planned_end_date')
+        ? 'planned_end_date'
+        : existingCols.has('end_date')
+          ? 'end_date'
+          : 'planned_end_date';
+      const ownerExecutionCol = existingCols.has('owner_execution_id')
+        ? 'owner_execution_id'
+        : existingCols.has('owner_id')
+          ? 'owner_id'
+          : 'owner_execution_id';
+
       const FIELD_MAP: Record<string, string> = {
-        title: 'title',
+        title: titleCol,
         axis: 'axis',
         area: 'area',
         summary: 'summary',
+        // UI uses `description`; DB column is `hypothesis`
+        description: 'hypothesis',
         hypothesis: 'hypothesis',
         businessValue: 'business_value',
         costCapex: 'cost_capex',
@@ -619,12 +682,17 @@ export class InitiativeController {
         valueDriver: 'value_driver',
         confidenceLevel: 'confidence_level',
         valueTiming: 'value_timing',
-        plannedStartDate: 'planned_start_date',
-        plannedEndDate: 'planned_end_date',
+        plannedStartDate: plannedStartCol,
+        plannedEndDate: plannedEndCol,
+        // UI aliases
+        ownerId: ownerExecutionCol,
         ownerBusinessId: 'owner_business_id',
-        ownerExecutionId: 'owner_execution_id',
+        ownerExecutionId: ownerExecutionCol,
+        sponsorId: 'sponsor_id',
+        priority: 'priority',
         marketContext: 'market_context',
         problemStatement: 'problem_statement',
+        estimatedBudget: 'estimated_budget',
       };
 
       // JSON array fields (stored as JSON strings)
@@ -633,7 +701,11 @@ export class InitiativeController {
         successCriteria: 'success_criteria',
         scopeIn: 'scope_in',
         scopeOut: 'scope_out',
+        killCriteria: 'kill_criteria',
         keyRisks: 'key_risks',
+        tags: 'tags',
+        resourceTools: 'resource_tools',
+        targetState: 'target_state',
       };
 
       const updates: string[] = [];

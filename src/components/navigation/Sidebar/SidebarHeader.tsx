@@ -50,8 +50,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
             whileTap={{ scale: 0.95 }}
             className={`
               p-2 rounded-xl transition-colors duration-150 shrink-0 ml-2
-              text-slate-400 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30 
-              dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10
+              text-slate-400 dark:text-slate-500 hover:bg-slate-200/70 dark:hover:bg-white/[0.06]
             `}
             title={t('sidebar.collapse', 'Collapse')}
           >
@@ -62,7 +61,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
         <>
           {/* Mini Logo (77) */}
           <motion.span
-            className="text-2xl font-bold tracking-tighter text-primary-600 dark:text-primary-400"
+            className="text-2xl font-semibold tracking-tighter text-primary-600 dark:text-primary-400"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
@@ -76,8 +75,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
             whileTap={{ scale: 0.95 }}
             className={`
               p-2 rounded-xl transition-colors duration-150 flex justify-center items-center
-              text-slate-400 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30 
-              dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10
+              text-slate-400 dark:text-slate-500 hover:bg-slate-200/70 dark:hover:bg-white/[0.06]
             `}
             title={t('sidebar.expand', 'Expand')}
           >
