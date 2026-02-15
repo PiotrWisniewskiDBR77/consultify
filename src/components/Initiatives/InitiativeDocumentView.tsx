@@ -6410,7 +6410,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                         }
                                         requestTasksAi('analyze');
                                       }}
-                                      disabled={!canUseAi}
+                                      disabled={!canUseAi || !!tasksAiRequest}
                                       title={
                                         !canUseAi
                                           ? isPolish
@@ -6420,7 +6420,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                       }
                                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
                                     >
-                                      <Sparkles size={13} />
+                                      {tasksAiRequest?.mode === 'analyze' ? (
+                                        <Loader2 size={13} className="animate-spin" />
+                                      ) : (
+                                        <Sparkles size={13} />
+                                      )}
                                       <span>{isPolish ? 'Analizuj z AI' : 'Analyze with AI'}</span>
                                     </button>
 
@@ -6436,7 +6440,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                         }
                                         requestTasksAi('addOne');
                                       }}
-                                      disabled={!canUseAi}
+                                      disabled={!canUseAi || !!tasksAiRequest}
                                       title={
                                         !canUseAi
                                           ? isPolish
@@ -6446,7 +6450,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                       }
                                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
                                     >
-                                      <Sparkles size={13} />
+                                      {tasksAiRequest?.mode === 'addOne' ? (
+                                        <Loader2 size={13} className="animate-spin" />
+                                      ) : (
+                                        <Sparkles size={13} />
+                                      )}
                                       <span>{isPolish ? 'AI: dodaj task' : 'AI: Add task'}</span>
                                     </button>
                                   </div>
@@ -6467,7 +6475,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                         }
                                         requestDecisionsAi('analyze');
                                       }}
-                                      disabled={!canUseAi}
+                                      disabled={!canUseAi || !!decisionsAiRequest}
                                       title={
                                         !canUseAi
                                           ? isPolish
@@ -6477,7 +6485,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                       }
                                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
                                     >
-                                      <Sparkles size={13} />
+                                      {decisionsAiRequest?.mode === 'analyze' ? (
+                                        <Loader2 size={13} className="animate-spin" />
+                                      ) : (
+                                        <Sparkles size={13} />
+                                      )}
                                       <span>{isPolish ? 'Analizuj z AI' : 'Analyze with AI'}</span>
                                     </button>
 
@@ -6493,7 +6505,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                         }
                                         requestDecisionsAi('addOne');
                                       }}
-                                      disabled={!canUseAi}
+                                      disabled={!canUseAi || !!decisionsAiRequest}
                                       title={
                                         !canUseAi
                                           ? isPolish
@@ -6503,7 +6515,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                       }
                                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
                                     >
-                                      <Sparkles size={13} />
+                                      {decisionsAiRequest?.mode === 'addOne' ? (
+                                        <Loader2 size={13} className="animate-spin" />
+                                      ) : (
+                                        <Sparkles size={13} />
+                                      )}
                                       <span>
                                         {isPolish ? 'AI: dodaj decyzję' : 'AI: Add decision'}
                                       </span>
@@ -6525,7 +6541,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                       }
                                       requestResourcesAi();
                                     }}
-                                    disabled={!canUseAi}
+                                    disabled={!canUseAi || !!resourcesAiRequest}
                                     title={
                                       !canUseAi
                                         ? isPolish
@@ -6535,7 +6551,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                     }
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
                                   >
-                                    <Sparkles size={13} />
+                                    {resourcesAiRequest ? (
+                                      <Loader2 size={13} className="animate-spin" />
+                                    ) : (
+                                      <Sparkles size={13} />
+                                    )}
                                     <span>{isPolish ? 'Analizuj z AI' : 'Analyze with AI'}</span>
                                   </button>
                                 );
@@ -6554,7 +6574,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                       }
                                       requestTeamAi();
                                     }}
-                                    disabled={!canUseAi}
+                                    disabled={!canUseAi || !!teamAiRequest}
                                     title={
                                       !canUseAi
                                         ? isPolish
@@ -6564,7 +6584,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                     }
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
                                   >
-                                    <Sparkles size={13} />
+                                    {teamAiRequest ? (
+                                      <Loader2 size={13} className="animate-spin" />
+                                    ) : (
+                                      <Sparkles size={13} />
+                                    )}
                                     <span>{isPolish ? 'Analizuj z AI' : 'Analyze with AI'}</span>
                                   </button>
                                 );

@@ -47,7 +47,7 @@ export const NModeSectionWrapper: React.FC<NModeSectionWrapperProps> = ({
       {/* Heading + AI action */}
       {heading && (
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
             {isPolish ? heading.pl : heading.en}
           </h2>
           {aiAction && (
