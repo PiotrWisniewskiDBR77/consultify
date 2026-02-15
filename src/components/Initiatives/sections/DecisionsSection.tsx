@@ -949,22 +949,23 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
   // Triggered from CTA bar (InitiativeDocumentView)
   useEffect(() => {
     if (!decisionsAiRequest) return;
-    const mode = decisionsAiRequest.mode;
-    clearDecisionsAiRequest?.();
-    if (readonly) return;
-    if (mode === 'addOne') {
-      void proposeOneDecisionWithAI();
-    } else {
-      void proposeDecisionsWithAI();
-    }
-  }, [
-    decisionsAiRequest?.nonce,
-    decisionsAiRequest?.mode,
-    clearDecisionsAiRequest,
-    proposeDecisionsWithAI,
-    proposeOneDecisionWithAI,
-    readonly,
-  ]);
+    const run = async () => {
+      try {
+        if (readonly) return;
+        const mode = decisionsAiRequest.mode;
+        if (mode === 'addOne') {
+          await proposeOneDecisionWithAI();
+        } else {
+          await proposeDecisionsWithAI();
+        }
+      } finally {
+        // Keep CTA-bar spinner visible until AI finishes.
+        clearDecisionsAiRequest?.();
+      }
+    };
+    void run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [decisionsAiRequest?.nonce]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">

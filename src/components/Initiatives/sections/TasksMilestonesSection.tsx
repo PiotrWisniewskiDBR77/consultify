@@ -1255,11 +1255,6 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                         : 'Optional: apply the suggested ordering.'}
                   </li>
                 </ul>
-                <div className="mt-2 text-[11px] text-purple-700/90 dark:text-purple-200/90">
-                  {isPolish
-                    ? 'Po zastosowaniu: uzupełnij ownerów i terminy — AI celowo ich nie ustawia.'
-                    : 'After applying: assign owners and due dates — AI intentionally does not set them.'}
-                </div>
               </Callout>
             </div>
 

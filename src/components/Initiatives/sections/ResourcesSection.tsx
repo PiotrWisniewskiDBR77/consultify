@@ -1107,9 +1107,17 @@ export const ResourcesSection: React.FC = () => {
 
   useEffect(() => {
     if (!resourcesAiRequest) return;
-    clearResourcesAiRequest?.();
-    void proposeAllTables();
-  }, [resourcesAiRequest?.nonce, clearResourcesAiRequest, proposeAllTables]);
+    const run = async () => {
+      try {
+        await proposeAllTables();
+      } finally {
+        // Keep CTA-bar spinner visible until AI finishes.
+        clearResourcesAiRequest?.();
+      }
+    };
+    void run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resourcesAiRequest?.nonce]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">

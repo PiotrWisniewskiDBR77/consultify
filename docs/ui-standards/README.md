@@ -41,6 +41,7 @@ docs/ui-standards/
 | **Tryby D/N/C**          | [01-shell-layout/presentation-modes.md](01-shell-layout/presentation-modes.md) | Architektura 3 trybów, N blocks kit                                    |
 | **Współdzielone sekcje** | [02-components/shared-sections.md](02-components/shared-sections.md)           | CommentsCanvas, ActivityLog, Risk, Governance                          |
 | **Building blocks**      | [02-components/building-blocks.md](02-components/building-blocks.md)           | Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView |
+| **AI suggestions modal** | [02-components/ai-suggestions-modal.md](02-components/ai-suggestions-modal.md) | Standard modala do przeglądu i zastosowania sugestii AI                |
 | **Task Panel**           | [02-components/task-panel.md](02-components/task-panel.md)                     | TaskDetailView — layout, sekcje                                        |
 | **Decision Panel**       | [02-components/decision-panel.md](02-components/decision-panel.md)             | DecisionDetailView — layout, sekcje                                    |
 | **Notification Panel**   | [02-components/notification-panel.md](02-components/notification-panel.md)     | NotificationDetailView                                                 |

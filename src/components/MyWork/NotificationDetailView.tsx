@@ -2285,9 +2285,16 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             titleReadOnly={true}
             artifactId={notificationId}
             artifactType="notification"
-            onSave={() => {}}
-            saving={false}
-            isDirty={false}
+            onSave={handleSaveWorksheet}
+            saving={worksheetSaving}
+            isDirty={worksheetIsDirty}
+            draftSavedLabel={
+              lastWorksheetSavedAt
+                ? isPolish
+                  ? `Zapisano ${new Date(lastWorksheetSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  : `Saved ${new Date(lastWorksheetSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                : undefined
+            }
             onChat={handleOpenChat}
             onClose={onClose}
             statusDotColor={severityConfig.dotColor}
