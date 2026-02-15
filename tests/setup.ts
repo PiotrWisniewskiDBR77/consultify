@@ -461,13 +461,6 @@ vi.mock('../server/src/middleware/planLimits.middleware.js', async (importOrigin
   };
 });
 
-// Mock Input Sanitization to avoid "Cannot set property query" errors
-vi.mock('../server/src/middleware/inputSanitization.middleware.js', () => ({
-  inputSanitizationMiddleware: (req: any, res: any, next: any) => next(),
-  queryParamSanitizationMiddleware: (req: any, res: any, next: any) => next(),
-  sqlParamValidationMiddleware: (req: any, res: any, next: any) => next(),
-}));
-
 // Mock Permission Service to avoid DB calls
 // COMMENTED OUT: We need real PermissionService for unit tests. Use DI instead.
 // vi.mock('../server/services/permissionService.js', () => ({

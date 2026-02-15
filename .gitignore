@@ -102,6 +102,9 @@ PLAN_*.md
 FAZA*.md
 SETUP_*.md
 
+# Allow tracked plans under docs/
+!docs/PLAN_*.md
+
 # Debug and trace files
 trace_*.cjs
 analyze_*.cjs

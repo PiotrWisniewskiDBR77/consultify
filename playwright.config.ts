@@ -13,6 +13,9 @@ const backendPort = (() => {
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // Some legacy/spec files under tests/e2e are written for Vitest (not Playwright).
+  // Ignore them so `npm run test:e2e` stays deterministic.
+  testIgnore: ['**/security-cookie-auth.spec.ts', '**/security-policies-api.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

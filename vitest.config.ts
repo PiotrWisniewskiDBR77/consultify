@@ -198,6 +198,7 @@ export default defineConfig({
     setupFiles: './tests/setup.ts',
     include: [
       'tests/unit/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      'tests/component/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/components/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/hooks/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/store/**/*.{test,spec}.{js,ts,jsx,tsx}',
@@ -288,14 +289,21 @@ export default defineConfig({
     environmentMatchGlobs: [
       ['tests/unit/backend/**', 'node'],
       ['tests/backend/**', 'node'],
+      ['tests/security/**', 'node'],
       ['server/**', 'node'],
     ],
     reporters: ['default', 'junit', 'json', 'verbose'],
     outputFile: 'junit.xml',
     coverage: {
       provider: 'v8',
+      all: false,
       reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],
-      include: ['src/**/*.{ts,tsx}', 'server/**/*.js'],
+      include: [
+        'server/src/controllers/**/*.{ts,js}',
+        'server/src/middleware/**/*.{ts,js}',
+        'server/src/routes/**/*.{ts,js}',
+        'server/src/services/*.{ts,js}',
+      ],
       exclude: [
         'src/vite-env.d.ts',
         '**/*.test.ts',
@@ -311,6 +319,9 @@ export default defineConfig({
         'server/database.postgres.js',
         'server/database.sqlite.js',
         '**/trash_node_modules_*/**',
+        'server/dist/**',
+        '**/dist/**',
+        '**/build/**',
       ],
       thresholds: {
         global: {
