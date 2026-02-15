@@ -10,13 +10,13 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  canExecuteGate,
   GATE_PERMISSIONS,
   GateType,
   getGateForTransition,
   isValidTransition,
   VALID_TRANSITIONS,
 } from '../constants/initiativeStatuses.js';
+import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
 import notificationService from '../services/notificationService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -50,6 +50,21 @@ const safeJsonParse = <T = unknown>(
 
 const normalizeStatus = (value: string | null | undefined): string =>
   String(value || '').toUpperCase();
+
+const getTopBarCapabilities = (status: string, userRoles: string[]) => {
+  const currentStatus = normalizeStatus(status);
+  const isTerminal = currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED';
+  const hasEditRole = (userRoles || []).some((r) =>
+    ['PMO', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'INITIATIVE_OWNER', 'PROJECT_SPONSOR'].includes(
+      String(r || '').toUpperCase()
+    )
+  );
+  return {
+    canEditPriority: hasEditRole && !isTerminal,
+    canEditOwner: hasEditRole && !isTerminal,
+    canEditTargetDate: hasEditRole && !isTerminal,
+  };
+};
 
 const hasApprovedGateDecision = async (
   orgId: string,
@@ -561,8 +576,36 @@ export class InitiativeController {
         return;
       }
 
-      // 3. Build update map — only include fields that are provided
+      // 2.1 Enforce top-bar edit rules (owner / target dates) based on backend capabilities
+      const accessCtx = userId ? await resolveInitiativeAccessContext(orgId, id, userId) : null;
+      const effectiveRoles = accessCtx?.effectiveRoles || [];
+      const topBarCaps = getTopBarCapabilities(currentStatus, effectiveRoles);
       const body = req.body as Record<string, unknown>;
+      const isOwnerUpdate =
+        body.ownerBusinessId !== undefined || body.ownerExecutionId !== undefined;
+      const isTargetDateUpdate =
+        body.plannedStartDate !== undefined || body.plannedEndDate !== undefined;
+
+      if (isOwnerUpdate && !topBarCaps.canEditOwner) {
+        res.status(403).json({
+          error: 'Owner cannot be edited in current status for current role',
+          field: 'owner',
+          currentStatus,
+          roles: effectiveRoles,
+        });
+        return;
+      }
+      if (isTargetDateUpdate && !topBarCaps.canEditTargetDate) {
+        res.status(403).json({
+          error: 'Target date cannot be edited in current status for current role',
+          field: 'targetDate',
+          currentStatus,
+          roles: effectiveRoles,
+        });
+        return;
+      }
+
+      // 3. Build update map — only include fields that are provided
       const FIELD_MAP: Record<string, string> = {
         title: 'title',
         axis: 'axis',
@@ -580,6 +623,7 @@ export class InitiativeController {
         plannedEndDate: 'planned_end_date',
         ownerBusinessId: 'owner_business_id',
         ownerExecutionId: 'owner_execution_id',
+        marketContext: 'market_context',
         problemStatement: 'problem_statement',
       };
 
@@ -780,7 +824,8 @@ export class InitiativeController {
       const { id } = req.params;
       const { status, reason } = req.body;
       const orgId = req.user?.organizationId;
-      if (!orgId) {
+      const actorId = req.user?.id;
+      if (!orgId || !actorId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
@@ -797,8 +842,6 @@ export class InitiativeController {
       const currentStatus = normalizeStatus((existing as Record<string, unknown>).status as string);
       const nextStatus = normalizeStatus(status as string);
       const initiativeName = String((existing as any)?.name || 'Initiative');
-      const actorId = req.user?.id;
-      const actorRole = String((req.user as any)?.role || '').toUpperCase();
       const actorName =
         req.user?.firstName && req.user?.lastName
           ? `${req.user.firstName} ${req.user.lastName}`
@@ -821,18 +864,36 @@ export class InitiativeController {
       // - PM/Lead/PMO gate approvals move initiatives to global visibility (REVIEW)
       const gate = getGateForTransition(currentStatus as any, nextStatus as any);
       if (gate) {
-        const isAdmin = actorRole === 'ADMIN' || actorRole === 'SUPERADMIN';
-        if (!isAdmin && !canExecuteGate(actorRole as any, gate)) {
+        const accessCtx = await resolveInitiativeAccessContext(orgId, id, actorId);
+        const isAdmin = accessCtx.effectiveRoles.includes('ADMIN');
+        const steeringBoardEnabled = !!accessCtx.steeringBoard.enabled;
+        const requiredRoles = GATE_PERMISSIONS[gate] || [];
+        const effectiveRequiredRoles = steeringBoardEnabled
+          ? requiredRoles
+          : requiredRoles.flatMap((r: string) => {
+              if (r === 'STEERING_COMMITTEE') return ['PROJECT_SPONSOR', 'PORTFOLIO_OWNER'];
+              return [r];
+            });
+
+        const canExecute =
+          isAdmin ||
+          effectiveRequiredRoles.some((r: string) => accessCtx.effectiveRoles.includes(r));
+
+        if (!canExecute) {
           res.status(403).json({
             error: 'Permission denied for this status transition',
             gate,
             from: currentStatus,
             to: nextStatus,
-            role: actorRole,
+            roles: accessCtx.effectiveRoles,
+            requiredRoles: effectiveRequiredRoles,
           });
           return;
         }
-        if (gate === GateType.SUBMIT_FOR_REVIEW && actorRole === 'CONSULTANT') {
+        if (
+          gate === GateType.SUBMIT_FOR_REVIEW &&
+          accessCtx.effectiveRoles.includes('CONSULTANT')
+        ) {
           const createdBy = (existing as any)?.created_by
             ? String((existing as any).created_by)
             : null;
@@ -1032,6 +1093,70 @@ export class InitiativeController {
         return;
       }
 
+      // DONE -> TRACKING (Benefits start) policy enforcement:
+      // - Business Owner must be assigned (initiative.owner_business_id)
+      // - at least 1 KPI must exist, and at least 1 KPI must have target + unit
+      if (currentStatus === 'DONE' && nextStatus === 'TRACKING') {
+        const row = await queryHelpers.queryOne(
+          `SELECT owner_business_id as ownerBusinessId FROM initiatives WHERE id = ? AND organization_id = ?`,
+          [id, orgId]
+        );
+        const ownerBusinessId = (row as any)?.ownerBusinessId
+          ? String((row as any).ownerBusinessId)
+          : '';
+        if (!ownerBusinessId) {
+          res.status(400).json({
+            error: 'Business Owner is required to start benefits tracking',
+            rule: 'BENEFITS_OWNER_REQUIRED',
+            field: 'ownerBusinessId',
+          });
+          return;
+        }
+
+        try {
+          const kpiCount = await queryHelpers.queryOne(
+            `SELECT COUNT(*) as c FROM initiative_kpis WHERE initiative_id = ?`,
+            [id]
+          );
+          const cAll = Number((kpiCount as any)?.c || 0);
+          if (cAll <= 0) {
+            res.status(400).json({
+              error: 'At least one KPI is required to start benefits tracking',
+              rule: 'BENEFITS_KPI_REQUIRED',
+            });
+            return;
+          }
+
+          const readyCount = await queryHelpers.queryOne(
+            `SELECT COUNT(*) as c
+             FROM initiative_kpis
+             WHERE initiative_id = ?
+               AND target_value IS NOT NULL
+               AND unit IS NOT NULL`,
+            [id]
+          );
+          const cReady = Number((readyCount as any)?.c || 0);
+          if (cReady <= 0) {
+            res.status(400).json({
+              error: 'KPI target and unit are required to start benefits tracking',
+              rule: 'BENEFITS_KPI_TARGET_REQUIRED',
+            });
+            return;
+          }
+        } catch (e: any) {
+          const msg = String(e?.message || e || '').toLowerCase();
+          // If KPI schema is missing, block transition with a clear message.
+          if (msg.includes('no such table') || msg.includes('initiative_kpis')) {
+            res.status(400).json({
+              error: 'KPI schema is required to start benefits tracking (missing initiative_kpis)',
+              rule: 'BENEFITS_KPI_SCHEMA_MISSING',
+            });
+            return;
+          }
+          throw e;
+        }
+      }
+
       // Execute status update with lifecycle timestamps
       const now = new Date().toISOString();
       const lifecycleUpdates: string[] = ['status = ?', 'updated_at = ?'];
@@ -1087,24 +1212,73 @@ export class InitiativeController {
       const sql = `UPDATE initiatives SET ${lifecycleUpdates.join(', ')} WHERE id = ? AND organization_id = ?`;
       await queryHelpers.queryRun(sql, lifecycleParams);
 
+      // Benefits tracking window defaults (best-effort; older schemas may not have these columns).
+      if (currentStatus === 'DONE' && nextStatus === 'TRACKING') {
+        const trackingStart = now;
+        const trackingEnd = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(); // default 90 days
+        try {
+          await queryHelpers.queryRun(
+            `UPDATE initiatives
+             SET tracking_started_at = COALESCE(tracking_started_at, ?),
+                 tracking_started_by = COALESCE(tracking_started_by, ?),
+                 tracking_start_date = COALESCE(tracking_start_date, ?),
+                 tracking_end_date = COALESCE(tracking_end_date, ?),
+                 updated_at = ?
+             WHERE id = ? AND organization_id = ?`,
+            [trackingStart, actorId || null, trackingStart, trackingEnd, now, id, orgId]
+          );
+        } catch (e: any) {
+          const msg = String(e?.message || e || '').toLowerCase();
+          if (!msg.includes('no such column')) throw e;
+          // ignore for legacy schemas
+        }
+      }
+
       // Log to initiative_status_history (audit trail)
       try {
         const historyId = uuidv4();
-        await queryHelpers.queryRun(
-          `INSERT INTO initiative_status_history (id, initiative_id, organization_id, from_status, to_status, changed_by, reason, gate_type, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            historyId,
-            id,
-            orgId,
-            currentStatus,
-            nextStatus,
-            actorId || null,
-            reason || null,
-            gate || null,
-            now,
-          ]
-        );
+        // Some dev SQLite schemas don't have the newer `gate_type` column yet.
+        // Write best-effort history: try with gate_type first, then fall back without.
+        try {
+          await queryHelpers.queryRun(
+            `INSERT INTO initiative_status_history (id, initiative_id, organization_id, from_status, to_status, changed_by, reason, gate_type, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              historyId,
+              id,
+              orgId,
+              currentStatus,
+              nextStatus,
+              actorId || null,
+              reason || null,
+              gate || null,
+              now,
+            ]
+          );
+        } catch (e: any) {
+          const msg = String(e?.message || e || '');
+          if (
+            msg.toLowerCase().includes('gate_type') ||
+            msg.toLowerCase().includes('no such column')
+          ) {
+            await queryHelpers.queryRun(
+              `INSERT INTO initiative_status_history (id, initiative_id, organization_id, from_status, to_status, changed_by, reason, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+              [
+                historyId,
+                id,
+                orgId,
+                currentStatus,
+                nextStatus,
+                actorId || null,
+                reason || null,
+                now,
+              ]
+            );
+          } else {
+            throw e;
+          }
+        }
       } catch {
         // status_history table may not exist yet — best-effort
         logger.warn('[initiatives] Could not write to initiative_status_history');
@@ -1444,8 +1618,16 @@ export class InitiativeController {
         priority,
       } = req.body as Record<string, unknown>;
 
+      if (status !== undefined) {
+        res.status(400).json({
+          error: 'Status cannot be updated via quick-update. Use /initiatives/:id/status endpoint.',
+          field: 'status',
+        });
+        return;
+      }
+
       const current = await queryHelpers.queryOne(
-        `SELECT planned_start_date, planned_end_date, owner_business_id, owner_execution_id, name
+        `SELECT status, planned_start_date, planned_end_date, owner_business_id, owner_execution_id, name
          FROM initiatives
          WHERE id = ? AND organization_id = ?`,
         [id, orgId]
@@ -1464,6 +1646,46 @@ export class InitiativeController {
       const previousOwnerBusinessId = (current as any).owner_business_id as string | null;
       const previousOwnerExecutionId = (current as any).owner_execution_id as string | null;
       const initiativeName = String((current as any)?.name || 'Initiative');
+      const currentStatus = normalizeStatus((current as any)?.status);
+
+      // Enforce top-bar edit rules for quick update endpoint
+      const accessCtx = actorId ? await resolveInitiativeAccessContext(orgId, id, actorId) : null;
+      const effectiveRoles = accessCtx?.effectiveRoles || [];
+      const topBarCaps = getTopBarCapabilities(currentStatus, effectiveRoles);
+
+      if (priority !== undefined && !topBarCaps.canEditPriority) {
+        res.status(403).json({
+          error: 'Priority cannot be edited in current status for current role',
+          field: 'priority',
+          currentStatus,
+          roles: effectiveRoles,
+        });
+        return;
+      }
+      if (
+        (ownerBusinessId !== undefined || ownerExecutionId !== undefined) &&
+        !topBarCaps.canEditOwner
+      ) {
+        res.status(403).json({
+          error: 'Owner cannot be edited in current status for current role',
+          field: 'owner',
+          currentStatus,
+          roles: effectiveRoles,
+        });
+        return;
+      }
+      if (
+        (plannedStartDate !== undefined || plannedEndDate !== undefined) &&
+        !topBarCaps.canEditTargetDate
+      ) {
+        res.status(403).json({
+          error: 'Target date cannot be edited in current status for current role',
+          field: 'targetDate',
+          currentStatus,
+          roles: effectiveRoles,
+        });
+        return;
+      }
 
       const existingStart = (current as Record<string, unknown>).planned_start_date as
         | string
@@ -1491,10 +1713,6 @@ export class InitiativeController {
       if (progress !== undefined) {
         updates.push('progress = ?');
         params.push(progress);
-      }
-      if (status) {
-        updates.push('status = ?');
-        params.push(normalizeStatus(status as string));
       }
       if (plannedStartDate !== undefined) {
         updates.push('planned_start_date = ?');
@@ -3091,11 +3309,13 @@ export class InitiativeController {
           r.id,
           r.initiative_id as initiativeId,
           r.user_id as userId,
+          r.name,
           r.role,
           r.allocation_percentage as allocationPercentage,
           r.start_date as startDate,
           r.end_date as endDate,
           r.notes,
+          r.source,
           u.first_name as firstName,
           u.last_name as lastName,
           u.avatar_url as avatarUrl
@@ -3116,7 +3336,8 @@ export class InitiativeController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
       const { id: initiativeId } = req.params;
-      const { userId, role, allocationPercentage, startDate, endDate, notes } = req.body;
+      const { userId, name, role, allocationPercentage, startDate, endDate, notes, source } =
+        req.body;
 
       if (!orgId) {
         res.status(401).json({ error: 'Unauthorized' });
@@ -3133,19 +3354,32 @@ export class InitiativeController {
 
       await queryHelpers.queryRun(
         `INSERT INTO initiative_resources (
-          id, initiative_id, organization_id, user_id, role, allocation_percentage, start_date, end_date, notes, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          id,
+          initiative_id,
+          organization_id,
+          user_id,
+          name,
+          role,
+          allocation_percentage,
+          start_date,
+          end_date,
+          notes,
+          created_at,
+          source
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           resourceId,
           initiativeId,
           orgId,
           userId || null,
+          name || null,
           role,
           allocationPercentage || 100,
           startDate || null,
           endDate || null,
           notes || null,
           now,
+          source || 'manual',
         ]
       );
 
@@ -3155,13 +3389,611 @@ export class InitiativeController {
           id: resourceId,
           initiativeId,
           userId,
+          name,
           role,
           allocationPercentage: allocationPercentage || 100,
           startDate,
           endDate,
           notes,
+          source: source || 'manual',
         },
       });
+    }
+  );
+
+  /**
+   * Delete resource from an initiative
+   */
+  static deleteResource = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId, resourceId } = req.params as any;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await queryHelpers.queryRun(
+        `DELETE FROM initiative_resources WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+        [resourceId, initiativeId, orgId]
+      );
+      res.json({ success: true });
+    }
+  );
+
+  /**
+   * Update resource in an initiative
+   */
+  static updateResource = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId, resourceId } = req.params as any;
+      const { name, role, allocationPercentage, startDate, endDate, notes } = req.body;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      await queryHelpers.queryRun(
+        `UPDATE initiative_resources SET
+          name = COALESCE(?, name),
+          role = COALESCE(?, role),
+          allocation_percentage = COALESCE(?, allocation_percentage),
+          start_date = COALESCE(?, start_date),
+          end_date = COALESCE(?, end_date),
+          notes = COALESCE(?, notes),
+          updated_at = ?
+        WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+        [
+          name,
+          role,
+          allocationPercentage,
+          startDate,
+          endDate,
+          notes,
+          now,
+          resourceId,
+          initiativeId,
+          orgId,
+        ]
+      );
+
+      res.json({ success: true });
+    }
+  );
+
+  // ==========================================
+  // BUDGET ITEMS CRUD
+  // ==========================================
+
+  /**
+   * Get all budget items for an initiative
+   */
+  static getBudgetItems = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const items = await queryHelpers.queryAll(
+        `SELECT
+          id,
+          initiative_id as initiativeId,
+          category,
+          cost_type as costType,
+          amount,
+          currency,
+          description,
+          source,
+          created_at as createdAt,
+          updated_at as updatedAt
+        FROM initiative_budget_items
+        WHERE initiative_id = ? AND organization_id = ?
+        ORDER BY created_at ASC`,
+        [initiativeId, orgId]
+      );
+
+      res.json({ budgetItems: items });
+    }
+  );
+
+  /**
+   * Add budget item to an initiative
+   */
+  static addBudgetItem = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+      const { category, costType, amount, currency, description, source } = req.body;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const itemId = uuidv4();
+      const now = new Date().toISOString();
+
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_budget_items (
+          id, initiative_id, organization_id, category, cost_type, amount, currency, description, created_at, updated_at, source
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          itemId,
+          initiativeId,
+          orgId,
+          category || 'other',
+          costType || 'OPEX',
+          amount || 0,
+          currency || 'PLN',
+          description || null,
+          now,
+          now,
+          source || 'manual',
+        ]
+      );
+
+      res.status(201).json({
+        success: true,
+        budgetItem: {
+          id: itemId,
+          initiativeId,
+          category: category || 'other',
+          costType: costType || 'OPEX',
+          amount: amount || 0,
+          currency: currency || 'PLN',
+          description,
+          source: source || 'manual',
+        },
+      });
+    }
+  );
+
+  /**
+   * Update budget item
+   */
+  static updateBudgetItem = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId, itemId } = req.params as any;
+      const { category, costType, amount, currency, description } = req.body;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      await queryHelpers.queryRun(
+        `UPDATE initiative_budget_items SET
+          category = COALESCE(?, category),
+          cost_type = COALESCE(?, cost_type),
+          amount = COALESCE(?, amount),
+          currency = COALESCE(?, currency),
+          description = COALESCE(?, description),
+          updated_at = ?
+        WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+        [category, costType, amount, currency, description, now, itemId, initiativeId, orgId]
+      );
+
+      res.json({ success: true });
+    }
+  );
+
+  /**
+   * Delete budget item
+   */
+  static deleteBudgetItem = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId, itemId } = req.params as any;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await queryHelpers.queryRun(
+        `DELETE FROM initiative_budget_items WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+        [itemId, initiativeId, orgId]
+      );
+
+      res.json({ success: true });
+    }
+  );
+
+  // ==========================================
+  // TOOLS CRUD
+  // ==========================================
+
+  /**
+   * Get all tools for an initiative
+   */
+  static getTools = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const items = await queryHelpers.queryAll(
+        `SELECT
+          id,
+          initiative_id as initiativeId,
+          name,
+          category,
+          vendor,
+          license_cost as licenseCost,
+          license_type as licenseType,
+          status,
+          notes,
+          source,
+          cost_type as costType,
+          created_at as createdAt,
+          updated_at as updatedAt
+        FROM initiative_tools
+        WHERE initiative_id = ? AND organization_id = ?
+        ORDER BY created_at ASC`,
+        [initiativeId, orgId]
+      );
+
+      res.json({ tools: items });
+    }
+  );
+
+  /**
+   * Add tool to an initiative
+   */
+  static addTool = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const orgId = req.user?.organizationId;
+    const { id: initiativeId } = req.params;
+    const { name, category, vendor, licenseCost, licenseType, status, notes, source, costType } =
+      req.body;
+
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    if (!name) {
+      res.status(400).json({ error: 'Name is required' });
+      return;
+    }
+
+    const toolId = uuidv4();
+    const now = new Date().toISOString();
+
+    await queryHelpers.queryRun(
+      `INSERT INTO initiative_tools (
+          id, initiative_id, organization_id, name, category, vendor, license_cost, license_type, status, notes, created_at, updated_at, source, cost_type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        toolId,
+        initiativeId,
+        orgId,
+        name,
+        category || 'software',
+        vendor || null,
+        licenseCost || 0,
+        licenseType || 'subscription',
+        status || 'planned',
+        notes || null,
+        now,
+        now,
+        source || 'manual',
+        costType || 'OPEX',
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      tool: {
+        id: toolId,
+        initiativeId,
+        name,
+        category: category || 'software',
+        vendor,
+        licenseCost: licenseCost || 0,
+        licenseType: licenseType || 'subscription',
+        status: status || 'planned',
+        notes,
+        source: source || 'manual',
+        costType: costType || 'OPEX',
+      },
+    });
+  });
+
+  /**
+   * Update tool
+   */
+  static updateTool = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId, toolId } = req.params as any;
+      const { name, category, vendor, licenseCost, licenseType, status, notes, costType } =
+        req.body;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      await queryHelpers.queryRun(
+        `UPDATE initiative_tools SET
+          name = COALESCE(?, name),
+          category = COALESCE(?, category),
+          vendor = COALESCE(?, vendor),
+          license_cost = COALESCE(?, license_cost),
+          license_type = COALESCE(?, license_type),
+          status = COALESCE(?, status),
+          notes = COALESCE(?, notes),
+          cost_type = COALESCE(?, cost_type),
+          updated_at = ?
+        WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+        [
+          name,
+          category,
+          vendor,
+          licenseCost,
+          licenseType,
+          status,
+          notes,
+          costType,
+          now,
+          toolId,
+          initiativeId,
+          orgId,
+        ]
+      );
+
+      res.json({ success: true });
+    }
+  );
+
+  /**
+   * Delete tool
+   */
+  static deleteTool = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId, toolId } = req.params as any;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await queryHelpers.queryRun(
+        `DELETE FROM initiative_tools WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+        [toolId, initiativeId, orgId]
+      );
+
+      res.json({ success: true });
+    }
+  );
+
+  // ==========================================
+  // INTANGIBLE ASSETS CRUD (Licenses, Training, Knowledge, IP)
+  // ==========================================
+
+  /**
+   * Get all intangible assets for an initiative
+   */
+  static getIntangibleAssets = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const items = await queryHelpers.queryAll(
+        `SELECT
+          id,
+          initiative_id as initiativeId,
+          asset_type as assetType,
+          name,
+          provider,
+          cost,
+          currency,
+          valid_from as validFrom,
+          valid_until as validUntil,
+          status,
+          beneficiaries,
+          notes,
+          source,
+          cost_type as costType,
+          created_at as createdAt,
+          updated_at as updatedAt
+        FROM initiative_intangible_assets
+        WHERE initiative_id = ? AND organization_id = ?
+        ORDER BY created_at ASC`,
+        [initiativeId, orgId]
+      );
+
+      res.json({ intangibleAssets: items });
+    }
+  );
+
+  /**
+   * Add intangible asset to an initiative
+   */
+  static addIntangibleAsset = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+      const {
+        assetType,
+        name,
+        provider,
+        cost,
+        currency,
+        validFrom,
+        validUntil,
+        status,
+        beneficiaries,
+        notes,
+        source,
+        costType,
+      } = req.body;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      if (!name) {
+        res.status(400).json({ error: 'Name is required' });
+        return;
+      }
+
+      const itemId = uuidv4();
+      const now = new Date().toISOString();
+
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_intangible_assets (
+          id, initiative_id, organization_id, asset_type, name, provider, cost, currency,
+          valid_from, valid_until, status, beneficiaries, notes, created_at, updated_at, source, cost_type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          itemId,
+          initiativeId,
+          orgId,
+          assetType || 'license',
+          name,
+          provider || null,
+          cost || 0,
+          currency || 'PLN',
+          validFrom || null,
+          validUntil || null,
+          status || 'planned',
+          beneficiaries || null,
+          notes || null,
+          now,
+          now,
+          source || 'manual',
+          costType || 'OPEX',
+        ]
+      );
+
+      res.status(201).json({
+        success: true,
+        intangibleAsset: {
+          id: itemId,
+          initiativeId,
+          assetType: assetType || 'license',
+          name,
+          provider,
+          cost: cost || 0,
+          currency: currency || 'PLN',
+          validFrom,
+          validUntil,
+          status: status || 'planned',
+          beneficiaries,
+          notes,
+          source: source || 'manual',
+          costType: costType || 'OPEX',
+        },
+      });
+    }
+  );
+
+  /**
+   * Update intangible asset
+   */
+  static updateIntangibleAsset = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId, assetId } = req.params as any;
+      const {
+        assetType,
+        name,
+        provider,
+        cost,
+        currency,
+        validFrom,
+        validUntil,
+        status,
+        beneficiaries,
+        notes,
+        costType,
+      } = req.body;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      await queryHelpers.queryRun(
+        `UPDATE initiative_intangible_assets SET
+          asset_type = COALESCE(?, asset_type),
+          name = COALESCE(?, name),
+          provider = COALESCE(?, provider),
+          cost = COALESCE(?, cost),
+          currency = COALESCE(?, currency),
+          valid_from = COALESCE(?, valid_from),
+          valid_until = COALESCE(?, valid_until),
+          status = COALESCE(?, status),
+          beneficiaries = COALESCE(?, beneficiaries),
+          notes = COALESCE(?, notes),
+          cost_type = COALESCE(?, cost_type),
+          updated_at = ?
+        WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+        [
+          assetType,
+          name,
+          provider,
+          cost,
+          currency,
+          validFrom,
+          validUntil,
+          status,
+          beneficiaries,
+          notes,
+          costType,
+          now,
+          assetId,
+          initiativeId,
+          orgId,
+        ]
+      );
+
+      res.json({ success: true });
+    }
+  );
+
+  /**
+   * Delete intangible asset
+   */
+  static deleteIntangibleAsset = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId, assetId } = req.params as any;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await queryHelpers.queryRun(
+        `DELETE FROM initiative_intangible_assets WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+        [assetId, initiativeId, orgId]
+      );
+
+      res.json({ success: true });
     }
   );
 
@@ -3187,6 +4019,8 @@ export class InitiativeController {
           s.external_email as externalEmail,
           s.role,
           s.raci_type as raciType,
+          s.influence_level as influenceLevel,
+          s.interest_level as interestLevel,
           s.created_at as createdAt,
           u.first_name as firstName,
           u.last_name as lastName,
@@ -3208,7 +4042,8 @@ export class InitiativeController {
       const orgId = req.user?.organizationId;
       const actorId = req.user?.id;
       const { id: initiativeId } = req.params;
-      const { userId, raciType, role, externalName, externalEmail } = req.body || {};
+      const { userId, raciType, role, externalName, externalEmail, influenceLevel, interestLevel } =
+        req.body || {};
 
       if (!orgId || !actorId) {
         res.status(401).json({ error: 'Unauthorized' });
@@ -3229,19 +4064,85 @@ export class InitiativeController {
         return;
       }
 
+      const rawRole = String(role || '').trim();
+      const rawRaci = String(raciType || '').trim();
+
+      // UI commonly sends RACI roles (accountable/responsible/consulted/informed)
+      // while DB enforces a business-role enum in `role`.
+      // We persist RACI in `raci_type` (A/R/C/I) and map to a safe DB role.
+      const DB_ROLES = new Set(['SPONSOR', 'OWNER', 'CONTRIBUTOR', 'REVIEWER', 'INFORMED']);
+      const toDbRoleFromRaci = (r: string): string => {
+        const up = r.toUpperCase();
+        if (up === 'A') return 'OWNER';
+        if (up === 'R') return 'CONTRIBUTOR';
+        if (up === 'C') return 'REVIEWER';
+        if (up === 'I') return 'INFORMED';
+        return 'CONTRIBUTOR';
+      };
+      const toRaciFromUiRole = (r: string): string | null => {
+        const low = r.toLowerCase();
+        if (low === 'accountable') return 'A';
+        if (low === 'responsible') return 'R';
+        if (low === 'consulted') return 'C';
+        if (low === 'informed') return 'I';
+        return null;
+      };
+
+      let resolvedRaci: string | null = rawRaci ? rawRaci.toUpperCase() : null;
+      let resolvedDbRole: string | null = rawRole ? rawRole.toUpperCase() : null;
+
+      // If role looks like UI RACI role string, map it.
+      const raciFromUi = rawRole ? toRaciFromUiRole(rawRole) : null;
+      if (raciFromUi) {
+        resolvedRaci = raciFromUi;
+        resolvedDbRole = toDbRoleFromRaci(raciFromUi);
+      }
+
+      // If role looks like a RACI letter, map it.
+      if (rawRole && ['A', 'R', 'C', 'I'].includes(rawRole.toUpperCase())) {
+        resolvedRaci = rawRole.toUpperCase();
+        resolvedDbRole = toDbRoleFromRaci(resolvedRaci);
+      }
+
+      // If DB role is provided, keep it (and keep any provided RACI).
+      if (resolvedDbRole && !DB_ROLES.has(resolvedDbRole)) {
+        // As a fallback, default to CONTRIBUTOR (DB-safe)
+        resolvedDbRole = 'CONTRIBUTOR';
+      }
+
+      // If raci_type not provided but DB role is "INFORMED", default RACI to I.
+      if (!resolvedRaci && resolvedDbRole === 'INFORMED') {
+        resolvedRaci = 'I';
+      }
+
+      // DB requires influence_level + interest_level NOT NULL (1..5). Default to 3.
+      const inf = Number.isFinite(Number(influenceLevel)) ? Number(influenceLevel) : 3;
+      const intr = Number.isFinite(Number(interestLevel)) ? Number(interestLevel) : 3;
+
       const id = uuidv4();
       await queryHelpers.queryRun(
         `INSERT INTO initiative_stakeholders (
-          id, initiative_id, user_id, external_name, external_email, role, raci_type, created_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          id,
+          initiative_id,
+          user_id,
+          external_name,
+          external_email,
+          role,
+          raci_type,
+          influence_level,
+          interest_level,
+          created_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           initiativeId,
           userId || null,
           userId ? null : externalName,
           userId ? null : externalEmail || null,
-          role || null,
-          raciType || null,
+          resolvedDbRole || 'CONTRIBUTOR',
+          resolvedRaci || null,
+          inf,
+          intr,
           actorId,
         ]
       );
@@ -3817,42 +4718,83 @@ export class InitiativeController {
       const ini = initiative as any;
       const currentStatus = String(ini.status || 'DRAFT').toUpperCase();
 
-      // Get gate roles for this initiative
-      let gateRoles: any[] = [];
-      try {
-        gateRoles = await queryHelpers.queryAll(
-          `SELECT gate_role as gateRole, user_id as userId
-           FROM initiative_gate_roles WHERE initiative_id = ?`,
-          [initiativeId]
-        );
-      } catch {
-        // table may not exist
-      }
+      // Canonical role resolution (system role + project membership + gate roles + steering board)
+      const accessCtx =
+        orgId && currentUserId
+          ? await resolveInitiativeAccessContext(orgId, initiativeId, currentUserId)
+          : null;
+      const steeringBoardEnabled = !!accessCtx?.steeringBoard?.enabled;
+      const userRoles = accessCtx?.effectiveRoles || [];
 
-      // Also add derived roles
-      if (ini.owner_business_id) {
-        gateRoles.push({ gateRole: 'INITIATIVE_OWNER', userId: ini.owner_business_id });
-        gateRoles.push({ gateRole: 'BUSINESS_OWNER', userId: ini.owner_business_id });
-      }
-      if (ini.owner_execution_id) {
-        gateRoles.push({ gateRole: 'INITIATIVE_OWNER', userId: ini.owner_execution_id });
-      }
-      if (ini.sponsor_id) {
-        gateRoles.push({ gateRole: 'PROJECT_SPONSOR', userId: ini.sponsor_id });
-      }
+      // Expanded assignments include initiative gate roles + derived + project roles + steering board members
+      const expandedAssignments: Array<{ gateRole: string; userId: string }> = [
+        ...(accessCtx?.roleAssignments || []),
+      ];
 
-      // Find the current user's roles on this initiative
-      const userRoles = gateRoles
-        .filter((r: any) => r.userId === currentUserId)
-        .map((r: any) => r.gateRole);
+      const projectId = accessCtx?.projectId ? String(accessCtx.projectId) : null;
+      const mapProjectRoleToInitiativeGateRoles = (projectRole: string): string[] => {
+        const r = String(projectRole || '')
+          .trim()
+          .toUpperCase();
+        if (!r) return [];
+        if (['PROJECT_SPONSOR', 'SPONSOR'].includes(r)) return ['PROJECT_SPONSOR'];
+        if (
+          [
+            'PROJECT_LEADER',
+            'PROJECT_LEAD',
+            'PROJECT_MANAGER',
+            'PMO_LEAD',
+            'MANAGER',
+            'TEAM_LEAD',
+            'WORKSTREAM_OWNER',
+          ].includes(r)
+        ) {
+          return ['PROJECT_MANAGER', 'PROJECT_LEAD'];
+        }
+        if (r === 'PMO') return ['PMO'];
+        if (r === 'PORTFOLIO_OWNER') return ['PORTFOLIO_OWNER'];
+        if (r === 'BUSINESS_OWNER') return ['BUSINESS_OWNER'];
+        if (r === 'STEERING_COMMITTEE') return ['STEERING_COMMITTEE'];
+        if (r === 'INITIATIVE_OWNER') return ['INITIATIVE_OWNER'];
+        if (r === 'TEAM_MEMBER') return ['TEAM_MEMBER'];
+        return [];
+      };
 
-      // Check current user's system role
-      const userRecord = await queryHelpers.queryOne(`SELECT role FROM users WHERE id = ?`, [
-        currentUserId,
-      ]);
-      const systemRole = String((userRecord as any)?.role || '').toUpperCase();
-      if (systemRole === 'ADMIN' || systemRole === 'SUPERADMIN') {
-        userRoles.push('ADMIN');
+      if (projectId) {
+        try {
+          const members = await queryHelpers.queryAll(
+            `SELECT user_id as userId, project_role as projectRole
+             FROM project_members WHERE project_id = ?`,
+            [projectId]
+          );
+          members.forEach((m: any) => {
+            const userId = String(m?.userId || '');
+            const projectRole = String(m?.projectRole || '');
+            if (!userId || !projectRole) return;
+            mapProjectRoleToInitiativeGateRoles(projectRole).forEach((gateRole) => {
+              expandedAssignments.push({ gateRole, userId });
+            });
+          });
+        } catch {
+          // best-effort
+        }
+
+        if (steeringBoardEnabled) {
+          try {
+            const boardMembers = await queryHelpers.queryAll(
+              `SELECT user_id as userId
+               FROM project_steering_board_members
+               WHERE project_id = ? AND UPPER(member_type) IN ('CHAIR','BOARD_MEMBER')`,
+              [projectId]
+            );
+            boardMembers.forEach((m: any) => {
+              const userId = String(m?.userId || '');
+              if (userId) expandedAssignments.push({ gateRole: 'STEERING_COMMITTEE', userId });
+            });
+          } catch {
+            // best-effort
+          }
+        }
       }
 
       // Get valid next transitions and check which ones the user can execute
@@ -3862,19 +4804,25 @@ export class InitiativeController {
       for (const nextStatus of validNext) {
         const gate = getGateForTransition(currentStatus as any, nextStatus as any);
         const requiredRoles = gate ? GATE_PERMISSIONS[gate] || [] : [];
+        const effectiveRequiredRoles = steeringBoardEnabled
+          ? requiredRoles
+          : requiredRoles.flatMap((r: string) => {
+              if (r === 'STEERING_COMMITTEE') return ['PROJECT_SPONSOR', 'PORTFOLIO_OWNER'];
+              return [r];
+            });
         const canExecute =
           userRoles.includes('ADMIN') ||
-          (gate ? requiredRoles.some((r: string) => userRoles.includes(r)) : true);
+          (gate ? effectiveRequiredRoles.some((r: string) => userRoles.includes(r)) : true);
 
         // Get assigned users for the required roles
-        const assignedApprovers = requiredRoles.flatMap((role: string) =>
-          gateRoles.filter((gr: any) => gr.gateRole === role)
+        const assignedApprovers = effectiveRequiredRoles.flatMap((role: string) =>
+          expandedAssignments.filter((gr: any) => String(gr.gateRole).toUpperCase() === role)
         );
 
         availableTransitions.push({
           targetStatus: nextStatus,
           gate: gate || null,
-          requiredRoles,
+          requiredRoles: effectiveRequiredRoles,
           assignedApprovers,
           canCurrentUserExecute: canExecute,
           hasAssignedApprover: assignedApprovers.length > 0,
@@ -3906,7 +4854,8 @@ export class InitiativeController {
       if (['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED'].includes(currentStatus)) {
         addCheck('sponsor', 'Sponsor assigned', !!ini.sponsor_id, 'warning');
       }
-      if (['APPROVED', 'SCHEDULED'].includes(currentStatus)) {
+      // Timeline baseline is required from Scheduling onward (not for APPROVE/APPROVED).
+      if (['SCHEDULED', 'EXECUTING', 'BLOCKED', 'DONE', 'TRACKING'].includes(currentStatus)) {
         addCheck(
           'timeline',
           'Timeline set',
@@ -3915,11 +4864,44 @@ export class InitiativeController {
         );
       }
 
+      // Benefits readiness (DONE -> TRACKING)
+      if (currentStatus === 'DONE') {
+        addCheck(
+          'benefits_owner',
+          'Business Owner assigned (benefits owner)',
+          !!ini.owner_business_id,
+          'blocking'
+        );
+        try {
+          const kpiCount = await queryHelpers.queryOne(
+            `SELECT COUNT(*) as c FROM initiative_kpis WHERE initiative_id = ?`,
+            [id]
+          );
+          const cAll = Number((kpiCount as any)?.c || 0);
+          addCheck('benefits_kpis', 'KPIs defined', cAll > 0, 'blocking');
+
+          const readyCount = await queryHelpers.queryOne(
+            `SELECT COUNT(*) as c
+             FROM initiative_kpis
+             WHERE initiative_id = ?
+               AND target_value IS NOT NULL
+               AND unit IS NOT NULL`,
+            [id]
+          );
+          const cReady = Number((readyCount as any)?.c || 0);
+          addCheck('benefits_kpi_targets', 'KPI targets + units defined', cReady > 0, 'warning');
+        } catch (e: any) {
+          // If KPI schema is missing, treat as blocking (cannot start Benefits safely).
+          addCheck('benefits_kpis', 'KPIs defined', false, 'blocking');
+        }
+      }
+
       // Check if required gate roles are assigned
       const nextGates = availableTransitions.filter((t: any) => t.gate && t.gate !== 'CANCEL');
       for (const transition of nextGates) {
         const missingRoles = (transition.requiredRoles as string[]).filter(
-          (role: string) => !gateRoles.some((gr: any) => gr.gateRole === role)
+          (role: string) =>
+            !expandedAssignments.some((gr: any) => String(gr.gateRole).toUpperCase() === role)
         );
         if (missingRoles.length > 0) {
           addCheck(
@@ -3931,10 +4913,80 @@ export class InitiativeController {
         }
       }
 
+      // Capabilities contract (v1) — backend is source of truth for UI enablement
+      const isTerminal = currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED';
+      const hasEditRole = userRoles.some((r: string) =>
+        ['PMO', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'INITIATIVE_OWNER', 'PROJECT_SPONSOR'].includes(
+          String(r || '').toUpperCase()
+        )
+      );
+
+      const topBar = {
+        canEditPriority: hasEditRole && !isTerminal,
+        canEditOwner: hasEditRole && !isTerminal,
+        canEditTargetDate: hasEditRole && !isTerminal,
+      };
+
+      const contextCreateActions = (() => {
+        if (!hasEditRole || isTerminal) return [];
+        if (['PLANNING', 'APPROVED', 'SCHEDULED', 'EXECUTING', 'BLOCKED'].includes(currentStatus)) {
+          return ['task', 'decision', 'raid'];
+        }
+        if (['REVIEW', 'PROMOTED', 'PENDING_REVIEW', 'DRAFT'].includes(currentStatus)) {
+          return ['decision', 'raid'];
+        }
+        return [];
+      })();
+
+      const cards = {
+        canEditCards:
+          topBar.canEditPriority ||
+          topBar.canEditOwner ||
+          topBar.canEditTargetDate ||
+          contextCreateActions.length > 0,
+        reasonCode:
+          topBar.canEditPriority ||
+          topBar.canEditOwner ||
+          topBar.canEditTargetDate ||
+          contextCreateActions.length > 0
+            ? null
+            : 'NO_EDIT_PERMISSION_FOR_STATUS_OR_ROLE',
+      };
+
+      const ai = {
+        canUseAi: cards.canEditCards && !isTerminal,
+        allowedSectionKeys: cards.canEditCards && !isTerminal ? ['*'] : [],
+      };
+
       res.json({
         currentStatus,
         userRoles,
         availableTransitions,
+        capabilities: {
+          version: 1,
+          source: 'backend',
+          topBar,
+          cards,
+          reasonCodes: {
+            topBar: {
+              priority: topBar.canEditPriority ? null : 'TOP_BAR_PRIORITY_LOCKED_BY_ROLE_OR_STATUS',
+              owner: topBar.canEditOwner ? null : 'TOP_BAR_OWNER_LOCKED_BY_ROLE_OR_STATUS',
+              targetDate: topBar.canEditTargetDate
+                ? null
+                : 'TOP_BAR_TARGET_DATE_LOCKED_BY_ROLE_OR_STATUS',
+            },
+            cards: { edit: cards.canEditCards ? null : 'NO_EDIT_PERMISSION_FOR_STATUS_OR_ROLE' },
+            ai: { use: ai.canUseAi ? null : 'AI_LOCKED_NO_EDIT_CAPABILITY' },
+          },
+          ctaBar: {
+            workflowActions: availableTransitions
+              .filter((t: any) => t.canCurrentUserExecute)
+              .map((t: any) => ({ targetStatus: t.targetStatus, gate: t.gate || null })),
+            contextCreateActions,
+            canUseAi: ai.canUseAi,
+            aiAllowedSectionKeys: ai.allowedSectionKeys,
+          },
+        },
         readiness,
         allBlocking:
           readiness.filter((r: any) => r.severity === 'blocking' && !r.pass).length === 0,
@@ -3958,31 +5010,196 @@ export class InitiativeController {
 
       let rows: any[] = [];
       try {
-        rows = await queryHelpers.queryAll(
-          `SELECT
-            h.id,
-            h.initiative_id as initiativeId,
-            h.from_status as fromStatus,
-            h.to_status as toStatus,
-            h.changed_by as changedBy,
-            h.reason,
-            h.gate_type as gateType,
-            h.created_at as createdAt,
-            u.first_name as changedByFirstName,
-            u.last_name as changedByLastName,
-            u.email as changedByEmail
-          FROM initiative_status_history h
-          LEFT JOIN users u ON u.id = h.changed_by
-          WHERE h.initiative_id = ? AND h.organization_id = ?
-          ORDER BY h.created_at DESC
-          LIMIT 100`,
-          [initiativeId, orgId]
-        );
+        // Some dev SQLite schemas don't have the newer `gate_type` column yet.
+        // Try selecting it first, then fall back to a NULL gateType to avoid 500s.
+        try {
+          rows = await queryHelpers.queryAll(
+            `SELECT
+              h.id,
+              h.initiative_id as initiativeId,
+              h.from_status as fromStatus,
+              h.to_status as toStatus,
+              h.changed_by as changedBy,
+              h.reason,
+              h.gate_type as gateType,
+              h.created_at as createdAt,
+              u.first_name as changedByFirstName,
+              u.last_name as changedByLastName,
+              u.email as changedByEmail
+            FROM initiative_status_history h
+            LEFT JOIN users u ON u.id = h.changed_by
+            WHERE h.initiative_id = ? AND h.organization_id = ?
+            ORDER BY h.created_at DESC
+            LIMIT 100`,
+            [initiativeId, orgId]
+          );
+        } catch (e: any) {
+          const msg = String(e?.message || e || '');
+          if (
+            msg.toLowerCase().includes('gate_type') ||
+            msg.toLowerCase().includes('no such column')
+          ) {
+            rows = await queryHelpers.queryAll(
+              `SELECT
+                h.id,
+                h.initiative_id as initiativeId,
+                h.from_status as fromStatus,
+                h.to_status as toStatus,
+                h.changed_by as changedBy,
+                h.reason,
+                NULL as gateType,
+                h.created_at as createdAt,
+                u.first_name as changedByFirstName,
+                u.last_name as changedByLastName,
+                u.email as changedByEmail
+              FROM initiative_status_history h
+              LEFT JOIN users u ON u.id = h.changed_by
+              WHERE h.initiative_id = ? AND h.organization_id = ?
+              ORDER BY h.created_at DESC
+              LIMIT 100`,
+              [initiativeId, orgId]
+            );
+          } else {
+            throw e;
+          }
+        }
       } catch {
         // Table may not exist
       }
 
       res.json({ history: rows });
+    }
+  );
+
+  // ==========================================
+  // INITIATIVE COMMENTS
+  // ==========================================
+
+  /**
+   * GET /api/initiatives/:id/comments
+   * Return initiative comments (newest first).
+   */
+  static getInitiativeComments = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const initiativeId = req.params.id;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      try {
+        const rows = await queryHelpers.queryAll(
+          `
+            SELECT
+              c.id,
+              c.content,
+              c.user_id as authorId,
+              c.created_at as createdAt,
+              u.first_name as firstName,
+              u.last_name as lastName,
+              u.email as email
+            FROM initiative_comments c
+            LEFT JOIN users u ON u.id = c.user_id
+            WHERE c.initiative_id = ? AND c.organization_id = ?
+            ORDER BY c.created_at DESC
+            LIMIT 200
+          `,
+          [initiativeId, orgId]
+        );
+
+        const comments = rows.map((r: any) => {
+          const authorName = `${r.firstName || ''} ${r.lastName || ''}`.trim() || r.email || 'User';
+          return {
+            id: r.id,
+            content: r.content,
+            authorId: r.authorId,
+            authorName,
+            createdAt: r.createdAt,
+            likes: 0,
+            likedByMe: false,
+          };
+        });
+
+        res.json({ comments });
+      } catch (e: any) {
+        res.status(500).json({ error: 'Failed to load comments' });
+      }
+    }
+  );
+
+  /**
+   * POST /api/initiatives/:id/comments
+   * Add comment to initiative.
+   */
+  static addInitiativeComment = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      const initiativeId = req.params.id;
+      const { content } = req.body as { content?: string };
+
+      if (!orgId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      if (!content || !String(content).trim()) {
+        res.status(400).json({ error: 'content is required' });
+        return;
+      }
+
+      const id = uuidv4();
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_comments (id, initiative_id, organization_id, user_id, content, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [id, initiativeId, orgId, userId, String(content).trim()]
+      );
+
+      res.status(201).json({ id });
+    }
+  );
+
+  /**
+   * DELETE /api/initiatives/:id/comments/:commentId
+   * Delete comment (best-effort ownership check: allow author or admin).
+   */
+  static deleteInitiativeComment = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      const role = (req.user as any)?.role as string | undefined;
+      const initiativeId = req.params.id;
+      const commentId = req.params.commentId;
+
+      if (!orgId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const row = await queryHelpers.queryOne<{ user_id: string }>(
+        `SELECT user_id FROM initiative_comments WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+        [commentId, initiativeId, orgId]
+      );
+
+      if (!row) {
+        res.json({ success: true });
+        return;
+      }
+
+      const isOwner = String((row as any).user_id) === String(userId);
+      const isAdmin = String(role || '')
+        .toUpperCase()
+        .includes('ADMIN');
+      if (!isOwner && !isAdmin) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+
+      await queryHelpers.queryRun(
+        `DELETE FROM initiative_comments WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+        [commentId, initiativeId, orgId]
+      );
+      res.json({ success: true });
     }
   );
 }

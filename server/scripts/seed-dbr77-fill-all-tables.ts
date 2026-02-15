@@ -955,10 +955,38 @@ async function seedInitiativeModuleDemoData(
 
     if (hasStakeholders) {
       const stakeholderRows = [
-        { id: 'stk-adma-0901', user_id: pick(0), role: 'A', raci_type: 'owner' },
-        { id: 'stk-adma-0902', user_id: pick(1), role: 'R', raci_type: 'lead' },
-        { id: 'stk-adma-0903', user_id: pick(2), role: 'C', raci_type: 'expert' },
-        { id: 'stk-adma-0904', user_id: pick(3), role: 'I', raci_type: 'stakeholder' },
+        {
+          id: 'stk-adma-0901',
+          user_id: pick(0),
+          role: 'SPONSOR',
+          raci_type: 'A',
+          influence_level: 5,
+          interest_level: 5,
+        },
+        {
+          id: 'stk-adma-0902',
+          user_id: pick(1),
+          role: 'OWNER',
+          raci_type: 'R',
+          influence_level: 4,
+          interest_level: 4,
+        },
+        {
+          id: 'stk-adma-0903',
+          user_id: pick(2),
+          role: 'CONTRIBUTOR',
+          raci_type: 'C',
+          influence_level: 3,
+          interest_level: 3,
+        },
+        {
+          id: 'stk-adma-0904',
+          user_id: pick(3),
+          role: 'INFORMED',
+          raci_type: 'I',
+          influence_level: 2,
+          interest_level: 4,
+        },
       ];
       for (const s of stakeholderRows) {
         await upsertDynamicRow(db, 'initiative_stakeholders', {
@@ -968,6 +996,8 @@ async function seedInitiativeModuleDemoData(
           user_id: s.user_id,
           role: s.role,
           raci_type: s.raci_type,
+          influence_level: s.influence_level,
+          interest_level: s.interest_level,
           created_by: anchors.userId,
           created_at: now,
         });
@@ -1020,9 +1050,10 @@ async function seedInitiativeModuleDemoData(
       initiative_id: initiativeId,
       organization_id: anchors.orgId,
       action: 'seeded',
-      actor_id: anchors.userId,
-      actor_name: 'Seeder',
-      changes: JSON.stringify({ seeded: true }),
+      changed_by: anchors.userId,
+      old_value: null,
+      new_value: JSON.stringify({ seeded: true }),
+      notes: 'Initial seed',
       created_at: now,
     });
   }

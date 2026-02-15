@@ -21,6 +21,8 @@ export const CreateInvitationSchema = z.object({
   projectId: z.string().uuid().optional(),
   projectRole: z.string().optional(),
   orgRole: MemberRoleEnum.optional(),
+  consultantProfile: z.enum(['NONE', 'EXTERNAL', 'PARTNER', 'INTERNAL']).optional(),
+  engagementType: z.enum(['INTERNAL', 'INVITED_BY_CLIENT', 'CONSULTANT_LED_ONBOARDING']).optional(),
 });
 
 export const ResendInvitationSchema = z.object({

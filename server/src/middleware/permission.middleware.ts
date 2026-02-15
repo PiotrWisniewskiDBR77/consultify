@@ -329,3 +329,12 @@ export const auditAction = (options: AuditOptions) => {
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
   deps = { ...deps, ...newDeps };
 };
+
+/**
+ * Internal helpers exposed for unit testing.
+ * Not part of the public middleware API.
+ */
+export const __private__ = {
+  normalizeRoleForDb,
+  getRoleCandidates,
+};

@@ -8,6 +8,8 @@ import axios from 'axios';
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import circuitBreaker from '../../services/ai/circuitBreaker.js';
+import llmConfigService from '../../services/ai/llmConfigService.js';
 import { llmService } from '../../services/ai/llmService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
@@ -724,68 +726,125 @@ export class LLMController {
    */
   static async getProvidersHealth(req: Request, res: Response) {
     try {
-      const providers = (await dbAll(
-        'SELECT * FROM llm_providers WHERE is_active = 1',
-        []
-      )) as any[];
+      // This endpoint is polled by the UI (top bar + settings). It must be fast.
+      // Older versions performed live connectivity checks for every active model row, which could take 20s+.
+      // We now:
+      // - test only distinct providers (openai/google/ollama/...) via LLMConfigService
+      // - enforce a hard timeout per provider
+      // - include circuit breaker states for debugging
 
+      // Default must be fast: this endpoint is polled by UI and should not block rendering.
+      const timeoutMsRaw = Number((req.query.timeoutMs as string) || 1200);
+      const timeoutMs = Number.isFinite(timeoutMsRaw)
+        ? Math.min(8000, Math.max(300, timeoutMsRaw))
+        : 1200;
+
+      const providers = (await llmConfigService.getAllProviders(true)) as any[];
+
+      const withTimeout = async <T>(p: Promise<T>, ms: number): Promise<T> => {
+        let timer: NodeJS.Timeout | null = null;
+        try {
+          return await Promise.race<T>([
+            p,
+            new Promise<T>((_resolve, reject) => {
+              timer = setTimeout(
+                () => reject(new Error(`Health check timed out after ${ms}ms`)),
+                ms
+              );
+            }),
+          ]);
+        } finally {
+          if (timer) clearTimeout(timer);
+        }
+      };
+
+      const nowIso = new Date().toISOString();
       const healthResults = await Promise.all(
-        providers.map(async (provider: any) => {
-          // Skip providers without API keys (avoids circuit breaker spam)
-          const hasKey = provider.api_key && provider.api_key.trim() &&
-            !provider.api_key.includes('placeholder') &&
-            !provider.api_key.startsWith('sk-demo-');
-          // Ollama is local and doesn't need an API key but needs a running server
-          const isLocal = provider.provider === 'ollama';
+        (providers || []).map(async (provider: any) => {
+          const providerId = String(provider.provider || '').toLowerCase();
+          const rawKey = typeof provider.api_key === 'string' ? provider.api_key.trim() : '';
+          const hasKey =
+            !!rawKey &&
+            !rawKey.toLowerCase().includes('placeholder') &&
+            !rawKey.startsWith('sk-demo-') &&
+            rawKey !== 'YOUR_GEMINI_API_KEY_HERE' &&
+            rawKey !== 'YOUR_OPENAI_API_KEY_HERE';
+          const isLocal = providerId === 'ollama';
 
           if (!hasKey && !isLocal) {
             return {
-              id: provider.id,
-              name: provider.name,
+              id: provider.id || provider.model_id || provider.provider,
+              name: provider.name || provider.provider,
               provider: provider.provider,
               status: 'unconfigured',
-              lastCheck: new Date().toISOString(),
+              available: false,
+              lastCheck: nowIso,
             };
           }
 
           try {
-            const result = await llmService.testConnection({
-              provider: provider.provider,
-              apiKey: provider.api_key,
-              api_key: provider.api_key,
-              endpoint: provider.endpoint,
-              id: provider.model_id,
-            });
+            // Local providers can hang when the daemon isn't running; keep them extra-fast by default.
+            const providerTimeoutMs = isLocal ? Math.min(timeoutMs, 800) : timeoutMs;
+            const result = await withTimeout(
+              llmService.testConnection({
+                provider: provider.provider,
+                apiKey: provider.api_key,
+                api_key: provider.api_key,
+                endpoint: provider.endpoint,
+                id: provider.model_id,
+              }),
+              providerTimeoutMs
+            );
+
+            const ok = !!(result as any)?.success;
             return {
-              id: provider.id,
-              name: provider.name,
+              id: provider.id || provider.model_id || provider.provider,
+              name: provider.name || provider.provider,
               provider: provider.provider,
-              status: result.success ? 'healthy' : 'unhealthy',
-              latency: result.latency || 0,
-              lastCheck: new Date().toISOString(),
+              status: ok ? 'healthy' : 'unhealthy',
+              available: ok,
+              latency: (result as any)?.latency || 0,
+              lastCheck: nowIso,
             };
           } catch (e: any) {
             return {
-              id: provider.id,
-              name: provider.name,
+              id: provider.id || provider.model_id || provider.provider,
+              name: provider.name || provider.provider,
               provider: provider.provider,
               status: 'unhealthy',
-              error: e.message,
-              lastCheck: new Date().toISOString(),
+              available: false,
+              error: e?.message || String(e),
+              lastCheck: nowIso,
             };
           }
         })
       );
 
       const configuredProviders = healthResults.filter((p) => p.status !== 'unconfigured');
+      const healthyCount = configuredProviders.filter((p) => p.status === 'healthy').length;
+      const overall =
+        configuredProviders.length === 0
+          ? 'unhealthy'
+          : healthyCount === 0
+            ? 'unhealthy'
+            : healthyCount === configuredProviders.length
+              ? 'healthy'
+              : 'degraded';
+
+      const breakerStatuses = (circuitBreaker as any)?.getStatus?.() || {};
+      const circuitBreakers = Object.entries(breakerStatuses).map(([name, raw]: any) => ({
+        name,
+        state: raw?.state || raw?.status || raw?.currentState || 'unknown',
+        failures: raw?.failures ?? raw?.failureCount ?? raw?.consecutiveFailures ?? 0,
+      }));
+
       return res.json({
+        success: true,
         providers: healthResults,
-        overall: configuredProviders.length > 0 && configuredProviders.every((p) => p.status === 'healthy')
-          ? 'healthy'
-          : configuredProviders.some((p) => p.status === 'healthy')
-            ? 'degraded'
-            : 'unhealthy',
+        circuitBreakers,
+        overall,
         lastCheck: Date.now(),
+        timeoutMs,
       });
     } catch (error: any) {
       console.error('[LLMController] Error getting providers health:', error);

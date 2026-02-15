@@ -70,6 +70,12 @@ function getProfileThresholds(profile: string): Thresholds {
         functions: 95,
         lines: 95,
       },
+      'src/components/navigation/Sidebar/FloatingSubmenu.tsx': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
     };
   }
 

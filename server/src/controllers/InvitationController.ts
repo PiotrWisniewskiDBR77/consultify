@@ -43,7 +43,17 @@ export class InvitationController {
    */
   static createInvitation = asyncHandler(
     async (req: AuthenticatedRequest<CreateInvitationRequest>, res: Response): Promise<void> => {
-      const { email, role, organizationId: bodyOrgId, message } = req.body;
+      const {
+        email,
+        role,
+        organizationId: bodyOrgId,
+        message,
+        projectId,
+        projectRole,
+        orgRole,
+        consultantProfile,
+        engagementType,
+      } = req.body as any;
       const userId = req.user?.id;
       const organizationId = bodyOrgId || req.user?.organizationId;
 
@@ -59,6 +69,30 @@ export class InvitationController {
 
       const InvitationService = (await import('../services/invitationService.js')).default;
       try {
+        // Project invitation (outside-org invite to a specific project)
+        if (projectId) {
+          const invitation = await InvitationService.createProjectInvitation({
+            email,
+            organizationId,
+            projectId,
+            projectRole: projectRole || undefined,
+            orgRole: orgRole || role || undefined,
+            invitedByUserId: userId,
+            metadata: {
+              message,
+              consultantProfile,
+              engagementType,
+            },
+          });
+
+          res.status(201).json({
+            success: true,
+            invitation,
+          });
+          return;
+        }
+
+        // Organization invitation (default)
         const invitation = await InvitationService.createInvitation({
           email,
           role,

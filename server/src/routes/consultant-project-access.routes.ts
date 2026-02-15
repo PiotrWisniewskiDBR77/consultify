@@ -366,6 +366,39 @@ router.post(
 
     logger.info(`Consultant invited: ${email} to project ${projectId} in org ${orgId}`);
 
+    // Compatibility layer (v1):
+    // If the invited consultant already exists as a user, ensure canonical project membership exists
+    // and mark consultant overlay fields on that membership.
+    if (existingUser?.id) {
+      try {
+        const memberId = uuidv4();
+        await dbRun(
+          `INSERT OR IGNORE INTO project_members
+           (id, project_id, user_id, project_role, allocation_percent, permissions, added_by_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            memberId,
+            projectId,
+            existingUser.id,
+            'TASK_ASSIGNEE',
+            100,
+            JSON.stringify({}),
+            invitedBy || null,
+          ]
+        );
+
+        // Overlay fields were added in migration 542; best-effort update
+        await dbRun(
+          `UPDATE project_members
+           SET consultant_profile = ?, engagement_type = ?, updated_at = datetime('now')
+           WHERE project_id = ? AND user_id = ?`,
+          ['EXTERNAL', 'INVITED_BY_CLIENT', projectId, existingUser.id]
+        );
+      } catch {
+        // best-effort
+      }
+    }
+
     return res.status(201).json({
       id,
       email: email.toLowerCase(),
@@ -429,6 +462,17 @@ router.delete(
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    // Fetch record for compatibility cleanup
+    let accessRecord: { consultant_id: string | null; project_id: string } | null = null;
+    try {
+      accessRecord = await dbGet<{ consultant_id: string | null; project_id: string }>(
+        `SELECT consultant_id, project_id FROM consultant_project_access WHERE id = ? AND organization_id = ?`,
+        [accessId, orgId]
+      );
+    } catch {
+      accessRecord = null;
+    }
+
     const now = new Date().toISOString();
 
     // Soft delete - set status to revoked
@@ -442,6 +486,20 @@ router.delete(
     }
 
     logger.info(`Consultant access revoked: ${accessId} in org ${orgId}`);
+
+    // Compatibility cleanup: revoke canonical membership created via consultant access
+    try {
+      if (accessRecord?.consultant_id && accessRecord?.project_id) {
+        await dbRun(
+          `DELETE FROM project_members
+           WHERE project_id = ? AND user_id = ?
+             AND UPPER(project_role) IN ('TASK_ASSIGNEE','CONSULTANT')`,
+          [accessRecord.project_id, accessRecord.consultant_id]
+        );
+      }
+    } catch {
+      // best-effort
+    }
 
     return res.json({ message: 'Access revoked' });
   })

@@ -1,15 +1,15 @@
-// @ts-nocheck
 /**
- * Security Routes (Mock)
- * Minimal responses to keep Security UI functional.
+ * Security Routes
+ *
+ * DB-backed minimal endpoints to keep Security UI functional.
  */
 
 import { Router } from 'express';
-import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import rolesRoutes from './security/roles.routes.js';
 
 const router = Router();
 
@@ -472,48 +472,8 @@ router.get(
   })
 );
 
-// Roles (custom)
-const roles: any[] = [];
-
-router.get(
-  '/roles',
-  verifyToken,
-  asyncHandler(async (_req: AuthRequest, res) => {
-    return res.json({ roles });
-  })
-);
-
-router.post(
-  '/roles',
-  verifyToken,
-  asyncHandler(async (req: AuthRequest, res) => {
-    const id = uuidv4();
-    roles.push({ id, ...req.body, created_at: new Date().toISOString() });
-    return res.json({ success: true, id });
-  })
-);
-
-router.put(
-  '/roles/:id',
-  verifyToken,
-  asyncHandler(async (req: AuthRequest, res) => {
-    const { id } = req.params;
-    const idx = roles.findIndex((r) => r.id === id);
-    if (idx === -1) return res.status(404).json({ error: 'Role not found' });
-    roles[idx] = { ...roles[idx], ...req.body };
-    return res.json({ success: true });
-  })
-);
-
-router.delete(
-  '/roles/:id',
-  verifyToken,
-  asyncHandler(async (req: AuthRequest, res) => {
-    const { id } = req.params;
-    const idx = roles.findIndex((r) => r.id === id);
-    if (idx !== -1) roles.splice(idx, 1);
-    return res.json({ success: true });
-  })
-);
+// Roles (custom) — DB-backed (security integrity gate)
+// Extracted into `./security/roles.routes.ts` for focused testing/coverage.
+router.use('/roles', rolesRoutes);
 
 export default router;

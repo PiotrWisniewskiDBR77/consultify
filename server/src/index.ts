@@ -607,7 +607,7 @@ const authLimiter = rateLimit({
 const corsOptions: cors.CorsOptions = {
   origin:
     process.env.FRONTEND_URL ||
-    (isProduction ? false : ['http://localhost:3000', 'http://127.0.0.1:3000', '*']),
+    (isProduction ? false : ['http://localhost:3000', 'http://127.0.0.1:3000']),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token', 'x-csrf-token'],
@@ -689,8 +689,8 @@ app.use((req, res, next) => {
     req.path === '/api/auth/login' ||
     req.originalUrl.includes('/auth/login')
   ) {
-    logger.info('[Index] Login Request Body:', JSON.stringify(req.body));
-    logger.info('[Index] Login Request Headers:', JSON.stringify(req.headers));
+    // Do NOT log request body/headers here (credentials/token leak risk).
+    logger.info('[Index] Login request received');
   }
   next();
 });
@@ -768,6 +768,27 @@ logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 
 // Helper function to serve index.html
 const serveIndexHtml = (req: Request, res: Response): void => {
+  // In stable dev mode we run Vite separately on :3000.
+  // Serving /dist from the backend (:3001) in dev is a common source of "dead UI"
+  // (stale assets, missing HMR, mismatched chunks) where navigation/sidebar appears unresponsive.
+  // When VITE_STABLE_DEV=1 is set (used by `npm run dev:stable`), redirect HTML requests to Vite.
+  const isDev = process.env.NODE_ENV !== 'production';
+  const shouldRedirectToVite =
+    isDev &&
+    (process.env.VITE_STABLE_DEV === '1' || process.env.VITE_REDIRECT_TO_DEV_SERVER === '1');
+  const accept = String(req.headers.accept || '');
+  const wantsHtml = accept.includes('text/html') || accept.includes('application/xhtml+xml');
+  const viteUrl = String(process.env.VITE_DEV_SERVER_URL || 'http://localhost:3000').replace(
+    /\/$/,
+    ''
+  );
+
+  if (shouldRedirectToVite && req.method === 'GET' && wantsHtml) {
+    const target = `${viteUrl}${req.originalUrl || req.path || '/'}`;
+    res.redirect(302, target);
+    return;
+  }
+
   // Use absolute path for res.sendFile (required for Railway/Docker)
   const indexPath = path.resolve(frontendDistPath, 'index.html');
 

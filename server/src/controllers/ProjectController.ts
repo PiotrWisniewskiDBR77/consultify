@@ -846,6 +846,464 @@ export class ProjectController {
   );
 
   // ==========================================
+  // PROJECT TEAM (CANONICAL MEMBERSHIP)
+  // ==========================================
+
+  static getProjectMembers = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const projectId = req.params.id;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const project = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+        [projectId, orgId]
+      );
+      if (!project) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      const rows = await queryHelpers.queryAll<any>(
+        `SELECT pm.*,
+                u.first_name as firstName,
+                u.last_name as lastName,
+                u.email as email,
+                u.avatar_url as avatarUrl,
+                u.role as accountRole
+         FROM project_members pm
+         JOIN users u ON u.id = pm.user_id
+         WHERE pm.project_id = ?
+         ORDER BY pm.project_role, u.last_name, u.first_name`,
+        [projectId]
+      );
+
+      const members = (rows || []).map((r: any) => ({
+        id: String(r.id),
+        projectId: String(r.project_id),
+        userId: String(r.user_id),
+        projectRole: String(r.project_role || ''),
+        isInvoked: !!r.is_invoked,
+        consultantProfile: String(r.consultant_profile || 'NONE'),
+        engagementType: String(r.engagement_type || 'INTERNAL'),
+        actingOrgId: r.acting_org_id || null,
+        workstreamId: r.workstream_id || null,
+        allocationPercent: Number(r.allocation_percent ?? 100),
+        permissions:
+          typeof r.permissions === 'string'
+            ? (() => {
+                try {
+                  return JSON.parse(r.permissions || '{}');
+                } catch {
+                  return {};
+                }
+              })()
+            : r.permissions || {},
+        startDate: r.start_date || null,
+        endDate: r.end_date || null,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+        addedById: r.added_by_id || null,
+        firstName: r.firstName || null,
+        lastName: r.lastName || null,
+        email: r.email || null,
+        avatarUrl: r.avatarUrl || null,
+        accountRole: r.accountRole || null,
+      }));
+
+      res.json({ members });
+    }
+  );
+
+  static addProjectMember = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const projectId = req.params.id;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const {
+        userId,
+        projectRole,
+        allocationPercent,
+        isInvoked,
+        consultantProfile,
+        engagementType,
+      } = (req.body || {}) as any;
+      if (!userId || !projectRole) {
+        res.status(400).json({ error: 'userId and projectRole are required' });
+        return;
+      }
+      if (
+        allocationPercent !== undefined &&
+        (Number.isNaN(Number(allocationPercent)) ||
+          Number(allocationPercent) < 0 ||
+          Number(allocationPercent) > 100)
+      ) {
+        res.status(400).json({ error: 'allocationPercent must be between 0 and 100' });
+        return;
+      }
+
+      const project = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+        [projectId, orgId]
+      );
+      if (!project) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      const existing = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM project_members WHERE project_id = ? AND user_id = ?`,
+        [projectId, userId]
+      );
+      if (existing) {
+        res.status(400).json({ error: 'User is already a member of this project' });
+        return;
+      }
+
+      const id = uuidv4();
+      await queryHelpers.queryRun(
+        `INSERT INTO project_members (id, project_id, user_id, project_role, allocation_percent, permissions, added_by_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          projectId,
+          userId,
+          String(projectRole),
+          allocationPercent !== undefined ? Number(allocationPercent) : 100,
+          JSON.stringify({}),
+          actorId,
+        ]
+      );
+
+      // Best-effort optional columns (migration 542)
+      try {
+        const updates: string[] = [];
+        const params: any[] = [];
+        if (isInvoked !== undefined) {
+          updates.push('is_invoked = ?');
+          params.push(isInvoked ? 1 : 0);
+        }
+        if (consultantProfile !== undefined) {
+          updates.push('consultant_profile = ?');
+          params.push(String(consultantProfile));
+        }
+        if (engagementType !== undefined) {
+          updates.push('engagement_type = ?');
+          params.push(String(engagementType));
+        }
+        if (updates.length > 0) {
+          updates.push("updated_at = datetime('now')");
+          params.push(projectId, userId);
+          await queryHelpers.queryRun(
+            `UPDATE project_members SET ${updates.join(', ')} WHERE project_id = ? AND user_id = ?`,
+            params
+          );
+        }
+      } catch {
+        // best-effort
+      }
+
+      res.status(201).json({ success: true, id });
+    }
+  );
+
+  static updateProjectMember = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const projectId = req.params.id;
+      const userId = req.params.userId;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const project = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+        [projectId, orgId]
+      );
+      if (!project) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      const existing = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM project_members WHERE project_id = ? AND user_id = ?`,
+        [projectId, userId]
+      );
+      if (!existing) {
+        res.status(404).json({ error: 'Project member not found' });
+        return;
+      }
+
+      const { projectRole, allocationPercent, isInvoked, consultantProfile, engagementType } =
+        (req.body || {}) as any;
+      const updates: string[] = [];
+      const params: any[] = [];
+
+      if (projectRole !== undefined) {
+        updates.push('project_role = ?');
+        params.push(String(projectRole));
+      }
+      if (allocationPercent !== undefined) {
+        const n = Number(allocationPercent);
+        if (Number.isNaN(n) || n < 0 || n > 100) {
+          res.status(400).json({ error: 'allocationPercent must be between 0 and 100' });
+          return;
+        }
+        updates.push('allocation_percent = ?');
+        params.push(n);
+      }
+      if (isInvoked !== undefined) {
+        updates.push('is_invoked = ?');
+        params.push(isInvoked ? 1 : 0);
+      }
+      if (consultantProfile !== undefined) {
+        updates.push('consultant_profile = ?');
+        params.push(String(consultantProfile));
+      }
+      if (engagementType !== undefined) {
+        updates.push('engagement_type = ?');
+        params.push(String(engagementType));
+      }
+
+      if (updates.length === 0) {
+        res.status(400).json({ error: 'No updates provided' });
+        return;
+      }
+
+      updates.push("updated_at = datetime('now')");
+      params.push(projectId, userId);
+      await queryHelpers.queryRun(
+        `UPDATE project_members SET ${updates.join(', ')} WHERE project_id = ? AND user_id = ?`,
+        params
+      );
+
+      res.json({ success: true });
+    }
+  );
+
+  static removeProjectMember = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const projectId = req.params.id;
+      const userId = req.params.userId;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const project = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+        [projectId, orgId]
+      );
+      if (!project) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      await queryHelpers.queryRun(
+        `DELETE FROM project_members WHERE project_id = ? AND user_id = ?`,
+        [projectId, userId]
+      );
+
+      res.json({ success: true });
+    }
+  );
+
+  // ==========================================
+  // STEERING BOARD (OPTIONAL)
+  // ==========================================
+
+  static getSteeringBoard = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const projectId = req.params.id;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const project = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+        [projectId, orgId]
+      );
+      if (!project) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      let board: any = null;
+      try {
+        board = await queryHelpers.queryOne(
+          `SELECT project_id as projectId, enabled, quorum_rule as quorumRule, sla_hours as slaHours
+           FROM project_steering_board WHERE project_id = ?`,
+          [projectId]
+        );
+      } catch {
+        board = null;
+      }
+
+      let members: any[] = [];
+      try {
+        members = await queryHelpers.queryAll(
+          `SELECT m.user_id as userId, m.member_type as memberType,
+                  u.first_name as firstName, u.last_name as lastName, u.email as email, u.avatar_url as avatarUrl
+           FROM project_steering_board_members m
+           JOIN users u ON u.id = m.user_id
+           WHERE m.project_id = ?
+           ORDER BY m.member_type, u.last_name, u.first_name`,
+          [projectId]
+        );
+      } catch {
+        members = [];
+      }
+
+      res.json({
+        board: board || { projectId, enabled: 0, quorumRule: 'SIMPLE_MAJORITY', slaHours: 72 },
+        members,
+      });
+    }
+  );
+
+  static updateSteeringBoard = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const projectId = req.params.id;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { enabled, quorumRule, slaHours } = (req.body || {}) as any;
+
+      const project = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+        [projectId, orgId]
+      );
+      if (!project) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      try {
+        const existing = await queryHelpers.queryOne(
+          `SELECT project_id as projectId FROM project_steering_board WHERE project_id = ?`,
+          [projectId]
+        );
+        if (existing) {
+          await queryHelpers.queryRun(
+            `UPDATE project_steering_board
+             SET enabled = COALESCE(?, enabled),
+                 quorum_rule = COALESCE(?, quorum_rule),
+                 sla_hours = COALESCE(?, sla_hours),
+                 updated_at = datetime('now')
+             WHERE project_id = ?`,
+            [
+              enabled !== undefined ? (enabled ? 1 : 0) : null,
+              quorumRule || null,
+              slaHours || null,
+              projectId,
+            ]
+          );
+        } else {
+          await queryHelpers.queryRun(
+            `INSERT INTO project_steering_board (project_id, enabled, quorum_rule, sla_hours, created_by_id)
+             VALUES (?, ?, ?, ?, ?)`,
+            [projectId, enabled ? 1 : 0, quorumRule || 'SIMPLE_MAJORITY', slaHours || 72, actorId]
+          );
+        }
+      } catch {
+        res
+          .status(500)
+          .json({ error: 'Steering board tables not available yet (run migrations).' });
+        return;
+      }
+
+      res.json({ success: true });
+    }
+  );
+
+  static addSteeringBoardMember = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const projectId = req.params.id;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { userId, memberType } = (req.body || {}) as any;
+      if (!userId) {
+        res.status(400).json({ error: 'userId is required' });
+        return;
+      }
+
+      const project = await queryHelpers.queryOne<{ id: string }>(
+        `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+        [projectId, orgId]
+      );
+      if (!project) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      try {
+        await queryHelpers.queryRun(
+          `INSERT OR REPLACE INTO project_steering_board_members (id, project_id, user_id, member_type)
+           VALUES (?, ?, ?, ?)`,
+          [uuidv4(), projectId, userId, String(memberType || 'BOARD_MEMBER')]
+        );
+      } catch {
+        res
+          .status(500)
+          .json({ error: 'Steering board tables not available yet (run migrations).' });
+        return;
+      }
+
+      res.status(201).json({ success: true });
+    }
+  );
+
+  static removeSteeringBoardMember = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const projectId = req.params.id;
+      const userId = req.params.userId;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      try {
+        await queryHelpers.queryRun(
+          `DELETE FROM project_steering_board_members WHERE project_id = ? AND user_id = ?`,
+          [projectId, userId]
+        );
+      } catch {
+        res
+          .status(500)
+          .json({ error: 'Steering board tables not available yet (run migrations).' });
+        return;
+      }
+
+      res.json({ success: true });
+    }
+  );
+
+  // ==========================================
   // PMO ROLES
   // ==========================================
 

@@ -11,7 +11,7 @@
 
 import { Server as SocketIOServer, Socket } from 'socket.io';
 
-import logger from '../../utils/Logger.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES

@@ -158,3 +158,15 @@ export const inputSanitizationMiddleware = async (
 };
 
 export default inputSanitizationMiddleware;
+
+/**
+ * Internal helpers exposed for unit testing.
+ * These are NOT part of the public middleware API.
+ */
+export const __private__ = {
+  isSuspicious,
+  truncateStrings,
+  checkForSuspiciousContent,
+  // Keep the loader available so tests can assert caching/behavior if needed.
+  loadSecurityUtils,
+};

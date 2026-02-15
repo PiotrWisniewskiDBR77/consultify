@@ -9,6 +9,7 @@ import { Request, Response } from 'express';
 import type { IDatabase } from '../database/IDatabase.js';
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
+import { setAuthCookies } from '../utils/cookieAuth.js';
 import logger from '../utils/Logger.js';
 import type { LoginRequest } from '../validators/auth.validators.js';
 
@@ -280,6 +281,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         userAgent: req.get('user-agent'),
       }
     );
+
+    // Prefer cookie-based auth in addition to JSON tokens.
+    // This prevents "No token provided" when localStorage is missing/cleared.
+    try {
+      setAuthCookies(res, tokenPair.accessToken, tokenPair.refreshToken);
+    } catch (err: any) {
+      // Non-fatal in dev; still return JSON tokens.
+      logger.warn('[Auth] Failed to set auth cookies (continuing)', { error: err?.message || err });
+    }
 
     const safeUser = {
       id: user.id,

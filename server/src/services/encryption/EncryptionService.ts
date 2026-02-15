@@ -218,7 +218,16 @@ export function decrypt(encrypted: string): string {
       throw new Error('Invalid encrypted format');
     }
 
-    const [versionStr, ivHex, authTagHex, ciphertext] = parts;
+    let versionStr = parts[0];
+    const ivHex = parts[1];
+    const authTagHex = parts[2];
+    const ciphertext = parts[3];
+
+    // Handle deterministic encryption flag 'd'
+    if (versionStr.startsWith('d')) {
+      versionStr = versionStr.slice(1);
+    }
+
     const version = parseInt(versionStr, 10);
 
     const key = keyManager.getKeyByVersion(version);
@@ -238,9 +247,10 @@ export function decrypt(encrypted: string): string {
     plaintext += decipher.final('utf8');
 
     return plaintext;
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message.includes('key version')) throw error;
     logger.error('[Encryption] Decryption failed:', error);
-    throw new Error('Decryption failed');
+    throw new Error(`Decryption failed: ${error.message}`);
   }
 }
 

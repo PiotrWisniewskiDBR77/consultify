@@ -65,6 +65,43 @@ router.post(
  */
 router.get('/:id', ProjectController.getProjectById);
 
+// ==========================================
+// PROJECT TEAM (CANONICAL MEMBERSHIP)
+// ==========================================
+
+/**
+ * GET /api/projects/:id/members
+ * Get canonical project members
+ */
+router.get('/:id/members', ProjectController.getProjectMembers);
+
+/**
+ * POST /api/projects/:id/members
+ * Add project member (canonical)
+ */
+router.post('/:id/members', ProjectController.addProjectMember);
+
+/**
+ * PATCH /api/projects/:id/members/:userId
+ * Update project member fields (role/invoked/consultant overlay)
+ */
+router.patch('/:id/members/:userId', ProjectController.updateProjectMember);
+
+/**
+ * DELETE /api/projects/:id/members/:userId
+ * Remove project member
+ */
+router.delete('/:id/members/:userId', ProjectController.removeProjectMember);
+
+// ==========================================
+// STEERING BOARD (OPTIONAL)
+// ==========================================
+
+router.get('/:id/steering-board', ProjectController.getSteeringBoard);
+router.put('/:id/steering-board', ProjectController.updateSteeringBoard);
+router.post('/:id/steering-board/members', ProjectController.addSteeringBoardMember);
+router.delete('/:id/steering-board/members/:userId', ProjectController.removeSteeringBoardMember);
+
 /**
  * PUT /api/projects/:id
  * Update project

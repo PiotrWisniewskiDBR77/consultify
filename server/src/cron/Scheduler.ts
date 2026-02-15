@@ -117,6 +117,20 @@ export const Scheduler = {
     });
     this.jobs.push(job7b);
 
+    // 7c. Initiative Auto-Start by timeline - Run every 5 minutes
+    const job7c = cron.schedule('*/5 * * * *', async () => {
+      try {
+        const { autoStartScheduledInitiatives } = await import('../jobs/initiativeAutoStartJob.js');
+        const result = await autoStartScheduledInitiatives({ limit: 200 });
+        if (result.started > 0) {
+          logger.info('[Scheduler] Initiative Auto-Start completed', result);
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Initiative Auto-Start job failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job7c);
+
     // 8. AI Monthly Budget Reset - Run on the 1st of every month at midnight
     const job8 = cron.schedule('0 0 1 * *', () => {
       logger.info('[Scheduler] Running Monthly AI Budget Reset');

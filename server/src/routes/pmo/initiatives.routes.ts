@@ -991,6 +991,102 @@ router.get('/:id/resources', InitiativeController.getResources);
  */
 router.post('/:id/resources', InitiativeController.addResource);
 
+/**
+ * DELETE /api/initiatives/:id/resources/:resourceId
+ * Remove a resource from an initiative
+ */
+router.delete('/:id/resources/:resourceId', InitiativeController.deleteResource);
+
+/**
+ * PUT /api/initiatives/:id/resources/:resourceId
+ * Update a resource in an initiative
+ */
+router.put('/:id/resources/:resourceId', InitiativeController.updateResource);
+
+// ==========================================
+// ROADMAP MODULE: BUDGET ITEMS ENDPOINTS
+// ==========================================
+
+/**
+ * GET /api/initiatives/:id/budget-items
+ * Get all budget items for an initiative
+ */
+router.get('/:id/budget-items', InitiativeController.getBudgetItems);
+
+/**
+ * POST /api/initiatives/:id/budget-items
+ * Add a budget item to an initiative
+ */
+router.post('/:id/budget-items', InitiativeController.addBudgetItem);
+
+/**
+ * PUT /api/initiatives/:id/budget-items/:itemId
+ * Update a budget item
+ */
+router.put('/:id/budget-items/:itemId', InitiativeController.updateBudgetItem);
+
+/**
+ * DELETE /api/initiatives/:id/budget-items/:itemId
+ * Delete a budget item
+ */
+router.delete('/:id/budget-items/:itemId', InitiativeController.deleteBudgetItem);
+
+// ==========================================
+// ROADMAP MODULE: TOOLS ENDPOINTS
+// ==========================================
+
+/**
+ * GET /api/initiatives/:id/tools
+ * Get all tools for an initiative
+ */
+router.get('/:id/tools', InitiativeController.getTools);
+
+/**
+ * POST /api/initiatives/:id/tools
+ * Add a tool to an initiative
+ */
+router.post('/:id/tools', InitiativeController.addTool);
+
+/**
+ * PUT /api/initiatives/:id/tools/:toolId
+ * Update a tool
+ */
+router.put('/:id/tools/:toolId', InitiativeController.updateTool);
+
+/**
+ * DELETE /api/initiatives/:id/tools/:toolId
+ * Delete a tool
+ */
+router.delete('/:id/tools/:toolId', InitiativeController.deleteTool);
+
+// ==========================================
+// ROADMAP MODULE: INTANGIBLE ASSETS ENDPOINTS
+// ==========================================
+
+/**
+ * GET /api/initiatives/:id/intangible-assets
+ * Get all intangible assets for an initiative
+ */
+router.get('/:id/intangible-assets', InitiativeController.getIntangibleAssets);
+
+/**
+ * POST /api/initiatives/:id/intangible-assets
+ * Add an intangible asset to an initiative
+ */
+router.post('/:id/intangible-assets', InitiativeController.addIntangibleAsset);
+
+/**
+ * PUT /api/initiatives/:id/intangible-assets/:assetId
+ * Update an intangible asset
+ */
+router.put('/:id/intangible-assets/:assetId', InitiativeController.updateIntangibleAsset);
+
+/**
+ * DELETE /api/initiatives/:id/intangible-assets/:assetId
+ * Delete an intangible asset
+ */
+router.delete('/:id/intangible-assets/:assetId', InitiativeController.deleteIntangibleAsset);
+
 // ==========================================
 // P0: RAID / Stakeholders / Watchers / History
 // ==========================================
@@ -1009,6 +1105,14 @@ router.patch('/:id/raid/:raidId', InitiativeController.updateRaidItem);
 router.delete('/:id/raid/:raidId', InitiativeController.deleteRaidItem);
 
 router.get('/:id/history', InitiativeController.getHistory);
+
+// ==========================================
+// INITIATIVE COMMENTS
+// ==========================================
+
+router.get('/:id/comments', InitiativeController.getInitiativeComments);
+router.post('/:id/comments', InitiativeController.addInitiativeComment);
+router.delete('/:id/comments/:commentId', InitiativeController.deleteInitiativeComment);
 
 // ==========================================
 // INITIATIVE TASK DEPENDENCIES (aggregated)

@@ -53,6 +53,7 @@ export const CreateInitiativeSchema = z.object({
   plannedEndDate: z.string().datetime().optional().nullable(),
   ownerBusinessId: z.string().optional().nullable(),
   ownerExecutionId: z.string().optional().nullable(),
+  marketContext: z.string().max(5000).optional(),
   problemStatement: z.string().max(5000).optional(),
   deliverables: z.array(z.string()).optional(),
   successCriteria: z.array(z.string()).optional(),
