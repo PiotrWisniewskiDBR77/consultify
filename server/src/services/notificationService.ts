@@ -522,6 +522,67 @@ class NotificationService {
   }
 
   /**
+   * Update editable "worksheet" drafts for NotificationDetailView (persisted in notifications.data JSON)
+   */
+  async updateWorksheetDraft(
+    notificationId: string,
+    userId: string,
+    draft: {
+      description?: string;
+      whyImportant?: string;
+      blocked?: string;
+      expectedAction?: string;
+    }
+  ): Promise<void> {
+    const db = await this.getDb();
+    const row = await db.get<{ data?: string }>(
+      `SELECT data FROM notifications WHERE id = ? AND user_id = ?`,
+      [notificationId, userId]
+    );
+    if (!row) {
+      throw new Error('Notification not found');
+    }
+
+    let dataObj: Record<string, unknown> = {};
+    try {
+      dataObj = row.data ? JSON.parse(row.data) : {};
+    } catch {
+      dataObj = {};
+    }
+
+    const prevWorksheet =
+      dataObj.worksheet &&
+      typeof dataObj.worksheet === 'object' &&
+      !Array.isArray(dataObj.worksheet)
+        ? (dataObj.worksheet as Record<string, unknown>)
+        : {};
+
+    const nextWorksheet = {
+      ...prevWorksheet,
+      ...(draft.description !== undefined ? { description: draft.description } : {}),
+      ...(draft.whyImportant !== undefined ? { whyImportant: draft.whyImportant } : {}),
+      ...(draft.blocked !== undefined ? { blocked: draft.blocked } : {}),
+      ...(draft.expectedAction !== undefined ? { expectedAction: draft.expectedAction } : {}),
+      updatedAt: new Date().toISOString(),
+    };
+
+    dataObj = { ...dataObj, worksheet: nextWorksheet };
+
+    await db.run(`UPDATE notifications SET data = ? WHERE id = ? AND user_id = ?`, [
+      JSON.stringify(dataObj),
+      notificationId,
+      userId,
+    ]);
+
+    await this.addActivityLogEntry(
+      notificationId,
+      userId,
+      'worksheet_updated',
+      'Notification worksheet updated'
+    );
+  }
+
+  /**
    * Get a single notification by ID
    */
   async getById(notificationId: string, userId: string): Promise<Notification | null> {
@@ -1181,6 +1242,16 @@ export const updateChecklist = (
   userId: string,
   checklist: { id: string; text: string; completed: boolean }[]
 ) => notificationService.updateChecklist(notificationId, userId, checklist);
+export const updateWorksheetDraft = (
+  notificationId: string,
+  userId: string,
+  draft: {
+    description?: string;
+    whyImportant?: string;
+    blocked?: string;
+    expectedAction?: string;
+  }
+) => notificationService.updateWorksheetDraft(notificationId, userId, draft);
 export const getById = (notificationId: string, userId: string) =>
   notificationService.getById(notificationId, userId);
 export const getSourceEntity = (notificationId: string, userId: string) =>

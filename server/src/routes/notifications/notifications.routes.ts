@@ -558,6 +558,36 @@ router.patch(
 );
 
 /**
+ * PATCH /api/notifications/:id/worksheet
+ * Persist editable worksheet drafts from NotificationDetailView
+ *
+ * Body: { description?, whyImportant?, blocked?, expectedAction? }
+ */
+router.patch(
+  '/:id/worksheet',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const { description, whyImportant, blocked, expectedAction } = req.body || {};
+      await (service as any).updateWorksheetDraft(req.params.id, userId, {
+        ...(description !== undefined ? { description: String(description) } : {}),
+        ...(whyImportant !== undefined ? { whyImportant: String(whyImportant) } : {}),
+        ...(blocked !== undefined ? { blocked: String(blocked) } : {}),
+        ...(expectedAction !== undefined ? { expectedAction: String(expectedAction) } : {}),
+      });
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
  * GET /api/notifications/:id/source-entity
  * Get the source entity (task/decision/initiative) linked to a notification
  */

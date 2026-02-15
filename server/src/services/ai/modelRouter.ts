@@ -793,7 +793,8 @@ export class ModelRouter {
     if (modelLower.startsWith('glm')) return 'zai';
     if (modelLower.includes('llama') || modelLower.includes('meta/')) return 'nvidia';
     // Ollama local models (typically use name:tag format like "gemma3:27b")
-    if (modelLower.includes('gemma') || modelLower.includes('devstral') || modelLower.includes(':')) return 'ollama';
+    if (modelLower.includes('gemma') || modelLower.includes('devstral') || modelLower.includes(':'))
+      return 'ollama';
 
     return 'openai';
   }

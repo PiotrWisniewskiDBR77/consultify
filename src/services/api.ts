@@ -2157,6 +2157,24 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to update checklist');
   },
 
+  // Update editable worksheet drafts for a notification (NotificationDetailView)
+  updateNotificationWorksheet: async (
+    id: string,
+    draft: {
+      description?: string;
+      whyImportant?: string;
+      blocked?: string;
+      expectedAction?: string;
+    }
+  ): Promise<void> => {
+    const res = await fetch(`${API_URL}/notifications/${id}/worksheet`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(draft),
+    });
+    if (!res.ok) throw new Error('Failed to update notification worksheet');
+  },
+
   // Get a single notification by ID (direct fetch instead of filter-all)
   getNotificationById: async (id: string): Promise<any | null> => {
     try {

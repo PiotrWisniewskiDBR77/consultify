@@ -190,6 +190,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const [notification, setNotification] = useState<NotificationData | null>(null);
   const [sourceEntity, setSourceEntity] = useState<Record<string, any> | null>(null);
   const [sourceEntityLoading, setSourceEntityLoading] = useState(false);
+  const [worksheetSaving, setWorksheetSaving] = useState(false);
+  const [lastSavedWorksheetSnapshot, setLastSavedWorksheetSnapshot] = useState<string>('');
+  const [lastWorksheetSavedAt, setLastWorksheetSavedAt] = useState<string | null>(null);
 
   // N-mode active section
   const [activeNSection, setActiveNSection] = useState('whats-happening');
@@ -256,6 +259,30 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
   // Worksheet analysis (AI fills the notification "sheet" fields)
   const [isAnalyzingWorksheet, setIsAnalyzingWorksheet] = useState(false);
+
+  const worksheetDraft = useMemo(
+    () => ({
+      description: descriptionDraft,
+      whyImportant: whyImportantDraft,
+      blocked: blockedDraft,
+      expectedAction: expectedActionDraft,
+    }),
+    [descriptionDraft, whyImportantDraft, blockedDraft, expectedActionDraft]
+  );
+
+  const worksheetSnapshot = useMemo(() => {
+    try {
+      return JSON.stringify(worksheetDraft);
+    } catch {
+      return '';
+    }
+  }, [worksheetDraft]);
+
+  const worksheetIsDirty = useMemo(() => {
+    if (!notificationId) return false;
+    if (!lastSavedWorksheetSnapshot) return false;
+    return worksheetSnapshot !== lastSavedWorksheetSnapshot;
+  }, [notificationId, worksheetSnapshot, lastSavedWorksheetSnapshot]);
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => {
@@ -429,6 +456,53 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       return updated;
     });
   };
+
+  const handleSaveWorksheet = useCallback(
+    async (silent = false) => {
+      if (!notificationId) return;
+      if (!worksheetIsDirty) return;
+      try {
+        setWorksheetSaving(true);
+        await Api.updateNotificationWorksheet(notificationId, worksheetDraft);
+        setLastSavedWorksheetSnapshot(worksheetSnapshot);
+        setLastWorksheetSavedAt(new Date().toISOString());
+        if (!silent) {
+          toast.success(isPolish ? 'Zapisano' : 'Saved');
+        }
+      } catch (e: any) {
+        if (!silent) {
+          toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
+        }
+      } finally {
+        setWorksheetSaving(false);
+      }
+    },
+    [notificationId, worksheetIsDirty, worksheetDraft, worksheetSnapshot, isPolish]
+  );
+
+  const worksheetAutosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!notificationId) return;
+    if (!worksheetIsDirty) return;
+    if (worksheetSaving) return;
+    if (loading) return;
+
+    if (worksheetAutosaveTimerRef.current) clearTimeout(worksheetAutosaveTimerRef.current);
+    worksheetAutosaveTimerRef.current = setTimeout(() => {
+      handleSaveWorksheet(true);
+    }, 1200);
+
+    return () => {
+      if (worksheetAutosaveTimerRef.current) clearTimeout(worksheetAutosaveTimerRef.current);
+    };
+  }, [
+    notificationId,
+    worksheetIsDirty,
+    worksheetSaving,
+    loading,
+    worksheetSnapshot,
+    handleSaveWorksheet,
+  ]);
 
   const applyChecklistFromAIText = useCallback(
     (text: string) => {
@@ -1028,20 +1102,58 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
   // Keep expected action draft in sync with loaded notification (and language)
   useEffect(() => {
-    setExpectedActionDraft(contract?.expectedAction || '');
-  }, [notificationId, contract?.expectedAction]);
+    const ws = (notification as any)?.data?.worksheet;
+    const persisted = ws && typeof ws === 'object' ? (ws as any).expectedAction : undefined;
+    setExpectedActionDraft(String(persisted ?? contract?.expectedAction ?? ''));
+  }, [notificationId, contract?.expectedAction, notification]);
 
   // Keep "What's Happening" field drafts in sync
   useEffect(() => {
-    setDescriptionDraft(contract?.what || notification?.message || '');
-    setWhyImportantDraft(contract?.whyImportant || '');
-    setBlockedDraft(contract?.blocked || '');
+    const ws = (notification as any)?.data?.worksheet;
+    const persistedWhat = ws && typeof ws === 'object' ? (ws as any).description : undefined;
+    const persistedWhy = ws && typeof ws === 'object' ? (ws as any).whyImportant : undefined;
+    const persistedBlocked = ws && typeof ws === 'object' ? (ws as any).blocked : undefined;
+    setDescriptionDraft(String(persistedWhat ?? contract?.what ?? notification?.message ?? ''));
+    setWhyImportantDraft(String(persistedWhy ?? contract?.whyImportant ?? ''));
+    setBlockedDraft(String(persistedBlocked ?? contract?.blocked ?? ''));
   }, [
     notificationId,
     contract?.what,
     contract?.whyImportant,
     contract?.blocked,
     notification?.message,
+    notification,
+  ]);
+
+  // Initialize worksheet baseline snapshot once per notification (for Save/dirty + autosave).
+  const worksheetBaselineRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!notification) return;
+    if (worksheetBaselineRef.current === notificationId) return;
+
+    const ws = (notification as any)?.data?.worksheet;
+    const baseline = {
+      description: String((ws as any)?.description ?? contract?.what ?? notification.message ?? ''),
+      whyImportant: String((ws as any)?.whyImportant ?? contract?.whyImportant ?? ''),
+      blocked: String((ws as any)?.blocked ?? contract?.blocked ?? ''),
+      expectedAction: String((ws as any)?.expectedAction ?? contract?.expectedAction ?? ''),
+    };
+
+    try {
+      const snap = JSON.stringify(baseline);
+      setLastSavedWorksheetSnapshot(snap);
+      setLastWorksheetSavedAt(new Date().toISOString());
+      worksheetBaselineRef.current = notificationId;
+    } catch {
+      // ignore
+    }
+  }, [
+    notificationId,
+    notification,
+    contract?.what,
+    contract?.whyImportant,
+    contract?.blocked,
+    contract?.expectedAction,
   ]);
 
   // ── Auto-trigger AI context enrichment on load ────────────────────────────
