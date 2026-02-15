@@ -11,6 +11,7 @@ import {
   Calendar,
   Edit3,
   ExternalLink,
+  Loader2,
   MoreVertical,
   Plus,
   Sparkles,
@@ -21,6 +22,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 
 import { useInitiativeContext } from './InitiativeContext';
@@ -883,6 +885,16 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
     applySuggestedOrder,
   ]);
 
+  const selectedAddCount = useMemo(() => {
+    if (!aiProposal) return 0;
+    return aiProposal.add.reduce((sum, _t, idx) => sum + (selectedAddIdx[idx] ? 1 : 0), 0);
+  }, [aiProposal, selectedAddIdx]);
+
+  const selectedRemoveCount = useMemo(() => {
+    if (!aiProposal) return 0;
+    return aiProposal.remove.reduce((sum, r) => sum + (selectedRemoveIds[r.taskId] ? 1 : 0), 0);
+  }, [aiProposal, selectedRemoveIds]);
+
   // When "New Task" button in toolbar triggers showCreateTask, auto-add a task card
   useEffect(() => {
     if (showCreateTask && !addTriggered.current) {
@@ -966,6 +978,12 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
               {tasks.length}
             </span>
           )}
+          {isAIProposing && (
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-navy-800/50 px-2 py-0.5 rounded-full">
+              <Loader2 size={12} className="animate-spin" />
+              {isPolish ? 'AI pracuje...' : 'AI working...'}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {!readonly && (
@@ -983,7 +1001,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
       {/* AI proposal modal */}
       {showAIModal && aiProposal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="w-full max-w-3xl rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
+          <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
             <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
               <div>
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
@@ -1011,111 +1029,55 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
             </div>
 
             <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
-              {/* Add proposals */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
+              {/* Remove suggestions (top) */}
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.add.length})
+                    {isPolish ? 'Do wywalenia' : 'To remove'} ({aiProposal.remove.length})
                   </span>
-                  <button
-                    onClick={() =>
-                      setSelectedAddIdx(
-                        Object.fromEntries(aiProposal.add.map((_, idx) => [idx, true])) as Record<
-                          number,
-                          boolean
-                        >
-                      )
-                    }
-                    className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                  >
-                    {isPolish ? 'Zaznacz wszystko' : 'Select all'}
-                  </button>
-                </div>
-                <div className="space-y-1.5">
-                  {aiProposal.add.map((t, idx) => (
-                    <label
-                      key={idx}
-                      className="flex items-start gap-2 p-2 rounded-xl border border-slate-200/60 dark:border-navy-700/50 bg-slate-50/40 dark:bg-navy-800/20 hover:bg-slate-50/70 dark:hover:bg-navy-800/30 transition-colors"
+                  {aiProposal.remove.length > 0 && (
+                    <button
+                      onClick={() =>
+                        setSelectedRemoveIds(
+                          Object.fromEntries(
+                            aiProposal.remove.map((r) => [r.taskId, true])
+                          ) as Record<string, boolean>
+                        )
+                      }
+                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      <input
-                        type="checkbox"
-                        checked={!!selectedAddIdx[idx]}
-                        onChange={(e) =>
-                          setSelectedAddIdx((prev) => ({ ...prev, [idx]: e.target.checked }))
-                        }
-                        className="mt-1"
-                      />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-medium text-slate-800 dark:text-white">
-                            {t.title}
-                          </span>
-                        </div>
-                        {t.description ? (
-                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
-                            {t.description}
-                          </p>
-                        ) : null}
-                        {t.rationale ? (
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                            {t.rationale}
-                          </p>
-                        ) : null}
-                      </div>
-                    </label>
-                  ))}
+                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                    </button>
+                  )}
                 </div>
-              </div>
-
-              {/* Suggested ordering */}
-              {aiProposal.reorder?.order?.length ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                      {isPolish ? 'Sugerowana kolejność' : 'Suggested order'} (
-                      {aiProposal.reorder.order.length})
-                    </span>
-                    <label className="inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 select-none">
-                      <input
-                        type="checkbox"
-                        checked={applySuggestedOrder}
-                        onChange={(e) => setApplySuggestedOrder(e.target.checked)}
-                      />
-                      {isPolish ? 'Zastosuj kolejność' : 'Apply order'}
-                    </label>
-                  </div>
-                  {aiProposal.reorder.note ? (
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {aiProposal.reorder.note}
-                    </p>
-                  ) : null}
-                  <ol className="space-y-1.5 list-decimal pl-5">
-                    {aiProposal.reorder.order.map((id) => {
-                      const existing = tasks.find((t) => String(t.id) === String(id));
-                      return (
-                        <li key={id} className="text-xs text-slate-700 dark:text-slate-200">
-                          {existing?.title || id}
-                        </li>
-                      );
-                    })}
-                  </ol>
-                </div>
-              ) : null}
-
-              {/* Remove suggestions */}
-              {aiProposal.remove.length > 0 && (
-                <div className="space-y-2">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Sugestie usunięcia' : 'Suggested removals'} (
-                    {aiProposal.remove.length})
-                  </span>
+                {aiProposal.remove.length === 0 ? (
+                  <EmptyStateInline
+                    icon={Trash2}
+                    dashed={false}
+                    className="p-5"
+                    message={
+                      aiMode === 'generate'
+                        ? isPolish
+                          ? 'Tryb generowania: brak usuwania.'
+                          : 'Generate mode: no removals.'
+                        : isPolish
+                          ? 'AI nie zasugerowało usunięć.'
+                          : 'No removal suggestions from AI.'
+                    }
+                    hint={
+                      isPolish
+                        ? 'Jeśli backlog jest OK, AI może zaproponować tylko dodania lub kolejność.'
+                        : 'If the backlog is already good, AI may propose only additions or ordering.'
+                    }
+                  />
+                ) : (
                   <div className="space-y-1.5">
                     {aiProposal.remove.map((r) => {
                       const existing = tasks.find((t) => String(t.id) === String(r.taskId));
                       return (
                         <label
                           key={r.taskId}
-                          className="flex items-start gap-2 p-2 rounded-xl border border-amber-200/60 dark:border-amber-500/20 bg-amber-50/40 dark:bg-amber-500/5 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 transition-colors"
+                          className="flex items-start gap-2 p-2 rounded-xl bg-amber-50/40 dark:bg-amber-500/5 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 transition-colors"
                         >
                           <input
                             type="checkbox"
@@ -1140,8 +1102,165 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                       );
                     })}
                   </div>
+                )}
+              </div>
+
+              {/* Add proposals */}
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.add.length})
+                  </span>
+                  {aiProposal.add.length > 0 && (
+                    <button
+                      onClick={() =>
+                        setSelectedAddIdx(
+                          Object.fromEntries(aiProposal.add.map((_, idx) => [idx, true])) as Record<
+                            number,
+                            boolean
+                          >
+                        )
+                      }
+                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    >
+                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                    </button>
+                  )}
                 </div>
-              )}
+                {aiProposal.add.length === 0 ? (
+                  <EmptyStateInline
+                    icon={Plus}
+                    dashed={false}
+                    className="p-5"
+                    message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
+                    hint={
+                      isPolish
+                        ? 'Jeśli backlog jest kompletny, AI może zaproponować tylko kolejność.'
+                        : 'If the backlog is complete, AI may propose only an ordering.'
+                    }
+                  />
+                ) : (
+                  <div className="space-y-1.5">
+                    {aiProposal.add.map((t, idx) => (
+                      <label
+                        key={idx}
+                        className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!selectedAddIdx[idx]}
+                          onChange={(e) =>
+                            setSelectedAddIdx((prev) => ({ ...prev, [idx]: e.target.checked }))
+                          }
+                          className="mt-1"
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium text-slate-800 dark:text-white">
+                              {t.title}
+                            </span>
+                          </div>
+                          {t.description ? (
+                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
+                              {t.description}
+                            </p>
+                          ) : null}
+                          {t.rationale ? (
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                              {t.rationale}
+                            </p>
+                          ) : null}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Suggested ordering */}
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Proponowana kolejność' : 'Suggested order'} (
+                    {aiProposal.reorder?.order?.length || 0})
+                  </span>
+                  <label className="inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 select-none">
+                    <input
+                      type="checkbox"
+                      checked={applySuggestedOrder}
+                      onChange={(e) => setApplySuggestedOrder(e.target.checked)}
+                      disabled={!aiProposal.reorder?.order?.length}
+                    />
+                    {isPolish ? 'Zastosuj kolejność' : 'Apply order'}
+                  </label>
+                </div>
+                {!aiProposal.reorder?.order?.length ? (
+                  <EmptyStateInline
+                    icon={Sparkles}
+                    dashed={false}
+                    className="p-5"
+                    message={isPolish ? 'Brak sugestii kolejności.' : 'No ordering suggestion.'}
+                    hint={
+                      isPolish
+                        ? 'AI może zwrócić tylko dodania/usunięcia bez re-order.'
+                        : 'AI may return only additions/removals without re-ordering.'
+                    }
+                  />
+                ) : (
+                  <>
+                    {aiProposal.reorder.note ? (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {aiProposal.reorder.note}
+                      </p>
+                    ) : null}
+                    <ol className="space-y-1.5 list-decimal pl-5">
+                      {aiProposal.reorder.order.map((id) => {
+                        const existing = tasks.find((t) => String(t.id) === String(id));
+                        return (
+                          <li key={id} className="text-xs text-slate-700 dark:text-slate-200">
+                            {existing?.title || id}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </>
+                )}
+              </div>
+
+              {/* Plan (bottom) */}
+              <Callout
+                variant="purple"
+                title={isPolish ? 'Plan' : 'Plan'}
+                compact
+                className="rounded-xl"
+              >
+                <ul className="list-disc pl-4 space-y-1">
+                  <li>
+                    {isPolish
+                      ? `Usuń zaznaczone taski: ${selectedRemoveCount}.`
+                      : `Remove selected tasks: ${selectedRemoveCount}.`}
+                  </li>
+                  <li>
+                    {isPolish
+                      ? `Dodaj zaznaczone taski: ${selectedAddCount} (status: To Do, source: AI).`
+                      : `Add selected tasks: ${selectedAddCount} (status: To Do, source: AI).`}
+                  </li>
+                  <li>
+                    {isPolish
+                      ? applySuggestedOrder && aiProposal.reorder?.order?.length
+                        ? 'Zastosuj proponowaną kolejność dla czytelności backlogu.'
+                        : 'Opcjonalnie: zastosuj proponowaną kolejność.'
+                      : applySuggestedOrder && aiProposal.reorder?.order?.length
+                        ? 'Apply the suggested ordering to make the backlog read better.'
+                        : 'Optional: apply the suggested ordering.'}
+                  </li>
+                </ul>
+                <div className="mt-2 text-[11px] text-purple-700/90 dark:text-purple-200/90">
+                  {isPolish
+                    ? 'Po zastosowaniu: uzupełnij ownerów i terminy — AI celowo ich nie ustawia.'
+                    : 'After applying: assign owners and due dates — AI intentionally does not set them.'}
+                </div>
+              </Callout>
             </div>
 
             <div className="px-5 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-end gap-2">

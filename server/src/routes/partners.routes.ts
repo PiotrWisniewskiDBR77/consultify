@@ -254,7 +254,14 @@ router.get('/referral-analytics', async (req: Request, res: Response, next: Next
       analytics = await PartnerReferralService.getReferralAnalytics(partnerOrgId, days);
     } catch (dbError: any) {
       logger.warn('Referral analytics: DB query failed, using fallback data:', dbError?.message);
-      analytics = { totalClicks: 0, uniqueClicks: 0, signups: 0, conversions: 0, clicksByDay: [], topCampaigns: [] };
+      analytics = {
+        totalClicks: 0,
+        uniqueClicks: 0,
+        signups: 0,
+        conversions: 0,
+        clicksByDay: [],
+        topCampaigns: [],
+      };
     }
 
     res.json({ success: true, data: analytics });
@@ -353,7 +360,10 @@ router.get('/commission-transactions', async (req: Request, res: Response, next:
         offset,
       });
     } catch (dbError: any) {
-      logger.warn('Commission transactions: DB query failed, using fallback data:', dbError?.message);
+      logger.warn(
+        'Commission transactions: DB query failed, using fallback data:',
+        dbError?.message
+      );
       commissions = [];
     }
 
@@ -472,9 +482,11 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
         tier: string;
         status: string;
         commission_rate_percent: number;
-      }>(db, `SELECT tier, status, commission_rate_percent FROM partner_organizations WHERE id = ?`, [
-        partnerOrgId,
-      ]);
+      }>(
+        db,
+        `SELECT tier, status, commission_rate_percent FROM partner_organizations WHERE id = ?`,
+        [partnerOrgId]
+      );
 
       const clientStats = await dbGet<{ count: number }>(
         db,
@@ -744,7 +756,11 @@ router.get('/metrics', async (req: Request, res: Response, next: NextFunction) =
         Math.round(retention * 0.3 + convRate * 0.3 + (avgCommissionRate?.avg || 15) * 2)
       );
 
-      fallbackMetrics.revenue = { totalYTD: Math.round(currentYTD), change: revenueChange, byMonth };
+      fallbackMetrics.revenue = {
+        totalYTD: Math.round(currentYTD),
+        change: revenueChange,
+        byMonth,
+      };
       fallbackMetrics.clients = {
         retention,
         newThisQuarter: newThisQuarter?.count || 0,
@@ -759,7 +775,8 @@ router.get('/metrics', async (req: Request, res: Response, next: NextFunction) =
           customerSatisfaction: 90,
           certificationProgress: 70,
         },
-        ranking: performanceScore >= 80 ? 'Top 15%' : performanceScore >= 60 ? 'Top 30%' : 'Growing',
+        ranking:
+          performanceScore >= 80 ? 'Top 15%' : performanceScore >= 60 ? 'Top 30%' : 'Growing',
       };
       fallbackMetrics.satisfaction = { score: 4.5, responses: 0, trend: 'stable' };
     } catch (dbError: any) {

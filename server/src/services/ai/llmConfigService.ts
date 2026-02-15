@@ -470,7 +470,10 @@ export class LLMConfigService {
       } catch (err: unknown) {
         const error = err as Error;
         if (!error.message.includes('UNIQUE constraint')) {
-          aiLogger.warn('LLMConfigService', `Failed to seed tier assignment for ${p.id}: ${error.message}`);
+          aiLogger.warn(
+            'LLMConfigService',
+            `Failed to seed tier assignment for ${p.id}: ${error.message}`
+          );
         }
       }
     }

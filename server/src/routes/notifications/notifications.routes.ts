@@ -87,34 +87,24 @@ router.post(
       (req.can && typeof req.can === 'function' && req.can('edit_organization_settings'));
     if (!isAdmin) return res.status(403).json({ error: 'Admin required' });
 
-    const {
-      type,
-      title,
-      body,
-      message,
-      severity,
-      category,
-      actionUrl,
-      data,
-      userIds,
-    } = req.body || {};
+    const { type, title, body, message, severity, category, actionUrl, data, userIds } =
+      req.body || {};
 
-    if (!type || typeof type !== 'string') return res.status(400).json({ error: 'type is required' });
-    if (!title || typeof title !== 'string') return res.status(400).json({ error: 'title is required' });
+    if (!type || typeof type !== 'string')
+      return res.status(400).json({ error: 'type is required' });
+    if (!title || typeof title !== 'string')
+      return res.status(400).json({ error: 'title is required' });
 
     const resolvedBody =
-      typeof body === 'string'
-        ? body
-        : typeof message === 'string'
-          ? message
-          : '';
+      typeof body === 'string' ? body : typeof message === 'string' ? message : '';
 
-    const targets: { id: string }[] = Array.isArray(userIds) && userIds.length > 0
-      ? userIds.filter((x: any) => typeof x === 'string').map((id: string) => ({ id }))
-      : await dbAll<{ id: string }>(
-          `SELECT id FROM users WHERE organization_id = ? AND (status IS NULL OR status = 'active')`,
-          [orgId]
-        );
+    const targets: { id: string }[] =
+      Array.isArray(userIds) && userIds.length > 0
+        ? userIds.filter((x: any) => typeof x === 'string').map((id: string) => ({ id }))
+        : await dbAll<{ id: string }>(
+            `SELECT id FROM users WHERE organization_id = ? AND (status IS NULL OR status = 'active')`,
+            [orgId]
+          );
 
     const results = await Promise.allSettled(
       (targets || []).map((u) =>

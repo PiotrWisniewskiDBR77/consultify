@@ -17,6 +17,7 @@ import {
   Check,
   DollarSign,
   GraduationCap,
+  Loader2,
   MoreVertical,
   Plus,
   Sparkles,
@@ -140,7 +141,8 @@ const TableAIMenu: React.FC<{
   onToggle: () => void;
   onClose: () => void;
   actions: TableAIMenuAction[];
-}> = ({ isPolish, isOpen, onToggle, onClose, actions }) => {
+  busy?: boolean;
+}> = ({ isPolish, isOpen, onToggle, onClose, actions, busy = false }) => {
   useEffect(() => {
     if (!isOpen) return;
     const onDoc = () => onClose();
@@ -156,12 +158,14 @@ const TableAIMenu: React.FC<{
       <button
         onClick={(e) => {
           e.stopPropagation();
+          if (busy) return;
           onToggle();
         }}
+        disabled={busy}
         className="p-1 rounded-md text-violet-500 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
         title={isPolish ? 'AI' : 'AI'}
       >
-        <Sparkles size={13} />
+        {busy ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
       </button>
       {isOpen && (
         <div
@@ -1395,7 +1399,7 @@ export const ResourcesSection: React.FC = () => {
                 disabled={aiBusy || !hasAnyAdd}
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
               >
-                {aiBusy ? <Sparkles size={13} className="opacity-70" /> : null}
+                {aiBusy ? <Loader2 size={13} className="animate-spin" /> : null}
                 {isPolish ? 'Zastosuj' : 'Apply'}
               </button>
             </div>
@@ -1407,6 +1411,7 @@ export const ResourcesSection: React.FC = () => {
       <BudgetTable
         isPolish={isPolish}
         items={budgetItems}
+        aiBusy={aiBusy}
         onAiAddOne={() => void proposeForTable('budget', 'addOne')}
         onAiAnalyze={() => void proposeForTable('budget', 'analyze')}
         onAdd={handleAddBudgetItem}
@@ -1418,6 +1423,7 @@ export const ResourcesSection: React.FC = () => {
       <TeamTable
         isPolish={isPolish}
         items={resourceItems}
+        aiBusy={aiBusy}
         onAiAddOne={() => void proposeForTable('fte', 'addOne')}
         onAiAnalyze={() => void proposeForTable('fte', 'analyze')}
         onAdd={handleAddResource}
@@ -1429,6 +1435,7 @@ export const ResourcesSection: React.FC = () => {
       <ToolsTable
         isPolish={isPolish}
         items={toolItems}
+        aiBusy={aiBusy}
         onAiAddOne={() => void proposeForTable('tools', 'addOne')}
         onAiAnalyze={() => void proposeForTable('tools', 'analyze')}
         onAdd={handleAddTool}
@@ -1440,6 +1447,7 @@ export const ResourcesSection: React.FC = () => {
       <IntangibleAssetsTable
         isPolish={isPolish}
         items={intangibleAssets}
+        aiBusy={aiBusy}
         onAiAddOne={() => void proposeForTable('intangibles', 'addOne')}
         onAiAnalyze={() => void proposeForTable('intangibles', 'analyze')}
         onAdd={handleAddIntangibleAsset}
@@ -1457,6 +1465,7 @@ export const ResourcesSection: React.FC = () => {
 interface BudgetTableProps {
   isPolish: boolean;
   items: BudgetItem[];
+  aiBusy: boolean;
   onAiAddOne: () => void;
   onAiAnalyze: () => void;
   onAdd: (data: Omit<BudgetItem, 'id'>) => Promise<void>;
@@ -1467,6 +1476,7 @@ interface BudgetTableProps {
 const BudgetTable: React.FC<BudgetTableProps> = ({
   isPolish,
   items,
+  aiBusy,
   onAiAddOne,
   onAiAnalyze,
   onAdd,
@@ -1559,6 +1569,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                   isOpen={aiMenuOpen}
                   onToggle={() => setAiMenuOpen((v) => !v)}
                   onClose={() => setAiMenuOpen(false)}
+                  busy={aiBusy}
                   actions={[
                     { id: 'addOne', label: { en: 'Add', pl: 'Dodaj' }, onClick: onAiAddOne },
                     {
@@ -1769,6 +1780,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
 interface TeamTableProps {
   isPolish: boolean;
   items: ResourceItem[];
+  aiBusy: boolean;
   onAiAddOne: () => void;
   onAiAnalyze: () => void;
   onAdd: (data: Omit<ResourceItem, 'id'>) => Promise<void>;
@@ -1779,6 +1791,7 @@ interface TeamTableProps {
 const TeamTable: React.FC<TeamTableProps> = ({
   isPolish,
   items,
+  aiBusy,
   onAiAddOne,
   onAiAnalyze,
   onAdd,
@@ -1870,6 +1883,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                   isOpen={aiMenuOpen}
                   onToggle={() => setAiMenuOpen((v) => !v)}
                   onClose={() => setAiMenuOpen(false)}
+                  busy={aiBusy}
                   actions={[
                     { id: 'addOne', label: { en: 'Add', pl: 'Dodaj' }, onClick: onAiAddOne },
                     {
@@ -2079,6 +2093,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
 interface ToolsTableProps {
   isPolish: boolean;
   items: ToolItem[];
+  aiBusy: boolean;
   onAiAddOne: () => void;
   onAiAnalyze: () => void;
   onAdd: (data: Omit<ToolItem, 'id'>) => Promise<void>;
@@ -2089,6 +2104,7 @@ interface ToolsTableProps {
 const ToolsTable: React.FC<ToolsTableProps> = ({
   isPolish,
   items,
+  aiBusy,
   onAiAddOne,
   onAiAnalyze,
   onAdd,
@@ -2178,6 +2194,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                   isOpen={aiMenuOpen}
                   onToggle={() => setAiMenuOpen((v) => !v)}
                   onClose={() => setAiMenuOpen(false)}
+                  busy={aiBusy}
                   actions={[
                     { id: 'addOne', label: { en: 'Add', pl: 'Dodaj' }, onClick: onAiAddOne },
                     {
@@ -2395,6 +2412,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
 interface IntangibleAssetsTableProps {
   isPolish: boolean;
   items: IntangibleAssetItem[];
+  aiBusy: boolean;
   onAiAddOne: () => void;
   onAiAnalyze: () => void;
   onAdd: (data: Omit<IntangibleAssetItem, 'id'>) => Promise<void>;
@@ -2405,6 +2423,7 @@ interface IntangibleAssetsTableProps {
 const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
   isPolish,
   items,
+  aiBusy,
   onAiAddOne,
   onAiAnalyze,
   onAdd,
@@ -2537,6 +2556,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                   isOpen={aiMenuOpen}
                   onToggle={() => setAiMenuOpen((v) => !v)}
                   onClose={() => setAiMenuOpen(false)}
+                  busy={aiBusy}
                   actions={[
                     { id: 'addOne', label: { en: 'Add', pl: 'Dodaj' }, onClick: onAiAddOne },
                     {

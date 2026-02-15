@@ -2076,8 +2076,58 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           ? initiative.tools
           : [];
 
+    const savedDeliverables = Array.isArray(initiative?.deliverables)
+      ? initiative.deliverables
+      : Array.isArray(initiative?.targetState?.deliverables)
+        ? initiative.targetState.deliverables
+        : Array.isArray(initiative?.target_state?.deliverables)
+          ? initiative.target_state.deliverables
+          : [];
+    const savedSuccessCriteria = Array.isArray(initiative?.successCriteria)
+      ? initiative.successCriteria
+      : Array.isArray(initiative?.success_criteria)
+        ? initiative.success_criteria
+        : Array.isArray(initiative?.targetState?.successCriteria)
+          ? initiative.targetState.successCriteria
+          : Array.isArray(initiative?.target_state?.successCriteria)
+            ? initiative.target_state.successCriteria
+            : [];
+
+    const savedScopeIn = Array.isArray(initiative?.scopeIn)
+      ? initiative.scopeIn
+      : Array.isArray(initiative?.scope_in)
+        ? initiative.scope_in
+        : Array.isArray(initiative?.scope?.inScope)
+          ? initiative.scope.inScope
+          : [];
+    const savedScopeOut = Array.isArray(initiative?.scopeOut)
+      ? initiative.scopeOut
+      : Array.isArray(initiative?.scope_out)
+        ? initiative.scope_out
+        : Array.isArray(initiative?.scope?.outScope)
+          ? initiative.scope.outScope
+          : [];
+    const savedKillCriteria = Array.isArray(initiative?.killCriteria)
+      ? initiative.killCriteria
+      : Array.isArray(initiative?.kill_criteria)
+        ? initiative.kill_criteria
+        : Array.isArray(initiative?.scope?.killCriteria)
+          ? initiative.scope.killCriteria
+          : [];
+
+    const normalizedDeliverables = deliverableItems
+      .map((d) => String(d.text || '').trim())
+      .filter(Boolean);
+    const normalizedSuccessCriteria = successCriteriaItems
+      .map((c) => String(c.text || '').trim())
+      .filter(Boolean);
+
+    const savedTargetDescription = String(
+      initiative?.targetState?.description || initiative?.target_state?.description || ''
+    );
+
     return (
-      summary !== (initiative?.summary || initiative?.description || '') ||
+      summary !== (initiative?.summary || '') ||
       description !== (initiative?.description || '') ||
       priority !== (initiative?.priority || 'medium').toLowerCase() ||
       ownerId !== (initiative?.ownerId || initiative?.owner_id || '') ||
@@ -2091,7 +2141,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       marketContextDraft !== (initiative?.marketContext || initiative?.market_context || '') ||
       budgetDraft !== savedBudget ||
       JSON.stringify(resourceTools) !== JSON.stringify(savedTools) ||
-      JSON.stringify(tags) !== JSON.stringify(initiative?.tags || [])
+      JSON.stringify(tags) !== JSON.stringify(initiative?.tags || []) ||
+      JSON.stringify(normalizedDeliverables) !== JSON.stringify(savedDeliverables) ||
+      JSON.stringify(normalizedSuccessCriteria) !== JSON.stringify(savedSuccessCriteria) ||
+      JSON.stringify(inScopeItems) !== JSON.stringify(savedScopeIn) ||
+      JSON.stringify(outScopeItems) !== JSON.stringify(savedScopeOut) ||
+      JSON.stringify(killCriteriaItems) !== JSON.stringify(savedKillCriteria) ||
+      targetDescriptionDraft !== savedTargetDescription
     );
   }, [
     initiative,
@@ -2109,6 +2165,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     budgetDraft,
     resourceTools,
     tags,
+    deliverableItems,
+    successCriteriaItems,
+    inScopeItems,
+    outScopeItems,
+    killCriteriaItems,
+    targetDescriptionDraft,
     decodeHtmlEntities,
   ]);
 
@@ -6425,7 +6487,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                       ) : (
                                         <Sparkles size={13} />
                                       )}
-                                      <span>{isPolish ? 'Analizuj z AI' : 'Analyze with AI'}</span>
+                                      <span>
+                                        {tasksAiRequest?.mode === 'analyze'
+                                          ? isPolish
+                                            ? 'Analizuję...'
+                                            : 'Analyzing...'
+                                          : isPolish
+                                            ? 'Analizuj z AI'
+                                            : 'Analyze with AI'}
+                                      </span>
                                     </button>
 
                                     <button
@@ -6455,7 +6525,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                       ) : (
                                         <Sparkles size={13} />
                                       )}
-                                      <span>{isPolish ? 'AI: dodaj task' : 'AI: Add task'}</span>
+                                      <span>
+                                        {tasksAiRequest?.mode === 'addOne'
+                                          ? isPolish
+                                            ? 'Dodaję...'
+                                            : 'Generating...'
+                                          : isPolish
+                                            ? 'AI: dodaj task'
+                                            : 'AI: Add task'}
+                                      </span>
                                     </button>
                                   </div>
                                 );

@@ -441,7 +441,12 @@ class NotificationService {
       userId,
     ]);
 
-    await this.addActivityLogEntry(notificationId, userId, 'marked_read', 'Notification marked as read');
+    await this.addActivityLogEntry(
+      notificationId,
+      userId,
+      'marked_read',
+      'Notification marked as read'
+    );
   }
 
   /**
@@ -1182,8 +1187,12 @@ export const getSourceEntity = (notificationId: string, userId: string) =>
   notificationService.getSourceEntity(notificationId, userId);
 export const getComments = (notificationId: string, userId: string) =>
   notificationService.getComments(notificationId, userId);
-export const addComment = (notificationId: string, userId: string, content: string, priority?: string) =>
-  notificationService.addComment(notificationId, userId, content, priority);
+export const addComment = (
+  notificationId: string,
+  userId: string,
+  content: string,
+  priority?: string
+) => notificationService.addComment(notificationId, userId, content, priority);
 export const deleteComment = (commentId: string, userId: string) =>
   notificationService.deleteComment(commentId, userId);
 export const getActivityLog = (notificationId: string, userId: string) =>

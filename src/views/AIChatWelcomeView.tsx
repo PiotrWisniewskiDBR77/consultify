@@ -1846,7 +1846,17 @@ For example: REMEMBER: preferred_language: Polish`;
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 p-4">
+        <div className="shrink-0 p-4 flex flex-col items-center gap-3">
+          <img
+            src="/assets/logos/logo-dark.png"
+            alt="Consultinity"
+            className="h-6 opacity-30 hidden dark:block"
+          />
+          <img
+            src="/assets/logos/logo-light.png"
+            alt="Consultinity"
+            className="h-6 opacity-30 dark:hidden"
+          />
           <p className="text-center text-[11px] text-slate-400 dark:text-slate-600 tracking-[0.25em] uppercase">
             DBR77 Industrial Intelligence
           </p>
