@@ -22,7 +22,9 @@ import {
   Flame,
   Hourglass,
   Inbox,
+  Kanban,
   LayoutGrid,
+  LayoutList,
   List,
   Loader2,
   Plus,
@@ -35,11 +37,14 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
+import { useUserCan } from '@/hooks/useUserCan';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
 import { DecisionDetailView } from './DecisionDetailView';
+import { DecisionsKanbanBoard } from './DecisionsKanbanBoard';
 import { DecisionsPanelContent } from './DecisionsPanelContent';
 import { ExecutiveDashboard } from './Executive/ExecutiveDashboard';
 import { type FocusItem, FocusView } from './Focus/FocusView';
@@ -47,11 +52,16 @@ import { InboxContent } from './InboxContent';
 import { MyTasksListContent } from './MyTasksListContent';
 import { NotificationDetailView } from './NotificationDetailView';
 import { NotificationsContent } from './NotificationsContent';
+import { NotificationsKanbanBoard } from './NotificationsKanbanBoard';
 import { TaskDetailView } from './TaskDetailView';
+import { TasksKanbanBoard } from './TasksKanbanBoard';
 
 // Types
 type ModuleTab = 'executive' | 'inbox' | 'focus' | 'tasks' | 'decisions' | 'notifications';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
+type TasksViewMode = 'table' | 'kanban';
+type DecisionsViewMode = 'list' | 'kanban';
+type NotificationsViewMode = 'list' | 'kanban';
 type DecisionFilter = 'my' | 'awaiting';
 type NotificationFilter = 'all' | 'unread' | 'today' | 'week';
 type ItemStatus =
@@ -171,7 +181,12 @@ interface MyWorkHubProps {
 export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentUser, myWorkIntent, clearMyWorkIntent } = useAppStore();
+
+  // A1.2: Role-based access – Executive tab restricted to admin/manager/superadmin
+  const { isAdmin, isManager, isSuperAdmin } = useUserCan();
+  const canViewExecutive = isAdmin || isManager || isSuperAdmin;
 
   // Tab state
   const [activeTab, setActiveTab] = useState<ModuleTab>('tasks');
@@ -180,6 +195,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   // Filter states
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
+  const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
+  const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('list');
+  const [notificationsViewMode, setNotificationsViewMode] = useState<NotificationsViewMode>('list');
   const [decisionFilter, setDecisionFilter] = useState<DecisionFilter>('my');
   const [notificationFilter, setNotificationFilter] = useState<NotificationFilter>('all');
 
@@ -234,7 +252,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   useEffect(() => {
     if (!myWorkIntent) return;
     if (myWorkIntent.tab) {
-      setActiveTab(myWorkIntent.tab as ModuleTab);
+      // A1.2: Block navigation to executive tab for unauthorized users
+      const targetTab = myWorkIntent.tab as ModuleTab;
+      if (targetTab === 'executive' && !canViewExecutive) {
+        clearMyWorkIntent();
+        return;
+      }
+      setActiveTab(targetTab);
     }
     setActiveDocumentId(null);
     if (myWorkIntent.open) {
@@ -261,15 +285,49 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     clearMyWorkIntent();
   }, [myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
 
+  // URL deep link support: /my-work?taskId=... or /my-work?decisionId=...
+  useEffect(() => {
+    const taskId = searchParams.get('taskId');
+    const decisionId = searchParams.get('decisionId');
+    if (!taskId && !decisionId) return;
+
+    if (taskId) {
+      setActiveTab('tasks');
+      handleOpenDocument({
+        id: taskId,
+        type: 'task',
+        name: isPolish ? 'Zadanie' : 'Task',
+        status: 'todo',
+      });
+    }
+
+    if (decisionId) {
+      setActiveTab('decisions');
+      handleOpenDocument({
+        id: decisionId,
+        type: 'decision',
+        name: isPolish ? 'Decyzja' : 'Decision',
+        status: 'pending',
+      });
+    }
+
+    const next = new URLSearchParams(searchParams);
+    next.delete('taskId');
+    next.delete('decisionId');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, handleOpenDocument, isPolish]);
+
   // Tab configuration
-  const tabs = useMemo(
-    () => [
+  // A1.2: Executive tab only visible to admin/manager/superadmin roles
+  const tabs = useMemo(() => {
+    const allTabs = [
       {
         id: 'executive' as ModuleTab,
         label: isPolish ? 'Executive' : 'Executive',
         icon: <FileText size={16} />,
         count: tabCounts.executive,
         color: 'bg-violet-500',
+        requiresExecutiveAccess: true,
       },
       {
         id: 'inbox' as ModuleTab,
@@ -277,6 +335,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <Inbox size={16} />,
         count: tabCounts.inbox,
         color: 'bg-red-500',
+        requiresExecutiveAccess: false,
       },
       {
         id: 'focus' as ModuleTab,
@@ -284,6 +343,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <Target size={16} />,
         count: tabCounts.focus,
         color: 'bg-amber-500',
+        requiresExecutiveAccess: false,
       },
       {
         id: 'tasks' as ModuleTab,
@@ -291,6 +351,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <CheckSquare size={16} />,
         count: tabCounts.tasks,
         color: 'bg-blue-500',
+        requiresExecutiveAccess: false,
       },
       {
         id: 'decisions' as ModuleTab,
@@ -298,6 +359,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <Scale size={16} />,
         count: tabCounts.decisions,
         color: 'bg-purple-500',
+        requiresExecutiveAccess: false,
       },
       {
         id: 'notifications' as ModuleTab,
@@ -305,10 +367,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <Bell size={16} />,
         count: tabCounts.notifications,
         color: 'bg-amber-500',
+        requiresExecutiveAccess: false,
       },
-    ],
-    [isPolish, tabCounts]
-  );
+    ];
+
+    // A1.2: Filter out Executive tab for users without admin/manager role
+    return allTabs.filter((tab) => !tab.requiresExecutiveAccess || canViewExecutive);
+  }, [isPolish, tabCounts, canViewExecutive]);
 
   // Task filters configuration
   const taskFilters = useMemo(
@@ -583,7 +648,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           label: isPolish ? 'Nowe powiadomienie' : 'New Notification',
           icon: <Plus size={16} />,
           onClick: () => {
-            toast.success(isPolish ? 'Funkcja w przygotowaniu' : 'Feature coming soon');
+            const newId = `new-notification-${Date.now()}`;
+            handleOpenDocument({
+              id: newId,
+              type: 'notification',
+              name: isPolish ? 'Nowe powiadomienie' : 'New Notification',
+              status: 'unread',
+              data: { isNew: true },
+            });
           },
           color: 'from-amber-500 to-amber-600',
           variant: 'primary' as const,
@@ -753,6 +825,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const renderListContent = () => {
     switch (activeTab) {
       case 'executive':
+        // A1.2: Double-check role access – if user somehow navigated here without permission
+        if (!canViewExecutive) {
+          return (
+            <div className="flex h-64 items-center justify-center">
+              <div className="text-center">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Brak dostępu. Wymagana rola Admin lub Manager.'
+                    : 'Access restricted. Admin or Manager role required.'}
+                </p>
+              </div>
+            </div>
+          );
+        }
         return (
           <ExecutiveDashboard
             onNavigate={(section) => {
@@ -789,7 +875,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           />
         );
       case 'tasks':
-        return (
+        return tasksViewMode === 'kanban' ? (
+          <TasksKanbanBoard
+            activeFilter={taskFilter}
+            searchQuery={searchQuery}
+            onTaskClick={handleTaskClick}
+            onCreateTask={handleCreateTask}
+            onCountsChange={handleTaskCountsChange}
+          />
+        ) : (
           <MyTasksListContent
             activeFilter={taskFilter}
             searchQuery={searchQuery}
@@ -799,7 +893,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           />
         );
       case 'decisions':
-        return (
+        return decisionsViewMode === 'kanban' ? (
+          <DecisionsKanbanBoard
+            viewMode={decisionFilter}
+            searchQuery={searchQuery}
+            onDecisionClick={handleDecisionClick}
+            onCreateDecision={handleCreateDecision}
+            onCountsChange={handleDecisionCountsChange}
+          />
+        ) : (
           <DecisionsPanelContent
             viewMode={decisionFilter}
             searchQuery={searchQuery}
@@ -808,7 +910,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           />
         );
       case 'notifications':
-        return (
+        return notificationsViewMode === 'kanban' ? (
+          <NotificationsKanbanBoard
+            filter={notificationFilter}
+            searchQuery={searchQuery}
+            onNotificationClick={handleNotificationClick}
+            onCountsChange={handleNotificationCountsChange}
+          />
+        ) : (
           <NotificationsContent
             filter={notificationFilter}
             searchQuery={searchQuery}
@@ -886,8 +995,116 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Right: Context Filters + Action Buttons */}
+          {/* Right: View Toggle + Context Filters + Action Buttons */}
           <div className="flex items-center gap-3">
+            {/* Tasks View Mode Toggle (table / kanban) — only on Tasks tab */}
+            {activeTab === 'tasks' && !activeDocumentId && (
+              <div
+                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
+              >
+                <button
+                  onClick={() => setTasksViewMode('table')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    tasksViewMode === 'table'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok tabeli' : 'Table view'}
+                  role="radio"
+                  aria-checked={tasksViewMode === 'table'}
+                >
+                  <LayoutList size={16} />
+                </button>
+                <button
+                  onClick={() => setTasksViewMode('kanban')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    tasksViewMode === 'kanban'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok kanban' : 'Kanban view'}
+                  role="radio"
+                  aria-checked={tasksViewMode === 'kanban'}
+                >
+                  <Kanban size={16} />
+                </button>
+              </div>
+            )}
+
+            {/* Decisions View Mode Toggle (list / kanban) — only on Decisions tab */}
+            {activeTab === 'decisions' && !activeDocumentId && (
+              <div
+                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
+              >
+                <button
+                  onClick={() => setDecisionsViewMode('list')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    decisionsViewMode === 'list'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok listy' : 'List view'}
+                  role="radio"
+                  aria-checked={decisionsViewMode === 'list'}
+                >
+                  <LayoutList size={16} />
+                </button>
+                <button
+                  onClick={() => setDecisionsViewMode('kanban')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    decisionsViewMode === 'kanban'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok kanban' : 'Kanban view'}
+                  role="radio"
+                  aria-checked={decisionsViewMode === 'kanban'}
+                >
+                  <Kanban size={16} />
+                </button>
+              </div>
+            )}
+
+            {/* Notifications View Mode Toggle (list / kanban) — only on Notifications tab */}
+            {activeTab === 'notifications' && !activeDocumentId && (
+              <div
+                className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
+              >
+                <button
+                  onClick={() => setNotificationsViewMode('list')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    notificationsViewMode === 'list'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok listy' : 'List view'}
+                  role="radio"
+                  aria-checked={notificationsViewMode === 'list'}
+                >
+                  <LayoutList size={16} />
+                </button>
+                <button
+                  onClick={() => setNotificationsViewMode('kanban')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-150 ${
+                    notificationsViewMode === 'kanban'
+                      ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-navy-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                  title={isPolish ? 'Widok kanban' : 'Kanban view'}
+                  role="radio"
+                  aria-checked={notificationsViewMode === 'kanban'}
+                >
+                  <Kanban size={16} />
+                </button>
+              </div>
+            )}
+
             {/* Context-sensitive Filter Dropdown (only show when viewing list) */}
             {currentFilters.length > 0 && (
               <div className="relative">

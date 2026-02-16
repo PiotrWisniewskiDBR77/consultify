@@ -23,6 +23,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 export interface Decision {
@@ -481,6 +482,10 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (!decision?.id) {
+                    toast.error('Missing decision ID');
+                    return;
+                  }
                   onApprove?.(decision.id);
                 }}
                 className="flex-1 px-3 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
@@ -491,6 +496,10 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (!decision?.id) {
+                    toast.error('Missing decision ID');
+                    return;
+                  }
                   onReject?.(decision.id);
                 }}
                 className="flex-1 px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
@@ -502,6 +511,10 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (!decision?.id) {
+                      toast.error('Missing decision ID');
+                      return;
+                    }
                     onDelegate(decision);
                   }}
                   className="px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-xs font-medium flex items-center justify-center gap-1.5"

@@ -207,4 +207,110 @@ router.delete(
   })
 );
 
+/**
+ * POST /api/notifications/:id/snooze
+ * Snooze a notification until a given time
+ */
+router.post(
+  '/:id/snooze',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const { preset, until } = req.body;
+
+      let snoozeUntil: string;
+
+      if (until) {
+        snoozeUntil = new Date(until).toISOString();
+      } else if (preset) {
+        const now = new Date();
+        switch (preset) {
+          case '1h':
+            now.setHours(now.getHours() + 1);
+            break;
+          case '4h':
+            now.setHours(now.getHours() + 4);
+            break;
+          case 'tomorrow':
+            now.setDate(now.getDate() + 1);
+            now.setHours(9, 0, 0, 0);
+            break;
+          case 'next_week':
+            now.setDate(now.getDate() + (8 - now.getDay()));
+            now.setHours(9, 0, 0, 0);
+            break;
+          default:
+            now.setHours(now.getHours() + 1);
+        }
+        snoozeUntil = now.toISOString();
+      } else {
+        return res.status(400).json({ error: 'Either preset or until is required' });
+      }
+
+      await service.snoozeNotification(req.params.id, userId, snoozeUntil);
+      return res.json({ success: true, snoozedUntil: snoozeUntil });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PATCH /api/notifications/:id/checklist
+ * Update the action checklist for a notification
+ */
+router.patch(
+  '/:id/checklist',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const { checklist } = req.body;
+
+      if (!Array.isArray(checklist)) {
+        return res.status(400).json({ error: 'checklist must be an array' });
+      }
+
+      await service.updateChecklist(req.params.id, userId, checklist);
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * GET /api/notifications/:id/source-entity
+ * Get the source entity (task/decision/initiative) linked to a notification
+ */
+router.get(
+  '/:id/source-entity',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const entity = await service.getSourceEntity(req.params.id, userId);
+      if (!entity) {
+        return res.status(404).json({ error: 'Source entity not found' });
+      }
+      return res.json(entity);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
 export default router;

@@ -126,13 +126,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const { updateWorkspaceFromView } = useConversationStore();
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<NotificationData | null>(null);
+  const [sourceEntity, setSourceEntity] = useState<Record<string, any> | null>(null);
+  const [sourceEntityLoading, setSourceEntityLoading] = useState(false);
 
   // Expanded sections state
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['whats-happening', 'ai-analysis', 'expected-action', 'control'])
+    new Set(['whats-happening', 'ai-analysis', 'expected-action', 'source-entity', 'control'])
   );
 
-  // Action checklist state (mock data - would come from API)
+  // Action checklist state
   const [actionChecklist, setActionChecklist] = useState<
     { id: string; text: string; completed: boolean }[]
   >([]);
@@ -160,13 +162,22 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       const notifications = await Api.getNotifications();
       const found = notifications.find((n: any) => n.id === notificationId);
       if (found) {
-        setNotification({
+        const notifData = {
           ...found,
           severity: found.severity || 'INFO',
           category: found.category || 'system',
-        });
-        // Generate action checklist based on notification type
-        generateActionChecklist(found);
+        };
+        setNotification(notifData);
+
+        // Load checklist from backend if persisted, otherwise generate
+        if (found.checklist && Array.isArray(found.checklist)) {
+          setActionChecklist(found.checklist);
+        } else {
+          generateActionChecklist(found);
+        }
+
+        // Load source entity
+        loadSourceEntity();
       } else {
         toast.error(isPolish ? 'Nie znaleziono powiadomienia' : 'Notification not found');
       }
@@ -177,6 +188,18 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSourceEntity = async () => {
+    try {
+      setSourceEntityLoading(true);
+      const entity = await Api.getNotificationSourceEntity(notificationId);
+      setSourceEntity(entity);
+    } catch (error) {
+      console.error('Failed to load source entity', error);
+    } finally {
+      setSourceEntityLoading(false);
     }
   };
 
@@ -253,9 +276,16 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   };
 
   const toggleChecklistItem = (id: string) => {
-    setActionChecklist((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item))
-    );
+    setActionChecklist((prev) => {
+      const updated = prev.map((item) =>
+        item.id === id ? { ...item, completed: !item.completed } : item
+      );
+      // Persist to backend
+      Api.updateNotificationChecklist(notificationId, updated).catch((err) =>
+        console.error('Failed to persist checklist', err)
+      );
+      return updated;
+    });
   };
 
   const markAsRead = async () => {
@@ -386,56 +416,114 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     return type && labels[type] ? (isPolish ? labels[type].pl : labels[type].en) : '';
   };
 
-  // Generate AI analysis based on notification
+  // Generate AI analysis based on notification data (enriched) + type fallback
   const generateAIAnalysis = () => {
     if (!notification) return null;
 
     const type = notification.type?.toUpperCase() || '';
+    const data = notification.data || {};
 
-    if (type.includes('OVERDUE')) {
-      return {
-        priority: isPolish ? 'WYSOKI' : 'HIGH',
-        impact: isPolish
-          ? 'To opóźnienie może wpłynąć na powiązane zadania i terminy projektu.'
-          : 'This delay may impact related tasks and project deadlines.',
-        recommendation: isPolish
-          ? 'Zalecane: Natychmiast zaktualizuj status lub deleguj zadanie.'
-          : 'Recommended: Immediately update status or delegate the task.',
-        riskLevel: 'high',
-      };
-    } else if (type.includes('BLOCKED')) {
-      return {
-        priority: isPolish ? 'KRYTYCZNY' : 'CRITICAL',
-        impact: isPolish
-          ? 'Zablokowane zadanie wstrzymuje postęp w projekcie.'
-          : 'Blocked task is halting project progress.',
-        recommendation: isPolish
-          ? 'Zalecane: Rozwiąż blokadę lub eskaluj do przełożonego.'
-          : 'Recommended: Resolve blocker or escalate to manager.',
-        riskLevel: 'critical',
-      };
-    } else if (type.includes('DECISION')) {
-      return {
-        priority: isPolish ? 'ŚREDNI' : 'MEDIUM',
-        impact: isPolish
-          ? 'Decyzja jest wymagana do kontynuowania prac.'
-          : 'Decision is required to continue work.',
-        recommendation: isPolish
-          ? 'Zalecane: Przeanalizuj opcje i podejmij decyzję w ciągu 24h.'
-          : 'Recommended: Analyze options and decide within 24h.',
-        riskLevel: 'medium',
-      };
+    // Priority mapping: use enriched data if available, otherwise compute from type
+    const priorityMap: Record<string, { en: string; pl: string }> = {
+      CRITICAL: { en: 'CRITICAL', pl: 'KRYTYCZNY' },
+      HIGH: { en: 'HIGH', pl: 'WYSOKI' },
+      MEDIUM: { en: 'MEDIUM', pl: 'ŚREDNI' },
+      LOW: { en: 'LOW', pl: 'NISKI' },
+    };
+
+    // Use enriched riskLevel from data if available (from AI triggers)
+    const enrichedRiskLevel = (data.riskLevel as string) || '';
+    const enrichedRecommendation = (data.recommendation as string) || '';
+    const enrichedImpact = (data.impact as string) || '';
+    const enrichedConfidence = data.confidence ? `${data.confidence}%` : '';
+
+    // Compute priority from notification severity or enriched data
+    let computedPriority = 'MEDIUM';
+    let computedRiskLevel = 'medium';
+    if (notification.severity === 'CRITICAL' || enrichedRiskLevel === 'critical') {
+      computedPriority = 'CRITICAL';
+      computedRiskLevel = 'critical';
+    } else if (notification.severity === 'WARNING' || enrichedRiskLevel === 'high') {
+      computedPriority = 'HIGH';
+      computedRiskLevel = 'high';
+    } else if (enrichedRiskLevel === 'medium') {
+      computedPriority = 'MEDIUM';
+      computedRiskLevel = 'medium';
     }
 
-    return {
-      priority: isPolish ? 'NISKI' : 'LOW',
-      impact: isPolish
+    // Build impact text from enriched data or infer from type
+    let impact: string;
+    if (enrichedImpact) {
+      impact = enrichedImpact;
+    } else if (type.includes('OVERDUE')) {
+      const daysOverdue = Number(data.days_overdue || data.daysOverdue || 0);
+      const blockingCount = Number(data.blocking_count || 0);
+      impact = isPolish
+        ? `To opóźnienie${daysOverdue > 0 ? ` (${daysOverdue} dni)` : ''} może wpłynąć na powiązane zadania${blockingCount > 0 ? ` i blokuje ${blockingCount} innych zadań` : ''}.`
+        : `This delay${daysOverdue > 0 ? ` (${daysOverdue} days)` : ''} may impact related tasks${blockingCount > 0 ? ` and blocks ${blockingCount} other task(s)` : ''}.`;
+    } else if (type.includes('BLOCKED')) {
+      impact = isPolish
+        ? 'Zablokowane zadanie wstrzymuje postęp w projekcie.'
+        : 'Blocked task is halting project progress.';
+    } else if (type.includes('DECISION')) {
+      const deadlineDays = Number(data.deadline_days || 0);
+      impact = isPolish
+        ? `Decyzja jest wymagana${deadlineDays > 0 ? ` w ciągu ${deadlineDays} dni` : ''} do kontynuowania prac.`
+        : `Decision is required${deadlineDays > 0 ? ` within ${deadlineDays} days` : ''} to continue work.`;
+    } else if (type.includes('AI_RISK')) {
+      impact = isPolish
+        ? 'AI wykryło potencjalne ryzyko wymagające uwagi.'
+        : 'AI detected a potential risk that requires attention.';
+    } else if (type.includes('AI_RECOMMENDATION')) {
+      const savings = data.savings_annual as string;
+      impact = savings
+        ? isPolish
+          ? `AI zidentyfikowało potencjalne oszczędności: ${savings}/rok.`
+          : `AI identified potential savings of ${savings}/year.`
+        : isPolish
+          ? 'AI ma rekomendację optymalizacji.'
+          : 'AI has an optimization recommendation.';
+    } else {
+      impact = isPolish
         ? 'To powiadomienie wymaga Twojej uwagi.'
-        : 'This notification requires your attention.',
-      recommendation: isPolish
+        : 'This notification requires your attention.';
+    }
+
+    // Build recommendation text
+    let recommendation: string;
+    if (enrichedRecommendation) {
+      recommendation = enrichedRecommendation;
+    } else if (type.includes('OVERDUE')) {
+      recommendation = isPolish
+        ? 'Zalecane: Natychmiast zaktualizuj status lub deleguj zadanie.'
+        : 'Recommended: Immediately update status or delegate the task.';
+    } else if (type.includes('BLOCKED')) {
+      recommendation = isPolish
+        ? 'Zalecane: Rozwiąż blokadę lub eskaluj do przełożonego.'
+        : 'Recommended: Resolve blocker or escalate to manager.';
+    } else if (type.includes('DECISION')) {
+      recommendation = isPolish
+        ? 'Zalecane: Przeanalizuj opcje i podejmij decyzję.'
+        : 'Recommended: Analyze options and make a decision.';
+    } else if (type.includes('AI')) {
+      recommendation = isPolish
+        ? 'Zalecane: Przejrzyj rekomendację AI i zdecyduj.'
+        : 'Recommended: Review AI recommendation and decide.';
+    } else {
+      recommendation = isPolish
         ? 'Zalecane: Przejrzyj i podejmij odpowiednią akcję.'
-        : 'Recommended: Review and take appropriate action.',
-      riskLevel: 'low',
+        : 'Recommended: Review and take appropriate action.';
+    }
+
+    const priLabel = priorityMap[computedPriority] || priorityMap.MEDIUM;
+
+    return {
+      priority: isPolish ? priLabel.pl : priLabel.en,
+      impact,
+      recommendation,
+      riskLevel: computedRiskLevel,
+      confidence: enrichedConfidence,
+      aiGenerated: !!data.aiGenerated,
     };
   };
 
@@ -497,6 +585,66 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
+                {/* Primary CTA — most important action, prominent in header */}
+                {contract.primaryCta.kind === 'open_task' ? (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() =>
+                      onNavigateToSource?.(
+                        'task',
+                        (contract.primaryCta as { kind: 'open_task'; id: string; label: string }).id
+                      )
+                    }
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-sm font-semibold transition-all shadow-sm"
+                  >
+                    <CheckSquare size={16} />
+                    <span>{contract.primaryCta.label}</span>
+                  </motion.button>
+                ) : contract.primaryCta.kind === 'open_decision' ? (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() =>
+                      onNavigateToSource?.(
+                        'decision',
+                        (
+                          contract.primaryCta as {
+                            kind: 'open_decision';
+                            id: string;
+                            label: string;
+                          }
+                        ).id
+                      )
+                    }
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700 text-sm font-semibold transition-all shadow-sm"
+                  >
+                    <Scale size={16} />
+                    <span>{contract.primaryCta.label}</span>
+                  </motion.button>
+                ) : contract.primaryCta.kind === 'open_project' ? (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() =>
+                      onNavigateToSource?.(
+                        'project',
+                        (
+                          contract.primaryCta as {
+                            kind: 'open_project';
+                            id: string;
+                            label: string;
+                          }
+                        ).id
+                      )
+                    }
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 text-sm font-semibold transition-all shadow-sm"
+                  >
+                    <FolderOpen size={16} />
+                    <span>{contract.primaryCta.label}</span>
+                  </motion.button>
+                ) : null}
+
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -638,6 +786,16 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         >
                           {isPolish ? 'Priorytet' : 'Priority'}: {aiAnalysis.priority}
                         </span>
+                        {aiAnalysis.confidence && (
+                          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-500">
+                            {isPolish ? 'Pewność' : 'Confidence'}: {aiAnalysis.confidence}
+                          </span>
+                        )}
+                        {aiAnalysis.aiGenerated && (
+                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-500">
+                            AI Generated
+                          </span>
+                        )}
                       </div>
                       <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                         {aiAnalysis.impact}
@@ -739,7 +897,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               </AnimatePresence>
             </motion.div>
 
-            {/* Related Items */}
+            {/* Source Entity Preview */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -747,7 +905,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
             >
               <button
-                onClick={() => toggleSection('related-items')}
+                onClick={() => toggleSection('source-entity')}
                 className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
@@ -755,28 +913,107 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     <Link2 size={18} className="text-indigo-500 dark:text-indigo-400" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    {isPolish ? 'Powiązane elementy' : 'Related Items'}
+                    {isPolish ? 'Źródło' : 'Source Entity'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
-                    {(notification.relatedObjectId ? 1 : 0) + (notification.projectName ? 1 : 0)}
-                  </span>
-                  <motion.div animate={{ rotate: expandedSections.has('related-items') ? 180 : 0 }}>
+                  {sourceEntity && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500 capitalize">
+                      {sourceEntity.type}
+                    </span>
+                  )}
+                  <motion.div animate={{ rotate: expandedSections.has('source-entity') ? 180 : 0 }}>
                     <ChevronDown size={18} className="text-slate-400" />
                   </motion.div>
                 </div>
               </button>
               <AnimatePresence>
-                {expandedSections.has('related-items') && (
+                {expandedSections.has('source-entity') && (
                   <motion.div
                     initial={{ height: 0 }}
                     animate={{ height: 'auto' }}
                     exit={{ height: 0 }}
                     className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
                   >
-                    <div className="p-5 space-y-2">
-                      {notification.relatedObjectType && notification.relatedObjectId && (
+                    <div className="p-5 space-y-3">
+                      {sourceEntityLoading ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 size={20} className="animate-spin text-slate-400" />
+                        </div>
+                      ) : sourceEntity && sourceEntity.title ? (
+                        <>
+                          {/* Entity card */}
+                          <button
+                            onClick={() => onNavigateToSource?.(sourceEntity.type, sourceEntity.id)}
+                            className="w-full text-left p-4 rounded-xl bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors group border border-slate-200/60 dark:border-navy-600/60"
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                {getRelatedObjectIcon(sourceEntity.type?.toUpperCase())}
+                                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                  {getRelatedObjectLabel(sourceEntity.type?.toUpperCase())}
+                                </span>
+                              </div>
+                              <ExternalLink
+                                size={14}
+                                className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                              />
+                            </div>
+                            <p className="text-sm font-semibold text-slate-800 dark:text-white mb-2">
+                              {sourceEntity.title}
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {sourceEntity.status && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium capitalize">
+                                  {sourceEntity.status}
+                                </span>
+                              )}
+                              {sourceEntity.priority && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium capitalize">
+                                  {sourceEntity.priority}
+                                </span>
+                              )}
+                              {(sourceEntity.assignee || sourceEntity.decider) && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-medium">
+                                  {sourceEntity.assignee || sourceEntity.decider}
+                                </span>
+                              )}
+                              {sourceEntity.dueDate && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-400 font-medium">
+                                  {isPolish ? 'Termin' : 'Due'}:{' '}
+                                  {new Date(sourceEntity.dueDate).toLocaleDateString()}
+                                </span>
+                              )}
+                              {sourceEntity.progress !== undefined &&
+                                sourceEntity.progress !== null && (
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
+                                    {sourceEntity.progress}%
+                                  </span>
+                                )}
+                            </div>
+                            {sourceEntity.description && (
+                              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                                {sourceEntity.description}
+                              </p>
+                            )}
+                          </button>
+
+                          {/* Project context */}
+                          {notification.projectName && (
+                            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-800">
+                              <FolderOpen size={16} className="text-indigo-400" />
+                              <div>
+                                <p className="text-xs text-slate-400">
+                                  {isPolish ? 'Projekt' : 'Project'}
+                                </p>
+                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                  {notification.projectName}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : notification.relatedObjectType && notification.relatedObjectId ? (
                         <button
                           onClick={() =>
                             onNavigateToSource?.(
@@ -802,23 +1039,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
                           />
                         </button>
-                      )}
-                      {notification.projectName && (
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-800">
-                          <FolderOpen size={16} className="text-indigo-400" />
-                          <div>
-                            <p className="text-xs text-slate-400">
-                              {isPolish ? 'Projekt' : 'Project'}
-                            </p>
-                            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                              {notification.projectName}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      {!notification.relatedObjectId && !notification.projectName && (
+                      ) : (
                         <p className="text-sm text-slate-400 text-center py-4">
-                          {isPolish ? 'Brak powiązanych elementów' : 'No related items'}
+                          {isPolish ? 'Brak powiązanej encji' : 'No linked entity'}
                         </p>
                       )}
                     </div>
@@ -863,12 +1086,23 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     exit={{ height: 0 }}
                     className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
                   >
-                    <div className="p-5">
-                      <p className="text-sm text-slate-400 text-center py-4">
+                    <div className="p-5 space-y-3">
+                      {sourceEntity?.type && (
+                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                          {isPolish
+                            ? `Komentarze dla powiązanej encji (${getRelatedObjectLabel(sourceEntity.type?.toUpperCase())})`
+                            : `Comments for linked ${sourceEntity.type}`}
+                        </p>
+                      )}
+                      <p className="text-sm text-slate-400 text-center py-3">
                         {isPolish ? 'Brak komentarzy' : 'No comments yet'}
                       </p>
-                      <button className="w-full px-4 py-2 rounded-xl border border-dashed border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-navy-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors text-sm">
-                        {isPolish ? '+ Dodaj komentarz' : '+ Add comment'}
+                      <button
+                        onClick={handleOpenChat}
+                        className="w-full px-4 py-2.5 rounded-xl border border-dashed border-purple-300 dark:border-purple-500/30 text-purple-600 dark:text-purple-400 hover:border-purple-400 dark:hover:border-purple-400/50 hover:bg-purple-50/50 dark:hover:bg-purple-500/5 transition-colors text-sm flex items-center justify-center gap-2"
+                      >
+                        <MessageSquare size={14} />
+                        {isPolish ? 'Otwórz czat z kontekstem' : 'Open contextual chat'}
                       </button>
                     </div>
                   </motion.div>
@@ -1022,12 +1256,27 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           {isPolish ? 'Kategoria' : 'Category'}
                         </label>
                         <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
-                          <Bell size={14} className="text-slate-400" />
+                          <TypeIcon size={14} className={typeConfig.color} />
                           <span className="text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">
                             {notification.category}
                           </span>
                         </div>
                       </div>
+
+                      {/* Project */}
+                      {(notification.projectName || (notification.data as any)?.projectName) && (
+                        <div>
+                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                            {isPolish ? 'Projekt' : 'Project'}
+                          </label>
+                          <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
+                            <FolderOpen size={14} className="text-indigo-400" />
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                              {notification.projectName || (notification.data as any)?.projectName}
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Created */}
                       <div>
@@ -1178,10 +1427,96 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     exit={{ height: 0 }}
                     className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
                   >
-                    <div className="p-4">
-                      <p className="text-sm text-slate-400 text-center py-2">
-                        {isPolish ? 'Brak przypisanych interesariuszy' : 'No stakeholders assigned'}
-                      </p>
+                    <div className="p-4 space-y-2">
+                      {/* Show stakeholders from source entity and notification data */}
+                      {sourceEntity?.assignee && (
+                        <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800">
+                          <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-500">
+                            {String(sourceEntity.assignee).charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                              {sourceEntity.assignee}
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              {isPolish ? 'Przypisany' : 'Assignee'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {sourceEntity?.decider && (
+                        <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800">
+                          <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center text-xs font-bold text-purple-500">
+                            {String(sourceEntity.decider).charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                              {sourceEntity.decider}
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              {isPolish ? 'Decydent' : 'Decider'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {sourceEntity?.owner && (
+                        <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800">
+                          <div className="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-500">
+                            {String(sourceEntity.owner).charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                              {sourceEntity.owner}
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              {isPolish ? 'Właściciel' : 'Owner'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {notification.data?.assignee &&
+                        !sourceEntity?.assignee &&
+                        !sourceEntity?.decider && (
+                          <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800">
+                            <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-500">
+                              {String(notification.data.assignee).charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                {String(notification.data.assignee)}
+                              </p>
+                              <p className="text-[10px] text-slate-400">
+                                {isPolish ? 'Przypisany' : 'Assignee'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      {notification.data?.assigned_by && (
+                        <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800">
+                          <div className="w-7 h-7 rounded-full bg-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-500">
+                            {String(notification.data.assigned_by).charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                              {String(notification.data.assigned_by)}
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              {isPolish ? 'Przydzielony przez' : 'Assigned by'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {!sourceEntity?.assignee &&
+                        !sourceEntity?.decider &&
+                        !sourceEntity?.owner &&
+                        !notification.data?.assignee &&
+                        !notification.data?.assigned_by && (
+                          <p className="text-sm text-slate-400 text-center py-2">
+                            {isPolish
+                              ? 'Brak przypisanych interesariuszy'
+                              : 'No stakeholders assigned'}
+                          </p>
+                        )}
                     </div>
                   </motion.div>
                 )}
@@ -1189,7 +1524,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             </motion.div>
 
             {/* Why You Got It */}
-            {contract.whyYouGotIt && (
+            {(contract.whyYouGotIt || notification.data?.whyYouGotIt) && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -1208,7 +1543,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 </div>
                 <div className="border-t border-slate-200 dark:border-navy-700 p-4">
                   <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                    {contract.whyYouGotIt}
+                    {contract.whyYouGotIt || String(notification.data?.whyYouGotIt || '')}
                   </p>
                 </div>
               </motion.div>

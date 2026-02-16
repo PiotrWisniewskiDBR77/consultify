@@ -19,14 +19,15 @@ export interface ChatSlice {
     deepResearch: boolean; // Głęboka analiza - dogłębne badanie tematu
     webSearch: boolean; // Wyszukiwanie web - dane w czasie rzeczywistym
     showReasoning: boolean; // Pokaż rozumowanie - widoczny tok myślenia AI
+    multiAgent: boolean; // Analiza wieloagentowa - perspektywy CFO/CTO/CHRO/COO
     // Knowledge Sources (Źródła wiedzy)
     knowledgeSources: {
       pmoDocuments: boolean; // Dokumenty PMO - ISO 21500, PMBOK, PRINCE2
       projectData: boolean; // Dane projektu - inicjatywy, zadania, decyzje
       organizationData: boolean; // Dane organizacji - zespoły, role, procesy
     };
-    // Response Style (Styl odpowiedzi - jak w Claude)
-    responseStyle: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+    // Response Style (Styl odpowiedzi - domain-specific presets)
+    responseStyle: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
     // Text-to-Speech (Czytanie odpowiedzi na głos)
     textToSpeech: boolean; // Włącz/wyłącz czytanie odpowiedzi
     ttsVoice: string | null; // Wybrany głos (voice URI)
@@ -76,15 +77,20 @@ export const createChatSlice: StateCreator<AppState, [], [], ChatSlice> = (set) 
     maxMode: false,
     multiModel: false,
     selectedModelId: null,
-    selectedTier: 'BUDGET',
+    // Default chat quality should be competitive with mainstream assistants.
+    // Budget tier remains available as an explicit user choice.
+    selectedTier: 'STANDARD',
     // AI Modes
     deepResearch: false,
-    webSearch: false,
+    // Enable by default for Chat-like behavior on external queries.
+    // Backend will gracefully degrade if web search is unavailable.
+    webSearch: true,
     showReasoning: false,
-    // Knowledge Sources (all disabled by default)
+    multiAgent: false,
+    // Knowledge Sources (default: use internal context where safe/useful)
     knowledgeSources: {
-      pmoDocuments: false,
-      projectData: false,
+      pmoDocuments: true,
+      projectData: true,
       organizationData: false,
     },
     // Response Style (default: normal)

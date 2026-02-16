@@ -1,20 +1,22 @@
 /**
  * ToolsMenu
  *
- * Dropdown menu for AI tools and integrations:
+ * Dropdown menu for AI tools (Gemini-style, opens downward):
  * - AI Modes (toggles with visual feedback)
- * - Knowledge Sources (toggles for data sources)
+ * - Response Style
+ * - Custom Instructions
  *
- * @version 2.1.0
+ * Knowledge Sources removed — always enabled by default.
+ *
+ * @version 3.0.0
  */
 
 import {
-  BookOpen,
+  BarChart3,
   Brain,
-  Building2,
+  Briefcase,
   Check,
   ChevronRight,
-  Database,
   Globe,
   GraduationCap,
   MessageSquare,
@@ -24,6 +26,7 @@ import {
   Sparkles,
   ToggleLeft,
   ToggleRight,
+  Users,
   Volume2,
   Zap,
 } from 'lucide-react';
@@ -47,29 +50,53 @@ interface ToolMode {
   enabled?: boolean;
 }
 
-interface KnowledgeSource {
-  id: string;
-  icon: React.ElementType;
-  labelKey: string;
-  descKey: string;
-  enabled: boolean;
-}
-
-// Response Style definitions
-type ResponseStyle = 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+// Response Style definitions — domain-specific presets for PMO/consulting
+type ResponseStyle = 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
 
 interface StyleOption {
   id: ResponseStyle;
   icon: React.ElementType;
   labelKey: string;
+  descKey: string;
 }
 
 const RESPONSE_STYLES: StyleOption[] = [
-  { id: 'normal', icon: MessageSquare, labelKey: 'aiChat.menu.styles.normal' },
-  { id: 'learning', icon: GraduationCap, labelKey: 'aiChat.menu.styles.learning' },
-  { id: 'concise', icon: Zap, labelKey: 'aiChat.menu.styles.concise' },
-  { id: 'explanatory', icon: BookOpen, labelKey: 'aiChat.menu.styles.explanatory' },
-  { id: 'formal', icon: Pen, labelKey: 'aiChat.menu.styles.formal' },
+  {
+    id: 'normal',
+    icon: MessageSquare,
+    labelKey: 'aiChat.menu.styles.normal',
+    descKey: 'aiChat.menu.styles.normalDesc',
+  },
+  {
+    id: 'executive',
+    icon: Briefcase,
+    labelKey: 'aiChat.menu.styles.executive',
+    descKey: 'aiChat.menu.styles.executiveDesc',
+  },
+  {
+    id: 'analyst',
+    icon: BarChart3,
+    labelKey: 'aiChat.menu.styles.analyst',
+    descKey: 'aiChat.menu.styles.analystDesc',
+  },
+  {
+    id: 'coach',
+    icon: GraduationCap,
+    labelKey: 'aiChat.menu.styles.coach',
+    descKey: 'aiChat.menu.styles.coachDesc',
+  },
+  {
+    id: 'concise',
+    icon: Zap,
+    labelKey: 'aiChat.menu.styles.concise',
+    descKey: 'aiChat.menu.styles.conciseDesc',
+  },
+  {
+    id: 'formal',
+    icon: Pen,
+    labelKey: 'aiChat.menu.styles.formal',
+    descKey: 'aiChat.menu.styles.formalDesc',
+  },
 ];
 
 export const ToolsMenu: React.FC<ToolsMenuProps> = ({
@@ -83,9 +110,66 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   const [showStyleSubmenu, setShowStyleSubmenu] = useState(false);
   const [showTTSSubmenu, setShowTTSSubmenu] = useState(false);
   const [submenuPosition, setSubmenuPosition] = useState<'right' | 'left'>('right');
+  const [showCustomInstructions, setShowCustomInstructions] = useState(false);
+  const [customInstructions, setCustomInstructions] = useState('');
+  const [customInstructionsLoaded, setCustomInstructionsLoaded] = useState(false);
+  const [isSavingInstructions, setIsSavingInstructions] = useState(false);
+  const [menuMaxHeight, setMenuMaxHeight] = useState<number | undefined>(undefined);
   const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const styleButtonRef = useRef<HTMLButtonElement>(null);
   const ttsButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Calculate available space above the trigger button for menu positioning
+  // (menu opens upward to avoid overflowing the bottom of the viewport)
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      // Available space above trigger minus some padding
+      const availableAbove = rect.top - 24;
+      setMenuMaxHeight(Math.max(200, availableAbove));
+    }
+  }, [isOpen]);
+
+  // Load custom instructions from AI memory on first open
+  React.useEffect(() => {
+    if (isOpen && !customInstructionsLoaded) {
+      fetch('/api/ai-memory', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          const ci = data.memories?.find((m: any) => m.key === 'custom_instructions');
+          if (ci?.value) setCustomInstructions(ci.value);
+          setCustomInstructionsLoaded(true);
+        })
+        .catch(() => setCustomInstructionsLoaded(true));
+    }
+  }, [isOpen, customInstructionsLoaded]);
+
+  // Save custom instructions to AI memory
+  const handleSaveInstructions = async () => {
+    setIsSavingInstructions(true);
+    try {
+      await fetch('/api/ai-memory/custom_instructions', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          value: customInstructions.trim(),
+          source: 'user',
+          context: 'Custom instructions set by user via AI preferences',
+        }),
+      });
+      toast.success(t('aiChat.menu.instructionsSaved', 'Instrukcje zapisane'));
+    } catch {
+      toast.error(t('aiChat.menu.instructionsSaveError', 'Nie udalo sie zapisac'));
+    } finally {
+      setIsSavingInstructions(false);
+    }
+  };
 
   // Get available voices
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -104,22 +188,13 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   }, []);
 
   // Use global store values
-  const {
-    deepResearch,
-    webSearch,
-    showReasoning,
-    knowledgeSources,
-    responseStyle,
-    textToSpeech,
-    ttsRate,
-    ttsVoice,
-  } = aiConfig;
+  const { deepResearch, webSearch, showReasoning, responseStyle, textToSpeech, ttsRate, ttsVoice } =
+    aiConfig;
 
   // Count active modes for badge
   const activeModeCount = [deepResearch, webSearch, showReasoning, textToSpeech].filter(
     Boolean
   ).length;
-  const activeSourceCount = Object.values(knowledgeSources || {}).filter(Boolean).length;
 
   // AI Modes - using global store values
   const AI_MODES: ToolMode[] = [
@@ -145,36 +220,18 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       enabled: showReasoning,
     },
     {
+      id: 'multiAgent',
+      icon: Users,
+      labelKey: 'aiChat.menu.modes.multiAgent.label',
+      descKey: 'aiChat.menu.modes.multiAgent.desc',
+      enabled: aiConfig.multiAgent ?? false,
+    },
+    {
       id: 'textToSpeech',
       icon: Volume2,
       labelKey: 'aiChat.menu.modes.textToSpeech.label',
       descKey: 'aiChat.menu.modes.textToSpeech.desc',
       enabled: textToSpeech,
-    },
-  ];
-
-  // Knowledge Sources - using global store values (all disabled by default)
-  const KNOWLEDGE_SOURCES: KnowledgeSource[] = [
-    {
-      id: 'pmoDocuments',
-      icon: BookOpen,
-      labelKey: 'aiChat.menu.sources.pmoDocuments.label',
-      descKey: 'aiChat.menu.sources.pmoDocuments.desc',
-      enabled: knowledgeSources?.pmoDocuments ?? false,
-    },
-    {
-      id: 'projectData',
-      icon: Database,
-      labelKey: 'aiChat.menu.sources.projectData.label',
-      descKey: 'aiChat.menu.sources.projectData.desc',
-      enabled: knowledgeSources?.projectData ?? false,
-    },
-    {
-      id: 'organizationData',
-      icon: Building2,
-      labelKey: 'aiChat.menu.sources.organizationData.label',
-      descKey: 'aiChat.menu.sources.organizationData.desc',
-      enabled: knowledgeSources?.organizationData ?? false,
     },
   ];
 
@@ -216,29 +273,11 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     onToolSelect(`toggle:${modeId}`);
   };
 
-  // Toggle knowledge sources - persists to global store
-  const toggleKnowledgeSource = (sourceId: string) => {
-    const currentValue = knowledgeSources?.[sourceId as keyof typeof knowledgeSources] ?? false;
-    const newValue = !currentValue;
-    const newSources = {
-      ...knowledgeSources,
-      [sourceId]: newValue,
-    };
-    setAIConfig({ knowledgeSources: newSources });
-
-    const label = t(`aiChat.menu.sources.${sourceId}.label`, sourceId);
-    toast.success(
-      t(newValue ? 'aiChat.menu.toast.enabled' : 'aiChat.menu.toast.disabled', { label }),
-      { duration: 2000 }
-    );
-
-    onToolSelect(`source:${sourceId}`);
-  };
-
   return (
     <div className="relative" ref={menuRef}>
       {/* Trigger Button */}
       <button
+        ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
         data-testid="chat-tools-button"
@@ -261,7 +300,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         )}
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Dropdown Menu — opens upward so it doesn't overflow bottom of viewport */}
       {isOpen && (
         <div
           className="
@@ -271,8 +310,9 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                         border border-slate-200 dark:border-navy-700
                         rounded-xl shadow-xl
                         animate-in fade-in-0 slide-in-from-bottom-2 duration-150
-                        max-h-[70vh] overflow-y-auto
+                        overflow-y-auto
                     "
+          style={{ maxHeight: menuMaxHeight ? `${menuMaxHeight}px` : '70vh' }}
         >
           {/* AI Modes Section */}
           <div className="px-3 py-2 flex items-center justify-between">
@@ -327,55 +367,6 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           {/* Divider */}
           <div className="my-2 border-t border-slate-200 dark:border-navy-700" />
 
-          {/* Knowledge Sources Section */}
-          <div className="px-3 py-2 flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              {t('aiChat.menu.knowledgeSources', 'Źródła wiedzy')}
-            </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400 font-medium">
-              {activeSourceCount}/{KNOWLEDGE_SOURCES.length}
-            </span>
-          </div>
-
-          {KNOWLEDGE_SOURCES.map((source) => {
-            const Icon = source.icon;
-            const isEnabled = source.enabled;
-
-            return (
-              <button
-                key={source.id}
-                onClick={() => toggleKnowledgeSource(source.id)}
-                className={`
-                                    w-full flex items-center gap-3 px-3 py-2 text-left
-                                    transition-colors
-                                    ${isEnabled ? 'bg-green-50 dark:bg-green-900/20' : 'hover:bg-slate-50 dark:hover:bg-navy-700'}
-                                `}
-              >
-                <div
-                  className={`p-1.5 rounded-lg ${isEnabled ? 'bg-green-100 dark:bg-green-900/30' : 'bg-slate-100 dark:bg-navy-700'}`}
-                >
-                  <Icon
-                    size={14}
-                    className={isEnabled ? 'text-green-500' : 'text-slate-400 dark:text-slate-500'}
-                  />
-                </div>
-                <div
-                  className={`flex-1 text-sm font-medium ${isEnabled ? 'text-green-700 dark:text-green-300' : 'text-slate-700 dark:text-slate-300'}`}
-                >
-                  {t(source.labelKey)}
-                </div>
-                {isEnabled ? (
-                  <ToggleRight size={22} className="text-green-500 shrink-0" />
-                ) : (
-                  <ToggleLeft size={22} className="text-slate-300 dark:text-slate-600 shrink-0" />
-                )}
-              </button>
-            );
-          })}
-
-          {/* Divider */}
-          <div className="my-2 border-t border-slate-200 dark:border-navy-700" />
-
           {/* Response Style Section */}
           <div className="relative">
             <button
@@ -411,7 +402,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
             {/* Style Submenu - positions left or right based on viewport */}
             {showStyleSubmenu && (
               <div
-                className={`absolute top-0 w-48 py-1 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-50 ${submenuPosition === 'right' ? 'left-full ml-1' : 'right-full mr-1'}`}
+                className={`absolute top-0 w-56 py-1 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-50 ${submenuPosition === 'right' ? 'left-full ml-1' : 'right-full mr-1'}`}
               >
                 {RESPONSE_STYLES.map((style) => {
                   const StyleIcon = style.icon;
@@ -430,25 +421,80 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                         onToolSelect(`style:${style.id}`);
                       }}
                       className={`
-                        w-full flex items-center gap-3 px-3 py-2 text-left transition-colors
+                        w-full flex items-start gap-3 px-3 py-2.5 text-left transition-colors
                         ${isSelected ? 'bg-primary-50 dark:bg-primary-900/20' : 'hover:bg-slate-50 dark:hover:bg-navy-700'}
                       `}
                     >
                       <StyleIcon
                         size={14}
-                        className={
+                        className={`mt-0.5 shrink-0 ${
                           isSelected ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
-                        }
+                        }`}
                       />
-                      <span
-                        className={`flex-1 text-sm ${isSelected ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-slate-700 dark:text-slate-300'}`}
-                      >
-                        {t(style.labelKey)}
-                      </span>
-                      {isSelected && <Check size={14} className="text-primary-500 shrink-0" />}
+                      <div className="flex-1 min-w-0">
+                        <span
+                          className={`block text-sm ${isSelected ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-slate-700 dark:text-slate-300'}`}
+                        >
+                          {t(style.labelKey)}
+                        </span>
+                        <span className="block text-[10px] text-slate-400 dark:text-slate-500 leading-tight mt-0.5">
+                          {t(style.descKey)}
+                        </span>
+                      </div>
+                      {isSelected && (
+                        <Check size={14} className="text-primary-500 shrink-0 mt-0.5" />
+                      )}
                     </button>
                   );
                 })}
+              </div>
+            )}
+          </div>
+
+          {/* Custom Instructions Section */}
+          <div className="my-2 border-t border-slate-200 dark:border-navy-700" />
+          <div className="px-3 py-1">
+            <button
+              onClick={() => setShowCustomInstructions(!showCustomInstructions)}
+              className="w-full flex items-center gap-3 py-2 text-left"
+            >
+              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-navy-700">
+                <Settings size={14} className="text-slate-400 dark:text-slate-500" />
+              </div>
+              <div className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t('aiChat.menu.customInstructions', 'Moje instrukcje')}
+              </div>
+              <ChevronRight
+                size={14}
+                className={`text-slate-400 shrink-0 transition-transform ${showCustomInstructions ? 'rotate-90' : ''}`}
+              />
+            </button>
+            {showCustomInstructions && (
+              <div className="mt-1 mb-2">
+                <textarea
+                  value={customInstructions}
+                  onChange={(e) => setCustomInstructions(e.target.value.slice(0, 1000))}
+                  placeholder={t(
+                    'aiChat.menu.customInstructionsPlaceholder',
+                    'np. "Zawsze odpowiadaj po polsku", "Preferuję tabele nad tekstem", "Jestem CTO w firmie produkcyjnej"'
+                  )}
+                  className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-navy-700 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                  rows={3}
+                />
+                <div className="flex items-center justify-between mt-1.5">
+                  <span className="text-[10px] text-slate-400">
+                    {customInstructions.length}/1000
+                  </span>
+                  <button
+                    onClick={handleSaveInstructions}
+                    disabled={isSavingInstructions}
+                    className="px-3 py-1 text-xs font-medium bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white rounded-lg transition-colors"
+                  >
+                    {isSavingInstructions
+                      ? t('common.saving', 'Zapisuję...')
+                      : t('common.save', 'Zapisz')}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -541,6 +587,62 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                             </option>
                           ))}
                       </select>
+                    </div>
+
+                    {/* C7.2: Voice style presets */}
+                    <div>
+                      <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+                        {t('aiChat.menu.voiceStyle', 'Voice style')}
+                      </label>
+                      <div className="grid grid-cols-2 gap-1">
+                        {[
+                          {
+                            id: 'formal',
+                            label: t('aiChat.menu.voiceFormal', 'Formal'),
+                            rate: 0.9,
+                            pitch: 0.9,
+                          },
+                          {
+                            id: 'normal',
+                            label: t('aiChat.menu.voiceNormal', 'Normal'),
+                            rate: 1.0,
+                            pitch: 1.0,
+                          },
+                          {
+                            id: 'cheerful',
+                            label: t('aiChat.menu.voiceCheerful', 'Cheerful'),
+                            rate: 1.1,
+                            pitch: 1.15,
+                          },
+                          {
+                            id: 'calm',
+                            label: t('aiChat.menu.voiceCalm', 'Calm'),
+                            rate: 0.85,
+                            pitch: 0.95,
+                          },
+                        ].map((style) => {
+                          const isActive = (ttsRate ?? 1) === style.rate;
+                          return (
+                            <button
+                              key={style.id}
+                              onClick={() => {
+                                setAIConfig({ ttsRate: style.rate, ttsPitch: style.pitch } as any);
+                                toast.success(`${style.label} voice style`, {
+                                  duration: 1200,
+                                  icon: '🎙️',
+                                });
+                              }}
+                              className={`px-2 py-1.5 text-xs rounded-lg border transition-colors ${
+                                isActive
+                                  ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400 font-medium'
+                                  : 'bg-slate-50 dark:bg-navy-700 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-600'
+                              }`}
+                            >
+                              {style.label}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     {/* Test button */}

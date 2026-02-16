@@ -463,7 +463,7 @@ export class InvitationServiceClass {
         throw new Error('You are already a member of this organization');
       }
       throw new Error(
-        'User with this email already exists. Multi-organization support coming soon.'
+        'User with this email already exists. Multi-organization support is not yet available.'
       );
     }
 

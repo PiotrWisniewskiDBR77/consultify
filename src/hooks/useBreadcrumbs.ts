@@ -1,7 +1,27 @@
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
+
+// Admin section titles mapping
+const ADMIN_SECTION_TITLES: Record<string, string> = {
+  organization: 'Strategic Profile',
+  branding: 'Branding',
+  billing: 'Plans',
+  payment: 'Payment',
+  tax: 'Tax',
+  alerts: 'Alerts',
+  security: 'Security',
+  governance: 'Governance',
+  audit: 'Audit',
+  'report-creator': 'Report Templates',
+  'initiative-templates': 'Initiative Templates',
+  'initiative-sections': 'Section Library',
+  integrations: 'Integrations',
+  api: 'API',
+  feedback: 'Feedback',
+};
 
 /**
  * Hook that returns breadcrumbs for the current view.
@@ -22,6 +42,7 @@ import { AppView } from '../types';
 export const useBreadcrumbs = () => {
   const { t } = useTranslation();
   const { currentView } = useAppStore();
+  const location = useLocation();
 
   // Default values
   let section = t('sidebar.dashboard', 'Dashboard');
@@ -196,9 +217,15 @@ export const useBreadcrumbs = () => {
   // =====================================================
   // ADMIN VIEWS
   // =====================================================
-  else if (viewParts.includes('ADMIN')) {
-    section = t('sidebar.adminPanel', 'Admin');
-    if (currentView === AppView.ADMIN_USERS) sub = t('common.users', 'Users');
+  else if (viewParts.includes('ADMIN') || location.pathname.startsWith('/admin')) {
+    section = t('sidebar.adminPanel', 'Admin Panel');
+
+    // Check URL tab parameter for AdminSettingsModule sections
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam && ADMIN_SECTION_TITLES[tabParam]) {
+      sub = ADMIN_SECTION_TITLES[tabParam];
+    } else if (currentView === AppView.ADMIN_USERS) sub = t('common.users', 'Users');
     else if (currentView === AppView.ADMIN_PROJECTS) sub = t('common.projects', 'Projects');
     else if (currentView === AppView.ADMIN_LLM) sub = 'LLM';
     else if (currentView === AppView.ADMIN_KNOWLEDGE) sub = t('sidebar.knowledge', 'Knowledge');
@@ -212,7 +239,7 @@ export const useBreadcrumbs = () => {
     else if (currentView === AppView.ADMIN_WORKSPACE) sub = t('common.workspace', 'Workspace');
     else if (currentView === AppView.ADMIN_AI) sub = 'AI';
     else if (currentView === AppView.ADMIN_SECURITY) sub = t('settings.security', 'Security');
-    else sub = '';
+    else sub = 'Strategic Profile'; // Default to first section
   }
   // =====================================================
   // SETTINGS VIEWS

@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
@@ -42,6 +43,7 @@ import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { Api } from '@/services/api';
 import { getStatusActions, InitiativeStatus } from '@/types/initiative';
 import { cn } from '@/utils/cn';
+import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 
 // ============================================
 // Types
@@ -704,6 +706,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
   onRefresh,
   onGenerateInitiatives,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { isEnabled } = useFeatureFlags();
   const wizardEnabled = isEnabled('assessmentInitiativesWizard');
@@ -1334,7 +1337,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
             >
               <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
                 <div className="text-base font-semibold text-navy-900 dark:text-white">
-                  New initiative (draft)
+                  {t('initiatives.form.newInitiative')} (draft)
                 </div>
                 <button
                   onClick={() => setShowManualModal(false)}
@@ -1346,67 +1349,67 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               <div className="p-5 space-y-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                    Title
+                    {t('initiatives.form.title')}
                   </label>
                   <input
                     value={manualTitle}
                     onChange={(e) => setManualTitle(e.target.value)}
                     className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
-                    placeholder="Initiative title…"
+                    placeholder={t('initiatives.form.titlePlaceholder')}
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                    Description (optional)
+                    {t('initiatives.form.descriptionOptional')}
                   </label>
                   <textarea
                     value={manualDescription}
                     onChange={(e) => setManualDescription(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                     rows={4}
-                    placeholder="Short description…"
+                    placeholder={t('initiatives.form.summaryPlaceholder')}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                      Priority
+                      {t('initiatives.form.priority')}
                     </label>
                     <select
                       value={manualPriority}
                       onChange={(e) => setManualPriority(e.target.value as any)}
                       className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                     >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="critical">Critical</option>
+                      <option value="low">{t('initiatives.priority.low')}</option>
+                      <option value="medium">{t('initiatives.priority.medium')}</option>
+                      <option value="high">{t('initiatives.priority.high')}</option>
+                      <option value="critical">{t('initiatives.priority.critical')}</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                      Risk
+                      {t('initiatives.form.risk')}
                     </label>
                     <select
                       value={manualRisk}
                       onChange={(e) => setManualRisk(e.target.value as any)}
                       className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                     >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
+                      <option value="low">{t('initiatives.risk.low')}</option>
+                      <option value="medium">{t('initiatives.risk.medium')}</option>
+                      <option value="high">{t('initiatives.risk.high')}</option>
                     </select>
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                    Category (optional)
+                    {t('initiatives.form.categoryOptional')}
                   </label>
                   <input
                     value={manualCategory}
                     onChange={(e) => setManualCategory(e.target.value)}
                     className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
-                    placeholder="e.g. Cybersecurity"
+                    placeholder={t('initiatives.form.categoryPlaceholder')}
                   />
                 </div>
               </div>
@@ -1415,15 +1418,43 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   onClick={() => setShowManualModal(false)}
                   className="h-10 px-4 rounded-lg border border-slate-200 dark:border-navy-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
                 >
-                  Cancel
+                  {t('initiatives.form.cancel')}
                 </button>
                 <button
                   onClick={async () => {
                     const title = manualTitle.trim();
                     if (title.length < 3) {
-                      toast.error('Title is too short');
+                      toast.error(t('initiatives.form.titleTooShort'));
                       return;
                     }
+
+                    // B8.2: Check for duplicates including archived/cancelled/rejected history
+                    let allInitiativesForDupeCheck = initiatives;
+                    try {
+                      const allRes = await Api.get(
+                        `/api/assessment-workflow-v2/${assessmentId}/generated-initiatives?includeArchived=true`
+                      );
+                      if (allRes?.initiatives) allInitiativesForDupeCheck = allRes.initiatives;
+                    } catch {
+                      /* fallback to current initiatives */
+                    }
+                    const duplicateName = checkDuplicateInitiative(
+                      title,
+                      allInitiativesForDupeCheck
+                    );
+                    if (duplicateName) {
+                      const shouldProceed = window.confirm(
+                        `${t('initiatives.form.duplicateWarning', { name: duplicateName })}\n\n${t('initiatives.form.duplicateWarningDesc')}\n\n${t('common.confirm', 'Do you want to proceed anyway?')}`
+                      );
+                      if (!shouldProceed) {
+                        return;
+                      }
+                      // Show warning toast but allow proceeding
+                      toast.error(t('initiatives.form.duplicateWarning', { name: duplicateName }), {
+                        duration: 5000,
+                      });
+                    }
+
                     try {
                       await handleCreateManualInitiative({
                         title,
@@ -1438,14 +1469,14 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       setManualCategory('');
                       setManualPriority('medium');
                       setManualRisk('medium');
-                      toast.success('Initiative created');
+                      toast.success(t('initiatives.form.initiativeCreated'));
                     } catch (e: any) {
-                      toast.error(e?.message || 'Failed to create initiative');
+                      toast.error(e?.message || t('initiatives.form.createFailed'));
                     }
                   }}
                   className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold"
                 >
-                  Create
+                  {t('initiatives.form.create')}
                 </button>
               </div>
             </motion.div>

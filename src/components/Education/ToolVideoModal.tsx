@@ -110,7 +110,7 @@ export const ToolVideoModal: React.FC<ToolVideoModalProps> = ({
                   <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mb-4">
                     <Play size={32} className="text-white/60 ml-1" />
                   </div>
-                  <p className="text-white/60 text-lg font-medium mb-2">Video Coming Soon</p>
+                  <p className="text-white/60 text-lg font-medium mb-2">Video not available</p>
                   <p className="text-white/40 text-sm max-w-md text-center px-4">
                     We're preparing an in-depth walkthrough of this tool. In the meantime, try it
                     yourself!

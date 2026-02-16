@@ -41,12 +41,8 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
         const data = await res.json();
         setLocations(data || []);
       } else {
-        // Fallback - create mock locations if endpoint doesn't exist
-        setLocations([
-          { id: 'all', name: 'All Locations' },
-          { id: 'hq', name: 'Headquarters' },
-          { id: 'remote', name: 'Remote' },
-        ]);
+        // Fallback - only keep the default "All" option
+        setLocations([{ id: 'all', name: 'All Locations' }]);
       }
     } catch (err) {
       // Fallback data

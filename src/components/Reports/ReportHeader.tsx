@@ -30,8 +30,10 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 
 interface ReportHeaderProps {
+  reportId?: string;
   name: string;
   status: 'DRAFT' | 'FINAL' | 'APPROVED' | 'ARCHIVED';
   organizationName?: string;
@@ -94,6 +96,7 @@ const STATUS_CONFIG: Record<
 };
 
 export const ReportHeader: React.FC<ReportHeaderProps> = ({
+  reportId,
   name,
   status,
   organizationName,
@@ -155,6 +158,15 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                 <h1 className="text-xl font-bold text-navy-900 dark:text-white truncate">
                   {name || t('reports.untitledReport', 'Untitled Report')}
                 </h1>
+                {reportId && (
+                  <ArtifactPermalinkButton
+                    artifactType="report"
+                    artifactId={reportId}
+                    isPolish={isPolish}
+                    size={14}
+                    className="p-1"
+                  />
+                )}
 
                 {/* Status badge */}
                 <span

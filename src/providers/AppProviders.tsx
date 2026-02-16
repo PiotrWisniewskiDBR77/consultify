@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -9,6 +9,49 @@ import { AccessPolicyProvider } from '../contexts/AccessPolicyContext';
 import { AIProvider } from '../contexts/AIContext';
 import { HelpProvider } from '../contexts/HelpContext';
 import { TrialProvider } from '../contexts/TrialContext';
+import { useAppStore } from '../store/useAppStore';
+
+/**
+ * ThemeSync - Keeps the DOM `dark` class in sync with the Zustand theme state.
+ * Uses useLayoutEffect to prevent visual flicker on theme changes.
+ */
+const ThemeSync: React.FC = () => {
+  const theme = useAppStore((s) => s.theme);
+
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else if (theme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (prefersDark) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [theme]);
+
+  // Also listen for system preference changes when theme is 'system'
+  React.useEffect(() => {
+    if (theme !== 'system') return;
+
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, [theme]);
+
+  return null;
+};
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -22,6 +65,7 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
 
   return (
     <ErrorBoundary>
+      <ThemeSync />
       <BrowserRouter>
         <AutoSaveProvider>
           <TrialProvider>

@@ -69,12 +69,13 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
   const handleInitialRating = (r: 'positive' | 'negative') => {
     setRating(r);
 
-    // For positive feedback, submit immediately but show option for details
+    // C8.1 / C8.2: Both positive and negative feedback show detail options
     if (r === 'positive') {
+      // C8.2: For positive feedback, submit immediately but show optional "what was good" form
       submitFeedback(r);
-      setShowDetails(false);
+      setShowDetails(true);
     } else {
-      // For negative, show detailed options
+      // C8.1: For negative, show detailed options to understand what went wrong
       setShowDetails(true);
     }
   };
@@ -191,13 +192,15 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
     );
   }
 
-  // Detailed feedback form (after negative rating)
+  // Detailed feedback form (after positive or negative rating)
   return (
     <div className="py-2 space-y-2 animate-fade-in">
-      {/* Header */}
+      {/* Header — C8.1/C8.2: context-aware header */}
       <div className="flex items-center justify-between">
         <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-          {t('aiChat.feedback.helpUsImprove', 'Pomóż nam się poprawić')}
+          {rating === 'positive'
+            ? t('aiChat.feedback.whatWasGood', 'Co było dobre? (opcjonalnie)')
+            : t('aiChat.feedback.helpUsImprove', 'Pomóż nam się poprawić')}
         </span>
         <button
           onClick={() => {

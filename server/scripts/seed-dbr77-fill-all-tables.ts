@@ -524,9 +524,10 @@ async function seedKeyDbr77Data(
   // If you really want extra fake assessments, set SEED_EXTRA_ASSESSMENTS=true.
   if (process.env.SEED_EXTRA_ASSESSMENTS === 'true') {
     try {
-      const aCount = await db.get(`SELECT COUNT(*) as c FROM assessments WHERE organization_id = ?`, [
-        anchors.orgId,
-      ]);
+      const aCount = await db.get(
+        `SELECT COUNT(*) as c FROM assessments WHERE organization_id = ?`,
+        [anchors.orgId]
+      );
       const c = Number(aCount?.c || 0);
       if (c < 8) {
         log.warn(
@@ -536,6 +537,159 @@ async function seedKeyDbr77Data(
     } catch {
       // ignore
     }
+  }
+}
+
+async function seedReportBuilderBlockLibrary(
+  db: any,
+  anchors: { orgId: string; userId: string; projectId: string }
+) {
+  // Seed a small, curated set of "consulting-grade" reusable blocks as SYSTEM blocks.
+  // These are returned by GET /api/report-builder/block-types for all orgs (organization_id NULL).
+  try {
+    // If table is missing (older DB), skip silently.
+    const exists = await db.get(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name='report_builder_block_types' LIMIT 1`,
+      []
+    );
+    if (!exists) return;
+
+    const rows = [
+      {
+        id: 'consulting_takeaway',
+        name: 'Key Takeaway (Slide headline)',
+        description: 'One-sentence key message in consulting style (use as slide headline).',
+        renderKind: 'callout',
+        sourceTypes: ['ASSESSMENT', 'INTERVIEW', 'TOOL', 'INITIATIVE'],
+        promptTemplate:
+          'Write a single, punchy, board-ready takeaway sentence. Use consulting tone. No fluff.',
+        inputSchema: null,
+        defaultLength: 'short',
+        defaultLanguage: 'business',
+      },
+      {
+        id: 'consulting_implications',
+        name: 'Implications / So what',
+        description: '3-6 bullets explaining implications and what it means for executives.',
+        renderKind: 'markdown',
+        sourceTypes: ['ASSESSMENT', 'INTERVIEW', 'TOOL', 'INITIATIVE'],
+        promptTemplate:
+          'Write 3-6 concise bullets: implications, risks, and why it matters. Executive tone. Each bullet starts with a verb.',
+        inputSchema: null,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+      },
+      {
+        id: 'consulting_decisions',
+        name: 'Decisions needed',
+        description: 'A short list of decisions required from leadership (owner + due date).',
+        renderKind: 'table',
+        sourceTypes: ['ASSESSMENT', 'INITIATIVE', 'TOOL'],
+        promptTemplate:
+          'Provide a table of decisions needed. Columns: Decision, Owner role, Deadline, Impact.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            columns: { type: 'array', items: { type: 'string' } },
+          },
+        },
+        defaultLength: 'short',
+        defaultLanguage: 'business',
+      },
+      {
+        id: 'consulting_risks_register',
+        name: 'Risks register (top 8)',
+        description: 'Consulting-style risk register with probability/impact and mitigation.',
+        renderKind: 'table',
+        sourceTypes: ['ASSESSMENT', 'INITIATIVE', 'TOOL'],
+        promptTemplate:
+          'Create a risk register table (max 8). Columns: Risk, Probability (Low/Med/High), Impact (Low/Med/High), Mitigation, Owner role.',
+        inputSchema: null,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+      },
+      {
+        id: 'consulting_2x2',
+        name: '2x2 prioritization (Impact x Effort)',
+        description: 'A 2x2 matrix to prioritize initiatives: impact vs effort.',
+        renderKind: 'matrix',
+        sourceTypes: ['INITIATIVE', 'TOOL', 'ASSESSMENT'],
+        promptTemplate:
+          'Produce a 2x2 matrix (Impact vs Effort). Provide quadrant labels and 6-10 items placed into quadrants. Include short rationale per item.',
+        inputSchema: null,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+      },
+      {
+        id: 'consulting_benchmark_bar',
+        name: 'Benchmark bar chart (Current vs Target)',
+        description: 'Bar chart comparing current vs target (or benchmark) across dimensions.',
+        renderKind: 'chart',
+        sourceTypes: ['ASSESSMENT'],
+        promptTemplate:
+          'Prepare chart data for a bar chart: labels (dimensions) and two series: Current and Target. Also provide 3 bullet insights.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            labels: { type: 'array', items: { type: 'string' } },
+            series: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  values: { type: 'array', items: { type: 'number' } },
+                },
+              },
+            },
+          },
+        },
+        defaultLength: 'short',
+        defaultLanguage: 'business',
+      },
+      {
+        id: 'consulting_roadmap',
+        name: 'Roadmap (Phases + milestones)',
+        description: 'Phased roadmap with milestones and owners.',
+        renderKind: 'markdown',
+        sourceTypes: ['ASSESSMENT', 'INITIATIVE', 'TOOL'],
+        promptTemplate:
+          'Draft a phased roadmap (Now / Next / Later) with milestones, owners (roles), and success metrics. Keep it slide-ready.',
+        inputSchema: null,
+        defaultLength: 'medium',
+        defaultLanguage: 'business',
+      },
+    ] as const;
+
+    for (const r of rows) {
+      await db.run(
+        `
+        INSERT OR IGNORE INTO report_builder_block_types (
+          id, organization_id, name, description,
+          source_types_json, render_kind, prompt_template, input_schema_json,
+          default_length, default_language,
+          is_system, is_active,
+          created_by, created_at, updated_at
+        ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, ?, datetime('now', '-30 days'), datetime('now'))
+      `,
+        [
+          r.id,
+          r.name,
+          r.description,
+          JSON.stringify(r.sourceTypes),
+          r.renderKind,
+          r.promptTemplate,
+          r.inputSchema ? JSON.stringify(r.inputSchema) : null,
+          r.defaultLength,
+          r.defaultLanguage,
+          anchors.userId,
+        ]
+      );
+    }
+
+    log.step(`Seeded consulting block library: ${rows.length} system block types`);
+  } catch (e: any) {
+    log.warn(`Report Builder block library seeding skipped: ${e?.message || String(e)}`);
   }
 }
 
@@ -608,17 +762,7 @@ async function main() {
              id, organization_id, max_projects, max_users, max_ai_calls_per_day, max_initiatives,
              max_storage_mb, max_total_tokens, ai_roles_enabled_json, created_at, updated_at
            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '-60 days'), datetime('now'))`,
-          [
-            uuidv4(),
-            org,
-            50,
-            200,
-            500,
-            500,
-            10_000,
-            2_000_000,
-            '["ADVISOR","EXECUTOR"]',
-          ]
+          [uuidv4(), org, 50, 200, 500, 500, 10_000, 2_000_000, '["ADVISOR","EXECUTOR"]']
         );
         log.step(`Created organization_limits for ${org}`);
       }
@@ -662,6 +806,7 @@ async function main() {
 
   // Key, app-visible data first
   await seedKeyDbr77Data(db, anchors);
+  await seedReportBuilderBlockLibrary(db, anchors);
 
   // Baseline table inventory (before fill)
   const tables = await getTables(db);

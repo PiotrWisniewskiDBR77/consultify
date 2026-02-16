@@ -132,24 +132,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
       if (eventsResponse?.events) {
         setRecentEvents(eventsResponse.events);
       } else {
-        // Mock recent events
-        setRecentEvents([
-          {
-            id: '1',
-            type: 'login',
-            severity: 'info',
-            description: 'Successful login from Chrome on MacOS',
-            timestamp: new Date().toISOString(),
-            ip: '192.168.1.1',
-          },
-          {
-            id: '2',
-            type: 'password_change',
-            severity: 'info',
-            description: 'Password was changed',
-            timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
-          },
-        ]);
+        setRecentEvents([]);
       }
     } catch (error) {
       console.error('Failed to load security data:', error);

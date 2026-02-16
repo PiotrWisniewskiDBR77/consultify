@@ -54,7 +54,10 @@ interface Notification {
   type: string;
   title: string;
   message: string;
+  body?: string;
   severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  priority?: string;
+  category?: string;
   read: boolean;
   isRead?: boolean;
   readAt?: string;
@@ -63,6 +66,7 @@ interface Notification {
   relatedObjectId?: string;
   projectId?: string;
   projectName?: string;
+  data?: Record<string, unknown>;
 }
 
 interface NotificationCounts {
@@ -690,7 +694,15 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
     try {
       setLoading(true);
       const data = await Api.getNotifications();
-      setNotifications(Array.isArray(data) ? data : []);
+      // Ensure severity is properly mapped from backend response
+      const mapped = (Array.isArray(data) ? data : []).map((n: any) => ({
+        ...n,
+        severity: n.severity || 'INFO',
+        message: n.message || n.body || '',
+        isRead: n.isRead ?? (n.read === true || n.read === 1),
+        data: n.data || n.metadata || {},
+      }));
+      setNotifications(mapped);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
       toast.error('Failed to load notifications');
@@ -929,10 +941,23 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
   };
 
   // Create bulk action configuration
+  const handleBulkArchive = async () => {
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) => Api.patch(`/notifications/${id}`, { archived: true }))
+      );
+      setNotifications((prev) => prev.filter((n) => !selectedIds.has(n.id)));
+      toast.success(`${selectedIds.size} notifications archived`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error('Failed to archive notifications');
+    }
+  };
+
   const bulkActions = createNotificationBulkActions({
     onMarkRead: handleBulkMarkRead,
     onDelete: handleBulkDelete,
-    onArchive: () => toast('Archive coming soon'),
+    onArchive: handleBulkArchive,
   });
 
   // Apply table filters and exclude snoozed notifications

@@ -263,7 +263,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
                 currentDocumentId={document?.id}
                 onSelectDocument={(id) => {
                   // Would need to implement document switching
-                  toast('Document switching coming soon!');
+                  toast('Document switching is not available in this view.', { icon: 'ℹ️' });
                 }}
                 onClose={() => setShowSidebar(false)}
               />
@@ -301,7 +301,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
                 diagramType={document?.type || 'process_flow'}
                 onAddNode={(type) => {
                   // Add node logic
-                  toast('Add node via toolbar coming soon!');
+                  toast('Use the canvas context menu to add nodes.', { icon: 'ℹ️' });
                 }}
               />
             </div>

@@ -144,7 +144,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
   const fetchWebhooks = async () => {
     try {
       const response = await Api.getWebhooks();
-      const webhookList = response?.webhooks || [];
+      const webhookList = Array.isArray(response) ? response : response?.webhooks || [];
       const formatted = webhookList.map((s: any) => ({
         id: s.id,
         name: s.name,

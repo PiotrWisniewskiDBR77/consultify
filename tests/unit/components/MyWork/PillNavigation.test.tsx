@@ -30,7 +30,7 @@ describe('PillNavigation', () => {
     expect(screen.getByText('Decisions')).toBeTruthy();
     expect(screen.getByText('2')).toBeTruthy();
     expect(screen.getByText('Projects')).toBeTruthy();
-    expect(screen.getByText('Soon')).toBeTruthy();
+    expect(screen.getByText('Beta')).toBeTruthy();
   });
 
   it('calls onTabChange when a tab is clicked', () => {

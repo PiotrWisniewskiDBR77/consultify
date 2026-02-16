@@ -34,6 +34,11 @@ export interface CreateInsightInput {
   title: string;
   sessionIds: string[];
   promptType: InsightPromptType;
+  /**
+   * Optional extra instructions appended to the AI prompt.
+   * Stored inside `filters` for traceability.
+   */
+  customPrompt?: string;
   filters?: {
     templateId?: string;
     dateFrom?: string;
@@ -56,6 +61,8 @@ export interface Insight {
   sourceSessionCount: number;
   tokensUsed: number;
   generationTimeMs?: number;
+  exportedToTools?: boolean;
+  exportedToAssessment?: boolean;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -254,19 +261,28 @@ class InterviewInsightService {
     const now = new Date().toISOString();
     const id = `ii_${uuidv4()}`;
 
+    const storedFilters: Record<string, any> | undefined = (() => {
+      const base = input.filters ? { ...input.filters } : {};
+      const customPrompt = (input.customPrompt || '').trim();
+      if (customPrompt) base.customPrompt = customPrompt;
+      return Object.keys(base).length > 0 ? base : undefined;
+    })();
+
     // Create insight record
     await db.run(
       `INSERT INTO interview_insights
-       (id, organization_id, title, prompt_type, source_session_ids, filters, 
+       (id, session_id, organization_id, category, title, prompt_type, source_session_ids, filters, 
         status, source_session_count, created_by, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
+        input.sessionIds?.[0] || null,
         input.organizationId,
+        'general',
         input.title,
         input.promptType,
         JSON.stringify(input.sessionIds),
-        input.filters ? JSON.stringify(input.filters) : null,
+        storedFilters ? JSON.stringify(storedFilters) : null,
         'generating',
         input.sessionIds.length,
         input.createdBy,
@@ -276,7 +292,7 @@ class InterviewInsightService {
     );
 
     // Start async generation
-    void this.generateInsight(id, input.sessionIds, input.promptType);
+    void this.generateInsight(id, input.sessionIds, input.promptType, input.customPrompt);
 
     return this.getById(id) as Promise<Insight>;
   }
@@ -331,7 +347,11 @@ class InterviewInsightService {
     );
 
     // Restart generation
-    void this.generateInsight(id, insight.sourceSessionIds, insight.promptType);
+    const customPrompt =
+      typeof (insight.filters as any)?.customPrompt === 'string'
+        ? String((insight.filters as any).customPrompt)
+        : undefined;
+    void this.generateInsight(id, insight.sourceSessionIds, insight.promptType, customPrompt);
 
     return this.getById(id);
   }
@@ -355,7 +375,8 @@ class InterviewInsightService {
   private async generateInsight(
     insightId: string,
     sessionIds: string[],
-    promptType: InsightPromptType
+    promptType: InsightPromptType,
+    customPrompt?: string
   ): Promise<void> {
     const db = await this.getDb();
     const startTime = Date.now();
@@ -373,17 +394,32 @@ class InterviewInsightService {
 
       // Get prompt template
       const promptTemplate = PROMPT_TEMPLATES[promptType];
-      const prompt = promptTemplate.replace('{DATA}', formattedData);
+      let prompt = promptTemplate.replace('{DATA}', formattedData);
+      const extra = (customPrompt || '').trim();
+      if (extra) {
+        prompt += `\n\nAdditional instructions:\n${extra}\n`;
+      }
 
-      // Call LLM
-      const response = await llmService.callText({
+      // Call LLM (through the unified router) with a stable model selection.
+      // NOTE: `llmService.callText()` requires a `modelConfig` and messages; using `generateResponse()`
+      // keeps this service compatible with the app-wide LLM fallback chain.
+      const response = await llmService.generateResponse({
         prompt,
         temperature: 0.3,
         maxTokens: 4000,
-      } as any);
+        // "standard" resolves via LLMConfigService fallback chain.
+        model: 'standard',
+        systemPrompt:
+          'You are a senior management consultant. Write in clear, structured markdown. Be specific and actionable.',
+      });
 
-      const content = (response as any)?.text || (response as any)?.content || '';
-      const tokensUsed = (response as any)?.usage?.totalTokens || 0;
+      const content = String((response as any)?.content || (response as any)?.text || '');
+      const tokensUsed = Number(
+        (response as any)?.usage?.totalTokens ||
+          (response as any)?.usage?.total_tokens ||
+          (response as any)?.usage?.total ||
+          0
+      );
       const generationTime = Date.now() - startTime;
 
       // Update with success
@@ -422,10 +458,10 @@ class InterviewInsightService {
       `SELECT 
         s.id, s.name, s.status, s.completed_at,
         t.name as template_name, t.category as template_category,
-        u.name as respondent_name
+        COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
        FROM interview_sessions s
        LEFT JOIN interview_library_templates t ON t.id = s.template_id
-       LEFT JOIN users u ON u.id = s.user_id
+       LEFT JOIN users u ON u.id = s.owner_id
        WHERE s.id IN (${placeholders})`,
       sessionIds
     );
@@ -434,11 +470,13 @@ class InterviewInsightService {
     const sessionDataPromises = (sessions || []).map(async (session: any) => {
       const answers = await db.all<any>(
         `SELECT 
-          a.answer_text, a.answer_value,
-          q.question_text, q.category
-         FROM interview_answers a
-         JOIN interview_library_questions q ON q.id = a.question_id
-         WHERE a.session_id = ?
+          q.question_text,
+          q.category,
+          q.answer_text,
+          q.status,
+          q.confidence_score
+         FROM interview_questions q
+         WHERE q.session_id = ?
          ORDER BY q.sort_order`,
         [session.id]
       );
@@ -461,7 +499,9 @@ class InterviewInsightService {
         const answerText = session.answers
           .map(
             (a: any) =>
-              `Q: ${a.question_text}\nA: ${a.answer_text || a.answer_value || 'No answer'}`
+              `Q: ${a.question_text}\nA: ${a.answer_text || 'No answer'}${
+                a.status ? ` (status: ${a.status})` : ''
+              }${a.confidence_score ? ` (confidence: ${a.confidence_score}/5)` : ''}`
           )
           .join('\n\n');
 
@@ -483,19 +523,52 @@ ${answerText}
   // ==========================================
 
   private mapRowToInsight(row: any): Insight {
+    // Support mixed/legacy schemas:
+    // - Legacy table (from migration 295) uses `description` + `insight_type`
+    // - AI/V2 schema uses `content` + `prompt_type`
+    const promptType = (row.prompt_type || row.insight_type || 'summary') as InsightPromptType;
+    const content = row.content || row.description || undefined;
+    const sourceSessionIdsRaw = row.source_session_ids;
+    const sourceSessionIds = (() => {
+      try {
+        if (typeof sourceSessionIdsRaw === 'string' && sourceSessionIdsRaw.trim().length > 0) {
+          const parsed = JSON.parse(sourceSessionIdsRaw);
+          if (Array.isArray(parsed)) return parsed.map(String);
+        }
+      } catch {
+        /* ignore */
+      }
+      // Legacy fallback: a single session_id if present
+      if (row.session_id) return [String(row.session_id)];
+      return [];
+    })();
+
     return {
       id: row.id,
       organizationId: row.organization_id,
       title: row.title,
-      promptType: row.prompt_type as InsightPromptType,
-      sourceSessionIds: JSON.parse(row.source_session_ids || '[]'),
-      filters: row.filters ? JSON.parse(row.filters) : undefined,
-      content: row.content || undefined,
+      promptType,
+      sourceSessionIds,
+      filters: row.filters
+        ? (() => {
+            try {
+              return JSON.parse(row.filters);
+            } catch {
+              return undefined;
+            }
+          })()
+        : undefined,
+      content,
       status: row.status as InsightStatus,
       errorMessage: row.error_message || undefined,
-      sourceSessionCount: row.source_session_count || 0,
+      sourceSessionCount:
+        typeof row.source_session_count === 'number'
+          ? row.source_session_count
+          : sourceSessionIds.length,
       tokensUsed: row.tokens_used || 0,
       generationTimeMs: row.generation_time_ms || undefined,
+      exportedToTools: row.exported_to_tools === 1,
+      exportedToAssessment: row.exported_to_assessment === 1,
       createdBy: row.created_by,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

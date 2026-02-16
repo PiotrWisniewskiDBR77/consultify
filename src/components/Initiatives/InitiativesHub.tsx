@@ -5,7 +5,7 @@
  * Connected to real API endpoints
  */
 
-import { Edit2, Lightbulb, Plus, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Edit2, Lightbulb, Plus, RefreshCw, Shield } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
+import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 
 import { useAppStore } from '../../store/useAppStore';
 import { InitiativeStatus, PortfolioFilters, PortfolioInitiative } from '../../types';
@@ -28,26 +29,114 @@ import {
   ModuleHub,
   ModuleTab,
   OpenDocument,
-  StatusFilter,
+  StatusDropdown,
   ViewMode,
 } from '../shared/ModuleHub';
+// Compact side panel (replaces old 50% drawer)
+import { InitiativeCompactPanel } from './InitiativeCompactPanel';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
-// New Initiative Drawer (50% width with Open wider)
-import { InitiativeDrawer } from './InitiativeDrawer';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
+// D1.2: Complete status set — includes execution/done + archived/cancelled for restoration
 const ALLOWED_STATUSES: InitiativeStatus[] =
   MODULE_STATUSES.length > 0
     ? MODULE_STATUSES
     : [
         InitiativeStatus.DRAFT,
-        InitiativeStatus.PLANNING,
+        InitiativeStatus.PENDING_REVIEW,
         InitiativeStatus.REVIEW,
+        InitiativeStatus.PROMOTED,
+        InitiativeStatus.PLANNING,
         InitiativeStatus.APPROVED,
+        InitiativeStatus.SCHEDULED,
         InitiativeStatus.EXECUTING,
         InitiativeStatus.BLOCKED,
+        InitiativeStatus.DONE,
+        InitiativeStatus.TRACKING,
+        InitiativeStatus.CANCELLED,
+        InitiativeStatus.ARCHIVED,
       ];
+
+// D1.1: Initiative type/level — determines governance complexity
+// Downgrade blocked, upgrade possible
+export type InitiativeLevel = 'quick_win' | 'standard' | 'strategic' | 'transformation';
+
+export const INITIATIVE_LEVELS: {
+  id: InitiativeLevel;
+  label: string;
+  description: string;
+  color: string;
+  icon: string;
+}[] = [
+  {
+    id: 'quick_win',
+    label: 'Quick Win',
+    description: 'Small improvement, minimal governance. < 1 month, 1-2 people.',
+    color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/30',
+    icon: '⚡',
+  },
+  {
+    id: 'standard',
+    label: 'Standard Project',
+    description: 'Regular project with defined scope. 1-3 months, dedicated team.',
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/30',
+    icon: '📋',
+  },
+  {
+    id: 'strategic',
+    label: 'Strategic Program',
+    description: 'Cross-functional program. 3-12 months, multiple teams, executive sponsor.',
+    color: 'text-purple-500 bg-purple-500/10 border-purple-500/30',
+    icon: '🎯',
+  },
+  {
+    id: 'transformation',
+    label: 'Transformation',
+    description: 'Organization-wide change. 6-24 months, full governance, board oversight.',
+    color: 'text-amber-500 bg-amber-500/10 border-amber-500/30',
+    icon: '🚀',
+  },
+];
+
+// D3.1: Validation rules for initiative approval
+interface ApprovalValidationError {
+  field: string;
+  message: string;
+}
+
+function validateForApproval(
+  initiative: PortfolioInitiative,
+  tasks: number
+): ApprovalValidationError[] {
+  const errors: ApprovalValidationError[] = [];
+
+  // Must have at least 1 task
+  if (tasks === 0) {
+    errors.push({
+      field: 'tasks',
+      message: 'At least 1 task is required before approval',
+    });
+  }
+
+  // Must have a deadline (plannedEndDate)
+  if (!initiative.plannedEndDate) {
+    errors.push({
+      field: 'deadline',
+      message: 'A deadline (end date) is required before approval',
+    });
+  }
+
+  // Must have an assigned owner
+  if (!initiative.ownerBusiness?.id) {
+    errors.push({
+      field: 'owner',
+      message: 'A business owner must be assigned before approval',
+    });
+  }
+
+  return errors;
+}
 
 interface InitiativesHubProps {
   initialTab?: ModuleTab;
@@ -71,6 +160,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Data state
   const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
+  const [allInitiatives, setAllInitiatives] = useState<PortfolioInitiative[]>([]); // For duplicate detection
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -88,6 +178,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [newAxis, setNewAxis] = useState<
     'strategic' | 'operational' | 'transformational' | 'compliance'
   >('operational');
+  const [newLevel, setNewLevel] = useState<InitiativeLevel>('standard');
   const [newSummary, setNewSummary] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
@@ -141,6 +232,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           ALLOWED_STATUSES.includes(i.status as InitiativeStatus)
         );
         setInitiatives(allowed);
+
+        // Also fetch all initiatives (including archived/cancelled) for duplicate detection
+        // Try to fetch all initiatives without status filter
+        try {
+          const allParams = new URLSearchParams();
+          if (currentProjectId) allParams.append('projectId', currentProjectId);
+          if (searchQuery) allParams.append('search', searchQuery);
+          // Try portfolio endpoint without status filter to get all initiatives
+          const allResponse = await Api.get(`/initiatives/portfolio?${allParams.toString()}`);
+          setAllInitiatives(allResponse.initiatives || response.initiatives || []);
+        } catch {
+          // Fallback: use current initiatives
+          setAllInitiatives(response.initiatives || []);
+        }
       } catch (error: any) {
         console.error('[InitiativesHub] Fetch error:', error);
         setLoadError(
@@ -190,21 +295,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // STATUS FILTERS
   // ============================================
 
-  const statusFilters: StatusFilter[] = useMemo(() => {
-    const counts: Record<string, number> = {};
+  // Status counts for dropdown
+  const statusCounts: Record<string, number> = useMemo(() => {
+    const counts: Record<string, number> = { all: initiatives.length };
     initiatives.forEach((i) => {
       counts[i.status] = (counts[i.status] || 0) + 1;
     });
-
-    return [
-      { id: 'all', label: 'All', color: 'bg-slate-400', count: initiatives.length },
-      ...ALLOWED_STATUSES.map((status) => ({
-        id: status,
-        label: STATUS_METADATA[status].label,
-        color: STATUS_METADATA[status].dotColor,
-        count: counts[status] || 0,
-      })),
-    ];
+    return counts;
   }, [initiatives]);
 
   // Available view modes
@@ -218,12 +315,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     return [
       {
         id: 'bulk-edit',
-        label: 'Bulk edit',
+        label: t('initiatives.bulkEdit.title'),
         badge: selectedIds.size,
         disabled: selectedIds.size === 0,
         onClick: () => {
           if (selectedIds.size === 0) {
-            toast.error('Select initiatives to edit');
+            toast.error(t('initiatives.bulkEdit.title'));
             return;
           }
           setShowBulkModal(true);
@@ -286,7 +383,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         const initiative = (fromList || response?.initiative || response) as any;
 
         if (!initiative?.id) {
-          toast.error('Initiative not found');
+          toast.error(t('initiatives.toast.notFound', 'Nie znaleziono inicjatywy'));
           return;
         }
 
@@ -296,7 +393,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           handleOpenFullScreen(initiative as any);
         }
       } catch (e: any) {
-        toast.error(e?.response?.data?.error || e?.message || 'Failed to open initiative');
+        toast.error(
+          e?.response?.data?.error ||
+            e?.message ||
+            t('initiatives.toast.openFailed', 'Nie udało się otworzyć inicjatywy')
+        );
       } finally {
         // Clear only deep-link params (preserve others if any)
         const next = new URLSearchParams(searchParams);
@@ -336,33 +437,89 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     setTimeout(() => setSelectedInitiative(null), 300);
   }, []);
 
+  // D3.1: Status change with approval validation
   const handleStatusChange = useCallback(
     async (initiativeId: string, newStatus: InitiativeStatus) => {
+      // D3.1: If transitioning to APPROVED, validate critical fields
+      if (newStatus === InitiativeStatus.APPROVED) {
+        const initiative = initiatives.find((i) => i.id === initiativeId);
+        if (initiative) {
+          // Fetch task count for this initiative
+          let taskCount = 0;
+          try {
+            const tasksRes = await Api.get(`/tasks?initiativeId=${initiativeId}`);
+            const arr = Array.isArray(tasksRes) ? tasksRes : tasksRes?.tasks || [];
+            taskCount = arr.length;
+          } catch {
+            // If we can't fetch tasks, assume 0
+          }
+
+          const errors = validateForApproval(initiative, taskCount);
+          if (errors.length > 0) {
+            // Show validation errors
+            const errorMessages = errors.map((e) => e.message).join('\n• ');
+            toast.error(
+              t(
+                'initiatives.toast.cannotApproveHub',
+                'Nie można zatwierdzić inicjatywy — brakuje wymaganych pól:\n• {{errors}}',
+                { errors: errorMessages }
+              ),
+              { duration: 6000 }
+            );
+            return;
+          }
+        }
+      }
+
       try {
         await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
         setInitiatives((prev) =>
           prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus } : i))
         );
-        toast.success('Status updated');
+        toast.success(t('initiatives.toast.statusUpdated', 'Status zaktualizowany'));
       } catch (error: any) {
-        toast.error(error?.response?.data?.error || 'Failed to update status');
+        toast.error(
+          error?.response?.data?.error ||
+            t('initiatives.toast.statusUpdateFailed', 'Nie udało się zaktualizować statusu')
+        );
       }
     },
-    []
+    [initiatives]
   );
 
   const handleQuickUpdate = useCallback(
     async (initiativeId: string, updates: Partial<PortfolioInitiative>) => {
+      // D1.2: Block level downgrade
+      if ((updates as any).level) {
+        const LEVEL_ORDER: Record<string, number> = {
+          quick_win: 0,
+          standard: 1,
+          strategic: 2,
+          transformation: 3,
+        };
+        const current = initiatives.find((i) => i.id === initiativeId);
+        const currentLevel = LEVEL_ORDER[(current as any)?.level || 'standard'] ?? 1;
+        const newLevel = LEVEL_ORDER[(updates as any).level] ?? 1;
+        if (newLevel < currentLevel) {
+          toast.error(
+            t(
+              'initiatives.toast.downgradeBlocked',
+              'Obniżenie poziomu jest zablokowane. Można jedynie podwyższyć poziom inicjatywy.'
+            )
+          );
+          return;
+        }
+      }
       try {
         await Api.patch(`/initiatives/${initiativeId}/quick-update`, updates);
         setInitiatives((prev) =>
           prev.map((i) => (i.id === initiativeId ? { ...i, ...updates } : i))
         );
       } catch (error: any) {
-        toast.error('Failed to update');
+        toast.error(t('initiatives.toast.updateFailed', 'Nie udało się zaktualizować'));
       }
     },
-    []
+    [initiatives]
   );
 
   const handleRemoveFilter = useCallback((id: string) => {
@@ -413,9 +570,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     const failed = results.filter((r) => r.status === 'rejected').length;
 
     if (failed > 0) {
-      toast.error(`${failed} updates failed`);
+      toast.error(t('initiatives.bulkEdit.updatesFailed', { count: failed }));
     } else {
-      toast.success('Bulk update applied');
+      toast.success(t('initiatives.bulkEdit.bulkUpdateApplied'));
     }
 
     setShowBulkModal(false);
@@ -482,16 +639,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         <div className="flex items-center justify-center h-full text-slate-500">
           <div className="text-center">
             <Lightbulb className="w-12 h-12 mx-auto mb-4 text-purple-400/50" />
-            <p className="text-lg text-white">No Initiatives Yet</p>
-            <p className="text-sm text-slate-400 mt-2">
-              Create your first initiative to get started
-            </p>
+            <p className="text-lg text-white">{t('initiatives.empty.title')}</p>
+            <p className="text-sm text-slate-400 mt-2">{t('initiatives.empty.description')}</p>
             <button
               onClick={() => setShowNewModal(true)}
               className="mt-6 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg text-sm font-medium hover:from-primary-400 hover:to-primary-500 transition-all"
             >
               <Plus size={14} className="inline mr-2" />
-              New Initiative
+              {t('initiatives.form.newInitiative')}
             </button>
           </div>
         </div>
@@ -582,6 +737,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // MAIN RENDER
   // ============================================
 
+  // Status dropdown for right-side controls (matches AssessmentHub pattern)
+  const statusDropdownControl = (
+    <StatusDropdown
+      context="initiatives"
+      value={activeStatusFilter || 'all'}
+      onChange={(status) => setActiveStatusFilter(status === 'all' ? null : status)}
+      counts={statusCounts}
+      size="sm"
+    />
+  );
+
   return (
     <div className="h-full" data-testid="initiatives-hub">
       <ModuleHub
@@ -601,18 +767,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         onNewItem={() => setShowNewModal(true)}
-        newItemLabel="+ New Initiative"
+        newItemLabel={`+ ${t('initiatives.form.newInitiative')}`}
         filterActions={filterActions}
-        statusFilters={statusFilters}
-        activeStatusFilter={activeStatusFilter}
-        onStatusFilterChange={(id) => setActiveStatusFilter(id === 'all' ? null : id)}
+        rightControls={statusDropdownControl}
         availableViewModes={availableViewModes}
       >
         <div className="flex-1 overflow-hidden">{renderContent()}</div>
       </ModuleHub>
 
-      {/* Initiative Drawer (50% width) with Open Wider functionality */}
-      <InitiativeDrawer
+      {/* Initiative Compact Side Panel */}
+      <InitiativeCompactPanel
         initiative={selectedInitiative}
         isOpen={isSidePanelOpen}
         onClose={handleCloseSidePanel}
@@ -622,70 +786,157 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setSelectedInitiative(updated);
           }
         }}
-        onOpenWider={handleOpenFullScreen}
+        onOpenFull={handleOpenFullScreen}
         users={users}
       />
 
-      {/* New Initiative Modal */}
+      {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold text-white mb-4">Create New Initiative</h2>
+          <div className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-semibold text-white mb-4">
+              {t('initiatives.form.createNew')}
+            </h2>
             <div className="space-y-4">
+              {/* Title */}
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Title *</label>
+                <label className="block text-xs text-slate-400 mb-1">
+                  {t('initiatives.form.titleRequired')}
+                </label>
                 <input
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white"
-                  placeholder="e.g. Submit compliance documentation"
+                  placeholder={t('initiatives.form.titlePlaceholder')}
                   autoFocus
                 />
               </div>
+
+              {/* D1.1: Initiative Type/Level selector */}
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Axis</label>
+                <label className="block text-xs text-slate-400 mb-2">
+                  Initiative Type / Level *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {INITIATIVE_LEVELS.map((level) => (
+                    <button
+                      key={level.id}
+                      type="button"
+                      onClick={() => setNewLevel(level.id)}
+                      className={`
+                        relative p-3 rounded-lg border text-left transition-all
+                        ${
+                          newLevel === level.id
+                            ? `${level.color} border-current ring-1 ring-current/30`
+                            : 'bg-navy-950 border-navy-700 text-slate-400 hover:border-slate-500'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-base">{level.icon}</span>
+                        <span className="text-xs font-semibold">{level.label}</span>
+                      </div>
+                      <p className="text-[10px] leading-tight opacity-70">{level.description}</p>
+                      {newLevel === level.id && (
+                        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-current" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Axis */}
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">
+                  {t('initiatives.form.axis')}
+                </label>
                 <select
                   value={newAxis}
                   onChange={(e) => setNewAxis(e.target.value as any)}
                   className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white"
                 >
-                  <option value="operational">Operational</option>
-                  <option value="strategic">Strategic</option>
-                  <option value="transformational">Transformational</option>
-                  <option value="compliance">Compliance</option>
+                  <option value="operational">{t('initiatives.axis.operational')}</option>
+                  <option value="strategic">{t('initiatives.axis.strategic')}</option>
+                  <option value="transformational">{t('initiatives.axis.transformational')}</option>
+                  <option value="compliance">{t('initiatives.axis.compliance')}</option>
                 </select>
               </div>
+
+              {/* Summary */}
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Summary</label>
+                <label className="block text-xs text-slate-400 mb-1">
+                  {t('initiatives.form.summary')}
+                </label>
                 <textarea
                   value={newSummary}
                   onChange={(e) => setNewSummary(e.target.value)}
                   className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white resize-none"
                   rows={3}
-                  placeholder="Short problem/goal statement…"
+                  placeholder={t('initiatives.form.summaryPlaceholder')}
                 />
               </div>
+
+              {/* D1.1: Level info callout */}
+              {newLevel && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-navy-800 border border-navy-600">
+                  <Shield size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-slate-400">
+                    <span className="font-medium text-slate-300">
+                      {INITIATIVE_LEVELS.find((l) => l.id === newLevel)?.label}
+                    </span>
+                    {' — '}
+                    {newLevel === 'quick_win' && 'Minimal governance. Can be self-approved.'}
+                    {newLevel === 'standard' &&
+                      'Standard approval flow. Requires owner + deadline + tasks.'}
+                    {newLevel === 'strategic' &&
+                      'Executive approval required. Full charter + RAID analysis.'}
+                    {newLevel === 'transformation' &&
+                      'Board-level governance. Full charter, steering committee, gate reviews.'}
+                    <br />
+                    <span className="text-slate-500 italic">
+                      Level can be upgraded later but not downgraded.
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
             <button
               disabled={isCreating}
               onClick={async () => {
                 if (!newTitle.trim()) {
-                  toast.error('Title is required');
+                  toast.error(t('initiatives.form.titleRequiredError'));
                   return;
                 }
+
+                // Check for duplicates
+                const duplicateName = checkDuplicateInitiative(newTitle.trim(), allInitiatives);
+                if (duplicateName) {
+                  const shouldProceed = window.confirm(
+                    `${t('initiatives.form.duplicateWarning', { name: duplicateName })}\n\n${t('initiatives.form.duplicateWarningDesc')}\n\n${t('common.confirm', 'Do you want to proceed anyway?')}`
+                  );
+                  if (!shouldProceed) {
+                    return;
+                  }
+                  toast.error(t('initiatives.form.duplicateWarning', { name: duplicateName }), {
+                    duration: 5000,
+                  });
+                }
+
                 try {
                   setIsCreating(true);
                   const created = await Api.post('/initiatives', {
                     projectId: currentProjectId || undefined,
                     title: newTitle.trim(),
                     axis: newAxis,
+                    level: newLevel, // D1.1: send initiative level
                     summary: newSummary.trim() || undefined,
                     status: 'DRAFT',
                   });
-                  toast.success('Initiative created');
+                  toast.success(t('initiatives.form.initiativeCreated'));
                   setShowNewModal(false);
                   setNewTitle('');
                   setNewSummary('');
+                  setNewLevel('standard');
                   // Refresh list and open quick preview for immediate follow-up
                   fetchData(true);
                   const createdId = created?.id || created?.initiative?.id;
@@ -700,7 +951,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   }
                 } catch (e: any) {
                   toast.error(
-                    e?.response?.data?.error || e?.message || 'Failed to create initiative'
+                    e?.response?.data?.error || e?.message || t('initiatives.form.createFailed')
                   );
                 } finally {
                   setIsCreating(false);
@@ -708,14 +959,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               }}
               className="w-full mt-6 py-2 text-sm text-white bg-primary-600 hover:bg-primary-500 transition-colors rounded-lg disabled:opacity-50"
             >
-              {isCreating ? 'Creating…' : 'Create'}
+              {isCreating ? t('initiatives.form.creating') : t('initiatives.form.create')}
             </button>
             <button
               disabled={isCreating}
               onClick={() => setShowNewModal(false)}
               className="w-full mt-2 py-2 text-sm text-slate-400 hover:text-white transition-colors border border-navy-600 rounded-lg hover:bg-navy-800 disabled:opacity-50"
             >
-              Cancel
+              {t('initiatives.form.cancel')}
             </button>
           </div>
         </div>
@@ -724,17 +975,23 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       {showBulkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-lg">
-            <h2 className="text-lg font-semibold text-white mb-4">Bulk edit initiatives</h2>
-            <p className="text-sm text-slate-400 mb-4">{selectedIds.size} initiatives selected</p>
+            <h2 className="text-lg font-semibold text-white mb-4">
+              {t('initiatives.bulkEdit.title')}
+            </h2>
+            <p className="text-sm text-slate-400 mb-4">
+              {t('initiatives.bulkEdit.selectedCount', { count: selectedIds.size })}
+            </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Status</label>
+                <label className="block text-xs text-slate-400 mb-1">
+                  {t('initiatives.bulkEdit.status')}
+                </label>
                 <select
                   value={bulkStatus}
                   onChange={(e) => setBulkStatus(e.target.value as InitiativeStatus)}
                   className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white"
                 >
-                  <option value="">No change</option>
+                  <option value="">{t('initiatives.bulkEdit.noChange')}</option>
                   {ALLOWED_STATUSES.map((s) => (
                     <option key={s} value={s}>
                       {STATUS_METADATA[s].label}
@@ -743,27 +1000,31 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Priority</label>
+                <label className="block text-xs text-slate-400 mb-1">
+                  {t('initiatives.bulkEdit.priority')}
+                </label>
                 <select
                   value={bulkPriority}
                   onChange={(e) => setBulkPriority(e.target.value as any)}
                   className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white"
                 >
-                  <option value="">No change</option>
-                  <option value="CRITICAL">Critical</option>
-                  <option value="HIGH">High</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="LOW">Low</option>
+                  <option value="">{t('initiatives.bulkEdit.noChange')}</option>
+                  <option value="CRITICAL">{t('initiatives.priority.critical')}</option>
+                  <option value="HIGH">{t('initiatives.priority.high')}</option>
+                  <option value="MEDIUM">{t('initiatives.priority.medium')}</option>
+                  <option value="LOW">{t('initiatives.priority.low')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Business Owner</label>
+                <label className="block text-xs text-slate-400 mb-1">
+                  {t('initiatives.bulkEdit.businessOwner')}
+                </label>
                 <select
                   value={bulkOwnerBusinessId}
                   onChange={(e) => setBulkOwnerBusinessId(e.target.value)}
                   className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white"
                 >
-                  <option value="">No change</option>
+                  <option value="">{t('initiatives.bulkEdit.noChange')}</option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.firstName} {user.lastName}
@@ -772,13 +1033,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Execution Owner</label>
+                <label className="block text-xs text-slate-400 mb-1">
+                  {t('initiatives.bulkEdit.executionOwner')}
+                </label>
                 <select
                   value={bulkOwnerExecutionId}
                   onChange={(e) => setBulkOwnerExecutionId(e.target.value)}
                   className="w-full px-3 py-2 bg-navy-950 border border-navy-700 rounded-lg text-sm text-white"
                 >
-                  <option value="">No change</option>
+                  <option value="">{t('initiatives.bulkEdit.noChange')}</option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.firstName} {user.lastName}
@@ -792,13 +1055,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 onClick={() => setShowBulkModal(false)}
                 className="px-4 py-2 text-sm text-slate-400 hover:text-white"
               >
-                Cancel
+                {t('initiatives.form.cancel')}
               </button>
               <button
                 onClick={handleBulkApply}
                 className="px-4 py-2 text-sm text-white bg-primary-600 hover:bg-primary-500 rounded-lg"
               >
-                Apply changes
+                {t('initiatives.bulkEdit.applyChanges')}
               </button>
             </div>
           </div>

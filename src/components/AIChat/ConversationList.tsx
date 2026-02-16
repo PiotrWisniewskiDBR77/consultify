@@ -4,14 +4,19 @@
  * Displays grouped conversation history with time-based sections.
  * Groups: Pinned → Today → Yesterday → This Week → Last Month → Older → Archived
  *
- * @version 2.0.0
+ * C3.1: Each group shows max MAX_VISIBLE_PER_GROUP items with "Show more" toggle.
+ *
+ * @version 2.1.0
  */
 
-import { Archive, Clock, Pin, Star } from 'lucide-react';
-import React from 'react';
+import { Archive, ChevronDown, ChevronRight, Clock, Pin, Star } from 'lucide-react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ConversationItem } from './ConversationItem';
+
+/** Max conversations visible per time-group before "Show more" */
+const MAX_VISIBLE_PER_GROUP = 5;
 
 interface ConversationListProps {
   groups: Record<string, any[]>;
@@ -31,6 +36,11 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   onSelect,
 }) => {
   const { t } = useTranslation();
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+
+  const toggleGroup = (key: string) => {
+    setExpandedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   // Map of group keys to config with i18n labels and icons
   const groupConfig: Record<string, GroupConfig> = {
@@ -74,6 +84,11 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
         const config = groupConfig[groupKey] || { label: groupKey };
         const Icon = config.icon;
+        const isExpanded = expandedGroups[groupKey] ?? false;
+        const hasMore = conversations.length > MAX_VISIBLE_PER_GROUP;
+        const visibleConversations = isExpanded
+          ? conversations
+          : conversations.slice(0, MAX_VISIBLE_PER_GROUP);
 
         return (
           <div key={groupKey} className="space-y-1">
@@ -95,7 +110,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
             {/* Conversations */}
             <div className="space-y-0.5">
-              {conversations.map((conv) => (
+              {visibleConversations.map((conv) => (
                 <ConversationItem
                   key={conv.id}
                   conversation={conv}
@@ -104,6 +119,27 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                 />
               ))}
             </div>
+
+            {/* Show more / Show less toggle */}
+            {hasMore && (
+              <button
+                onClick={() => toggleGroup(groupKey)}
+                className="w-full flex items-center justify-center gap-1.5 px-2 py-1 text-[11px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-lg transition-colors"
+              >
+                {isExpanded ? (
+                  <>
+                    <ChevronRight size={12} className="rotate-[-90deg]" />
+                    {t('aiChat.showLess', 'Show less')}
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown size={12} />
+                    {t('aiChat.showMore', 'Show more')} (
+                    {conversations.length - MAX_VISIBLE_PER_GROUP})
+                  </>
+                )}
+              </button>
+            )}
           </div>
         );
       })}

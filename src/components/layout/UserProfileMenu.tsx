@@ -62,6 +62,9 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
   if (!currentUser) return null;
 
+  const initials =
+    `${currentUser.firstName?.[0] || ''}${currentUser.lastName?.[0] || ''}`.toUpperCase();
+
   return (
     <div className={`relative ${className}`} ref={menuRef}>
       <button
@@ -79,13 +82,17 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
           </div>
         )}
 
-        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 flex items-center justify-center relative">
+        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 flex items-center justify-center relative overflow-hidden">
           {currentUser.avatarUrl ? (
             <img
               src={currentUser.avatarUrl}
               alt="Profile"
               className="w-full h-full rounded-full object-cover"
             />
+          ) : initials ? (
+            <div className="w-full h-full rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-[11px] font-bold text-white">
+              {initials}
+            </div>
           ) : (
             <UserCircle size={20} className="text-slate-400 dark:text-slate-500" />
           )}
@@ -105,6 +112,10 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                     alt="Profile"
                     className="w-full h-full object-cover"
                   />
+                ) : initials ? (
+                  <div className="w-full h-full rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white">
+                    {initials}
+                  </div>
                 ) : (
                   <UserCircle size={24} />
                 )}

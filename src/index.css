@@ -187,3 +187,71 @@
     @apply px-4 first:pl-0 last:pr-0;
   }
 }
+
+/* ==========================================
+ * PRINT STYLES — Public Report View
+ * ========================================== */
+
+@media print {
+  /* Hide non-printable elements */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Reset backgrounds */
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Force white backgrounds for cards */
+  .bg-white,
+  .dark\:bg-gray-800 {
+    background-color: white !important;
+  }
+
+  /* Remove shadows for print */
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl,
+  .shadow-2xl {
+    box-shadow: none !important;
+  }
+
+  /* Ensure section breaks */
+  [id^="section-"] {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Cover page full page */
+  .print\:mb-4 {
+    page-break-after: always;
+  }
+
+  /* Smaller margins for print */
+  .max-w-5xl {
+    max-width: 100% !important;
+    padding-left: 0.5cm !important;
+    padding-right: 0.5cm !important;
+  }
+
+  /* Better typography for print */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  /* Reduce heading sizes */
+  .text-3xl {
+    font-size: 22pt !important;
+  }
+  .text-xl {
+    font-size: 14pt !important;
+  }
+  .text-lg {
+    font-size: 12pt !important;
+  }
+}

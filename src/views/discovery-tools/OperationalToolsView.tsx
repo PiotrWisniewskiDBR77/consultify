@@ -284,7 +284,7 @@ export const OperationalToolsView: React.FC = () => {
               >
                 {!isImplemented && (
                   <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-slate-200 dark:bg-navy-700 text-xs text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Wkrótce' : 'Coming Soon'}
+                    {isPolish ? 'W przygotowaniu' : 'In Development'}
                   </div>
                 )}
                 <div className="flex items-start gap-4">

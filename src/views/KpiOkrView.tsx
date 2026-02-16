@@ -29,7 +29,7 @@ export const KpiOkrView: React.FC = () => {
             </div>
           </div>
 
-          {/* Coming Soon Card */}
+          {/* Module In Development Card */}
           <div className="bg-white dark:bg-navy-800 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
             <div className="p-12 text-center">
               {/* Icon */}
@@ -39,7 +39,7 @@ export const KpiOkrView: React.FC = () => {
 
               {/* Title */}
               <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-3">
-                {t('kpiOkr.comingSoon', 'Moduł KPI/OKR w przygotowaniu')}
+                {t('kpiOkr.moduleTitle', 'KPI/OKR Module')}
               </h2>
 
               {/* Description */}

@@ -2,8 +2,9 @@
 /**
  * RAIDLog
  *
- * Risks, Assumptions, Issues, Dependencies log for initiative execution.
+ * Risks, Assumptions, Issues, Decisions & Dependencies log for initiative execution.
  * Professional PMO tool for tracking project health indicators.
+ * Supports CRUD operations for all RAID item types.
  */
 
 import {
@@ -28,7 +29,7 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
 
-type RAIDType = 'RISK' | 'ASSUMPTION' | 'ISSUE' | 'DEPENDENCY';
+type RAIDType = 'RISK' | 'ASSUMPTION' | 'ISSUE' | 'DEPENDENCY' | 'DECISION';
 type RAIDStatus = 'OPEN' | 'MITIGATED' | 'REALIZED' | 'CLOSED';
 type RAIDProbability = 'LOW' | 'MEDIUM' | 'HIGH';
 type RAIDImpact = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
@@ -53,10 +54,14 @@ interface RAIDItem {
 
 interface RAIDLogProps {
   initiativeId?: string;
+  projectId?: string;
   onItemClick?: (item: RAIDItem) => void;
 }
 
-const RAID_TYPES = {
+const RAID_TYPES: Record<
+  RAIDType,
+  { label: string; icon: typeof AlertTriangle; color: string; bgColor: string }
+> = {
   RISK: {
     label: 'Risk',
     icon: AlertTriangle,
@@ -81,13 +86,20 @@ const RAID_TYPES = {
     color: 'text-purple-600 dark:text-purple-400',
     bgColor: 'bg-purple-100 dark:bg-purple-900/30',
   },
+  DECISION: {
+    label: 'Decision',
+    icon: CheckCircle2,
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+  },
 };
 
-export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, onItemClick }) => {
+export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onItemClick }) => {
   const [items, setItems] = useState<RAIDItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<RAIDType | 'ALL'>('ALL');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<RAIDItem | null>(null);
   const [newItem, setNewItem] = useState<Partial<RAIDItem>>({
     type: 'RISK',
     status: 'OPEN',
@@ -95,61 +107,21 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, onItemClick }) =
 
   useEffect(() => {
     fetchItems();
-  }, [initiativeId]);
+  }, [initiativeId, projectId]);
 
   const fetchItems = async () => {
     setIsLoading(true);
     try {
-      const url = initiativeId ? `/raid?initiativeId=${initiativeId}` : '/raid';
+      let url = '/raid';
+      const params: string[] = [];
+      if (initiativeId) params.push(`initiativeId=${initiativeId}`);
+      if (projectId) params.push(`projectId=${projectId}`);
+      if (params.length > 0) url += `?${params.join('&')}`;
       const response = await Api.get(url);
-      setItems(response.items || []);
+      setItems(Array.isArray(response) ? response : response?.items || []);
     } catch (err) {
-      console.error('[RAIDLog] Error:', err);
-      // Sample data for development
-      setItems([
-        {
-          id: '1',
-          type: 'RISK',
-          title: 'Key developer may leave',
-          description: 'Main architect considering other opportunities',
-          status: 'OPEN',
-          probability: 'MEDIUM',
-          impact: 'HIGH',
-          mitigationPlan: 'Knowledge transfer sessions scheduled',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          type: 'ISSUE',
-          title: 'API integration delayed',
-          description: 'Third-party API not available as scheduled',
-          status: 'OPEN',
-          impact: 'HIGH',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: '3',
-          type: 'DEPENDENCY',
-          title: 'Requires Finance approval',
-          description: 'Budget allocation pending CFO sign-off',
-          status: 'OPEN',
-          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: '4',
-          type: 'ASSUMPTION',
-          title: 'User adoption rate > 60%',
-          description: 'Assuming users will adopt the new system within 3 months',
-          status: 'OPEN',
-          probability: 'HIGH',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ]);
+      console.error('[RAIDLog] Error fetching RAID items:', err);
+      setItems([]);
     } finally {
       setIsLoading(false);
     }
@@ -165,6 +137,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, onItemClick }) =
       await Api.post('/raid', {
         ...newItem,
         initiativeId,
+        projectId,
       });
       toast.success('Item added');
       setShowAddModal(false);
@@ -187,12 +160,41 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, onItemClick }) =
 
   const filteredItems = items.filter((item) => activeTab === 'ALL' || item.type === activeTab);
 
+  const handleDeleteItem = async (itemId: string) => {
+    try {
+      await Api.delete(`/raid/${itemId}`);
+      setItems((prev) => prev.filter((i) => i.id !== itemId));
+      toast.success('Item deleted');
+    } catch {
+      toast.error('Failed to delete item');
+    }
+  };
+
+  const handleEditItem = async () => {
+    if (!editingItem) return;
+    try {
+      await Api.put(`/raid/${editingItem.id}`, {
+        title: editingItem.title,
+        description: editingItem.description,
+        status: editingItem.status,
+        severity: editingItem.impact || editingItem.probability,
+        dueDate: editingItem.dueDate,
+      });
+      setItems((prev) => prev.map((i) => (i.id === editingItem.id ? editingItem : i)));
+      setEditingItem(null);
+      toast.success('Item updated');
+    } catch {
+      toast.error('Failed to update item');
+    }
+  };
+
   const getCounts = () => ({
     ALL: items.filter((i) => i.status === 'OPEN').length,
     RISK: items.filter((i) => i.type === 'RISK' && i.status === 'OPEN').length,
     ISSUE: items.filter((i) => i.type === 'ISSUE' && i.status === 'OPEN').length,
     ASSUMPTION: items.filter((i) => i.type === 'ASSUMPTION' && i.status === 'OPEN').length,
     DEPENDENCY: items.filter((i) => i.type === 'DEPENDENCY' && i.status === 'OPEN').length,
+    DECISION: items.filter((i) => i.type === 'DECISION' && i.status === 'OPEN').length,
   });
 
   const counts = getCounts();
@@ -297,6 +299,13 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, onItemClick }) =
 
           {/* Actions */}
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => setEditingItem(item)}
+              className="p-1.5 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-white/10 rounded"
+              title="Edit"
+            >
+              <Edit2 size={14} />
+            </button>
             {item.status === 'OPEN' && (
               <>
                 <button
@@ -319,6 +328,17 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, onItemClick }) =
                 )}
               </>
             )}
+            <button
+              onClick={() => {
+                if (window.confirm('Delete this RAID item?')) {
+                  handleDeleteItem(item.id);
+                }
+              }}
+              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+              title="Delete"
+            >
+              <Trash2 size={14} />
+            </button>
           </div>
         </div>
       </div>
@@ -329,37 +349,39 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, onItemClick }) =
     <div className="space-y-4">
       {/* Header with tabs */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-navy-800 rounded-lg">
-          {(['ALL', 'RISK', 'ISSUE', 'ASSUMPTION', 'DEPENDENCY'] as const).map((tab) => {
-            const config = tab === 'ALL' ? null : RAID_TYPES[tab];
-            const Icon = config?.icon || AlertTriangle;
-            const count = counts[tab];
+        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-navy-800 rounded-lg overflow-x-auto">
+          {(['ALL', 'RISK', 'ASSUMPTION', 'ISSUE', 'DECISION', 'DEPENDENCY'] as const).map(
+            (tab) => {
+              const config = tab === 'ALL' ? null : RAID_TYPES[tab];
+              const Icon = config?.icon || AlertTriangle;
+              const count = counts[tab];
 
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === tab
-                    ? 'bg-white dark:bg-navy-900 text-navy-900 dark:text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
-                }`}
-              >
-                {tab === 'ALL' ? 'All' : <Icon size={14} className={config?.color} />}
-                {count > 0 && (
-                  <span
-                    className={`text-xs px-1.5 py-0.5 rounded-full ${
-                      tab === 'ISSUE' && count > 0
-                        ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                        : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === tab
+                      ? 'bg-white dark:bg-navy-900 text-navy-900 dark:text-white shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
+                  }`}
+                >
+                  {tab === 'ALL' ? 'All' : <Icon size={14} className={config?.color} />}
+                  {count > 0 && (
+                    <span
+                      className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        tab === 'ISSUE' && count > 0
+                          ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                          : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            }
+          )}
         </div>
 
         <button
@@ -388,6 +410,117 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, onItemClick }) =
       </div>
 
       {/* Add Modal */}
+      {/* Edit Modal */}
+      {editingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg p-6 m-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">
+              Edit {RAID_TYPES[editingItem.type]?.label || editingItem.type}
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={editingItem.title}
+                  onChange={(e) =>
+                    setEditingItem((prev) => (prev ? { ...prev, title: e.target.value } : null))
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={editingItem.description}
+                  onChange={(e) =>
+                    setEditingItem((prev) =>
+                      prev ? { ...prev, description: e.target.value } : null
+                    )
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={editingItem.status}
+                    onChange={(e) =>
+                      setEditingItem((prev) =>
+                        prev ? { ...prev, status: e.target.value as RAIDStatus } : null
+                      )
+                    }
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                  >
+                    <option value="OPEN">Open</option>
+                    <option value="MITIGATED">Mitigated</option>
+                    <option value="REALIZED">Realized</option>
+                    <option value="CLOSED">Closed</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Due Date
+                  </label>
+                  <input
+                    type="date"
+                    value={
+                      editingItem.dueDate
+                        ? new Date(editingItem.dueDate).toISOString().split('T')[0]
+                        : ''
+                    }
+                    onChange={(e) =>
+                      setEditingItem((prev) => (prev ? { ...prev, dueDate: e.target.value } : null))
+                    }
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                  />
+                </div>
+              </div>
+              {editingItem.mitigationPlan !== undefined && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Mitigation Plan
+                  </label>
+                  <textarea
+                    value={editingItem.mitigationPlan || ''}
+                    onChange={(e) =>
+                      setEditingItem((prev) =>
+                        prev ? { ...prev, mitigationPlan: e.target.value } : null
+                      )
+                    }
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                    rows={2}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setEditingItem(null)}
+                className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditItem}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg p-6 m-4 max-h-[90vh] overflow-y-auto">
@@ -399,7 +532,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, onItemClick }) =
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Type
                 </label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-5 gap-2">
                   {(Object.keys(RAID_TYPES) as RAIDType[]).map((type) => {
                     const config = RAID_TYPES[type];
                     const Icon = config.icon;

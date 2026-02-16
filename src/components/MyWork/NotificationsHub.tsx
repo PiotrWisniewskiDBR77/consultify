@@ -31,6 +31,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
+import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
+import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
+
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -53,6 +57,44 @@ interface Notification {
   userId?: string;
   scope?: 'PROJECT' | 'PERSONAL' | 'SYSTEM';
 }
+
+/* ─────────────── Notification → GenericListItem mapping ─────────────── */
+
+const getSeverityVariant = (severity?: string): GenericListItem['statusVariant'] => {
+  switch (severity?.toUpperCase()) {
+    case 'CRITICAL':
+      return 'danger';
+    case 'WARNING':
+      return 'warning';
+    case 'INFO':
+      return 'info';
+    default:
+      return 'neutral';
+  }
+};
+
+const notificationToGenericItem = (n: Notification): GenericListItem => ({
+  id: n.id,
+  title: n.title,
+  subtitle: n.message || undefined,
+  status: n.severity || 'INFO',
+  statusVariant: getSeverityVariant(n.severity),
+  secondaryLabel: n.relatedObjectType?.replace(/_/g, ' ').toLowerCase() || undefined,
+  tertiaryLabel: n.scope || 'System',
+  isHighlighted: !n.read,
+  dueDate: n.createdAt
+    ? new Date(n.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : undefined,
+  _raw: n,
+});
+
+const NOTIFICATION_CLICKUP_COLUMNS: ListColumn[] = [
+  { key: 'title', label: 'Notification', width: 'flex-1 min-w-0' },
+  { key: 'status', label: 'Severity', width: 'w-24' },
+  { key: 'secondaryLabel', label: 'Related to', width: 'w-28' },
+  { key: 'tertiaryLabel', label: 'Source', width: 'w-24' },
+  { key: 'dueDate', label: 'Time', width: 'w-24' },
+];
 
 interface NotificationsHubProps {
   onOpenTask?: (taskId: string) => void;
@@ -411,6 +453,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<NotificationMode>('all');
   const [filter, setFilter] = useState<NotificationFilter>('all');
+  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('d');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
     new Set(['thisWeek', 'earlier'])
   );
@@ -541,6 +584,42 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
     }
   };
 
+  // New notification (A6.4) — admin broadcast
+  const [showNewNotification, setShowNewNotification] = useState(false);
+  const [newNotifTitle, setNewNotifTitle] = useState('');
+  const [newNotifMessage, setNewNotifMessage] = useState('');
+  const [newNotifSeverity, setNewNotifSeverity] = useState<'INFO' | 'WARNING' | 'CRITICAL'>('INFO');
+  const [creatingNotif, setCreatingNotif] = useState(false);
+
+  const handleCreateNotification = () => {
+    setShowNewNotification(true);
+  };
+
+  const handleSubmitNewNotification = async () => {
+    if (!newNotifTitle.trim()) return;
+    setCreatingNotif(true);
+    try {
+      await Api.post('/notifications', {
+        title: newNotifTitle.trim(),
+        message: newNotifMessage.trim(),
+        severity: newNotifSeverity,
+        scope: 'PROJECT',
+        type: 'ADMIN_BROADCAST',
+      });
+      toast.success(t('notifications.created', 'Notification created'));
+      setShowNewNotification(false);
+      setNewNotifTitle('');
+      setNewNotifMessage('');
+      setNewNotifSeverity('INFO');
+      fetchNotifications();
+    } catch (error) {
+      console.error('Failed to create notification:', error);
+      toast.error(t('notifications.createError', 'Failed to create notification'));
+    } finally {
+      setCreatingNotif(false);
+    }
+  };
+
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.read) {
       handleMarkRead(notification.id);
@@ -562,6 +641,45 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
       onOpenInitiative(notification.relatedObjectId);
     }
   };
+
+  /* ─── Sections for N / C views ─── */
+  const notifViewSections: ListSection[] = useMemo(() => {
+    const critical = filteredNotifications
+      .filter((n) => n.severity === 'CRITICAL')
+      .map(notificationToGenericItem);
+    const warning = filteredNotifications
+      .filter((n) => n.severity === 'WARNING')
+      .map(notificationToGenericItem);
+    const info = filteredNotifications
+      .filter((n) => n.severity === 'INFO')
+      .map(notificationToGenericItem);
+    const other = filteredNotifications
+      .filter((n) => !['CRITICAL', 'WARNING', 'INFO'].includes(n.severity))
+      .map(notificationToGenericItem);
+
+    return [
+      ...(critical.length > 0
+        ? [{ id: 'critical', label: 'Critical', items: critical, accentColor: 'text-red-500' }]
+        : []),
+      ...(warning.length > 0
+        ? [{ id: 'warning', label: 'Warning', items: warning, accentColor: 'text-amber-500' }]
+        : []),
+      ...(info.length > 0
+        ? [{ id: 'info', label: 'Information', items: info, accentColor: 'text-blue-500' }]
+        : []),
+      ...(other.length > 0
+        ? [{ id: 'other', label: 'Other', items: other, accentColor: 'text-slate-400' }]
+        : []),
+    ];
+  }, [filteredNotifications]);
+
+  const handleNotifItemClick = useCallback(
+    (item: GenericListItem) => {
+      const n = item._raw as Notification;
+      handleNotificationClick(n);
+    },
+    [handleNotificationClick]
+  );
 
   const toggleGroup = (group: string) => {
     setExpandedGroups((prev) => {
@@ -649,16 +767,35 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
           })}
         </div>
 
-        {/* Mark All Read Button - EXACTLY matching New Task button style */}
-        {counts.unread > 0 && (
+        <div className="flex items-center gap-2">
+          {/* New Notification Button (A6.4) — admin broadcast */}
           <button
-            onClick={handleMarkAllRead}
-            className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-lg shadow-sm hover:shadow transition-all duration-150"
+            onClick={handleCreateNotification}
+            className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-lg shadow-sm hover:shadow transition-all duration-150"
           >
-            <CheckCheck size={14} />
-            <span>{t('myWork.markAllRead', 'Mark all read')}</span>
+            <Bell size={14} />
+            <span>{t('notifications.new', 'New notification')}</span>
           </button>
-        )}
+
+          {/* Mark All Read Button */}
+          {counts.unread > 0 && (
+            <button
+              onClick={handleMarkAllRead}
+              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-lg shadow-sm hover:shadow transition-all duration-150"
+            >
+              <CheckCheck size={14} />
+              <span>{t('myWork.markAllRead', 'Mark all read')}</span>
+            </button>
+          )}
+
+          {/* A7.1: View style switcher */}
+          <CardViewSwitcher
+            moduleId="my-work-notifications"
+            value={cardViewStyle}
+            onChange={setCardViewStyle}
+            compact
+          />
+        </div>
       </div>
 
       {/* Filter Chips - EXACTLY matching QuickFilterBar */}
@@ -708,7 +845,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
         </div>
       </div>
 
-      {/* Notifications List */}
+      {/* Notifications content — switches layout based on cardViewStyle (A7.2/A7.3) */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -721,78 +858,234 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
               {t('myWork.noNotifications', 'No notifications')}
             </p>
           </div>
+        ) : cardViewStyle === 'n' ? (
+          <div className="p-4">
+            <NotionListView
+              sections={notifViewSections}
+              onItemClick={handleNotifItemClick}
+              emptyMessage={t('myWork.noNotifications', 'No notifications')}
+            />
+          </div>
+        ) : cardViewStyle === 'c' ? (
+          <div className="p-4">
+            <ClickUpListView
+              sections={notifViewSections}
+              columns={NOTIFICATION_CLICKUP_COLUMNS}
+              onItemClick={handleNotifItemClick}
+              emptyMessage={t('myWork.noNotifications', 'No notifications')}
+            />
+          </div>
         ) : (
-          <>
-            {/* This Week */}
-            {groupedNotifications.thisWeek.length > 0 && (
-              <div>
-                <button
-                  onClick={() => toggleGroup('thisWeek')}
-                  className="w-full flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-800/50 text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide"
-                >
-                  {expandedGroups.has('thisWeek') ? (
-                    <ChevronDown size={12} />
-                  ) : (
-                    <ChevronRight size={12} />
-                  )}
-                  {t('notifications.thisWeek', 'This Week')}
-                  <span className="ml-auto px-1.5 py-0.5 text-[10px] bg-slate-200 dark:bg-white/10 rounded-full">
-                    {groupedNotifications.thisWeek.length}
-                  </span>
-                </button>
-
-                {expandedGroups.has('thisWeek') && (
-                  <AnimatePresence>
-                    {groupedNotifications.thisWeek.map((notification) => (
-                      <NotificationItem
-                        key={notification.id}
-                        notification={notification}
-                        onMarkRead={handleMarkRead}
-                        onDelete={handleDelete}
-                        onClick={handleNotificationClick}
-                      />
-                    ))}
-                  </AnimatePresence>
-                )}
-              </div>
-            )}
-
-            {/* Earlier */}
-            {groupedNotifications.earlier.length > 0 && (
-              <div>
-                <button
-                  onClick={() => toggleGroup('earlier')}
-                  className="w-full flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-800/50 text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide"
-                >
-                  {expandedGroups.has('earlier') ? (
-                    <ChevronDown size={12} />
-                  ) : (
-                    <ChevronRight size={12} />
-                  )}
-                  {t('notifications.earlier', 'Earlier')}
-                  <span className="ml-auto px-1.5 py-0.5 text-[10px] bg-slate-200 dark:bg-white/10 rounded-full">
-                    {groupedNotifications.earlier.length}
-                  </span>
-                </button>
-
-                {expandedGroups.has('earlier') && (
-                  <AnimatePresence>
-                    {groupedNotifications.earlier.map((notification) => (
-                      <NotificationItem
-                        key={notification.id}
-                        notification={notification}
-                        onMarkRead={handleMarkRead}
-                        onDelete={handleDelete}
-                        onClick={handleNotificationClick}
-                      />
-                    ))}
-                  </AnimatePresence>
-                )}
-              </div>
-            )}
-          </>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 dark:bg-navy-900 sticky top-0 z-10">
+                <tr>
+                  <th className="w-6 px-2 py-2"></th>
+                  <th className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {t('notifications.col.type', 'Type')}
+                  </th>
+                  <th className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {t('notifications.col.title', 'Title')}
+                  </th>
+                  <th className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[100px]">
+                    {t('notifications.col.relatedTo', 'Related to')}
+                  </th>
+                  <th className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[90px]">
+                    {t('notifications.col.source', 'Source')}
+                  </th>
+                  <th className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[80px]">
+                    {t('notifications.col.time', 'Time')}
+                  </th>
+                  <th className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[50px]">
+                    {t('notifications.col.actions', '')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-navy-700">
+                {filteredNotifications.map((notification) => (
+                  <tr
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification)}
+                    className={`cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.02] ${
+                      !notification.read ? 'bg-blue-50/30 dark:bg-blue-900/5' : ''
+                    }`}
+                  >
+                    {/* Unread dot */}
+                    <td className="px-2 py-2.5">
+                      {!notification.read && (
+                        <div className="w-2 h-2 rounded-full bg-blue-500 mx-auto" />
+                      )}
+                    </td>
+                    {/* Type — with wrap fix (A6.1) */}
+                    <td className="px-3 py-2.5">
+                      <span className="inline-flex items-center gap-1 text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-[100px]">
+                        {getNotificationIcon(notification.type, notification.severity)}
+                        <span className="truncate text-slate-600 dark:text-slate-400">
+                          {notification.type.replace(/_/g, ' ').toLowerCase()}
+                        </span>
+                      </span>
+                    </td>
+                    {/* Title — single line with ellipsis */}
+                    <td className="px-3 py-2.5">
+                      <span
+                        className={`text-[13px] block truncate max-w-[300px] ${
+                          notification.read
+                            ? 'text-slate-600 dark:text-slate-400'
+                            : 'text-slate-900 dark:text-white font-medium'
+                        }`}
+                        title={notification.title}
+                      >
+                        {notification.title}
+                      </span>
+                    </td>
+                    {/* Related to (A6.2) */}
+                    <td className="px-3 py-2.5">
+                      {notification.relatedObjectType ? (
+                        <span className="inline-flex items-center gap-1 text-[11px]">
+                          {getRelatedObjectIcon(notification.relatedObjectType)}
+                          <span className="text-slate-600 dark:text-slate-400">
+                            {getRelatedObjectLabel(notification.relatedObjectType)}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">—</span>
+                      )}
+                    </td>
+                    {/* Source (A6.3) */}
+                    <td className="px-3 py-2.5">
+                      <span
+                        className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded ${
+                          notification.scope === 'PROJECT'
+                            ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
+                            : notification.scope === 'PERSONAL'
+                              ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
+                              : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
+                        }`}
+                      >
+                        {notification.scope === 'PROJECT' ? (
+                          <Building2 size={10} />
+                        ) : notification.scope === 'PERSONAL' ? (
+                          <User size={10} />
+                        ) : (
+                          <Sparkles size={10} />
+                        )}
+                        <span>{notification.scope || 'System'}</span>
+                      </span>
+                    </td>
+                    {/* Time */}
+                    <td className="px-3 py-2.5 text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                      {formatRelativeTime(notification.createdAt)}
+                    </td>
+                    {/* Actions */}
+                    <td className="px-3 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-0.5">
+                        {!notification.read && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkRead(notification.id);
+                            }}
+                            className="p-1 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                            title={t('notifications.markRead', 'Mark as read')}
+                          >
+                            <Check size={13} />
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(notification.id);
+                          }}
+                          className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                          title={t('notifications.delete', 'Delete')}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
+
+      {/* New Notification Modal (A6.4) */}
+      {showNewNotification && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 p-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+              {t('notifications.newTitle', 'Create Notification')}
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                  {t('notifications.titleLabel', 'Title')}
+                </label>
+                <input
+                  type="text"
+                  value={newNotifTitle}
+                  onChange={(e) => setNewNotifTitle(e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/40"
+                  placeholder={t('notifications.titlePlaceholder', 'Notification title...')}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                  {t('notifications.messageLabel', 'Message')}
+                </label>
+                <textarea
+                  value={newNotifMessage}
+                  onChange={(e) => setNewNotifMessage(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/40"
+                  placeholder={t('notifications.messagePlaceholder', 'Notification message...')}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                  {t('notifications.severityLabel', 'Severity')}
+                </label>
+                <div className="flex gap-2">
+                  {(['INFO', 'WARNING', 'CRITICAL'] as const).map((sev) => (
+                    <button
+                      key={sev}
+                      onClick={() => setNewNotifSeverity(sev)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                        newNotifSeverity === sev
+                          ? sev === 'CRITICAL'
+                            ? 'bg-red-100 border-red-300 text-red-700 dark:bg-red-900/30 dark:border-red-700 dark:text-red-300'
+                            : sev === 'WARNING'
+                              ? 'bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-300'
+                              : 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300'
+                          : 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      {sev}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setShowNewNotification(false)}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-600"
+              >
+                {t('common.cancel', 'Cancel')}
+              </button>
+              <button
+                onClick={handleSubmitNewNotification}
+                disabled={creatingNotif || !newNotifTitle.trim()}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
+              >
+                {creatingNotif ? t('common.creating', 'Creating...') : t('common.create', 'Create')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

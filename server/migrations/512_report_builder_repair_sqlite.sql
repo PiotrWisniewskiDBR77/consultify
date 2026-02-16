@@ -140,6 +140,38 @@ CREATE INDEX IF NOT EXISTS idx_rb_sections_report ON report_builder_sections(rep
 CREATE INDEX IF NOT EXISTS idx_rb_sections_key ON report_builder_sections(report_id, section_key);
 CREATE INDEX IF NOT EXISTS idx_rb_sections_order ON report_builder_sections(report_id, order_index);
 
+-- ==========================================
+-- BLOCK TYPES + SECTION EXTENSIONS (506)
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS report_builder_block_types (
+  id TEXT PRIMARY KEY,
+  organization_id TEXT, -- NULL for system block types
+  name TEXT NOT NULL,
+  description TEXT,
+  source_types_json TEXT, -- JSON array
+  render_kind TEXT NOT NULL DEFAULT 'markdown',
+  prompt_template TEXT,
+  input_schema_json TEXT,
+  default_length TEXT DEFAULT 'medium',
+  default_language TEXT DEFAULT 'business',
+  is_system BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_by TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (organization_id) REFERENCES organizations(id),
+  FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_rb_block_types_org ON report_builder_block_types(organization_id);
+CREATE INDEX IF NOT EXISTS idx_rb_block_types_active ON report_builder_block_types(is_active);
+
+ALTER TABLE report_builder_sections ADD COLUMN block_type_id TEXT;
+ALTER TABLE report_builder_sections ADD COLUMN block_config_json TEXT;
+ALTER TABLE report_builder_sections ADD COLUMN render_kind TEXT;
+CREATE INDEX IF NOT EXISTS idx_rb_sections_block_type ON report_builder_sections(block_type_id);
+
 CREATE TABLE IF NOT EXISTS report_builder_templates (
   id TEXT PRIMARY KEY,
   organization_id TEXT,  -- NULL for system templates

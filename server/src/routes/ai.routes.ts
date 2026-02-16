@@ -4,6 +4,7 @@
  */
 
 import { Response, Router } from 'express';
+import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
@@ -14,8 +15,15 @@ import {
   validateParams,
   validateQuery,
 } from '../middleware/validation.middleware.js';
+import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
+import {
+  triggerAIDependencyConflict,
+  triggerAIOverloadDetected,
+  triggerAIRecommendation,
+  triggerAIRiskDetected,
+} from '../services/aiNotificationTriggers.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import {
   ActionIdParamSchema,
@@ -52,6 +60,7 @@ import {
   RecordDecisionRequestSchema,
   RecordFeedbackRequestSchema,
   RecordSuggestionActionRequestSchema,
+  RefineTextRequestSchema,
   RejectActionRequestSchema,
   ReportMessageRequestSchema,
   RoadmapRequestSchema,
@@ -65,6 +74,171 @@ const router = Router();
 
 // Apply rate limiting to all AI routes
 router.use(aiRateLimiter);
+
+// -------------------- Chat attachments ingestion --------------------
+// This is intentionally self-contained (no StorageService / KnowledgeService dependency).
+const attachmentsUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      'application/pdf',
+      'text/plain',
+      'text/markdown',
+      'text/csv',
+      'application/json',
+    ];
+    if (allowed.includes(file.mimetype) || file.mimetype.startsWith('text/')) return cb(null, true);
+    return cb(new Error(`Unsupported file type: ${file.mimetype}`));
+  },
+});
+
+router.post(
+  '/attachments/ingest',
+  verifyToken,
+  attachmentsUpload.single('file'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const filename = String(req.file.originalname || 'attachment');
+    const mimeType = String(req.file.mimetype || '');
+    const docId = uuidv4();
+
+    // Extract text from buffer
+    let text = '';
+    try {
+      if (mimeType === 'application/pdf') {
+        const pdfParseMod = (await import('pdf-parse')) as any;
+        const pdf = pdfParseMod.default || pdfParseMod;
+        const out = await pdf(req.file.buffer);
+        text = String(out?.text || '');
+      } else {
+        text = req.file.buffer.toString('utf8');
+      }
+    } catch (err: any) {
+      logger.warn('[AI Attachments] Text extraction failed:', err?.message || String(err));
+      text = '';
+    }
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ error: 'Could not extract any text from file' });
+    }
+
+    // Create a knowledge_docs row (schema is minimal across DBs; extra columns are optional)
+    await dbRun(
+      `INSERT INTO knowledge_docs (id, filename, filepath, status, created_at)
+       VALUES (?, ?, ?, 'indexed', CURRENT_TIMESTAMP)`,
+      [docId, filename, ''],
+      { fallback: true } as any
+    );
+    // Best-effort optional columns (do not fail request)
+    try {
+      await dbRun(
+        `UPDATE knowledge_docs SET category = ? WHERE id = ?`,
+        ['chat_attachment', docId],
+        {
+          fallback: true,
+        } as any
+      );
+    } catch {
+      /* ignore */
+    }
+    try {
+      await dbRun(`UPDATE knowledge_docs SET organization_id = ? WHERE id = ?`, [orgId, docId], {
+        fallback: true,
+      } as any);
+    } catch {
+      /* ignore */
+    }
+
+    const makeChunks = (raw: string): Array<{ chunkIndex: number; content: string }> => {
+      const normalized = String(raw || '')
+        .replace(/\r\n/g, '\n')
+        .trim();
+      const MAX = 1200;
+      const OVERLAP = 150;
+      const out: Array<{ chunkIndex: number; content: string }> = [];
+      if (!normalized) return out;
+
+      const paras = normalized
+        .split(/\n\s*\n/g)
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+      let buf = '';
+      const flush = () => {
+        const c = buf.trim();
+        if (c) out.push({ chunkIndex: out.length, content: c });
+        buf = '';
+      };
+
+      const pushLong = (p: string) => {
+        const s = p.trim();
+        if (!s) return;
+        if (s.length <= MAX) {
+          out.push({ chunkIndex: out.length, content: s });
+          return;
+        }
+        let i = 0;
+        while (i < s.length) {
+          const chunk = s.slice(i, i + MAX).trim();
+          if (chunk) out.push({ chunkIndex: out.length, content: chunk });
+          if (i + MAX >= s.length) break;
+          i = Math.max(0, i + MAX - OVERLAP);
+        }
+      };
+
+      for (const p of paras) {
+        if (!p) continue;
+        if (!buf) {
+          if (p.length <= MAX) buf = p;
+          else pushLong(p);
+          continue;
+        }
+        if (buf.length + 2 + p.length <= MAX) {
+          buf += `\n\n${p}`;
+        } else {
+          flush();
+          if (p.length <= MAX) buf = p;
+          else pushLong(p);
+        }
+      }
+      flush();
+      if (out.length === 0) pushLong(normalized);
+      return out;
+    };
+
+    const ragModule = await import('../services/ragService.js');
+    const ragService = (ragModule.default || ragModule) as any;
+
+    const chunks = makeChunks(text);
+    let embeddedChunks = 0;
+    for (const c of chunks) {
+      const chunkIndex = Number(c.chunkIndex || 0);
+      const content = String(c.content || '').trim();
+      if (!content) continue;
+      const embedding = await ragService.generateEmbedding(content);
+      await dbRun(
+        `INSERT INTO knowledge_chunks (id, doc_id, content, chunk_index, embedding)
+         VALUES (?, ?, ?, ?, ?)`,
+        [`${docId}-chk-${chunkIndex}`, docId, content, chunkIndex, JSON.stringify(embedding || [])],
+        { fallback: true } as any
+      );
+      if (embedding && Array.isArray(embedding) && embedding.length > 0) embeddedChunks += 1;
+    }
+
+    return res.status(201).json({
+      success: true,
+      docId,
+      filename,
+      mimeType,
+      totalChunks: chunks.length,
+      embeddedChunks,
+    });
+  })
+);
 
 // Lazy load services to avoid circular dependencies
 
@@ -80,7 +254,7 @@ const getAIActionExecutor = async () =>
   (await import('../services/aiActionExecutor.js')).default as any;
 const getAIAuditLogger = async () => (await import('../services/aiAuditLogger.js')).default as any;
 const getAIPipeline = async () => {
-  const { AIPipeline } = (await import('../services/ai/aiPipeline.js')) as any;
+  const { AIPipeline } = (await import('../services/ai/AIPipeline.js')) as any;
   return new AIPipeline();
 };
 
@@ -132,6 +306,159 @@ router.get(
 // ==================== CHAT ====================
 
 /**
+ * Deep Research: Generate clarification questions before research.
+ * Returns 2-3 targeted questions with options to focus the research scope.
+ */
+router.post(
+  '/deep-research/clarify',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { message } = req.body as { message: string };
+
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    try {
+      const { generateClarificationQuestions } =
+        await import('../services/ai/deepResearchService.js');
+
+      // Use a lightweight LLM client for clarification
+      const { default: modelRouter } = await import('../services/ai/modelRouter.js');
+      const { llmService } = await import('../services/ai/llmService.js');
+
+      const modelCfg = await modelRouter.select({
+        capability: 'chat_simple',
+        organizationId: req.organizationId || undefined,
+        options: { tier: 'BUDGET' },
+      } as any);
+
+      // Build a simple OpenAI-compatible client wrapper
+      const llmClient = {
+        chat: {
+          completions: {
+            create: async (params: any) => {
+              const result = (await llmService.call({
+                type: 'chat',
+                modelConfig: {
+                  provider: modelCfg.provider,
+                  id: modelCfg.id,
+                  endpoint: (modelCfg as any).endpoint,
+                  apiKey: (modelCfg as any).apiKey,
+                },
+                systemPrompt: '',
+                messages: params.messages,
+                maxTokens: params.max_tokens || 1000,
+                temperature: params.temperature ?? 0.3,
+              })) as any;
+
+              return {
+                choices: [{ message: { content: result?.content || String(result) } }],
+              };
+            },
+          },
+        },
+      };
+
+      const result = await generateClarificationQuestions(message, llmClient);
+
+      return res.json({
+        success: true,
+        ...result,
+        researchType: (() => {
+          try {
+            const { detectResearchType } = require('../services/ai/deepResearchService.js');
+            return detectResearchType(message);
+          } catch {
+            return 'general_research';
+          }
+        })(),
+      });
+    } catch (error: any) {
+      logger.error('[AI Routes] Clarification generation failed:', error);
+      return res.status(500).json({ error: 'Failed to generate clarification questions' });
+    }
+  })
+);
+
+/**
+ * Engagement Summary (R13)
+ *
+ * Generates periodic engagement reports (weekly/monthly) as downloadable artifacts.
+ */
+router.post(
+  '/engagement-summary',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const {
+      period = 'weekly',
+      projectId,
+      language,
+    } = req.body as {
+      period?: 'weekly' | 'monthly';
+      projectId?: string;
+      language?: string;
+    };
+
+    try {
+      const { engagementSummaryService } =
+        await import('../services/ai/engagementSummaryService.js');
+
+      const summary = await engagementSummaryService.generateSummary({
+        organizationId: req.organizationId || '',
+        projectId: projectId || undefined,
+        userId: req.userId || '',
+        period,
+        language: language || 'en',
+      });
+
+      const artifact = engagementSummaryService.formatAsArtifact(summary, language);
+
+      return res.json({
+        success: true,
+        summary,
+        artifact,
+      });
+    } catch (err: any) {
+      logger.error('[AI] Engagement summary error:', err);
+      return res.status(500).json({ error: 'Failed to generate engagement summary' });
+    }
+  })
+);
+
+/**
+ * Industry Benchmarks (R9)
+ *
+ * Returns benchmark data and comparisons for the organization's industry.
+ */
+router.post(
+  '/benchmarks/compare',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { industry, scores } = req.body as {
+      industry: string;
+      scores?: Array<{ axis: string; score: number }>;
+    };
+
+    try {
+      const { industryBenchmarkService } =
+        await import('../services/ai/industryBenchmarkService.js');
+
+      if (scores && scores.length > 0) {
+        const comparisons = industryBenchmarkService.compareToBenchmarks(industry, scores);
+        return res.json({ success: true, comparisons });
+      }
+
+      const benchmarks = industryBenchmarkService.getBenchmarks(industry);
+      return res.json({ success: true, benchmarks });
+    } catch (err: any) {
+      logger.error('[AI] Benchmark comparison error:', err);
+      return res.status(500).json({ error: 'Failed to get benchmarks' });
+    }
+  })
+);
+
+/**
  * Deep Thinking: Confirm Understanding (blocking gate)
  *
  * Returns a decision-ready paraphrase of the user's task + minimal questions/gaps
@@ -155,13 +482,18 @@ router.post(
       focusMode?: string;
       selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
       selectedModelId?: string | null;
-      aiModes?: { deepResearch?: boolean; webSearch?: boolean; showReasoning?: boolean };
+      aiModes?: {
+        deepResearch?: boolean;
+        webSearch?: boolean;
+        showReasoning?: boolean;
+        multiAgent?: boolean;
+      };
       knowledgeSources?: {
         pmoDocuments?: boolean;
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
     };
 
     const {
@@ -226,57 +558,76 @@ router.post(
     const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Always respond in ${langName}.]\n`;
 
     // Confirm schema (structured output)
+    // NOTE: OpenAI Structured Outputs requires ALL properties to be in 'required' array.
+    // All fields must be required (no .optional() or .default()) for OpenAI compatibility.
     const ConfirmSchema = z.object({
       understanding: z.object({
-        goal: z.string().min(1),
-        context: z.string().optional().default(''),
-        constraints: z.array(z.string()).optional().default([]),
+        goal: z.string().describe('The main goal or objective of the user request'),
+        context: z.string().describe('Additional context about the request'),
+        constraints: z.array(z.string()).describe('Any constraints or limitations'),
         expectedOutput: z
           .enum(['Decision', 'StructuredAnalysis', 'FullReport'])
-          .default('FullReport'),
-        decisionHorizon: z.string().optional().default(''),
+          .describe('The type of output expected'),
+        decisionHorizon: z.string().describe('Time horizon for the decision'),
       }),
-      isClearEnoughToProceed: z.boolean().default(true),
+      isClearEnoughToProceed: z
+        .boolean()
+        .describe('Whether the request is clear enough to proceed'),
       missingInfoQuestions: z
         .array(
           z.object({
-            id: z.string(),
-            question: z.string(),
-            whyItMatters: z.string().optional().default(''),
+            id: z.string().describe('Unique identifier for the question'),
+            question: z.string().describe('The question to ask'),
+            whyItMatters: z.string().describe('Why this question is important'),
           })
         )
-        .default([]),
+        .describe('Questions to clarify missing information'),
       researchPlanItems: z
         .array(
           z.object({
-            id: z.string(),
-            type: z.enum([
-              'ConceptualFrameworks',
-              'PriorPatterns',
-              'UserInputs',
-              'ExternalReferences',
-            ]),
-            label: z.string(),
-            rationale: z.string().optional().default(''),
+            id: z.string().describe('Unique identifier for the research item'),
+            type: z
+              .enum(['ConceptualFrameworks', 'PriorPatterns', 'UserInputs', 'ExternalReferences'])
+              .describe('Type of research'),
+            label: z.string().describe('Label for the research item'),
+            rationale: z.string().describe('Why this research is needed'),
           })
         )
-        .default([]),
-      suggestedDepth: z.enum(['Light', 'Standard', 'Hard']).default('Standard'),
+        .describe('Planned research items'),
+      suggestedDepth: z.enum(['Light', 'Standard', 'Hard']).describe('Suggested depth of analysis'),
     });
 
     const { modelRouter } = await import('../services/ai/modelRouter.js');
+    const { modelMeetsRequirements } = await import('../services/ai/modelCapabilities.js');
     const { llmService } = await import('../services/ai/llmService.js');
 
-    // Select a cost-effective model for confirm unless user explicitly requested a specific route
+    // Select a model that supports Structured Outputs (JSON Schema).
+    // This is a hard contract requirement for the confirm step.
     const tier = (selectedTier || 'BUDGET') as any;
-    const modelCfg = selectedModelId
-      ? await modelRouter.getProviderConfig(selectedModelId, tier)
-      : await modelRouter.select({
-          capability: 'chat_simple',
-          tier,
-          organizationId: req.organizationId!,
-          options: { tier },
-        } as any);
+    const requirements = { structured_outputs: true as const };
+
+    let modelCfg: any = null;
+    if (selectedModelId) {
+      try {
+        const cfg = await modelRouter.getProviderConfig(selectedModelId, tier);
+        if (modelMeetsRequirements(cfg.id, requirements)) {
+          modelCfg = cfg;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!modelCfg) {
+      modelCfg = await modelRouter.select({
+        capability: 'chat_confirm',
+        organizationId: req.organizationId,
+        tier,
+        requirements,
+      } as any);
+    }
+
+    logger.info('[AI Confirm] Using model:', modelCfg.id, 'provider:', modelCfg.provider);
 
     const compactHistory = (history || []).slice(-8).map((m) => ({
       role: m.role === 'model' ? 'assistant' : (m.role as any),
@@ -307,21 +658,43 @@ router.post(
       `- responseStyle: ${String(responseStyle || 'normal')}`,
     ].join('\n');
 
-    const result = (await llmService.callStructured({
-      type: 'chat',
-      modelConfig: {
-        provider: modelCfg.provider,
-        id: modelCfg.id,
-        endpoint: (modelCfg as any).endpoint,
-        apiKey: (modelCfg as any).apiKey,
-      },
-      systemPrompt: sys,
-      messages: [
-        ...compactHistory.filter((m) => m.content && String(m.content).trim().length > 0),
-        { role: 'user', content: user },
-      ],
-      schema: ConfirmSchema,
-    } as any)) as any;
+    logger.info(
+      '[AI Confirm] Calling LLM with model:',
+      modelCfg.id,
+      'provider:',
+      modelCfg.provider
+    );
+    logger.info(
+      '[AI Confirm] History length:',
+      compactHistory.length,
+      'User prompt length:',
+      user.length
+    );
+
+    let result: any;
+    try {
+      result = (await llmService.callStructured({
+        type: 'chat',
+        modelConfig: {
+          provider: modelCfg.provider,
+          id: modelCfg.id,
+          endpoint: (modelCfg as any).endpoint,
+          apiKey: (modelCfg as any).apiKey,
+        },
+        systemPrompt: sys,
+        messages: [
+          ...compactHistory.filter((m) => m.content && String(m.content).trim().length > 0),
+          { role: 'user', content: user },
+        ],
+        schema: ConfirmSchema,
+      } as any)) as any;
+    } catch (llmError: any) {
+      logger.error('[AI Confirm] LLM call failed:', llmError?.message || llmError);
+      logger.error('[AI Confirm] LLM error stack:', llmError?.stack);
+      throw llmError;
+    }
+
+    logger.info('[AI Confirm] LLM call succeeded, returning result');
 
     return res.json({
       confirm: result.object,
@@ -359,13 +732,14 @@ router.post(
         deepResearch?: boolean;
         webSearch?: boolean;
         showReasoning?: boolean;
+        multiAgent?: boolean;
       };
       knowledgeSources?: {
         pmoDocuments?: boolean;
         projectData?: boolean;
         organizationData?: boolean;
       };
-      responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+      responseStyle?: 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
     };
 
     const {
@@ -406,19 +780,11 @@ router.post(
     if (aiModes?.deepResearch) {
       const confirmed = Boolean((context as any)?.deepThinkingConfirmed);
       if (!confirmed) {
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders();
-        res.write(
-          `data: ${JSON.stringify({
-            error:
-              'Deep Thinking requires Confirm Understanding first. Call /api/ai/chat/confirm and then retry with context.deepThinkingConfirmed=true.',
-            code: 'DEEP_THINKING_CONFIRM_REQUIRED',
-          })}\n\n`
-        );
-        res.write('data: [DONE]\n\n');
-        return res.end();
+        return res.status(400).json({
+          error:
+            'Deep Thinking requires Confirm Understanding first. Call /api/ai/chat/confirm and then retry with context.deepThinkingConfirmed=true.',
+          code: 'DEEP_THINKING_CONFIRM_REQUIRED',
+        });
       }
     }
 
@@ -429,6 +795,10 @@ router.post(
     let streamAborted = false;
     let streamCompleted = false;
     let deepThinkingStartedLogged = false;
+    // Tracing / diagnostics (must be in outer stream handler scope)
+    let chatRunId: string | null = null;
+    let pipelineMeta: any = null;
+    const dtStatesEmitted: string[] = [];
 
     const languageMap: Record<string, string> = {
       pl: 'Polish (Polski)',
@@ -443,11 +813,34 @@ router.post(
 
     const enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
 
+    // Prevent Node.js / proxy / ALB socket timeouts for long-running SSE streams
+    // (Deep Thinking can run 30–90 seconds; default 2min timeout gives safety margin)
+    if (req.socket) {
+      req.socket.setTimeout(120_000); // 2 minutes
+      req.socket.setNoDelay(true); // Disable Nagle for real-time streaming
+    }
+
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable Nginx buffering for SSE
     res.setHeader('X-Stream-Session-Id', streamSessionId);
     res.flushHeaders();
+
+    // SSE heartbeat: keep connection alive during long AI processing (context build,
+    // RAG retrieval, Deep Thinking research). Prevents proxy/ALB idle timeouts.
+    const heartbeatInterval = setInterval(() => {
+      if (!isClientConnected || streamCompleted || streamAborted) {
+        clearInterval(heartbeatInterval);
+        return;
+      }
+      try {
+        res.write(': heartbeat\n\n');
+      } catch {
+        // Connection already closed — will be cleaned up by connectionCleanup
+        clearInterval(heartbeatInterval);
+      }
+    }, 15_000); // Every 15 seconds
 
     // --------------------------------------------------------------------
     // E2E_MODE: deterministic streaming for runtime tests (CI + Playwright)
@@ -485,6 +878,7 @@ router.post(
       if (streamCompleted) return;
       isClientConnected = false;
       streamAborted = true;
+      clearInterval(heartbeatInterval);
       logger.info(`[Stream] Client disconnected: ${streamSessionId}`);
 
       // Deep Thinking ops metric: aborted run
@@ -512,6 +906,28 @@ router.post(
           req.userId!,
           req.organizationId!
         ).catch((err: Error | null) => logger.error('[Stream] Failed to save partial:', err));
+      }
+
+      // Trace: mark run as aborted (best-effort)
+      if (chatRunId && req.organizationId && req.userId) {
+        setImmediate(() => {
+          import('../services/ai/chatTraceService.js')
+            .then((mod: any) =>
+              (mod.default || mod).completeRun({
+                runId: chatRunId,
+                status: 'aborted',
+                pipelineTraceId: pipelineMeta?.traceId || pipelineMeta?.trace_id || null,
+                modelProvider: pipelineMeta?.provider || null,
+                modelId: pipelineMeta?.model || null,
+                tier: selectedTier || null,
+                outputText: accumulatedContent,
+                dtStates: dtStatesEmitted,
+              })
+            )
+            .catch(() => {
+              /* ignore */
+            });
+        });
       }
     };
 
@@ -697,16 +1113,41 @@ router.post(
         },
       };
 
-      logger.info(`[AI Stream] Processing request for user ${req.userId}`, {
-        projectId,
-        focusMode,
-        hasScreenContext: !!screenContext,
-        screenId: screenContext?.screenId || screenContext?.currentScreen || 'unknown',
-      });
+      // --------------------------------------------------------
+      // Chat trace: create a persistent run record (admin ops)
+      // --------------------------------------------------------
+      try {
+        const svcMod = await import('../services/ai/chatTraceService.js');
+        const chatTraceService = (svcMod.default || svcMod) as any;
+        const created = await chatTraceService.createRun({
+          organizationId: req.organizationId!,
+          userId: req.userId!,
+          conversationId: conversationId || null,
+          streamSessionId,
+          capability: 'chat',
+          request: {
+            message: String(message || '').slice(0, 2000),
+            aiModes: aiModes || null,
+            knowledgeSources: knowledgeSources || null,
+            responseStyle: responseStyle || null,
+            selectedTier: selectedTier || null,
+            selectedModelId: selectedModelId || null,
+            language: language || null,
+            resumeFromPartial: Boolean(resumeFromPartial),
+          },
+          context: {
+            projectId,
+            focusMode,
+            hasScreenContext: Boolean(screenContext),
+            attachmentDocIds: (context as any)?.attachmentDocIds || null,
+          },
+        });
+        chatRunId = String(created?.runId || '') || null;
+      } catch {
+        // ignore tracing failures
+      }
 
-      // B1: Track emitted DT states for process integrity diagnostic
-      const dtStatesEmitted: string[] = [];
-
+      // Helper to emit SSE events to the client (hoisted before first usage)
       const emitSSE = (payload: Record<string, unknown>) => {
         if (!isClientConnected || res.destroyed) return;
         // Capture dt_state events for B1 diagnostic
@@ -715,6 +1156,171 @@ router.post(
         }
         res.write(`data: ${JSON.stringify(payload)}\n\n`);
       };
+
+      // --------------------------------------------------------
+      // Memory injection (short-term summary + long-term user/org)
+      // --------------------------------------------------------
+      emitSSE({
+        type: 'thought',
+        step: 'memory',
+        status: 'in_progress',
+        label: language?.startsWith('pl')
+          ? 'Wczytuję kontekst rozmowy i pamięć…'
+          : 'Loading conversation context and memory…',
+      });
+      try {
+        const convIdForMemory = conversationId || null;
+        const [convSummary, ltmAddon] = await Promise.all([
+          convIdForMemory
+            ? import('../services/ai/conversationSummaryService.js')
+                .then((mod: any) => (mod.default || mod).get(convIdForMemory))
+                .catch(() => '')
+            : Promise.resolve(''),
+          req.userId && req.organizationId
+            ? import('../services/ai/longTermMemoryService.js')
+                .then((mod: any) =>
+                  (mod.default || mod).getPromptAddendum({
+                    userId: req.userId,
+                    organizationId: req.organizationId,
+                  })
+                )
+                .catch(() => '')
+            : Promise.resolve(''),
+        ]);
+
+        const parts: string[] = [];
+        const hasSummary = Boolean(convSummary && String(convSummary).trim().length > 0);
+        const hasLtm = Boolean(ltmAddon && String(ltmAddon).trim().length > 0);
+
+        if (hasSummary) {
+          parts.push('## SHORT-TERM MEMORY (conversation summary)');
+          parts.push(String(convSummary).trim());
+          parts.push(
+            '',
+            'Rules:',
+            '- Use this as context, but prefer the latest user message if there is conflict.',
+            '- Do not mention the existence of this summary unless asked.'
+          );
+        }
+        if (hasLtm) {
+          parts.push(String(ltmAddon).trim());
+        }
+
+        const memoryAddon = parts.join('\n');
+        if (memoryAddon.trim().length > 0) {
+          pipelineRequest = {
+            ...pipelineRequest,
+            options: {
+              ...(pipelineRequest.options || {}),
+              systemInstruction:
+                String((pipelineRequest.options as any)?.systemInstruction || '') +
+                `\n\n${memoryAddon}\n`,
+            },
+            context: {
+              ...((pipelineRequest as any).context || {}),
+              memory: {
+                conversationSummary: convSummary || '',
+                longTermInjected: hasLtm,
+              },
+            },
+          } as any;
+        }
+
+        // Trace event (best-effort)
+        if (chatRunId) {
+          import('../services/ai/chatTraceService.js')
+            .then((m: any) =>
+              (m.default || m).addEvent(chatRunId, 'memory_injected', { hasSummary, hasLtm })
+            )
+            .catch(() => {
+              /* ignore */
+            });
+        }
+      } catch {
+        // ignore memory failures
+      }
+
+      logger.info(`[AI Stream] Processing request for user ${req.userId}`, {
+        projectId,
+        focusMode,
+        hasScreenContext: !!screenContext,
+        screenId: screenContext?.screenId || screenContext?.currentScreen || 'unknown',
+      });
+
+      // --------------------------------------------------------
+      // Help / KB documentation grounding (product how-to)
+      // --------------------------------------------------------
+      // Lightweight retrieval: inject only a few relevant KB articles as snippets.
+      // Also stream KB citations so the UI can show them.
+      emitSSE({
+        type: 'thought',
+        step: 'knowledge',
+        status: 'in_progress',
+        label: language?.startsWith('pl')
+          ? 'Przeszukuję bazę wiedzy i dokumentację…'
+          : 'Searching knowledge base and documentation…',
+      });
+      try {
+        const kbModuleId =
+          String(
+            (screenContext as any)?.moduleId ||
+              (screenContext as any)?.module ||
+              (screenContext as any)?.currentModule ||
+              (screenContext as any)?.screenId ||
+              (screenContext as any)?.currentScreen ||
+              ''
+          ).trim() || null;
+
+        const kb = await buildHelpDocsContext({
+          query: message,
+          language,
+          moduleId: kbModuleId,
+          maxArticles: 3,
+          maxCharsPerArticle: 1200,
+        });
+
+        if (kb?.citations?.length) {
+          emitSSE({ type: 'citations', citations: kb.citations });
+          if (chatRunId) {
+            import('../services/ai/chatTraceService.js')
+              .then((m: any) =>
+                (m.default || m).addEvent(chatRunId, 'kb_docs', {
+                  moduleId: kbModuleId,
+                  citationsCount: kb.citations.length,
+                })
+              )
+              .catch(() => {
+                /* ignore */
+              });
+          }
+        }
+
+        if (kb?.systemInstructionAddon?.trim()) {
+          pipelineRequest = {
+            ...pipelineRequest,
+            options: {
+              ...(pipelineRequest.options || {}),
+              systemInstruction:
+                String((pipelineRequest.options as any)?.systemInstruction || '') +
+                `\n\n${kb.systemInstructionAddon}\n`,
+            },
+            context: {
+              ...((pipelineRequest as any).context || {}),
+              external: {
+                ...((pipelineRequest as any).context?.external || {}),
+                helpDocs: {
+                  query: message,
+                  moduleId: kbModuleId,
+                  articles: kb.articles || [],
+                  citations: kb.citations || [],
+                },
+              },
+            },
+          } as any;
+        }
+      } catch (kbErr: any) {
+        logger.warn('[AI Stream] KB docs retrieval failed, continuing without it:', kbErr?.message);
+      }
 
       // --------------------------------------------------------
       // AI-suggested Deep Thinking activation (hint)
@@ -738,6 +1344,355 @@ router.post(
       }
 
       // --------------------------------------------------------
+      // Web Search (non-DeepThinking mode) — auto-detect + smart queries
+      // --------------------------------------------------------
+      // Strategy:
+      // 1. If user explicitly enabled webSearch → always search
+      // 2. If webSearch is default (true) → use intent detector to decide
+      // 3. Use optimized search queries (not raw message) for better results
+      // 4. Run multiple queries for complex questions
+      // 5. Inject results + citations into system instruction for grounded answers
+      if (!aiModes?.deepResearch && (aiModes?.webSearch || message?.trim().length >= 20)) {
+        emitSSE({
+          type: 'thought',
+          step: 'web_search_check',
+          status: 'in_progress',
+          label: language?.startsWith('pl')
+            ? 'Sprawdzam, czy potrzebuję informacji z internetu…'
+            : 'Checking if web search is needed…',
+        });
+      }
+      if (!aiModes?.deepResearch) {
+        const tavilyKey = (process.env.TAVILY_API_KEY || '').trim();
+        const userEnabledWebSearch = aiModes?.webSearch === true;
+
+        // Auto-detect web search intent
+        let searchIntent: any = null;
+        try {
+          const { detectWebSearchIntent } =
+            await import('../services/ai/webSearchIntentDetector.js');
+          searchIntent = detectWebSearchIntent(message, {
+            userEnabledWebSearch,
+            historyLength: Array.isArray(history) ? history.length : 0,
+          });
+        } catch (err: any) {
+          logger.debug('[AI Stream] Intent detector not available:', err?.message);
+          // Fallback: if user enabled webSearch, search with raw message
+          if (userEnabledWebSearch) {
+            searchIntent = {
+              shouldSearch: true,
+              confidence: 0.5,
+              reason: 'user toggle enabled (fallback)',
+              queries: [message.slice(0, 150)],
+              searchDepth: 'basic' as const,
+              maxResults: 5,
+            };
+          }
+        }
+
+        if (searchIntent?.shouldSearch && tavilyKey) {
+          try {
+            const { TavilyWebSearchService } =
+              await import('../services/ai/tavilyWebSearchService.js');
+            const svc = new (TavilyWebSearchService as any)(tavilyKey);
+
+            // Execute search queries (possibly multiple for complex questions)
+            const searchQueries: string[] =
+              searchIntent.queries?.length > 0 ? searchIntent.queries : [message.slice(0, 150)];
+
+            emitSSE({
+              type: 'research_progress',
+              topic: message,
+              stage: 'searching',
+              queries: searchQueries,
+              sources: [],
+            });
+
+            const allResults: any[] = [];
+            const allAnswers: string[] = [];
+            for (const query of searchQueries.slice(0, 3)) {
+              try {
+                const resp = await svc.search(query, {
+                  maxResults: searchIntent.maxResults ?? 5,
+                  includeNews: true,
+                  searchDepth: searchIntent.searchDepth ?? 'basic',
+                });
+                const results = Array.isArray(resp?.results) ? resp.results : [];
+                allResults.push(...results);
+                if (resp?.answer) allAnswers.push(resp.answer);
+              } catch (qErr: any) {
+                logger.debug(`[AI Stream] Query "${query}" failed: ${qErr?.message}`);
+              }
+            }
+
+            // Deduplicate by URL
+            const seenUrls = new Set<string>();
+            const dedupedResults = allResults.filter((r: any) => {
+              if (!r?.url || seenUrls.has(r.url)) return false;
+              seenUrls.add(r.url);
+              return true;
+            });
+
+            const citations = dedupedResults
+              .filter((r: any) => r?.url && r?.title)
+              .slice(0, 8)
+              .map((r: any, idx: number) => ({
+                id: `web_${idx + 1}`,
+                type: 'external',
+                title: String(r.title || ''),
+                reference: String(r.url || ''),
+                link: String(r.url || ''),
+                excerpt: String(r.snippet || ''),
+              }));
+
+            if (citations.length > 0) {
+              emitSSE({ type: 'citations', citations });
+            }
+
+            emitSSE({
+              type: 'research_progress',
+              topic: message,
+              stage: 'complete',
+              queries: searchQueries,
+              sources: citations.map((c: any) => ({ title: c.title, url: c.link })),
+            });
+
+            if (chatRunId) {
+              import('../services/ai/chatTraceService.js')
+                .then((m: any) =>
+                  (m.default || m).addEvent(chatRunId, 'web_search', {
+                    queries: searchQueries,
+                    citationsCount: citations.length,
+                    intent: searchIntent.reason,
+                    confidence: searchIntent.confidence,
+                  })
+                )
+                .catch(() => {
+                  /* non-critical */
+                });
+            }
+
+            // Inject sources + Tavily answers into system instruction
+            const sourcesText = citations
+              .map((c: any, i: number) => `[${i + 1}] ${c.title}\n${c.link}\n${c.excerpt || ''}`)
+              .join('\n\n');
+
+            const tavilyAnswerText =
+              allAnswers.length > 0
+                ? `\n\n## WEB SEARCH SYNTHESIS\n${allAnswers.join('\n\n')}`
+                : '';
+
+            pipelineRequest = {
+              ...pipelineRequest,
+              options: {
+                ...(pipelineRequest.options || {}),
+                systemInstruction:
+                  String((pipelineRequest.options as any)?.systemInstruction || '') +
+                  `\n\n## WEB SOURCES (${citations.length} results from ${searchQueries.length} queries)\n${sourcesText}${tavilyAnswerText}\n\nRules:\n- When using any web source, cite it inline like [1], [2].\n- If sources are insufficient or contradictory, say so.\n- Prioritize higher-scored sources and prefer recent data.\n`,
+              },
+              context: {
+                ...((pipelineRequest as any).context || {}),
+                external: {
+                  ...(context as any)?.external,
+                  webSearch: {
+                    queries: searchQueries,
+                    results: dedupedResults,
+                    answers: allAnswers,
+                    intent: searchIntent.reason,
+                  },
+                  citations,
+                },
+              },
+            } as any;
+          } catch (err: any) {
+            logger.warn('[AI Stream] Web search failed, continuing without it:', err?.message);
+            emitSSE({
+              type: 'research_progress',
+              topic: message,
+              stage: 'complete',
+              queries: [],
+              sources: [],
+              error: 'Web research unavailable',
+            });
+          }
+        } else if (searchIntent?.shouldSearch && !tavilyKey) {
+          // User/auto-detect wants web search but no API key configured
+          logger.info('[AI Stream] Web search intent detected but TAVILY_API_KEY not set');
+          emitSSE({
+            type: 'research_progress',
+            topic: message,
+            stage: 'complete',
+            queries: [],
+            sources: [],
+            error: 'Web search unavailable — TAVILY_API_KEY not configured',
+          });
+        }
+      }
+
+      // --------------------------------------------------------
+      // Conversation-scoped RAG from attached documents
+      // --------------------------------------------------------
+      // The client can attach documents to a conversation and pass their `knowledge_docs.id` as:
+      // - context.attachmentDocIds: string[]
+      // - OR context.attachments: Array<{ docId: string; ... }>
+      // We then restrict retrieval to ONLY those doc IDs.
+      const attachmentDocIdsRaw =
+        (context as any)?.attachmentDocIds ||
+        (Array.isArray((context as any)?.attachments)
+          ? (context as any).attachments.map((a: any) => a?.docId).filter(Boolean)
+          : null);
+      const attachmentDocIds = Array.isArray(attachmentDocIdsRaw)
+        ? Array.from(new Set(attachmentDocIdsRaw.map((x: any) => String(x)).filter(Boolean)))
+        : [];
+
+      if (attachmentDocIds.length > 0 && message && message.trim().length > 0) {
+        emitSSE({
+          type: 'thought',
+          step: 'attachments',
+          status: 'in_progress',
+          label: language?.startsWith('pl')
+            ? `Analizuję ${attachmentDocIds.length} załącznik(ów) — szukam powiązanych fragmentów…`
+            : `Analyzing ${attachmentDocIds.length} attachment(s) — searching for relevant fragments…`,
+        });
+        let attachmentChunksInjected = false;
+        try {
+          const ragModule = await import('../services/ragService.js');
+          const ragService = (ragModule.default || ragModule) as any;
+          const chunks = await ragService.searchRelevantChunks(message, {
+            limit: 5,
+            organizationId: req.organizationId || undefined,
+            documentIds: attachmentDocIds,
+          });
+
+          if (Array.isArray(chunks) && chunks.length > 0) {
+            attachmentChunksInjected = true;
+            const attachmentsText = chunks
+              .slice(0, 5)
+              .map((c: any, i: number) => {
+                const source = String(c?.source || 'Attachment');
+                const content = String(c?.content || '').trim();
+                return `[A${i + 1}] ${source}\n${content}`;
+              })
+              .join('\n\n');
+
+            pipelineRequest = {
+              ...pipelineRequest,
+              options: {
+                ...(pipelineRequest.options || {}),
+                systemInstruction:
+                  String((pipelineRequest.options as any)?.systemInstruction || '') +
+                  `\n\n## ATTACHMENTS (conversation-scoped sources)\n${attachmentsText}\n\nRules:\n- The user has attached documents to this conversation. The above content comes from those attachments.\n- Prefer these attachments when relevant.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n- If the attachments do not contain the needed info, say so.\n`,
+              },
+              context: {
+                ...((pipelineRequest as any).context || {}),
+                external: {
+                  ...(context as any)?.external,
+                  attachmentsRag: {
+                    documentIds: attachmentDocIds,
+                    chunks,
+                  },
+                },
+              },
+            } as any;
+
+            if (chatRunId) {
+              import('../services/ai/chatTraceService.js')
+                .then((m: any) =>
+                  (m.default || m).addEvent(chatRunId, 'attachment_rag', {
+                    attachmentDocIdsCount: attachmentDocIds.length,
+                    chunksCount: chunks.length,
+                  })
+                )
+                .catch(() => {
+                  /* ignore */
+                });
+            }
+          }
+        } catch (err: any) {
+          logger.warn(
+            '[AI Stream] Attachment RAG failed, continuing without it:',
+            err?.message || String(err)
+          );
+        }
+
+        // Fallback: if RAG returned no chunks (e.g. embedding failure, query mismatch),
+        // load raw chunks directly from DB to ensure the AI always sees attachment content.
+        if (!attachmentChunksInjected) {
+          try {
+            const placeholders = attachmentDocIds.map(() => '?').join(',');
+            const rows = await dbAll(
+              `SELECT c.content, d.filename
+               FROM knowledge_chunks c
+               JOIN knowledge_docs d ON c.doc_id = d.id
+               WHERE d.id IN (${placeholders})
+               ORDER BY c.chunk_index ASC
+               LIMIT 10`,
+              attachmentDocIds,
+              { fallback: true } as any
+            );
+
+            if (Array.isArray(rows) && rows.length > 0) {
+              attachmentChunksInjected = true;
+              const attachmentsText = rows
+                .map((r: any, i: number) => {
+                  const source = String(r?.filename || 'Attachment');
+                  const content = String(r?.content || '').trim();
+                  return `[A${i + 1}] ${source}\n${content}`;
+                })
+                .join('\n\n');
+
+              pipelineRequest = {
+                ...pipelineRequest,
+                options: {
+                  ...(pipelineRequest.options || {}),
+                  systemInstruction:
+                    String((pipelineRequest.options as any)?.systemInstruction || '') +
+                    `\n\n## ATTACHMENTS (conversation-scoped sources — direct load)\n${attachmentsText}\n\nRules:\n- The user has attached documents to this conversation. The above content comes from those attachments.\n- Refer to this content when the user asks about their attachments.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n`,
+                },
+              } as any;
+
+              logger.info(
+                `[AI Stream] Attachment fallback: loaded ${rows.length} raw chunks for ${attachmentDocIds.length} doc(s)`
+              );
+            } else {
+              logger.warn(
+                `[AI Stream] Attachment fallback: no chunks found in DB for docIds: ${attachmentDocIds.join(', ')}`
+              );
+            }
+          } catch (fbErr: any) {
+            logger.warn(
+              '[AI Stream] Attachment fallback DB query failed:',
+              fbErr?.message || String(fbErr)
+            );
+          }
+        }
+
+        // If we still have no chunks but DO have attachment doc IDs, inject a minimal awareness note
+        // so the AI knows the user attached files even if content couldn't be extracted.
+        if (!attachmentChunksInjected && attachmentDocIds.length > 0) {
+          const attachmentNames = (
+            Array.isArray((context as any)?.attachments)
+              ? (context as any).attachments
+                  .map((a: any) => String(a?.filename || ''))
+                  .filter(Boolean)
+              : []
+          ).join(', ');
+
+          pipelineRequest = {
+            ...pipelineRequest,
+            options: {
+              ...(pipelineRequest.options || {}),
+              systemInstruction:
+                String((pipelineRequest.options as any)?.systemInstruction || '') +
+                `\n\n## ATTACHMENTS (metadata only)\nThe user has attached ${attachmentDocIds.length} document(s) to this conversation${attachmentNames ? ` (${attachmentNames})` : ''}. ` +
+                `However, the content could not be extracted or retrieved. ` +
+                `If the user asks about these attachments, acknowledge that they were attached but explain that the content extraction may have failed and suggest re-uploading in a supported format (PDF, TXT, MD, CSV, JSON).\n`,
+            },
+          } as any;
+        }
+      }
+
+      // --------------------------------------------------------
       // Deep Thinking orchestration (standalone, composable)
       // --------------------------------------------------------
       // NOTE: `aiModes.deepResearch` is used as the Deep Thinking toggle in the client (ToolsMenu).
@@ -750,6 +1705,8 @@ router.post(
           language,
           context: (context || null) as any,
           aiModes: (aiModes || null) as any,
+          // v2.0: pass clarification answers for focused research
+          clarificationAnswers: (context as any)?.clarificationAnswers || null,
           emit: emitSSE,
         });
 
@@ -808,6 +1765,89 @@ router.post(
         }
       }
 
+      // --------------------------------------------------------
+      // Multi-Agent Decision Room routing
+      // When multiAgent mode is ON, route through the Decision Room
+      // instead of the standard pipeline for richer multi-perspective analysis.
+      // --------------------------------------------------------
+      if (aiModes?.multiAgent && message) {
+        try {
+          const { runDecisionRoom } = await import('../services/ai/advancedFeatures.js');
+          emitSSE({
+            type: 'status',
+            message: 'Uruchamiam analizę wieloagentową (CFO, CTO, CHRO, COO)...',
+          });
+
+          const decisionResult = await runDecisionRoom(
+            message,
+            JSON.stringify({
+              projectId,
+              screenContext: screenContext?.currentScreen || screenContext?.screenId || null,
+              history: (history || [])
+                .slice(-4)
+                .map((m: any) => `${m.role}: ${m.content?.slice(0, 200)}`)
+                .join('\n'),
+            }),
+            ['Opcja A', 'Opcja B'], // Default options — the AI will refine these
+            req.userId || 'anonymous',
+            req.organizationId || 'default'
+          );
+
+          // Stream the multi-agent result as structured content
+          const parts: string[] = [];
+          if (decisionResult.perspectives && decisionResult.perspectives.length > 0) {
+            for (const p of decisionResult.perspectives) {
+              parts.push(
+                `### ${p.agentRole}\n${p.analysis}\n**Rekomendacja:** ${p.recommendation}\n**Pewność:** ${p.confidenceLevel || 0}%\n`
+              );
+            }
+          }
+          if (decisionResult.consensus) {
+            parts.push(
+              `---\n## Konsensus\n**Rekomendacja:** ${decisionResult.consensus.recommendation}\n**Poziom pewności:** ${decisionResult.consensus.confidenceLevel || 0}%`
+            );
+            if (decisionResult.consensus.keyAgreements?.length > 0) {
+              parts.push(`**Zgodność:** ${decisionResult.consensus.keyAgreements.join(', ')}`);
+            }
+          }
+          const multiAgentContent = parts.join('\n');
+          emitSSE({ type: 'content', content: multiAgentContent });
+          emitSSE({ type: 'done', content: multiAgentContent });
+          emitSSE({ type: 'end' });
+
+          // Complete chat trace
+          if (chatRunId) {
+            try {
+              const svcMod = await import('../services/ai/chatTraceService.js');
+              await (svcMod.default || svcMod).completeRun({ runId: chatRunId as string });
+            } catch {
+              /* ignore */
+            }
+          }
+          return; // Skip standard pipeline
+        } catch (err) {
+          logger.warn(
+            '[AI Stream] Multi-agent mode failed, falling back to standard pipeline',
+            err
+          );
+          emitSSE({
+            type: 'status',
+            message: 'Tryb wieloagentowy niedostępny — przechodzę do standardowej analizy...',
+          });
+          // Fall through to standard pipeline
+        }
+      }
+
+      // Emit thought: generating response
+      emitSSE({
+        type: 'thought',
+        step: 'generating',
+        status: 'in_progress',
+        label: language?.startsWith('pl')
+          ? 'Generuję odpowiedź na podstawie zebranego kontekstu…'
+          : 'Generating response based on gathered context…',
+      });
+
       const aiPipeline = await getAIPipeline();
       const response = await (aiPipeline as any).process(
         pipelineRequest,
@@ -823,6 +1863,24 @@ router.post(
         }
       );
 
+      pipelineMeta = (response as any)?.metadata || null;
+      if (chatRunId && pipelineMeta) {
+        import('../services/ai/chatTraceService.js')
+          .then((m: any) =>
+            (m.default || m).addEvent(chatRunId, 'pipeline_metadata', {
+              provider: pipelineMeta?.provider,
+              model: pipelineMeta?.model,
+              traceId: pipelineMeta?.traceId,
+              latencyMs: pipelineMeta?.latency,
+              hasRag: Boolean(pipelineMeta?.ragResults),
+              hasMemory: Boolean(pipelineMeta?.memoryUsed),
+            })
+          )
+          .catch(() => {
+            /* ignore */
+          });
+      }
+
       // If pipeline failed before streaming starts, surface the error as SSE (instead of silently ending).
       // Otherwise the client sees "nothing" or a misleading EMPTY_STREAM.
       if ((response as any)?.success === false && (response as any)?.error) {
@@ -834,6 +1892,21 @@ router.post(
           (/invalid_api_key|incorrect api key/i.test(msg)
             ? 'INVALID_API_KEY'
             : 'AI_PIPELINE_ERROR');
+
+        if (chatRunId) {
+          try {
+            const svcMod = await import('../services/ai/chatTraceService.js');
+            const chatTraceService = (svcMod.default || svcMod) as any;
+            await chatTraceService.failRun({
+              runId: chatRunId,
+              code,
+              message: msg,
+              dtStates: dtStatesEmitted,
+            });
+          } catch {
+            /* ignore */
+          }
+        }
 
         if (isClientConnected && !res.destroyed) {
           res.write(
@@ -870,34 +1943,52 @@ router.post(
       }
 
       if ((response as { stream?: AsyncIterable<string> }).stream) {
-        for await (const chunk of (response as { stream: AsyncIterable<string> }).stream) {
-          if (!isClientConnected || res.destroyed || streamAborted) {
-            logger.info(`[Stream] Aborting stream - client disconnected: ${streamSessionId}`);
-            break;
-          }
+        let streamIterationError: Error | null = null;
+        try {
+          for await (const chunk of (response as { stream: AsyncIterable<string> }).stream) {
+            if (!isClientConnected || res.destroyed || streamAborted) {
+              logger.info(`[Stream] Aborting stream - client disconnected: ${streamSessionId}`);
+              break;
+            }
 
-          if (chunk) {
-            accumulatedContent += chunk;
-            res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+            if (chunk) {
+              accumulatedContent += chunk;
+              res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
 
-            if (Date.now() - lastSaveTime > 2000) {
-              savePartialResponse(
-                streamSessionId,
-                accumulatedContent,
-                req.userId!,
-                req.organizationId!
-              ).catch((err: Error | null) =>
-                logger.warn('[Stream] Partial save failed:', (err as Error).message)
-              );
-              lastSaveTime = Date.now();
+              if (Date.now() - lastSaveTime > 2000) {
+                savePartialResponse(
+                  streamSessionId,
+                  accumulatedContent,
+                  req.userId!,
+                  req.organizationId!
+                ).catch((err: Error | null) =>
+                  logger.warn('[Stream] Partial save failed:', (err as Error).message)
+                );
+                lastSaveTime = Date.now();
+              }
             }
           }
+        } catch (iterErr: any) {
+          streamIterationError = iterErr;
+          logger.error(`[Stream] Iterator error: ${iterErr?.message?.slice(0, 300)}`);
         }
 
         if (isClientConnected && !streamAborted) {
-          // If stream produced no content, surface an explicit error.
-          // Without this, the frontend may see only [DONE] and appear "dead".
-          if (!accumulatedContent || accumulatedContent.trim().length === 0) {
+          // If the stream iterator threw (e.g. Gemini 429 rate limit), send a clear error.
+          if (streamIterationError) {
+            const errMsg = String(streamIterationError?.message || 'Stream failed');
+            const isRateLimit = /quota|rate.limit|429|too many/i.test(errMsg);
+            res.write(
+              `data: ${JSON.stringify({
+                error: isRateLimit
+                  ? 'LLM rate limit exceeded. Please wait a moment or switch to a different model tier.'
+                  : `AI stream error: ${errMsg.slice(0, 200)}`,
+                code: isRateLimit ? 'RATE_LIMIT' : 'STREAM_ERROR',
+              })}\n\n`
+            );
+          } else if (!accumulatedContent || accumulatedContent.trim().length === 0) {
+            // If stream produced no content, surface an explicit error.
+            // Without this, the frontend may see only [DONE] and appear "dead".
             res.write(
               `data: ${JSON.stringify({
                 error:
@@ -1031,6 +2122,9 @@ router.post(
             }
           }
 
+          // Hoisted so it's accessible in both deep-thinking metrics and agent-audit scopes
+          let forceDepthDiff: any = null;
+
           // Deep Thinking ops metric: completed run (evaluate final output; do not reward length)
           if (
             aiModes?.deepResearch &&
@@ -1051,7 +2145,6 @@ router.post(
               const patternsFinal = detectPatterns(accumulatedContent, language);
 
               // Force-depth diff check: if this was a force-depth request, compare with previous answer
-              let forceDepthDiff: any = null;
               if (forceDepthTrigger || (context as any)?.forceDepth) {
                 try {
                   const { evaluateForceDepthDiff } =
@@ -1081,11 +2174,13 @@ router.post(
                         `[DeepThinking] Force-depth FAIL: response too similar. ` +
                           `Jaccard=${forceDepthDiff.jaccardSimilarity}, delta=${forceDepthDiff.rubricDelta}`
                       );
-                      // Emit warning to frontend (informational, not blocking)
+                      // Emit explicit quality FAIL signal to frontend (non-blocking, but must be visible).
                       emitSSE({
                         type: 'dt_selfcheck',
-                        status: 'force_depth_insufficient',
-                        label: 'Analysis depth may be insufficient',
+                        status: 'failed',
+                        label:
+                          'Directed deepening failed: output is too similar (insufficient depth).',
+                        forceDepthDiff,
                       });
                     }
                   }
@@ -1131,8 +2226,224 @@ router.post(
             }
           }
 
+          // ================================================================
+          // Agent Audit Layer (Post-DT) — optional, streamed transparency
+          // ================================================================
+          try {
+            const agentAudit = (context as any)?.agentAudit || null;
+            const agentIds = Array.isArray(agentAudit?.agentIds)
+              ? agentAudit.agentIds.map((x: any) => String(x || '').trim()).filter(Boolean)
+              : [];
+            const decisionContext = agentAudit?.decisionContext || null;
+
+            if (
+              aiModes?.deepResearch &&
+              req.organizationId &&
+              req.userId &&
+              decisionContext &&
+              agentIds.length > 0
+            ) {
+              emitSSE({
+                type: 'agent_audit_state',
+                state: 'reviewing',
+                agentsTotal: agentIds.length,
+              });
+
+              const { runAgentAudit } =
+                await import('../services/ai/agentAudit/orchestratorService.js');
+              const { createAgentAuditRun } =
+                await import('../services/ai/agentAudit/agentAuditStore.js');
+
+              const auditOut = await runAgentAudit({
+                organizationId: req.organizationId!,
+                userId: req.userId!,
+                conversationId: conversationId || null,
+                decisionContext,
+                deepThinkingReport: accumulatedContent,
+                forceDepthDiff: forceDepthDiff ?? null,
+                agentIds,
+                userIntent: agentAudit?.userIntent || 'validate',
+                language,
+                webSearchEnabled: Boolean(aiModes?.webSearch),
+                selectedTier,
+                selectedModelId,
+                loopIteration: agentAudit?.loopIteration || 1,
+                emit: emitSSE,
+              } as any);
+
+              // Persist run (best-effort)
+              try {
+                await createAgentAuditRun({
+                  id: auditOut.orchestratorRunId,
+                  organizationId: req.organizationId!,
+                  userId: req.userId!,
+                  conversationId: conversationId || null,
+                  dtSessionId: streamSessionId,
+                  userIntent: String(agentAudit?.userIntent || 'validate'),
+                  loopIteration: Number(agentAudit?.loopIteration || 1),
+                  decisionContext: decisionContext || null,
+                  selectedAgentIds: agentIds,
+                  verdict: auditOut.verdict || null,
+                  reviews: (auditOut.reviews || []).map((r: any) => ({
+                    agentId: String(r.agentId || ''),
+                    overreach: r.overreach || null,
+                    review: r,
+                  })),
+                } as any);
+              } catch {
+                /* ignore */
+              }
+
+              emitSSE({
+                type: 'agent_audit_verdict',
+                orchestratorRunId: auditOut.orchestratorRunId,
+                verdict: auditOut.verdict,
+                reviews: auditOut.reviews,
+                decisionContext,
+                agentIds,
+                userIntent: agentAudit?.userIntent || 'validate',
+                loopIteration: agentAudit?.loopIteration || 1,
+              });
+            }
+          } catch (auditErr: any) {
+            emitSSE({
+              type: 'agent_audit_state',
+              state: 'error',
+              error: String(auditErr?.message || auditErr || ''),
+            });
+          }
+
+          // ================================================================
+          // Post-stream: Quality scoring (best-effort, non-blocking)
+          // ================================================================
+          if (accumulatedContent && accumulatedContent.trim().length > 0) {
+            try {
+              const qcMod = await import('../services/ai/qualityChecker.js');
+              const qc = (qcMod as any).qualityChecker || (qcMod as any).default;
+              if (qc?.check) {
+                // Pass tier info for LLM-as-Judge (R14)
+                const selectedTier = (pipelineRequest as any)?.options?.selectedTier || 'STANDARD';
+                const qualityScore = await qc.check({
+                  question: message,
+                  response: accumulatedContent,
+                  conversationId: conversationId || undefined,
+                  messageId: chatRunId || undefined,
+                  userId: req.userId,
+                  organizationId: req.organizationId,
+                  tier: selectedTier,
+                });
+                if (qualityScore && typeof qualityScore.overall === 'number') {
+                  emitSSE({ type: 'quality_score', ...qualityScore });
+                }
+              }
+            } catch (qErr: any) {
+              logger.debug('[AI Stream] Quality scoring failed:', qErr?.message);
+            }
+
+            // ================================================================
+            // Post-stream: Knowledge Graph extraction (R8, best-effort)
+            // ================================================================
+            try {
+              if (req.organizationId && accumulatedContent.length > 100) {
+                const kgMod = await import('../services/ai/knowledgeGraphService.js');
+                const kgService = (kgMod as any).knowledgeGraphService || (kgMod as any).default;
+                if (kgService?.processConversation) {
+                  // Fire and forget — don't block the stream
+                  kgService
+                    .processConversation(req.organizationId, message, accumulatedContent)
+                    .catch(() => {});
+                }
+              }
+            } catch {
+              // Non-critical
+            }
+
+            // ================================================================
+            // Post-stream: Citation extraction (best-effort, non-blocking)
+            // ================================================================
+            try {
+              const ceMod = await import('../services/ai/citationExtractor.js');
+              const ce = (ceMod as any).citationExtractor || (ceMod as any).default;
+              if (ce?.extract) {
+                // Gather knowledge sources from context (if any RAG chunks were used)
+                const ragChunks =
+                  ((pipelineRequest as any).context?.external?.attachmentsRag?.chunks as any[]) ||
+                  [];
+                const citationResult = ce.extract(accumulatedContent, [], ragChunks);
+                if (citationResult?.citations?.length > 0) {
+                  emitSSE({
+                    type: 'citations',
+                    citations: citationResult.citations.map((c: any) => ({
+                      id: c.id,
+                      type: c.sourceType || 'document',
+                      title: c.sourceTitle || '',
+                      reference: c.sourceUrl || c.sourceId || '',
+                      link: c.sourceUrl || '',
+                      excerpt: c.text || '',
+                      confidence: c.confidence,
+                    })),
+                  });
+                }
+              }
+            } catch (cErr: any) {
+              logger.debug('[AI Stream] Citation extraction failed:', cErr?.message);
+            }
+
+            // ================================================================
+            // Post-stream: Cost monitoring (best-effort, non-blocking)
+            // ================================================================
+            try {
+              const costMod = await import('../services/ai/cost-monitoring.service.js');
+              const costSvc = (costMod as any).aiCostMonitoring || (costMod as any).default;
+              if (costSvc?.recordUsage) {
+                const estimatedInput = Math.max(10, Math.ceil((message?.length || 0) / 4));
+                const estimatedOutput = Math.max(
+                  10,
+                  Math.ceil((accumulatedContent?.length || 0) / 4)
+                );
+                // Use actual token counts from pipeline metadata when available
+                const inputTokens = (pipelineMeta as any)?.inputTokens || estimatedInput;
+                const outputTokens = (pipelineMeta as any)?.outputTokens || estimatedOutput;
+                costSvc.recordUsage(
+                  req.userId!,
+                  req.organizationId!,
+                  (selectedTier || 'STANDARD') as any,
+                  pipelineMeta?.provider || 'unknown',
+                  pipelineMeta?.model || 'unknown',
+                  {
+                    inputTokens,
+                    outputTokens,
+                    totalTokens: inputTokens + outputTokens,
+                  }
+                );
+              }
+            } catch (costErr: any) {
+              logger.debug('[AI Stream] Cost monitoring failed:', costErr?.message);
+            }
+          }
+
           streamCompleted = true;
           res.write('data: [DONE]\n\n');
+
+          if (chatRunId) {
+            try {
+              const svcMod = await import('../services/ai/chatTraceService.js');
+              const chatTraceService = (svcMod.default || svcMod) as any;
+              await chatTraceService.completeRun({
+                runId: chatRunId,
+                status: streamAborted ? 'aborted' : 'completed',
+                pipelineTraceId: pipelineMeta?.traceId || null,
+                modelProvider: pipelineMeta?.provider || null,
+                modelId: pipelineMeta?.model || null,
+                tier: selectedTier || null,
+                latencyMs: typeof pipelineMeta?.latency === 'number' ? pipelineMeta.latency : null,
+                outputText: accumulatedContent,
+                dtStates: dtStatesEmitted,
+              });
+            } catch {
+              /* ignore */
+            }
+          }
 
           await dbRun(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId]);
 
@@ -1155,11 +2466,96 @@ router.post(
         return res.end();
       } else {
         if (isClientConnected && !res.destroyed) {
-          res.write(
-            `data: ${JSON.stringify({ text: (response as { content?: string }).content || '' })}\n\n`
-          );
+          const nonStreamContent = String((response as { content?: string }).content || '');
+          res.write(`data: ${JSON.stringify({ text: nonStreamContent })}\n\n`);
+
+          // Post-response: quality scoring + citations + cost monitoring (same as streaming branch)
+          if (nonStreamContent.trim().length > 0) {
+            try {
+              const qcMod = await import('../services/ai/qualityChecker.js');
+              const qc = (qcMod as any).qualityChecker || (qcMod as any).default;
+              if (qc?.check) {
+                const qs = await qc.check({
+                  question: message,
+                  response: nonStreamContent,
+                  conversationId: conversationId || undefined,
+                  userId: req.userId,
+                  organizationId: req.organizationId,
+                });
+                if (qs && typeof qs.overall === 'number') emitSSE({ type: 'quality_score', ...qs });
+              }
+            } catch {
+              /* ignore */
+            }
+
+            try {
+              const ceMod = await import('../services/ai/citationExtractor.js');
+              const ce = (ceMod as any).citationExtractor || (ceMod as any).default;
+              if (ce?.extract) {
+                const cr = ce.extract(nonStreamContent, [], []);
+                if (cr?.citations?.length > 0) {
+                  emitSSE({
+                    type: 'citations',
+                    citations: cr.citations.map((c: any) => ({
+                      id: c.id,
+                      type: c.sourceType || 'document',
+                      title: c.sourceTitle || '',
+                      reference: c.sourceUrl || c.sourceId || '',
+                      link: c.sourceUrl || '',
+                      excerpt: c.text || '',
+                      confidence: c.confidence,
+                    })),
+                  });
+                }
+              }
+            } catch {
+              /* ignore */
+            }
+
+            try {
+              const costMod = await import('../services/ai/cost-monitoring.service.js');
+              const costSvc = (costMod as any).aiCostMonitoring || (costMod as any).default;
+              if (costSvc?.recordUsage) {
+                const ei = Math.max(10, Math.ceil((message?.length || 0) / 4));
+                const eo = Math.max(10, Math.ceil((nonStreamContent?.length || 0) / 4));
+                const it = (pipelineMeta as any)?.inputTokens || ei;
+                const ot = (pipelineMeta as any)?.outputTokens || eo;
+                costSvc.recordUsage(
+                  req.userId!,
+                  req.organizationId!,
+                  (selectedTier || 'STANDARD') as any,
+                  pipelineMeta?.provider || 'unknown',
+                  pipelineMeta?.model || 'unknown',
+                  { inputTokens: it, outputTokens: ot, totalTokens: it + ot }
+                );
+              }
+            } catch {
+              /* ignore */
+            }
+          }
+
           streamCompleted = true;
           res.write('data: [DONE]\n\n');
+
+          if (chatRunId) {
+            try {
+              const svcMod = await import('../services/ai/chatTraceService.js');
+              const chatTraceService = (svcMod.default || svcMod) as any;
+              await chatTraceService.completeRun({
+                runId: chatRunId,
+                status: 'completed',
+                pipelineTraceId: pipelineMeta?.traceId || null,
+                modelProvider: pipelineMeta?.provider || null,
+                modelId: pipelineMeta?.model || null,
+                tier: selectedTier || null,
+                latencyMs: typeof pipelineMeta?.latency === 'number' ? pipelineMeta.latency : null,
+                outputText: nonStreamContent,
+                dtStates: dtStatesEmitted,
+              });
+            } catch {
+              /* ignore */
+            }
+          }
         }
         return res.end();
       }
@@ -1182,6 +2578,22 @@ router.post(
         const code = /invalid_api_key|incorrect api key/i.test(msg)
           ? 'INVALID_API_KEY'
           : 'AI_STREAM_ERROR';
+
+        if (chatRunId) {
+          try {
+            const svcMod = await import('../services/ai/chatTraceService.js');
+            const chatTraceService = (svcMod.default || svcMod) as any;
+            await chatTraceService.failRun({
+              runId: chatRunId,
+              code,
+              message: msg,
+              dtStates: dtStatesEmitted,
+            });
+          } catch {
+            /* ignore */
+          }
+        }
+
         res.write(
           `data: ${JSON.stringify({
             error: msg,
@@ -1217,6 +2629,7 @@ router.post(
         return res.end();
       }
     } finally {
+      clearInterval(heartbeatInterval);
       req.socket?.removeListener('close', connectionCleanup);
       req.socket?.removeListener('error', connectionCleanup);
       res.removeListener('close', connectionCleanup);
@@ -1257,6 +2670,118 @@ router.get(
   })
 );
 
+// ==================== REFINE TEXT (AI Field Enhancer) ====================
+/**
+ * Lightweight text-refinement endpoint for the AIFieldEnhancer component.
+ * Sends the user's field text + mode instruction to an LLM and returns
+ * plain refined text — no orchestrator, no deep thinking, no streaming.
+ */
+router.post(
+  '/refine-text',
+  verifyToken,
+  validateBody(RefineTextRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { text, mode, systemInstruction, fieldLabel, artifactContext, language } = req.body;
+
+    // --- Provider check ---
+    const hasEnvProvider =
+      !!process.env.OPENAI_API_KEY ||
+      !!process.env.GEMINI_API_KEY ||
+      !!process.env.GOOGLE_AI_API_KEY ||
+      !!process.env.ANTHROPIC_API_KEY ||
+      !!process.env.MISTRAL_API_KEY;
+
+    if (!hasEnvProvider) {
+      return res.status(500).json({
+        error: 'No LLM provider configured. Set OPENAI_API_KEY or GEMINI_API_KEY.',
+        code: 'NO_LLM_PROVIDER',
+      });
+    }
+
+    // --- Access policy ---
+    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+    const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
+    if (!aiAccessCheck.allowed) {
+      return res.status(403).json({
+        error: aiAccessCheck.reason || 'Access blocked',
+        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
+      });
+    }
+
+    // Count the call
+    AccessPolicyService.incrementUsage(req.organizationId!, 'ai_calls', 1).catch((err: any) => {
+      logger.warn('[AI RefineText] Failed to increment ai_calls usage:', err?.message || err);
+    });
+
+    // --- Build prompts ---
+    const langCode = (language || 'pl').split('-')[0];
+    const langMap: Record<string, string> = {
+      pl: 'Polish',
+      en: 'English',
+      de: 'German',
+      es: 'Spanish',
+    };
+    const langName = langMap[langCode] || 'Polish';
+
+    const sys = [
+      systemInstruction ||
+        `You are a professional PMO content editor. Return ONLY the refined text — no commentary, no explanations, no quotes, no prefixes. Keep the original language.`,
+      `\n[LANGUAGE INSTRUCTION: Always respond in ${langName}.]`,
+    ].join('\n');
+
+    const ctx = artifactContext
+      ? `Artifact type: ${artifactContext.type}, Title: ${artifactContext.title || '-'}, Status: ${artifactContext.status || '-'}, Priority: ${artifactContext.priority || '-'}`
+      : '';
+
+    const userPrompt = [
+      fieldLabel ? `Field: ${fieldLabel}` : '',
+      ctx ? `Context: ${ctx}` : '',
+      `Edit mode: ${mode}`,
+      '',
+      `Text to refine:`,
+      text,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    // --- Call LLM ---
+    const { modelRouter } = await import('../services/ai/modelRouter.js');
+    const { llmService } = await import('../services/ai/llmService.js');
+
+    const modelCfg = await modelRouter.select({
+      capability: 'chat_confirm',
+      organizationId: req.organizationId,
+      tier: 'BUDGET',
+    } as any);
+
+    logger.info('[AI RefineText] Using model:', modelCfg.id, 'provider:', modelCfg.provider);
+
+    const result = (await llmService.callText({
+      type: 'chat',
+      modelConfig: {
+        provider: modelCfg.provider,
+        id: modelCfg.id,
+        endpoint: (modelCfg as any).endpoint,
+        apiKey: (modelCfg as any).apiKey,
+      },
+      systemPrompt: sys,
+      messages: [{ role: 'user', content: userPrompt }],
+    } as any)) as any;
+
+    const refinedText = String(result?.content || result?.text || '').trim();
+
+    if (!refinedText) {
+      return res.status(502).json({
+        error: 'LLM returned empty response',
+        code: 'EMPTY_LLM_RESPONSE',
+      });
+    }
+
+    return res.json({ text: refinedText });
+  })
+);
+
+// ==================== CHAT (AI Orchestrator) ====================
 router.post(
   '/chat',
   verifyToken,
@@ -2631,6 +4156,32 @@ router.post(
         logger.warn('[AI] Could not update adaptive service:', (adaptErr as Error).message);
       }
 
+      // Feed into learning system for pattern analysis and quality improvement
+      try {
+        const lsPath = '../services/ai/learningSystem' + '.js';
+        const lsMod = await import(/* @vite-ignore */ lsPath);
+        const ls = (lsMod as any).learningSystem || (lsMod as any).default;
+        if (ls?.processFeedback) {
+          await ls.processFeedback({
+            id: `fb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            userId,
+            organizationId: req.organizationId,
+            conversationId: req.body.conversationId || '',
+            messageId,
+            feedbackType: rating,
+            comment: req.body.comment || undefined,
+            correction: req.body.correction || undefined,
+            timestamp: new Date().toISOString(),
+          });
+          logger.debug(`[AI Feedback] Learning system processed feedback for message ${messageId}`);
+        }
+      } catch (learnErr) {
+        logger.warn(
+          '[AI] Could not process feedback in learning system:',
+          (learnErr as Error).message
+        );
+      }
+
       return res.json({ success: true });
     } catch (err: any) {
       logger.error('[AI] Feedback error:', err);
@@ -2960,6 +4511,426 @@ router.get(
     } catch (err: any) {
       logger.error('[AI] Soft cap status error:', err);
       return res.status(500).json({ success: false, error: (err as Error).message });
+    }
+  })
+);
+
+// ==================== PHASE 3: INTELLIGENT FEATURES ====================
+
+// 3.1 NL → Initiative Generator
+router.post(
+  '/generate-initiative',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { goal, projectId } = req.body;
+    if (!goal) return res.status(400).json({ error: 'Goal description is required' });
+
+    try {
+      const { generateInitiativeFromNL } = await import('../services/ai/intelligentFeatures.js');
+      const result = await generateInitiativeFromNL(
+        goal,
+        req.userId!,
+        req.organizationId!,
+        projectId
+      );
+      return res.json({ success: true, initiative: result });
+    } catch (err: any) {
+      logger.error('[AI] Generate initiative error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 3.2 AI Sense-Check
+router.post(
+  '/sense-check',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { data, type } = req.body;
+    if (!data) return res.status(400).json({ error: 'Data is required for sense-check' });
+
+    try {
+      const { senseCheckInitiative } = await import('../services/ai/intelligentFeatures.js');
+      const result = await senseCheckInitiative(data, req.userId!, req.organizationId!);
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Sense-check error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 3.3 Predictive Risk Score
+router.post(
+  '/risk-score',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { initiativeData, projectContext } = req.body;
+    if (!initiativeData) return res.status(400).json({ error: 'Initiative data is required' });
+
+    try {
+      const { predictRiskScore } = await import('../services/ai/intelligentFeatures.js');
+      const result = await predictRiskScore(
+        initiativeData,
+        req.userId!,
+        req.organizationId!,
+        projectContext
+      );
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Risk score error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 3.4 AI-Narrated Dashboards
+router.post(
+  '/narrate',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { chartType, chartData, userRole } = req.body;
+    if (!chartType || !chartData)
+      return res.status(400).json({ error: 'Chart type and data required' });
+
+    try {
+      const { narrateChartData } = await import('../services/ai/intelligentFeatures.js');
+      const narrative = await narrateChartData(
+        chartType,
+        chartData,
+        userRole || 'analyst',
+        req.userId!,
+        req.organizationId!
+      );
+      return res.json({ success: true, narrative });
+    } catch (err: any) {
+      logger.error('[AI] Narrate error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 3.6 Proactive AI Nudges
+router.get(
+  '/nudges',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const projectId = req.query.projectId as string | undefined;
+
+    try {
+      const { generateNudges } = await import('../services/ai/intelligentFeatures.js');
+      const nudges = await generateNudges(req.userId!, req.organizationId!, projectId);
+      return res.json({ success: true, nudges });
+    } catch (err: any) {
+      logger.error('[AI] Nudges error:', err);
+      return res.json({ success: true, nudges: [] });
+    }
+  })
+);
+
+// 3.6b Nudge dismiss (best-effort persistence)
+router.post(
+  '/nudges/:nudgeId/dismiss',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { nudgeId } = req.params;
+    try {
+      const svc = await import('../services/ai/proactiveNudges.js');
+      await (svc.default || svc.proactiveNudgesService).dismissNudge(nudgeId, req.userId!);
+    } catch {
+      // best-effort — dismiss tracking is optional
+    }
+    return res.json({ success: true });
+  })
+);
+
+// 3.6c Nudge action tracking (best-effort)
+router.post(
+  '/nudges/:nudgeId/action',
+  verifyToken,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    // Best-effort: track that user acted on this nudge. Can be enhanced later.
+    return res.json({ success: true });
+  })
+);
+
+// ==================== PHASE 4: ADVANCED AI FEATURES ====================
+
+// 4.1 Multi-Agent Decision Room
+router.post(
+  '/decision-room',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { title, context, options } = req.body;
+    if (!title || !options?.length) {
+      return res.status(400).json({ error: 'Title and options are required' });
+    }
+
+    try {
+      const { runDecisionRoom } = await import('../services/ai/advancedFeatures.js');
+      const result = await runDecisionRoom(
+        title,
+        context || '',
+        options,
+        req.userId!,
+        req.organizationId!
+      );
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Decision room error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 4.2 Monte Carlo ROI Forecasting
+router.post(
+  '/monte-carlo',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { baseROI, capex, opex, uncertainty, iterations } = req.body;
+    if (baseROI === undefined || capex === undefined) {
+      return res.status(400).json({ error: 'baseROI and capex are required' });
+    }
+
+    try {
+      const { runMonteCarloROI } = await import('../services/ai/advancedFeatures.js');
+      const result = runMonteCarloROI(baseROI, capex, opex || 0, uncertainty, iterations);
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Monte Carlo error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 4.3 Intelligent Document Import
+router.post(
+  '/extract-document',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { text, documentType } = req.body;
+    if (!text) return res.status(400).json({ error: 'Document text is required' });
+
+    try {
+      const { extractDocumentData } = await import('../services/ai/advancedFeatures.js');
+      const result = await extractDocumentData(
+        text,
+        documentType || 'general',
+        req.userId!,
+        req.organizationId!
+      );
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Document extraction error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// 4.5 Conversational Assessment
+router.post(
+  '/assessment/question',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { axis, area, previousAnswers } = req.body;
+    if (!axis || !area) return res.status(400).json({ error: 'Axis and area are required' });
+
+    try {
+      const { generateAssessmentQuestion } = await import('../services/ai/advancedFeatures.js');
+      const result = await generateAssessmentQuestion(
+        axis,
+        area,
+        previousAnswers || [],
+        req.userId!,
+        req.organizationId!
+      );
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Assessment question error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+router.post(
+  '/assessment/score',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { axis, area, answer } = req.body;
+    if (!axis || !area || !answer) {
+      return res.status(400).json({ error: 'Axis, area, and answer are required' });
+    }
+
+    try {
+      const { mapAnswerToScore } = await import('../services/ai/advancedFeatures.js');
+      const result = await mapAnswerToScore(axis, area, answer, req.userId!, req.organizationId!);
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      logger.error('[AI] Assessment score error:', err);
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// ==================== PHASE 5: PLATFORM SERVICES ====================
+
+// Per-tier rate limiting info
+router.get(
+  '/tier-limits',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { getTierLimits } = await import('../services/ai/platformServices.js');
+      const tier = (req as any).subscriptionTier || 'free';
+      return res.json({ success: true, tier, limits: getTierLimits(tier) });
+    } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// Token estimation
+router.post(
+  '/estimate-tokens',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { text, language } = req.body;
+    if (!text) return res.status(400).json({ error: 'Text is required' });
+
+    try {
+      const { estimateTokenCount } = await import('../services/ai/platformServices.js');
+      return res.json({ success: true, estimatedTokens: estimateTokenCount(text, language) });
+    } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// Cache stats
+router.get(
+  '/cache-stats',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { getCacheStats } = await import('../services/ai/platformServices.js');
+      return res.json({ success: true, ...getCacheStats() });
+    } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+// Industry intelligence
+router.get(
+  '/industry-benchmark',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const industry = (req.query.industry as string) || 'general';
+
+    try {
+      const { getIndustryBenchmark } = await import('../services/ai/platformServices.js');
+      return res.json({ success: true, benchmark: getIndustryBenchmark(industry) });
+    } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+router.get(
+  '/industry-benchmarks',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { getAllIndustryBenchmarks } = await import('../services/ai/platformServices.js');
+      return res.json({ success: true, benchmarks: getAllIndustryBenchmarks() });
+    } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+/**
+ * POST /api/ai/trigger-notification
+ * Manually or programmatically trigger an AI notification
+ * Used by AI pipelines to create risk, recommendation, overload, or conflict notifications
+ */
+router.post(
+  '/trigger-notification',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = (req as any).userId || req.user?.id;
+    const organizationId = (req as any).organizationId || req.user?.organizationId || 'system';
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const { type, title, description, projectId, relatedObjectType, relatedObjectId, details } =
+        req.body;
+
+      if (!type || !title || !description) {
+        return res.status(400).json({ error: 'type, title, and description are required' });
+      }
+
+      const ctx = {
+        userId,
+        organizationId,
+        projectId,
+        relatedObjectType,
+        relatedObjectId,
+      };
+
+      let notifId: string | null = null;
+
+      switch (type) {
+        case 'AI_RISK_DETECTED':
+          notifId = await triggerAIRiskDetected(ctx, {
+            title,
+            description,
+            riskLevel: details?.riskLevel || 'medium',
+            affectedEntity: details?.affectedEntity,
+            recommendation: details?.recommendation,
+            confidence: details?.confidence,
+          });
+          break;
+        case 'AI_RECOMMENDATION':
+          notifId = await triggerAIRecommendation(ctx, {
+            title,
+            description,
+            impact: details?.impact,
+            savings: details?.savings,
+            confidence: details?.confidence,
+            actionLabel: details?.actionLabel,
+          });
+          break;
+        case 'AI_OVERLOAD_DETECTED':
+          notifId = await triggerAIOverloadDetected(ctx, {
+            title,
+            description,
+            affectedResource: details?.affectedResource || 'unknown',
+            currentLoad: details?.currentLoad || 0,
+            threshold: details?.threshold || 0,
+            recommendation: details?.recommendation,
+          });
+          break;
+        case 'AI_DEPENDENCY_CONFLICT':
+          notifId = await triggerAIDependencyConflict(ctx, {
+            title,
+            description,
+            conflictingEntities: details?.conflictingEntities || [],
+            suggestedResolution: details?.suggestedResolution,
+          });
+          break;
+        default:
+          return res.status(400).json({
+            error: `Unknown AI notification type: ${type}. Supported: AI_RISK_DETECTED, AI_RECOMMENDATION, AI_OVERLOAD_DETECTED, AI_DEPENDENCY_CONFLICT`,
+          });
+      }
+
+      return res.json({ success: true, notificationId: notifId });
+    } catch (err: any) {
+      logger.error('[AI Routes] Failed to trigger AI notification:', err);
+      return res.status(500).json({ error: err.message });
     }
   })
 );

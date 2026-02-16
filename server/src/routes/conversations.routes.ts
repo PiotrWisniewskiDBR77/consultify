@@ -44,16 +44,15 @@ const router = Router();
  */
 async function getTeamProjectForConversation(conversationId: string): Promise<{
   id: string;
+  scope: string;
   organization_id: string;
 } | null> {
   try {
-    // Note: If scope column doesn't exist, use organization_id as fallback
-    // Team projects have organization_id, personal projects don't
     const row = await dbGet(
-      `SELECT cp.id, cp.organization_id
+      `SELECT cp.id, cp.scope, cp.organization_id
        FROM conversations c
        JOIN chat_projects cp ON c.chat_project_id = cp.id
-       WHERE c.id = ? AND cp.organization_id IS NOT NULL`,
+       WHERE c.id = ? AND cp.scope = 'team'`,
       [conversationId]
     );
     return (row as any) || null;
@@ -79,12 +78,12 @@ async function findAccessibleConversation(
   if (personal) return personal;
 
   // Try team access: conversation is in a team-scope project the user's org owns
-  // Note: If scope column doesn't exist, use organization_id as fallback
   if (organizationId) {
     const team = await dbGet(
       `SELECT c.* FROM conversations c
        JOIN chat_projects cp ON c.chat_project_id = cp.id
        WHERE c.id = ?
+         AND cp.scope = 'team'
          AND cp.organization_id = ?`,
       [conversationId, organizationId]
     );
@@ -112,7 +111,7 @@ const CreateConversationSchema = z.object({
   title: z.string().max(255).optional(),
   projectId: z.string().uuid().optional(),
   chatProjectId: z.string().uuid().optional(),
-  pmoContext: z.record(z.unknown()).optional(),
+  pmoContext: z.record(z.string(), z.unknown()).optional(),
   language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).optional(),
 });
 
@@ -125,7 +124,7 @@ const UpdateConversationSchema = z.object({
   starred: z.boolean().optional(),
   archived: z.boolean().optional(),
   tags: z.array(z.string()).optional(),
-  pmoContext: z.record(z.unknown()).optional(),
+  pmoContext: z.record(z.string(), z.unknown()).optional(),
   chatProjectId: z.string().uuid().nullable().optional(),
   language: z.enum(['en', 'pl', 'de', 'ar', 'jp', 'es']).optional(),
 });
@@ -136,9 +135,16 @@ const AddMessageSchema = z.object({
   messageType: z
     .enum(['text', 'action_request', 'summary', 'file', 'tool_call', 'voice'])
     .optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   tokenCount: z.number().int().positive().optional(),
   modelUsed: z.string().max(100).optional(),
+});
+
+const TruncateConversationSchema = z.object({
+  /** Message ID to keep (inclusive). All later messages will be removed. */
+  afterMessageId: z.string().min(1),
+  /** Optional edited content for that message (typically a user message edit). */
+  editedContent: z.string().min(1).optional(),
 });
 
 const BulkOperationSchema = z.object({
@@ -195,30 +201,19 @@ router.get(
         whereClause = `WHERE c.user_id = ?`;
         params.push(req.userId!);
         // Exclude conversations in team projects (they show under 'team')
-        // Note: If scope column doesn't exist, use organization_id as fallback
-        // Team projects have organization_id, personal projects don't (or match user's org)
-        if (req.organizationId) {
-          whereClause += ` AND (c.chat_project_id IS NULL OR cp.organization_id IS NULL OR cp.organization_id != ?)`;
-          params.push(req.organizationId);
-        } else {
-          whereClause += ` AND (c.chat_project_id IS NULL OR cp.organization_id IS NULL)`;
-        }
+        whereClause += ` AND (c.chat_project_id IS NULL OR cp.scope IS NULL OR cp.scope = 'personal')`;
       } else if (scope === 'team') {
         if (!req.organizationId) {
           return res.json({ conversations: [], total: 0, limit, offset });
         }
-        // Note: If scope column doesn't exist, use organization_id as fallback
-        // Team projects have organization_id matching the user's org
-        whereClause = `WHERE cp.organization_id = ? AND c.chat_project_id IS NOT NULL`;
+        whereClause = `WHERE cp.scope = 'team' AND cp.organization_id = ?`;
         params.push(req.organizationId);
       } else {
         // scope === 'all': personal + team
         whereClause = `WHERE (c.user_id = ?`;
         params.push(req.userId!);
         if (req.organizationId) {
-          // Note: If scope column doesn't exist, use organization_id as fallback
-          // Include conversations in chat_projects with matching organization_id
-          whereClause += ` OR (cp.organization_id = ? AND c.chat_project_id IS NOT NULL)`;
+          whereClause += ` OR (cp.scope = 'team' AND cp.organization_id = ?)`;
           params.push(req.organizationId);
         }
         whereClause += `)`;
@@ -268,7 +263,7 @@ router.get(
                     c.starred, c.archived, c.tags, c.pmo_context, c.language,
                     c.message_count, c.last_message_preview, c.last_message_at,
                     c.created_at, c.updated_at,
-                    cp.organization_id as chat_project_organization_id
+                    cp.scope as chat_project_scope
                 ${fromClause}
                 ${whereClause}
                 ORDER BY 
@@ -387,8 +382,7 @@ router.get(
                 SELECT cm.id, cm.conversation_id, cm.role, cm.content, cm.message_type,
                        cm.metadata, cm.token_count, cm.model_used, cm.author_user_id,
                        cm.created_at,
-                       TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as author_name, 
-                       u.email as author_email
+                       COALESCE(u.first_name || ' ' || u.last_name, u.email) as author_name, u.email as author_email
                 FROM conversation_messages cm
                 LEFT JOIN users u ON cm.author_user_id = u.id
                 WHERE cm.conversation_id = ?
@@ -616,9 +610,7 @@ router.post(
       // Note: Trigger in DB handles updating conversation metadata
 
       const message = await dbGet(
-        `SELECT cm.*, 
-         TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as author_name, 
-         u.email as author_email
+        `SELECT cm.*, COALESCE(u.first_name || ' ' || u.last_name, u.email) as author_name, u.email as author_email
          FROM conversation_messages cm
          LEFT JOIN users u ON cm.author_user_id = u.id
          WHERE cm.id = ?`,
@@ -628,6 +620,131 @@ router.post(
       return res.status(201).json(message);
     } catch (err: any) {
       logger.error('[Conversations] Add message error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ==================== TRUNCATE / EDIT FROM MESSAGE ====================
+// ChatGPT-like: edit a user message and regenerate from that point.
+router.post(
+  '/:id/truncate',
+  verifyToken,
+  validateParams(ConversationIdParamSchema),
+  validateBody(TruncateConversationSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id: conversationId } = req.params;
+    const { afterMessageId, editedContent } = req.body as {
+      afterMessageId: string;
+      editedContent?: string;
+    };
+
+    try {
+      // Verify access (personal ownership or team membership)
+      const conversation = await findAccessibleConversation(
+        conversationId,
+        req.userId!,
+        req.organizationId
+      );
+      if (!conversation) {
+        return res.status(404).json({ error: 'Conversation not found' });
+      }
+
+      // For team conversations, require permission (reuse add_message for now)
+      const teamProject = await getTeamProjectForConversation(conversationId);
+      if (teamProject) {
+        const perm = await checkChatPermission(
+          req.userId!,
+          teamProject.organization_id,
+          'add_message'
+        );
+        if (!perm.allowed) {
+          return res.status(403).json({ error: 'No permission to edit this team conversation' });
+        }
+      }
+
+      const target = await dbGet(
+        `SELECT * FROM conversation_messages WHERE id = ? AND conversation_id = ?`,
+        [afterMessageId, conversationId]
+      );
+      if (!target) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+
+      const now = new Date().toISOString();
+      const beforeCountRow = (await dbGet(
+        `SELECT COUNT(*) as count FROM conversation_messages WHERE conversation_id = ?`,
+        [conversationId]
+      )) as any;
+      const beforeCount = Number(beforeCountRow?.count || 0);
+
+      // Optionally update message content (edit) + store edit history (best-effort)
+      if (editedContent && String(target.role) === 'user') {
+        try {
+          await dbRun(
+            `INSERT INTO message_edits (id, message_id, original_content, edited_content, edited_by, created_at)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [uuidv4(), afterMessageId, target.content, editedContent, req.userId!, now]
+          );
+        } catch (_e) {
+          // message_edits table might not exist in some environments; ignore
+        }
+
+        // Increment version if column exists (SQLite handles missing columns by error; ignore)
+        try {
+          await dbRun(
+            `UPDATE conversation_messages
+             SET content = ?, version = COALESCE(version, 1) + 1
+             WHERE id = ? AND conversation_id = ?`,
+            [editedContent, afterMessageId, conversationId]
+          );
+        } catch {
+          await dbRun(
+            `UPDATE conversation_messages SET content = ? WHERE id = ? AND conversation_id = ?`,
+            [editedContent, afterMessageId, conversationId]
+          );
+        }
+      }
+
+      // Delete all messages strictly after the target timestamp.
+      // Also delete same-timestamp messages except the target (best-effort ordering).
+      await dbRun(
+        `DELETE FROM conversation_messages WHERE conversation_id = ? AND created_at > ?`,
+        [conversationId, target.created_at]
+      );
+      await dbRun(
+        `DELETE FROM conversation_messages WHERE conversation_id = ? AND created_at = ? AND id != ?`,
+        [conversationId, target.created_at, afterMessageId]
+      );
+
+      const afterCountRow = (await dbGet(
+        `SELECT COUNT(*) as count FROM conversation_messages WHERE conversation_id = ?`,
+        [conversationId]
+      )) as any;
+      const afterCount = Number(afterCountRow?.count || 0);
+      const deletedCount = Math.max(0, beforeCount - afterCount);
+
+      const last = await dbGet(
+        `SELECT content, created_at FROM conversation_messages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT 1`,
+        [conversationId]
+      );
+
+      await dbRun(
+        `UPDATE conversations
+         SET message_count = ?, last_message_preview = ?, last_message_at = ?, updated_at = ?
+         WHERE id = ?`,
+        [
+          afterCount,
+          last ? String((last as any).content || '').slice(0, 200) : null,
+          last ? (last as any).created_at : null,
+          now,
+          conversationId,
+        ]
+      );
+
+      return res.json({ success: true, deletedCount });
+    } catch (err: any) {
+      logger.error('[Conversations] Truncate error:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -682,7 +799,7 @@ router.post(
       )) as Array<{ role: string; content: string }>;
 
       // Generate title using AI
-      const aiPipeline = await import('../services/ai/aiPipeline.js').then((m) => {
+      const aiPipeline = await import('../services/ai/AIPipeline.js').then((m) => {
         const AIPipelineClass = (m as any).AIPipeline;
         return new AIPipelineClass();
       });
@@ -691,23 +808,50 @@ router.post(
         .map((m) => `${m.role}: ${m.content.slice(0, 200)}`)
         .join('\n');
 
-      const response = await aiPipeline.process({
-        type: 'chat',
-        capability: 'chat',
-        userId: req.userId!,
-        organizationId: req.organizationId!,
-        prompt: `Generate a short, descriptive title (max 50 chars) for this conversation. Return ONLY the title, no quotes or explanation:\n\n${messagesContext}`,
-        stream: false,
-      });
+      // Helper: heuristic title from first user message
+      const heuristicTitle = (): string => {
+        const firstUserMsg = messages.find((m) => m.role === 'user');
+        if (firstUserMsg?.content) {
+          const cleaned = firstUserMsg.content.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+          return cleaned.length > 50 ? cleaned.slice(0, 47) + '...' : cleaned;
+        }
+        return 'New conversation';
+      };
 
-      const generatedTitle = (
-        (response as any).text ||
-        (response as any).content ||
-        'New conversation'
-      )
-        .trim()
-        .replace(/^["']|["']$/g, '')
-        .slice(0, 50);
+      let generatedTitle: string;
+
+      // Try AI generation only if organizationId is available
+      if (req.organizationId) {
+        try {
+          const response = await aiPipeline.process({
+            type: 'chat',
+            capability: 'chat',
+            userId: req.userId!,
+            organizationId: req.organizationId,
+            prompt: `Generate a short, descriptive title (max 50 chars) for this conversation. Return ONLY the title, no quotes or explanation:\n\n${messagesContext}`,
+            stream: false,
+          });
+
+          generatedTitle = ((response as any).text || (response as any).content || '')
+            .trim()
+            .replace(/^["']|["']$/g, '')
+            .slice(0, 50);
+
+          // If AI returned empty or default, fall back to heuristic
+          if (!generatedTitle || generatedTitle === 'New conversation') {
+            generatedTitle = heuristicTitle();
+          }
+        } catch (aiErr: any) {
+          logger.warn(
+            `[Conversations] AI title generation failed for ${id}, using heuristic:`,
+            aiErr?.message
+          );
+          generatedTitle = heuristicTitle();
+        }
+      } else {
+        logger.info(`[Conversations] No organizationId for ${id}, using heuristic title`);
+        generatedTitle = heuristicTitle();
+      }
 
       // Update conversation title
       await dbRun(
@@ -720,8 +864,8 @@ router.post(
       return res.json({ title: generatedTitle });
     } catch (err: any) {
       logger.error('[Conversations] Generate title error:', err);
-      // Return success with default title on AI error
-      return res.json({ title: 'New conversation', error: err.message });
+      // Return error status instead of masking failure
+      return res.status(500).json({ error: 'Title generation failed', details: err.message });
     }
   })
 );
@@ -980,6 +1124,93 @@ router.post(
     } catch (err: any) {
       logger.error('[Conversations] Summarize error:', err);
       return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// ==================== SEARCH BY CONTENT ====================
+
+router.get(
+  '/search',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const query = ((req.query.q as string) || '').trim();
+    if (!query || query.length < 2) {
+      return res.json({ conversations: [] });
+    }
+
+    try {
+      const searchPattern = `%${query}%`;
+
+      // Search in conversation titles and message content
+      const results = (await dbAll(
+        `SELECT DISTINCT c.id, c.title, c.updated_at, c.project_id, c.is_starred,
+                c.pmo_context, c.title_source
+         FROM conversations c
+         LEFT JOIN conversation_messages cm ON cm.conversation_id = c.id
+         WHERE c.user_id = ?
+           AND c.is_archived = 0
+           AND (c.title LIKE ? OR cm.content LIKE ?)
+         ORDER BY c.updated_at DESC
+         LIMIT 20`,
+        [req.userId!, searchPattern, searchPattern]
+      )) as any[];
+
+      return res.json({
+        conversations: results.map((c: any) => ({
+          id: c.id,
+          title: c.title,
+          updatedAt: c.updated_at,
+          projectId: c.project_id,
+          isStarred: c.is_starred === 1,
+          titleSource: c.title_source,
+          pmoContext: c.pmo_context ? JSON.parse(c.pmo_context) : null,
+        })),
+        query,
+      });
+    } catch (err: any) {
+      logger.error('[Conversations] Search error:', err);
+      return res.status(500).json({ error: 'Search failed' });
+    }
+  })
+);
+
+// ==================== AUTO-ARCHIVE STALE CONVERSATIONS ====================
+
+router.post(
+  '/auto-archive',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const daysOld = parseInt(req.body.daysOld) || 30;
+
+    try {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+
+      const result = await dbRun(
+        `UPDATE conversations 
+         SET is_archived = 1, updated_at = CURRENT_TIMESTAMP
+         WHERE user_id = ?
+           AND is_archived = 0
+           AND is_starred = 0
+           AND updated_at < ?
+           AND title != 'New conversation'`,
+        [req.userId!, cutoffDate.toISOString()]
+      );
+
+      const archivedCount = (result as any)?.changes || 0;
+
+      logger.info(
+        `[Conversations] Auto-archived ${archivedCount} conversations for user ${req.userId}`
+      );
+
+      return res.json({
+        archived: archivedCount,
+        cutoffDate: cutoffDate.toISOString(),
+      });
+    } catch (err: any) {
+      logger.error('[Conversations] Auto-archive error:', err);
+      return res.status(500).json({ error: 'Auto-archive failed' });
     }
   })
 );

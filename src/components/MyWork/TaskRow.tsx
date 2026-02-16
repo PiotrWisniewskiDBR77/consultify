@@ -5,9 +5,10 @@
 
 import { motion } from 'framer-motion';
 import { Calendar, CheckCircle2, Circle, Pin, Trash2, User } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { Task } from '../../types';
+import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 
 interface TaskRowProps {
   task: Task;
@@ -70,8 +71,6 @@ export const TaskRow: React.FC<TaskRowProps> = ({
   onDelete,
   onClick,
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
   const isCompleted = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
   const overdue = !isCompleted && isOverdue(task.dueDate);
   const dueDateFormatted = formatDueDate(task.dueDate);
@@ -83,8 +82,6 @@ export const TaskRow: React.FC<TaskRowProps> = ({
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -10 }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick(task.id)}
       className={`
                 group h-12 flex items-center gap-3 px-3 cursor-pointer
@@ -149,69 +146,76 @@ export const TaskRow: React.FC<TaskRowProps> = ({
         )}
       </div>
 
-      {/* Right side: Due date, Assignee, or Hover Actions */}
+      {/* Right side: Due date, Assignee, and "⋯" menu (A3.2) */}
       <div className="shrink-0 flex items-center gap-2">
-        {/* Hover Actions */}
-        {isHovered ? (
-          <div className="flex items-center gap-1">
-            {onTogglePin && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onTogglePin(task.id);
-                }}
-                className={`
-                                    p-1.5 rounded transition-colors
-                                    ${
-                                      isPinned
-                                        ? 'text-purple-500 bg-purple-50 dark:bg-purple-900/30'
-                                        : 'text-slate-400 dark:text-slate-500 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20'
-                                    }
-                                `}
-                title={isPinned ? 'Unpin' : 'Pin to top'}
-              >
-                <Pin size={14} />
-              </button>
-            )}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (confirm('Delete this task?')) {
-                  onDelete(task.id);
-                }
-              }}
-              className="p-1.5 rounded text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-              title="Delete"
-            >
-              <Trash2 size={14} />
-            </button>
+        {/* Due Date */}
+        <div
+          className={`flex items-center gap-1 text-xs ${
+            dueDateFormatted
+              ? overdue
+                ? 'text-red-500 font-medium'
+                : 'text-slate-400 dark:text-slate-500'
+              : 'text-slate-300 dark:text-slate-600'
+          }`}
+        >
+          <Calendar size={12} />
+          <span>{dueDateFormatted || 'No due date'}</span>
+        </div>
+
+        {/* Assignee Avatar */}
+        {assigneeInitial ? (
+          <div
+            className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-medium text-slate-600 dark:text-slate-300"
+            title={assigneeName}
+          >
+            {assigneeInitial}
           </div>
         ) : (
-          <>
-            {/* Due Date */}
-            {dueDateFormatted && (
-              <div
-                className={`
-                                    flex items-center gap-1 text-xs
-                                    ${overdue ? 'text-red-500 font-medium' : 'text-slate-400 dark:text-slate-500'}
-                                `}
-              >
-                <Calendar size={12} />
-                <span>{dueDateFormatted}</span>
-              </div>
-            )}
-
-            {/* Assignee Avatar */}
-            {assigneeInitial && (
-              <div
-                className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-medium text-slate-600 dark:text-slate-300"
-                title={assigneeName}
-              >
-                {assigneeInitial}
-              </div>
-            )}
-          </>
+          <div
+            className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-medium text-slate-400 dark:text-slate-600"
+            title="Unassigned"
+          >
+            <User size={10} />
+          </div>
         )}
+
+        {/* Row Actions Menu */}
+        <div onClick={(e) => e.stopPropagation()}>
+          <RowActionsMenu
+            size="sm"
+            actions={[
+              ...(onTogglePin
+                ? [
+                    {
+                      id: 'pin',
+                      label: isPinned ? 'Unpin' : 'Pin to top',
+                      icon: Pin,
+                      onClick: () => onTogglePin(task.id),
+                      variant: isPinned ? ('primary' as const) : ('default' as const),
+                    },
+                  ]
+                : []),
+              {
+                id: 'complete',
+                label: isCompleted ? 'Reopen' : 'Complete',
+                icon: CheckCircle2,
+                onClick: () => onToggleComplete(task.id, !isCompleted),
+              },
+              {
+                id: 'delete',
+                label: 'Delete',
+                icon: Trash2,
+                onClick: () => {
+                  if (confirm('Delete this task?')) {
+                    onDelete(task.id);
+                  }
+                },
+                variant: 'danger' as const,
+                divider: true,
+              },
+            ]}
+          />
+        </div>
       </div>
     </motion.div>
   );

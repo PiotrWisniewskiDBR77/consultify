@@ -288,26 +288,8 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
   const handleViewHistory = async (config: ConfigItem) => {
     setHistoryConfig(config);
     setShowHistoryModal(true);
-    // Mock versions
-    setVersions([
-      {
-        id: '1',
-        config_key: config.key,
-        old_value: 'old_value',
-        new_value: config.value,
-        changed_at: new Date(Date.now() - 86400000).toISOString(),
-        changed_by: 'admin@example.com',
-        reason: 'Updated for security',
-      },
-      {
-        id: '2',
-        config_key: config.key,
-        old_value: 'older_value',
-        new_value: 'old_value',
-        changed_at: new Date(Date.now() - 86400000 * 7).toISOString(),
-        changed_by: 'admin@example.com',
-      },
-    ]);
+    // Empty state - no mock data
+    setVersions([]);
   };
 
   const handleExportConfig = () => {

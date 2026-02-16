@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DecisionsPanel - Enhanced decision management
  * Part of My Work Module PMO Upgrade
@@ -48,6 +47,10 @@ import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
+import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
+import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
+
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -79,6 +82,71 @@ interface Decision {
 type ViewMode = 'my' | 'awaiting';
 type SortOrder = 'newest' | 'oldest' | 'urgency' | 'priority';
 type FilterType = 'all' | 'overdue' | 'thisWeek' | 'blocking' | 'critical' | 'high';
+
+/* ─────────────── Decision → GenericListItem mapping ─────────────── */
+
+const getDecisionStatusVariant = (status?: string): GenericListItem['statusVariant'] => {
+  switch (status?.toUpperCase()) {
+    case 'APPROVED':
+      return 'success';
+    case 'REJECTED':
+      return 'danger';
+    case 'DEFERRED':
+      return 'warning';
+    case 'ESCALATED':
+      return 'purple';
+    case 'PENDING':
+      return 'info';
+    default:
+      return 'neutral';
+  }
+};
+
+const getDecisionPriorityVariant = (priority?: string): GenericListItem['priorityVariant'] => {
+  switch (priority?.toUpperCase()) {
+    case 'CRITICAL':
+      return 'critical';
+    case 'HIGH':
+      return 'high';
+    case 'MEDIUM':
+      return 'medium';
+    case 'LOW':
+      return 'low';
+    default:
+      return 'medium';
+  }
+};
+
+const decisionToGenericItem = (d: Decision): GenericListItem => ({
+  id: d.id,
+  title: d.title || 'Untitled decision',
+  subtitle: d.description || undefined,
+  status: d.status,
+  statusVariant: getDecisionStatusVariant(d.status),
+  priority: d.priority || 'MEDIUM',
+  priorityVariant: getDecisionPriorityVariant(d.priority),
+  dueDate: d.dueDate
+    ? new Date(d.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : undefined,
+  isOverdue: d.isOverdue,
+  assignee: d.ownerName || undefined,
+  secondaryLabel: d.projectName || undefined,
+  tertiaryLabel: d.decisionType || undefined,
+  indicator: d.daysWaiting,
+  indicatorLabel: d.daysWaiting ? `${d.daysWaiting}d waiting` : undefined,
+  isHighlighted: d.isOverdue || d.priority === 'CRITICAL',
+  _raw: d,
+});
+
+const DECISION_CLICKUP_COLUMNS: ListColumn[] = [
+  { key: 'title', label: 'Decision', width: 'flex-1 min-w-0' },
+  { key: 'status', label: 'Status', width: 'w-28' },
+  { key: 'priority', label: 'Priority', width: 'w-24' },
+  { key: 'assignee', label: 'Owner', width: 'w-32' },
+  { key: 'dueDate', label: 'Due', width: 'w-24' },
+  { key: 'indicator', label: 'Waiting', width: 'w-24' },
+  { key: 'secondaryLabel', label: 'Project', width: 'w-32' },
+];
 
 interface DecisionsPanelProps {
   onDecisionClick?: (id: string) => void;
@@ -348,18 +416,28 @@ const DelegateModal: React.FC<{
   const [submitting, setSubmitting] = useState(false);
 
   const handleDelegate = async () => {
+    if (!decision) {
+      toast.error(t('decisions.error', 'No decision selected'));
+      return;
+    }
+    if (!decision.id) {
+      toast.error(t('decisions.error', 'Missing decision ID'));
+      return;
+    }
     if (!toUserId.trim()) {
       toast.error(t('decisions.selectUser', 'Please select a user'));
       return;
     }
-    if (!decision) return;
 
     setSubmitting(true);
     try {
-      await onDelegate(decision.id, toUserId, note);
+      await onDelegate(decision.id, toUserId.trim(), note);
       setToUserId('');
       setNote('');
       onClose();
+    } catch (error) {
+      console.error('[DelegateModal] Delegation failed:', error);
+      toast.error(t('decisions.delegateError', 'Failed to delegate decision'));
     } finally {
       setSubmitting(false);
     }
@@ -838,6 +916,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('d');
   const [showNewModal, setShowNewModal] = useState(false);
   const [delegateDecision, setDelegateDecision] = useState<Decision | null>(null);
 
@@ -943,6 +1022,14 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
   };
 
   const handleDelegate = async (decisionId: string, toUserId: string, note: string) => {
+    if (!decisionId) {
+      toast.error(t('decisions.error', 'Missing decision ID'));
+      return;
+    }
+    if (!toUserId) {
+      toast.error(t('decisions.selectUser', 'Please select a user to delegate to'));
+      return;
+    }
     try {
       await Api.put(`/decisions/${decisionId}`, {
         decisionOwnerId: toUserId,
@@ -952,7 +1039,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
       fetchDecisions();
     } catch (error) {
       console.error('Failed to delegate:', error);
-      toast.error(t('decisions.delegateError', 'Failed to delegate'));
+      toast.error(t('decisions.delegateError', 'Failed to delegate decision'));
     }
   };
 
@@ -1069,6 +1156,67 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
   const urgentCount = decisions.filter(
     (d) => ['PENDING', 'ESCALATED'].includes(d.status) && d.isOverdue
   ).length;
+
+  /* ─── Sections for N / C views ─── */
+  const decisionViewSections: ListSection[] = (() => {
+    const overdue = filteredDecisions.filter((d) => d.isOverdue).map(decisionToGenericItem);
+    const critical = filteredDecisions
+      .filter((d) => !d.isOverdue && d.priority === 'CRITICAL')
+      .map(decisionToGenericItem);
+    const high = filteredDecisions
+      .filter((d) => !d.isOverdue && d.priority === 'HIGH')
+      .map(decisionToGenericItem);
+    const rest = filteredDecisions
+      .filter((d) => !d.isOverdue && d.priority !== 'CRITICAL' && d.priority !== 'HIGH')
+      .map(decisionToGenericItem);
+
+    return [
+      ...(overdue.length > 0
+        ? [
+            {
+              id: 'overdue',
+              label: t('decisions.overdue', 'Overdue'),
+              items: overdue,
+              accentColor: 'text-red-500',
+            },
+          ]
+        : []),
+      ...(critical.length > 0
+        ? [
+            {
+              id: 'critical',
+              label: t('decisions.critical', 'Critical'),
+              items: critical,
+              accentColor: 'text-orange-500',
+            },
+          ]
+        : []),
+      ...(high.length > 0
+        ? [
+            {
+              id: 'high',
+              label: t('decisions.highPriority', 'High Priority'),
+              items: high,
+              accentColor: 'text-amber-500',
+            },
+          ]
+        : []),
+      ...(rest.length > 0
+        ? [
+            {
+              id: 'other',
+              label: t('decisions.other', 'Other'),
+              items: rest,
+              accentColor: 'text-slate-400',
+            },
+          ]
+        : []),
+    ];
+  })();
+
+  const handleDecisionItemClick = (item: GenericListItem) => {
+    onDecisionClick?.(item.id);
+  };
 
   if (loading) {
     return (
@@ -1271,54 +1419,81 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
             <option value="urgency">⚠️ {t('decisions.sortUrgency', 'Urgency')}</option>
             <option value="priority">🚨 {t('decisions.sortPriority', 'Priority')}</option>
           </select>
+
+          {/* A7.1: View style switcher */}
+          <CardViewSwitcher
+            moduleId="my-work-decisions"
+            value={cardViewStyle}
+            onChange={setCardViewStyle}
+            compact
+          />
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        <AnimatePresence mode="popLayout">
-          {filteredDecisions.length > 0 ? (
-            filteredDecisions.map((decision) => (
-              <DecisionCard
-                key={decision.id}
-                decision={decision}
-                viewMode={viewMode}
-                onApprove={handleApprove}
-                onReject={handleReject}
-                onDelegate={(d) => setDelegateDecision(d)}
-                onEscalate={handleEscalate}
-                onClick={onDecisionClick}
-              />
-            ))
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-12 text-slate-400 dark:text-slate-500"
-            >
-              {viewMode === 'my' ? (
-                <>
-                  <CheckCircle2 size={32} className="mx-auto mb-2 text-green-500" />
-                  <p className="text-sm font-medium">
-                    {t('decisions.noMyDecisions', 'No decisions awaiting your action')}
-                  </p>
-                  <p className="text-xs">{t('decisions.allCaughtUp', 'All caught up!')}</p>
-                </>
-              ) : (
-                <>
-                  <Hourglass
-                    size={32}
-                    className="mx-auto mb-2 text-slate-400 dark:text-slate-500"
-                  />
-                  <p className="text-sm font-medium">
-                    {t('decisions.noAwaitingOthers', 'No decisions pending from others')}
-                  </p>
-                </>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      {/* Content — switches layout based on cardViewStyle (A7.2/A7.3) */}
+      {cardViewStyle === 'n' ? (
+        <div className="flex-1 overflow-hidden p-4">
+          <NotionListView
+            sections={decisionViewSections}
+            onItemClick={handleDecisionItemClick}
+            emptyMessage={t('decisions.noMyDecisions', 'No decisions awaiting your action')}
+          />
+        </div>
+      ) : cardViewStyle === 'c' ? (
+        <div className="flex-1 overflow-y-auto p-4">
+          <ClickUpListView
+            sections={decisionViewSections}
+            columns={DECISION_CLICKUP_COLUMNS}
+            onItemClick={handleDecisionItemClick}
+            emptyMessage={t('decisions.noMyDecisions', 'No decisions awaiting your action')}
+          />
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <AnimatePresence mode="popLayout">
+            {filteredDecisions.length > 0 ? (
+              filteredDecisions.map((decision) => (
+                <DecisionCard
+                  key={decision.id}
+                  decision={decision}
+                  viewMode={viewMode}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                  onDelegate={(d) => setDelegateDecision(d)}
+                  onEscalate={handleEscalate}
+                  onClick={onDecisionClick}
+                />
+              ))
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-12 text-slate-400 dark:text-slate-500"
+              >
+                {viewMode === 'my' ? (
+                  <>
+                    <CheckCircle2 size={32} className="mx-auto mb-2 text-green-500" />
+                    <p className="text-sm font-medium">
+                      {t('decisions.noMyDecisions', 'No decisions awaiting your action')}
+                    </p>
+                    <p className="text-xs">{t('decisions.allCaughtUp', 'All caught up!')}</p>
+                  </>
+                ) : (
+                  <>
+                    <Hourglass
+                      size={32}
+                      className="mx-auto mb-2 text-slate-400 dark:text-slate-500"
+                    />
+                    <p className="text-sm font-medium">
+                      {t('decisions.noAwaitingOthers', 'No decisions pending from others')}
+                    </p>
+                  </>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* Modals */}
       <NewDecisionModal

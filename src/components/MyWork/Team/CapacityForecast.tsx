@@ -5,7 +5,7 @@
 
 import { motion } from 'framer-motion';
 import { AlertTriangle, Calendar, Clock, TrendingDown, TrendingUp, Users, Zap } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface DayForecast {
@@ -151,47 +151,24 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // Generate default forecast data
-  const displayForecasts: DayForecast[] = useMemo(() => {
-    if (forecasts.length > 0) return forecasts;
-
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const today = new Date();
-
-    return Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(today);
-      date.setDate(date.getDate() + i);
-      const dayOfWeek = date.getDay();
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
-      // Mock capacity (higher mid-week, bottleneck on Thursday)
-      const baseCapacity = isWeekend ? 20 : 75;
-      const variance = i === 3 ? 45 : Math.random() * 30 - 10; // Thursday is overloaded
-      const capacity = Math.round(baseCapacity + variance);
-
-      return {
-        date,
-        dayLabel: days[dayOfWeek === 0 ? 6 : dayOfWeek - 1],
-        capacity,
-        plannedTasks: isWeekend ? 1 : Math.round(3 + Math.random() * 5),
-        estimatedHours: isWeekend ? 2 : Math.round(4 + Math.random() * 4),
-        riskLevel: capacity > 100 ? 'high' : capacity > 85 ? 'medium' : 'low',
-        bottlenecks:
-          capacity > 100 ? ['Resource constraint'] : capacity > 85 ? ['High workload'] : [],
-      } as DayForecast;
-    });
-  }, [forecasts]);
+  const displayForecasts: DayForecast[] = forecasts;
 
   const today = new Date().toDateString();
 
   // Calculate summary stats
-  const avgCapacity = Math.round(
-    displayForecasts.reduce((sum, f) => sum + f.capacity, 0) / displayForecasts.length
-  );
-  const peakDay = displayForecasts.reduce(
-    (max, f) => (f.capacity > max.capacity ? f : max),
-    displayForecasts[0]
-  );
+  const avgCapacity =
+    displayForecasts.length > 0
+      ? Math.round(
+          displayForecasts.reduce((sum, f) => sum + f.capacity, 0) / displayForecasts.length
+        )
+      : 0;
+  const peakDay =
+    displayForecasts.length > 0
+      ? displayForecasts.reduce(
+          (max, f) => (f.capacity > max.capacity ? f : max),
+          displayForecasts[0]
+        )
+      : null;
   const riskDays = displayForecasts.filter((f) => f.riskLevel !== 'low').length;
 
   if (loading) {
@@ -259,20 +236,27 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
 
       {/* Forecast Grid */}
       <div className="p-4">
-        <div className="grid grid-cols-7 gap-2">
-          {displayForecasts.map((forecast, idx) => (
-            <ForecastDay
-              key={idx}
-              forecast={forecast}
-              isToday={forecast.date.toDateString() === today}
-              onClick={() => onDayClick?.(forecast.date)}
-            />
-          ))}
-        </div>
+        {displayForecasts.length > 0 ? (
+          <div className="grid grid-cols-7 gap-2">
+            {displayForecasts.map((forecast, idx) => (
+              <ForecastDay
+                key={idx}
+                forecast={forecast}
+                isToday={forecast.date.toDateString() === today}
+                onClick={() => onDayClick?.(forecast.date)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+            <Calendar size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+            <p className="text-sm">{t('team.forecast.noData', 'No capacity data available')}</p>
+          </div>
+        )}
       </div>
 
       {/* Peak Alert */}
-      {peakDay.capacity > 85 && (
+      {peakDay && peakDay.capacity > 85 && (
         <div className="px-5 py-3 bg-amber-50 dark:bg-amber-900/20 border-t border-amber-200 dark:border-amber-500/20">
           <div className="flex items-center gap-3">
             <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400" />

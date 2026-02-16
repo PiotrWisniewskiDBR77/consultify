@@ -24,10 +24,12 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import { useAIContext } from '@/contexts/AIContext';
 import { isValidLanguage, type SupportedLanguage } from '@/i18n';
-import { Api } from '@/services/api';
+import { Api } from '@/services/api.ts';
 
 import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 // Components
@@ -36,8 +38,10 @@ import { CitationList } from '../components/AIChat/CitationList';
 import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
+import { ResearchProgress } from '../components/AIChat/ResearchProgress';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
+import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
@@ -105,6 +109,7 @@ export const AIChatWelcomeView: React.FC = () => {
   );
 
   // Conversation store
+  const conversationStore = useConversationStore() as any;
   const {
     activeConversationId,
     activeMessages,
@@ -121,7 +126,7 @@ export const AIChatWelcomeView: React.FC = () => {
     draftChatLanguage,
     chatLanguageByConversationId,
     setConversationChatLanguage,
-  } = useConversationStore();
+  } = conversationStore;
 
   const activeConversationIdRef = useRef(activeConversationId);
   const activeMessagesRef = useRef(activeMessages);
@@ -193,6 +198,10 @@ export const AIChatWelcomeView: React.FC = () => {
     retryLastStream,
     lastError,
     clearLastError,
+    researchProgress,
+    streamStartedAt,
+    streamCompletedSignal,
+    retryInfo,
   } = useAIStream({
     onStreamDone: handleStreamDone,
     onStreamError: (err) => {
@@ -895,14 +904,32 @@ For example: REMEMBER: preferred_language: Polish`;
     ]
   );
 
-  // Handle new chat
-  const handleNewChat = useCallback(() => {
+  // Handle new chat — clear state AND create a fresh conversation (like UnifiedChatPanel)
+  const handleNewChat = useCallback(async () => {
     clearActiveChat();
     setDtPendingConfirm(null);
     clearLastError();
     abortStream();
     // Title generation is handled by the conversation store
-  }, [abortStream, clearActiveChat, clearLastError]);
+    try {
+      const conv = await createConversation({ projectId: selectedProject?.id });
+      setActiveConversation(conv.id);
+      if (chatLanguage) {
+        setConversationChatLanguage(conv.id, chatLanguage);
+      }
+    } catch (err) {
+      console.error('[AIChatWelcomeView] Failed to create new chat:', err);
+    }
+  }, [
+    abortStream,
+    chatLanguage,
+    clearActiveChat,
+    clearLastError,
+    createConversation,
+    selectedProject?.id,
+    setActiveConversation,
+    setConversationChatLanguage,
+  ]);
 
   // Handle export
   const handleExport = useCallback(() => {
@@ -1314,6 +1341,27 @@ For example: REMEMBER: preferred_language: Polish`;
                       </div>
                     )}
 
+                    {/* Research Progress - web search / sources status (C6.1) */}
+                    {isAiMessage && isStreamingThis && researchProgress && (
+                      <div className="mb-2 max-w-[85%]">
+                        <ResearchProgress {...researchProgress} />
+                      </div>
+                    )}
+
+                    {/* Thinking Status Line - elapsed time + retry info */}
+                    {isAiMessage && isStreamingThis && !displayContent && streamStartedAt && (
+                      <div className="mb-2 max-w-[85%]">
+                        <ThinkingStatusLine
+                          label={
+                            retryInfo
+                              ? `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries}...`
+                              : 'Thinking...'
+                          }
+                          compact
+                        />
+                      </div>
+                    )}
+
                     <div
                       className={`inline-block max-w-[85%] ${
                         msg.role === 'user'
@@ -1321,7 +1369,7 @@ For example: REMEMBER: preferred_language: Polish`;
                           : 'text-navy-900 dark:text-slate-200'
                       }`}
                     >
-                      <div className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                      <div className="text-[15px] leading-relaxed">
                         {isEditingThis ? (
                           <div className="flex flex-col gap-2">
                             <textarea
@@ -1349,8 +1397,14 @@ For example: REMEMBER: preferred_language: Polish`;
                               </button>
                             </div>
                           </div>
+                        ) : isAiMessage ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-pre:my-2 prose-code:text-primary-600 dark:prose-code:text-primary-400 prose-code:before:content-none prose-code:after:content-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {displayContent || ''}
+                            </ReactMarkdown>
+                          </div>
                         ) : (
-                          displayContent
+                          <span className="whitespace-pre-wrap">{displayContent}</span>
                         )}
                         {isStreamingThis && displayContent && (
                           <span className="inline-block w-2 h-5 bg-primary-500 ml-1 animate-pulse rounded-sm" />
@@ -1662,7 +1716,7 @@ For example: REMEMBER: preferred_language: Polish`;
           </div>
 
           {/* Chat Input */}
-          <div className="w-full max-w-2xl">
+          <div className="w-full max-w-3xl">
             {!!lastError && !isStreaming && (
               <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
                 <div className="text-xs text-amber-800 dark:text-amber-200">
@@ -1698,7 +1752,7 @@ For example: REMEMBER: preferred_language: Polish`;
           </div>
 
           {/* Minimal Suggestions */}
-          <div className="w-full max-w-2xl mt-6">
+          <div className="w-full max-w-3xl mt-5">
             <SmartSuggestions
               projectId={selectedProject?.id}
               onSuggestionClick={handleSuggestionClick}
@@ -1709,7 +1763,7 @@ For example: REMEMBER: preferred_language: Polish`;
           </div>
 
           {/* AI Capability Cards — shows what the AI can do */}
-          <div className="w-full max-w-3xl mt-6 grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="w-full max-w-2xl mt-6 grid grid-cols-2 md:grid-cols-4 gap-2">
             {[
               {
                 icon: Brain,
@@ -1761,17 +1815,17 @@ For example: REMEMBER: preferred_language: Polish`;
             ].map((cap) => (
               <button
                 key={cap.label}
-                onClick={() => void handleSend(cap.prompt)}
-                className="group flex flex-col items-start gap-1.5 p-2 rounded-lg border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-white/[0.02] hover:bg-white dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 text-left"
+                onClick={() => handleSuggestionClick(cap.prompt)}
+                className="group flex flex-col items-start gap-1.5 p-2.5 rounded-lg border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-white/[0.02] hover:bg-white dark:hover:bg-white/5 hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 text-left"
               >
                 <div className={`p-1.5 rounded-md ${cap.bg}`}>
-                  <cap.icon size={16} className={cap.color} />
+                  <cap.icon size={15} className={cap.color} />
                 </div>
                 <div>
                   <div className="text-[11px] font-semibold text-navy-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                     {cap.label}
                   </div>
-                  <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight line-clamp-2">
+                  <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">
                     {cap.desc}
                   </div>
                 </div>
@@ -1780,7 +1834,7 @@ For example: REMEMBER: preferred_language: Polish`;
           </div>
 
           {/* First-time help hint */}
-          <div className="w-full max-w-2xl mt-6 text-center">
+          <div className="w-full max-w-2xl mt-4 text-center">
             <p className="text-[11px] text-slate-400 dark:text-slate-600 flex items-center justify-center gap-1.5">
               <Sparkles size={11} />
               {t(

@@ -62,7 +62,7 @@ const aiMemoryManagerMock = {
   getRelevantMemory: vi.fn(),
   getUserPreferences: vi.fn(),
 };
-vi.mock('../../server/services/aiMemoryManager', () => ({
+vi.mock('../../server/src/services/aiMemoryManager', () => ({
   default: aiMemoryManagerMock,
   ...aiMemoryManagerMock,
 }));
@@ -71,7 +71,7 @@ vi.mock('../../server/services/aiMemoryManager', () => ({
 const aiContextBuilderMock = {
   buildContext: vi.fn(),
 };
-vi.mock('../../server/services/aiContextBuilder', () => ({
+vi.mock('../../server/src/services/aiContextBuilder', () => ({
   default: aiContextBuilderMock,
   ...aiContextBuilderMock,
 }));
@@ -82,18 +82,18 @@ const aiActionExecutorMock = {
   requestAction: vi.fn(),
   approveAction: vi.fn(),
 };
-vi.mock('../../server/services/aiActionExecutor', () => ({
+vi.mock('../../server/src/services/aiActionExecutor', () => ({
   default: aiActionExecutorMock,
   ...aiActionExecutorMock,
 }));
 
-const AIMemoryManagerModule = await import('../../server/services/aiMemoryManager');
+const AIMemoryManagerModule = await import('../../server/src/services/aiMemoryManager');
 const AIMemoryManager = AIMemoryManagerModule.default || AIMemoryManagerModule;
 
-const AIContextBuilderModule = await import('../../server/services/aiContextBuilder');
+const AIContextBuilderModule = await import('../../server/src/services/aiContextBuilder');
 const AIContextBuilder = AIContextBuilderModule.default || AIContextBuilderModule;
 
-const AIActionExecutorModule = await import('../../server/services/aiActionExecutor');
+const AIActionExecutorModule = await import('../../server/src/services/aiActionExecutor');
 const AIActionExecutor = AIActionExecutorModule.default || AIActionExecutorModule;
 
 describe('AI Multi-Tenant Security Tests', () => {

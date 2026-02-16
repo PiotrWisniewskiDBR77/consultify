@@ -3401,65 +3401,59 @@ ${JSON.stringify(questions || [], null, 2)}
 
   getInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params;
-
-    const row = (await queryHelpers.queryOne(
-      `SELECT 
-        id, session_id, organization_id, category, title, description,
-        source_quote, insight_type, impact_level, confidence, pmo_domain,
-        actionable, status, exported_to_tools, exported_to_assessment,
-        created_by, created_at, updated_at
-       FROM interview_insights 
-       WHERE id = ?`,
-      [id]
-    )) as any;
-
-    if (!row) {
+    const interviewInsightService = await import('../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.getById(id);
+    if (!insight) {
       res.status(404).json({ error: 'Insight not found' });
       return;
     }
-
-    const insight = {
-      id: row.id,
-      sessionId: row.session_id,
-      organizationId: row.organization_id,
-      category: row.category,
-      title: row.title,
-      description: row.description,
-      content: row.description,
-      sourceQuote: row.source_quote,
-      insightType: row.insight_type,
-      promptType: row.insight_type,
-      impactLevel: row.impact_level,
-      confidence: row.confidence,
-      pmoDomain: row.pmo_domain,
-      actionable: row.actionable === 1,
-      status: row.status,
-      exportedToTools: row.exported_to_tools === 1,
-      exportedToAssessment: row.exported_to_assessment === 1,
-      createdBy: row.created_by,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
-
     res.json(insight);
   }),
 
   createInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-    const { title, sessionIds, promptType, filters } = req.body;
+    const { title, sessionIds, sessionId, promptType, filters, customPrompt } = req.body || {};
 
-    if (!title || !sessionIds || !Array.isArray(sessionIds) || sessionIds.length === 0) {
-      res.status(400).json({ error: 'title and sessionIds are required' });
+    const normalizedSessionIds: string[] = Array.isArray(sessionIds)
+      ? sessionIds.map(String).filter(Boolean)
+      : sessionId
+        ? [String(sessionId)].filter(Boolean)
+        : [];
+
+    if (normalizedSessionIds.length === 0) {
+      res.status(400).json({ error: 'sessionId or sessionIds is required' });
       return;
+    }
+
+    let normalizedTitle = typeof title === 'string' ? title.trim() : '';
+    const normalizedPromptType = (
+      typeof promptType === 'string' && promptType.trim() ? promptType.trim() : 'summary'
+    ) as any;
+
+    // If title is omitted (e.g. quick-generate from a session row), build a reasonable default.
+    if (!normalizedTitle) {
+      try {
+        const sessionRow = await queryHelpers.queryOne(
+          `SELECT name FROM interview_sessions WHERE id = ?`,
+          [normalizedSessionIds[0]]
+        );
+        const sessionName = String((sessionRow as any)?.name || '').trim();
+        normalizedTitle = sessionName
+          ? `${sessionName} — ${normalizedPromptType}`
+          : `Interview Insight — ${normalizedPromptType}`;
+      } catch {
+        normalizedTitle = `Interview Insight — ${normalizedPromptType}`;
+      }
     }
 
     const interviewInsightService = await import('../services/InterviewInsightService.js');
     const insight = await interviewInsightService.create({
       organizationId: user.organizationId,
-      title,
-      sessionIds,
-      promptType: promptType || 'summary',
+      title: normalizedTitle,
+      sessionIds: normalizedSessionIds,
+      promptType: normalizedPromptType,
       filters,
+      customPrompt,
       createdBy: user.id,
     });
 

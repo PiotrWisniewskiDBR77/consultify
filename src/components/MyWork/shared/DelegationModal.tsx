@@ -116,8 +116,26 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
   };
 
   const handleSubmit = async () => {
+    // Validate required fields before API call
+    if (!decisionId) {
+      toast.error(isPolish ? 'Brak identyfikatora decyzji' : 'Missing decision ID');
+      return;
+    }
+
     if (selectedUsers.length === 0) {
       toast.error(isPolish ? 'Wybierz co najmniej jedną osobę' : 'Select at least one person');
+      return;
+    }
+
+    // Validate delegatee exists
+    const delegateeId = selectedUsers[0];
+    if (
+      (delegationType === 'full' ||
+        delegationType === 'co_decide' ||
+        delegationType === 'review') &&
+      !delegateeId
+    ) {
+      toast.error(isPolish ? 'Wybierz osobę do delegacji' : 'Select a person to delegate to');
       return;
     }
 
@@ -138,7 +156,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
       } else {
         // Delegate to single user
         await Api.post(`/decisions/${decisionId}/delegate`, {
-          toUserId: selectedUsers[0],
+          toUserId: delegateeId,
           delegationType,
           reason,
           comment,
@@ -157,9 +175,13 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
       onDelegated?.();
       onClose();
     } catch (error: any) {
+      console.error('[DelegationModal] Delegation failed:', error);
+      const serverMessage = error?.response?.data?.error;
       toast.error(
-        error?.response?.data?.error ||
-          (isPolish ? 'Nie udało się wysłać' : 'Failed to send request')
+        serverMessage ||
+          (isPolish
+            ? 'Nie udało się wysłać żądania delegacji'
+            : 'Failed to send delegation request')
       );
     } finally {
       setSubmitting(false);

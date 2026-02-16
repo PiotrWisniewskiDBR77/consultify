@@ -1,85 +1,69 @@
 /**
- * SCIM Routes (lightweight storage + mock responses)
- * Stores SCIM tokens in DB, keeps placeholder Users/Groups to avoid 501.
+ * SCIM Routes - System for Cross-domain Identity Management
  */
-
-import { Router } from 'express';
+import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
-const SCIM_BASE = `${process.env.API_BASE_URL || 'http://localhost:3000/api'}/scim/v2`;
 
-// Base info for UI (endpoints, auth)
+// SCIM 2.0 Users endpoint
 router.get(
-  '/info',
-  verifyToken,
-  asyncHandler(async (_req: AuthRequest, res) => {
-    return res.json({
-      baseUrl: SCIM_BASE,
-      usersEndpoint: '/Users',
-      groupsEndpoint: '/Groups',
-      auth: 'Bearer Token',
-      patchSupported: true,
+  '/Users',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { filter, startIndex = '1', count = '100' } = req.query;
+    const users = await dbAll(
+      `SELECT id, email, first_name, last_name, is_active FROM users LIMIT ? OFFSET ?`,
+      [parseInt(count as string), parseInt(startIndex as string) - 1]
+    );
+    res.json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+      totalResults: (users || []).length,
+      startIndex: parseInt(startIndex as string),
+      itemsPerPage: parseInt(count as string),
+      Resources: (users || []).map((u: any) => ({
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        id: u.id,
+        userName: u.email,
+        active: !!u.is_active,
+        name: { givenName: u.first_name, familyName: u.last_name },
+      })),
     });
   })
 );
 
-// Tokens list
-router.get(
-  '/tokens',
-  verifyToken,
-  asyncHandler(async (_req: AuthRequest, res) => {
-    const { all: dbAll } = await import('../../utils/DbPromise.js');
-    const tokens = await dbAll(`SELECT * FROM scim_tokens ORDER BY created_at DESC`, []);
-    return res.json({ tokens });
-  })
-);
-
-// Create token
 router.post(
-  '/tokens',
-  verifyToken,
-  asyncHandler(async (_req: AuthRequest, res) => {
+  '/Users',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userName, name, active } = req.body;
+    if (!userName) return res.status(400).json({ error: 'userName required' });
     const id = uuidv4();
-    const token = `scim_${uuidv4()}`;
-    const { run: dbRun } = await import('../../utils/DbPromise.js');
     await dbRun(
-      `INSERT INTO scim_tokens (id, token, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
-      [id, token]
+      `INSERT INTO users (id, email, first_name, last_name, is_active, created_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+      [id, userName, name?.givenName || '', name?.familyName || '', active !== false ? 1 : 0]
     );
-    return res.json({ success: true, id, token });
-  })
-);
-
-// Delete token
-router.delete(
-  '/tokens/:id',
-  verifyToken,
-  asyncHandler(async (req: AuthRequest, res) => {
-    const { id } = req.params;
-    const { run: dbRun } = await import('../../utils/DbPromise.js');
-    await dbRun(`DELETE FROM scim_tokens WHERE id = ?`, [id]);
-    return res.json({ success: true });
-  })
-);
-
-// Placeholder for SCIM Users/Groups endpoints (not full SCIM spec, just to avoid 501)
-router.get(
-  '/v2/Users',
-  verifyToken,
-  asyncHandler(async (_req: AuthRequest, res) => {
-    return res.json({ Resources: [], totalResults: 0 });
+    logger.info(`[SCIM] Created user: ${userName}`);
+    res.status(201).json({ schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'], id, userName });
   })
 );
 
 router.get(
-  '/v2/Groups',
-  verifyToken,
-  asyncHandler(async (_req: AuthRequest, res) => {
-    return res.json({ Resources: [], totalResults: 0 });
+  '/Groups',
+  asyncHandler(async (_req: Request, res: Response) => {
+    const groups = await dbAll('SELECT id, name FROM groups LIMIT 100');
+    res.json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+      totalResults: (groups || []).length,
+      Resources: (groups || []).map((g: any) => ({
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:Group'],
+        id: g.id,
+        displayName: g.name,
+      })),
+    });
   })
 );
 

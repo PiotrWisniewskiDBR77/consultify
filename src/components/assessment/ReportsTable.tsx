@@ -22,12 +22,14 @@ import {
   FileOutput,
   FileText,
   Lightbulb,
+  Link2,
   Loader2,
   MoreVertical,
   Plus,
   RefreshCw,
   Search,
   Send,
+  Settings2,
   Sparkles,
   Trash2,
   Upload,
@@ -40,9 +42,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 import { ImportReportModal } from '../Reports/ImportReportModal';
-import { NewReportModal } from './modals/NewReportModal';
-import { StageGateModal } from './modals/StageGateModal';
-import { ReportEditor } from './ReportEditor';
 
 // ============================================
 // Types
@@ -62,8 +61,9 @@ type ReportStatus =
 interface Report {
   id: string;
   name: string;
-  assessmentId: string;
-  assessmentName: string;
+  sourceType: string;
+  sourceId: string;
+  sourceName: string;
   status: ReportStatus;
   createdAt: string;
   updatedAt: string;
@@ -83,7 +83,7 @@ const VISIBLE_STATUSES: ReportStatus[] = [
   'UTILIZED',
 ];
 
-type FilterStatus = 'all' | 'in_review' | 'approved' | 'sent';
+type FilterStatus = 'all' | 'draft' | 'generated' | 'in_review' | 'approved' | 'sent';
 
 type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
@@ -93,6 +93,10 @@ interface ReportsTableProps {
   onCreateInitiatives: (reportId: string) => void;
   pendingAssessmentId?: string | null;
   onOpenReport?: (reportId: string, reportName: string, status?: string) => void;
+  /** When true, show all reports across source types and statuses (Admin “Kreator raportów”). */
+  showAllStatuses?: boolean;
+  /** Callback to open the template editor (ReportEditor in template mode). */
+  onCreateTemplate?: () => void;
 }
 
 // ============================================
@@ -161,8 +165,9 @@ const STATUS_CONFIG: Record<
 export const ReportsTable: React.FC<ReportsTableProps> = ({
   projectId,
   onCreateInitiatives,
-  pendingAssessmentId,
   onOpenReport,
+  showAllStatuses = false,
+  onCreateTemplate,
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -174,29 +179,29 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [activeRowMenu, setActiveRowMenu] = useState<string | null>(null);
-  const [showNewReportModal, setShowNewReportModal] = useState(!!pendingAssessmentId);
-  const [isCreatingReport, setIsCreatingReport] = useState(false);
-  const [editingReportId, setEditingReportId] = useState<string | null>(null);
-  const [showStageGate, setShowStageGate] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
 
   // Fetch reports from Report Builder API
   const fetchReports = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Fetch reports with IN_REVIEW+ status from Report Builder API
-      const statusFilter = VISIBLE_STATUSES.join(',');
-      const response = await Api.get(
-        `/report-builder?sourceType=ASSESSMENT&statusIn=${statusFilter}`
-      );
+      // Build query – when showAllStatuses is true, fetch all reports (all sources + statuses)
+      const queryParts: string[] = [];
+      if (!showAllStatuses) {
+        queryParts.push(`sourceType=ASSESSMENT`);
+        queryParts.push(`statusIn=${VISIBLE_STATUSES.join(',')}`);
+      }
+      const qs = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+      const response = await Api.get(`/report-builder${qs}`);
       const apiReports = response?.reports || [];
 
       // Map API response to component's expected format
       const mappedReports: Report[] = apiReports.map((r: any) => ({
-        id: r.id,
-        name: r.title,
-        assessmentId: r.sourceId,
-        assessmentName: r.sourceName || '',
+        id: String(r.id),
+        name: String(r.title || r.name || 'Report'),
+        sourceType: String(r.sourceType || ''),
+        sourceId: String(r.sourceId || ''),
+        sourceName: String(r.sourceName || ''),
         status: r.status as ReportStatus,
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
@@ -204,8 +209,8 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         createdByName: r.createdByName,
         canGenerateInitiatives:
           r.status === 'APPROVED' || r.status === 'SENT_INTERNAL' || r.status === 'SENT_EXTERNAL',
-        initiativesGenerated: false, // TODO: Check if initiatives exist
-        initiativesCount: 0,
+        initiativesGenerated: Number(r.initiativesCount || 0) > 0,
+        initiativesCount: Number(r.initiativesCount || 0),
       }));
 
       setReports(mappedReports);
@@ -214,7 +219,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [showAllStatuses]);
 
   useEffect(() => {
     fetchReports();
@@ -272,11 +277,14 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     }
   };
 
-  // Export PDF
-  const handleExportPDF = async (reportId: string, reportName: string) => {
+  const handleExport = async (
+    reportId: string,
+    reportName: string,
+    format: 'pdf' | 'pptx' | 'doc'
+  ) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/report-builder/${reportId}/export/pdf`, {
+      const response = await fetch(`/api/report-builder/${reportId}/export/${format}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -285,19 +293,51 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${reportName.replace(/\s+/g, '_')}_Report.pdf`;
+        const safe = reportName.replace(/[^\p{L}\p{N}_-]+/gu, '_');
+        const ext = format === 'doc' ? 'doc' : format;
+        a.download = `${safe}_Report.${ext}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        toast.success(isPolish ? 'Eksport PDF zakończony' : 'PDF export completed');
+        toast.success(
+          isPolish
+            ? `Eksport ${format.toUpperCase()} zakończony`
+            : `${format.toUpperCase()} export completed`
+        );
       } else {
-        console.error('PDF export failed');
-        toast.error(isPolish ? 'Nie udało się wyeksportować PDF' : 'Failed to export PDF');
+        console.error('Export failed');
+        toast.error(isPolish ? 'Nie udało się wyeksportować' : 'Failed to export');
       }
     } catch (err) {
-      console.error('[ReportsTable] PDF Export error:', err);
-      toast.error(isPolish ? 'Błąd eksportu PDF' : 'PDF export error');
+      console.error('[ReportsTable] Export error:', err);
+      toast.error(isPolish ? 'Błąd eksportu' : 'Export error');
+    }
+  };
+
+  const handleExportPDF = (reportId: string, reportName: string) =>
+    handleExport(reportId, reportName, 'pdf');
+  const handleExportPPTX = (reportId: string, reportName: string) =>
+    handleExport(reportId, reportName, 'pptx');
+  const handleExportWord = (reportId: string, reportName: string) =>
+    handleExport(reportId, reportName, 'doc');
+
+  const handleCreateShareLink = async (reportId: string) => {
+    try {
+      const resp = await Api.post(`/report-builder/${reportId}/share`, {
+        showCompanyLogo: true,
+        showConsultinityBranding: true,
+      });
+      const link = resp?.link;
+      const url = link?.url ? `${window.location.origin}${String(link.url)}` : '';
+      if (url) {
+        await navigator.clipboard.writeText(url);
+        toast.success(isPolish ? 'Link skopiowany' : 'Link copied');
+      } else {
+        toast.success(isPolish ? 'Link utworzony' : 'Link created');
+      }
+    } catch (e: any) {
+      toast.error(e?.message || (isPolish ? 'Błąd tworzenia linku' : 'Failed to create link'));
     }
   };
 
@@ -306,6 +346,12 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     return reports.filter((report) => {
       // Status filter
       if (filterStatus !== 'all') {
+        if (
+          filterStatus === 'draft' &&
+          !['DRAFT', 'CONFIGURING', 'GENERATING'].includes(report.status)
+        )
+          return false;
+        if (filterStatus === 'generated' && report.status !== 'GENERATED') return false;
         if (filterStatus === 'in_review' && report.status !== 'IN_REVIEW') return false;
         if (filterStatus === 'approved' && report.status !== 'APPROVED') return false;
         if (filterStatus === 'sent' && !['SENT_INTERNAL', 'SENT_EXTERNAL'].includes(report.status))
@@ -317,7 +363,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         const query = searchQuery.toLowerCase();
         return (
           report.name.toLowerCase().includes(query) ||
-          report.assessmentName.toLowerCase().includes(query)
+          report.sourceName.toLowerCase().includes(query)
         );
       }
 
@@ -339,6 +385,9 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const stats = useMemo(
     () => ({
       total: reports.length,
+      draft: reports.filter((r) => ['DRAFT', 'CONFIGURING', 'GENERATING'].includes(r.status))
+        .length,
+      generated: reports.filter((r) => r.status === 'GENERATED').length,
       inReview: reports.filter((r) => r.status === 'IN_REVIEW').length,
       approved: reports.filter((r) => r.status === 'APPROVED').length,
       sent: reports.filter((r) => ['SENT_INTERNAL', 'SENT_EXTERNAL'].includes(r.status)).length,
@@ -351,24 +400,9 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     if (onOpenReport) {
       onOpenReport(reportId, reportName, status);
     } else {
-      navigate(`/reports/builder?reportId=${reportId}`);
+      navigate(`/reports/builder/${reportId}`);
     }
   };
-
-  // If editing a report, show the editor
-  if (editingReportId) {
-    return (
-      <ReportEditor
-        reportId={editingReportId}
-        onClose={() => setEditingReportId(null)}
-        onSaved={() => fetchReports()}
-        onFinalized={() => {
-          fetchReports();
-          setEditingReportId(null);
-        }}
-      />
-    );
-  }
 
   return (
     <div className="h-full flex flex-col">
@@ -377,15 +411,39 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-navy-900 dark:text-white">
-              {isPolish ? 'Raporty' : 'Reports'}
+              {showAllStatuses
+                ? isPolish
+                  ? 'Kreator raportów'
+                  : 'Report creator'
+                : isPolish
+                  ? 'Raporty'
+                  : 'Reports'}
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {isPolish
-                ? 'Raporty z ocen w statusie przeglądu i wyższych'
-                : 'Assessment reports in review status and above'}
+              {showAllStatuses
+                ? isPolish
+                  ? 'Wszystkie raporty (wszystkie źródła i statusy) oraz szybki dostęp do edytora.'
+                  : 'All reports (all sources and statuses) with quick access to the editor.'
+                : isPolish
+                  ? 'Raporty z ocen w statusie przeglądu i wyższych'
+                  : 'Assessment reports in review status and above'}
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {showAllStatuses && (
+              <button
+                onClick={() => navigate('/reports/builder?tab=composer')}
+                className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                title={
+                  isPolish
+                    ? 'Ustawienia kreatora (bloki/szablony/profile)'
+                    : 'Creator settings (blocks/templates/profiles)'
+                }
+              >
+                <Settings2 size={18} />
+                {isPolish ? 'Ustawienia' : 'Settings'}
+              </button>
+            )}
             <button
               onClick={() => setShowImportModal(true)}
               className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
@@ -394,6 +452,16 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
               <Upload size={18} />
               {isPolish ? 'Importuj' : 'Import'}
             </button>
+            {showAllStatuses && onCreateTemplate && (
+              <button
+                onClick={onCreateTemplate}
+                className="flex items-center gap-2 px-4 py-2.5 border border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 font-medium rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                title={isPolish ? 'Utwórz nowy szablon raportu' : 'Create new report template'}
+              >
+                <FileText size={18} />
+                {isPolish ? 'Nowy Szablon' : 'New Template'}
+              </button>
+            )}
             <button
               onClick={() => navigate('/reports/builder?new=true')}
               className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg"
@@ -413,6 +481,22 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           >
             {isPolish ? 'Wszystkie' : 'All'} ({stats.total})
           </button>
+          {showAllStatuses && (
+            <>
+              <button
+                onClick={() => setFilterStatus('draft')}
+                className={`text-sm ${filterStatus === 'draft' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
+              >
+                {isPolish ? 'Szkice' : 'Drafts'} ({stats.draft})
+              </button>
+              <button
+                onClick={() => setFilterStatus('generated')}
+                className={`text-sm ${filterStatus === 'generated' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
+              >
+                {isPolish ? 'Wygenerowane' : 'Generated'} ({stats.generated})
+              </button>
+            </>
+          )}
           <button
             onClick={() => setFilterStatus('in_review')}
             className={`text-sm ${filterStatus === 'in_review' ? 'text-purple-600 dark:text-purple-400 font-medium' : 'text-slate-500'}`}
@@ -472,13 +556,21 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                   ? 'Brak raportów pasujących do wyszukiwania'
                   : 'No reports match your search'
                 : isPolish
-                  ? 'Brak raportów w przeglądzie'
-                  : 'No reports in review yet'}
+                  ? showAllStatuses
+                    ? 'Brak raportów'
+                    : 'Brak raportów w przeglądzie'
+                  : showAllStatuses
+                    ? 'No reports yet'
+                    : 'No reports in review yet'}
             </p>
             <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
               {isPolish
-                ? 'Raporty pojawią się tutaj po przesłaniu do przeglądu'
-                : 'Reports will appear here after being submitted for review'}
+                ? showAllStatuses
+                  ? 'Utwórz nowy raport lub otwórz istniejący z listy.'
+                  : 'Raporty pojawią się tutaj po przesłaniu do przeglądu'
+                : showAllStatuses
+                  ? 'Create a new report or open an existing one from the list.'
+                  : 'Reports will appear here after being submitted for review'}
             </p>
           </div>
         ) : (
@@ -493,7 +585,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                     {isPolish ? 'Autor' : 'Author'}
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {isPolish ? 'Ocena' : 'Assessment'}
+                    {isPolish ? 'Kontekst' : 'Context'}
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Status
@@ -547,7 +639,16 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                         </div>
                       </td>
                       <td className="px-4 py-4 text-sm text-slate-500 dark:text-slate-400">
-                        {report.assessmentName}
+                        <div className="flex flex-col">
+                          <span className="text-slate-600 dark:text-slate-300">
+                            {report.sourceName || '—'}
+                          </span>
+                          {report.sourceType && (
+                            <span className="text-xs text-slate-400 dark:text-slate-500">
+                              {report.sourceType}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-4">
                         <span
@@ -600,9 +701,14 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                           )}
 
                           {/* Download PDF - for approved+ reports */}
-                          {['APPROVED', 'SENT_INTERNAL', 'SENT_EXTERNAL', 'UTILIZED'].includes(
-                            report.status
-                          ) && (
+                          {[
+                            'GENERATED',
+                            'IN_REVIEW',
+                            'APPROVED',
+                            'SENT_INTERNAL',
+                            'SENT_EXTERNAL',
+                            'UTILIZED',
+                          ].includes(report.status) && (
                             <button
                               onClick={() => handleExportPDF(report.id, report.name)}
                               className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
@@ -697,6 +803,8 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                   )}
 
                                   {[
+                                    'GENERATED',
+                                    'IN_REVIEW',
                                     'APPROVED',
                                     'SENT_INTERNAL',
                                     'SENT_EXTERNAL',
@@ -714,7 +822,44 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                                         <FileText size={14} />
                                         {isPolish ? 'Eksportuj PDF' : 'Export PDF'}
                                       </button>
+                                      <button
+                                        onClick={() => {
+                                          handleExportPPTX(report.id, report.name);
+                                          setActiveRowMenu(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
+                                      >
+                                        <FileText size={14} />
+                                        {isPolish ? 'Eksportuj PPTX' : 'Export PPTX'}
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          handleExportWord(report.id, report.name);
+                                          setActiveRowMenu(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-2"
+                                      >
+                                        <FileText size={14} />
+                                        {isPolish ? 'Eksportuj Word' : 'Export Word'}
+                                      </button>
                                     </>
+                                  )}
+
+                                  {['GENERATED', 'IN_REVIEW', 'APPROVED', 'UTILIZED'].includes(
+                                    report.status
+                                  ) && (
+                                    <button
+                                      onClick={() => {
+                                        handleCreateShareLink(report.id);
+                                        setActiveRowMenu(null);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 flex items-center gap-2"
+                                    >
+                                      <Link2 size={14} />
+                                      {isPolish
+                                        ? 'Utwórz link (kopiuj)'
+                                        : 'Create share link (copy)'}
+                                    </button>
                                   )}
 
                                   {report.canGenerateInitiatives &&
@@ -747,35 +892,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           </div>
         )}
       </div>
-
-      {/* Stage Gate Modal */}
-      {showStageGate && (
-        <StageGateModal
-          projectId={projectId}
-          assessmentId={pendingAssessmentId || ''}
-          gateType="DESIGN_GATE"
-          fromPhase="Assessment"
-          toPhase="Reports"
-          onClose={() => setShowStageGate(false)}
-          onProceed={() => {
-            setShowStageGate(false);
-            setShowNewReportModal(true);
-          }}
-        />
-      )}
-
-      {/* New Report Modal */}
-      {showNewReportModal && (
-        <NewReportModal
-          projectId={projectId}
-          preselectedAssessmentId={pendingAssessmentId || undefined}
-          onClose={() => setShowNewReportModal(false)}
-          onCreated={(reportId) => {
-            fetchReports();
-            setShowNewReportModal(false);
-          }}
-        />
-      )}
 
       {/* Import Report Modal */}
       {showImportModal && (

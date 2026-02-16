@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { getAppViewFromPath } from '../routes/routeConfig';
 import { useAppStore } from '../store/useAppStore';
 import { AppView, AuthStep, SessionMode } from '../types';
+import { parseArtifactRef } from '../utils/artifactLinks';
 
 /**
  * RouterSync
@@ -21,6 +22,7 @@ export const RouterSync: React.FC = () => {
   // Avoid selectors that return new objects/arrays each call (even with shallow),
   // because it can trigger "getSnapshot should be cached" warnings/loops.
   const setCurrentViewState = useAppStore((s) => s.setCurrentViewState);
+  const setMyWorkIntent = useAppStore((s) => s.setMyWorkIntent);
   const setSessionMode = useAppStore((s) => s.setSessionMode);
   const setAuthInitialStep = useAppStore((s) => s.setAuthInitialStep);
   const currentView = useAppStore((s) => s.currentView);
@@ -28,6 +30,69 @@ export const RouterSync: React.FC = () => {
 
   // Use refs to prevent infinite loops
   const isNavigatingRef = useRef(false);
+  const lastHandledArtifactRef = useRef<string | null>(null);
+
+  // 1.5. Artifact deep-link routing
+  useEffect(() => {
+    const artifactRaw = searchParams.get('artifact');
+    if (!artifactRaw) {
+      lastHandledArtifactRef.current = null;
+      return;
+    }
+    if (lastHandledArtifactRef.current === artifactRaw) return;
+    lastHandledArtifactRef.current = artifactRaw;
+
+    const parsed = parseArtifactRef(artifactRaw);
+    if (!parsed) return;
+
+    const { type, id } = parsed;
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('artifact');
+    nextParams.delete('code');
+
+    if (type === 'task' || type === 'decision') {
+      setMyWorkIntent({
+        tab: type === 'task' ? 'tasks' : 'decisions',
+        open: {
+          type,
+          id,
+        },
+      });
+      nextParams.set(type === 'task' ? 'taskId' : 'decisionId', id);
+      navigate(`/my-work?${nextParams.toString()}`, { replace: true });
+      return;
+    }
+
+    if (type === 'initiative') {
+      nextParams.set('open', id);
+      nextParams.set('mode', 'doc');
+      navigate(`/initiatives?${nextParams.toString()}`, { replace: true });
+      return;
+    }
+
+    if (type === 'report') {
+      navigate(`/reports/builder/${id}`, { replace: true });
+      return;
+    }
+
+    if (type === 'assessment') {
+      nextParams.set('assessmentId', id);
+      navigate(`/assessment?${nextParams.toString()}`, { replace: true });
+      return;
+    }
+
+    if (type === 'tool') {
+      nextParams.set('sessionId', id);
+      navigate(`/discovery-tools/strategic?${nextParams.toString()}`, { replace: true });
+      return;
+    }
+
+    if (type === 'insight') {
+      nextParams.set('insightId', id);
+      navigate(`/interview?${nextParams.toString()}`, { replace: true });
+      return;
+    }
+  }, [searchParams, navigate, setMyWorkIntent]);
 
   // 1. Attribution Capture
   useEffect(() => {
@@ -98,6 +163,7 @@ export const RouterSync: React.FC = () => {
     // If user is not authenticated, protect private routes
     const isProtected =
       path === '/chat' ||
+      path.startsWith('/chat/') ||
       path === '/studio' ||
       path.startsWith('/admin') ||
       path.startsWith('/settings') ||
@@ -135,7 +201,7 @@ export const RouterSync: React.FC = () => {
     }
 
     // SUPERADMIN should not stay on /chat
-    if (path === '/chat' && userRole === 'SUPERADMIN') {
+    if ((path === '/chat' || path.startsWith('/chat/')) && userRole === 'SUPERADMIN') {
       console.log('[RouterSync] SUPERADMIN on /chat, redirecting to /superadmin');
       isNavigatingRef.current = true;
       navigate('/superadmin', { replace: true });

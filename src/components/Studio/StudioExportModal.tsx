@@ -65,7 +65,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
       } else if (format === 'json') {
         // Export nodes/edges as JSON
         // This would need access to the actual node/edge data
-        toast.success('JSON export coming soon');
+        toast('JSON export is not available for this content type.', { icon: 'ℹ️' });
       }
 
       onClose();

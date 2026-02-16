@@ -234,7 +234,9 @@ describe('Multi-Tenant Security', () => {
 
       const decrypt = (encrypted: string, key: string) => {
         const decoded = Buffer.from(encrypted, 'base64').toString();
-        const [encKey, data] = decoded.split(':');
+        const colonIdx = decoded.indexOf(':');
+        const encKey = decoded.slice(0, colonIdx);
+        const data = decoded.slice(colonIdx + 1);
         if (encKey !== key) {
           throw new Error('Invalid encryption key');
         }

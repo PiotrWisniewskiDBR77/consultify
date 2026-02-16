@@ -6,6 +6,17 @@
  */
 
 import bcrypt from 'bcryptjs';
+import {
+  AlignmentType,
+  Document,
+  Footer,
+  Header,
+  HeadingLevel,
+  Packer,
+  PageNumber,
+  Paragraph,
+  TextRun,
+} from 'docx';
 import { NextFunction, Request, Response, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
@@ -19,16 +30,79 @@ import {
 } from '../config/reportInvocationProfiles.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { default as defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
+import notificationService from '../services/notificationService.js';
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportGenerationService from '../services/reportGenerationService.js';
 import logger from '../utils/Logger.js';
 
+// ==========================================
+// HELPER: Auto-version + Notify on status change
+// ==========================================
+
+async function createAutoVersionOnStatusChange(
+  reportId: string,
+  organizationId: string,
+  userId: string,
+  previousStatus: string,
+  newStatus: string,
+  changeSummary: string
+): Promise<void> {
+  try {
+    await ReportBuilderService.createVersion(reportId, organizationId, userId, {
+      changeType: 'auto',
+      changeSummary,
+      previousStatus,
+      newStatus,
+    });
+    logger.info('[ReportBuilder] Auto-version created on status change', {
+      reportId,
+      previousStatus,
+      newStatus,
+    });
+  } catch (err) {
+    logger.warn('[ReportBuilder] Failed to create auto-version (non-fatal)', { reportId, err });
+  }
+}
+
+async function notifyOnStatusChange(
+  reportId: string,
+  organizationId: string,
+  actorUserId: string,
+  targetUserIds: string[],
+  notifType: string,
+  title: string,
+  body: string,
+  reportTitle?: string
+): Promise<void> {
+  for (const targetId of targetUserIds) {
+    if (targetId === actorUserId) continue; // Don't notify yourself
+    try {
+      await notificationService.send({
+        userId: targetId,
+        organizationId,
+        type: notifType,
+        title,
+        body,
+        entityType: 'report_builder',
+        entityId: reportId,
+        actionUrl: `/reports/builder/${reportId}`,
+        actorId: actorUserId,
+        priority: 'normal',
+        metadata: { reportTitle },
+      });
+    } catch (err) {
+      logger.warn('[ReportBuilder] Failed to send notification (non-fatal)', { targetId, err });
+    }
+  }
+}
+
 const router = Router();
 
-// Apply middleware
-router.use(authRateLimiter);
+// Apply middleware (use default API limiter – 1000 req/15min in dev, not the restrictive auth limiter)
+router.use(defaultRateLimiter);
 router.use(verifyToken);
 router.use(demoContextMiddleware);
 
@@ -179,7 +253,14 @@ router.get('/sources/interview', async (req: Request, res: Response, next: NextF
       db.all(
         `SELECT s.id, s.name, s.status, s.total_questions, s.answered_questions,
                 s.template_id, s.completed_at, s.created_at, s.updated_at,
-                u.name as ownerName
+                COALESCE(
+                  NULLIF(
+                    TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')),
+                    ''
+                  ),
+                  u.email,
+                  u.id
+                ) as ownerName
          FROM interview_sessions s
          LEFT JOIN users u ON u.id = s.owner_id
          WHERE s.organization_id = ? AND s.status IN ('completed', 'in_progress')
@@ -231,7 +312,15 @@ router.get(
 
       const session = await new Promise<any>((resolve, reject) => {
         db.get(
-          `SELECT s.*, u.name as ownerName
+          `SELECT s.*,
+                  COALESCE(
+                    NULLIF(
+                      TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')),
+                      ''
+                    ),
+                    u.email,
+                    u.id
+                  ) as ownerName
            FROM interview_sessions s
            LEFT JOIN users u ON u.id = s.owner_id
            WHERE s.id = ? AND s.organization_id = ?`,
@@ -896,10 +985,38 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
     logger.info('[ReportBuilder] Report created', { reportId: result.report.id, userId });
 
+    // Projection into Assessment module list (so the report appears in Assessment → Reports tab)
+    // Best-effort and non-blocking.
+    try {
+      if (String(result.report.sourceType || '').toUpperCase() === 'ASSESSMENT') {
+        await upsertAssessmentReportForBuilder({
+          organizationId,
+          assessmentId: String(result.report.sourceId),
+          projectId: result.report.projectId ? String(result.report.projectId) : null,
+          builderReportId: String(result.report.id),
+          name: String(result.report.title || title || 'Report'),
+          templateId: result.report.templateId
+            ? String(result.report.templateId)
+            : templateId || null,
+          rbStatus: String(result.report.status || 'CONFIGURING'),
+          userId,
+        });
+      }
+    } catch (syncErr: any) {
+      logger.warn('[ReportBuilder] Failed to project report into assessment_reports', {
+        reportId: result.report.id,
+        message: syncErr?.message,
+      });
+    }
+
     res.status(201).json(result);
   } catch (err: any) {
     logger.error('[ReportBuilder] Error creating report:', err);
-    if (err.message?.includes('not found') || err.message?.includes('not approved')) {
+    if (
+      err.message?.includes('not found') ||
+      err.message?.includes('not approved') ||
+      err.message?.includes('mismatch')
+    ) {
       return res.status(400).json({ error: err.message });
     }
     next(err);
@@ -1026,6 +1143,44 @@ router.post('/:id/duplicate', async (req: Request, res: Response, next: NextFunc
     if (err.message === 'Report not found') {
       return res.status(404).json({ error: err.message });
     }
+    next(err);
+  }
+});
+
+// ==========================================
+// REPORT METADATA
+// ==========================================
+
+/**
+ * PATCH /api/report-builder/:id/metadata
+ * Update report title, description without changing status.
+ */
+router.patch('/:id/metadata', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = paramStr(req.params.id);
+    const { userId, organizationId } = getAuthContext(req);
+    const { title, description } = req.body;
+
+    if (!title && description === undefined) {
+      return res.status(400).json({ error: 'At least one of title or description is required' });
+    }
+
+    const existing = await ReportBuilderService.getReport(id, organizationId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    await ReportBuilderService.updateReportMetadata(id, organizationId, userId, {
+      title: title || undefined,
+      description: description !== undefined ? description : undefined,
+    });
+
+    const refreshed = await ReportBuilderService.getReport(id, organizationId);
+
+    logger.info('[ReportBuilder] Report metadata updated', { reportId: id, title, userId });
+    res.json({ report: refreshed?.report });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error updating report metadata:', err);
     next(err);
   }
 });
@@ -1338,6 +1493,7 @@ router.post('/:id/finalize', async (req: Request, res: Response, next: NextFunct
   try {
     const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
+    const { reviewers, message } = req.body || {};
 
     const report = await ReportBuilderService.getReport(id, organizationId);
     if (!report) {
@@ -1360,9 +1516,36 @@ router.post('/:id/finalize', async (req: Request, res: Response, next: NextFunct
       });
     }
 
+    const previousStatus = report.report.status;
     await ReportBuilderService.updateReportStatus(id, 'IN_REVIEW', userId);
 
-    logger.info('[ReportBuilder] Report finalized', { reportId: id });
+    // Auto-version: snapshot before review
+    await createAutoVersionOnStatusChange(
+      id,
+      organizationId,
+      userId,
+      previousStatus,
+      'IN_REVIEW',
+      `Sent for review${message ? `: ${message}` : ''}`
+    );
+
+    // Notify reviewers
+    const reviewerIds = Array.isArray(reviewers) ? reviewers : [];
+    if (reviewerIds.length > 0) {
+      const reportTitle = report.report.title || 'Report';
+      await notifyOnStatusChange(
+        id,
+        organizationId,
+        userId,
+        reviewerIds,
+        'report_review_requested',
+        'Review requested',
+        `You have been asked to review "${reportTitle}"${message ? `. Message: ${message}` : ''}`,
+        reportTitle
+      );
+    }
+
+    logger.info('[ReportBuilder] Report finalized', { reportId: id, reviewers: reviewerIds });
 
     res.json({ success: true, status: 'IN_REVIEW' });
   } catch (err) {
@@ -1404,7 +1587,87 @@ router.post('/:id/approve', async (req: Request, res: Response, next: NextFuncti
       });
     }
 
+    const previousStatus = report.report.status;
     await ReportBuilderService.updateReportStatus(id, 'APPROVED', userId);
+
+    // Auto-version: approved version snapshot (immutable reference)
+    await createAutoVersionOnStatusChange(
+      id,
+      organizationId,
+      userId,
+      previousStatus,
+      'APPROVED',
+      'Report approved — approved version snapshot'
+    );
+
+    // Notify report author
+    const authorId = report.report.createdBy || report.report.created_by;
+    if (authorId) {
+      await notifyOnStatusChange(
+        id,
+        organizationId,
+        userId,
+        [authorId],
+        'report_approved',
+        'Report approved',
+        `Your report "${report.report.title || 'Report'}" has been approved.`,
+        report.report.title
+      );
+    }
+
+    // Auto-sync: mark APPROVE_REPORT gate as APPROVED in assessment workflow (when sourced from assessment)
+    if (
+      String(report.report.sourceType || '').toUpperCase() === 'ASSESSMENT' &&
+      report.report.sourceId
+    ) {
+      const assessmentId = String(report.report.sourceId);
+      try {
+        const { getDatabase } = await import('../database/index.js');
+        const db = getDatabase();
+
+        await new Promise<void>((resolve, reject) => {
+          db.run(
+            `UPDATE assessments
+             SET report_approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+             WHERE id = ? AND organization_id = ?`,
+            [assessmentId, String(organizationId)],
+            (err: Error | null) => (err ? reject(err) : resolve())
+          );
+        });
+
+        // Best-effort: gate table may not exist in all environments
+        await new Promise<void>((resolve) => {
+          db.run(
+            `UPDATE assessment_gate_decisions
+             SET status = 'APPROVED', decided_by = ?, decided_at = CURRENT_TIMESTAMP
+             WHERE assessment_id = ? AND gate_type = 'APPROVE_REPORT'`,
+            [String(userId), assessmentId],
+            () => resolve()
+          );
+        });
+
+        await new Promise<void>((resolve) => {
+          db.run(
+            `UPDATE assessment_gate_decisions
+             SET status = 'APPROVED', decided_by = ?, decided_at = CURRENT_TIMESTAMP
+             WHERE assessment_id = ? AND gate_type = 'GENERATE_REPORT' AND status != 'APPROVED'`,
+            [String(userId), assessmentId],
+            () => resolve()
+          );
+        });
+
+        logger.info('[ReportBuilder] Auto-synced APPROVE_REPORT gate for assessment', {
+          assessmentId,
+          reportId: id,
+        });
+      } catch (syncErr: any) {
+        logger.warn('[ReportBuilder] Gate sync failed for assessment report approval', {
+          assessmentId,
+          reportId: id,
+          message: syncErr?.message,
+        });
+      }
+    }
 
     logger.info('[ReportBuilder] Report approved', { reportId: id });
 
@@ -1433,7 +1696,33 @@ router.post('/:id/send-back', async (req: Request, res: Response, next: NextFunc
       return res.status(400).json({ error: 'Report must be in review to send back' });
     }
 
+    const previousStatus = report.report.status;
     await ReportBuilderService.updateReportStatus(id, 'DRAFT', userId);
+
+    // Auto-version before reverting
+    await createAutoVersionOnStatusChange(
+      id,
+      organizationId,
+      userId,
+      previousStatus,
+      'DRAFT',
+      'Sent back for revision'
+    );
+
+    // Notify author
+    const authorId = report.report.createdBy || report.report.created_by;
+    if (authorId) {
+      await notifyOnStatusChange(
+        id,
+        organizationId,
+        userId,
+        [authorId],
+        'report_sent_back',
+        'Report sent back',
+        `Your report "${report.report.title || 'Report'}" was sent back for revision.`,
+        report.report.title
+      );
+    }
 
     logger.info('[ReportBuilder] Report sent back to draft', { reportId: id });
 
@@ -1465,6 +1754,31 @@ router.post('/:id/reject', async (req: Request, res: Response, next: NextFunctio
     }
 
     await ReportBuilderService.updateReportStatus(id, 'DRAFT', userId);
+
+    // Auto-version before rejection
+    await createAutoVersionOnStatusChange(
+      id,
+      organizationId,
+      userId,
+      status,
+      'DRAFT',
+      `Rejected${reason ? `: ${reason}` : ''}`
+    );
+
+    // Notify author
+    const authorId = report.report.createdBy || report.report.created_by;
+    if (authorId) {
+      await notifyOnStatusChange(
+        id,
+        organizationId,
+        userId,
+        [authorId],
+        'report_rejected',
+        'Report rejected',
+        `Your report "${report.report.title || 'Report'}" was rejected.${reason ? ` Reason: ${reason}` : ''}`,
+        report.report.title
+      );
+    }
 
     logger.info('[ReportBuilder] Report rejected', {
       reportId: id,
@@ -1501,6 +1815,15 @@ router.post('/:id/utilize', async (req: Request, res: Response, next: NextFuncti
 
     await ReportBuilderService.updateReportStatus(id, 'UTILIZED', userId);
 
+    await createAutoVersionOnStatusChange(
+      id,
+      organizationId,
+      userId,
+      status,
+      'UTILIZED',
+      `Report utilized${notes ? `: ${notes}` : ''}`
+    );
+
     logger.info('[ReportBuilder] Report utilized', { reportId: id, userId, notes });
 
     res.json({ success: true, status: 'UTILIZED' });
@@ -1530,6 +1853,15 @@ router.post('/:id/mark-sent-internal', async (req: Request, res: Response, next:
 
     await ReportBuilderService.updateReportStatus(id, 'SENT_INTERNAL', userId);
 
+    await createAutoVersionOnStatusChange(
+      id,
+      organizationId,
+      userId,
+      'APPROVED',
+      'SENT_INTERNAL',
+      'Sent internally'
+    );
+
     logger.info('[ReportBuilder] Report marked as sent internally', { reportId: id, userId });
 
     res.json({ success: true, status: 'SENT_INTERNAL' });
@@ -1558,6 +1890,15 @@ router.post('/:id/mark-sent-external', async (req: Request, res: Response, next:
     }
 
     await ReportBuilderService.updateReportStatus(id, 'SENT_EXTERNAL', userId);
+
+    await createAutoVersionOnStatusChange(
+      id,
+      organizationId,
+      userId,
+      'SENT_INTERNAL',
+      'SENT_EXTERNAL',
+      'Sent to client'
+    );
 
     logger.info('[ReportBuilder] Report marked as sent externally', { reportId: id, userId });
 
@@ -1624,9 +1965,42 @@ const writeReportBuilderPdf = async (
   sections: any[],
   filePath: string
 ): Promise<void> => {
-  const doc = new PDFDocument({ margin: 48, size: 'A4' });
+  // bufferPages enables adding page numbers after content generation
+  const doc = new PDFDocument({ margin: 48, size: 'A4', bufferPages: true });
   const stream = fs.createWriteStream(filePath);
   doc.pipe(stream);
+
+  const drawHeaderFooter = (pageNumber: number, totalPages: number) => {
+    const title = String(report.title || report.name || 'Report');
+    const org = report.organizationName ? String(report.organizationName) : '';
+
+    // Header
+    doc
+      .fontSize(9)
+      .fillColor('#64748b')
+      .text(org ? `${org} • ${title}` : title, 48, 22, { align: 'left' });
+    doc
+      .moveTo(48, 36)
+      .lineTo(doc.page.width - 48, 36)
+      .lineWidth(0.5)
+      .strokeColor('#e2e8f0')
+      .stroke();
+
+    // Footer
+    const footerY = doc.page.height - 34;
+    doc
+      .moveTo(48, footerY - 6)
+      .lineTo(doc.page.width - 48, footerY - 6)
+      .lineWidth(0.5)
+      .strokeColor('#e2e8f0')
+      .stroke();
+
+    doc.fontSize(8).fillColor('#94a3b8').text('Confidential', 48, footerY, { align: 'left' });
+    doc
+      .fontSize(8)
+      .fillColor('#94a3b8')
+      .text(`${pageNumber} / ${totalPages}`, 48, footerY, { align: 'right' });
+  };
 
   // Title page
   doc
@@ -1642,6 +2016,7 @@ const writeReportBuilderPdf = async (
     align: 'center',
   });
   doc.moveDown(2);
+  doc.addPage();
 
   // Sections
   const enabledSections = sections
@@ -1653,7 +2028,7 @@ const writeReportBuilderPdf = async (
     if (!content) continue;
 
     // Section title
-    doc.fontSize(16).fillColor('#1e293b').text(section.title);
+    doc.fontSize(16).fillColor('#0f172a').text(section.title);
     doc.moveDown(0.3);
 
     // Check if it's a matrix section
@@ -1723,9 +2098,14 @@ const writeReportBuilderPdf = async (
     }
   }
 
-  // Footer on last page
-  doc.fontSize(8).fillColor('#94a3b8');
-  doc.text(`Report ID: ${report.id}`, 48, doc.page.height - 40);
+  // Add headers/footers with page numbers (skip title page)
+  const range = doc.bufferedPageRange(); // { start: 0, count: N }
+  const totalPages = range.count;
+  for (let i = range.start; i < range.start + range.count; i += 1) {
+    doc.switchToPage(i);
+    if (i === 0) continue; // title page
+    drawHeaderFooter(i + 1, totalPages);
+  }
 
   doc.end();
   await new Promise<void>((resolve, reject) => {
@@ -1857,6 +2237,153 @@ const writeReportBuilderWordDoc = async (report: any, sections: any[], filePath:
   await fs.promises.writeFile(filePath, html, 'utf8');
 };
 
+const markdownToDocxParagraphs = (markdown: string): Paragraph[] => {
+  const text = String(markdown || '');
+  const lines = text.split('\n');
+  const out: Paragraph[] = [];
+
+  for (const raw of lines) {
+    const line = raw.replace(/\r/g, '');
+    if (!line.trim()) {
+      out.push(new Paragraph({ text: '' }));
+      continue;
+    }
+
+    // Headings
+    if (line.startsWith('### ')) {
+      out.push(
+        new Paragraph({
+          text: line.slice(4).trim(),
+          heading: HeadingLevel.HEADING_3,
+        })
+      );
+      continue;
+    }
+    if (line.startsWith('## ')) {
+      out.push(
+        new Paragraph({
+          text: line.slice(3).trim(),
+          heading: HeadingLevel.HEADING_2,
+        })
+      );
+      continue;
+    }
+    if (line.startsWith('# ')) {
+      out.push(
+        new Paragraph({
+          text: line.slice(2).trim(),
+          heading: HeadingLevel.HEADING_1,
+        })
+      );
+      continue;
+    }
+
+    // Bullets
+    if (/^[-*]\s+/.test(line)) {
+      out.push(
+        new Paragraph({
+          text: line.replace(/^[-*]\s+/, '').trim(),
+          bullet: { level: 0 },
+        })
+      );
+      continue;
+    }
+
+    // Basic inline cleanup (drop markdown markers)
+    const cleaned = line
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/`(.*?)`/g, '$1')
+      .replace(/\[(.*?)\]\(.*?\)/g, '$1');
+
+    out.push(new Paragraph({ children: [new TextRun(String(cleaned))] }));
+  }
+
+  return out;
+};
+
+const writeReportBuilderDocx = async (report: any, sections: any[], filePath: string) => {
+  const title = report.title || report.name || 'Report';
+  const subtitleParts: string[] = [];
+  if (report.organizationName) subtitleParts.push(String(report.organizationName));
+  if (report.sourceFramework) subtitleParts.push(String(report.sourceFramework));
+  if (report.sourceName) subtitleParts.push(String(report.sourceName));
+
+  const enabledSections = (sections || [])
+    .filter((s) => s && s.enabled)
+    .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+
+  const children: Paragraph[] = [];
+
+  // Cover-ish header
+  children.push(
+    new Paragraph({
+      text: String(title),
+      heading: HeadingLevel.TITLE,
+      alignment: AlignmentType.CENTER,
+    })
+  );
+  if (subtitleParts.length) {
+    children.push(
+      new Paragraph({
+        text: subtitleParts.join(' • '),
+        alignment: AlignmentType.CENTER,
+      })
+    );
+  }
+  children.push(new Paragraph({ text: '' }));
+
+  // Body
+  for (const section of enabledSections) {
+    const sectionTitle = section.title || section.sectionKey || 'Section';
+    children.push(
+      new Paragraph({
+        text: String(sectionTitle),
+        heading: HeadingLevel.HEADING_1,
+      })
+    );
+    const content = section.editedContent || section.generatedContent || '';
+    children.push(...markdownToDocxParagraphs(String(content)));
+    children.push(new Paragraph({ text: '' }));
+  }
+
+  const doc = new Document({
+    sections: [
+      {
+        headers: {
+          default: new Header({
+            children: [
+              new Paragraph({
+                children: [new TextRun({ text: String(title), size: 18 })],
+              }),
+            ],
+          }),
+        },
+        footers: {
+          default: new Footer({
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({ text: 'Consultinity Report', size: 16 }),
+                  new TextRun('  •  '),
+                  new TextRun({ children: [PageNumber.CURRENT] }),
+                  new TextRun(' / '),
+                  new TextRun({ children: [PageNumber.TOTAL_PAGES] }),
+                ],
+                alignment: AlignmentType.RIGHT,
+              }),
+            ],
+          }),
+        },
+        children,
+      },
+    ],
+  });
+
+  const buffer = await Packer.toBuffer(doc);
+  await fs.promises.writeFile(filePath, buffer);
+};
+
 /**
  * GET /api/report-builder/:id/export/pdf
  * Export report as PDF
@@ -1907,9 +2434,9 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
 
 /**
  * GET /api/report-builder/:id/export/doc
- * Export report as a Word document (.doc, HTML)
+ * Export report as a Word document (.docx)
  */
-router.get('/:id/export/doc', async (req: Request, res: Response, next: NextFunction) => {
+const exportDocx = async (req: Request, res: Response) => {
   try {
     const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
@@ -1920,10 +2447,11 @@ router.get('/:id/export/doc', async (req: Request, res: Response, next: NextFunc
     }
 
     const exportDir = await ensureExportDir();
-    const fileName = `${id}-${Date.now()}.doc`;
+    const fileName = `${id}-${Date.now()}.docx`;
     const filePath = path.join(exportDir, fileName);
 
-    await writeReportBuilderWordDoc(reportData.report, reportData.sections, filePath);
+    // Generate real DOCX (client-ready) instead of HTML-in-.doc
+    await writeReportBuilderDocx(reportData.report, reportData.sections, filePath);
 
     const stats = await fs.promises.stat(filePath);
 
@@ -1937,74 +2465,187 @@ router.get('/:id/export/doc', async (req: Request, res: Response, next: NextFunc
       exportedBy: userId,
     });
 
-    logger.info('[ReportBuilder] Word (.doc) exported', { reportId: id, userId });
+    logger.info('[ReportBuilder] Word (.docx) exported', { reportId: id, userId });
 
-    res.setHeader('Content-Type', 'application/msword');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${reportData.report.title || 'report'}.doc"`
+      `attachment; filename="${reportData.report.title || 'report'}.docx"`
     );
     return res.sendFile(filePath);
   } catch (err: any) {
-    logger.error('[ReportBuilder] Error exporting Word (.doc):', err);
+    logger.error('[ReportBuilder] Error exporting Word (.docx):', err);
     return res.status(500).json({ error: 'Failed to export Word', message: err.message });
   }
-});
+};
+
+// Backward compatible + explicit endpoints
+router.get('/:id/export/doc', exportDocx);
+router.get('/:id/export/docx', exportDocx);
 
 /**
  * GET /api/report-builder/:id/export/pptx
  * Export report as PowerPoint presentation
+ *
+ * Query params:
+ *   ?version=2          — use new BCG-grade pipeline (v2)
+ *   ?template=corporate — corporate | minimal | modern
+ *   ?language=pl        — pl | en
+ *   ?confidentiality=confidential — confidential | internal | public
  */
 router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
-    const { template, language } = req.query;
+    const { template, language, version, confidentiality } = req.query;
+    const useV2 = version === '2' || version === 'v2';
 
     const reportData = await ReportBuilderService.getReport(id, organizationId);
     if (!reportData) {
       return res.status(404).json({ error: 'Report not found' });
     }
 
-    // Dynamically import PptxExportService
-    const { PptxExportService } = await import('../services/report/PptxExportService.js');
-    const pptxService = new PptxExportService();
+    let buffer: Buffer;
 
-    // Prepare report data for PPTX export
-    const rpt = reportData.report as any;
-    const pptxReportData = {
-      id: rpt.id,
-      name: rpt.title || rpt.name || 'Report',
-      sourceType: rpt.sourceType || rpt.source_type || 'ASSESSMENT',
-      sourceFramework: rpt.sourceFramework || rpt.source_framework,
-      organizationName: rpt.organizationName || rpt.organization_name,
-      projectName: rpt.projectName || rpt.project_name,
-      createdAt: rpt.createdAt || rpt.created_at,
-      intentConfig:
-        rpt.intentConfig || rpt.intent_config
-          ? JSON.parse(rpt.intentConfig || rpt.intent_config)
-          : undefined,
-      sections: (reportData.sections || []).map((s: any) => ({
-        key: s.sectionKey || s.section_key,
-        title: s.title || s.sectionKey || s.section_key,
-        type: s.sectionType || s.section_type,
-        content: s.generatedContent || s.generated_content || '',
-        renderKind: s.renderKind || s.render_kind,
-        data: s.dataJson || s.data_json ? JSON.parse(s.dataJson || s.data_json) : undefined,
-      })),
-      scoreSummary:
-        rpt.scoreSummary || rpt.score_summary
-          ? JSON.parse(rpt.scoreSummary || rpt.score_summary)
-          : undefined,
-    };
+    if (useV2) {
+      // ── V2: BCG-grade component pipeline ──
+      const { PptxPipelineService } =
+        await import('../services/report/pptx/PptxPipelineService.js');
+      const pipeline = new PptxPipelineService();
 
-    // Generate PPTX
-    const buffer = await pptxService.generatePresentation(pptxReportData, {
-      template: (template as any) || 'corporate',
-      language: (language as any) || 'pl',
-      includeCharts: true,
-      includeToc: true,
-    });
+      const rpt = reportData.report as any;
+
+      // Parse score summary if stored as JSON string
+      let scoreSummary: any = undefined;
+      const rawScore = rpt.scoreSummary || rpt.score_summary;
+      if (rawScore) {
+        try {
+          scoreSummary = typeof rawScore === 'string' ? JSON.parse(rawScore) : rawScore;
+        } catch {
+          /* ignore */
+        }
+      }
+
+      // Parse config if stored as JSON string
+      let config: any = undefined;
+      const rawConfig = rpt.config || rpt.config_json;
+      if (rawConfig) {
+        try {
+          config = typeof rawConfig === 'string' ? JSON.parse(rawConfig) : rawConfig;
+        } catch {
+          /* ignore */
+        }
+      }
+
+      // Pre-load block types once for slide_intent resolution
+      const allBlockTypes = await ReportBuilderService.listBlockTypes(organizationId).catch(
+        () => []
+      );
+      const btMap = new Map(allBlockTypes.map((bt: any) => [bt.id, bt]));
+
+      const v2Sections = (reportData.sections || []).map((s: any) => {
+        const btId = s.blockTypeId || s.block_type_id;
+        const bt = btId ? btMap.get(btId) : undefined;
+        return {
+          sectionKey: s.sectionKey || s.section_key,
+          sectionType: s.sectionType || s.section_type,
+          title: s.title || s.sectionKey || s.section_key,
+          orderIndex: s.orderIndex ?? s.order_index ?? 0,
+          enabled: s.enabled !== false,
+          blockTypeId: btId,
+          blockConfig: s.blockConfig || s.block_config,
+          renderKind: s.renderKind || s.render_kind,
+          generatedContent: s.generatedContent || s.generated_content,
+          editedContent: s.editedContent || s.edited_content,
+          contentFormat: s.contentFormat || s.content_format,
+          repeatFor: s.repeatFor || s.repeat_for,
+          repeatKey: s.repeatKey || s.repeat_key,
+          repeatName: s.repeatName || s.repeat_name,
+          repeatData: s.repeatData || s.repeat_data,
+          slideIntent: bt?.slideIntent || undefined,
+        };
+      });
+
+      const result = await pipeline.generateFromLegacyReport(
+        {
+          report: {
+            id: rpt.id,
+            title: rpt.title || rpt.name || 'Report',
+            description: rpt.description,
+            sourceType: rpt.sourceType || rpt.source_type || 'ASSESSMENT',
+            sourceFramework: rpt.sourceFramework || rpt.source_framework,
+            sourceName: rpt.sourceName || rpt.source_name,
+            config,
+            companyContext: rpt.companyContext || rpt.company_context,
+            createdAt: rpt.createdAt || rpt.created_at,
+            createdBy: rpt.createdBy || rpt.created_by || userId,
+          },
+          sections: v2Sections,
+          scoreSummary,
+          organizationName: rpt.organizationName || rpt.organization_name,
+          projectName: rpt.projectName || rpt.project_name,
+        },
+        {
+          template: (template as any) || 'corporate',
+          language: (language as any) || 'pl',
+          confidentiality: (confidentiality as any) || 'confidential',
+        }
+      );
+
+      buffer = result.buffer;
+
+      // Log pipeline stats
+      logger.info('[ReportBuilder] PPTX v2 exported', {
+        reportId: id,
+        userId,
+        slideCount: result.slideCount,
+        warnings: result.warnings.length,
+        valid: result.validation.valid,
+      });
+    } else {
+      // ── V1: Legacy monolithic export ──
+      const { PptxExportService } = await import('../services/report/PptxExportService.js');
+      const pptxService = new PptxExportService();
+
+      const rpt = reportData.report as any;
+      const pptxReportData = {
+        id: rpt.id,
+        name: rpt.title || rpt.name || 'Report',
+        sourceType: rpt.sourceType || rpt.source_type || 'ASSESSMENT',
+        sourceFramework: rpt.sourceFramework || rpt.source_framework,
+        organizationName: rpt.organizationName || rpt.organization_name,
+        projectName: rpt.projectName || rpt.project_name,
+        createdAt: rpt.createdAt || rpt.created_at,
+        intentConfig:
+          rpt.intentConfig || rpt.intent_config
+            ? JSON.parse(rpt.intentConfig || rpt.intent_config)
+            : undefined,
+        sections: (reportData.sections || []).map((s: any) => ({
+          key: s.sectionKey || s.section_key,
+          title: s.title || s.sectionKey || s.section_key,
+          type: s.sectionType || s.section_type,
+          content: s.generatedContent || s.generated_content || '',
+          renderKind: s.renderKind || s.render_kind,
+          data: s.dataJson || s.data_json ? JSON.parse(s.dataJson || s.data_json) : undefined,
+        })),
+        scoreSummary:
+          rpt.scoreSummary || rpt.score_summary
+            ? JSON.parse(rpt.scoreSummary || rpt.score_summary)
+            : undefined,
+      };
+
+      buffer = await pptxService.generatePresentation(pptxReportData, {
+        template: (template as any) || 'corporate',
+        language: (language as any) || 'pl',
+        includeCharts: true,
+        includeToc: true,
+      });
+
+      logger.info('[ReportBuilder] PPTX v1 exported', { reportId: id, userId });
+    }
 
     // Save to exports directory
     const exportDir = await ensureExportDir();
@@ -2025,8 +2666,6 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
       language: (language as string) || 'pl',
       exportedBy: userId,
     });
-
-    logger.info('[ReportBuilder] PPTX exported', { reportId: id, userId });
 
     res.setHeader(
       'Content-Type',

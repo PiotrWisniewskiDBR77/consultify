@@ -91,20 +91,20 @@ export const AISLADashboard: React.FC = () => {
   const fetchMetrics = useCallback(async () => {
     try {
       // Fetch latency metrics
-      const latencyRes = (await Api.getAIHealthMetrics?.()) || mockLatencyData();
-      setLatency(latencyRes.latency as any);
+      const latencyRes = await Api.getAIHealthMetrics?.();
+      if (latencyRes) setLatency(latencyRes.latency as any);
 
       // Fetch availability metrics
-      const availRes = (await Api.getAIAvailability?.()) || mockAvailabilityData();
-      setAvailability(availRes.availability as any);
+      const availRes = await Api.getAIAvailability?.();
+      if (availRes) setAvailability(availRes.availability as any);
 
       // Fetch SLA breaches
-      const breachRes = (await Api.getAISLABreaches?.()) || mockBreachData();
-      setBreaches(breachRes.breaches || []);
+      const breachRes = await Api.getAISLABreaches?.();
+      setBreaches(breachRes?.breaches || []);
 
       // Fetch trend data
-      const trendRes = (await Api.getAISLATrends?.()) || mockTrendData();
-      setTrends(trendRes.trends || []);
+      const trendRes = await Api.getAISLATrends?.();
+      setTrends(trendRes?.trends || []);
 
       setLastUpdated(new Date());
     } catch (error) {
@@ -478,61 +478,5 @@ export const AISLADashboard: React.FC = () => {
     </div>
   );
 };
-
-// Mock data functions for development/fallback
-function mockLatencyData() {
-  return {
-    latency: {
-      p50: 1200 + Math.random() * 800,
-      p95: 3500 + Math.random() * 1500,
-      p99: 7000 + Math.random() * 3000,
-      avg: 1800 + Math.random() * 1000,
-      count: Math.floor(10000 + Math.random() * 5000),
-    },
-  };
-}
-
-function mockAvailabilityData() {
-  return {
-    availability: {
-      current: 99.95 + Math.random() * 0.05,
-      last24h: 99.9 + Math.random() * 0.1,
-      last7d: 99.85 + Math.random() * 0.15,
-      last30d: 99.8 + Math.random() * 0.2,
-    },
-  };
-}
-
-function mockBreachData() {
-  const hasBreaches = Math.random() > 0.7;
-  if (!hasBreaches) return { breaches: [] };
-
-  return {
-    breaches: [
-      {
-        id: '1',
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
-        metric: 'P99 Latency',
-        value: 12000,
-        threshold: 10000,
-        severity: 'warning' as const,
-      },
-    ],
-  };
-}
-
-function mockTrendData() {
-  const trends = [];
-  for (let i = 23; i >= 0; i--) {
-    trends.push({
-      timestamp: new Date(Date.now() - i * 3600000).toISOString(),
-      p50: 1000 + Math.random() * 1000,
-      p95: 3000 + Math.random() * 2000,
-      p99: 6000 + Math.random() * 4000,
-      availability: 99.9 + Math.random() * 0.1,
-    });
-  }
-  return { trends };
-}
 
 export default AISLADashboard;

@@ -258,9 +258,9 @@ const StatusMachine = {
     const labels: Record<InitiativeStatus, string> = {
       [INITIATIVE_STATUSES.DRAFT]: 'Draft',
       [INITIATIVE_STATUSES.PENDING_REVIEW]: 'Pending Review',
+      [INITIATIVE_STATUSES.PLANNING]: 'Planning',
       [INITIATIVE_STATUSES.REVIEW]: 'In Review',
       [INITIATIVE_STATUSES.PROMOTED]: 'Promoted',
-      [INITIATIVE_STATUSES.PLANNING]: 'Planning',
       [INITIATIVE_STATUSES.APPROVED]: 'Approved',
       [INITIATIVE_STATUSES.SCHEDULED]: 'Scheduled',
       [INITIATIVE_STATUSES.EXECUTING]: 'Executing',

@@ -29,7 +29,7 @@ import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
-import { Api } from '../../../services/api';
+import { Api, getHeaders } from '../../../services/api';
 
 // ============================================
 // Types
@@ -481,24 +481,28 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
 
   const isApproved = workflowStatus === 'APPROVED';
 
-  // Fetch reports for this assessment from Assessment Reports API
+  // Fetch reports for this assessment from Report Builder API
   const fetchReports = useCallback(async () => {
     try {
-      const response = await Api.get(`/assessment-reports?assessmentId=${assessmentId}`);
+      const response = await Api.get(
+        `/report-builder?sourceType=ASSESSMENT&sourceId=${encodeURIComponent(assessmentId)}`
+      );
       const apiReports = response?.reports || [];
       const mapped: Report[] = apiReports.map((r: any) => ({
-        id: r.id,
-        name: r.name,
-        assessmentId: r.assessmentId,
-        assessmentName: r.assessmentName || assessmentName || '',
+        id: String(r.id),
+        name: String(r.title || r.name || 'Report'),
+        assessmentId,
+        assessmentName: String(r.sourceName || assessmentName || ''),
         status: (String(r.status || 'DRAFT').toUpperCase() as ReportStatus) || 'DRAFT',
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
-        createdBy: r.createdBy || 'system',
+        createdAt: String(r.createdAt || ''),
+        updatedAt: String(r.updatedAt || ''),
+        createdBy: String(r.createdByName || r.createdBy || 'system'),
         createdByName: r.createdByName,
-        canGenerateInitiatives: String(r.status || '').toUpperCase() === 'FINAL',
-        initiativesGenerated: false,
-        initiativesCount: 0,
+        canGenerateInitiatives: ['APPROVED', 'SENT_INTERNAL', 'SENT_EXTERNAL'].includes(
+          String(r.status || '').toUpperCase()
+        ),
+        initiativesGenerated: Number(r.initiativesCount || 0) > 0,
+        initiativesCount: Number(r.initiativesCount || 0),
       }));
       setReports(mapped);
     } catch (err) {
@@ -535,7 +539,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
   // Submit report to review (finalize)
   const handleFinalize = async (reportId: string) => {
     try {
-      await Api.finalizeReport(reportId);
+      await Api.post(`/report-builder/${reportId}/finalize`, {});
       toast.success('Report finalized');
       await fetchReports();
     } catch (err) {
@@ -543,38 +547,17 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
     }
   };
 
-  const handleExportPDF = async (reportId: string, reportName: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/assessment-reports/${reportId}/export/pdf`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${reportName.replace(/\s+/g, '_')}_Report.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        toast.success('PDF exported');
-      }
-    } catch (err) {
-      toast.error('Failed to export PDF');
-    }
-  };
-
+  /** Download a report export as a binary blob and trigger browser download. */
   const downloadExport = async (
-    format: 'pdf' | 'pptx' | 'excel',
+    format: 'pdf' | 'pptx' | 'doc' | 'excel',
     reportId: string,
     reportName: string
   ) => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`/api/assessment-reports/${reportId}/export/${format}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    });
+    const headers = getHeaders();
+    // Remove Content-Type for GET blob requests
+    delete (headers as Record<string, string>)['Content-Type'];
+
+    const response = await fetch(`/api/report-builder/${reportId}/export/${format}`, { headers });
     if (!response.ok) {
       const text = await response.text().catch(() => '');
       throw new Error(text || `Export failed (${format})`);
@@ -585,11 +568,21 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
     const a = document.createElement('a');
     a.href = url;
     const safeTitle = (reportName || 'report').replace(/[^\p{L}\p{N}_-]+/gu, '_');
-    a.download = `${safeTitle}.${format}`;
+    const ext = format === 'doc' ? 'docx' : format;
+    a.download = `${safeTitle}.${ext}`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
+  };
+
+  const handleExportPDF = async (reportId: string, reportName: string) => {
+    try {
+      await downloadExport('pdf', reportId, reportName);
+      toast.success('PDF exported');
+    } catch (err) {
+      toast.error('Failed to export PDF');
+    }
   };
 
   const handleExportPPTX = async (reportId: string, reportName: string) => {
@@ -602,7 +595,12 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
   };
 
   const handleExportWord = async (reportId: string, reportName: string) => {
-    toast.error('Word export not available for this report type');
+    try {
+      await downloadExport('doc', reportId, reportName);
+      toast.success('Word exported');
+    } catch (err) {
+      toast.error('Failed to export Word');
+    }
   };
 
   const handleExportExcel = async (reportId: string, reportName: string) => {
@@ -616,7 +614,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
 
   const handleDelete = async (reportId: string) => {
     try {
-      await Api.delete(`/assessment-reports/${reportId}`);
+      await Api.delete(`/report-builder/${reportId}`);
       toast.success('Report deleted');
       await fetchReports();
     } catch (err: any) {
@@ -628,7 +626,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
     if (onOpenReport) {
       onOpenReport(reportId, reportName, status);
     } else {
-      navigate(`/assessment-reports/${reportId}`);
+      navigate(`/reports/builder/${reportId}`);
     }
   };
 
@@ -645,8 +643,10 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
   const stats = useMemo(
     () => ({
       total: reports.length,
-      draft: reports.filter((r) => r.status === 'DRAFT').length,
-      inReview: 0,
+      draft: reports.filter((r) =>
+        ['DRAFT', 'CONFIGURING', 'GENERATING', 'GENERATED'].includes(r.status)
+      ).length,
+      inReview: reports.filter((r) => r.status === 'IN_REVIEW').length,
       approved: reports.filter((r) => r.status === 'APPROVED').length,
     }),
     [reports]

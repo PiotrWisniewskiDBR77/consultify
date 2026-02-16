@@ -106,7 +106,7 @@ async function checkToolsMenu(): Promise<SubsystemHealth> {
     details: {
       aiModes: ['deepResearch', 'webSearch', 'showReasoning', 'textToSpeech'],
       knowledgeSources: ['pmoDocuments', 'projectData', 'organizationData'],
-      responseStyles: ['normal', 'learning', 'concise', 'explanatory', 'formal'],
+      responseStyles: ['normal', 'executive', 'analyst', 'coach', 'concise', 'formal'],
     },
     lastChecked: new Date().toISOString(),
   };
@@ -1304,7 +1304,7 @@ router.get(
         circuitBreakers = { error: 'Circuit breaker service not available' };
       }
 
-      // 3. Cost summary (best-effort)
+      // 3. Cost summary (best-effort, non-blocking)
       let costSummary: Record<string, unknown> = {};
       try {
         const healthCheck = aiCostMonitoring.getHealthCheck();
@@ -1316,11 +1316,12 @@ router.get(
           alertLevel: daily.alertLevel,
           budgetUsedPercent: daily.budgetUsedPercent,
         };
-      } catch {
-        costSummary = { status: 'unavailable' };
+      } catch (err: any) {
+        logger.warn(`[HealthCheck] Cost summary unavailable: ${err?.message}`);
+        costSummary = { status: 'unavailable', error: err?.message };
       }
 
-      // 4. Quality summary (best-effort)
+      // 4. Quality summary (best-effort, non-blocking)
       let qualitySummary: Record<string, unknown> = {};
       try {
         const qHealth = aiQualityMonitoring.getHealthCheck();
@@ -1329,8 +1330,9 @@ router.get(
           avgScore: (qHealth as any).averageScore || null,
           totalInteractions: (qHealth as any).totalInteractions || 0,
         };
-      } catch {
-        qualitySummary = { status: 'unavailable' };
+      } catch (err: any) {
+        logger.warn(`[HealthCheck] Quality summary unavailable: ${err?.message}`);
+        qualitySummary = { status: 'unavailable', error: err?.message };
       }
 
       const overallStatus =

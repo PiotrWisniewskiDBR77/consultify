@@ -43,7 +43,7 @@ interface AppearanceSettingsProps {
 
 interface AppearancePreferences {
   uiDensity: 'comfortable' | 'compact' | 'spacious';
-  startPage: 'dashboard' | 'myTasks' | 'inbox' | 'lastVisited';
+  startPage: 'chat' | 'myTasks' | 'inbox' | 'lastVisited';
   fontScale: number; // 90, 100, 110, 120
   sidebarCollapsed: boolean;
   showWelcomeTips: boolean;
@@ -51,7 +51,7 @@ interface AppearancePreferences {
 
 const DEFAULT_PREFERENCES: AppearancePreferences = {
   uiDensity: 'comfortable',
-  startPage: 'dashboard',
+  startPage: 'chat',
   fontScale: 100,
   sidebarCollapsed: false,
   showWelcomeTips: true,
@@ -65,10 +65,10 @@ const UI_DENSITY_OPTIONS = [
 
 const START_PAGE_OPTIONS = [
   {
-    value: 'dashboard',
-    label: 'Dashboard',
+    value: 'chat',
+    label: 'AI Chat',
     icon: LayoutGrid,
-    description: 'Overview of your workspace',
+    description: 'Start with AI assistant',
   },
   {
     value: 'myTasks',

@@ -56,8 +56,8 @@
     "Piotr_Tools/**",
     "config/tours/**",
     // Exclude duplicate/copy files like \"file 2.tsx\"
-    "**/* *.ts",
-    "**/* *.tsx",
-    "**/* *.js"
+    "**/* [0-9]*.*",
+    "**/* copy.*",
+    "**/*.icloud"
   ]
 }

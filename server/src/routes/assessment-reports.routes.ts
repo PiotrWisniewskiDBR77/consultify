@@ -18,6 +18,8 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import AssessmentInitiativeGenerationRunService from '../services/assessmentInitiativeGenerationRunService.js';
 import AssessmentPermissionService from '../services/assessmentPermissionService.js';
+import { mapReportBuilderStatusToAssessmentReportStatus } from '../services/assessmentReportBuilderLinkService.js';
+import ReportBuilderService from '../services/reportBuilderService.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
@@ -51,7 +53,15 @@ type DetailedAnalysis = {
   [key: string]: any;
 };
 
-type ReportStatus = 'DRAFT' | 'FINAL' | 'ARCHIVED';
+type ReportStatus =
+  | 'DRAFT'
+  | 'GENERATING'
+  | 'FINAL'
+  | 'PENDING_APPROVAL'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'UTILIZED'
+  | 'ARCHIVED';
 type SectionType =
   | 'cover_page'
   | 'executive_summary'
@@ -112,6 +122,7 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
       name TEXT,
       status TEXT DEFAULT 'DRAFT',
       template_id TEXT,
+      builder_report_id TEXT,
       axis_data TEXT,
       executive_summary TEXT,
       detailed_analysis TEXT,
@@ -122,6 +133,12 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
       updated_by TEXT,
       approved_by TEXT,
       approved_at TIMESTAMP,
+      rejected_by TEXT,
+      rejected_at TIMESTAMP,
+      rejection_reason TEXT,
+      utilized_by TEXT,
+      utilized_at TIMESTAMP,
+      utilization_notes TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`
@@ -145,6 +162,7 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
     await add('name', 'TEXT');
     await add('status', "TEXT DEFAULT 'DRAFT'");
     await add('template_id', 'TEXT');
+    await add('builder_report_id', 'TEXT');
     await add('axis_data', 'TEXT');
     await add('executive_summary', 'TEXT');
     await add('detailed_analysis', 'TEXT');
@@ -155,6 +173,12 @@ const ensureAssessmentReportsSchema = async (): Promise<void> => {
     await add('updated_by', 'TEXT');
     await add('approved_by', 'TEXT');
     await add('approved_at', 'TIMESTAMP');
+    await add('rejected_by', 'TEXT');
+    await add('rejected_at', 'TIMESTAMP');
+    await add('rejection_reason', 'TEXT');
+    await add('utilized_by', 'TEXT');
+    await add('utilized_at', 'TIMESTAMP');
+    await add('utilization_notes', 'TEXT');
   } catch (e) {
     // ignore; table might be locked or pragma not available in some environments
   }
@@ -294,31 +318,108 @@ const computeAxisDataFromAssessment = (assessment: any): Record<string, any> => 
   const answers = assessment?.answers
     ? safeJsonParse<any>(assessment.answers, {})
     : assessment?.answers;
-  if (type !== 'DRD') return {};
-
-  const drd = answers?.drd || {};
-  const areas = drd?.areas || {};
-  const axisBuckets: Record<string, { achieved: number[]; target: number[] }> = {};
-
-  Object.entries<any>(areas).forEach(([areaId, s]) => {
-    const axisId = String(areaId || '').slice(0, 1); // "1A" -> "1"
-    if (!axisId || !/^\d$/.test(axisId)) return;
-    if (!axisBuckets[axisId]) axisBuckets[axisId] = { achieved: [], target: [] };
-    const a = Number(s?.achievedLevel || 0);
-    const t = Number(s?.targetLevel || 0);
-    if (a > 0) axisBuckets[axisId].achieved.push(a);
-    if (t > 0) axisBuckets[axisId].target.push(t);
-  });
 
   const avg = (arr: number[]) => (arr.length ? arr.reduce((x, y) => x + y, 0) / arr.length : 0);
-  const out: Record<string, any> = {};
-  for (const [axisId, bucket] of Object.entries(axisBuckets)) {
-    out[axisId] = {
-      actual: Number(avg(bucket.achieved).toFixed(2)),
-      target: Number(avg(bucket.target).toFixed(2)),
-    };
+
+  // ==========================================
+  // DRD: 7 axes, areas like "1A", "1B", "2A", etc.
+  // ==========================================
+  if (type === 'DRD') {
+    const drd = answers?.drd || {};
+    const areas = drd?.areas || {};
+    const axisBuckets: Record<string, { achieved: number[]; target: number[] }> = {};
+
+    Object.entries<any>(areas).forEach(([areaId, s]) => {
+      const axisId = String(areaId || '').slice(0, 1); // "1A" -> "1"
+      if (!axisId || !/^\d$/.test(axisId)) return;
+      if (!axisBuckets[axisId]) axisBuckets[axisId] = { achieved: [], target: [] };
+      const a = Number(s?.achievedLevel || 0);
+      const t = Number(s?.targetLevel || 0);
+      if (a > 0) axisBuckets[axisId].achieved.push(a);
+      if (t > 0) axisBuckets[axisId].target.push(t);
+    });
+
+    const out: Record<string, any> = {};
+    for (const [axisId, bucket] of Object.entries(axisBuckets)) {
+      out[axisId] = {
+        actual: Number(avg(bucket.achieved).toFixed(2)),
+        target: Number(avg(bucket.target).toFixed(2)),
+      };
+    }
+    return out;
   }
-  return out;
+
+  // ==========================================
+  // SIRI: 3 Building Blocks, 8 Dimensions, 16 Prioritisation Areas
+  // ==========================================
+  if (type === 'SIRI') {
+    const siri = answers?.siri || {};
+    const out: Record<string, any> = { _framework: 'SIRI' };
+
+    // Building blocks (PROCESS, TECHNOLOGY, ORGANIZATION)
+    const blocks = siri?.buildingBlocks || {};
+    for (const [blockId, blockData] of Object.entries<any>(blocks)) {
+      out[`block_${blockId}`] = {
+        actual: Number(blockData?.current || blockData?.actual || 0),
+        target: Number(blockData?.target || 0),
+      };
+    }
+
+    // Dimensions (8 dimensions)
+    const dimensions = siri?.dimensions || {};
+    for (const [dimId, dimData] of Object.entries<any>(dimensions)) {
+      out[`dim_${dimId}`] = {
+        actual: Number(dimData?.current || dimData?.actual || 0),
+        target: Number(dimData?.target || 0),
+      };
+    }
+
+    // Prioritisation matrix (individual area scores)
+    const matrix = siri?.prioritisationMatrix || {};
+    for (const [areaId, score] of Object.entries<any>(matrix)) {
+      if (typeof score === 'number') {
+        out[`area_${areaId}`] = { actual: score, target: 0 };
+      } else if (score && typeof score === 'object') {
+        out[`area_${areaId}`] = {
+          actual: Number(score?.current || score?.actual || 0),
+          target: Number(score?.target || 0),
+        };
+      }
+    }
+
+    return out;
+  }
+
+  // ==========================================
+  // ADMA: 5 Pillars, 12 Dimensions
+  // ==========================================
+  if (type === 'ADMA') {
+    const adma = answers?.adma || {};
+    const out: Record<string, any> = { _framework: 'ADMA' };
+
+    // Pillars (strategy, smart_products, smart_operations, smart_supply, data_driven)
+    const pillars = adma?.pillars || {};
+    for (const [pillarId, pillarData] of Object.entries<any>(pillars)) {
+      out[`pillar_${pillarId}`] = {
+        actual: Number(pillarData?.current || pillarData?.actual || 0),
+        target: Number(pillarData?.target || 0),
+      };
+    }
+
+    // Dimensions (12 dimensions)
+    const dimensions = adma?.dimensions || {};
+    for (const [dimId, dimData] of Object.entries<any>(dimensions)) {
+      out[`dim_${dimId}`] = {
+        actual: Number(dimData?.current || dimData?.actual || 0),
+        target: Number(dimData?.target || 0),
+      };
+    }
+
+    return out;
+  }
+
+  // Unknown framework - return empty but try to parse any generic structure
+  return {};
 };
 
 // Best-effort init (avoid breaking route in case of migrations ordering)
@@ -446,6 +547,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         r.name as name,
         r.status as status,
         r.template_id as templateId,
+        r.builder_report_id as builderReportId,
         r.created_by as createdBy,
         r.created_at as createdAt,
         r.updated_at as updatedAt,
@@ -490,6 +592,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         projectId: r.projectId || null,
         status: String(r.status || 'DRAFT').toUpperCase(),
         templateId: r.templateId || null,
+        builderReportId: r.builderReportId || null,
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
         createdBy: r.createdBy || 'system',
@@ -672,28 +775,13 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     });
     if (!assessment) return res.status(404).json({ error: 'Assessment not found' });
 
-    const existing = await new Promise<any>((resolve, reject) => {
-      db.get(
-        `SELECT id FROM assessment_reports WHERE assessment_id = ? AND organization_id = ?`,
-        [assessmentId, organizationId],
-        (err: Error | null, row: any) => {
-          if (err) reject(err);
-          else resolve(row);
-        }
-      );
-    });
-
-    if (existing?.id) {
-      return res.status(200).json({ id: existing.id });
-    }
-
     const id = `report-${uuidv4()}`;
     await new Promise<void>((resolve, reject) => {
       db.run(
         `INSERT INTO assessment_reports (
-          id, assessment_id, organization_id, project_id, name, status, template_id, axis_data,
+          id, assessment_id, organization_id, project_id, name, status, template_id, builder_report_id, axis_data,
           generation_params, created_by, updated_by, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
           id,
           assessmentId,
@@ -702,6 +790,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
           name ? String(name) : `Report - ${assessment.name || 'Assessment'}`,
           'DRAFT',
           templateId ? String(templateId) : null,
+          null,
           JSON.stringify(computeAxisDataFromAssessment(assessment)),
           JSON.stringify({ source: 'manual', templateId: templateId || null }),
           userId,
@@ -714,7 +803,41 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       );
     });
 
-    res.status(201).json({ id });
+    // If assessment is approved, also create a linked Report Builder report (for review/comments/export).
+    let builderReportId: string | null = null;
+    try {
+      const assessmentStatus = String(assessment.status || '').toUpperCase();
+      if (assessmentStatus === 'APPROVED') {
+        const rb = await ReportBuilderService.createReport({
+          organizationId,
+          sourceType: 'ASSESSMENT',
+          sourceId: String(assessmentId),
+          title: name ? String(name) : `Report - ${assessment.name || 'Assessment'}`,
+          description: `Assessment report for "${assessment.name || 'Assessment'}"`,
+          createdBy: userId,
+          templateId: templateId ? String(templateId) : undefined,
+        });
+        builderReportId = rb?.report?.id ? String(rb.report.id) : null;
+        if (builderReportId) {
+          const projected = mapReportBuilderStatusToAssessmentReportStatus(
+            String(rb.report.status || 'CONFIGURING')
+          );
+          await run(
+            `UPDATE assessment_reports
+             SET builder_report_id = ?, status = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+             WHERE id = ? AND organization_id = ?`,
+            [builderReportId, projected, userId, id, organizationId]
+          );
+        }
+      }
+    } catch (syncErr: any) {
+      logger.warn('[AssessmentReports] Failed to create linked report builder report', {
+        reportId: id,
+        message: syncErr?.message,
+      });
+    }
+
+    res.status(201).json({ id, builderReportId });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error creating report:', err);
     res.status(500).json({ error: 'Failed to create report', message: err.message });
@@ -749,32 +872,50 @@ router.get('/:reportId/full', async (req: AuthRequest, res: Response) => {
 
     const axisData = safeJsonParse<Record<string, any>>(reportRow.axis_data, {});
 
+    const mappedSections = (sections || []).map((s: any) => ({
+      id: s.id,
+      reportId: s.report_id,
+      sectionType: s.section_type,
+      axisId: s.axis_id || undefined,
+      areaId: s.area_id || undefined,
+      title: s.title,
+      content: s.content || '',
+      dataSnapshot: safeJsonParse(s.data_snapshot, {}),
+      orderIndex: Number(s.order_index || 0),
+      isAiGenerated: Boolean(s.is_ai_generated),
+      version: Number(s.version || 1),
+      lastEditedBy: s.updated_by || undefined,
+      createdAt: s.created_at,
+      updatedAt: s.updated_at,
+    }));
+
+    // Calculate progress based on sections with content
+    const totalSections = mappedSections.length;
+    const sectionsWithContent = mappedSections.filter(
+      (s: any) => s.content && s.content.trim().length > 10
+    ).length;
+    const progress =
+      totalSections > 0 ? Math.round((sectionsWithContent / totalSections) * 100) : 0;
+    const status = String(reportRow.status || 'DRAFT').toUpperCase();
+    const isComplete =
+      status === 'FINAL' ||
+      status === 'PENDING_APPROVAL' ||
+      status === 'APPROVED' ||
+      status === 'UTILIZED';
+
     return res.json({
       id: reportRow.id,
       name: reportRow.name || `Report - ${reportRow.assessmentName || 'Assessment'}`,
-      status: String(reportRow.status || 'DRAFT').toUpperCase(),
+      status,
+      builderReportId: reportRow.builder_report_id || null,
       assessmentId: reportRow.assessment_id,
       assessmentName: reportRow.assessmentName || 'Assessment',
+      assessmentType: reportRow.assessmentType || 'DRD',
       axisData,
       content: {},
-      sections: (sections || []).map((s: any) => ({
-        id: s.id,
-        reportId: s.report_id,
-        sectionType: s.section_type,
-        axisId: s.axis_id || undefined,
-        areaId: s.area_id || undefined,
-        title: s.title,
-        content: s.content || '',
-        dataSnapshot: safeJsonParse(s.data_snapshot, {}),
-        orderIndex: Number(s.order_index || 0),
-        isAiGenerated: Boolean(s.is_ai_generated),
-        version: Number(s.version || 1),
-        lastEditedBy: s.updated_by || undefined,
-        createdAt: s.created_at,
-        updatedAt: s.updated_at,
-      })),
-      progress: 0,
-      isComplete: false,
+      sections: mappedSections,
+      progress,
+      isComplete,
       templateId: reportRow.template_id || null,
       createdAt: reportRow.created_at,
       updatedAt: reportRow.updated_at,
@@ -985,7 +1126,7 @@ Requirements:
 
     await run(
       `UPDATE assessment_reports
-       SET template_id = ?, generation_params = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+       SET template_id = ?, generation_params = ?, status = 'FINAL', updated_by = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ? AND organization_id = ?`,
       [
         resolvedTemplateId,
@@ -1315,12 +1456,22 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
       }
     }
 
-    // Stub fallbacks (only used if LLM is not available or failed)
+    // Fallbacks (only used if LLM is not available or failed)
     if (next === current && !llmService) {
       if (act === 'summarize') {
-        next = current.slice(0, 600) + (current.length > 600 ? '\n\n_(summary truncated)_\n' : '');
+        // Best-effort: truncate to first ~600 chars as a simple summary
+        next =
+          current.slice(0, 600) +
+          (current.length > 600
+            ? '\n\n_(AI summarization is currently unavailable. Showing truncated content.)_\n'
+            : '');
       } else if (act === 'expand') {
-        next = `${current}\n\n---\n\n_TODO: expand this section with examples, metrics and context._\n`;
+        // Return original content with a note – don't insert TODO markers
+        return res.status(503).json({
+          success: false,
+          error: 'AI service unavailable',
+          message: 'AI content expansion is temporarily unavailable. Please try again later.',
+        });
       } else if (act === 'regenerate') {
         next = createDraftContent({
           sectionType: sectionRow.section_type as SectionType,
@@ -1331,9 +1482,17 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
           axisId: sectionRow.axis_id || null,
         });
       } else if (act === 'improve') {
-        next = `${current}\n\n---\n\n_TODO: improve clarity, structure and tone._\n`;
+        return res.status(503).json({
+          success: false,
+          error: 'AI service unavailable',
+          message: 'AI content improvement is temporarily unavailable. Please try again later.',
+        });
       } else if (act === 'translate') {
-        next = `${current}\n\n---\n\n_TODO: translation requested (not yet implemented)._\n`;
+        return res.status(503).json({
+          success: false,
+          error: 'AI service unavailable',
+          message: 'AI translation is temporarily unavailable. Please try again later.',
+        });
       }
     }
 
@@ -1379,9 +1538,81 @@ router.get('/:reportId/sections/:sectionId/history', async (req: AuthRequest, re
   }
 });
 
-router.post('/:reportId/ai-edit', async (_req: AuthRequest, res: Response) => {
-  // Minimal stub for now (UI expects endpoint)
-  return res.json({ success: true });
+router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
+  try {
+    await ensureAssessmentReportsSchema();
+    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const userId = req.user?.id || 'system';
+    const { reportId } = req.params;
+    const { sectionId, instruction, content } = req.body || {};
+
+    if (!sectionId || !instruction) {
+      return res.status(400).json({ error: 'sectionId and instruction are required' });
+    }
+
+    // Verify report exists
+    const reportRow = await get<any>(
+      `SELECT id FROM assessment_reports WHERE id = ? AND organization_id = ?`,
+      [reportId, organizationId]
+    );
+    if (!reportRow) return res.status(404).json({ error: 'Report not found' });
+
+    // Get section
+    const sectionRow = await get<any>(
+      `SELECT id, title, content, version, section_type FROM assessment_report_sections WHERE id = ? AND report_id = ?`,
+      [sectionId, reportId]
+    );
+    if (!sectionRow) return res.status(404).json({ error: 'Section not found' });
+
+    const currentContent = content || sectionRow.content || '';
+
+    // Try LLM
+    let llmService: any = null;
+    try {
+      const mod = await import('../services/ai/llmService.js');
+      llmService = mod.llmService || mod.default;
+    } catch {
+      // LLM not available
+    }
+
+    if (!llmService) {
+      return res.status(503).json({
+        success: false,
+        error: 'AI service unavailable',
+        message: 'AI editing is temporarily unavailable. Please try again later.',
+      });
+    }
+
+    const result = await llmService.call({
+      type: 'text',
+      modelConfig: { id: 'standard' },
+      systemPrompt:
+        'You are a professional consulting report editor. Apply the user instruction to the provided content. Output only the edited content in Markdown format. Do not add explanations.',
+      messages: [
+        {
+          role: 'user',
+          content: `Section: "${sectionRow.title}"\n\nInstruction: ${instruction}\n\nContent:\n${currentContent}`,
+        },
+      ],
+      maxTokens: 4096,
+      temperature: 0.7,
+    });
+
+    const editedContent = String(result?.content || currentContent);
+    const nextVersion = Number(sectionRow.version || 1) + 1;
+
+    await run(
+      `UPDATE assessment_report_sections
+       SET content = ?, is_ai_generated = 1, version = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND report_id = ?`,
+      [editedContent, nextVersion, userId, sectionId, reportId]
+    );
+
+    return res.json({ success: true, content: editedContent, version: nextVersion });
+  } catch (err: any) {
+    logger.error('[AssessmentReports] Error ai-edit:', err);
+    return res.status(500).json({ error: 'Failed AI edit', message: err.message });
+  }
 });
 
 // =============================================================================
@@ -1493,6 +1724,14 @@ router.delete('/:reportId', async (req: AuthRequest, res: Response) => {
     const organizationId = req.user?.organizationId || 'org-dbr77-system';
     const { reportId } = req.params;
 
+    const row = await get<any>(
+      `SELECT id, builder_report_id as builderReportId
+       FROM assessment_reports
+       WHERE id = ? AND organization_id = ?`,
+      [String(reportId), String(organizationId)]
+    ).catch(() => null);
+    const builderReportId = row?.builderReportId ? String(row.builderReportId) : null;
+
     // Best-effort cascade
     await run(`DELETE FROM assessment_report_section_history WHERE report_id = ?`, [
       reportId,
@@ -1505,6 +1744,14 @@ router.delete('/:reportId', async (req: AuthRequest, res: Response) => {
       reportId,
       organizationId,
     ]);
+
+    // If linked to Report Builder, delete it as well (best-effort).
+    if (builderReportId) {
+      await run(`DELETE FROM report_builder_reports WHERE id = ? AND organization_id = ?`, [
+        builderReportId,
+        organizationId,
+      ]).catch(() => {});
+    }
 
     return res.json({ success: true });
   } catch (err: any) {
@@ -1565,10 +1812,11 @@ router.post('/:reportId/approve', async (req: AuthRequest, res: Response) => {
     if (!reportRow) return res.status(404).json({ error: 'Report not found' });
 
     const currentStatus = String(reportRow.status || 'DRAFT').toUpperCase();
-    if (currentStatus !== 'FINAL') {
-      return res
-        .status(409)
-        .json({ error: 'Report must be FINAL to approve', status: currentStatus });
+    if (!['FINAL', 'PENDING_APPROVAL'].includes(currentStatus)) {
+      return res.status(409).json({
+        error: 'Report must be FINAL or PENDING_APPROVAL to approve',
+        status: currentStatus,
+      });
     }
 
     const roleInfo = await AssessmentPermissionService.getUserRole(
@@ -1592,7 +1840,59 @@ router.post('/:reportId/approve', async (req: AuthRequest, res: Response) => {
       );
     });
 
-    return res.json({ success: true });
+    // ── Auto-sync: mark APPROVE_REPORT gate as APPROVED in assessment workflow ──
+    if (reportRow.assessmentId) {
+      try {
+        // Update the assessment's report_approved_at timestamp
+        await new Promise<void>((resolve, reject) => {
+          db.run(
+            `UPDATE assessments
+             SET report_approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+             WHERE id = ? AND organization_id = ?`,
+            [String(reportRow.assessmentId), String(organizationId)],
+            (err: Error | null) => (err ? reject(err) : resolve())
+          );
+        });
+
+        // Update APPROVE_REPORT gate decision to APPROVED (if gate_decisions table exists)
+        await new Promise<void>((resolve, reject) => {
+          db.run(
+            `UPDATE assessment_gate_decisions
+             SET status = 'APPROVED', decided_by = ?, decided_at = CURRENT_TIMESTAMP
+             WHERE assessment_id = ? AND gate_type = 'APPROVE_REPORT'`,
+            [String(userId), String(reportRow.assessmentId)],
+            (err: Error | null) => {
+              // Ignore errors — table may not exist in all environments
+              resolve();
+            }
+          );
+        });
+
+        // Also update GENERATE_REPORT gate if present
+        await new Promise<void>((resolve, reject) => {
+          db.run(
+            `UPDATE assessment_gate_decisions
+             SET status = 'APPROVED', decided_by = ?, decided_at = CURRENT_TIMESTAMP
+             WHERE assessment_id = ? AND gate_type = 'GENERATE_REPORT' AND status != 'APPROVED'`,
+            [String(userId), String(reportRow.assessmentId)],
+            (err: Error | null) => {
+              resolve();
+            }
+          );
+        });
+
+        logger.info(
+          `[AssessmentReports] Auto-synced APPROVE_REPORT gate for assessment ${reportRow.assessmentId}`
+        );
+      } catch (syncErr: any) {
+        // Non-blocking: log but don't fail the approval
+        logger.warn(
+          `[AssessmentReports] Gate sync failed for assessment ${reportRow.assessmentId}: ${syncErr?.message}`
+        );
+      }
+    }
+
+    return res.json({ success: true, gatesSynced: !!reportRow.assessmentId });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error approving report:', err);
     return res.status(500).json({ error: 'Failed to approve report', message: err.message });
@@ -1620,10 +1920,15 @@ router.post('/:reportId/reject', async (req: AuthRequest, res: Response) => {
     if (!reportRow) return res.status(404).json({ error: 'Report not found' });
 
     const currentStatus = String(reportRow.status || 'DRAFT').toUpperCase();
-    if (currentStatus !== 'FINAL' && currentStatus !== 'APPROVED') {
-      return res
-        .status(409)
-        .json({ error: 'Report must be FINAL or APPROVED to reject', status: currentStatus });
+    if (
+      currentStatus !== 'FINAL' &&
+      currentStatus !== 'PENDING_APPROVAL' &&
+      currentStatus !== 'APPROVED'
+    ) {
+      return res.status(409).json({
+        error: 'Report must be FINAL, PENDING_APPROVAL or APPROVED to reject',
+        status: currentStatus,
+      });
     }
 
     // RBAC check
@@ -1640,7 +1945,7 @@ router.post('/:reportId/reject', async (req: AuthRequest, res: Response) => {
     await new Promise<void>((resolve, reject) => {
       db.run(
         `UPDATE assessment_reports
-         SET status = 'DRAFT', rejected_by = ?, rejected_at = CURRENT_TIMESTAMP,
+         SET status = 'REJECTED', rejected_by = ?, rejected_at = CURRENT_TIMESTAMP,
              rejection_reason = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
          WHERE id = ? AND organization_id = ?`,
         [
@@ -1683,7 +1988,12 @@ router.post('/:reportId/send-back', async (req: AuthRequest, res: Response) => {
     await new Promise<void>((resolve, reject) => {
       db.run(
         `UPDATE assessment_reports
-         SET status = 'DRAFT', rejection_reason = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+         SET status = 'DRAFT',
+             rejection_reason = ?,
+             rejected_by = NULL,
+             rejected_at = NULL,
+             updated_by = ?,
+             updated_at = CURRENT_TIMESTAMP
          WHERE id = ? AND organization_id = ?`,
         [String(reason || ''), String(userId), String(reportId), String(organizationId)],
         (err: Error | null) => (err ? reject(err) : resolve())

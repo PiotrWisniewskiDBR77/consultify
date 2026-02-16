@@ -1,0 +1,150 @@
+/**
+ * ActivityLogCanvas
+ *
+ * Generic N-mode section for displaying activity log / audit trail.
+ * Reusable across all artifact types (Decision, Task, Notification, Initiative).
+ *
+ * Shows:
+ * - Summary stat cards (entries, changes, escalations, collaboration)
+ * - Chronological activity feed with type icons, timestamps, old→new values
+ *
+ * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.3
+ */
+
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+// ── Types ───────────────────────────────────────────────────────────────────
+
+export interface ActivityLogEntry {
+  id: string;
+  type: string;
+  description: string;
+  timestamp: string;
+  userName?: string;
+  oldValue?: string;
+  newValue?: string;
+}
+
+export interface ActivityStats {
+  total: number;
+  edited: number;
+  escalations: number;
+  collaboration: number;
+}
+
+export interface ActivityTypeMeta {
+  icon: React.ReactNode;
+  label: string;
+  style: string;
+}
+
+interface ActivityLogCanvasProps {
+  /** Sorted activity log entries */
+  entries: ActivityLogEntry[];
+  /** Summary statistics */
+  stats: ActivityStats;
+  /** Function to resolve entry type → icon, label, CSS style */
+  typeMeta: (type: string) => ActivityTypeMeta;
+  /** Optional custom stat cards (overrides default 4-card grid) */
+  customStats?: { label: { en: string; pl: string }; value: number }[];
+}
+
+// ── Component ───────────────────────────────────────────────────────────────
+
+export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
+  entries,
+  stats,
+  typeMeta,
+  customStats,
+}) => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
+
+  const defaultStatCards = [
+    { label: { en: 'Entries', pl: 'Wpisy' }, value: stats.total },
+    { label: { en: 'Changes', pl: 'Zmiany' }, value: stats.edited },
+    { label: { en: 'Escalations', pl: 'Eskalacje' }, value: stats.escalations },
+    { label: { en: 'Collaboration', pl: 'Współpraca' }, value: stats.collaboration },
+  ];
+
+  const statCards = customStats || defaultStatCards;
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+        {isPolish ? 'Logi aktywności' : 'Activity Log'}
+      </h2>
+
+      {/* Stat cards */}
+      <div className="space-y-4">
+        <div className={`grid grid-cols-1 md:grid-cols-${statCards.length} gap-2`}>
+          {statCards.map((card) => (
+            <div
+              key={isPolish ? card.label.pl : card.label.en}
+              className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2"
+            >
+              <p className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                {isPolish ? card.label.pl : card.label.en}
+              </p>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {card.value}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Activity feed */}
+        {entries.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300/60 dark:border-navy-700/70 bg-white/40 dark:bg-navy-900/40 p-6 text-center text-xs text-slate-400 dark:text-slate-500">
+            {isPolish ? 'Brak wpisów w logu.' : 'No activity entries yet.'}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
+            <div className="space-y-1">
+              {entries.map((entry) => {
+                const meta = typeMeta(entry.type);
+                return (
+                  <div
+                    key={entry.id}
+                    className="grid grid-cols-[auto_1fr_auto] gap-3 items-start py-2.5 px-2 rounded-xl hover:bg-slate-50/70 dark:hover:bg-navy-800/40 transition-colors"
+                  >
+                    <span
+                      className={`inline-flex items-center justify-center w-6 h-6 rounded-lg border ${meta.style}`}
+                    >
+                      {meta.icon}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm text-slate-700 dark:text-slate-200">
+                        {entry.description}
+                      </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
+                        <span>{new Date(entry.timestamp).toLocaleString()}</span>
+                        {entry.userName && <span>{`· ${entry.userName}`}</span>}
+                        <span className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60">
+                          {meta.label}
+                        </span>
+                      </div>
+                      {(entry.oldValue || entry.newValue) && (
+                        <div className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                          {entry.oldValue ? `${isPolish ? 'Było' : 'From'}: ${entry.oldValue}` : ''}
+                          {entry.oldValue && entry.newValue ? '  ->  ' : ''}
+                          {entry.newValue ? `${isPolish ? 'Jest' : 'To'}: ${entry.newValue}` : ''}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-mono uppercase tracking-wide text-slate-300 dark:text-slate-600">
+                      {entry.type}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ActivityLogCanvas;

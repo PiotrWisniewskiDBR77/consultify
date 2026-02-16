@@ -37,12 +37,20 @@ interface ApprovalWorkflowProps {
   className?: string;
 }
 
-// Role icons
+// B3.2: Use centralized role definitions
+import {
+  getRoleLabel as getSharedRoleLabel,
+  type ProjectRole,
+  ROLE_DEFINITIONS,
+} from '@/services/roleDefinitions';
+
+// Role icons — uses centralized icon mapping
 const RoleIcon: React.FC<{ role: string; className?: string }> = ({ role, className }) => {
-  switch (role) {
-    case 'SPONSOR':
+  const def = ROLE_DEFINITIONS[role as ProjectRole];
+  switch (def?.iconName) {
+    case 'Crown':
       return <Crown className={className} />;
-    case 'PMO_LEAD':
+    case 'Shield':
       return <Shield className={className} />;
     default:
       return <User className={className} />;
@@ -65,19 +73,8 @@ const getStatusColor = (status: string) => {
   }
 };
 
-// Role labels
-const getRoleLabel = (role: string) => {
-  switch (role) {
-    case 'MANAGER':
-      return 'Project Manager';
-    case 'PMO_LEAD':
-      return 'PMO Lead';
-    case 'SPONSOR':
-      return 'Sponsor';
-    default:
-      return role;
-  }
-};
+// B3.2: Role labels from shared service
+const getRoleLabel = (role: string) => getSharedRoleLabel(role);
 
 // SLA countdown display
 const SLACountdown: React.FC<{ dueAt: string }> = ({ dueAt }) => {

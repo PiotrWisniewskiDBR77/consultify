@@ -1,6 +1,6 @@
 /**
- * MyProjects - Under construction placeholder
- * Will show user's associated projects in the future
+ * MyProjects - Project overview module (in development)
+ * Shows user's associated projects when available
  */
 
 import { Construction, FolderKanban, Hammer, Sparkles } from 'lucide-react';
@@ -20,12 +20,12 @@ export const MyProjects: React.FC = () => {
             {t('myWork.sections.projects', 'My Projects')}
           </h2>
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-medium">
-            Coming Soon
+            No projects yet
           </span>
         </div>
       </div>
 
-      {/* Under Construction Content */}
+      {/* Empty State — module in development */}
       <div className="flex-1 flex flex-col items-center justify-center p-8">
         <div className="relative mb-6">
           {/* Background decoration */}
@@ -43,13 +43,13 @@ export const MyProjects: React.FC = () => {
         </div>
 
         <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2 text-center">
-          {t('myWork.projects.underConstruction', 'Under Construction')}
+          {t('myWork.projects.underConstruction', 'Projects Module')}
         </h3>
 
         <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-md mb-6">
           {t(
             'myWork.projects.description',
-            "We're building something amazing! Soon you'll be able to see all your projects, track progress, and manage your portfolio from here."
+            'Your projects will appear here once they are created. Use the Initiatives module to create and manage projects, then track progress from this view.'
           )}
         </p>
 

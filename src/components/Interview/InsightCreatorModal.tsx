@@ -41,7 +41,8 @@ export type InsightPromptType =
   | 'risk_assessment'
   | 'opportunity_scan'
   | 'maturity'
-  | 'stakeholder_map';
+  | 'stakeholder_map'
+  | 'between_the_lines';
 
 interface CompletedSession {
   id: string;
@@ -182,6 +183,19 @@ const ANALYSIS_TYPES: AnalysisType[] = [
     color: 'violet',
     category: 'bcg',
   },
+  // E7.3: Between the Lines — advanced NLP analysis
+  {
+    id: 'between_the_lines',
+    name: 'Between the Lines',
+    namePl: 'Czytanie Między Wierszami',
+    description:
+      'Detect hidden intentions, contradictions, evasions, and unspoken goals. Analyze what respondents really mean vs. what they say.',
+    descriptionPl:
+      'Wykryj ukryte intencje, sprzeczności, uniki i niewypowiedziane cele. Analiza co respondenci naprawdę mają na myśli vs. co mówią.',
+    icon: <Brain size={18} />,
+    color: 'rose',
+    category: 'bcg',
+  },
 ];
 
 // ==========================================
@@ -201,6 +215,55 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   const [selectedType, setSelectedType] = useState<InsightPromptType>('summary');
   const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
   const [customPrompt, setCustomPrompt] = useState('');
+
+  // E7.3 / E7.4: Auto-fill custom prompt for special analysis types
+  const handleTypeChange = (type: InsightPromptType) => {
+    setSelectedType(type);
+    if (type === 'between_the_lines') {
+      setCustomPrompt(
+        isPolish
+          ? `Przeanalizuj odpowiedzi respondentów na głębokim poziomie. Szukaj:
+1. UKRYTE INTENCJE — co respondent naprawdę chce osiągnąć, ale nie mówi wprost
+2. SPRZECZNOŚCI — gdzie odpowiedzi jednej osoby są niespójne lub sprzeczne z innymi
+3. UNIKI I OMIJANIE — tematy, których respondenci unikają lub bagatelizują
+4. NIEWYPOWIEDZIANE CELE — cele polityczne, osobiste interesy, ukryte agendy
+5. EMOCJE I NAPIĘCIA — gdzie widać frustrację, strach, entuzjazm lub opór
+6. KŁAMSTWA I PRZESADA — odpowiedzi, które wydają się nieprawdopodobne lub przesadzone
+
+Dla każdego znaleziska podaj: cytat, interpretację, poziom pewności (wysoki/średni/niski) i rekomendację.`
+          : `Analyze respondent answers at a deep level. Look for:
+1. HIDDEN INTENTIONS — what the respondent really wants to achieve but doesn't say directly
+2. CONTRADICTIONS — where one person's answers are inconsistent or contradict others
+3. EVASIONS — topics respondents avoid or downplay
+4. UNSPOKEN GOALS — political goals, personal interests, hidden agendas
+5. EMOTIONS & TENSIONS — where you see frustration, fear, enthusiasm, or resistance
+6. LIES & EXAGGERATION — answers that seem implausible or exaggerated
+
+For each finding provide: quote, interpretation, confidence level (high/medium/low), and recommendation.`
+      );
+    } else if (type === 'summary' && !customPrompt) {
+      // E7.4: Precise formula for executive summaries
+      setCustomPrompt(
+        isPolish
+          ? `Użyj precyzyjnej formuły konsultingowej:
+1. KONTEKST (2-3 zdania) — cel wywiadów, zakres, liczba respondentów
+2. KLUCZOWE WNIOSKI (5-7 punktów) — najważniejsze odkrycia, uszeregowane wg wpływu
+3. WZORCE I TRENDY — powtarzające się tematy, wspólne obawy
+4. ROZBIEŻNOŚCI — gdzie opinie się różnią i dlaczego
+5. RYZYKA I SZANSE — zidentyfikowane zagrożenia i możliwości
+6. REKOMENDACJE (3-5) — konkretne, mierzalne, z priorytetem i timeframe
+7. NASTĘPNE KROKI — co zrobić w ciągu 30/60/90 dni`
+          : `Use a precise consulting formula:
+1. CONTEXT (2-3 sentences) — interview purpose, scope, number of respondents
+2. KEY FINDINGS (5-7 points) — most important discoveries, ranked by impact
+3. PATTERNS & TRENDS — recurring themes, common concerns
+4. DIVERGENCES — where opinions differ and why
+5. RISKS & OPPORTUNITIES — identified threats and possibilities
+6. RECOMMENDATIONS (3-5) — specific, measurable, with priority and timeframe
+7. NEXT STEPS — what to do within 30/60/90 days`
+      );
+    }
+  };
   const [showFilters, setShowFilters] = useState(false);
   const [filterTemplate, setFilterTemplate] = useState<string>('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
@@ -502,7 +565,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
                       key={type.id}
                       type="button"
                       onClick={() => {
-                        setSelectedType(type.id);
+                        handleTypeChange(type.id);
                         setShowTypeDropdown(false);
                       }}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-navy-700 transition-colors ${
@@ -539,7 +602,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
                       key={type.id}
                       type="button"
                       onClick={() => {
-                        setSelectedType(type.id);
+                        handleTypeChange(type.id);
                         setShowTypeDropdown(false);
                       }}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-navy-700 transition-colors ${
@@ -576,7 +639,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
                       key={type.id}
                       type="button"
                       onClick={() => {
-                        setSelectedType(type.id);
+                        handleTypeChange(type.id);
                         setShowTypeDropdown(false);
                       }}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-navy-700 transition-colors ${

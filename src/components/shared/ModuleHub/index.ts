@@ -12,6 +12,19 @@ export { GridView } from './GridView';
 export { ModuleHub } from './ModuleHub';
 export type { StatusFilter } from './ModuleNavBar';
 export { ModuleNavBar } from './ModuleNavBar';
-export type { InitiativeStatus, ModuleContext, StatusOption } from './StatusDropdown';
-export { ALL_OPTION, ALL_STATUSES, getStatusesForModule, StatusDropdown } from './StatusDropdown';
+export type {
+  AssessmentStatus,
+  InitiativeStatus,
+  ModuleContext,
+  ReportStatus,
+  StatusOption,
+} from './StatusDropdown';
+export {
+  ALL_OPTION,
+  ALL_STATUSES,
+  ASSESSMENT_STATUSES,
+  getStatusesForModule,
+  REPORT_STATUSES,
+  StatusDropdown,
+} from './StatusDropdown';
 export * from './types';

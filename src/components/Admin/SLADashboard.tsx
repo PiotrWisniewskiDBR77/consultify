@@ -208,10 +208,26 @@ export function SLADashboard() {
       setUptimeHistory(history);
     } catch (err) {
       console.error('Failed to load SLA metrics:', err);
-      // Set demo data on error
-      setMetrics(generateMockMetrics());
-      setBreaches(generateMockBreaches());
-      setUptimeHistory(generateMockHistory());
+      // Set empty state on error
+      setMetrics({
+        uptimePercentage: 0,
+        uptimeTarget: 99.9,
+        responseTimeP50: 0,
+        responseTimeP95: 0,
+        responseTimeP99: 0,
+        responseTimeTargetP95: 3.0,
+        responseTimeTargetP99: 5.0,
+        errorRate: 0,
+        errorRateTarget: 1.0,
+        totalRequests: 0,
+        successfulRequests: 0,
+        failedRequests: 0,
+        averageLatency: 0,
+        slaCompliant: false,
+        lastCalculated: new Date().toISOString(),
+      });
+      setBreaches([]);
+      setUptimeHistory([]);
     }
     setLoading(false);
   }, [timeRange]);
@@ -227,102 +243,6 @@ export function SLADashboard() {
     }
     return undefined;
   }, [autoRefresh, loadSLAData]);
-
-  const generateMockMetrics = (): SLAMetrics => {
-    const uptime = 99.5 + Math.random() * 0.49;
-    const totalReqs = Math.floor(50000 + Math.random() * 100000);
-    const errorRate = 0.05 + Math.random() * 0.5;
-    const failedReqs = Math.floor(totalReqs * (errorRate / 100));
-
-    return {
-      uptimePercentage: uptime,
-      uptimeTarget: 99.9,
-      responseTimeP50: 0.5 + Math.random() * 0.5,
-      responseTimeP95: 1.5 + Math.random() * 1.5,
-      responseTimeP99: 3.0 + Math.random() * 2.0,
-      responseTimeTargetP95: 3.0,
-      responseTimeTargetP99: 5.0,
-      errorRate: errorRate,
-      errorRateTarget: 1.0,
-      totalRequests: totalReqs,
-      successfulRequests: totalReqs - failedReqs,
-      failedRequests: failedReqs,
-      averageLatency: 0.8 + Math.random() * 0.7,
-      slaCompliant: uptime >= 99.9 && errorRate <= 1.0,
-      lastCalculated: new Date().toISOString(),
-    };
-  };
-
-  const generateMockBreaches = (): SLABreach[] => {
-    const breaches: SLABreach[] = [];
-    const now = Date.now();
-
-    // Generate some historical breaches
-    if (Math.random() > 0.3) {
-      breaches.push({
-        id: 'breach-1',
-        timestamp: new Date(now - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        metric: 'Response Time P99',
-        threshold: 5.0,
-        actual: 5.8,
-        severity: 'warning',
-        resolved: true,
-        resolvedAt: new Date(now - 2 * 24 * 60 * 60 * 1000 + 15 * 60 * 1000).toISOString(),
-        duration: 15,
-      });
-    }
-
-    if (Math.random() > 0.5) {
-      breaches.push({
-        id: 'breach-2',
-        timestamp: new Date(now - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        metric: 'Error Rate',
-        threshold: 1.0,
-        actual: 1.3,
-        severity: 'critical',
-        resolved: true,
-        resolvedAt: new Date(now - 5 * 24 * 60 * 60 * 1000 + 45 * 60 * 1000).toISOString(),
-        duration: 45,
-      });
-    }
-
-    if (Math.random() > 0.7) {
-      breaches.push({
-        id: 'breach-3',
-        timestamp: new Date(now - 12 * 24 * 60 * 60 * 1000).toISOString(),
-        metric: 'Uptime',
-        threshold: 99.9,
-        actual: 99.7,
-        severity: 'critical',
-        resolved: true,
-        resolvedAt: new Date(now - 12 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000).toISOString(),
-        duration: 120,
-      });
-    }
-
-    return breaches;
-  };
-
-  const generateMockHistory = (): UptimeDataPoint[] => {
-    const days = timeRange === '24h' ? 24 : timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
-    const isHourly = timeRange === '24h';
-
-    return Array.from({ length: days }, (_, i) => {
-      const date = new Date();
-      if (isHourly) {
-        date.setHours(date.getHours() - (days - i - 1));
-      } else {
-        date.setDate(date.getDate() - (days - i - 1));
-      }
-
-      const hasIncident = Math.random() > 0.92;
-      return {
-        date: date.toISOString(),
-        uptime: hasIncident ? 98 + Math.random() * 1.9 : 99.5 + Math.random() * 0.5,
-        incidents: hasIncident ? Math.floor(1 + Math.random() * 2) : 0,
-      };
-    });
-  };
 
   const handleExport = () => {
     const data = {

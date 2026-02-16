@@ -20,7 +20,9 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+
+import { Api } from '@/services/api';
 
 import type { ReportSourceType } from '../useReportBuilder';
 
@@ -39,10 +41,22 @@ interface BlockType {
   color: string;
   category: 'content' | 'data' | 'visual';
   sourceTypes?: ReportSourceType[];
+  blockTypeId?: string;
+  renderKind?: string;
+  defaultLength?: 'short' | 'medium' | 'long';
 }
 
 interface BlockPaletteProps {
-  onSelect: (type: string, title: string) => void;
+  onSelect: (
+    type: string,
+    title: string,
+    afterIndex?: number,
+    meta?: {
+      blockTypeId?: string;
+      renderKind?: string;
+      defaultLength?: 'short' | 'medium' | 'long';
+    }
+  ) => void;
   onClose: () => void;
   isPl: boolean;
   sourceType: ReportSourceType | null;
@@ -53,6 +67,19 @@ interface BlockPaletteProps {
 // ==========================================
 
 const BLOCK_TYPES: BlockType[] = [
+  // Core structural blocks (used by many system templates)
+  {
+    id: 'cover',
+    type: 'cover',
+    title: 'Cover Page',
+    titlePl: 'Strona tytułowa',
+    description: 'Title page (company, date, report subtitle)',
+    descriptionPl: 'Strona tytułowa (firma, data, podtytuł raportu)',
+    icon: <FileText className="w-6 h-6" />,
+    color: 'from-slate-500 to-slate-600',
+    category: 'content',
+  },
+
   // Content blocks
   {
     id: 'summary',
@@ -122,6 +149,50 @@ const BLOCK_TYPES: BlockType[] = [
     color: 'from-violet-500 to-violet-600',
     category: 'content',
   },
+  {
+    id: 'context',
+    type: 'context',
+    title: 'Context / Company Profile',
+    titlePl: 'Kontekst / Profil organizacji',
+    description: 'Business context, scope, and key assumptions',
+    descriptionPl: 'Kontekst biznesowy, zakres i kluczowe założenia',
+    icon: <Target className="w-6 h-6" />,
+    color: 'from-emerald-500 to-emerald-600',
+    category: 'content',
+  },
+  {
+    id: 'axis_analysis',
+    type: 'axis_analysis',
+    title: 'Axis / Topic Analysis',
+    titlePl: 'Analiza osi / tematu',
+    description: 'Deep dive analysis repeated per axis/topic',
+    descriptionPl: 'Analiza pogłębiona, często powtarzana per oś/temat',
+    icon: <List className="w-6 h-6" />,
+    color: 'from-blue-500 to-blue-600',
+    category: 'content',
+  },
+  {
+    id: 'action_plan',
+    type: 'action_plan',
+    title: 'Action Plan / Next Steps',
+    titlePl: 'Plan działań / Następne kroki',
+    description: 'Roadmap-style actions and owners',
+    descriptionPl: 'Działania, ownerzy i harmonogram',
+    icon: <Zap className="w-6 h-6" />,
+    color: 'from-amber-500 to-amber-600',
+    category: 'content',
+  },
+  {
+    id: 'appendix',
+    type: 'appendix',
+    title: 'Appendix',
+    titlePl: 'Aneks',
+    description: 'Additional details, tables, glossary and evidence',
+    descriptionPl: 'Dodatkowe szczegóły, tabele, słownik i dowody',
+    icon: <FileText className="w-6 h-6" />,
+    color: 'from-slate-500 to-slate-600',
+    category: 'content',
+  },
 
   // Data blocks
   {
@@ -155,6 +226,39 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'List of most important findings',
     descriptionPl: 'Lista najważniejszych wniosków',
     icon: <MessageSquare className="w-6 h-6" />,
+    color: 'from-rose-500 to-rose-600',
+    category: 'data',
+  },
+  {
+    id: 'dashboard',
+    type: 'dashboard',
+    title: 'Dashboard / Score Summary',
+    titlePl: 'Dashboard / Podsumowanie wyników',
+    description: 'High-level scorecard and key gaps',
+    descriptionPl: 'Podsumowanie wyników i kluczowych luk',
+    icon: <LayoutGrid className="w-6 h-6" />,
+    color: 'from-indigo-500 to-indigo-600',
+    category: 'data',
+  },
+  {
+    id: 'scorecard',
+    type: 'scorecard',
+    title: 'Scorecard',
+    titlePl: 'Scorecard',
+    description: 'Structured summary of scores and targets',
+    descriptionPl: 'Strukturalne podsumowanie wyników i celów',
+    icon: <Table className="w-6 h-6" />,
+    color: 'from-cyan-500 to-cyan-600',
+    category: 'data',
+  },
+  {
+    id: 'gap_analysis',
+    type: 'gap_analysis',
+    title: 'Gap Analysis',
+    titlePl: 'Analiza luk',
+    description: 'Where we are vs where we want to be',
+    descriptionPl: 'Różnice: stan obecny vs docelowy',
+    icon: <Target className="w-6 h-6" />,
     color: 'from-rose-500 to-rose-600',
     category: 'data',
   },
@@ -193,6 +297,63 @@ const BLOCK_TYPES: BlockType[] = [
     color: 'from-teal-500 to-teal-600',
     category: 'visual',
   },
+  {
+    id: 'roadmap',
+    type: 'roadmap',
+    title: 'Roadmap',
+    titlePl: 'Roadmapa',
+    description: 'Phased timeline with milestones',
+    descriptionPl: 'Harmonogram z kamieniami milowymi',
+    icon: <BarChart3 className="w-6 h-6" />,
+    color: 'from-teal-500 to-teal-600',
+    category: 'visual',
+  },
+  {
+    id: 'kpis',
+    type: 'kpis',
+    title: 'KPIs',
+    titlePl: 'KPI',
+    description: 'Metrics to track progress and outcomes',
+    descriptionPl: 'Metryki do śledzenia postępu i efektów',
+    icon: <PieChart className="w-6 h-6" />,
+    color: 'from-orange-500 to-orange-600',
+    category: 'visual',
+  },
+  {
+    id: 'risk',
+    type: 'risk',
+    title: 'Risks',
+    titlePl: 'Ryzyka',
+    description: 'Risk register and mitigation',
+    descriptionPl: 'Rejestr ryzyk i mitygacje',
+    icon: <MessageSquare className="w-6 h-6" />,
+    color: 'from-violet-500 to-violet-600',
+    category: 'visual',
+  },
+  {
+    id: 'prioritization',
+    type: 'prioritization',
+    title: 'Prioritization',
+    titlePl: 'Priorytetyzacja',
+    description: 'Impact vs effort, initiative prioritization',
+    descriptionPl: 'Wpływ vs nakład, priorytety inicjatyw',
+    icon: <LayoutGrid className="w-6 h-6" />,
+    color: 'from-purple-500 to-purple-600',
+    category: 'visual',
+  },
+  {
+    id: 'initiatives',
+    type: 'initiatives',
+    title: 'Initiative Cards',
+    titlePl: 'Karty Inicjatyw',
+    description: 'Rich initiative cards with strategy, effort, metrics',
+    descriptionPl: 'Karty inicjatyw ze strategią, wysiłkiem, metrykami',
+    icon: <Zap className="w-6 h-6" />,
+    color: 'from-indigo-500 to-violet-600',
+    category: 'visual',
+    renderKind: 'initiatives',
+    defaultLength: 'long',
+  },
 ];
 
 // ==========================================
@@ -209,19 +370,112 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
   const [activeCategory, setActiveCategory] = useState<'all' | 'content' | 'data' | 'visual'>(
     'all'
   );
+  const [libraryBlocks, setLibraryBlocks] = useState<BlockType[]>([]);
+  const [libraryLoaded, setLibraryLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await Api.get('/report-builder/block-types');
+        const blocks = (res?.blocks || []) as any[];
+        const mapped: BlockType[] = blocks.map((b) => {
+          const rk = String(b.renderKind || 'markdown');
+          const icon =
+            rk === 'callout' ? (
+              <Quote className="w-6 h-6" />
+            ) : rk === 'table' ? (
+              <Table className="w-6 h-6" />
+            ) : rk === 'chart' ? (
+              <BarChart3 className="w-6 h-6" />
+            ) : rk === 'matrix' ? (
+              <LayoutGrid className="w-6 h-6" />
+            ) : rk === 'json' ? (
+              <Target className="w-6 h-6" />
+            ) : (
+              <FileText className="w-6 h-6" />
+            );
+
+          const category: BlockType['category'] =
+            rk === 'chart' || rk === 'matrix'
+              ? 'visual'
+              : rk === 'table' || rk === 'json'
+                ? 'data'
+                : 'content';
+
+          const color =
+            rk === 'chart'
+              ? 'from-pink-500 to-pink-600'
+              : rk === 'matrix'
+                ? 'from-purple-500 to-purple-600'
+                : rk === 'table'
+                  ? 'from-cyan-500 to-cyan-600'
+                  : rk === 'callout'
+                    ? 'from-violet-500 to-violet-600'
+                    : rk === 'json'
+                      ? 'from-emerald-500 to-emerald-600'
+                      : 'from-blue-500 to-blue-600';
+
+          return {
+            id: `bt_${String(b.id)}`,
+            type: 'custom',
+            title: String(b.name || 'Custom block'),
+            titlePl: String(b.name || 'Custom block'),
+            description: String(b.description || ''),
+            descriptionPl: String(b.description || ''),
+            icon,
+            color,
+            category,
+            sourceTypes: Array.isArray(b.sourceTypes)
+              ? (b.sourceTypes as string[])
+                  .map((s) => String(s || '').toUpperCase())
+                  .filter((s): s is ReportSourceType =>
+                    ['ASSESSMENT', 'INTERVIEW', 'TOOL', 'INITIATIVE'].includes(s)
+                  )
+              : undefined,
+            blockTypeId: String(b.id),
+            renderKind: rk,
+            defaultLength:
+              b.defaultLength === 'short' ||
+              b.defaultLength === 'medium' ||
+              b.defaultLength === 'long'
+                ? b.defaultLength
+                : undefined,
+          };
+        });
+        if (!cancelled) setLibraryBlocks(mapped);
+      } catch {
+        if (!cancelled) setLibraryBlocks([]);
+      } finally {
+        if (!cancelled) setLibraryLoaded(true);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const allBlocks = useMemo(() => {
+    // Always include core blocks; merge library blocks on top for discoverability.
+    const seen = new Set<string>();
+    const out: BlockType[] = [];
+    for (const b of [...BLOCK_TYPES, ...libraryBlocks]) {
+      if (seen.has(b.id)) continue;
+      seen.add(b.id);
+      out.push(b);
+    }
+    return out;
+  }, [libraryBlocks]);
 
   const filteredBlocks = useMemo(() => {
-    return BLOCK_TYPES.filter((block) => {
-      // Filter by source type
-      if (block.sourceTypes && sourceType && !block.sourceTypes.includes(sourceType)) {
-        return false;
-      }
-
-      // Filter by category
+    return allBlocks.filter((block) => {
+      // Category filter
       if (activeCategory !== 'all' && block.category !== activeCategory) {
         return false;
       }
 
+      // Filter by category
       // Filter by search
       if (search) {
         const searchLower = search.toLowerCase();
@@ -236,7 +490,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
 
       return true;
     });
-  }, [search, activeCategory, sourceType, isPl]);
+  }, [allBlocks, search, activeCategory, isPl]);
 
   const categories = [
     { id: 'all', label: isPl ? 'Wszystkie' : 'All' },
@@ -247,7 +501,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl h-[min(720px,85vh)] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between mb-4">
@@ -299,34 +553,64 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
         {/* Block Grid */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="grid grid-cols-2 gap-4">
-            {filteredBlocks.map((block) => (
-              <button
-                key={block.id}
-                onClick={() => onSelect(block.type, isPl ? block.titlePl : block.title)}
-                className="p-4 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-left transition-all group border-2 border-transparent hover:border-blue-500"
-              >
-                <div className="flex items-start gap-4">
-                  <div
-                    className={`w-12 h-12 rounded-xl bg-gradient-to-br ${block.color} flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-transform`}
-                  >
-                    {block.icon}
+            {filteredBlocks.map((block) => {
+              const isCompatible =
+                !block.sourceTypes || !sourceType || block.sourceTypes.includes(sourceType);
+              return (
+                <button
+                  key={block.id}
+                  disabled={!isCompatible}
+                  onClick={() =>
+                    isCompatible &&
+                    onSelect(block.type, isPl ? block.titlePl : block.title, undefined, {
+                      blockTypeId: block.blockTypeId,
+                      renderKind: block.renderKind,
+                      defaultLength: block.defaultLength,
+                    })
+                  }
+                  className={[
+                    'p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-left transition-all group border-2 border-transparent',
+                    isCompatible
+                      ? 'hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-blue-500'
+                      : 'opacity-50 cursor-not-allowed',
+                  ].join(' ')}
+                >
+                  <div className="flex items-start gap-4">
+                    <div
+                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${block.color} flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-transform`}
+                    >
+                      {block.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-slate-900 dark:text-white">
+                        {isPl ? block.titlePl : block.title}
+                      </h3>
+                      {!isCompatible && (
+                        <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                          {isPl
+                            ? 'Niedostępny dla tego kontekstu'
+                            : 'Not available for this context'}
+                        </div>
+                      )}
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                        {isPl ? block.descriptionPl : block.description}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-slate-900 dark:text-white">
-                      {isPl ? block.titlePl : block.title}
-                    </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                      {isPl ? block.descriptionPl : block.description}
-                    </p>
-                  </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
 
           {filteredBlocks.length === 0 && (
             <div className="text-center py-12 text-slate-500">
               {isPl ? 'Nie znaleziono bloków' : 'No blocks found'}
+            </div>
+          )}
+
+          {!libraryLoaded && (
+            <div className="text-center pt-6 text-xs text-slate-400">
+              {isPl ? 'Ładowanie biblioteki bloków…' : 'Loading block library…'}
             </div>
           )}
         </div>

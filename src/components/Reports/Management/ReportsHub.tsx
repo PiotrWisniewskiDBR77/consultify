@@ -11,20 +11,28 @@ import {
   Building2,
   Calendar,
   CalendarClock,
+  Clock,
   Download,
   Eye,
   FileBarChart2,
   FileText,
+  History,
   Loader2,
+  Lock,
+  MessageSquare,
   Plus,
   Share2,
   Sparkles,
+  User,
   Users,
   Wand2,
+  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
+import { useOpenChatWithContext } from '../../../hooks/useOpenChatWithContext';
 import { Api } from '../../../services/api';
 import {
   ManagementReport,
@@ -110,6 +118,8 @@ interface ReportHistoryItem {
   periodEnd?: string;
   pdfPath?: string;
   pptxPath?: string;
+  versionNumber?: number;
+  versionLabel?: string;
 }
 
 interface ReportTemplate {
@@ -143,6 +153,10 @@ interface ReportsHubProps {
 }
 
 export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) => {
+  // B9.1: Chat about report
+  const openChatWithContext = useOpenChatWithContext();
+  const { t } = useTranslation();
+
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -158,6 +172,8 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
   const [isLoading, setIsLoading] = useState(true);
   const [showGeneratorDrawer, setShowGeneratorDrawer] = useState(false);
   const [currentReport, setCurrentReport] = useState<ManagementReport | null>(null);
+  // Quick preview panel state (B5.2)
+  const [previewReportId, setPreviewReportId] = useState<string | null>(null);
 
   // Fetch data
   useEffect(() => {
@@ -175,7 +191,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         setSchedules(schedulesRes.data?.schedules || []);
       } catch (err) {
         console.error('[ReportsHub] Failed to load:', err);
-        toast.error('Failed to load reports data');
+        toast.error(t('reports.toast.loadError', 'Nie udało się załadować danych'));
       } finally {
         setIsLoading(false);
       }
@@ -277,6 +293,16 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
             <span className="text-sm text-white font-medium">{row.title}</span>
             {row.projectName && <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>}
           </div>
+        ),
+      },
+      {
+        id: 'version',
+        label: 'Ver.',
+        width: '60px',
+        render: (row: ReportHistoryItem) => (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-mono font-medium bg-white/5 text-slate-300 rounded">
+            v{row.versionLabel || row.versionNumber || '1.0'}
+          </span>
         ),
       },
       {
@@ -529,7 +555,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         setActiveDocumentId(report.id);
       }
     } catch (error) {
-      toast.error('Failed to load report');
+      toast.error(t('reports.toast.loadReportError', 'Nie udało się załadować raportu'));
     }
   }, []);
 
@@ -538,10 +564,10 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       const response = await Api.get(`/api/management-reports/${reportId}/pdf`);
       if (response.data?.pdfUrl) {
         window.open(response.data.pdfUrl, '_blank');
-        toast.success('PDF download started');
+        toast.success(t('reports.toast.pdfStarted', 'Pobieranie PDF rozpoczęte'));
       }
     } catch (error) {
-      toast.error('Failed to download PDF');
+      toast.error(t('reports.toast.pdfError', 'Nie udało się pobrać PDF'));
     }
   }, []);
 
@@ -552,10 +578,10 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       });
       if (response.data?.shareUrl) {
         navigator.clipboard.writeText(window.location.origin + response.data.shareUrl);
-        toast.success('Share link copied to clipboard');
+        toast.success(t('reports.toast.shareLinkCopied', 'Link do udostępniania skopiowany'));
       }
     } catch (error) {
-      toast.error('Failed to create share link');
+      toast.error(t('reports.toast.shareLinkError', 'Nie udało się utworzyć linku'));
     }
   }, []);
 
@@ -623,7 +649,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
 
     setOpenDocuments((prev) => [...prev, doc]);
     setActiveDocumentId(report.id);
-    toast.success('Report generated successfully!');
+    toast.success(t('reports.toast.reportGenerated', 'Raport wygenerowany pomyślnie!'));
   }, []);
 
   // Render report preview
@@ -684,15 +710,178 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         );
       }
 
+      const previewReport = previewReportId
+        ? filteredReports.find((r) => r.id === previewReportId)
+        : null;
+
       return (
-        <FilterableTable
-          columns={reportColumns}
-          data={filteredReports}
-          onRowClick={(row: any) => handleOpenDocument(row as ReportHistoryItem)}
-          activeFilters={activeFilters}
-          onFilterChange={setActiveFilters}
-          emptyMessage="No reports found."
-        />
+        <div className="flex h-full">
+          {/* Reports Table */}
+          <div className={`flex-1 min-w-0 ${previewReport ? 'border-r border-white/5' : ''}`}>
+            <FilterableTable
+              columns={reportColumns}
+              data={filteredReports}
+              onRowClick={(row: any) => {
+                const r = row as ReportHistoryItem;
+                setPreviewReportId(r.id === previewReportId ? null : r.id);
+              }}
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              emptyMessage="No reports found."
+            />
+          </div>
+
+          {/* Quick Version Preview Panel (B5.2) */}
+          {previewReport && (
+            <div className="w-80 shrink-0 bg-navy-950/50 overflow-y-auto">
+              <div className="p-4">
+                {/* Panel Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <History size={14} className="text-violet-400" />
+                    Quick Preview
+                  </h4>
+                  <button
+                    onClick={() => setPreviewReportId(null)}
+                    className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    <X size={14} className="text-slate-400" />
+                  </button>
+                </div>
+
+                {/* Report Info Card */}
+                <div className="bg-navy-900/80 rounded-xl border border-navy-700 p-4 space-y-3">
+                  {/* Title */}
+                  <div>
+                    <h5 className="text-sm font-semibold text-white leading-tight">
+                      {previewReport.title}
+                    </h5>
+                    {previewReport.projectName && (
+                      <p className="text-xs text-slate-400 mt-0.5">{previewReport.projectName}</p>
+                    )}
+                  </div>
+
+                  {/* Metadata */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className={`${REPORT_TYPE_META[previewReport.reportType].color}`}>
+                        {REPORT_TYPE_META[previewReport.reportType].icon}
+                      </span>
+                      <span className="text-slate-300">
+                        {REPORT_TYPE_META[previewReport.reportType].label}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <Calendar size={12} />
+                      <span>{new Date(previewReport.createdAt).toLocaleString()}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <User size={12} />
+                      <span>{previewReport.generatedByName}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs">
+                      <span
+                        className={`w-2 h-2 rounded-full ${STATUS_META[previewReport.status].dotColor}`}
+                      />
+                      <span className="text-slate-300">
+                        {STATUS_META[previewReport.status].label}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-medium ${SCOPE_META[previewReport.scope].color} text-white`}
+                      >
+                        {SCOPE_META[previewReport.scope].label}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Immutable Version Badge */}
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-violet-500/10 border border-violet-500/20 rounded-lg">
+                    <Lock size={12} className="text-violet-400" />
+                    <span className="text-[11px] text-violet-300 font-medium">
+                      Immutable Version
+                    </span>
+                  </div>
+
+                  {/* Period */}
+                  {previewReport.periodStart && previewReport.periodEnd && (
+                    <div className="text-xs text-slate-400">
+                      <span className="text-slate-500">Period:</span> {previewReport.periodStart} –{' '}
+                      {previewReport.periodEnd}
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="mt-4 space-y-2">
+                  <button
+                    onClick={() => handleViewReport(previewReport.id)}
+                    className="w-full flex items-center gap-2 px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <Eye size={14} />
+                    Open Full Report
+                  </button>
+
+                  {previewReport.pdfPath && (
+                    <button
+                      onClick={() => handleDownloadPDF(previewReport.id)}
+                      className="w-full flex items-center gap-2 px-3 py-2 border border-navy-700 hover:bg-white/5 text-slate-300 text-sm font-medium rounded-lg transition-colors"
+                    >
+                      <Download size={14} />
+                      Download PDF
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => handleShare(previewReport.id)}
+                    className="w-full flex items-center gap-2 px-3 py-2 border border-navy-700 hover:bg-white/5 text-slate-300 text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <Share2 size={14} />
+                    Share Link
+                  </button>
+
+                  {/* B9.1: Chat about this report */}
+                  <button
+                    onClick={async () => {
+                      try {
+                        await openChatWithContext({
+                          entityType: 'report',
+                          entityId: previewReport.id,
+                          entityName: previewReport.title,
+                          contextData: {
+                            reportType: previewReport.reportType,
+                            reportScope: previewReport.scope,
+                            reportStatus: previewReport.status,
+                            periodStart: previewReport.periodStart,
+                            periodEnd: previewReport.periodEnd,
+                          },
+                        });
+                        toast.success(
+                          t('reports.toast.chatOpened', 'Otwarto czat dla tego raportu'),
+                          { duration: 1500, icon: '💬' }
+                        );
+                      } catch (err) {
+                        console.error('[ReportsHub] Failed to open chat:', err);
+                        toast.error(
+                          t('reports.toast.chatOpenError', 'Nie udało się otworzyć czatu')
+                        );
+                      }
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <MessageSquare size={14} />
+                    Chat about this Report
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       );
     }
 

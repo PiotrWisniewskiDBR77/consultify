@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Fix JSDOM navigation error
 if (typeof window !== 'undefined') {
-  const noop = () => { };
+  const noop = () => {};
   Object.defineProperty(window, 'location', {
     value: {
       ...window.location,
@@ -30,7 +30,7 @@ vi.mock('react-i18next', () => ({
   }),
   initReactI18next: {
     type: '3rdParty',
-    init: () => { },
+    init: () => {},
   },
 }));
 
@@ -39,7 +39,7 @@ vi.mock('react-markdown', () => ({
 }));
 
 vi.mock('remark-gfm', () => ({
-  default: () => { },
+  default: () => {},
 }));
 
 vi.mock('../../../src/store/useAppStore', () => ({
@@ -58,12 +58,16 @@ vi.mock('../../../src/store/useConversationStore', () => ({
   useConversationStore: () => ({
     activeConversationId: null,
     activeMessages: [],
+    isLoading: false,
+    isSidebarOpen: false,
     displayMode: 'full',
     createConversation: vi.fn().mockResolvedValue({ id: 'test-conv-id' }),
     addMessage: vi.fn().mockResolvedValue({ id: 'test-msg-id' }),
     setActiveConversation: vi.fn(),
     fetchConversation: vi.fn(),
     clearActiveChat: vi.fn(),
+    truncateFromMessage: vi.fn(),
+    toggleSidebar: vi.fn(),
     setDisplayMode: vi.fn(),
     expandToFullScreen: vi.fn(),
     collapseToSplit: vi.fn(),

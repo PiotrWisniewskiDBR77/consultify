@@ -99,18 +99,17 @@ const AlertService = {
         logger.error(`[ALERT SERVICE] ${alert.message}`);
 
         try {
-          // Create system alert notification
-          if (NotificationService && typeof (NotificationService as any).create === 'function') {
-            await (NotificationService as any).create({
-              userId: 'system', // System-level alert
+          // Create system alert notification via send()
+          if (NotificationService && typeof NotificationService.send === 'function') {
+            await NotificationService.send({
+              userId: 'system',
               organizationId: 'system',
               type: 'SYSTEM_ALERT',
               title: `System Alert: ${alert.component}`,
+              body: alert.message,
               message: alert.message,
               severity: 'CRITICAL',
               isActionable: false,
-
-              // expiresAt removed as it's not in NotificationPayload
             });
           }
         } catch (error) {

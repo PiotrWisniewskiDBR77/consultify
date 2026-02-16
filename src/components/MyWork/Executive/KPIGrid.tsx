@@ -7,16 +7,12 @@ import { motion } from 'framer-motion';
 import {
   AlertTriangle,
   ArrowRight,
-  Calendar,
   CheckCircle2,
-  Clock,
   FileQuestion,
   Minus,
-  Target,
   TrendingDown,
   TrendingUp,
   Users,
-  Zap,
 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -250,7 +246,18 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
     },
   };
 
-  const completionRate = Math.round((kpiData.tasks.completed / kpiData.tasks.total) * 100);
+  // A1.1: Protect against division by zero – show "No data" when there are no tasks
+  const hasTaskData = kpiData.tasks.total > 0;
+  const completionRate = hasTaskData
+    ? Math.round((kpiData.tasks.completed / kpiData.tasks.total) * 100)
+    : null;
+
+  // A1.1: Detect whether real data was loaded from API
+  // The parent (ExecutiveDashboard) passes data; if the API call failed or returned empty,
+  // the values stay at their initial zeros. We check if the data prop section exists.
+  const hasDecisionData = data?.decisions !== undefined;
+  const hasTeamData = data?.team !== undefined;
+  const hasRiskData = data?.risk !== undefined;
 
   if (loading) {
     return (
@@ -271,121 +278,170 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-      {/* Tasks KPI */}
+      {/* Tasks KPI – A1.1: data source: /my-work/stats?period=week */}
       <KPICard
         title={t('executive.kpi.tasks', 'Task Execution')}
         icon={<CheckCircle2 size={22} className="text-white" />}
         iconBg="bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/30"
-        value={`${completionRate}%`}
-        subValue={`${kpiData.tasks.completed}/${kpiData.tasks.total}`}
-        trend={kpiData.tasks.trend}
-        trendLabel={kpiData.tasks.trend === 'up' ? '+8%' : '-3%'}
-        status={completionRate >= 75 ? 'success' : completionRate >= 50 ? 'warning' : 'danger'}
-        details={[
-          { label: t('executive.kpi.onTime', 'On-time'), value: `${kpiData.tasks.onTimeRate}%` },
-          {
-            label: t('executive.kpi.overdue', 'Overdue'),
-            value: kpiData.tasks.overdueCount,
-            highlight: kpiData.tasks.overdueCount > 0,
-          },
-        ]}
+        value={hasTaskData ? `${completionRate}%` : '—'}
+        subValue={
+          hasTaskData
+            ? `${kpiData.tasks.completed}/${kpiData.tasks.total}`
+            : t('executive.kpi.noData', 'No data')
+        }
+        trend={hasTaskData ? kpiData.tasks.trend : undefined}
+        status={
+          !hasTaskData
+            ? 'neutral'
+            : (completionRate ?? 0) >= 75
+              ? 'success'
+              : (completionRate ?? 0) >= 50
+                ? 'warning'
+                : 'danger'
+        }
+        details={
+          hasTaskData
+            ? [
+                {
+                  label: t('executive.kpi.onTime', 'On-time'),
+                  value: `${kpiData.tasks.onTimeRate}%`,
+                },
+                {
+                  label: t('executive.kpi.overdue', 'Overdue'),
+                  value: kpiData.tasks.overdueCount,
+                  highlight: kpiData.tasks.overdueCount > 0,
+                },
+              ]
+            : []
+        }
         onClick={() => onNavigate?.('tasks')}
         delay={0}
       />
 
-      {/* Decisions KPI */}
+      {/* Decisions KPI – A1.1: data source: /decisions?limit=10 */}
       <KPICard
         title={t('executive.kpi.decisions', 'Decisions Pending')}
         icon={<FileQuestion size={22} className="text-white" />}
         iconBg="bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/30"
-        value={kpiData.decisions.pending}
-        subValue={t('executive.kpi.awaiting', 'awaiting')}
-        trend={kpiData.decisions.trend}
-        status={
-          kpiData.decisions.critical > 0
-            ? 'danger'
-            : kpiData.decisions.pending > 5
-              ? 'warning'
-              : 'success'
+        value={hasDecisionData ? kpiData.decisions.pending : '—'}
+        subValue={
+          hasDecisionData
+            ? t('executive.kpi.awaiting', 'awaiting')
+            : t('executive.kpi.noData', 'No data')
         }
-        details={[
-          {
-            label: t('executive.kpi.critical', 'Critical'),
-            value: kpiData.decisions.critical,
-            highlight: kpiData.decisions.critical > 0,
-          },
-          {
-            label: t('executive.kpi.avgWait', 'Avg wait'),
-            value: `${kpiData.decisions.avgWaitDays}d`,
-          },
-        ]}
+        trend={hasDecisionData ? kpiData.decisions.trend : undefined}
+        status={
+          !hasDecisionData
+            ? 'neutral'
+            : kpiData.decisions.critical > 0
+              ? 'danger'
+              : kpiData.decisions.pending > 5
+                ? 'warning'
+                : 'success'
+        }
+        details={
+          hasDecisionData
+            ? [
+                {
+                  label: t('executive.kpi.critical', 'Critical'),
+                  value: kpiData.decisions.critical,
+                  highlight: kpiData.decisions.critical > 0,
+                },
+                {
+                  label: t('executive.kpi.avgWait', 'Avg wait'),
+                  value: `${kpiData.decisions.avgWaitDays}d`,
+                },
+              ]
+            : []
+        }
         onClick={() => onNavigate?.('decisions')}
         delay={1}
       />
 
-      {/* Team Capacity KPI */}
+      {/* Team Capacity KPI – A1.1: data source: /my-work/team-workload */}
       <KPICard
         title={t('executive.kpi.teamCapacity', 'Team Capacity')}
         icon={<Users size={22} className="text-white" />}
         iconBg="bg-gradient-to-br from-cyan-500 to-blue-600 shadow-cyan-500/30"
-        value={`${kpiData.team.avgCapacity}%`}
-        subValue={t('executive.kpi.utilized', 'utilized')}
-        trend={kpiData.team.trend}
-        trendLabel={kpiData.team.trend === 'up' ? '+5%' : '-2%'}
-        status={
-          kpiData.team.overloaded > 2
-            ? 'danger'
-            : kpiData.team.avgCapacity > 90
-              ? 'warning'
-              : 'success'
+        value={hasTeamData ? `${kpiData.team.avgCapacity}%` : '—'}
+        subValue={
+          hasTeamData
+            ? t('executive.kpi.utilized', 'utilized')
+            : t('executive.kpi.noData', 'No data')
         }
-        details={[
-          {
-            label: t('executive.kpi.overloaded', 'Overloaded'),
-            value: kpiData.team.overloaded,
-            highlight: kpiData.team.overloaded > 0,
-          },
-          { label: t('executive.kpi.available', 'Available'), value: kpiData.team.available },
-        ]}
+        trend={hasTeamData ? kpiData.team.trend : undefined}
+        status={
+          !hasTeamData
+            ? 'neutral'
+            : kpiData.team.overloaded > 2
+              ? 'danger'
+              : kpiData.team.avgCapacity > 90
+                ? 'warning'
+                : 'success'
+        }
+        details={
+          hasTeamData
+            ? [
+                {
+                  label: t('executive.kpi.overloaded', 'Overloaded'),
+                  value: kpiData.team.overloaded,
+                  highlight: kpiData.team.overloaded > 0,
+                },
+                { label: t('executive.kpi.available', 'Available'), value: kpiData.team.available },
+              ]
+            : []
+        }
         onClick={() => onNavigate?.('team')}
         delay={2}
       />
 
-      {/* Risk Level KPI */}
+      {/* Risk Level KPI – A1.1: data source: derived from overdue tasks */}
       <KPICard
         title={t('executive.kpi.riskLevel', 'Risk Level')}
         icon={<AlertTriangle size={22} className="text-white" />}
         iconBg={`bg-gradient-to-br ${
-          kpiData.risk.level === 'critical'
-            ? 'from-rose-500 to-red-600 shadow-rose-500/30'
-            : kpiData.risk.level === 'high'
-              ? 'from-orange-500 to-red-600 shadow-orange-500/30'
-              : kpiData.risk.level === 'medium'
-                ? 'from-amber-500 to-orange-600 shadow-amber-500/30'
-                : 'from-emerald-500 to-green-600 shadow-emerald-500/30'
+          !hasRiskData
+            ? 'from-slate-400 to-slate-500 shadow-slate-500/30'
+            : kpiData.risk.level === 'critical'
+              ? 'from-rose-500 to-red-600 shadow-rose-500/30'
+              : kpiData.risk.level === 'high'
+                ? 'from-orange-500 to-red-600 shadow-orange-500/30'
+                : kpiData.risk.level === 'medium'
+                  ? 'from-amber-500 to-orange-600 shadow-amber-500/30'
+                  : 'from-emerald-500 to-green-600 shadow-emerald-500/30'
         }`}
-        value={kpiData.risk.level.toUpperCase()}
-        subValue={(<RiskLevelBadge level={kpiData.risk.level} />) as any}
-        trend={kpiData.risk.trend}
-        status={
-          kpiData.risk.level === 'critical'
-            ? 'danger'
-            : kpiData.risk.level === 'high'
-              ? 'warning'
-              : 'neutral'
+        value={hasRiskData ? kpiData.risk.level.toUpperCase() : '—'}
+        subValue={
+          hasRiskData
+            ? ((<RiskLevelBadge level={kpiData.risk.level} />) as any)
+            : t('executive.kpi.noData', 'No data')
         }
-        details={[
-          {
-            label: t('executive.kpi.blockers', 'Blockers'),
-            value: kpiData.risk.blockers,
-            highlight: kpiData.risk.blockers > 2,
-          },
-          {
-            label: t('executive.kpi.escalations', 'Escalations'),
-            value: kpiData.risk.escalations,
-            highlight: kpiData.risk.escalations > 0,
-          },
-        ]}
+        trend={hasRiskData ? kpiData.risk.trend : undefined}
+        status={
+          !hasRiskData
+            ? 'neutral'
+            : kpiData.risk.level === 'critical'
+              ? 'danger'
+              : kpiData.risk.level === 'high'
+                ? 'warning'
+                : 'neutral'
+        }
+        details={
+          hasRiskData
+            ? [
+                {
+                  label: t('executive.kpi.blockers', 'Blockers'),
+                  value: kpiData.risk.blockers,
+                  highlight: kpiData.risk.blockers > 2,
+                },
+                {
+                  label: t('executive.kpi.escalations', 'Escalations'),
+                  value: kpiData.risk.escalations,
+                  highlight: kpiData.risk.escalations > 0,
+                },
+              ]
+            : []
+        }
         onClick={() => onNavigate?.('risks')}
         delay={3}
       />

@@ -101,60 +101,35 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
 }) => {
   const [filter, setFilter] = useState<'all' | ActionStatus>('all');
   const [selectedAction, setSelectedAction] = useState<CorrectiveAction | null>(null);
+  const [localActions, setLocalActions] = useState<CorrectiveAction[]>(actions);
+  const [isLoading, setIsLoading] = useState(!actions.length);
 
-  // Mock actions
-  const [localActions] = useState<CorrectiveAction[]>([
-    {
-      id: 'ca-1',
-      title: 'Increase User Training Sessions',
-      description:
-        'User adoption is below target. Need additional training and change management support.',
-      status: 'IN_PROGRESS',
-      priority: 'HIGH',
-      linkedKPIId: 'kpi-3',
-      linkedKPIName: 'User Adoption Rate',
-      assignee: { id: 'user-1', name: 'Anna Nowak' },
-      dueDate: '2025-01-15',
-      createdDate: '2024-12-20',
-      expectedImpact: 'Increase adoption rate by 15% within 4 weeks',
-      rootCause: 'Insufficient end-user training during rollout',
-      steps: [
-        'Schedule 5 additional training sessions',
-        'Create quick reference guides',
-        'Deploy in-app tooltips',
-        'Establish super-user network',
-      ],
-    },
-    {
-      id: 'ca-2',
-      title: 'Budget Variance Mitigation',
-      description: 'Reduce Phase 2 scope to stay within approved budget',
-      status: 'OPEN',
-      priority: 'CRITICAL',
-      linkedKPIId: 'kpi-2',
-      linkedKPIName: 'Budget Variance',
-      assignee: { id: 'user-2', name: 'Jan Kowalski' },
-      dueDate: '2025-01-05',
-      createdDate: '2024-12-25',
-      expectedImpact: 'Reduce variance to 3% by deferring non-critical features',
-      rootCause: 'Scope creep from additional security requirements',
-    },
-    {
-      id: 'ca-3',
-      title: 'Process Documentation Update',
-      description: 'Update SOPs to reflect new automated workflows',
-      status: 'COMPLETED',
-      priority: 'MEDIUM',
-      linkedKPIId: 'kpi-6',
-      linkedKPIName: 'Process Efficiency Gain',
-      assignee: { id: 'user-3', name: 'Piotr Wiśniewski' },
-      dueDate: '2024-12-20',
-      createdDate: '2024-12-01',
-      completedDate: '2024-12-18',
-      expectedImpact: 'Reduce confusion and support tickets by 25%',
-      actualImpact: 'Support tickets reduced by 30%, exceeding target',
-    },
-  ]);
+  // Fetch corrective actions from API when props don't provide them
+  React.useEffect(() => {
+    if (actions.length > 0) {
+      setLocalActions(actions);
+      setIsLoading(false);
+      return;
+    }
+    const fetchActions = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/pmo/projects/${projectId}/corrective-actions`);
+        if (response.ok) {
+          const data = await response.json();
+          setLocalActions(Array.isArray(data) ? data : data?.actions || []);
+        } else {
+          setLocalActions([]);
+        }
+      } catch {
+        console.warn('[CorrectiveActions] No corrective actions data available from API');
+        setLocalActions([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchActions();
+  }, [projectId, actions]);
 
   const filteredActions =
     filter === 'all' ? localActions : localActions.filter((a) => a.status === filter);
@@ -176,6 +151,55 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
       new Date(action.dueDate) < new Date()
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
+            <Target className="text-red-500" size={24} />
+            Corrective Actions
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Loading actions...</p>
+        </div>
+        <div className="flex items-center justify-center h-48">
+          <div className="animate-spin w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (localActions.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
+              <Target className="text-red-500" size={24} />
+              Corrective Actions
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Track and manage remediation activities for off-target KPIs
+            </p>
+          </div>
+          <button
+            onClick={onCreateAction}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            <Plus size={16} />
+            New Action
+          </button>
+        </div>
+        <div className="flex flex-col items-center justify-center h-48 text-slate-400 dark:text-slate-500">
+          <CheckCircle2 size={48} className="mb-4 text-green-500 opacity-50" />
+          <p className="text-lg font-medium text-navy-900 dark:text-white">No corrective actions</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            All KPIs are on track. Actions will appear here when needed.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

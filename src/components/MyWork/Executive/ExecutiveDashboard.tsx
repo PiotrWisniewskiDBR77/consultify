@@ -129,14 +129,50 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           const onTimeRate = stats.onTimeRate || 0;
 
           setHealthScore({
+            // A1.1: data source – computed from /my-work/stats completionRate + onTimeRate
             score: Math.round((completionRate + onTimeRate) / 2),
             previousScore: Math.max(0, Math.round((completionRate + onTimeRate) / 2) - 5),
             trend: stats.trend || 'stable',
             breakdown: {
               execution: completionRate,
-              decisions: 0,
-              capacity: 0,
-              risk: 0,
+              // A1.1: Derive breakdown from available data sources
+              decisions:
+                decisionsRes.status === 'fulfilled' &&
+                Array.isArray(decisionsRes.value?.decisions || decisionsRes.value)
+                  ? (() => {
+                      const decs = decisionsRes.value?.decisions || decisionsRes.value || [];
+                      const resolved = decs.filter((d: any) =>
+                        ['APPROVED', 'RESOLVED', 'COMPLETED'].includes(
+                          String(d.status).toUpperCase()
+                        )
+                      );
+                      return decs.length > 0
+                        ? Math.round((resolved.length / decs.length) * 100)
+                        : 0;
+                    })()
+                  : 0,
+              capacity:
+                teamRes.status === 'fulfilled' && teamRes.value
+                  ? (() => {
+                      const team = Array.isArray(teamRes.value)
+                        ? teamRes.value
+                        : teamRes.value?.members || [];
+                      if (team.length === 0) return 0;
+                      const avgUtil =
+                        team.reduce(
+                          (sum: number, m: any) => sum + (m.utilization || m.capacity || 0),
+                          0
+                        ) / team.length;
+                      return Math.round(Math.min(100, avgUtil));
+                    })()
+                  : 0,
+              risk: stats.byStatus?.blocked
+                ? Math.round(
+                    Math.max(0, 100 - (stats.byStatus.blocked / Math.max(1, stats.total)) * 100)
+                  )
+                : completionRate > 0
+                  ? Math.round(completionRate * 0.9)
+                  : 0,
             },
           });
 

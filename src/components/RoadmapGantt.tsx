@@ -4,29 +4,33 @@
  * Strategic Roadmap Gantt Chart with:
  * - Drag-and-drop to move initiatives
  * - Resize handles to adjust duration
- * - Dependency visualization (arrows)
+ * - Dependency visualization (SVG arrows between bars)
+ * - Dependency validation (D4.1) — warns about illogical sequences, circular deps
+ * - Clean toolbar (D4.2) — zoom, scroll, fullscreen clearly separated
+ * - Critical path highlighting (D5.1) — longest chain of dependent tasks
  * - Full-screen mode
- * - Zoom levels (Month/Quarter/Year)
+ * - Zoom levels (Month/Quarter)
  * - Status indicators
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
-  ArrowRight,
   Calendar,
   ChevronLeft,
   ChevronRight,
-  Filter,
+  Eye,
   GripVertical,
   Link,
   Maximize2,
+  MessageSquare,
   Minimize2,
-  ZoomIn,
-  ZoomOut,
+  Route,
+  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { InitiativeStatus } from '../types/core';
 import { Initiative } from '../types/domain';
@@ -41,6 +45,9 @@ interface FullInitiative extends Initiative {
   plannedEndDate?: string;
   dependencies?: any[];
   name: string;
+  readinessPercent?: number;
+  missingReadiness?: string[];
+  conflictCount?: number;
 }
 
 interface RoadmapGanttProps {
@@ -52,13 +59,17 @@ interface RoadmapGanttProps {
     toId: string,
     type: 'FINISH_TO_START' | 'START_TO_START'
   ) => void;
+  // D4.4: PM perspective check
+  onPMPerspectiveCheck?: (initiativeId: string) => void;
+  // D4.5: Open contextual chat for an initiative
+  onOpenScheduleChat?: (initiativeId: string) => void;
 }
 
 interface GanttInitiative extends Omit<FullInitiative, 'status'> {
   status: string;
 }
 
-type ZoomLevel = 'month' | 'quarter' | 'year';
+type ZoomLevel = 'month' | 'quarter';
 
 const QUARTERS: Quarter[] = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8'];
 
@@ -66,7 +77,7 @@ const QUARTERS: Quarter[] = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8'];
 const generateMonths = (startYear: number, numMonths: number) => {
   const months = [];
   let year = startYear;
-  let month = 0; // January
+  let month = 0;
 
   for (let i = 0; i < numMonths; i++) {
     months.push({
@@ -104,20 +115,241 @@ const STATUS_COLORS: Record<string, string> = {
   approved: 'border-l-4 border-l-green-500',
   active: 'border-l-4 border-l-purple-500',
   on_hold: 'border-l-4 border-l-red-500 animate-pulse',
-  // Legacy support
   APPROVED: 'border-l-4 border-l-green-500',
   EXECUTING: 'border-l-4 border-l-purple-500',
   BLOCKED: 'border-l-4 border-l-red-500 animate-pulse',
 };
+
+// ============================================
+// D4.1: DEPENDENCY VALIDATION
+// ============================================
+
+interface DependencyWarning {
+  initiativeId: string;
+  type: 'schedule_conflict' | 'circular' | 'missing_predecessor';
+  message: string;
+  severity: 'warning' | 'error';
+}
+
+/**
+ * Validates task order and dependencies.
+ * Returns warnings for:
+ * - Tasks starting before their predecessor ends (schedule conflict)
+ * - Circular dependencies
+ * - Missing predecessor references
+ */
+function validateDependencies(initiatives: GanttInitiative[]): DependencyWarning[] {
+  const warnings: DependencyWarning[] = [];
+  const initMap = new Map<string, GanttInitiative>();
+  initiatives.forEach((i) => initMap.set(i.id, i));
+
+  // Check for circular dependencies using DFS
+  const visited = new Set<string>();
+  const inStack = new Set<string>();
+
+  function hasCycle(id: string, path: string[]): boolean {
+    if (inStack.has(id)) return true;
+    if (visited.has(id)) return false;
+
+    visited.add(id);
+    inStack.add(id);
+
+    const init = initMap.get(id);
+    if (init?.dependencies) {
+      for (const dep of init.dependencies) {
+        const depId = typeof dep === 'string' ? dep : dep.initiativeId;
+        if (hasCycle(depId, [...path, id])) {
+          return true;
+        }
+      }
+    }
+
+    inStack.delete(id);
+    return false;
+  }
+
+  // Check each initiative
+  initiatives.forEach((init) => {
+    if (!init.dependencies || init.dependencies.length === 0) return;
+
+    // Check circular
+    visited.clear();
+    inStack.clear();
+    if (hasCycle(init.id, [])) {
+      warnings.push({
+        initiativeId: init.id,
+        type: 'circular',
+        message: `Circular dependency detected for "${init.name}"`,
+        severity: 'error',
+      });
+    }
+
+    // Check schedule conflicts
+    init.dependencies.forEach((dep: any) => {
+      const depId = typeof dep === 'string' ? dep : dep.initiativeId;
+      const predecessor = initMap.get(depId);
+
+      if (!predecessor) {
+        warnings.push({
+          initiativeId: init.id,
+          type: 'missing_predecessor',
+          message: `Predecessor not found for "${init.name}"`,
+          severity: 'warning',
+        });
+        return;
+      }
+
+      // Check if this initiative starts before predecessor ends
+      const predEnd = predecessor.plannedEndDate ? new Date(predecessor.plannedEndDate) : null;
+      const thisStart = init.plannedStartDate ? new Date(init.plannedStartDate) : null;
+
+      if (predEnd && thisStart && thisStart < predEnd) {
+        warnings.push({
+          initiativeId: init.id,
+          type: 'schedule_conflict',
+          message: `"${init.name}" starts before "${predecessor.name}" ends`,
+          severity: 'warning',
+        });
+      }
+    });
+  });
+
+  return warnings;
+}
+
+// ============================================
+// D5.1: CRITICAL PATH CALCULATION
+// ============================================
+
+/**
+ * Computes the critical path — the longest chain of dependent initiatives.
+ * Uses topological sort + longest path in DAG.
+ */
+function computeCriticalPath(initiatives: GanttInitiative[], currentYear: number): Set<string> {
+  const initMap = new Map<string, GanttInitiative>();
+  initiatives.forEach((i) => initMap.set(i.id, i));
+
+  // Build adjacency list (predecessor -> successors)
+  const successors = new Map<string, string[]>();
+  const predecessors = new Map<string, string[]>();
+  initiatives.forEach((i) => {
+    if (!successors.has(i.id)) successors.set(i.id, []);
+    if (!predecessors.has(i.id)) predecessors.set(i.id, []);
+  });
+
+  initiatives.forEach((init) => {
+    if (init.dependencies) {
+      init.dependencies.forEach((dep: any) => {
+        const depId = typeof dep === 'string' ? dep : dep.initiativeId;
+        if (initMap.has(depId)) {
+          const succs = successors.get(depId) || [];
+          succs.push(init.id);
+          successors.set(depId, succs);
+
+          const preds = predecessors.get(init.id) || [];
+          preds.push(depId);
+          predecessors.set(init.id, preds);
+        }
+      });
+    }
+  });
+
+  // Calculate duration for each initiative in months
+  function getDuration(init: GanttInitiative): number {
+    if (init.plannedStartDate && init.plannedEndDate) {
+      const start = new Date(init.plannedStartDate);
+      const end = new Date(init.plannedEndDate);
+      return Math.max(
+        1,
+        Math.round((end.getTime() - start.getTime()) / (30 * 24 * 60 * 60 * 1000))
+      );
+    }
+    return 3; // default 3 months
+  }
+
+  // Longest path using dynamic programming
+  const longestTo = new Map<string, number>(); // longest path ending at node
+  const pathPrev = new Map<string, string | null>(); // for backtracking
+
+  // Topological order (Kahn's algorithm)
+  const inDegree = new Map<string, number>();
+  initiatives.forEach((i) => inDegree.set(i.id, (predecessors.get(i.id) || []).length));
+
+  const queue: string[] = [];
+  inDegree.forEach((deg, id) => {
+    if (deg === 0) queue.push(id);
+  });
+
+  const topoOrder: string[] = [];
+  while (queue.length > 0) {
+    const node = queue.shift()!;
+    topoOrder.push(node);
+    (successors.get(node) || []).forEach((succ) => {
+      const newDeg = (inDegree.get(succ) || 1) - 1;
+      inDegree.set(succ, newDeg);
+      if (newDeg === 0) queue.push(succ);
+    });
+  }
+
+  // Initialize
+  topoOrder.forEach((id) => {
+    const init = initMap.get(id)!;
+    longestTo.set(id, getDuration(init));
+    pathPrev.set(id, null);
+  });
+
+  // Process in topological order
+  topoOrder.forEach((id) => {
+    const currentLen = longestTo.get(id) || 0;
+    (successors.get(id) || []).forEach((succ) => {
+      const succInit = initMap.get(succ)!;
+      const newLen = currentLen + getDuration(succInit);
+      if (newLen > (longestTo.get(succ) || 0)) {
+        longestTo.set(succ, newLen);
+        pathPrev.set(succ, id);
+      }
+    });
+  });
+
+  // Find the end of the longest path
+  let maxLen = 0;
+  let maxEnd = '';
+  longestTo.forEach((len, id) => {
+    if (len > maxLen) {
+      maxLen = len;
+      maxEnd = id;
+    }
+  });
+
+  // Backtrack to get the full critical path
+  const criticalPathIds = new Set<string>();
+  if (maxEnd && maxLen > 0) {
+    let current: string | null = maxEnd;
+    while (current) {
+      criticalPathIds.add(current);
+      current = pathPrev.get(current) || null;
+    }
+  }
+
+  return criticalPathIds;
+}
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
   initiatives,
   onUpdateInitiative,
   onInitiativeClick,
   onCreateDependency,
+  onPMPerspectiveCheck,
+  onOpenScheduleChat,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
   const timelineRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState<ZoomLevel>('quarter');
   const [activeDrag, setActiveDrag] = useState<string | null>(null);
@@ -125,51 +357,66 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
   const [linkingFrom, setLinkingFrom] = useState<string | null>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [hoveredInitiative, setHoveredInitiative] = useState<string | null>(null);
+  const [showCriticalPath, setShowCriticalPath] = useState(false);
+  const [showWarnings, setShowWarnings] = useState(true);
 
   // Timeline configuration
   const currentYear = new Date().getFullYear();
-  const months = useMemo(() => generateMonths(currentYear, 24), [currentYear]); // 2 years
+  const months = useMemo(() => generateMonths(currentYear, 24), [currentYear]);
 
-  // Calculate cell width based on zoom
+  // Cell width based on zoom
   const cellWidth = useMemo(() => {
-    switch (zoomLevel) {
-      case 'month':
-        return 100;
-      case 'quarter':
-        return 300;
-      case 'year':
-        return 600;
-      default:
-        return 100;
-    }
+    return zoomLevel === 'month' ? 100 : 300;
   }, [zoomLevel]);
+
+  // D4.1: Dependency validation
+  const dependencyWarnings = useMemo(
+    () => validateDependencies(initiatives as GanttInitiative[]),
+    [initiatives]
+  );
+
+  const warningsByInitiative = useMemo(() => {
+    const map = new Map<string, DependencyWarning[]>();
+    dependencyWarnings.forEach((w) => {
+      const existing = map.get(w.initiativeId) || [];
+      existing.push(w);
+      map.set(w.initiativeId, existing);
+    });
+    return map;
+  }, [dependencyWarnings]);
+
+  // D5.1: Critical path
+  const criticalPathIds = useMemo(
+    () => computeCriticalPath(initiatives as GanttInitiative[], currentYear),
+    [initiatives, currentYear]
+  );
 
   // Calculate positions based on dates or quarters
   const getInitiativePosition = useCallback(
     (init: GanttInitiative) => {
-      // Try dates first
       if (init.plannedStartDate && init.plannedEndDate) {
         const startDate = new Date(init.plannedStartDate);
         const endDate = new Date(init.plannedEndDate);
         const startMonth = (startDate.getFullYear() - currentYear) * 12 + startDate.getMonth();
         const endMonth = (endDate.getFullYear() - currentYear) * 12 + endDate.getMonth();
 
+        const monthWidth = zoomLevel === 'month' ? cellWidth : cellWidth / 3;
         return {
-          left: startMonth * cellWidth,
-          width: Math.max((endMonth - startMonth + 1) * cellWidth, cellWidth),
+          left: startMonth * monthWidth,
+          width: Math.max((endMonth - startMonth + 1) * monthWidth, monthWidth),
         };
       }
 
-      // Fall back to quarter
       const quarterIndex = QUARTERS.indexOf(init.quarter || 'Q1');
       const monthIndex = quarterIndex * 3;
+      const monthWidth = zoomLevel === 'month' ? cellWidth : cellWidth / 3;
 
       return {
-        left: monthIndex * cellWidth,
-        width: cellWidth * 3, // Default 3 months
+        left: monthIndex * monthWidth,
+        width: monthWidth * 3,
       };
     },
-    [cellWidth, currentYear]
+    [cellWidth, currentYear, zoomLevel]
   );
 
   // Handle drag end
@@ -178,13 +425,11 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
       setActiveDrag(null);
       if (!timelineRef.current) return;
 
-      const bounds = timelineRef.current.getBoundingClientRect();
-      const pixelsPerMonth = cellWidth;
-      const monthsMoved = Math.round(info.offset.x / pixelsPerMonth);
+      const monthWidth = zoomLevel === 'month' ? cellWidth : cellWidth / 3;
+      const monthsMoved = Math.round(info.offset.x / monthWidth);
 
       if (monthsMoved === 0) return;
 
-      // Calculate new dates
       const currentStart = init.plannedStartDate
         ? new Date(init.plannedStartDate)
         : new Date(currentYear, QUARTERS.indexOf(init.quarter || 'Q1') * 3, 1);
@@ -202,15 +447,16 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
         plannedEndDate: currentEnd.toISOString(),
       });
 
-      toast.success('Initiative moved');
+      toast.success(t('roadmap.toast.initiativeMoved', 'Inicjatywa przeniesiona'));
     },
-    [cellWidth, currentYear, onUpdateInitiative]
+    [cellWidth, currentYear, onUpdateInitiative, zoomLevel]
   );
 
   // Handle resize
   const handleResize = useCallback(
     (init: GanttInitiative, deltaX: number, edge: 'start' | 'end') => {
-      const monthsDelta = Math.round(deltaX / cellWidth);
+      const monthWidth = zoomLevel === 'month' ? cellWidth : cellWidth / 3;
+      const monthsDelta = Math.round(deltaX / monthWidth);
       if (monthsDelta === 0) return;
 
       const currentStart = init.plannedStartDate
@@ -222,7 +468,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
 
       if (edge === 'start') {
         currentStart.setMonth(currentStart.getMonth() + monthsDelta);
-        if (currentStart >= currentEnd) return; // Prevent invalid range
+        if (currentStart >= currentEnd) return;
       } else {
         currentEnd.setMonth(currentEnd.getMonth() + monthsDelta);
         if (currentEnd <= currentStart) return;
@@ -235,7 +481,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
         plannedEndDate: currentEnd.toISOString(),
       });
     },
-    [cellWidth, currentYear, onUpdateInitiative]
+    [cellWidth, currentYear, onUpdateInitiative, zoomLevel]
   );
 
   // Handle dependency creation
@@ -243,11 +489,17 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
     (initiativeId: string) => {
       if (!linkingFrom) {
         setLinkingFrom(initiativeId);
-        toast('Click another initiative to create dependency', { icon: '🔗' });
+        toast(
+          t(
+            'roadmap.toast.clickToCreateDependency',
+            'Kliknij inną inicjatywę, aby utworzyć zależność'
+          ),
+          { icon: '🔗' }
+        );
       } else if (linkingFrom !== initiativeId) {
         onCreateDependency?.(linkingFrom, initiativeId, 'FINISH_TO_START');
         setLinkingFrom(null);
-        toast.success('Dependency created');
+        toast.success(t('roadmap.toast.dependencyCreated', 'Zależność utworzona'));
       } else {
         setLinkingFrom(null);
       }
@@ -268,22 +520,87 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
   const timelineGroups = useMemo(() => {
     if (zoomLevel === 'month') {
       return months;
-    } else if (zoomLevel === 'quarter') {
-      const quarters = [];
-      for (let i = 0; i < months.length; i += 3) {
-        const q = (Math.floor(i / 3) % 4) + 1;
-        const year = months[i].year;
-        quarters.push({
-          index: i / 3,
-          label: `Q${q}`,
-          fullLabel: `Q${q} ${year}`,
-          width: cellWidth,
-        });
-      }
-      return quarters;
     }
-    return months;
+    const quarters = [];
+    for (let i = 0; i < months.length; i += 3) {
+      const q = (Math.floor(i / 3) % 4) + 1;
+      const year = months[i].year;
+      quarters.push({
+        index: i / 3,
+        label: `Q${q}`,
+        fullLabel: `Q${q} ${year}`,
+        width: cellWidth,
+      });
+    }
+    return quarters;
   }, [months, zoomLevel, cellWidth]);
+
+  // Row index map for dependency arrows
+  const initiativeRowIndex = useMemo(() => {
+    const map = new Map<string, number>();
+    initiatives.forEach((init, idx) => map.set(init.id, idx));
+    return map;
+  }, [initiatives]);
+
+  // Compute dependency lines for SVG overlay
+  const dependencyLines = useMemo(() => {
+    const lines: Array<{
+      fromId: string;
+      toId: string;
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+      isConflict: boolean;
+      isCritical: boolean;
+    }> = [];
+
+    const ROW_HEIGHT = 80; // matches h-20
+
+    initiatives.forEach((init) => {
+      if (!init.dependencies || init.dependencies.length === 0) return;
+      const toPos = getInitiativePosition(init as GanttInitiative);
+      const toRowIdx = initiativeRowIndex.get(init.id);
+      if (toRowIdx === undefined) return;
+
+      init.dependencies.forEach((dep: any) => {
+        const depId = typeof dep === 'string' ? dep : dep.initiativeId;
+        const depInit = initiatives.find((i) => i.id === depId);
+        if (!depInit) return;
+
+        const fromPos = getInitiativePosition(depInit as GanttInitiative);
+        const fromRowIdx = initiativeRowIndex.get(depId);
+        if (fromRowIdx === undefined) return;
+
+        const hasConflict = warningsByInitiative
+          .get(init.id)
+          ?.some((w) => w.type === 'schedule_conflict');
+        const isCritical =
+          showCriticalPath && criticalPathIds.has(init.id) && criticalPathIds.has(depId);
+
+        lines.push({
+          fromId: depId,
+          toId: init.id,
+          x1: fromPos.left + fromPos.width - scrollOffset,
+          y1: fromRowIdx * ROW_HEIGHT + ROW_HEIGHT / 2,
+          x2: toPos.left - scrollOffset,
+          y2: toRowIdx * ROW_HEIGHT + ROW_HEIGHT / 2,
+          isConflict: !!hasConflict,
+          isCritical,
+        });
+      });
+    });
+
+    return lines;
+  }, [
+    initiatives,
+    getInitiativePosition,
+    initiativeRowIndex,
+    scrollOffset,
+    warningsByInitiative,
+    showCriticalPath,
+    criticalPathIds,
+  ]);
 
   return (
     <div
@@ -291,64 +608,133 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
         isFullscreen ? 'fixed inset-4 z-50' : 'h-full'
       }`}
     >
-      {/* Toolbar */}
+      {/* ============================
+          D4.2: CLEAN TOOLBAR
+          ============================ */}
       <div className="shrink-0 flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
-        <div className="flex items-center gap-2">
+        {/* Left: Title & count */}
+        <div className="flex items-center gap-3">
           <h3 className="font-semibold text-navy-900 dark:text-white">Strategic Roadmap</h3>
-          <span className="text-xs text-slate-500 dark:text-slate-400">
+          <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
             {initiatives.length} initiatives
           </span>
+          {dependencyWarnings.length > 0 && showWarnings && (
+            <button
+              onClick={() => setShowWarnings((v) => !v)}
+              className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
+              title="Dependency warnings"
+            >
+              <AlertTriangle size={12} />
+              {dependencyWarnings.length} warning{dependencyWarnings.length !== 1 ? 's' : ''}
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Zoom Controls */}
+        {/* Right: Controls — clearly separated groups */}
+        <div className="flex items-center gap-3">
+          {/* Group 1: Zoom */}
           <div className="flex items-center bg-white dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700 p-0.5">
             <button
               onClick={() => setZoomLevel('month')}
-              className={`px-2 py-1 text-xs rounded-md transition-colors ${
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                 zoomLevel === 'month'
-                  ? 'bg-purple-600 text-white'
-                  : 'text-slate-600 dark:text-slate-400'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
               Month
             </button>
             <button
               onClick={() => setZoomLevel('quarter')}
-              className={`px-2 py-1 text-xs rounded-md transition-colors ${
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                 zoomLevel === 'quarter'
-                  ? 'bg-purple-600 text-white'
-                  : 'text-slate-600 dark:text-slate-400'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
               Quarter
             </button>
           </div>
 
-          {/* Scroll Controls */}
-          <button
-            onClick={scrollLeft}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <button
-            onClick={scrollRight}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
-          >
-            <ChevronRight size={16} />
-          </button>
+          {/* Separator */}
+          <div className="w-px h-5 bg-slate-200 dark:bg-navy-700" />
 
-          {/* Fullscreen Toggle */}
-          <button
-            onClick={toggleFullscreen}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
-            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-          >
-            {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-          </button>
+          {/* Group 2: Navigation */}
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={scrollLeft}
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              title="Scroll left"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={scrollRight}
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              title="Scroll right"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+          {/* Separator */}
+          <div className="w-px h-5 bg-slate-200 dark:bg-navy-700" />
+
+          {/* Group 3: View toggles */}
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => setShowCriticalPath((v) => !v)}
+              className={`p-1.5 rounded-lg transition-colors ${
+                showCriticalPath
+                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
+              }`}
+              title={showCriticalPath ? 'Hide critical path' : 'Show critical path'}
+            >
+              <Route size={16} />
+            </button>
+            <button
+              onClick={toggleFullscreen}
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            >
+              {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* D4.1: Warning banner */}
+      {showWarnings && dependencyWarnings.length > 0 && (
+        <div className="shrink-0 px-4 py-2 bg-amber-50 dark:bg-amber-900/10 border-b border-amber-200 dark:border-amber-800/30">
+          <div className="flex items-start gap-2">
+            <AlertTriangle size={14} className="text-amber-500 mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-amber-800 dark:text-amber-300 mb-1">
+                Schedule Warnings
+              </p>
+              <div className="space-y-0.5">
+                {dependencyWarnings.slice(0, 3).map((w, i) => (
+                  <p key={i} className="text-xs text-amber-700 dark:text-amber-400 truncate">
+                    {w.severity === 'error' ? '⛔' : '⚠️'} {w.message}
+                  </p>
+                ))}
+                {dependencyWarnings.length > 3 && (
+                  <p className="text-xs text-amber-600 dark:text-amber-500">
+                    +{dependencyWarnings.length - 3} more warnings
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => setShowWarnings(false)}
+              className="p-0.5 text-amber-500 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Header Row */}
       <div className="flex border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
@@ -376,7 +762,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto relative">
         {initiatives.length === 0 ? (
           <div className="flex items-center justify-center h-48 text-slate-400 dark:text-slate-500">
             <div className="text-center">
@@ -386,191 +772,328 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
             </div>
           </div>
         ) : (
-          initiatives.map((init: GanttInitiative) => {
-            const position = getInitiativePosition(init);
-            const barColor = AXIS_COLORS[init.axis] || 'bg-slate-500';
-            const statusBorder = STATUS_COLORS[init.status || ''] || '';
-            const isActive = activeDrag === init.id || hoveredInitiative === init.id;
-            const isLinking = linkingFrom === init.id;
-
-            return (
-              <div
-                key={init.id}
-                className={`flex border-b border-slate-100 dark:border-navy-700 group hover:bg-slate-50 dark:hover:bg-navy-800/20/50 dark:hover:bg-white/5 transition-colors ${
-                  isLinking ? 'bg-purple-50 dark:bg-purple-900/10' : ''
-                }`}
-              >
-                {/* Info Column */}
-                <div
-                  className="w-72 min-w-[288px] p-3 text-sm border-r border-slate-200 dark:border-navy-700 z-10 bg-inherit relative shrink-0 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5"
-                  onClick={() => onInitiativeClick?.(init as FullInitiative)}
+          <>
+            {/* D5.1: SVG overlay for dependency arrows */}
+            <svg
+              ref={svgRef}
+              className="absolute inset-0 pointer-events-none z-30"
+              style={{
+                left: 288, // w-72 offset
+                width: `calc(100% - 288px)`,
+                height: initiatives.length * 80,
+              }}
+            >
+              <defs>
+                <marker
+                  id="arrowhead"
+                  markerWidth="8"
+                  markerHeight="6"
+                  refX="8"
+                  refY="3"
+                  orient="auto"
                 >
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${barColor}`} />
-                    <div
-                      className="font-semibold text-navy-900 dark:text-white truncate flex-1"
-                      title={init.name}
-                    >
-                      {init.name}
-                    </div>
-                    {onCreateDependency && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLinkClick(init.id);
-                        }}
-                        className={`p-1 rounded transition-colors ${
-                          isLinking
-                            ? 'bg-purple-600 text-white'
-                            : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
-                        }`}
-                        title="Create dependency"
-                      >
-                        <Link size={12} />
-                      </button>
-                    )}
-                  </div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
-                    <span className="capitalize">{init.axis}</span>
-                    <span>•</span>
-                    <span
-                      className={`px-1.5 py-0.5 rounded ${
-                        init.priority === 'high' || init.priority === 'critical'
-                          ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                          : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                      }`}
-                    >
-                      {init.priority}
-                    </span>
-                    {(init.status === 'BLOCKED' || init.status === 'on_hold') && (
-                      <AlertTriangle size={10} className="text-red-500" />
-                    )}
-                  </div>
-                </div>
-
-                {/* Timeline Container */}
-                <div
-                  ref={(idx) => {
-                    if (init.id === initiatives[0]?.id) timelineRef.current = idx as any;
-                  }}
-                  className="flex-1 relative h-20 overflow-hidden"
-                  style={{ transform: `translateX(-${scrollOffset}px)` }}
+                  <polygon points="0 0, 8 3, 0 6" fill="#94a3b8" />
+                </marker>
+                <marker
+                  id="arrowhead-warning"
+                  markerWidth="8"
+                  markerHeight="6"
+                  refX="8"
+                  refY="3"
+                  orient="auto"
                 >
-                  {/* Background Grid Lines */}
+                  <polygon points="0 0, 8 3, 0 6" fill="#f59e0b" />
+                </marker>
+                <marker
+                  id="arrowhead-critical"
+                  markerWidth="8"
+                  markerHeight="6"
+                  refX="8"
+                  refY="3"
+                  orient="auto"
+                >
+                  <polygon points="0 0, 8 3, 0 6" fill="#ef4444" />
+                </marker>
+              </defs>
+              {dependencyLines.map((line, idx) => {
+                const isSameRow = line.y1 === line.y2;
+                const midX = (line.x1 + line.x2) / 2;
+                const curveOffset = isSameRow ? 0 : (line.y2 - line.y1) * 0.3;
+
+                const stroke = line.isCritical
+                  ? '#ef4444'
+                  : line.isConflict
+                    ? '#f59e0b'
+                    : '#94a3b8';
+                const marker = line.isCritical
+                  ? 'url(#arrowhead-critical)'
+                  : line.isConflict
+                    ? 'url(#arrowhead-warning)'
+                    : 'url(#arrowhead)';
+                const strokeWidth = line.isCritical ? 2.5 : 1.5;
+                const dashArray = line.isConflict ? '6 3' : 'none';
+
+                return (
+                  <path
+                    key={idx}
+                    d={`M ${line.x1} ${line.y1} C ${midX} ${line.y1 + curveOffset}, ${midX} ${line.y2 - curveOffset}, ${line.x2} ${line.y2}`}
+                    fill="none"
+                    stroke={stroke}
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={dashArray}
+                    markerEnd={marker}
+                    opacity={0.7}
+                  />
+                );
+              })}
+            </svg>
+
+            {/* Initiative rows */}
+            {initiatives.map((init: GanttInitiative) => {
+              const position = getInitiativePosition(init);
+              const barColor = AXIS_COLORS[init.axis] || 'bg-slate-500';
+              const statusBorder = STATUS_COLORS[init.status || ''] || '';
+              const isActive = activeDrag === init.id || hoveredInitiative === init.id;
+              const isLinking = linkingFrom === init.id;
+              const isCritical = showCriticalPath && criticalPathIds.has(init.id);
+              const warnings = warningsByInitiative.get(init.id) || [];
+              const hasWarning = warnings.length > 0;
+
+              return (
+                <div
+                  key={init.id}
+                  className={`flex border-b border-slate-100 dark:border-navy-700 group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
+                    isLinking ? 'bg-purple-50 dark:bg-purple-900/10' : ''
+                  } ${isCritical ? 'bg-red-50/50 dark:bg-red-900/5' : ''}`}
+                >
+                  {/* Info Column */}
                   <div
-                    className="absolute inset-0 flex pointer-events-none"
-                    style={{ width: timelineGroups.length * cellWidth }}
+                    className="w-72 min-w-[288px] p-3 text-sm border-r border-slate-200 dark:border-navy-700 z-10 bg-inherit relative shrink-0 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5"
+                    onClick={() => onInitiativeClick?.(init as FullInitiative)}
                   >
-                    {timelineGroups.map((_: any, idx: number) => (
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${barColor} shrink-0`} />
+                      {/* D4.1: Warning indicator */}
+                      {hasWarning && (
+                        <div className="shrink-0" title={warnings.map((w) => w.message).join('\n')}>
+                          <AlertTriangle
+                            size={12}
+                            className={
+                              warnings.some((w) => w.severity === 'error')
+                                ? 'text-red-500'
+                                : 'text-amber-500'
+                            }
+                          />
+                        </div>
+                      )}
+                      {/* D5.1: Critical path indicator */}
+                      {isCritical && (
+                        <div className="shrink-0" title="On critical path">
+                          <Route size={12} className="text-red-500" />
+                        </div>
+                      )}
                       <div
-                        key={idx}
-                        className="border-r border-slate-100 dark:border-navy-700 last:border-r-0"
-                        style={{ width: cellWidth }}
-                      />
-                    ))}
+                        className="font-semibold text-navy-900 dark:text-white truncate flex-1"
+                        title={init.name}
+                      >
+                        {init.name}
+                      </div>
+                      {onCreateDependency && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLinkClick(init.id);
+                          }}
+                          className={`p-1 rounded transition-colors shrink-0 ${
+                            isLinking
+                              ? 'bg-purple-600 text-white'
+                              : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
+                          }`}
+                          title="Create dependency"
+                        >
+                          <Link size={12} />
+                        </button>
+                      )}
+                      {/* D4.4: PM perspective check */}
+                      {onPMPerspectiveCheck && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onPMPerspectiveCheck(init.id);
+                          }}
+                          className="p-1 rounded text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                          title="PM Perspective Check"
+                        >
+                          <Eye size={12} />
+                        </button>
+                      )}
+                      {/* D4.5: Open chat for this initiative */}
+                      {onOpenScheduleChat && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenScheduleChat(init.id);
+                          }}
+                          className="p-1 rounded text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                          title="Chat about this initiative"
+                        >
+                          <MessageSquare size={12} />
+                        </button>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+                      <span className="capitalize">{init.axis}</span>
+                      <span>•</span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded ${
+                          init.priority === 'high' || init.priority === 'critical'
+                            ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                            : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                        }`}
+                      >
+                        {init.priority}
+                      </span>
+                      {typeof init.readinessPercent === 'number' && (
+                        <>
+                          <span>•</span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded ${
+                              init.readinessPercent >= 80
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                : init.readinessPercent >= 50
+                                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                  : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+                            }`}
+                            title={
+                              init.missingReadiness?.length
+                                ? `Missing: ${init.missingReadiness.join(', ')}`
+                                : 'Readiness'
+                            }
+                          >
+                            {init.readinessPercent}%
+                          </span>
+                        </>
+                      )}
+                      {!!init.conflictCount && init.conflictCount > 0 && (
+                        <>
+                          <span>•</span>
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
+                            title="Conflicts detected"
+                          >
+                            <AlertTriangle size={10} className="text-rose-500" />
+                            {init.conflictCount}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Draggable Bar */}
-                  <motion.div
-                    drag="x"
-                    dragMomentum={false}
-                    dragElastic={0}
-                    dragConstraints={{
-                      left: 0,
-                      right: timelineGroups.length * cellWidth - position.width,
+                  {/* Timeline Container */}
+                  <div
+                    ref={(el) => {
+                      if (init.id === initiatives[0]?.id) timelineRef.current = el as any;
                     }}
-                    style={{
-                      position: 'absolute',
-                      left: position.left,
-                      width: position.width,
-                      top: '20%',
-                      bottom: '20%',
-                      zIndex: isActive ? 50 : 10,
-                    }}
-                    onDragStart={() => setActiveDrag(init.id)}
-                    onDragEnd={(e, info) => handleDragEnd(init, info)}
-                    onHoverStart={() => setHoveredInitiative(init.id)}
-                    onHoverEnd={() => setHoveredInitiative(null)}
-                    className={`rounded-lg shadow-md cursor-grab active:cursor-grabbing flex items-center text-white ${barColor} ${statusBorder} text-xs font-medium overflow-hidden ${
-                      isActive ? 'ring-2 ring-white ring-offset-2' : ''
-                    }`}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
+                    className="flex-1 relative h-20 overflow-hidden"
+                    style={{ transform: `translateX(-${scrollOffset}px)` }}
                   >
-                    {/* Resize Handle Start */}
+                    {/* Background Grid Lines */}
                     <div
-                      className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        setResizing({ id: init.id, edge: 'start' });
-                      }}
+                      className="absolute inset-0 flex pointer-events-none"
+                      style={{ width: timelineGroups.length * cellWidth }}
                     >
-                      <div className="w-0.5 h-4 bg-white/50 rounded" />
+                      {timelineGroups.map((_: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="border-r border-slate-100 dark:border-navy-700 last:border-r-0"
+                          style={{ width: cellWidth }}
+                        />
+                      ))}
                     </div>
 
-                    {/* Content */}
-                    <div className="flex items-center gap-1 px-3 flex-1 min-w-0">
-                      <GripVertical size={12} className="opacity-50 shrink-0" />
-                      <span className="truncate">{init.name}</span>
-                    </div>
-
-                    {/* Resize Handle End */}
-                    <div
-                      className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        setResizing({ id: init.id, edge: 'end' });
+                    {/* Draggable Bar */}
+                    <motion.div
+                      drag="x"
+                      dragMomentum={false}
+                      dragElastic={0}
+                      dragConstraints={{
+                        left: 0,
+                        right: timelineGroups.length * cellWidth - position.width,
                       }}
+                      style={{
+                        position: 'absolute',
+                        left: position.left,
+                        width: position.width,
+                        top: '20%',
+                        bottom: '20%',
+                        zIndex: isActive ? 50 : 10,
+                      }}
+                      onDragStart={() => setActiveDrag(init.id)}
+                      onDragEnd={(e, info) => handleDragEnd(init, info)}
+                      onHoverStart={() => setHoveredInitiative(init.id)}
+                      onHoverEnd={() => setHoveredInitiative(null)}
+                      className={`rounded-lg shadow-md cursor-grab active:cursor-grabbing flex items-center text-white ${barColor} ${statusBorder} text-xs font-medium overflow-hidden ${
+                        isActive ? 'ring-2 ring-white ring-offset-2' : ''
+                      } ${isCritical ? 'ring-2 ring-red-500 ring-offset-1' : ''} ${
+                        hasWarning ? 'ring-1 ring-amber-400' : ''
+                      }`}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
                     >
-                      <div className="w-0.5 h-4 bg-white/50 rounded" />
-                    </div>
-                  </motion.div>
+                      {/* D4.1: Warning badge on bar */}
+                      {hasWarning && (
+                        <div
+                          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center z-20"
+                          title={warnings.map((w) => w.message).join('\n')}
+                        >
+                          <AlertTriangle size={10} className="text-white" />
+                        </div>
+                      )}
 
-                  {/* Dependency Arrows - simplified visualization */}
-                  {init.dependencies?.map((dep: any) => {
-                    const depInit = initiatives.find((i) => i.id === dep.initiativeId);
-                    if (!depInit) return null;
-                    const depPos = getInitiativePosition(depInit as GanttInitiative);
+                      {!!init.conflictCount && init.conflictCount > 0 && !hasWarning && (
+                        <div className="absolute right-2 top-2 w-5 h-5 rounded-full bg-black/25 flex items-center justify-center text-[10px] font-bold">
+                          {init.conflictCount}
+                        </div>
+                      )}
 
-                    return (
-                      <svg
-                        key={dep.initiativeId}
-                        className="absolute pointer-events-none"
-                        style={{
-                          left: depPos.left + depPos.width,
-                          top: '50%',
-                          width: position.left - (depPos.left + depPos.width),
-                          height: 20,
-                          transform: 'translateY(-50%)',
+                      {/* Resize Handle Start */}
+                      <div
+                        className="absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          setResizing({ id: init.id, edge: 'start' });
                         }}
                       >
-                        <line
-                          x1="0"
-                          y1="10"
-                          x2="100%"
-                          y2="10"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeDasharray="4 2"
-                          className="text-slate-300 dark:text-slate-600"
-                        />
-                        <polygon
-                          points="100,5 90,10 100,15"
-                          fill="currentColor"
-                          className="text-slate-400 dark:text-slate-500"
-                        />
-                      </svg>
-                    );
-                  })}
+                        <div className="w-0.5 h-4 bg-white/60 rounded" />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex items-center gap-1 px-3 flex-1 min-w-0">
+                        <GripVertical size={12} className="opacity-50 shrink-0" />
+                        <span className="truncate">{init.name}</span>
+                      </div>
+
+                      {/* Resize Handle End */}
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          setResizing({ id: init.id, edge: 'end' });
+                        }}
+                      >
+                        <div className="w-0.5 h-4 bg-white/60 rounded" />
+                      </div>
+                    </motion.div>
+                  </div>
                 </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </>
         )}
       </div>
 
       {/* Footer with legend */}
-      <div className="shrink-0 px-4 py-2 bg-slate-50 dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700 flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+      <div className="shrink-0 px-4 py-2 bg-slate-50 dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700 flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
         <span className="font-medium">Legend:</span>
         {Object.entries(AXIS_COLORS)
           .slice(0, 5)
@@ -580,6 +1103,24 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
               <span className="capitalize">{axis.replace(/([A-Z])/g, ' $1').trim()}</span>
             </div>
           ))}
+        {showCriticalPath && (
+          <>
+            <div className="w-px h-3 bg-slate-300 dark:bg-navy-600" />
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded ring-2 ring-red-500 bg-red-500/20" />
+              <span>Critical Path</span>
+            </div>
+          </>
+        )}
+        {dependencyWarnings.length > 0 && (
+          <>
+            <div className="w-px h-3 bg-slate-300 dark:bg-navy-600" />
+            <div className="flex items-center gap-1.5">
+              <AlertTriangle size={12} className="text-amber-500" />
+              <span>Schedule Warning</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Fullscreen overlay */}

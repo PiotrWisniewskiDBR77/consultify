@@ -258,7 +258,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
             onChange={(e) => handleImport(e.target.files)}
           />
           <button
-            onClick={() => toast('Create template UI coming soon')}
+            onClick={() => toast('Template creation is available through the API.', { icon: 'ℹ️' })}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
           >
             <Plus size={18} />
@@ -317,7 +317,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
             Get started by creating your first playbook template.
           </p>
           <button
-            onClick={() => toast('Create template UI coming soon')}
+            onClick={() => toast('Template creation is available through the API.', { icon: 'ℹ️' })}
             className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
           >
             <Plus size={18} />
@@ -377,7 +377,9 @@ export const PlaybookTemplatesListView: React.FC = () => {
                       {/* View/Edit */}
                       {template.status === TemplateStatus.DRAFT ? (
                         <button
-                          onClick={() => toast('Edit UI coming soon')}
+                          onClick={() =>
+                            toast('Edit this template through the API.', { icon: 'ℹ️' })
+                          }
                           title="Edit"
                           className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/20 rounded transition"
                         >
@@ -385,7 +387,9 @@ export const PlaybookTemplatesListView: React.FC = () => {
                         </button>
                       ) : (
                         <button
-                          onClick={() => toast('Preview UI coming soon')}
+                          onClick={() =>
+                            toast('Preview is available after generating a report.', { icon: 'ℹ️' })
+                          }
                           title="View"
                           className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/20 rounded transition"
                         >

@@ -16,6 +16,8 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import AssessmentInitiativeService from '../services/assessmentInitiativeService.js';
+import { getAssessmentRoles } from '../services/assessmentPermissionService.js';
+import NotificationService from '../services/notificationService.js';
 import { hasPermission } from '../services/permissionService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { assessmentAuditLogger } from '../utils/AssessmentAuditLogger.js';
@@ -214,6 +216,55 @@ const ensurePermission = async (
 const requireDoD = (assessment: AssessmentRow): boolean => {
   return (assessment.completion_percent || 0) >= 100 && (assessment.confidence_avg || 0) >= 3;
 };
+
+async function notifyAssessmentTeam(params: {
+  assessmentId: string;
+  organizationId: string;
+  actorId: string;
+  type: string;
+  title: string;
+  body: string;
+  actionUrl?: string;
+  audience?: 'approvers' | 'team';
+}) {
+  try {
+    const roles = await getAssessmentRoles(
+      String(params.assessmentId),
+      String(params.organizationId)
+    );
+    const unique = new Set<string>();
+    for (const r of roles || []) {
+      const role = String((r as any).role || '').toLowerCase();
+      if (params.audience === 'approvers') {
+        if (role !== 'admin' && role !== 'manager') continue;
+      } else {
+        if (role === 'viewer') continue;
+      }
+      const uid = String((r as any).userId || '');
+      if (!uid || uid === String(params.actorId)) continue;
+      unique.add(uid);
+    }
+
+    await Promise.all(
+      Array.from(unique).map((userId) =>
+        NotificationService.send({
+          userId,
+          organizationId: String(params.organizationId),
+          type: params.type,
+          title: params.title,
+          body: params.body,
+          entityType: 'assessment',
+          entityId: String(params.assessmentId),
+          actionUrl: params.actionUrl,
+          actorId: String(params.actorId),
+          priority: 'normal',
+        }).catch(() => null)
+      )
+    );
+  } catch {
+    // non-blocking
+  }
+}
 
 // Check if report is approved
 const isReportApproved = async (assessmentId: string): Promise<boolean> => {
@@ -1043,6 +1094,17 @@ export class AssessmentController {
         decisionId,
       });
 
+      notifyAssessmentTeam({
+        assessmentId,
+        organizationId: user.organizationId,
+        actorId: user.id,
+        type: 'ASSESSMENT_REVIEW_REQUESTED',
+        title: 'Assessment submitted for review',
+        body: `Assessment "${assessment.name}" was submitted for review.`,
+        actionUrl: `/assessment/${String(assessment.assessment_type || 'drd').toLowerCase()}/${assessmentId}`,
+        audience: 'approvers',
+      }).catch(() => {});
+
       res.json({ id: assessmentId, status: 'REVIEW', backendStatus: 'IN_REVIEW' });
     }
   );
@@ -1141,6 +1203,17 @@ export class AssessmentController {
         reportId: report.id,
       });
 
+      notifyAssessmentTeam({
+        assessmentId,
+        organizationId: user.organizationId,
+        actorId: user.id,
+        type: 'ASSESSMENT_REPORT_APPROVED',
+        title: 'Report approved',
+        body: `Report for assessment "${assessment.name}" was approved.`,
+        actionUrl: `/assessment/${String(assessment.assessment_type || 'drd').toLowerCase()}/${assessmentId}`,
+        audience: 'team',
+      }).catch(() => {});
+
       res.json({
         id: assessmentId,
         status: 'REVIEW',
@@ -1229,6 +1302,17 @@ export class AssessmentController {
         decisionId,
       });
 
+      notifyAssessmentTeam({
+        assessmentId,
+        organizationId: user.organizationId,
+        actorId: user.id,
+        type: 'ASSESSMENT_APPROVED',
+        title: 'Assessment approved',
+        body: `Assessment "${assessment.name}" has been approved.`,
+        actionUrl: `/assessment/${String(assessment.assessment_type || 'drd').toLowerCase()}/${assessmentId}`,
+        audience: 'team',
+      }).catch(() => {});
+
       res.json({ id: assessmentId, status: 'APPROVED', backendStatus: 'APPROVED' });
     }
   );
@@ -1305,6 +1389,17 @@ export class AssessmentController {
         decisionId,
         comment,
       });
+
+      notifyAssessmentTeam({
+        assessmentId,
+        organizationId: user.organizationId,
+        actorId: user.id,
+        type: 'ASSESSMENT_SENT_BACK',
+        title: 'Assessment sent back to draft',
+        body: `Assessment "${assessment.name}" was sent back to draft. Comment: ${String(comment)}`,
+        actionUrl: `/assessment/${String(assessment.assessment_type || 'drd').toLowerCase()}/${assessmentId}`,
+        audience: 'team',
+      }).catch(() => {});
 
       res.json({ id: assessmentId, status: 'DRAFT', backendStatus: 'DRAFT' });
     }

@@ -78,13 +78,13 @@ router.post(
       const notificationType = isCritical ? 'CLIENT_TICKET' : 'USER_FEEDBACK';
       const notificationSeverity = isCritical ? 'WARNING' : 'INFO';
 
-      await (NotificationService as any).create({
+      await NotificationService.send({
         userId: userId,
         organizationId: 'system',
-        projectId: null,
         type: notificationType,
-        severity: notificationSeverity,
+        severity: notificationSeverity as 'INFO' | 'WARNING' | 'CRITICAL',
         title: isCritical ? `Critical Feedback: ${type}` : `New Feedback: ${type}`,
+        body: message.substring(0, 200) + (message.length > 200 ? '...' : ''),
         message: message.substring(0, 200) + (message.length > 200 ? '...' : ''),
         relatedObjectType: 'FEEDBACK',
         relatedObjectId: id,
@@ -196,13 +196,13 @@ router.post(
 
     if (feedback && feedback.user_id) {
       try {
-        await (NotificationService as any).create({
+        await NotificationService.send({
           userId: feedback.user_id,
           organizationId: 'system',
-          projectId: null,
           type: 'FEEDBACK_RESPONSE',
           severity: 'INFO',
           title: 'Odpowiedź na Twój feedback',
+          body: response.substring(0, 200) + (response.length > 200 ? '...' : ''),
           message: response.substring(0, 200) + (response.length > 200 ? '...' : ''),
           relatedObjectType: 'FEEDBACK',
           relatedObjectId: id,
@@ -320,13 +320,13 @@ router.post(
     // If low rating, create notification for admins
     if (rating <= 2 && comment) {
       try {
-        await (NotificationService as any).create({
+        await NotificationService.send({
           userId: 'admin',
           organizationId: 'system',
-          projectId: null,
           type: 'LOW_PULSE_ALERT',
           severity: 'WARNING',
           title: `Low Pulse Rating: ${rating}/5`,
+          body: comment.substring(0, 200),
           message: comment.substring(0, 200),
           relatedObjectType: 'PULSE',
           relatedObjectId: id,
@@ -436,13 +436,13 @@ router.post(
 
     // Create notification for product team
     try {
-      await (NotificationService as any).create({
+      await NotificationService.send({
         userId: 'product',
         organizationId: 'system',
-        projectId: null,
         type: 'FEATURE_REQUEST',
         severity: impact === 'high' ? 'WARNING' : 'INFO',
         title: `New Feature Request: ${featureName}`,
+        body: description.substring(0, 200),
         message: description.substring(0, 200),
         relatedObjectType: 'FEATURE',
         relatedObjectId: id,

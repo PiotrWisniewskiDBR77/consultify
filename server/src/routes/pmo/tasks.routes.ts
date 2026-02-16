@@ -59,6 +59,13 @@ router.get(
 router.post('/', validateBody(CreateTaskSchema), TaskController.createTask);
 
 /**
+ * GET /api/tasks/search
+ * Search tasks by title (for dependency linking)
+ * NOTE: Must be before /:id to avoid Express matching "search" as an id
+ */
+router.get('/search', TaskController.searchTasks);
+
+/**
  * GET /api/tasks/:id
  * Get single task by ID
  */
@@ -197,5 +204,27 @@ router.post('/:id/move', TaskController.moveTask);
  * Get blocking decision details
  */
 router.get('/:id/blocking-decision', TaskController.getBlockingDecision);
+
+// ==========================================
+// TASK DEPENDENCIES (Gantt-style)
+// ==========================================
+
+/**
+ * GET /api/tasks/:id/dependencies
+ * Get all dependencies for a task
+ */
+router.get('/:id/dependencies', TaskController.getTaskDependencies);
+
+/**
+ * POST /api/tasks/:id/dependencies
+ * Add dependency between tasks
+ */
+router.post('/:id/dependencies', TaskController.addTaskDependency);
+
+/**
+ * DELETE /api/tasks/:id/dependencies/:depId
+ * Remove a dependency
+ */
+router.delete('/:id/dependencies/:depId', TaskController.removeTaskDependency);
 
 export default router;

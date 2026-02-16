@@ -3,16 +3,63 @@
  * Renders user and AI messages with hover actions, artifacts, and thinking blocks
  */
 
-import { Bot, ChevronDown, ChevronUp, FileCode, Sparkles, User } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { Bot, Check, ChevronDown, ChevronUp, Copy, FileCode, Sparkles, User } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { atomOneDark, atomOneLight } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import remarkGfm from 'remark-gfm';
 
 import { Artifact, ChatMessage, MessageFeedback } from '../../../types';
 import { CitationList } from '../CitationList';
 import { MessageActions } from './MessageActions';
 import { ThinkingBlock } from './ThinkingBlock';
+
+const MarkdownCodeBlock: React.FC<{ code: string; language?: string }> = ({ code, language }) => {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+
+  const lang = (language || '').trim() || 'text';
+  const trimmed = code.replace(/\n$/, '');
+  const isDark =
+    typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : true;
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(trimmed);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignore
+    }
+  }, [trimmed]);
+
+  return (
+    <div className="my-2 rounded-lg overflow-hidden border border-slate-200 dark:border-navy-800 bg-slate-900 dark:bg-navy-950">
+      <div className="flex items-center justify-between px-3 py-2 bg-slate-800 dark:bg-navy-900 border-b border-slate-700 dark:border-navy-800">
+        <span className="text-[11px] font-mono text-slate-300/80 uppercase">{lang}</span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] text-slate-300/80 hover:text-slate-100 hover:bg-white/10 transition-colors"
+          title={t('code.copy', 'Copy')}
+        >
+          {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+          {copied ? t('code.copied', 'Copied!') : t('code.copy', 'Copy')}
+        </button>
+      </div>
+      <SyntaxHighlighter
+        language={lang === 'text' ? undefined : lang}
+        style={isDark ? atomOneDark : atomOneLight}
+        customStyle={{ margin: 0, padding: '0.75rem', fontSize: '0.75rem', lineHeight: '1.5' }}
+        showLineNumbers={false}
+        wrapLongLines={false}
+      >
+        {trimmed}
+      </SyntaxHighlighter>
+    </div>
+  );
+};
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -42,7 +89,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
-  const [isHovered, setIsHovered] = useState(false);
   const [showFullContent, setShowFullContent] = useState(false);
 
   const isUser = message.role === 'user';
@@ -50,6 +96,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const hasArtifacts = message.artifacts && message.artifacts.length > 0;
   const hasThinkingSteps = message.thinkingSteps && message.thinkingSteps.length > 0;
   const hasCitations = message.citations && message.citations.length > 0;
+  const attachments = useMemo(() => {
+    const raw = (message as any)?.metadata?.attachments;
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((a: any) => ({
+        docId: a?.docId ? String(a.docId) : '',
+        filename: a?.filename ? String(a.filename) : '',
+      }))
+      .filter((a: any) => a.docId || a.filename);
+  }, [message]);
 
   // Truncate long messages
   const MAX_PREVIEW_LENGTH = 2000;
@@ -85,8 +141,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         ${isUser ? 'flex-row-reverse' : 'flex-row'}
         ${className}
       `}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Avatar */}
       <div
@@ -143,6 +197,26 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             ${isUser ? 'text-white' : 'prose prose-sm dark:prose-invert max-w-none'}
           `}
           >
+            {attachments.length > 0 && (
+              <div
+                className={`mb-2 flex flex-wrap gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}
+              >
+                {attachments.slice(0, 8).map((a: any, idx: number) => (
+                  <span
+                    key={`${a.docId || a.filename}-${idx}`}
+                    title={a.docId ? `doc: ${a.docId}` : a.filename}
+                    className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs ${
+                      isUser
+                        ? 'bg-white/15 text-white'
+                        : 'bg-white/70 dark:bg-navy-700 text-slate-700 dark:text-slate-200 border border-slate-200/70 dark:border-navy-600'
+                    }`}
+                  >
+                    <FileCode size={12} className={isUser ? 'text-white/80' : ''} />
+                    <span className="max-w-[240px] truncate">{a.filename || 'Attachment'}</span>
+                  </span>
+                ))}
+              </div>
+            )}
             {isUser ? (
               <p className="whitespace-pre-wrap">{message.content}</p>
             ) : (
@@ -150,8 +224,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 remarkPlugins={[remarkGfm]}
                 components={{
                   // Custom code rendering
-                  code: ({ className: codeClassName, children, ...props }: any) => {
-                    const isInline = !props.node?.properties?.className?.includes('language-');
+                  code: ({ inline, className: codeClassName, children }: any) => {
+                    const isInline = !!inline;
                     if (isInline) {
                       return (
                         <code className="px-1 py-0.5 bg-slate-200 dark:bg-navy-700 rounded text-brand dark:text-brand-light text-xs font-mono">
@@ -159,11 +233,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         </code>
                       );
                     }
-                    return (
-                      <pre className="bg-slate-900 dark:bg-navy-950 text-slate-100 p-3 rounded-lg overflow-x-auto text-xs my-2">
-                        <code className={codeClassName}>{children}</code>
-                      </pre>
-                    );
+                    const match = /language-([\w-]+)/.exec(codeClassName || '');
+                    const lang = match?.[1] || 'text';
+                    const code = String(children ?? '');
+                    return <MarkdownCodeBlock code={code} language={lang} />;
                   },
                   // Custom link rendering
                   a: ({ href, children }) => (
@@ -210,21 +283,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             </button>
           )}
 
-          {/* Streaming indicator */}
+          {/* Streaming indicator — inline cursor */}
           {isStreaming && isAI && (
-            <span className="inline-flex items-center gap-1 mt-2">
-              <span
-                className="w-2 h-2 bg-brand rounded-full animate-bounce"
-                style={{ animationDelay: '0ms' }}
-              />
-              <span
-                className="w-2 h-2 bg-brand rounded-full animate-bounce"
-                style={{ animationDelay: '150ms' }}
-              />
-              <span
-                className="w-2 h-2 bg-brand rounded-full animate-bounce"
-                style={{ animationDelay: '300ms' }}
-              />
+            <span className="inline-flex items-center gap-0.5 ml-1 align-baseline">
+              <span className="w-[3px] h-4 bg-brand rounded-sm animate-pulse" />
             </span>
           )}
         </div>
@@ -270,7 +332,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           className={`
           absolute top-2 transition-opacity duration-200
           ${isUser ? 'left-0' : 'right-0'}
-          ${isHovered || isStreaming ? 'opacity-100' : 'opacity-0'}
+          opacity-100 md:opacity-0 md:group-hover:opacity-100
         `}
         >
           {!isStreaming && (

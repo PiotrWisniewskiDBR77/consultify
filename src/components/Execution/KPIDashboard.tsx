@@ -102,89 +102,35 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
   const [selectedPeriod, setSelectedPeriod] = useState<string>(
     new Date().toISOString().slice(0, 7)
   );
+  const [localKPIs, setLocalKPIs] = useState<KPI[]>(kpis);
+  const [isLoading, setIsLoading] = useState(!kpis.length);
 
-  // Mock KPIs
-  const [localKPIs] = useState<KPI[]>([
-    {
-      id: 'kpi-1',
-      name: 'Initiative Completion Rate',
-      description: 'Percentage of initiatives completed on schedule',
-      category: 'DELIVERY',
-      status: 'ON_TARGET',
-      target: 85,
-      actual: 88,
-      unit: '%',
-      trend: 'UP',
-      lastUpdated: '2024-12-28',
-      history: [
-        { date: '2024-10', value: 75 },
-        { date: '2024-11', value: 82 },
-        { date: '2024-12', value: 88 },
-      ],
-    },
-    {
-      id: 'kpi-2',
-      name: 'Budget Variance',
-      description: 'Actual spending vs planned budget',
-      category: 'FINANCIAL',
-      status: 'AT_RISK',
-      target: 0,
-      actual: 8,
-      unit: '%',
-      trend: 'UP',
-      lastUpdated: '2024-12-28',
-      linkedInitiativeName: 'Digital Process Automation',
-    },
-    {
-      id: 'kpi-3',
-      name: 'User Adoption Rate',
-      description: 'Percentage of target users actively using new systems',
-      category: 'ADOPTION',
-      status: 'OFF_TARGET',
-      target: 70,
-      actual: 52,
-      unit: '%',
-      trend: 'STABLE',
-      lastUpdated: '2024-12-28',
-    },
-    {
-      id: 'kpi-4',
-      name: 'Defect Rate',
-      description: 'Number of critical defects per release',
-      category: 'QUALITY',
-      status: 'ON_TARGET',
-      target: 5,
-      actual: 3,
-      unit: 'defects',
-      trend: 'DOWN',
-      lastUpdated: '2024-12-28',
-    },
-    {
-      id: 'kpi-5',
-      name: 'Stakeholder Satisfaction',
-      description: 'Average satisfaction score from surveys',
-      category: 'SATISFACTION',
-      status: 'ON_TARGET',
-      target: 4.0,
-      actual: 4.2,
-      unit: '/5',
-      trend: 'UP',
-      lastUpdated: '2024-12-28',
-    },
-    {
-      id: 'kpi-6',
-      name: 'Process Efficiency Gain',
-      description: 'Reduction in process cycle time',
-      category: 'DELIVERY',
-      status: 'ACHIEVED',
-      target: 30,
-      actual: 35,
-      unit: '%',
-      trend: 'UP',
-      lastUpdated: '2024-12-28',
-      linkedInitiativeName: 'Workflow Automation',
-    },
-  ]);
+  // Fetch KPIs from API when props don't provide them
+  React.useEffect(() => {
+    if (kpis.length > 0) {
+      setLocalKPIs(kpis);
+      setIsLoading(false);
+      return;
+    }
+    const fetchKPIs = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/pmo/projects/${projectId}/kpis`);
+        if (response.ok) {
+          const data = await response.json();
+          setLocalKPIs(Array.isArray(data) ? data : data?.kpis || []);
+        } else {
+          setLocalKPIs([]);
+        }
+      } catch {
+        console.warn('[KPIDashboard] No KPI data available from API');
+        setLocalKPIs([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchKPIs();
+  }, [projectId, kpis]);
 
   const filteredKPIs =
     selectedCategory === 'all'
@@ -219,6 +165,57 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
         return <span className="w-3 h-0.5 bg-slate-400 rounded" />;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
+              <BarChart3 className="text-purple-500" size={24} />
+              KPI Dashboard
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Loading KPI data...</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center h-48">
+          <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (localKPIs.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
+              <BarChart3 className="text-purple-500" size={24} />
+              KPI Dashboard
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Track transformation metrics and performance
+            </p>
+          </div>
+          <button
+            onClick={onAddKPI}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            <Plus size={16} />
+            Add KPI
+          </button>
+        </div>
+        <div className="flex flex-col items-center justify-center h-48 text-slate-400 dark:text-slate-500">
+          <Target size={48} className="mb-4 opacity-50" />
+          <p className="text-lg font-medium text-navy-900 dark:text-white">No KPIs defined yet</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Add KPIs to track transformation metrics and performance
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

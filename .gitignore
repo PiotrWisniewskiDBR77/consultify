@@ -29,6 +29,12 @@ dist-ssr
 .env.production
 server/.env
 
+# Auth tokens and session files
+token.json
+
+# Local startup scripts with paths
+start-londyn.sh
+
 # Database files
 *.db
 *.db-journal
@@ -50,6 +56,8 @@ frontend_*.log
 server/consultify.db
 server/database.sqlite
 junit.xml
+junit-*.xml
+reports/junit*.xml
 
 # Garbage / Backup files
 node_modules_trash
@@ -154,3 +162,18 @@ Piotr_Tools/
 
 # Quarantine folder for duplicate files
 _quarantine/
+
+# Server logs (prevent committing huge log files)
+server/logs/
+
+# iCloud/Finder duplicates (macOS numbered copies)
+* [0-9]*.*
+
+# Vendored packages
+*.tgz
+
+# Analysis artifacts
+_analysis/
+
+# Cursor IDE workspace
+.cursor/

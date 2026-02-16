@@ -1009,7 +1009,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   // Handlers
   const handleApprove = async (id: string) => {
     try {
-      await Api.updateDecision(id, { status: 'APPROVED' });
+      await Api.decideDecision(id, 'approved');
       setDecisions((prev) => prev.map((d) => (d.id === id ? { ...d, status: 'APPROVED' } : d)));
       toast.success('Decision approved');
     } catch (error) {
@@ -1019,7 +1019,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   const handleReject = async (id: string) => {
     try {
-      await Api.updateDecision(id, { status: 'REJECTED' });
+      await Api.decideDecision(id, 'rejected');
       setDecisions((prev) => prev.map((d) => (d.id === id ? { ...d, status: 'REJECTED' } : d)));
       toast.success('Decision rejected');
     } catch (error) {
@@ -1072,10 +1072,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
     try {
       // Update decision status to ESCALATED
-      await Api.updateDecision(id, {
-        status: 'ESCALATED',
-        escalatedAt: new Date().toISOString(),
-      });
+      await Api.escalateDecision(id, 'Manual escalation from decisions panel');
 
       // Create an escalation notification
       await Api.post('/api/notifications', {
@@ -1160,9 +1157,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   // Bulk actions
   const handleBulkApprove = async () => {
     try {
-      await Promise.all(
-        Array.from(selectedIds).map((id) => Api.updateDecision(id, { status: 'APPROVED' }))
-      );
+      await Promise.all(Array.from(selectedIds).map((id) => Api.decideDecision(id, 'approved')));
       setDecisions((prev) =>
         prev.map((d) => (selectedIds.has(d.id) ? { ...d, status: 'APPROVED' } : d))
       );
@@ -1185,10 +1180,34 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   };
 
   // Create bulk action configuration
+  const handleBulkChangePriority = async () => {
+    const newPriority = prompt(
+      'Set priority for selected decisions (LOW / MEDIUM / HIGH / CRITICAL):'
+    );
+    if (!newPriority || !['low', 'medium', 'high', 'critical'].includes(newPriority.toLowerCase()))
+      return;
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) =>
+          Api.updateDecision(id, { priority: newPriority.toUpperCase() })
+        )
+      );
+      setDecisions((prev) =>
+        prev.map((d) => (selectedIds.has(d.id) ? { ...d, priority: newPriority.toUpperCase() } : d))
+      );
+      toast.success(
+        `Priority set to ${newPriority.toUpperCase()} for ${selectedIds.size} decisions`
+      );
+      setSelectedIds(new Set());
+    } catch {
+      toast.error('Failed to update priority');
+    }
+  };
+
   const bulkActions = createDecisionBulkActions({
     onApprove: handleBulkApprove,
     onDelete: handleBulkDelete,
-    onChangePriority: () => toast('Priority change coming soon'),
+    onChangePriority: handleBulkChangePriority,
   });
 
   // Apply table filters to decisions

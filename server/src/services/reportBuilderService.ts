@@ -7,10 +7,11 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-// DRD_STRUCTURE import removed - not found in codebase
+import { DRD_STRUCTURE } from '../data/drdStructure.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
+import { upsertAssessmentReportForBuilder } from './assessmentReportBuilderLinkService.js';
 
 // ==========================================
 // TYPES
@@ -38,6 +39,7 @@ export type SectionType =
   | 'list'
   | 'recommendations'
   | 'action_plan'
+  | 'initiatives'
   | 'appendix'
   | 'custom';
 
@@ -93,6 +95,8 @@ export interface SectionRecord {
   repeatKey?: string;
   repeatName?: string;
   repeatData?: string;
+  chapterKey?: string;
+  chapterTitle?: string;
 }
 
 export interface CreateReportParams {
@@ -118,6 +122,8 @@ export interface UpdateSectionConfigParams {
   language?: SectionLanguage;
   customPrompt?: string;
   title?: string;
+  chapterKey?: string | null;
+  chapterTitle?: string | null;
 }
 
 export interface GenerateSectionParams {
@@ -127,6 +133,8 @@ export interface GenerateSectionParams {
 }
 
 export type BlockRenderKind = 'markdown' | 'callout' | 'table' | 'chart' | 'matrix' | 'json';
+
+export type BlockCategory = 'content' | 'data' | 'visual';
 
 export interface BlockTypeRecord {
   id: string;
@@ -141,6 +149,14 @@ export interface BlockTypeRecord {
   defaultLanguage?: SectionLanguage;
   isSystem?: boolean;
   isActive?: boolean;
+  category?: BlockCategory;
+  displayOrder?: number;
+  /** Explicit slide intent for PPTX v2 pipeline (from migration 525) */
+  slideIntent?: string | null;
+  /** PPTX-specific prompt that generates structured JSON (from migration 525) */
+  pptxPromptTemplate?: string | null;
+  /** JSON Schema for validating PPTX prompt output (from migration 525) */
+  pptxOutputSchema?: Record<string, unknown> | null;
   createdBy?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -476,8 +492,9 @@ export async function createReport(params: CreateReportParams): Promise<{
       INSERT INTO report_builder_sections (
         id, report_id, section_key, section_type, title, order_index,
         enabled, required, length, language, content_format,
+        custom_prompt, block_type_id, block_config_json, render_kind,
         repeat_for, repeat_key, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'markdown', ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'markdown', ?, ?, ?, ?, ?, ?, ?, ?)
     `,
       [
         sectionId,
@@ -490,6 +507,19 @@ export async function createReport(params: CreateReportParams): Promise<{
         tplSection.required,
         tplSection.defaultLength || 'medium',
         tplSection.defaultLanguage || 'business',
+        (tplSection as any).customPrompt || (tplSection as any).promptHints || null,
+        (tplSection as any).blockTypeId || null,
+        (() => {
+          const cfg = (tplSection as any).blockSettings || (tplSection as any).config || null;
+          const extras: any = {};
+          if ((tplSection as any).description) extras.description = (tplSection as any).description;
+          if ((tplSection as any).dataSource) extras.dataSource = (tplSection as any).dataSource;
+          if ((tplSection as any).includeVisuals !== undefined)
+            extras.includeVisuals = Boolean((tplSection as any).includeVisuals);
+          const merged = cfg && typeof cfg === 'object' ? { ...(cfg as any), ...extras } : extras;
+          return Object.keys(merged || {}).length > 0 ? JSON.stringify(merged) : null;
+        })(),
+        (tplSection as any).renderKind || null,
         tplSection.repeatFor || null,
         tplSection.repeatKey || null,
         now,
@@ -626,6 +656,8 @@ export async function getReport(
       repeatKey: s.repeat_key,
       repeatName: s.repeat_name,
       repeatData: s.repeat_data,
+      chapterKey: (s as any).chapter_key || undefined,
+      chapterTitle: (s as any).chapter_title || undefined,
     })),
   };
 }
@@ -644,9 +676,15 @@ export async function listReports(
   }
 ): Promise<ReportRecord[]> {
   let sql = `
-    SELECT r.*, u.first_name || ' ' || u.last_name as created_by_name
+    SELECT r.*, u.first_name || ' ' || u.last_name as created_by_name,
+      COALESCE(ini.total_initiatives, 0) as initiatives_count
     FROM report_builder_reports r
     LEFT JOIN users u ON r.created_by = u.id
+    LEFT JOIN (
+      SELECT b.assessment_id, SUM(b.initiatives_count) as total_initiatives
+      FROM assessment_initiative_batches b
+      GROUP BY b.assessment_id
+    ) ini ON r.source_type = 'ASSESSMENT' AND ini.assessment_id = r.source_id
     WHERE r.organization_id = ?
   `;
   const params: unknown[] = [organizationId];
@@ -695,6 +733,8 @@ export async function listReports(
     generatedAt: row.generated_at,
     approvedAt: row.approved_at,
     version: row.version,
+    initiativesCount: Number(row.initiatives_count || 0),
+    createdByName: row.created_by_name || undefined,
   }));
 }
 
@@ -708,7 +748,7 @@ export async function listBlockTypes(organizationId: string): Promise<BlockTypeR
     SELECT *
     FROM report_builder_block_types
     WHERE is_active = 1 AND (organization_id IS NULL OR organization_id = ?)
-    ORDER BY is_system DESC, name ASC
+    ORDER BY COALESCE(display_order, 999) ASC, is_system DESC, name ASC
   `,
     [organizationId]
   );
@@ -726,6 +766,11 @@ export async function listBlockTypes(organizationId: string): Promise<BlockTypeR
     defaultLanguage: (r.default_language || 'business') as SectionLanguage,
     isSystem: Boolean(r.is_system),
     isActive: Boolean(r.is_active),
+    category: (r.category || 'content') as BlockCategory,
+    displayOrder: r.display_order ?? 999,
+    slideIntent: r.slide_intent || null,
+    pptxPromptTemplate: r.pptx_prompt_template || null,
+    pptxOutputSchema: r.pptx_output_schema ? JSON.parse(r.pptx_output_schema) : null,
     createdBy: r.created_by,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -908,6 +953,14 @@ export async function updateSectionConfig(
       setClauses.push('title = ?');
       params.push(update.title);
     }
+    if (update.chapterKey !== undefined) {
+      setClauses.push('chapter_key = ?');
+      params.push(update.chapterKey);
+    }
+    if (update.chapterTitle !== undefined) {
+      setClauses.push('chapter_title = ?');
+      params.push(update.chapterTitle);
+    }
 
     params.push(reportId, update.sectionKey);
 
@@ -957,6 +1010,8 @@ export async function updateSectionConfig(
     repeatFor: s.repeat_for,
     repeatKey: s.repeat_key,
     repeatName: s.repeat_name,
+    chapterKey: (s as any).chapter_key || undefined,
+    chapterTitle: (s as any).chapter_title || undefined,
   }));
 }
 
@@ -1161,7 +1216,7 @@ export async function updateReportStatus(
   const now = new Date().toISOString();
 
   let additionalFields = '';
-  const params: unknown[] = [status, now, userId, now];
+  const params: unknown[] = [status, now, userId];
 
   if (status === 'GENERATED') {
     additionalFields = ', generated_at = ?';
@@ -1195,6 +1250,112 @@ export async function updateReportStatus(
   );
 
   await logActivity(reportId, `STATUS_${status}`, userId);
+
+  // Best-effort projection into Assessment module list (when report is sourced from assessment)
+  try {
+    const row = await queryOne<{
+      organization_id: string;
+      source_type: string;
+      source_id: string;
+      project_id: string | null;
+      title: string;
+      status: string;
+      template_id?: string | null;
+    }>(
+      `SELECT organization_id, source_type, source_id, project_id, title, status, template_id
+       FROM report_builder_reports
+       WHERE id = ?`,
+      [reportId]
+    );
+
+    if (row && String(row.source_type || '').toUpperCase() === 'ASSESSMENT') {
+      await upsertAssessmentReportForBuilder({
+        organizationId: String(row.organization_id),
+        assessmentId: String(row.source_id),
+        projectId: row.project_id ? String(row.project_id) : null,
+        builderReportId: reportId,
+        name: String(row.title || 'Report'),
+        templateId: (row as any).template_id ? String((row as any).template_id) : null,
+        rbStatus: String(row.status || status),
+        userId,
+      });
+    }
+  } catch (err: any) {
+    logger.warn('[ReportBuilder] Failed to sync assessment report projection (status)', {
+      reportId,
+      message: err?.message,
+    });
+  }
+}
+
+/**
+ * Update report metadata (title, description) without changing status
+ */
+export async function updateReportMetadata(
+  reportId: string,
+  organizationId: string,
+  userId: string,
+  updates: { title?: string; description?: string }
+): Promise<void> {
+  const setClauses: string[] = ['updated_at = ?', 'updated_by = ?'];
+  const params: unknown[] = [new Date().toISOString(), userId];
+
+  if (updates.title !== undefined) {
+    setClauses.push('title = ?');
+    params.push(updates.title);
+  }
+  if (updates.description !== undefined) {
+    setClauses.push('description = ?');
+    params.push(updates.description);
+  }
+
+  params.push(reportId, organizationId);
+
+  await queryRun(
+    `
+    UPDATE report_builder_reports
+    SET ${setClauses.join(', ')}
+    WHERE id = ? AND organization_id = ?
+  `,
+    params
+  );
+
+  await logActivity(reportId, 'METADATA_UPDATED', userId, updates);
+
+  // Best-effort: keep Assessment module list name in sync (when linked)
+  try {
+    const row = await queryOne<{
+      organization_id: string;
+      source_type: string;
+      source_id: string;
+      project_id: string | null;
+      title: string;
+      template_id?: string | null;
+    }>(
+      `SELECT organization_id, source_type, source_id, project_id, title, template_id
+       FROM report_builder_reports
+       WHERE id = ? AND organization_id = ?`,
+      [reportId, organizationId]
+    );
+
+    if (row && String(row.source_type || '').toUpperCase() === 'ASSESSMENT') {
+      await upsertAssessmentReportForBuilder({
+        organizationId: String(row.organization_id),
+        assessmentId: String(row.source_id),
+        projectId: row.project_id ? String(row.project_id) : null,
+        builderReportId: reportId,
+        name: String(row.title || updates.title || 'Report'),
+        templateId: (row as any).template_id ? String((row as any).template_id) : null,
+        // rbStatus omitted → don't overwrite assessment report status
+        userId,
+      });
+    }
+  } catch (err: any) {
+    logger.warn('[ReportBuilder] Failed to sync assessment report projection (metadata)', {
+      reportId,
+      message: err?.message,
+    });
+  }
 }
 
 /**
@@ -1345,23 +1506,79 @@ export async function getSourceDataForReport(
   const assessment = await getAssessmentSourceData(report.report.sourceId);
   if (!assessment) return null;
 
-  // Extract per-axis data
+  // Extract per-axis data from DRD answers
   const axesData: Record<string, unknown> = {};
   const drdAnswers = (assessment.answers as any)?.drd?.areas || {};
 
-  // Group by axis
+  // DRD axis names for richer AI context
+  const DRD_AXIS_NAMES: Record<string, string> = {
+    '1': 'Digital Processes',
+    '2': 'Digital Products & Services',
+    '3': 'Digital Business Models',
+    '4': 'Data & Analytics',
+    '5': 'Organizational Culture',
+    '6': 'Cybersecurity & Risk',
+    '7': 'AI & Machine Learning',
+  };
+
+  // Group by axis and compute per-axis summary
   for (let i = 1; i <= 7; i++) {
     const axisKey = String(i);
     const axisAreas: Record<string, unknown> = {};
+    let totalAchieved = 0;
+    let totalTarget = 0;
+    let areaCount = 0;
 
     for (const [areaId, areaData] of Object.entries(drdAnswers)) {
       if (areaId.startsWith(axisKey)) {
         axisAreas[areaId] = areaData;
+        const area = areaData as any;
+        if (area?.achievedLevel != null) {
+          totalAchieved += area.achievedLevel;
+          totalTarget += area.targetLevel || area.achievedLevel;
+          areaCount++;
+        }
       }
     }
 
     if (Object.keys(axisAreas).length > 0) {
-      axesData[axisKey] = axisAreas;
+      axesData[axisKey] = {
+        areas: axisAreas,
+        axisName: DRD_AXIS_NAMES[axisKey] || `Axis ${axisKey}`,
+        areaCount,
+        averageScore: areaCount > 0 ? Math.round((totalAchieved / areaCount) * 10) / 10 : 0,
+        averageTarget: areaCount > 0 ? Math.round((totalTarget / areaCount) * 10) / 10 : 0,
+        gap: areaCount > 0 ? Math.round(((totalTarget - totalAchieved) / areaCount) * 10) / 10 : 0,
+      };
+    }
+  }
+
+  // Ensure assessment.scores is populated — compute from answers if empty
+  if (
+    !assessment.scores ||
+    Object.keys(assessment.scores).length === 0 ||
+    !(assessment.scores as any).axes
+  ) {
+    const computedAxes: any[] = [];
+    for (const [axisKey, axisInfo] of Object.entries(axesData) as [string, any][]) {
+      computedAxes.push({
+        axisId: axisKey,
+        axisName: axisInfo.axisName,
+        score: axisInfo.averageScore,
+        maxScore: 7,
+        target: axisInfo.averageTarget,
+        gap: axisInfo.gap,
+        fullMark: 7,
+      });
+    }
+    if (computedAxes.length > 0) {
+      const overallAvg = computedAxes.reduce((s, a) => s + a.score, 0) / computedAxes.length;
+      assessment.scores = {
+        axes: computedAxes,
+        overallScore: Math.round(overallAvg * 10) / 10,
+        maxScore: 7,
+        assessmentType: assessment.assessmentType,
+      };
     }
   }
 
@@ -1963,7 +2180,7 @@ export async function listVersions(reportId: string, organizationId: string): Pr
 
   const rows = await queryAll<any>(
     `
-    SELECT v.*, u.name as created_by_name
+    SELECT v.*, u.first_name || ' ' || u.last_name as created_by_name
     FROM report_builder_versions v
     LEFT JOIN users u ON v.created_by = u.id
     WHERE v.report_id = ?
@@ -2227,6 +2444,7 @@ const ReportBuilderService = {
   removeSection,
   updateSectionContent,
   updateReportStatus,
+  updateReportMetadata,
   updateReportConfig,
   duplicateReport,
   getSourceDataForReport,

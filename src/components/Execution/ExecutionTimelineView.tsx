@@ -3,9 +3,20 @@
  *
  * Gantt-style timeline view for initiatives in execution phase.
  * Shows timeline bars based on planned/actual dates with status-based coloring.
+ *
+ * D4.1: Dependency validation — warns about illogical sequences
+ * D5.1: Dependency lines (SVG arrows), critical path highlight, drag-to-move bars
  */
 
-import { AlertTriangle, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  AlertTriangle,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  GripHorizontal,
+  Route,
+} from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { FullInitiative, InitiativeStatus } from '../../types';
@@ -13,6 +24,7 @@ import { FullInitiative, InitiativeStatus } from '../../types';
 interface ExecutionTimelineViewProps {
   initiatives: FullInitiative[];
   onInitiativeClick: (initiative: FullInitiative) => void;
+  onUpdateInitiative?: (initiative: FullInitiative) => void;
   projectId?: string;
 }
 
@@ -194,6 +206,144 @@ const getMonthsFromWeeks = (
 };
 
 // ============================================
+// D4.1: DEPENDENCY VALIDATION
+// ============================================
+
+interface DepWarning {
+  initiativeId: string;
+  message: string;
+  severity: 'warning' | 'error';
+}
+
+function validateInitiativeDependencies(initiatives: FullInitiative[]): DepWarning[] {
+  const warnings: DepWarning[] = [];
+  const initMap = new Map<string, FullInitiative>();
+  initiatives.forEach((i) => initMap.set(i.id, i));
+
+  initiatives.forEach((init) => {
+    const related = init.relatedInitiatives?.filter((r) => r.relationType === 'DEPENDS_ON');
+    if (!related || related.length === 0) return;
+
+    related.forEach((rel) => {
+      const predecessor = initMap.get(rel.relatedInitiativeId);
+      if (!predecessor) return;
+
+      const predEnd = predecessor.plannedEndDate || predecessor.endDate;
+      const thisStart = init.startDate || init.plannedStartDate;
+
+      if (predEnd && thisStart && new Date(thisStart) < new Date(predEnd)) {
+        warnings.push({
+          initiativeId: init.id,
+          message: `"${init.name}" starts before "${predecessor.name}" ends`,
+          severity: 'warning',
+        });
+      }
+    });
+  });
+
+  return warnings;
+}
+
+// ============================================
+// D5.1: CRITICAL PATH
+// ============================================
+
+function computeExecutionCriticalPath(initiatives: FullInitiative[]): Set<string> {
+  const ids = new Set<string>();
+  const today = new Date();
+
+  // Mark blocked and overdue as critical
+  initiatives.forEach((i) => {
+    if (i.status === InitiativeStatus.BLOCKED) {
+      ids.add(i.id);
+    }
+    if (
+      i.plannedEndDate &&
+      new Date(i.plannedEndDate) < today &&
+      i.status !== InitiativeStatus.DONE
+    ) {
+      ids.add(i.id);
+    }
+  });
+
+  // Also compute longest dependency chain
+  const initMap = new Map<string, FullInitiative>();
+  initiatives.forEach((i) => initMap.set(i.id, i));
+
+  const successors = new Map<string, string[]>();
+  initiatives.forEach((i) => successors.set(i.id, []));
+
+  initiatives.forEach((init) => {
+    const deps = init.relatedInitiatives?.filter((r) => r.relationType === 'DEPENDS_ON') || [];
+    deps.forEach((dep) => {
+      if (initMap.has(dep.relatedInitiativeId)) {
+        const succs = successors.get(dep.relatedInitiativeId) || [];
+        succs.push(init.id);
+        successors.set(dep.relatedInitiativeId, succs);
+      }
+    });
+  });
+
+  // Simple longest path
+  const longestTo = new Map<string, number>();
+  const pathPrev = new Map<string, string | null>();
+
+  function getDuration(init: FullInitiative): number {
+    const start = init.startDate || init.plannedStartDate;
+    const end = init.plannedEndDate || init.endDate;
+    if (start && end) {
+      return Math.max(
+        1,
+        Math.round(
+          (new Date(end).getTime() - new Date(start).getTime()) / (7 * 24 * 60 * 60 * 1000)
+        )
+      );
+    }
+    return 2;
+  }
+
+  initiatives.forEach((i) => {
+    longestTo.set(i.id, getDuration(i));
+    pathPrev.set(i.id, null);
+  });
+
+  // Process (simplified — works for DAGs without explicit topo sort)
+  for (let iter = 0; iter < initiatives.length; iter++) {
+    initiatives.forEach((init) => {
+      const currentLen = longestTo.get(init.id) || 0;
+      (successors.get(init.id) || []).forEach((succ) => {
+        const succInit = initMap.get(succ);
+        if (!succInit) return;
+        const newLen = currentLen + getDuration(succInit);
+        if (newLen > (longestTo.get(succ) || 0)) {
+          longestTo.set(succ, newLen);
+          pathPrev.set(succ, init.id);
+        }
+      });
+    });
+  }
+
+  let maxLen = 0;
+  let maxEnd = '';
+  longestTo.forEach((len, id) => {
+    if (len > maxLen) {
+      maxLen = len;
+      maxEnd = id;
+    }
+  });
+
+  if (maxEnd && maxLen > 0) {
+    let current: string | null = maxEnd;
+    while (current) {
+      ids.add(current);
+      current = pathPrev.get(current) || null;
+    }
+  }
+
+  return ids;
+}
+
+// ============================================
 // TIMELINE BAR COMPONENT
 // ============================================
 
@@ -204,6 +354,9 @@ interface TimelineBarProps {
   totalWeeks: number;
   onClick: () => void;
   isOnCriticalPath?: boolean;
+  hasWarning?: boolean;
+  warningMessage?: string;
+  onDragEnd?: (weeksDelta: number) => void;
 }
 
 const TimelineBar: React.FC<TimelineBarProps> = ({
@@ -213,33 +366,76 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
   totalWeeks,
   onClick,
   isOnCriticalPath,
+  hasWarning,
+  warningMessage,
+  onDragEnd,
 }) => {
   const colors = STATUS_COLORS[initiative.status] || STATUS_COLORS[InitiativeStatus.EXECUTING];
   const span = Math.max(1, endIdx - startIdx + 1);
   const progress = initiative.progress || 0;
   const leftPercent = (startIdx / totalWeeks) * 100;
   const widthPercent = (span / totalWeeks) * 100;
+  const [dragOffset, setDragOffset] = useState(0);
+
+  const handleDragEnd = useCallback(() => {
+    if (onDragEnd && dragOffset !== 0) {
+      const weekWidth = 100 / totalWeeks;
+      const weeksDelta = Math.round(dragOffset / weekWidth);
+      if (weeksDelta !== 0) {
+        onDragEnd(weeksDelta);
+      }
+    }
+    setDragOffset(0);
+  }, [dragOffset, onDragEnd, totalWeeks]);
 
   return (
-    <div
+    <motion.div
       onClick={onClick}
+      drag={onDragEnd ? 'x' : false}
+      dragMomentum={false}
+      dragElastic={0}
+      onDrag={(_, info) => {
+        const containerWidth = 100; // percent
+        setDragOffset((info.offset.x / window.innerWidth) * containerWidth);
+      }}
+      onDragEnd={handleDragEnd}
       className={`
-        absolute top-2 h-10 rounded-lg cursor-pointer group
-        transition-all hover:scale-[1.02] hover:shadow-lg hover:z-10
+        absolute top-2 h-10 rounded-lg group
+        transition-shadow hover:shadow-lg hover:z-10
         ${colors.bg} border ${colors.border}
         ${isOnCriticalPath ? 'ring-2 ring-red-500/50' : ''}
+        ${hasWarning ? 'ring-1 ring-amber-400/70' : ''}
+        ${onDragEnd ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
       `}
       style={{
         left: `${leftPercent}%`,
         width: `${widthPercent}%`,
         minWidth: '60px',
       }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={onDragEnd ? { scale: 0.98 } : undefined}
     >
+      {/* D4.1: Warning badge */}
+      {hasWarning && (
+        <div
+          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center z-20"
+          title={warningMessage}
+        >
+          <AlertTriangle size={10} className="text-white" />
+        </div>
+      )}
+
       <div
         className={`absolute inset-y-0 left-0 ${colors.progress} opacity-30 rounded-l-lg`}
         style={{ width: `${progress}%` }}
       />
       <div className="relative h-full flex items-center gap-2 px-3 overflow-hidden">
+        {onDragEnd && (
+          <GripHorizontal
+            size={12}
+            className="opacity-30 shrink-0 group-hover:opacity-70 transition-opacity"
+          />
+        )}
         <div className={`w-2 h-2 rounded-full ${colors.progress} shrink-0`} />
         <span className={`text-sm font-medium truncate ${colors.text}`}>{initiative.name}</span>
         {initiative.priority === 'Critical' && (
@@ -247,7 +443,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
         )}
         <span className="ml-auto text-xs text-slate-400 shrink-0">{progress}%</span>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -258,9 +454,11 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
 export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
   initiatives,
   onInitiativeClick,
+  onUpdateInitiative,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewWeeks, setViewWeeks] = useState(12);
+  const [showCriticalPath, setShowCriticalPath] = useState(true);
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     today.setDate(today.getDate() - 14);
@@ -269,6 +467,18 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
 
   const weeks = useMemo(() => generateWeeks(startDate, viewWeeks), [startDate, viewWeeks]);
   const months = useMemo(() => getMonthsFromWeeks(weeks), [weeks]);
+
+  // D4.1: Dependency validation
+  const depWarnings = useMemo(() => validateInitiativeDependencies(initiatives), [initiatives]);
+  const warningsByInit = useMemo(() => {
+    const map = new Map<string, DepWarning[]>();
+    depWarnings.forEach((w) => {
+      const existing = map.get(w.initiativeId) || [];
+      existing.push(w);
+      map.set(w.initiativeId, existing);
+    });
+    return map;
+  }, [depWarnings]);
 
   const getWeekIndex = useCallback(
     (dateStr: string | undefined): number => {
@@ -323,6 +533,17 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
     return rows;
   }, [processedInitiatives]);
 
+  // Flat map for SVG line drawing: initiative id -> { row, startIdx, endIdx }
+  const initiativePositionMap = useMemo(() => {
+    const map = new Map<string, { row: number; startIdx: number; endIdx: number }>();
+    initiativeRows.forEach((row, rowIdx) => {
+      row.forEach((init) => {
+        map.set(init.id, { row: rowIdx, startIdx: init.startIdx, endIdx: init.endIdx });
+      });
+    });
+    return map;
+  }, [initiativeRows]);
+
   const todayPosition = useMemo(() => {
     const today = new Date();
     const firstWeekStart = weeks[0]?.date;
@@ -334,23 +555,53 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
     return position;
   }, [weeks, viewWeeks]);
 
-  const criticalPathIds = useMemo(() => {
-    const ids = new Set<string>();
-    const today = new Date();
-    initiatives.forEach((i) => {
-      if (i.status === InitiativeStatus.BLOCKED) {
-        ids.add(i.id);
-      }
-      if (
-        i.plannedEndDate &&
-        new Date(i.plannedEndDate) < today &&
-        i.status !== InitiativeStatus.DONE
-      ) {
-        ids.add(i.id);
-      }
+  // D5.1: Critical path
+  const criticalPathIds = useMemo(
+    () => (showCriticalPath ? computeExecutionCriticalPath(initiatives) : new Set<string>()),
+    [initiatives, showCriticalPath]
+  );
+
+  // D5.1: Dependency lines for SVG
+  const dependencyLines = useMemo(() => {
+    const lines: Array<{
+      fromId: string;
+      toId: string;
+      x1Pct: number;
+      y1Row: number;
+      x2Pct: number;
+      y2Row: number;
+      isCritical: boolean;
+      isConflict: boolean;
+    }> = [];
+
+    initiatives.forEach((init) => {
+      const deps = init.relatedInitiatives?.filter((r) => r.relationType === 'DEPENDS_ON') || [];
+      const toPos = initiativePositionMap.get(init.id);
+      if (!toPos) return;
+
+      deps.forEach((dep) => {
+        const fromPos = initiativePositionMap.get(dep.relatedInitiativeId);
+        if (!fromPos) return;
+
+        const isCritical =
+          criticalPathIds.has(init.id) && criticalPathIds.has(dep.relatedInitiativeId);
+        const isConflict = warningsByInit.has(init.id);
+
+        lines.push({
+          fromId: dep.relatedInitiativeId,
+          toId: init.id,
+          x1Pct: ((fromPos.endIdx + 1) / viewWeeks) * 100,
+          y1Row: fromPos.row,
+          x2Pct: (toPos.startIdx / viewWeeks) * 100,
+          y2Row: toPos.row,
+          isCritical,
+          isConflict,
+        });
+      });
     });
-    return ids;
-  }, [initiatives]);
+
+    return lines;
+  }, [initiatives, initiativePositionMap, viewWeeks, criticalPathIds, warningsByInit]);
 
   const navigateTimeline = (direction: 'prev' | 'next') => {
     setStartDate((prev) => {
@@ -366,10 +617,51 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
     setStartDate(today);
   };
 
+  // D5.1: Handle drag to move
+  const handleBarDragEnd = useCallback(
+    (initiative: FullInitiative, weeksDelta: number) => {
+      if (!onUpdateInitiative) return;
+
+      const startStr = initiative.startDate || initiative.plannedStartDate;
+      const endStr = initiative.plannedEndDate || initiative.endDate;
+
+      if (!startStr) return;
+
+      const newStart = new Date(startStr);
+      newStart.setDate(newStart.getDate() + weeksDelta * 7);
+
+      const updates: Partial<FullInitiative> = {
+        ...initiative,
+      };
+
+      if (initiative.startDate) {
+        updates.startDate = newStart.toISOString();
+      }
+      if (initiative.plannedStartDate) {
+        const newPStart = new Date(initiative.plannedStartDate);
+        newPStart.setDate(newPStart.getDate() + weeksDelta * 7);
+        updates.plannedStartDate = newPStart.toISOString();
+      }
+
+      if (endStr) {
+        const newEnd = new Date(endStr);
+        newEnd.setDate(newEnd.getDate() + weeksDelta * 7);
+        if (initiative.plannedEndDate) updates.plannedEndDate = newEnd.toISOString();
+        if (initiative.endDate) updates.endDate = newEnd.toISOString();
+      }
+
+      onUpdateInitiative(updates as FullInitiative);
+    },
+    [onUpdateInitiative]
+  );
+
+  const ROW_HEIGHT = 56; // h-14
+
   return (
     <div className="h-full flex flex-col bg-navy-950">
       {/* Timeline Controls */}
       <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-navy-700 bg-navy-900">
+        {/* Left: Navigation */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigateTimeline('prev')}
@@ -389,21 +681,52 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           >
             <ChevronRight size={18} />
           </button>
+
+          {/* D4.1: Warning count */}
+          {depWarnings.length > 0 && (
+            <>
+              <div className="w-px h-4 bg-navy-700 mx-1" />
+              <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-900/30 text-amber-400">
+                <AlertTriangle size={11} />
+                {depWarnings.length} warning{depWarnings.length !== 1 ? 's' : ''}
+              </span>
+            </>
+          )}
         </div>
-        <div className="flex items-center gap-1 bg-navy-800 rounded-lg p-1 border border-navy-700">
-          {[8, 12, 16].map((w) => (
-            <button
-              key={w}
-              onClick={() => setViewWeeks(w)}
-              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                viewWeeks === w
-                  ? 'bg-cyan-500/20 text-cyan-400'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {w}W
-            </button>
-          ))}
+
+        {/* Right: View controls */}
+        <div className="flex items-center gap-3">
+          {/* Critical path toggle */}
+          <button
+            onClick={() => setShowCriticalPath((v) => !v)}
+            className={`p-1.5 rounded-lg transition-colors ${
+              showCriticalPath
+                ? 'bg-red-900/30 text-red-400'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/10'
+            }`}
+            title={showCriticalPath ? 'Hide critical path' : 'Show critical path'}
+          >
+            <Route size={16} />
+          </button>
+
+          <div className="w-px h-4 bg-navy-700" />
+
+          {/* Week range selector */}
+          <div className="flex items-center gap-1 bg-navy-800 rounded-lg p-1 border border-navy-700">
+            {[8, 12, 16].map((w) => (
+              <button
+                key={w}
+                onClick={() => setViewWeeks(w)}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  viewWeeks === w
+                    ? 'bg-cyan-500/20 text-cyan-400'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {w}W
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -464,6 +787,79 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
               ))}
             </div>
 
+            {/* D5.1: SVG dependency lines */}
+            {dependencyLines.length > 0 && (
+              <svg
+                className="absolute inset-0 pointer-events-none z-15"
+                style={{
+                  width: '100%',
+                  height: initiativeRows.length * ROW_HEIGHT,
+                }}
+              >
+                <defs>
+                  <marker
+                    id="exec-arrow"
+                    markerWidth="8"
+                    markerHeight="6"
+                    refX="8"
+                    refY="3"
+                    orient="auto"
+                  >
+                    <polygon points="0 0, 8 3, 0 6" fill="#64748b" />
+                  </marker>
+                  <marker
+                    id="exec-arrow-crit"
+                    markerWidth="8"
+                    markerHeight="6"
+                    refX="8"
+                    refY="3"
+                    orient="auto"
+                  >
+                    <polygon points="0 0, 8 3, 0 6" fill="#ef4444" />
+                  </marker>
+                  <marker
+                    id="exec-arrow-warn"
+                    markerWidth="8"
+                    markerHeight="6"
+                    refX="8"
+                    refY="3"
+                    orient="auto"
+                  >
+                    <polygon points="0 0, 8 3, 0 6" fill="#f59e0b" />
+                  </marker>
+                </defs>
+                {dependencyLines.map((line, idx) => {
+                  const y1 = line.y1Row * ROW_HEIGHT + ROW_HEIGHT / 2;
+                  const y2 = line.y2Row * ROW_HEIGHT + ROW_HEIGHT / 2;
+                  const stroke = line.isCritical
+                    ? '#ef4444'
+                    : line.isConflict
+                      ? '#f59e0b'
+                      : '#64748b';
+                  const marker = line.isCritical
+                    ? 'url(#exec-arrow-crit)'
+                    : line.isConflict
+                      ? 'url(#exec-arrow-warn)'
+                      : 'url(#exec-arrow)';
+                  const sw = line.isCritical ? 2 : 1.5;
+                  const dash = line.isConflict ? '5 3' : 'none';
+
+                  return (
+                    <path
+                      key={idx}
+                      d={`M ${line.x1Pct}% ${y1} C ${(line.x1Pct + line.x2Pct) / 2}% ${y1}, ${(line.x1Pct + line.x2Pct) / 2}% ${y2}, ${line.x2Pct}% ${y2}`}
+                      fill="none"
+                      stroke={stroke}
+                      strokeWidth={sw}
+                      strokeDasharray={dash}
+                      markerEnd={marker}
+                      opacity={0.6}
+                    />
+                  );
+                })}
+              </svg>
+            )}
+
             {/* Initiative rows */}
             {initiativeRows.length === 0 ? (
               <div className="flex items-center justify-center h-48 text-slate-400">
@@ -478,17 +874,27 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
             ) : (
               initiativeRows.map((row, rowIdx) => (
                 <div key={rowIdx} className="relative h-14 border-b border-navy-800">
-                  {row.map((initiative) => (
-                    <TimelineBar
-                      key={initiative.id}
-                      initiative={initiative}
-                      startIdx={initiative.startIdx}
-                      endIdx={initiative.endIdx}
-                      totalWeeks={viewWeeks}
-                      onClick={() => onInitiativeClick(initiative)}
-                      isOnCriticalPath={criticalPathIds.has(initiative.id)}
-                    />
-                  ))}
+                  {row.map((initiative) => {
+                    const initWarnings = warningsByInit.get(initiative.id) || [];
+                    return (
+                      <TimelineBar
+                        key={initiative.id}
+                        initiative={initiative}
+                        startIdx={initiative.startIdx}
+                        endIdx={initiative.endIdx}
+                        totalWeeks={viewWeeks}
+                        onClick={() => onInitiativeClick(initiative)}
+                        isOnCriticalPath={criticalPathIds.has(initiative.id)}
+                        hasWarning={initWarnings.length > 0}
+                        warningMessage={initWarnings.map((w) => w.message).join('\n')}
+                        onDragEnd={
+                          onUpdateInitiative
+                            ? (weeksDelta) => handleBarDragEnd(initiative, weeksDelta)
+                            : undefined
+                        }
+                      />
+                    );
+                  })}
                 </div>
               ))
             )}
@@ -497,7 +903,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="shrink-0 flex items-center gap-6 px-4 py-2 border-t border-navy-700 bg-navy-900 text-xs">
+      <div className="shrink-0 flex items-center gap-6 px-4 py-2 border-t border-navy-700 bg-navy-900 text-xs flex-wrap">
         <div className="flex items-center gap-4">
           {[
             { status: InitiativeStatus.APPROVED, label: 'Ready' },
@@ -515,6 +921,12 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           <div className="w-3 h-3 rounded ring-2 ring-red-500/50 bg-red-500/20" />
           <span className="text-slate-400">Critical/Overdue</span>
         </div>
+        {depWarnings.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            <AlertTriangle size={12} className="text-amber-500" />
+            <span className="text-slate-400">Schedule Warning</span>
+          </div>
+        )}
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-0.5 bg-red-500" />
           <span className="text-slate-400">Today</span>

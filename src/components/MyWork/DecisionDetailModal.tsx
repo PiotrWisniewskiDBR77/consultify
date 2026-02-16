@@ -197,6 +197,11 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
 
   // Handle decision submission
   const handleDecision = async (status: 'APPROVED' | 'REJECTED') => {
+    if (!decisionId) {
+      toast.error(t('decisions.error', 'Missing decision ID'));
+      return;
+    }
+
     if (!outcome.trim()) {
       toast.error(t('decisions.rationaleRequired', 'Please provide a rationale for your decision'));
       return;

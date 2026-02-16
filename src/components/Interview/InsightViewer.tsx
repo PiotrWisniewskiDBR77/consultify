@@ -30,7 +30,6 @@ import {
   Hash,
   History,
   Lightbulb,
-  Link2,
   Loader2,
   Meh,
   MessageSquare,
@@ -67,6 +66,7 @@ import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
+import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 
 import {
   type Attachment,
@@ -1216,13 +1216,21 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   {typeMeta.icon}
                 </div>
                 <div className="flex-1">
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full text-xl font-bold bg-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
-                    placeholder={isPolish ? 'Tytuł wniosku...' : 'Insight title...'}
-                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full text-xl font-bold bg-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none"
+                      placeholder={isPolish ? 'Tytuł wniosku...' : 'Insight title...'}
+                    />
+                    <ArtifactPermalinkButton
+                      artifactType="insight"
+                      artifactId={insight?.id || insightId}
+                      isPolish={isPolish}
+                      size={13}
+                    />
+                  </div>
                   <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
                     <span className={getColorClasses(typeMeta.color, 'text')}>
                       {isPolish ? typeMeta.labelPl : typeMeta.label}

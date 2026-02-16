@@ -12,7 +12,7 @@
  * @version 2.0
  */
 
-import { ArrowLeft, Menu, X } from 'lucide-react';
+import { ChevronRight, Menu, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -203,10 +203,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     [navigate]
   );
 
-  // Handle back to dashboard
+  // Handle back to main app (Chat)
   const handleBackToDashboard = useCallback(() => {
-    setCurrentView(AppView.DASHBOARD);
-    navigate(ROUTES.DASHBOARD);
+    setCurrentView(AppView.AI_CHAT);
+    navigate(ROUTES.AI_CHAT);
   }, [navigate, setCurrentView]);
 
   // Get current section metadata
@@ -344,7 +344,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   }, [activeSection, currentUser, onUpdateUser, t]);
 
   return (
-    <div className="flex h-full bg-navy-950 relative">
+    <div className="flex h-full bg-slate-50 dark:bg-navy-950 relative">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
@@ -369,49 +369,32 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-navy-900">
-        {/* Header */}
-        <header className="flex items-center justify-between px-4 lg:px-6 h-14 border-b border-white/5 bg-navy-900 sticky top-0 z-20">
-          <div className="flex items-center gap-3 lg:gap-4">
+      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-navy-900">
+        {/* Header - Breadcrumbs Style (Golden Standard) */}
+        <header className="flex items-center justify-between px-4 lg:px-6 h-12 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900 sticky top-0 z-20">
+          <div className="flex items-center gap-3">
             {/* Mobile menu button */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden text-slate-400 dark:text-slate-500 hover:text-white p-2"
+              className="lg:hidden text-slate-600 hover:text-navy-900 dark:text-slate-400 dark:hover:text-white p-2"
             >
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBackToDashboard}
-              className="text-slate-400 dark:text-slate-500 hover:text-white hidden lg:flex"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {t('settings.backToDashboard', 'Back to Dashboard')}
-            </Button>
-
-            <div className="h-5 w-px bg-white/10 hidden lg:block" />
-
-            <div>
-              <h1 className="text-base lg:text-lg font-semibold text-white">{currentMeta.title}</h1>
-              <p className="text-xs text-slate-400 dark:text-slate-500 hidden sm:block">
-                {currentMeta.subtitle}
-              </p>
+            {/* Breadcrumbs */}
+            <div className="flex items-center text-sm font-medium text-slate-500 dark:text-slate-400">
+              <span
+                onClick={handleBackToDashboard}
+                className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors"
+              >
+                Settings
+              </span>
+              <ChevronRight size={14} className="mx-2" />
+              <span className="text-navy-900 dark:text-white">{currentMeta.title}</span>
             </div>
           </div>
-
-          {/* Mobile back button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBackToDashboard}
-            className="lg:hidden text-slate-400 dark:text-slate-500 hover:text-white"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
         </header>
 
         {/* Content */}

@@ -1,54 +1,217 @@
-import { MessageSquare, Star } from 'lucide-react';
-import React from 'react';
+import {
+  CheckSquare,
+  ClipboardCheck,
+  Edit3,
+  Map,
+  MessageSquare,
+  Rocket,
+  Scale,
+  Star,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Conversation } from '../../store/useConversationStore';
+import {
+  Conversation,
+  getConversationEntityType,
+  useConversationStore,
+} from '../../store/useConversationStore';
 import { ConversationActions } from './ConversationActions';
 
 interface ConversationItemProps {
   conversation: Conversation;
   isActive?: boolean;
   onSelect: (id: string) => void;
+  /** Compact mode for nested-in-folder display */
+  compact?: boolean;
 }
+
+// Entity type -> icon, color, and label mappings
+const ENTITY_CONFIG: Record<
+  string,
+  { icon: React.ElementType; color: string; activeColor: string; label: string }
+> = {
+  assessment: {
+    icon: ClipboardCheck,
+    color: 'text-blue-500',
+    activeColor: 'text-blue-600',
+    label: 'Assessment',
+  },
+  initiative: {
+    icon: Rocket,
+    color: 'text-emerald-500',
+    activeColor: 'text-emerald-600',
+    label: 'Initiative',
+  },
+  roadmap: {
+    icon: Map,
+    color: 'text-violet-500',
+    activeColor: 'text-violet-600',
+    label: 'Roadmap',
+  },
+  task: {
+    icon: CheckSquare,
+    color: 'text-orange-500',
+    activeColor: 'text-orange-600',
+    label: 'Task',
+  },
+  decision: {
+    icon: Scale,
+    color: 'text-rose-500',
+    activeColor: 'text-rose-600',
+    label: 'Decision',
+  },
+};
+
+const TAG_COLORS: Record<string, string> = {
+  assessment: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',
+  initiative: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400',
+  roadmap: 'bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-400',
+  task: 'bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400',
+  decision: 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400',
+};
 
 export const ConversationItem: React.FC<ConversationItemProps> = ({
   conversation,
   isActive,
   onSelect,
+  compact = false,
 }) => {
+  const entityType = useMemo(() => getConversationEntityType(conversation), [conversation]);
+  const { renameConversation } = useConversationStore();
+
+  // Inline rename state
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState(conversation.title);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sync rename value when conversation title changes externally (e.g. auto-title)
+  useEffect(() => {
+    if (!isRenaming) {
+      setRenameValue(conversation.title);
+    }
+  }, [conversation.title, isRenaming]);
+
+  // Focus input when entering rename mode
+  useEffect(() => {
+    if (isRenaming && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isRenaming]);
+
+  const handleStartRename = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setRenameValue(conversation.title || '');
+      setIsRenaming(true);
+    },
+    [conversation.title]
+  );
+
+  const handleFinishRename = useCallback(async () => {
+    const trimmed = renameValue.trim();
+    if (trimmed && trimmed !== conversation.title) {
+      await renameConversation(conversation.id, trimmed);
+    }
+    setIsRenaming(false);
+  }, [renameValue, conversation.title, conversation.id, renameConversation]);
+
+  const handleRenameKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleFinishRename();
+      } else if (e.key === 'Escape') {
+        setRenameValue(conversation.title);
+        setIsRenaming(false);
+      }
+    },
+    [handleFinishRename, conversation.title]
+  );
+
+  const config = entityType ? ENTITY_CONFIG[entityType] : null;
+  const IconComponent = config?.icon || MessageSquare;
+  const iconColor = isActive
+    ? config?.activeColor || 'text-primary-500'
+    : config?.color || 'text-slate-400 group-hover:text-slate-500 dark:text-slate-400';
+
+  // Determine if this is an auto-titled "New conversation" that should show a hint
+  const isDefaultTitle =
+    !conversation.title ||
+    conversation.title === 'New conversation' ||
+    conversation.title === 'Nowa rozmowa';
+
   return (
     <div
-      onClick={() => onSelect(conversation.id)}
+      onClick={() => !isRenaming && onSelect(conversation.id)}
       className={`
-                group relative flex flex-col gap-1 p-3 rounded-xl cursor-pointer transition-all
-                ${
-                  isActive
-                    ? 'bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-900/30'
-                    : 'hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
-                }
-            `}
+        group relative flex flex-col gap-1 ${compact ? 'p-2' : 'p-3'} rounded-xl cursor-pointer transition-all
+        ${
+          isActive
+            ? 'bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-900/30'
+            : 'hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
+        }
+      `}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <MessageSquare
-            size={16}
-            className={
-              isActive
-                ? 'text-primary-500'
-                : 'text-slate-400 group-hover:text-slate-500 dark:text-slate-400'
-            }
-          />
-          <h4
-            className={`text-sm font-medium truncate ${isActive ? 'text-primary-900 dark:text-primary-100' : 'text-slate-700 dark:text-slate-300'}`}
-          >
-            {conversation.title || 'New Conversation'}
-          </h4>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <IconComponent size={compact ? 14 : 16} className={`shrink-0 ${iconColor}`} />
+
+          {isRenaming ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={handleRenameKeyDown}
+              onBlur={handleFinishRename}
+              onClick={(e) => e.stopPropagation()}
+              className="flex-1 min-w-0 px-1.5 py-0.5 text-sm font-medium rounded bg-white dark:bg-navy-800 border border-primary-400 dark:border-primary-600 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+            />
+          ) : (
+            <h4
+              className={`text-sm font-medium truncate ${
+                isDefaultTitle
+                  ? 'text-slate-400 dark:text-slate-500 italic'
+                  : isActive
+                    ? 'text-primary-900 dark:text-primary-100'
+                    : 'text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              {conversation.title || 'New Conversation'}
+            </h4>
+          )}
         </div>
-        {conversation.starred && (
-          <Star size={12} className="text-amber-400 fill-amber-400 shrink-0 mt-1" />
-        )}
+
+        <div className="flex items-center gap-1 shrink-0">
+          {conversation.starred && (
+            <Star size={12} className="text-amber-400 fill-amber-400 mt-0.5" />
+          )}
+          {/* Inline rename pencil icon — visible on hover */}
+          {!isRenaming && !compact && (
+            <button
+              onClick={handleStartRename}
+              className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-300 hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-400 rounded transition-all"
+              title="Rename"
+            >
+              <Edit3 size={12} />
+            </button>
+          )}
+        </div>
       </div>
 
-      {conversation.lastMessagePreview && (
+      {/* Entity tag badge */}
+      {entityType && !compact && (
+        <div className="ml-6">
+          <span
+            className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${TAG_COLORS[entityType] || ''}`}
+          >
+            {config?.label}
+          </span>
+        </div>
+      )}
+
+      {conversation.lastMessagePreview && !compact && (
         <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 ml-6">
           {conversation.lastMessagePreview}
         </p>

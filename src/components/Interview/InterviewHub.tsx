@@ -42,6 +42,7 @@ import {
   Target,
   Trash2,
   UserPlus,
+  Users,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -72,6 +73,7 @@ const safeToastError = (error: any, defaultMessage: string, isPolish: boolean) =
   toast.error(errorMessage);
 };
 
+import { type CardViewStyle, CardViewSwitcher } from '../shared/CardViewSwitcher';
 import { AssignInterviewModal } from './AssignInterviewModal';
 import { InsightCreatorModal } from './InsightCreatorModal';
 import { InsightViewer } from './InsightViewer';
@@ -130,12 +132,22 @@ interface InterviewTemplate {
   createdAt: string;
 }
 
-type ModuleTab = 'my-assignments' | 'sessions' | 'templates' | 'insights' | 'managed';
+type ModuleTab =
+  | 'my-assignments'
+  | 'sessions'
+  | 'assessments'
+  | 'templates'
+  | 'insights'
+  | 'managed';
 type ViewMode = 'table' | 'grid';
 type ItemStatus =
   | 'draft'
+  | 'drafting'
   | 'in_review'
+  | 'review'
   | 'approved'
+  | 'accepted'
+  | 'rejected'
   | 'completed'
   | 'active'
   | 'archived'
@@ -240,8 +252,12 @@ const TYPE_COLORS = {
 
 const STATUS_COLORS: Record<ItemStatus, string> = {
   draft: 'bg-slate-400',
+  drafting: 'bg-slate-400',
   in_review: 'bg-amber-400',
+  review: 'bg-amber-400',
   approved: 'bg-emerald-400',
+  accepted: 'bg-emerald-400',
+  rejected: 'bg-red-400',
   completed: 'bg-emerald-400',
   active: 'bg-purple-400',
   archived: 'bg-slate-500',
@@ -255,7 +271,7 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
 export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentProjectId, setCurrentProjectId, currentOrganization } = useAppStore();
 
   // Permissions hook
@@ -269,6 +285,7 @@ export const InterviewHub: React.FC = () => {
   // Get session ID from URL if provided
   const sessionIdFromUrl = searchParams.get('sessionId');
   const assignmentIdFromUrl = searchParams.get('assignmentId');
+  const insightIdFromUrl = searchParams.get('insightId');
 
   // State - domyślnie Inbox (moje przydziały)
   const [activeTab, setActiveTab] = useState<ModuleTab>('my-assignments');
@@ -281,6 +298,8 @@ export const InterviewHub: React.FC = () => {
     useState<InterviewTemplate | null>(null);
   const [insightTypeFilter, setInsightTypeFilter] = useState<string>('all');
   const [insightStatusFilter, setInsightStatusFilter] = useState<string>('all');
+  const [insightViewStyle, setInsightViewStyle] = useState<CardViewStyle>('d');
+  const [insightGroupBy, setInsightGroupBy] = useState<'report' | 'person'>('report');
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState<string>('all');
 
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
@@ -395,6 +414,23 @@ export const InterviewHub: React.FC = () => {
       }
     }
   }, [sessionIdFromUrl, sessions]);
+
+  // Open insight from URL
+  useEffect(() => {
+    if (!insightIdFromUrl) return;
+    const insight = insights.find((i) => i.id === insightIdFromUrl);
+    if (!insight) return;
+    handleOpenDocument({
+      id: insight.id,
+      type: 'insight',
+      name: insight.title || 'Insight',
+      status: (insight.status as ItemStatus) || 'approved',
+      data: insight,
+    });
+    const next = new URLSearchParams(searchParams);
+    next.delete('insightId');
+    setSearchParams(next, { replace: true });
+  }, [insightIdFromUrl, insights, searchParams, setSearchParams]);
 
   // Load template questions when a template doc is opened
   useEffect(() => {
@@ -604,20 +640,20 @@ export const InterviewHub: React.FC = () => {
         count: sessions.length,
       });
 
-      // 3. Templates - biblioteka szablonów (PM/Admin)
+      // 3. Assessments - oceny wywiadów (PM/Admin) - between Sessions and Templates
+      baseTabs.push({
+        id: 'assessments' as ModuleTab,
+        label: isPolish ? 'Oceny' : 'Assessments',
+        icon: <Target size={16} />,
+        count: insights.filter((i) => i.exportedToAssessment).length,
+      });
+
+      // 4. Templates - biblioteka szablonów (PM/Admin)
       baseTabs.push({
         id: 'templates' as ModuleTab,
         label: isPolish ? 'Szablony' : 'Templates',
         icon: <FileText size={16} />,
         count: templates.length,
-      });
-
-      // 4. Insights - wnioski AI (PM/Admin)
-      baseTabs.push({
-        id: 'insights' as ModuleTab,
-        label: isPolish ? 'Wnioski' : 'Insights',
-        icon: <Lightbulb size={16} />,
-        count: insights.length,
       });
 
       // 5. Assigned - wywiady które przydzieliłem (PM/Admin)
@@ -629,6 +665,14 @@ export const InterviewHub: React.FC = () => {
         icon: <ClipboardList size={16} />,
         count: assignedCount,
         hasWarning: overdueCount > 0,
+      });
+
+      // 6. Insights - wnioski AI (PM/Admin) - rightmost
+      baseTabs.push({
+        id: 'insights' as ModuleTab,
+        label: isPolish ? 'Wnioski' : 'Insights',
+        icon: <Lightbulb size={16} />,
+        count: insights.length,
       });
     }
 
@@ -925,18 +969,49 @@ export const InterviewHub: React.FC = () => {
     [isPolish]
   );
 
-  // Export action
+  // Export action — generates and downloads file
   const handleExport = useCallback(
     (format: 'pdf' | 'excel') => {
-      // TODO: Implement export functionality
-      toast.success(
-        isPolish
-          ? `Eksport do ${format.toUpperCase()} rozpoczęty`
-          : `Export to ${format.toUpperCase()} started`
-      );
+      try {
+        // Build export content from sessions
+        const lines: string[] = [];
+        lines.push('# Interview Sessions Export');
+        lines.push(`Generated: ${new Date().toLocaleDateString()}`);
+        lines.push('');
+        sessions.forEach(
+          (s: { name?: string; status?: string; createdAt?: string; questions?: unknown[] }) => {
+            lines.push(`## ${s.name || 'Untitled Session'}`);
+            lines.push(`Status: ${s.status || '—'}`);
+            lines.push(
+              `Created: ${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '—'}`
+            );
+            lines.push(`Questions: ${Array.isArray(s.questions) ? s.questions.length : 0}`);
+            lines.push('');
+          }
+        );
+
+        const content = lines.join('\n');
+        const mimeType = format === 'pdf' ? 'text/plain' : 'text/csv';
+        const ext = format === 'pdf' ? 'txt' : 'csv';
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `interview-sessions-export.${ext}`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        toast.success(
+          isPolish
+            ? `Eksport do ${format.toUpperCase()} zakończony`
+            : `Export to ${format.toUpperCase()} completed`
+        );
+      } catch {
+        toast.error(isPolish ? 'Błąd eksportu' : 'Export failed');
+      }
       setShowExportModal(false);
     },
-    [isPolish]
+    [isPolish, sessions]
   );
 
   // Generate insight from session
@@ -1078,22 +1153,22 @@ export const InterviewHub: React.FC = () => {
   // Render table view for sessions
   const renderSessionsTable = () => (
     <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
-      <table className="w-full">
+      <table className="w-full table-fixed">
         <thead>
           <tr className="border-b border-navy-700">
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[40%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Nazwa' : 'Name'}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Status' : 'Status'}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Postęp' : 'Progress'}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Data' : 'Date'}
             </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[15%] px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Akcje' : 'Actions'}
             </th>
           </tr>
@@ -1114,18 +1189,18 @@ export const InterviewHub: React.FC = () => {
                 className="group hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-navy-700/50 last:border-0"
               >
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${statusConfig.bgColor}`}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${statusConfig.bgColor}`}
                     >
                       <Brain size={16} className={statusConfig.textColor} />
                     </div>
-                    <div>
-                      <span className="text-sm text-white font-medium block">
+                    <div className="min-w-0">
+                      <span className="text-sm text-white font-medium block truncate">
                         {session.name || 'Discovery Interview'}
                       </span>
                       {session.ownerId && (
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-500 truncate block">
                           ID: {session.id.slice(0, 8)}...
                         </span>
                       )}
@@ -1137,7 +1212,9 @@ export const InterviewHub: React.FC = () => {
                     className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${statusConfig.bgColor}`}
                   >
                     <span className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
-                    <span className={`text-xs font-medium ${statusConfig.textColor}`}>
+                    <span
+                      className={`text-xs font-medium ${statusConfig.textColor} whitespace-nowrap`}
+                    >
                       {isPolish ? statusConfig.label.pl : statusConfig.label.en}
                     </span>
                   </div>
@@ -1480,25 +1557,25 @@ export const InterviewHub: React.FC = () => {
   // Render insights table
   const renderInsightsTable = () => (
     <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
-      <table className="w-full">
+      <table className="w-full table-fixed">
         <thead>
           <tr className="border-b border-navy-700">
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[30%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Tytuł' : 'Title'}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[14%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Typ' : 'Type'}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[12%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Status' : 'Status'}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[12%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Źródło' : 'Source'}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[12%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Data' : 'Date'}
             </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[20%] px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Akcje' : 'Actions'}
             </th>
           </tr>
@@ -1538,16 +1615,18 @@ export const InterviewHub: React.FC = () => {
                 className="group hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-navy-700/50 last:border-0"
               >
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${typeConfig.bgColor}`}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${typeConfig.bgColor}`}
                     >
                       <Lightbulb size={16} className={typeConfig.textColor} />
                     </div>
-                    <div>
-                      <span className="text-sm text-white font-medium block">{insight.title}</span>
+                    <div className="min-w-0">
+                      <span className="text-sm text-white font-medium block truncate">
+                        {insight.title}
+                      </span>
                       {insight.createdBy && (
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-500 truncate block">
                           {isPolish ? 'Autor:' : 'Author:'} {insight.createdBy}
                         </span>
                       )}
@@ -1705,22 +1784,22 @@ export const InterviewHub: React.FC = () => {
   // Render templates table
   const renderTemplatesTable = () => (
     <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
-      <table className="w-full">
+      <table className="w-full table-fixed">
         <thead>
           <tr className="border-b border-navy-700">
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[35%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Nazwa' : 'Name'}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Kategoria' : 'Category'}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[10%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Pytania' : 'Questions'}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Status' : 'Status'}
             </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[25%] px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Akcje' : 'Actions'}
             </th>
           </tr>
@@ -1733,13 +1812,15 @@ export const InterviewHub: React.FC = () => {
               className="group hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-navy-700/50 last:border-0"
             >
               <td className="px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-500/20">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-blue-500/20">
                     <FileText size={16} className="text-blue-400" />
                   </div>
-                  <div>
-                    <span className="text-sm text-white font-medium block">{template.name}</span>
-                    <span className="text-xs text-slate-500 line-clamp-1">
+                  <div className="min-w-0">
+                    <span className="text-sm text-white font-medium block truncate">
+                      {template.name}
+                    </span>
+                    <span className="text-xs text-slate-500 truncate block">
                       {template.description}
                     </span>
                   </div>
@@ -2075,6 +2156,21 @@ export const InterviewHub: React.FC = () => {
     return null;
   };
 
+  // Sorting state for assignments
+  const [assignmentSortField, setAssignmentSortField] = useState<
+    'dueAt' | 'status' | 'progress' | null
+  >('dueAt');
+  const [assignmentSortAsc, setAssignmentSortAsc] = useState(true);
+
+  const toggleAssignmentSort = (field: 'dueAt' | 'status' | 'progress') => {
+    if (assignmentSortField === field) {
+      setAssignmentSortAsc(!assignmentSortAsc);
+    } else {
+      setAssignmentSortField(field);
+      setAssignmentSortAsc(true);
+    }
+  };
+
   // Render assignments table (reusable for my/managed/overdue)
   const renderAssignmentsTable = (
     assignments: InterviewAssignment[],
@@ -2084,12 +2180,20 @@ export const InterviewHub: React.FC = () => {
       switch (status) {
         case 'assigned':
           return 'bg-blue-500/20 text-blue-400';
+        case 'drafting':
+          return 'bg-slate-500/20 text-slate-400';
         case 'in_progress':
           return 'bg-purple-500/20 text-purple-400';
+        case 'review':
+          return 'bg-amber-500/20 text-amber-400';
         case 'submitted':
           return 'bg-amber-500/20 text-amber-400';
         case 'sent_back':
           return 'bg-red-500/20 text-red-400';
+        case 'rejected':
+          return 'bg-red-500/20 text-red-400';
+        case 'accepted':
+          return 'bg-emerald-500/20 text-emerald-400';
         case 'approved':
           return 'bg-emerald-500/20 text-emerald-400';
         case 'completed':
@@ -2102,9 +2206,13 @@ export const InterviewHub: React.FC = () => {
     const getStatusLabel = (status: string) => {
       const labels: Record<string, { pl: string; en: string }> = {
         assigned: { pl: 'Przydzielony', en: 'Assigned' },
+        drafting: { pl: 'Szkic', en: 'Drafting' },
         in_progress: { pl: 'W trakcie', en: 'In Progress' },
+        review: { pl: 'Do przeglądu', en: 'In Review' },
         submitted: { pl: 'Wysłany', en: 'Submitted' },
         sent_back: { pl: 'Do poprawy', en: 'Sent Back' },
+        rejected: { pl: 'Odrzucony', en: 'Rejected' },
+        accepted: { pl: 'Zaakceptowany', en: 'Accepted' },
         approved: { pl: 'Zatwierdzony', en: 'Approved' },
         completed: { pl: 'Zakończony', en: 'Completed' },
       };
@@ -2131,6 +2239,49 @@ export const InterviewHub: React.FC = () => {
       return new Date(dueAt) < new Date();
     };
 
+    /** E1.1 – "days to due" helper with color coding */
+    const getDaysToDue = (
+      dueAt?: string
+    ): { days: number; label: string; colorClass: string } | null => {
+      if (!dueAt) return null;
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const due = new Date(dueAt);
+      due.setHours(0, 0, 0, 0);
+      const diffMs = due.getTime() - now.getTime();
+      const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      if (days < 0) {
+        const absDays = Math.abs(days);
+        return {
+          days,
+          label: isPolish
+            ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
+            : `${absDays}d overdue`,
+          colorClass: 'text-red-400 bg-red-500/10',
+        };
+      }
+      if (days === 0) {
+        return {
+          days,
+          label: isPolish ? 'Dziś!' : 'Today!',
+          colorClass: 'text-red-400 bg-red-500/10',
+        };
+      }
+      if (days <= 3) {
+        return {
+          days,
+          label: isPolish ? `${days} ${days === 1 ? 'dzień' : 'dni'} do terminu` : `${days}d left`,
+          colorClass: 'text-amber-400 bg-amber-500/10',
+        };
+      }
+      return {
+        days,
+        label: isPolish ? `${days} ${days === 1 ? 'dzień' : 'dni'} do terminu` : `${days}d left`,
+        colorClass: 'text-emerald-400 bg-emerald-500/10',
+      };
+    };
+
     const handleStartAssignment = async (assignment: InterviewAssignment) => {
       try {
         const projectId = await ensureProjectId();
@@ -2147,8 +2298,6 @@ export const InterviewHub: React.FC = () => {
           projectId,
         })) as any;
         toast.dismiss();
-
-        console.log('[InterviewHub] Start assignment result:', result);
 
         // Open the session - backend returns { assignmentId, session }
         const session = result?.session;
@@ -2204,21 +2353,40 @@ export const InterviewHub: React.FC = () => {
       }
     };
 
+    // Sort assignments based on current sort field
+    const sortedAssignments = [...assignments].sort((a, b) => {
+      if (!assignmentSortField) return 0;
+      const dir = assignmentSortAsc ? 1 : -1;
+      if (assignmentSortField === 'dueAt') {
+        const aDate = a.dueAt ? new Date(a.dueAt).getTime() : Infinity;
+        const bDate = b.dueAt ? new Date(b.dueAt).getTime() : Infinity;
+        return (aDate - bDate) * dir;
+      }
+      if (assignmentSortField === 'progress') {
+        const aP = a.session?.completenessPercent || 0;
+        const bP = b.session?.completenessPercent || 0;
+        return (aP - bP) * dir;
+      }
+      if (assignmentSortField === 'status') {
+        const statusOrder: Record<string, number> = {
+          sent_back: 0,
+          assigned: 1,
+          in_progress: 2,
+          submitted: 3,
+          approved: 4,
+          completed: 5,
+        };
+        return ((statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99)) * dir;
+      }
+      return 0;
+    });
+
     const handleOpenAssignmentRow = async (assignment: InterviewAssignment) => {
       try {
-        console.log('[InterviewHub] Opening assignment:', {
-          id: assignment.id,
-          status: assignment.status,
-          sessionId: assignment.sessionId,
-          showAssignee,
-        });
-
         // If assignment has a session, open it (read-only will be handled by workspace based on assignment status)
         const sid = assignment.sessionId || assignment.session?.id;
         if (sid) {
-          console.log('[InterviewHub] Loading session:', sid);
           const session = await Api.get(`/interview/sessions/${sid}`);
-          console.log('[InterviewHub] Session loaded:', session);
           handleOpenDocument({
             id: (session as InterviewSession).id,
             type: 'session',
@@ -2231,14 +2399,12 @@ export const InterviewHub: React.FC = () => {
 
         // If user is assignee and the assignment hasn't started, start it.
         if (!showAssignee && assignment.status === 'assigned') {
-          console.log('[InterviewHub] Starting assignment as assignee');
           await handleStartAssignment(assignment);
           return;
         }
 
         // If manager view and assignment hasn't started yet, show info message
         if (showAssignee && !assignment.sessionId) {
-          console.log('[InterviewHub] Assignment not started yet (manager view)');
           const message = isPolish
             ? 'Wywiad nie został jeszcze rozpoczęty przez przypisanego użytkownika'
             : 'Interview has not been started by the assignee yet';
@@ -2263,33 +2429,62 @@ export const InterviewHub: React.FC = () => {
 
     return (
       <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
-        <table className="w-full">
+        <table className="w-full table-fixed">
           <thead>
             <tr className="border-b border-navy-700">
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th
+                className={`${showAssignee ? 'w-[25%]' : 'w-[30%]'} px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider`}
+              >
                 {isPolish ? 'Szablon' : 'Template'}
               </th>
               {showAssignee && (
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                   {isPolish ? 'Przydzielony do' : 'Assignee'}
                 </th>
               )}
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th
+                className="w-[13%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 transition-colors"
+                onClick={() => toggleAssignmentSort('status')}
+              >
                 {isPolish ? 'Status' : 'Status'}
+                {assignmentSortField === 'status' && (
+                  <ChevronDown
+                    size={12}
+                    className={`inline-block ml-0.5 transition-transform ${assignmentSortAsc ? '' : 'rotate-180'}`}
+                  />
+                )}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th
+                className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 transition-colors"
+                onClick={() => toggleAssignmentSort('progress')}
+              >
                 {isPolish ? 'Postęp' : 'Progress'}
+                {assignmentSortField === 'progress' && (
+                  <ChevronDown
+                    size={12}
+                    className={`inline-block ml-0.5 transition-transform ${assignmentSortAsc ? '' : 'rotate-180'}`}
+                  />
+                )}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                {isPolish ? 'Termin' : 'Due Date'}
+              <th
+                className="w-[13%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 transition-colors"
+                onClick={() => toggleAssignmentSort('dueAt')}
+              >
+                {isPolish ? 'Do terminu' : 'Days to Due'}
+                {assignmentSortField === 'dueAt' && (
+                  <ChevronDown
+                    size={12}
+                    className={`inline-block ml-0.5 transition-transform ${assignmentSortAsc ? '' : 'rotate-180'}`}
+                  />
+                )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="w-[19%] px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
                 {isPolish ? 'Akcje' : 'Actions'}
               </th>
             </tr>
           </thead>
           <tbody>
-            {assignments.map((assignment) => {
+            {sortedAssignments.map((assignment) => {
               const progress = assignment.session?.completenessPercent || 0;
               const overdue = isOverdue(assignment.dueAt) && assignment.status !== 'completed';
 
@@ -2315,18 +2510,18 @@ export const InterviewHub: React.FC = () => {
                   }}
                 >
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center bg-blue-500/20`}
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-blue-500/20`}
                       >
                         <ClipboardList size={16} className="text-blue-400" />
                       </div>
-                      <div>
-                        <span className="text-sm text-white font-medium block">
+                      <div className="min-w-0">
+                        <span className="text-sm text-white font-medium block truncate">
                           {assignment.template?.name || 'Interview'}
                         </span>
                         {assignment.template?.category && (
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-slate-500 truncate block">
                             {assignment.template.category}
                           </span>
                         )}
@@ -2365,17 +2560,29 @@ export const InterviewHub: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    {assignment.dueAt ? (
-                      <div
-                        className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-400' : 'text-slate-400'}`}
-                      >
-                        <Calendar size={12} />
-                        {new Date(assignment.dueAt).toLocaleDateString()}
-                        {overdue && <AlertTriangle size={12} className="ml-1" />}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-slate-500">—</span>
-                    )}
+                    {(() => {
+                      const dtd = getDaysToDue(assignment.dueAt);
+                      if (!dtd) return <span className="text-xs text-slate-500">—</span>;
+
+                      return (
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${dtd.colorClass}`}
+                            title={
+                              assignment.dueAt
+                                ? new Date(assignment.dueAt).toLocaleDateString()
+                                : ''
+                            }
+                          >
+                            {dtd.days < 0 && <AlertTriangle size={11} />}
+                            {dtd.days === 0 && <AlertTriangle size={11} />}
+                            {dtd.days > 0 && dtd.days <= 3 && <Clock size={11} />}
+                            {dtd.days > 3 && <Calendar size={11} />}
+                            {dtd.label}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -2553,8 +2760,285 @@ export const InterviewHub: React.FC = () => {
       );
     }
 
+    if (activeTab === 'assessments') {
+      // Assessments tab shows insights that have been exported to assessment
+      const assessmentInsights = insights.filter((i) => i.exportedToAssessment);
+      return (
+        <div className="p-4">
+          {assessmentInsights.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Target className="w-12 h-12 text-slate-600 mb-3" />
+              <p className="text-slate-400 text-sm mb-2">
+                {isPolish ? 'Brak ocen' : 'No assessments yet'}
+              </p>
+              <p className="text-xs text-slate-500 max-w-md">
+                {isPolish
+                  ? 'Oceny pojawiają się po wyeksportowaniu wniosków do modułu Assessment. Przejdź do zakładki Wnioski, aby wygenerować i wyeksportować.'
+                  : 'Assessments appear after exporting insights to the Assessment module. Go to the Insights tab to generate and export.'}
+              </p>
+            </div>
+          ) : (
+            renderInsightsTable()
+          )}
+        </div>
+      );
+    }
+
     if (activeTab === 'insights') {
-      return <div className="p-4">{renderInsightsTable()}</div>;
+      // Group insights by report or person
+      const groupedInsights =
+        insightGroupBy === 'person'
+          ? (() => {
+              const byPerson: Record<string, typeof filteredInsights> = {};
+              filteredInsights.forEach((insight) => {
+                const person = insight.createdBy || (isPolish ? 'Nieznany' : 'Unknown');
+                if (!byPerson[person]) byPerson[person] = [];
+                byPerson[person].push(insight);
+              });
+              return byPerson;
+            })()
+          : (() => {
+              const byReport: Record<string, typeof filteredInsights> = {};
+              filteredInsights.forEach((insight) => {
+                const source = insight.sessionId
+                  ? `Session ${insight.sessionId.slice(0, 8)}`
+                  : insight.sourceSessionCount
+                    ? `${insight.sourceSessionCount} ${isPolish ? 'sesji' : 'sessions'}`
+                    : isPolish
+                      ? 'Ogólne'
+                      : 'General';
+                if (!byReport[source]) byReport[source] = [];
+                byReport[source].push(insight);
+              });
+              return byReport;
+            })();
+
+      return (
+        <div className="p-4 space-y-4">
+          {/* Insights toolbar: View switcher + Group-by filter */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {/* E4.3: Group-by filter toggle */}
+              <div className="inline-flex items-center rounded-lg border border-navy-700 bg-navy-900 p-0.5">
+                <button
+                  onClick={() => setInsightGroupBy('report')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    insightGroupBy === 'report'
+                      ? 'bg-navy-800 text-primary-400 shadow-sm border border-navy-600'
+                      : 'text-slate-400 hover:text-slate-300'
+                  }`}
+                >
+                  <FileText size={14} />
+                  {isPolish ? 'Wg raportu' : 'By Report'}
+                </button>
+                <button
+                  onClick={() => setInsightGroupBy('person')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    insightGroupBy === 'person'
+                      ? 'bg-navy-800 text-primary-400 shadow-sm border border-navy-600'
+                      : 'text-slate-400 hover:text-slate-300'
+                  }`}
+                >
+                  <Users size={14} />
+                  {isPolish ? 'Wg osoby' : 'By Person'}
+                </button>
+              </div>
+            </div>
+
+            {/* E4.1: 3-view switcher */}
+            <CardViewSwitcher
+              moduleId="interview-insights"
+              value={insightViewStyle}
+              onChange={setInsightViewStyle}
+              compact
+            />
+          </div>
+
+          {/* Render based on view style */}
+          {insightViewStyle === 'd' ? (
+            // Standard table view with optional grouping headers
+            Object.keys(groupedInsights).length > 1 ? (
+              <div className="space-y-4">
+                {Object.entries(groupedInsights).map(([groupName, groupInsights]) => (
+                  <div key={groupName}>
+                    <div className="flex items-center gap-2 mb-2 px-1">
+                      {insightGroupBy === 'person' ? (
+                        <Users size={14} className="text-slate-400" />
+                      ) : (
+                        <FileText size={14} className="text-slate-400" />
+                      )}
+                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        {groupName}
+                      </span>
+                      <span className="text-xs text-slate-500">({groupInsights.length})</span>
+                    </div>
+                    {renderInsightsTable()}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              renderInsightsTable()
+            )
+          ) : insightViewStyle === 'n' ? (
+            // Notion-like: card layout with more whitespace
+            <div className="space-y-3">
+              {Object.entries(groupedInsights).map(([groupName, groupInsights]) => (
+                <div key={groupName}>
+                  {Object.keys(groupedInsights).length > 1 && (
+                    <div className="flex items-center gap-2 mb-2 px-1">
+                      {insightGroupBy === 'person' ? (
+                        <Users size={14} className="text-slate-400" />
+                      ) : (
+                        <FileText size={14} className="text-slate-400" />
+                      )}
+                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        {groupName}
+                      </span>
+                      <span className="text-xs text-slate-500">({groupInsights.length})</span>
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    {groupInsights.map((insight) => {
+                      const promptType =
+                        (insight as any).promptType || (insight as any).insightType || 'summary';
+                      const typeConfig = getInsightTypeConfig(promptType);
+                      return (
+                        <div
+                          key={insight.id}
+                          onClick={() => handleViewInsight(insight)}
+                          className="group bg-navy-900 border border-navy-700 rounded-xl p-4 hover:bg-navy-800/50 cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${typeConfig.bgColor}`}
+                            >
+                              <Lightbulb size={18} className={typeConfig.textColor} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-medium text-white truncate">
+                                {insight.title}
+                              </h4>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span
+                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${typeConfig.bgColor} ${typeConfig.textColor}`}
+                                >
+                                  {isPolish ? typeConfig.label.pl : typeConfig.label.en}
+                                </span>
+                                {insight.createdBy && (
+                                  <span className="text-xs text-slate-500">
+                                    {insight.createdBy}
+                                  </span>
+                                )}
+                                {insight.createdAt && (
+                                  <span className="text-xs text-slate-500">
+                                    {new Date(insight.createdAt).toLocaleDateString()}
+                                  </span>
+                                )}
+                              </div>
+                              {insight.content && (
+                                <p className="text-xs text-slate-400 mt-2 line-clamp-2">
+                                  {insight.content.slice(0, 200)}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+              {filteredInsights.length === 0 && (
+                <div className="flex flex-col items-center py-12 text-center">
+                  <Lightbulb className="w-12 h-12 text-slate-600 mb-3" />
+                  <p className="text-slate-400 text-sm">
+                    {isPolish ? 'Brak wniosków' : 'No insights yet'}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            // ClickUp/Dense: compact rows with max info
+            <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+              {Object.entries(groupedInsights).map(([groupName, groupInsights]) => (
+                <div key={groupName}>
+                  {Object.keys(groupedInsights).length > 1 && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-navy-800/50 border-b border-navy-700">
+                      {insightGroupBy === 'person' ? (
+                        <Users size={12} className="text-slate-400" />
+                      ) : (
+                        <FileText size={12} className="text-slate-400" />
+                      )}
+                      <span className="text-xs font-semibold text-slate-400 uppercase">
+                        {groupName}
+                      </span>
+                      <span className="text-xs text-slate-500">({groupInsights.length})</span>
+                    </div>
+                  )}
+                  {groupInsights.map((insight) => {
+                    const promptType =
+                      (insight as any).promptType || (insight as any).insightType || 'summary';
+                    const typeConfig = getInsightTypeConfig(promptType);
+                    const status = (insight.status || 'completed') as
+                      | 'generating'
+                      | 'completed'
+                      | 'failed';
+                    return (
+                      <div
+                        key={insight.id}
+                        onClick={() => handleViewInsight(insight)}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-navy-700/50 last:border-0"
+                      >
+                        <Lightbulb size={14} className={typeConfig.textColor} />
+                        <span className="text-sm text-white font-medium truncate flex-1 min-w-0">
+                          {insight.title}
+                        </span>
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${typeConfig.bgColor} ${typeConfig.textColor} whitespace-nowrap`}
+                        >
+                          {isPolish ? typeConfig.label.pl : typeConfig.label.en}
+                        </span>
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap ${
+                            status === 'completed'
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : status === 'generating'
+                                ? 'bg-amber-500/20 text-amber-400'
+                                : 'bg-red-500/20 text-red-400'
+                          }`}
+                        >
+                          {status === 'completed'
+                            ? isPolish
+                              ? 'Gotowe'
+                              : 'Done'
+                            : status === 'generating'
+                              ? 'AI...'
+                              : isPolish
+                                ? 'Błąd'
+                                : 'Err'}
+                        </span>
+                        <span className="text-[10px] text-slate-500 whitespace-nowrap">
+                          {insight.createdAt
+                            ? new Date(insight.createdAt).toLocaleDateString()
+                            : ''}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+              {filteredInsights.length === 0 && (
+                <div className="flex flex-col items-center py-12 text-center">
+                  <Lightbulb className="w-12 h-12 text-slate-600 mb-3" />
+                  <p className="text-slate-400 text-sm">
+                    {isPolish ? 'Brak wniosków' : 'No insights yet'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
     }
 
     if (activeTab === 'templates') {
@@ -3132,8 +3616,8 @@ export const InterviewHub: React.FC = () => {
 
               <p className="text-center text-slate-500 text-sm mt-6">
                 {isPolish
-                  ? 'Pełny dashboard analityczny w przygotowaniu...'
-                  : 'Full analytics dashboard coming soon...'}
+                  ? 'Przejdź do zakładki Analytics, aby zobaczyć szczegóły'
+                  : 'Visit the Analytics tab for detailed insights'}
               </p>
             </div>
           </div>

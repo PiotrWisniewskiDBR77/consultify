@@ -1,8 +1,10 @@
 /**
  * TaskDetailView
- * Full-page task detail view following Decision Panel Golden Standard
- * Two-column layout with collapsible sections
- * Tech-sexy UI with gradients and glassmorphism
+ * Full-page task detail view with N / C presentation modes
+ * N mode: NModeHeader + PropertiesStrip + LeftNav (9 sections) + Canvas
+ * D mode (accordion): legacy — kept until N mode is fully rolled out
+ *
+ * @see docs/ui-standards/detail-view-presentation-modes.md
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
@@ -14,15 +16,18 @@ import {
   CheckSquare,
   ChevronDown,
   ChevronLeft,
+  ChevronUp,
   Clock,
   Edit3,
   ExternalLink,
   Eye,
   FileText,
   Flag,
+  FolderOpen,
   GitBranch,
   History,
   Layers,
+  Lightbulb,
   Link2,
   Loader2,
   MessageSquare,
@@ -37,6 +42,8 @@ import {
   Sparkles,
   Tag,
   Target,
+  ThumbsDown,
+  ThumbsUp,
   Trash2,
   User,
   Users,
@@ -46,12 +53,39 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { usePresentationMode } from '@/hooks/usePresentationMode';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Api } from '@/services/api';
 import { InitiativeService } from '@/services/initiativeService';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
+import { buildArtifactCode } from '@/utils/artifactLinks';
 
+// ── AI Field Enhancer (shared) ───────────────────────────────────────────────
+import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
+import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
+import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
+// ── N-Mode Layout (shared) ──────────────────────────────────────────────────
+import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
+import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
+import { NModePropertiesStrip } from '../shared/NModeLayout/NModePropertiesStrip';
+import { NModeSectionWrapper } from '../shared/NModeLayout/NModeSectionWrapper';
+import type { NModeSection } from '../shared/NModeLayout/types';
+// ── N-Mode Sections (shared, reusable across artifacts) ─────────────────────
+import {
+  ActivityLogCanvas,
+  type ActivityLogEntry as NModeActivityLogEntry,
+  type ActivityStats,
+  type ActivityTypeMeta,
+  AttachmentsLinksCanvas,
+  type CommentItem,
+  type CommentPriority,
+  CommentsCanvas,
+  type DateFilter,
+  RiskCanvas,
+  type SortOrder,
+} from '../shared/NModeSections';
 import {
   type Alternative,
   AlternativesSection,
@@ -80,6 +114,8 @@ import {
   type TaskDependency,
   type WarningThresholds,
 } from './shared';
+// ── Presentation Mode Switcher ───────────────────────────────────────────────
+import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
 
 interface TaskDetailViewProps {
   taskId: string | null;
@@ -279,6 +315,154 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [isGeneratingOutcome, setIsGeneratingOutcome] = useState(false);
   const [isGeneratingChecklist, setIsGeneratingChecklist] = useState(false);
 
+  // ── RACI / Governance inline editing (mirrors Decision) ──────────────────
+  type IntegrationChannel = 'slack' | 'teams' | 'webhook' | 'jira';
+  type CoreDeliveryChannel = 'in_app' | 'email';
+  type EscalationMode = 'notify_only' | 'manager_review' | 'executive_alert';
+  type DeliveryConfig = {
+    coreChannels: CoreDeliveryChannel[];
+    integrationChannels: IntegrationChannel[];
+    syncTargets: string[];
+  };
+  type ReminderRuleWithDelivery = ReminderRule & { delivery?: DeliveryConfig };
+  type EscalationRuleWithConfig = EscalationRule & {
+    warningDays: number;
+    criticalDays: number;
+    escalationMode: EscalationMode;
+    delivery: DeliveryConfig;
+  };
+
+  const [editingStakeholderId, setEditingStakeholderId] = useState<string | null>(null);
+  const [stakeholderDraft, setStakeholderDraft] = useState<Stakeholder | null>(null);
+  const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
+  const [reminderDraft, setReminderDraft] = useState<ReminderRuleWithDelivery | null>(null);
+  const [editingEscalationId, setEditingEscalationId] = useState<string | null>(null);
+  const [escalationDraft, setEscalationDraft] = useState<EscalationRuleWithConfig | null>(null);
+  const [isSuggestingStakeholders, setIsSuggestingStakeholders] = useState(false);
+  const [escalationRules, setEscalationRules] = useState<EscalationRuleWithConfig[]>(() => {
+    if (escalation) {
+      return [
+        {
+          ...escalation,
+          warningDays: thresholds.warningDays,
+          criticalDays: thresholds.criticalDays,
+          escalationMode: 'manager_review' as EscalationMode,
+          delivery: {
+            coreChannels: ['in_app'] as CoreDeliveryChannel[],
+            integrationChannels: [],
+            syncTargets: [],
+          },
+        },
+      ];
+    }
+    return [];
+  });
+
+  const governanceTableCardClass =
+    'bg-white/70 dark:bg-navy-900/70 rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-4 space-y-3 h-[340px] flex flex-col';
+  const governanceModalClass =
+    'relative w-full max-w-2xl rounded-3xl border border-slate-200/50 dark:border-navy-700/50 bg-white/95 dark:bg-navy-900/95 shadow-2xl p-6 space-y-5';
+  const governanceModalHintClass =
+    'rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 px-3 py-2 text-xs text-slate-600 dark:text-slate-300';
+  const channelChipClass =
+    'px-2 py-1 rounded-md border text-[11px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
+
+  const integrationChannelCatalog: Array<{
+    key: IntegrationChannel;
+    label: string;
+    scope: string;
+  }> = [
+    { key: 'slack', label: 'Slack', scope: 'notification' },
+    { key: 'teams', label: 'Teams', scope: 'notification' },
+    { key: 'jira', label: 'Jira', scope: 'work-management' },
+    { key: 'webhook', label: 'Webhook', scope: 'custom' },
+  ];
+
+  const escalationModeOptions: Array<{ value: EscalationMode; label: string }> = [
+    { value: 'notify_only', label: isPolish ? 'Powiadomienie tylko' : 'Notify only' },
+    { value: 'manager_review', label: isPolish ? 'Przegląd managera' : 'Manager review' },
+    { value: 'executive_alert', label: isPolish ? 'Alert executive' : 'Executive alert' },
+  ];
+
+  const toggleChannel = <T extends string>(list: T[], key: T, enabled: boolean): T[] => {
+    if (enabled) return list.includes(key) ? list : [...list, key];
+    return list.filter((entry) => entry !== key);
+  };
+
+  const ensureDeliveryConfig = (
+    source?: Partial<DeliveryConfig> | null,
+    fallback?: ReminderRule
+  ): DeliveryConfig => {
+    if (source?.coreChannels) return source as DeliveryConfig;
+    const channels: CoreDeliveryChannel[] = [];
+    if (fallback) {
+      if ((fallback as any).inAppNotification !== false) channels.push('in_app');
+      if ((fallback as any).emailNotification) channels.push('email');
+    }
+    return {
+      coreChannels: channels.length > 0 ? channels : ['in_app'],
+      integrationChannels: (source?.integrationChannels || []) as IntegrationChannel[],
+      syncTargets: (source?.syncTargets || []) as string[],
+    };
+  };
+
+  const normalizeReminderRule = (rule: ReminderRuleWithDelivery): ReminderRuleWithDelivery => {
+    const delivery = ensureDeliveryConfig(rule.delivery, rule);
+    return {
+      ...rule,
+      inAppNotification: delivery.coreChannels.includes('in_app'),
+      emailNotification: delivery.coreChannels.includes('email'),
+      delivery,
+    };
+  };
+
+  const normalizeEscalationRule = (
+    rule: Partial<EscalationRuleWithConfig>
+  ): EscalationRuleWithConfig => ({
+    id: String(rule.id || Math.random().toString(36).slice(2, 11)),
+    enabled: rule.enabled !== false,
+    escalateTo: String(rule.escalateTo || ''),
+    escalateToName: String(rule.escalateToName || ''),
+    afterDays: Number(rule.afterDays ?? 5),
+    warningDays: Number(rule.warningDays ?? thresholds.warningDays),
+    criticalDays: Number(rule.criticalDays ?? thresholds.criticalDays),
+    escalationMode: (rule.escalationMode || 'manager_review') as EscalationMode,
+    message: String(rule.message || ''),
+    delivery: ensureDeliveryConfig(rule.delivery || null),
+  });
+
+  const stakeholderRoleLabel = (role: StakeholderRole) => {
+    if (role === 'responsible') return isPolish ? 'Odpowiedzialny' : 'Responsible';
+    if (role === 'accountable') return isPolish ? 'Rozliczany' : 'Accountable';
+    if (role === 'consulted') return isPolish ? 'Konsultowany' : 'Consulted';
+    return isPolish ? 'Informowany' : 'Informed';
+  };
+
+  const stakeholderChannelLabels = (settings?: StakeholderNotificationSettings) => {
+    if (!settings?.enabled) return [isPolish ? 'Wyłączone' : 'Disabled'];
+    const labels: string[] = [];
+    if (settings.inAppEnabled) labels.push('In-app');
+    if (settings.emailEnabled) labels.push('Email');
+    if (settings.integrationChannels) {
+      settings.integrationChannels.forEach((ch: string) => {
+        labels.push(ch.charAt(0).toUpperCase() + ch.slice(1));
+      });
+    }
+    return labels.length > 0 ? labels : ['In-app'];
+  };
+
+  const deliveryBadgeLabels = (delivery?: DeliveryConfig, fallback?: ReminderRule) => {
+    const source = delivery || (fallback ? ensureDeliveryConfig(null, fallback) : null);
+    if (!source) return ['In-app'];
+    const labels: string[] = source.coreChannels.map((ch: string) =>
+      ch === 'in_app' ? 'In-app' : ch.charAt(0).toUpperCase() + ch.slice(1)
+    );
+    source.integrationChannels.forEach((ch: string) =>
+      labels.push(ch.charAt(0).toUpperCase() + ch.slice(1))
+    );
+    return labels.length > 0 ? labels : ['In-app'];
+  };
+
   // Activity Log
   interface ActivityLogEntry {
     id: string;
@@ -327,7 +511,22 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setActivityLog((prev) => [entry, ...prev]);
   };
 
-  // UI State
+  // ── Presentation Mode (N = page-first / C = ClickUp) ──────────────────────
+  const { mode: presentationMode, setMode: setPresentationMode } = usePresentationMode({
+    entityType: 'task',
+    syncURL: true,
+  });
+  const reducedMotion = useReducedMotion();
+  const motionDuration = reducedMotion ? 0 : 0.22;
+  const [activeNSection, setActiveNSection] = useState('description-scope');
+
+  // N-mode comment state (for CommentsCanvas)
+  const [nCommentDraft, setNCommentDraft] = useState('');
+  const [nCommentPriority, setNCommentPriority] = useState<CommentPriority>('normal');
+  const [nCommentDateFilter, setNCommentDateFilter] = useState<DateFilter>('all');
+  const [nCommentSortOrder, setNCommentSortOrder] = useState<SortOrder>('desc');
+
+  // UI State (accordion / D-mode)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set([]));
@@ -692,24 +891,255 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
   // Linked items handlers
   const handleAddLinkedItem = async (item: LinkedItem) => {
-    setLinkedItems([...linkedItems, item]);
+    // Duplicate check — same id + type already present?
+    const isDuplicate = linkedItems.some((li) => li.id === item.id && li.type === item.type);
+    if (isDuplicate) {
+      toast(isPolish ? 'Ten element jest już powiązany' : 'This item is already linked', {
+        icon: '⚠️',
+      });
+      return;
+    }
+    setLinkedItems((prev) => [...prev, item]);
   };
 
-  const handleRemoveLinkedItem = async (id: string) => {
-    setLinkedItems(linkedItems.filter((i) => i.id !== id));
-  };
-
-  const searchLinkedItems = async (query: string) => {
-    return [];
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
-        <Loader2 className="animate-spin text-primary-500" size={32} />
-      </div>
+  const handleRemoveLinkedItem = async (item: Pick<LinkedItem, 'id' | 'type'>) => {
+    setLinkedItems((prev) =>
+      prev.filter((i) =>
+        item.type ? !(i.id === item.id && i.type === item.type) : i.id !== item.id
+      )
     );
-  }
+  };
+
+  const searchLinkedItems = useCallback(async (query: string): Promise<LinkedItem[]> => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    try {
+      const [
+        tasksRes,
+        initiativesRes,
+        decisionsRes,
+        projectsRes,
+        assessmentsRes,
+        reportsRes,
+        toolsRes,
+        insightsRes,
+      ] = await Promise.allSettled([
+        Api.get('/tasks?limit=50'),
+        Api.get('/initiatives'),
+        Api.getDecisions(),
+        Api.getProjects(),
+        Api.get('/assessments'),
+        Api.get('/reports'),
+        Api.listToolSessions({ limit: 50 }),
+        Api.get('/interview/insights'),
+      ]);
+
+      const tasks =
+        tasksRes.status === 'fulfilled'
+          ? Array.isArray(tasksRes.value)
+            ? tasksRes.value
+            : tasksRes.value?.tasks || []
+          : [];
+      const initiatives =
+        initiativesRes.status === 'fulfilled'
+          ? Array.isArray(initiativesRes.value)
+            ? initiativesRes.value
+            : initiativesRes.value?.initiatives || []
+          : [];
+      const decisions = decisionsRes.status === 'fulfilled' ? decisionsRes.value || [] : [];
+      const projects =
+        projectsRes.status === 'fulfilled'
+          ? Array.isArray(projectsRes.value)
+            ? projectsRes.value
+            : projectsRes.value?.projects || []
+          : [];
+      const assessments =
+        assessmentsRes.status === 'fulfilled'
+          ? Array.isArray(assessmentsRes.value)
+            ? assessmentsRes.value
+            : assessmentsRes.value?.assessments || []
+          : [];
+      const reports =
+        reportsRes.status === 'fulfilled'
+          ? Array.isArray(reportsRes.value)
+            ? reportsRes.value
+            : reportsRes.value?.reports || []
+          : [];
+      const tools =
+        toolsRes.status === 'fulfilled'
+          ? Array.isArray(toolsRes.value)
+            ? toolsRes.value
+            : toolsRes.value?.items || []
+          : [];
+      const insights =
+        insightsRes.status === 'fulfilled'
+          ? Array.isArray(insightsRes.value)
+            ? insightsRes.value
+            : insightsRes.value?.insights || []
+          : [];
+
+      const mappedTasks: LinkedItem[] = tasks
+        .filter((t: any) =>
+          String(t.title || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 10)
+        .map((t: any) => ({
+          id: String(t.id),
+          type: 'task' as const,
+          title: String(t.title || 'Task'),
+          status: t.status,
+          priority: t.priority,
+        }));
+      const mappedInitiatives: LinkedItem[] = initiatives
+        .filter((i: any) =>
+          String(i.name || i.title || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 10)
+        .map((i: any) => ({
+          id: String(i.id),
+          type: 'initiative' as const,
+          title: String(i.name || i.title || 'Initiative'),
+          status: i.status,
+          priority: i.priority,
+        }));
+      const mappedDecisions: LinkedItem[] = decisions
+        .filter((d: any) =>
+          String(d.title || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 10)
+        .map((d: any) => ({
+          id: String(d.id),
+          type: 'decision' as const,
+          title: String(d.title || 'Decision'),
+          status: d.status,
+          priority: d.priority,
+        }));
+      const mappedProjects: LinkedItem[] = projects
+        .filter((p: any) =>
+          String(p.name || p.title || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 10)
+        .map((p: any) => ({
+          id: String(p.id),
+          type: 'project' as const,
+          title: String(p.name || p.title || 'Project'),
+          status: p.status,
+          priority: p.priority,
+        }));
+      const mappedAssessments: LinkedItem[] = assessments
+        .filter((a: any) =>
+          String(a.title || a.name || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((a: any) => ({
+          id: String(a.id),
+          type: 'assessment' as const,
+          title: String(a.title || a.name || 'Assessment'),
+          status: a.status,
+          url: '/assessment',
+        }));
+      const mappedReports: LinkedItem[] = reports
+        .filter((r: any) =>
+          String(r.title || r.name || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((r: any) => ({
+          id: String(r.id),
+          type: 'report' as const,
+          title: String(r.title || r.name || 'Report'),
+          status: r.status,
+          url: `/assessment-reports/${String(r.id)}`,
+        }));
+      const mappedTools: LinkedItem[] = tools
+        .filter((tool: any) =>
+          String(tool.name || tool.title || tool.toolType || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((tool: any) => ({
+          id: String(tool.id),
+          type: 'tool' as const,
+          title: String(tool.name || tool.title || tool.toolType || 'Tool'),
+          status: tool.status,
+          url: '/tools',
+        }));
+      const mappedInsights: LinkedItem[] = insights
+        .filter((insight: any) =>
+          String(insight.title || insight.name || insight.summary || '')
+            .toLowerCase()
+            .includes(q)
+        )
+        .slice(0, 8)
+        .map((insight: any) => ({
+          id: String(insight.id),
+          type: 'insight' as const,
+          title: String(insight.title || insight.name || 'Insight'),
+          status: insight.status,
+          url: '/interview',
+        }));
+
+      return [
+        ...mappedTasks,
+        ...mappedInitiatives,
+        ...mappedDecisions,
+        ...mappedProjects,
+        ...mappedAssessments,
+        ...mappedReports,
+        ...mappedTools,
+        ...mappedInsights,
+      ].slice(0, 24);
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const openLinkedItemTarget = useCallback(
+    (item: LinkedItem) => {
+      const explicitUrl = item.externalUrl || item.url;
+      const normalizedItemId = String(item.id);
+      const fallbackPath =
+        item.type === 'task'
+          ? `/my-work/tasks/${normalizedItemId}`
+          : item.type === 'decision'
+            ? `/my-work/decisions/${normalizedItemId}`
+            : item.type === 'initiative'
+              ? `/initiatives/${normalizedItemId}`
+              : item.type === 'project'
+                ? `/projects/${normalizedItemId}`
+                : item.type === 'assessment'
+                  ? '/assessment'
+                  : item.type === 'report'
+                    ? `/assessment-reports/${normalizedItemId}`
+                    : item.type === 'tool'
+                      ? '/tools'
+                      : item.type === 'insight'
+                        ? '/interview'
+                        : null;
+      const target = explicitUrl || fallbackPath;
+      if (!target) {
+        toast(isPolish ? 'Brak docelowego linku' : 'No target link available', { icon: 'ℹ️' });
+        return;
+      }
+      window.open(target, '_blank', 'noopener,noreferrer');
+    },
+    [isPolish]
+  );
+
+  // NOTE: loading check moved below all hooks to avoid "fewer hooks" error.
+  // See the `if (loading)` guard before the N-mode / D-mode render blocks.
 
   const statusConfig = STATUS_CONFIG[status] || STATUS_CONFIG.todo;
   const priorityConfig = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium;
@@ -718,6 +1148,99 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const isBlocked = status === 'blocked';
   const isDone = status === 'done';
   const isDecisionBlocked = Boolean(blockedByDecisionId);
+
+  // ── Risk helpers (matching Decision pattern) ──────────────────────────────
+  const riskLevelOptions = useMemo(() => ['low', 'medium', 'high', 'critical'] as const, []);
+  const riskCategoryOptions = useMemo(
+    () =>
+      ['technical', 'business', 'financial', 'operational', 'security'].map((c) => ({
+        value: c,
+        label:
+          c === 'technical'
+            ? isPolish
+              ? 'Techniczne'
+              : 'Technical'
+            : c === 'business'
+              ? isPolish
+                ? 'Biznesowe'
+                : 'Business'
+              : c === 'financial'
+                ? isPolish
+                  ? 'Finansowe'
+                  : 'Financial'
+                : c === 'operational'
+                  ? isPolish
+                    ? 'Operacyjne'
+                    : 'Operational'
+                  : isPolish
+                    ? 'Bezpieczeństwo'
+                    : 'Security',
+      })),
+    [isPolish]
+  );
+  const quickMitigationArguments = useMemo(
+    () =>
+      isPolish
+        ? ['POC przed wdrożeniem', 'Przegląd tygodniowy', 'Plan kontroli jakości']
+        : ['POC before rollout', 'Weekly review checkpoint', 'Quality control plan'],
+    [isPolish]
+  );
+  const quickContingencyArguments = useMemo(
+    () =>
+      isPolish
+        ? ['Tryb ręczny fallback', 'Eskalacja do PMO', 'Przesunięcie terminu + komunikat']
+        : ['Manual fallback mode', 'Escalate to PMO', 'Timeline shift with stakeholder notice'],
+    [isPolish]
+  );
+  const riskLevelToScore = (level?: string) => {
+    const n = String(level || '').toLowerCase();
+    if (n === 'critical') return 4;
+    if (n === 'high') return 3;
+    if (n === 'medium') return 2;
+    return 1;
+  };
+  const getRiskScore = (risk: RiskItem) =>
+    riskLevelToScore(risk.probability) * riskLevelToScore(risk.impact);
+  const getRiskScoreClass = (score: number) => {
+    if (score >= 12) return 'text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/30';
+    if (score >= 8) return 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30';
+    if (score >= 4)
+      return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
+    return 'text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border-emerald-500/30';
+  };
+  const getRiskLevelClass = (level?: string) => {
+    const n = String(level || '').toLowerCase();
+    if (n === 'critical') return 'border-red-500/60 bg-red-500/10 text-red-700 dark:text-red-300';
+    if (n === 'high')
+      return 'border-orange-500/55 bg-orange-500/10 text-orange-700 dark:text-orange-300';
+    if (n === 'medium')
+      return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
+    return 'border-emerald-500/45 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
+  };
+  const getRiskLevelLabel = (level: string) => {
+    if (isPolish) {
+      if (level === 'critical') return 'Krytyczny';
+      if (level === 'high') return 'Wysoki';
+      if (level === 'medium') return 'Średni';
+      return 'Niski';
+    }
+    if (level === 'critical') return 'Critical';
+    if (level === 'high') return 'High';
+    if (level === 'medium') return 'Medium';
+    return 'Low';
+  };
+  const sortedRisks = useMemo(
+    () =>
+      [...risks].sort((a, b) => {
+        const byScore = getRiskScore(b) - getRiskScore(a);
+        if (byScore !== 0) return byScore;
+        return String(a.title || '').localeCompare(String(b.title || ''));
+      }),
+    [risks]
+  );
+  const updateRisk = (id: string, updates: Partial<RiskItem>) =>
+    setRisks(risks.map((r) => (r.id === id ? { ...r, ...updates } : r)));
+  const removeRisk = (id: string) => setRisks(risks.filter((r) => r.id !== id));
 
   // Risk handlers
   const addRisk = () => {
@@ -816,21 +1339,76 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
   const generateIdeasAI = async () => {
     setIsGeneratingIdeas(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    const aiIdeas: ImplementationIdea[] = [
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        title: isPolish ? 'Automatyzacja procesu' : 'Process automation',
-        description: '',
-        source: 'ai',
-        status: 'idea',
-        votes: 0,
-        votedByMe: false,
-      },
-    ];
+    await new Promise((r) => setTimeout(r, 1800));
+
+    const taskContext = title || 'task';
+    const aiIdeas: ImplementationIdea[] = isPolish
+      ? [
+          {
+            id: Math.random().toString(36).substr(2, 9),
+            title: `Podejście 1: Automatyzacja z wykorzystaniem istniejących narzędzi`,
+            description: `Wykorzystaj obecną infrastrukturę i narzędzia zespołu do realizacji "${taskContext}". Skonfiguruj pipeline CI/CD, dodaj testy automatyczne i wdróż monitoring. Estymacja: 3-5 dni roboczych.`,
+            source: 'ai',
+            status: 'idea',
+            votes: 0,
+            votedByMe: false,
+          },
+          {
+            id: Math.random().toString(36).substr(2, 9),
+            title: `Podejście 2: Outsourcing do specjalisty / zewnętrznego zespołu`,
+            description: `Zlecenie realizacji "${taskContext}" wyspecjalizowanemu dostawcy. Wymaga przygotowania specyfikacji i kryteriów akceptacji. Zaleta: szybsze dostarczenie, brak obciążenia zespołu wewnętrznego.`,
+            source: 'ai',
+            status: 'idea',
+            votes: 0,
+            votedByMe: false,
+          },
+          {
+            id: Math.random().toString(36).substr(2, 9),
+            title: `Podejście 3: Iteracyjne wdrożenie w sprintach`,
+            description: `Podziel zadanie na mniejsze deliverables i realizuj w 2-3 sprintach. Sprint 1: PoC/MVP, Sprint 2: integracja, Sprint 3: hardening + dokumentacja. Minimalizuje ryzyko przez wczesne feedback loops.`,
+            source: 'ai',
+            status: 'idea',
+            votes: 0,
+            votedByMe: false,
+          },
+        ]
+      : [
+          {
+            id: Math.random().toString(36).substr(2, 9),
+            title: `Approach 1: Automate using existing toolchain`,
+            description: `Leverage the team's current infrastructure to implement "${taskContext}". Set up CI/CD pipeline, add automated tests, and deploy monitoring. Estimated effort: 3-5 working days.`,
+            source: 'ai',
+            status: 'idea',
+            votes: 0,
+            votedByMe: false,
+          },
+          {
+            id: Math.random().toString(36).substr(2, 9),
+            title: `Approach 2: Outsource to specialist / external team`,
+            description: `Delegate "${taskContext}" to a specialized vendor. Requires preparing specs and acceptance criteria. Advantage: faster delivery, no internal team load.`,
+            source: 'ai',
+            status: 'idea',
+            votes: 0,
+            votedByMe: false,
+          },
+          {
+            id: Math.random().toString(36).substr(2, 9),
+            title: `Approach 3: Iterative delivery across sprints`,
+            description: `Break the task into smaller deliverables across 2-3 sprints. Sprint 1: PoC/MVP, Sprint 2: integration, Sprint 3: hardening + documentation. Minimizes risk through early feedback loops.`,
+            source: 'ai',
+            status: 'idea',
+            votes: 0,
+            votedByMe: false,
+          },
+        ];
+
     setImplementationIdeas([...implementationIdeas, ...aiIdeas]);
     setIsGeneratingIdeas(false);
-    toast.success(isPolish ? 'Wygenerowano pomysły AI' : 'AI ideas generated');
+    toast.success(
+      isPolish
+        ? 'AI wygenerował 3 propozycje realizacji'
+        : 'AI generated 3 implementation proposals'
+    );
   };
 
   // AI Description handler
@@ -927,38 +1505,2818 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // AI Comment handler
   const generateAIComment = async () => {
     setIsGeneratingAIComment(true);
-    await new Promise((r) => setTimeout(r, 1500));
+    try {
+      const recentComments = comments
+        .slice(-5)
+        .map((c, idx) => `${idx + 1}. ${c.authorName}: ${c.content}`)
+        .join('\n');
+      const checklistOpenCount = checklist.filter((item) => !item.completed).length;
+      const blockersSummary =
+        blockedReason?.trim() || linkedItems.filter((item) => item.type === 'risk').length > 0
+          ? isPolish
+            ? `${blockedReason || 'Brak jawnej przyczyny blokady'}`
+            : `${blockedReason || 'No explicit blocking reason'}`
+          : isPolish
+            ? 'Brak blokerów'
+            : 'No blockers';
 
-    // Generate AI analysis comment based on task context
-    const aiComments = [
-      isPolish
-        ? `🤖 **Analiza AI**: Na podstawie opisu zadania "${title || 'bez tytułu'}", sugeruję rozważenie następujących aspektów: priorytetyzacja kroków, identyfikacja potencjalnych blokerów oraz określenie mierzalnych kryteriów sukcesu.`
-        : `🤖 **AI Analysis**: Based on the task description "${title || 'untitled'}", I suggest considering the following aspects: step prioritization, identification of potential blockers, and defining measurable success criteria.`,
-      isPolish
-        ? `🤖 **Wskazówka AI**: Zadanie może wymagać dodatkowej koordynacji z zespołem. Rozważ dodanie checklisty z kluczowymi krokami.`
-        : `🤖 **AI Tip**: This task may require additional team coordination. Consider adding a checklist with key steps.`,
-      isPolish
-        ? `🤖 **Rekomendacja AI**: Bazując na priorytecie i terminie, zalecam podzielenie zadania na mniejsze, łatwiejsze do śledzenia części.`
-        : `🤖 **AI Recommendation**: Based on priority and deadline, I recommend breaking this task into smaller, easier-to-track parts.`,
-    ];
+      const prompt = isPolish
+        ? `Wygeneruj JEDEN konkretny komentarz do zadania projektowego.
+Cel: pomóc zespołowi podjąć najbliższy sensowny krok.
 
-    const randomComment = aiComments[Math.floor(Math.random() * aiComments.length)];
+Zasady:
+- 2-4 krótkie zdania.
+- Maksymalnie 450 znaków.
+- Bez markdown, bez emoji, bez list numerowanych.
+- Nie powtarzaj treści podobnej do ostatnich komentarzy.
+- Komentarz ma być praktyczny i oparty na danych z kontekstu.
 
-    const newComment: Comment = {
-      id: Math.random().toString(36).substr(2, 9),
-      content: randomComment,
-      authorId: 'ai-assistant',
-      authorName: 'AI Assistant',
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      likedByMe: false,
-    };
+Kontekst zadania:
+- Tytuł: ${title || 'Brak tytułu'}
+- Opis: ${description || 'Brak opisu'}
+- Status: ${status}
+- Priorytet: ${priority}
+- Termin: ${dueDate || 'Brak terminu'}
+- Otwarte checklisty: ${checklistOpenCount}
+- Blokery: ${blockersSummary}
+- Liczba ryzyk: ${risks.length}
+- Liczba zależności: ${dependencies.length}
 
-    setComments([...comments, newComment]);
-    setIsGeneratingAIComment(false);
-    addActivityLogEntry('comment', isPolish ? 'AI wygenerowało komentarz' : 'AI generated comment');
-    toast.success(isPolish ? 'AI wygenerowało komentarz' : 'AI comment generated');
+Ostatnie komentarze:
+${recentComments || 'Brak komentarzy'}
+
+Zwróć WYŁĄCZNIE gotowy tekst komentarza.`
+        : `Generate ONE concrete comment for a project task.
+Goal: help the team choose the most useful immediate next step.
+
+Rules:
+- 2-4 short sentences.
+- Max 450 characters.
+- No markdown, no emoji, no numbered lists.
+- Do not repeat or paraphrase recent comments.
+- Keep it practical and grounded in the provided task context.
+
+Task context:
+- Title: ${title || 'Untitled'}
+- Description: ${description || 'No description'}
+- Status: ${status}
+- Priority: ${priority}
+- Due date: ${dueDate || 'No due date'}
+- Open checklist items: ${checklistOpenCount}
+- Blockers: ${blockersSummary}
+- Risk count: ${risks.length}
+- Dependency count: ${dependencies.length}
+
+Recent comments:
+${recentComments || 'No comments yet'}
+
+Return ONLY the final comment text.`;
+
+      const aiRes = await Api.post('/ai/chat', {
+        message: prompt,
+        history: [],
+        systemInstruction: isPolish
+          ? 'Jesteś praktycznym PMO coachem. Odpowiadasz krótko, konkretnie i bez pustych ogólników.'
+          : 'You are a practical PMO coach. Respond briefly, concretely, and avoid generic filler.',
+        roleName: 'Task Comment Advisor',
+      });
+
+      const raw = String(aiRes?.text || aiRes?.content || '').trim();
+      const generatedComment = raw
+        .replace(/^```[\w-]*\n?/g, '')
+        .replace(/```$/g, '')
+        .replace(/^["']|["']$/g, '')
+        .trim();
+
+      if (!generatedComment) {
+        throw new Error('Empty AI response');
+      }
+
+      const recentAIMessages = comments
+        .filter((c) => c.authorId === 'ai-assistant')
+        .slice(-3)
+        .map((c) => c.content.trim().toLowerCase());
+
+      const isDuplicate = recentAIMessages.includes(generatedComment.toLowerCase());
+      if (isDuplicate) {
+        throw new Error('Duplicate AI comment');
+      }
+
+      const newComment: Comment = {
+        id: Math.random().toString(36).substr(2, 9),
+        content: generatedComment,
+        authorId: 'ai-assistant',
+        authorName: 'AI Assistant',
+        createdAt: new Date().toISOString(),
+        likes: 0,
+        likedByMe: false,
+        isAIGenerated: true,
+      };
+
+      setComments((prev) => [...prev, newComment]);
+      addActivityLogEntry(
+        'comment',
+        isPolish ? 'AI wygenerowało komentarz' : 'AI generated comment'
+      );
+      toast.success(isPolish ? 'AI wygenerowało komentarz' : 'AI comment generated');
+    } catch (error) {
+      const fallback = isPolish
+        ? `Proponuję doprecyzować jeden najbliższy krok i właściciela zadania na dziś. Dla priorytetu "${priority}" warto też potwierdzić blocker oraz termin, żeby uniknąć opóźnienia.`
+        : `I suggest clarifying one immediate next step and assigning a clear owner today. For "${priority}" priority, also confirm blocker status and due date to reduce delivery risk.`;
+
+      const lastAI = comments
+        .filter((c) => c.authorId === 'ai-assistant')
+        .slice(-1)[0]
+        ?.content?.trim()
+        .toLowerCase();
+      const fallbackWithVariant =
+        lastAI === fallback.trim().toLowerCase()
+          ? `${fallback} ${isPolish ? 'Skup się na mierzalnym wyniku do końca dnia.' : 'Focus on a measurable outcome by end of day.'}`
+          : fallback;
+
+      const newComment: Comment = {
+        id: Math.random().toString(36).substr(2, 9),
+        content: fallbackWithVariant,
+        authorId: 'ai-assistant',
+        authorName: 'AI Assistant',
+        createdAt: new Date().toISOString(),
+        likes: 0,
+        likedByMe: false,
+        isAIGenerated: true,
+      };
+
+      setComments((prev) => [...prev, newComment]);
+      addActivityLogEntry(
+        'comment',
+        isPolish ? 'AI dodało fallback komentarza' : 'AI added fallback comment'
+      );
+      toast.success(isPolish ? 'Dodano komentarz pomocniczy AI' : 'Added a fallback AI comment');
+    } finally {
+      setIsGeneratingAIComment(false);
+    }
   };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // N-MODE DEFINITIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── Alert border classes for PropertiesStrip ─────────────────────────────
+  const statusAlertBorderClass =
+    status === 'blocked'
+      ? 'border-red-400/70 dark:border-red-500/50'
+      : status === 'done'
+        ? 'border-emerald-400/70 dark:border-emerald-500/50'
+        : status === 'in_progress'
+          ? 'border-blue-400/70 dark:border-blue-500/50'
+          : status === 'review'
+            ? 'border-purple-400/70 dark:border-purple-500/50'
+            : 'border-slate-200/60 dark:border-navy-600/60';
+  const priorityAlertBorderClass =
+    priority === 'critical'
+      ? 'border-red-400/70 dark:border-red-500/50'
+      : priority === 'high'
+        ? 'border-orange-400/70 dark:border-orange-500/50'
+        : priority === 'medium'
+          ? 'border-blue-400/70 dark:border-blue-500/50'
+          : 'border-slate-200/60 dark:border-navy-600/60';
+  const dueDateAlertBorderClass = useMemo(() => {
+    if (!dueDate) return undefined;
+    const d = new Date(dueDate);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (diff < 0) return 'border-red-400 dark:border-red-500/50';
+    if (diff <= 3) return 'border-amber-400 dark:border-amber-500/50';
+    return undefined;
+  }, [dueDate]);
+
+  // ── N-mode section navigation ────────────────────────────────────────────
+  const taskNSections: NModeSection[] = useMemo(
+    () => [
+      {
+        id: 'description-scope',
+        icon: FileText,
+        label: { en: 'Description & Scope', pl: 'Opis i zakres' },
+        component: null,
+      },
+      {
+        id: 'implementation',
+        icon: Lightbulb,
+        label: { en: 'Implementation Ideas', pl: 'Pomysły realizacji' },
+        component: null,
+      },
+      {
+        id: 'risk-alternatives',
+        icon: AlertCircle,
+        label: { en: 'Risk & Alternatives', pl: 'Ryzyko i alternatywy' },
+        component: null,
+      },
+      {
+        id: 'checklist',
+        icon: CheckSquare,
+        label: { en: 'Checklist', pl: 'Lista kontrolna' },
+        component: null,
+      },
+      {
+        id: 'dependencies',
+        icon: GitBranch,
+        label: { en: 'Dependencies', pl: 'Zależności' },
+        component: null,
+      },
+      {
+        id: 'governance',
+        icon: Users,
+        label: { en: 'RACI & Escalation', pl: 'RACI i eskalacja' },
+        component: null,
+      },
+      {
+        id: 'comments',
+        icon: MessageSquare,
+        label: { en: 'Comments', pl: 'Komentarze' },
+        component: null,
+      },
+      {
+        id: 'attachments-links',
+        icon: FolderOpen,
+        label: { en: 'Attachments & Links', pl: 'Załączniki i powiązania' },
+        component: null,
+      },
+      {
+        id: 'activity-log',
+        icon: History,
+        label: { en: 'Activity Log', pl: 'Aktywność' },
+        component: null,
+      },
+    ],
+    []
+  );
+
+  // ── CommentsCanvas props mapping ─────────────────────────────────────────
+  const nModeComments: CommentItem[] = useMemo(
+    () =>
+      comments
+        .filter((c) => {
+          if (nCommentDateFilter === 'all') return true;
+          const d = new Date(c.createdAt);
+          const now = new Date();
+          if (nCommentDateFilter === 'today') return d.toDateString() === now.toDateString();
+          if (nCommentDateFilter === '7d') return now.getTime() - d.getTime() < 7 * 86400000;
+          if (nCommentDateFilter === '30d') return now.getTime() - d.getTime() < 30 * 86400000;
+          return true;
+        })
+        .sort((a, b) =>
+          nCommentSortOrder === 'desc'
+            ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        )
+        .map((c) => ({
+          id: c.id,
+          authorName: c.authorName,
+          content: c.content,
+          createdAt: c.createdAt,
+          isAIGenerated: c.authorId === 'ai-assistant',
+          priority: 'normal' as CommentPriority,
+        })),
+    [comments, nCommentDateFilter, nCommentSortOrder]
+  );
+
+  const getPriorityDotClass = (p: CommentPriority) =>
+    p === 'high' ? 'bg-red-500' : p === 'low' ? 'bg-slate-400' : 'bg-blue-500';
+  const getCommentPriority = (_c: CommentItem): CommentPriority => 'normal';
+  const getPriorityButtonClass = (p: CommentPriority, active: boolean) =>
+    active
+      ? p === 'high'
+        ? 'border-red-400/80 text-red-300 bg-red-500/20 shadow-[0_0_0_1px_rgba(239,68,68,0.3)]'
+        : p === 'low'
+          ? 'border-emerald-400/80 text-emerald-300 bg-emerald-500/20 shadow-[0_0_0_1px_rgba(16,185,129,0.3)]'
+          : 'border-indigo-400/70 text-indigo-300 bg-indigo-500/15 shadow-[0_0_0_1px_rgba(129,140,248,0.2)]'
+      : 'border-slate-300/55 dark:border-navy-600/60 text-slate-400 dark:text-slate-500 hover:border-slate-400/70 hover:text-slate-300';
+  const getCommentPriorityLabel = (p: CommentPriority) =>
+    p === 'high' ? 'High' : p === 'low' ? 'Low' : 'Normal';
+  const getCommentPriorityHint = (p: CommentPriority) =>
+    p === 'high'
+      ? isPolish
+        ? 'Wymagana natychmiastowa uwaga'
+        : 'Requires immediate attention'
+      : p === 'low'
+        ? isPolish
+          ? 'Informacyjny komentarz'
+          : 'Informational comment'
+        : isPolish
+          ? 'Standardowy komentarz'
+          : 'Standard comment';
+
+  const handleNModeSubmitComment = () => {
+    if (!nCommentDraft.trim()) return;
+    handleAddComment(nCommentDraft);
+    setNCommentDraft('');
+  };
+
+  // ── ActivityLogCanvas props mapping ──────────────────────────────────────
+  const nModeActivityEntries: NModeActivityLogEntry[] = useMemo(
+    () =>
+      activityLog.map((e) => ({
+        id: e.id,
+        type: e.type,
+        description: e.description,
+        timestamp: e.timestamp,
+        userName: e.userName,
+        oldValue: e.oldValue,
+        newValue: e.newValue,
+      })),
+    [activityLog]
+  );
+
+  const nModeActivityStats: ActivityStats = useMemo(() => {
+    const total = activityLog.length;
+    const edited = activityLog.filter(
+      (e) => e.type === 'edit' || e.type === 'status_change'
+    ).length;
+    const escalations = activityLog.filter(
+      (e) => e.type === 'deadline' || e.type === 'priority'
+    ).length;
+    const collaboration = activityLog.filter(
+      (e) => e.type === 'comment' || e.type === 'assignment'
+    ).length;
+    return { total, edited, escalations, collaboration };
+  }, [activityLog]);
+
+  const nModeActivityTypeMeta = (type: string): ActivityTypeMeta => {
+    const MAP: Record<string, { icon: React.ReactNode; label: string; style: string }> = {
+      created: {
+        icon: <Plus size={10} />,
+        label: 'Created',
+        style: 'border-emerald-300/50 bg-emerald-500/10 text-emerald-600',
+      },
+      status_change: {
+        icon: <CheckCircle2 size={10} />,
+        label: 'Status',
+        style: 'border-blue-300/50 bg-blue-500/10 text-blue-600',
+      },
+      assignment: {
+        icon: <User size={10} />,
+        label: 'Assigned',
+        style: 'border-purple-300/50 bg-purple-500/10 text-purple-600',
+      },
+      comment: {
+        icon: <MessageSquare size={10} />,
+        label: 'Comment',
+        style: 'border-amber-300/50 bg-amber-500/10 text-amber-600',
+      },
+      edit: {
+        icon: <Edit3 size={10} />,
+        label: 'Edit',
+        style: 'border-slate-300/50 bg-slate-500/10 text-slate-600',
+      },
+      attachment: {
+        icon: <FileText size={10} />,
+        label: 'Attachment',
+        style: 'border-cyan-300/50 bg-cyan-500/10 text-cyan-600',
+      },
+      deadline: {
+        icon: <Calendar size={10} />,
+        label: 'Deadline',
+        style: 'border-red-300/50 bg-red-500/10 text-red-600',
+      },
+      priority: {
+        icon: <Flag size={10} />,
+        label: 'Priority',
+        style: 'border-orange-300/50 bg-orange-500/10 text-orange-600',
+      },
+    };
+    return (
+      MAP[type] || {
+        icon: <Clock size={10} />,
+        label: type,
+        style: 'border-slate-300/50 bg-slate-500/10 text-slate-600',
+      }
+    );
+  };
+
+  // ── Build N-mode sections with components ────────────────────────────────
+  const nModeSectionsWithContent: NModeSection[] = useMemo(() => {
+    return taskNSections.map((section) => {
+      let component: React.ReactNode = null;
+
+      switch (section.id) {
+        // ── 1. Description & Scope ─────────────────────────────────────
+        case 'description-scope':
+          {
+            // Build related items list (initiative + linked items)
+            const relatedTaskItems: { id: string; type: string; title: string }[] = [];
+            if (initiativeName && initiativeId) {
+              relatedTaskItems.push({
+                id: initiativeId,
+                type: isPolish ? 'Inicjatywa' : 'Initiative',
+                title: initiativeName,
+              });
+            }
+            linkedItems.forEach((item) => {
+              relatedTaskItems.push({
+                id: item.id,
+                type: item.type || 'item',
+                title: item.title || item.id,
+              });
+            });
+
+            component = (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                    {isPolish ? 'Opis i zakres' : 'Description & Scope'}
+                  </h2>
+                </div>
+
+                {/* 1) Related to — initiative, assessment, survey, etc. */}
+                <div className="space-y-2">
+                  <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Wynika z' : 'Related to'}
+                  </label>
+                  {relatedTaskItems.length === 0 ? (
+                    <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border border-amber-400/60 text-amber-600 dark:text-amber-300 bg-amber-500/10">
+                      {isPolish
+                        ? 'Brak powiązania — zadanie samodzielne'
+                        : 'No linked source — standalone task'}
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {relatedTaskItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between gap-3 text-sm text-slate-700 dark:text-slate-300"
+                        >
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 uppercase">
+                              {item.type}
+                            </span>
+                            <span className="truncate">{item.title}</span>
+                          </div>
+                          <span className="shrink-0 text-[11px] font-mono text-slate-500/70 dark:text-slate-500/70">
+                            {String(item.id).length > 24
+                              ? `${String(item.id).slice(0, 24)}...`
+                              : item.id}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2) Task Description */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Opis zadania' : 'Task description'}
+                    </label>
+                    <AIFieldEnhancer
+                      fieldKey="task-description"
+                      sectionLabel={isPolish ? 'Opis zadania' : 'Task Description'}
+                      currentValue={description}
+                      onApply={setDescription}
+                      artifactContext={{ title, status, priority, type: 'task' }}
+                    />
+                  </div>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={10}
+                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200/40 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[200px]"
+                    placeholder={
+                      isPolish
+                        ? 'Opisz zadanie szczegółowo — co należy zrobić, dlaczego jest to ważne, jakie są ograniczenia...'
+                        : 'Describe what needs to be done, why it matters, any constraints or dependencies...'
+                    }
+                  />
+                </div>
+
+                {/* 3) Expected Outcome */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Oczekiwany rezultat' : 'Expected outcome'}
+                    </label>
+                    <AIFieldEnhancer
+                      fieldKey="task-expected-outcome"
+                      sectionLabel={isPolish ? 'Oczekiwany rezultat' : 'Expected Outcome'}
+                      currentValue={expectedOutcome}
+                      onApply={setExpectedOutcome}
+                      artifactContext={{ title, status, priority, type: 'task' }}
+                    />
+                  </div>
+                  <textarea
+                    value={expectedOutcome}
+                    onChange={(e) => setExpectedOutcome(e.target.value)}
+                    rows={8}
+                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200/40 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[160px]"
+                    placeholder={
+                      isPolish
+                        ? 'Zdefiniuj mierzalny rezultat — co oznacza sukces, jakie kryteria akceptacji...'
+                        : 'Define the measurable outcome — what does success look like, acceptance criteria...'
+                    }
+                  />
+                </div>
+              </div>
+            );
+            break;
+          }
+          break;
+
+        // ── 2. Checklist ───────────────────────────────────────────────
+        case 'checklist': {
+          const completedCount = checklist.filter((c) => c.completed).length;
+          const totalCount = checklist.length;
+          component = (
+            <div className="space-y-6">
+              {/* Heading row */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Lista kontrolna' : 'Checklist'}
+                </h2>
+                <button
+                  onClick={addChecklistItem}
+                  className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                >
+                  <Plus size={13} />
+                  {isPolish ? 'Dodaj element' : 'Add item'}
+                </button>
+              </div>
+
+              {/* Progress counter */}
+              {totalCount > 0 && (
+                <div className="flex items-center justify-end">
+                  <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 tabular-nums">
+                    {completedCount}/{totalCount}
+                  </span>
+                </div>
+              )}
+
+              {/* Items */}
+              {totalCount === 0 ? (
+                <div className="py-10 text-center">
+                  <CheckSquare
+                    size={28}
+                    className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                  />
+                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                    {isPolish
+                      ? 'Brak elementów — wygeneruj przez AI lub dodaj ręcznie'
+                      : 'No items yet — generate with AI or add manually'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {checklist.map((item, idx) => {
+                    const done = item.completed;
+                    return (
+                      <div
+                        key={item.id}
+                        className={`group flex items-start gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                          done
+                            ? 'opacity-50 hover:opacity-70'
+                            : 'hover:bg-slate-50/60 dark:hover:bg-navy-800/40'
+                        }`}
+                      >
+                        {/* Checkbox */}
+                        <button
+                          onClick={() => updateChecklistItem(item.id, { completed: !done })}
+                          className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 ${
+                            done
+                              ? 'bg-emerald-500 border-emerald-500 text-white'
+                              : 'border-slate-300 dark:border-navy-600 hover:border-emerald-400 dark:hover:border-emerald-500'
+                          }`}
+                        >
+                          {done && (
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path
+                                d="M2.5 6L5 8.5L9.5 3.5"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </button>
+
+                        {/* Number + text */}
+                        <span
+                          className={`text-[11px] font-medium mt-0.5 mr-0.5 tabular-nums select-none ${
+                            done
+                              ? 'text-slate-300 dark:text-slate-600'
+                              : 'text-slate-400 dark:text-slate-500'
+                          }`}
+                        >
+                          {idx + 1}.
+                        </span>
+                        <input
+                          type="text"
+                          value={item.text}
+                          onChange={(e) => updateChecklistItem(item.id, { text: e.target.value })}
+                          placeholder={isPolish ? 'Wprowadź element...' : 'Enter item...'}
+                          className={`flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 transition-colors ${
+                            done
+                              ? 'line-through text-slate-400 dark:text-slate-500'
+                              : 'text-slate-700 dark:text-slate-300'
+                          }`}
+                        />
+
+                        {/* Delete */}
+                        <button
+                          onClick={() => removeChecklistItem(item.id)}
+                          className="mt-0.5 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Quick-add row at the bottom */}
+              {totalCount > 0 && (
+                <button
+                  onClick={addChecklistItem}
+                  className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 hover:text-emerald-500 dark:hover:text-emerald-400 py-1.5 px-3 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-colors"
+                >
+                  <Plus size={13} />
+                  <span>{isPolish ? 'Dodaj kolejny element' : 'Add another item'}</span>
+                </button>
+              )}
+            </div>
+          );
+          break;
+        }
+
+        // ── 2. Implementation Ideas (N-mode flat) ──────────────────────
+        case 'implementation': {
+          const sortedIdeas = [...implementationIdeas].sort((a, b) => {
+            if (a.status === 'selected' && b.status !== 'selected') return -1;
+            if (b.status === 'selected' && a.status !== 'selected') return 1;
+            return b.votes - a.votes;
+          });
+          const selectedCount = implementationIdeas.filter((i) => i.status === 'selected').length;
+
+          const ideaStatusConfig: Record<
+            string,
+            { label: string; dot: string; text: string; bg: string }
+          > = {
+            idea: {
+              label: isPolish ? 'Pomysł' : 'Idea',
+              dot: 'bg-slate-400',
+              text: 'text-slate-500 dark:text-slate-400',
+              bg: 'bg-slate-100 dark:bg-slate-500/20',
+            },
+            considered: {
+              label: isPolish ? 'Rozważany' : 'Considered',
+              dot: 'bg-blue-500',
+              text: 'text-blue-600 dark:text-blue-400',
+              bg: 'bg-blue-100 dark:bg-blue-500/20',
+            },
+            selected: {
+              label: isPolish ? 'Wybrany' : 'Selected',
+              dot: 'bg-emerald-500',
+              text: 'text-emerald-600 dark:text-emerald-400',
+              bg: 'bg-emerald-100 dark:bg-emerald-500/20',
+            },
+            rejected: {
+              label: isPolish ? 'Odrzucony' : 'Rejected',
+              dot: 'bg-red-500',
+              text: 'text-red-600 dark:text-red-400',
+              bg: 'bg-red-100 dark:bg-red-500/20',
+            },
+          };
+
+          component = (
+            <div className="space-y-6">
+              {/* Heading */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Pomysły realizacji' : 'Implementation Ideas'}
+                </h2>
+                <button
+                  onClick={addIdea}
+                  className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                >
+                  <Plus size={13} />
+                  {isPolish ? 'Dodaj pomysł' : 'Add idea'}
+                </button>
+              </div>
+
+              {/* Ideas list */}
+              <div className="space-y-2">
+                <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  {isPolish
+                    ? `Propozycje (${implementationIdeas.length})`
+                    : `Proposals (${implementationIdeas.length})`}
+                </label>
+
+                {sortedIdeas.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <Lightbulb
+                      size={28}
+                      className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                    />
+                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                      {isPolish
+                        ? 'Brak pomysłów — wygeneruj przez AI lub dodaj ręcznie'
+                        : 'No ideas yet — generate with AI or add manually'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {sortedIdeas.map((idea) => {
+                      const sConfig = ideaStatusConfig[idea.status] || ideaStatusConfig.idea;
+                      const isAI = idea.source === 'ai';
+                      const isTeam = idea.source === 'team';
+
+                      return (
+                        <div
+                          key={idea.id}
+                          className={`rounded-xl border transition-all ${
+                            idea.status === 'selected'
+                              ? 'border-emerald-300/60 dark:border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-500/5'
+                              : 'border-slate-200/50 dark:border-navy-700/50 hover:border-slate-300 dark:hover:border-navy-600'
+                          }`}
+                        >
+                          <div className="px-4 py-4">
+                            <div className="flex items-start gap-3">
+                              {/* Vote up / down — horizontal thumbs */}
+                              <div className="flex items-center gap-1.5 pt-1">
+                                <button
+                                  onClick={() =>
+                                    setImplementationIdeas(
+                                      implementationIdeas.map((i) =>
+                                        i.id === idea.id
+                                          ? { ...i, votes: i.votes + 1, votedByMe: true }
+                                          : i
+                                      )
+                                    )
+                                  }
+                                  className={`p-1 rounded-md transition-colors ${
+                                    idea.votedByMe
+                                      ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-500/10'
+                                      : 'text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-emerald-500/10'
+                                  }`}
+                                  title={isPolish ? 'Głosuj za' : 'Vote up'}
+                                >
+                                  <ThumbsUp size={14} />
+                                </button>
+                                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 min-w-[14px] text-center">
+                                  {idea.votes}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    setImplementationIdeas(
+                                      implementationIdeas.map((i) =>
+                                        i.id === idea.id
+                                          ? {
+                                              ...i,
+                                              votes: Math.max(0, i.votes - 1),
+                                              votedByMe: false,
+                                            }
+                                          : i
+                                      )
+                                    )
+                                  }
+                                  className="p-1 rounded-md text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                  title={isPolish ? 'Głosuj przeciw' : 'Vote down'}
+                                >
+                                  <ThumbsDown size={14} />
+                                </button>
+                              </div>
+
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  {/* Source badge */}
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                      isAI
+                                        ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
+                                        : isTeam
+                                          ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
+                                          : 'bg-slate-100 dark:bg-slate-500/20 text-slate-500 dark:text-slate-400'
+                                    }`}
+                                  >
+                                    {isAI ? <Sparkles size={9} /> : <User size={9} />}
+                                    {isAI
+                                      ? 'AI'
+                                      : isTeam
+                                        ? isPolish
+                                          ? 'Zespół'
+                                          : 'Team'
+                                        : isPolish
+                                          ? 'Ręcznie'
+                                          : 'Manual'}
+                                  </span>
+                                  {/* Status */}
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${sConfig.bg} ${sConfig.text}`}
+                                  >
+                                    <span className={`w-1.5 h-1.5 rounded-full ${sConfig.dot}`} />
+                                    {sConfig.label}
+                                  </span>
+                                  {idea.createdBy && (
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                      {idea.createdBy}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Title — editable */}
+                                <input
+                                  type="text"
+                                  value={idea.title}
+                                  onChange={(e) =>
+                                    setImplementationIdeas(
+                                      implementationIdeas.map((i) =>
+                                        i.id === idea.id ? { ...i, title: e.target.value } : i
+                                      )
+                                    )
+                                  }
+                                  className="w-full text-sm font-medium bg-transparent text-slate-800 dark:text-slate-200 focus:outline-none"
+                                  placeholder={isPolish ? 'Nazwa podejścia...' : 'Approach name...'}
+                                />
+
+                                {/* Description — editable */}
+                                <textarea
+                                  value={idea.description}
+                                  onChange={(e) =>
+                                    setImplementationIdeas(
+                                      implementationIdeas.map((i) =>
+                                        i.id === idea.id ? { ...i, description: e.target.value } : i
+                                      )
+                                    )
+                                  }
+                                  rows={3}
+                                  className="w-full mt-1 px-0 py-1 bg-transparent text-xs leading-relaxed text-slate-600 dark:text-slate-400 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y min-h-[48px]"
+                                  placeholder={
+                                    isPolish
+                                      ? 'Opisz podejście, kroki, narzędzia...'
+                                      : 'Describe the approach, steps, tools...'
+                                  }
+                                />
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex items-center gap-1 shrink-0">
+                                <select
+                                  value={idea.status}
+                                  onChange={(e) =>
+                                    setImplementationIdeas(
+                                      implementationIdeas.map((i) =>
+                                        i.id === idea.id
+                                          ? {
+                                              ...i,
+                                              status: e.target
+                                                .value as ImplementationIdea['status'],
+                                            }
+                                          : i
+                                      )
+                                    )
+                                  }
+                                  className={`px-1.5 py-0.5 rounded text-[10px] font-medium border-0 cursor-pointer focus:outline-none bg-transparent ${sConfig.text}`}
+                                >
+                                  {Object.entries(ideaStatusConfig).map(([key, cfg]) => (
+                                    <option key={key} value={key}>
+                                      {cfg.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button
+                                  onClick={() =>
+                                    setImplementationIdeas(
+                                      implementationIdeas.filter((i) => i.id !== idea.id)
+                                    )
+                                  }
+                                  className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-colors"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                                <AIFieldEnhancer
+                                  fieldKey={`idea-${idea.id}`}
+                                  sectionLabel={
+                                    isPolish ? 'Pomysł realizacji' : 'Implementation Idea'
+                                  }
+                                  currentValue={`${idea.title}\n${idea.description}`}
+                                  onApply={(val) => {
+                                    const lines = val.split('\n');
+                                    const newTitle = lines[0] || idea.title;
+                                    const newDesc =
+                                      lines.slice(1).join('\n').trim() || idea.description;
+                                    setImplementationIdeas(
+                                      implementationIdeas.map((i) =>
+                                        i.id === idea.id
+                                          ? { ...i, title: newTitle, description: newDesc }
+                                          : i
+                                      )
+                                    );
+                                  }}
+                                  artifactContext={{ title, status, priority, type: 'task' }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Selected summary */}
+              {selectedCount > 0 && (
+                <div className="px-3 py-2 rounded-lg bg-emerald-50/60 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/30">
+                  <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400">
+                    <CheckCircle2 size={13} />
+                    {isPolish
+                      ? `${selectedCount} pomysł(ów) wybranych do realizacji`
+                      : `${selectedCount} idea(s) selected for implementation`}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+          break;
+        }
+
+        // ── 3. Risk & Alternatives (N-mode flat — matching Decision) ──
+        // ── 4. Risk & Impact (shared RiskCanvas) ─────────────────────
+        case 'risk-alternatives':
+          component = (
+            <RiskCanvas
+              risks={risks}
+              onAddRisk={addRisk}
+              onUpdateRisk={updateRisk}
+              onRemoveRisk={removeRisk}
+              onAIGenerate={generateRisksAI}
+              isGeneratingAI={isGeneratingRisks}
+              artifactType="task"
+              artifactContext={{ title, status, priority, type: 'task' }}
+              fieldKeyPrefix="t"
+            />
+          );
+          break;
+
+        // ── 5. Dependencies ───────────────────────────────────────────
+        case 'dependencies':
+          component = (
+            <div className="space-y-8">
+              <DependenciesSection
+                taskId={taskId || ''}
+                connectedTasks={linkedItems
+                  .filter((item) => item.type === 'task')
+                  .map((item) => ({
+                    id: item.id,
+                    title: item.title,
+                    status: item.status,
+                    priority: item.priority,
+                  }))}
+              />
+            </div>
+          );
+          break;
+
+        // ── 6. Governance & Evidence ───────────────────────────────────
+        case 'governance':
+          component = (
+            <div className="space-y-8">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                {isPolish ? 'RACI i eskalacja' : 'RACI & Escalation'}
+              </h2>
+              <div className="space-y-4">
+                {/* RACI table */}
+                <div className={governanceTableCardClass}>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                      {isPolish
+                        ? 'RACI (macierz odpowiedzialności)'
+                        : 'RACI (responsibility matrix)'}
+                    </h3>
+                    <button
+                      onClick={() => {
+                        const fallbackUser = users[0];
+                        if (!fallbackUser) return;
+                        setEditingStakeholderId('__new__');
+                        setStakeholderDraft({
+                          id: '__new__',
+                          decisionId: taskId || 'new',
+                          userId: fallbackUser.id,
+                          userName: `${fallbackUser.firstName} ${fallbackUser.lastName}`,
+                          userEmail: fallbackUser.email,
+                          role: 'consulted',
+                          notificationSettings: {
+                            enabled: true,
+                            triggers: ['on_status_change'],
+                            emailEnabled: false,
+                            inAppEnabled: true,
+                            integrationChannels: [],
+                            syncTargets: [],
+                          },
+                        });
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
+                    >
+                      + {isPolish ? 'Dodaj osobę' : 'Add person'}
+                    </button>
+                  </div>
+                  <div className="overflow-auto flex-1">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                          <th className="text-left py-2 pr-2">{isPolish ? 'Osoba' : 'Person'}</th>
+                          <th className="text-left py-2 pr-2">{isPolish ? 'Rola' : 'Role'}</th>
+                          <th className="text-left py-2 pr-2">Email</th>
+                          <th className="text-left py-2 pr-2">
+                            {isPolish ? 'Notyfikacje' : 'Notifications'}
+                          </th>
+                          <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                        {stakeholders.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="py-6 text-center text-xs text-slate-400">
+                              {isPolish ? 'Brak interesariuszy.' : 'No stakeholders yet.'}
+                            </td>
+                          </tr>
+                        ) : (
+                          stakeholders.map((s) => (
+                            <tr key={s.id}>
+                              <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">
+                                {s.userName || s.userId}
+                              </td>
+                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                {stakeholderRoleLabel(s.role)}
+                              </td>
+                              <td className="py-2 pr-2 text-slate-500 dark:text-slate-400">
+                                {s.userEmail || '—'}
+                              </td>
+                              <td className="py-2 pr-2 text-xs">
+                                <div className="flex flex-wrap gap-1">
+                                  {stakeholderChannelLabels(s.notificationSettings).map((label) => (
+                                    <span
+                                      key={`${s.id}-${label}`}
+                                      className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                    >
+                                      {label}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="py-2 text-right">
+                                <div className="inline-flex items-center gap-1">
+                                  <button
+                                    onClick={() => {
+                                      setEditingStakeholderId(s.id);
+                                      setStakeholderDraft({ ...s });
+                                    }}
+                                    className="p-1 text-slate-400 hover:text-primary-500"
+                                    title={isPolish ? 'Edytuj' : 'Edit'}
+                                  >
+                                    <Edit3 size={13} />
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      setStakeholders(
+                                        stakeholders.filter((item) => item.id !== s.id)
+                                      )
+                                    }
+                                    className="p-1 text-slate-400 hover:text-red-500"
+                                    title={isPolish ? 'Usuń' : 'Delete'}
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Reminders table */}
+                <div className={governanceTableCardClass}>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                      {isPolish ? 'Przypomnienia' : 'Reminders'}
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setEditingReminderId('__new__');
+                        setReminderDraft({
+                          id: '__new__',
+                          type: 'before_due',
+                          days: 2,
+                          recipients: 'both',
+                          inAppNotification: true,
+                          emailNotification: false,
+                          delivery: ensureDeliveryConfig({ coreChannels: ['in_app'] }),
+                          message: '',
+                          enabled: true,
+                        });
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
+                    >
+                      + {isPolish ? 'Dodaj reminder' : 'Add reminder'}
+                    </button>
+                  </div>
+                  <div className="overflow-auto flex-1">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                          <th className="text-left py-2 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
+                          <th className="text-left py-2 pr-2">{isPolish ? 'Dni' : 'Days'}</th>
+                          <th className="text-left py-2 pr-2">
+                            {isPolish ? 'Do kogo' : 'Recipients'}
+                          </th>
+                          <th className="text-left py-2 pr-2">
+                            {isPolish ? 'Notyfikacje' : 'Notifications'}
+                          </th>
+                          <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                        {reminders.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="py-6 text-center text-xs text-slate-400">
+                              {isPolish ? 'Brak reminderów.' : 'No reminders yet.'}
+                            </td>
+                          </tr>
+                        ) : (
+                          reminders.map((r) => (
+                            <tr key={r.id}>
+                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                {r.type === 'before_due'
+                                  ? isPolish
+                                    ? 'Przed terminem'
+                                    : 'Before due'
+                                  : isPolish
+                                    ? 'Po terminie'
+                                    : 'After due'}
+                              </td>
+                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                {r.days}
+                              </td>
+                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                {r.recipients}
+                              </td>
+                              <td className="py-2 pr-2 text-xs">
+                                <div className="flex flex-wrap gap-1">
+                                  {!r.enabled && (
+                                    <span className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400">
+                                      {isPolish ? 'Wyłączone' : 'Disabled'}
+                                    </span>
+                                  )}
+                                  {deliveryBadgeLabels(
+                                    (r as ReminderRuleWithDelivery).delivery,
+                                    r
+                                  ).map((label) => (
+                                    <span
+                                      key={`${r.id}-${label}`}
+                                      className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                    >
+                                      {label}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="py-2 text-right">
+                                <div className="inline-flex items-center gap-1">
+                                  <button
+                                    onClick={() => {
+                                      setEditingReminderId(r.id);
+                                      setReminderDraft(
+                                        normalizeReminderRule({ ...r } as ReminderRuleWithDelivery)
+                                      );
+                                    }}
+                                    className="p-1 text-slate-400 hover:text-primary-500"
+                                    title={isPolish ? 'Edytuj' : 'Edit'}
+                                  >
+                                    <Edit3 size={13} />
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      setReminders(reminders.filter((item) => item.id !== r.id))
+                                    }
+                                    className="p-1 text-slate-400 hover:text-red-500"
+                                    title={isPolish ? 'Usuń' : 'Delete'}
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Escalation table */}
+                <div className={governanceTableCardClass}>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
+                      {isPolish ? 'Eskalacja i zasady' : 'Escalation and rules'}
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setEscalationDraft(
+                          normalizeEscalationRule({
+                            id: Math.random().toString(36).slice(2, 11),
+                            enabled: true,
+                            escalateTo: users[0]?.id || '',
+                            escalateToName: users[0]
+                              ? `${users[0].firstName} ${users[0].lastName}`
+                              : '',
+                            afterDays: 3,
+                            warningDays: thresholds.warningDays,
+                            criticalDays: thresholds.criticalDays,
+                            escalationMode: 'manager_review',
+                            delivery: ensureDeliveryConfig({ coreChannels: ['in_app', 'email'] }),
+                            message: '',
+                          })
+                        );
+                        setEditingEscalationId('__new__');
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 transition-colors"
+                    >
+                      + {isPolish ? 'Dodaj eskalację' : 'Add escalation'}
+                    </button>
+                  </div>
+                  <div className="overflow-auto flex-1">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50">
+                          <th className="text-left py-2 pr-2">Status</th>
+                          <th className="text-left py-2 pr-2">
+                            {isPolish ? 'Progi W/C' : 'W/C thresholds'}
+                          </th>
+                          <th className="text-left py-2 pr-2">
+                            {isPolish ? 'Eskaluj po' : 'Escalate after'}
+                          </th>
+                          <th className="text-left py-2 pr-2">
+                            {isPolish ? 'Eskaluj do' : 'Escalate to'}
+                          </th>
+                          <th className="text-left py-2 pr-2">
+                            {isPolish ? 'Komunikat' : 'Message'}
+                          </th>
+                          <th className="text-left py-2 pr-2">{isPolish ? 'Tryb' : 'Mode'}</th>
+                          <th className="text-left py-2 pr-2">
+                            {isPolish ? 'Kanały' : 'Channels'}
+                          </th>
+                          <th className="text-right py-2">{isPolish ? 'Akcje' : 'Actions'}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+                        {escalationRules.length === 0 ? (
+                          <tr>
+                            <td colSpan={8} className="py-6 text-center text-xs text-slate-400">
+                              {isPolish ? 'Brak reguł eskalacji.' : 'No escalation rules yet.'}
+                            </td>
+                          </tr>
+                        ) : (
+                          escalationRules.map((rule) => (
+                            <tr key={rule.id}>
+                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                {rule.enabled
+                                  ? isPolish
+                                    ? 'Aktywna'
+                                    : 'Enabled'
+                                  : isPolish
+                                    ? 'Wyłączona'
+                                    : 'Disabled'}
+                              </td>
+                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                {rule.warningDays}/{rule.criticalDays} d
+                              </td>
+                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                {rule.afterDays} d
+                              </td>
+                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                {rule.escalateToName || '—'}
+                              </td>
+                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                {rule.message || '—'}
+                              </td>
+                              <td className="py-2 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                                {rule.escalationMode === 'notify_only'
+                                  ? isPolish
+                                    ? 'Powiadomienie'
+                                    : 'Notify'
+                                  : rule.escalationMode === 'manager_review'
+                                    ? 'Manager review'
+                                    : 'Executive alert'}
+                              </td>
+                              <td className="py-2 pr-2 text-xs">
+                                <div className="flex flex-wrap gap-1">
+                                  {deliveryBadgeLabels(rule.delivery).map((label) => (
+                                    <span
+                                      key={`${rule.id}-ch-${label}`}
+                                      className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400"
+                                    >
+                                      {label}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="py-2 text-right">
+                                <div className="inline-flex items-center gap-1">
+                                  <button
+                                    onClick={() => {
+                                      setEditingEscalationId(rule.id);
+                                      setEscalationDraft({ ...rule });
+                                    }}
+                                    className="p-1 text-slate-400 hover:text-primary-500"
+                                    title={isPolish ? 'Edytuj' : 'Edit'}
+                                  >
+                                    <Edit3 size={13} />
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      setEscalationRules(
+                                        escalationRules.filter((item) => item.id !== rule.id)
+                                      )
+                                    }
+                                    className="p-1 text-slate-400 hover:text-red-500"
+                                    title={isPolish ? 'Usuń' : 'Delete'}
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+          break;
+
+        // ── 7. Comments (shared CommentsCanvas) ────────────────────────
+        case 'comments':
+          component = (
+            <CommentsCanvas
+              comments={nModeComments}
+              onDeleteComment={handleDeleteComment}
+              dateFilter={nCommentDateFilter}
+              onDateFilterChange={setNCommentDateFilter}
+              sortOrder={nCommentSortOrder}
+              onToggleSort={() => setNCommentSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+              commentDraft={nCommentDraft}
+              onCommentDraftChange={setNCommentDraft}
+              onSubmitComment={handleNModeSubmitComment}
+              draftPriority={nCommentPriority}
+              onDraftPriorityChange={setNCommentPriority}
+              onAIEnhance={generateAIComment}
+              isAIEnhancing={isGeneratingAIComment}
+              getPriorityDotClass={getPriorityDotClass}
+              getCommentPriority={getCommentPriority}
+              getPriorityButtonClass={getPriorityButtonClass}
+              getCommentPriorityLabel={getCommentPriorityLabel}
+              getCommentPriorityHint={getCommentPriorityHint}
+            />
+          );
+          break;
+
+        // ── 8. Attachments & Links (rich canvas — same as Decision) ────
+        case 'attachments-links':
+          component = (
+            <AttachmentsLinksCanvas
+              attachments={attachments}
+              onUploadAttachments={handleUploadAttachments}
+              onDeleteAttachment={handleDeleteAttachment}
+              onEditAttachment={(id, patch) => {
+                setAttachments((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+              }}
+              linkedItems={linkedItems}
+              onAddLinkedItem={handleAddLinkedItem}
+              onRemoveLinkedItem={handleRemoveLinkedItem}
+              onEditLinkedItem={(key, patch) => {
+                const [type, id] = key.split(':');
+                setLinkedItems((prev) =>
+                  prev.map((item) =>
+                    item.type === type && item.id === id ? { ...item, ...patch } : item
+                  )
+                );
+              }}
+              onNavigateLinkedItem={openLinkedItemTarget}
+              searchLinkedItems={searchLinkedItems}
+            />
+          );
+          break;
+
+        // ── 9. Activity Log (shared ActivityLogCanvas) ─────────────────
+        case 'activity-log':
+          component = (
+            <ActivityLogCanvas
+              entries={nModeActivityEntries}
+              stats={nModeActivityStats}
+              typeMeta={nModeActivityTypeMeta}
+            />
+          );
+          break;
+      }
+
+      return { ...section, component };
+    });
+  }, [
+    taskNSections,
+    isPolish,
+    description,
+    expectedOutcome,
+    initiativeName,
+    checklist,
+    checklistProgress,
+    implementationIdeas,
+    risks,
+    alternatives,
+    selectedAlternativeId,
+    status,
+    dependencies,
+    relatedDecisions,
+    stakeholders,
+    users,
+    evidenceRequired,
+    evidenceItems,
+    requiresAcceptance,
+    acceptanceType,
+    acceptorId,
+    signedOff,
+    signedOffAt,
+    signedOffBy,
+    reminders,
+    escalation,
+    thresholds,
+    dueDate,
+    escalationRules,
+    nModeComments,
+    nCommentDraft,
+    nCommentPriority,
+    nCommentDateFilter,
+    nCommentSortOrder,
+    attachments,
+    linkedItems,
+    tags,
+    newTag,
+    nModeActivityEntries,
+    nModeActivityStats,
+    isGeneratingDescription,
+    isGeneratingOutcome,
+    isGeneratingChecklist,
+    isGeneratingIdeas,
+    isGeneratingRisks,
+    isGeneratingAlternatives,
+    isGeneratingAIComment,
+    taskId,
+    onOpenDecision,
+    showCreateDecision,
+    showDecisionSearch,
+    blockedReason,
+  ]);
+
+  // ── isDirty (for NModeHeader save button) ────────────────────────────────
+  const isDirty = title.trim().length > 0 || description.trim().length > 0;
+
+  // ── Loading guard (AFTER all hooks to respect Rules of Hooks) ────────────
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
+        <Loader2 className="animate-spin text-primary-500" size={32} />
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // N-MODE RENDER
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  if (presentationMode === 'n') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto space-y-0">
+            {/* ── Header ──────────────────────────────────────── */}
+            <NModeHeader
+              title={title}
+              onTitleChange={setTitle}
+              titlePlaceholder={{ en: 'Task title...', pl: 'Tytuł zadania...' }}
+              artifactId={taskId || undefined}
+              artifactType="task"
+              onSave={handleSave}
+              saving={saving}
+              isDirty={isDirty}
+              onChat={handleOpenChat}
+              onClose={onClose}
+              statusDotColor={statusConfig.color}
+              presentationMode={presentationMode}
+              onPresentationModeChange={setPresentationMode}
+              buildArtifactCode={buildArtifactCode}
+            />
+
+            {/* ── N-Mode Content ──────────────────────────────── */}
+            <div className="col-span-full space-y-4 mt-4">
+              {/* Deadline Alert */}
+              {dueDate && dueDateAlertBorderClass && (
+                <div className="mb-3 px-4 py-2 rounded-xl bg-red-500/5 dark:bg-red-500/10 border border-red-200/60 dark:border-red-500/30 text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+                  <AlertCircle size={14} />
+                  {isPolish
+                    ? 'Uwaga: zbliża się lub minął termin!'
+                    : 'Warning: deadline approaching or overdue!'}
+                </div>
+              )}
+
+              {/* Blocked reason — editable when status=blocked */}
+              {status === 'blocked' && (
+                <div className="mb-3 px-4 py-3 rounded-xl bg-red-500/5 dark:bg-red-500/10 border border-red-200/60 dark:border-red-500/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle size={14} className="text-red-500 dark:text-red-400" />
+                    <span className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide">
+                      {isPolish ? 'Powód blokady' : 'Blocked Reason'}
+                    </span>
+                  </div>
+                  <textarea
+                    value={blockedReason}
+                    onChange={(e) => setBlockedReason(e.target.value)}
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-lg text-sm bg-white/60 dark:bg-navy-800/60 border border-red-200/40 dark:border-red-500/20 text-slate-700 dark:text-slate-300 placeholder-red-300 dark:placeholder-red-500/50 focus:outline-none focus:border-red-400 resize-none"
+                    placeholder={
+                      isPolish ? 'Opisz powód blokady...' : 'Describe blocking reason...'
+                    }
+                  />
+                </div>
+              )}
+
+              {/* PropertiesStrip — order: Status, Priority, Due Date, Owner, Initiative (2-col) */}
+              <NModePropertiesStrip
+                fields={[
+                  {
+                    id: 'status',
+                    label: { en: 'Status', pl: 'Status' },
+                    type: 'select' as const,
+                    value: status,
+                    onChange: (v) => {
+                      const old = status;
+                      setStatus(v as keyof typeof STATUS_CONFIG);
+                      addActivityLogEntry(
+                        'status_change',
+                        isPolish ? 'Status zmieniony' : 'Status changed',
+                        old,
+                        v
+                      );
+                    },
+                    options: Object.entries(STATUS_CONFIG).map(([key, config]) => ({
+                      value: key,
+                      label: config.label,
+                    })),
+                    alertBorderClass: statusAlertBorderClass,
+                  },
+                  {
+                    id: 'priority',
+                    label: { en: 'Priority', pl: 'Priorytet' },
+                    type: 'select' as const,
+                    value: priority,
+                    onChange: (v) => {
+                      const old = priority;
+                      setPriority(v as keyof typeof PRIORITY_CONFIG);
+                      addActivityLogEntry(
+                        'priority',
+                        isPolish ? 'Priorytet zmieniony' : 'Priority changed',
+                        old,
+                        v
+                      );
+                    },
+                    options: Object.entries(PRIORITY_CONFIG).map(([key, config]) => ({
+                      value: key,
+                      label: config.label,
+                    })),
+                    alertBorderClass: priorityAlertBorderClass,
+                  },
+                  {
+                    id: 'dueDate',
+                    label: { en: 'Due Date', pl: 'Termin' },
+                    type: 'date' as const,
+                    value: dueDate,
+                    onChange: setDueDate,
+                    alertBorderClass: dueDateAlertBorderClass,
+                  },
+                  {
+                    id: 'owner',
+                    label: { en: 'Owner', pl: 'Właściciel' },
+                    type: 'custom' as const,
+                    value: ownerId,
+                    onChange: setOwnerId,
+                    render: () => (
+                      <select
+                        value={ownerId}
+                        onChange={(e) => setOwnerId(e.target.value)}
+                        className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
+                      >
+                        <option value="">{isPolish ? 'Wybierz' : 'Select'}</option>
+                        {users.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.firstName} {u.lastName}
+                          </option>
+                        ))}
+                      </select>
+                    ),
+                  },
+                  {
+                    id: 'initiative',
+                    label: { en: 'Initiative', pl: 'Inicjatywa' },
+                    type: 'custom' as const,
+                    value: initiativeId || '',
+                    colSpan: 2,
+                    onChange: (v) => {
+                      if (v) {
+                        setInitiativeId(v);
+                        const found = availableInitiatives.find((i) => i.id === v);
+                        setInitiativeName(found?.name || null);
+                      } else {
+                        setInitiativeId(null);
+                        setInitiativeName(null);
+                      }
+                    },
+                    render: () => (
+                      <select
+                        value={initiativeId || ''}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v) {
+                            setInitiativeId(v);
+                            const found = availableInitiatives.find((i) => i.id === v);
+                            setInitiativeName(found?.name || null);
+                          } else {
+                            setInitiativeId(null);
+                            setInitiativeName(null);
+                          }
+                        }}
+                        className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-600/60 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors"
+                      >
+                        <option value="">
+                          {isPolish ? 'Samodzielne zadanie' : 'Standalone task'}
+                        </option>
+                        {availableInitiatives.map((init) => (
+                          <option key={init.id} value={init.id}>
+                            {init.name}
+                          </option>
+                        ))}
+                      </select>
+                    ),
+                  },
+                ]}
+              />
+
+              {/* ── Task Action Bar ──────────────────────────────── */}
+              <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60">
+                <div className="flex items-center gap-2">
+                  {/* Start / Resume — shown when todo or blocked */}
+                  {(status === 'todo' || status === 'blocked') && (
+                    <button
+                      onClick={() => {
+                        const old = status;
+                        setStatus('in_progress');
+                        if (status === 'blocked') setBlockedReason('');
+                        addActivityLogEntry(
+                          'status_change',
+                          isPolish ? 'Rozpoczęto zadanie' : 'Task started',
+                          old,
+                          'in_progress'
+                        );
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-400/50 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                    >
+                      <Play size={13} /> {isPolish ? 'Rozpocznij' : 'Start'}
+                    </button>
+                  )}
+
+                  {/* Send to Review — shown when in_progress */}
+                  {status === 'in_progress' && (
+                    <button
+                      onClick={() => {
+                        setStatus('review');
+                        addActivityLogEntry(
+                          'status_change',
+                          isPolish ? 'Wysłano do przeglądu' : 'Sent to review',
+                          'in_progress',
+                          'review'
+                        );
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-purple-400/50 text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 transition-colors"
+                    >
+                      <Eye size={13} /> {isPolish ? 'Do przeglądu' : 'Send to Review'}
+                    </button>
+                  )}
+
+                  {/* Complete — shown when in_progress or review */}
+                  {(status === 'in_progress' || status === 'review') && (
+                    <button
+                      onClick={() => {
+                        const old = status;
+                        setStatus('done');
+                        addActivityLogEntry(
+                          'status_change',
+                          isPolish ? 'Zadanie ukończone' : 'Task completed',
+                          old,
+                          'done'
+                        );
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                    >
+                      <CheckCircle2 size={13} /> {isPolish ? 'Ukończ' : 'Complete'}
+                    </button>
+                  )}
+
+                  {/* Block — shown when not blocked and not done */}
+                  {status !== 'blocked' && status !== 'done' && (
+                    <button
+                      onClick={() => {
+                        const old = status;
+                        setStatus('blocked');
+                        addActivityLogEntry(
+                          'status_change',
+                          isPolish ? 'Zadanie zablokowane' : 'Task blocked',
+                          old,
+                          'blocked'
+                        );
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-red-400/50 text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <AlertCircle size={13} /> {isPolish ? 'Zablokuj' : 'Block'}
+                    </button>
+                  )}
+
+                  {/* Reopen — shown when done */}
+                  {status === 'done' && (
+                    <button
+                      onClick={() => {
+                        setStatus('in_progress');
+                        addActivityLogEntry(
+                          'status_change',
+                          isPolish ? 'Wznowiono zadanie' : 'Task reopened',
+                          'done',
+                          'in_progress'
+                        );
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-400/50 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                    >
+                      <Play size={13} /> {isPolish ? 'Wznów' : 'Reopen'}
+                    </button>
+                  )}
+
+                  {/* Reassign — always shown */}
+                  <button
+                    onClick={() => {
+                      // scroll to assignee field or open a quick picker
+                      toast(
+                        isPolish
+                          ? 'Zmień wykonawcę w polu Wykonawca powyżej'
+                          : 'Change assignee in the Assignee field above'
+                      );
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  >
+                    <Share2 size={13} /> {isPolish ? 'Przydziel' : 'Reassign'}
+                  </button>
+
+                  {/* ── Section-specific AI actions (right-aligned) ── */}
+                  {activeNSection === 'implementation' && (
+                    <button
+                      onClick={generateIdeasAI}
+                      disabled={isGeneratingIdeas}
+                      className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                        isGeneratingIdeas
+                          ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                          : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                      } disabled:opacity-40 disabled:cursor-not-allowed`}
+                      title={
+                        isPolish
+                          ? 'Wygeneruj plan implementacji przez AI'
+                          : 'Generate implementation plan with AI'
+                      }
+                    >
+                      {isGeneratingIdeas ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={13} />
+                      )}
+                      {isPolish ? 'Stwórz pomysły' : 'Create Ideas'}
+                    </button>
+                  )}
+
+                  {activeNSection === 'risk-alternatives' && (
+                    <button
+                      onClick={generateRisksAI}
+                      disabled={isGeneratingRisks}
+                      className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                        isGeneratingRisks
+                          ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                          : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                      } disabled:opacity-40 disabled:cursor-not-allowed`}
+                      title={isPolish ? 'Analizuj ryzyka przez AI' : 'Analyze risks with AI'}
+                    >
+                      {isGeneratingRisks ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={13} />
+                      )}
+                      {isPolish ? 'Analizuj ryzyka' : 'Analyze risks'}
+                    </button>
+                  )}
+
+                  {activeNSection === 'checklist' && (
+                    <button
+                      onClick={generateAIChecklist}
+                      disabled={isGeneratingChecklist}
+                      className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                        isGeneratingChecklist
+                          ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                          : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                      } disabled:opacity-40 disabled:cursor-not-allowed`}
+                      title={
+                        isPolish ? 'Wygeneruj checklistę przez AI' : 'Generate checklist with AI'
+                      }
+                    >
+                      {isGeneratingChecklist ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={13} />
+                      )}
+                      {isPolish ? 'Stwórz checklistę' : 'Create Checklist'}
+                    </button>
+                  )}
+
+                  {activeNSection === 'comments' && (
+                    <button
+                      onClick={generateAIComment}
+                      disabled={isGeneratingAIComment}
+                      className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                        isGeneratingAIComment
+                          ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                          : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                      } disabled:opacity-40 disabled:cursor-not-allowed`}
+                      title={isPolish ? 'Generuj komentarze przez AI' : 'Generate AI comments'}
+                    >
+                      {isGeneratingAIComment ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={13} />
+                      )}
+                      {isPolish ? 'AI komentarze' : 'AI comments'}
+                    </button>
+                  )}
+
+                  {activeNSection === 'governance' && (
+                    <button
+                      onClick={async () => {
+                        setIsSuggestingStakeholders(true);
+                        try {
+                          const roster = users
+                            .map((u) => `${u.id}: ${u.firstName} ${u.lastName} (${u.email})`)
+                            .join('\n');
+                          const prompt = isPolish
+                            ? `Na podstawie danych zadania zaproponuj skład RACI. Zwróć WYŁĄCZNIE JSON:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nDostępne osoby:\n${roster}`
+                            : `Based on task data, propose a RACI team. Return JSON ONLY:\n{"stakeholders":[{"userId":"...","role":"accountable|responsible|consulted|informed","reason":"..."}]}\nAvailable people:\n${roster}`;
+                          const aiRes = await Api.post('/ai/chat', {
+                            message: prompt,
+                            history: [],
+                            systemInstruction: isPolish
+                              ? 'Jesteś asystentem PMO. Zwróć tylko prawidłowy JSON.'
+                              : 'You are a PMO assistant. Return valid JSON only.',
+                            roleName: 'RACI Team Advisor',
+                          });
+                          const raw = String(aiRes?.text || aiRes?.content || '').trim();
+                          const jsonMatch = raw.match(/\{[\s\S]*\}/);
+                          if (jsonMatch) {
+                            const parsed = JSON.parse(jsonMatch[0]);
+                            if (Array.isArray(parsed.stakeholders)) {
+                              const next = parsed.stakeholders.map((s: any) => {
+                                const user = users.find((u) => u.id === s.userId);
+                                return {
+                                  id: Math.random().toString(36).substr(2, 9),
+                                  decisionId: taskId || 'new',
+                                  userId: s.userId,
+                                  userName: user ? `${user.firstName} ${user.lastName}` : s.userId,
+                                  userEmail: user?.email || '',
+                                  role: s.role as StakeholderRole,
+                                  notificationSettings: {
+                                    enabled: true,
+                                    triggers: ['on_status_change'],
+                                    emailEnabled: false,
+                                    inAppEnabled: true,
+                                    integrationChannels: [],
+                                    syncTargets: [],
+                                  },
+                                };
+                              });
+                              setStakeholders(next);
+                              toast.success(
+                                isPolish
+                                  ? `AI zaproponowało skład RACI (${next.length} osób).`
+                                  : `AI proposed RACI team (${next.length} people).`
+                              );
+                            }
+                          }
+                        } catch {
+                          // fallback
+                          const fallbackTeam = users
+                            .slice(0, Math.min(4, users.length))
+                            .map((u, i) => ({
+                              id: Math.random().toString(36).substr(2, 9),
+                              decisionId: taskId || 'new',
+                              userId: u.id,
+                              userName: `${u.firstName} ${u.lastName}`,
+                              userEmail: u.email,
+                              role:
+                                (
+                                  [
+                                    'accountable',
+                                    'responsible',
+                                    'consulted',
+                                    'informed',
+                                  ] as StakeholderRole[]
+                                )[i] || 'informed',
+                              notificationSettings: {
+                                enabled: true,
+                                triggers: ['on_status_change'] as string[],
+                                emailEnabled: false,
+                                inAppEnabled: true,
+                                integrationChannels: [] as string[],
+                                syncTargets: [] as string[],
+                              },
+                            }));
+                          setStakeholders(fallbackTeam);
+                          toast.success(
+                            isPolish
+                              ? 'Zastosowano domyślny skład RACI.'
+                              : 'Applied fallback RACI team.'
+                          );
+                        } finally {
+                          setIsSuggestingStakeholders(false);
+                        }
+                      }}
+                      disabled={isSuggestingStakeholders}
+                      className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                        isSuggestingStakeholders
+                          ? 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10'
+                          : 'border-primary-400/50 text-primary-600 dark:text-primary-300 bg-primary-500/10 hover:bg-primary-500/15'
+                      } disabled:opacity-40 disabled:cursor-not-allowed`}
+                      title={isPolish ? 'Generuj RACI przez AI' : 'Generate RACI with AI'}
+                    >
+                      {isSuggestingStakeholders ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={13} />
+                      )}
+                      {isPolish ? 'Generuj RACI' : 'Generate RACI'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* 2-Pane: LeftNav + Canvas */}
+              <div className="flex gap-0 min-h-[60vh]">
+                <NModeLeftNav
+                  sections={nModeSectionsWithContent}
+                  activeSection={activeNSection}
+                  onSectionChange={setActiveNSection}
+                />
+                <NModeCanvas
+                  sections={nModeSectionsWithContent}
+                  activeSection={activeNSection}
+                  reducedMotion={reducedMotion}
+                  motionDuration={motionDuration}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── RACI Governance Modals (exact copy from Decision) ── */}
+
+        {/* Stakeholder modal */}
+        {stakeholderDraft && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/60"
+              onClick={() => {
+                setEditingStakeholderId(null);
+                setStakeholderDraft(null);
+              }}
+            />
+            <div className={`${governanceModalClass} min-h-[380px]`}>
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  {editingStakeholderId === '__new__'
+                    ? isPolish
+                      ? 'Dodaj osobę do RACI'
+                      : 'Add RACI person'
+                    : isPolish
+                      ? 'Edytuj osobę RACI'
+                      : 'Edit RACI person'}
+                </h4>
+                <div className="inline-flex items-center gap-2">
+                  <button
+                    disabled={isSuggestingStakeholders}
+                    onClick={() => {
+                      /* AI stub for stakeholder draft – same pattern as Decision */
+                      toast(isPolish ? 'AI uzupełni formularz...' : 'AI will fill the form...');
+                    }}
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-purple-300/40 dark:border-purple-500/30 text-purple-500 hover:text-purple-600 hover:border-purple-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                  >
+                    {isSuggestingStakeholders ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={12} />
+                    )}
+                    AI
+                  </button>
+                  <button
+                    className="p-1 text-slate-400 hover:text-slate-600"
+                    onClick={() => {
+                      setEditingStakeholderId(null);
+                      setStakeholderDraft(null);
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+              <div className={governanceModalHintClass}>
+                {isPolish
+                  ? 'Tutaj opisujemy i konfigurujemy odpowiedzialność osoby w RACI oraz kanały komunikacji.'
+                  : 'Use this window to describe and configure person responsibility in RACI and communication channels.'}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <label className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Osoba' : 'Person'}
+                  <select
+                    value={stakeholderDraft.userId}
+                    onChange={(e) => {
+                      const selected = users.find((u) => u.id === e.target.value);
+                      setStakeholderDraft({
+                        ...stakeholderDraft,
+                        userId: e.target.value,
+                        userName: selected
+                          ? `${selected.firstName} ${selected.lastName}`
+                          : stakeholderDraft.userName,
+                        userEmail: selected?.email || stakeholderDraft.userEmail,
+                      });
+                    }}
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  >
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.firstName} {u.lastName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Rola' : 'Role'}
+                  <select
+                    value={stakeholderDraft.role}
+                    onChange={(e) =>
+                      setStakeholderDraft({
+                        ...stakeholderDraft,
+                        role: e.target.value as StakeholderRole,
+                      })
+                    }
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  >
+                    <option value="responsible">Responsible</option>
+                    <option value="accountable">Accountable</option>
+                    <option value="consulted">Consulted</option>
+                    <option value="informed">Informed</option>
+                  </select>
+                </label>
+              </div>
+              <div className="space-y-2 flex-1">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Kanały notyfikacji' : 'Notification channels'}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
+                      {[
+                        {
+                          key: 'enabled',
+                          label: isPolish ? 'Aktywne' : 'Enabled',
+                          active: stakeholderDraft.notificationSettings.enabled,
+                          toggle: () =>
+                            setStakeholderDraft({
+                              ...stakeholderDraft,
+                              notificationSettings: {
+                                ...stakeholderDraft.notificationSettings,
+                                enabled: !stakeholderDraft.notificationSettings.enabled,
+                              },
+                            }),
+                        },
+                        {
+                          key: 'in_app',
+                          label: 'In-app',
+                          active: stakeholderDraft.notificationSettings.inAppEnabled,
+                          toggle: () =>
+                            setStakeholderDraft({
+                              ...stakeholderDraft,
+                              notificationSettings: {
+                                ...stakeholderDraft.notificationSettings,
+                                inAppEnabled: !stakeholderDraft.notificationSettings.inAppEnabled,
+                              },
+                            }),
+                        },
+                        {
+                          key: 'email',
+                          label: 'Email',
+                          active: stakeholderDraft.notificationSettings.emailEnabled,
+                          toggle: () =>
+                            setStakeholderDraft({
+                              ...stakeholderDraft,
+                              notificationSettings: {
+                                ...stakeholderDraft.notificationSettings,
+                                emailEnabled: !stakeholderDraft.notificationSettings.emailEnabled,
+                              },
+                            }),
+                        },
+                      ].map((channel) => (
+                        <button
+                          key={channel.key}
+                          type="button"
+                          onClick={channel.toggle}
+                          className={`${channelChipClass} ${channel.active ? 'border-purple-400/60 text-purple-500 bg-purple-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                        >
+                          {channel.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
+                      {integrationChannelCatalog.map((channel) => {
+                        const list =
+                          stakeholderDraft.notificationSettings.integrationChannels || [];
+                        const selected = list.includes(channel.key);
+                        return (
+                          <button
+                            key={channel.key}
+                            type="button"
+                            onClick={() => {
+                              const current =
+                                stakeholderDraft.notificationSettings.integrationChannels || [];
+                              const next = selected
+                                ? current.filter((c: string) => c !== channel.key)
+                                : [...current, channel.key];
+                              setStakeholderDraft({
+                                ...stakeholderDraft,
+                                notificationSettings: {
+                                  ...stakeholderDraft.notificationSettings,
+                                  integrationChannels: next,
+                                },
+                              });
+                            }}
+                            className={`${channelChipClass} ${selected ? 'border-purple-400/60 text-purple-500 bg-purple-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            title={channel.scope}
+                          >
+                            {channel.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+                <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                  {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                  <input
+                    value={(stakeholderDraft.notificationSettings.syncTargets || []).join(', ')}
+                    onChange={(e) =>
+                      setStakeholderDraft({
+                        ...stakeholderDraft,
+                        notificationSettings: {
+                          ...stakeholderDraft.notificationSettings,
+                          syncTargets: e.target.value
+                            .split(',')
+                            .map((item: string) => item.trim())
+                            .filter(Boolean),
+                        },
+                      })
+                    }
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                    placeholder="slack:#ops, jira:DRD"
+                  />
+                </label>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setEditingStakeholderId(null);
+                    setStakeholderDraft(null);
+                  }}
+                  className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                >
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+                <button
+                  onClick={() => {
+                    if (!stakeholderDraft) return;
+                    if (editingStakeholderId === '__new__') {
+                      setStakeholders([
+                        ...stakeholders,
+                        { ...stakeholderDraft, id: Math.random().toString(36).slice(2, 11) },
+                      ]);
+                    } else {
+                      setStakeholders(
+                        stakeholders.map((item) =>
+                          item.id === editingStakeholderId
+                            ? { ...stakeholderDraft, id: item.id }
+                            : item
+                        )
+                      );
+                    }
+                    setEditingStakeholderId(null);
+                    setStakeholderDraft(null);
+                  }}
+                  className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                >
+                  {isPolish ? 'Zapisz' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reminder modal */}
+        {reminderDraft && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/60"
+              onClick={() => {
+                setEditingReminderId(null);
+                setReminderDraft(null);
+              }}
+            />
+            <div className={`${governanceModalClass} min-h-[380px]`}>
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  {editingReminderId === '__new__'
+                    ? isPolish
+                      ? 'Dodaj reminder'
+                      : 'Add reminder'
+                    : isPolish
+                      ? 'Edytuj reminder'
+                      : 'Edit reminder'}
+                </h4>
+                <div className="inline-flex items-center gap-2">
+                  <button
+                    disabled={isSuggestingStakeholders}
+                    onClick={() =>
+                      toast(isPolish ? 'AI uzupełni formularz...' : 'AI will fill the form...')
+                    }
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-purple-300/40 dark:border-purple-500/30 text-purple-500 hover:text-purple-600 hover:border-purple-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                  >
+                    <Sparkles size={12} /> AI
+                  </button>
+                  <button
+                    className="p-1 text-slate-400 hover:text-slate-600"
+                    onClick={() => {
+                      setEditingReminderId(null);
+                      setReminderDraft(null);
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+              <div className={governanceModalHintClass}>
+                {isPolish
+                  ? 'Tutaj opisujemy cel remindera: kiedy ma się uruchamiać, do kogo trafić i jaką wiadomość wysłać.'
+                  : 'Use this window to describe reminder intent: when it should trigger, recipients, and the message.'}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <label className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Typ' : 'Type'}
+                  <select
+                    value={reminderDraft.type}
+                    onChange={(e) =>
+                      setReminderDraft({
+                        ...reminderDraft,
+                        type: e.target.value as 'before_due' | 'after_due',
+                      })
+                    }
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  >
+                    <option value="before_due">{isPolish ? 'Przed terminem' : 'Before due'}</option>
+                    <option value="after_due">{isPolish ? 'Po terminie' : 'After due'}</option>
+                  </select>
+                </label>
+                <label className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Dni' : 'Days'}
+                  <input
+                    type="number"
+                    min={0}
+                    value={reminderDraft.days}
+                    onChange={(e) =>
+                      setReminderDraft({ ...reminderDraft, days: Number(e.target.value) || 0 })
+                    }
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  />
+                </label>
+              </div>
+              <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                {isPolish ? 'Odbiorcy' : 'Recipients'}
+                <select
+                  value={reminderDraft.recipients}
+                  onChange={(e) =>
+                    setReminderDraft({ ...reminderDraft, recipients: e.target.value as any })
+                  }
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                >
+                  <option value="both">{isPolish ? 'Obaj' : 'Both'}</option>
+                  <option value="stakeholders">
+                    {isPolish ? 'Interesariusze' : 'Stakeholders'}
+                  </option>
+                  <option value="owner">Owner</option>
+                </select>
+              </label>
+              <div className="space-y-3">
+                <label className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={reminderDraft.enabled}
+                    onChange={(e) =>
+                      setReminderDraft({ ...reminderDraft, enabled: e.target.checked })
+                    }
+                  />
+                  {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(
+                        [
+                          { key: 'in_app', label: 'In-app' },
+                          { key: 'email', label: 'Email' },
+                        ] as Array<{ key: CoreDeliveryChannel; label: string }>
+                      ).map((channel) => {
+                        const delivery = ensureDeliveryConfig(
+                          reminderDraft.delivery,
+                          reminderDraft
+                        );
+                        const enabled = delivery.coreChannels.includes(channel.key);
+                        return (
+                          <button
+                            key={channel.key}
+                            type="button"
+                            onClick={() =>
+                              setReminderDraft({
+                                ...reminderDraft,
+                                delivery: {
+                                  ...delivery,
+                                  coreChannels: toggleChannel(
+                                    delivery.coreChannels,
+                                    channel.key,
+                                    !enabled
+                                  ),
+                                },
+                                inAppNotification:
+                                  channel.key === 'in_app'
+                                    ? !enabled
+                                    : delivery.coreChannels.includes('in_app'),
+                                emailNotification:
+                                  channel.key === 'email'
+                                    ? !enabled
+                                    : delivery.coreChannels.includes('email'),
+                              })
+                            }
+                            className={`${channelChipClass} ${enabled ? 'border-purple-400/60 text-purple-500 bg-purple-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          >
+                            {channel.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {integrationChannelCatalog.map((channel) => {
+                        const delivery = ensureDeliveryConfig(
+                          reminderDraft.delivery,
+                          reminderDraft
+                        );
+                        const enabled = delivery.integrationChannels.includes(channel.key);
+                        return (
+                          <button
+                            key={channel.key}
+                            type="button"
+                            onClick={() =>
+                              setReminderDraft({
+                                ...reminderDraft,
+                                delivery: {
+                                  ...delivery,
+                                  integrationChannels: toggleChannel(
+                                    delivery.integrationChannels,
+                                    channel.key,
+                                    !enabled
+                                  ),
+                                },
+                              })
+                            }
+                            className={`${channelChipClass} ${enabled ? 'border-purple-400/60 text-purple-500 bg-purple-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            title={channel.scope}
+                          >
+                            {channel.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+                <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                  {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                  <input
+                    value={ensureDeliveryConfig(
+                      reminderDraft.delivery,
+                      reminderDraft
+                    ).syncTargets.join(', ')}
+                    onChange={(e) =>
+                      setReminderDraft({
+                        ...reminderDraft,
+                        delivery: {
+                          ...ensureDeliveryConfig(reminderDraft.delivery, reminderDraft),
+                          syncTargets: e.target.value
+                            .split(',')
+                            .map((item: string) => item.trim())
+                            .filter(Boolean),
+                        },
+                      })
+                    }
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                    placeholder="slack:#delivery, jira:PROJ, webhook:ops"
+                  />
+                </label>
+              </div>
+              <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                {isPolish ? 'Wiadomość' : 'Message'}
+                <textarea
+                  value={reminderDraft.message || ''}
+                  onChange={(e) => setReminderDraft({ ...reminderDraft, message: e.target.value })}
+                  rows={3}
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                />
+              </label>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setEditingReminderId(null);
+                    setReminderDraft(null);
+                  }}
+                  className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                >
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+                <button
+                  onClick={() => {
+                    if (!reminderDraft) return;
+                    const normalized = normalizeReminderRule(reminderDraft);
+                    if (editingReminderId === '__new__') {
+                      setReminders([
+                        ...reminders,
+                        { ...normalized, id: Math.random().toString(36).slice(2, 11) },
+                      ]);
+                    } else {
+                      setReminders(
+                        reminders.map((item) =>
+                          item.id === editingReminderId ? { ...normalized, id: item.id } : item
+                        )
+                      );
+                    }
+                    setEditingReminderId(null);
+                    setReminderDraft(null);
+                  }}
+                  className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                >
+                  {isPolish ? 'Zapisz' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Escalation modal */}
+        {editingEscalationId && escalationDraft && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/60"
+              onClick={() => {
+                setEditingEscalationId(null);
+                setEscalationDraft(null);
+              }}
+            />
+            <div className={governanceModalClass}>
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  {editingEscalationId === '__new__'
+                    ? isPolish
+                      ? 'Dodaj regułę eskalacji'
+                      : 'Add escalation rule'
+                    : isPolish
+                      ? 'Edytuj regułę eskalacji'
+                      : 'Edit escalation rule'}
+                </h4>
+                <div className="inline-flex items-center gap-2">
+                  <button
+                    disabled={isSuggestingStakeholders}
+                    onClick={() =>
+                      toast(isPolish ? 'AI uzupełni formularz...' : 'AI will fill the form...')
+                    }
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-purple-300/40 dark:border-purple-500/30 text-purple-500 hover:text-purple-600 hover:border-purple-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                  >
+                    <Sparkles size={12} /> AI
+                  </button>
+                  <button
+                    className="p-1 text-slate-400 hover:text-slate-600"
+                    onClick={() => {
+                      setEditingEscalationId(null);
+                      setEscalationDraft(null);
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+              <div className={governanceModalHintClass}>
+                {isPolish
+                  ? 'Tutaj opisujemy regułę eskalacji: progi, czas eskalacji, osobę docelową i komunikat.'
+                  : 'Use this window to describe escalation rule settings: thresholds, timing, assignee, and message.'}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <label className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Próg ostrzeżenia (dni)' : 'Warning threshold (days)'}
+                  <input
+                    type="number"
+                    min={0}
+                    value={escalationDraft.warningDays}
+                    onChange={(e) =>
+                      setEscalationDraft({
+                        ...escalationDraft,
+                        warningDays: Number(e.target.value) || 0,
+                      })
+                    }
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  />
+                </label>
+                <label className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Próg krytyczny (dni)' : 'Critical threshold (days)'}
+                  <input
+                    type="number"
+                    min={0}
+                    value={escalationDraft.criticalDays}
+                    onChange={(e) =>
+                      setEscalationDraft({
+                        ...escalationDraft,
+                        criticalDays: Number(e.target.value) || 0,
+                      })
+                    }
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  />
+                </label>
+                <label className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Eskaluj po (dni)' : 'Escalate after (days)'}
+                  <input
+                    type="number"
+                    min={1}
+                    value={escalationDraft.afterDays}
+                    onChange={(e) =>
+                      setEscalationDraft({
+                        ...escalationDraft,
+                        afterDays: Number(e.target.value) || 1,
+                      })
+                    }
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  />
+                </label>
+                <label className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Eskaluj do' : 'Escalate to'}
+                  <select
+                    value={escalationDraft.escalateTo}
+                    onChange={(e) => {
+                      const selected = users.find((u) => u.id === e.target.value);
+                      setEscalationDraft({
+                        ...escalationDraft,
+                        escalateTo: e.target.value,
+                        escalateToName: selected
+                          ? `${selected.firstName} ${selected.lastName}`
+                          : escalationDraft.escalateToName,
+                      });
+                    }}
+                    className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  >
+                    <option value="">{isPolish ? 'Wybierz' : 'Select'}</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.firstName} {u.lastName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                {isPolish ? 'Tryb eskalacji' : 'Escalation mode'}
+                <select
+                  value={escalationDraft.escalationMode}
+                  onChange={(e) =>
+                    setEscalationDraft({
+                      ...escalationDraft,
+                      escalationMode: e.target.value as EscalationMode,
+                    })
+                  }
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                >
+                  {escalationModeOptions.map((mode) => (
+                    <option key={mode.value} value={mode.value}>
+                      {mode.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={escalationDraft.enabled}
+                  onChange={(e) =>
+                    setEscalationDraft({ ...escalationDraft, enabled: e.target.checked })
+                  }
+                />
+                {isPolish ? 'Reguła aktywna' : 'Rule enabled'}
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Kanały podstawowe' : 'Core channels'}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(
+                      [
+                        { key: 'in_app', label: 'In-app' },
+                        { key: 'email', label: 'Email' },
+                      ] as Array<{ key: CoreDeliveryChannel; label: string }>
+                    ).map((channel) => {
+                      const delivery = ensureDeliveryConfig(escalationDraft.delivery);
+                      const enabled = delivery.coreChannels.includes(channel.key);
+                      return (
+                        <button
+                          key={channel.key}
+                          type="button"
+                          onClick={() =>
+                            setEscalationDraft({
+                              ...escalationDraft,
+                              delivery: {
+                                ...delivery,
+                                coreChannels: toggleChannel(
+                                  delivery.coreChannels,
+                                  channel.key,
+                                  !enabled
+                                ),
+                              },
+                            })
+                          }
+                          className={`${channelChipClass} ${enabled ? 'border-purple-400/60 text-purple-500 bg-purple-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                        >
+                          {channel.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/70 dark:bg-navy-800/50 p-3 space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Kanały integracyjne' : 'Integration channels'}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {integrationChannelCatalog.map((channel) => {
+                      const delivery = ensureDeliveryConfig(escalationDraft.delivery);
+                      const enabled = delivery.integrationChannels.includes(channel.key);
+                      return (
+                        <button
+                          key={channel.key}
+                          type="button"
+                          onClick={() =>
+                            setEscalationDraft({
+                              ...escalationDraft,
+                              delivery: {
+                                ...delivery,
+                                integrationChannels: toggleChannel(
+                                  delivery.integrationChannels,
+                                  channel.key,
+                                  !enabled
+                                ),
+                              },
+                            })
+                          }
+                          className={`${channelChipClass} ${enabled ? 'border-purple-400/60 text-purple-500 bg-purple-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          title={channel.scope}
+                        >
+                          {channel.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                {isPolish ? 'Cele synchronizacji' : 'Sync targets'}
+                <input
+                  value={ensureDeliveryConfig(escalationDraft.delivery).syncTargets.join(', ')}
+                  onChange={(e) =>
+                    setEscalationDraft({
+                      ...escalationDraft,
+                      delivery: {
+                        ...ensureDeliveryConfig(escalationDraft.delivery),
+                        syncTargets: e.target.value
+                          .split(',')
+                          .map((item: string) => item.trim())
+                          .filter(Boolean),
+                      },
+                    })
+                  }
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                  placeholder="slack:#incident, jira:OPS, webhook:oncall"
+                />
+              </label>
+              <label className="text-xs text-slate-500 dark:text-slate-400 block">
+                {isPolish ? 'Komunikat eskalacji' : 'Escalation message'}
+                <textarea
+                  value={escalationDraft.message || ''}
+                  onChange={(e) =>
+                    setEscalationDraft({ ...escalationDraft, message: e.target.value })
+                  }
+                  rows={3}
+                  className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
+                />
+              </label>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setEditingEscalationId(null);
+                    setEscalationDraft(null);
+                  }}
+                  className="px-3 py-1.5 rounded-md text-xs border border-slate-300/60 dark:border-navy-600 text-slate-500"
+                >
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+                <button
+                  onClick={() => {
+                    if (!escalationDraft) return;
+                    const normalized = normalizeEscalationRule(escalationDraft);
+                    if (editingEscalationId === '__new__') {
+                      setEscalationRules([
+                        ...escalationRules,
+                        { ...normalized, id: Math.random().toString(36).slice(2, 11) },
+                      ]);
+                    } else {
+                      setEscalationRules(
+                        escalationRules.map((item) =>
+                          item.id === editingEscalationId ? { ...normalized, id: item.id } : item
+                        )
+                      );
+                    }
+                    setEditingEscalationId(null);
+                    setEscalationDraft(null);
+                  }}
+                  className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                >
+                  {isPolish ? 'Zapisz' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // D-MODE (LEGACY ACCORDION) — kept until N-mode is fully rolled out
+  // ═══════════════════════════════════════════════════════════════════════════
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50/30 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
@@ -999,9 +4357,19 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
                   placeholder={isPolish ? 'Tytuł zadania...' : 'Task title...'}
                   autoFocus={!taskId}
                 />
+                {taskId && (
+                  <ArtifactPermalinkButton
+                    artifactType="task"
+                    artifactId={taskId}
+                    isPolish={isPolish}
+                    size={13}
+                  />
+                )}
               </div>
 
               <div className="flex items-center gap-2">
+                {/* Presentation Mode Switcher */}
+                <PresentationModeSwitcher value={presentationMode} onChange={setPresentationMode} />
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -2364,7 +5732,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
             <LinkedItemsSection
               items={linkedItems}
               onAdd={handleAddLinkedItem}
-              onRemove={handleRemoveLinkedItem}
+              onRemove={(itemId: string) => handleRemoveLinkedItem({ id: itemId, type: '' as any })}
               searchItems={searchLinkedItems}
               expanded={expandedSections.has('linkedItems')}
               onToggleExpand={() => toggleSection('linkedItems')}
@@ -2506,19 +5874,15 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
             {/* Dependencies */}
             <DependenciesSection
-              dependencies={dependencies}
-              onAdd={(type) => {
-                const newDep: TaskDependency = {
-                  id: Math.random().toString(36).substr(2, 9),
-                  taskId: '',
-                  taskTitle: isPolish ? 'Nowa zależność' : 'New dependency',
-                  type,
-                };
-                setDependencies([...dependencies, newDep]);
-              }}
-              onRemove={(id) => setDependencies(dependencies.filter((d) => d.id !== id))}
-              expanded={expandedSections.has('dependencies')}
-              onToggleExpand={() => toggleSection('dependencies')}
+              taskId={taskId || ''}
+              connectedTasks={linkedItems
+                .filter((item) => item.type === 'task')
+                .map((item) => ({
+                  id: item.id,
+                  title: item.title,
+                  status: item.status,
+                  priority: item.priority,
+                }))}
             />
 
             {/* Evidence & Acceptance */}

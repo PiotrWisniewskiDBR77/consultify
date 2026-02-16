@@ -42,6 +42,8 @@ describe('AuthController', () => {
 
     // Mock sessions
     const sessions = new Map();
+    // Ensure token uniqueness even within same millisecond
+    let tokenSeq = 0;
 
     // Login endpoint
     app.post('/api/auth/login', (req, res) => {
@@ -56,7 +58,7 @@ describe('AuthController', () => {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      const token = `mock-jwt-${user.id}-${Date.now()}`;
+      const token = `mock-jwt-${user.id}-${Date.now()}-${tokenSeq++}`;
       sessions.set(token, { userId: user.id, email: user.email });
 
       res.cookie('auth_token', token, { httpOnly: true });
@@ -150,7 +152,7 @@ describe('AuthController', () => {
       }
 
       // Generate new token
-      const newToken = `mock-jwt-${session.userId}-${Date.now()}`;
+      const newToken = `mock-jwt-${session.userId}-${Date.now()}-${tokenSeq++}`;
       sessions.delete(token);
       sessions.set(newToken, session);
 

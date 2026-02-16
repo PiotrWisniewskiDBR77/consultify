@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
 import Api from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 import { SettingsDivider, SettingsFormRow, SettingsSection } from './shared';
 
 interface ThemeSettingsProps {
@@ -33,7 +34,8 @@ const ACCENT_COLORS = [
 
 export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const [theme, setTheme] = useState<Theme>('system');
+  const theme = useAppStore((s) => s.theme) as Theme;
+  const toggleTheme = useAppStore((s) => s.toggleTheme);
   const [accentColor, setAccentColor] = useState('#8b5cf6');
   const [originalTheme, setOriginalTheme] = useState<Theme>('system');
   const [originalAccent, setOriginalAccent] = useState('#8b5cf6');
@@ -51,43 +53,25 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
         const savedAccent = response?.preferences?.accentColor;
 
         if (savedTheme) {
-          setTheme(savedTheme);
+          toggleTheme(savedTheme);
           setOriginalTheme(savedTheme);
-          applyTheme(savedTheme);
+        } else {
+          // Use current app theme as baseline if backend didn't return anything.
+          setOriginalTheme(useAppStore.getState().theme as Theme);
         }
         if (savedAccent) {
           setAccentColor(savedAccent);
           setOriginalAccent(savedAccent);
         }
       } catch (err) {
-        // Fallback to localStorage
-        const localTheme = localStorage.getItem('theme') as Theme;
-        if (localTheme) {
-          setTheme(localTheme);
-          setOriginalTheme(localTheme);
-          applyTheme(localTheme);
-        }
+        // Fallback to current app theme (single source of truth)
+        setOriginalTheme(useAppStore.getState().theme as Theme);
       } finally {
         setLoading(false);
       }
     };
     loadTheme();
-  }, []);
-
-  const applyTheme = (newTheme: Theme) => {
-    if (newTheme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.classList.toggle('dark', prefersDark);
-    } else {
-      document.documentElement.classList.toggle('dark', newTheme === 'dark');
-    }
-    localStorage.setItem('theme', newTheme);
-  };
-
-  const handleThemeChange = (newTheme: Theme) => {
-    setTheme(newTheme);
-    applyTheme(newTheme);
-  };
+  }, [toggleTheme]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -154,13 +138,13 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                 return (
                   <button
                     key={id}
-                    onClick={() => handleThemeChange(id)}
+                    onClick={() => toggleTheme(id)}
                     className={cn(
                       'relative p-4 rounded-xl border-2 transition-all duration-200',
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/5'
-                        : 'border-white/10 hover:border-white/20 bg-navy-800/50'
+                        ? 'border-violet-500 bg-violet-50 dark:bg-violet-500/5'
+                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-navy-800/50'
                     )}
                   >
                     {/* Preview */}
@@ -174,13 +158,17 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                         size={18}
                         className={cn(
                           'transition-colors',
-                          isSelected ? 'text-violet-400' : 'text-slate-500 dark:text-slate-400'
+                          isSelected
+                            ? 'text-violet-600 dark:text-violet-400'
+                            : 'text-slate-500 dark:text-slate-400'
                         )}
                       />
                       <span
                         className={cn(
                           'font-medium transition-colors',
-                          isSelected ? 'text-violet-300' : 'text-slate-300'
+                          isSelected
+                            ? 'text-violet-700 dark:text-violet-300'
+                            : 'text-slate-700 dark:text-slate-300'
                         )}
                       >
                         {label}
@@ -225,7 +213,8 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'group relative w-12 h-12 rounded-xl transition-all duration-200',
                       'hover:scale-110 active:scale-95',
                       color.class,
-                      isSelected && 'ring-2 ring-white ring-offset-2 ring-offset-navy-900'
+                      isSelected &&
+                        'ring-2 ring-slate-900 dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-navy-900'
                     )}
                     title={color.name}
                   >
@@ -239,8 +228,8 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
 
               {/* Custom color picker */}
               <label
-                className="relative w-12 h-12 rounded-xl bg-navy-700 border border-dashed border-white/20 
-                                         cursor-pointer hover:border-white/40 transition-all duration-200
+                className="relative w-12 h-12 rounded-xl bg-slate-100 dark:bg-navy-700 border border-dashed border-slate-300 dark:border-white/20 
+                                         cursor-pointer hover:border-slate-400 dark:hover:border-white/40 transition-all duration-200
                                          flex items-center justify-center"
                 title={t('settings.appearance.customColor', 'Custom color')}
               >
@@ -255,10 +244,12 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
             </div>
 
             {/* Current color preview */}
-            <div className="flex items-center gap-3 mt-4 p-3 bg-navy-700/50 rounded-lg">
+            <div className="flex items-center gap-3 mt-4 p-3 bg-slate-100 dark:bg-navy-700/50 rounded-lg">
               <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: accentColor }} />
               <div>
-                <span className="text-sm text-white font-mono">{accentColor.toUpperCase()}</span>
+                <span className="text-sm text-slate-900 dark:text-white font-mono">
+                  {accentColor.toUpperCase()}
+                </span>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {t('settings.appearance.currentAccent', 'Current accent color')}
                 </p>
@@ -267,8 +258,8 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
           </SettingsFormRow>
 
           {/* Preview Note */}
-          <div className="p-4 bg-navy-700/30 rounded-lg text-center">
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+          <div className="p-4 bg-slate-50 dark:bg-navy-700/30 rounded-lg text-center">
+            <p className="text-sm text-slate-500 dark:text-slate-500">
               <Sparkles size={14} className="inline mr-2 text-violet-400" />
               {t(
                 'settings.appearance.previewNote',

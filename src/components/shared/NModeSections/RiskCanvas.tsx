@@ -1,0 +1,465 @@
+/**
+ * RiskCanvas
+ *
+ * Generic N-mode section for risk assessment / risk register.
+ * Reusable across all artifact types (Decision, Task, Initiative).
+ *
+ * Shows:
+ * - Risk cards with probability/impact/category selectors
+ * - Risk score badge (P×I)
+ * - Contingency + mitigation textareas with quick-action buttons
+ * - AIFieldEnhancer per risk field
+ * - Level legend, sorted by score
+ *
+ * @see docs/ui-standards/shared-nmode-sections-standard.md
+ */
+
+import { AlertTriangle, Loader2, Plus, Sparkles, X } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
+
+// ── Types ───────────────────────────────────────────────────────────────────
+
+export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
+export type RiskCategory =
+  | 'technical'
+  | 'business'
+  | 'operational'
+  | 'financial'
+  | 'security'
+  | 'legal'
+  | 'other';
+
+export interface RiskItem {
+  id: string;
+  title: string;
+  probability: RiskLevel;
+  impact: RiskLevel;
+  category?: string;
+  mitigation: string;
+  contingency: string;
+}
+
+export interface RiskCanvasProps {
+  /** Risk items (unsorted — component sorts by score internally) */
+  risks: RiskItem[];
+  /** Add new empty risk */
+  onAddRisk: () => void;
+  /** Update fields on a risk */
+  onUpdateRisk: (id: string, updates: Partial<RiskItem>) => void;
+  /** Remove a risk by id */
+  onRemoveRisk: (id: string) => void;
+  /** AI generate risks handler (omit to hide AI button) */
+  onAIGenerate?: () => void;
+  /** Whether AI generation is in progress */
+  isGeneratingAI?: boolean;
+  /** Whether inputs are locked/read-only (e.g. decision stage lock) */
+  locked?: boolean;
+  /** Artifact type for AIFieldEnhancer context */
+  artifactType: 'task' | 'decision' | 'initiative' | 'notification';
+  /** Artifact context for AIFieldEnhancer */
+  artifactContext: { title: string; status: string; priority: string; type: string };
+  /** Unique prefix for AI field keys (e.g. 't' for task, 'n' for decision) */
+  fieldKeyPrefix: string;
+}
+
+// ── Utility functions (pure, no hooks) ──────────────────────────────────────
+
+const RISK_LEVEL_OPTIONS: readonly RiskLevel[] = ['low', 'medium', 'high', 'critical'];
+
+const riskLevelToScore = (level?: string): number => {
+  const n = String(level || '').toLowerCase();
+  if (n === 'critical') return 4;
+  if (n === 'high') return 3;
+  if (n === 'medium') return 2;
+  return 1;
+};
+
+export const getRiskScore = (risk: RiskItem): number =>
+  riskLevelToScore(risk.probability) * riskLevelToScore(risk.impact);
+
+const getRiskScoreClass = (score: number): string => {
+  if (score >= 12) return 'text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/30';
+  if (score >= 8) return 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30';
+  if (score >= 4)
+    return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
+  return 'text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border-emerald-500/30';
+};
+
+const getRiskLevelClass = (level?: string): string => {
+  const n = String(level || '').toLowerCase();
+  if (n === 'critical') return 'border-red-500/60 bg-red-500/10 text-red-700 dark:text-red-300';
+  if (n === 'high')
+    return 'border-orange-500/55 bg-orange-500/10 text-orange-700 dark:text-orange-300';
+  if (n === 'medium')
+    return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
+  return 'border-emerald-500/45 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
+};
+
+// ── Component ───────────────────────────────────────────────────────────────
+
+export const RiskCanvas: React.FC<RiskCanvasProps> = ({
+  risks,
+  onAddRisk,
+  onUpdateRisk,
+  onRemoveRisk,
+  onAIGenerate,
+  isGeneratingAI = false,
+  locked = false,
+  artifactContext,
+  fieldKeyPrefix,
+}) => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
+
+  // i18n labels for levels
+  const getRiskLevelLabel = (level: string): string => {
+    if (isPolish) {
+      if (level === 'critical') return 'Krytyczny';
+      if (level === 'high') return 'Wysoki';
+      if (level === 'medium') return 'Średni';
+      return 'Niski';
+    }
+    if (level === 'critical') return 'Critical';
+    if (level === 'high') return 'High';
+    if (level === 'medium') return 'Medium';
+    return 'Low';
+  };
+
+  // i18n labels for categories
+  const riskCategoryOptions = useMemo(
+    () =>
+      ['technical', 'business', 'financial', 'operational', 'security'].map((c) => ({
+        value: c,
+        label:
+          c === 'technical'
+            ? isPolish
+              ? 'Techniczne'
+              : 'Technical'
+            : c === 'business'
+              ? isPolish
+                ? 'Biznesowe'
+                : 'Business'
+              : c === 'financial'
+                ? isPolish
+                  ? 'Finansowe'
+                  : 'Financial'
+                : c === 'operational'
+                  ? isPolish
+                    ? 'Operacyjne'
+                    : 'Operational'
+                  : isPolish
+                    ? 'Bezpieczeństwo'
+                    : 'Security',
+      })),
+    [isPolish]
+  );
+
+  const quickContingencyArguments = useMemo(
+    () =>
+      isPolish
+        ? ['Tryb ręczny fallback', 'Eskalacja do PMO', 'Przesunięcie terminu + komunikat']
+        : ['Manual fallback mode', 'Escalate to PMO', 'Timeline shift with stakeholder notice'],
+    [isPolish]
+  );
+
+  const quickMitigationArguments = useMemo(
+    () =>
+      isPolish
+        ? ['POC przed wdrożeniem', 'Przegląd tygodniowy', 'Plan kontroli jakości']
+        : ['POC before rollout', 'Weekly review checkpoint', 'Quality control plan'],
+    [isPolish]
+  );
+
+  const sortedRisks = useMemo(
+    () =>
+      [...risks].sort((a, b) => {
+        const byScore = getRiskScore(b) - getRiskScore(a);
+        if (byScore !== 0) return byScore;
+        return String(a.title || '').localeCompare(String(b.title || ''));
+      }),
+    [risks]
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+          {isPolish ? 'Ryzyko i wpływ' : 'Risk & Impact'}
+        </h2>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onAddRisk}
+            disabled={locked}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-600/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-navy-500 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Plus size={13} />
+            {isPolish ? 'Dodaj ryzyko' : 'Add risk'}
+          </button>
+          {onAIGenerate && (
+            <button
+              onClick={onAIGenerate}
+              disabled={locked || isGeneratingAI}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-500 dark:text-purple-400 hover:bg-purple-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {isGeneratingAI ? (
+                <Loader2 size={13} className="animate-spin" />
+              ) : (
+                <Sparkles size={13} />
+              )}
+              {isPolish ? 'Analizuj ryzyka' : 'Analyze risks'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Empty state */}
+      {risks.length === 0 ? (
+        <div className="py-8 text-center">
+          <AlertTriangle size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+          <p className="text-sm text-slate-400 dark:text-slate-500 mb-3">
+            {isPolish ? 'Brak zidentyfikowanych ryzyk.' : 'No risks identified.'}
+          </p>
+          <button
+            onClick={onAddRisk}
+            disabled={locked}
+            className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40"
+          >
+            + {isPolish ? 'Dodaj ryzyko' : 'Add risk'}
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+          <span>
+            {isPolish
+              ? 'Posortowane wg najwyższego risk score (P×I)'
+              : 'Sorted by highest risk score (P×I)'}
+          </span>
+          <span>{isPolish ? `${risks.length} ryzyk` : `${risks.length} risks`}</span>
+        </div>
+      )}
+
+      {/* Risk cards */}
+      {risks.length > 0 && (
+        <div className="space-y-0 divide-y divide-slate-300/55 dark:divide-navy-600/65">
+          {/* Level legend */}
+          <div className="py-2 text-[10px] flex flex-wrap items-center gap-1.5 text-slate-400 dark:text-slate-500">
+            <span>{isPolish ? 'Legenda poziomów:' : 'Level legend:'}</span>
+            {RISK_LEVEL_OPTIONS.map((level) => (
+              <span
+                key={`legend-${level}`}
+                className={`px-1.5 py-0.5 rounded border font-medium ${getRiskLevelClass(level)}`}
+              >
+                {getRiskLevelLabel(level)}
+              </span>
+            ))}
+          </div>
+
+          {/* Risk items */}
+          {sortedRisks.map((risk) => (
+            <div key={risk.id} className="py-5 first:pt-2 group">
+              <div className="p-5 rounded-xl bg-slate-50/20 dark:bg-navy-900/25 space-y-5">
+                {/* Title + Score + Selectors */}
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <input
+                      value={risk.title}
+                      onChange={(e) => onUpdateRisk(risk.id, { title: e.target.value })}
+                      readOnly={locked}
+                      className="flex-1 text-sm font-medium bg-transparent text-slate-800 dark:text-white focus:outline-none placeholder-slate-400"
+                      placeholder={isPolish ? 'Nazwa ryzyka...' : 'Risk name...'}
+                    />
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold ${getRiskScoreClass(getRiskScore(risk))}`}
+                      >
+                        Score {getRiskScore(risk)}
+                      </span>
+                      <button
+                        onClick={() => onRemoveRisk(risk.id)}
+                        disabled={locked}
+                        className="p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    {/* Probability */}
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Prawdopodobieństwo' : 'Probability'}
+                      </span>
+                      <select
+                        value={risk.probability}
+                        onChange={(e) =>
+                          onUpdateRisk(risk.id, { probability: e.target.value as RiskLevel })
+                        }
+                        disabled={locked}
+                        className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-primary-400 ${getRiskLevelClass(risk.probability)} disabled:opacity-60`}
+                      >
+                        {RISK_LEVEL_OPTIONS.map((level) => (
+                          <option key={`p-${risk.id}-${level}`} value={level}>
+                            {getRiskLevelLabel(level)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* Impact */}
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Wpływ' : 'Impact'}
+                      </span>
+                      <select
+                        value={risk.impact}
+                        onChange={(e) =>
+                          onUpdateRisk(risk.id, { impact: e.target.value as RiskLevel })
+                        }
+                        disabled={locked}
+                        className={`w-full text-[11px] px-2 py-1 rounded-md border focus:outline-none focus:border-primary-400 ${getRiskLevelClass(risk.impact)} disabled:opacity-60`}
+                      >
+                        {RISK_LEVEL_OPTIONS.map((level) => (
+                          <option key={`i-${risk.id}-${level}`} value={level}>
+                            {getRiskLevelLabel(level)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* Category */}
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Kategoria' : 'Category'}
+                      </span>
+                      <select
+                        value={risk.category || 'business'}
+                        onChange={(e) => onUpdateRisk(risk.id, { category: e.target.value })}
+                        disabled={locked}
+                        className="w-full text-[11px] px-2 py-1 rounded-md bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400 disabled:opacity-60"
+                      >
+                        {riskCategoryOptions.map((cat) => (
+                          <option key={`c-${risk.id}-${cat.value}`} value={cat.value}>
+                            {cat.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Two columns: Contingency + Mitigation */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                  {/* Risk (materialized) / Contingency */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Ryzyko (materializacja)' : 'Risk (materialized)'}
+                      </span>
+                      <AIFieldEnhancer
+                        fieldKey={`${fieldKeyPrefix}-risk-con-${risk.id}`}
+                        sectionLabel={`Risk contingency: ${risk.title || 'Risk'}`}
+                        currentValue={risk.contingency || ''}
+                        onApply={(value) => onUpdateRisk(risk.id, { contingency: value })}
+                        artifactContext={artifactContext}
+                        disabled={locked}
+                      />
+                    </div>
+                    <textarea
+                      value={risk.contingency || ''}
+                      onChange={(e) => onUpdateRisk(risk.id, { contingency: e.target.value })}
+                      rows={4}
+                      readOnly={locked}
+                      className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
+                      placeholder={
+                        isPolish
+                          ? 'Co robimy, gdy ryzyko się zmaterializuje?'
+                          : 'What is the fallback if risk materializes?'
+                      }
+                    />
+                    <div className="flex flex-wrap gap-1">
+                      {quickContingencyArguments.map((arg) => (
+                        <button
+                          key={`${risk.id}-con-${arg}`}
+                          onClick={() =>
+                            onUpdateRisk(risk.id, {
+                              contingency: risk.contingency
+                                ? `${risk.contingency}\n- ${arg}`
+                                : `- ${arg}`,
+                            })
+                          }
+                          disabled={locked}
+                          className="px-1.5 py-0.5 rounded border border-red-400/30 text-red-500 dark:text-red-400 text-[10px] hover:bg-red-500/10 transition-colors disabled:opacity-40"
+                        >
+                          +{arg}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Mitigation */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Mitigacja' : 'Mitigation'}
+                      </span>
+                      <AIFieldEnhancer
+                        fieldKey={`${fieldKeyPrefix}-risk-mit-${risk.id}`}
+                        sectionLabel={`Risk mitigation: ${risk.title || 'Risk'}`}
+                        currentValue={risk.mitigation || ''}
+                        onApply={(value) => onUpdateRisk(risk.id, { mitigation: value })}
+                        artifactContext={artifactContext}
+                        disabled={locked}
+                      />
+                    </div>
+                    <textarea
+                      value={risk.mitigation || ''}
+                      onChange={(e) => onUpdateRisk(risk.id, { mitigation: e.target.value })}
+                      rows={4}
+                      readOnly={locked}
+                      className="w-full min-h-[92px] text-xs bg-transparent border-b border-slate-200/60 dark:border-navy-700/60 text-slate-500 dark:text-slate-400 focus:outline-none focus:border-primary-400 resize-y"
+                      placeholder={
+                        isPolish ? 'Jak ograniczamy to ryzyko?' : 'How do we mitigate this risk?'
+                      }
+                    />
+                    <div className="flex flex-wrap gap-1">
+                      {quickMitigationArguments.map((arg) => (
+                        <button
+                          key={`${risk.id}-mit-${arg}`}
+                          onClick={() =>
+                            onUpdateRisk(risk.id, {
+                              mitigation: risk.mitigation
+                                ? `${risk.mitigation}\n- ${arg}`
+                                : `- ${arg}`,
+                            })
+                          }
+                          disabled={locked}
+                          className="px-1.5 py-0.5 rounded border border-emerald-400/30 text-emerald-600 dark:text-emerald-400 text-[10px] hover:bg-emerald-500/10 transition-colors disabled:opacity-40"
+                        >
+                          +{arg}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Bottom add button */}
+      <button
+        onClick={onAddRisk}
+        disabled={locked}
+        className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors disabled:opacity-40"
+      >
+        + {isPolish ? 'Dodaj ryzyko' : 'Add risk'}
+      </button>
+    </div>
+  );
+};
+
+export default RiskCanvas;

@@ -6,6 +6,7 @@
 
 import { AlertTriangle, Plus, Save, Trash2, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { DRDAxis, GeneratedInitiative, InitiativeRiskLevel } from '../../types';
 
@@ -15,29 +16,44 @@ interface InitiativeEditorProps {
   onCancel: () => void;
 }
 
-const AXIS_OPTIONS: { value: DRDAxis; label: string }[] = [
-  { value: 'processes', label: 'Processes' },
-  { value: 'digitalProducts', label: 'Digital Products' },
-  { value: 'businessModels', label: 'Business Models' },
-  { value: 'dataManagement', label: 'Data Management' },
-  { value: 'culture', label: 'Organizational Culture' },
-  { value: 'cybersecurity', label: 'Cybersecurity' },
-  { value: 'aiMaturity', label: 'AI Maturity' },
+// B8.1: Use i18n keys instead of hardcoded English labels
+const AXIS_OPTIONS: { value: DRDAxis; labelKey: string; fallback: string }[] = [
+  { value: 'processes', labelKey: 'initiatives.axis.processes', fallback: 'Processes' },
+  {
+    value: 'digitalProducts',
+    labelKey: 'initiatives.axis.digitalProducts',
+    fallback: 'Digital Products',
+  },
+  {
+    value: 'businessModels',
+    labelKey: 'initiatives.axis.businessModels',
+    fallback: 'Business Models',
+  },
+  {
+    value: 'dataManagement',
+    labelKey: 'initiatives.axis.dataManagement',
+    fallback: 'Data Management',
+  },
+  { value: 'culture', labelKey: 'initiatives.axis.culture', fallback: 'Organizational Culture' },
+  { value: 'cybersecurity', labelKey: 'initiatives.axis.cybersecurity', fallback: 'Cybersecurity' },
+  { value: 'aiMaturity', labelKey: 'initiatives.axis.aiMaturity', fallback: 'AI Maturity' },
 ];
 
-const RISK_OPTIONS: { value: InitiativeRiskLevel; label: string }[] = [
-  { value: 'LOW', label: 'Low Risk' },
-  { value: 'MEDIUM', label: 'Medium Risk' },
-  { value: 'HIGH', label: 'High Risk' },
+// RISK_OPTIONS will be translated in component using t()
+const RISK_OPTIONS: { value: InitiativeRiskLevel; labelKey: string }[] = [
+  { value: 'LOW', labelKey: 'initiatives.risk.low' },
+  { value: 'MEDIUM', labelKey: 'initiatives.risk.medium' },
+  { value: 'HIGH', labelKey: 'initiatives.risk.high' },
 ];
 
-const TIMELINE_OPTIONS = [
-  '1-3 months',
-  '3-6 months',
-  '6-9 months',
-  '9-12 months',
-  '12-18 months',
-  '18-24 months',
+// B8.1: Use i18n keys for timeline options
+const TIMELINE_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
+  { value: '1-3 months', labelKey: 'initiatives.timeline.1_3', fallback: '1-3 months' },
+  { value: '3-6 months', labelKey: 'initiatives.timeline.3_6', fallback: '3-6 months' },
+  { value: '6-9 months', labelKey: 'initiatives.timeline.6_9', fallback: '6-9 months' },
+  { value: '9-12 months', labelKey: 'initiatives.timeline.9_12', fallback: '9-12 months' },
+  { value: '12-18 months', labelKey: 'initiatives.timeline.12_18', fallback: '12-18 months' },
+  { value: '18-24 months', labelKey: 'initiatives.timeline.18_24', fallback: '18-24 months' },
 ];
 
 export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
@@ -45,6 +61,8 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
   onSave,
   onCancel,
 }) => {
+  const { t } = useTranslation();
+
   // Form state
   const [name, setName] = useState(initiative.name);
   const [description, setDescription] = useState(initiative.description);
@@ -64,23 +82,23 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!name || name.length < 5) {
-      newErrors.name = 'Name must be at least 5 characters';
+      newErrors.name = t('initiatives.form.nameMinLength');
     }
 
     if (!description || description.length < 20) {
-      newErrors.description = 'Description must be at least 20 characters';
+      newErrors.description = t('initiatives.form.descriptionMinLength');
     }
 
     if (estimatedBudget <= 0) {
-      newErrors.estimatedBudget = 'Budget must be greater than 0';
+      newErrors.estimatedBudget = t('initiatives.form.budgetRequired');
     }
 
     if (estimatedROI <= 0) {
-      newErrors.estimatedROI = 'ROI must be greater than 0';
+      newErrors.estimatedROI = t('initiatives.form.roiRequired');
     }
 
     return newErrors;
-  }, [name, description, estimatedBudget, estimatedROI]);
+  }, [name, description, estimatedBudget, estimatedROI, t]);
 
   // Sync errors state with computed errors
   useEffect(() => {
@@ -122,7 +140,9 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
       <div className="w-full max-w-2xl max-h-[90vh] bg-white dark:bg-navy-900 rounded-xl shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-navy-900 dark:text-white">Edit Initiative</h2>
+          <h2 className="text-lg font-bold text-navy-900 dark:text-white">
+            {t('initiatives.form.edit')}
+          </h2>
           <button
             onClick={onCancel}
             className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
@@ -136,7 +156,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
           {/* Name */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Initiative Name *
+              {t('initiatives.form.nameRequired')}
             </label>
             <input
               type="text"
@@ -150,7 +170,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                     : 'border-slate-200 dark:border-navy-700 focus:ring-purple-500'
                                 }
                             `}
-              placeholder="Enter initiative name"
+              placeholder={t('initiatives.form.namePlaceholder')}
             />
             {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
           </div>
@@ -158,7 +178,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
           {/* Description */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Description *
+              {t('initiatives.form.description')} *
             </label>
             <textarea
               value={description}
@@ -172,7 +192,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                                     : 'border-slate-200 dark:border-navy-700 focus:ring-purple-500'
                                 }
                             `}
-              placeholder="Describe the initiative..."
+              placeholder={t('initiatives.form.descriptionPlaceholder')}
             />
             {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
           </div>
@@ -181,7 +201,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Source Axis
+                {t('initiatives.form.sourceAxis')}
               </label>
               <select
                 value={sourceAxisId}
@@ -190,7 +210,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
               >
                 {AXIS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {t(opt.labelKey, opt.fallback)}
                   </option>
                 ))}
               </select>
@@ -198,7 +218,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Risk Level
+                {t('initiatives.form.riskLevel')}
               </label>
               <select
                 value={riskLevel}
@@ -207,7 +227,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
               >
                 {RISK_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </option>
                 ))}
               </select>
@@ -218,7 +238,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Budget (PLN) *
+                {t('initiatives.form.budget')} *
               </label>
               <input
                 type="number"
@@ -240,7 +260,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Expected ROI *
+                {t('initiatives.form.expectedROI')} *
               </label>
               <input
                 type="number"
@@ -261,16 +281,16 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Timeline
+                {t('initiatives.form.timeline')}
               </label>
               <select
                 value={timeline}
                 onChange={(e) => setTimeline(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
               >
-                {TIMELINE_OPTIONS.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+                {TIMELINE_OPTIONS.map((tl) => (
+                  <option key={tl.value} value={tl.value}>
+                    {t(tl.labelKey, tl.fallback)}
                   </option>
                 ))}
               </select>
@@ -280,7 +300,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
           {/* Objectives */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Objectives
+              {t('initiatives.form.objectives')}
             </label>
 
             {objectives.length > 0 && (
@@ -312,7 +332,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
                 onChange={(e) => setNewObjective(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddObjective()}
                 className="flex-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white text-sm"
-                placeholder="Add new objective..."
+                placeholder={t('initiatives.form.addObjective')}
               />
               <button
                 onClick={handleAddObjective}
@@ -330,11 +350,10 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
               <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                  High-Risk, High-Budget Initiative
+                  {t('initiatives.form.highRiskHighBudget')}
                 </p>
                 <p className="text-sm text-amber-600 dark:text-amber-400">
-                  Consider breaking this into smaller phases or implementing additional governance
-                  controls.
+                  {t('initiatives.form.highRiskHighBudgetDesc')}
                 </p>
               </div>
             </div>
@@ -347,7 +366,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
             onClick={onCancel}
             className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           >
-            Cancel
+            {t('initiatives.form.cancel')}
           </button>
           <button
             onClick={handleSave}
@@ -355,7 +374,7 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
             className="flex items-center gap-2 p-4 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-400 text-white rounded-lg font-medium transition-colors"
           >
             <Save size={18} />
-            Save Changes
+            {t('initiatives.form.save')}
           </button>
         </div>
       </div>

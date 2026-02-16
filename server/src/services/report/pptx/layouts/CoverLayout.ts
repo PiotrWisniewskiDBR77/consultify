@@ -1,0 +1,93 @@
+/**
+ * Layout: Cover
+ * Presentation opening slide — full bleed brand color, title, subtitle, date.
+ */
+import { BodyText } from '../atomics/BodyText.js';
+import { ConfidentialityBanner } from '../atomics/ConfidentialityBanner.js';
+import type {
+  CoverContent,
+  DesignTokens,
+  LayoutResult,
+  UnifiedReportMeta,
+  UnifiedSlide,
+} from '../types.js';
+
+export function CoverLayout(
+  slide: UnifiedSlide,
+  meta: UnifiedReportMeta,
+  tokens: DesignTokens
+): LayoutResult {
+  const c = slide.content as CoverContent;
+  const elements = [];
+
+  // Title
+  elements.push(
+    BodyText(
+      {
+        text: c.title,
+        position: { x: 0.8, y: 1.8, w: 8.4, h: 1.2 },
+        fontSize: 40,
+        bold: true,
+        color: tokens.colors.textInverse,
+        align: 'center',
+        valign: 'middle',
+      },
+      tokens
+    )
+  );
+
+  // Subtitle
+  if (c.subtitle) {
+    elements.push(
+      BodyText(
+        {
+          text: c.subtitle,
+          position: { x: 0.8, y: 3.2, w: 8.4, h: 0.5 },
+          fontSize: 18,
+          color: tokens.colors.textInverse,
+          align: 'center',
+        },
+        tokens
+      )
+    );
+  }
+
+  // Organization | Date
+  const infoLine = [c.organization, c.date].filter(Boolean).join('  |  ');
+  elements.push(
+    BodyText(
+      {
+        text: infoLine,
+        position: { x: 0.8, y: 4.0, w: 8.4, h: 0.4 },
+        fontSize: 14,
+        color: tokens.colors.textInverse,
+        align: 'center',
+      },
+      tokens
+    )
+  );
+
+  // Branding footer
+  elements.push(
+    BodyText(
+      {
+        text: 'Consultinity',
+        position: { x: 0.8, y: 4.8, w: 8.4, h: 0.3 },
+        fontSize: 11,
+        color: tokens.colors.textInverse,
+        align: 'center',
+      },
+      tokens
+    )
+  );
+
+  // Confidentiality
+  if (meta.confidentiality && meta.confidentiality !== 'public') {
+    elements.push(ConfidentialityBanner({ level: meta.confidentiality }, tokens));
+  }
+
+  return {
+    masterName: 'COVER',
+    elements,
+  };
+}

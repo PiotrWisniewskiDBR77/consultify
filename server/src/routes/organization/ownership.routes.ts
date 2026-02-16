@@ -430,7 +430,7 @@ router.post(
         [orgId]
       );
 
-      if (org?.owner_id !== userId) {
+      if (!org || org.owner_id !== userId) {
         return res.status(403).json({ error: 'Only the owner can delete the organization' });
       }
 
@@ -451,10 +451,11 @@ router.post(
         `[ownership] Organization ${orgId} scheduled for deletion on ${deletionDate.toISOString()}`
       );
 
+      const orgName = org.name;
       return res.json({
         success: true,
         deletionDate: deletionDate.toISOString(),
-        message: `Organization "${org?.name || 'Unknown'}" scheduled for deletion on ${deletionDate.toLocaleDateString()}. You can cancel this within 30 days.`,
+        message: `Organization "${orgName}" scheduled for deletion on ${deletionDate.toLocaleDateString()}. You can cancel this within 30 days.`,
       });
     } catch (error: any) {
       logger.error('[ownership] Error scheduling deletion:', error);

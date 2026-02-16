@@ -23,6 +23,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import type { CloudFile, CloudProviderId } from '../../hooks/useCloudIntegrations';
+import { Api } from '../../services/api';
 
 // Cloud provider icons
 const ProviderIcons: Record<string, React.ReactNode> = {
@@ -102,61 +103,80 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
   ]);
   const [selectedFile, setSelectedFile] = useState<CloudFile | null>(null);
 
-  // Load files for current folder
-  const loadFiles = useCallback(async (folderId: string = 'root') => {
-    setIsLoading(true);
-    try {
-      // TODO: Replace with real API call
-      // const response = await Api.listCloudFiles(provider, folderId);
-      // setFiles(response.files);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
-      // Demo data for now
-      await new Promise((resolve) => setTimeout(resolve, 500));
+  // Demo fallback data (used when backend cloud integration is not yet deployed)
+  const DEMO_FILES: CloudFile[] = [
+    { id: '1', name: 'Dokumenty projektowe', mimeType: 'folder', size: 0, isFolder: true },
+    { id: '2', name: 'Prezentacje', mimeType: 'folder', size: 0, isFolder: true },
+    {
+      id: '3',
+      name: 'Raport Q4 2025.pdf',
+      mimeType: 'application/pdf',
+      size: 2453000,
+      isFolder: false,
+      modifiedAt: '2025-12-15',
+    },
+    {
+      id: '4',
+      name: 'Budżet projektu.xlsx',
+      mimeType: 'application/vnd.ms-excel',
+      size: 156000,
+      isFolder: false,
+      modifiedAt: '2025-12-10',
+    },
+    {
+      id: '5',
+      name: 'Notatki ze spotkania.docx',
+      mimeType: 'application/msword',
+      size: 45000,
+      isFolder: false,
+      modifiedAt: '2025-12-08',
+    },
+    {
+      id: '6',
+      name: 'Screenshot.png',
+      mimeType: 'image/png',
+      size: 890000,
+      isFolder: false,
+      modifiedAt: '2025-12-05',
+    },
+  ];
 
-      const demoFiles: CloudFile[] = [
-        { id: '1', name: 'Dokumenty projektowe', mimeType: 'folder', size: 0, isFolder: true },
-        { id: '2', name: 'Prezentacje', mimeType: 'folder', size: 0, isFolder: true },
-        {
-          id: '3',
-          name: 'Raport Q4 2025.pdf',
-          mimeType: 'application/pdf',
-          size: 2453000,
-          isFolder: false,
-          modifiedAt: '2025-12-15',
-        },
-        {
-          id: '4',
-          name: 'Budżet projektu.xlsx',
-          mimeType: 'application/vnd.ms-excel',
-          size: 156000,
-          isFolder: false,
-          modifiedAt: '2025-12-10',
-        },
-        {
-          id: '5',
-          name: 'Notatki ze spotkania.docx',
-          mimeType: 'application/msword',
-          size: 45000,
-          isFolder: false,
-          modifiedAt: '2025-12-08',
-        },
-        {
-          id: '6',
-          name: 'Screenshot.png',
-          mimeType: 'image/png',
-          size: 890000,
-          isFolder: false,
-          modifiedAt: '2025-12-05',
-        },
-      ];
-
-      setFiles(demoFiles);
-    } catch (error) {
-      console.error('Failed to load files:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  // Load files for current folder — real API with demo fallback
+  const loadFiles = useCallback(
+    async (folderId: string = 'root') => {
+      setIsLoading(true);
+      try {
+        const response = await Api.listCloudFiles(
+          provider,
+          folderId === 'root' ? undefined : folderId
+        );
+        const cloudFiles: CloudFile[] = Array.isArray(response)
+          ? response
+          : ((response as any)?.files ?? []);
+        setFiles(cloudFiles);
+        setIsDemoMode(false);
+      } catch (error: any) {
+        // Backend returns CLOUD_NOT_IMPLEMENTED or 501 when not deployed yet — fall back to demo
+        const isNotImplemented =
+          error?.message?.includes('CLOUD_NOT_IMPLEMENTED') ||
+          error?.message?.includes('not implemented');
+        if (isNotImplemented) {
+          console.info('[CloudFilePicker] Cloud integration not implemented, using demo data');
+          setIsDemoMode(true);
+          setFiles(DEMO_FILES);
+        } else {
+          console.error('[CloudFilePicker] Failed to load files:', error);
+          toast.error(t('aiChat.cloudPicker.loadError', 'Nie udało się załadować plików'));
+          setFiles([]);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [provider, t]
+  );
 
   // Load files when modal opens or path changes
   useEffect(() => {
@@ -215,10 +235,12 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
               {ProviderNames[provider]}
             </h2>
-            {/* Demo Mode Badge */}
-            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full border border-amber-200 dark:border-amber-800">
-              Demo
-            </span>
+            {/* Demo Mode Badge - only show when backend is not yet deployed */}
+            {isDemoMode && (
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full border border-amber-200 dark:border-amber-800">
+                Demo
+              </span>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -228,25 +250,27 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
           </button>
         </div>
 
-        {/* Demo Mode Warning Banner */}
-        <div className="mx-4 mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-          <div className="flex items-start gap-2">
-            <div className="shrink-0 w-5 h-5 rounded-full bg-amber-200 dark:bg-amber-800 flex items-center justify-center">
-              <span className="text-amber-700 dark:text-amber-300 text-xs">⚠</span>
-            </div>
-            <div className="flex-1">
-              <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
-                {t('aiChat.cloudPicker.demoMode', 'Tryb demonstracyjny')}
-              </p>
-              <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
-                {t(
-                  'aiChat.cloudPicker.demoModeDesc',
-                  'Wyświetlane są przykładowe pliki. Integracja z chmurą zostanie dodana wkrótce.'
-                )}
-              </p>
+        {/* Demo Mode Warning Banner - only show when backend is not yet deployed */}
+        {isDemoMode && (
+          <div className="mx-4 mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <div className="flex items-start gap-2">
+              <div className="shrink-0 w-5 h-5 rounded-full bg-amber-200 dark:bg-amber-800 flex items-center justify-center">
+                <span className="text-amber-700 dark:text-amber-300 text-xs">⚠</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
+                  {t('aiChat.cloudPicker.demoMode', 'Tryb demonstracyjny')}
+                </p>
+                <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
+                  {t(
+                    'aiChat.cloudPicker.demoModeDesc',
+                    'Wyświetlane są przykładowe pliki. Integracja z chmurą zostanie dodana wkrótce.'
+                  )}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-1 px-4 py-2 border-b border-slate-200 dark:border-navy-700 overflow-x-auto">

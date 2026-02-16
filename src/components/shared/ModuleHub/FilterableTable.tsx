@@ -3,7 +3,16 @@
  * Table with filterable column headers and row actions
  */
 
-import { ChevronDown, Edit, Eye, FileText, MoreVertical, Trash2 } from 'lucide-react';
+import {
+  ChevronDown,
+  Copy,
+  Edit,
+  Eye,
+  FileText,
+  Maximize2,
+  MoreVertical,
+  Trash2,
+} from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { FilterChip } from './ActiveFilters';
@@ -36,9 +45,10 @@ interface FilterableTableProps {
   emptyMessage?: string;
 }
 
-// Status badge component - uses canonical 11-status initiative lifecycle
-const StatusBadge: React.FC<{ status: ItemStatus }> = ({ status }) => {
-  const config: Record<ItemStatus, { bg: string; text: string; dot: string; label: string }> = {
+// Status badge component — supports all status families (assessment, report, initiative)
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+  const config: Record<string, { bg: string; text: string; dot: string; label: string }> = {
+    // Initiative / shared statuses
     DRAFT: { bg: 'bg-slate-500/20', text: 'text-slate-300', dot: 'bg-slate-400', label: 'Draft' },
     PENDING_REVIEW: {
       bg: 'bg-orange-500/20',
@@ -101,6 +111,50 @@ const StatusBadge: React.FC<{ status: ItemStatus }> = ({ status }) => {
       text: 'text-slate-300',
       dot: 'bg-slate-500',
       label: 'Archived',
+    },
+    // Assessment-specific statuses
+    IN_REVIEW: {
+      bg: 'bg-amber-500/20',
+      text: 'text-amber-300',
+      dot: 'bg-amber-400',
+      label: 'In Review',
+    },
+    AWAITING_APPROVAL: {
+      bg: 'bg-orange-500/20',
+      text: 'text-orange-300',
+      dot: 'bg-orange-400',
+      label: 'Awaiting Approval',
+    },
+    REJECTED: {
+      bg: 'bg-red-500/20',
+      text: 'text-red-300',
+      dot: 'bg-red-400',
+      label: 'Rejected',
+    },
+    // Report-specific statuses
+    GENERATING: {
+      bg: 'bg-blue-500/20',
+      text: 'text-blue-300',
+      dot: 'bg-blue-400',
+      label: 'Generating',
+    },
+    FINAL: {
+      bg: 'bg-indigo-500/20',
+      text: 'text-indigo-300',
+      dot: 'bg-indigo-400',
+      label: 'Final',
+    },
+    PENDING_APPROVAL: {
+      bg: 'bg-orange-500/20',
+      text: 'text-orange-300',
+      dot: 'bg-orange-400',
+      label: 'Pending Approval',
+    },
+    UTILIZED: {
+      bg: 'bg-teal-500/20',
+      text: 'text-teal-300',
+      dot: 'bg-teal-400',
+      label: 'Utilized',
     },
   };
 
@@ -361,10 +415,10 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            onRowAction?.('view', row);
+                            onRowAction?.('preview', row);
                           }}
-                          className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-white transition-colors"
-                          title="View"
+                          className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-blue-400 transition-colors"
+                          title="Quick preview"
                         >
                           <Eye size={14} />
                         </button>
@@ -374,9 +428,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             onRowAction?.('edit', row);
                           }}
                           className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-white transition-colors"
-                          title="Edit"
+                          title="Open"
                         >
-                          <Edit size={14} />
+                          <Maximize2 size={14} />
                         </button>
                         <button
                           onClick={(e) => {
@@ -389,25 +443,14 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         </button>
                       </div>
 
-                      {/* Action Menu */}
+                      {/* Action Menu — Open / Duplicate / Edit / Delete */}
                       {actionMenuRow === row.id && (
                         <>
                           <div
                             className="fixed inset-0 z-40"
                             onClick={() => setActionMenuRow(null)}
                           />
-                          <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-navy-800 border border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onRowAction?.('view', row);
-                                setActionMenuRow(null);
-                              }}
-                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700 transition-colors"
-                            >
-                              <Eye size={14} />
-                              <span>View</span>
-                            </button>
+                          <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-navy-800 border border-navy-600 rounded-lg shadow-xl overflow-hidden">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -416,19 +459,30 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                               }}
                               className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700 transition-colors"
                             >
-                              <Edit size={14} />
-                              <span>Edit</span>
+                              <Maximize2 size={14} />
+                              <span>Open</span>
                             </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onRowAction?.('report', row);
+                                onRowAction?.('duplicate', row);
                                 setActionMenuRow(null);
                               }}
                               className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700 transition-colors"
                             >
-                              <FileText size={14} />
-                              <span>Create Report</span>
+                              <Copy size={14} />
+                              <span>Duplicate</span>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRowAction?.('rename', row);
+                                setActionMenuRow(null);
+                              }}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700 transition-colors"
+                            >
+                              <Edit size={14} />
+                              <span>Edit</span>
                             </button>
                             <div className="border-t border-navy-600" />
                             <button

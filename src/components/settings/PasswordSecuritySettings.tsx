@@ -153,29 +153,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       setSessions(response.sessions || []);
     } catch (error) {
       console.error('Failed to fetch sessions:', error);
-      // Mock data for demo
-      setSessions([
-        {
-          id: '1',
-          deviceInfo: 'Desktop',
-          device: 'Desktop',
-          browser: 'Chrome 120',
-          location: 'Warsaw, Poland',
-          ipAddress: '192.168.1.1',
-          lastActive: 'Now',
-          current: true,
-        },
-        {
-          id: '2',
-          deviceInfo: 'Mobile',
-          device: 'Mobile',
-          browser: 'Safari iOS',
-          location: 'Krakow, Poland',
-          ipAddress: '192.168.1.2',
-          lastActive: '2 hours ago',
-          current: false,
-        },
-      ]);
+      setSessions([]);
     } finally {
       setIsLoadingSessions(false);
     }
@@ -188,36 +166,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       setSecurityEvents(response.events || []);
     } catch (error) {
       console.error('Failed to fetch security events:', error);
-      // Mock data
-      setSecurityEvents([
-        {
-          id: '1',
-          type: 'login',
-          description: 'Successful login',
-          ipAddress: '192.168.1.1',
-          location: 'Warsaw, PL',
-          timestamp: new Date().toISOString(),
-          status: 'success',
-        },
-        {
-          id: '2',
-          type: 'password_change',
-          description: 'Password changed',
-          ipAddress: '192.168.1.1',
-          location: 'Warsaw, PL',
-          timestamp: new Date(Date.now() - 86400000).toISOString(),
-          status: 'success',
-        },
-        {
-          id: '3',
-          type: 'login_failed',
-          description: 'Failed login attempt',
-          ipAddress: '10.0.0.1',
-          location: 'Unknown',
-          timestamp: new Date(Date.now() - 172800000).toISOString(),
-          status: 'warning',
-        },
-      ]);
+      setSecurityEvents([]);
     } finally {
       setLoadingEvents(false);
     }

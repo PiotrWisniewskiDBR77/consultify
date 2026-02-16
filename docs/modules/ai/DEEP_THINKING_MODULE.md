@@ -15,6 +15,7 @@ Deep Thinking to **samodzielny tryb decyzyjny** w IRIS 6.0 zaprojektowany do wsp
 - **Widoczny proces research** z transparentnymi źródłami
 - **14-punktową rubrykę jakości** (DoD) z automatyczną naprawą
 - **8 serwisów enterprise** (memory, audit, calibration, stakeholders, templates, stress testing, collaboration, integrations)
+- **Warstwę audytu po DT (Agent Audit Layer)** — agenci ról/branż audytują zamknięty raport i nadają status jakości (SSOT: `docs/modules/ai/AGENT_AUDIT_LAYER.md`)
 
 ---
 

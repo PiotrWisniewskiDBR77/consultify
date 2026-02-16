@@ -31,13 +31,16 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import { ToolDocumentView } from '@/components/DiscoveryTools';
+import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { ToolType } from '@/store/useToolStore';
 import { AppView } from '@/types';
+import { parseArtifactRef } from '@/utils/artifactLinks';
 
 interface StrategicTool {
   id: string;
@@ -200,6 +203,7 @@ export const StrategicToolsView: React.FC = () => {
   const isPolish = i18n.language === 'pl';
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<ToolType | null>(null);
+  const [activeSessionId, setActiveSessionId] = useState<string | undefined>(undefined);
 
   // Handle tool query parameter from URL
   useEffect(() => {
@@ -216,17 +220,60 @@ export const StrategicToolsView: React.FC = () => {
       ) {
         setActiveTool(toolParam as ToolType);
         setSelectedTool(toolParam);
+        setActiveSessionId(searchParams.get('sessionId') || undefined);
       }
       // Clear the URL parameter after processing
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams]);
 
+  // Deep link support: /discovery-tools/strategic?artifact=tool:<sessionId>
+  useEffect(() => {
+    const parsed = parseArtifactRef(searchParams.get('artifact'));
+    if (!parsed || parsed.type !== 'tool') return;
+
+    const run = async () => {
+      try {
+        const session = await Api.getToolSession(parsed.id);
+        const resolvedToolType = String(session?.toolType || '').toLowerCase();
+        if (
+          resolvedToolType === 'dynamic-swot' ||
+          resolvedToolType === 'market-forces' ||
+          resolvedToolType === 'growth-paths' ||
+          resolvedToolType === 'portfolio-priority' ||
+          resolvedToolType === 'risk-uncertainty'
+        ) {
+          setActiveTool(resolvedToolType as ToolType);
+          setSelectedTool(resolvedToolType);
+          setActiveSessionId(parsed.id);
+        } else {
+          toast.error(
+            isPolish
+              ? 'Nieobsługiwany typ narzędzia dla deep-linku'
+              : 'Unsupported tool type for deep link'
+          );
+        }
+      } catch {
+        toast.error(
+          isPolish ? 'Nie udało się otworzyć sesji narzędzia' : 'Failed to open tool session'
+        );
+      } finally {
+        const next = new URLSearchParams(searchParams);
+        next.delete('artifact');
+        next.delete('code');
+        setSearchParams(next, { replace: true });
+      }
+    };
+
+    void run();
+  }, [searchParams, setSearchParams, isPolish]);
+
   const handleBack = () => {
     if (activeTool) {
       // Go back to tool list
       setActiveTool(null);
       setSelectedTool(null);
+      setActiveSessionId(undefined);
     } else {
       // Go back to Discovery Tools main view
       setCurrentView(AppView.DISCOVERY_TOOLS);
@@ -254,6 +301,7 @@ export const StrategicToolsView: React.FC = () => {
     return (
       <ToolDocumentView
         toolType={activeTool}
+        sessionId={activeSessionId}
         onBack={handleBack}
         onOpenInitiative={(initiativeId) => {
           console.log('Open initiative:', initiativeId);
@@ -322,10 +370,10 @@ export const StrategicToolsView: React.FC = () => {
                 `}
                 onClick={() => handleStartTool(tool.id)}
               >
-                {/* Coming soon badge for non-implemented tools */}
+                {/* In Development badge for non-implemented tools */}
                 {!isImplemented && (
                   <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-slate-200 dark:bg-navy-700 text-xs text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Wkrótce' : 'Coming Soon'}
+                    {isPolish ? 'W przygotowaniu' : 'In Development'}
                   </div>
                 )}
                 <div className="flex items-start gap-4">

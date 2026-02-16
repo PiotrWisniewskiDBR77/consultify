@@ -645,7 +645,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
 
   const contentPanel = (
     <div ref={levelsContainerRef} className="h-full overflow-auto p-4 md:p-6">
-      <div className="max-w-6xl mx-auto">
+      <div className="w-full">
         {/* Mobile: Toggle sidebar button */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -690,10 +690,6 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       <div className="flex items-center gap-2">
                         <span className="h-3.5 w-3.5 rounded-full bg-blue-500/70 ring-1 ring-blue-300/60" />
                         <span>TO-BE</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="h-3.5 w-3.5 rounded-full bg-white/10 ring-1 ring-white/15" />
-                        <span>Not assessed</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 text-[11px] text-slate-300">
@@ -1878,10 +1874,6 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                         <div className="flex items-center gap-2">
                           <span className="h-3.5 w-3.5 rounded-full bg-blue-500/70 ring-1 ring-blue-300/60" />
                           <span>TO-BE</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="h-3.5 w-3.5 rounded-full bg-white/10 ring-1 ring-white/15" />
-                          <span>Not assessed</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 text-[11px] text-slate-300">

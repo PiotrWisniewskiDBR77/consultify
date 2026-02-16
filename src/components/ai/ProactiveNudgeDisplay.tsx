@@ -30,7 +30,7 @@ import api from '../../services/api';
 
 interface Nudge {
   id: string;
-  type: 'SUGGESTION' | 'REMINDER' | 'INSIGHT' | 'TIP' | 'WARNING';
+  type: string;
   title: string;
   message: string;
   actionLabel?: string;
@@ -42,7 +42,8 @@ interface Nudge {
     initiativeId?: string;
   };
   expiresAt?: string;
-  dismissible: boolean;
+  dismissible?: boolean;
+  recommendation?: string;
 }
 
 interface ProactiveNudgeDisplayProps {
@@ -109,24 +110,51 @@ export function ProactiveNudgeDisplay({
   const [collapsed, setCollapsed] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState<Record<string, 'positive' | 'negative'>>({});
 
+  const mapToUiType = (raw: any): keyof typeof nudgeStyles => {
+    const pr = String(raw?.priority || '').toLowerCase();
+    if (pr === 'critical' || pr === 'high') return 'WARNING';
+    if (pr === 'normal') return 'INSIGHT';
+    return 'SUGGESTION';
+  };
+
   const fetchNudges = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (projectId) params.append('projectId', projectId);
       if (screen) params.append('screen', screen);
 
-      const response = await api.get(`/ai/proactive-nudges?${params.toString()}`);
+      const response = await api.get(`/ai/nudges?${params.toString()}`);
 
-      if (response.data.success) {
-        const newNudges = (response.data.nudges || []).filter(
-          (n: Nudge) => !dismissedIds.has(n.id)
-        );
+      if (response?.success) {
+        const newNudges: Nudge[] = (response.nudges || [])
+          .map((n: any) => {
+            const id = String(n?.id || '').trim();
+            const title = String(n?.title || '').trim() || 'AI suggestion';
+            const message = String(n?.message || '').trim();
+            const recommendation = String(n?.recommendation || '').trim();
+            const fullMessage = recommendation ? `${message}\n\n${recommendation}` : message;
+            const actionUrl = n?.actionUrl ? String(n.actionUrl) : undefined;
+            const actionLabel = actionUrl
+              ? String(n?.actionLabel || t('common.open', 'Open'))
+              : undefined;
+            return {
+              id,
+              type: mapToUiType(n),
+              title,
+              message: fullMessage,
+              actionUrl,
+              actionLabel,
+              priority: 'MEDIUM',
+              dismissible: n?.dismissible !== false,
+            } as Nudge;
+          })
+          .filter((n: Nudge) => n.id && !dismissedIds.has(n.id));
         setNudges(newNudges);
       }
-    } catch (err) {
-      console.error('Failed to fetch nudges:', err);
+    } catch {
+      // Nudges are non-critical - silently ignore fetch failures
     }
-  }, [projectId, screen, dismissedIds]);
+  }, [projectId, screen, dismissedIds, t]);
 
   useEffect(() => {
     fetchNudges();
@@ -141,10 +169,14 @@ export function ProactiveNudgeDisplay({
     setNudges((prev) => prev.filter((n) => n.id !== nudgeId));
 
     try {
-      await api.post(`/ai/proactive-nudges/${nudgeId}/dismiss`, {
-        feedback,
-        dismissedAt: new Date().toISOString(),
-      });
+      await api
+        .post(`/ai/nudges/${nudgeId}/dismiss`, {
+          feedback,
+          dismissedAt: new Date().toISOString(),
+        })
+        .catch(() => {
+          /* best-effort */
+        });
     } catch (err) {
       console.error('Failed to record dismissal:', err);
     }
@@ -158,10 +190,14 @@ export function ProactiveNudgeDisplay({
 
   const handleAction = async (nudge: Nudge) => {
     try {
-      await api.post(`/ai/proactive-nudges/${nudge.id}/action`, {
-        actionTaken: true,
-        actionAt: new Date().toISOString(),
-      });
+      await api
+        .post(`/ai/nudges/${nudge.id}/action`, {
+          actionTaken: true,
+          actionAt: new Date().toISOString(),
+        })
+        .catch(() => {
+          /* best-effort */
+        });
     } catch (err) {
       console.error('Failed to record action:', err);
     }
@@ -204,7 +240,8 @@ export function ProactiveNudgeDisplay({
       {!collapsed && (
         <>
           {visibleNudges.map((nudge, index) => {
-            const style = nudgeStyles[nudge.type];
+            const style =
+              nudgeStyles[nudge.type as any as keyof typeof nudgeStyles] || nudgeStyles.SUGGESTION;
             const Icon = style.icon;
             const hasFeedback = feedbackGiven[nudge.id];
 

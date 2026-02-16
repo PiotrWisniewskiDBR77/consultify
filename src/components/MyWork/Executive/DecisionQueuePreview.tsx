@@ -16,6 +16,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 interface Decision {
@@ -139,6 +140,10 @@ const DecisionItem: React.FC<{
           <button
             onClick={(e) => {
               e.stopPropagation();
+              if (!decision?.id) {
+                toast.error('Missing decision ID');
+                return;
+              }
               onApprove?.(decision.id);
             }}
             className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 flex items-center justify-center transition-colors"
@@ -149,6 +154,10 @@ const DecisionItem: React.FC<{
           <button
             onClick={(e) => {
               e.stopPropagation();
+              if (!decision?.id) {
+                toast.error('Missing decision ID');
+                return;
+              }
               onReject?.(decision.id);
             }}
             className="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/50 flex items-center justify-center transition-colors"
@@ -159,6 +168,10 @@ const DecisionItem: React.FC<{
           <button
             onClick={(e) => {
               e.stopPropagation();
+              if (!decision?.id) {
+                toast.error('Missing decision ID');
+                return;
+              }
               onDelegate?.(decision.id);
             }}
             className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/20 flex items-center justify-center transition-colors"

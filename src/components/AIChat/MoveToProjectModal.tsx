@@ -1,21 +1,30 @@
 /**
- * MoveToProjectModal - Move conversation to project
+ * MoveToProjectModal
+ *
+ * Allows moving a conversation to a chat folder ("chat project") or removing it from one.
+ * This is used by `ConversationActions` ("Dodaj do projektu"/"Zmień projekt").
  */
 
-import React from 'react';
+import { Folder, Plus, Search, Users, X } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-interface Conversation {
+import { useChatProjectStore } from '../../store/useChatProjectStore';
+
+interface ConversationLike {
   id: string;
   title?: string;
+  chatProjectId?: string | null;
+  chatProjectScope?: 'personal' | 'team' | null;
   [key: string]: any;
 }
 
 interface MoveToProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  conversation: Conversation;
-  conversationId?: string;
-  onMove?: (projectId: string) => void;
+  conversation: ConversationLike;
+  /** optional callback for analytics / parent state */
+  onMove?: (projectId: string | null) => void;
 }
 
 export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
@@ -24,23 +33,367 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
   conversation,
   onMove,
 }) => {
+  const { t } = useTranslation();
+  const {
+    projects,
+    isLoading,
+    fetchProjects,
+    createProject,
+    moveConversationToProject,
+    getPersonalProjects,
+    getTeamProjects,
+  } = useChatProjectStore();
+
+  const [query, setQuery] = useState('');
+  const [busyId, setBusyId] = useState<string | 'remove' | 'create' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newScope, setNewScope] = useState<'personal' | 'team'>('personal');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setQuery('');
+    setError(null);
+    setShowCreate(false);
+    setNewName('');
+    void fetchProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  const currentProject = useMemo(() => {
+    const id = conversation?.chatProjectId;
+    if (!id) return null;
+    return projects.find((p) => p.id === id) || null;
+  }, [conversation?.chatProjectId, projects]);
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredPersonal = useMemo(() => {
+    const list = getPersonalProjects();
+    if (!normalizedQuery) return list;
+    return list.filter((p) =>
+      String(p.name || '')
+        .toLowerCase()
+        .includes(normalizedQuery)
+    );
+  }, [getPersonalProjects, normalizedQuery, projects]);
+
+  const filteredTeam = useMemo(() => {
+    const list = getTeamProjects();
+    if (!normalizedQuery) return list;
+    return list.filter((p) =>
+      String(p.name || '')
+        .toLowerCase()
+        .includes(normalizedQuery)
+    );
+  }, [getTeamProjects, normalizedQuery, projects]);
+
+  const handleMove = async (projectId: string | null) => {
+    setError(null);
+    setBusyId(projectId || 'remove');
+    try {
+      await moveConversationToProject(conversation.id, projectId);
+      onMove?.(projectId);
+      onClose();
+    } catch (e: any) {
+      setError(
+        e?.message ||
+          t('aiChat.moveToFolderFailed', 'Nie udało się przenieść rozmowy. Spróbuj ponownie.')
+      );
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleCreate = async () => {
+    const name = newName.trim();
+    if (!name) return;
+    setError(null);
+    setBusyId('create');
+    try {
+      const created = await createProject({ name, scope: newScope });
+      await handleMove(created.id);
+    } catch (e: any) {
+      setError(
+        e?.message ||
+          t('aiChat.createFolderFailed', 'Nie udało się utworzyć folderu. Spróbuj ponownie.')
+      );
+      setBusyId(null);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-96">
-        <h3 className="text-lg font-semibold mb-4">Move to Project</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Select a project to move this conversation to.
-        </p>
-        <div className="flex justify-end gap-2">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('aiChat.moveToFolder', 'Move to folder')}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-white dark:bg-navy-900 rounded-2xl w-[420px] max-w-[92vw] shadow-2xl border border-slate-200 dark:border-navy-700">
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-navy-900 dark:text-white truncate">
+              {t('aiChat.moveToFolder', 'Move to folder')}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+              {conversation?.title || t('aiChat.newConversation', 'New conversation')}
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:bg-navy-800 rounded"
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            title={t('common.close', 'Close')}
           >
-            Cancel
+            <X size={16} />
           </button>
         </div>
+
+        {/* Body */}
+        <div className="p-5">
+          {/* Current */}
+          <div className="mb-4">
+            <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              {t('aiChat.currentFolder', 'Current')}
+            </div>
+            <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+              {currentProject ? (
+                <div className="flex items-center gap-2">
+                  <Folder size={14} style={{ color: currentProject.color }} />
+                  <span className="truncate">{currentProject.name}</span>
+                  <span className="ml-auto text-[10px] text-slate-400 dark:text-slate-500 uppercase">
+                    {currentProject.scope === 'team'
+                      ? t('aiChat.teamFolder', 'Team')
+                      : t('aiChat.personalFolder', 'Personal')}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-slate-500 dark:text-slate-400 italic">
+                  {t('aiChat.noFolder', 'No folder')}
+                </span>
+              )}
+            </div>
+            {conversation?.chatProjectId && (
+              <button
+                onClick={() => handleMove(null)}
+                disabled={busyId !== null}
+                className="mt-2 inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-xl bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-200 transition-colors disabled:opacity-50"
+              >
+                <X size={14} />
+                {t('aiChat.removeFromFolder', 'Remove from folder')}
+              </button>
+            )}
+          </div>
+
+          {/* Search */}
+          <div className="relative mb-4">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t('aiChat.searchFoldersPlaceholder', 'Search folders...')}
+              className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+            />
+          </div>
+
+          {/* Create */}
+          <div className="mb-4">
+            {!showCreate ? (
+              <button
+                onClick={() => setShowCreate(true)}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-xl border border-dashed border-slate-300 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:border-slate-400 dark:hover:border-navy-600 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              >
+                <Plus size={16} />
+                {t('aiChat.createFolder', 'Create folder')}
+              </button>
+            ) : (
+              <div className="rounded-xl border border-slate-200 dark:border-navy-700 p-3 bg-white dark:bg-navy-900">
+                <div className="flex items-center gap-2">
+                  <input
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') void handleCreate();
+                      if (e.key === 'Escape') {
+                        setShowCreate(false);
+                        setNewName('');
+                        setNewScope('personal');
+                      }
+                    }}
+                    placeholder={t('aiChat.folderName', 'Folder name...')}
+                    className="flex-1 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                    autoFocus
+                  />
+                  <button
+                    onClick={() => setShowCreate(false)}
+                    className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                    title={t('common.cancel', 'Cancel')}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setNewScope('personal')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                        newScope === 'personal'
+                          ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300'
+                          : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                      }`}
+                    >
+                      <Folder size={12} className="inline mr-1" />
+                      {t('aiChat.personalFolder', 'Personal')}
+                    </button>
+                    <button
+                      onClick={() => setNewScope('team')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                        newScope === 'team'
+                          ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300'
+                          : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                      }`}
+                    >
+                      <Users size={12} className="inline mr-1" />
+                      {t('aiChat.teamFolder', 'Team')}
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => void handleCreate()}
+                    disabled={!newName.trim() || busyId !== null}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white transition-colors"
+                  >
+                    {t('common.add', 'Add')}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <div className="mb-4 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-xl px-3 py-2">
+              {error}
+            </div>
+          )}
+
+          {/* List */}
+          <div className="max-h-72 overflow-y-auto space-y-4">
+            {isLoading && projects.length === 0 ? (
+              <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                {t('common.loading', 'Loading')}
+              </div>
+            ) : (
+              <>
+                <Section
+                  title={t('aiChat.myFolders', 'My Folders')}
+                  icon={<Folder size={12} />}
+                  items={filteredPersonal}
+                  activeId={conversation?.chatProjectId || null}
+                  busyId={busyId}
+                  onPick={(id) => void handleMove(id)}
+                />
+                <Section
+                  title={t('aiChat.teamFolders', 'Team Folders')}
+                  icon={<Users size={12} />}
+                  items={filteredTeam}
+                  activeId={conversation?.chatProjectId || null}
+                  busyId={busyId}
+                  onPick={(id) => void handleMove(id)}
+                />
+                {filteredPersonal.length === 0 && filteredTeam.length === 0 && (
+                  <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                    {t('aiChat.noFolders', 'No folders found')}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-slate-200 dark:border-navy-700 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium rounded-xl bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-200 transition-colors"
+          >
+            {t('common.cancel', 'Cancel')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MAX_VISIBLE_FOLDERS = 4; // C3.5: max 4 per section + scroll
+
+const Section: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  items: Array<{
+    id: string;
+    name: string;
+    color?: string;
+    scope?: string;
+    conversationCount?: number;
+  }>;
+  activeId: string | null;
+  busyId: string | 'remove' | 'create' | null;
+  onPick: (id: string) => void;
+}> = ({ title, icon, items, activeId, busyId, onPick }) => {
+  const [showAll, setShowAll] = React.useState(false);
+  const hasMore = items.length > MAX_VISIBLE_FOLDERS;
+  const visibleItems = showAll ? items : items.slice(0, MAX_VISIBLE_FOLDERS);
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-2 px-1">
+        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+          {icon}
+          {title}
+        </div>
+        <div className="ml-auto text-[10px] text-slate-300 dark:text-slate-600">{items.length}</div>
+      </div>
+      <div className="space-y-1">
+        {visibleItems.map((p) => {
+          const active = activeId === p.id;
+          const disabled = busyId !== null;
+          return (
+            <button
+              key={p.id}
+              onClick={() => onPick(p.id)}
+              disabled={disabled}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left transition-colors border ${
+                active
+                  ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300'
+                  : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+              } ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
+            >
+              <Folder size={14} style={{ color: p.color || '#6366f1' }} />
+              <span className="truncate flex-1">{p.name}</span>
+              {typeof p.conversationCount === 'number' && (
+                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                  {p.conversationCount}
+                </span>
+              )}
+            </button>
+          );
+        })}
+        {/* C3.5: Show more / less toggle */}
+        {hasMore && (
+          <button
+            onClick={() => setShowAll((v) => !v)}
+            className="w-full text-center py-1.5 text-[11px] font-medium text-primary-500 hover:text-primary-400 transition-colors"
+          >
+            {showAll ? `Show less` : `Show ${items.length - MAX_VISIBLE_FOLDERS} more…`}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import {
@@ -211,6 +212,7 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
   onUpdate,
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const { t } = useTranslation();
   const [selectedAction, setSelectedAction] = useState<StatusAction | null>(null);
 
   const progress = initiative.progress || 0;
@@ -224,7 +226,7 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
   const handleStatusChange = useCallback(
     async (action: StatusAction, reason?: string) => {
       if (!isValidTransition(initiative.status, action.targetStatus)) {
-        toast.error('Invalid status transition');
+        toast.error(t('execution.toast.invalidTransition', 'Nieprawidłowa zmiana statusu'));
         return;
       }
 
@@ -247,11 +249,15 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
           ...updates,
         });
 
-        toast.success(`Status changed to ${getStatusMeta(action.targetStatus).label}`);
+        toast.success(
+          t('execution.toast.statusChanged', 'Status zmieniony na {{status}}', {
+            status: getStatusMeta(action.targetStatus).label,
+          })
+        );
         setSelectedAction(null);
       } catch (error) {
         console.error('[ExecutionDetailPanel] Status change failed:', error);
-        toast.error('Failed to update status');
+        toast.error(t('execution.toast.statusUpdateError', 'Nie udało się zaktualizować statusu'));
       } finally {
         setIsUpdating(false);
       }
@@ -280,7 +286,7 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
         });
       } catch (error) {
         console.error('[ExecutionDetailPanel] Task toggle failed:', error);
-        toast.error('Failed to update task');
+        toast.error(t('execution.toast.taskUpdateError', 'Nie udało się zaktualizować zadania'));
       }
     },
     [initiative, tasks, onUpdate]

@@ -7,9 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
-// @ts-ignore TS1149 - Case sensitivity: aiPipeline.js is created in Docker, AIPipeline.js exists in git
-// On macOS both resolve to same file, but Docker needs aiPipeline.js for case-sensitive imports
-import { AIPipeline } from './ai/aiPipeline.js';
+import { AIPipeline } from './ai/AIPipeline.js';
 
 type ToolSessionRow = {
   id: string;
@@ -174,7 +172,7 @@ export class ToolInitiativeService {
           }),
           aiTimeoutMs,
           'AI initiative generation'
-        ) as { content?: string } | null | undefined;
+        );
 
         if (response?.content) {
           const parsed = parseJsonPayload(response.content);

@@ -6,6 +6,7 @@
  * It serves as a pattern for migrating other backend services.
  */
 
+import { buildPersonaPrompt } from '../../ai/persona.js';
 import type {
   AIArtifact,
   AICapability,
@@ -148,6 +149,37 @@ const CAPABILITY_REGISTRY: CapabilityRegistry = {
     description: 'Streaming chat interaction',
     outputFormat: 'text',
   },
+  // Phase 3 capabilities
+  nlToInitiative: {
+    role: 'CONSULTANT',
+    maxTokens: 3000,
+    description: 'Generate structured initiative from natural language description',
+    outputFormat: 'json',
+  },
+  senseCheck: {
+    role: 'GATEKEEPER',
+    maxTokens: 1500,
+    description: 'Validate and sense-check form data (timeline, budget, consistency)',
+    outputFormat: 'json',
+  },
+  riskScore: {
+    role: 'ANALYST',
+    maxTokens: 1500,
+    description: 'Predict risk score for an initiative',
+    outputFormat: 'json',
+  },
+  narrateDashboard: {
+    role: 'ANALYST',
+    maxTokens: 1000,
+    description: 'Generate natural language explanation of chart/KPI data',
+    outputFormat: 'text',
+  },
+  engagementSummary: {
+    role: 'CONSULTANT',
+    maxTokens: 6000,
+    description: 'Generate weekly/monthly engagement summary report',
+    outputFormat: 'text',
+  },
 };
 
 // ==========================================
@@ -207,38 +239,88 @@ export class AIPipeline {
 
       // Check if streaming is requested
       if ((request as any).stream) {
-        logger.info(
-          `[AIPipeline] Starting stream with ${modelConfig.provider}/${modelConfig.model}`
-        );
+        const systemPromptStr = prompt.find((m) => m.role === 'system')?.content || '';
+        const nonSystemMsgs = prompt
+          .filter((m) => m.role !== 'system')
+          .map((m) => ({
+            role: m.role as 'user' | 'assistant' | 'system' | 'tool',
+            content: m.content,
+          }));
 
-        // Return a stream-enabled response
-        const streamResponse = await llmService.callStream({
-          type: 'chat',
-          modelConfig: {
-            provider: modelConfig.provider,
-            id: modelConfig.model,
-            endpoint: (modelConfig as any).endpoint,
-            apiKey: (modelConfig as any).apiKey,
-          },
-          systemPrompt: prompt.find((m) => m.role === 'system')?.content || '',
-          messages: prompt
-            .filter((m) => m.role !== 'system')
-            .map((m) => ({
-              role: m.role as 'user' | 'assistant' | 'system' | 'tool',
-              content: m.content,
-            })),
-          maxTokens: modelConfig.maxTokens,
-          temperature: request.options?.temperature ?? 0.7,
-          stream: true,
-        });
+        // Try primary provider, with automatic fallback on failure (e.g. Gemini 429)
+        const FALLBACK_MODELS = [
+          { provider: 'openai', id: 'gpt-4o-mini' },
+          { provider: 'openai', id: 'gpt-4o' },
+        ];
+
+        let usedProvider = modelConfig.provider;
+        let usedModel = modelConfig.model;
+        let streamResponse: Record<string, unknown> | null = null;
+
+        // Attempt primary model
+        try {
+          logger.info(
+            `[AIPipeline] Starting stream with ${modelConfig.provider}/${modelConfig.model}`
+          );
+          streamResponse = await llmService.callStream({
+            type: 'chat',
+            modelConfig: {
+              provider: modelConfig.provider,
+              id: modelConfig.model,
+              endpoint: (modelConfig as any).endpoint,
+              apiKey: (modelConfig as any).apiKey,
+            },
+            systemPrompt: systemPromptStr,
+            messages: nonSystemMsgs,
+            maxTokens: modelConfig.maxTokens,
+            temperature: request.options?.temperature ?? 0.7,
+            stream: true,
+          });
+        } catch (primaryError: any) {
+          const isRateLimit = /quota|rate.limit|429|too many requests/i.test(
+            primaryError?.message || ''
+          );
+          logger.warn(
+            `[AIPipeline] Primary stream failed (${modelConfig.provider}/${modelConfig.model}): ${primaryError?.message?.slice(0, 200)}${isRateLimit ? ' [RATE_LIMIT — trying fallback]' : ''}`
+          );
+
+          // Try fallback models if primary fails
+          for (const fb of FALLBACK_MODELS) {
+            if (fb.provider === modelConfig.provider && fb.id === modelConfig.model) continue;
+            try {
+              logger.info(`[AIPipeline] Attempting fallback stream: ${fb.provider}/${fb.id}`);
+              streamResponse = await llmService.callStream({
+                type: 'chat',
+                modelConfig: { provider: fb.provider, id: fb.id },
+                systemPrompt: systemPromptStr,
+                messages: nonSystemMsgs,
+                maxTokens: modelConfig.maxTokens,
+                temperature: request.options?.temperature ?? 0.7,
+                stream: true,
+              });
+              usedProvider = fb.provider;
+              usedModel = fb.id;
+              logger.info(`[AIPipeline] Fallback stream started: ${fb.provider}/${fb.id}`);
+              break;
+            } catch (fbError: any) {
+              logger.warn(
+                `[AIPipeline] Fallback ${fb.provider}/${fb.id} also failed: ${fbError?.message?.slice(0, 150)}`
+              );
+            }
+          }
+
+          if (!streamResponse) {
+            throw primaryError; // All fallbacks failed — propagate original error
+          }
+        }
 
         return {
           success: true,
           content: '',
           stream: (streamResponse as { stream?: AsyncIterable<string> }).stream,
           metadata: {
-            provider: modelConfig.provider,
-            model: modelConfig.model,
+            provider: usedProvider,
+            model: usedModel,
             latency: Date.now() - startTime,
             traceId,
             ragResults: enrichedContext.ragResults,
@@ -411,11 +493,55 @@ export class AIPipeline {
         ((request as any)?.context?.aiModes as any);
       const isDeepThinking = aiModes?.deepResearch === true;
       if (isDeepThinking) {
-        logger.info('[AIPipeline] Deep Thinking autonomy: skipping AIContextBuilder');
+        // v2.0: Deep Thinking gets LIGHT context (org profile + memory only).
+        // We skip heavy execution context (tasks, blockers) but include org identity
+        // for personalized research.
+        logger.info('[AIPipeline] Deep Thinking: building light context (org + memory only)');
+
+        const userId = request.userId;
+        const organizationId = request.organizationId || null;
+
+        const lightContext: any = { ...(request.context || {}) };
+
+        if (userId && organizationId) {
+          try {
+            // Get org memory (terminology, decision patterns, maturity)
+            const aiMemoryMod = await import('./aiMemoryService.js');
+            const aiMemoryService = (aiMemoryMod as any).default || aiMemoryMod;
+
+            let orgMemory = null;
+            if (aiMemoryService?.getOrgMemory) {
+              orgMemory = await aiMemoryService.getOrgMemory(organizationId);
+            }
+
+            let userMemory = null;
+            if (aiMemoryService?.getUserMemory) {
+              userMemory = await aiMemoryService.getUserMemory(userId);
+            }
+
+            if (orgMemory) {
+              lightContext.orgMemory = {
+                terminology: orgMemory.terminology,
+                decisionPatterns: orgMemory.decisionPatterns?.slice(0, 3),
+                aiMaturityStage: orgMemory.aiMaturityStage,
+              };
+            }
+
+            if (userMemory) {
+              lightContext.userMemory = {
+                preferences: userMemory.preferences,
+                expertise: userMemory.expertise?.slice(0, 5),
+              };
+            }
+          } catch (memErr: any) {
+            logger.debug(`[AIPipeline] Deep Thinking light context failed: ${memErr?.message}`);
+          }
+        }
+
         return {
-          context: (request.context || {}) as any,
+          context: lightContext as any,
           ragResults: 0,
-          memoryUsed: false,
+          memoryUsed: true,
         };
       }
 
@@ -465,6 +591,23 @@ export class AIPipeline {
           logger.debug(`[AIPipeline] Org memory not available: ${memErr?.message}`);
         }
 
+        // Load custom instructions from key-value memory
+        let customInstructions: string | null = null;
+        try {
+          const { get: dbGet } = await import('../../utils/DbPromise.js');
+          const ciRow = await dbGet(
+            'SELECT value FROM ai_user_memory WHERE user_id = ? AND key = ?',
+            [userId, 'custom_instructions']
+          );
+          if (ciRow && (ciRow as any).value) {
+            customInstructions = String((ciRow as any).value)
+              .trim()
+              .slice(0, 1000);
+          }
+        } catch {
+          // ignore — custom instructions are non-critical
+        }
+
         // Merge memory into context
         const contextWithMemory = {
           ...fullContext,
@@ -483,6 +626,7 @@ export class AIPipeline {
                 aiMaturityStage: orgMemory.aiMaturityStage,
               }
             : null,
+          customInstructions,
         };
 
         logger.info(`[AIPipeline] Context built successfully`, {
@@ -527,7 +671,7 @@ export class AIPipeline {
     const messages: ChatMessage[] = [];
 
     // Build intelligent system prompt based on context
-    let systemPrompt = this.buildSystemPrompt(capability, ctx, request);
+    let systemPrompt = await this.buildSystemPrompt(capability, ctx, request);
 
     // Add custom system instruction if provided
     if ((request.options as any)?.systemInstruction) {
@@ -557,6 +701,28 @@ export class AIPipeline {
       }
     }
 
+    // Enhance system prompt with learned instructions from user feedback
+    if (request.organizationId) {
+      try {
+        const lsPath = './learningSystem' + '.js';
+        const learningMod = await import(/* @vite-ignore */ lsPath);
+        const learningSystem = (learningMod as any).default || learningMod;
+        if (learningSystem?.enhancePrompt) {
+          const enhanced = await learningSystem.enhancePrompt(systemPrompt, request.organizationId);
+          if (enhanced?.enhancedPrompt) {
+            systemPrompt = enhanced.enhancedPrompt;
+            if (enhanced.appliedPatterns?.length > 0) {
+              logger.info(
+                `[AIPipeline] Applied ${enhanced.appliedPatterns.length} learned instruction(s)`
+              );
+            }
+          }
+        }
+      } catch (learnErr: any) {
+        logger.debug(`[AIPipeline] Learning system not available: ${learnErr?.message}`);
+      }
+    }
+
     messages.push({
       role: 'system',
       content: systemPrompt,
@@ -573,10 +739,37 @@ export class AIPipeline {
       }
     }
 
-    // Add user prompt
+    // Scan user prompt for PII and prompt injection before sending to LLM
+    let sanitizedPrompt = request.prompt;
+    try {
+      const secMod = await import('./enterpriseSecurity.js');
+      const security = (secMod as any).default || (secMod as any).enterpriseSecurity;
+      if (security?.scanAndSanitize) {
+        const scanResult = await security.scanAndSanitize(
+          request.prompt,
+          request.userId,
+          request.organizationId
+        );
+        if (scanResult.blocked) {
+          logger.warn(`[AIPipeline] Prompt blocked by security scan (injection detected)`);
+          throw new Error('PROMPT_BLOCKED: Input contains disallowed content');
+        }
+        if (scanResult.piiResult?.hasPII) {
+          sanitizedPrompt = scanResult.sanitizedText;
+          logger.info(
+            `[AIPipeline] PII redacted from user prompt (${scanResult.piiResult.detections.length} items)`
+          );
+        }
+      }
+    } catch (secErr: any) {
+      if (secErr?.message?.startsWith('PROMPT_BLOCKED')) throw secErr;
+      logger.debug(`[AIPipeline] Security scan not available: ${secErr?.message}`);
+    }
+
+    // Add user prompt (sanitized)
     messages.push({
       role: 'user',
-      content: request.prompt,
+      content: sanitizedPrompt,
     });
 
     return messages;
@@ -585,15 +778,17 @@ export class AIPipeline {
   /**
    * Build intelligent system prompt with full context awareness
    */
-  private buildSystemPrompt(
+  private async buildSystemPrompt(
     capability: AICapability,
     ctx: any,
     request: AIPipelineRequest
-  ): string {
+  ): Promise<string> {
     const parts: string[] = [];
 
-    // 1. Role definition
-    parts.push(this.buildRoleSection(capability));
+    // 1. Role definition with screen-aware persona + language
+    const conversationLang =
+      ctx?.conversationLanguage || ctx?.userMemory?.preferences?.language || null;
+    parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang));
 
     // 2. Organization context
     if (ctx?.organization) {
@@ -628,6 +823,11 @@ export class AIPipeline {
       if (memParts.length > 1) parts.push(memParts.join('\n'));
     }
 
+    // 4.5b. Custom instructions (user-defined via AI preferences UI)
+    if (ctx?.customInstructions) {
+      parts.push(`## INSTRUKCJE UŻYTKOWNIKA (Custom Instructions)\n${ctx.customInstructions}`);
+    }
+
     // 4.6. Organization memory (terminology, patterns)
     if (ctx?.orgMemory) {
       const om = ctx.orgMemory;
@@ -655,6 +855,11 @@ export class AIPipeline {
       parts.push(this.buildPendingApprovalsSection(ctx.pendingApprovals));
     }
 
+    // 5.5 Selected entity context (deep-loaded data for the item user is viewing)
+    if (ctx?.selectedEntity) {
+      parts.push(this.buildSelectedEntitySection(ctx.selectedEntity));
+    }
+
     // 6. Screen context
     if (ctx?.currentScreen) {
       parts.push(this.buildScreenContextSection(ctx));
@@ -665,36 +870,91 @@ export class AIPipeline {
       parts.push(this.buildKnowledgeSection(ctx.knowledge));
     }
 
+    // 7.5 Assessment data
+    if (ctx?.assessmentData) {
+      parts.push(this.buildAssessmentSection(ctx.assessmentData));
+    }
+
+    // 7.6 Financial data
+    if (ctx?.financialData) {
+      parts.push(this.buildFinancialSection(ctx.financialData));
+    }
+
+    // 7.7 Historical patterns, RAID, decision memory
+    if (ctx?.historicalPatterns) {
+      parts.push(this.buildHistoricalSection(ctx.historicalPatterns));
+    }
+
+    // 7.8 Industry benchmarks (R9) — inject if assessment data exists
+    if (ctx?.assessmentData?.axisScores && ctx?.organization) {
+      try {
+        const { industryBenchmarkService } = await import('./industryBenchmarkService.js');
+        const industry = ctx.orgMemory?.industry || ctx.organization?.industry || 'manufacturing';
+        const orgScores = ctx.assessmentData.axisScores.map((a: any) => ({
+          axis: a.axis,
+          score: a.asIs || a.current_score || 0,
+        }));
+        const benchmarkCtx = industryBenchmarkService.buildBenchmarkContext(industry, orgScores);
+        if (benchmarkCtx) parts.push(benchmarkCtx);
+      } catch {
+        // Benchmark service not available — continue
+      }
+    }
+
+    // 7.9 Knowledge graph context (R8) — inject entity intelligence
+    if (ctx?.organization && request.organizationId) {
+      try {
+        const { knowledgeGraphService } = await import('./knowledgeGraphService.js');
+        const graphCtx = await knowledgeGraphService.buildGraphContext(request.organizationId, 10);
+        if (graphCtx) parts.push(graphCtx);
+      } catch {
+        // Knowledge graph not available — continue
+      }
+    }
+
     // 8. Behavioral instructions
     parts.push(this.buildBehavioralInstructions(capability, ctx, request));
 
     return parts.filter(Boolean).join('\n\n');
   }
 
-  private buildRoleSection(capability: AICapability): string {
-    const roleDescriptions: Record<string, string> = {
-      CONSULTANT:
-        'Jesteś ekspertem PMO i doradcą transformacji cyfrowej w platformie Consultinity. Pomagasz użytkownikom w zarządzaniu projektami, inicjatywami i zadaniami.',
-      ANALYST:
-        'Jesteś analitykiem biznesowym specjalizującym się w ocenie dojrzałości cyfrowej i analizie strategicznej.',
-      STRATEGIST:
-        'Jesteś strategiem transformacji cyfrowej, pomagającym w planowaniu roadmap i priorytetyzacji inicjatyw.',
-      IMPLEMENTER:
-        'Jesteś specjalistą od wdrożeń, pomagającym w wykonaniu zadań i zarządzaniu pracą.',
-      GATEKEEPER: 'Jesteś kontrolerem jakości, weryfikującym zgodność ze standardami PMO.',
-    };
-
-    return `## ROLA
-${roleDescriptions[capability.role] || `Jesteś ${capability.role}. ${capability.description}`}`;
+  private buildRoleSection(
+    capability: AICapability,
+    currentScreen?: string | null,
+    language?: string | null
+  ): string {
+    // Use unified persona with screen-aware emphasis and language
+    return buildPersonaPrompt(currentScreen, language);
   }
 
   private buildOrganizationSection(org: any): string {
     if (!org) return '';
 
-    return `## ORGANIZACJA
-- Nazwa: ${org.organizationName || 'Nieznana'}
-- Aktywne projekty: ${org.activeProjectCount || 0}
-- Poziom dojrzałości PMO: ${org.pmoMaturityLevel || 'BASIC'}`;
+    const lines = [
+      '## ORGANIZACJA',
+      `- Nazwa: ${org.organizationName || 'Nieznana'}`,
+      org.industry ? `- Branża: ${org.industry}` : '',
+      `- Aktywne projekty: ${org.activeProjectCount || 0}`,
+      `- Poziom dojrzałości PMO: ${org.pmoMaturityLevel || 'BASIC'}`,
+    ];
+
+    // Inject organization terminology for consistent language
+    if (org.terminology && Object.keys(org.terminology).length > 0) {
+      lines.push('', '### Terminologia organizacji (używaj tych terminów):');
+      for (const [term, definition] of Object.entries(org.terminology)) {
+        lines.push(`- **${term}**: ${definition}`);
+      }
+    }
+
+    // Inject org-level best practices / patterns
+    if (org.orgPatterns && org.orgPatterns.length > 0) {
+      lines.push('', '### Wzorce organizacyjne (learned from past projects):');
+      for (const p of org.orgPatterns.slice(0, 3)) {
+        lines.push(`- [${p.type}] ${p.title}: ${p.content}`);
+      }
+    }
+
+    return lines.filter(Boolean).join('\n');
   }
 
   private buildProjectSection(project: any): string {
@@ -855,6 +1115,168 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     return `## WIEDZA KONTEKSTOWA\n${sections.join('\n')}`;
   }
 
+  private buildSelectedEntitySection(entity: any): string {
+    if (!entity?.data) return '';
+    const d = entity.data;
+    const type = entity.type;
+
+    const sections: string[] = [`## WYBRANY ELEMENT: ${type.toUpperCase()}`];
+
+    if (type === 'initiative') {
+      sections.push(`- Nazwa: ${d.name}`);
+      sections.push(`- Status: ${d.status} | Priorytet: ${d.priority}`);
+      if (d.description) sections.push(`- Opis: ${d.description.slice(0, 300)}`);
+      if (d.cost_capex) sections.push(`- CAPEX: ${d.cost_capex} | OPEX: ${d.cost_opex || 0}`);
+      if (d.expected_roi) sections.push(`- Oczekiwany ROI: ${d.expected_roi}%`);
+      if (d.estimated_duration_weeks)
+        sections.push(`- Szacowany czas: ${d.estimated_duration_weeks} tygodni`);
+      if (d.drd_axis) sections.push(`- Oś DRD: ${d.drd_axis} / ${d.drd_area || ''}`);
+      if (d.kpis?.length > 0) {
+        sections.push(`### KPI (${d.kpis.length}):`);
+        d.kpis.slice(0, 5).forEach((k: any) => {
+          sections.push(
+            `  - ${k.name}: ${k.current_value || '?'}/${k.target_value} ${k.unit || ''}`
+          );
+        });
+      }
+      if (d.dependencies?.length > 0) {
+        sections.push(
+          `- Zależności: ${d.dependencies.length} (${d.dependencies.map((dep: any) => dep.depends_on_id).join(', ')})`
+        );
+      }
+    } else if (type === 'task') {
+      sections.push(`- Tytuł: ${d.title}`);
+      sections.push(`- Status: ${d.status} | Priorytet: ${d.priority || 'N/A'}`);
+      if (d.description) sections.push(`- Opis: ${d.description.slice(0, 200)}`);
+      if (d.due_date) sections.push(`- Termin: ${d.due_date}`);
+      if (d.progress !== undefined) sections.push(`- Postęp: ${d.progress}%`);
+      if (d.recentComments?.length > 0) {
+        sections.push(`### Ostatnie komentarze (${d.recentComments.length}):`);
+        d.recentComments.slice(0, 3).forEach((c: any) => {
+          sections.push(`  - ${c.content?.slice(0, 100)}`);
+        });
+      }
+    } else if (type === 'assessment') {
+      sections.push(`- Nazwa: ${d.name} (${d.framework})`);
+      sections.push(`- Status: ${d.status} | Ukończenie: ${d.completion_percent}%`);
+      if (d.overall_score) sections.push(`- Wynik ogólny: ${d.overall_score}`);
+      if (d.topGaps?.length > 0) {
+        sections.push(`### Top luki:`);
+        d.topGaps.slice(0, 5).forEach((g: any) => {
+          sections.push(`  - ${g.axis_name || g.axis_id}: gap = ${g.gap}`);
+        });
+      }
+    } else if (type === 'decision') {
+      sections.push(`- Tytuł: ${d.title}`);
+      sections.push(`- Typ: ${d.type} | Status: ${d.status}`);
+      if (d.description) sections.push(`- Opis: ${d.description.slice(0, 200)}`);
+      if (d.deadline) sections.push(`- Deadline: ${d.deadline}`);
+      if (d.options?.length > 0) {
+        sections.push(`### Opcje (${d.options.length}):`);
+        d.options.slice(0, 5).forEach((o: any) => {
+          sections.push(
+            `  - ${o.label || o.name || 'Opcja'}: ${(o.description || '').slice(0, 100)}`
+          );
+        });
+      }
+    }
+
+    return sections.join('\n');
+  }
+
+  private buildAssessmentSection(data: any): string {
+    if (!data) return '';
+    const sections: string[] = ['## OCENA DOJRZAŁOŚCI CYFROWEJ'];
+    sections.push(`- Assessment: ${data.name} (${data.framework})`);
+    sections.push(`- Status: ${data.status} | Ukończenie: ${data.completionPercent || 0}%`);
+    if (data.overallScore) sections.push(`- Wynik ogólny AS-IS: ${data.overallScore}`);
+    if (data.overallTarget) sections.push(`- Cel TO-BE: ${data.overallTarget}`);
+    if (data.overallGap) sections.push(`- Luka ogólna: ${data.overallGap}`);
+
+    if (data.axisScores?.length > 0) {
+      sections.push(`### Wyniki per oś:`);
+      data.axisScores.forEach((a: any) => {
+        const gapIndicator = a.gap > 1.5 ? ' ⚠️' : a.gap > 0.5 ? ' ↑' : '';
+        sections.push(
+          `  - ${a.axis}: AS-IS ${a.asIs} → TO-BE ${a.toBe} (gap: ${a.gap})${gapIndicator}`
+        );
+      });
+    }
+
+    if (data.topGaps?.length > 0) {
+      sections.push(`### Największe luki:`);
+      data.topGaps.forEach((g: any) => {
+        sections.push(`  - ${g.axis}: gap ${g.gap}`);
+      });
+    }
+
+    return sections.join('\n');
+  }
+
+  private buildFinancialSection(data: any): string {
+    if (!data) return '';
+    const sections: string[] = ['## ANALIZA FINANSOWA'];
+
+    if (data.portfolio) {
+      const p = data.portfolio;
+      sections.push(`### Portfel inicjatyw (${p.initiativeCount}):`);
+      if (p.totalCapex) sections.push(`- Łączny CAPEX: ${p.totalCapex.toLocaleString()}`);
+      if (p.totalOpex) sections.push(`- Łączny OPEX: ${p.totalOpex.toLocaleString()}`);
+      if (p.avgExpectedRoi)
+        sections.push(`- Średni oczekiwany ROI: ${Math.round(p.avgExpectedRoi)}%`);
+    }
+
+    if (data.analysis) {
+      const a = data.analysis;
+      sections.push(`### Analiza finansowa:`);
+      if (a.npv) sections.push(`- NPV: ${a.npv.toLocaleString()}`);
+      if (a.irr) sections.push(`- IRR: ${a.irr}%`);
+      if (a.roiPercentage) sections.push(`- ROI: ${a.roiPercentage}%`);
+      if (a.paybackMonths) sections.push(`- Payback: ${a.paybackMonths} miesięcy`);
+    }
+
+    if (data.scenarios?.length > 0) {
+      sections.push(`### Scenariusze:`);
+      data.scenarios.forEach((s: any) => {
+        sections.push(`  - ${s.type}: NPV ${s.npv?.toLocaleString() || '?'}, ROI ${s.roi || '?'}%`);
+      });
+    }
+
+    return sections.join('\n');
+  }
+
+  private buildHistoricalSection(data: any): string {
+    if (!data) return '';
+    const sections: string[] = ['## WZORCE HISTORYCZNE'];
+
+    if (data.initiativePatterns) {
+      const p = data.initiativePatterns;
+      sections.push(`### Inicjatywy organizacji:`);
+      sections.push(
+        `- Łącznie: ${p.total} | Ukończone: ${p.completed} | Anulowane: ${p.cancelled}`
+      );
+      sections.push(`- Success rate: ${p.successRate}%`);
+      if (p.avgDurationWeeks)
+        sections.push(`- Średni czas realizacji: ${p.avgDurationWeeks} tygodni`);
+    }
+
+    if (data.raidItems?.length > 0) {
+      sections.push(`### Aktywne ryzyka/problemy (${data.raidItems.length}):`);
+      data.raidItems.slice(0, 5).forEach((r: any) => {
+        sections.push(`  - [${r.type}] ${r.title} — impact: ${r.impact}, status: ${r.status}`);
+      });
+    }
+
+    if (data.decisionMemory?.length > 0) {
+      sections.push(`### Pamięć decyzji:`);
+      data.decisionMemory.slice(0, 3).forEach((d: any) => {
+        sections.push(`  - Problem: ${d.problem} → Wybrano: ${d.chosen} → Wynik: ${d.outcome}`);
+      });
+    }
+
+    return sections.join('\n');
+  }
+
   private buildBehavioralInstructions(
     capability: AICapability,
     ctx: any,
@@ -863,6 +1285,7 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     const instructions: string[] = [
       '## INSTRUKCJE',
       '1. Odpowiadaj konkretnie i pomocnie, wykorzystując powyższy kontekst.',
+      '1.1. Zasada jakości (CHAT): Nie odmawiaj tylko dlatego, że brakuje danych lub źródeł. Jeśli nie masz pewności: (a) podaj 2–5 hipotez, (b) zaznacz założenia, (c) zadaj maks. 3 pytania doprecyzowujące, (d) zaproponuj jak zweryfikować (np. wklejenie linku/fragmentu/plików).',
       '2. Jeśli użytkownik pyta o swoje zadania lub inicjatywy, odwołuj się do danych z sekcji KONTEKST UŻYTKOWNIKA.',
       '3. Proponuj konkretne działania bazując na aktualnym stanie pracy użytkownika.',
       '4. Jeśli są blokery lub problemy, proaktywnie oferuj pomoc w ich rozwiązaniu.',
@@ -886,10 +1309,22 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
       );
     }
 
-    if (aiModes?.webSearch) {
-      instructions.push(
-        '9. TRYB: Web Search — możesz otrzymać od systemu wyniki researchu i listę źródeł. Jeśli nie masz dostępu do web lub nie masz dostarczonych źródeł, powiedz to wprost. Nie udawaj, że wykonałeś wyszukiwanie.'
-      );
+    // Web search instruction — active when user toggle is on OR when auto-detected
+    if (aiModes?.webSearch || (request as any)?.context?.external?.webSearch) {
+      const hasWebResults = !!(request as any)?.context?.external?.webSearch?.results?.length;
+      if (hasWebResults) {
+        instructions.push(
+          '9. TRYB: Web Search AKTYWNY — System dostarczył Ci wyniki wyszukiwania internetowego w sekcji "WEB SOURCES". Wykorzystaj je aktywnie:\n' +
+            '   - Cytuj źródła inline jak [1], [2] gdy korzystasz z danych ze źródeł.\n' +
+            '   - Jeśli źródła są sprzeczne, zaznacz to.\n' +
+            '   - Preferuj najnowsze dane i źródła o wyższej wiarygodności.\n' +
+            '   - Jeśli źródła nie wystarczają do pełnej odpowiedzi, uzupełnij swoją wiedzą ale zaznacz co pochodzi ze źródeł a co z Twojej wiedzy.'
+        );
+      } else {
+        instructions.push(
+          '9. TRYB: Web Search — wyszukiwanie jest włączone, ale w tym przypadku nie dostarczono wyników. Nie udawaj, że wykonałeś wyszukiwanie. Odpowiedz najlepiej jak potrafisz na podstawie swojej wiedzy, zaznaczając że odpowiedź nie jest oparta na najświeższych danych z internetu.'
+        );
+      }
     }
 
     if (aiModes?.showReasoning) {
@@ -899,7 +1334,10 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
         );
       } else {
         instructions.push(
-          '10. TRYB: Reasoning ON — dodaj krótki, wysokopoziomowy opis toku rozumowania w tagach <thinking>...</thinking>. Nie ujawniaj danych wrażliwych ani długich rozważań.'
+          '10. TRYB: Reasoning ON — PRZED odpowiedzią dodaj sekcję toku rozumowania w tagach <thinking>...</thinking>. ' +
+            'Opisz w 3-8 punktach: jakie założenia przyjąłeś, jakie alternatywy rozważyłeś, ' +
+            'dlaczego wybrałeś daną ścieżkę, i co mogłoby zmienić Twoją rekomendację. ' +
+            'Bądź konkretny i merytoryczny. Nie ujawniaj danych wrażliwych.'
         );
       }
     } else {
@@ -909,9 +1347,13 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     if (responseStyle) {
       const styleMap: Record<string, string> = {
         normal: 'Standardowy styl odpowiedzi (zbalansowany).',
-        learning: 'Styl edukacyjny: tłumacz krok po kroku, dodawaj krótkie przykłady.',
+        executive:
+          'Styl Executive: zwięzły, decyzyjny, max 3-5 bulletów, zawsze z konkretną rekomendacją. Unikaj dygresji. Format: problem → analiza → rekomendacja.',
+        analyst:
+          'Styl Analyst: dane, metryki, porównania, tabele. Precyzyjny i oparty na faktach. Podawaj liczby, procenty, benchmarki. Używaj tabel i wykresów tam gdzie to możliwe.',
+        coach:
+          'Styl Coach: zadawaj pytania naprowadzające, tłumacz krok po kroku, buduj zrozumienie. Zamiast dawać gotowe odpowiedzi — prowadź użytkownika do samodzielnych wniosków.',
         concise: 'Styl zwięzły: tylko najważniejsze punkty, bez dygresji.',
-        explanatory: 'Styl wyjaśniający: więcej kontekstu i uzasadnienia, ale bez lania wody.',
         formal: 'Styl formalny: język urzędowy/biznesowy, precyzyjny i neutralny.',
       };
       instructions.push(`11. Styl odpowiedzi: ${styleMap[responseStyle] || responseStyle}`);
@@ -929,26 +1371,71 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
       }
     }
 
+    // C8.3: Behavioral guardrails — prevent autonomous creation of entities
+    instructions.push(
+      '13. ZASADA BEZPIECZEŃSTWA: NIGDY nie twórz samodzielnie inicjatyw, zadań, decyzji ani kamieni milowych w systemie. ' +
+        'Możesz jedynie PROPONOWAĆ ich utworzenie jako akcje do zatwierdzenia przez użytkownika. ' +
+        'Każda modyfikacja danych w systemie wymaga jawnej zgody użytkownika. ' +
+        'Możesz natomiast generować powiadomienia informacyjne i sugestie.'
+    );
+
+    // C8.2: Documentation/help awareness — AI knows the platform and can guide users
+    instructions.push(
+      '14. POMOC I DOKUMENTACJA: Znasz strukturę platformy Consultinity i jej moduły:\n' +
+        '   - Assessment (DRD, SIRI, ADMA, CMMI, Lean) — ocena dojrzałości organizacji\n' +
+        '   - Initiatives — zarządzanie inicjatywami transformacyjnymi\n' +
+        '   - Execution — realizacja zadań, KPI, timeline\n' +
+        '   - Portfolio — widok portfela inicjatyw, priorytetyzacja\n' +
+        '   - Reports — generowanie raportów zarządczych\n' +
+        '   - My Work — osobisty dashboard, zadania, decyzje, powiadomienia\n' +
+        '   - Interview/Discovery — wywiady i narzędzia odkrywcze\n' +
+        '   - Context Builder — profil organizacji, cele, wyzwania\n' +
+        '   - Studio — zaawansowane narzędzia analityczne\n' +
+        '   Gdy użytkownik pyta "jak coś zrobić" lub potrzebuje pomocy, wskaż mu odpowiedni moduł, ' +
+        '   opisz kroki i zaproponuj nawigację (akcja navigate). ' +
+        '   Możesz też sugerować najlepsze praktyki PMO i metodyki zarządzania projektami.'
+    );
+
+    // C8.1: Navigation capability — AI can propose navigation actions
+    instructions.push(
+      '15. NAWIGACJA: Możesz zaproponować użytkownikowi przejście do konkretnego modułu/ekranu. ' +
+        'Dostępne widoki: chat, my-work, initiatives, portfolio, execution, roadmap, reports, ' +
+        'assessment, interview, discovery-tools, implementation, roi, economics, kpi-okr, benefits, ' +
+        'studio, admin, settings, project-intelligence, context, rollout. ' +
+        'Gdy użytkownik pyta o konkretną inicjatywę, zadanie lub moduł, zaproponuj nawigację.'
+    );
+
+    // C4.1: Attachment analysis — AI should reference uploaded files
+    if (ctx?.attachments?.length > 0 || ctx?.attachmentFileNames?.length > 0) {
+      const fileNames =
+        ctx.attachmentFileNames || ctx.attachments?.map((a: any) => a.filename) || [];
+      instructions.push(
+        `16. ZAŁĄCZNIKI: Użytkownik dołączył pliki: ${fileNames.join(', ')}. ` +
+          'Przeanalizuj ich zawartość (dostarczoną przez system RAG) i odwołuj się do nich w odpowiedzi. ' +
+          'Cytuj konkretne fragmenty z plików gdy to istotne. Wskaż nazwy plików w odpowiedzi.'
+      );
+    }
+
     // Add context-specific instructions
     if (ctx?.execution?.capacityStatus === 'OVERLOADED') {
       instructions.push(
-        '5. ⚠️ Użytkownik jest przeciążony - sugeruj priorytetyzację i delegowanie zadań.'
+        '17. ⚠️ Użytkownik jest przeciążony - sugeruj priorytetyzację i delegowanie zadań.'
       );
     }
 
     if (ctx?.execution?.blockers?.length > 0) {
-      instructions.push('5. Są aktywne blokery - zaoferuj pomoc w ich rozwiązaniu.');
+      instructions.push('17. Są aktywne blokery - zaoferuj pomoc w ich rozwiązaniu.');
     }
 
     if (ctx?.pendingApprovals?.count > 0) {
       instructions.push(
-        `5. Użytkownik ma ${ctx.pendingApprovals.count} oczekujących akcji AI do przejrzenia.`
+        `17. Użytkownik ma ${ctx.pendingApprovals.count} oczekujących akcji AI do przejrzenia.`
       );
     }
 
     // Response format hint
     if (capability.outputFormat === 'json') {
-      instructions.push('6. Odpowiedz w formacie JSON.');
+      instructions.push('18. Odpowiedz w formacie JSON.');
     }
 
     return instructions.join('\n');

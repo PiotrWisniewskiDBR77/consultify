@@ -511,7 +511,6 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
     const autoSaveInterval = setInterval(async () => {
       if (hasUnsavedChanges && !isSaving) {
-        console.log('[AutoSave] Saving...');
         await handleSaveAssessment();
       }
     }, 30000); // 30 seconds
@@ -637,7 +636,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
   // Render content based on active tab
   const renderContent = () => {
-    // If framework not yet implemented, show coming soon
+    // If framework not yet implemented, show in development message
     if (!isFrameworkImplemented && activeTab === 'map') {
       return (
         <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950/50">
@@ -652,7 +651,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
             </h2>
             <p className="text-slate-500 dark:text-slate-400 mb-2">{frameworkConfig.description}</p>
             <span className="inline-block px-4 py-2 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full text-sm font-medium">
-              Coming Soon
+              In Development
             </span>
           </div>
         </div>
@@ -893,6 +892,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
               onCreateInitiatives={handleCreateInitiatives}
               pendingAssessmentId={selectedAssessmentId}
               onOpenReport={handleOpenReport}
+              showAllStatuses
             />
           </React.Suspense>
         );

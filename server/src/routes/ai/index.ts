@@ -5,6 +5,7 @@
 
 import { Router } from 'express';
 
+import agentAuditRoutes from './agent-audit.routes.js';
 import aiAbTestingRoutes from './ai-ab-testing.routes.js';
 import aiAnalyticsRoutesV1 from './ai-analytics.routes.js';
 import aiBudgetsRoutes from './ai-budgets.routes.js';
@@ -62,5 +63,6 @@ router.use('/explain', aiExplainRoutes);
 router.use('/learning', aiLearningRoutes);
 router.use('/playbooks', aiPlaybooksRoutes);
 router.use('/deep-thinking', deepThinkingRoutes);
+router.use('/agent-audit', agentAuditRoutes);
 
 export default router;

@@ -45,7 +45,12 @@ export type CapabilityName =
   | 'buildRoadmap'
   | 'validateRoadmap'
   | 'chat'
-  | 'chatStream';
+  | 'chatStream'
+  | 'nlToInitiative'
+  | 'senseCheck'
+  | 'riskScore'
+  | 'narrateDashboard'
+  | 'engagementSummary';
 
 export type CapabilityRegistry = Record<CapabilityName, AICapability>;
 
@@ -72,6 +77,51 @@ export interface ToolCall {
   id: string;
   type: 'function';
   function: FunctionCall;
+}
+
+// ==========================================
+// SHARED ENUMS & PRIMITIVES
+// ==========================================
+
+/** Unified response style – kept in sync with frontend chatSlice */
+export type ResponseStyle = 'normal' | 'executive' | 'analyst' | 'coach' | 'concise' | 'formal';
+
+/** AI mode toggles sent from the chat UI */
+export interface AIModes {
+  deepResearch?: boolean;
+  webSearch?: boolean;
+  showReasoning?: boolean;
+  multiAgent?: boolean;
+  tts?: boolean;
+}
+
+/** SSE event types emitted during AI streaming */
+export type SSEEventType =
+  | 'content'
+  | 'thought'
+  | 'status'
+  | 'done'
+  | 'end'
+  | 'error'
+  | 'artifact'
+  | 'agent_audit_state'
+  | 'deep_thinking_progress'
+  | 'quality_signal';
+
+export interface SSEEvent {
+  type: SSEEventType;
+  content?: string;
+  message?: string;
+  [key: string]: unknown;
+}
+
+/** Screen context passed from the frontend */
+export interface ScreenContext {
+  currentScreen?: string;
+  screenId?: string;
+  entityId?: string;
+  entityType?: string;
+  viewMode?: string;
 }
 
 // ==========================================
@@ -102,17 +152,13 @@ export interface AIContext {
    * Optional chat/runtime configuration coming from the client chat UI.
    * NOTE: not all upstream context builders will populate this yet; it is safe to omit.
    */
-  aiModes?: {
-    deepResearch?: boolean;
-    webSearch?: boolean;
-    showReasoning?: boolean;
-  };
+  aiModes?: AIModes;
   knowledgeSources?: {
     pmoDocuments?: boolean;
     projectData?: boolean;
     organizationData?: boolean;
   };
-  responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+  responseStyle?: ResponseStyle;
   selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
   selectedModelId?: string | null;
 }
@@ -158,17 +204,13 @@ export interface AIOptions {
   /**
    * Chat UI / routing controls (sent from frontend)
    */
-  aiModes?: {
-    deepResearch?: boolean;
-    webSearch?: boolean;
-    showReasoning?: boolean;
-  };
+  aiModes?: AIModes;
   knowledgeSources?: {
     pmoDocuments?: boolean;
     projectData?: boolean;
     organizationData?: boolean;
   };
-  responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+  responseStyle?: ResponseStyle;
   selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
   selectedModelId?: string | null;
   /**

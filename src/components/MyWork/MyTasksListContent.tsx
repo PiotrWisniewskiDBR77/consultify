@@ -15,7 +15,6 @@ import {
   Eye,
   Loader2,
   Minus,
-  MoreVertical,
   Plus,
   Square,
   Trash2,
@@ -26,6 +25,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import {
   BulkActionBar,
   type ColumnDef,
@@ -141,7 +141,7 @@ const getStatusConfig = (status?: string) => {
 
 // Date formatting
 const formatDueDate = (dueDate?: string | Date): string => {
-  if (!dueDate) return '-';
+  if (!dueDate) return 'No due date';
   const date = new Date(dueDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -304,7 +304,6 @@ const TaskTableRow: React.FC<{
   onClick,
   columnWidths,
 }) => {
-  const [showMenu, setShowMenu] = useState(false);
   const { t } = useTranslation();
 
   const isCompleted = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
@@ -313,8 +312,8 @@ const TaskTableRow: React.FC<{
   const statusConfig = getStatusConfig(task.status);
   const assigneeName = task.assignee?.firstName
     ? `${task.assignee.firstName} ${task.assignee.lastName || ''}`.trim()
-    : '-';
-  const assigneeInitial = assigneeName !== '-' ? assigneeName[0].toUpperCase() : '';
+    : 'Unassigned';
+  const assigneeInitial = assigneeName !== 'Unassigned' ? assigneeName[0].toUpperCase() : '';
 
   return (
     <motion.tr
@@ -399,9 +398,11 @@ const TaskTableRow: React.FC<{
       <td className="px-3 py-2.5" style={{ width: columnWidths.date }}>
         <div
           className={`flex items-center gap-1.5 text-xs ${
-            overdue
-              ? 'text-red-700 dark:text-red-400 font-medium'
-              : 'text-slate-600 dark:text-slate-400'
+            !task.dueDate
+              ? 'text-slate-300 dark:text-slate-600 italic'
+              : overdue
+                ? 'text-red-700 dark:text-red-400 font-medium'
+                : 'text-slate-600 dark:text-slate-400'
           }`}
         >
           <Calendar size={12} />
@@ -417,91 +418,66 @@ const TaskTableRow: React.FC<{
               {assigneeInitial}
             </div>
           ) : (
-            <User size={14} className="text-slate-500" />
+            <User size={14} className="text-slate-300 dark:text-slate-600" />
           )}
-          <span className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[80px]">
+          <span
+            className={`text-xs truncate max-w-[80px] ${
+              assigneeName === 'Unassigned'
+                ? 'text-slate-300 dark:text-slate-600 italic'
+                : 'text-slate-600 dark:text-slate-400'
+            }`}
+          >
             {assigneeName}
           </span>
         </div>
       </td>
 
-      {/* Actions */}
-      <td className="px-3 py-2.5" style={{ width: columnWidths.actions }}>
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick(task.id);
-            }}
-            className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            title="View"
-          >
-            <Eye size={14} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick(task.id);
-            }}
-            className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            title="Edit"
-          >
-            <Edit size={14} />
-          </button>
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowMenu(!showMenu);
-              }}
-              className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              <MoreVertical size={14} />
-            </button>
-            {showMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 w-36 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClick(task.id);
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                  >
-                    <Eye size={14} />
-                    View
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClick(task.id);
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                  >
-                    <Edit size={14} />
-                    Edit
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm('Delete this task?')) {
-                        onDelete(task.id);
-                      }
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-navy-700"
-                  >
-                    <Trash2 size={14} />
-                    Delete
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+      {/* Actions — "⋯" menu (A3.2: replaces overlapping inline buttons) */}
+      <td
+        className="px-3 py-2.5 text-right"
+        style={{ width: columnWidths.actions }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <RowActionsMenu
+          size="sm"
+          actions={
+            [
+              {
+                id: 'view',
+                label: t('common.view', 'View'),
+                icon: Eye,
+                onClick: () => onClick(task.id, task),
+                variant: 'primary',
+              },
+              {
+                id: 'edit',
+                label: t('common.edit', 'Edit'),
+                icon: Edit,
+                onClick: () => onClick(task.id, task),
+              },
+              {
+                id: 'complete',
+                label: isCompleted
+                  ? t('myWork.tasks.reopen', 'Reopen')
+                  : t('myWork.tasks.complete', 'Complete'),
+                icon: CheckCircle2,
+                onClick: () => onToggleComplete(task.id, !isCompleted),
+              },
+              {
+                id: 'delete',
+                label: t('common.delete', 'Delete'),
+                icon: Trash2,
+                onClick: () => {
+                  if (confirm('Delete this task?')) {
+                    onDelete(task.id);
+                  }
+                },
+                variant: 'danger',
+                divider: true,
+              },
+            ] satisfies RowAction[]
+          }
+        />
       </td>
     </motion.tr>
   );
@@ -769,12 +745,70 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   };
 
   // Create bulk action configuration
+  const handleBulkChangePriority = async () => {
+    const newPriority = prompt('Set priority for selected tasks (low / medium / high / critical):');
+    if (
+      !newPriority ||
+      !['low', 'medium', 'high', 'critical', 'urgent'].includes(newPriority.toLowerCase())
+    )
+      return;
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) =>
+          Api.updateTask(id, { priority: newPriority.toLowerCase() })
+        )
+      );
+      setTasks((prev) =>
+        prev.map((t) =>
+          selectedIds.has(t.id) ? ({ ...t, priority: newPriority.toLowerCase() } as Task) : t
+        )
+      );
+      toast.success(`Priority set to ${newPriority} for ${selectedIds.size} tasks`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error(t('myWork.errors.updateFailed', 'Failed to update priority'));
+    }
+  };
+
+  const handleBulkChangeDate = async () => {
+    const newDate = prompt('Set due date (YYYY-MM-DD):');
+    if (!newDate || !/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+      if (newDate) toast.error('Invalid date format. Use YYYY-MM-DD');
+      return;
+    }
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) => Api.updateTask(id, { dueDate: newDate }))
+      );
+      setTasks((prev) =>
+        prev.map((t) => (selectedIds.has(t.id) ? ({ ...t, dueDate: newDate } as Task) : t))
+      );
+      toast.success(`Due date updated for ${selectedIds.size} tasks`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error(t('myWork.errors.updateFailed', 'Failed to update due date'));
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) => Api.updateTask(id, { status: 'archived' }))
+      );
+      setTasks((prev) => prev.filter((t) => !selectedIds.has(t.id)));
+      toast.success(`${selectedIds.size} tasks archived`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error(t('myWork.errors.updateFailed', 'Failed to archive tasks'));
+    }
+  };
+
   const bulkActions = createTaskBulkActions({
     onComplete: handleBulkComplete,
     onDelete: handleBulkDelete,
-    onChangePriority: () => toast('Priority change coming soon'),
-    onChangeDate: () => toast('Date change coming soon'),
-    onArchive: () => toast('Archive coming soon'),
+    onChangePriority: handleBulkChangePriority,
+    onChangeDate: handleBulkChangeDate,
+    onArchive: handleBulkArchive,
   });
 
   // Flat list of all visible tasks for keyboard navigation
@@ -929,11 +963,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
               {taskStats.completed}
             </div>
-            {taskStats.total > 0 && (
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {taskStats.completionRate}%
-              </div>
-            )}
           </div>
 
           {/* In Progress */}
@@ -988,22 +1017,53 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             </div>
           </div>
 
-          {/* Completion Rate */}
+          {/* Status Summary */}
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp size={16} className="text-emerald-500" />
+              <BarChart3 size={16} className="text-slate-500 dark:text-slate-400" />
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                {t('myWork.stats.completionRate', 'Done')}
+                {t('myWork.stats.statusSummary', 'Status')}
               </span>
             </div>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-              {taskStats.completionRate}%
-            </div>
-            <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-1.5 mt-2">
-              <div
-                className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
-                style={{ width: `${taskStats.completionRate}%` }}
-              />
+            <div className="text-xs text-slate-600 dark:text-slate-300 space-y-0.5">
+              {taskStats.todo > 0 && (
+                <div>
+                  <span className="font-medium">{taskStats.todo}</span> todo
+                </div>
+              )}
+              {taskStats.inProgress > 0 && (
+                <div>
+                  <span className="font-medium">{taskStats.inProgress}</span> in progress
+                </div>
+              )}
+              {taskStats.blocked > 0 && (
+                <div>
+                  <span className="font-medium">{taskStats.blocked}</span> blocked
+                </div>
+              )}
+              {taskStats.overdue > 0 && (
+                <div>
+                  <span className="font-medium">{taskStats.overdue}</span> overdue
+                </div>
+              )}
+              {taskStats.critical > 0 && (
+                <div>
+                  <span className="font-medium">{taskStats.critical}</span> critical
+                </div>
+              )}
+              {taskStats.completed > 0 && (
+                <div>
+                  <span className="font-medium">{taskStats.completed}</span> done
+                </div>
+              )}
+              {taskStats.todo === 0 &&
+                taskStats.inProgress === 0 &&
+                taskStats.blocked === 0 &&
+                taskStats.overdue === 0 &&
+                taskStats.critical === 0 &&
+                taskStats.completed === 0 && (
+                  <div className="text-slate-400 dark:text-slate-500">No tasks</div>
+                )}
             </div>
           </div>
         </div>
@@ -1188,19 +1248,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
       {/* Keyboard Shortcuts Help Modal */}
       <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
-
-      {/* Keyboard hint */}
-      <div className="fixed bottom-4 left-4 z-40 hidden lg:block">
-        <button
-          onClick={() => setShowHelp(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 text-xs hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
-        >
-          <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-600 text-[10px] font-mono">
-            ?
-          </kbd>
-          <span>{t('keyboard.shortcuts', 'Keyboard shortcuts')}</span>
-        </button>
-      </div>
     </div>
   );
 };

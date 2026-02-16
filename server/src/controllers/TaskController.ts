@@ -234,13 +234,33 @@ export class TaskController {
         let s = baseSql;
         const p = [...baseParams];
 
+        const normalizeCsvOrArray = (value: unknown): string[] => {
+          if (value == null) return [];
+          if (Array.isArray(value)) {
+            return value
+              .flatMap((v) => String(v ?? '').split(','))
+              .map((v) => v.trim())
+              .filter(Boolean);
+          }
+          return String(value)
+            .split(',')
+            .map((v) => v.trim())
+            .filter(Boolean);
+        };
+
         if (projectId) {
           s += ` AND t.project_id = ?`;
           p.push(projectId);
         }
         if (status) {
-          s += ` AND t.status = ?`;
-          p.push(status);
+          const statuses = normalizeCsvOrArray(status);
+          if (statuses.length === 1) {
+            s += ` AND t.status = ?`;
+            p.push(statuses[0]);
+          } else if (statuses.length > 1) {
+            s += ` AND t.status IN (${statuses.map(() => '?').join(',')})`;
+            p.push(...statuses);
+          }
         }
         if (assigneeId) {
           s += ` AND t.assignee_id = ?`;
@@ -251,8 +271,14 @@ export class TaskController {
           p.push(reporterId);
         }
         if (priority) {
-          s += ` AND t.priority = ?`;
-          p.push(priority);
+          const priorities = normalizeCsvOrArray(priority);
+          if (priorities.length === 1) {
+            s += ` AND t.priority = ?`;
+            p.push(priorities[0]);
+          } else if (priorities.length > 1) {
+            s += ` AND t.priority IN (${priorities.map(() => '?').join(',')})`;
+            p.push(...priorities);
+          }
         }
         if (initiativeId) {
           s += ` AND t.initiative_id = ?`;
@@ -1788,6 +1814,419 @@ export class TaskController {
         blockedAt: task.blocked_at,
         blockedReason: task.blocked_reason,
         decision: decision || null,
+      });
+    }
+  );
+
+  // ==========================================
+  // TASK DEPENDENCIES (Gantt-style)
+  // ==========================================
+
+  /**
+   * GET /api/tasks/:id/dependencies
+   * Get all dependencies for a task (both directions)
+   */
+  static getTaskDependencies = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const taskId = req.params.id;
+
+      // DB stores dependency_type as 'finish_to_start' etc. — map to short form FS/SS/FF/SF
+      const dbToShort: Record<string, string> = {
+        finish_to_start: 'FS',
+        start_to_start: 'SS',
+        finish_to_finish: 'FF',
+        start_to_finish: 'SF',
+        FS: 'FS',
+        SS: 'SS',
+        FF: 'FF',
+        SF: 'SF', // accept both
+      };
+
+      // Outgoing: this task is predecessor → other tasks are successors
+      const outgoing = await DbPromise.all<{
+        id: string;
+        predecessor_id: string;
+        successor_id: string;
+        dependency_type: string;
+        lag_days: number;
+        notes: string;
+        created_at: string;
+        created_by: string;
+        task_title: string;
+        task_status: string;
+        task_priority: string;
+        task_index_code: string;
+      }>(
+        `SELECT td.id, td.predecessor_id, td.successor_id,
+                COALESCE(td.dependency_type, 'finish_to_start') as dependency_type,
+                COALESCE(td.lag_days, 0) as lag_days,
+                td.notes, td.created_at, td.created_by,
+                t.title as task_title, t.status as task_status,
+                t.priority as task_priority, t.id as task_index_code
+         FROM task_dependencies td
+         JOIN tasks t ON t.id = td.successor_id
+         WHERE td.predecessor_id = ? AND t.organization_id = ?
+         ORDER BY td.created_at DESC`,
+        [taskId, orgId]
+      );
+
+      // Incoming: other tasks are predecessors → this task is successor
+      const incoming = await DbPromise.all<{
+        id: string;
+        predecessor_id: string;
+        successor_id: string;
+        dependency_type: string;
+        lag_days: number;
+        notes: string;
+        created_at: string;
+        created_by: string;
+        task_title: string;
+        task_status: string;
+        task_priority: string;
+        task_index_code: string;
+      }>(
+        `SELECT td.id, td.predecessor_id, td.successor_id,
+                COALESCE(td.dependency_type, 'finish_to_start') as dependency_type,
+                COALESCE(td.lag_days, 0) as lag_days,
+                td.notes, td.created_at, td.created_by,
+                t.title as task_title, t.status as task_status,
+                t.priority as task_priority, t.id as task_index_code
+         FROM task_dependencies td
+         JOIN tasks t ON t.id = td.predecessor_id
+         WHERE td.successor_id = ? AND t.organization_id = ?
+         ORDER BY td.created_at DESC`,
+        [taskId, orgId]
+      );
+
+      res.json({
+        success: true,
+        successors: outgoing.map((d) => ({
+          id: d.id,
+          taskId: d.successor_id,
+          taskTitle: d.task_title,
+          taskStatus: d.task_status,
+          taskPriority: d.task_priority,
+          taskIndexCode: d.task_index_code,
+          dependencyType: dbToShort[d.dependency_type] || 'FS',
+          lagDays: d.lag_days,
+          notes: d.notes,
+          createdAt: d.created_at,
+        })),
+        predecessors: incoming.map((d) => ({
+          id: d.id,
+          taskId: d.predecessor_id,
+          taskTitle: d.task_title,
+          taskStatus: d.task_status,
+          taskPriority: d.task_priority,
+          taskIndexCode: d.task_index_code,
+          dependencyType: dbToShort[d.dependency_type] || 'FS',
+          lagDays: d.lag_days,
+          notes: d.notes,
+          createdAt: d.created_at,
+        })),
+      });
+    }
+  );
+
+  /**
+   * POST /api/tasks/:id/dependencies
+   * Add a dependency link between two tasks
+   */
+  static addTaskDependency = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      const taskId = req.params.id;
+      const { targetTaskId, direction, dependencyType, lagDays, notes } = req.body as {
+        targetTaskId: string;
+        direction: 'successor' | 'predecessor';
+        dependencyType?: string;
+        lagDays?: number;
+        notes?: string;
+      };
+
+      if (!targetTaskId) {
+        res.status(400).json({ error: 'targetTaskId is required' });
+        return;
+      }
+
+      if (targetTaskId === taskId) {
+        res.status(400).json({ error: 'A task cannot depend on itself' });
+        return;
+      }
+
+      // Verify both tasks exist and belong to the same org
+      const sourceTask = await DbPromise.get<{ id: string }>(
+        'SELECT id FROM tasks WHERE id = ? AND organization_id = ?',
+        [taskId, orgId]
+      );
+      const targetTask = await DbPromise.get<{ id: string; title: string; status: string }>(
+        'SELECT id, title, status FROM tasks WHERE id = ? AND organization_id = ?',
+        [targetTaskId, orgId]
+      );
+
+      if (!sourceTask) {
+        res.status(404).json({ error: 'Source task not found' });
+        return;
+      }
+      if (!targetTask) {
+        res.status(404).json({ error: 'Target task not found' });
+        return;
+      }
+
+      // Map short form (FS/SS/FF/SF) to DB values
+      const shortToDb: Record<string, string> = {
+        FS: 'finish_to_start',
+        SS: 'start_to_start',
+        FF: 'finish_to_finish',
+        SF: 'start_to_finish',
+        finish_to_start: 'finish_to_start',
+        start_to_start: 'start_to_start',
+        finish_to_finish: 'finish_to_finish',
+        start_to_finish: 'start_to_finish',
+      };
+
+      // Determine predecessor/successor based on direction
+      // "predecessor" means: targetTask is a predecessor of current task
+      //   → predecessor_id = targetTaskId, successor_id = taskId
+      // "successor" means: targetTask is a successor of current task
+      //   → predecessor_id = taskId, successor_id = targetTaskId
+      const predecessorId = direction === 'predecessor' ? targetTaskId : taskId;
+      const successorId = direction === 'predecessor' ? taskId : targetTaskId;
+
+      // Check for duplicate
+      const existing = await DbPromise.get<{ id: string }>(
+        'SELECT id FROM task_dependencies WHERE predecessor_id = ? AND successor_id = ?',
+        [predecessorId, successorId]
+      );
+      if (existing) {
+        res.status(409).json({ error: 'This dependency already exists' });
+        return;
+      }
+
+      // Simple cycle detection: check if creating this link would form a cycle
+      // by checking if successorId can reach predecessorId through existing dependencies
+      const visited = new Set<string>();
+      const queue = [successorId];
+      let hasCycle = false;
+
+      while (queue.length > 0) {
+        const current = queue.shift()!;
+        if (current === predecessorId) {
+          hasCycle = true;
+          break;
+        }
+        if (visited.has(current)) continue;
+        visited.add(current);
+
+        const nextDeps = await DbPromise.all<{ successor_id: string }>(
+          'SELECT successor_id FROM task_dependencies WHERE predecessor_id = ?',
+          [current]
+        );
+        for (const nd of nextDeps) {
+          if (!visited.has(nd.successor_id)) {
+            queue.push(nd.successor_id);
+          }
+        }
+      }
+
+      if (hasCycle) {
+        res.status(400).json({
+          error: 'Adding this dependency would create a circular reference',
+          code: 'CIRCULAR_DEPENDENCY',
+        });
+        return;
+      }
+
+      const depId = uuidv4();
+      const depType = shortToDb[dependencyType || 'FS'] || 'finish_to_start';
+      const lag = lagDays || 0;
+
+      await DbPromise.run(
+        `INSERT INTO task_dependencies (id, predecessor_id, successor_id, dependency_type, lag_days, notes, created_by, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+        [depId, predecessorId, successorId, depType, lag, notes || null, userId || null]
+      );
+
+      // Log activity
+      try {
+        await ActivityService.logActivity({
+          organizationId: orgId!,
+          entityType: 'task',
+          entityId: taskId,
+          action: 'dependency_added',
+          userId: userId!,
+          details: {
+            targetTaskId,
+            targetTaskTitle: targetTask.title,
+            direction,
+            dependencyType: depType,
+          },
+        });
+      } catch {
+        // best-effort
+      }
+
+      // Map back to short form for the response
+      const dbToShort: Record<string, string> = {
+        finish_to_start: 'FS',
+        start_to_start: 'SS',
+        finish_to_finish: 'FF',
+        start_to_finish: 'SF',
+      };
+
+      res.status(201).json({
+        success: true,
+        dependency: {
+          id: depId,
+          predecessorId,
+          successorId,
+          taskId: targetTaskId,
+          taskTitle: targetTask.title,
+          taskStatus: targetTask.status,
+          dependencyType: dbToShort[depType] || dependencyType || 'FS',
+          lagDays: lag,
+          notes: notes || null,
+          direction,
+        },
+      });
+    }
+  );
+
+  /**
+   * DELETE /api/tasks/:id/dependencies/:depId
+   * Remove a dependency
+   */
+  static removeTaskDependency = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      const taskId = req.params.id;
+      const depId = req.params.depId;
+
+      // Verify the dependency exists and involves this task
+      const dep = await DbPromise.get<{
+        id: string;
+        predecessor_id: string;
+        successor_id: string;
+      }>(
+        `SELECT td.id, td.predecessor_id, td.successor_id
+         FROM task_dependencies td
+         JOIN tasks t1 ON t1.id = td.predecessor_id AND t1.organization_id = ?
+         WHERE td.id = ? AND (td.predecessor_id = ? OR td.successor_id = ?)`,
+        [orgId, depId, taskId, taskId]
+      );
+
+      if (!dep) {
+        res.status(404).json({ error: 'Dependency not found' });
+        return;
+      }
+
+      await DbPromise.run('DELETE FROM task_dependencies WHERE id = ?', [depId]);
+
+      // Log activity
+      try {
+        await ActivityService.logActivity({
+          organizationId: orgId!,
+          entityType: 'task',
+          entityId: taskId,
+          action: 'dependency_removed',
+          userId: userId!,
+          details: { dependencyId: depId },
+        });
+      } catch {
+        // best-effort
+      }
+
+      res.json({ success: true });
+    }
+  );
+
+  /**
+   * GET /api/tasks/search
+   * Search tasks by title for dependency linking
+   */
+  static searchTasks = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const query = String(req.query.q || '').trim();
+      const excludeId = String(req.query.exclude || '');
+
+      if (!query) {
+        res.json({ tasks: [] });
+        return;
+      }
+
+      // ── Smart query parsing ────────────────────────────────
+      // If the user pastes an internal URL like:
+      //   http://localhost:3000/my-work?artifact=task%3Atask-rich-006
+      //   http://localhost:3000/my-work?artifact=task:task-rich-006
+      // Extract the task ID from it.
+      let extractedId: string | null = null;
+      try {
+        if (
+          query.startsWith('http://') ||
+          query.startsWith('https://') ||
+          query.startsWith('localhost')
+        ) {
+          const url = new URL(query.startsWith('localhost') ? `http://${query}` : query);
+          const artifact = url.searchParams.get('artifact');
+          if (artifact) {
+            // artifact format: "task:task-rich-001" or "task%3Atask-rich-001"
+            const decoded = decodeURIComponent(artifact);
+            const match = decoded.match(/^task:(.+)$/);
+            if (match) {
+              extractedId = match[1];
+            }
+          }
+        }
+      } catch {
+        // Not a valid URL, treat as normal search
+      }
+
+      // Also detect if the query itself looks like a task ID (e.g. "task-rich-006")
+      if (!extractedId && /^task-/i.test(query)) {
+        extractedId = query;
+      }
+
+      // If we extracted an ID, search by ID first, then also by title as fallback
+      const tasks = await DbPromise.all<{
+        id: string;
+        title: string;
+        status: string;
+        priority: string;
+        initiative_name: string | null;
+      }>(
+        `SELECT t.id, t.title, t.status, t.priority,
+                i.name as initiative_name
+         FROM tasks t
+         LEFT JOIN initiatives i ON i.id = t.initiative_id
+         WHERE t.organization_id = ?
+           AND t.id != ?
+           AND (t.title LIKE ? OR t.id = ? OR t.id LIKE ?)
+         ORDER BY
+           CASE WHEN t.id = ? THEN 0 ELSE 1 END,
+           t.updated_at DESC
+         LIMIT 20`,
+        [
+          orgId,
+          excludeId || '',
+          `%${extractedId || query}%`,
+          extractedId || '',
+          `%${extractedId || query}%`,
+          extractedId || '',
+        ]
+      );
+
+      res.json({
+        tasks: tasks.map((t) => ({
+          id: t.id,
+          title: t.title,
+          status: t.status,
+          priority: t.priority,
+          initiativeName: t.initiative_name,
+        })),
       });
     }
   );

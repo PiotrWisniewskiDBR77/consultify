@@ -659,7 +659,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                               )}
                               {connector.status === 'coming_soon' && (
                                 <span className="px-1.5 py-0.5 text-xs bg-slate-50 dark:bg-navy-800/300/20 text-slate-400 dark:text-slate-500 rounded">
-                                  Soon
+                                  Planned
                                 </span>
                               )}
                             </div>

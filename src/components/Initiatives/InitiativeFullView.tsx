@@ -46,8 +46,11 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+
+import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 
 // Status metadata for UI
 const STATUS_META: Record<
@@ -205,6 +208,46 @@ interface InitiativeFullViewProps {
   sourceModule?: 'tools' | 'assessment' | 'initiatives' | 'execution';
 }
 
+/**
+ * B7.3: TruncatedListSection — replaces unreadable long lists.
+ * Shows maxVisible items, then a "Show more" toggle for the rest.
+ */
+const TruncatedListSection: React.FC<{
+  title: string;
+  items: string[];
+  icon: React.ReactNode;
+  maxVisible?: number;
+}> = ({ title, items, icon, maxVisible = 3 }) => {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? items : items.slice(0, maxVisible);
+  const hasMore = items.length > maxVisible;
+
+  return (
+    <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
+      <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3 flex items-center justify-between">
+        <span>{title}</span>
+        <span className="text-slate-500 font-normal">{items.length}</span>
+      </h3>
+      <ul className="space-y-2">
+        {visible.map((item, i) => (
+          <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
+            {icon}
+            {item}
+          </li>
+        ))}
+      </ul>
+      {hasMore && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-3 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+        >
+          {expanded ? `Show less` : `Show ${items.length - maxVisible} more…`}
+        </button>
+      )}
+    </div>
+  );
+};
+
 export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
   initiativeId,
   onBack,
@@ -219,6 +262,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [isSaving, setIsSaving] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const { t } = useTranslation();
 
   // Fetch initiative data
   const fetchInitiative = useCallback(async () => {
@@ -448,12 +492,17 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
       setIsTransitioning(true);
       try {
         await Api.patch(`/initiatives/${initiative.id}/gate`, { gate });
-        toast.success(`Action "${gate}" completed successfully`);
+        toast.success(
+          t('initiatives.toast.gateActionSuccess', 'Akcja "{{gate}}" wykonana pomyślnie', { gate })
+        );
         await fetchInitiative();
         onStatusChange?.();
       } catch (err: any) {
         console.error('[InitiativeFullView] Gate action error:', err);
-        toast.error(err?.response?.data?.error || `Failed to execute ${gate}`);
+        toast.error(
+          err?.response?.data?.error ||
+            t('initiatives.toast.gateActionError', 'Nie udało się wykonać {{gate}}', { gate })
+        );
       } finally {
         setIsTransitioning(false);
       }
@@ -669,24 +718,16 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 </button>
               ))}
               {availableActions.length > 2 && (
-                <div className="relative group">
-                  <button className="px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-navy-700 rounded-lg transition-colors">
-                    More...
-                  </button>
-                  <div className="absolute right-0 top-full mt-1 z-50 hidden group-hover:block min-w-[180px] py-1 bg-navy-800 border border-navy-600 rounded-lg shadow-xl">
-                    {availableActions.slice(2).map((action) => (
-                      <button
-                        key={action.id}
-                        onClick={() => handleGateAction(action.gate)}
-                        disabled={isTransitioning}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-navy-700 hover:text-white transition-colors"
-                      >
-                        {action.icon}
-                        {action.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <RowActionsMenu
+                  actions={availableActions.slice(2).map((action) => ({
+                    id: action.id,
+                    label: action.label,
+                    onClick: () => handleGateAction(action.gate),
+                    disabled: isTransitioning,
+                    variant: action.id === 'cancel' ? ('danger' as const) : ('default' as const),
+                  }))}
+                  size="md"
+                />
               )}
             </div>
           </div>
@@ -1029,32 +1070,20 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               </div>
             )}
             {initiative.deliverables && initiative.deliverables.length > 0 && (
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3">
-                  Deliverables
-                </h3>
-                <ul className="space-y-2">
-                  {initiative.deliverables.map((d, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                      <CheckCircle size={14} className="text-green-400 mt-0.5 shrink-0" />
-                      {d}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <TruncatedListSection
+                title="Deliverables"
+                items={initiative.deliverables}
+                icon={<CheckCircle size={14} className="text-green-400 mt-0.5 shrink-0" />}
+                maxVisible={3}
+              />
             )}
             {initiative.keyRisks && initiative.keyRisks.length > 0 && (
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3">Key Risks</h3>
-                <ul className="space-y-2">
-                  {initiative.keyRisks.map((r, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                      <AlertTriangle size={14} className="text-amber-400 mt-0.5 shrink-0" />
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <TruncatedListSection
+                title="Key Risks"
+                items={initiative.keyRisks}
+                icon={<AlertTriangle size={14} className="text-amber-400 mt-0.5 shrink-0" />}
+                maxVisible={3}
+              />
             )}
             {!initiative.strategicIntent &&
               !initiative.businessValue &&
