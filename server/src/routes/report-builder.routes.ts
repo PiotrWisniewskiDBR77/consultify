@@ -1601,7 +1601,7 @@ router.post('/:id/approve', async (req: Request, res: Response, next: NextFuncti
     );
 
     // Notify report author
-    const authorId = report.report.createdBy || report.report.created_by;
+    const authorId = report.report.createdBy || (report.report as any).created_by;
     if (authorId) {
       await notifyOnStatusChange(
         id,
@@ -1710,7 +1710,7 @@ router.post('/:id/send-back', async (req: Request, res: Response, next: NextFunc
     );
 
     // Notify author
-    const authorId = report.report.createdBy || report.report.created_by;
+    const authorId = report.report.createdBy || (report.report as any).created_by;
     if (authorId) {
       await notifyOnStatusChange(
         id,
@@ -1766,7 +1766,7 @@ router.post('/:id/reject', async (req: Request, res: Response, next: NextFunctio
     );
 
     // Notify author
-    const authorId = report.report.createdBy || report.report.created_by;
+    const authorId = report.report.createdBy || (report.report as any).created_by;
     if (authorId) {
       await notifyOnStatusChange(
         id,
@@ -2581,7 +2581,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
             config,
             companyContext: rpt.companyContext || rpt.company_context,
             createdAt: rpt.createdAt || rpt.created_at,
-            createdBy: rpt.createdBy || rpt.created_by || userId,
+            createdBy: rpt.createdBy || (rpt as any).created_by || userId,
           },
           sections: v2Sections,
           scoreSummary,

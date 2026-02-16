@@ -32,12 +32,14 @@ const resolveTestSchemaPath = async () => {
 const CRITICAL_TABLES = [
   'organizations',
   'users',
+  'login_history',
   'sessions',
   'projects',
   'tasks',
   'teams',
   'invitations',
   'notifications',
+  'notification_settings',
   'settings',
   'revoked_tokens',
   'refresh_tokens',
@@ -283,6 +285,381 @@ async function verifySchema(): Promise<{
       missingColumns: {},
     };
   }
+}
+
+// ==========================================
+// TARGETED SELF-HEAL (PROJECT TEAM TABLES)
+// ==========================================
+
+async function ensureProjectMembershipTables(): Promise<void> {
+  const db = await getDatabaseAsync();
+  const dbType = databaseConfig.type;
+
+  // Keep this minimal and safe: only create/repair the few tables required by
+  // `/api/projects/:id/members` (ProjectController.*ProjectMember).
+
+  if (dbType === 'postgres') {
+    // Workstreams (required FK target for project_members.workstream_id)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS workstreams (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        description TEXT,
+        owner_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        status TEXT NOT NULL DEFAULT 'ACTIVE',
+        color TEXT DEFAULT '#3B82F6',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_workstreams_project ON workstreams(project_id)`);
+
+    // Canonical project membership (used by initiatives Team section)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS project_members (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        project_role TEXT NOT NULL DEFAULT 'TASK_ASSIGNEE',
+        workstream_id TEXT REFERENCES workstreams(id) ON DELETE SET NULL,
+        allocation_percent INTEGER NOT NULL DEFAULT 100,
+        permissions TEXT DEFAULT '{}',
+        start_date TIMESTAMP,
+        end_date TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        added_by_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        -- Optional consultant overlay (best-effort; UI tolerates nulls)
+        is_invoked INTEGER DEFAULT 0,
+        consultant_profile TEXT DEFAULT 'NONE',
+        engagement_type TEXT DEFAULT 'INTERNAL',
+        acting_org_id TEXT,
+        UNIQUE(project_id, user_id)
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_project_members_project ON project_members(project_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_project_members_user ON project_members(user_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_project_members_role ON project_members(project_role)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_project_members_workstream ON project_members(workstream_id)`
+    );
+    return;
+  }
+
+  // SQLite branch
+  // Create tables if missing.
+  await new Promise<void>((resolve, reject) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS workstreams (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        description TEXT,
+        owner_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        status TEXT NOT NULL DEFAULT 'ACTIVE',
+        color TEXT DEFAULT '#3B82F6',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+      (err: Error | null) => {
+        if (err) reject(err);
+        else resolve();
+      }
+    );
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS project_members (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        project_role TEXT NOT NULL DEFAULT 'TASK_ASSIGNEE',
+        workstream_id TEXT REFERENCES workstreams(id) ON DELETE SET NULL,
+        allocation_percent INTEGER NOT NULL DEFAULT 100,
+        permissions TEXT DEFAULT '{}',
+        start_date TEXT,
+        end_date TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        added_by_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        -- Optional consultant overlay (best-effort; UI tolerates nulls)
+        is_invoked INTEGER DEFAULT 0,
+        consultant_profile TEXT DEFAULT 'NONE',
+        engagement_type TEXT DEFAULT 'INTERNAL',
+        acting_org_id TEXT,
+        UNIQUE(project_id, user_id)
+      )`,
+      (err: Error | null) => {
+        if (err) reject(err);
+        else resolve();
+      }
+    );
+  });
+
+  // Repair missing columns on older SQLite DBs.
+  const columnsInfo = await new Promise<any[]>((resolve, reject) => {
+    db.all(`PRAGMA table_info(project_members)`, (err: Error | null, rows: any[]) => {
+      if (err) reject(err);
+      else resolve(rows || []);
+    });
+  });
+  const existingColumns = new Set(columnsInfo.map((c) => c.name));
+
+  const addColumn = async (ddl: string) => {
+    await new Promise<void>((resolve) => {
+      db.run(`ALTER TABLE project_members ADD COLUMN ${ddl}`, (err: Error | null) => {
+        // SQLite doesn't support IF NOT EXISTS for columns; ignore duplicates.
+        if (
+          err &&
+          !String(err.message || '')
+            .toLowerCase()
+            .includes('duplicate column')
+        ) {
+          logger.warn(
+            '[DatabaseInitializer] Failed to add column to project_members:',
+            err.message
+          );
+        }
+        resolve();
+      });
+    });
+  };
+
+  if (!existingColumns.has('project_role'))
+    await addColumn(`project_role TEXT DEFAULT 'TASK_ASSIGNEE'`);
+  if (!existingColumns.has('allocation_percent'))
+    await addColumn(`allocation_percent INTEGER DEFAULT 100`);
+  if (!existingColumns.has('permissions')) await addColumn(`permissions TEXT DEFAULT '{}'`);
+  if (!existingColumns.has('added_by_id')) await addColumn(`added_by_id TEXT`);
+  if (!existingColumns.has('created_at'))
+    await addColumn(`created_at TEXT DEFAULT (datetime('now'))`);
+  if (!existingColumns.has('updated_at'))
+    await addColumn(`updated_at TEXT DEFAULT (datetime('now'))`);
+  if (!existingColumns.has('workstream_id')) await addColumn(`workstream_id TEXT`);
+  if (!existingColumns.has('is_invoked')) await addColumn(`is_invoked INTEGER DEFAULT 0`);
+  if (!existingColumns.has('consultant_profile'))
+    await addColumn(`consultant_profile TEXT DEFAULT 'NONE'`);
+  if (!existingColumns.has('engagement_type'))
+    await addColumn(`engagement_type TEXT DEFAULT 'INTERNAL'`);
+  if (!existingColumns.has('acting_org_id')) await addColumn(`acting_org_id TEXT`);
+}
+
+// ==========================================
+// TARGETED SELF-HEAL (CHAT CONVERSATIONS)
+// ==========================================
+
+async function ensureChatConversationTables(): Promise<void> {
+  const db = await getDatabaseAsync();
+  const dbType = databaseConfig.type;
+
+  // Conversations + messages are required for AI Chat runtime smoke + history sidebar.
+  // Older SQLite dev DBs (and TEST_SCHEMA) may have partial/legacy versions of these tables.
+
+  if (dbType === 'postgres') {
+    // Conversations
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS conversations (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        organization_id TEXT,
+        project_id TEXT,
+        chat_project_id TEXT,
+        created_by TEXT,
+        title TEXT,
+        title_source TEXT,
+        pmo_context TEXT DEFAULT '{}',
+        language TEXT DEFAULT 'en',
+        starred BOOLEAN DEFAULT FALSE,
+        archived BOOLEAN DEFAULT FALSE,
+        tags TEXT DEFAULT '[]',
+        message_count INTEGER DEFAULT 0,
+        last_message_preview TEXT,
+        last_message_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Messages
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS conversation_messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        message_type TEXT DEFAULT 'text',
+        metadata TEXT DEFAULT '{}',
+        token_count INTEGER,
+        model_used TEXT,
+        author_user_id TEXT,
+        version INTEGER DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_conversation_messages_conversation ON conversation_messages(conversation_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_conversation_messages_created ON conversation_messages(created_at)`
+    );
+    return;
+  }
+
+  // SQLite branch
+  await new Promise<void>((resolve, reject) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS conversations (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        organization_id TEXT,
+        project_id TEXT,
+        chat_project_id TEXT,
+        created_by TEXT,
+        title TEXT,
+        title_source TEXT,
+        pmo_context TEXT DEFAULT '{}',
+        language TEXT DEFAULT 'en',
+        starred INTEGER DEFAULT 0,
+        archived INTEGER DEFAULT 0,
+        tags TEXT DEFAULT '[]',
+        message_count INTEGER DEFAULT 0,
+        last_message_preview TEXT,
+        last_message_at TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+      (err: Error | null) => (err ? reject(err) : resolve())
+    );
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS conversation_messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        message_type TEXT DEFAULT 'text',
+        metadata TEXT DEFAULT '{}',
+        token_count INTEGER,
+        model_used TEXT,
+        author_user_id TEXT,
+        version INTEGER DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+      )`,
+      (err: Error | null) => (err ? reject(err) : resolve())
+    );
+  });
+
+  // Some conversation queries join chat_projects for team-scoped conversations.
+  // Ensure chat_projects exists in SQLite test/e2e DBs to avoid 500s / noisy logs.
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS chat_projects (
+        id TEXT PRIMARY KEY,
+        scope TEXT DEFAULT 'personal',
+        organization_id TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+      () => resolve()
+    );
+  });
+
+  // Repair missing columns on older SQLite DBs (incl. TEST_SCHEMA legacy tables).
+  const tableColumns = async (table: string): Promise<Set<string>> => {
+    const rows = await new Promise<any[]>((resolve, reject) => {
+      db.all(`PRAGMA table_info(${table})`, (err: Error | null, out: any[]) => {
+        if (err) reject(err);
+        else resolve(out || []);
+      });
+    });
+    return new Set(rows.map((r) => r.name));
+  };
+
+  const addColumn = async (table: string, ddl: string) => {
+    await new Promise<void>((resolve) => {
+      db.run(`ALTER TABLE ${table} ADD COLUMN ${ddl}`, (err: Error | null) => {
+        if (
+          err &&
+          !String(err.message || '')
+            .toLowerCase()
+            .includes('duplicate column')
+        ) {
+          logger.warn(`[DatabaseInitializer] Failed to add column to ${table}:`, err.message);
+        }
+        resolve();
+      });
+    });
+  };
+
+  const convCols = await tableColumns('conversations');
+  if (!convCols.has('project_id')) await addColumn('conversations', `project_id TEXT`);
+  if (!convCols.has('chat_project_id')) await addColumn('conversations', `chat_project_id TEXT`);
+  if (!convCols.has('created_by')) await addColumn('conversations', `created_by TEXT`);
+  if (!convCols.has('title_source')) await addColumn('conversations', `title_source TEXT`);
+  if (!convCols.has('pmo_context'))
+    await addColumn('conversations', `pmo_context TEXT DEFAULT '{}'`);
+  if (!convCols.has('language')) await addColumn('conversations', `language TEXT DEFAULT 'en'`);
+  if (!convCols.has('starred')) await addColumn('conversations', `starred INTEGER DEFAULT 0`);
+  if (!convCols.has('archived')) await addColumn('conversations', `archived INTEGER DEFAULT 0`);
+  if (!convCols.has('tags')) await addColumn('conversations', `tags TEXT DEFAULT '[]'`);
+  if (!convCols.has('message_count'))
+    await addColumn('conversations', `message_count INTEGER DEFAULT 0`);
+  if (!convCols.has('last_message_preview'))
+    await addColumn('conversations', `last_message_preview TEXT`);
+  if (!convCols.has('last_message_at')) await addColumn('conversations', `last_message_at TEXT`);
+
+  const msgCols = await tableColumns('conversation_messages');
+  if (!msgCols.has('message_type'))
+    await addColumn('conversation_messages', `message_type TEXT DEFAULT 'text'`);
+  if (!msgCols.has('token_count')) await addColumn('conversation_messages', `token_count INTEGER`);
+  if (!msgCols.has('model_used')) await addColumn('conversation_messages', `model_used TEXT`);
+  if (!msgCols.has('author_user_id'))
+    await addColumn('conversation_messages', `author_user_id TEXT`);
+  if (!msgCols.has('version'))
+    await addColumn('conversation_messages', `version INTEGER DEFAULT 1`);
+
+  const chatProjectCols = await tableColumns('chat_projects');
+  if (!chatProjectCols.has('scope'))
+    await addColumn('chat_projects', `scope TEXT DEFAULT 'personal'`);
+  if (!chatProjectCols.has('organization_id'))
+    await addColumn('chat_projects', `organization_id TEXT`);
+
+  // Notifications route expects `is_dismissed` on some schemas.
+  try {
+    const notifCols = await tableColumns('notifications');
+    if (!notifCols.has('is_dismissed'))
+      await addColumn('notifications', `is_dismissed INTEGER DEFAULT 0`);
+    if (!notifCols.has('snoozed_until')) await addColumn('notifications', `snoozed_until TEXT`);
+  } catch (e: any) {
+    logger.warn('[DatabaseInitializer] Unable to self-heal notifications columns:', e?.message);
+  }
+
+  // Indices (best-effort)
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_conversation_messages_conversation ON conversation_messages(conversation_id)`,
+      () => resolve()
+    );
+  });
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_conversation_messages_created ON conversation_messages(created_at)`,
+      () => resolve()
+    );
+  });
 }
 
 /**
@@ -535,6 +912,27 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
           message: `SQLite schema incomplete. Missing tables: ${recheck.missing.join(', ')}`,
         };
       }
+    }
+
+    // Ensure the canonical project membership tables exist (used by Initiative Team UI)
+    // We do this regardless of the large "critical tables" list so the feature works on older dev DBs.
+    try {
+      await ensureProjectMembershipTables();
+    } catch (e: any) {
+      logger.warn(
+        '[DatabaseInitializer] ensureProjectMembershipTables failed (continuing):',
+        e?.message || e
+      );
+    }
+
+    // Ensure chat conversation tables are compatible with current routes.
+    try {
+      await ensureChatConversationTables();
+    } catch (e: any) {
+      logger.warn(
+        '[DatabaseInitializer] ensureChatConversationTables failed (continuing):',
+        e?.message || e
+      );
     }
 
     // Final verification

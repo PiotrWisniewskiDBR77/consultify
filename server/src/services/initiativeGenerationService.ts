@@ -72,6 +72,13 @@ function interpolateTemplate(template: string, context: GenerationContext): stri
   return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
     const value = context[key];
     if (value === undefined || value === null) return `[not provided]`;
+    // Make language explicit for LLMs (templates often use: "Language: {{language}}")
+    if (key === 'language') {
+      const lang = String(value).toLowerCase().trim();
+      if (lang === 'pl' || lang === 'polish') return 'Polish';
+      if (lang === 'en' || lang === 'english') return 'English';
+      return String(value);
+    }
     if (typeof value === 'object') return JSON.stringify(value);
     return String(value);
   });
@@ -198,12 +205,14 @@ When asked to write in Polish, use professional business Polish.`;
       organizationId || undefined
     );
 
+    const langName = context.language === 'pl' ? 'Polish' : 'English';
     const prompt = `Given this initiative context, suggest which sections should be enabled and their priority.
 
 Initiative: ${context.initiativeName}
 Description: ${context.summary || 'Not yet defined'}
 Category: ${context.category || 'general'}
 Module: ${context.module || 'general'}
+Language: ${langName}
 
 Available sections:
 ${allSections.map((s) => `- ${s.key}: ${s.name} (${s.description || 'No description'})`).join('\n')}
@@ -212,14 +221,14 @@ Return a JSON array of section suggestions:
 [{ "key": "section_key", "reason": "Why this section is important", "priority": "high|medium|low" }]
 
 Only include sections that are truly relevant. Order by priority.
+Respond in the requested language only.
 Return valid JSON array only.`;
 
     try {
       const result = await llm.call({
         type: 'text',
         modelConfig: { id: 'standard' },
-        systemPrompt:
-          'You are an expert in initiative planning. Suggest relevant sections based on context.',
+        systemPrompt: `You are an expert in initiative planning. Suggest relevant sections based on context. Respond in ${langName}.`,
         messages: [{ role: 'user', content: prompt }],
         maxTokens: 2048,
         temperature: 0.5,

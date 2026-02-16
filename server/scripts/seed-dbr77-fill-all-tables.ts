@@ -1061,6 +1061,101 @@ async function seedInitiativeModuleDemoData(
   log.step(`Seeded initiative module demo data: ${initiativeId}`);
 }
 
+async function seedDiscoveryToolSessions(
+  db: any,
+  anchors: { orgId: string; userId: string; projectId: string }
+) {
+  // DiscoveryToolsHub (frontend) lists tool sessions filtered by currentProjectId.
+  // If tool_sessions exist only for a different project_id, the Tools → Discovery list will look empty.
+  //
+  // Seed a small, curated set of tool_sessions for the latest projects in the org,
+  // using real supported toolType slugs so the UI can open documents.
+  try {
+    const hasToolSessions = await db
+      .get(`SELECT name FROM sqlite_master WHERE type='table' AND name='tool_sessions' LIMIT 1`, [])
+      .catch(() => null);
+    if (!hasToolSessions) return;
+
+    const projRes = await db
+      .query(
+        `SELECT id FROM projects WHERE organization_id = ? ORDER BY created_at DESC LIMIT 10`,
+        [anchors.orgId]
+      )
+      .catch(() => ({ rows: [] as any[] }));
+    const projectIds = (projRes?.rows || [])
+      .map((r: any) => String(r?.id || '').trim())
+      .filter(Boolean);
+
+    const uniqueProjectIds = Array.from(
+      new Set(projectIds.length > 0 ? projectIds : [anchors.projectId])
+    );
+    const now = nowIso();
+
+    const sessionsTemplate = [
+      {
+        suffix: 'swot-draft',
+        tool_type: 'dynamic-swot',
+        name: 'SWOT — Current State Snapshot',
+        status: 'DRAFT',
+        completion_percent: 35,
+        confidence_avg: 2.8,
+        answers_json: JSON.stringify({
+          seeded: true,
+          sections: { strengths: [], weaknesses: [], opportunities: [], threats: [] },
+        }),
+      },
+      {
+        suffix: 'porter-review',
+        tool_type: 'market-forces',
+        name: 'Porter — Market Forces (In Review)',
+        status: 'REVIEW',
+        completion_percent: 100,
+        confidence_avg: 3.4,
+        answers_json: JSON.stringify({ seeded: true, draft: 'ready_for_review' }),
+      },
+      {
+        suffix: 'bcg-approved',
+        tool_type: 'portfolio-priority',
+        name: 'Portfolio Priority — Approved',
+        status: 'APPROVED',
+        completion_percent: 100,
+        confidence_avg: 4.1,
+        answers_json: JSON.stringify({ seeded: true, snapshot: 'approved' }),
+      },
+    ] as const;
+
+    for (const pid of uniqueProjectIds) {
+      for (const tpl of sessionsTemplate) {
+        const id = `tool-${pid}-${tpl.suffix}`;
+        await upsertDynamicRow(db, 'tool_sessions', {
+          id,
+          organization_id: anchors.orgId,
+          project_id: pid,
+          tool_type: tpl.tool_type,
+          name: tpl.name,
+          status: tpl.status,
+          completion_percent: tpl.completion_percent,
+          confidence_avg: tpl.confidence_avg,
+          answers_json: tpl.answers_json,
+          context_snapshot: JSON.stringify({ seeded: true, toolType: tpl.tool_type }),
+          review_requested_at: tpl.status === 'REVIEW' || tpl.status === 'APPROVED' ? now : null,
+          approved_at: tpl.status === 'APPROVED' ? now : null,
+          created_by: anchors.userId,
+          updated_by: anchors.userId,
+          created_at: now,
+          updated_at: now,
+        });
+      }
+    }
+
+    log.step(
+      `Seeded Discovery tool sessions: ${uniqueProjectIds.length} project(s) × ${sessionsTemplate.length} sessions`
+    );
+  } catch (e: any) {
+    log.warn(`Discovery tool sessions seeding skipped: ${e?.message || String(e)}`);
+  }
+}
+
 async function main() {
   console.log('\n🧩 DBR77: Fill All Tables Seeder (SQLite)\n');
 
@@ -1176,6 +1271,7 @@ async function main() {
   await seedKeyDbr77Data(db, anchors);
   await seedReportBuilderBlockLibrary(db, anchors);
   await seedInitiativeModuleDemoData(db, anchors);
+  await seedDiscoveryToolSessions(db, anchors);
 
   // Baseline table inventory (before fill)
   const tables = await getTables(db);

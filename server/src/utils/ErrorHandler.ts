@@ -142,8 +142,8 @@ export function errorHandlerMiddleware(
     });
   }
 
-  // Development response
-  if (process.env.NODE_ENV === 'development') {
+  // Development/test response
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
     res.status(err.statusCode).json({
       status: status,
       error: {

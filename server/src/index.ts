@@ -34,9 +34,17 @@ const serverEnvPath = path.resolve(__dirname, '../../.env');
 // Prefer repo-root `.env` (workspace-level config), fallback to `server/.env` for legacy setups.
 const envPathToUse = fs.existsSync(repoRootEnvPath) ? repoRootEnvPath : serverEnvPath;
 
+// By default, do NOT override env vars already set by the shell / npm scripts.
+// This is critical for local dev where scripts explicitly set DB_TYPE/SQLITE_PATH.
+// If you really want `.env` to force-override exported variables, set DOTENV_OVERRIDE=1.
+const shouldOverrideDotenv =
+  !isProductionEnv &&
+  !isTestEnv &&
+  (process.env.DOTENV_OVERRIDE === '1' || process.env.DOTENV_OVERRIDE === 'true');
+
 dotenv.config({
   path: envPathToUse,
-  override: !isProductionEnv && !isTestEnv,
+  override: shouldOverrideDotenv,
 });
 
 // Dev-only visibility: confirm which .env was loaded (helps debug "keys pasted but not used").
@@ -190,7 +198,7 @@ app.get('/api/ready', (_req: Request, res: Response) => {
 });
 
 const databaseInitPromise: Promise<void> =
-  !isTest || process.env.E2E_MODE === 'true'
+  !isTest || process.env.E2E_MODE === 'true' || process.env.ENABLE_TEST_GATEWAY === 'true'
     ? (async () => {
         try {
           logger.info('[Server] Initializing database...');
@@ -947,8 +955,15 @@ if (!isTest) {
 // ============================================================
 
 const startServer = true; // Always start server when running via tsx
+// IMPORTANT:
+// - We DO want to start an HTTP server when this file is executed directly (e.g. `tsx src/index.ts`)
+//   even if NODE_ENV=test (common for Playwright / smoke environments).
+// - We do NOT want to start an HTTP server when running unit tests under Vitest, where this module
+//   may be imported for app wiring.
+const shouldStartHttpServer =
+  process.env.START_HTTP_SERVER !== 'false' && !process.env.VITEST && process.env.VITEST !== 'true';
 
-if (startServer && (!isTest || process.env.E2E_MODE === 'true')) {
+if (startServer && shouldStartHttpServer) {
   (async () => {
     logger.info('[Server] Starting HTTP server after route registration...');
     const server = http.createServer(app);

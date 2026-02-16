@@ -130,19 +130,22 @@ export const getCsrfTokenHandler = (req: Request, res: Response): void => {
     // Do NOT use a static token (security integrity gate).
     const existing = req.cookies?.[CSRF_COOKIE_NAME];
     if (typeof existing === 'string' && existing.length > 0) {
-      return res.json({ token: existing });
+      res.json({ token: existing });
+      return;
     }
-    return res.json({ token: generateToken() });
+    res.json({ token: generateToken() });
+    return;
   }
 
   const existing = req.cookies?.[CSRF_COOKIE_NAME];
   if (typeof existing === 'string' && existing.length > 0) {
-    return res.json({ token: existing });
+    res.json({ token: existing });
+    return;
   }
 
   const token = generateToken();
   res.cookie(CSRF_COOKIE_NAME, token, cookieOptions(req));
-  return res.json({ token });
+  res.json({ token });
 };
 
 export default csrfTokenMiddleware;

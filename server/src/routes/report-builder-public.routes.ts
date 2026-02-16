@@ -10,6 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import PDFDocument from 'pdfkit';
 
+import config from '../config/Config.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import logger from '../utils/Logger.js';
 
@@ -485,10 +486,7 @@ router.get('/:token/check-auth', async (req: Request, res: Response) => {
     const jwt = await import('jsonwebtoken');
     const token = authHeader.split(' ')[1];
     try {
-      const decoded = jwt.default.verify(
-        token,
-        process.env.JWT_SECRET || 'consultify-secret'
-      ) as any;
+      const decoded = jwt.default.verify(token, config.JWT_SECRET) as any;
       return res.json({
         authenticated: true,
         userId: decoded.userId || decoded.id,

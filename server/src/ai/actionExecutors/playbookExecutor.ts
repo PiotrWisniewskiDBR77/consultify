@@ -56,15 +56,25 @@ export const PlaybookExecutor = {
       };
     }
 
-    logger.info(`[PlaybookExecutor] Starting playbook "${payload.name || playbookId}" with ${steps.length} steps`);
+    logger.info(
+      `[PlaybookExecutor] Starting playbook "${payload.name || playbookId}" with ${steps.length} steps`
+    );
 
-    const results: Array<{ stepId: string; stepName: string; success: boolean; result?: unknown; error?: string }> = [];
+    const results: Array<{
+      stepId: string;
+      stepName: string;
+      success: boolean;
+      result?: unknown;
+      error?: string;
+    }> = [];
     let currentStepIndex = 0;
     let stepsCompleted = 0;
 
     while (currentStepIndex < steps.length) {
       const step = steps[currentStepIndex];
-      logger.debug(`[PlaybookExecutor] Executing step ${currentStepIndex + 1}/${steps.length}: ${step.name} (${step.type})`);
+      logger.debug(
+        `[PlaybookExecutor] Executing step ${currentStepIndex + 1}/${steps.length}: ${step.name} (${step.type})`
+      );
 
       try {
         const stepResult = await PlaybookExecutor._executeStep(step, context, metadata);
@@ -116,7 +126,9 @@ export const PlaybookExecutor = {
       }
     }
 
-    logger.info(`[PlaybookExecutor] Playbook "${payload.name || playbookId}" completed: ${stepsCompleted}/${steps.length} steps`);
+    logger.info(
+      `[PlaybookExecutor] Playbook "${payload.name || playbookId}" completed: ${stepsCompleted}/${steps.length} steps`
+    );
 
     return {
       success: true,

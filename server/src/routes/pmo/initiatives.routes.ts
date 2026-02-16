@@ -7,6 +7,7 @@
 
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
 
 import InitiativeControllerRaw from '../../controllers/InitiativeController.js';
 const InitiativeController = InitiativeControllerRaw as any;
@@ -867,6 +868,31 @@ router.patch(
   InitiativeController.quickUpdateInitiative
 );
 
+/**
+ * PATCH /api/initiatives/:id
+ * Backwards-compatible alias for clients that used a generic PATCH.
+ *
+ * - If the payload contains `status`, delegate to the canonical `/status` handler
+ *   (keeps transition validation + governance rules).
+ * - Otherwise, delegate to the canonical update handler (same as PUT, but accepts partial payloads).
+ */
+router.patch('/:id', (req, res, next) => {
+  const body = (req as any)?.body || {};
+  const hasStatus = body && Object.prototype.hasOwnProperty.call(body, 'status');
+
+  if (hasStatus) {
+    return (validateBody(UpdateInitiativeStatusSchema) as any)(req, res, (err?: unknown) => {
+      if (err) return next(err);
+      return (InitiativeController.updateInitiativeStatus as any)(req, res, next);
+    });
+  }
+
+  return (validateBody(UpdateInitiativeSchema) as any)(req, res, (err?: unknown) => {
+    if (err) return next(err);
+    return (InitiativeController.updateInitiative as any)(req, res, next);
+  });
+});
+
 // ==========================================
 // FLOW-INITIATIVE-001: STATUS TRANSITIONS
 // ==========================================
@@ -979,6 +1005,15 @@ router.delete('/:id/milestones/:milestoneId', InitiativeController.deleteMilesto
 // ROADMAP MODULE: RESOURCES ENDPOINTS
 // ==========================================
 
+const ResourcesAiApplyLogSchema = z.object({
+  scope: z.enum(['budget', 'fte', 'tools', 'intangibles', 'all']),
+  budgetAdded: z.number().int().min(0),
+  fteAdded: z.number().int().min(0),
+  toolsAdded: z.number().int().min(0),
+  intangiblesAdded: z.number().int().min(0),
+  note: z.string().nullable().optional(),
+});
+
 /**
  * GET /api/initiatives/:id/resources
  * Get resources allocated to an initiative
@@ -1002,6 +1037,16 @@ router.delete('/:id/resources/:resourceId', InitiativeController.deleteResource)
  * Update a resource in an initiative
  */
 router.put('/:id/resources/:resourceId', InitiativeController.updateResource);
+
+/**
+ * POST /api/initiatives/:id/resources/ai-apply-log
+ * Write a single audit entry after applying AI proposals.
+ */
+router.post(
+  '/:id/resources/ai-apply-log',
+  validateBody(ResourcesAiApplyLogSchema),
+  InitiativeController.logResourcesAiApply
+);
 
 // ==========================================
 // ROADMAP MODULE: BUDGET ITEMS ENDPOINTS

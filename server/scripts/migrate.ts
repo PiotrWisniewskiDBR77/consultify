@@ -331,8 +331,17 @@ async function applyMigration(
         try {
           // Skip no-op transaction statements on SQLite (defense-in-depth)
           if ((process.env.DB_TYPE || 'sqlite') === 'sqlite') {
-            const upper = statement.trim().toUpperCase().replace(/;+\s*$/, '');
-            if (upper === 'BEGIN' || upper === 'BEGIN TRANSACTION' || upper === 'COMMIT' || upper === 'ROLLBACK' || upper === 'END') {
+            const upper = statement
+              .trim()
+              .toUpperCase()
+              .replace(/;+\s*$/, '');
+            if (
+              upper === 'BEGIN' ||
+              upper === 'BEGIN TRANSACTION' ||
+              upper === 'COMMIT' ||
+              upper === 'ROLLBACK' ||
+              upper === 'END'
+            ) {
               continue;
             }
           }
@@ -469,11 +478,21 @@ async function applyMigration(
     const executionTime = Date.now() - startTime;
 
     // Record successful migration
-    await db.run(
-      `INSERT OR REPLACE INTO schema_migrations (version, filename, checksum, execution_time_ms, status)
-             VALUES (?, ?, ?, ?, 'success')`,
-      [migration.version, migration.filename, migration.checksum, executionTime]
-    );
+    const isPostgres = (process.env.DB_TYPE || 'sqlite') === 'postgres';
+    if (isPostgres) {
+      await db.run(
+        `INSERT INTO schema_migrations (version, filename, checksum, execution_time_ms, status)
+               VALUES ($1, $2, $3, $4, 'success')
+               ON CONFLICT (version) DO UPDATE SET filename = $2, checksum = $3, execution_time_ms = $4, status = 'success'`,
+        [migration.version, migration.filename, migration.checksum, executionTime]
+      );
+    } else {
+      await db.run(
+        `INSERT OR REPLACE INTO schema_migrations (version, filename, checksum, execution_time_ms, status)
+               VALUES (?, ?, ?, ?, 'success')`,
+        [migration.version, migration.filename, migration.checksum, executionTime]
+      );
+    }
 
     logger.info(`[Migrate] ✅ Applied ${migration.filename} in ${executionTime}ms`);
     return true;
@@ -492,11 +511,21 @@ async function applyMigration(
     try {
       const status = safeMode ? 'success' : 'failed';
       const checksum = safeMode ? `skipped:${migration.checksum}` : migration.checksum;
-      await db.run(
-        `INSERT OR REPLACE INTO schema_migrations (version, filename, checksum, execution_time_ms, status)
-                 VALUES (?, ?, ?, ?, ?)`,
-        [migration.version, migration.filename, checksum, executionTime, status]
-      );
+      const isPostgres2 = (process.env.DB_TYPE || 'sqlite') === 'postgres';
+      if (isPostgres2) {
+        await db.run(
+          `INSERT INTO schema_migrations (version, filename, checksum, execution_time_ms, status)
+                   VALUES ($1, $2, $3, $4, $5)
+                   ON CONFLICT (version) DO UPDATE SET filename = $2, checksum = $3, execution_time_ms = $4, status = $5`,
+          [migration.version, migration.filename, checksum, executionTime, status]
+        );
+      } else {
+        await db.run(
+          `INSERT OR REPLACE INTO schema_migrations (version, filename, checksum, execution_time_ms, status)
+                   VALUES (?, ?, ?, ?, ?)`,
+          [migration.version, migration.filename, checksum, executionTime, status]
+        );
+      }
     } catch (recordError) {
       logger.error('[Migrate] Failed to record migration failure:', recordError);
     }
@@ -510,16 +539,26 @@ async function applyMigration(
  */
 async function backfillMigrations(migrations: Migration[]): Promise<void> {
   const db = await getDatabase();
+  const isPostgres = (process.env.DB_TYPE || 'sqlite') === 'postgres';
 
   logger.info(`[Migrate] Backfilling ${migrations.length} existing migrations...`);
 
   for (const migration of migrations) {
     try {
-      await db.run(
-        `INSERT OR IGNORE INTO schema_migrations (version, filename, checksum, status)
-                 VALUES (?, ?, ?, 'success')`,
-        [migration.version, migration.filename, migration.checksum]
-      );
+      if (isPostgres) {
+        await db.run(
+          `INSERT INTO schema_migrations (version, filename, checksum, status)
+                   VALUES ($1, $2, $3, 'success')
+                   ON CONFLICT (version) DO UPDATE SET filename = $2, checksum = $3, status = 'success'`,
+          [migration.version, migration.filename, migration.checksum]
+        );
+      } else {
+        await db.run(
+          `INSERT OR IGNORE INTO schema_migrations (version, filename, checksum, status)
+                   VALUES (?, ?, ?, 'success')`,
+          [migration.version, migration.filename, migration.checksum]
+        );
+      }
       logger.info(`[Migrate] Backfilled: ${migration.filename}`);
     } catch (error) {
       logger.error(`[Migrate] Failed to backfill ${migration.filename}:`, error);
@@ -535,29 +574,45 @@ async function backfillMigrations(migrations: Migration[]): Promise<void> {
 async function runMigrations(options: { backfill?: boolean } = {}): Promise<void> {
   logger.info('[Migrate] Starting migration process...');
 
-  // Disable foreign keys for migration flexibility (essential for SQLite schema changes)
   const db = await getDatabaseAsync();
-  // @ts-ignore - SQLite specific PRAGMA
-  await db.run('PRAGMA foreign_keys = OFF');
+  const dbType = process.env.DB_TYPE || 'sqlite';
+
+  // Disable foreign keys for migration flexibility (essential for SQLite schema changes)
+  if (dbType === 'sqlite') {
+    // @ts-ignore - SQLite specific PRAGMA
+    await db.run('PRAGMA foreign_keys = OFF');
+  }
 
   // Ensure schema_migrations exists before we read/write migration state.
-  // This prevents first-run failures on fresh SQLite DBs.
-  await db.run(`
-    CREATE TABLE IF NOT EXISTS schema_migrations (
-      version TEXT,
-      filename TEXT PRIMARY KEY,
-      applied_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      checksum TEXT,
-      execution_time_ms INTEGER,
-      status TEXT
-    );
-  `);
+  // This prevents first-run failures on fresh DBs.
+  if (dbType === 'postgres') {
+    await db.run(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        version TEXT,
+        filename TEXT PRIMARY KEY,
+        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        checksum TEXT,
+        execution_time_ms INTEGER,
+        status TEXT
+      );
+    `);
+  } else {
+    await db.run(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        version TEXT,
+        filename TEXT PRIMARY KEY,
+        applied_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        checksum TEXT,
+        execution_time_ms INTEGER,
+        status TEXT
+      );
+    `);
+  }
 
   const allMigrations = getAllMigrations();
   const appliedMigrations = await getAppliedMigrations();
 
-  const dbType = process.env.DB_TYPE || 'sqlite';
-  const safeMode = dbType === 'sqlite' && (process.env.MIGRATE_MODE || '').toLowerCase() === 'safe';
+  const safeMode = (process.env.MIGRATE_MODE || '').toLowerCase() === 'safe';
 
   logger.info(`[Migrate] Found ${allMigrations.length} migration files`);
   logger.info(`[Migrate] ${appliedMigrations.length} migrations already applied`);

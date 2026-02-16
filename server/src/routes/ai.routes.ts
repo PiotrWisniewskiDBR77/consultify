@@ -2748,6 +2748,13 @@ router.post(
     const { modelRouter } = await import('../services/ai/modelRouter.js');
     const { llmService } = await import('../services/ai/llmService.js');
 
+    // Interactive UI endpoint: prefer fail-fast over multi-minute retries.
+    // Allow optional timeout override for power-users/debugging.
+    const requestedTimeoutMsRaw = Number((req.query as any)?.timeoutMs);
+    const timeoutMs = Number.isFinite(requestedTimeoutMsRaw)
+      ? Math.max(5000, Math.min(60000, Math.floor(requestedTimeoutMsRaw)))
+      : 20000;
+
     const modelCfg = await modelRouter.select({
       capability: 'chat_confirm',
       organizationId: req.organizationId,
@@ -2766,6 +2773,13 @@ router.post(
       },
       systemPrompt: sys,
       messages: [{ role: 'user', content: userPrompt }],
+      timeoutMs,
+      breakerOptions: {
+        // Single-attempt by default; avoid long "spinner hangs" in UI.
+        retryAttempts: 1,
+        retryBaseDelay: 250,
+        retryMaxDelay: 1000,
+      },
     } as any)) as any;
 
     const refinedText = String(result?.content || result?.text || '').trim();
@@ -3421,7 +3435,13 @@ RULES:
 5. Balance workload across quarters - no more than 3-4 major initiatives per quarter
 6. Return the EXACT initiative names as provided (case-sensitive)
 
-Return a structured roadmap assigning each initiative to a specific quarter.`;
+Return ONLY valid JSON (no markdown, no code fences, no commentary) with this exact shape:
+{
+  "year1": { "q1": string[], "q2": string[], "q3": string[], "q4": string[] },
+  "year2"?: { "q1": string[], "q2": string[], "q3": string[], "q4": string[] },
+  "year3"?: { "q1": string[], "q2": string[], "q3": string[], "q4": string[] },
+  "reasoning": string
+}`;
 
       const response = await aiPipeline.process({
         type: 'structured',
@@ -3599,7 +3619,9 @@ Return a JSON array of conflicts with fields:
 - initiatives (array of initiative names)
 - severity (low|medium|high)
 - description
-- recommendation`;
+- recommendation
+
+Return ONLY valid JSON array (no markdown, no code fences, no commentary).`;
 
       const response = await aiPipeline.process({
         type: 'structured',
@@ -3643,7 +3665,9 @@ ${initiativesSummary}
 Return a JSON array with fields:
 - name
 - recommendedPriority (Critical|High|Medium|Low)
-- rationale`;
+- rationale
+
+Return ONLY valid JSON array (no markdown, no code fences, no commentary).`;
 
       const response = await aiPipeline.process({
         type: 'structured',

@@ -44,8 +44,6 @@ export interface AuthRequest extends AuthenticatedRequest {
   user?: AuthenticatedUser;
   isDemo?: boolean;
   can?: (capability: string) => boolean;
-  // Added for cookie-based auth extraction (cookie-parser)
-  cookies?: Record<string, any>;
 }
 
 // ==========================================
@@ -100,7 +98,9 @@ const extractToken = (req: AuthRequest): string | null => {
   }
 
   // Try cookie (common browser auth)
-  const cookieToken = req.cookies?.access_token;
+  // NOTE: cookie-parser (or compatible) should populate `req.cookies`.
+  // This gate is enforced by scripts/security/verify-security-integrity.ts
+  const cookieToken = (req as any).cookies?.access_token || (req as any).cookies?.token;
   if (typeof cookieToken === 'string' && cookieToken.length > 0) return cookieToken;
 
   // Try body or query (legacy support)

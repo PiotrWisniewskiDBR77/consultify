@@ -22,7 +22,9 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
     const orgId = req.user!.organizationId;
-    let row = await dbGet(`SELECT * FROM security_settings WHERE organization_id = ?`, [orgId]);
+    let row = await dbGet<any>(`SELECT * FROM security_settings WHERE organization_id = ?`, [
+      orgId,
+    ]);
 
     if (!row) {
       await dbRun(
@@ -33,7 +35,7 @@ router.get(
                 ) VALUES (?, 0, 8, 1, 1, 0, 0, 30, 5, '["192.168.1.0/24"]', ?)`,
         [orgId, req.user!.id]
       );
-      row = await dbGet(`SELECT * FROM security_settings WHERE organization_id = ?`, [orgId]);
+      row = await dbGet<any>(`SELECT * FROM security_settings WHERE organization_id = ?`, [orgId]);
     }
 
     return res.json({

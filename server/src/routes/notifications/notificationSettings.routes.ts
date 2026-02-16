@@ -66,7 +66,17 @@ router.put(
     const newSettings = req.body;
 
     // Validate structure
-    if (!newSettings || typeof newSettings !== 'object') {
+    if (
+      !newSettings ||
+      typeof newSettings !== 'object' ||
+      Array.isArray(newSettings) ||
+      Object.keys(newSettings).length === 0
+    ) {
+      return res.status(400).json({ error: 'Invalid settings format' });
+    }
+    const allowedTopLevelKeys = new Set(['email', 'push', 'inApp', 'slack', 'quiet']);
+    const hasKnownKey = Object.keys(newSettings).some((k) => allowedTopLevelKeys.has(k));
+    if (!hasKnownKey) {
       return res.status(400).json({ error: 'Invalid settings format' });
     }
 

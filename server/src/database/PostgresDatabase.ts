@@ -16,6 +16,109 @@ let pool: Pool | null = null;
 let readPool: Pool | null = null;
 const SLOW_QUERY_THRESHOLD_MS = 1000;
 
+/**
+ * Postgres boolean-flag normalization for legacy SQLite-style 0/1 queries.
+ *
+ * Some tables use `BOOLEAN` (true/false), while older code paths still emit `0/1`.
+ * We normalize on the SQL adapter layer to avoid DB-level custom operators/casts.
+ */
+const BOOLEAN_IS_ACTIVE_TABLES = new Set<string>([
+  'ai_budgets',
+  'ai_conversation_context',
+  'ai_instructions_org',
+  'ai_instructions_system',
+  'ai_model_permissions',
+  'ai_playbook_templates',
+  'ai_policies',
+  'ai_prompt_blocks',
+  'ai_system_prompts',
+  'api_keys',
+  'approval_workflows',
+  'assessment_frameworks',
+  'assessment_questions',
+  'business_metrics',
+  'content_categories',
+  'content_tags',
+  'custom_roles',
+  'customer_lifecycle_stages',
+  'customer_success_playbooks',
+  'dashboard_widgets',
+  'dlp_policies',
+  'global_strategies',
+  'integration_api_keys',
+  'integration_providers',
+  'integration_webhooks',
+  'knowledge_documents',
+  'kpi_definitions',
+  'llm_providers',
+  'llm_tier_assignments',
+  'locations',
+  'management_report_templates',
+  'mobile_devices',
+  'module_help',
+  'notification_templates',
+  'onboarding_tooltips',
+  'onboarding_tours',
+  'partner_campaign_links',
+  'partner_discount_config',
+  'partner_learning_modules',
+  'partner_resources',
+  'permission_definitions',
+  'pmo_standards',
+  'report_templates',
+  'retention_policies',
+  'sandbox_projects',
+  'sandbox_templates',
+  'scim_group_mappings',
+  'scim_service_providers',
+  'settings_templates',
+  'spending_alerts',
+  'sub_processors',
+  'supported_locales',
+  'tools',
+  'user_role_assignments',
+  'webauthn_credentials',
+  'white_label_assets',
+]);
+
+const BOOLEAN_IS_DEFAULT_TABLES = new Set<string>([
+  'custom_dashboards',
+  'custom_roles',
+  'llm_providers',
+  'management_report_approval_presets',
+  'management_report_templates',
+  'payment_methods',
+  'report_templates',
+  'user_dashboard_layouts',
+]);
+
+function findPrimaryTableForBooleanFlags(sql: string): string | null {
+  const cleaned = sql.trim();
+  const update = cleaned.match(/^\s*UPDATE\s+(?:(?:public\.)?("?[a-zA-Z0-9_]+"?))/i);
+  if (update) return update[1].replace(/"/g, '').toLowerCase();
+  const insert = cleaned.match(/^\s*INSERT\s+INTO\s+(?:(?:public\.)?("?[a-zA-Z0-9_]+"?))/i);
+  if (insert) return insert[1].replace(/"/g, '').toLowerCase();
+  const from = cleaned.match(/\bFROM\s+(?:(?:public\.)?("?[a-zA-Z0-9_]+"?))/i);
+  if (from) return from[1].replace(/"/g, '').toLowerCase();
+  return null;
+}
+
+function normalizeBooleanFlagsForTable(sql: string, table: string | null): string {
+  if (!table) return sql;
+  let out = sql;
+  if (BOOLEAN_IS_ACTIVE_TABLES.has(table)) {
+    out = out.replace(/\bis_active\s*=\s*1\b/gi, 'is_active = TRUE');
+    out = out.replace(/\bis_active\s*=\s*0\b/gi, 'is_active = FALSE');
+    out = out.replace(/\bis_active\s*=\s*1\s*-\s*is_active\b/gi, 'is_active = NOT is_active');
+  }
+  if (BOOLEAN_IS_DEFAULT_TABLES.has(table)) {
+    out = out.replace(/\bis_default\s*=\s*1\b/gi, 'is_default = TRUE');
+    out = out.replace(/\bis_default\s*=\s*0\b/gi, 'is_default = FALSE');
+    out = out.replace(/\bis_default\s*=\s*1\s*-\s*is_default\b/gi, 'is_default = NOT is_default');
+  }
+  return out;
+}
+
 function getPool(): Pool {
   if (!pool) {
     logger.info('[Postgres] Initializing connection pool...');
@@ -106,6 +209,18 @@ async function executeWithLogging<T>(
  * Helper to convert SQLite params (?) to Postgres params ($1, $2)
  */
 function adaptQuery(sql: string): string {
+  // Handle PRAGMA table_info(table_name) -> Postgres equivalent
+  const pragmaMatch = sql.match(/^\s*PRAGMA\s+table_info\(["']?(\w+)["']?\)\s*$/i);
+  if (pragmaMatch) {
+    const tableName = pragmaMatch[1];
+    return `SELECT column_name as name, data_type as type, CASE WHEN is_nullable = 'NO' THEN 1 ELSE 0 END as "notnull", column_default as dflt_value FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '${tableName}' ORDER BY ordinal_position`;
+  }
+
+  // Skip any other PRAGMA statements (they're SQLite-specific and not needed in Postgres)
+  if (/^\s*PRAGMA\s+/i.test(sql)) {
+    return 'SELECT 1 WHERE false'; // No-op query
+  }
+
   let paramIndex = 1;
   // Replace ? with $1, $2, etc.
   // Also replace SQLite specific functions if possible
@@ -206,6 +321,42 @@ function adaptQuery(sql: string): string {
     adapted = adapted.replace('INSERT OR IGNORE', 'INSERT');
     adapted += ' ON CONFLICT DO NOTHING';
   }
+
+  /**
+   * SQLite json_extract(col, '$.a.b') -> Postgres jsonb extraction
+   *
+   * Notes:
+   * - We cast the first argument to jsonb because many columns are stored as TEXT.
+   * - Supports simple paths like '$.a' or '$.a.b.c'
+   */
+  adapted = adapted.replace(
+    /json_extract\s*\(\s*([^,]+?)\s*,\s*(['"])\$\.(.+?)\2\s*\)/gi,
+    (_m, expr, _q, rawPath) => {
+      const path = String(rawPath).trim();
+      if (!path) return `(${expr})::jsonb`;
+      const parts = path
+        .split('.')
+        .map((p: string) => p.trim())
+        .filter(Boolean);
+      if (parts.length <= 1) {
+        return `((${expr})::jsonb ->> '${parts[0] || ''}')`;
+      }
+      return `((${expr})::jsonb #>> '{${parts.join(',')}}')`;
+    }
+  );
+
+  /**
+   * SQLite AUTOINCREMENT -> Postgres identity/serial equivalent
+   * We keep this intentionally simple to prevent hard failures when legacy
+   * SQLite DDL is executed against Postgres.
+   */
+  adapted = adapted.replace(
+    /\bINTEGER\s+PRIMARY\s+KEY\s+AUTOINCREMENT\b/gi,
+    'BIGSERIAL PRIMARY KEY'
+  );
+  adapted = adapted.replace(/\bAUTOINCREMENT\b/gi, '');
+
+  adapted = normalizeBooleanFlagsForTable(adapted, findPrimaryTableForBooleanFlags(adapted));
 
   return adapted;
 }
@@ -771,6 +922,26 @@ export async function initDb(): Promise<void> {
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             )`);
 
+    // Notification Settings
+    await query(`CREATE TABLE IF NOT EXISTS notification_settings(
+                user_id TEXT PRIMARY KEY,
+                settings TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+    // Login History
+    await query(`CREATE TABLE IF NOT EXISTS login_history(
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                ip_address TEXT,
+                user_agent TEXT,
+                location TEXT,
+                status TEXT DEFAULT 'success',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
     // Activity Logs
     await query(`CREATE TABLE IF NOT EXISTS activity_logs(
                 id TEXT PRIMARY KEY,
@@ -1222,16 +1393,36 @@ export async function initDb(): Promise<void> {
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             stripe_invoice_id TEXT UNIQUE,
-            amount_due REAL,
+            invoice_number TEXT,
+            subtotal REAL,
+            tax_amount REAL,
+            total REAL,
             amount_paid REAL,
+            amount_due REAL,
             currency TEXT DEFAULT 'usd',
             status TEXT,
+            due_date TIMESTAMP,
+            paid_at TIMESTAMP,
             period_start DATE,
             period_end DATE,
             pdf_url TEXT,
+            line_items TEXT,
+            metadata TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
+
+    // Ensure newer invoice fields exist even when table pre-dates them
+    await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS invoice_number TEXT`);
+    await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS subtotal REAL`);
+    await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS tax_amount REAL`);
+    await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS total REAL`);
+    await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS due_date TIMESTAMP`);
+    await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP`);
+    await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS line_items TEXT`);
+    await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS metadata TEXT`);
+    await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP`);
 
     // Plan Features
     await query(`CREATE TABLE IF NOT EXISTS plan_features(
@@ -1769,20 +1960,30 @@ export async function initDb(): Promise<void> {
       [],
       'Skipping organization_id index on access_requests'
     );
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_access_requests_reviewer ON access_requests(reviewed_by)`
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_access_requests_reviewer ON access_requests(reviewed_by)`,
+      [],
+      'Skipping reviewed_by index on access_requests'
     );
     await querySafe(
       `CREATE INDEX IF NOT EXISTS idx_access_codes_org ON access_codes(organization_id)`,
       [],
       'Skipping organization_id index on access_codes'
     );
-    await query(`CREATE INDEX IF NOT EXISTS idx_access_codes_creator ON access_codes(created_by)`);
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_access_code_usage_code ON access_code_usage(code_id)`
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_access_codes_creator ON access_codes(created_by)`,
+      [],
+      'Skipping created_by index on access_codes'
     );
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_access_code_usage_user ON access_code_usage(user_id)`
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_access_code_usage_code ON access_code_usage(code_id)`,
+      [],
+      'Skipping code_id index on access_code_usage'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_access_code_usage_user ON access_code_usage(user_id)`,
+      [],
+      'Skipping user_id index on access_code_usage'
     );
 
     // Tasks Management
@@ -1830,7 +2031,11 @@ export async function initDb(): Promise<void> {
       [],
       'Skipping organization_id time index on activity_logs'
     );
-    await query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_user ON activity_logs(user_id)`);
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_activity_logs_user ON activity_logs(user_id)`,
+      [],
+      'Skipping user_id index on activity_logs'
+    );
     await query(
       `CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, read, created_at DESC)`
     );
@@ -1851,15 +2056,21 @@ export async function initDb(): Promise<void> {
       [],
       'Skipping organization_id index on custom_prompts'
     );
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_custom_prompts_creator ON custom_prompts(created_by)`
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_custom_prompts_creator ON custom_prompts(created_by)`,
+      [],
+      'Skipping created_by index on custom_prompts'
     );
     await querySafe(
       `CREATE INDEX IF NOT EXISTS idx_webhooks_org ON webhooks(organization_id)`,
       [],
       'Skipping organization_id index on webhooks'
     );
-    await query(`CREATE INDEX IF NOT EXISTS idx_webhooks_creator ON webhooks(created_by)`);
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_webhooks_creator ON webhooks(created_by)`,
+      [],
+      'Skipping created_by index on webhooks'
+    );
 
     // Core Modules
     await querySafe(

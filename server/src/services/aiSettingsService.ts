@@ -451,14 +451,19 @@ class AISettingsService {
         this.getOrgSettings(orgId),
         this.getUserSettings(userId),
       ]);
-      return { superadmin, org, user };
+      const effective = {
+        ...(superadmin || {}),
+        ...(org || {}),
+        ...(user || {}),
+      };
+      return { ...effective, superadmin, org, user };
     } catch (err) {
       console.error('[AISettingsService] Error in getEffectiveSettings:', err);
-      return {
-        superadmin: DEFAULT_SUPERADMIN,
-        org: { ...DEFAULT_ORG, organization_id: orgId },
-        user: { ...DEFAULT_USER, user_id: userId },
-      };
+      const superadmin = DEFAULT_SUPERADMIN;
+      const org = { ...DEFAULT_ORG, organization_id: orgId };
+      const user = { ...DEFAULT_USER, user_id: userId };
+      const effective = { ...superadmin, ...org, ...user };
+      return { ...effective, superadmin, org, user };
     }
   }
 
@@ -517,9 +522,11 @@ class AISettingsService {
       params
     );
 
+    const safeRows = rows || [];
     return {
       total: countRow?.total || 0,
-      entries: rows || [],
+      rows: safeRows,
+      entries: safeRows,
     };
   }
 

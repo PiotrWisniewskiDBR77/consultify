@@ -146,6 +146,16 @@ type CallParams = {
   cache?: boolean; // Cache control
   cacheTtl?: number; // TTL in seconds
   semantic?: boolean; // Use semantic search for caching
+  /**
+   * Optional total timeout hint for a single provider call.
+   * Note: circuit-breaker retries can extend total wall time unless retryAttempts is reduced.
+   */
+  timeoutMs?: number;
+  /**
+   * Circuit breaker options override (e.g. retryAttempts, retry delays).
+   * Use sparingly; interactive UI endpoints should prefer fail-fast.
+   */
+  breakerOptions?: Record<string, unknown>;
 };
 
 type McpServer = {
@@ -685,6 +695,12 @@ export class LLMService {
     const provider = getProvider(modelConfig);
     const model = provider(modelConfig.id as string);
     const providerId = String(modelConfig.provider || 'openai');
+    const timeoutMs =
+      typeof params.timeoutMs === 'number' &&
+      Number.isFinite(params.timeoutMs) &&
+      params.timeoutMs > 0
+        ? Math.max(1000, Math.floor(params.timeoutMs))
+        : 60000;
 
     const formattedMessages: LLMMessage[] = [
       { role: 'system', content: systemPrompt || '' },
@@ -697,10 +713,11 @@ export class LLMService {
         generateText({
           model,
           messages: formattedMessages as any,
-          abortSignal: AbortSignal.timeout(60000),
+          abortSignal: AbortSignal.timeout(timeoutMs),
         }),
       {
-        timeout: 60000,
+        timeout: timeoutMs,
+        ...(params.breakerOptions || {}),
         onRetry: (attempt: number, delay: number, error: Error) => {
           aiLogger.info('LLMService', `Retrying ${providerId} (attempt ${attempt})`, {
             delay,

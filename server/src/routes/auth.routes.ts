@@ -523,12 +523,58 @@ router.post(
       }
 
       if (!user) {
-        logger.error('[Auth] Demo user not found - please run seed script');
-        return res.status(404).json({
-          error: 'Demo user not found. Please contact support.',
-          code: 'DEMO_USER_NOT_FOUND',
-        });
-        return;
+        // Deterministic E2E/CI support: auto-provision a demo user when running in test gateway mode.
+        // This avoids flaky smoke tests that depend on external seed scripts.
+        const isTestGateway =
+          process.env.NODE_ENV === 'test' ||
+          process.env.E2E_MODE === 'true' ||
+          process.env.ENABLE_TEST_GATEWAY === 'true';
+
+        if (!isTestGateway) {
+          logger.error('[Auth] Demo user not found - please run seed script');
+          return res.status(404).json({
+            error: 'Demo user not found. Please contact support.',
+            code: 'DEMO_USER_NOT_FOUND',
+          });
+        }
+
+        const demoOrgId = 'demo-org';
+        const demoUserId = 'demo-user-id';
+        const demoEmail = DEMO_EMAILS[0];
+
+        await dbRun(
+          `
+            INSERT INTO organizations (id, name, plan, status)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(id) DO NOTHING
+          `,
+          [demoOrgId, 'Demo Organization', 'enterprise', 'active']
+        );
+
+        await dbRun(
+          `
+            INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO NOTHING
+          `,
+          [demoUserId, demoOrgId, demoEmail, 'demo-not-used', 'ADMIN', 'active', 'Demo', 'User']
+        );
+
+        user = await dbGet<{
+          id: string;
+          email: string;
+          role: string;
+          organization_id: string;
+          first_name: string;
+          last_name: string;
+          status: string;
+        }>('SELECT * FROM users WHERE id = ?', [demoUserId]);
+        matchedEmail = demoEmail;
+
+        if (!user) {
+          logger.error('[Auth] Demo user auto-provision failed');
+          return res.status(500).json({ error: 'Demo login failed. Please try again.' });
+        }
       }
 
       const org = await dbGet<{

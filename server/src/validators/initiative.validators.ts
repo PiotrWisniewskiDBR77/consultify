@@ -33,6 +33,19 @@ export const InitiativePriorityEnum = z
   .enum(['critical', 'high', 'medium', 'low'])
   .transform((v) => v.toLowerCase());
 
+const DateOnlyOrDateTimeString = z
+  .string()
+  .transform((v) => String(v ?? '').trim())
+  .refine(
+    (v) => {
+      if (!v) return true;
+      // Accept HTML date input values (YYYY-MM-DD) and full ISO date-times.
+      if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return true;
+      return z.string().datetime().safeParse(v).success;
+    },
+    { message: 'Invalid date format (expected YYYY-MM-DD or ISO datetime)' }
+  );
+
 // ==========================================
 // REQUEST SCHEMAS
 // ==========================================
@@ -58,8 +71,8 @@ export const CreateInitiativeSchema = z.object({
   valueDriver: z.string().max(255).optional(),
   confidenceLevel: ConfidenceLevelEnum.optional(),
   valueTiming: z.string().max(255).optional(),
-  plannedStartDate: z.string().datetime().optional().nullable(),
-  plannedEndDate: z.string().datetime().optional().nullable(),
+  plannedStartDate: DateOnlyOrDateTimeString.optional().nullable(),
+  plannedEndDate: DateOnlyOrDateTimeString.optional().nullable(),
   /** UI alias: InitiativeDocumentView uses `ownerId` (single owner). */
   ownerId: z.string().optional().nullable(),
   ownerBusinessId: z.string().optional().nullable(),
@@ -100,8 +113,8 @@ export const QuickUpdateInitiativeSchema = z.object({
   progress: z.number().min(0).max(100).optional(),
   status: InitiativeStatusEnum.optional(),
   notes: z.string().max(1000).optional(),
-  plannedStartDate: z.string().datetime().optional().nullable(),
-  plannedEndDate: z.string().datetime().optional().nullable(),
+  plannedStartDate: DateOnlyOrDateTimeString.optional().nullable(),
+  plannedEndDate: DateOnlyOrDateTimeString.optional().nullable(),
   ownerBusinessId: z.string().optional().nullable(),
   ownerExecutionId: z.string().optional().nullable(),
   priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional(),

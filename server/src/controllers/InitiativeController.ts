@@ -16,6 +16,7 @@ import {
   isValidTransition,
   VALID_TRANSITIONS,
 } from '../constants/initiativeStatuses.js';
+import activityService from '../services/ActivityService.js';
 import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
 import notificationService from '../services/notificationService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
@@ -262,11 +263,19 @@ export class InitiativeController {
       const supportedLangs = ['pl', 'en', 'de', 'es', 'ar', 'ja'];
       const lang = supportedLangs.includes(userLang) ? userLang : 'en';
 
-      const { status, source, sourceAssessmentId } = req.query as {
+      const { status, source, sourceAssessmentId, projectId, search } = req.query as {
         status?: string;
         source?: string;
         sourceAssessmentId?: string;
+        projectId?: string;
+        search?: string;
       };
+      const priorityRaw = (req.query as any)?.priority as string | string[] | undefined;
+      const priorities = Array.isArray(priorityRaw)
+        ? priorityRaw
+        : priorityRaw
+          ? [priorityRaw]
+          : [];
       const params: Array<unknown> = [orgId];
       let sql = `
             SELECT i.*, 
@@ -277,9 +286,29 @@ export class InitiativeController {
             LEFT JOIN users oe ON i.owner_execution_id = oe.id
             WHERE i.organization_id = ?
         `;
+      if (projectId) {
+        sql += ` AND i.project_id = ?`;
+        params.push(String(projectId));
+      }
       if (status) {
         sql += ` AND UPPER(i.status) = ?`;
         params.push(normalizeStatus(status));
+      }
+      if (priorities.length > 0) {
+        const normalized = priorities.map((p) => String(p || '').toUpperCase()).filter(Boolean);
+        if (normalized.length > 0) {
+          sql += ` AND UPPER(COALESCE(i.priority,'')) IN (${normalized.map(() => '?').join(', ')})`;
+          params.push(...normalized);
+        }
+      }
+      if (search) {
+        const like = `%${String(search).toLowerCase()}%`;
+        sql += ` AND (
+          LOWER(COALESCE(i.title, i.name, '')) LIKE ?
+          OR LOWER(COALESCE(i.summary, '')) LIKE ?
+          OR LOWER(COALESCE(i.hypothesis, '')) LIKE ?
+        )`;
+        params.push(like, like, like);
       }
 
       // Assessment module support: show initiatives derived from assessments/reports
@@ -1879,7 +1908,33 @@ export class InitiativeController {
         return;
       }
 
-      const sql = `
+      const { projectId, statuses, status, search } = req.query as {
+        projectId?: string;
+        statuses?: string;
+        status?: string;
+        search?: string;
+      };
+      const priorityRaw = (req.query as any)?.priority as string | string[] | undefined;
+      const priorities = Array.isArray(priorityRaw)
+        ? priorityRaw
+        : priorityRaw
+          ? [priorityRaw]
+          : [];
+      const statusRaw = (req.query as any)?.status as string | string[] | undefined;
+      const requestedStatuses = (() => {
+        const out: string[] = [];
+        const fromStatuses = String(statuses || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        out.push(...fromStatuses);
+        if (Array.isArray(statusRaw)) out.push(...statusRaw);
+        else if (statusRaw) out.push(statusRaw);
+        return Array.from(new Set(out.map((s) => String(s || '').toUpperCase()).filter(Boolean)));
+      })();
+
+      const params: Array<unknown> = [orgId];
+      let sql = `
             SELECT i.*, 
                 ob.first_name as ob_first_name, ob.last_name as ob_last_name, ob.avatar_url as ob_avatar,
                 oe.first_name as oe_first_name, oe.last_name as oe_last_name, oe.avatar_url as oe_avatar
@@ -1887,10 +1942,32 @@ export class InitiativeController {
             LEFT JOIN users ob ON i.owner_business_id = ob.id
             LEFT JOIN users oe ON i.owner_execution_id = oe.id
             WHERE i.organization_id = ?
-            ORDER BY i.created_at DESC
         `;
 
-      const rows = await queryHelpers.queryAll(sql, [orgId]);
+      if (projectId) {
+        sql += ` AND i.project_id = ?`;
+        params.push(String(projectId));
+      }
+      if (priorities.length > 0) {
+        const normalized = priorities.map((p) => String(p || '').toUpperCase()).filter(Boolean);
+        if (normalized.length > 0) {
+          sql += ` AND UPPER(COALESCE(i.priority,'')) IN (${normalized.map(() => '?').join(', ')})`;
+          params.push(...normalized);
+        }
+      }
+      if (search) {
+        const like = `%${String(search).toLowerCase()}%`;
+        sql += ` AND (
+          LOWER(COALESCE(i.title, i.name, '')) LIKE ?
+          OR LOWER(COALESCE(i.summary, '')) LIKE ?
+          OR LOWER(COALESCE(i.hypothesis, '')) LIKE ?
+        )`;
+        params.push(like, like, like);
+      }
+
+      sql += ` ORDER BY i.created_at DESC`;
+
+      const rows = await queryHelpers.queryAll(sql, params);
 
       // Helper to normalize status
       const normalizePortfolioStatus = (status: string | unknown): string => {
@@ -1936,7 +2013,7 @@ export class InitiativeController {
         return n;
       };
 
-      const initiatives = rows.map((i: Record<string, unknown>) => {
+      let initiatives = rows.map((i: Record<string, unknown>) => {
         const budget =
           ((i.cost_capex as number) || 0) + ((i.cost_opex as number) || 0) ||
           (i.business_value as number) ||
@@ -1992,6 +2069,16 @@ export class InitiativeController {
           updatedAt: i.updated_at,
         };
       });
+
+      // Status filter must use normalized status to support legacy STEP* values.
+      // Supports:
+      // - ?status=REVIEW
+      // - ?status=REVIEW&status=PROMOTED (repeat param)
+      // - ?statuses=REVIEW,PROMOTED (comma)
+      if (requestedStatuses.length > 0) {
+        const set = new Set(requestedStatuses);
+        initiatives = initiatives.filter((i: any) => set.has(String(i.status || '').toUpperCase()));
+      }
 
       // Calculate stats by status
       const byStatus: Record<string, number> = {};
@@ -4947,7 +5034,7 @@ export class InitiativeController {
         try {
           const kpiCount = await queryHelpers.queryOne(
             `SELECT COUNT(*) as c FROM initiative_kpis WHERE initiative_id = ?`,
-            [id]
+            [initiativeId]
           );
           const cAll = Number((kpiCount as any)?.c || 0);
           addCheck('benefits_kpis', 'KPIs defined', cAll > 0, 'blocking');
@@ -4958,7 +5045,7 @@ export class InitiativeController {
              WHERE initiative_id = ?
                AND target_value IS NOT NULL
                AND unit IS NOT NULL`,
-            [id]
+            [initiativeId]
           );
           const cReady = Number((readyCount as any)?.c || 0);
           addCheck('benefits_kpi_targets', 'KPI targets + units defined', cReady > 0, 'warning');
@@ -5271,6 +5358,88 @@ export class InitiativeController {
         `DELETE FROM initiative_comments WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
         [commentId, initiativeId, orgId]
       );
+      res.json({ success: true });
+    }
+  );
+
+  /**
+   * POST /api/initiatives/:id/resources/ai-apply-log
+   * Record a single summary audit entry after the user applies AI proposals in Resources.
+   */
+  static logResourcesAiApply = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      const initiativeId = String(req.params.id || '');
+      const { scope, budgetAdded, fteAdded, toolsAdded, intangiblesAdded, note } = req.body as any;
+
+      if (!orgId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const initiative = (await queryHelpers.queryOne(
+        `SELECT id, organization_id, project_id, COALESCE(title, name) as title
+         FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, orgId]
+      )) as any;
+
+      // Activity log (human audit trail)
+      try {
+        await activityService.log({
+          organizationId: String(orgId),
+          userId: String(userId),
+          action: 'initiative.resources.ai_apply',
+          entityType: 'initiative',
+          entityId: initiativeId,
+          entityName: String(initiative?.title || ''),
+          metadata: {
+            scope,
+            budgetAdded,
+            fteAdded,
+            toolsAdded,
+            intangiblesAdded,
+            note: note || null,
+          },
+        });
+      } catch {
+        // never block the request
+      }
+
+      // AI audit log (governance / explainability)
+      try {
+        const AIAuditLogger = await import('../services/aiAuditLogger.js').then(
+          (m) => (m as any).default || m
+        );
+        await (AIAuditLogger as any).logInteraction({
+          userId: String(userId),
+          organizationId: String(orgId),
+          projectId: initiative?.project_id ? String(initiative.project_id) : null,
+          actionType: 'INITIATIVE_RESOURCES_APPLY',
+          actionDescription: 'User applied AI-proposed resources (additions only)',
+          contextSnapshot: {
+            initiativeId,
+            scope,
+            counts: {
+              budgetAdded: Number(budgetAdded) || 0,
+              fteAdded: Number(fteAdded) || 0,
+              toolsAdded: Number(toolsAdded) || 0,
+              intangiblesAdded: Number(intangiblesAdded) || 0,
+            },
+            note: note || null,
+          },
+          dataSourcesUsed: ['initiative', 'resources_tables'],
+          aiRole: 'ADVISOR',
+          policyLevel: 'ADVISORY',
+          confidenceLevel: 'MEDIUM',
+          aiSuggestion: null,
+          userDecision: 'APPLIED',
+          userFeedback: null,
+        });
+      } catch {
+        // ignore
+      }
+
       res.json({ success: true });
     }
   );

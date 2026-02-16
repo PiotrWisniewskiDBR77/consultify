@@ -20,6 +20,36 @@ const SQLITE_GLOBAL_KEY = '__CONSULTINITY_SQLITE_INSTANCE__';
 
 // local cache
 let dbInstance: IDatabase | null = null;
+let schemaInitPromise: Promise<void> | null = null;
+let creatingDbPromise: Promise<IDatabase> | null = null;
+const SCHEMA_INIT_GUARD_KEY = '__CONSULTINITY_SCHEMA_INIT_IN_PROGRESS__';
+
+async function ensureSchemaInitialized(db: IDatabase): Promise<void> {
+  // Skip schema work for mock DBs
+  if ((db as any)?.isMock) return;
+  // Avoid deadlocks: DatabaseInitializer calls getDatabaseAsync() internally.
+  if ((globalThis as any)[SCHEMA_INIT_GUARD_KEY]) return;
+
+  if (!schemaInitPromise) {
+    schemaInitPromise = (async () => {
+      (globalThis as any)[SCHEMA_INIT_GUARD_KEY] = true;
+      try {
+        // Lazy import to avoid eager circular deps at module load time
+        const mod = await import('./DatabaseInitializer.js');
+        if (typeof mod.initializeDatabase === 'function') {
+          await mod.initializeDatabase();
+        }
+      } catch (e) {
+        // Don't hard-crash here; callers may handle missing schema elsewhere.
+        logger.warn('[Database] Schema initialization skipped/failed:', (e as any)?.message || e);
+      } finally {
+        (globalThis as any)[SCHEMA_INIT_GUARD_KEY] = false;
+      }
+    })();
+  }
+
+  await schemaInitPromise;
+}
 
 /**
  * Ensures we have a single global instance across all module loads
@@ -68,39 +98,53 @@ export async function createDatabase(): Promise<IDatabase> {
     return existing;
   }
 
-  if (
-    process.env.MOCK_DB === 'true' ||
-    (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false' && !process.env.SQLITE_PATH)
-  ) {
-    const mockDb = (global as any).__TEST_DB_MOCK__ || createMockDatabase();
-    setToGlobal(mockDb);
-    return mockDb;
+  if (creatingDbPromise) {
+    return creatingDbPromise;
   }
 
-  if (databaseConfig.type === 'postgres') {
-    const db = PostgresDatabase as unknown as IDatabase;
+  creatingDbPromise = (async (): Promise<IDatabase> => {
+    if (
+      process.env.MOCK_DB === 'true' ||
+      (process.env.NODE_ENV === 'test' &&
+        process.env.MOCK_DB !== 'false' &&
+        !process.env.SQLITE_PATH)
+    ) {
+      const mockDb = (global as any).__TEST_DB_MOCK__ || createMockDatabase();
+      setToGlobal(mockDb);
+      return mockDb;
+    }
+
+    if (databaseConfig.type === 'postgres') {
+      const db = PostgresDatabase as unknown as IDatabase;
+      setToGlobal(db);
+      return db;
+    }
+
+    // Default to SQLite (direct sqlite3 connection)
+    const sqlite3Module: any = await import('sqlite3').then((m) => (m as any).default || m);
+    const sqlite3 = sqlite3Module?.verbose ? sqlite3Module.verbose() : sqlite3Module;
+    const sqlitePath = databaseConfig.sqlite?.path || process.env.SQLITE_PATH;
+    if (!sqlitePath) {
+      throw new Error('SQLITE_PATH is not set');
+    }
+
+    const db = (await new Promise((resolve, reject) => {
+      const handle = new sqlite3.Database(sqlitePath, (err: any) => {
+        if (err) reject(err);
+        else resolve(handle);
+      });
+    })) as IDatabase;
+
+    shimQuery(db);
     setToGlobal(db);
     return db;
+  })();
+
+  try {
+    return await creatingDbPromise;
+  } finally {
+    creatingDbPromise = null;
   }
-
-  // Default to SQLite (direct sqlite3 connection)
-  const sqlite3Module: any = await import('sqlite3').then((m) => (m as any).default || m);
-  const sqlite3 = sqlite3Module?.verbose ? sqlite3Module.verbose() : sqlite3Module;
-  const sqlitePath = databaseConfig.sqlite?.path || process.env.SQLITE_PATH;
-  if (!sqlitePath) {
-    throw new Error('SQLITE_PATH is not set');
-  }
-
-  const db = (await new Promise((resolve, reject) => {
-    const handle = new sqlite3.Database(sqlitePath, (err: any) => {
-      if (err) reject(err);
-      else resolve(handle);
-    });
-  })) as IDatabase;
-
-  shimQuery(db);
-  setToGlobal(db);
-  return db;
 }
 
 /**
@@ -109,9 +153,12 @@ export async function createDatabase(): Promise<IDatabase> {
 export async function getDatabaseAsync(): Promise<IDatabase> {
   const existing = getFromGlobal();
   if (existing && !(existing as any).__CLOSED__) {
+    await ensureSchemaInitialized(existing);
     return existing;
   }
-  return createDatabase();
+  const db = await createDatabase();
+  await ensureSchemaInitialized(db);
+  return db;
 }
 
 /**
@@ -125,6 +172,14 @@ export function getDatabaseInstance(): IDatabase {
 
   if (dbInstance && !(dbInstance as any).__CLOSED__) {
     return dbInstance;
+  }
+
+  // If configuration is Postgres, never fall back to SQLite sync open.
+  // This prevents accidental local SQLite usage in production paths.
+  if (databaseConfig.type === 'postgres') {
+    const db = PostgresDatabase as unknown as IDatabase;
+    setToGlobal(db);
+    return db;
   }
 
   if (
