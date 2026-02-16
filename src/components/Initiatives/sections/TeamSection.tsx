@@ -14,8 +14,17 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
   expanded,
   onToggle,
 }) => {
-  const { users, ownerId, setOwnerId, sponsorId, setSponsorId, ownerName, sponsorName, isPolish } =
-    useInitiativeContext();
+  const {
+    users,
+    ownerId,
+    setOwnerId,
+    sponsorId,
+    setSponsorId,
+    ownerName,
+    sponsorName,
+    isPolish,
+    canEditOwner,
+  } = useInitiativeContext();
 
   return (
     <CollapsibleSection
@@ -45,8 +54,17 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
               : 'Responsible for initiative delivery, makes operational decisions and reports progress.'}
           </p>
           <select
+            id="initiative-team-owner"
             value={ownerId}
             onChange={(e) => setOwnerId(e.target.value)}
+            disabled={!canEditOwner}
+            title={
+              !canEditOwner
+                ? isPolish
+                  ? 'Nie masz uprawnień do edycji właściciela na tym etapie.'
+                  : 'You cannot edit owner at this stage.'
+                : undefined
+            }
             className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400"
           >
             <option value="">{isPolish ? 'Wybierz właściciela...' : 'Select owner...'}</option>
@@ -75,8 +93,17 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
               : 'Business sponsor, provides resources and support, removes organizational obstacles.'}
           </p>
           <select
+            id="initiative-team-sponsor"
             value={sponsorId}
             onChange={(e) => setSponsorId(e.target.value)}
+            disabled={!canEditOwner}
+            title={
+              !canEditOwner
+                ? isPolish
+                  ? 'Nie masz uprawnień do edycji sponsora na tym etapie.'
+                  : 'You cannot edit sponsor at this stage.'
+                : undefined
+            }
             className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
           >
             <option value="">{isPolish ? 'Wybierz sponsora...' : 'Select sponsor...'}</option>

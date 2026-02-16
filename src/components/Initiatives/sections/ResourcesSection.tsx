@@ -27,6 +27,8 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { z } from 'zod';
 
 import { Api } from '@/services/api';
 
@@ -108,6 +110,15 @@ type ResourcesAiProposal = {
   intangibleAdd: IntangibleDraft[];
 };
 
+const ResourcesAiProposalSchema = z.object({
+  scope: z.enum(['budget', 'fte', 'tools', 'intangibles', 'all']),
+  note: z.string().optional(),
+  budgetAdd: z.array(z.any()),
+  fteAdd: z.array(z.any()),
+  toolsAdd: z.array(z.any()),
+  intangibleAdd: z.array(z.any()),
+});
+
 const safeJsonParse = (raw: string): any | null => {
   const text = String(raw || '').trim();
   if (!text) return null;
@@ -169,7 +180,7 @@ const TableAIMenu: React.FC<{
       </button>
       {isOpen && (
         <div
-          className="absolute right-0 top-7 z-30 w-40 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30"
+          className="absolute right-0 top-7 z-30 w-48 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30"
           onClick={(e) => e.stopPropagation()}
         >
           {actions.map((a) => (
@@ -179,7 +190,7 @@ const TableAIMenu: React.FC<{
                 onClose();
                 a.onClick();
               }}
-              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors whitespace-nowrap"
             >
               {isPolish ? a.label.pl : a.label.en}
             </button>
@@ -231,6 +242,7 @@ export const ResourcesSection: React.FC = () => {
   const {
     isPolish,
     initiative,
+    initiativeId,
     tasks,
     decisions,
     raidItems,
@@ -253,6 +265,9 @@ export const ResourcesSection: React.FC = () => {
     resourcesAiRequest,
     clearResourcesAiRequest,
   } = useInitiativeContext();
+
+  const aiLanguage = isPolish ? 'pl' : 'en';
+  const targetLanguageName = isPolish ? 'Polish' : 'English';
 
   const [aiBusy, setAiBusy] = useState(false);
   const [aiProposal, setAiProposal] = useState<ResourcesAiProposal | null>(null);
@@ -335,6 +350,14 @@ export const ResourcesSection: React.FC = () => {
     return allowed.has(s) ? s : 'member';
   }, []);
 
+  const normalizeIsoDate = useCallback((v: any): string | undefined => {
+    const s = String(v || '').trim();
+    if (!s) return undefined;
+    // Accept ISO 8601 date prefix (YYYY-MM-DD) and drop any time part.
+    const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+    return m?.[1] || undefined;
+  }, []);
+
   const buildCommonContext = useCallback((): string => {
     const tasksCompact = (tasks || []).slice(0, 25).map((t: any) => ({
       id: String(t?.id),
@@ -376,22 +399,60 @@ export const ResourcesSection: React.FC = () => {
 
   const callAi = useCallback(
     async (input: { fieldLabel: string; systemInstruction: string; contextText: string }) => {
-      const res = await Api.post('/ai/refine-text', {
+      const artifactContext = {
+        title: initiative?.name || '',
+        status: initiative?.status || '',
+        priority: initiative?.priority || '',
+        type: 'initiative',
+      };
+
+      const runOnce = async (payload: { text: string; systemInstruction: string }) => {
+        const res = await Api.post('/ai/refine-text', {
+          text: payload.text,
+          mode: 'generate',
+          systemInstruction: payload.systemInstruction,
+          fieldLabel: input.fieldLabel,
+          artifactContext,
+          language: aiLanguage,
+        });
+        const raw = String(res?.text || '');
+        const parsed = safeJsonParse(raw);
+        return { raw, parsed };
+      };
+
+      // 1) First attempt
+      const first = await runOnce({
         text: input.contextText,
-        mode: 'generate',
         systemInstruction: input.systemInstruction,
-        fieldLabel: input.fieldLabel,
-        artifactContext: {
-          title: initiative?.name || '',
-          status: initiative?.status || '',
-          priority: initiative?.priority || '',
-          type: 'initiative',
-        },
-        language: 'en',
       });
-      return safeJsonParse(String(res?.text || ''));
+      if (first.parsed && typeof first.parsed === 'object' && !Array.isArray(first.parsed))
+        return first.parsed;
+
+      // 2) Auto-repair attempt (strict JSON only)
+      const repairSystemInstruction = [
+        input.systemInstruction,
+        ``,
+        `REPAIR MODE:`,
+        `You previously returned an invalid response (not valid JSON / wrong shape).`,
+        `Your job is to REPAIR it into VALID JSON matching the schema already provided above.`,
+        `Rules:`,
+        `- Return ONLY valid JSON (no markdown, no code fences, no commentary).`,
+        `- Do NOT add extra keys beyond the schema.`,
+        `- If you are unsure, return the minimal valid structure with empty "add" arrays.`,
+      ].join('\n');
+
+      const repairText = [input.contextText, ``, `[MODEL OUTPUT TO REPAIR]`, first.raw].join('\n');
+
+      const second = await runOnce({
+        text: repairText,
+        systemInstruction: repairSystemInstruction,
+      });
+      if (second.parsed && typeof second.parsed === 'object' && !Array.isArray(second.parsed))
+        return second.parsed;
+
+      return null;
     },
-    [initiative]
+    [aiLanguage, initiative]
   );
 
   const openProposal = useCallback((proposal: ResourcesAiProposal) => {
@@ -410,7 +471,9 @@ export const ResourcesSection: React.FC = () => {
       `You are a senior PMO / finance partner.`,
       `Propose exactly ONE additional Budget line item for this initiative.`,
       ``,
-      `OUTPUT LANGUAGE: English only. Translate any non-English context to English.`,
+      `You will receive initiative context and existing rows in the user message. Use that context; do not guess.`,
+      ``,
+      `OUTPUT LANGUAGE: ${targetLanguageName} only. Translate as needed.`,
       ``,
       `Rules:`,
       `- Do NOT invent numbers. Use numeric amounts ONLY if clearly present in context.`,
@@ -424,76 +487,96 @@ export const ResourcesSection: React.FC = () => {
       `Return ONLY valid JSON (no markdown, no code fences, no commentary).`,
       `Schema: { "category": string, "costType": "CAPEX"|"OPEX", "amount": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "description"?: string }`,
     ].join('\n');
-  }, []);
+  }, [targetLanguageName]);
 
-  const buildBudgetAnalyzeInstruction = useCallback((isEmpty: boolean): string => {
-    return [
-      `You are a senior PMO / finance partner.`,
-      `Review the existing Budget table and propose ADDITIONS ONLY (no removals).`,
-      isEmpty
-        ? `The table is empty. Propose an initial complete set (5–10 items) that likely applies to this initiative.`
-        : `The table has existing rows. Propose 0–6 additional items ONLY if truly missing.`,
-      ``,
-      `OUTPUT LANGUAGE: English only. Translate any non-English context to English.`,
-      ``,
-      `Rules:`,
-      `- Never remove or edit existing rows. Only propose additions.`,
-      `- Do NOT invent numbers. Use numeric amounts ONLY if clearly present in context.`,
-      `- If amount is unknown, set amount = 0 and add "[confirm]" placeholders in description.`,
-      `- Avoid duplicates of existing items (same intent).`,
-      ``,
-      `Return ONLY valid JSON (no markdown, no code fences, no commentary).`,
-      `Schema: { "add": [{ "category": string, "costType": "CAPEX"|"OPEX", "amount": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "description"?: string, "rationale"?: string }], "note"?: string }`,
-    ].join('\n');
-  }, []);
+  const buildBudgetAnalyzeInstruction = useCallback(
+    (isEmpty: boolean): string => {
+      return [
+        `You are a senior PMO / finance partner.`,
+        `Review the existing Budget table and propose ADDITIONS ONLY (no removals).`,
+        isEmpty
+          ? `The table is empty. Propose an initial complete set (5–10 items) that likely applies to this initiative.`
+          : `The table has existing rows. Propose 0–6 additional items ONLY if truly missing.`,
+        ``,
+        `You will receive initiative context and existing rows in the user message. Use that context; do not guess.`,
+        ``,
+        `OUTPUT LANGUAGE: ${targetLanguageName} only. Translate as needed.`,
+        ``,
+        `Rules:`,
+        `- Never remove or edit existing rows. Only propose additions.`,
+        `- Do NOT invent numbers. Use numeric amounts ONLY if clearly present in context.`,
+        `- If amount is unknown, set amount = 0 and add "[confirm]" placeholders in description.`,
+        `- Avoid duplicates of existing items (same intent).`,
+        `- category must be one of: personnel | technology | consulting | training | infrastructure | licenses | other`,
+        `- costType must be CAPEX or OPEX.`,
+        `- currency must be one of: PLN | EUR | USD | GBP (prefer the existing table currency if present; otherwise PLN).`,
+        ``,
+        `Return ONLY valid JSON (no markdown, no code fences, no commentary).`,
+        `If nothing is missing, return { "add": [] } (optional "note").`,
+        `Schema: { "add": [{ "category": string, "costType": "CAPEX"|"OPEX", "amount": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "description"?: string, "rationale"?: string }], "note"?: string }`,
+      ].join('\n');
+    },
+    [targetLanguageName]
+  );
 
   const buildFteAddOneInstruction = useCallback((): string => {
     return [
       `You are a senior PMO delivery lead.`,
       `Propose exactly ONE additional Team/FTE allocation row for this initiative.`,
       ``,
-      `OUTPUT LANGUAGE: English only. Translate any non-English context to English.`,
+      `You will receive initiative context and existing rows in the user message. Use that context; do not guess.`,
+      ``,
+      `OUTPUT LANGUAGE: ${targetLanguageName} only. Translate as needed.`,
       ``,
       `Rules:`,
       `- Do NOT invent real people if they are not in context. If uncertain, use a role placeholder name like "Process SME (TBD)".`,
       `- allocationPercentage must be an integer 10–100.`,
       `- role must be one of: lead | member | consultant | stakeholder`,
-      `- startDate/endDate: only include if present in context, otherwise omit.`,
+      `- startDate/endDate: include only if present in context; otherwise omit. If provided, use ISO 8601 format "YYYY-MM-DD".`,
       `- Avoid duplicates of existing rows.`,
       ``,
       `Return ONLY valid JSON.`,
-      `Schema: { "name": string, "role": "lead"|"member"|"consultant"|"stakeholder", "allocationPercentage": number, "startDate"?: string, "endDate"?: string, "notes"?: string }`,
+      `Schema: { "name": string, "role": "lead"|"member"|"consultant"|"stakeholder", "allocationPercentage": number, "startDate"?: "YYYY-MM-DD", "endDate"?: "YYYY-MM-DD", "notes"?: string }`,
     ].join('\n');
-  }, []);
+  }, [targetLanguageName]);
 
-  const buildFteAnalyzeInstruction = useCallback((isEmpty: boolean): string => {
-    return [
-      `You are a senior PMO delivery lead.`,
-      `Review the existing Team/FTE table and propose ADDITIONS ONLY (no removals).`,
-      isEmpty
-        ? `The table is empty. Propose an initial lean allocation plan (4–8 rows).`
-        : `The table has existing rows. Propose 0–6 additional rows only if key capabilities are missing.`,
-      ``,
-      `OUTPUT LANGUAGE: English only. Translate any non-English context to English.`,
-      ``,
-      `Rules:`,
-      `- Never remove or edit existing rows. Only additions.`,
-      `- Do NOT invent real people if not in context; use "TBD" placeholders.`,
-      `- allocationPercentage must be an integer 10–100.`,
-      `- role must be one of: lead | member | consultant | stakeholder`,
-      `- Avoid duplicates.`,
-      ``,
-      `Return ONLY valid JSON.`,
-      `Schema: { "add": [{ "name": string, "role": "lead"|"member"|"consultant"|"stakeholder", "allocationPercentage": number, "startDate"?: string, "endDate"?: string, "notes"?: string, "rationale"?: string }], "note"?: string }`,
-    ].join('\n');
-  }, []);
+  const buildFteAnalyzeInstruction = useCallback(
+    (isEmpty: boolean): string => {
+      return [
+        `You are a senior PMO delivery lead.`,
+        `Review the existing Team/FTE table and propose ADDITIONS ONLY (no removals).`,
+        isEmpty
+          ? `The table is empty. Propose an initial lean allocation plan (4–8 rows).`
+          : `The table has existing rows. Propose 0–6 additional rows only if key capabilities are missing.`,
+        ``,
+        `You will receive initiative context and existing rows in the user message. Use that context; do not guess.`,
+        ``,
+        `OUTPUT LANGUAGE: ${targetLanguageName} only. Translate as needed.`,
+        ``,
+        `Rules:`,
+        `- Never remove or edit existing rows. Only additions.`,
+        `- Do NOT invent real people if not in context; use "TBD" placeholders.`,
+        `- allocationPercentage must be an integer 10–100.`,
+        `- role must be one of: lead | member | consultant | stakeholder`,
+        `- startDate/endDate: include only if present in context; otherwise omit. If provided, use ISO 8601 format "YYYY-MM-DD".`,
+        `- Avoid duplicates.`,
+        ``,
+        `Return ONLY valid JSON.`,
+        `If nothing is missing, return { "add": [] } (optional "note").`,
+        `Schema: { "add": [{ "name": string, "role": "lead"|"member"|"consultant"|"stakeholder", "allocationPercentage": number, "startDate"?: string, "endDate"?: string, "notes"?: string, "rationale"?: string }], "note"?: string }`,
+      ].join('\n');
+    },
+    [targetLanguageName]
+  );
 
   const buildToolsAddOneInstruction = useCallback((): string => {
     return [
       `You are a senior technical delivery lead.`,
       `Propose exactly ONE additional tool/infrastructure item needed for this initiative.`,
       ``,
-      `OUTPUT LANGUAGE: English only. Translate any non-English context to English.`,
+      `You will receive initiative context and existing rows in the user message. Use that context; do not guess.`,
+      ``,
+      `OUTPUT LANGUAGE: ${targetLanguageName} only. Translate as needed.`,
       ``,
       `Rules:`,
       `- Do NOT invent vendor names or costs unless present in context.`,
@@ -504,71 +587,91 @@ export const ResourcesSection: React.FC = () => {
       `- Avoid duplicates.`,
       ``,
       `Return ONLY valid JSON.`,
-      `Schema: { "name": string, "category": string, "vendor"?: string, "licenseCost": number, "licenseType": string, "status": string, "notes"?: string }`,
+      `Schema: { "name": string, "category": "software"|"hardware"|"cloud"|"platform"|"other", "vendor"?: string, "licenseCost": number, "licenseType": "subscription"|"perpetual"|"open_source"|"internal", "status": "planned"|"active"|"deprecated", "notes"?: string }`,
     ].join('\n');
-  }, []);
+  }, [targetLanguageName]);
 
-  const buildToolsAnalyzeInstruction = useCallback((isEmpty: boolean): string => {
-    return [
-      `You are a senior technical delivery lead.`,
-      `Review the existing Tools & Infrastructure table and propose ADDITIONS ONLY (no removals).`,
-      isEmpty
-        ? `The table is empty. Propose an initial set (3–8 items).`
-        : `The table has existing rows. Propose 0–5 additions only if clearly missing.`,
-      ``,
-      `OUTPUT LANGUAGE: English only. Translate any non-English context to English.`,
-      ``,
-      `Rules:`,
-      `- Never remove or edit existing rows. Only additions.`,
-      `- Do NOT invent costs/vendors unless present.`,
-      `- If cost unknown, set licenseCost = 0 and include "[confirm]" placeholders in notes.`,
-      `- Avoid duplicates.`,
-      ``,
-      `Return ONLY valid JSON.`,
-      `Schema: { "add": [{ "name": string, "category": string, "vendor"?: string, "licenseCost": number, "licenseType": string, "status": string, "notes"?: string, "rationale"?: string }], "note"?: string }`,
-    ].join('\n');
-  }, []);
+  const buildToolsAnalyzeInstruction = useCallback(
+    (isEmpty: boolean): string => {
+      return [
+        `You are a senior technical delivery lead.`,
+        `Review the existing Tools & Infrastructure table and propose ADDITIONS ONLY (no removals).`,
+        isEmpty
+          ? `The table is empty. Propose an initial set (3–8 items).`
+          : `The table has existing rows. Propose 0–5 additions only if clearly missing.`,
+        ``,
+        `You will receive initiative context and existing rows in the user message. Use that context; do not guess.`,
+        ``,
+        `OUTPUT LANGUAGE: ${targetLanguageName} only. Translate as needed.`,
+        ``,
+        `Rules:`,
+        `- Never remove or edit existing rows. Only additions.`,
+        `- Do NOT invent costs/vendors unless present.`,
+        `- If cost unknown, set licenseCost = 0 and include "[confirm]" placeholders in notes.`,
+        `- category must be one of: software | hardware | cloud | platform | other`,
+        `- licenseType must be one of: subscription | perpetual | open_source | internal`,
+        `- status must be one of: planned | active | deprecated`,
+        `- Avoid duplicates.`,
+        ``,
+        `Return ONLY valid JSON.`,
+        `If nothing is missing, return { "add": [] } (optional "note").`,
+        `Schema: { "add": [{ "name": string, "category": "software"|"hardware"|"cloud"|"platform"|"other", "vendor"?: string, "licenseCost": number, "licenseType": "subscription"|"perpetual"|"open_source"|"internal", "status": "planned"|"active"|"deprecated", "notes"?: string, "rationale"?: string }], "note"?: string }`,
+      ].join('\n');
+    },
+    [targetLanguageName]
+  );
 
   const buildIntangibleAddOneInstruction = useCallback((): string => {
     return [
       `You are a senior PMO / enablement lead.`,
       `Propose exactly ONE additional intangible asset item (license/training/certification/knowledge/IP) for this initiative.`,
       ``,
-      `OUTPUT LANGUAGE: English only. Translate any non-English context to English.`,
+      `You will receive initiative context and existing rows in the user message. Use that context; do not guess.`,
+      ``,
+      `OUTPUT LANGUAGE: ${targetLanguageName} only. Translate as needed.`,
       ``,
       `Rules:`,
       `- Do NOT invent providers or costs unless present in context.`,
       `- If cost is unknown, set cost = 0 and use notes with "[confirm]" placeholders.`,
       `- assetType must be one of: license | training | certification | knowledge | ip | legal_right | other`,
       `- status must be one of: planned | active | expired | renewed`,
-      `- validFrom/validUntil only if present in context; otherwise omit.`,
+      `- validFrom/validUntil: include only if present in context; otherwise omit. If provided, use ISO 8601 format "YYYY-MM-DD".`,
       `- Avoid duplicates.`,
       ``,
       `Return ONLY valid JSON.`,
-      `Schema: { "assetType": string, "name": string, "provider"?: string, "cost": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "validFrom"?: string, "validUntil"?: string, "status": string, "beneficiaries"?: string, "notes"?: string }`,
+      `Schema: { "assetType": "license"|"training"|"certification"|"knowledge"|"ip"|"legal_right"|"other", "name": string, "provider"?: string, "cost": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "validFrom"?: "YYYY-MM-DD", "validUntil"?: "YYYY-MM-DD", "status": "planned"|"active"|"expired"|"renewed", "beneficiaries"?: string, "notes"?: string }`,
     ].join('\n');
-  }, []);
+  }, [targetLanguageName]);
 
-  const buildIntangibleAnalyzeInstruction = useCallback((isEmpty: boolean): string => {
-    return [
-      `You are a senior PMO / enablement lead.`,
-      `Review the existing Intangibles table and propose ADDITIONS ONLY (no removals).`,
-      isEmpty
-        ? `The table is empty. Propose an initial set (2–6 items).`
-        : `The table has existing rows. Propose 0–4 additions only if clearly missing.`,
-      ``,
-      `OUTPUT LANGUAGE: English only. Translate any non-English context to English.`,
-      ``,
-      `Rules:`,
-      `- Never remove or edit existing rows. Only additions.`,
-      `- Do NOT invent providers/costs/dates unless present in context.`,
-      `- If cost unknown, set cost = 0 and include "[confirm]" placeholders.`,
-      `- Avoid duplicates.`,
-      ``,
-      `Return ONLY valid JSON.`,
-      `Schema: { "add": [{ "assetType": string, "name": string, "provider"?: string, "cost": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "validFrom"?: string, "validUntil"?: string, "status": string, "beneficiaries"?: string, "notes"?: string, "rationale"?: string }], "note"?: string }`,
-    ].join('\n');
-  }, []);
+  const buildIntangibleAnalyzeInstruction = useCallback(
+    (isEmpty: boolean): string => {
+      return [
+        `You are a senior PMO / enablement lead.`,
+        `Review the existing Intangibles table and propose ADDITIONS ONLY (no removals).`,
+        isEmpty
+          ? `The table is empty. Propose an initial set (2–6 items).`
+          : `The table has existing rows. Propose 0–4 additions only if clearly missing.`,
+        ``,
+        `You will receive initiative context and existing rows in the user message. Use that context; do not guess.`,
+        ``,
+        `OUTPUT LANGUAGE: ${targetLanguageName} only. Translate as needed.`,
+        ``,
+        `Rules:`,
+        `- Never remove or edit existing rows. Only additions.`,
+        `- Do NOT invent providers/costs/dates unless present in context.`,
+        `- If cost unknown, set cost = 0 and include "[confirm]" placeholders.`,
+        `- assetType must be one of: license | training | certification | knowledge | ip | legal_right | other`,
+        `- status must be one of: planned | active | expired | renewed`,
+        `- validFrom/validUntil: include only if present in context; otherwise omit. If provided, use ISO 8601 format "YYYY-MM-DD".`,
+        `- Avoid duplicates.`,
+        ``,
+        `Return ONLY valid JSON.`,
+        `If nothing is missing, return { "add": [] } (optional "note").`,
+        `Schema: { "add": [{ "assetType": "license"|"training"|"certification"|"knowledge"|"ip"|"legal_right"|"other", "name": string, "provider"?: string, "cost": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "validFrom"?: "YYYY-MM-DD", "validUntil"?: "YYYY-MM-DD", "status": "planned"|"active"|"expired"|"renewed", "beneficiaries"?: string, "notes"?: string, "rationale"?: string }], "note"?: string }`,
+      ].join('\n');
+    },
+    [targetLanguageName]
+  );
 
   const analyzeAllInstruction = useCallback(
     (flags: {
@@ -587,13 +690,18 @@ export const ResourcesSection: React.FC = () => {
           ? `All tables are empty. Generate a full initial fill for each table within the limits.`
           : `Some tables already have rows. For each table propose ADDITIONS ONLY if truly missing; never remove anything.`,
         ``,
-        `OUTPUT LANGUAGE: English only. Translate any non-English context to English.`,
+        `You will receive initiative context and existing rows in the user message. Use that context; do not guess.`,
+        ``,
+        `OUTPUT LANGUAGE: ${targetLanguageName} only. Translate as needed.`,
         ``,
         `Rules:`,
         `- Never remove or edit existing rows; propose additions only.`,
         `- Do NOT invent numbers/providers/vendors/dates unless present in context.`,
         `- If a numeric field is unknown, set it to 0 and add "[confirm]" placeholders in description/notes.`,
         `- Avoid duplicates vs the existing rows provided.`,
+        `- Dates (startDate/endDate/validFrom/validUntil) must be ISO 8601 "YYYY-MM-DD" if provided.`,
+        `- Output MUST NOT contain "remove", "reorder", "update", or any edit instructions. Additions only.`,
+        `- Output MUST contain ONLY these keys: budget, teamFte, tools, intangibles, note (optional). No extra keys.`,
         ``,
         `Limits:`,
         `- Budget add: ${flags.budgetEmpty ? '5–10' : '0–6'}`,
@@ -602,16 +710,17 @@ export const ResourcesSection: React.FC = () => {
         `- Intangibles add: ${flags.intangibleEmpty ? '2–6' : '0–4'}`,
         ``,
         `Return ONLY valid JSON.`,
+        `If nothing is missing, return: { "budget": { "add": [] }, "teamFte": { "add": [] }, "tools": { "add": [] }, "intangibles": { "add": [] } }`,
         `Schema: {`,
-        `  "budget": { "add": [{ "category": string, "costType": "CAPEX"|"OPEX", "amount": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "description"?: string, "rationale"?: string }] },`,
-        `  "teamFte": { "add": [{ "name": string, "role": "lead"|"member"|"consultant"|"stakeholder", "allocationPercentage": number, "startDate"?: string, "endDate"?: string, "notes"?: string, "rationale"?: string }] },`,
-        `  "tools": { "add": [{ "name": string, "category": string, "vendor"?: string, "licenseCost": number, "licenseType": string, "status": string, "notes"?: string, "rationale"?: string }] },`,
-        `  "intangibles": { "add": [{ "assetType": string, "name": string, "provider"?: string, "cost": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "validFrom"?: string, "validUntil"?: string, "status": string, "beneficiaries"?: string, "notes"?: string, "rationale"?: string }] },`,
+        `  "budget": { "add": [{ "category": "personnel"|"technology"|"consulting"|"training"|"infrastructure"|"licenses"|"other", "costType": "CAPEX"|"OPEX", "amount": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "description"?: string, "rationale"?: string }] },`,
+        `  "teamFte": { "add": [{ "name": string, "role": "lead"|"member"|"consultant"|"stakeholder", "allocationPercentage": number, "startDate"?: "YYYY-MM-DD", "endDate"?: "YYYY-MM-DD", "notes"?: string, "rationale"?: string }] },`,
+        `  "tools": { "add": [{ "name": string, "category": "software"|"hardware"|"cloud"|"platform"|"other", "vendor"?: string, "licenseCost": number, "licenseType": "subscription"|"perpetual"|"open_source"|"internal", "status": "planned"|"active"|"deprecated", "notes"?: string, "rationale"?: string }] },`,
+        `  "intangibles": { "add": [{ "assetType": "license"|"training"|"certification"|"knowledge"|"ip"|"legal_right"|"other", "name": string, "provider"?: string, "cost": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "validFrom"?: "YYYY-MM-DD", "validUntil"?: "YYYY-MM-DD", "status": "planned"|"active"|"expired"|"renewed", "beneficiaries"?: string, "notes"?: string, "rationale"?: string }] },`,
         `  "note"?: string`,
         `}`,
       ].join('\n');
     },
-    []
+    [targetLanguageName]
   );
 
   const proposeForTable = useCallback(
@@ -727,13 +836,16 @@ export const ResourcesSection: React.FC = () => {
           proposal.budgetAdd = addRaw
             .map((x: any) => ({
               category: normalizeBudgetCategory(x?.category),
-              costType: String(x?.costType || 'OPEX').toUpperCase() === 'CAPEX' ? 'CAPEX' : 'OPEX',
+              costType:
+                String(x?.costType || 'OPEX').toUpperCase() === 'CAPEX'
+                  ? ('CAPEX' as const)
+                  : ('OPEX' as const),
               amount: Number(x?.amount) || 0,
               currency: normalizeCurrency(x?.currency),
               description: x?.description ? String(x.description).trim() : undefined,
               rationale: x?.rationale ? String(x.rationale).trim() : undefined,
             }))
-            .filter((x) => x.category && x.costType);
+            .filter((x: any) => x.category && x.costType);
         }
 
         if (table === 'fte') {
@@ -747,12 +859,12 @@ export const ResourcesSection: React.FC = () => {
                 10,
                 Math.min(100, Math.round(Number(x?.allocationPercentage) || 50))
               ),
-              startDate: x?.startDate ? String(x.startDate).trim() : undefined,
-              endDate: x?.endDate ? String(x.endDate).trim() : undefined,
+              startDate: normalizeIsoDate(x?.startDate),
+              endDate: normalizeIsoDate(x?.endDate),
               notes: x?.notes ? String(x.notes).trim() : undefined,
               rationale: x?.rationale ? String(x.rationale).trim() : undefined,
             }))
-            .filter((x) => x.name);
+            .filter((x: any) => x.name);
         }
 
         if (table === 'tools') {
@@ -769,7 +881,7 @@ export const ResourcesSection: React.FC = () => {
               notes: x?.notes ? String(x.notes).trim() : undefined,
               rationale: x?.rationale ? String(x.rationale).trim() : undefined,
             }))
-            .filter((x) => x.name);
+            .filter((x: any) => x.name);
         }
 
         if (table === 'intangibles') {
@@ -782,14 +894,14 @@ export const ResourcesSection: React.FC = () => {
               provider: x?.provider ? String(x.provider).trim() : undefined,
               cost: Number(x?.cost) || 0,
               currency: normalizeCurrency(x?.currency),
-              validFrom: x?.validFrom ? String(x.validFrom).trim() : undefined,
-              validUntil: x?.validUntil ? String(x.validUntil).trim() : undefined,
+              validFrom: normalizeIsoDate(x?.validFrom),
+              validUntil: normalizeIsoDate(x?.validUntil),
               status: normalizeIntangibleStatus(x?.status),
               beneficiaries: x?.beneficiaries ? String(x.beneficiaries).trim() : undefined,
               notes: x?.notes ? String(x.notes).trim() : undefined,
               rationale: x?.rationale ? String(x.rationale).trim() : undefined,
             }))
-            .filter((x) => x.name);
+            .filter((x: any) => x.name);
         }
 
         const hasAny =
@@ -798,7 +910,23 @@ export const ResourcesSection: React.FC = () => {
           proposal.toolsAdd.length > 0 ||
           proposal.intangibleAdd.length > 0;
 
-        if (!hasAny) return;
+        if (!hasAny) {
+          toast(
+            isPolish
+              ? 'AI nie zaproponowało dodatków dla tej tabeli.'
+              : 'AI suggested no additions for this table.'
+          );
+          return;
+        }
+        const check = ResourcesAiProposalSchema.safeParse(proposal);
+        if (!check.success) {
+          toast.error(
+            isPolish
+              ? 'Odpowiedź AI ma nieprawidłowy format (nie można zastosować).'
+              : 'AI response has invalid format (cannot apply).'
+          );
+          return;
+        }
         openProposal(proposal);
       } finally {
         setAiBusy(false);
@@ -821,6 +949,7 @@ export const ResourcesSection: React.FC = () => {
       normalizeBudgetCategory,
       normalizeCurrency,
       normalizeFteRole,
+      normalizeIsoDate,
       normalizeIntangibleStatus,
       normalizeIntangibleType,
       normalizeLicenseType,
@@ -927,13 +1056,16 @@ export const ResourcesSection: React.FC = () => {
       proposal.budgetAdd = proposal.budgetAdd
         .map((x: any) => ({
           category: normalizeBudgetCategory(x?.category),
-          costType: String(x?.costType || 'OPEX').toUpperCase() === 'CAPEX' ? 'CAPEX' : 'OPEX',
+          costType:
+            String(x?.costType || 'OPEX').toUpperCase() === 'CAPEX'
+              ? ('CAPEX' as const)
+              : ('OPEX' as const),
           amount: Number(x?.amount) || 0,
           currency: normalizeCurrency(x?.currency),
           description: x?.description ? String(x.description).trim() : undefined,
           rationale: x?.rationale ? String(x.rationale).trim() : undefined,
         }))
-        .filter((x) => x.category);
+        .filter((x: any) => x.category);
 
       proposal.fteAdd = proposal.fteAdd
         .map((x: any) => ({
@@ -943,12 +1075,12 @@ export const ResourcesSection: React.FC = () => {
             10,
             Math.min(100, Math.round(Number(x?.allocationPercentage) || 50))
           ),
-          startDate: x?.startDate ? String(x.startDate).trim() : undefined,
-          endDate: x?.endDate ? String(x.endDate).trim() : undefined,
+          startDate: normalizeIsoDate(x?.startDate),
+          endDate: normalizeIsoDate(x?.endDate),
           notes: x?.notes ? String(x.notes).trim() : undefined,
           rationale: x?.rationale ? String(x.rationale).trim() : undefined,
         }))
-        .filter((x) => x.name);
+        .filter((x: any) => x.name);
 
       proposal.toolsAdd = proposal.toolsAdd
         .map((x: any) => ({
@@ -961,7 +1093,7 @@ export const ResourcesSection: React.FC = () => {
           notes: x?.notes ? String(x.notes).trim() : undefined,
           rationale: x?.rationale ? String(x.rationale).trim() : undefined,
         }))
-        .filter((x) => x.name);
+        .filter((x: any) => x.name);
 
       proposal.intangibleAdd = proposal.intangibleAdd
         .map((x: any) => ({
@@ -970,21 +1102,138 @@ export const ResourcesSection: React.FC = () => {
           provider: x?.provider ? String(x.provider).trim() : undefined,
           cost: Number(x?.cost) || 0,
           currency: normalizeCurrency(x?.currency),
-          validFrom: x?.validFrom ? String(x.validFrom).trim() : undefined,
-          validUntil: x?.validUntil ? String(x.validUntil).trim() : undefined,
+          validFrom: normalizeIsoDate(x?.validFrom),
+          validUntil: normalizeIsoDate(x?.validUntil),
           status: normalizeIntangibleStatus(x?.status),
           beneficiaries: x?.beneficiaries ? String(x.beneficiaries).trim() : undefined,
           notes: x?.notes ? String(x.notes).trim() : undefined,
           rationale: x?.rationale ? String(x.rationale).trim() : undefined,
         }))
-        .filter((x) => x.name);
+        .filter((x: any) => x.name);
+
+      // Deduplicate vs existing rows — CTA should propose only what to ADD.
+      const existingBudgetKeys = new Set(
+        budgetItems.map((b) =>
+          [
+            String(b.category || '')
+              .trim()
+              .toLowerCase(),
+            String(b.costType || '')
+              .trim()
+              .toUpperCase(),
+            String(b.description || '')
+              .trim()
+              .toLowerCase(),
+          ].join('|')
+        )
+      );
+      const existingFteKeys = new Set(
+        resourceItems.map((r) =>
+          [
+            String(r.name || '')
+              .trim()
+              .toLowerCase(),
+            String(r.role || '')
+              .trim()
+              .toLowerCase(),
+          ].join('|')
+        )
+      );
+      const existingToolKeys = new Set(
+        toolItems.map((t) =>
+          [
+            String(t.name || '')
+              .trim()
+              .toLowerCase(),
+            String(t.category || '')
+              .trim()
+              .toLowerCase(),
+          ].join('|')
+        )
+      );
+      const existingIntangibleKeys = new Set(
+        intangibleAssets.map((a) =>
+          [
+            String(a.assetType || '')
+              .trim()
+              .toLowerCase(),
+            String(a.name || '')
+              .trim()
+              .toLowerCase(),
+          ].join('|')
+        )
+      );
+
+      proposal.budgetAdd = proposal.budgetAdd.filter((b) => {
+        const key = [
+          String(b.category || '')
+            .trim()
+            .toLowerCase(),
+          String(b.costType || '')
+            .trim()
+            .toUpperCase(),
+          String(b.description || '')
+            .trim()
+            .toLowerCase(),
+        ].join('|');
+        return !existingBudgetKeys.has(key);
+      });
+      proposal.fteAdd = proposal.fteAdd.filter((r) => {
+        const key = [
+          String(r.name || '')
+            .trim()
+            .toLowerCase(),
+          String(r.role || '')
+            .trim()
+            .toLowerCase(),
+        ].join('|');
+        return !existingFteKeys.has(key);
+      });
+      proposal.toolsAdd = proposal.toolsAdd.filter((t) => {
+        const key = [
+          String(t.name || '')
+            .trim()
+            .toLowerCase(),
+          String(t.category || '')
+            .trim()
+            .toLowerCase(),
+        ].join('|');
+        return !existingToolKeys.has(key);
+      });
+      proposal.intangibleAdd = proposal.intangibleAdd.filter((a) => {
+        const key = [
+          String(a.assetType || '')
+            .trim()
+            .toLowerCase(),
+          String(a.name || '')
+            .trim()
+            .toLowerCase(),
+        ].join('|');
+        return !existingIntangibleKeys.has(key);
+      });
 
       const hasAny =
         proposal.budgetAdd.length > 0 ||
         proposal.fteAdd.length > 0 ||
         proposal.toolsAdd.length > 0 ||
         proposal.intangibleAdd.length > 0;
-      if (!hasAny) return;
+      if (!hasAny) {
+        toast(
+          isPolish
+            ? 'AI nie zaproponowało brakujących zasobów do dodania.'
+            : 'AI suggested no missing resources to add.'
+        );
+        return;
+      }
+      const check = ResourcesAiProposalSchema.safeParse(proposal);
+      if (!check.success) {
+        toast.error(
+          isPolish
+            ? 'Odpowiedź AI ma nieprawidłowy format (nie można zastosować).'
+            : 'AI response has invalid format (cannot apply).'
+        );
+        return;
+      }
       openProposal(proposal);
     } finally {
       setAiBusy(false);
@@ -999,6 +1248,7 @@ export const ResourcesSection: React.FC = () => {
     normalizeBudgetCategory,
     normalizeCurrency,
     normalizeFteRole,
+    normalizeIsoDate,
     normalizeIntangibleStatus,
     normalizeIntangibleType,
     normalizeLicenseType,
@@ -1028,6 +1278,7 @@ export const ResourcesSection: React.FC = () => {
           amount: Number(b.amount) || 0,
           currency: normalizeCurrency(b.currency),
           description: b.description || undefined,
+          source: 'ai',
         });
       }
       for (const r of fteToAdd) {
@@ -1041,6 +1292,7 @@ export const ResourcesSection: React.FC = () => {
           startDate: r.startDate || undefined,
           endDate: r.endDate || undefined,
           notes: r.notes || undefined,
+          source: 'ai',
         });
       }
       for (const t of toolsToAdd) {
@@ -1052,6 +1304,7 @@ export const ResourcesSection: React.FC = () => {
           licenseType: normalizeLicenseType(t.licenseType),
           status: normalizeToolStatus(t.status),
           notes: t.notes || undefined,
+          source: 'ai',
         });
       }
       for (const a of intangibleToAdd) {
@@ -1066,7 +1319,22 @@ export const ResourcesSection: React.FC = () => {
           status: normalizeIntangibleStatus(a.status),
           beneficiaries: a.beneficiaries || undefined,
           notes: a.notes || undefined,
+          source: 'ai',
         });
+      }
+
+      // Audit (single summary entry) — best-effort, never block UX
+      try {
+        await Api.post(`/initiatives/${initiativeId}/resources/ai-apply-log`, {
+          scope: aiProposal.scope,
+          budgetAdded: budgetToAdd.length,
+          fteAdded: fteToAdd.length,
+          toolsAdded: toolsToAdd.length,
+          intangiblesAdded: intangibleToAdd.length,
+          note: aiProposal.note || null,
+        });
+      } catch {
+        // ignore
       }
 
       closeAIModal();
@@ -1089,6 +1357,7 @@ export const ResourcesSection: React.FC = () => {
     normalizeLicenseType,
     normalizeToolCategory,
     normalizeToolStatus,
+    initiativeId,
     selectedBudgetIdx,
     selectedFteIdx,
     selectedIntangibleIdx,
@@ -1103,6 +1372,39 @@ export const ResourcesSection: React.FC = () => {
       aiProposal.toolsAdd.length > 0 ||
       aiProposal.intangibleAdd.length > 0
     );
+  }, [aiProposal]);
+
+  const proposalQuality = useMemo(() => {
+    if (!aiProposal) {
+      return { confirmPlaceholders: 0, zeroAmounts: 0, missingVendors: 0, missingProviders: 0 };
+    }
+
+    const includesConfirm = (s: unknown) =>
+      String(s || '')
+        .toLowerCase()
+        .includes('[confirm]');
+
+    let confirmPlaceholders = 0;
+    let zeroAmounts = 0;
+    let missingVendors = 0;
+    let missingProviders = 0;
+
+    for (const b of aiProposal.budgetAdd) {
+      if (Number(b.amount) === 0) zeroAmounts++;
+      if (includesConfirm(b.description)) confirmPlaceholders++;
+    }
+    for (const t of aiProposal.toolsAdd) {
+      if (!String(t.vendor || '').trim()) missingVendors++;
+      if (Number(t.licenseCost) === 0) zeroAmounts++;
+      if (includesConfirm(t.notes)) confirmPlaceholders++;
+    }
+    for (const a of aiProposal.intangibleAdd) {
+      if (!String(a.provider || '').trim()) missingProviders++;
+      if (Number(a.cost) === 0) zeroAmounts++;
+      if (includesConfirm(a.notes)) confirmPlaceholders++;
+    }
+
+    return { confirmPlaceholders, zeroAmounts, missingVendors, missingProviders };
   }, [aiProposal]);
 
   useEffect(() => {
@@ -1140,6 +1442,48 @@ export const ResourcesSection: React.FC = () => {
                     {aiProposal.note}
                   </p>
                 ) : null}
+                {(proposalQuality.confirmPlaceholders > 0 ||
+                  proposalQuality.zeroAmounts > 0 ||
+                  proposalQuality.missingVendors > 0 ||
+                  proposalQuality.missingProviders > 0) && (
+                  <div className="mt-2 rounded-xl border border-amber-200/60 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/10 px-3 py-2">
+                    <div className="text-[11px] font-semibold text-amber-800 dark:text-amber-200">
+                      {isPolish
+                        ? 'Kontrola jakości (przed dodaniem)'
+                        : 'Quality checks (before adding)'}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-amber-700/90 dark:text-amber-200/80 space-y-0.5">
+                      {proposalQuality.zeroAmounts > 0 ? (
+                        <div>
+                          {isPolish
+                            ? `- Pola kosztowe = 0: ${proposalQuality.zeroAmounts} (wymaga potwierdzenia)`
+                            : `- Cost fields = 0: ${proposalQuality.zeroAmounts} (needs confirmation)`}
+                        </div>
+                      ) : null}
+                      {proposalQuality.confirmPlaceholders > 0 ? (
+                        <div>
+                          {isPolish
+                            ? `- Placeholdery “[confirm]”: ${proposalQuality.confirmPlaceholders}`
+                            : `- “[confirm]” placeholders: ${proposalQuality.confirmPlaceholders}`}
+                        </div>
+                      ) : null}
+                      {proposalQuality.missingVendors > 0 ? (
+                        <div>
+                          {isPolish
+                            ? `- Brak vendor (Tools): ${proposalQuality.missingVendors}`
+                            : `- Missing vendor (Tools): ${proposalQuality.missingVendors}`}
+                        </div>
+                      ) : null}
+                      {proposalQuality.missingProviders > 0 ? (
+                        <div>
+                          {isPolish
+                            ? `- Brak provider (Intangibles): ${proposalQuality.missingProviders}`
+                            : `- Missing provider (Intangibles): ${proposalQuality.missingProviders}`}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                )}
               </div>
               <button
                 onClick={closeAIModal}
@@ -1579,10 +1923,14 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                   onClose={() => setAiMenuOpen(false)}
                   busy={aiBusy}
                   actions={[
-                    { id: 'addOne', label: { en: 'Add', pl: 'Dodaj' }, onClick: onAiAddOne },
+                    {
+                      id: 'addOne',
+                      label: { en: 'Add by AI', pl: 'Dodaj przez AI' },
+                      onClick: onAiAddOne,
+                    },
                     {
                       id: 'analyze',
-                      label: { en: 'Analyze', pl: 'Analizuj' },
+                      label: { en: 'Analyze with AI', pl: 'Analizuj z AI' },
                       onClick: onAiAnalyze,
                     },
                   ]}
@@ -1893,10 +2241,14 @@ const TeamTable: React.FC<TeamTableProps> = ({
                   onClose={() => setAiMenuOpen(false)}
                   busy={aiBusy}
                   actions={[
-                    { id: 'addOne', label: { en: 'Add', pl: 'Dodaj' }, onClick: onAiAddOne },
+                    {
+                      id: 'addOne',
+                      label: { en: 'Add by AI', pl: 'Dodaj przez AI' },
+                      onClick: onAiAddOne,
+                    },
                     {
                       id: 'analyze',
-                      label: { en: 'Analyze', pl: 'Analizuj' },
+                      label: { en: 'Analyze with AI', pl: 'Analizuj z AI' },
                       onClick: onAiAnalyze,
                     },
                   ]}
@@ -2204,10 +2556,14 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                   onClose={() => setAiMenuOpen(false)}
                   busy={aiBusy}
                   actions={[
-                    { id: 'addOne', label: { en: 'Add', pl: 'Dodaj' }, onClick: onAiAddOne },
+                    {
+                      id: 'addOne',
+                      label: { en: 'Add by AI', pl: 'Dodaj przez AI' },
+                      onClick: onAiAddOne,
+                    },
                     {
                       id: 'analyze',
-                      label: { en: 'Analyze', pl: 'Analizuj' },
+                      label: { en: 'Analyze with AI', pl: 'Analizuj z AI' },
                       onClick: onAiAnalyze,
                     },
                   ]}
@@ -2566,10 +2922,14 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                   onClose={() => setAiMenuOpen(false)}
                   busy={aiBusy}
                   actions={[
-                    { id: 'addOne', label: { en: 'Add', pl: 'Dodaj' }, onClick: onAiAddOne },
+                    {
+                      id: 'addOne',
+                      label: { en: 'Add by AI', pl: 'Dodaj przez AI' },
+                      onClick: onAiAddOne,
+                    },
                     {
                       id: 'analyze',
-                      label: { en: 'Analyze', pl: 'Analizuj' },
+                      label: { en: 'Analyze with AI', pl: 'Analizuj z AI' },
                       onClick: onAiAnalyze,
                     },
                   ]}

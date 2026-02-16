@@ -151,7 +151,9 @@ const DrawerRaidList: React.FC<{ items: RaidItem[]; maxVisible?: number }> = ({
                 {item.severity}
               </span>
             )}
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">{item.type}</span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">
+              {item.type}
+            </span>
           </div>
         </div>
       ))}
@@ -160,7 +162,9 @@ const DrawerRaidList: React.FC<{ items: RaidItem[]; maxVisible?: number }> = ({
           onClick={() => setExpanded(!expanded)}
           className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
         >
-          {expanded ? t('initiatives.drawer.showLess') : t('initiatives.drawer.showMore', { count: items.length - maxVisible })}
+          {expanded
+            ? t('initiatives.drawer.showLess')
+            : t('initiatives.drawer.showMore', { count: items.length - maxVisible })}
         </button>
       )}
     </div>
@@ -201,7 +205,9 @@ const DrawerDependenciesList: React.FC<{ dependencies: any[]; maxVisible?: numbe
           onClick={() => setExpanded(!expanded)}
           className="mt-2 text-xs text-purple-400 hover:text-purple-300 transition-colors"
         >
-          {expanded ? t('initiatives.drawer.showLess') : t('initiatives.drawer.showMore', { count: dependencies.length - maxVisible })}
+          {expanded
+            ? t('initiatives.drawer.showLess')
+            : t('initiatives.drawer.showMore', { count: dependencies.length - maxVisible })}
         </button>
       )}
     </div>
@@ -359,11 +365,15 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         {/* Gate readiness */}
         <div
           className={`p-4 rounded-xl border ${
-            isGateReady ? 'bg-white/50 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700' : 'bg-amber-900/10 border-amber-500/20'
+            isGateReady
+              ? 'bg-white/50 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700'
+              : 'bg-amber-900/10 border-amber-500/20'
           }`}
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">{t('initiatives.drawer.quickReview')}</span>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+              {t('initiatives.drawer.quickReview')}
+            </span>
             <span
               className={`px-2 py-0.5 text-xs font-medium rounded ${statusMeta?.bgColor} ${statusMeta?.color}`}
             >
@@ -373,7 +383,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
 
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-sm font-medium text-slate-900 dark:text-white">{t('initiatives.drawer.gateReadiness')}</div>
+              <div className="text-sm font-medium text-slate-900 dark:text-white">
+                {t('initiatives.drawer.gateReadiness')}
+              </div>
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {requiredGates.length === 0
                   ? 'No gate required for current status.'
@@ -423,7 +435,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
 
         {/* Summary */}
         <div>
-          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">{t('initiatives.drawer.summary')}</h4>
+          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
+            {t('initiatives.drawer.summary')}
+          </h4>
           <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
             {initiative.summary || initiative.description || t('initiatives.drawer.noSummary')}
           </p>
@@ -443,7 +457,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                   style={{ width: `${initiative.progress || 0}%` }}
                 />
               </div>
-              <span className="text-sm font-semibold text-slate-900 dark:text-white">{initiative.progress || 0}%</span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                {initiative.progress || 0}%
+              </span>
             </div>
           </div>
 
@@ -497,12 +513,16 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
           <div className="flex items-center justify-between text-sm">
             <div>
               <span className="text-slate-500">{t('initiatives.drawer.start')} </span>
-              <span className="text-slate-900 dark:text-white">{formatDate(initiative.plannedStartDate)}</span>
+              <span className="text-slate-900 dark:text-white">
+                {formatDate(initiative.plannedStartDate)}
+              </span>
             </div>
             <ChevronRight size={14} className="text-slate-600" />
             <div>
               <span className="text-slate-500">{t('initiatives.drawer.end')} </span>
-              <span className="text-slate-900 dark:text-white">{formatDate(initiative.plannedEndDate)}</span>
+              <span className="text-slate-900 dark:text-white">
+                {formatDate(initiative.plannedEndDate)}
+              </span>
             </div>
           </div>
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mt-2">
@@ -566,7 +586,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
       <div className="space-y-5">
         {/* Timeline Header */}
         <div className="flex items-center justify-between">
-          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Milestones</h4>
+          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+            Milestones
+          </h4>
           {milestones.length > 0 && (
             <button
               onClick={() => onOpenWider(initiative)}
@@ -589,7 +611,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
               <div
                 key={milestone.id}
                 className={`relative pl-6 pb-4 ${
-                  idx < milestones.length - 1 ? 'border-l-2 border-slate-200 dark:border-navy-700' : ''
+                  idx < milestones.length - 1
+                    ? 'border-l-2 border-slate-200 dark:border-navy-700'
+                    : ''
                 }`}
               >
                 <div
@@ -605,7 +629,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                 />
                 <div className="bg-white/50 dark:bg-navy-900/50 rounded-lg p-3 border border-slate-200 dark:border-navy-700">
                   <div className="flex items-center justify-between mb-1">
-                    <h5 className="text-sm font-medium text-slate-900 dark:text-white">{milestone.name}</h5>
+                    <h5 className="text-sm font-medium text-slate-900 dark:text-white">
+                      {milestone.name}
+                    </h5>
                     {milestone.isGate && (
                       <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-500/20 text-amber-400 rounded">
                         Gate
@@ -652,7 +678,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
       <div className="space-y-5">
         {/* Owners */}
         <div>
-          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Ownership</h4>
+          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
+            Ownership
+          </h4>
           <div className="space-y-3">
             {/* Business Owner */}
             <div className="flex items-center gap-3 p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700">
@@ -703,7 +731,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                     <div className="text-sm font-medium text-slate-900 dark:text-white">
                       {initiative.ownerExecution.firstName} {initiative.ownerExecution.lastName}
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">Execution Owner</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      Execution Owner
+                    </div>
                   </div>
                 </>
               ) : (
@@ -718,7 +748,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
 
         {/* Capacity */}
         <div className="p-4 bg-white/50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700">
-          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Resource Capacity</h4>
+          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
+            Resource Capacity
+          </h4>
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-500 dark:text-slate-400">Required FTE</span>
@@ -758,7 +790,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         {/* Gate Decisions */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">{t('initiatives.drawer.gateDecisions')}</h4>
+            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+              {t('initiatives.drawer.gateDecisions')}
+            </h4>
             <button
               onClick={() => onOpenWider(initiative)}
               className="text-xs text-purple-400 hover:text-purple-300"
@@ -780,7 +814,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                   className="p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-500/30 cursor-pointer transition-colors"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <h5 className="text-sm font-medium text-slate-900 dark:text-white">{decision.title}</h5>
+                    <h5 className="text-sm font-medium text-slate-900 dark:text-white">
+                      {decision.title}
+                    </h5>
                     <span
                       className={`px-2 py-0.5 text-[10px] font-medium rounded ${
                         decision.status === 'APPROVED'
@@ -812,19 +848,21 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
 
         {/* Gate Requirements Info */}
         <div className="p-4 bg-slate-200/30 dark:bg-slate-800/30 rounded-xl border border-slate-200 dark:border-navy-700">
-          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Gate Requirements</h4>
+          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
+            Gate Requirements
+          </h4>
           <div className="space-y-2 text-xs text-slate-500 dark:text-slate-400">
             <p>
-              <strong className="text-slate-700 dark:text-slate-300">REVIEW → PROMOTED:</strong> Requires Go/No-Go
-              decision
+              <strong className="text-slate-700 dark:text-slate-300">REVIEW → PROMOTED:</strong>{' '}
+              Requires Go/No-Go decision
             </p>
             <p>
-              <strong className="text-slate-700 dark:text-slate-300">PROMOTED → PLANNING:</strong> Requires Resources
-              Commit decision
+              <strong className="text-slate-700 dark:text-slate-300">PROMOTED → PLANNING:</strong>{' '}
+              Requires Resources Commit decision
             </p>
             <p>
-              <strong className="text-slate-700 dark:text-slate-300">APPROVED → SCHEDULED:</strong> Requires Schedule
-              Lock decision + planned dates
+              <strong className="text-slate-700 dark:text-slate-300">APPROVED → SCHEDULED:</strong>{' '}
+              Requires Schedule Lock decision + planned dates
             </p>
           </div>
         </div>
@@ -872,7 +910,8 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
               <div className="flex-1 min-w-0 pr-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                    {initiative.axis?.replace(/([A-Z])/g, ' $1').trim() || t('initiatives.drawer.initiative')}
+                    {initiative.axis?.replace(/([A-Z])/g, ' $1').trim() ||
+                      t('initiatives.drawer.initiative')}
                   </span>
                   {initiative.targetQuarter && (
                     <span className="px-2 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-300 rounded">
@@ -880,7 +919,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                     </span>
                   )}
                 </div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white line-clamp-2">{initiative.name}</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white line-clamp-2">
+                  {initiative.name}
+                </h2>
               </div>
 
               <div className="flex items-center gap-1">

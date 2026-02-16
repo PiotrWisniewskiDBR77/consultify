@@ -43,6 +43,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
+import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 
 import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 
@@ -190,6 +191,10 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
   const [decisions, setDecisions] = useState<DecisionItem[]>([]);
   const [raidItems, setRaidItems] = useState<RaidItem[]>([]);
   const [activeTab, setActiveTab] = useState<CompactTab>('summary');
+  const [gateReadiness, setGateReadiness] = useState<{
+    readiness: any[];
+    availableTransitions: any[];
+  } | null>(null);
 
   const id = initiative?.id || propInitiativeId;
 
@@ -208,10 +213,11 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
       }
 
       // Fetch related data in parallel
-      const [tasksRes, decisionsRes, raidRes] = await Promise.allSettled([
+      const [tasksRes, decisionsRes, raidRes, gateRes] = await Promise.allSettled([
         Api.get(`/tasks?initiativeId=${id}`),
         Api.get(`/decisions?relatedObjectId=${id}&relatedObjectType=initiative`),
         Api.get(`/initiatives/${id}/raid`),
+        Api.get(`/initiatives/${id}/gate-readiness-check`),
       ]);
 
       if (tasksRes.status === 'fulfilled') {
@@ -243,6 +249,10 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           (Array.isArray(raidRes.value) ? raidRes.value : []);
         setRaidItems(arr);
       }
+
+      if (gateRes.status === 'fulfilled') {
+        setGateReadiness(gateRes.value);
+      }
     } catch (e: any) {
       console.error('Failed to load initiative data', e);
     } finally {
@@ -269,6 +279,17 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
   const statusActions = getStatusActions(status);
   const priority = (initiative?.priority || 'medium').toLowerCase();
   const priorityStyle = PRIORITY_COLORS[priority] || PRIORITY_COLORS.medium;
+
+  // Next step CTA data
+  const nextStepInfo = useMemo(
+    () => (initiative ? getNextStep(initiative.status) : null),
+    [initiative]
+  );
+  const healthInfo = useMemo(() => (initiative ? getHealthInfo(initiative) : null), [initiative]);
+  const blockingItems = useMemo(() => {
+    if (!gateReadiness?.readiness) return [];
+    return gateReadiness.readiness.filter((r: any) => r.severity === 'blocking' && !r.pass);
+  }, [gateReadiness]);
 
   const tasksDone = useMemo(
     () => tasks.filter((t) => t.status === 'done' || t.status === 'DONE').length,
@@ -410,6 +431,57 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             ))}
         </div>
       </div>
+
+      {/* Next Step CTA — "jaki jest kolejny krok z daną inicjatywą" */}
+      {nextStepInfo && initiative && (
+        <div className="flex-shrink-0 px-4 py-2.5 border-b border-slate-100 dark:border-navy-800 bg-primary-50/50 dark:bg-primary-900/10">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {t('initiatives.compact.nextStep', 'Next step')}
+            </span>
+            {healthInfo && (
+              <div className="flex items-center gap-1">
+                <span className={`w-2 h-2 rounded-full ${healthInfo.dotClass}`} />
+                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                  {healthInfo.label}
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <ArrowRight size={14} className="text-primary-500 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                {nextStepInfo.label}
+              </span>
+              {nextStepInfo.role && (
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 ml-1.5">
+                  ({nextStepInfo.role})
+                </span>
+              )}
+            </div>
+          </div>
+          {/* Blocking items — max 3 */}
+          {blockingItems.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {blockingItems.slice(0, 3).map((item: any) => (
+                <span
+                  key={item.key || item.label}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400"
+                >
+                  <AlertTriangle size={10} />
+                  {item.label || item.key}
+                </span>
+              ))}
+              {blockingItems.length > 3 && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
+                  +{blockingItems.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* D3.3 / D3.4: Missing data banner — motivates to fill in initiative info */}
       {initiative &&

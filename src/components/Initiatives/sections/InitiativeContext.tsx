@@ -49,6 +49,16 @@ export interface InitiativeContextValue {
   initiativeTemplate: any;
   isPolish: boolean;
 
+  // Capabilities (backend source of truth via gate-readiness-check)
+  canEditPriority: boolean;
+  canEditOwner: boolean;
+  canEditTargetDate: boolean;
+  canEditCards: boolean;
+
+  // Navigation helpers (guided workflow)
+  openSection: (sectionId: string) => void;
+  focusTopBarField: (field: 'title' | 'priority' | 'owner' | 'targetDate') => void;
+
   // Related data
   decisions: Decision[];
   setDecisions: React.Dispatch<React.SetStateAction<Decision[]>>;
@@ -86,6 +96,17 @@ export interface InitiativeContextValue {
   setSummary: (v: string) => void;
   description: string;
   setDescription: (v: string) => void;
+  // Target state / success criteria (initiative definition)
+  targetDescriptionDraft: string;
+  setTargetDescriptionDraft: (v: string) => void;
+  successCriteriaItems: Array<{ id: string; text: string; done: boolean }>;
+  setSuccessCriteriaItems: React.Dispatch<
+    React.SetStateAction<Array<{ id: string; text: string; done: boolean }>>
+  >;
+  deliverableItems: Array<{ id: string; text: string; done: boolean }>;
+  setDeliverableItems: React.Dispatch<
+    React.SetStateAction<Array<{ id: string; text: string; done: boolean }>>
+  >;
   priority: string;
   setPriority: (v: any) => void;
   ownerId: string;
@@ -178,14 +199,38 @@ export interface InitiativeContextValue {
   decisionsAiRequest: { mode: 'analyze' | 'addOne'; nonce: number } | null;
   requestDecisionsAi: (mode: 'analyze' | 'addOne') => void;
   clearDecisionsAiRequest: () => void;
+  // RAID AI actions (triggered from CTA)
+  raidAiRequest: { nonce: number } | null;
+  requestRaidAi: () => void;
+  clearRaidAiRequest: () => void;
   // Resources AI actions (triggered from CTA)
   resourcesAiRequest: { nonce: number } | null;
   requestResourcesAi: () => void;
   clearResourcesAiRequest: () => void;
+  // Timeline AI actions (triggered from CTA)
+  timelineAiRequest: { nonce: number } | null;
+  requestTimelineAi: () => void;
+  clearTimelineAiRequest: () => void;
+  // Dependencies AI actions (triggered from CTA)
+  dependenciesAiRequest: { nonce: number } | null;
+  requestDependenciesAi: () => void;
+  clearDependenciesAiRequest: () => void;
   // Team AI actions (triggered from CTA)
   teamAiRequest: { nonce: number } | null;
   requestTeamAi: () => void;
   clearTeamAiRequest: () => void;
+  // Gates AI actions (triggered from CTA)
+  gatesAiRequest: { nonce: number } | null;
+  requestGatesAi: () => void;
+  clearGatesAiRequest: () => void;
+  // KPIs AI actions (triggered from CTA)
+  kpisAiRequest: { nonce: number } | null;
+  requestKpisAi: () => void;
+  clearKpisAiRequest: () => void;
+  // Success Criteria (targetState) AI actions (triggered from CTA)
+  targetStateAiRequest: { nonce: number } | null;
+  requestTargetStateAi: () => void;
+  clearTargetStateAiRequest: () => void;
   handleCreateTask: () => Promise<void>;
   handleCreateDecision: () => Promise<void>;
   handleRemoveDecision: (id: string) => Promise<void>;

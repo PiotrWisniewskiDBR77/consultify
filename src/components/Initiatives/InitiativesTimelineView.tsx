@@ -437,54 +437,65 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
     );
   }
 
+  // Tech Sexy v2.0 button primitives (monochrome chrome, h-9, hover bg-only)
+  const BTN_BASE =
+    'inline-flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-medium transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed';
+  const BTN_GHOST = `${BTN_BASE} text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]`;
+  const BTN_PRIMARY = `${BTN_BASE} bg-hig-primary text-white hover:bg-hig-primary-hover`;
+
+  const conflictsCount = localConflicts.length + aiConflictList.length;
+
   return (
     <div className="h-full p-4" data-testid="initiatives-timeline">
-      <div className="mb-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">AI Assist</span>
-          <button
-            onClick={handleAiSchedule}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-purple-600 text-white hover:bg-purple-500 transition-colors"
-            disabled={aiLoading !== null}
-          >
-            {aiLoading === 'schedule' ? 'Scheduling...' : 'AI Schedule'}
-          </button>
-          <button
-            onClick={handleAiConflicts}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-            disabled={aiLoading !== null}
-          >
-            {aiLoading === 'conflicts' ? 'Analyzing...' : 'AI Conflicts'}
-          </button>
-          <button
-            onClick={handleAiPriorities}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-            disabled={aiLoading !== null}
-          >
-            {aiLoading === 'priorities' ? 'Recommending...' : 'AI Priorities'}
-          </button>
-          {Array.isArray(aiSchedule) && aiSchedule.length > 0 && (
+      <div className="mb-4 rounded-xl bg-white dark:bg-navy-900/50 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mr-1">
+            AI Assist
+          </span>
+
+          {/* Primary action: generate schedule unless there's a schedule to apply */}
+          {Array.isArray(aiSchedule) && aiSchedule.length > 0 ? (
+            <button onClick={applyAiSchedule} className={BTN_PRIMARY}>
+              Apply schedule
+            </button>
+          ) : (
             <button
-              onClick={applyAiSchedule}
-              className="ml-auto px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
+              onClick={handleAiSchedule}
+              className={BTN_PRIMARY}
+              disabled={aiLoading !== null}
             >
-              Apply Schedule
+              {aiLoading === 'schedule' ? 'Scheduling…' : 'AI schedule'}
             </button>
           )}
-          {(localConflicts.length > 0 || aiConflictList.length > 0) && (
+
+          <button onClick={handleAiConflicts} className={BTN_GHOST} disabled={aiLoading !== null}>
+            {aiLoading === 'conflicts' ? 'Analyzing…' : 'AI conflicts'}
+            {conflictsCount > 0 && (
+              <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300">
+                {conflictsCount}
+              </span>
+            )}
+          </button>
+
+          <button onClick={handleAiPriorities} className={BTN_GHOST} disabled={aiLoading !== null}>
+            {aiLoading === 'priorities' ? 'Recommending…' : 'AI priorities'}
+          </button>
+
+          {/* Conflicts panel toggle (only when there are conflicts to show) */}
+          {conflictsCount > 0 && (
             <button
               onClick={() => setShowConflictsPanel((p) => !p)}
-              className="ml-auto px-3 py-1.5 text-xs font-medium rounded-lg bg-rose-600/20 text-rose-200 hover:bg-rose-600/30 transition-colors"
+              className={BTN_GHOST}
+              aria-expanded={showConflictsPanel}
             >
-              {showConflictsPanel ? 'Hide Conflicts' : 'View Conflicts'} (
-              {localConflicts.length + aiConflictList.length})
+              {showConflictsPanel ? 'Hide conflicts' : 'View conflicts'}
             </button>
           )}
         </div>
 
         {Array.isArray(aiSchedule) && aiSchedule.length > 0 && (
-          <div className="mt-3 text-xs text-slate-400">
-            Suggested schedule for {aiSchedule.length} initiatives.
+          <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+            Suggested schedule for {aiSchedule.length} initiatives. Review and apply when ready.
           </div>
         )}
         {showConflictsPanel && (localConflicts.length > 0 || aiConflictList.length > 0) && (
@@ -495,7 +506,7 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
         )}
         {aiPriorities && (
           <div className="mt-3 space-y-2">
-            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+            <h4 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
               AI Priority Recommendations
             </h4>
             {Array.isArray(aiPriorities) ? (
@@ -503,13 +514,13 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
                 {aiPriorities.map((item: any, idx: number) => (
                   <div
                     key={idx}
-                    className="flex items-start gap-2 p-2 bg-slate-50 dark:bg-navy-800/50 rounded-lg border border-slate-200/50 dark:border-navy-700/50"
+                    className="flex items-start gap-2 p-2 bg-slate-50/70 dark:bg-white/[0.03] rounded-lg"
                   >
-                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-purple-500/20 text-purple-500 text-[10px] font-bold flex items-center justify-center">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-200/70 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 text-[10px] font-semibold flex items-center justify-center">
                       {idx + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
+                      <p className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
                         {item.name || item.initiativeName || item.title || `Initiative #${idx + 1}`}
                       </p>
                       {(item.reason || item.rationale) && (
@@ -518,11 +529,15 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
                         </p>
                       )}
                       {item.priority && (
-                        <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                          item.priority === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' :
-                          item.priority === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400' :
-                          'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
-                        }`}>
+                        <span
+                          className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                            item.priority === 'CRITICAL'
+                              ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
+                              : item.priority === 'HIGH'
+                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400'
+                                : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                          }`}
+                        >
                           {item.priority}
                         </span>
                       )}
@@ -535,9 +550,11 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
                 {Object.entries(aiPriorities).map(([key, value]: [string, any]) => (
                   <div
                     key={key}
-                    className="flex items-center justify-between p-2 bg-slate-50 dark:bg-navy-800/50 rounded-lg border border-slate-200/50 dark:border-navy-700/50"
+                    className="flex items-center justify-between p-2 bg-slate-50/70 dark:bg-white/[0.03] rounded-lg"
                   >
-                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{key}</span>
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      {key}
+                    </span>
                     <span className="text-xs text-slate-500 dark:text-slate-400">
                       {typeof value === 'string' ? value : JSON.stringify(value)}
                     </span>

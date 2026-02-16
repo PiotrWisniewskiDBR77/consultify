@@ -392,7 +392,9 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
               <Target size={22} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">{initiative.name}</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                {initiative.name}
+              </h2>
               <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                 <span>ID: {initiative.id?.slice(0, 8)}</span>
                 <span className="w-1 h-1 bg-slate-600 rounded-full" />
@@ -406,7 +408,9 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
           {/* Readiness Score */}
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Charter Readiness</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                Charter Readiness
+              </div>
               <div
                 className={`text-2xl font-bold ${
                   readiness.total >= 70
@@ -513,7 +517,9 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                       className="flex items-center justify-between p-2 bg-slate-50 dark:bg-navy-800 rounded-lg"
                     >
                       <span className="text-sm text-slate-700 dark:text-slate-300">{item}</span>
-                      <button className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300">×</button>
+                      <button className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300">
+                        ×
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -604,7 +610,9 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <FileText size={16} className="text-slate-400" />
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Summary</span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Summary
+                </span>
               </div>
               <textarea
                 value={initiative.summary || ''}

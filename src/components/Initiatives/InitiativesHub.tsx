@@ -5,7 +5,7 @@
  * Connected to real API endpoints
  */
 
-import { AlertTriangle, Edit2, Lightbulb, Plus, RefreshCw, Shield } from 'lucide-react';
+import { AlertTriangle, Edit2, Filter, Lightbulb, Plus, RefreshCw, Shield } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -14,16 +14,17 @@ import { useSearchParams } from 'react-router-dom';
 import { Api } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
+import { ACTIVE_STATUSES, ALL_STATUSES } from '@/utils/initiativeHelpers';
 
 import { useAppStore } from '../../store/useAppStore';
 import { InitiativeStatus, PortfolioFilters, PortfolioInitiative } from '../../types';
-// Initiative Card component
-import { InitiativeCard } from '../InitiativeCard';
 // Detail views
 import { DecisionDetailView } from '../MyWork/DecisionDetailView';
 import { TaskDetailView } from '../MyWork/TaskDetailView';
+// Grid card for grid view
+import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 // Portfolio view components
-import { PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
+import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 import { PortfolioListView } from '../Portfolio/PortfolioListView';
 import { PortfolioMatrixView } from '../Portfolio/PortfolioMatrixView';
 // ModuleHub components
@@ -102,45 +103,6 @@ export const INITIATIVE_LEVELS: {
   },
 ];
 
-// D3.1: Validation rules for initiative approval
-interface ApprovalValidationError {
-  field: string;
-  message: string;
-}
-
-function validateForApproval(
-  initiative: PortfolioInitiative,
-  tasks: number
-): ApprovalValidationError[] {
-  const errors: ApprovalValidationError[] = [];
-
-  // Must have at least 1 task
-  if (tasks === 0) {
-    errors.push({
-      field: 'tasks',
-      message: 'At least 1 task is required before approval',
-    });
-  }
-
-  // Must have a deadline (plannedEndDate)
-  if (!initiative.plannedEndDate) {
-    errors.push({
-      field: 'deadline',
-      message: 'A deadline (end date) is required before approval',
-    });
-  }
-
-  // Must have an assigned owner
-  if (!initiative.ownerBusiness?.id) {
-    errors.push({
-      field: 'owner',
-      message: 'A business owner must be assigned before approval',
-    });
-  }
-
-  return errors;
-}
-
 interface InitiativesHubProps {
   initialTab?: ModuleTab;
 }
@@ -160,6 +122,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
+  /** Active/All scope toggle — used for Kanban columns and data filtering */
+  const [scope, setScope] = useState<KanbanScope>('active');
 
   // Data state
   const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
@@ -208,7 +172,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         setLoadError(null);
         const params = new URLSearchParams();
         if (currentProjectId) params.append('projectId', currentProjectId);
-        if (
+        // Scope-based filtering: 'active' sends only core statuses, 'all' sends everything.
+        if (scope === 'active' && !activeStatusFilter) {
+          params.append('statuses', ACTIVE_STATUSES.join(','));
+        } else if (
           activeStatusFilter &&
           ALLOWED_STATUSES.includes(activeStatusFilter as InitiativeStatus)
         ) {
@@ -259,7 +226,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         setIsRefreshing(false);
       }
     },
-    [currentProjectId, activeStatusFilter, filters.priority, searchQuery]
+    [currentProjectId, activeStatusFilter, filters.priority, searchQuery, scope]
   );
 
   useEffect(() => {
@@ -509,35 +476,47 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // D3.1: Status change with approval validation
   const handleStatusChange = useCallback(
     async (initiativeId: string, newStatus: InitiativeStatus) => {
-      // D3.1: If transitioning to APPROVED, validate critical fields
-      if (newStatus === InitiativeStatus.APPROVED) {
-        const initiative = initiatives.find((i) => i.id === initiativeId);
-        if (initiative) {
-          // Fetch task count for this initiative
-          let taskCount = 0;
-          try {
-            const tasksRes = await Api.get(`/tasks?initiativeId=${initiativeId}`);
-            const arr = Array.isArray(tasksRes) ? tasksRes : tasksRes?.tasks || [];
-            taskCount = arr.length;
-          } catch {
-            // If we can't fetch tasks, assume 0
-          }
-
-          const errors = validateForApproval(initiative, taskCount);
-          if (errors.length > 0) {
-            // Show validation errors
-            const errorMessages = errors.map((e) => e.message).join('\n• ');
-            toast.error(
-              t(
-                'initiatives.toast.cannotApproveHub',
-                'Nie można zatwierdzić inicjatywy — brakuje wymaganych pól:\n• {{errors}}',
-                { errors: errorMessages }
-              ),
-              { duration: 6000 }
-            );
-            return;
-          }
+      // Preflight via backend gate-readiness-check (source of truth).
+      // This avoids local heuristics drifting from canonical gate DoD rules.
+      try {
+        const rc = await Api.get(`/initiatives/${initiativeId}/gate-readiness-check`);
+        const transitions = Array.isArray(rc?.availableTransitions) ? rc.availableTransitions : [];
+        const tr = transitions.find(
+          (x: any) =>
+            String(x?.targetStatus || '').toUpperCase() === String(newStatus).toUpperCase()
+        );
+        if (!tr || !tr.canCurrentUserExecute) {
+          toast.error(
+            t(
+              'initiatives.toast.statusNotAllowed',
+              'Nie masz uprawnień lub bramka nie jest dostępna na tym etapie.'
+            ),
+            { duration: 5000 }
+          );
+          return;
         }
+        const readiness = Array.isArray(rc?.readiness) ? rc.readiness : [];
+        const blockingMissing = readiness.filter(
+          (r: any) => r?.severity === 'blocking' && !r?.pass
+        );
+        if (blockingMissing.length > 0) {
+          const list = blockingMissing
+            .slice(0, 5)
+            .map((r: any) => String(r?.label || r?.key || '').trim())
+            .filter(Boolean)
+            .join('\n• ');
+          toast.error(
+            t(
+              'initiatives.toast.gateBlockedHub',
+              'Nie można przejść dalej — brakuje elementów blokujących:\n• {{items}}',
+              { items: list || t('common.missing', 'Missing required items') }
+            ),
+            { duration: 6500 }
+          );
+          return;
+        }
+      } catch {
+        // Best-effort: backend will enforce anyway on PATCH /status.
       }
 
       try {
@@ -780,17 +759,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <div className="h-full overflow-auto p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {searchedInitiatives.map((initiative) => (
-                <InitiativeCard
+                <InitiativeGridCard
                   key={initiative.id}
-                  initiative={
-                    {
-                      ...initiative,
-                      title: initiative.name,
-                      name: initiative.name,
-                      status: initiative.status as any,
-                      priority: initiative.priority as any,
-                    } as any
-                  }
+                  initiative={initiative}
                   onClick={() => handleInitiativeClick(initiative)}
                 />
               ))}
@@ -808,6 +779,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             initiatives={searchedInitiatives}
             onInitiativeClick={handleInitiativeClick}
             onStatusChange={handleStatusChange}
+            scope={scope}
           />
         );
       case 'timeline':
@@ -834,15 +806,60 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // MAIN RENDER
   // ============================================
 
-  // Status dropdown for right-side controls (matches AssessmentHub pattern)
+  // Active / All scope toggle (matches agreed UI spec)
+  const scopeToggle = (
+    <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60">
+      {[
+        { id: 'active' as const, label: t('initiatives.scope.active', 'Active') },
+        { id: 'all' as const, label: t('initiatives.scope.all', 'All') },
+      ].map((opt) => (
+        <button
+          key={opt.id}
+          type="button"
+          onClick={() => {
+            setScope(opt.id);
+            if (opt.id === 'active') setActiveStatusFilter(null);
+          }}
+          className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-colors ${
+            scope === opt.id
+              ? 'bg-white/80 dark:bg-navy-900/70 text-slate-700 dark:text-slate-200 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-navy-900/50'
+          }`}
+          title={
+            opt.id === 'active'
+              ? t(
+                  'initiatives.scope.activeHint',
+                  'Review → Promoted → Planning → Approved → Scheduled'
+                )
+              : t(
+                  'initiatives.scope.allHint',
+                  'Full lifecycle including Draft, Executing, Blocked, Done, Archived...'
+                )
+          }
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+
   const statusDropdownControl = (
     <StatusDropdown
       context="initiatives"
       value={activeStatusFilter || 'all'}
-      onChange={(status) => setActiveStatusFilter(status === 'all' ? null : status)}
+      onChange={(status) => {
+        setActiveStatusFilter(status === 'all' ? null : status);
+      }}
       counts={statusCounts}
       size="sm"
     />
+  );
+
+  const rightControls = (
+    <div className="flex items-center gap-2">
+      {scopeToggle}
+      {statusDropdownControl}
+    </div>
   );
 
   return (
@@ -866,7 +883,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         onNewItem={() => setShowNewModal(true)}
         newItemLabel={`+ ${t('initiatives.form.newInitiative')}`}
         filterActions={filterActions}
-        rightControls={statusDropdownControl}
+        rightControls={rightControls}
         availableViewModes={availableViewModes}
       >
         <div className="flex-1 overflow-hidden">{renderContent()}</div>

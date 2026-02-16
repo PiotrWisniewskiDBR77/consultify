@@ -274,6 +274,8 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
   const [showAIModal, setShowAIModal] = useState(false);
   const [isAIProposing, setIsAIProposing] = useState(false);
   const [aiProposal, setAiProposal] = useState<AITaskProposal | null>(null);
+  const [aiNoSuggestionsMessage, setAiNoSuggestionsMessage] = useState<string | null>(null);
+  const aiNoSuggestionsTimerRef = useRef<number | null>(null);
   const [selectedAddIdx, setSelectedAddIdx] = useState<Record<number, boolean>>({});
   const [selectedRemoveIds, setSelectedRemoveIds] = useState<Record<string, boolean>>({});
   const [applySuggestedOrder, setApplySuggestedOrder] = useState(false);
@@ -304,6 +306,12 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
     setApplySuggestedOrder(false);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (aiNoSuggestionsTimerRef.current) window.clearTimeout(aiNoSuggestionsTimerRef.current);
+    };
+  }, []);
+
   const parseAIJson = (raw: string): any | null => {
     const text = String(raw || '').trim();
     if (!text) return null;
@@ -330,8 +338,10 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
   const proposeOneTaskWithAI = useCallback(async () => {
     if (readonly) return;
     setIsAIProposing(true);
+    setAiNoSuggestionsMessage(null);
     try {
-      const targetLanguageName = 'English';
+      const aiLanguage = isPolish ? 'pl' : 'en';
+      const targetLanguageName = isPolish ? 'Polish' : 'English';
       const existingTitles = tasks
         .map((t) => String(t.title || '').trim())
         .filter(Boolean)
@@ -366,7 +376,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
         JSON.stringify(existingTitles, null, 2),
       ].join('\n');
 
-      const aiRes = await Api.post('/ai/refine-text', {
+      const aiRes = await Api.post('/ai/refine-text?timeoutMs=20000', {
         text: contextText,
         mode: 'generate',
         systemInstruction,
@@ -377,7 +387,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
           priority: initiative?.priority || '',
           type: 'initiative',
         },
-        language: 'en',
+        language: aiLanguage,
       });
 
       const parsed = parseAIJson(String(aiRes?.text || '')) as any;
@@ -409,9 +419,11 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
     async (mode: 'generate' | 'review') => {
       if (readonly) return;
       setIsAIProposing(true);
+      setAiNoSuggestionsMessage(null);
       setAiMode(mode);
       try {
-        const targetLanguageName = 'English';
+        const aiLanguage = isPolish ? 'pl' : 'en';
+        const targetLanguageName = isPolish ? 'Polish' : 'English';
         const removalCandidates = mode === 'review' ? buildRemovalCandidates(tasks) : [];
         const existingTasksCompact = tasks.map((t) => ({
           id: String(t.id),
@@ -480,7 +492,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
             : '',
         ].join('\n');
 
-        const aiRes = await Api.post('/ai/refine-text', {
+        const aiRes = await Api.post('/ai/refine-text?timeoutMs=20000', {
           text: contextText,
           mode: 'generate',
           systemInstruction,
@@ -491,7 +503,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
             priority: initiative?.priority || '',
             type: 'initiative',
           },
-          language: 'en',
+          language: aiLanguage,
         });
 
         const parsed = parseAIJson(String(aiRes?.text || ''));
@@ -560,7 +572,17 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
           proposal.remove.length === 0 &&
           (!proposal.reorder || proposal.reorder.order.length === 0)
         ) {
-          toast.error(isPolish ? 'AI nie zwróciło propozycji' : 'AI returned no proposals');
+          const msg = isPolish
+            ? 'AI nie znalazło sugestii zmian — backlog wygląda OK.'
+            : 'AI found no change suggestions — the backlog looks good.';
+          setAiNoSuggestionsMessage(msg);
+          if (aiNoSuggestionsTimerRef.current) {
+            window.clearTimeout(aiNoSuggestionsTimerRef.current);
+          }
+          aiNoSuggestionsTimerRef.current = window.setTimeout(() => {
+            setAiNoSuggestionsMessage(null);
+            aiNoSuggestionsTimerRef.current = null;
+          }, 7000);
           setAiProposal(null);
           return;
         }
@@ -997,6 +1019,24 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
           )}
         </div>
       </div>
+
+      {aiNoSuggestionsMessage && !showAIModal && (
+        <Callout
+          variant="purple"
+          compact
+          title={isPolish ? 'AI' : 'AI'}
+          action={
+            readonly
+              ? undefined
+              : {
+                  label: isPolish ? 'AI: dodaj task' : 'AI: add task',
+                  onClick: () => void proposeOneTaskWithAI(),
+                }
+          }
+        >
+          {aiNoSuggestionsMessage}
+        </Callout>
+      )}
 
       {/* AI proposal modal */}
       {showAIModal && aiProposal && (

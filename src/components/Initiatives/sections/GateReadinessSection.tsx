@@ -7,8 +7,11 @@
 
 import { motion } from 'framer-motion';
 import { Check, CheckCircle2, Clock, Flag, Loader2, Send, Sparkles, User, X } from 'lucide-react';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 
+import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { Api } from '@/services/api';
 import { getStatusMeta } from '@/services/initiativeLifecycle';
 
 import { CollapsibleSection } from './CollapsibleSection';
@@ -17,6 +20,144 @@ import { InitiativeGatesWorkflowTable } from './InitiativeGatesWorkflowTable';
 import type { InitiativeSectionProps } from './types';
 import { GATE_CONFIG, GATE_DEFINITIONS, getNextGateForStatus, getRoleLabel } from './types';
 
+type AIGatesProposal = {
+  initiative: {
+    update?: {
+      ownerId?: string;
+      sponsorId?: string;
+      plannedEndDate?: string; // YYYY-MM-DD
+      priority?: 'critical' | 'high' | 'medium' | 'low';
+      reason: string;
+    };
+  };
+  gateRoles: {
+    add: Array<{ gateRole: string; userId: string; reason: string }>;
+    remove: Array<{ gateRole: string; userId: string; reason: string }>;
+  };
+  gateDecisions: {
+    update: Array<{
+      decisionId: string;
+      decisionOwnerId?: string;
+      dueDate?: string; // YYYY-MM-DD
+      description?: string;
+      reason: string;
+    }>;
+  };
+  tasks: {
+    update: Array<{
+      taskId: string;
+      assigneeId?: string;
+      dueDate?: string; // YYYY-MM-DD
+      status?: 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'DONE';
+      reason: string;
+    }>;
+  };
+  raid: {
+    update: Array<{
+      raidId: string;
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+      status?: string; // OPEN | IN_PROGRESS | BLOCKED | RESOLVED (server accepts string)
+      ownerId?: string;
+      dueDate?: string; // YYYY-MM-DD
+      title?: string;
+      description?: string;
+      reason: string;
+    }>;
+  };
+  note?: string;
+};
+
+function safeJsonParse(raw: string): any | null {
+  const text = String(raw || '').trim();
+  if (!text) return null;
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  const candidate = (fenced?.[1] || text).trim();
+  try {
+    return JSON.parse(candidate);
+  } catch {
+    const start = candidate.indexOf('{');
+    const end = candidate.lastIndexOf('}');
+    if (start >= 0 && end > start) {
+      try {
+        return JSON.parse(candidate.slice(start, end + 1));
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+
+const ALLOWED_GATE_ROLES = [
+  'PMO',
+  'STEERING_COMMITTEE',
+  'INITIATIVE_OWNER',
+  'PROJECT_SPONSOR',
+  'BUSINESS_OWNER',
+  'CONSULTANT',
+  'PROJECT_MANAGER',
+  'PROJECT_LEAD',
+  'TEAM_MEMBER',
+] as const;
+
+const GATE_DECISION_TYPES = [
+  'SUBMIT_FOR_REVIEW',
+  'APPROVE_TO_INITIATIVE',
+  'ACCEPT',
+  'START_PLANNING',
+  'APPROVE',
+  'SCHEDULE',
+  'START',
+  'BLOCK',
+  'UNBLOCK',
+  'COMPLETE',
+  'START_TRACKING',
+  'CANCEL',
+  'ARCHIVE',
+] as const;
+
+const ALLOWED_PRIORITIES = ['critical', 'high', 'medium', 'low'] as const;
+const ALLOWED_TASK_STATUSES = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE'] as const;
+
+const normalizeTaskStatus = (
+  value?: string
+): (typeof ALLOWED_TASK_STATUSES)[number] | undefined => {
+  const raw = String(value || '').trim();
+  if (!raw) return undefined;
+  const up = raw.toUpperCase();
+  if (up === 'INPROGRESS') return 'IN_PROGRESS';
+  if ((ALLOWED_TASK_STATUSES as readonly string[]).includes(up)) return up as any;
+  return undefined;
+};
+
+const normalizeRaidSeverity = (
+  value?: string
+): 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | undefined => {
+  const raw = String(value || '').trim();
+  if (!raw) return undefined;
+  const up = raw.toUpperCase();
+  if (up === 'LOW' || up === 'MEDIUM' || up === 'HIGH' || up === 'CRITICAL') return up;
+  return undefined;
+};
+
+const normalizeRaidStatus = (value?: string): string | undefined => {
+  const raw = String(value || '').trim();
+  if (!raw) return undefined;
+  const up = raw.toUpperCase();
+  // keep a small canonical set, but allow pass-through for backend flexibility
+  if (up === 'OPEN' || up === 'IN_PROGRESS' || up === 'BLOCKED' || up === 'RESOLVED') return up;
+  return up;
+};
+
+const toIsoFromDateOnly = (dateOnly?: string): string | undefined => {
+  const d = String(dateOnly || '').trim();
+  if (!d) return undefined;
+  const [yy, mm, dd] = d.split('-').map((x) => Number(x));
+  if (!yy || !mm || !dd) return undefined;
+  const dt = new Date(yy, mm - 1, dd, 12, 0, 0);
+  return dt.toISOString();
+};
+
 export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
   sectionType,
   expanded,
@@ -24,7 +165,9 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
 }) => {
   const {
     initiative,
+    initiativeId,
     decisions,
+    gateRoles,
     raidItems,
     tasks,
     stakeholders,
@@ -36,10 +179,16 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
     users,
     pendingApprovals,
     isPolish,
-    isGeneratingAI,
-    handleGenerateAI,
+    canEditCards,
+    openSection,
+    focusTopBarField,
+    gatesAiRequest,
+    requestGatesAi,
+    clearGatesAiRequest,
+    fetchAll,
     handleRequestApproval,
     isMutating,
+    gateReadiness,
   } = useInitiativeContext();
 
   const status = (initiative?.status || 'DRAFT') as string;
@@ -47,6 +196,20 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
   const nextGateConfig = nextGate ? GATE_CONFIG[nextGate] : null;
   const canRequestApproval =
     nextGateConfig && !pendingApprovals.some((a) => a.gateType === nextGate);
+
+  const [isAIProposing, setIsAIProposing] = useState(false);
+  const [aiProposal, setAiProposal] = useState<AIGatesProposal | null>(null);
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [selectedRoleAddIdx, setSelectedRoleAddIdx] = useState<Record<number, boolean>>({});
+  const [selectedRoleRemove, setSelectedRoleRemove] = useState<Record<string, boolean>>({});
+  const [selectedDecisionUpdate, setSelectedDecisionUpdate] = useState<Record<string, boolean>>({});
+  const [selectedInitiativeFields, setSelectedInitiativeFields] = useState<
+    Partial<Record<'ownerId' | 'sponsorId' | 'plannedEndDate' | 'priority', boolean>>
+  >({});
+  const [selectedTaskUpdate, setSelectedTaskUpdate] = useState<Record<string, boolean>>({});
+  const [selectedRaidUpdate, setSelectedRaidUpdate] = useState<Record<string, boolean>>({});
+  const [noSuggestionsMessage, setNoSuggestionsMessage] = useState<string | null>(null);
+  const noSuggestionsTimerRef = useRef<number | null>(null);
 
   const requiredGates = useMemo(
     () => GATE_DEFINITIONS.filter((g) => g.forStatus === status),
@@ -122,6 +285,645 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
     return Math.round((metCount / nextGateConfig.requirements.length) * 100);
   }, [nextGateConfig, checkRequirement]);
 
+  const backendReadiness = useMemo(() => {
+    const items = (gateReadiness?.readiness || []).map((r: any) => ({
+      key: String(r.key || ''),
+      label: String(r.label || r.key || ''),
+      pass: !!r.pass,
+      severity: String(r.severity || 'warning'),
+    }));
+    // Sort: blocking fails first, then warnings fails, then passes.
+    const weight = (x: { pass: boolean; severity: string }) => {
+      if (!x.pass && x.severity === 'blocking') return 0;
+      if (!x.pass && x.severity === 'warning') return 1;
+      if (x.pass && x.severity === 'blocking') return 2;
+      return 3;
+    };
+    return items.sort((a, b) => weight(a) - weight(b));
+  }, [gateReadiness]);
+
+  const blockingMissing = useMemo(
+    () => backendReadiness.filter((r) => r.severity === 'blocking' && !r.pass),
+    [backendReadiness]
+  );
+
+  const handleFix = useCallback(
+    (key: string) => {
+      const k = String(key || '').toLowerCase();
+      if (!k) return;
+      // Top-bar fields / header title
+      if (k === 'title') {
+        focusTopBarField('title');
+        return;
+      }
+      if (k === 'owner') {
+        focusTopBarField('owner');
+        openSection('team');
+        return;
+      }
+      if (k === 'timeline') {
+        openSection('timeline');
+        return;
+      }
+      // Narrative content
+      if (k === 'summary') {
+        openSection('overview');
+        return;
+      }
+      if (k === 'sponsor') {
+        openSection('team');
+        return;
+      }
+      // Benefits readiness (DONE -> TRACKING)
+      if (k.startsWith('benefits_kpi')) {
+        openSection('kpis');
+        return;
+      }
+      if (k === 'benefits_owner') {
+        openSection('team');
+        return;
+      }
+      // Gate role assignment warnings
+      if (k.startsWith('gate_role_')) {
+        openSection('gates');
+        return;
+      }
+      // Default fallback
+      openSection('gates');
+    },
+    [focusTopBarField, openSection]
+  );
+
+  const proposeGatesWithAI = useCallback(async () => {
+    if (!initiativeId) {
+      toast.error(isPolish ? 'Brak ID inicjatywy' : 'Missing initiative ID');
+      return;
+    }
+    setIsAIProposing(true);
+    setNoSuggestionsMessage(null);
+    try {
+      const allowedUserIds = new Set(users.map((u) => String(u.id)));
+      const allowedRoles = new Set<string>(ALLOWED_GATE_ROLES as unknown as string[]);
+
+      const explicitAssignments = (gateRoles || []).filter((r) => r.source === 'explicit');
+      const explicitSet = new Set(explicitAssignments.map((r) => `${r.gateRole}::${r.userId}`));
+
+      const gateDecisions = (decisions || []).filter((d) =>
+        (GATE_DECISION_TYPES as readonly string[]).includes(String(d.type || ''))
+      );
+      const decisionIdSet = new Set(gateDecisions.map((d) => String(d.id)));
+      const taskIdSet = new Set((tasks || []).map((t) => String((t as any)?.id)));
+      const raidIdSet = new Set((raidItems || []).map((r: any) => String(r?.id)));
+
+      const readinessSnapshot = gateReadiness
+        ? {
+            currentStatus: gateReadiness.currentStatus,
+            userRoles: gateReadiness.userRoles,
+            allBlocking: gateReadiness.allBlocking,
+            allWarnings: gateReadiness.allWarnings,
+            readiness: (gateReadiness.readiness || []).slice(0, 50),
+            availableTransitions: (gateReadiness.availableTransitions || []).map((t) => ({
+              targetStatus: t.targetStatus,
+              gate: t.gate,
+              requiredRoles: t.requiredRoles,
+              hasAssignedApprover: t.hasAssignedApprover,
+              assignedApprovers: (t.assignedApprovers || []).slice(0, 10),
+            })),
+          }
+        : null;
+
+      const aiLanguage = isPolish ? 'pl' : 'en';
+      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const systemInstruction = [
+        `You are a senior PMO governance lead.`,
+        `Your goal is to review the Initiative's gate workflow governance and propose high-signal improvements.`,
+        ``,
+        `You MAY propose only changes in these categories:`,
+        `1) Initiative top-bar fields (owner/sponsor/target date/priority) — update only`,
+        `2) Gate role assignments (add/remove explicit assignments)`,
+        `3) Updates to EXISTING gate decisions (owner, due date, description)`,
+        `4) Updates to EXISTING tasks (assignee/due/status) — update only`,
+        `5) Updates to EXISTING RAID items (severity/status/owner/due/title/description) — update only`,
+        ``,
+        `Rules:`,
+        `- Do NOT propose creating new tasks, decisions, or gates.`,
+        `- Do NOT propose changing the initiative status.`,
+        `- Do NOT invent user ids. You MUST use only userId values from ALLOWED USERS.`,
+        `- Do NOT invent decision ids. For decision updates, you MUST use only decisionId values from EXISTING GATE DECISIONS.`,
+        `- Do NOT invent task ids. For task updates, you MUST use only taskId values from EXISTING TASKS.`,
+        `- Do NOT invent raid ids. For RAID updates, you MUST use only raidId values from EXISTING RAID ITEMS.`,
+        `- gateRole MUST be one of ALLOWED GATE ROLES.`,
+        `- dueDate (if used) MUST be in YYYY-MM-DD format.`,
+        `- For initiative.priority use exactly one of: ${ALLOWED_PRIORITIES.join(' | ')}`,
+        `- For tasks.status use exactly one of: ${ALLOWED_TASK_STATUSES.join(' | ')}`,
+        `- Output language MUST be ${targetLanguageName}. Translate if needed.`,
+        ``,
+        `Return ONLY valid JSON (no markdown, no code fences, no commentary).`,
+        `Schema:`,
+        `{`,
+        `  "initiative": { "update"?: { "ownerId"?: string, "sponsorId"?: string, "plannedEndDate"?: "YYYY-MM-DD", "priority"?: "critical"|"high"|"medium"|"low", "reason": string } },`,
+        `  "gateRoles": {`,
+        `    "add": [ { "gateRole": string, "userId": string, "reason": string } ],`,
+        `    "remove": [ { "gateRole": string, "userId": string, "reason": string } ]`,
+        `  },`,
+        `  "gateDecisions": {`,
+        `    "update": [ { "decisionId": string, "decisionOwnerId"?: string, "dueDate"?: "YYYY-MM-DD", "description"?: string, "reason": string } ]`,
+        `  },`,
+        `  "tasks": {`,
+        `    "update": [ { "taskId": string, "assigneeId"?: string, "dueDate"?: "YYYY-MM-DD", "status"?: "TODO"|"IN_PROGRESS"|"BLOCKED"|"DONE", "reason": string } ]`,
+        `  },`,
+        `  "raid": {`,
+        `    "update": [ { "raidId": string, "severity"?: "LOW"|"MEDIUM"|"HIGH"|"CRITICAL", "status"?: string, "ownerId"?: string, "dueDate"?: "YYYY-MM-DD", "title"?: string, "description"?: string, "reason": string } ]`,
+        `  },`,
+        `  "note"?: string`,
+        `}`,
+      ].join('\n');
+
+      const contextText = [
+        `[INITIATIVE CONTEXT]`,
+        `Initiative name: ${initiative?.name || ''}`,
+        `Status: ${initiative?.status || ''}`,
+        `Priority: ${initiative?.priority || ''}`,
+        `Summary: ${(initiative?.summary || initiative?.description || '').toString()}`,
+        ``,
+        `[GATE READINESS]`,
+        JSON.stringify(readinessSnapshot, null, 2),
+        ``,
+        `[EXISTING EXPLICIT GATE ROLE ASSIGNMENTS]`,
+        JSON.stringify(
+          explicitAssignments.map((r) => ({
+            gateRole: String(r.gateRole),
+            userId: String(r.userId),
+            name: `${r.firstName || ''} ${r.lastName || ''}`.trim() || r.email || r.userId,
+          })),
+          null,
+          2
+        ),
+        ``,
+        `[EXISTING GATE DECISIONS]`,
+        JSON.stringify(
+          gateDecisions.map((d) => ({
+            decisionId: String(d.id),
+            type: String(d.type || ''),
+            status: String(d.status || ''),
+            decisionOwnerId: (d as any)?.decisionOwnerId || (d as any)?.decisionMakerId || null,
+            dueDate: (d as any)?.dueDate || null,
+            description: String((d as any)?.description || '').slice(0, 600) || null,
+          })),
+          null,
+          2
+        ),
+        ``,
+        `[ALLOWED USERS]`,
+        JSON.stringify(
+          users.map((u) => ({
+            userId: String(u.id),
+            name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || u.id,
+            email: u.email || null,
+          })),
+          null,
+          2
+        ),
+        ``,
+        `[ALLOWED GATE ROLES]`,
+        JSON.stringify(Array.from(allowedRoles), null, 2),
+        ``,
+        `[EXISTING TASKS]`,
+        JSON.stringify(
+          (tasks || []).slice(0, 80).map((t: any) => ({
+            taskId: String(t?.id),
+            title: String(t?.title || ''),
+            status: String(t?.status || ''),
+            dueDate: String(t?.dueDate || ''),
+            assigneeId: t?.assigneeId ? String(t.assigneeId) : null,
+            assigneeName: t?.assigneeName || null,
+          })),
+          null,
+          2
+        ),
+        ``,
+        `[EXISTING RAID ITEMS]`,
+        JSON.stringify(
+          (raidItems || []).slice(0, 60).map((r: any) => ({
+            raidId: String(r?.id),
+            type: String(r?.type || ''),
+            title: String(r?.title || ''),
+            status: String(r?.status || ''),
+            severity: String(r?.severity || ''),
+            ownerId: r?.ownerId ? String(r.ownerId) : null,
+            owner: r?.owner || null,
+            dueDate: r?.dueDate || null,
+            description: String(r?.description || '').slice(0, 400) || null,
+          })),
+          null,
+          2
+        ),
+        ``,
+        `[INITIATIVE TOP BAR]`,
+        JSON.stringify(
+          {
+            ownerId: ownerId || null,
+            sponsorId: sponsorId || null,
+            plannedEndDate: targetDate || null,
+            priority: String(initiative?.priority || ''),
+          },
+          null,
+          2
+        ),
+      ].join('\n');
+
+      const aiRes = await Api.post('/ai/refine-text?timeoutMs=20000', {
+        text: contextText,
+        mode: 'generate',
+        systemInstruction,
+        fieldLabel: 'Initiative gates governance review',
+        artifactContext: {
+          title: initiative?.name || '',
+          status: initiative?.status || '',
+          priority: initiative?.priority || '',
+          type: 'initiative',
+        },
+        language: aiLanguage,
+      });
+
+      const parsed = safeJsonParse(String(aiRes?.text || '')) as any;
+      const proposal: AIGatesProposal = {
+        initiative: {
+          update: parsed?.initiative?.update ? parsed.initiative.update : undefined,
+        },
+        gateRoles: {
+          add: Array.isArray(parsed?.gateRoles?.add) ? parsed.gateRoles.add : [],
+          remove: Array.isArray(parsed?.gateRoles?.remove) ? parsed.gateRoles.remove : [],
+        },
+        gateDecisions: {
+          update: Array.isArray(parsed?.gateDecisions?.update) ? parsed.gateDecisions.update : [],
+        },
+        tasks: {
+          update: Array.isArray(parsed?.tasks?.update) ? parsed.tasks.update : [],
+        },
+        raid: {
+          update: Array.isArray(parsed?.raid?.update) ? parsed.raid.update : [],
+        },
+        note: parsed?.note ? String(parsed.note).trim() : undefined,
+      };
+
+      // Normalize initiative update
+      if (proposal.initiative.update) {
+        const u = proposal.initiative.update as any;
+        const owner = u?.ownerId ? String(u.ownerId).trim() : undefined;
+        const sponsor = u?.sponsorId ? String(u.sponsorId).trim() : undefined;
+        const plannedEndDate = u?.plannedEndDate ? String(u.plannedEndDate).trim() : undefined;
+        const pr = u?.priority ? String(u.priority).trim().toLowerCase() : undefined;
+        const reason = String(u?.reason || '').trim();
+
+        const normalized: AIGatesProposal['initiative']['update'] = {
+          reason: reason || 'Suggested top-bar adjustment to improve gate readiness.',
+        };
+        if (owner && allowedUserIds.has(owner)) normalized.ownerId = owner;
+        if (sponsor && allowedUserIds.has(sponsor)) normalized.sponsorId = sponsor;
+        if (plannedEndDate && /^\d{4}-\d{2}-\d{2}$/.test(plannedEndDate)) {
+          normalized.plannedEndDate = plannedEndDate;
+        }
+        if (
+          pr &&
+          (ALLOWED_PRIORITIES as readonly string[]).includes(pr) &&
+          pr !==
+            String(initiative?.priority || '')
+              .trim()
+              .toLowerCase()
+        ) {
+          normalized.priority = pr as any;
+        }
+
+        // Drop update if it contains no actionable field
+        const hasAny =
+          !!normalized.ownerId ||
+          !!normalized.sponsorId ||
+          !!normalized.plannedEndDate ||
+          !!normalized.priority;
+        proposal.initiative.update = hasAny ? normalized : undefined;
+      }
+
+      // Normalize role add/remove
+      proposal.gateRoles.add = proposal.gateRoles.add
+        .map((x: any) => ({
+          gateRole: String(x?.gateRole || '').trim(),
+          userId: String(x?.userId || '').trim(),
+          reason: String(x?.reason || '').trim(),
+        }))
+        .filter((x) => x.gateRole && x.userId && x.reason)
+        .filter((x) => allowedRoles.has(x.gateRole) && allowedUserIds.has(x.userId))
+        .filter((x) => !explicitSet.has(`${x.gateRole}::${x.userId}`))
+        .slice(0, 12);
+
+      proposal.gateRoles.remove = proposal.gateRoles.remove
+        .map((x: any) => ({
+          gateRole: String(x?.gateRole || '').trim(),
+          userId: String(x?.userId || '').trim(),
+          reason: String(x?.reason || '').trim(),
+        }))
+        .filter((x) => x.gateRole && x.userId && x.reason)
+        .filter((x) => allowedRoles.has(x.gateRole) && allowedUserIds.has(x.userId))
+        .filter((x) => explicitSet.has(`${x.gateRole}::${x.userId}`))
+        .slice(0, 12);
+
+      // Normalize decision updates
+      proposal.gateDecisions.update = proposal.gateDecisions.update
+        .map((x: any) => ({
+          decisionId: String(x?.decisionId || '').trim(),
+          decisionOwnerId: x?.decisionOwnerId ? String(x.decisionOwnerId).trim() : undefined,
+          dueDate: x?.dueDate ? String(x.dueDate).trim() : undefined,
+          description: x?.description ? String(x.description).trim() : undefined,
+          reason: String(x?.reason || '').trim(),
+        }))
+        .filter((x) => x.decisionId && x.reason)
+        .filter((x) => decisionIdSet.has(x.decisionId))
+        .filter((x) => (x.decisionOwnerId ? allowedUserIds.has(x.decisionOwnerId) : true))
+        .filter((x) => (x.dueDate ? /^\d{4}-\d{2}-\d{2}$/.test(x.dueDate) : true))
+        .filter((x) => !!x.decisionOwnerId || !!x.dueDate || !!x.description)
+        .slice(0, 20);
+
+      // Normalize task updates
+      proposal.tasks.update = proposal.tasks.update
+        .map((x: any) => ({
+          taskId: String(x?.taskId || '').trim(),
+          assigneeId: x?.assigneeId ? String(x.assigneeId).trim() : undefined,
+          dueDate: x?.dueDate ? String(x.dueDate).trim() : undefined,
+          status: normalizeTaskStatus(x?.status),
+          reason: String(x?.reason || '').trim(),
+        }))
+        .filter((x) => x.taskId && x.reason)
+        .filter((x) => taskIdSet.has(x.taskId))
+        .filter((x) => (x.assigneeId ? allowedUserIds.has(x.assigneeId) : true))
+        .filter((x) => (x.dueDate ? /^\d{4}-\d{2}-\d{2}$/.test(x.dueDate) : true))
+        .filter((x) => !!x.assigneeId || !!x.dueDate || !!x.status)
+        .slice(0, 25);
+
+      // Normalize RAID updates
+      proposal.raid.update = proposal.raid.update
+        .map((x: any) => ({
+          raidId: String(x?.raidId || '').trim(),
+          severity: normalizeRaidSeverity(x?.severity),
+          status: normalizeRaidStatus(x?.status),
+          ownerId: x?.ownerId ? String(x.ownerId).trim() : undefined,
+          dueDate: x?.dueDate ? String(x.dueDate).trim() : undefined,
+          title: x?.title ? String(x.title).trim() : undefined,
+          description: x?.description ? String(x.description).trim() : undefined,
+          reason: String(x?.reason || '').trim(),
+        }))
+        .filter((x) => x.raidId && x.reason)
+        .filter((x) => raidIdSet.has(x.raidId))
+        .filter((x) => (x.ownerId ? allowedUserIds.has(x.ownerId) : true))
+        .filter((x) => (x.dueDate ? /^\d{4}-\d{2}-\d{2}$/.test(x.dueDate) : true))
+        .filter(
+          (x) =>
+            !!x.severity || !!x.status || !!x.ownerId || !!x.dueDate || !!x.title || !!x.description
+        )
+        .slice(0, 30);
+
+      const hasAny =
+        !!proposal.initiative.update ||
+        proposal.gateRoles.add.length > 0 ||
+        proposal.gateRoles.remove.length > 0 ||
+        proposal.gateDecisions.update.length > 0 ||
+        proposal.tasks.update.length > 0 ||
+        proposal.raid.update.length > 0;
+
+      if (!hasAny) {
+        const msg = isPolish
+          ? 'AI nie znalazło sugestii zmian — bramki wyglądają OK.'
+          : 'AI found no change suggestions — the gates look good.';
+        setNoSuggestionsMessage(msg);
+        if (noSuggestionsTimerRef.current) window.clearTimeout(noSuggestionsTimerRef.current);
+        noSuggestionsTimerRef.current = window.setTimeout(() => {
+          setNoSuggestionsMessage(null);
+          noSuggestionsTimerRef.current = null;
+        }, 7000);
+      }
+
+      // Always open modal (also for "no suggestions" — per UX request)
+      setAiProposal(proposal);
+      setShowAIModal(true);
+      setSelectedRoleAddIdx(
+        Object.fromEntries(proposal.gateRoles.add.map((_, idx) => [idx, true])) as Record<
+          number,
+          boolean
+        >
+      );
+      setSelectedRoleRemove(
+        Object.fromEntries(
+          proposal.gateRoles.remove.map((r) => [`${r.gateRole}::${r.userId}`, false])
+        ) as Record<string, boolean>
+      );
+      setSelectedDecisionUpdate(
+        Object.fromEntries(
+          proposal.gateDecisions.update.map((u) => [u.decisionId, true])
+        ) as Record<string, boolean>
+      );
+      setSelectedInitiativeFields({
+        ownerId: !!proposal.initiative.update?.ownerId,
+        sponsorId: !!proposal.initiative.update?.sponsorId,
+        plannedEndDate: !!proposal.initiative.update?.plannedEndDate,
+        priority: !!proposal.initiative.update?.priority,
+      });
+      setSelectedTaskUpdate(
+        Object.fromEntries(proposal.tasks.update.map((u) => [u.taskId, true])) as Record<
+          string,
+          boolean
+        >
+      );
+      setSelectedRaidUpdate(
+        Object.fromEntries(proposal.raid.update.map((u) => [u.raidId, true])) as Record<
+          string,
+          boolean
+        >
+      );
+    } catch (e: any) {
+      toast.error(
+        e?.message || (isPolish ? 'Nie udało się przeanalizować bramek' : 'Failed to analyze gates')
+      );
+    } finally {
+      setIsAIProposing(false);
+    }
+  }, [
+    decisions,
+    gateReadiness,
+    gateRoles,
+    initiative,
+    initiativeId,
+    isPolish,
+    ownerId,
+    raidItems,
+    sponsorId,
+    targetDate,
+    tasks,
+    users,
+  ]);
+
+  useEffect(() => {
+    if (!gatesAiRequest) return;
+    const run = async () => {
+      try {
+        await proposeGatesWithAI();
+      } finally {
+        clearGatesAiRequest();
+      }
+    };
+    void run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gatesAiRequest?.nonce]);
+
+  const closeAIModal = useCallback(() => {
+    setShowAIModal(false);
+    setAiProposal(null);
+    setSelectedRoleAddIdx({});
+    setSelectedRoleRemove({});
+    setSelectedDecisionUpdate({});
+    setSelectedInitiativeFields({});
+    setSelectedTaskUpdate({});
+    setSelectedRaidUpdate({});
+  }, []);
+
+  const applyAIProposal = useCallback(async () => {
+    if (!aiProposal) return;
+    if (!initiativeId) return;
+    const initiativeUpdate = aiProposal.initiative.update;
+    const roleAdds = aiProposal.gateRoles.add.filter((_, idx) => selectedRoleAddIdx[idx]);
+    const roleRemoves = aiProposal.gateRoles.remove.filter(
+      (r) => selectedRoleRemove[`${r.gateRole}::${r.userId}`]
+    );
+    const decisionUpdates = aiProposal.gateDecisions.update.filter(
+      (u) => selectedDecisionUpdate[u.decisionId]
+    );
+    const taskUpdates = aiProposal.tasks.update.filter((u) => selectedTaskUpdate[u.taskId]);
+    const raidUpdates = aiProposal.raid.update.filter((u) => selectedRaidUpdate[u.raidId]);
+
+    const selectedInitiativePayload: Record<string, any> = {};
+    if (initiativeUpdate?.ownerId && selectedInitiativeFields.ownerId) {
+      selectedInitiativePayload.ownerId = initiativeUpdate.ownerId;
+    }
+    if (initiativeUpdate?.sponsorId && selectedInitiativeFields.sponsorId) {
+      selectedInitiativePayload.sponsorId = initiativeUpdate.sponsorId;
+    }
+    if (initiativeUpdate?.plannedEndDate && selectedInitiativeFields.plannedEndDate) {
+      selectedInitiativePayload.plannedEndDate = initiativeUpdate.plannedEndDate;
+    }
+    if (initiativeUpdate?.priority && selectedInitiativeFields.priority) {
+      selectedInitiativePayload.priority = initiativeUpdate.priority;
+    }
+
+    if (
+      Object.keys(selectedInitiativePayload).length === 0 &&
+      roleAdds.length === 0 &&
+      roleRemoves.length === 0 &&
+      decisionUpdates.length === 0 &&
+      taskUpdates.length === 0 &&
+      raidUpdates.length === 0
+    ) {
+      toast.error(isPolish ? 'Zaznacz zmiany do zastosowania' : 'Select changes to apply');
+      return;
+    }
+
+    if (roleRemoves.length > 0) {
+      const ok = window.confirm(
+        isPolish
+          ? `Usunąć ${roleRemoves.length} przypisań ról bramkowych?`
+          : `Remove ${roleRemoves.length} gate role assignments?`
+      );
+      if (!ok) return;
+    }
+
+    setIsAIProposing(true);
+    try {
+      // 0) Initiative top-bar updates
+      if (Object.keys(selectedInitiativePayload).length > 0) {
+        await Api.put(`/initiatives/${initiativeId}`, selectedInitiativePayload);
+      }
+
+      // 1) Gate roles (explicit only)
+      if (roleAdds.length > 0 || roleRemoves.length > 0) {
+        const removeSet = new Set(roleRemoves.map((r) => `${r.gateRole}::${r.userId}`));
+        const existingExplicit = (gateRoles || [])
+          .filter((r) => r.source === 'explicit')
+          .map((r) => ({ gateRole: String(r.gateRole), userId: String(r.userId) }));
+
+        const next: Array<{ gateRole: string; userId: string }> = existingExplicit.filter(
+          (r) => !removeSet.has(`${r.gateRole}::${r.userId}`)
+        );
+        const nextSet = new Set(next.map((r) => `${r.gateRole}::${r.userId}`));
+        for (const a of roleAdds) {
+          const key = `${a.gateRole}::${a.userId}`;
+          if (!nextSet.has(key)) {
+            next.push({ gateRole: a.gateRole, userId: a.userId });
+            nextSet.add(key);
+          }
+        }
+
+        await Api.put(`/initiatives/${initiativeId}/gate-roles`, { roles: next });
+      }
+
+      // 2) Gate decision updates
+      if (decisionUpdates.length > 0) {
+        for (const u of decisionUpdates) {
+          const payload: Record<string, any> = {};
+          if (u.decisionOwnerId) payload.decisionOwnerId = u.decisionOwnerId;
+          if (u.dueDate) payload.dueDate = toIsoFromDateOnly(u.dueDate);
+          if (u.description) payload.description = u.description;
+          if (Object.keys(payload).length === 0) continue;
+          await Api.put(`/decisions/${u.decisionId}`, payload);
+        }
+      }
+
+      // 3) Task updates
+      if (taskUpdates.length > 0) {
+        for (const u of taskUpdates) {
+          const payload: Record<string, any> = {};
+          if (u.assigneeId) payload.assigneeId = u.assigneeId;
+          if (u.dueDate) payload.dueDate = toIsoFromDateOnly(u.dueDate);
+          if (u.status) payload.status = u.status;
+          if (Object.keys(payload).length === 0) continue;
+          await Api.put(`/tasks/${u.taskId}`, payload);
+        }
+      }
+
+      // 4) RAID updates (initiative-scoped RAID endpoints)
+      if (raidUpdates.length > 0) {
+        for (const u of raidUpdates) {
+          const payload: Record<string, any> = {};
+          if (u.title) payload.title = u.title;
+          if (u.description) payload.description = u.description;
+          if (u.severity) payload.severity = u.severity;
+          if (u.status) payload.status = u.status;
+          if (u.ownerId) payload.ownerId = u.ownerId;
+          if (u.dueDate) payload.dueDate = toIsoFromDateOnly(u.dueDate);
+          if (Object.keys(payload).length === 0) continue;
+          await Api.patch(`/initiatives/${initiativeId}/raid/${u.raidId}`, payload);
+        }
+      }
+
+      toast.success(isPolish ? 'Zastosowano sugestie AI' : 'Applied AI suggestions');
+      await fetchAll();
+      closeAIModal();
+    } catch (e: any) {
+      toast.error(e?.message || (isPolish ? 'Nie udało się zastosować zmian' : 'Failed to apply'));
+    } finally {
+      setIsAIProposing(false);
+    }
+  }, [
+    aiProposal,
+    closeAIModal,
+    fetchAll,
+    gateRoles,
+    initiativeId,
+    isPolish,
+    selectedInitiativeFields,
+    selectedDecisionUpdate,
+    selectedRoleAddIdx,
+    selectedRoleRemove,
+    selectedTaskUpdate,
+    selectedRaidUpdate,
+  ]);
+
   const reqLabels: Record<string, { en: string; pl: string }> = {
     title: { en: 'Title defined', pl: 'Tytuł zdefiniowany' },
     problem: { en: 'Problem statement', pl: 'Opis problemu' },
@@ -196,12 +998,12 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
             whileTap={{ scale: 0.95 }}
             onClick={(e) => {
               e.stopPropagation();
-              handleGenerateAI('gates');
+              requestGatesAi();
             }}
-            disabled={isGeneratingAI === 'gates'}
+            disabled={!!gatesAiRequest}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium transition-colors disabled:opacity-50"
           >
-            {isGeneratingAI === 'gates' ? (
+            {gatesAiRequest ? (
               <Loader2 size={14} className="animate-spin" />
             ) : (
               <Sparkles size={14} />
@@ -211,6 +1013,642 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
         </div>
       }
     >
+      {/* AI "no suggestions" callout (auto-dismiss) */}
+      {noSuggestionsMessage && !showAIModal && (
+        <div className="mb-4">
+          <Callout variant="purple" title={isPolish ? 'AI: brak sugestii' : 'AI: no suggestions'}>
+            {noSuggestionsMessage}
+          </Callout>
+        </div>
+      )}
+
+      {/* AI proposal modal */}
+      {showAIModal && aiProposal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-200/60 dark:border-navy-700/60 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 dark:from-violet-500/20 dark:to-purple-500/20 flex items-center justify-center">
+                  <Sparkles size={16} className="text-violet-600 dark:text-violet-400" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'AI: przegląd bramek' : 'AI: gates review'}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish
+                      ? 'Zmiany nie są stosowane automatycznie — wybierz i zaakceptuj.'
+                      : 'Nothing is applied automatically — select and accept changes.'}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={closeAIModal}
+                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+              {aiProposal.note ? (
+                <Callout variant="purple" title={isPolish ? 'Notatka AI' : 'AI note'}>
+                  {aiProposal.note}
+                </Callout>
+              ) : null}
+
+              {/* Initiative top-bar updates */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Inicjatywa (top bar)' : 'Initiative (top bar)'}
+                  </span>
+                </div>
+
+                {!aiProposal.initiative.update ? (
+                  <EmptyStateInline
+                    icon={Flag}
+                    message={isPolish ? 'Brak zmian w top bar' : 'No top-bar changes'}
+                    hint={
+                      isPolish
+                        ? 'AI nie sugeruje zmian owner/sponsor/termin/prioritet.'
+                        : 'AI suggests no owner/sponsor/date/priority changes.'
+                    }
+                  />
+                ) : (
+                  <div className="space-y-1.5">
+                    {(() => {
+                      const u = aiProposal.initiative.update!;
+                      const items: Array<
+                        | {
+                            key: 'ownerId' | 'sponsorId';
+                            label: string;
+                            value: string;
+                          }
+                        | { key: 'plannedEndDate' | 'priority'; label: string; value: string }
+                      > = [];
+
+                      if (u.ownerId) {
+                        const user = users.find((x) => String(x.id) === String(u.ownerId));
+                        const name =
+                          (user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '') ||
+                          (user ? user.email : '') ||
+                          u.ownerId;
+                        items.push({
+                          key: 'ownerId',
+                          label: isPolish ? 'Owner' : 'Owner',
+                          value: name,
+                        });
+                      }
+                      if (u.sponsorId) {
+                        const user = users.find((x) => String(x.id) === String(u.sponsorId));
+                        const name =
+                          (user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '') ||
+                          (user ? user.email : '') ||
+                          u.sponsorId;
+                        items.push({
+                          key: 'sponsorId',
+                          label: isPolish ? 'Sponsor' : 'Sponsor',
+                          value: name,
+                        });
+                      }
+                      if (u.plannedEndDate) {
+                        items.push({
+                          key: 'plannedEndDate',
+                          label: isPolish ? 'Termin (end)' : 'Target date (end)',
+                          value: u.plannedEndDate,
+                        });
+                      }
+                      if (u.priority) {
+                        items.push({
+                          key: 'priority',
+                          label: isPolish ? 'Priorytet' : 'Priority',
+                          value: u.priority,
+                        });
+                      }
+
+                      return items.map((it) => (
+                        <label
+                          key={it.key}
+                          className="flex items-start gap-2 p-3 rounded-xl bg-slate-50/60 dark:bg-navy-800/40 border border-slate-200/60 dark:border-navy-700/60 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!selectedInitiativeFields[it.key]}
+                            onChange={(e) =>
+                              setSelectedInitiativeFields((p) => ({
+                                ...p,
+                                [it.key]: e.target.checked,
+                              }))
+                            }
+                            className="mt-1"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                              {it.label}: {it.value}
+                            </div>
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                              {u.reason}
+                            </div>
+                          </div>
+                        </label>
+                      ));
+                    })()}
+                  </div>
+                )}
+              </div>
+
+              {/* Gate roles */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Role bramkowe' : 'Gate roles'}
+                  </span>
+                </div>
+
+                {aiProposal.gateRoles.add.length === 0 &&
+                aiProposal.gateRoles.remove.length === 0 ? (
+                  <EmptyStateInline
+                    icon={User}
+                    message={isPolish ? 'Brak zmian ról bramkowych' : 'No gate role changes'}
+                    hint={
+                      isPolish
+                        ? 'AI nie sugeruje przypisań/usunięć ról.'
+                        : 'AI suggests no role adds/removes.'
+                    }
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* Adds */}
+                    <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 p-3 bg-slate-50/60 dark:bg-navy-800/40">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                          {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.gateRoles.add.length})
+                        </span>
+                        {aiProposal.gateRoles.add.length > 0 && (
+                          <button
+                            onClick={() =>
+                              setSelectedRoleAddIdx(
+                                Object.fromEntries(
+                                  aiProposal.gateRoles.add.map((_, idx) => [idx, true])
+                                ) as Record<number, boolean>
+                              )
+                            }
+                            className="text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:underline"
+                          >
+                            {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                          </button>
+                        )}
+                      </div>
+                      {aiProposal.gateRoles.add.length === 0 ? (
+                        <div className="text-xs text-slate-500 dark:text-slate-400">—</div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {aiProposal.gateRoles.add.map((a, idx) => {
+                            const u = users.find((x) => String(x.id) === String(a.userId));
+                            const name =
+                              (u ? `${u.firstName || ''} ${u.lastName || ''}`.trim() : '') ||
+                              (u ? u.email : '') ||
+                              a.userId;
+                            return (
+                              <label
+                                key={`${a.gateRole}::${a.userId}::${idx}`}
+                                className="flex items-start gap-2 p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={!!selectedRoleAddIdx[idx]}
+                                  onChange={(e) =>
+                                    setSelectedRoleAddIdx((p) => ({
+                                      ...p,
+                                      [idx]: e.target.checked,
+                                    }))
+                                  }
+                                  className="mt-0.5"
+                                />
+                                <div className="min-w-0">
+                                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                                    {a.gateRole} → {name}
+                                  </div>
+                                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                    {a.reason}
+                                  </div>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Removes */}
+                    <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 p-3 bg-slate-50/60 dark:bg-navy-800/40">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                          {isPolish ? 'Do usunięcia' : 'To remove'} (
+                          {aiProposal.gateRoles.remove.length})
+                        </span>
+                        {aiProposal.gateRoles.remove.length > 0 && (
+                          <button
+                            onClick={() =>
+                              setSelectedRoleRemove(
+                                Object.fromEntries(
+                                  aiProposal.gateRoles.remove.map((r) => [
+                                    `${r.gateRole}::${r.userId}`,
+                                    true,
+                                  ])
+                                ) as Record<string, boolean>
+                              )
+                            }
+                            className="text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:underline"
+                          >
+                            {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                          </button>
+                        )}
+                      </div>
+                      {aiProposal.gateRoles.remove.length === 0 ? (
+                        <div className="text-xs text-slate-500 dark:text-slate-400">—</div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {aiProposal.gateRoles.remove.map((r) => {
+                            const key = `${r.gateRole}::${r.userId}`;
+                            const u = users.find((x) => String(x.id) === String(r.userId));
+                            const name =
+                              (u ? `${u.firstName || ''} ${u.lastName || ''}`.trim() : '') ||
+                              (u ? u.email : '') ||
+                              r.userId;
+                            return (
+                              <label
+                                key={key}
+                                className="flex items-start gap-2 p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={!!selectedRoleRemove[key]}
+                                  onChange={(e) =>
+                                    setSelectedRoleRemove((p) => ({
+                                      ...p,
+                                      [key]: e.target.checked,
+                                    }))
+                                  }
+                                  className="mt-0.5"
+                                />
+                                <div className="min-w-0">
+                                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                                    {r.gateRole} → {name}
+                                  </div>
+                                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                    {r.reason}
+                                  </div>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Gate decision updates */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Decyzje bramkowe' : 'Gate decisions'}
+                  </span>
+                </div>
+                {aiProposal.gateDecisions.update.length === 0 ? (
+                  <EmptyStateInline
+                    icon={Flag}
+                    message={isPolish ? 'Brak aktualizacji decyzji' : 'No decision updates'}
+                    hint={
+                      isPolish
+                        ? 'AI nie sugeruje zmian dla istniejących decyzji bramkowych.'
+                        : 'AI suggests no updates for existing gate decisions.'
+                    }
+                  />
+                ) : (
+                  <div className="space-y-1.5">
+                    {aiProposal.gateDecisions.update.map((u) => {
+                      const decision = (decisions || []).find(
+                        (d) => String(d.id) === String(u.decisionId)
+                      );
+                      const title = decision?.title || decision?.type || u.decisionId;
+                      const ownerUser = u.decisionOwnerId
+                        ? users.find((x) => String(x.id) === String(u.decisionOwnerId))
+                        : undefined;
+                      const ownerName = u.decisionOwnerId
+                        ? (ownerUser
+                            ? `${ownerUser.firstName || ''} ${ownerUser.lastName || ''}`.trim()
+                            : '') ||
+                          ownerUser?.email ||
+                          u.decisionOwnerId
+                        : null;
+                      return (
+                        <label
+                          key={u.decisionId}
+                          className="flex items-start gap-2 p-3 rounded-xl bg-slate-50/60 dark:bg-navy-800/40 border border-slate-200/60 dark:border-navy-700/60 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!selectedDecisionUpdate[u.decisionId]}
+                            onChange={(e) =>
+                              setSelectedDecisionUpdate((p) => ({
+                                ...p,
+                                [u.decisionId]: e.target.checked,
+                              }))
+                            }
+                            className="mt-1"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                              {title}
+                            </div>
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                              {u.reason}
+                            </div>
+                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                              <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {isPolish ? 'Owner' : 'Owner'}:
+                                </span>{' '}
+                                <span className="font-medium">{ownerName || '—'}</span>
+                              </div>
+                              <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {isPolish ? 'Due' : 'Due'}:
+                                </span>{' '}
+                                <span className="font-medium">{u.dueDate || '—'}</span>
+                              </div>
+                              <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {isPolish ? 'Note' : 'Note'}:
+                                </span>{' '}
+                                <span className="font-medium">{u.description ? '✓' : '—'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Task updates */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Zadania' : 'Tasks'}
+                  </span>
+                </div>
+                {aiProposal.tasks.update.length === 0 ? (
+                  <EmptyStateInline
+                    icon={CheckCircle2}
+                    message={isPolish ? 'Brak aktualizacji zadań' : 'No task updates'}
+                    hint={
+                      isPolish
+                        ? 'AI nie sugeruje zmian assignee/due/status.'
+                        : 'AI suggests no assignee/due/status changes.'
+                    }
+                  />
+                ) : (
+                  <div className="space-y-1.5">
+                    {aiProposal.tasks.update.map((u) => {
+                      const task = (tasks || []).find(
+                        (t: any) => String(t?.id) === String(u.taskId)
+                      );
+                      const title = String((task as any)?.title || '').trim() || u.taskId;
+                      const assigneeUser = u.assigneeId
+                        ? users.find((x) => String(x.id) === String(u.assigneeId))
+                        : undefined;
+                      const assigneeName = u.assigneeId
+                        ? (assigneeUser
+                            ? `${assigneeUser.firstName || ''} ${assigneeUser.lastName || ''}`.trim()
+                            : '') ||
+                          assigneeUser?.email ||
+                          u.assigneeId
+                        : null;
+                      return (
+                        <label
+                          key={u.taskId}
+                          className="flex items-start gap-2 p-3 rounded-xl bg-slate-50/60 dark:bg-navy-800/40 border border-slate-200/60 dark:border-navy-700/60 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!selectedTaskUpdate[u.taskId]}
+                            onChange={(e) =>
+                              setSelectedTaskUpdate((p) => ({
+                                ...p,
+                                [u.taskId]: e.target.checked,
+                              }))
+                            }
+                            className="mt-1"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                              {title}
+                            </div>
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                              {u.reason}
+                            </div>
+                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                              <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {isPolish ? 'Owner' : 'Owner'}:
+                                </span>{' '}
+                                <span className="font-medium">{assigneeName || '—'}</span>
+                              </div>
+                              <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {isPolish ? 'Due' : 'Due'}:
+                                </span>{' '}
+                                <span className="font-medium">{u.dueDate || '—'}</span>
+                              </div>
+                              <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {isPolish ? 'Status' : 'Status'}:
+                                </span>{' '}
+                                <span className="font-medium">{u.status || '—'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* RAID updates */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'RAID' : 'RAID'}
+                  </span>
+                </div>
+                {aiProposal.raid.update.length === 0 ? (
+                  <EmptyStateInline
+                    icon={User}
+                    message={isPolish ? 'Brak aktualizacji RAID' : 'No RAID updates'}
+                    hint={
+                      isPolish
+                        ? 'AI nie sugeruje zmian dla istniejących ryzyk/issue.'
+                        : 'AI suggests no changes to existing risks/issues.'
+                    }
+                  />
+                ) : (
+                  <div className="space-y-1.5">
+                    {aiProposal.raid.update.map((u) => {
+                      const item = (raidItems || []).find(
+                        (r: any) => String(r?.id) === String(u.raidId)
+                      );
+                      const title = String(item?.title || '').trim() || u.raidId;
+                      const ownerUser = u.ownerId
+                        ? users.find((x) => String(x.id) === String(u.ownerId))
+                        : undefined;
+                      const ownerName = u.ownerId
+                        ? (ownerUser
+                            ? `${ownerUser.firstName || ''} ${ownerUser.lastName || ''}`.trim()
+                            : '') ||
+                          ownerUser?.email ||
+                          u.ownerId
+                        : null;
+                      return (
+                        <label
+                          key={u.raidId}
+                          className="flex items-start gap-2 p-3 rounded-xl bg-slate-50/60 dark:bg-navy-800/40 border border-slate-200/60 dark:border-navy-700/60 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!selectedRaidUpdate[u.raidId]}
+                            onChange={(e) =>
+                              setSelectedRaidUpdate((p) => ({
+                                ...p,
+                                [u.raidId]: e.target.checked,
+                              }))
+                            }
+                            className="mt-1"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                              {title}
+                            </div>
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                              {u.reason}
+                            </div>
+                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                              <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {isPolish ? 'Severity' : 'Severity'}:
+                                </span>{' '}
+                                <span className="font-medium">{u.severity || '—'}</span>
+                              </div>
+                              <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {isPolish ? 'Status' : 'Status'}:
+                                </span>{' '}
+                                <span className="font-medium">{u.status || '—'}</span>
+                              </div>
+                              <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {isPolish ? 'Owner' : 'Owner'}:
+                                </span>{' '}
+                                <span className="font-medium">{ownerName || '—'}</span>
+                              </div>
+                            </div>
+                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                              <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {isPolish ? 'Due' : 'Due'}:
+                                </span>{' '}
+                                <span className="font-medium">{u.dueDate || '—'}</span>
+                              </div>
+                              <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {isPolish ? 'Title' : 'Title'}:
+                                </span>{' '}
+                                <span className="font-medium">{u.title ? '✓' : '—'}</span>
+                              </div>
+                              <div className="rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 px-2 py-1">
+                                <span className="text-slate-500 dark:text-slate-400">
+                                  {isPolish ? 'Desc' : 'Desc'}:
+                                </span>{' '}
+                                <span className="font-medium">{u.description ? '✓' : '—'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* No suggestions table */}
+              {!aiProposal.initiative.update &&
+              aiProposal.gateRoles.add.length === 0 &&
+              aiProposal.gateRoles.remove.length === 0 &&
+              aiProposal.gateDecisions.update.length === 0 &&
+              aiProposal.tasks.update.length === 0 &&
+              aiProposal.raid.update.length === 0 ? (
+                <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-slate-50/80 dark:bg-navy-800/60">
+                      <tr>
+                        <th className="text-left px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          {isPolish ? 'Wynik analizy' : 'Analysis result'}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                          {isPolish
+                            ? 'AI nie zaproponowało żadnych zmian do wprowadzenia.'
+                            : 'AI did not propose any changes to apply.'}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-between bg-slate-50/60 dark:bg-navy-900/40">
+              <button
+                onClick={closeAIModal}
+                disabled={isAIProposing}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+              >
+                {isPolish ? 'Zamknij' : 'Close'}
+              </button>
+              <button
+                onClick={() => void applyAIProposal()}
+                disabled={
+                  isAIProposing ||
+                  (!aiProposal.initiative.update &&
+                    aiProposal.gateRoles.add.length === 0 &&
+                    aiProposal.gateRoles.remove.length === 0 &&
+                    aiProposal.gateDecisions.update.length === 0 &&
+                    aiProposal.tasks.update.length === 0 &&
+                    aiProposal.raid.update.length === 0)
+                }
+                className="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white text-sm font-semibold transition-colors inline-flex items-center gap-2"
+              >
+                {isAIProposing ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Check size={16} />
+                )}
+                <span>{isPolish ? 'Zastosuj zaznaczone' : 'Apply selected'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Full lifecycle gate workflow table (13 stages) */}
       <div className="mb-6">
         <InitiativeGatesWorkflowTable />
@@ -302,6 +1740,107 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Backend readiness (source of truth) */}
+          {backendReadiness.length > 0 && (
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  {isPolish ? 'Gotowość (system)' : 'Readiness (system)'}
+                </span>
+                {blockingMissing.length > 0 ? (
+                  <span className="text-[10px] font-semibold text-red-500">
+                    {isPolish ? 'Blokujące braki' : 'Blocking missing'}
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    {isPolish ? 'OK' : 'OK'}
+                  </span>
+                )}
+              </div>
+
+              {blockingMissing.length > 0 && (
+                <Callout
+                  variant="warning"
+                  compact
+                  title={isPolish ? 'Nie możesz przejść dalej' : "You can't progress yet"}
+                >
+                  {isPolish
+                    ? 'Uzupełnij brakujące elementy (blokujące), a następnie ponów akcję gate.'
+                    : 'Fill missing blocking items, then retry the gate action.'}
+                </Callout>
+              )}
+
+              <div className="space-y-1">
+                {backendReadiness.slice(0, 10).map((r) => {
+                  const isBlocking = r.severity === 'blocking';
+                  const isFail = !r.pass;
+                  return (
+                    <div
+                      key={r.key}
+                      className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border ${
+                        isFail && isBlocking
+                          ? 'bg-red-500/5 border-red-500/20'
+                          : isFail
+                            ? 'bg-amber-500/5 border-amber-500/20'
+                            : 'bg-emerald-500/5 border-emerald-500/20'
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                          r.pass ? 'bg-emerald-500' : isBlocking ? 'bg-red-500' : 'bg-amber-500'
+                        }`}
+                      >
+                        {r.pass ? (
+                          <Check size={12} className="text-white" />
+                        ) : (
+                          <X size={12} className="text-white" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
+                            {r.label}
+                          </span>
+                          <span
+                            className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                              isBlocking
+                                ? 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                            }`}
+                          >
+                            {isPolish
+                              ? isBlocking
+                                ? 'blokuje'
+                                : 'ostrzeżenie'
+                              : isBlocking
+                                ? 'blocking'
+                                : 'warning'}
+                          </span>
+                        </div>
+                      </div>
+                      {!r.pass && (
+                        <button
+                          type="button"
+                          onClick={() => handleFix(r.key)}
+                          className="px-2 py-1 rounded-md text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 transition-colors"
+                          title={
+                            !canEditCards
+                              ? isPolish
+                                ? 'Masz podgląd, ale brak uprawnień do edycji na tym etapie.'
+                                : 'You can view, but you lack edit permission at this stage.'
+                              : undefined
+                          }
+                        >
+                          {isPolish ? 'Napraw' : 'Fix'}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Requirements Checklist */}
           <div className="space-y-2 mb-4">

@@ -35,8 +35,8 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
     setRaidItems,
     criticalRaids,
     isPolish,
-    isGeneratingAI,
-    handleGenerateAI,
+    raidAiRequest,
+    requestRaidAi,
     initiative,
     status,
     priority,
@@ -140,8 +140,8 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
   );
 
   const handleAIGenerate = useCallback(() => {
-    handleGenerateAI('raid');
-  }, [handleGenerateAI]);
+    requestRaidAi();
+  }, [requestRaidAi]);
 
   // ── User list for owner dropdown ─────────────────────────────────────
 
@@ -194,7 +194,7 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
         onRemoveItem={handleRemoveItem}
         onConvertToIssue={handleConvertToIssue}
         onAIGenerate={handleAIGenerate}
-        isGeneratingAI={isGeneratingAI === 'raid'}
+        isGeneratingAI={!!raidAiRequest}
         locked={readonly}
         artifactContext={artifactContext}
         fieldKeyPrefix="init"

@@ -55,7 +55,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Callout } from '@/components/shared/NModeBlocks';
+import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
 import {
@@ -286,6 +286,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [titleDraft, setTitleDraft] = useState<string>('');
+  const titleInputId = 'initiative-title-input';
 
   // Related data
   const [decisions, setDecisions] = useState<Decision[]>([]);
@@ -473,8 +475,52 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     mode: 'analyze' | 'addOne';
     nonce: number;
   } | null>(null);
+  const [raidAiRequest, setRaidAiRequest] = useState<{ nonce: number } | null>(null);
   const [resourcesAiRequest, setResourcesAiRequest] = useState<{ nonce: number } | null>(null);
+  const [timelineAiRequest, setTimelineAiRequest] = useState<{ nonce: number } | null>(null);
+  const [dependenciesAiRequest, setDependenciesAiRequest] = useState<{ nonce: number } | null>(
+    null
+  );
   const [teamAiRequest, setTeamAiRequest] = useState<{ nonce: number } | null>(null);
+  const [commentsAiRequest, setCommentsAiRequest] = useState<{ nonce: number } | null>(null);
+  const [gatesAiRequest, setGatesAiRequest] = useState<{ nonce: number } | null>(null);
+  const [kpisAiRequest, setKpisAiRequest] = useState<{ nonce: number } | null>(null);
+  const [targetStateAiRequest, setTargetStateAiRequest] = useState<{ nonce: number } | null>(null);
+
+  // RAID AI proposal (analyze → suggestions → apply)
+  const [isRaidAIProposing, setIsRaidAIProposing] = useState(false);
+  const [showRaidAIModal, setShowRaidAIModal] = useState(false);
+  const [raidAiNoSuggestionsMessage, setRaidAiNoSuggestionsMessage] = useState<string | null>(null);
+  const [raidAiProposal, setRaidAiProposal] = useState<{
+    add: Array<{
+      type: 'risk' | 'assumption' | 'issue' | 'dependency';
+      title: string;
+      description?: string;
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+      rationale?: string;
+    }>;
+    remove: Array<{ raidId: string; reason: string }>;
+  } | null>(null);
+  const [raidAiSelectedAddIdx, setRaidAiSelectedAddIdx] = useState<Record<number, boolean>>({});
+  const [raidAiSelectedRemoveIds, setRaidAiSelectedRemoveIds] = useState<Record<string, boolean>>(
+    {}
+  );
+
+  // Comments AI proposal (analyze → suggestions → apply)
+  const [isCommentsAIProposing, setIsCommentsAIProposing] = useState(false);
+  const [showCommentsAIModal, setShowCommentsAIModal] = useState(false);
+  const [commentsAiProposal, setCommentsAiProposal] = useState<{
+    add: Array<{ content: string; rationale?: string }>;
+    remove: Array<{ commentId: string; reason: string }>;
+    note?: string;
+  } | null>(null);
+  const [commentsAiSelectedAddIdx, setCommentsAiSelectedAddIdx] = useState<Record<number, boolean>>(
+    {}
+  );
+  const [commentsAiSelectedRemoveIds, setCommentsAiSelectedRemoveIds] = useState<
+    Record<string, boolean>
+  >({});
+
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
@@ -527,15 +573,441 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   }, []);
   const clearDecisionsAiRequest = useCallback(() => setDecisionsAiRequest(null), []);
 
+  const requestRaidAi = useCallback(() => {
+    setRaidAiRequest({ nonce: Date.now() });
+  }, []);
+  const clearRaidAiRequest = useCallback(() => setRaidAiRequest(null), []);
+
   const requestResourcesAi = useCallback(() => {
     setResourcesAiRequest({ nonce: Date.now() });
   }, []);
   const clearResourcesAiRequest = useCallback(() => setResourcesAiRequest(null), []);
 
+  const requestTimelineAi = useCallback(() => {
+    setTimelineAiRequest({ nonce: Date.now() });
+  }, []);
+  const clearTimelineAiRequest = useCallback(() => setTimelineAiRequest(null), []);
+
+  const requestDependenciesAi = useCallback(() => {
+    setDependenciesAiRequest({ nonce: Date.now() });
+  }, []);
+  const clearDependenciesAiRequest = useCallback(() => setDependenciesAiRequest(null), []);
+
   const requestTeamAi = useCallback(() => {
     setTeamAiRequest({ nonce: Date.now() });
   }, []);
   const clearTeamAiRequest = useCallback(() => setTeamAiRequest(null), []);
+
+  const requestCommentsAi = useCallback(() => {
+    setCommentsAiRequest({ nonce: Date.now() });
+  }, []);
+  const clearCommentsAiRequest = useCallback(() => setCommentsAiRequest(null), []);
+
+  const requestGatesAi = useCallback(() => {
+    setGatesAiRequest({ nonce: Date.now() });
+  }, []);
+  const clearGatesAiRequest = useCallback(() => setGatesAiRequest(null), []);
+
+  const requestKpisAi = useCallback(() => {
+    setKpisAiRequest({ nonce: Date.now() });
+  }, []);
+  const clearKpisAiRequest = useCallback(() => setKpisAiRequest(null), []);
+
+  const requestTargetStateAi = useCallback(() => {
+    setTargetStateAiRequest({ nonce: Date.now() });
+  }, []);
+  const clearTargetStateAiRequest = useCallback(() => setTargetStateAiRequest(null), []);
+
+  // ==========================================
+  // RAID AI (proposal flow like Tasks/Decisions)
+  // ==========================================
+
+  const closeRaidAIModal = useCallback(() => {
+    setShowRaidAIModal(false);
+    setRaidAiProposal(null);
+    setRaidAiSelectedAddIdx({});
+    setRaidAiSelectedRemoveIds({});
+    setRaidAiNoSuggestionsMessage(null);
+  }, []);
+
+  const parseAIJson = useCallback((raw: string): any | null => {
+    const text = String(raw || '').trim();
+    if (!text) return null;
+    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    const candidate = (fenced?.[1] || text).trim();
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      const start = candidate.indexOf('{');
+      const end = candidate.lastIndexOf('}');
+      if (start >= 0 && end > start) {
+        try {
+          return JSON.parse(candidate.slice(start, end + 1));
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    }
+  }, []);
+
+  const normalizeRaidType = useCallback(
+    (value: any): 'risk' | 'assumption' | 'issue' | 'dependency' => {
+      const t = String(value || '')
+        .trim()
+        .toLowerCase();
+      if (t === 'risk' || t === 'risks') return 'risk';
+      if (t === 'assumption' || t === 'assumptions') return 'assumption';
+      if (t === 'issue' || t === 'issues') return 'issue';
+      if (t === 'dependency' || t === 'dependencies') return 'dependency';
+      return 'risk';
+    },
+    []
+  );
+
+  const normalizeSeverity = useCallback((value: any): 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' => {
+    const s = String(value || '')
+      .trim()
+      .toUpperCase();
+    if (s === 'LOW' || s === 'MEDIUM' || s === 'HIGH' || s === 'CRITICAL') return s;
+    return 'MEDIUM';
+  }, []);
+
+  const buildRaidRemovalCandidates = useCallback(() => {
+    const candidates: Array<{ raidId: string; title: string; type: string; why: string }> = [];
+    const seen = new Map<string, string>(); // normTitle -> firstId
+
+    const normalizeTitle = (title: string) =>
+      String(title || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+—\s+.+$/g, '')
+        .replace(/\s+/g, ' ')
+        .replace(/[^\p{L}\p{N}\s]/gu, '')
+        .trim();
+
+    const junkPatterns: Array<{ re: RegExp; why: string }> = [
+      { re: /\b(test|demo|dummy)\b/i, why: 'Test/demo placeholder — not a real RAID entry.' },
+      { re: /\b(wip|tmp|temp)\b/i, why: 'Temporary/WIP placeholder — not a real RAID entry.' },
+      { re: /^test[-_\s]*raid/i, why: 'Test placeholder — not a real RAID entry.' },
+    ];
+
+    const tooShort = (s: string) => String(s || '').trim().length < 6;
+    const looksLikeGarbage = (s: string) =>
+      /^\?+$/.test(s.trim()) || /^[\d\W_]+$/.test(s.trim()) || /^(new item|item|raid)$/i.test(s);
+
+    for (const r of raidItems || []) {
+      const id = String((r as any)?.id || '');
+      const title = String((r as any)?.title || '').trim();
+      const type = String((r as any)?.type || '').trim();
+      const norm = normalizeTitle(title);
+
+      if (!id) continue;
+
+      if (!title) {
+        candidates.push({
+          raidId: id,
+          title: '(empty title)',
+          type,
+          why: 'Empty title — invalid.',
+        });
+        continue;
+      }
+
+      if (tooShort(title) || looksLikeGarbage(title)) {
+        candidates.push({
+          raidId: id,
+          title,
+          type,
+          why: 'Placeholder/garbage title — low quality.',
+        });
+      }
+
+      for (const p of junkPatterns) {
+        if (p.re.test(title)) {
+          candidates.push({ raidId: id, title, type, why: p.why });
+          break;
+        }
+      }
+
+      if (norm) {
+        const first = seen.get(`${type}:${norm}`);
+        if (!first) {
+          seen.set(`${type}:${norm}`, id);
+        } else if (first !== id) {
+          candidates.push({
+            raidId: id,
+            title,
+            type,
+            why: 'Duplicate (same type + same intent/title).',
+          });
+        }
+      }
+    }
+
+    // De-dupe by raidId, keep first reason.
+    const byId = new Map<string, (typeof candidates)[number]>();
+    for (const c of candidates) {
+      if (!byId.has(c.raidId)) byId.set(c.raidId, c);
+    }
+    return Array.from(byId.values()).slice(0, 25);
+  }, [raidItems]);
+
+  const proposeRaidWithAI = useCallback(async () => {
+    setIsRaidAIProposing(true);
+    setRaidAiNoSuggestionsMessage(null);
+    try {
+      const aiLanguage = isPolish ? 'pl' : 'en';
+      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const existingIds = new Set((raidItems || []).map((r: any) => String(r?.id || '')));
+      const removalCandidates = buildRaidRemovalCandidates();
+
+      const existingRaidCompact = (raidItems || []).slice(0, 80).map((r: any) => ({
+        id: String(r?.id || ''),
+        type: String(r?.type || ''),
+        title: String(r?.title || ''),
+        severity: String(r?.severity || r?.impact || ''),
+        status: String(r?.status || ''),
+      }));
+
+      const existingTasksCompact = (tasks || []).slice(0, 25).map((t: any) => ({
+        id: String(t?.id || ''),
+        title: String(t?.title || ''),
+        status: String(t?.status || ''),
+      }));
+
+      const existingDecisionsCompact = (decisions || []).slice(0, 25).map((d: any) => ({
+        id: String(d?.id || ''),
+        title: String(d?.title || ''),
+        status: String(d?.status || ''),
+        type: String(d?.type || ''),
+      }));
+
+      const systemInstruction = [
+        `You are a senior PMO risk and governance lead.`,
+        `Your goal is to propose a lean, high-signal RAID log for an initiative.`,
+        `Rules:`,
+        `- RAID types: risk, assumption, issue, dependency.`,
+        `- Keep the log lean: prefer fewer, higher-quality entries.`,
+        `- Titles must be concrete and specific (no placeholders).`,
+        `- Do NOT invent facts, systems, vendors, budgets, dates, owners, or KPIs not present in context.`,
+        `- Use severity as a rough impact indicator: LOW | MEDIUM | HIGH | CRITICAL.`,
+        `- Removal suggestions should focus on placeholders/tests/duplicates/low-quality entries.`,
+        `- If REMOVAL CANDIDATES are provided, you MUST choose removals from them only (unless you explicitly justify keeping them by returning empty "remove").`,
+        `- Output language MUST be ${targetLanguageName}. Translate if needed.`,
+        ``,
+        `Return ONLY valid JSON (no markdown, no code fences, no commentary).`,
+        `IMPORTANT: For "remove", you MUST use existing raidId values only (prefer from REMOVAL CANDIDATES). Never fabricate ids.`,
+        `Schema:`,
+        `{`,
+        `  "add": [ { "type": "risk|assumption|issue|dependency", "title": string, "description"?: string, "severity"?: "LOW|MEDIUM|HIGH|CRITICAL", "rationale"?: string } ],`,
+        `  "remove": [ { "raidId": string, "reason": string } ]`,
+        `}`,
+        ``,
+        `Mode: review. Return 0–8 items in "add" (only missing/high-value). Return 0–6 items in "remove" (only clearly low-quality/duplicate/placeholder). It is OK to return no changes (both arrays empty) if the RAID log is already good.`,
+      ].join('\n');
+
+      const contextText = [
+        `[INITIATIVE CONTEXT]`,
+        `Initiative name: ${initiative?.name || initiative?.title || ''}`,
+        `Status: ${initiative?.status || ''}`,
+        `Priority: ${initiative?.priority || ''}`,
+        `Summary: ${(initiative?.summary || initiative?.description || '').toString()}`,
+        ``,
+        `[TASKS SNAPSHOT]`,
+        JSON.stringify(existingTasksCompact, null, 2),
+        ``,
+        `[DECISIONS SNAPSHOT]`,
+        JSON.stringify(existingDecisionsCompact, null, 2),
+        ``,
+        `[EXISTING RAID]`,
+        JSON.stringify(existingRaidCompact, null, 2),
+        ``,
+        `[REMOVAL CANDIDATES]`,
+        `These are flagged by deterministic quality rules. Prefer removing these if they are truly not real RAID entries:`,
+        JSON.stringify(removalCandidates, null, 2),
+      ].join('\n');
+
+      const aiRes = await Api.post('/ai/refine-text?timeoutMs=20000', {
+        text: contextText,
+        mode: 'generate',
+        systemInstruction,
+        fieldLabel: 'Initiative RAID review',
+        artifactContext: {
+          title: initiative?.name || initiative?.title || '',
+          status: initiative?.status || '',
+          priority: initiative?.priority || '',
+          type: 'initiative',
+        },
+        language: aiLanguage,
+      });
+
+      const parsed = parseAIJson(String((aiRes as any)?.text || (aiRes as any)?.content || ''));
+      const proposal = {
+        add: Array.isArray(parsed?.add) ? parsed.add : [],
+        remove: Array.isArray(parsed?.remove) ? parsed.remove : [],
+      } as NonNullable<typeof raidAiProposal>;
+
+      proposal.add = proposal.add
+        .map((x: any) => ({
+          type: normalizeRaidType(x?.type),
+          title: String(x?.title || '').trim(),
+          description: x?.description ? String(x.description).trim() : '',
+          severity: x?.severity ? normalizeSeverity(x.severity) : undefined,
+          rationale: x?.rationale ? String(x.rationale).trim() : '',
+        }))
+        .filter((x) => x.title.length > 0)
+        .slice(0, 20);
+
+      proposal.remove = proposal.remove
+        .map((x: any) => ({
+          raidId: String(x?.raidId || '').trim(),
+          reason: String(x?.reason || '').trim(),
+        }))
+        .filter((x) => x.raidId.length > 0 && x.reason.length > 0 && existingIds.has(x.raidId))
+        .slice(0, 12);
+
+      if (proposal.add.length === 0 && proposal.remove.length === 0) {
+        setRaidAiNoSuggestionsMessage(
+          isPolish
+            ? 'AI nie znalazło sugestii zmian — RAID wygląda OK.'
+            : 'AI found no change suggestions — the RAID log looks good.'
+        );
+      }
+
+      setRaidAiProposal(proposal);
+      setRaidAiSelectedAddIdx(
+        Object.fromEntries(proposal.add.map((_, idx) => [idx, true])) as Record<number, boolean>
+      );
+      setRaidAiSelectedRemoveIds(
+        Object.fromEntries(proposal.remove.map((r) => [r.raidId, false])) as Record<string, boolean>
+      );
+      setShowRaidAIModal(true);
+    } catch (e: any) {
+      toast.error(
+        e?.message || (isPolish ? 'Nie udało się przeanalizować RAID' : 'Failed to analyze RAID')
+      );
+    } finally {
+      setIsRaidAIProposing(false);
+    }
+  }, [
+    buildRaidRemovalCandidates,
+    decisions,
+    initiative,
+    isPolish,
+    normalizeRaidType,
+    normalizeSeverity,
+    parseAIJson,
+    raidItems,
+    tasks,
+  ]);
+
+  const applyRaidAIProposal = useCallback(async () => {
+    if (!raidAiProposal) return;
+    if (!initiativeId) return;
+
+    const toAdd = raidAiProposal.add.filter((_, idx) => !!raidAiSelectedAddIdx[idx]);
+    const toRemove = raidAiProposal.remove.filter((r) => !!raidAiSelectedRemoveIds[r.raidId]);
+
+    if (toAdd.length === 0 && toRemove.length === 0) {
+      toast(isPolish ? 'Brak wybranych zmian' : 'No selected changes');
+      return;
+    }
+
+    if (toRemove.length > 0) {
+      const ok = window.confirm(
+        isPolish
+          ? `Usunąć ${toRemove.length} element(ów) RAID? To działanie jest nieodwracalne.`
+          : `Delete ${toRemove.length} RAID item(s)? This action cannot be undone.`
+      );
+      if (!ok) return;
+    }
+
+    setIsRaidAIProposing(true);
+    try {
+      // Add first (non-destructive), then remove.
+      for (const x of toAdd) {
+        const typeUpper = String(x.type || 'risk').toUpperCase();
+        const res: any = await Api.post(`/initiatives/${initiativeId}/raid`, {
+          type: typeUpper,
+          title: x.title,
+          description: x.description || x.rationale || '',
+          severity: x.severity || 'MEDIUM',
+        });
+
+        const id = String(res?.id || res?.raidId || res?.item?.id || '');
+        if (id) {
+          setRaidItems((prev) => [
+            ...prev,
+            {
+              id,
+              initiativeId,
+              type: x.type,
+              title: x.title,
+              description: x.description || x.rationale || '',
+              status: 'OPEN',
+              severity: x.severity || 'MEDIUM',
+              ownerId: null,
+              dueDate: null,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            } as any,
+          ]);
+        }
+      }
+
+      for (const r of toRemove) {
+        const id = r.raidId;
+        setRaidItems((prev) => prev.filter((item: any) => String(item?.id) !== String(id)));
+        try {
+          await Api.delete(`/initiatives/${initiativeId}/raid/${id}`);
+        } catch {
+          // best-effort
+        }
+      }
+
+      // Refresh RAID list (server is source of truth)
+      try {
+        const refreshed = await Api.get(`/initiatives/${initiativeId}/raid`);
+        setRaidItems(
+          refreshed?.items || refreshed?.raid || (Array.isArray(refreshed) ? refreshed : [])
+        );
+      } catch {
+        // best-effort
+      }
+
+      toast.success(isPolish ? 'Zastosowano sugestie AI' : 'Applied AI suggestions');
+      closeRaidAIModal();
+    } catch (e: any) {
+      toast.error(
+        e?.message ||
+          (isPolish ? 'Nie udało się zastosować sugestii' : 'Failed to apply suggestions')
+      );
+    } finally {
+      setIsRaidAIProposing(false);
+    }
+  }, [
+    closeRaidAIModal,
+    initiativeId,
+    isPolish,
+    raidAiProposal,
+    raidAiSelectedAddIdx,
+    raidAiSelectedRemoveIds,
+    setRaidItems,
+  ]);
+
+  useEffect(() => {
+    if (!raidAiRequest) return;
+    const run = async () => {
+      try {
+        await proposeRaidWithAI();
+      } finally {
+        clearRaidAiRequest();
+      }
+    };
+    void run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [raidAiRequest?.nonce]);
 
   // ==========================================
   // COMPUTED VALUES
@@ -586,6 +1058,59 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       return next;
     });
   }, []);
+
+  const openSection = useCallback(
+    (sectionId: string) => {
+      if (!sectionId) return;
+      // Ensure expanded in D-mode (accordion).
+      setExpandedSections((prev) => {
+        const next = new Set(prev);
+        next.add(sectionId);
+        return next;
+      });
+      // Switch active section in N-mode (left nav).
+      const nModeMap: Record<string, string> = {
+        overview: 'initiative-definition',
+        problemDefinition: 'initiative-definition',
+        targetState: 'target-state-scope',
+        scope: 'target-state-scope',
+        raid: 'risk-raid',
+        kpis: 'kpi',
+        history: 'activity-log',
+        attachments: 'attachments-links',
+        linkedItems: 'attachments-links',
+      };
+      const mappedN = nModeMap[sectionId] || sectionId;
+      setActiveNSection(mappedN);
+    },
+    [setActiveNSection]
+  );
+
+  const focusTopBarField = useCallback(
+    (field: 'title' | 'priority' | 'owner' | 'targetDate') => {
+      const ids: Record<typeof field, string> = {
+        title: titleInputId,
+        priority: 'initiative-topbar-priority',
+        owner: 'initiative-topbar-owner',
+        targetDate: 'initiative-topbar-targetDate',
+      };
+      const id = ids[field];
+      // Scroll to top so header/strip is visible.
+      try {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch {
+        // ignore
+      }
+      // Focus after a tick to allow layout updates.
+      window.setTimeout(() => {
+        const el = document.getElementById(id) as any;
+        if (el && typeof el.focus === 'function') {
+          el.focus();
+        }
+      }, 50);
+    },
+    [titleInputId]
+  );
 
   useEffect(() => {
     if (!kpiMenuId) return;
@@ -878,6 +1403,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       const data = await Api.getInitiativeById(initiativeId);
       setInitiative(data);
       setInitiativeTemplate(null);
+      setTitleDraft(String(data.title || data.name || '').trim());
       setSummary(data.summary || data.description || '');
       setDescription(data.description || '');
       // Sync problem definition fields — try structured object first, then parse JSON string
@@ -1890,7 +2416,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     setIsMutating(true);
     try {
-      await Api.patch(`/initiatives/${initiativeId}`, { status: action.targetStatus });
+      await Api.patch(`/initiatives/${initiativeId}/status`, { status: action.targetStatus });
       setInitiative((prev: any) => ({ ...prev, status: action.targetStatus }));
       onStatusChange?.(action.targetStatus);
       toast.success(isPolish ? 'Status zaktualizowany' : 'Status updated');
@@ -1954,16 +2480,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         .map((v) => String(v || '').trim())
         .filter(Boolean);
 
-      await Api.patch(`/initiatives/${initiativeId}`, {
+      const normalizedPriority = String(priority || '')
+        .trim()
+        .toLowerCase();
+      const normalizedTitle = String(titleDraft || '').trim();
+
+      const updatePayload: Record<string, unknown> = {
         // Core narrative
         summary,
         description, // backend alias → hypothesis
-        // Top-bar fields
-        priority,
-        ownerId,
-        sponsorId,
-        plannedStartDate: startDate || undefined,
-        plannedEndDate: targetDate,
         // Definition / scope
         problemStatement: problemDefinitionPayload,
         marketContext: marketContextDraft || undefined,
@@ -1980,11 +2505,38 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         targetState: {
           description: targetDescriptionDraft || undefined,
         },
-      });
+      };
+
+      // Title is edited in the header and saved as `title` (DB column may be title or name).
+      // Guarded by canEditCards to avoid editing in read-only contexts.
+      if (canEditCards && normalizedTitle) {
+        const savedTitle = String(initiative?.title || initiative?.name || '').trim();
+        if (normalizedTitle !== savedTitle) {
+          updatePayload.title = normalizedTitle;
+        }
+      }
+
+      // Top-bar fields are permissioned by backend capabilities (gateReadiness).
+      // Do NOT send fields the current user cannot edit, otherwise backend rejects the save.
+      if (canEditPriority) {
+        updatePayload.priority = normalizedPriority || undefined;
+      }
+      if (canEditOwner) {
+        updatePayload.ownerId = ownerId || undefined;
+        updatePayload.sponsorId = sponsorId || undefined;
+      }
+      if (canEditTargetDate) {
+        updatePayload.plannedStartDate = startDate || undefined;
+        updatePayload.plannedEndDate = targetDate || undefined;
+      }
+
+      await Api.put(`/initiatives/${initiativeId}`, updatePayload);
 
       // Keep local baseline in sync so dirty-check resets immediately.
       setInitiative((prev: any) => ({
         ...prev,
+        title: canEditCards && normalizedTitle ? normalizedTitle : prev?.title,
+        name: canEditCards && normalizedTitle ? normalizedTitle : prev?.name,
         summary,
         description,
         priority,
@@ -2127,6 +2679,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     );
 
     return (
+      String(titleDraft || '').trim() !==
+        String(initiative?.title || initiative?.name || '').trim() ||
       summary !== (initiative?.summary || '') ||
       description !== (initiative?.description || '') ||
       priority !== (initiative?.priority || 'medium').toLowerCase() ||
@@ -2151,6 +2705,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     );
   }, [
     initiative,
+    titleDraft,
     summary,
     description,
     priority,
@@ -2856,6 +3411,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const handleGenerateScopeCard = async (): Promise<void> => {
     setIsGeneratingAI('scope');
+    const aiLanguage = isPolish ? 'pl' : 'en';
     const targetLanguageName = isPolish ? 'Polish' : 'English';
 
     const buildParagraphSystemInstruction = (
@@ -2968,7 +3524,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           priority,
           type: 'initiative',
         },
-        language: 'en',
+        language: aiLanguage,
       });
       return String(aiRes?.text || '').trim();
     };
@@ -3023,7 +3579,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               priority,
               type: 'initiative',
             },
-            language: 'en',
+            language: aiLanguage,
           });
           return String(aiRes?.text || '').trim();
         })(),
@@ -3059,7 +3615,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           category: initiative?.category || '',
           module: initiative?.module || '',
           status: initiative?.status || '',
-          language: 'en',
+          language: aiLanguage,
         };
         const res = await Api.post('/initiatives/generate-section', context);
         const parsed = res?.parsedContent || res?.content;
@@ -3109,6 +3665,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const handleGenerateAI = async (section: string): Promise<any> => {
     setIsGeneratingAI(section);
     try {
+      const aiLanguage = isPolish ? 'pl' : 'en';
+      const targetLanguageName = isPolish ? 'Polish' : 'English';
       const context = {
         sectionKey: section,
         initiativeId,
@@ -3118,7 +3676,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         category: initiative?.category || '',
         module: initiative?.module || '',
         status: initiative?.status || '',
-        language: 'en',
+        language: aiLanguage,
       };
 
       const result = await Api.post('/initiatives/generate-section', context);
@@ -3164,7 +3722,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 Api.post('/ai/refine-text', {
                   text: `[GENERATE FROM SCRATCH] Section: ${f.key}. Initiative: ${initiative?.name || ''}. Summary: ${result.parsedContent || result.content}`,
                   mode: 'generate',
-                  systemInstruction: `You are a strategic PMO expert. Generate professional content for the "${f.key}" section of initiative "${initiative?.name || ''}". Return ONLY the content — no commentary, no quotes, no prefixes. Write concisely (2-4 sentences). Output language: English. Translate any non-English input to English.`,
+                  systemInstruction: `You are a strategic PMO expert. Generate professional content for the "${f.key}" section of initiative "${initiative?.name || ''}". Return ONLY the content — no commentary, no quotes, no prefixes. Write concisely (2-4 sentences). Output language: ${targetLanguageName}. Translate as needed.`,
                   fieldLabel: f.key,
                   artifactContext: {
                     title: initiative?.name || '',
@@ -3172,7 +3730,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     priority,
                     type: 'initiative',
                   },
-                  language: 'en',
+                  language: aiLanguage,
                 })
               )
             );
@@ -3387,7 +3945,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       return;
     setIsMutating(true);
     try {
-      await Api.patch(`/initiatives/${initiativeId}`, { status: 'ARCHIVED' });
+      await Api.post(`/initiatives/${initiativeId}/archive`, {});
       toast.success(isPolish ? 'Inicjatywa zarchiwizowana' : 'Initiative archived');
       setShowMoreMenu(false);
       fetchAll();
@@ -3434,6 +3992,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       initiativeId,
       initiativeTemplate,
       isPolish,
+      canEditPriority,
+      canEditOwner,
+      canEditTargetDate,
+      canEditCards,
+      openSection,
+      focusTopBarField,
       decisions,
       setDecisions,
       raidItems,
@@ -3466,6 +4030,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setSummary,
       description,
       setDescription,
+      targetDescriptionDraft,
+      setTargetDescriptionDraft,
+      successCriteriaItems,
+      setSuccessCriteriaItems,
+      deliverableItems,
+      setDeliverableItems,
       priority,
       setPriority,
       ownerId,
@@ -3544,12 +4114,30 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       decisionsAiRequest,
       requestDecisionsAi,
       clearDecisionsAiRequest,
+      raidAiRequest,
+      requestRaidAi,
+      clearRaidAiRequest,
       resourcesAiRequest,
       requestResourcesAi,
       clearResourcesAiRequest,
+      timelineAiRequest,
+      requestTimelineAi,
+      clearTimelineAiRequest,
+      dependenciesAiRequest,
+      requestDependenciesAi,
+      clearDependenciesAiRequest,
       teamAiRequest,
       requestTeamAi,
       clearTeamAiRequest,
+      gatesAiRequest,
+      requestGatesAi,
+      clearGatesAiRequest,
+      kpisAiRequest,
+      requestKpisAi,
+      clearKpisAiRequest,
+      targetStateAiRequest,
+      requestTargetStateAi,
+      clearTargetStateAiRequest,
       handleCreateTask,
       handleCreateDecision,
       handleRemoveDecision,
@@ -3627,8 +4215,20 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       userGateRoles,
       statusHistory,
       gateReadiness,
+      canEditPriority,
+      canEditOwner,
+      canEditTargetDate,
+      canEditCards,
+      openSection,
+      focusTopBarField,
       summary,
       description,
+      targetDescriptionDraft,
+      setTargetDescriptionDraft,
+      successCriteriaItems,
+      setSuccessCriteriaItems,
+      deliverableItems,
+      setDeliverableItems,
       priority,
       ownerId,
       sponsorId,
@@ -3688,9 +4288,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       resourcesAiRequest,
       requestResourcesAi,
       clearResourcesAiRequest,
+      timelineAiRequest,
+      requestTimelineAi,
+      clearTimelineAiRequest,
+      dependenciesAiRequest,
+      requestDependenciesAi,
+      clearDependenciesAiRequest,
       teamAiRequest,
       requestTeamAi,
       clearTeamAiRequest,
+      gatesAiRequest,
+      requestGatesAi,
+      clearGatesAiRequest,
+      kpisAiRequest,
+      requestKpisAi,
+      clearKpisAiRequest,
+      targetStateAiRequest,
+      requestTargetStateAi,
+      clearTargetStateAiRequest,
       handleCreateTask,
       handleCreateDecision,
       handleRemoveDecision,
@@ -4190,6 +4805,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             </div>
             {canEditPriority && (
               <select
+                id="initiative-topbar-priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -4216,6 +4832,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         readOnly: !canEditOwner,
         render: () => (
           <select
+            id="initiative-topbar-owner"
             value={ownerId}
             onChange={(e) => setOwnerId(e.target.value)}
             disabled={!canEditOwner}
@@ -4246,6 +4863,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         readOnly: !canEditTargetDate,
         render: () => (
           <input
+            id="initiative-topbar-targetDate"
             type="date"
             value={targetDate}
             onChange={(e) => setTargetDate(e.target.value)}
@@ -4356,6 +4974,309 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     // Best-effort backend delete (comments are stored in initiative_comments)
     Api.delete(`/initiatives/${initiativeId}/comments/${commentId}`).catch(() => {});
   };
+
+  // ==========================================
+  // COMMENTS AI (Analyze with AI → proposal → apply)
+  // ==========================================
+
+  const closeCommentsAIModal = useCallback(() => {
+    setShowCommentsAIModal(false);
+    setCommentsAiProposal(null);
+    setCommentsAiSelectedAddIdx({});
+    setCommentsAiSelectedRemoveIds({});
+  }, []);
+
+  const buildCommentRemovalCandidates = useCallback(() => {
+    const candidates: Array<{ commentId: string; excerpt: string; why: string }> = [];
+    const seen = new Map<string, string>(); // norm -> firstId
+
+    const normalize = (s: string) =>
+      String(s || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .replace(/[^\p{L}\p{N}\s]/gu, '')
+        .trim();
+
+    const junkPatterns: Array<{ re: RegExp; why: string }> = [
+      {
+        re: /\b(test-comment|test comment|demo|dummy)\b/i,
+        why: 'Test/demo placeholder — not a real delivery comment.',
+      },
+      {
+        re: /^\s*test[-_\s]*comment\b/i,
+        why: 'Test placeholder — not a real delivery comment.',
+      },
+      {
+        re: /\b(wip|tmp|temp)\b/i,
+        why: 'Temporary/WIP placeholder — low signal.',
+      },
+    ];
+
+    const tooShort = (s: string) => String(s || '').trim().length < 10;
+    const looksLikeGarbage = (s: string) =>
+      /^\?+$/.test(s.trim()) || /^[\d\W_]+$/.test(s.trim()) || /^(comment|new comment)$/i.test(s);
+
+    for (const c of comments) {
+      const id = String((c as any)?.id || '');
+      const content = String((c as any)?.content || '').trim();
+      if (!id) continue;
+
+      if (!content) {
+        candidates.push({ commentId: id, excerpt: '(empty)', why: 'Empty comment — invalid.' });
+        continue;
+      }
+
+      if (looksLikeGarbage(content) || tooShort(content)) {
+        candidates.push({
+          commentId: id,
+          excerpt: content.slice(0, 140),
+          why: 'Low-signal comment.',
+        });
+      }
+
+      for (const p of junkPatterns) {
+        if (p.re.test(content)) {
+          candidates.push({ commentId: id, excerpt: content.slice(0, 140), why: p.why });
+          break;
+        }
+      }
+
+      const norm = normalize(content);
+      if (norm) {
+        const first = seen.get(norm);
+        if (!first) {
+          seen.set(norm, id);
+        } else if (first !== id) {
+          candidates.push({
+            commentId: id,
+            excerpt: content.slice(0, 140),
+            why: 'Duplicate comment (same content/intent).',
+          });
+        }
+      }
+    }
+
+    // De-dupe by commentId, keep first reason.
+    const byId = new Map<string, (typeof candidates)[number]>();
+    for (const c of candidates) {
+      if (!byId.has(c.commentId)) byId.set(c.commentId, c);
+    }
+    return Array.from(byId.values()).slice(0, 20);
+  }, [comments]);
+
+  const proposeCommentsWithAI = useCallback(async () => {
+    setIsCommentsAIProposing(true);
+    try {
+      const aiLanguage = isPolish ? 'pl' : 'en';
+      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const existingIds = new Set(comments.map((c) => String((c as any)?.id || '')));
+      const removalCandidates = buildCommentRemovalCandidates();
+
+      const compactComments = [...comments]
+        .slice()
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 30)
+        .map((c) => ({
+          id: String((c as any)?.id || ''),
+          author: String((c as any)?.authorName || ''),
+          createdAt: String((c as any)?.createdAt || ''),
+          content: String((c as any)?.content || '').slice(0, 500),
+        }));
+
+      const systemInstruction = [
+        `You are a senior PMO advisor reviewing an initiative discussion thread.`,
+        `Your goal is to propose HIGH-SIGNAL improvements to the Comments module (not a summary).`,
+        `Rules:`,
+        `- Add suggestions should be actionable, specific, and tied to delivery risk reduction.`,
+        `- Prefer FEWER, better comments. 0-3 adds is fine.`,
+        `- Remove suggestions should focus ONLY on placeholders/tests/duplicates/low-signal noise.`,
+        `- If REMOVAL CANDIDATES are provided, you MAY remove from them, but never fabricate ids.`,
+        `- Do NOT invent facts, dates, numbers, vendors, systems, or commitments not in context.`,
+        `- Output language MUST be ${targetLanguageName}. Translate if needed.`,
+        ``,
+        `Return ONLY valid JSON (no markdown, no code fences, no commentary).`,
+        `IMPORTANT: For "remove", you MUST use existing commentId values only (prefer from REMOVAL CANDIDATES). Never fabricate ids.`,
+        `Schema:`,
+        `{`,
+        `  "add": [ { "content": string, "rationale"?: string } ],`,
+        `  "remove": [ { "commentId": string, "reason": string } ],`,
+        `  "note"?: string`,
+        `}`,
+      ].join('\n');
+
+      const contextText = [
+        `[INITIATIVE CONTEXT]`,
+        `Initiative name: ${initiative?.name || ''}`,
+        `Status: ${status || ''}`,
+        `Priority: ${priority || ''}`,
+        `Summary: ${(summary || initiative?.description || '').toString()}`,
+        `Problem statement: ${(initiative?.problem_statement || '').toString()}`,
+        ``,
+        `[EXISTING COMMENTS]`,
+        JSON.stringify(compactComments, null, 2),
+        ``,
+        `[REMOVAL CANDIDATES]`,
+        `These are flagged by deterministic quality rules. Remove ONLY if truly low-signal:`,
+        JSON.stringify(removalCandidates, null, 2),
+      ].join('\n');
+
+      const aiRes = await Api.post('/ai/refine-text?timeoutMs=20000', {
+        text: contextText,
+        mode: 'generate',
+        systemInstruction,
+        fieldLabel: 'Initiative comments review',
+        artifactContext: {
+          title: initiative?.name || '',
+          status,
+          priority,
+          type: 'initiative',
+        },
+        language: aiLanguage,
+      });
+
+      const parsed = parseAIJson(String(aiRes?.text || '')) as any;
+      const proposal = {
+        add: Array.isArray(parsed?.add) ? parsed.add : [],
+        remove: Array.isArray(parsed?.remove) ? parsed.remove : [],
+        note: parsed?.note ? String(parsed.note).trim() : '',
+      };
+
+      const seenAdds = new Set<string>();
+      const normalizeAdd = (s: string) =>
+        String(s || '')
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, ' ')
+          .slice(0, 240);
+
+      proposal.add = proposal.add
+        .map((a: any) => ({
+          content: String(a?.content || a?.text || a?.comment || '').trim(),
+          rationale: a?.rationale ? String(a.rationale).trim() : '',
+        }))
+        .filter((a: any) => a.content.length > 0)
+        .filter((a: any) => {
+          const key = normalizeAdd(a.content);
+          if (!key) return true;
+          if (seenAdds.has(key)) return false;
+          seenAdds.add(key);
+          return true;
+        })
+        .slice(0, 5);
+
+      proposal.remove = proposal.remove
+        .map((r: any) => ({
+          commentId: String(r?.commentId || r?.id || '').trim(),
+          reason: String(r?.reason || '').trim(),
+        }))
+        .filter((r: any) => r.commentId && r.reason && existingIds.has(r.commentId))
+        .slice(0, 10);
+
+      const hasAny = proposal.add.length > 0 || proposal.remove.length > 0;
+      if (!hasAny && !proposal.note) {
+        proposal.note = isPolish
+          ? 'AI nie znalazło sugestii zmian — wątek komentarzy wygląda OK.'
+          : 'AI found no change suggestions — the comments thread looks good.';
+      }
+
+      setCommentsAiProposal(proposal);
+      setCommentsAiSelectedAddIdx(
+        Object.fromEntries(proposal.add.map((_a: any, idx: number) => [idx, true])) as Record<
+          number,
+          boolean
+        >
+      );
+      setCommentsAiSelectedRemoveIds(
+        Object.fromEntries(proposal.remove.map((r: any) => [r.commentId, false])) as Record<
+          string,
+          boolean
+        >
+      );
+      setShowCommentsAIModal(true);
+    } catch (e: any) {
+      toast.error(
+        e?.message ||
+          (isPolish ? 'Nie udało się przeanalizować komentarzy' : 'Failed to analyze comments')
+      );
+    } finally {
+      setIsCommentsAIProposing(false);
+    }
+  }, [
+    buildCommentRemovalCandidates,
+    comments,
+    initiative,
+    isPolish,
+    parseAIJson,
+    priority,
+    status,
+    summary,
+  ]);
+
+  const applyCommentsAIProposal = useCallback(async () => {
+    if (!commentsAiProposal) return;
+    const toAdd = commentsAiProposal.add.filter((_a, idx) => !!commentsAiSelectedAddIdx[idx]);
+    const toRemove = commentsAiProposal.remove.filter(
+      (r) => !!commentsAiSelectedRemoveIds[r.commentId]
+    );
+
+    if (toAdd.length === 0 && toRemove.length === 0) {
+      toast(isPolish ? 'Brak wybranych zmian' : 'No selected changes');
+      return;
+    }
+
+    if (toRemove.length > 0) {
+      const ok = window.confirm(
+        isPolish
+          ? `Usunąć ${toRemove.length} komentarz(e)? To działanie jest nieodwracalne.`
+          : `Delete ${toRemove.length} comment(s)? This action cannot be undone.`
+      );
+      if (!ok) return;
+    }
+
+    setIsCommentsAIProposing(true);
+    try {
+      for (const r of toRemove) {
+        handleDeleteComment(r.commentId);
+      }
+      for (const a of toAdd) {
+        await handleAddComment(String((a as any)?.content || '').trim());
+      }
+
+      toast.success(
+        isPolish
+          ? `Zastosowano sugestie AI (${toAdd.length} dodano${toRemove.length ? `, ${toRemove.length} usunięto` : ''})`
+          : `Applied AI suggestions (${toAdd.length} added${toRemove.length ? `, ${toRemove.length} removed` : ''})`
+      );
+      closeCommentsAIModal();
+    } catch {
+      toast.error(isPolish ? 'Nie udało się zastosować sugestii' : 'Failed to apply suggestions');
+    } finally {
+      setIsCommentsAIProposing(false);
+    }
+  }, [
+    closeCommentsAIModal,
+    commentsAiProposal,
+    commentsAiSelectedAddIdx,
+    commentsAiSelectedRemoveIds,
+    handleAddComment,
+    handleDeleteComment,
+    isPolish,
+  ]);
+
+  useEffect(() => {
+    if (!commentsAiRequest) return;
+    const run = async () => {
+      try {
+        await proposeCommentsWithAI();
+      } finally {
+        // Keep CTA-bar spinner visible until AI finishes.
+        clearCommentsAiRequest();
+      }
+    };
+    void run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commentsAiRequest?.nonce]);
 
   // ==========================================
   // N-MODE: ACTIVITY LOG ADAPTERS (shared ActivityLogCanvas)
@@ -5720,7 +6641,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   })
                 );
               }}
-              locked={false}
+              onAIGenerate={() => requestRaidAi()}
+              isGeneratingAI={!!raidAiRequest || isRaidAIProposing}
+              locked={!canEditCards}
               artifactContext={{
                 title: initiative?.title || initiative?.name || '',
                 status: status || '',
@@ -5783,27 +6706,274 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
 
         case 'comments': {
+          const selectedAddCount = commentsAiProposal
+            ? commentsAiProposal.add.reduce(
+                (sum, _a, idx) => sum + (commentsAiSelectedAddIdx[idx] ? 1 : 0),
+                0
+              )
+            : 0;
+          const selectedRemoveCount = commentsAiProposal
+            ? commentsAiProposal.remove.reduce(
+                (sum, r) => sum + (commentsAiSelectedRemoveIds[r.commentId] ? 1 : 0),
+                0
+              )
+            : 0;
+
           component = (
-            <CommentsCanvas
-              comments={nModeComments}
-              onDeleteComment={handleDeleteComment}
-              dateFilter={nCommentDateFilter}
-              onDateFilterChange={setNCommentDateFilter}
-              sortOrder={nCommentSortOrder}
-              onToggleSort={() => setNCommentSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
-              commentDraft={nCommentDraft}
-              onCommentDraftChange={setNCommentDraft}
-              onSubmitComment={handleNModeSubmitComment}
-              draftPriority={nCommentPriority}
-              onDraftPriorityChange={setNCommentPriority}
-              onAIEnhance={() => handleGenerateAI('comments')}
-              isAIEnhancing={isGeneratingAI === 'comments'}
-              getPriorityDotClass={getPriorityDotClass}
-              getCommentPriority={getCommentPriority}
-              getPriorityButtonClass={getPriorityButtonClass}
-              getCommentPriorityLabel={getCommentPriorityLabel}
-              getCommentPriorityHint={getCommentPriorityHint}
-            />
+            <>
+              <CommentsCanvas
+                comments={nModeComments}
+                onDeleteComment={handleDeleteComment}
+                dateFilter={nCommentDateFilter}
+                onDateFilterChange={setNCommentDateFilter}
+                sortOrder={nCommentSortOrder}
+                onToggleSort={() => setNCommentSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+                commentDraft={nCommentDraft}
+                onCommentDraftChange={setNCommentDraft}
+                onSubmitComment={handleNModeSubmitComment}
+                draftPriority={nCommentPriority}
+                onDraftPriorityChange={setNCommentPriority}
+                onAIEnhance={() => handleGenerateAI('comments')}
+                isAIEnhancing={isGeneratingAI === 'comments'}
+                getPriorityDotClass={getPriorityDotClass}
+                getCommentPriority={getCommentPriority}
+                getPriorityButtonClass={getPriorityButtonClass}
+                getCommentPriorityLabel={getCommentPriorityLabel}
+                getCommentPriorityHint={getCommentPriorityHint}
+              />
+
+              {/* AI proposal modal (Analyze with AI → add/remove) */}
+              {showCommentsAIModal && commentsAiProposal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+                  <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
+                    <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+                      <div>
+                        <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+                          {isPolish
+                            ? 'Propozycje zmian w komentarzach (AI)'
+                            : 'Proposed comment changes (AI)'}
+                        </h3>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          {isPolish
+                            ? 'Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.'
+                            : 'Select items to add/remove, then click “Apply”.'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={closeCommentsAIModal}
+                        className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                        title={isPolish ? 'Zamknij' : 'Close'}
+                        disabled={isCommentsAIProposing}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+
+                    <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
+                      {commentsAiProposal.note ? (
+                        <Callout variant="purple" compact title={isPolish ? 'AI' : 'AI'}>
+                          {commentsAiProposal.note}
+                        </Callout>
+                      ) : null}
+
+                      {/* To remove (top) */}
+                      <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                            {isPolish ? 'Do wywalenia' : 'To remove'} (
+                            {commentsAiProposal.remove.length})
+                          </span>
+                          {commentsAiProposal.remove.length > 0 && (
+                            <button
+                              onClick={() =>
+                                setCommentsAiSelectedRemoveIds(
+                                  Object.fromEntries(
+                                    commentsAiProposal.remove.map((r) => [r.commentId, true])
+                                  ) as Record<string, boolean>
+                                )
+                              }
+                              className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                              disabled={isCommentsAIProposing}
+                            >
+                              {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                            </button>
+                          )}
+                        </div>
+
+                        {commentsAiProposal.remove.length === 0 ? (
+                          <EmptyStateInline
+                            icon={Trash2}
+                            dashed={false}
+                            className="p-5"
+                            message={
+                              isPolish
+                                ? 'AI nie zasugerowało usunięć.'
+                                : 'No removal suggestions from AI.'
+                            }
+                            hint={
+                              isPolish
+                                ? 'Jeśli wątek wygląda dobrze, AI może nie proponować destrukcyjnych zmian.'
+                                : 'If the thread looks good, AI may avoid destructive changes.'
+                            }
+                          />
+                        ) : (
+                          <div className="space-y-1.5">
+                            {commentsAiProposal.remove.map((r) => {
+                              const existing = comments.find(
+                                (c) => String((c as any)?.id) === String(r.commentId)
+                              );
+                              const title = existing
+                                ? String((existing as any)?.content || '').slice(0, 120)
+                                : r.commentId;
+                              return (
+                                <label
+                                  key={r.commentId}
+                                  className="flex items-start gap-2 p-2 rounded-xl bg-amber-50/40 dark:bg-amber-500/5 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 transition-colors"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={!!commentsAiSelectedRemoveIds[r.commentId]}
+                                    onChange={(e) =>
+                                      setCommentsAiSelectedRemoveIds((prev) => ({
+                                        ...prev,
+                                        [r.commentId]: e.target.checked,
+                                      }))
+                                    }
+                                    className="mt-1"
+                                    disabled={isCommentsAIProposing}
+                                  />
+                                  <div className="min-w-0">
+                                    <span className="text-sm font-medium text-slate-800 dark:text-white">
+                                      {title || r.commentId}
+                                    </span>
+                                    <p className="text-xs text-amber-800/90 dark:text-amber-200 mt-0.5">
+                                      {r.reason}
+                                    </p>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* To add */}
+                      <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                            {isPolish ? 'Do dodania' : 'To add'} ({commentsAiProposal.add.length})
+                          </span>
+                          {commentsAiProposal.add.length > 0 && (
+                            <button
+                              onClick={() =>
+                                setCommentsAiSelectedAddIdx(
+                                  Object.fromEntries(
+                                    commentsAiProposal.add.map((_a, idx) => [idx, true])
+                                  ) as Record<number, boolean>
+                                )
+                              }
+                              className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                              disabled={isCommentsAIProposing}
+                            >
+                              {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                            </button>
+                          )}
+                        </div>
+
+                        {commentsAiProposal.add.length === 0 ? (
+                          <EmptyStateInline
+                            icon={Plus}
+                            dashed={false}
+                            className="p-5"
+                            message={
+                              isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'
+                            }
+                            hint={
+                              isPolish
+                                ? 'Jeśli wątek jest kompletny, AI może nie dodawać komentarzy.'
+                                : 'If the thread is complete, AI may not add new comments.'
+                            }
+                          />
+                        ) : (
+                          <div className="space-y-1.5">
+                            {commentsAiProposal.add.map((a, idx) => (
+                              <label
+                                key={idx}
+                                className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={!!commentsAiSelectedAddIdx[idx]}
+                                  onChange={(e) =>
+                                    setCommentsAiSelectedAddIdx((prev) => ({
+                                      ...prev,
+                                      [idx]: e.target.checked,
+                                    }))
+                                  }
+                                  className="mt-1"
+                                  disabled={isCommentsAIProposing}
+                                />
+                                <div className="min-w-0">
+                                  <span className="text-sm font-medium text-slate-800 dark:text-white whitespace-pre-wrap">
+                                    {a.content}
+                                  </span>
+                                  {a.rationale ? (
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                                      {a.rationale}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Plan (bottom) */}
+                      <Callout
+                        variant="purple"
+                        title={isPolish ? 'Plan' : 'Plan'}
+                        compact
+                        className="rounded-xl"
+                      >
+                        <ul className="list-disc pl-4 space-y-1">
+                          <li>
+                            {isPolish
+                              ? `Usuń zaznaczone komentarze: ${selectedRemoveCount}.`
+                              : `Remove selected comments: ${selectedRemoveCount}.`}
+                          </li>
+                          <li>
+                            {isPolish
+                              ? `Dodaj zaznaczone komentarze: ${selectedAddCount}.`
+                              : `Add selected comments: ${selectedAddCount}.`}
+                          </li>
+                        </ul>
+                      </Callout>
+                    </div>
+
+                    <div className="px-5 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-end gap-2">
+                      <button
+                        onClick={closeCommentsAIModal}
+                        disabled={isCommentsAIProposing}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                      >
+                        {isPolish ? 'Anuluj' : 'Cancel'}
+                      </button>
+                      <button
+                        onClick={() => void applyCommentsAIProposal()}
+                        disabled={isCommentsAIProposing}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                      >
+                        {isCommentsAIProposing ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : null}
+                        {isPolish ? 'Zastosuj' : 'Apply'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           );
           break;
         }
@@ -6331,13 +7501,256 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   if (presentationMode === 'c') {
     return (
       <InitiativeContext.Provider value={contextValue}>
+        {showRaidAIModal && raidAiProposal && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/40">
+            <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
+              <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+                    {isPolish ? 'Propozycje zmian w RAID (AI)' : 'Proposed RAID changes (AI)'}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    {isPolish
+                      ? 'Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.'
+                      : 'Select items to add/remove, then click “Apply”.'}
+                  </p>
+                </div>
+                <button
+                  onClick={closeRaidAIModal}
+                  className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  title={isPolish ? 'Zamknij' : 'Close'}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
+                {raidAiNoSuggestionsMessage ? (
+                  <Callout variant="purple" compact title={isPolish ? 'AI' : 'AI'}>
+                    {raidAiNoSuggestionsMessage}
+                  </Callout>
+                ) : null}
+
+                <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      {isPolish ? 'Do wywalenia' : 'To remove'} ({raidAiProposal.remove.length})
+                    </span>
+                    {raidAiProposal.remove.length > 0 && (
+                      <button
+                        onClick={() =>
+                          setRaidAiSelectedRemoveIds(
+                            Object.fromEntries(
+                              raidAiProposal.remove.map((r) => [r.raidId, true])
+                            ) as Record<string, boolean>
+                          )
+                        }
+                        className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                      >
+                        {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      </button>
+                    )}
+                  </div>
+
+                  {raidAiProposal.remove.length === 0 ? (
+                    <EmptyStateInline
+                      icon={Trash2}
+                      dashed={false}
+                      className="p-5"
+                      message={
+                        isPolish
+                          ? 'AI nie zasugerowało usunięć.'
+                          : 'No removal suggestions from AI.'
+                      }
+                      hint={
+                        isPolish
+                          ? 'Jeśli RAID jest OK, AI może nie zaproponować zmian.'
+                          : 'If the RAID log is already good, AI may suggest no changes.'
+                      }
+                    />
+                  ) : (
+                    <div className="space-y-1.5">
+                      {raidAiProposal.remove.map((r) => {
+                        const existing = raidItems.find(
+                          (x: any) => String(x?.id) === String(r.raidId)
+                        );
+                        return (
+                          <label
+                            key={r.raidId}
+                            className="flex items-start gap-2 p-2 rounded-xl bg-amber-50/40 dark:bg-amber-500/5 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={!!raidAiSelectedRemoveIds[r.raidId]}
+                              onChange={(e) =>
+                                setRaidAiSelectedRemoveIds((prev) => ({
+                                  ...prev,
+                                  [r.raidId]: e.target.checked,
+                                }))
+                              }
+                              className="mt-1"
+                            />
+                            <div className="min-w-0">
+                              <span className="text-sm font-medium text-slate-800 dark:text-white">
+                                {existing?.title || r.raidId}
+                              </span>
+                              <p className="text-xs text-amber-800/90 dark:text-amber-200 mt-0.5">
+                                {r.reason}
+                              </p>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      {isPolish ? 'Do dodania' : 'To add'} ({raidAiProposal.add.length})
+                    </span>
+                    {raidAiProposal.add.length > 0 && (
+                      <button
+                        onClick={() =>
+                          setRaidAiSelectedAddIdx(
+                            Object.fromEntries(
+                              raidAiProposal.add.map((_, idx) => [idx, true])
+                            ) as Record<number, boolean>
+                          )
+                        }
+                        className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                      >
+                        {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      </button>
+                    )}
+                  </div>
+
+                  {raidAiProposal.add.length === 0 ? (
+                    <EmptyStateInline
+                      icon={Plus}
+                      dashed={false}
+                      className="p-5"
+                      message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
+                      hint={
+                        isPolish
+                          ? 'AI może zwrócić tylko usunięcia lub brak zmian.'
+                          : 'AI may return only removals or no changes.'
+                      }
+                    />
+                  ) : (
+                    <div className="space-y-1.5">
+                      {raidAiProposal.add.map((x, idx) => (
+                        <label
+                          key={idx}
+                          className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!raidAiSelectedAddIdx[idx]}
+                            onChange={(e) =>
+                              setRaidAiSelectedAddIdx((prev) => ({
+                                ...prev,
+                                [idx]: e.target.checked,
+                              }))
+                            }
+                            className="mt-1"
+                          />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-medium text-slate-800 dark:text-white">
+                                {x.title}
+                              </span>
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-slate-200/60 dark:bg-navy-700/60 text-slate-600 dark:text-slate-300">
+                                {String(x.type || '').toUpperCase()}
+                              </span>
+                              {x.severity ? (
+                                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-200/60 dark:bg-navy-700/60 text-slate-600 dark:text-slate-300">
+                                  {x.severity}
+                                </span>
+                              ) : null}
+                            </div>
+                            {x.description ? (
+                              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
+                                {x.description}
+                              </p>
+                            ) : null}
+                            {x.rationale ? (
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                                {x.rationale}
+                              </p>
+                            ) : null}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Callout
+                  variant="purple"
+                  title={isPolish ? 'Plan' : 'Plan'}
+                  compact
+                  className="rounded-xl"
+                >
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li>
+                      {(isPolish
+                        ? 'Usuń zaznaczone elementy RAID: '
+                        : 'Remove selected RAID items: ') +
+                        raidAiProposal.remove.reduce(
+                          (sum, r) => sum + (raidAiSelectedRemoveIds[r.raidId] ? 1 : 0),
+                          0
+                        )}
+                    </li>
+                    <li>
+                      {(isPolish
+                        ? 'Dodaj zaznaczone elementy RAID: '
+                        : 'Add selected RAID items: ') +
+                        raidAiProposal.add.reduce(
+                          (sum, _x, idx) => sum + (raidAiSelectedAddIdx[idx] ? 1 : 0),
+                          0
+                        )}
+                    </li>
+                  </ul>
+                </Callout>
+              </div>
+
+              <div className="px-5 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-end gap-2">
+                <button
+                  onClick={closeRaidAIModal}
+                  disabled={isRaidAIProposing}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                >
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+                <button
+                  onClick={() => void applyRaidAIProposal()}
+                  disabled={isRaidAIProposing || !canEditCards}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                  title={
+                    !canEditCards
+                      ? isPolish
+                        ? 'Brak uprawnień do edycji na tym etapie inicjatywy.'
+                        : 'No edit permission at this initiative stage.'
+                      : undefined
+                  }
+                >
+                  {isRaidAIProposing ? <Loader2 size={13} className="animate-spin" /> : null}
+                  {isPolish ? 'Zastosuj' : 'Apply'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
           <div className="min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
               <NModeHeader
-                title={initiative?.name || ''}
-                onTitleChange={() => {}}
-                titleReadOnly
+                title={titleDraft || initiative?.name || ''}
+                onTitleChange={setTitleDraft}
+                titleReadOnly={!canEditCards}
+                titleInputId={titleInputId}
                 artifactId={initiativeId}
                 artifactType="initiative"
                 onSave={() => handleSave(false)}
@@ -6378,6 +7791,244 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   return (
     <InitiativeContext.Provider value={contextValue}>
+      {showRaidAIModal && raidAiProposal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/40">
+          <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
+            <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Propozycje zmian w RAID (AI)' : 'Proposed RAID changes (AI)'}
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  {isPolish
+                    ? 'Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.'
+                    : 'Select items to add/remove, then click “Apply”.'}
+                </p>
+              </div>
+              <button
+                onClick={closeRaidAIModal}
+                className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                title={isPolish ? 'Zamknij' : 'Close'}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
+              {raidAiNoSuggestionsMessage ? (
+                <Callout variant="purple" compact title={isPolish ? 'AI' : 'AI'}>
+                  {raidAiNoSuggestionsMessage}
+                </Callout>
+              ) : null}
+
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Do wywalenia' : 'To remove'} ({raidAiProposal.remove.length})
+                  </span>
+                  {raidAiProposal.remove.length > 0 && (
+                    <button
+                      onClick={() =>
+                        setRaidAiSelectedRemoveIds(
+                          Object.fromEntries(
+                            raidAiProposal.remove.map((r) => [r.raidId, true])
+                          ) as Record<string, boolean>
+                        )
+                      }
+                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    >
+                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                    </button>
+                  )}
+                </div>
+
+                {raidAiProposal.remove.length === 0 ? (
+                  <EmptyStateInline
+                    icon={Trash2}
+                    dashed={false}
+                    className="p-5"
+                    message={
+                      isPolish ? 'AI nie zasugerowało usunięć.' : 'No removal suggestions from AI.'
+                    }
+                    hint={
+                      isPolish
+                        ? 'Jeśli RAID jest OK, AI może nie zaproponować zmian.'
+                        : 'If the RAID log is already good, AI may suggest no changes.'
+                    }
+                  />
+                ) : (
+                  <div className="space-y-1.5">
+                    {raidAiProposal.remove.map((r) => {
+                      const existing = raidItems.find(
+                        (x: any) => String(x?.id) === String(r.raidId)
+                      );
+                      return (
+                        <label
+                          key={r.raidId}
+                          className="flex items-start gap-2 p-2 rounded-xl bg-amber-50/40 dark:bg-amber-500/5 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!raidAiSelectedRemoveIds[r.raidId]}
+                            onChange={(e) =>
+                              setRaidAiSelectedRemoveIds((prev) => ({
+                                ...prev,
+                                [r.raidId]: e.target.checked,
+                              }))
+                            }
+                            className="mt-1"
+                          />
+                          <div className="min-w-0">
+                            <span className="text-sm font-medium text-slate-800 dark:text-white">
+                              {existing?.title || r.raidId}
+                            </span>
+                            <p className="text-xs text-amber-800/90 dark:text-amber-200 mt-0.5">
+                              {r.reason}
+                            </p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Do dodania' : 'To add'} ({raidAiProposal.add.length})
+                  </span>
+                  {raidAiProposal.add.length > 0 && (
+                    <button
+                      onClick={() =>
+                        setRaidAiSelectedAddIdx(
+                          Object.fromEntries(
+                            raidAiProposal.add.map((_, idx) => [idx, true])
+                          ) as Record<number, boolean>
+                        )
+                      }
+                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    >
+                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                    </button>
+                  )}
+                </div>
+
+                {raidAiProposal.add.length === 0 ? (
+                  <EmptyStateInline
+                    icon={Plus}
+                    dashed={false}
+                    className="p-5"
+                    message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
+                    hint={
+                      isPolish
+                        ? 'AI może zwrócić tylko usunięcia lub brak zmian.'
+                        : 'AI may return only removals or no changes.'
+                    }
+                  />
+                ) : (
+                  <div className="space-y-1.5">
+                    {raidAiProposal.add.map((x, idx) => (
+                      <label
+                        key={idx}
+                        className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!raidAiSelectedAddIdx[idx]}
+                          onChange={(e) =>
+                            setRaidAiSelectedAddIdx((prev) => ({
+                              ...prev,
+                              [idx]: e.target.checked,
+                            }))
+                          }
+                          className="mt-1"
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium text-slate-800 dark:text-white">
+                              {x.title}
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-slate-200/60 dark:bg-navy-700/60 text-slate-600 dark:text-slate-300">
+                              {String(x.type || '').toUpperCase()}
+                            </span>
+                            {x.severity ? (
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-slate-200/60 dark:bg-navy-700/60 text-slate-600 dark:text-slate-300">
+                                {x.severity}
+                              </span>
+                            ) : null}
+                          </div>
+                          {x.description ? (
+                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
+                              {x.description}
+                            </p>
+                          ) : null}
+                          {x.rationale ? (
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                              {x.rationale}
+                            </p>
+                          ) : null}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Callout
+                variant="purple"
+                title={isPolish ? 'Plan' : 'Plan'}
+                compact
+                className="rounded-xl"
+              >
+                <ul className="list-disc pl-4 space-y-1">
+                  <li>
+                    {(isPolish
+                      ? 'Usuń zaznaczone elementy RAID: '
+                      : 'Remove selected RAID items: ') +
+                      raidAiProposal.remove.reduce(
+                        (sum, r) => sum + (raidAiSelectedRemoveIds[r.raidId] ? 1 : 0),
+                        0
+                      )}
+                  </li>
+                  <li>
+                    {(isPolish ? 'Dodaj zaznaczone elementy RAID: ' : 'Add selected RAID items: ') +
+                      raidAiProposal.add.reduce(
+                        (sum, _x, idx) => sum + (raidAiSelectedAddIdx[idx] ? 1 : 0),
+                        0
+                      )}
+                  </li>
+                </ul>
+              </Callout>
+            </div>
+
+            <div className="px-5 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-end gap-2">
+              <button
+                onClick={closeRaidAIModal}
+                disabled={isRaidAIProposing}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+              >
+                {isPolish ? 'Anuluj' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => void applyRaidAIProposal()}
+                disabled={isRaidAIProposing || !canEditCards}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                title={
+                  !canEditCards
+                    ? isPolish
+                      ? 'Brak uprawnień do edycji na tym etapie inicjatywy.'
+                      : 'No edit permission at this initiative stage.'
+                    : undefined
+                }
+              >
+                {isRaidAIProposing ? <Loader2 size={13} className="animate-spin" /> : null}
+                {isPolish ? 'Zastosuj' : 'Apply'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
         {/* ═══════════════════════════════════════════════════════════════
             N-MODE RENDER
@@ -6386,9 +8037,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           <div className="min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
               <NModeHeader
-                title={initiative?.name || ''}
-                onTitleChange={() => {}}
-                titleReadOnly
+                title={titleDraft || initiative?.name || ''}
+                onTitleChange={setTitleDraft}
+                titleReadOnly={!canEditCards}
+                titleInputId={titleInputId}
                 artifactId={initiativeId}
                 artifactType="initiative"
                 onSave={() => handleSave(false)}
@@ -6568,7 +8220,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                       ) : (
                                         <Sparkles size={13} />
                                       )}
-                                      <span>{isPolish ? 'Analizuj z AI' : 'Analyze with AI'}</span>
+                                      <span>
+                                        {decisionsAiRequest?.mode === 'analyze'
+                                          ? isPolish
+                                            ? 'Analizuję...'
+                                            : 'Analyzing...'
+                                          : isPolish
+                                            ? 'Analizuj z AI'
+                                            : 'Analyze with AI'}
+                                      </span>
                                     </button>
 
                                     <button
@@ -6599,10 +8259,57 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                         <Sparkles size={13} />
                                       )}
                                       <span>
-                                        {isPolish ? 'AI: dodaj decyzję' : 'AI: Add decision'}
+                                        {decisionsAiRequest?.mode === 'addOne'
+                                          ? isPolish
+                                            ? 'Dodaję...'
+                                            : 'Generating...'
+                                          : isPolish
+                                            ? 'AI: dodaj decyzję'
+                                            : 'AI: Add decision'}
                                       </span>
                                     </button>
                                   </div>
+                                );
+                              }
+                              if (activeNSection === 'comments') {
+                                return (
+                                  <button
+                                    onClick={() => {
+                                      if (!canUseAi) {
+                                        toast.error(
+                                          isPolish
+                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                            : 'AI is unavailable because you have no edit permissions in this context.'
+                                        );
+                                        return;
+                                      }
+                                      requestCommentsAi();
+                                    }}
+                                    disabled={!canUseAi || !!commentsAiRequest}
+                                    title={
+                                      !canUseAi
+                                        ? isPolish
+                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                          : 'No permission to use AI in this context.'
+                                        : undefined
+                                    }
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                  >
+                                    {commentsAiRequest ? (
+                                      <Loader2 size={13} className="animate-spin" />
+                                    ) : (
+                                      <Sparkles size={13} />
+                                    )}
+                                    <span>
+                                      {commentsAiRequest
+                                        ? isPolish
+                                          ? 'Analizuję...'
+                                          : 'Analyzing...'
+                                        : isPolish
+                                          ? 'Analizuj z AI'
+                                          : 'Analyze with AI'}
+                                    </span>
+                                  </button>
                                 );
                               }
                               if (activeNSection === 'resources') {
@@ -6634,7 +8341,138 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                     ) : (
                                       <Sparkles size={13} />
                                     )}
-                                    <span>{isPolish ? 'Analizuj z AI' : 'Analyze with AI'}</span>
+                                    <span>
+                                      {resourcesAiRequest
+                                        ? isPolish
+                                          ? 'Analizuję...'
+                                          : 'Analyzing...'
+                                        : isPolish
+                                          ? 'Analizuj z AI'
+                                          : 'Analyze with AI'}
+                                    </span>
+                                  </button>
+                                );
+                              }
+                              if (activeNSection === 'timeline') {
+                                return (
+                                  <button
+                                    onClick={() => {
+                                      if (!canUseAi) {
+                                        toast.error(
+                                          isPolish
+                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                            : 'AI is unavailable because you have no edit permissions in this context.'
+                                        );
+                                        return;
+                                      }
+                                      requestTimelineAi();
+                                    }}
+                                    disabled={!canUseAi || !!timelineAiRequest}
+                                    title={
+                                      !canUseAi
+                                        ? isPolish
+                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                          : 'No permission to use AI in this context.'
+                                        : undefined
+                                    }
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                  >
+                                    {timelineAiRequest ? (
+                                      <Loader2 size={13} className="animate-spin" />
+                                    ) : (
+                                      <Sparkles size={13} />
+                                    )}
+                                    <span>
+                                      {timelineAiRequest
+                                        ? isPolish
+                                          ? 'Analizuję...'
+                                          : 'Analyzing...'
+                                        : isPolish
+                                          ? 'Analizuj z AI'
+                                          : 'Analyze with AI'}
+                                    </span>
+                                  </button>
+                                );
+                              }
+                              if (activeNSection === 'dependencies') {
+                                return (
+                                  <button
+                                    onClick={() => {
+                                      if (!canUseAi) {
+                                        toast.error(
+                                          isPolish
+                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                            : 'AI is unavailable because you have no edit permissions in this context.'
+                                        );
+                                        return;
+                                      }
+                                      requestDependenciesAi();
+                                    }}
+                                    disabled={!canUseAi || !!dependenciesAiRequest}
+                                    title={
+                                      !canUseAi
+                                        ? isPolish
+                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                          : 'No permission to use AI in this context.'
+                                        : undefined
+                                    }
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                  >
+                                    {dependenciesAiRequest ? (
+                                      <Loader2 size={13} className="animate-spin" />
+                                    ) : (
+                                      <Sparkles size={13} />
+                                    )}
+                                    <span>
+                                      {dependenciesAiRequest
+                                        ? isPolish
+                                          ? 'Analizuję...'
+                                          : 'Analyzing...'
+                                        : isPolish
+                                          ? 'Analizuj z AI'
+                                          : 'Analyze with AI'}
+                                    </span>
+                                  </button>
+                                );
+                              }
+                              if (activeNSection === 'kpis') {
+                                return (
+                                  <button
+                                    onClick={() => {
+                                      if (!canUseAi) {
+                                        toast.error(
+                                          isPolish
+                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                            : 'AI is unavailable because you have no edit permissions in this context.'
+                                        );
+                                        return;
+                                      }
+                                      requestKpisAi();
+                                    }}
+                                    disabled={!canUseAi || !!kpisAiRequest}
+                                    title={
+                                      !canUseAi
+                                        ? isPolish
+                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                          : 'No permission to use AI in this context.'
+                                        : undefined
+                                    }
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                  >
+                                    {kpisAiRequest ? (
+                                      <Loader2 size={13} className="animate-spin" />
+                                    ) : (
+                                      <Sparkles size={13} />
+                                    )}
+                                    <span>
+                                      {kpisAiRequest
+                                        ? isPolish
+                                          ? 'Analizuję...'
+                                          : 'Analyzing...'
+                                        : isPolish
+                                          ? 'Analizuj z AI'
+                                          : 'Analyze with AI'}
+                                    </span>
                                   </button>
                                 );
                               }
@@ -6667,7 +8505,97 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                     ) : (
                                       <Sparkles size={13} />
                                     )}
-                                    <span>{isPolish ? 'Analizuj z AI' : 'Analyze with AI'}</span>
+                                    <span>
+                                      {teamAiRequest
+                                        ? isPolish
+                                          ? 'Analizuję...'
+                                          : 'Analyzing...'
+                                        : isPolish
+                                          ? 'Analizuj z AI'
+                                          : 'Analyze with AI'}
+                                    </span>
+                                  </button>
+                                );
+                              }
+                              if (activeNSection === 'targetState') {
+                                return (
+                                  <button
+                                    onClick={() => {
+                                      if (!canUseAi) {
+                                        toast.error(
+                                          isPolish
+                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                            : 'AI is unavailable because you have no edit permissions in this context.'
+                                        );
+                                        return;
+                                      }
+                                      requestTargetStateAi();
+                                    }}
+                                    disabled={!canUseAi || !!targetStateAiRequest}
+                                    title={
+                                      !canUseAi
+                                        ? isPolish
+                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                          : 'No permission to use AI in this context.'
+                                        : undefined
+                                    }
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                  >
+                                    {targetStateAiRequest ? (
+                                      <Loader2 size={13} className="animate-spin" />
+                                    ) : (
+                                      <Sparkles size={13} />
+                                    )}
+                                    <span>
+                                      {targetStateAiRequest
+                                        ? isPolish
+                                          ? 'Analizuję...'
+                                          : 'Analyzing...'
+                                        : isPolish
+                                          ? 'Analizuj z AI'
+                                          : 'Analyze with AI'}
+                                    </span>
+                                  </button>
+                                );
+                              }
+                              if (activeNSection === 'gates') {
+                                return (
+                                  <button
+                                    onClick={() => {
+                                      if (!canUseAi) {
+                                        toast.error(
+                                          isPolish
+                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                            : 'AI is unavailable because you have no edit permissions in this context.'
+                                        );
+                                        return;
+                                      }
+                                      requestGatesAi();
+                                    }}
+                                    disabled={!canUseAi || !!gatesAiRequest}
+                                    title={
+                                      !canUseAi
+                                        ? isPolish
+                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                          : 'No permission to use AI in this context.'
+                                        : undefined
+                                    }
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                  >
+                                    {gatesAiRequest ? (
+                                      <Loader2 size={13} className="animate-spin" />
+                                    ) : (
+                                      <Sparkles size={13} />
+                                    )}
+                                    <span>
+                                      {gatesAiRequest
+                                        ? isPolish
+                                          ? 'Analizuję...'
+                                          : 'Analyzing...'
+                                        : isPolish
+                                          ? 'Analizuj z AI'
+                                          : 'Analyze with AI'}
+                                    </span>
                                   </button>
                                 );
                               }
@@ -6690,6 +8618,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                     : isPolish
                                       ? 'Analyze with AI'
                                       : 'Analyze with AI';
+                              const isRaidAnalyzing =
+                                activeNSection === 'risk-raid' &&
+                                (!!raidAiRequest || isRaidAIProposing);
                               return (
                                 <button
                                   onClick={async () => {
@@ -6705,9 +8636,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                       await handleGenerateScopeCard();
                                       return;
                                     }
+                                    if (activeNSection === 'risk-raid') {
+                                      requestRaidAi();
+                                      return;
+                                    }
                                     await handleGenerateAI(aiSectionKey);
                                   }}
-                                  disabled={!canUseAi || isGeneratingAI === aiSectionKey}
+                                  disabled={
+                                    !canUseAi ||
+                                    (activeNSection === 'risk-raid'
+                                      ? isRaidAnalyzing
+                                      : isGeneratingAI === aiSectionKey)
+                                  }
                                   title={
                                     !canUseAi
                                       ? isPolish
@@ -6717,12 +8657,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                   }
                                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
                                 >
-                                  {isGeneratingAI === aiSectionKey ? (
+                                  {activeNSection === 'risk-raid' ? (
+                                    isRaidAnalyzing ? (
+                                      <Loader2 size={13} className="animate-spin" />
+                                    ) : (
+                                      <Sparkles size={13} />
+                                    )
+                                  ) : isGeneratingAI === aiSectionKey ? (
                                     <Loader2 size={13} className="animate-spin" />
                                   ) : (
                                     <Sparkles size={13} />
                                   )}
-                                  <span>{aiLabel}</span>
+                                  <span>
+                                    {activeNSection === 'risk-raid' && isRaidAnalyzing
+                                      ? isPolish
+                                        ? 'Analizuję...'
+                                        : 'Analyzing...'
+                                      : aiLabel}
+                                  </span>
                                 </button>
                               );
                             })()}
@@ -6784,10 +8736,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       {isPolish ? moduleConfig.labelPl : moduleConfig.label}
                     </div>
                     <input
+                      id={titleInputId}
                       type="text"
-                      value={initiative.name || ''}
-                      readOnly
-                      className="flex-1 text-xl font-bold text-slate-800 dark:text-white bg-transparent border-none focus:outline-none truncate"
+                      value={titleDraft || initiative.name || ''}
+                      onChange={(e) => setTitleDraft(e.target.value)}
+                      readOnly={!canEditCards}
+                      className={`flex-1 text-xl font-bold text-slate-800 dark:text-white bg-transparent border-none focus:outline-none truncate ${
+                        !canEditCards ? '' : 'cursor-text'
+                      }`}
                     />
                     <ArtifactPermalinkButton
                       artifactType="initiative"

@@ -4,8 +4,6 @@
  * Types used across all initiative sections and the dynamic renderer.
  */
 
-import type { InitiativeStatus } from '../../../types';
-
 // ==========================================
 // DATA TYPES
 // ==========================================
@@ -340,6 +338,9 @@ export interface TimelineRow {
   id: string;
   type: TimelineRowType;
   name: string;
+
+  /** Visual hint — row is on the critical path (UI-only) */
+  isCriticalPath?: boolean;
 
   // ── Time ──
   startDate: string | null;

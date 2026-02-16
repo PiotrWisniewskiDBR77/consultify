@@ -92,36 +92,37 @@ export function getSectionComponent(
  * Maps section keys to their default order values.
  */
 export const DEFAULT_SECTION_ORDER: Record<string, number> = {
-  // Canonical N-mode content sequence (left column)
-  scope: 10,
-  targetState: 20,
-  problemDefinition: 30,
-  kpis: 40,
-  financialAnalysis: 50,
-  financialImpact: 60,
+  // Match system defaults seeded in `server/migrations/529_initiative_section_types.sql`
+  // Left column (content)
+  overview: 10,
+  problemDefinition: 20,
+  targetState: 30,
+  scope: 40,
+  tasks: 50,
+  decisions: 60,
   raid: 70,
-  tasks: 80,
-  timeline: 90,
-  decisions: 100,
-  gates: 110,
-  attachments: 120,
+  gates: 80,
+  financialAnalysis: 90,
+  financialImpact: 100,
+  kpis: 110,
+  pilot: 120,
   comments: 130,
   history: 140,
-  // Legacy sections kept for backward compatibility
-  overview: 200,
-  pilot: 210,
-  // Right column
+  // Right column (control/meta)
   control: 10,
-  team: 15,
-  initiativeTeam: 20,
-  raciEscalation: 30,
+  team: 20,
+  timeline: 30,
   resources: 40,
-  dependencies: 50,
-  stakeholders: 60,
-  linkedItems: 70,
+  stakeholders: 50,
+  dependencies: 60,
+  attachments: 70,
   tags: 80,
   reminders: 90,
-  watchers: 220,
+  watchers: 100,
+  // Legacy/optional sections kept for compatibility
+  initiativeTeam: 120,
+  raciEscalation: 130,
+  linkedItems: 140,
 };
 
 /**
@@ -129,33 +130,33 @@ export const DEFAULT_SECTION_ORDER: Record<string, number> = {
  * Matches the current "show everything" behavior.
  */
 export const DEFAULT_VISIBLE_SECTIONS: Record<string, boolean> = {
-  // Canonical initiative cards enabled by default
-  scope: true,
-  targetState: true,
+  // Core initiative cards enabled by default (aligned with system seed)
+  overview: true,
   problemDefinition: true,
-  kpis: true,
+  targetState: true,
+  scope: true,
   tasks: true,
   decisions: true,
   raid: true,
   gates: true,
   financialAnalysis: true,
   financialImpact: true,
-  resources: true,
-  dependencies: true,
+  kpis: true,
   comments: true,
   history: true,
   control: true,
   team: true,
-  initiativeTeam: true,
-  raciEscalation: true,
   timeline: true,
-  attachments: true,
-  linkedItems: true,
+  resources: true,
   stakeholders: true,
-  reminders: true,
+  dependencies: true,
+  attachments: true,
   tags: true,
-  // Excluded from canonical N-mode but left in registry for compatibility
-  overview: false,
+  reminders: true,
+  // Optional sections (off by default unless enabled by template)
   pilot: false,
   watchers: false,
+  initiativeTeam: false,
+  raciEscalation: false,
+  linkedItems: false,
 };

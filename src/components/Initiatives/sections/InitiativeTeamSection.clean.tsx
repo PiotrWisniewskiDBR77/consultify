@@ -5,8 +5,7 @@
  * AI proposals (add/update/remove) are triggered by `teamAiRequest` from `useInitiativeContext()`.
  */
 
-import { AnimatePresence } from 'framer-motion';
-import { Copy, Loader2, Sparkles, Trash2, Users, X } from 'lucide-react';
+import { Loader2, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -21,11 +20,6 @@ import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 
 import { useInitiativeContext } from './InitiativeContext';
-import {
-  InitiativeTeamComposerModal,
-  type PendingConsultantAccess,
-  type ProjectMemberLite,
-} from './InitiativeTeamComposerModal';
 import type { InitiativeSectionProps } from './types';
 
 type TeamAiProposal = {
@@ -57,13 +51,11 @@ function safeJsonParse(raw: string): any | null {
 }
 
 function normalizeRole(raw: any): PanelTeamRole {
-  const v = String(raw || '').trim();
-  const up = v.toUpperCase();
-  const low = v.toLowerCase();
-  if (low === 'admin' || low === 'manager' || low === 'editor' || low === 'viewer')
-    return low as any;
-  // allow project roles (initiative mode)
-  return (up as any) || ('TEAM_MEMBER' as any);
+  const v = String(raw || '')
+    .toLowerCase()
+    .trim();
+  if (v === 'admin' || v === 'manager' || v === 'editor' || v === 'viewer') return v;
+  return 'viewer';
 }
 
 function normalizeProposal(raw: any): TeamAiProposal {
@@ -109,8 +101,6 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
 
   const [members, setMembers] = useState<PanelTeamMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
-  const [pendingConsultants, setPendingConsultants] = useState<PendingConsultantAccess[]>([]);
-  const [showComposer, setShowComposer] = useState(false);
 
   const [showAIModal, setShowAIModal] = useState(false);
   const [isAIProposing, setIsAIProposing] = useState(false);
@@ -160,72 +150,7 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
         setLoadingMembers(true);
         const res: any = await Api.get(`/projects/${pid}/members`);
         const arr = Array.isArray(res) ? res : Array.isArray(res?.members) ? res.members : [];
-        const nowIso = new Date().toISOString();
-        const normalized = (arr || []).map((m: any) => {
-          const userId = String(m?.userId || m?.user_id || '');
-          const email = String(m?.email || m?.userEmail || '').trim();
-          const name =
-            String(m?.userName || '').trim() ||
-            String(`${m?.firstName || ''} ${m?.lastName || ''}`.trim()) ||
-            email ||
-            userId ||
-            'User';
-          const projectRoleRaw = String(
-            m?.projectRole || m?.project_role || m?.role || 'TEAM_MEMBER'
-          );
-          const projectRole =
-            String(projectRoleRaw || '')
-              .trim()
-              .toUpperCase() || 'TEAM_MEMBER';
-          const perms = (
-            m?.permissions && typeof m.permissions === 'object' ? m.permissions : {}
-          ) as Record<string, boolean>;
-          const isExternal = String(m?.consultantProfile || 'NONE').toUpperCase() !== 'NONE';
-          const externalType =
-            String(m?.consultantProfile || '').toUpperCase() === 'PARTNER'
-              ? ('PARTNER' as const)
-              : isExternal
-                ? ('CONSULTANT' as const)
-                : undefined;
-
-          const canEdit =
-            !!perms.canUpdateTasks ||
-            !!perms.canCreateTasks ||
-            !!perms.canUpdateInitiatives ||
-            !!perms.canCreateInitiatives ||
-            !!perms.canUpdateDecisions;
-          const canApprove = !!perms.canApproveDecisions || !!perms.canApproveChangeRequests;
-          const canManageTeam = !!perms.canManageTeam;
-          const canChangeStatus = canEdit;
-
-          return {
-            id: String(m?.id || userId || `${pid}:${email}`),
-            assessmentId: String(initiative?.id || 'initiative'),
-            userId,
-            organizationId: String(
-              m?.organizationId || m?.organization_id || initiative?.organizationId || ''
-            ),
-            role: projectRole as any,
-            projectRole,
-            permissions: perms,
-            isExternal,
-            externalType,
-            externalOrgName: undefined,
-            canEdit,
-            canApprove,
-            canManageTeam,
-            canChangeStatus,
-            canGenerateReport: false,
-            canGenerateInitiatives: false,
-            assignedAreas: null,
-            assignedBy: String(m?.addedById || m?.assignedBy || ''),
-            assignedAt: String(m?.createdAt || m?.joinedAt || m?.assignedAt || nowIso),
-            updatedAt: String(m?.updatedAt || nowIso),
-            userName: name,
-            userEmail: email,
-          } as PanelTeamMember;
-        });
-        setMembers(normalized);
+        setMembers(arr as PanelTeamMember[]);
       } catch (e) {
         console.error(e);
         setMembers([]);
@@ -236,100 +161,9 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
     [projectId]
   );
 
-  const loadPendingConsultants = useCallback(
-    async (pidOverride?: string) => {
-      const pid = pidOverride || projectId;
-      if (!pid) {
-        setPendingConsultants([]);
-        return;
-      }
-      try {
-        const res: any = await Api.get('/consultant-project-access');
-        const list = Array.isArray(res) ? res : [];
-        const flattened: PendingConsultantAccess[] = [];
-        for (const c of list) {
-          const email = String(c?.email || c?.consultant_email || '').trim();
-          const projects = Array.isArray(c?.projects) ? c.projects : [];
-          for (const p of projects) {
-            const projectId = String(p?.project_id || p?.projectId || '');
-            if (!projectId || projectId !== pid) continue;
-            const status = String(p?.status || '').toLowerCase();
-            if (status === 'revoked') continue;
-            flattened.push({
-              accessId: String(p?.access_id || p?.accessId || ''),
-              email,
-              projectId,
-              status: String(p?.status || 'pending'),
-              projectRole: p?.projectRole ? String(p.projectRole) : null,
-              accessCode: p?.access_code ? String(p.access_code) : null,
-              invitedAt: p?.invited_at ? String(p.invited_at) : undefined,
-              acceptedAt: p?.accepted_at ? String(p.accepted_at) : null,
-            });
-          }
-        }
-        setPendingConsultants(flattened.filter((x) => !!x.accessId && !!x.email));
-      } catch {
-        setPendingConsultants([]);
-      }
-    },
-    [projectId]
-  );
-
-  const updatePendingConsultantRole = useCallback(
-    async (accessId: string, nextRole: string) => {
-      const pid = await ensureProjectId();
-      try {
-        await Api.put(`/consultant-project-access/${accessId}`, { projectRole: nextRole });
-        await loadPendingConsultants(pid);
-        toast.success(isPolish ? 'Zaktualizowano rolę konsultanta' : 'Consultant role updated');
-      } catch (e: any) {
-        toast.error(
-          e?.message || (isPolish ? 'Nie udało się zaktualizować roli' : 'Update failed')
-        );
-      }
-    },
-    [ensureProjectId, isPolish, loadPendingConsultants]
-  );
-
-  const revokePendingConsultant = useCallback(
-    async (accessId: string) => {
-      if (
-        !confirm(
-          isPolish
-            ? 'Cofnąć dostęp konsultanta do projektu?'
-            : 'Revoke consultant access to this project?'
-        )
-      ) {
-        return;
-      }
-      const pid = await ensureProjectId();
-      try {
-        await Api.delete(`/consultant-project-access/${accessId}`);
-        await loadPendingConsultants(pid);
-        toast.success(isPolish ? 'Cofnięto dostęp' : 'Access revoked');
-      } catch (e: any) {
-        toast.error(e?.message || (isPolish ? 'Nie udało się cofnąć dostępu' : 'Revoke failed'));
-      }
-    },
-    [ensureProjectId, isPolish, loadPendingConsultants]
-  );
-
-  const copyToClipboard = useCallback(
-    async (text: string) => {
-      try {
-        await navigator.clipboard.writeText(text);
-        toast.success(isPolish ? 'Skopiowano' : 'Copied');
-      } catch {
-        toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
-      }
-    },
-    [isPolish]
-  );
-
   useEffect(() => {
     void loadMembers();
-    void loadPendingConsultants();
-  }, [loadMembers, loadPendingConsultants]);
+  }, [loadMembers]);
 
   const orgUsers: PanelOrgUser[] = useMemo(() => {
     const raw = Array.isArray(users) ? users : [];
@@ -362,10 +196,9 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
       const pid = await ensureProjectId();
       await Api.post(`/projects/${pid}/members`, { userId, projectRole: role });
       await loadMembers(pid);
-      await loadPendingConsultants(pid);
       toast.success(isPolish ? 'Dodano członka zespołu' : 'Team member added');
     },
-    [ensureProjectId, isPolish, loadMembers, loadPendingConsultants]
+    [ensureProjectId, isPolish, loadMembers]
   );
 
   const onUpdateMember = useCallback(
@@ -373,10 +206,9 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
       const pid = await ensureProjectId();
       await Api.patch(`/projects/${pid}/members/${userId}`, { projectRole: role });
       await loadMembers(pid);
-      await loadPendingConsultants(pid);
       toast.success(isPolish ? 'Zaktualizowano rolę' : 'Role updated');
     },
-    [ensureProjectId, isPolish, loadMembers, loadPendingConsultants]
+    [ensureProjectId, isPolish, loadMembers]
   );
 
   const onRemoveMember = useCallback(
@@ -384,10 +216,9 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
       const pid = await ensureProjectId();
       await Api.delete(`/projects/${pid}/members/${userId}`);
       await loadMembers(pid);
-      await loadPendingConsultants(pid);
       toast.success(isPolish ? 'Usunięto członka zespołu' : 'Team member removed');
     },
-    [ensureProjectId, isPolish, loadMembers, loadPendingConsultants]
+    [ensureProjectId, isPolish, loadMembers]
   );
 
   const closeAIModal = useCallback(() => {
@@ -562,17 +393,6 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={() => setShowComposer(true)}
-          className="h-9 px-3 rounded-xl border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors text-sm font-semibold inline-flex items-center gap-2"
-        >
-          <Users size={16} className="text-slate-500 dark:text-slate-400" />
-          {isPolish ? 'Kompozycja zespołu' : 'Compose team'}
-        </button>
-      </div>
-
       <div className="p-0">
         <TeamManagementPanel
           assessmentId={String(initiative?.id || 'initiative')}
@@ -583,7 +403,6 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
           canManageTeam
           onRefresh={async () => {
             await loadMembers();
-            await loadPendingConsultants();
           }}
           onSearchUsers={onSearchUsers}
           onAddMember={onAddMember}
@@ -597,109 +416,6 @@ export const InitiativeTeamSection: React.FC<InitiativeSectionProps> = () => {
           }}
         />
       </div>
-
-      <AnimatePresence>
-        {showComposer ? (
-          <InitiativeTeamComposerModal
-            isOpen={showComposer}
-            onClose={() => setShowComposer(false)}
-            orgUsers={orgUsers}
-            existingMembers={members.map((m) => ({
-              userId: String(m.userId || ''),
-              name: String(m.userName || ''),
-              email: String(m.userEmail || ''),
-              projectRole: String((m as any).projectRole || m.role || ''),
-            }))}
-            pendingConsultants={pendingConsultants}
-            ensureProjectId={ensureProjectId}
-            onAfterChange={async (pid) => {
-              await loadMembers(pid);
-              await loadPendingConsultants(pid);
-            }}
-            canInviteConsultant
-          />
-        ) : null}
-      </AnimatePresence>
-
-      {pendingConsultants.length > 0 ? (
-        <div className="rounded-xl border border-slate-200/80 dark:border-navy-700 bg-white/60 dark:bg-navy-900/40 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-200/80 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/20">
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">
-              {isPolish ? 'Konsultanci (pending)' : 'Consultants (pending)'}
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {isPolish
-                ? 'Zaproszeni, ale jeszcze niezaakceptowani lub bez pełnego konta.'
-                : 'Invited but not accepted yet, or without a full account.'}
-            </div>
-          </div>
-          <div className="divide-y divide-slate-200/70 dark:divide-navy-800">
-            {pendingConsultants.map((c) => (
-              <div key={c.accessId} className="px-4 py-3 flex items-center gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                    {c.email}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    {String(c.status || '').toUpperCase()}
-                    {c.accessCode ? ` • ${isPolish ? 'kod' : 'code'}: ${c.accessCode}` : ''}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <select
-                    value={String(c.projectRole || 'CONSULTANT')}
-                    onChange={(e) => void updatePendingConsultantRole(c.accessId, e.target.value)}
-                    className="h-9 px-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
-                    title={isPolish ? 'Rola w projekcie' : 'Project role'}
-                  >
-                    {[
-                      'CONSULTANT',
-                      'TEAM_MEMBER',
-                      'TASK_ASSIGNEE',
-                      'INITIATIVE_OWNER',
-                      'WORKSTREAM_OWNER',
-                      'PMO',
-                      'PMO_LEAD',
-                      'PROJECT_LEADER',
-                      'STEERING_COMMITTEE',
-                      'BUSINESS_OWNER',
-                      'PORTFOLIO_OWNER',
-                      'SPONSOR',
-                      'STAKEHOLDER',
-                      'OBSERVER',
-                    ].map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
-
-                  {c.accessCode ? (
-                    <button
-                      type="button"
-                      onClick={() => void copyToClipboard(String(c.accessCode))}
-                      className="p-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/30 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                      title={isPolish ? 'Kopiuj kod' : 'Copy code'}
-                    >
-                      <Copy size={16} />
-                    </button>
-                  ) : null}
-
-                  <button
-                    type="button"
-                    onClick={() => void revokePendingConsultant(c.accessId)}
-                    className="p-2 rounded-xl border border-rose-200/60 dark:border-rose-500/20 bg-rose-50/60 dark:bg-rose-500/10 text-rose-700 dark:text-rose-200 hover:bg-rose-50 transition-colors"
-                    title={isPolish ? 'Cofnij dostęp' : 'Revoke access'}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       {showAIModal && aiProposal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">

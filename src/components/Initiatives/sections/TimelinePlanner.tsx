@@ -14,8 +14,6 @@ import {
   BarChart3,
   Bell,
   CalendarDays,
-  Check,
-  ChevronDown,
   Clock,
   Copy,
   Flag,
@@ -26,7 +24,6 @@ import {
   PauseCircle,
   Pencil,
   Play,
-  Plus,
   Rocket,
   Table2,
   Trash2,
@@ -534,6 +531,18 @@ export function useTimelineRows({
     }
   }, []);
 
+  const replaceExtraRows = useCallback((next: TimelineRow[]) => {
+    setExtraRows(Array.isArray(next) ? next : []);
+  }, []);
+
+  const clearRowOverrides = useCallback(() => {
+    setRowOverrides({});
+  }, []);
+
+  const replaceManualOrder = useCallback((next: string[]) => {
+    setManualOrder(Array.isArray(next) ? next.filter(Boolean) : []);
+  }, []);
+
   const removeRow = useCallback((id: string) => {
     setExtraRows((prev) => prev.filter((r) => r.id !== id));
   }, []);
@@ -579,7 +588,18 @@ export function useTimelineRows({
     [rawRows]
   );
 
-  return { rows, addRow, updateRow, removeRow, duplicateRow, reorderRows, extraRows };
+  return {
+    rows,
+    addRow,
+    updateRow,
+    removeRow,
+    duplicateRow,
+    reorderRows,
+    extraRows,
+    replaceExtraRows,
+    clearRowOverrides,
+    replaceManualOrder,
+  };
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3272,9 +3292,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
         const days = daysBetween(row.startDate, row.endDate);
         const isStart = row.type === 'start';
         const isFinish = row.type === 'finish';
-        const isExtra = row.id.startsWith('tr-');
         const canEdit = editable && !isStart && !isFinish;
-        const canRemove = editable && isExtra;
         const depLabel = row.dependsOnId ? `#${getRowIndex(row.dependsOnId)}` : '';
 
         // Decision outcome display
@@ -3312,7 +3330,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               meta.bgTint || 'hover:bg-slate-50/50 dark:hover:bg-navy-800/30'
             } ${draggingId === row.id ? 'opacity-60' : ''} ${
               dragOverId === row.id ? 'ring-1 ring-cyan-500/40' : ''
-            }`}
+            } ${row.isCriticalPath ? 'border-l-2 border-fuchsia-400/80 bg-fuchsia-500/5' : ''}`}
           >
             {/* # */}
             <div className="px-1 py-2 flex items-center justify-center gap-1.5">
@@ -3337,6 +3355,11 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
 
             {/* Name */}
             <div className="px-2 py-2 min-w-0 flex items-center gap-1.5">
+              {row.isCriticalPath && (
+                <span className="text-[8px] px-1 py-0.5 rounded bg-fuchsia-500/15 text-fuchsia-600 dark:text-fuchsia-300 font-bold">
+                  CP
+                </span>
+              )}
               {/* Status dot for tasks */}
               {row.type === 'task' && row.status && (
                 <div
@@ -4104,7 +4127,9 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
               return (
                 <div key={row.id} className="h-9 flex items-center relative">
                   <div
-                    className={`absolute h-5 rounded-lg ${barColor} transition-all`}
+                    className={`absolute h-5 rounded-lg ${barColor} transition-all ${
+                      row.isCriticalPath ? 'ring-2 ring-fuchsia-300/70' : ''
+                    }`}
                     style={{ left: `${left}%`, width: `${width}%`, minWidth: '4px' }}
                     title={`${row.name}: ${fmtDate(row.startDate)} → ${fmtDate(row.endDate)}`}
                   >
@@ -4132,6 +4157,11 @@ export type PlannerView = 'table' | 'gantt';
 
 export interface TimelinePlannerHandle {
   openAddPanel: () => void;
+  applyAiPlan: (plan: {
+    extraRows: TimelineRow[];
+    rowPatches: Array<{ id: string; patch: Partial<TimelineRow> }>;
+    manualOrder: string[];
+  }) => void;
 }
 
 export interface TimelinePlannerProps {
@@ -4165,7 +4195,17 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
   const [view, setView] = useState<PlannerView>('table');
   const [showAddPanel, setShowAddPanel] = useState(false);
 
-  const { rows, addRow, updateRow, removeRow, duplicateRow, reorderRows } = useTimelineRows({
+  const {
+    rows,
+    addRow,
+    updateRow,
+    removeRow,
+    duplicateRow,
+    reorderRows,
+    replaceExtraRows,
+    clearRowOverrides,
+    replaceManualOrder,
+  } = useTimelineRows({
     plannedStart,
     plannedEnd,
     tasks,
@@ -4178,9 +4218,25 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
     if (handleRef) {
       handleRef.current = {
         openAddPanel: () => setShowAddPanel(true),
+        applyAiPlan: (plan) => {
+          const extra = Array.isArray(plan?.extraRows) ? plan.extraRows : [];
+          const patches = Array.isArray(plan?.rowPatches) ? plan.rowPatches : [];
+          const order = Array.isArray(plan?.manualOrder) ? plan.manualOrder : [];
+
+          clearRowOverrides();
+          replaceExtraRows(extra);
+          replaceManualOrder(order);
+
+          for (const p of patches) {
+            if (!p?.id || !p?.patch) continue;
+            updateRow(String(p.id), p.patch);
+          }
+
+          setView('table');
+        },
       };
     }
-  }, [handleRef]);
+  }, [clearRowOverrides, handleRef, replaceExtraRows, replaceManualOrder, updateRow]);
 
   // Summary stats
   const stats = useMemo(() => {

@@ -25,6 +25,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 
 import { useInitiativeContext } from './InitiativeContext';
@@ -294,6 +295,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
   const [isAIProposing, setIsAIProposing] = useState(false);
   const [aiProposal, setAiProposal] = useState<AIDecisionProposal | null>(null);
   const [showAIModal, setShowAIModal] = useState(false);
+  const [aiNoSuggestionsMessage, setAiNoSuggestionsMessage] = useState<string | null>(null);
   const [selectedAddIdx, setSelectedAddIdx] = useState<Record<number, boolean>>({});
   const [selectedRemoveIds, setSelectedRemoveIds] = useState<Record<string, boolean>>({});
   const [applySuggestedOrder, setApplySuggestedOrder] = useState(false);
@@ -302,6 +304,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
   const createTitleInputRef = useRef<HTMLInputElement | null>(null);
   const addTriggered = useRef(false);
   const initiativeId = initiative?.id;
+  const aiNoSuggestionsTimerRef = useRef<number | null>(null);
 
   // Sort: gate decisions + pending first, then by due date (unless AI order override is applied)
   const sortedDecisions = useMemo(() => {
@@ -553,8 +556,10 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
   const proposeOneDecisionWithAI = useCallback(async () => {
     if (readonly) return;
     setIsAIProposing(true);
+    setAiNoSuggestionsMessage(null);
     try {
-      const targetLanguageName = 'English';
+      const aiLanguage = isPolish ? 'pl' : 'en';
+      const targetLanguageName = isPolish ? 'Polish' : 'English';
       const existingCompact = decisions
         .map((d) => ({
           id: String(d.id),
@@ -619,7 +624,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
         ),
       ].join('\n');
 
-      const aiRes = await Api.post('/ai/refine-text', {
+      const aiRes = await Api.post('/ai/refine-text?timeoutMs=20000', {
         text: contextText,
         mode: 'generate',
         systemInstruction,
@@ -630,7 +635,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
           priority: initiative?.priority || '',
           type: 'initiative',
         },
-        language: 'en',
+        language: aiLanguage,
       });
 
       const parsed = parseAIJson(String(aiRes?.text || '')) as any;
@@ -674,8 +679,10 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
   const proposeDecisionsWithAI = useCallback(async () => {
     if (readonly) return;
     setIsAIProposing(true);
+    setAiNoSuggestionsMessage(null);
     try {
-      const targetLanguageName = 'English';
+      const aiLanguage = isPolish ? 'pl' : 'en';
+      const targetLanguageName = isPolish ? 'Polish' : 'English';
       const existingIds = new Set(decisions.map((d) => String(d.id)));
       const existingNormTitles = new Set(
         decisions.map((d) => normalizeDecisionTitleForDedupe(String(d.title || ''))).filter(Boolean)
@@ -760,7 +767,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
         ),
       ].join('\n');
 
-      const aiRes = await Api.post('/ai/refine-text', {
+      const aiRes = await Api.post('/ai/refine-text?timeoutMs=20000', {
         text: contextText,
         mode: 'generate',
         systemInstruction,
@@ -771,7 +778,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
           priority: initiative?.priority || '',
           type: 'initiative',
         },
-        language: 'en',
+        language: aiLanguage,
       });
 
       const parsed = parseAIJson(String(aiRes?.text || '')) as any;
@@ -841,7 +848,17 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
       const hasAny =
         proposal.add.length > 0 || proposal.remove.length > 0 || !!proposal.reorder?.order?.length;
       if (!hasAny) {
-        toast.success(isPolish ? 'Brak sugestii zmian' : 'No suggestions');
+        const msg = isPolish
+          ? 'AI nie znalazło sugestii zmian — log decyzji wygląda OK.'
+          : 'AI found no change suggestions — the decisions log looks good.';
+        setAiNoSuggestionsMessage(msg);
+        if (aiNoSuggestionsTimerRef.current) {
+          window.clearTimeout(aiNoSuggestionsTimerRef.current);
+        }
+        aiNoSuggestionsTimerRef.current = window.setTimeout(() => {
+          setAiNoSuggestionsMessage(null);
+          aiNoSuggestionsTimerRef.current = null;
+        }, 7000);
         return;
       }
 
@@ -850,7 +867,8 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
         Object.fromEntries(proposal.add.map((_, idx) => [idx, true])) as Record<number, boolean>
       );
       setSelectedRemoveIds(
-        Object.fromEntries(proposal.remove.map((r) => [r.decisionId, true])) as Record<
+        // Destructive changes are opt-in: default unchecked.
+        Object.fromEntries(proposal.remove.map((r) => [r.decisionId, false])) as Record<
           string,
           boolean
         >
@@ -871,6 +889,16 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
     }
   }, [decisions, initiative, isPolish, normalizeDecisionType, readonly, tasks, raidItems]);
 
+  const selectedAddCount = useMemo(() => {
+    if (!aiProposal) return 0;
+    return aiProposal.add.reduce((sum, _d, idx) => sum + (selectedAddIdx[idx] ? 1 : 0), 0);
+  }, [aiProposal, selectedAddIdx]);
+
+  const selectedRemoveCount = useMemo(() => {
+    if (!aiProposal) return 0;
+    return aiProposal.remove.reduce((sum, r) => sum + (selectedRemoveIds[r.decisionId] ? 1 : 0), 0);
+  }, [aiProposal, selectedRemoveIds]);
+
   const applyAIProposal = useCallback(async () => {
     if (!aiProposal) return;
     if (readonly) return;
@@ -888,6 +916,16 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
       const removeIds = aiProposal.remove
         .filter((r) => !!selectedRemoveIds[r.decisionId])
         .map((r) => r.decisionId);
+
+      if (removeIds.length > 0) {
+        const ok = window.confirm(
+          isPolish
+            ? `Usunąć ${removeIds.length} decyzję/decyzje? To działanie jest nieodwracalne.`
+            : `Delete ${removeIds.length} decision(s)? This action cannot be undone.`
+        );
+        if (!ok) return;
+      }
+
       for (const id of removeIds) {
         await handleRemove(id);
       }
@@ -952,6 +990,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
     const run = async () => {
       try {
         if (readonly) return;
+        setAiNoSuggestionsMessage(null);
         const mode = decisionsAiRequest.mode;
         if (mode === 'addOne') {
           await proposeOneDecisionWithAI();
@@ -967,6 +1006,12 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [decisionsAiRequest?.nonce]);
 
+  useEffect(() => {
+    return () => {
+      if (aiNoSuggestionsTimerRef.current) window.clearTimeout(aiNoSuggestionsTimerRef.current);
+    };
+  }, []);
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       {/* Header */}
@@ -978,6 +1023,12 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
           {decisions.length > 0 && (
             <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
               {decisions.length}
+            </span>
+          )}
+          {isAIProposing && (
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-navy-800/50 px-2 py-0.5 rounded-full">
+              <Loader2 size={12} className="animate-spin" />
+              {isPolish ? 'AI pracuje...' : 'AI working...'}
             </span>
           )}
         </div>
@@ -992,10 +1043,28 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
         )}
       </div>
 
+      {aiNoSuggestionsMessage && !showAIModal && (
+        <Callout
+          variant="purple"
+          compact
+          title={isPolish ? 'AI' : 'AI'}
+          action={
+            readonly
+              ? undefined
+              : {
+                  label: isPolish ? 'AI: dodaj decyzję' : 'AI: add decision',
+                  onClick: () => void proposeOneDecisionWithAI(),
+                }
+          }
+        >
+          {aiNoSuggestionsMessage}
+        </Callout>
+      )}
+
       {/* AI proposal modal */}
       {showAIModal && aiProposal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="w-full max-w-3xl rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
+          <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
             <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
               <div>
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
@@ -1019,9 +1088,80 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
             </div>
 
             <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
-              {/* Add proposals */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
+              {/* To remove (top) */}
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Do wywalenia' : 'To remove'} ({aiProposal.remove.length})
+                  </span>
+                  {aiProposal.remove.length > 0 && (
+                    <button
+                      onClick={() =>
+                        setSelectedRemoveIds(
+                          Object.fromEntries(
+                            aiProposal.remove.map((r) => [r.decisionId, true])
+                          ) as Record<string, boolean>
+                        )
+                      }
+                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    >
+                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                    </button>
+                  )}
+                </div>
+
+                {aiProposal.remove.length === 0 ? (
+                  <EmptyStateInline
+                    icon={Trash2}
+                    dashed={false}
+                    className="p-5"
+                    message={
+                      isPolish ? 'AI nie zasugerowało usunięć.' : 'No removal suggestions from AI.'
+                    }
+                    hint={
+                      isPolish
+                        ? 'Jeśli log decyzji jest OK, AI może zaproponować tylko dodania lub kolejność.'
+                        : 'If the decisions log is already good, AI may propose only additions or ordering.'
+                    }
+                  />
+                ) : (
+                  <div className="space-y-1.5">
+                    {aiProposal.remove.map((r) => {
+                      const existing = decisions.find((d) => String(d.id) === String(r.decisionId));
+                      return (
+                        <label
+                          key={r.decisionId}
+                          className="flex items-start gap-2 p-2 rounded-xl bg-amber-50/40 dark:bg-amber-500/5 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!selectedRemoveIds[r.decisionId]}
+                            onChange={(e) =>
+                              setSelectedRemoveIds((prev) => ({
+                                ...prev,
+                                [r.decisionId]: e.target.checked,
+                              }))
+                            }
+                            className="mt-1"
+                          />
+                          <div className="min-w-0">
+                            <span className="text-sm font-medium text-slate-800 dark:text-white">
+                              {existing?.title || r.decisionId}
+                            </span>
+                            <p className="text-xs text-amber-800/90 dark:text-amber-200 mt-0.5">
+                              {r.reason}
+                            </p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* To add */}
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                     {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.add.length})
                   </span>
@@ -1041,14 +1181,27 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                     </button>
                   )}
                 </div>
-                {aiProposal.add.length > 0 ? (
+
+                {aiProposal.add.length === 0 ? (
+                  <EmptyStateInline
+                    icon={Plus}
+                    dashed={false}
+                    className="p-5"
+                    message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
+                    hint={
+                      isPolish
+                        ? 'AI może zwrócić tylko usunięcia lub kolejność.'
+                        : 'AI may return only removals or ordering.'
+                    }
+                  />
+                ) : (
                   <div className="space-y-1.5">
                     {aiProposal.add.map((d, idx) => {
                       const typeLabel = DECISION_TYPE_LABELS[d.type];
                       return (
                         <label
                           key={idx}
-                          className="flex items-start gap-2 p-2 rounded-xl border border-slate-200/60 dark:border-navy-700/50 bg-slate-50/40 dark:bg-navy-800/20 hover:bg-slate-50/70 dark:hover:bg-navy-800/30 transition-colors"
+                          className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
                         >
                           <input
                             type="checkbox"
@@ -1077,88 +1230,89 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                       );
                     })}
                   </div>
-                ) : (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
-                  </p>
                 )}
               </div>
 
-              {/* Suggested ordering */}
-              {aiProposal.reorder?.order?.length ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                      {isPolish ? 'Sugerowana kolejność' : 'Suggested order'} (
-                      {aiProposal.reorder.order.length})
-                    </span>
-                    <label className="inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 select-none">
-                      <input
-                        type="checkbox"
-                        checked={applySuggestedOrder}
-                        onChange={(e) => setApplySuggestedOrder(e.target.checked)}
-                      />
-                      {isPolish ? 'Zastosuj kolejność' : 'Apply order'}
-                    </label>
-                  </div>
-                  {aiProposal.reorder.note ? (
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {aiProposal.reorder.note}
-                    </p>
-                  ) : null}
-                  <ol className="space-y-1.5 list-decimal pl-5">
-                    {aiProposal.reorder.order.map((id) => {
-                      const existing = decisions.find((d) => String(d.id) === String(id));
-                      return (
-                        <li key={id} className="text-xs text-slate-700 dark:text-slate-200">
-                          {existing?.title || id}
-                        </li>
-                      );
-                    })}
-                  </ol>
-                </div>
-              ) : null}
-
-              {/* Remove suggestions */}
-              {aiProposal.remove.length > 0 && (
-                <div className="space-y-2">
+              {/* Suggested order */}
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Sugestie usunięcia' : 'Suggested removals'} (
-                    {aiProposal.remove.length})
+                    {isPolish ? 'Proponowana kolejność' : 'Suggested order'} (
+                    {aiProposal.reorder?.order?.length || 0})
                   </span>
-                  <div className="space-y-1.5">
-                    {aiProposal.remove.map((r) => {
-                      const existing = decisions.find((d) => String(d.id) === String(r.decisionId));
-                      return (
-                        <label
-                          key={r.decisionId}
-                          className="flex items-start gap-2 p-2 rounded-xl border border-amber-200/60 dark:border-amber-500/20 bg-amber-50/40 dark:bg-amber-500/5 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 transition-colors"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={!!selectedRemoveIds[r.decisionId]}
-                            onChange={(e) =>
-                              setSelectedRemoveIds((prev) => ({
-                                ...prev,
-                                [r.decisionId]: e.target.checked,
-                              }))
-                            }
-                            className="mt-1"
-                          />
-                          <div className="min-w-0">
-                            <span className="text-sm font-medium text-slate-800 dark:text-white">
-                              {existing?.title || r.decisionId}
-                            </span>
-                            <p className="text-xs text-amber-800/90 dark:text-amber-200 mt-0.5">
-                              {r.reason}
-                            </p>
-                          </div>
-                        </label>
-                      );
-                    })}
-                  </div>
+                  <label className="inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 select-none">
+                    <input
+                      type="checkbox"
+                      checked={applySuggestedOrder}
+                      onChange={(e) => setApplySuggestedOrder(e.target.checked)}
+                      disabled={!aiProposal.reorder?.order?.length}
+                    />
+                    {isPolish ? 'Zastosuj kolejność' : 'Apply order'}
+                  </label>
                 </div>
-              )}
+
+                {!aiProposal.reorder?.order?.length ? (
+                  <EmptyStateInline
+                    icon={Sparkles}
+                    dashed={false}
+                    className="p-5"
+                    message={isPolish ? 'Brak sugestii kolejności.' : 'No ordering suggestion.'}
+                    hint={
+                      isPolish
+                        ? 'AI może zwrócić tylko dodania/usunięcia bez re-order.'
+                        : 'AI may return only additions/removals without re-ordering.'
+                    }
+                  />
+                ) : (
+                  <>
+                    {aiProposal.reorder.note ? (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {aiProposal.reorder.note}
+                      </p>
+                    ) : null}
+                    <ol className="space-y-1.5 list-decimal pl-5">
+                      {aiProposal.reorder.order.map((id) => {
+                        const existing = decisions.find((d) => String(d.id) === String(id));
+                        return (
+                          <li key={id} className="text-xs text-slate-700 dark:text-slate-200">
+                            {existing?.title || id}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </>
+                )}
+              </div>
+
+              {/* Plan (bottom) */}
+              <Callout
+                variant="purple"
+                title={isPolish ? 'Plan' : 'Plan'}
+                compact
+                className="rounded-xl"
+              >
+                <ul className="list-disc pl-4 space-y-1">
+                  <li>
+                    {isPolish
+                      ? `Usuń zaznaczone decyzje: ${selectedRemoveCount}.`
+                      : `Remove selected decisions: ${selectedRemoveCount}.`}
+                  </li>
+                  <li>
+                    {isPolish
+                      ? `Dodaj zaznaczone decyzje: ${selectedAddCount} (status: Pending, source: AI).`
+                      : `Add selected decisions: ${selectedAddCount} (status: Pending, source: AI).`}
+                  </li>
+                  <li>
+                    {isPolish
+                      ? applySuggestedOrder && aiProposal.reorder?.order?.length
+                        ? 'Zastosuj proponowaną kolejność dla czytelności.'
+                        : 'Opcjonalnie: zastosuj proponowaną kolejność.'
+                      : applySuggestedOrder && aiProposal.reorder?.order?.length
+                        ? 'Apply the suggested ordering to make the list read better.'
+                        : 'Optional: apply the suggested ordering.'}
+                  </li>
+                </ul>
+              </Callout>
             </div>
 
             <div className="px-5 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-end gap-2">
