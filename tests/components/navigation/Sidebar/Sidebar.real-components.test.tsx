@@ -120,7 +120,7 @@ vi.mock('../../../../src/components/navigation/Sidebar/menuConfig', () => ({
   getOrganizationMenuItem: () => ({
     id: 'ORGANIZATION',
     label: 'Organization',
-    viewId: AppView.CONTEXT_BUILDER_PROFILE,
+    viewId: AppView.ORGANIZATION_PROFILE,
   }),
   getAdminMenuItem: () => ({ id: 'ADMIN', label: 'Admin', viewId: AppView.ADMIN_DASHBOARD }),
   getSuperAdminMenuItem: () => ({
@@ -163,8 +163,8 @@ describe('Sidebar (L2, real subcomponents)', () => {
     // Footer children are real NavItem buttons (label rendered in expanded mode)
     fireEvent.click(screen.getByRole('button', { name: /Organization/i }));
     expect(conversationState.setDisplayMode).toHaveBeenCalledWith('split');
-    expect(appState.setCurrentViewState).toHaveBeenCalledWith(AppView.CONTEXT_BUILDER_PROFILE);
-    expect(navigateMock).toHaveBeenCalledWith(`/route/${String(AppView.CONTEXT_BUILDER_PROFILE)}`);
+    expect(appState.setCurrentViewState).toHaveBeenCalledWith(AppView.ORGANIZATION_PROFILE);
+    expect(navigateMock).toHaveBeenCalledWith(`/route/${String(AppView.ORGANIZATION_PROFILE)}`);
 
     fireEvent.click(screen.getByRole('button', { name: /Partner Portal/i }));
     expect(appState.setCurrentViewState).toHaveBeenCalledWith(AppView.PARTNER_LANDING);

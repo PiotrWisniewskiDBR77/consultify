@@ -102,6 +102,112 @@ describe('AuthMiddleware', () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
+    it('should treat non-Bearer authorization header as token', async () => {
+      mockReq.headers!['authorization'] = 'raw-token';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-raw' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).toHaveBeenCalledWith('raw-token', 'test-secret', expect.any(Function));
+      expect(mockReq.user?.id).toBe('user-raw');
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should extract token from body.token when header/cookie missing', async () => {
+      mockReq.body = { token: 'body-token' } as any;
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-body' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).toHaveBeenCalledWith(
+        'body-token',
+        'test-secret',
+        expect.any(Function)
+      );
+      expect(mockReq.user?.id).toBe('user-body');
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should extract token from query.token when header/cookie/body missing', async () => {
+      mockReq.query = { token: 'query-token' } as any;
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-query' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).toHaveBeenCalledWith(
+        'query-token',
+        'test-secret',
+        expect.any(Function)
+      );
+      expect(mockReq.user?.id).toBe('user-query');
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should prefer header token over cookie/body/query', async () => {
+      mockReq.headers!['authorization'] = 'Bearer header-token';
+      mockReq.cookies!['access_token'] = 'cookie-token';
+      mockReq.body = { token: 'body-token' } as any;
+      mockReq.query = { token: 'query-token' } as any;
+
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-header' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).toHaveBeenCalledWith(
+        'header-token',
+        'test-secret',
+        expect.any(Function)
+      );
+      expect(mockReq.user?.id).toBe('user-header');
+    });
+
+    it('should prefer access_token cookie over token cookie', async () => {
+      mockReq.cookies!['access_token'] = 'access-cookie-token';
+      mockReq.cookies!['token'] = 'fallback-cookie-token';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-cookie' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).toHaveBeenCalledWith(
+        'access-cookie-token',
+        'test-secret',
+        expect.any(Function)
+      );
+      expect(mockReq.user?.id).toBe('user-cookie');
+    });
+
+    it('should fall back to token cookie when access_token is missing', async () => {
+      mockReq.cookies!['token'] = 'fallback-cookie-token';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-token-cookie' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).toHaveBeenCalledWith(
+        'fallback-cookie-token',
+        'test-secret',
+        expect.any(Function)
+      );
+      expect(mockReq.user?.id).toBe('user-token-cookie');
+    });
+
     it('should extract token from cookie if header is missing', async () => {
       mockReq.cookies!['access_token'] = 'cookie-token';
       mockJwt.verify.mockImplementation((token, secret, callback) => {
@@ -117,6 +223,66 @@ describe('AuthMiddleware', () => {
         expect.any(Function)
       );
       expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should not overwrite existing req.user in test bypass mode', async () => {
+      process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
+      mockReq.user = { id: 'already', role: 'administrator' } as any;
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.user?.id).toBe('already');
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should map role "guest" and normalize permission role to VIEWER', async () => {
+      mockReq.headers!['authorization'] = 'Bearer guest-token';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'guest-1', role: 'guest' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.user?.role).toBe('guest');
+      mockReq.can?.('some_capability');
+      expect(mockPermissionService.can).toHaveBeenCalledWith(
+        expect.objectContaining({ role: 'VIEWER' }),
+        'some_capability',
+        expect.any(Object)
+      );
+    });
+
+    it('should skip revocation DB check when decoded token has no jti', async () => {
+      mockReq.headers!['authorization'] = 'Bearer no-jti-token';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-no-jti' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockDbGet).not.toHaveBeenCalled();
+      expect(mockReq.user?.id).toBe('user-no-jti');
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should handle missing JWT_SECRET config by failing unauthorized', async () => {
+      mockReq.headers!['authorization'] = 'Bearer cfg-missing';
+      setDependencies({
+        jwt: mockJwt as any,
+        config: {},
+        PermissionService: mockPermissionService,
+        dbGet: mockDbGet,
+      });
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(new Error('bad secret'), null);
+      });
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
     });
 
     it('should return 401 if token is expired', async () => {

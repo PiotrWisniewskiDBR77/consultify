@@ -27,6 +27,7 @@ export default defineConfig({
       'tests/unit/backend/security/inputSanitizationMiddleware.test.ts',
       'tests/unit/backend/middleware/auth.middleware.test.ts',
       'tests/unit/backend/middleware/permissionMiddleware.test.ts',
+      'tests/unit/server/utils/piiRedactor.test.ts',
     ],
     exclude: ['node_modules/**', 'tests/e2e/**'],
     coverage: {
@@ -38,6 +39,8 @@ export default defineConfig({
         'server/src/middleware/permission.middleware.ts',
         'server/src/middleware/inputSanitization.middleware.ts',
         'server/src/services/accessPolicyService.ts',
+        'server/src/utils/cookieAuth.ts',
+        'server/src/utils/piiRedactor.ts',
       ],
     },
   },

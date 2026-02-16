@@ -19,6 +19,12 @@ let dbAvailable = false;
 
 async function tryGetDb(): Promise<boolean> {
   try {
+    // This test performs real SQLite introspection.
+    // The global test setup defaults MOCK_DB=true for unit tests; override here.
+    process.env.MOCK_DB = 'false';
+    process.env.DB_TYPE = process.env.DB_TYPE || 'sqlite';
+    process.env.SQLITE_PATH = process.env.SQLITE_PATH || ':memory:';
+
     const { getDatabaseAsync } = await import('../../../server/src/database/Database');
     db = await getDatabaseAsync();
     return !!db;

@@ -14,7 +14,7 @@ vi.hoisted(() => {
   process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
   const workerId = process.env.VITEST_WORKER_ID || '0';
   const runId = process.env.VITEST_RUN_ID || Date.now().toString(36);
-  process.env.SQLITE_PATH = `./test-integration-security-${workerId}-${runId}.db`;
+  process.env.SQLITE_PATH = `./test-l3-${workerId}-${runId}.db`;
 });
 
 describe('Security Roles + Policies Integration (L3)', () => {

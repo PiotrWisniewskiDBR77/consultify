@@ -18,6 +18,7 @@ export default defineConfig({
     include: [
       'tests/components/auth/**/*.{test,spec}.{ts,tsx}',
       'tests/components/navigation/**/*.{test,spec}.{ts,tsx}',
+      'tests/components/organization/**/*.{test,spec}.{ts,tsx}',
     ],
     exclude: ['node_modules/**', 'tests/e2e/**'],
     coverage: {
@@ -33,6 +34,8 @@ export default defineConfig({
         'src/components/navigation/Sidebar/SidebarFooter.tsx',
         'src/components/navigation/Sidebar/SidebarHeader.tsx',
         'src/components/navigation/Sidebar/FloatingSubmenu.tsx',
+        'src/views/OrganizationView.tsx',
+        'src/components/Organization/OrganizationSidebar.tsx',
       ],
       thresholds: {
         global: {
@@ -41,7 +44,6 @@ export default defineConfig({
           functions: 95,
           lines: 95,
         },
-        // @ts-expect-error: perFile thresholds is valid in vitest but types lag behind
         perFile: {
           'views/auth/LoginView.tsx': { statements: 95, branches: 80, functions: 95, lines: 95 },
           'src/components/auth/MFASetup.tsx': {
@@ -87,6 +89,18 @@ export default defineConfig({
             lines: 95,
           },
           'src/components/navigation/Sidebar/FloatingSubmenu.tsx': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
+          'src/views/OrganizationView.tsx': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
+          'src/components/Organization/OrganizationSidebar.tsx': {
             statements: 95,
             branches: 80,
             functions: 95,

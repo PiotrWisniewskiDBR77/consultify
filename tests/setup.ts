@@ -6,6 +6,15 @@ import { setupAutoCleanup } from './helpers/testCleanup';
 // Setup automatic cleanup for all tests
 setupAutoCleanup();
 
+// --------------------------------------------------------
+// Billing/Stripe safety defaults for tests
+// --------------------------------------------------------
+// Some server-side config paths require Stripe secrets in production-like modes.
+// Ensure tests never fail due to missing Stripe env vars.
+process.env.MOCK_BILLING = process.env.MOCK_BILLING || 'true';
+process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_dummy';
+process.env.STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_dummy';
+
 // Provide jest compatibility for legacy tests
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis as any).jest = vi;
@@ -374,7 +383,6 @@ const mockRouter = (req: any, res: any, next: any) => next();
 vi.mock('../server/src/routes/aiPlaybooks.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/content.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/premiumReports.routes.js', () => ({ default: mockRouter }));
-vi.mock('../server/src/routes/studio.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/managementReports.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/voice.routes.js', () => ({ default: mockRouter }));
 // vi.mock('../server/src/routes/ai.routes.js', () => ({ default: mockRouter }));

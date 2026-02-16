@@ -151,7 +151,7 @@ vi.mock('../../../../src/components/navigation/Sidebar/menuConfig', () => ({
   getOrganizationMenuItem: () => ({
     id: 'ORGANIZATION',
     label: 'Organization',
-    viewId: AppView.CONTEXT_BUILDER_PROFILE,
+    viewId: AppView.ORGANIZATION_PROFILE,
   }),
   getAdminMenuItem: () => ({ id: 'ADMIN', label: 'Admin', viewId: AppView.ADMIN_DASHBOARD }),
   getSuperAdminMenuItem: () => ({
@@ -219,8 +219,8 @@ describe('Sidebar (L2)', () => {
     fireEvent.click(screen.getByTestId('navitem-ORGANIZATION'));
 
     expect(conversationState.setDisplayMode).toHaveBeenCalledWith('split');
-    expect(appState.setCurrentViewState).toHaveBeenCalledWith(AppView.CONTEXT_BUILDER_PROFILE);
-    expect(navigateMock).toHaveBeenCalledWith(`/route/${String(AppView.CONTEXT_BUILDER_PROFILE)}`);
+    expect(appState.setCurrentViewState).toHaveBeenCalledWith(AppView.ORGANIZATION_PROFILE);
+    expect(navigateMock).toHaveBeenCalledWith(`/route/${String(AppView.ORGANIZATION_PROFILE)}`);
   });
 
   it('AI_CHAT click navigates to full chat when not already on chat', () => {

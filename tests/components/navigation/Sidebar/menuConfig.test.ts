@@ -16,7 +16,7 @@ describe('Sidebar menuConfig (L2)', () => {
   it('builds Organization menu item with correct view and label', () => {
     const item = getOrganizationMenuItem(t);
     expect(item.id).toBe('ORGANIZATION');
-    expect(item.viewId).toBe(AppView.CONTEXT_BUILDER_PROFILE);
+    expect(item.viewId).toBe(AppView.ORGANIZATION_PROFILE);
     expect(item.label).toBe('sidebar.organization');
   });
 

@@ -14,7 +14,13 @@ export default defineConfig({
   test: {
     ...base.test,
     environment: 'node',
-    include: ['tests/integration/routes/security-roles-policies.test.js'],
+    include: [
+      'tests/integration/routes/security-roles-policies.test.js',
+      'tests/integration/routes/notification-settings.l3.test.ts',
+      'tests/integration/routes/login-history.l3.test.ts',
+      'tests/integration/routes/health.l3.test.ts',
+      'tests/integration/routes/health-faults.l3.test.ts',
+    ],
     exclude: ['node_modules/**', 'tests/e2e/**'],
     env: {
       ...(base.test?.env || {}),
@@ -27,6 +33,10 @@ export default defineConfig({
       include: [
         'server/src/routes/securityPolicies.routes.ts',
         'server/src/routes/security/roles.routes.ts',
+        'server/src/routes/notifications/notificationSettings.routes.ts',
+        'server/src/routes/loginHistory.routes.ts',
+        'server/src/routes/healthRoutes.ts',
+        'server/src/routes/health.routes.ts',
       ],
       thresholds: {
         global: {
@@ -35,7 +45,6 @@ export default defineConfig({
           functions: 95,
           lines: 95,
         },
-        // @ts-expect-error: perFile thresholds is valid in vitest but types lag behind
         perFile: {
           'server/src/routes/securityPolicies.routes.ts': {
             statements: 95,
@@ -44,6 +53,30 @@ export default defineConfig({
             lines: 95,
           },
           'server/src/routes/security/roles.routes.ts': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
+          'server/src/routes/notifications/notificationSettings.routes.ts': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
+          'server/src/routes/loginHistory.routes.ts': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
+          'server/src/routes/healthRoutes.ts': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
+          'server/src/routes/health.routes.ts': {
             statements: 95,
             branches: 80,
             functions: 95,
