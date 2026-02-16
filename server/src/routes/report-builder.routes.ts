@@ -2544,7 +2544,9 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
       const allBlockTypes = await ReportBuilderService.listBlockTypes(organizationId).catch(
         () => []
       );
-      const btMap = new Map(allBlockTypes.map((bt: any) => [bt.id, bt]));
+      const btMap = new Map(
+        allBlockTypes.map((bt) => [bt.id, bt] as [string, typeof bt])
+      );
 
       const v2Sections = (reportData.sections || []).map((s: any) => {
         const btId = s.blockTypeId || s.block_type_id;
@@ -2565,7 +2567,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
           repeatKey: s.repeatKey || s.repeat_key,
           repeatName: s.repeatName || s.repeat_name,
           repeatData: s.repeatData || s.repeat_data,
-          slideIntent: bt?.slideIntent || undefined,
+          slideIntent: bt?.slideIntent ?? undefined,
         };
       });
 

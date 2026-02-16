@@ -348,7 +348,9 @@ async function executeWebSearch(args: any, ctx: ToolExecutionContext): Promise<s
 async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<string> {
   try {
     const ragMod = await import('../ragService.js');
-    const ragService = ragMod.default || ragMod;
+    const ragService = (ragMod.default || ragMod) as {
+      hybridSearch?: (query: string, opts?: { organizationId?: string; limit?: number }) => Promise<Array<{ content?: string; metadata?: { documentTitle?: string; documentId?: string }; score?: number }>>;
+    };
     if (!ragService?.hybridSearch) {
       return JSON.stringify({
         source: 'knowledge_base',
@@ -524,7 +526,9 @@ async function executeGetInitiativeStatus(args: any, ctx: ToolExecutionContext):
 async function executeCompareBenchmarks(args: any, ctx: ToolExecutionContext): Promise<string> {
   try {
     const benchmarkMod = await import('./industryBenchmarkService.js');
-    const benchmarkService = benchmarkMod.default || benchmarkMod;
+    const benchmarkService = (benchmarkMod.default || benchmarkMod) as {
+      getBenchmarks?: (industry: string, metricType?: string) => unknown[];
+    };
     if (benchmarkService?.getBenchmarks) {
       const benchmarks = await benchmarkService.getBenchmarks(args.industry, args.metric_type);
       return JSON.stringify({ source: 'benchmarks', industry: args.industry, data: benchmarks });

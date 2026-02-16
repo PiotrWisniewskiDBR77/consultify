@@ -262,7 +262,7 @@ class InterviewInsightService {
     const id = `ii_${uuidv4()}`;
 
     const storedFilters: Record<string, any> | undefined = (() => {
-      const base = input.filters ? { ...input.filters } : {};
+      const base: Record<string, any> = input.filters ? { ...input.filters } : {};
       const customPrompt = (input.customPrompt || '').trim();
       if (customPrompt) base.customPrompt = customPrompt;
       return Object.keys(base).length > 0 ? base : undefined;
