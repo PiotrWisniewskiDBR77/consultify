@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -86,12 +87,20 @@ export interface SendNotificationInput {
 
 class NotificationService {
   private db: IDatabase | null = null;
+  private notificationsCols: Set<string> | null = null;
 
   private async getDb(): Promise<IDatabase> {
     if (!this.db) {
       this.db = await getDatabase();
     }
     return this.db;
+  }
+
+  private async getNotificationsCols(): Promise<Set<string>> {
+    if (!this.notificationsCols) {
+      this.notificationsCols = await getTableColumns('notifications');
+    }
+    return this.notificationsCols;
   }
 
   /**
@@ -233,41 +242,63 @@ class NotificationService {
     // Merge data and metadata with enrichment (enrichment has lowest priority)
     const mergedData = { ...enrichedData, ...(input.metadata || {}), ...(input.data || {}) };
 
-    // Save notification with all enriched fields
-    await db.run(
-      `INSERT INTO notifications (
-                id, user_id, organization_id, type, title, body, message, icon,
-                severity, priority, entity_type, entity_id,
-                related_object_type, related_object_id, project_id,
-                action_url, actor_id, actor_name,
-                is_actionable, data, metadata, channels_sent, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        input.userId,
-        input.organizationId,
-        input.type,
-        input.title,
-        input.body,
-        input.message || input.body,
-        typeConfig?.icon || null,
-        severity,
-        priority,
-        input.entityType || input.relatedObjectType || null,
-        input.entityId || input.relatedObjectId || null,
-        input.relatedObjectType || input.entityType || null,
-        input.relatedObjectId || input.entityId || null,
-        input.projectId || null,
-        input.actionUrl || null,
-        input.actorId || null,
-        input.actorName || null,
-        input.isActionable ? 1 : 0,
-        JSON.stringify(mergedData),
-        JSON.stringify(input.metadata || {}),
-        JSON.stringify(channels),
-        now,
-      ]
-    );
+    const cols = await this.getNotificationsCols();
+    const isLegacyMinimalSchema =
+      !cols.has('organization_id') && cols.has('read') && cols.has('message') && !cols.has('body');
+
+    if (isLegacyMinimalSchema) {
+      // Legacy minimal schema (Postgres):
+      // notifications(id, user_id, type, title, message, data, read, created_at)
+      await db.run(
+        `INSERT INTO notifications (id, user_id, type, title, message, data, read, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, 0, ?)`,
+        [
+          id,
+          input.userId,
+          input.type,
+          input.title,
+          input.message || input.body || input.title,
+          JSON.stringify(mergedData),
+          now,
+        ]
+      );
+    } else {
+      // New schema
+      await db.run(
+        `INSERT INTO notifications (
+                  id, user_id, organization_id, type, title, body, message, icon,
+                  severity, priority, entity_type, entity_id,
+                  related_object_type, related_object_id, project_id,
+                  action_url, actor_id, actor_name,
+                  is_actionable, data, metadata, channels_sent, created_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          input.userId,
+          input.organizationId,
+          input.type,
+          input.title,
+          input.body,
+          input.message || input.body,
+          typeConfig?.icon || null,
+          severity,
+          priority,
+          input.entityType || input.relatedObjectType || null,
+          input.entityId || input.relatedObjectId || null,
+          input.relatedObjectType || input.entityType || null,
+          input.relatedObjectId || input.entityId || null,
+          input.projectId || null,
+          input.actionUrl || null,
+          input.actorId || null,
+          input.actorName || null,
+          input.isActionable ? 1 : 0,
+          JSON.stringify(mergedData),
+          JSON.stringify(input.metadata || {}),
+          JSON.stringify(channels),
+          now,
+        ]
+      );
+    }
 
     // Dispatch to channels
     await this.dispatchToChannels(id, input, channels, prefs);
@@ -293,15 +324,23 @@ class NotificationService {
     }
   ): Promise<Notification[]> {
     const db = await this.getDb();
+    const cols = await this.getNotificationsCols();
 
-    let query = `SELECT * FROM notifications WHERE user_id = ?`;
+    const needsOrgJoin = !cols.has('organization_id');
+    let query = needsOrgJoin
+      ? `SELECT n.*, u.organization_id as organization_id FROM notifications n LEFT JOIN users u ON n.user_id = u.id WHERE n.user_id = ?`
+      : `SELECT * FROM notifications WHERE user_id = ?`;
     const params: (string | number)[] = [userId];
 
-    // Exclude dismissed notifications
-    query += ` AND (is_dismissed IS NULL OR is_dismissed = 0)`;
+    // Exclude dismissed notifications (only if supported)
+    if (cols.has('is_dismissed')) {
+      query += ` AND (is_dismissed IS NULL OR is_dismissed = 0)`;
+    }
 
     if (options?.unreadOnly) {
-      query += ` AND (read = 0 OR is_read = 0)`;
+      if (cols.has('read') && cols.has('is_read')) query += ` AND (read = 0 OR is_read = 0)`;
+      else if (cols.has('read')) query += ` AND read = 0`;
+      else if (cols.has('is_read')) query += ` AND is_read = 0`;
     }
 
     if (options?.type) {
@@ -310,17 +349,23 @@ class NotificationService {
     }
 
     if (options?.severity) {
-      query += ` AND severity = ?`;
-      params.push(options.severity);
+      if (cols.has('severity')) {
+        query += ` AND severity = ?`;
+        params.push(options.severity);
+      }
     }
 
     if (options?.projectId) {
-      query += ` AND (project_id = ? OR (entity_id = ? AND entity_type = 'project'))`;
-      params.push(options.projectId, options.projectId);
+      if (cols.has('project_id') || (cols.has('entity_id') && cols.has('entity_type'))) {
+        query += ` AND (project_id = ? OR (entity_id = ? AND entity_type = 'project'))`;
+        params.push(options.projectId, options.projectId);
+      }
     }
 
     // Exclude snoozed notifications that haven't expired
-    query += ` AND (snoozed_until IS NULL OR snoozed_until < datetime('now'))`;
+    if (cols.has('snoozed_until')) {
+      query += ` AND (snoozed_until IS NULL OR snoozed_until < datetime('now'))`;
+    }
 
     query += ` ORDER BY created_at DESC`;
 
@@ -369,6 +414,10 @@ class NotificationService {
     // Related object: prefer dedicated columns, fall back to entity columns
     const relatedObjectType = r.related_object_type || r.entity_type || null;
     const relatedObjectId = r.related_object_id || r.entity_id || null;
+    const projectName =
+      (data.projectName as string | null | undefined) ||
+      (data.project_name as string | null | undefined) ||
+      undefined;
 
     return {
       id: r.id,
@@ -387,7 +436,7 @@ class NotificationService {
       relatedObjectType: relatedObjectType,
       relatedObjectId: relatedObjectId,
       projectId: r.project_id || null,
-      projectName: (data.projectName as string) || (data.project_name as string) || null,
+      projectName,
       actionUrl: r.action_url,
       actorId: r.actor_id,
       actorName: r.actor_name,
@@ -411,9 +460,14 @@ class NotificationService {
    */
   async getUnreadCount(userId: string): Promise<number> {
     const db = await this.getDb();
+    const cols = await this.getNotificationsCols();
 
+    const dismissedFilter = cols.has('is_dismissed')
+      ? ' AND (is_dismissed IS NULL OR is_dismissed = 0)'
+      : '';
+    const readFilter = cols.has('read') ? 'read = 0' : cols.has('is_read') ? 'is_read = 0' : '1=1';
     const result = await db.get<{ count: number }>(
-      `SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND read = 0 AND (is_dismissed IS NULL OR is_dismissed = 0)`,
+      `SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND ${readFilter}${dismissedFilter}`,
       [userId]
     );
 
@@ -470,11 +524,29 @@ class NotificationService {
   async dismiss(notificationId: string, userId: string): Promise<void> {
     const db = await this.getDb();
     const now = new Date().toISOString();
+    const cols = await this.getNotificationsCols();
 
-    await db.run(
-      `UPDATE notifications SET is_dismissed = 1, dismissed_at = ? WHERE id = ? AND user_id = ?`,
-      [now, notificationId, userId]
-    );
+    if (cols.has('is_dismissed')) {
+      await db.run(
+        `UPDATE notifications SET is_dismissed = 1, dismissed_at = ? WHERE id = ? AND user_id = ?`,
+        [now, notificationId, userId]
+      );
+      return;
+    }
+
+    // Legacy minimal schema: approximate dismiss by marking as read (or delete)
+    if (cols.has('read')) {
+      await db.run(`UPDATE notifications SET read = 1 WHERE id = ? AND user_id = ?`, [
+        notificationId,
+        userId,
+      ]);
+      return;
+    }
+
+    await db.run(`DELETE FROM notifications WHERE id = ? AND user_id = ?`, [
+      notificationId,
+      userId,
+    ]);
   }
 
   /**
