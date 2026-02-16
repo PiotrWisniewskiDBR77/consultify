@@ -426,7 +426,9 @@ export const ReferralToolsSection: React.FC = () => {
                   <tr key={campaign.id} className="hover:bg-white/5">
                     <td className="px-3 py-3">
                       <div>
-                        <p className="font-medium text-slate-900 dark:text-white">{campaign.name}</p>
+                        <p className="font-medium text-slate-900 dark:text-white">
+                          {campaign.name}
+                        </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-xs">
                           {campaign.utmSource && `${campaign.utmSource}`}
                           {campaign.utmMedium && ` / ${campaign.utmMedium}`}
@@ -434,7 +436,9 @@ export const ReferralToolsSection: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="text-slate-900 dark:text-white font-medium">{campaign.clickCount}</span>
+                      <span className="text-slate-900 dark:text-white font-medium">
+                        {campaign.clickCount}
+                      </span>
                     </td>
                     <td className="px-3 py-3 text-center">
                       <span className="text-slate-900 dark:text-white">{campaign.signupCount}</span>

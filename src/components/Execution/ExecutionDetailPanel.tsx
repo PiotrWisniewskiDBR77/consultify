@@ -115,7 +115,9 @@ const TaskItem: React.FC<{
         {isDone && <CheckCircle2 size={12} className="text-white" />}
       </button>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm ${isDone ? 'text-slate-500 line-through' : 'text-slate-900 dark:text-white'}`}>
+        <p
+          className={`text-sm ${isDone ? 'text-slate-500 line-through' : 'text-slate-900 dark:text-white'}`}
+        >
           {task.title}
         </p>
         {task.dueDate && (
@@ -157,7 +159,9 @@ const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
         className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-md shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">{action.label}</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+          {action.label}
+        </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
           {action.requiresReason
             ? 'Please provide a reason for this change.'
@@ -305,7 +309,9 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white">{initiative.name}</h1>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+                {initiative.name}
+              </h1>
               <div className="flex items-center gap-3 mt-1">
                 <StatusBadge status={initiative.status} />
                 {initiative.priority && (
@@ -333,23 +339,23 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                 return (order[a.variant] ?? 1) - (order[b.variant] ?? 1);
               })
               .map((action) => (
-              <button
-                key={action.targetStatus}
-                onClick={() =>
-                  action.requiresReason ? setSelectedAction(action) : handleStatusChange(action)
-                }
-                disabled={isUpdating}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
-                  action.variant === 'danger'
-                    ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
-                    : action.variant === 'primary'
-                      ? 'bg-cyan-600 text-white hover:bg-cyan-500'
-                      : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600'
-                }`}
-              >
-                {action.label}
-              </button>
-            ))}
+                <button
+                  key={action.targetStatus}
+                  onClick={() =>
+                    action.requiresReason ? setSelectedAction(action) : handleStatusChange(action)
+                  }
+                  disabled={isUpdating}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
+                    action.variant === 'danger'
+                      ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
+                      : action.variant === 'primary'
+                        ? 'bg-cyan-600 text-white hover:bg-cyan-500'
+                        : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-navy-600'
+                  }`}
+                >
+                  {action.label}
+                </button>
+              ))}
           </div>
         </div>
       </div>
@@ -434,7 +440,9 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                         </span>
                       </div>
                       {risk.mitigation && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Mitigation: {risk.mitigation}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                          Mitigation: {risk.mitigation}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -447,7 +455,9 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
           <div className="space-y-6">
             {/* Progress */}
             <div className="bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-navy-700">
-              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">Progress</h3>
+              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">
+                Progress
+              </h3>
               <div className="flex justify-center">
                 <ProgressRing progress={progress} />
               </div>
@@ -463,7 +473,7 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                 {initiative.startDate && (
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-500">Start</span>
-                        <span className="text-sm text-slate-900 dark:text-white">
+                    <span className="text-sm text-slate-900 dark:text-white">
                       {new Date(initiative.startDate).toLocaleDateString()}
                     </span>
                   </div>
@@ -485,7 +495,9 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                 )}
                 {initiative.actualEndDate && (
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-500">{t('execution.detail.actualEnd')}</span>
+                    <span className="text-xs text-slate-500">
+                      {t('execution.detail.actualEnd')}
+                    </span>
                     <span className="text-sm text-green-400">
                       {new Date(initiative.actualEndDate).toLocaleDateString()}
                     </span>
@@ -513,7 +525,9 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                       <p className="text-sm text-slate-900 dark:text-white">
                         {initiative.ownerBusiness.firstName} {initiative.ownerBusiness.lastName}
                       </p>
-                      <p className="text-xs text-slate-500">{t('execution.detail.businessOwner')}</p>
+                      <p className="text-xs text-slate-500">
+                        {t('execution.detail.businessOwner')}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -529,7 +543,9 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                       <p className="text-sm text-slate-900 dark:text-white">
                         {initiative.ownerTechnical.firstName} {initiative.ownerTechnical.lastName}
                       </p>
-                      <p className="text-xs text-slate-500">{t('execution.detail.technicalOwner')}</p>
+                      <p className="text-xs text-slate-500">
+                        {t('execution.detail.technicalOwner')}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -549,15 +565,19 @@ export const ExecutionDetailPanel: React.FC<ExecutionDetailPanelProps> = ({
                 <div className="space-y-3">
                   {initiative.costCapex && (
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-500">{t('execution.detail.budgetCapex')}</span>
-                        <span className="text-sm text-slate-900 dark:text-white">
+                      <span className="text-xs text-slate-500">
+                        {t('execution.detail.budgetCapex')}
+                      </span>
+                      <span className="text-sm text-slate-900 dark:text-white">
                         {initiative.costCapex.toLocaleString()} PLN
                       </span>
                     </div>
                   )}
                   {initiative.expectedRoi && (
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-500">{t('execution.detail.expectedRoi')}</span>
+                      <span className="text-xs text-slate-500">
+                        {t('execution.detail.expectedRoi')}
+                      </span>
                       <span className="text-sm text-green-400">{initiative.expectedRoi}x</span>
                     </div>
                   )}

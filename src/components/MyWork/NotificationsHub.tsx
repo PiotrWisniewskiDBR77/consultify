@@ -36,8 +36,6 @@ import { useTranslation } from 'react-i18next';
 import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
 import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
 import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
-
-import { Api } from '../../services/api';
 import {
   clearMutedNotificationTypesForSession,
   getMutedNotificationTypes,
@@ -45,6 +43,8 @@ import {
   NOTIFICATION_MUTE_SESSION_CHANGED_EVENT,
   unmuteNotificationTypeForSession,
 } from '@/utils/notificationMuteSession';
+
+import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 
 export type NotificationMode = 'project' | 'personal' | 'all';
@@ -191,7 +191,9 @@ const getRelatedObjectIcon = (type: string | undefined) => {
     case 'PROJECT':
       return <FolderOpen size={12} className="text-emerald-500" />;
     default:
-      return <FileText size={12} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />;
+      return (
+        <FileText size={12} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+      );
   }
 };
 
@@ -478,7 +480,9 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
     try {
       setLoading(true);
       const data = (await Api.getNotifications(false, 50)) as any;
-      setNotifications((Array.isArray(data) ? data : []).filter((n: any) => !isNotificationTypeMuted(n.type)));
+      setNotifications(
+        (Array.isArray(data) ? data : []).filter((n: any) => !isNotificationTypeMuted(n.type))
+      );
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -695,7 +699,14 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
         ? [{ id: 'info', label: 'Information', items: info, accentColor: 'text-blue-500' }]
         : []),
       ...(other.length > 0
-        ? [{ id: 'other', label: 'Other', items: other, accentColor: 'text-slate-500 dark:text-slate-400' }]
+        ? [
+            {
+              id: 'other',
+              label: 'Other',
+              items: other,
+              accentColor: 'text-slate-500 dark:text-slate-400',
+            },
+          ]
         : []),
     ];
   }, [filteredNotifications]);
@@ -942,7 +953,10 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
           </div>
         ) : filteredNotifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-            <Bell size={40} className="text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-3" />
+            <Bell
+              size={40}
+              className="text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-3"
+            />
             <p className="text-[13px] text-slate-500 dark:text-slate-400">
               {t('myWork.noNotifications', 'No notifications')}
             </p>

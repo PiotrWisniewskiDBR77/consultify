@@ -217,7 +217,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
               flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium
               border transition-all duration-200
               ${
-                  activeInOverflow
+                activeInOverflow
                   ? 'bg-primary-500/15 border-primary-500 text-primary-600 dark:text-primary-400'
                   : 'bg-slate-50 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-500'
               }
@@ -252,7 +252,9 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
                         }
                       `}
                     >
-                      <span className="font-mono text-xs text-slate-500 dark:text-slate-400">{doc.subType}</span>
+                      <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
+                        {doc.subType}
+                      </span>
                       <span className="flex-1 truncate">{doc.name}</span>
                       <span className={`w-2 h-2 rounded-full ${statusColor}`} />
                       <button

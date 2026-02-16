@@ -65,7 +65,9 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
                       </span>
                     </div>
                   </div>
-                  <p className="text-slate-900 dark:text-white text-sm font-medium">{challenge.title}</p>
+                  <p className="text-slate-900 dark:text-white text-sm font-medium">
+                    {challenge.title}
+                  </p>
                   {challenge.description && (
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       {challenge.description}

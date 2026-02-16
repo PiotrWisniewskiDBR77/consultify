@@ -48,8 +48,12 @@ const _lastTitleAttemptAt: Record<string, number> = {};
 
 function getAppLanguageFallback(): SupportedLanguage {
   try {
-    const raw = (localStorage.getItem('i18nextLng') || 'pl').split('-')[0];
-    return (isValidLanguage(raw) ? raw : 'pl') as SupportedLanguage;
+    const nav =
+      (typeof navigator !== 'undefined' && (navigator.languages?.[0] || navigator.language)) ||
+      'pl';
+    const base = String(nav).split('-')[0].toLowerCase();
+    const mapped = base === 'ja' ? 'jp' : base;
+    return (isValidLanguage(mapped) ? mapped : 'pl') as SupportedLanguage;
   } catch {
     return 'pl';
   }

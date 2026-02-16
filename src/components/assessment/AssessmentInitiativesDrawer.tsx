@@ -2,6 +2,7 @@ import { ArrowRight, X } from 'lucide-react';
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -27,6 +28,7 @@ export const AssessmentInitiativesDrawer: React.FC<AssessmentInitiativesDrawerPr
   framework,
 }) => {
   const { setCurrentView } = useAppStore();
+  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [activeInitiativeId, setActiveInitiativeId] = useState<string | null>(null);
@@ -50,13 +52,16 @@ export const AssessmentInitiativesDrawer: React.FC<AssessmentInitiativesDrawerPr
 
   const handleEdit = (id: string) => {
     // Navigate to the full initiative document view from assessment context
-    setCurrentView(AppView.FULL_STEP2_INITIATIVES, { initiativeId: id, mode: 'doc' });
+    setCurrentView(AppView.FULL_STEP2_INITIATIVES);
+    navigate(`/initiatives?open=${encodeURIComponent(id)}&mode=doc`);
   };
 
   const handleApprove = async (id: string) => {
     try {
-      await Api.post(`/initiatives/${id}/submit-review`);
-      toast.success(isPolish ? 'Inicjatywa przesłana do przeglądu' : 'Initiative submitted for review');
+      await Api.post(`/initiatives/${id}/submit-review`, {});
+      toast.success(
+        isPolish ? 'Inicjatywa przesłana do przeglądu' : 'Initiative submitted for review'
+      );
       setRefreshKey((k) => k + 1);
       handleCloseDetails();
     } catch (e: any) {
@@ -74,7 +79,8 @@ export const AssessmentInitiativesDrawer: React.FC<AssessmentInitiativesDrawerPr
       handleCloseDetails();
     } catch (e: any) {
       toast.error(
-        e?.message || (isPolish ? 'Nie udało się przenieść do roadmapy' : 'Failed to add to roadmap')
+        e?.message ||
+          (isPolish ? 'Nie udało się przenieść do roadmapy' : 'Failed to add to roadmap')
       );
     }
   };
@@ -101,7 +107,9 @@ export const AssessmentInitiativesDrawer: React.FC<AssessmentInitiativesDrawerPr
               {isPolish ? 'Inicjatywy' : 'Initiatives'}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {isPolish ? 'Powiązane z aktualnym assessmentem' : 'Related to the current assessment'}
+              {isPolish
+                ? 'Powiązane z aktualnym assessmentem'
+                : 'Related to the current assessment'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -114,7 +122,9 @@ export const AssessmentInitiativesDrawer: React.FC<AssessmentInitiativesDrawerPr
                   ? 'bg-purple-600 text-white hover:bg-purple-500'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 dark:text-slate-500 cursor-not-allowed'
               }`}
-              title={isPolish ? 'Przejdź do Inicjatyw po PLANNING' : 'Go to Initiatives after PLANNING'}
+              title={
+                isPolish ? 'Przejdź do Inicjatyw po PLANNING' : 'Go to Initiatives after PLANNING'
+              }
             >
               {isPolish ? 'Idź do Inicjatyw' : 'Go to Initiatives'}
               <ArrowRight size={14} />

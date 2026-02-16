@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { PresentationModeSwitcher } from '@/components/MyWork/shared/PresentationModeSwitcher';
 import { ArtifactPermalinkButton } from '@/components/shared/ArtifactPermalinkButton';
 import type { PresentationMode } from '@/hooks/usePresentationMode';
+import type { ArtifactType } from '@/utils/artifactLinks';
 
 import type { NModeHeaderConfig } from './types';
 
@@ -24,7 +25,9 @@ interface NModeHeaderProps extends NModeHeaderConfig {
   /** Mode change handler */
   onPresentationModeChange: (mode: PresentationMode) => void;
   /** Build artifact code string from type + id */
-  buildArtifactCode?: (type: string, id: string) => string;
+  buildArtifactCode?: (type: ArtifactType, id: string) => string;
+  /** Optional id for the title input (for guided focus/jump) */
+  titleInputId?: string;
 }
 
 export const NModeHeader: React.FC<NModeHeaderProps> = ({
@@ -44,6 +47,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   presentationMode,
   onPresentationModeChange,
   buildArtifactCode,
+  titleInputId,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -70,6 +74,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
         <div className="flex-1 flex items-center gap-3">
           {statusDotColor && <div className={`w-3 h-3 rounded-full ${statusDotColor} shadow-lg`} />}
           <input
+            id={titleInputId}
             type="text"
             value={title}
             onChange={(e) => !titleReadOnly && onTitleChange(e.target.value)}

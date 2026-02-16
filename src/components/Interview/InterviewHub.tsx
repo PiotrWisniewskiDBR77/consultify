@@ -1831,7 +1831,9 @@ export const InterviewHub: React.FC = () => {
                   {template.category}
                 </span>
               </td>
-              <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">{template.questionCount}</td>
+              <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                {template.questionCount}
+              </td>
               <td className="px-4 py-3">
                 {template.isDefault ? (
                   <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
@@ -2039,8 +2041,12 @@ export const InterviewHub: React.FC = () => {
                 <FileText size={24} className="text-blue-400" />
               </div>
               <div className="flex-1">
-                <h1 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">{template.name}</h1>
-                <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">{template.description}</p>
+                <h1 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                  {template.name}
+                </h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">
+                  {template.description}
+                </p>
                 <div className="flex items-center gap-3">
                   <span className="px-2 py-1 bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 text-xs rounded-full">
                     {template.questionCount} {isPolish ? 'pytań' : 'questions'}
@@ -2556,7 +2562,9 @@ export const InterviewHub: React.FC = () => {
                           style={{ width: `${progress}%` }}
                         />
                       </div>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">{progress}%</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {progress}%
+                      </span>
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -3103,8 +3111,8 @@ export const InterviewHub: React.FC = () => {
               onClick={() => setShowSearch(!showSearch)}
               className={`p-2 rounded-lg border transition-all duration-200 ${
                 showSearch
-                ? 'bg-primary-500/15 border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'bg-slate-100 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-slate-500'
+                  ? 'bg-primary-500/15 border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'bg-slate-100 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-slate-500'
               }`}
               title="Search"
             >
@@ -3341,7 +3349,9 @@ export const InterviewHub: React.FC = () => {
                   <FileText size={20} className="text-red-400" />
                 </div>
                 <div className="text-left">
-                  <span className="text-sm font-medium text-slate-900 dark:text-white block">PDF</span>
+                  <span className="text-sm font-medium text-slate-900 dark:text-white block">
+                    PDF
+                  </span>
                   <span className="text-xs text-slate-500">
                     {isPolish ? 'Raport profesjonalny' : 'Professional report'}
                   </span>
@@ -3355,7 +3365,9 @@ export const InterviewHub: React.FC = () => {
                   <FileText size={20} className="text-emerald-400" />
                 </div>
                 <div className="text-left">
-                  <span className="text-sm font-medium text-slate-900 dark:text-white block">Excel</span>
+                  <span className="text-sm font-medium text-slate-900 dark:text-white block">
+                    Excel
+                  </span>
                   <span className="text-xs text-slate-500">
                     {isPolish ? 'Dane do analizy' : 'Data for analysis'}
                   </span>

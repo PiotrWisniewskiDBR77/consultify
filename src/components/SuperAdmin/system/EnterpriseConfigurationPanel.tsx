@@ -355,7 +355,9 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Configuration Management</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Configuration Management
+          </h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
             Manage system settings and environment configurations
           </p>
@@ -481,7 +483,9 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{catInfo.icon}</span>
-                    <span className="font-medium text-slate-900 dark:text-white">{catInfo.label}</span>
+                    <span className="font-medium text-slate-900 dark:text-white">
+                      {catInfo.label}
+                    </span>
                     <span className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">
                       {items.length}
                     </span>
@@ -662,7 +666,9 @@ const ConfigEditModal: React.FC<{
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Key</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Key
+            </label>
             <code className="block w-full px-3 py-2 bg-slate-200 dark:bg-slate-800 text-cyan-400 rounded-lg font-mono">
               {config.key}
             </code>
@@ -778,7 +784,9 @@ const ConfigAddModal: React.FC<{
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Key *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Key *
+            </label>
             <input
               type="text"
               required
@@ -791,7 +799,9 @@ const ConfigAddModal: React.FC<{
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Type</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Type
+              </label>
               <select
                 value={formData.type}
                 onChange={(e) =>
@@ -807,7 +817,9 @@ const ConfigAddModal: React.FC<{
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Category
+              </label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -823,7 +835,9 @@ const ConfigAddModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Value *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Value *
+            </label>
             {formData.type === 'boolean' ? (
               <select
                 value={formData.value}
@@ -846,7 +860,9 @@ const ConfigAddModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Description
+            </label>
             <input
               type="text"
               value={formData.description}
@@ -863,7 +879,9 @@ const ConfigAddModal: React.FC<{
               onChange={(e) => setFormData({ ...formData, is_sensitive: e.target.checked })}
               className="rounded border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-cyan-500"
             />
-            <span className="text-sm text-slate-700 dark:text-slate-300">Sensitive value (will be masked)</span>
+            <span className="text-sm text-slate-700 dark:text-slate-300">
+              Sensitive value (will be masked)
+            </span>
           </label>
 
           <div className="flex justify-end gap-3 pt-4">

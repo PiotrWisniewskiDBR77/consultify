@@ -306,7 +306,10 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                               )}
                             </div>
                             <div className="flex items-center gap-1.5 mt-1">
-                              <User size={14} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+                              <User
+                                size={14}
+                                className="text-slate-500 dark:text-slate-400 dark:text-slate-500"
+                              />
                               <span className="text-sm text-navy-900 dark:text-white font-medium">
                                 {version.createdByName || 'Użytkownik'}
                               </span>

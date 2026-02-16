@@ -341,10 +341,10 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                   <Sparkles size={16} className="text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">AI Consultant</h3>
-                  <p className="text-[10px] text-slate-500">
-                    Twój asystent transformacji
-                  </p>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    AI Consultant
+                  </h3>
+                  <p className="text-[10px] text-slate-500">Twój asystent transformacji</p>
                 </div>
               </div>
               <button

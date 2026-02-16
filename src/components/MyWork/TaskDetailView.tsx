@@ -992,7 +992,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         projectsRes.status === 'fulfilled'
           ? Array.isArray(projectsRes.value)
             ? projectsRes.value
-            : projectsRes.value?.projects || []
+            : (projectsRes.value as any)?.projects || []
           : [];
       const assessments =
         assessmentsRes.status === 'fulfilled'
@@ -2489,7 +2489,7 @@ Return ONLY the final comment text.`;
             <RiskCanvas
               risks={risks}
               onAddRisk={addRisk}
-              onUpdateRisk={updateRisk}
+              onUpdateRisk={(id, updates) => updateRisk(id, updates as any)}
               onRemoveRisk={removeRisk}
               onAIGenerate={generateRisksAI}
               isGeneratingAI={isGeneratingRisks}
@@ -3618,11 +3618,13 @@ Return ONLY the final comment text.`;
                                 )[i] || 'informed',
                               notificationSettings: {
                                 enabled: true,
-                                triggers: ['on_status_change'] as string[],
+                                triggers: [
+                                  'on_status_change',
+                                ] as StakeholderNotificationSettings['triggers'],
                                 emailEnabled: false,
                                 inAppEnabled: true,
-                                integrationChannels: [] as string[],
-                                syncTargets: [] as string[],
+                                integrationChannels: [],
+                                syncTargets: [],
                               },
                             }));
                           setStakeholders(fallbackTeam);
@@ -4549,7 +4551,7 @@ Return ONLY the final comment text.`;
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={handleSave}
+                  onClick={() => void handleSave()}
                   disabled={saving}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                   title={isPolish ? 'Zapisz' : 'Save'}

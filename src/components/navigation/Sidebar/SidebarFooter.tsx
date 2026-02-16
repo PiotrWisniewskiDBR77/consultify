@@ -39,6 +39,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
         {/* Partner Portal Button - between Settings and Logout */}
         {showPartnerPortal && (
           <motion.button
+            type="button"
             onClick={() => onNavigate(AppView.PARTNER_LANDING)}
             whileTap={{ scale: 0.98 }}
             className={`
@@ -57,6 +58,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
 
         {/* Logout Button */}
         <motion.button
+          type="button"
           onClick={onLogout}
           whileTap={{ scale: 0.98 }}
           className={`

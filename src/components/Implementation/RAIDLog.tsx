@@ -554,7 +554,9 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                               : 'text-slate-500 dark:text-slate-400'
                           }
                         />
-                        <span className="text-xs mt-1 text-slate-700 dark:text-slate-300">{config.label}</span>
+                        <span className="text-xs mt-1 text-slate-700 dark:text-slate-300">
+                          {config.label}
+                        </span>
                       </button>
                     );
                   })}

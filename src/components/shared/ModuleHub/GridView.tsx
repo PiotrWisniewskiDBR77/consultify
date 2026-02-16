@@ -284,7 +284,9 @@ export const GridView: React.FC<GridViewProps> = ({
 
             {/* Content */}
             <div className="px-4 pb-2">
-              <h3 className="text-slate-900 dark:text-white font-medium leading-tight line-clamp-2">{item.name}</h3>
+              <h3 className="text-slate-900 dark:text-white font-medium leading-tight line-clamp-2">
+                {item.name}
+              </h3>
             </div>
 
             {/* Progress */}
@@ -314,7 +316,9 @@ export const GridView: React.FC<GridViewProps> = ({
                 <span className={`w-2 h-2 rounded-full ${statusConfig.dot}`} />
                 <span className="text-xs font-medium">{statusConfig.label}</span>
               </div>
-              <span className="text-xs text-slate-500 dark:text-slate-400">{formatRelativeTime(item.updatedAt)}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {formatRelativeTime(item.updatedAt)}
+              </span>
             </div>
 
             {/* Quick Preview Button (on hover) */}

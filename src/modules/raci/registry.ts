@@ -1,5 +1,9 @@
+import {
+  buildSyncTargetLookup,
+  parseLegacySyncTargets,
+  validateSyncTargetSelection,
+} from './syncTargets';
 import type { SyncProvider, SyncTargetRecord } from './types';
-import { buildSyncTargetLookup, parseLegacySyncTargets, validateSyncTargetSelection } from './syncTargets';
 
 export interface SyncTargetRegistry {
   listByOrganization(organizationId: string): Promise<SyncTargetRecord[]>;

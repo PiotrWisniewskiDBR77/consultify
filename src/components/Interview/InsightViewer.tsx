@@ -66,7 +66,6 @@ import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
-import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 
 import {
   type Attachment,
@@ -76,6 +75,7 @@ import {
   type LinkedItem,
   LinkedItemsSection,
 } from '../MyWork/shared';
+import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 
 // ==========================================
 // TYPES
@@ -1378,7 +1378,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 : 'Low confidence'}
                         </span>
                         {finding.category && (
-                          <span className="text-xs text-slate-500 dark:text-slate-400">{finding.category}</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {finding.category}
+                          </span>
                         )}
                         <span className="text-xs text-slate-500 dark:text-slate-400">
                           {finding.sourceCount} {isPolish ? 'źródeł' : 'sources'}
@@ -1508,7 +1510,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12">
                     <FileText size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
-                    <p className="text-slate-500 dark:text-slate-400">{isPolish ? 'Brak treści' : 'No content'}</p>
+                    <p className="text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Brak treści' : 'No content'}
+                    </p>
                   </div>
                 )}
               </div>

@@ -109,7 +109,6 @@ export function usePresentationMode({
   // Resolve initial mode following priority chain
   const initial = useMemo<PresentationMode>(() => {
     return readFromURL() ?? readFromStorage(entityType) ?? FALLBACK_MODE;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityType]);
 
   const [mode, setModeState] = useState<PresentationMode>(initial);

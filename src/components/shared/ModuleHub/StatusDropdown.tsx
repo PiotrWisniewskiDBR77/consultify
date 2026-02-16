@@ -82,22 +82,22 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     label: 'Draft',
     labelPL: 'Szkic',
     color: 'text-slate-400',
-    bgColor: 'bg-slate-500',
+    bgColor: 'bg-slate-400',
     order: 1,
   },
   PENDING_REVIEW: {
     id: 'PENDING_REVIEW',
     label: 'Pending Review',
     labelPL: 'Oczekuje na przegląd',
-    color: 'text-orange-400',
-    bgColor: 'bg-orange-500',
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-500',
     order: 2,
   },
   REVIEW: {
     id: 'REVIEW',
     label: 'In Review',
     labelPL: 'W przeglądzie',
-    color: 'text-amber-400',
+    color: 'text-amber-500',
     bgColor: 'bg-amber-500',
     order: 3,
   },
@@ -105,7 +105,7 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'PROMOTED',
     label: 'Promoted',
     labelPL: 'Promowana',
-    color: 'text-blue-400',
+    color: 'text-blue-500',
     bgColor: 'bg-blue-500',
     order: 4,
   },
@@ -113,15 +113,15 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'PLANNING',
     label: 'Planning',
     labelPL: 'Planowanie',
-    color: 'text-indigo-400',
-    bgColor: 'bg-indigo-500',
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-500',
     order: 5,
   },
   APPROVED: {
     id: 'APPROVED',
     label: 'Approved',
     labelPL: 'Zatwierdzona',
-    color: 'text-emerald-400',
+    color: 'text-emerald-500',
     bgColor: 'bg-emerald-500',
     order: 6,
   },
@@ -129,23 +129,23 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'SCHEDULED',
     label: 'Scheduled',
     labelPL: 'Zaplanowana',
-    color: 'text-purple-400',
-    bgColor: 'bg-purple-500',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500',
     order: 7,
   },
   EXECUTING: {
     id: 'EXECUTING',
     label: 'Executing',
     labelPL: 'W realizacji',
-    color: 'text-cyan-400',
-    bgColor: 'bg-cyan-500',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500',
     order: 8,
   },
   BLOCKED: {
     id: 'BLOCKED',
     label: 'Blocked',
     labelPL: 'Zablokowana',
-    color: 'text-red-400',
+    color: 'text-red-500',
     bgColor: 'bg-red-500',
     order: 9,
   },
@@ -153,32 +153,32 @@ const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
     id: 'DONE',
     label: 'Done',
     labelPL: 'Ukończona',
-    color: 'text-green-400',
-    bgColor: 'bg-green-500',
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500',
     order: 10,
   },
   TRACKING: {
     id: 'TRACKING',
     label: 'Tracking',
     labelPL: 'Śledzenie',
-    color: 'text-teal-400',
-    bgColor: 'bg-teal-500',
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500',
     order: 11,
   },
   CANCELLED: {
     id: 'CANCELLED',
     label: 'Cancelled',
     labelPL: 'Anulowana',
-    color: 'text-gray-400',
-    bgColor: 'bg-gray-500',
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-400',
     order: 12,
   },
   ARCHIVED: {
     id: 'ARCHIVED',
     label: 'Archived',
     labelPL: 'Zarchiwizowana',
-    color: 'text-slate-300',
-    bgColor: 'bg-slate-600',
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-400',
     order: 13,
   },
 };
@@ -190,14 +190,14 @@ const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
     label: 'Draft',
     labelPL: 'Szkic',
     color: 'text-slate-400',
-    bgColor: 'bg-slate-500',
+    bgColor: 'bg-slate-400',
     order: 1,
   },
   IN_REVIEW: {
     id: 'IN_REVIEW',
     label: 'In Review',
     labelPL: 'W przeglądzie',
-    color: 'text-amber-400',
+    color: 'text-amber-500',
     bgColor: 'bg-amber-500',
     order: 2,
   },
@@ -205,15 +205,15 @@ const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
     id: 'AWAITING_APPROVAL',
     label: 'Awaiting Approval',
     labelPL: 'Oczekuje na zatwierdzenie',
-    color: 'text-orange-400',
-    bgColor: 'bg-orange-500',
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-500',
     order: 3,
   },
   APPROVED: {
     id: 'APPROVED',
     label: 'Approved',
     labelPL: 'Zatwierdzony',
-    color: 'text-emerald-400',
+    color: 'text-emerald-500',
     bgColor: 'bg-emerald-500',
     order: 4,
   },
@@ -221,7 +221,7 @@ const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
     id: 'REJECTED',
     label: 'Rejected',
     labelPL: 'Odrzucony',
-    color: 'text-red-400',
+    color: 'text-red-500',
     bgColor: 'bg-red-500',
     order: 5,
   },
@@ -229,8 +229,8 @@ const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
     id: 'ARCHIVED',
     label: 'Archived',
     labelPL: 'Zarchiwizowany',
-    color: 'text-slate-300',
-    bgColor: 'bg-slate-600',
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-400',
     order: 6,
   },
 };
@@ -242,14 +242,14 @@ const REPORT_STATUSES: Record<ReportStatus, StatusOption> = {
     label: 'Draft',
     labelPL: 'Szkic',
     color: 'text-slate-400',
-    bgColor: 'bg-slate-500',
+    bgColor: 'bg-slate-400',
     order: 1,
   },
   GENERATING: {
     id: 'GENERATING',
     label: 'Generating',
     labelPL: 'Generowanie',
-    color: 'text-blue-400',
+    color: 'text-blue-500',
     bgColor: 'bg-blue-500',
     order: 2,
   },
@@ -257,23 +257,23 @@ const REPORT_STATUSES: Record<ReportStatus, StatusOption> = {
     id: 'FINAL',
     label: 'Final',
     labelPL: 'Finalny',
-    color: 'text-indigo-400',
-    bgColor: 'bg-indigo-500',
+    color: 'text-slate-500',
+    bgColor: 'bg-slate-500',
     order: 3,
   },
   PENDING_APPROVAL: {
     id: 'PENDING_APPROVAL',
     label: 'Pending Approval',
     labelPL: 'Oczekuje na zatwierdzenie',
-    color: 'text-orange-400',
-    bgColor: 'bg-orange-500',
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-500',
     order: 4,
   },
   APPROVED: {
     id: 'APPROVED',
     label: 'Approved',
     labelPL: 'Zatwierdzony',
-    color: 'text-emerald-400',
+    color: 'text-emerald-500',
     bgColor: 'bg-emerald-500',
     order: 5,
   },
@@ -281,7 +281,7 @@ const REPORT_STATUSES: Record<ReportStatus, StatusOption> = {
     id: 'REJECTED',
     label: 'Rejected',
     labelPL: 'Odrzucony',
-    color: 'text-red-400',
+    color: 'text-red-500',
     bgColor: 'bg-red-500',
     order: 6,
   },
@@ -289,8 +289,8 @@ const REPORT_STATUSES: Record<ReportStatus, StatusOption> = {
     id: 'UTILIZED',
     label: 'Utilized',
     labelPL: 'Wykorzystany',
-    color: 'text-teal-400',
-    bgColor: 'bg-teal-500',
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500',
     order: 7,
   },
 };
@@ -461,12 +461,12 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          flex items-center gap-2 rounded-lg font-medium
-          bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300
-          hover:bg-slate-100 dark:hover:bg-navy-700 hover:border-slate-500 hover:text-slate-900 dark:hover:text-white
-          transition-all duration-200
+          inline-flex items-center gap-2 h-9 rounded-lg font-medium
+          text-slate-700 dark:text-slate-300
+          hover:bg-slate-100/70 dark:hover:bg-white/[0.05]
+          transition-colors duration-150
           ${sizeClasses[size]}
-          ${isOpen ? 'border-primary-500 bg-slate-200 dark:bg-navy-700' : ''}
+          ${isOpen ? 'bg-white/70 dark:bg-white/[0.06] text-slate-900 dark:text-slate-100' : ''}
         `}
       >
         {showIcon && <Filter size={iconSize} className="text-slate-500 dark:text-slate-400" />}
@@ -489,8 +489,8 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
           className="
             absolute top-full left-0 mt-1 z-50
             min-w-[200px] py-1
-            bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg
-            shadow-xl shadow-black/10 dark:shadow-black/30
+            bg-white dark:bg-navy-800 rounded-xl
+            shadow-hig-xl dark:shadow-hig-dark-xl
           "
         >
           {options.map((option) => {
@@ -504,7 +504,11 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
                 className={`
                   w-full flex items-center gap-3 px-3 py-2 text-left
                   transition-colors duration-150
-                  ${isSelected ? 'bg-primary-500/15 text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 hover:text-slate-900 dark:hover:text-white'}
+                  ${
+                    isSelected
+                      ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100'
+                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                  }
                 `}
               >
                 <span className={`w-2.5 h-2.5 rounded-full ${option.bgColor}`} />

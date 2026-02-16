@@ -155,9 +155,7 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
                   <nav className="flex items-center gap-1 text-sm">
                     {breadcrumbs.map((crumb, index) => (
                       <React.Fragment key={index}>
-                        {index > 0 && (
-                          <ChevronRight className="w-4 h-4 text-slate-400" />
-                        )}
+                        {index > 0 && <ChevronRight className="w-4 h-4 text-slate-400" />}
                         {index < breadcrumbs.length - 1 ? (
                           <button
                             onClick={() => crumb.section && onSectionChange(crumb.section)}
@@ -166,7 +164,9 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
                             {crumb.label}
                           </button>
                         ) : (
-                          <span className="font-medium text-slate-900 dark:text-white">{crumb.label}</span>
+                          <span className="font-medium text-slate-900 dark:text-white">
+                            {crumb.label}
+                          </span>
                         )}
                       </React.Fragment>
                     ))}
@@ -174,10 +174,10 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
                 ) : (
                   title && (
                     <div>
-                      <h1 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h1>
-                      {subtitle && (
-                        <p className="text-sm text-slate-500">{subtitle}</p>
-                      )}
+                      <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+                        {title}
+                      </h1>
+                      {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
                     </div>
                   )
                 )}
@@ -192,7 +192,9 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 lg:p-6">
-            <div className="bg-white dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-6">{children}</div>
+            <div className="bg-white dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 p-6">
+              {children}
+            </div>
           </div>
         </div>
       </main>

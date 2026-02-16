@@ -371,7 +371,9 @@ const DroppableColumn: React.FC<{
         {itemIds.length === 0 && !isOver && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className={`mb-2 ${column.headerColor} opacity-30`}>{column.icon}</div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">No notifications</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+              No notifications
+            </p>
           </div>
         )}
       </div>
@@ -683,7 +685,7 @@ export const NotificationsKanbanBoard: React.FC<NotificationsKanbanBoardProps> =
         if (!notification) return;
 
         const movingToRead = endCol === 'read';
-        const previousRead = notification.read || notification.isRead;
+        const previousRead = Boolean(notification.read ?? notification.isRead);
 
         // Optimistic update
         setNotifications((prev) =>
@@ -754,8 +756,13 @@ export const NotificationsKanbanBoard: React.FC<NotificationsKanbanBoardProps> =
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
         <div className="flex-1 p-4">
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
-            <Bell size={48} className="text-slate-500 dark:text-slate-400 dark:text-slate-600 mb-4" />
-            <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">No notifications</h3>
+            <Bell
+              size={48}
+              className="text-slate-500 dark:text-slate-400 dark:text-slate-600 mb-4"
+            />
+            <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
+              No notifications
+            </h3>
             <p className="text-sm text-slate-500">You're all caught up!</p>
           </div>
         </div>

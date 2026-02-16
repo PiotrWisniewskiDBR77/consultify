@@ -282,15 +282,11 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">On Target</div>
-          <div className="text-2xl font-bold text-green-400">
-            {stats.onTarget}
-          </div>
+          <div className="text-2xl font-bold text-green-400">{stats.onTarget}</div>
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">At Risk</div>
-          <div className="text-2xl font-bold text-amber-400">
-            {stats.atRisk}
-          </div>
+          <div className="text-2xl font-bold text-amber-400">{stats.atRisk}</div>
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Off Target</div>
@@ -298,9 +294,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Achieved</div>
-          <div className="text-2xl font-bold text-purple-400">
-            {stats.achieved}
-          </div>
+          <div className="text-2xl font-bold text-purple-400">{stats.achieved}</div>
         </div>
       </div>
 
@@ -383,9 +377,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
                 <div>
                   <div className="text-3xl font-bold text-slate-900 dark:text-white flex items-baseline gap-1">
                     {kpi.actual}
-                    <span className="text-sm font-normal text-slate-500">
-                      {kpi.unit}
-                    </span>
+                    <span className="text-sm font-normal text-slate-500">{kpi.unit}</span>
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
                     Target: {kpi.target}

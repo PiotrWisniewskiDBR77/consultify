@@ -56,8 +56,12 @@ export const StatusChangeToast: React.FC<StatusChangeToastProps> = ({
             <CheckCircle2 size={20} className={statusMeta.color} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-900 dark:text-white">Status updated to {statusMeta.label}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{initiativeName}</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white">
+              Status updated to {statusMeta.label}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+              {initiativeName}
+            </p>
 
             {hasModuleChanged && (
               <button

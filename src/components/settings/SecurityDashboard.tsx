@@ -290,7 +290,9 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                     <span className={`text-4xl font-bold ${getScoreColor(score.total)}`}>
                       {score.total}
                     </span>
-                    <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-lg">/100</span>
+                    <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-lg">
+                      /100
+                    </span>
                   </div>
                 </div>
               </div>
@@ -566,7 +568,9 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                       </span>
                       {event.ip && (
                         <>
-                          <span className="text-slate-700 dark:text-slate-300 dark:text-slate-600">•</span>
+                          <span className="text-slate-700 dark:text-slate-300 dark:text-slate-600">
+                            •
+                          </span>
                           <span className="text-xs text-slate-500 dark:text-slate-400">
                             {event.ip}
                           </span>

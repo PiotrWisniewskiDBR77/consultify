@@ -741,7 +741,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       {
         id: 'name',
         label: 'Name',
-        render: (row) => <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>,
+        render: (row) => (
+          <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
+        ),
       },
       {
         id: 'category',
@@ -1205,7 +1207,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                   </span>
                 )}
               </div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white">{selectedInitiative.name}</h1>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+                {selectedInitiative.name}
+              </h1>
               {selectedInitiative.description && (
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
                   {selectedInitiative.description}
@@ -1353,7 +1357,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                     <Zap size={12} className="text-amber-400" />
                     <span>
                       Generated from:{' '}
-                      <span className="text-slate-900 dark:text-white capitalize">{selectedInitiative.sourceType}</span>
+                      <span className="text-slate-900 dark:text-white capitalize">
+                        {selectedInitiative.sourceType}
+                      </span>
                     </span>
                     {selectedInitiative.sourceId && (
                       <span className="text-slate-500">
@@ -1369,7 +1375,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             <div className="space-y-4">
               {/* Key Metrics */}
               <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4">Key Metrics</h3>
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4">
+                  Key Metrics
+                </h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
@@ -1755,7 +1763,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                     </span>
                     <div className="flex-1">
                       <div className="text-slate-900 dark:text-white font-medium">{meta.name}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">{meta.description}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {meta.description}
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -1800,7 +1810,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                         {slug}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <div className="text-slate-900 dark:text-white font-medium truncate">{titleFromSlug(slug)}</div>
+                        <div className="text-slate-900 dark:text-white font-medium truncate">
+                          {titleFromSlug(slug)}
+                        </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                           Catalog tool · `wdrozenia/.../strategy/{slug}.md`
                         </div>

@@ -520,9 +520,7 @@ const MetricsSection: React.FC = () => {
               <span
                 className={cn(
                   'text-sm',
-                  metric.isPositive
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-amber-400'
+                  metric.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-400'
                 )}
               >
                 {metric.change}
@@ -917,15 +915,9 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-slate-400">
-                      {org.industry}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-center text-slate-400">
-                      {org.users}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-center text-slate-400">
-                      {org.projects}
-                    </td>
+                    <td className="px-4 py-4 text-sm text-slate-400">{org.industry}</td>
+                    <td className="px-4 py-4 text-sm text-center text-slate-400">{org.users}</td>
+                    <td className="px-4 py-4 text-sm text-center text-slate-400">{org.projects}</td>
                     <td className="px-4 py-4 text-center">
                       <span className="px-2 py-1 text-sm font-medium bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded">
                         {org.assessmentScore}/5
@@ -937,10 +929,8 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                           'px-2 py-1 text-xs font-medium rounded-full',
                           org.status === 'active' &&
                             'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
-                          org.status === 'onboarding' &&
-                            'bg-amber-900/30 text-amber-400',
-                          org.status === 'inactive' &&
-                            'bg-slate-900/30 text-slate-400'
+                          org.status === 'onboarding' && 'bg-amber-900/30 text-amber-400',
+                          org.status === 'inactive' && 'bg-slate-900/30 text-slate-400'
                         )}
                       >
                         {org.status}
@@ -1002,9 +992,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h4 className="font-medium text-slate-900 dark:text-white">{project.name}</h4>
-                    <p className="text-sm text-slate-400">
-                      {project.clientName}
-                    </p>
+                    <p className="text-sm text-slate-400">{project.clientName}</p>
                   </div>
                   <span className="px-2 py-1 text-xs font-medium bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded">
                     {project.framework}
@@ -1246,15 +1234,16 @@ const CertificationSection: React.FC<{
                           'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
                         status === 'in-progress' &&
                           'bg-violet-100 dark:bg-violet-900/30 text-violet-600',
-                        status === 'locked' &&
-                          'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                        status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-slate-500'
                       )}
                     >
                       {status === 'completed' ? <CheckCircle2 className="w-6 h-6" /> : index + 1}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-slate-900 dark:text-white">{course.name}</h4>
+                        <h4 className="font-medium text-slate-900 dark:text-white">
+                          {course.name}
+                        </h4>
                         <span
                           className={cn(
                             'px-2 py-1 text-xs font-medium rounded-full',
@@ -1262,16 +1251,13 @@ const CertificationSection: React.FC<{
                               'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
                             status === 'in-progress' &&
                               'bg-violet-100 dark:bg-violet-900/30 text-violet-600',
-                            status === 'locked' &&
-                              'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                            status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-slate-500'
                           )}
                         >
                           {getDisplayStatus(course.status)}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-400 mt-1">
-                        {course.type}
-                      </p>
+                      <p className="text-sm text-slate-400 mt-1">{course.type}</p>
                       <div className="flex items-center gap-4 mt-3 text-sm text-slate-400">
                         <span className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
@@ -1440,9 +1426,7 @@ const CertificationSection: React.FC<{
                     Issued:{' '}
                     {cert.completedAt ? new Date(cert.completedAt).toLocaleDateString() : 'N/A'}
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    ID: {cert.certificateId}
-                  </p>
+                  <p className="text-xs text-slate-500 mt-1">ID: {cert.certificateId}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -1738,8 +1722,7 @@ const BillingSection: React.FC<{
                         'px-2 py-1 text-xs font-medium rounded-full',
                         invoice.status === 'paid' &&
                           'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
-                        invoice.status === 'pending' &&
-                          'bg-amber-900/30 text-amber-600'
+                        invoice.status === 'pending' && 'bg-amber-900/30 text-amber-600'
                       )}
                     >
                       {invoice.status}
@@ -1855,9 +1838,7 @@ const BillingSection: React.FC<{
                   <td className="px-4 py-4 font-medium text-slate-900 dark:text-white">
                     {commission.client}
                   </td>
-                  <td className="px-4 py-4 text-sm text-slate-400">
-                    {commission.type}
-                  </td>
+                  <td className="px-4 py-4 text-sm text-slate-400">{commission.type}</td>
                   <td className="px-4 py-4 text-right font-medium text-slate-900 dark:text-white">
                     {commission.amount}
                   </td>
@@ -1867,16 +1848,13 @@ const BillingSection: React.FC<{
                         'px-2 py-1 text-xs font-medium rounded-full',
                         commission.status === 'paid' &&
                           'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
-                        commission.status === 'pending' &&
-                          'bg-amber-900/30 text-amber-600'
+                        commission.status === 'pending' && 'bg-amber-900/30 text-amber-600'
                       )}
                     >
                       {commission.status}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-sm text-slate-400">
-                    {commission.date}
-                  </td>
+                  <td className="px-4 py-4 text-sm text-slate-400">{commission.date}</td>
                 </tr>
               ))}
             </tbody>
@@ -1937,9 +1915,7 @@ const BillingSection: React.FC<{
           </div>
           <div className="flex items-center gap-3">
             <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600" />
-            <span className="text-slate-400">
-              All certifications complete (2/4)
-            </span>
+            <span className="text-slate-400">All certifications complete (2/4)</span>
           </div>
         </div>
       </div>
@@ -2290,17 +2266,13 @@ const ProfileSection: React.FC<{
                 <Target
                   className={cn(
                     'w-8 h-8 mx-auto mb-2',
-                    selectedSpecializations.includes(fw)
-                      ? 'text-violet-600'
-                      : 'text-slate-500'
+                    selectedSpecializations.includes(fw) ? 'text-violet-600' : 'text-slate-500'
                   )}
                 />
                 <span
                   className={cn(
                     'font-medium',
-                    selectedSpecializations.includes(fw)
-                      ? 'text-violet-600'
-                      : 'text-slate-400'
+                    selectedSpecializations.includes(fw) ? 'text-violet-600' : 'text-slate-400'
                   )}
                 >
                   {fw}
@@ -2430,9 +2402,7 @@ const ProfileSection: React.FC<{
                       </span>
                     ))
                   ) : (
-                    <span className="text-xs text-slate-500">
-                      No specializations selected
-                    </span>
+                    <span className="text-xs text-slate-500">No specializations selected</span>
                   )}
                 </div>
               </div>

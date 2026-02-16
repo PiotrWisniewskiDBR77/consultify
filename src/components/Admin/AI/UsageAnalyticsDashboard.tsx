@@ -547,7 +547,10 @@ export const UsageAnalyticsDashboard: React.FC = () => {
           <div className="space-y-3">
             {modelUsage.map((model) => (
               <div key={model.model} className="flex items-center gap-4">
-                <div className="w-28 text-sm text-slate-900 dark:text-white font-medium truncate" title={model.model}>
+                <div
+                  className="w-28 text-sm text-slate-900 dark:text-white font-medium truncate"
+                  title={model.model}
+                >
                   {model.model}
                 </div>
                 <div className="flex-1">
@@ -556,12 +559,16 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                       className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all flex items-center justify-end pr-2"
                       style={{ width: `${model.percentage}%` }}
                     >
-                      <span className="text-xs font-medium text-slate-900 dark:text-white">{model.percentage}%</span>
+                      <span className="text-xs font-medium text-slate-900 dark:text-white">
+                        {model.percentage}%
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div className="w-24 text-right">
-                  <div className="text-sm text-slate-900 dark:text-white">{formatNumber(model.requests)}</div>
+                  <div className="text-sm text-slate-900 dark:text-white">
+                    {formatNumber(model.requests)}
+                  </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     {formatCurrency(model.cost)}
                   </div>
@@ -592,12 +599,16 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                       className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all flex items-center justify-end pr-2"
                       style={{ width: `${cap.percentage}%` }}
                     >
-                      <span className="text-xs font-medium text-slate-900 dark:text-white">{cap.percentage}%</span>
+                      <span className="text-xs font-medium text-slate-900 dark:text-white">
+                        {cap.percentage}%
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div className="w-24 text-right">
-                  <div className="text-sm text-slate-900 dark:text-white">{formatNumber(cap.requests)}</div>
+                  <div className="text-sm text-slate-900 dark:text-white">
+                    {formatNumber(cap.requests)}
+                  </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     {formatCurrency(cap.cost)}
                   </div>

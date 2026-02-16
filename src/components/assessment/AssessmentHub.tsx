@@ -286,8 +286,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
     if (assessmentId) {
       const fromList = assessments.find((a) => a.id === assessmentId);
-      if (fromList?.assessmentType) {
-        const framework = String(fromList.assessmentType).toLowerCase();
+      if (fromList?.type) {
+        const framework = String(fromList.type).toLowerCase();
         const next = new URLSearchParams(searchParams);
         next.delete('assessmentId');
         setSearchParams(next, { replace: true });

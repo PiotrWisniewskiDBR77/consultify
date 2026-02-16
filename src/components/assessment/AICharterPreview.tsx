@@ -229,7 +229,11 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
     return (
       <div className="group flex items-start gap-2">
         <span className="flex-1">
-          {value || <span className="italic text-slate-500 dark:text-slate-400 dark:text-slate-500">Not set</span>}
+          {value || (
+            <span className="italic text-slate-500 dark:text-slate-400 dark:text-slate-500">
+              Not set
+            </span>
+          )}
         </span>
         <button
           onClick={() => startEditing(field, value || '')}

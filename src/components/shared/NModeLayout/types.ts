@@ -117,7 +117,7 @@ export interface NModeHeaderConfig {
   /** Artifact ID (e.g. "BEC-08877-BEC151") */
   artifactId?: string;
   /** Artifact type for permalink/code generation */
-  artifactType: string;
+  artifactType: import('@/utils/artifactLinks').ArtifactType;
   /** Save handler */
   onSave: () => void;
   /** Whether save is in progress */

@@ -283,10 +283,11 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
           const roleLabel =
             role === 'OTHER'
               ? t('pmo.roles.other', 'Other / legacy roles')
-              : t(
-                  `pmo.roles.${role}`,
-                  i18n.language === 'pl' ? roleInfo?.labelPl : roleInfo?.labelEn
-                );
+              : t(`pmo.roles.${role}`, {
+                  defaultValue:
+                    (i18n.language === 'pl' ? roleInfo?.labelPl : roleInfo?.labelEn) ||
+                    (roleInfo ? roleInfo.labelEn : role),
+                });
           const roleColor =
             role === 'OTHER' ? 'bg-gray-100 dark:bg-navy-800 text-gray-800' : roleInfo?.color;
 
@@ -545,8 +546,8 @@ const SteeringBoardPanel: React.FC<{ projectId: string; canManage: boolean }> = 
   const load = async () => {
     try {
       setLoading(true);
-      const res = await api.get<SteeringBoardApiResponse>(`/projects/${projectId}/steering-board`);
-      const data = res.data;
+      const res = await api.get(`/projects/${projectId}/steering-board`);
+      const data = res.data as SteeringBoardApiResponse;
       setEnabled(!!(data?.board?.enabled as any));
       setMembers(data?.members || []);
     } catch {

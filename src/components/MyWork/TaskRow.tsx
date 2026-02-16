@@ -24,7 +24,7 @@ const getPriorityColor = (priority?: string): string => {
     case 'urgent':
       return 'bg-red-500';
     case 'high':
-      return 'bg-orange-500';
+      return 'bg-amber-500';
     case 'medium':
       return 'bg-blue-500';
     case 'low':

@@ -222,7 +222,10 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                     className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-slate-200 dark:hover:bg-navy-700 transition-all"
                     title={isPolish ? 'Usuń' : 'Delete'}
                   >
-                    <Trash2 size={14} className="text-slate-500 dark:text-slate-400 hover:text-red-500" />
+                    <Trash2
+                      size={14}
+                      className="text-slate-500 dark:text-slate-400 hover:text-red-500"
+                    />
                   </button>
                 )}
               </div>

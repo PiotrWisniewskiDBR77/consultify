@@ -377,9 +377,7 @@ export const ClientAccessView: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-3 py-3">
-                        <span className="text-slate-500">
-                          {employee.lastActive || '--'}
-                        </span>
+                        <span className="text-slate-500">{employee.lastActive || '--'}</span>
                       </td>
                     </tr>
                   ))}

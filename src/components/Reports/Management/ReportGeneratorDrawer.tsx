@@ -172,13 +172,18 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
               <Sparkles className="w-5 h-5 text-violet-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Generate New Report</h2>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                Generate New Report
+              </h2>
               <p className="text-sm text-slate-400">
                 AI will analyze your data and generate insights
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+          >
             <X size={20} className="text-slate-400" />
           </button>
         </div>
@@ -187,7 +192,9 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Report Type Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Report Type</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+              Report Type
+            </label>
             <div className="space-y-2">
               {reportTypeOptions.map((option) => {
                 const Icon = option.icon;
@@ -205,13 +212,17 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
                   >
                     <div
                       className={`p-2 rounded-lg ${
-                        isSelected ? 'bg-violet-500 text-white' : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
+                        isSelected
+                          ? 'bg-violet-500 text-white'
+                          : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       <Icon size={18} />
                     </div>
                     <div className="flex-1">
-                      <h3 className={`font-medium ${isSelected ? 'text-white' : 'text-slate-700 dark:text-slate-300'}`}>
+                      <h3
+                        className={`font-medium ${isSelected ? 'text-white' : 'text-slate-700 dark:text-slate-300'}`}
+                      >
                         {option.title}
                       </h3>
                       <p className="text-xs text-slate-500 mt-0.5">{option.description}</p>
@@ -227,7 +238,9 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
 
           {/* Scope Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Report Scope</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+              Report Scope
+            </label>
             <div className="flex gap-3">
               <button
                 onClick={() => {
@@ -312,7 +325,9 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
 
           {/* PMO Standards Info */}
           <div className="p-4 bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-navy-700">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">PMO Standards Compliance</h3>
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              PMO Standards Compliance
+            </h3>
             <div className="grid grid-cols-3 gap-4 text-xs text-slate-500">
               <div>
                 <span className="font-medium text-slate-400">ISO 21500:2021</span>

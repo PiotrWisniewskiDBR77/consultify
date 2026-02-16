@@ -12,6 +12,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ message }) => (
     aria-label={message || 'Loading'}
   >
     <Loader2 className="animate-spin text-blue-500" size={48} />
-    {message && <p className="text-slate-500 dark:text-slate-400 font-medium animate-pulse">{message}</p>}
+    {message && (
+      <p className="text-slate-500 dark:text-slate-400 font-medium animate-pulse">{message}</p>
+    )}
   </div>
 );

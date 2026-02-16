@@ -210,7 +210,10 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
               </div>
             ) : insights.length === 0 ? (
               <div className="text-center py-8">
-                <Lightbulb size={32} className="text-slate-700 dark:text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                <Lightbulb
+                  size={32}
+                  className="text-slate-700 dark:text-slate-300 dark:text-slate-600 mx-auto mb-3"
+                />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Brak insightów do wyświetlenia
                 </p>
@@ -437,7 +440,10 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
           <div className="p-4 space-y-4">
             {!currentAxis || !currentScore || !targetScore ? (
               <div className="text-center py-8">
-                <TrendingUp size={32} className="text-slate-700 dark:text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                <TrendingUp
+                  size={32}
+                  className="text-slate-700 dark:text-slate-300 dark:text-slate-600 mx-auto mb-3"
+                />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Wybierz ocenę i cel, aby zobaczyć analizę luki
                 </p>
@@ -480,7 +486,10 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
                           style={{ width: `${(gapAnalysis.currentScore / 7) * 100}%` }}
                         />
                       </div>
-                      <ChevronRight size={16} className="text-slate-500 dark:text-slate-400 dark:text-slate-500 mx-2" />
+                      <ChevronRight
+                        size={16}
+                        className="text-slate-500 dark:text-slate-400 dark:text-slate-500 mx-2"
+                      />
                       <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-to-r from-green-400 to-green-500"

@@ -325,7 +325,9 @@ export const ReportTemplatesView: React.FC = () => {
           <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
             Saved Templates{' '}
             {templates.length > 0 && (
-              <span className="text-slate-500 dark:text-slate-400 font-normal">({templates.length})</span>
+              <span className="text-slate-500 dark:text-slate-400 font-normal">
+                ({templates.length})
+              </span>
             )}
           </h3>
           <ChevronDown

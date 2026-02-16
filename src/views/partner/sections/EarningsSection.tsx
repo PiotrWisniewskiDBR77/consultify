@@ -246,7 +246,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wide">
                 {t('partner.earnings.nextPayment', 'NEXT COMMISSION PAYMENT')}
               </p>
-              <p className="text-lg font-semibold text-slate-900 dark:text-white">{nextPaymentDate}</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                {nextPaymentDate}
+              </p>
             </div>
           )}
         </div>
@@ -317,7 +319,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               </div>
               <span className="text-sm text-slate-400 dark:text-slate-500">This Month</span>
             </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">€{summary?.thisMonth.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              €{summary?.thisMonth.toLocaleString()}
+            </p>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               From {summary?.thisMonthCount} referrals
             </p>
@@ -404,7 +408,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                     {transactions.map((tx) => (
                       <tr key={tx.id} className="hover:bg-white/5">
                         <td className="px-3 py-3">
-                          <span className="font-medium text-slate-900 dark:text-white">{tx.organizationName}</span>
+                          <span className="font-medium text-slate-900 dark:text-white">
+                            {tx.organizationName}
+                          </span>
                         </td>
                         <td className="px-3 py-3">
                           <span className="text-sm text-slate-400 dark:text-slate-500 capitalize">
@@ -412,7 +418,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                           </span>
                         </td>
                         <td className="px-3 py-3 text-right">
-                          <span className="text-slate-600 dark:text-slate-300">€{tx.grossAmount.toLocaleString()}</span>
+                          <span className="text-slate-600 dark:text-slate-300">
+                            €{tx.grossAmount.toLocaleString()}
+                          </span>
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="font-medium text-emerald-400">
@@ -563,7 +571,10 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         {/* Payout List */}
         <div className="space-y-4">
           {payouts.map((payout) => (
-            <div key={payout.id} className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
+            <div
+              key={payout.id}
+              className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div
@@ -581,7 +592,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-slate-900 dark:text-white">€{payout.netAmount.toLocaleString()}</p>
+                    <p className="font-medium text-slate-900 dark:text-white">
+                      €{payout.netAmount.toLocaleString()}
+                    </p>
                     <p className="text-sm text-slate-400 dark:text-slate-500">
                       {payout.transactionCount} transactions • {payout.periodStart} to{' '}
                       {payout.periodEnd}
@@ -660,7 +673,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
       {/* Bank Details */}
       <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Bank Account Details</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          Bank Account Details
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="text-sm text-slate-400 dark:text-slate-500 mb-1 block">
@@ -710,7 +725,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
       {/* Payout Preferences */}
       <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Payout Preferences</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          Payout Preferences
+        </h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>

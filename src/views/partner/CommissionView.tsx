@@ -70,9 +70,7 @@ export const CommissionView: React.FC = () => {
                 <h3 className="font-semibold text-slate-900 dark:text-white">
                   Commission Statements
                 </h3>
-                <p className="text-xs text-slate-400">
-                  Historical statements and payouts
-                </p>
+                <p className="text-xs text-slate-400">Historical statements and payouts</p>
               </div>
             </div>
             <PMODomainBadge mapping={PARTNER_PMO_MAPPING.COMMISSION_SETTLEMENT} />

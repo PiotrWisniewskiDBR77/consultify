@@ -694,7 +694,9 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         return (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <FileBarChart2 className="w-16 h-16 text-slate-600 mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No reports yet</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              No reports yet
+            </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-md">
               Generate your first management report to track project status, team progress, and
               portfolio health.
@@ -757,7 +759,9 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                       {previewReport.title}
                     </h5>
                     {previewReport.projectName && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{previewReport.projectName}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {previewReport.projectName}
+                      </p>
                     )}
                   </div>
 
@@ -891,7 +895,9 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         return (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Wand2 className="w-16 h-16 text-slate-600 mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No templates yet</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              No templates yet
+            </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
               Create templates to quickly generate reports with predefined sections.
             </p>
@@ -917,7 +923,9 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         return (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <CalendarClock className="w-16 h-16 text-slate-600 mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No schedules yet</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              No schedules yet
+            </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
               Set up recurring schedules to automatically generate reports.
             </p>

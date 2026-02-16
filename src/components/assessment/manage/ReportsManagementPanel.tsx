@@ -743,7 +743,10 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         {/* Search */}
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800">
           <div className="relative max-w-md">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+            />
             <input
               type="text"
               value={searchQuery}

@@ -207,7 +207,9 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                     >
                       {pillar.score.toFixed(1)}
                     </span>
-                    <span className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">/5</span>
+                    <span className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                      /5
+                    </span>
                   </div>
                 </div>
 
@@ -362,7 +364,10 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                       <span className={`font-medium text-${getLevelColor(dim.current)}-600`}>
                         {currentLevel?.title || 'N/A'}
                       </span>
-                      <ArrowRight size={14} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+                      <ArrowRight
+                        size={14}
+                        className="text-slate-500 dark:text-slate-400 dark:text-slate-500"
+                      />
                       <span className="font-medium text-green-600">
                         {targetLevel?.title || 'N/A'}
                       </span>
@@ -383,7 +388,9 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                   )}
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Luka</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                    Luka
+                  </div>
                   <div className="text-lg font-bold text-red-600">-{dim.gap}</div>
                 </div>
               </div>

@@ -229,7 +229,9 @@ export const AssessmentRadarChart: React.FC<AssessmentRadarChartProps> = ({
 
   return (
     <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Maturity Overview</h3>
+      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        Maturity Overview
+      </h3>
       <ResponsiveContainer width="100%" height={height}>
         <RechartsRadar data={chartData}>
           <PolarGrid stroke="#334155" />
@@ -264,7 +266,9 @@ export const AssessmentRadarChart: React.FC<AssessmentRadarChartProps> = ({
           )}
           <Legend
             wrapperStyle={{ paddingTop: 20 }}
-            formatter={(value) => <span className="text-slate-700 dark:text-slate-300 text-sm">{value}</span>}
+            formatter={(value) => (
+              <span className="text-slate-700 dark:text-slate-300 text-sm">{value}</span>
+            )}
           />
           <Tooltip
             contentStyle={{
@@ -409,7 +413,9 @@ export const DimensionBars: React.FC<DimensionBarsProps> = ({ data, height = 300
 
   return (
     <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Dimension Comparison</h3>
+      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        Dimension Comparison
+      </h3>
       <ResponsiveContainer width="100%" height={height}>
         <BarChart data={chartData} layout="vertical" margin={{ left: 100, right: 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -428,7 +434,11 @@ export const DimensionBars: React.FC<DimensionBarsProps> = ({ data, height = 300
             }}
             labelStyle={{ color: '#f8fafc' }}
           />
-          <Legend formatter={(value) => <span className="text-slate-700 dark:text-slate-300 text-sm">{value}</span>} />
+          <Legend
+            formatter={(value) => (
+              <span className="text-slate-700 dark:text-slate-300 text-sm">{value}</span>
+            )}
+          />
           <Bar dataKey="current" name="Current" fill="#3b82f6" radius={[0, 4, 4, 0]} />
           <Bar dataKey="target" name="Target" fill="#10b981" radius={[0, 4, 4, 0]} />
         </BarChart>

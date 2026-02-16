@@ -155,7 +155,10 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
     return (
       <>
         <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm">
-          <Building2 size={48} className="mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-4" />
+          <Building2
+            size={48}
+            className="mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-4"
+          />
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
             No Organization Found
           </h3>
@@ -259,7 +262,10 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2 mb-4">
-            <CreditCard size={20} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+            <CreditCard
+              size={20}
+              className="text-slate-500 dark:text-slate-400 dark:text-slate-500"
+            />
             Billing Status
           </h3>
           <div className="flex items-center justify-between mb-4">

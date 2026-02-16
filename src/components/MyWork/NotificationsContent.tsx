@@ -48,6 +48,9 @@ import {
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { type SnoozePreset, useNotificationSnooze } from '@/hooks/useNotificationSnooze';
 import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
+import { AppView } from '@/types';
 import {
   clearMutedNotificationTypesForSession,
   getMutedNotificationTypes,
@@ -55,9 +58,6 @@ import {
   NOTIFICATION_MUTE_SESSION_CHANGED_EVENT,
   unmuteNotificationTypeForSession,
 } from '@/utils/notificationMuteSession';
-import { useAppStore } from '@/store/useAppStore';
-import { useConversationStore } from '@/store/useConversationStore';
-import { AppView } from '@/types';
 
 type NotificationFilter = 'all' | 'unread' | 'today' | 'week';
 
@@ -144,49 +144,29 @@ const TIME_GROUP_LABELS: Record<TimeGroup, { en: string; pl: string }> = {
   earlier: { en: 'Earlier', pl: 'Wcześniej' },
 };
 
-// Get notification type config
+// Get notification type config — neutral monochromatic (type is a label, not a status)
+const NEUTRAL_TYPE_STYLE = {
+  color: 'text-slate-600 dark:text-slate-400',
+  bg: 'bg-slate-100 dark:bg-navy-800/60',
+};
+
 const getTypeConfig = (type: string) => {
   const typeUpper = type?.toUpperCase() || '';
 
   if (typeUpper.includes('TASK')) {
-    return {
-      label: 'Task',
-      icon: CheckSquare,
-      color: 'text-blue-700 dark:text-blue-400',
-      bg: 'bg-blue-100 dark:bg-blue-500/20',
-    };
+    return { label: 'Task', icon: CheckSquare, ...NEUTRAL_TYPE_STYLE };
   }
   if (typeUpper.includes('DECISION')) {
-    return {
-      label: 'Decision',
-      icon: AlertCircle,
-      color: 'text-purple-700 dark:text-purple-400',
-      bg: 'bg-purple-100 dark:bg-purple-500/20',
-    };
+    return { label: 'Decision', icon: AlertCircle, ...NEUTRAL_TYPE_STYLE };
   }
   if (typeUpper.includes('AI') || typeUpper.includes('RECOMMENDATION')) {
-    return {
-      label: 'AI Insight',
-      icon: Sparkles,
-      color: 'text-emerald-700 dark:text-emerald-400',
-      bg: 'bg-emerald-100 dark:bg-emerald-500/20',
-    };
+    return { label: 'AI Insight', icon: Sparkles, ...NEUTRAL_TYPE_STYLE };
   }
   if (typeUpper.includes('GATE') || typeUpper.includes('APPROVAL')) {
-    return {
-      label: 'Approval',
-      icon: Target,
-      color: 'text-amber-700 dark:text-amber-400',
-      bg: 'bg-amber-100 dark:bg-amber-500/20',
-    };
+    return { label: 'Approval', icon: Target, ...NEUTRAL_TYPE_STYLE };
   }
   if (typeUpper.includes('SYSTEM') || typeUpper.includes('SECURITY')) {
-    return {
-      label: 'System',
-      icon: Bot,
-      color: 'text-slate-700 dark:text-slate-400',
-      bg: 'bg-slate-100 dark:bg-slate-500/20',
-    };
+    return { label: 'System', icon: Bot, ...NEUTRAL_TYPE_STYLE };
   }
   if (
     typeUpper.includes('BILLING') ||
@@ -196,31 +176,17 @@ const getTypeConfig = (type: string) => {
     typeUpper.includes('INVOICE') ||
     typeUpper.includes('LIMIT')
   ) {
-    return {
-      label: 'Billing',
-      icon: CreditCard,
-      color: 'text-indigo-700 dark:text-indigo-400',
-      bg: 'bg-indigo-100 dark:bg-indigo-500/20',
-    };
+    return { label: 'Billing', icon: CreditCard, ...NEUTRAL_TYPE_STYLE };
   }
   if (typeUpper.startsWith('DBR77_') || typeUpper.includes('DBR77')) {
-    const icon = typeUpper.includes('KB') || typeUpper.includes('INSTRUCTION') ? BookOpen : Megaphone;
-    return {
-      label: 'DBR77',
-      icon,
-      color: 'text-purple-700 dark:text-purple-400',
-      bg: 'bg-purple-100 dark:bg-purple-500/20',
-    };
+    const icon =
+      typeUpper.includes('KB') || typeUpper.includes('INSTRUCTION') ? BookOpen : Megaphone;
+    return { label: 'DBR77', icon, ...NEUTRAL_TYPE_STYLE };
   }
-  return {
-    label: 'Alert',
-    icon: Bell,
-    color: 'text-slate-700 dark:text-slate-400',
-    bg: 'bg-slate-100 dark:bg-slate-500/20',
-  };
+  return { label: 'Alert', icon: Bell, ...NEUTRAL_TYPE_STYLE };
 };
 
-// Get severity config
+// Get severity config — alarm for CRITICAL/WARNING, neutral for INFO
 const getSeverityConfig = (severity: string) => {
   switch (severity) {
     case 'CRITICAL':
@@ -242,9 +208,9 @@ const getSeverityConfig = (severity: string) => {
     default:
       return {
         label: 'Info',
-        color: 'text-blue-700 dark:text-blue-400',
-        bg: 'bg-blue-100 dark:bg-blue-500/20',
-        dot: 'bg-blue-500',
+        color: 'text-slate-600 dark:text-slate-400',
+        bg: 'bg-slate-100 dark:bg-navy-800/60',
+        dot: 'bg-slate-400 dark:bg-slate-500',
         icon: Info,
       };
   }
@@ -1101,10 +1067,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
 
                 {mutedTypesOpen && (
                   <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setMutedTypesOpen(false)}
-                    />
+                    <div className="fixed inset-0 z-40" onClick={() => setMutedTypesOpen(false)} />
                     <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/60 shadow-xl overflow-hidden">
                       <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700/60 flex items-center justify-between">
                         <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">

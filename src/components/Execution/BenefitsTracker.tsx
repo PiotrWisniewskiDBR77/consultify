@@ -141,7 +141,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
     return (
       <div className="space-y-6">
         <div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <TrendingUp className="text-green-500" size={24} />
             Benefits Realization
           </h3>
@@ -229,9 +229,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Avg. Realization</div>
-          <div className="text-2xl font-bold text-purple-400">
-            {stats.avgRealization}%
-          </div>
+          <div className="text-2xl font-bold text-purple-400">{stats.avgRealization}%</div>
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Benefits Achieved</div>
@@ -241,9 +239,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">In Progress</div>
-          <div className="text-2xl font-bold text-amber-400">
-            {stats.partial}
-          </div>
+          <div className="text-2xl font-bold text-amber-400">{stats.partial}</div>
         </div>
       </div>
 
@@ -329,9 +325,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
                           ? `${(benefit.currentValue / 1000).toFixed(0)}k`
                           : benefit.currentValue}
                       </span>
-                      <span className="text-sm text-slate-500 ml-1">
-                        {benefit.unit}
-                      </span>
+                      <span className="text-sm text-slate-500 ml-1">{benefit.unit}</span>
                     </div>
                     <div className="text-right">
                       <span className="text-sm text-slate-500 dark:text-slate-400">
@@ -411,7 +405,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
               </div>
 
               {/* Footer */}
-                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between">
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between">
                 <div className="text-xs text-slate-500 dark:text-slate-400">
                   <strong>Measurement:</strong> {benefit.measurementCriteria}
                 </div>

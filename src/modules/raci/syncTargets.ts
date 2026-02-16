@@ -4,7 +4,9 @@ const SYNC_TARGET_PATTERN =
   /^(?<provider>slack|teams|jira|webhook):(?<workspace>[^:\s]+):(?<external>[^:\s]+)(?::(?<extra>[^:\s]+))?$/i;
 
 export function normalizeProvider(raw: string): SyncProvider | null {
-  const value = String(raw || '').trim().toLowerCase();
+  const value = String(raw || '')
+    .trim()
+    .toLowerCase();
   if (value === 'slack' || value === 'teams' || value === 'jira' || value === 'webhook') {
     return value;
   }

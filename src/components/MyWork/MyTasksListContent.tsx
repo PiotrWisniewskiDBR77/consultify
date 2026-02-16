@@ -58,57 +58,82 @@ interface MyTasksListContentProps {
   onCountsChange: (counts: TaskCounts) => void;
 }
 
-// Priority colors
+// Priority colors — 5-color semantic palette
 const getPriorityConfig = (priority?: string) => {
   switch (priority?.toLowerCase()) {
     case 'urgent':
     case 'critical':
-      return { color: 'text-red-400', bg: 'bg-red-500', dot: 'bg-red-500', label: 'Critical' };
+      return {
+        color: 'text-red-600 dark:text-red-400',
+        bg: 'bg-red-500',
+        dot: 'bg-red-500',
+        label: 'Critical',
+      };
     case 'high':
-      return { color: 'text-orange-400', bg: 'bg-orange-500', dot: 'bg-orange-500', label: 'High' };
+      return {
+        color: 'text-amber-600 dark:text-amber-400',
+        bg: 'bg-amber-500',
+        dot: 'bg-amber-500',
+        label: 'High',
+      };
     case 'medium':
-      return { color: 'text-blue-400', bg: 'bg-blue-500', dot: 'bg-blue-500', label: 'Medium' };
+      return {
+        color: 'text-blue-600 dark:text-blue-400',
+        bg: 'bg-blue-500',
+        dot: 'bg-blue-500',
+        label: 'Medium',
+      };
     case 'low':
-      return { color: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-500', dot: 'bg-slate-500', label: 'Low' };
+      return {
+        color: 'text-slate-500 dark:text-slate-400',
+        bg: 'bg-slate-400',
+        dot: 'bg-slate-400',
+        label: 'Low',
+      };
     default:
-      return { color: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-500', dot: 'bg-slate-500', label: 'Normal' };
+      return {
+        color: 'text-slate-500 dark:text-slate-400',
+        bg: 'bg-slate-400',
+        dot: 'bg-slate-400',
+        label: 'Normal',
+      };
   }
 };
 
-// Status config
+// Status config — subtle/ghost badges, alarm only for blocked/rejected
 const getStatusConfig = (status?: string) => {
   switch (status?.toLowerCase()) {
     case 'done':
     case 'completed':
     case 'validated':
       return {
-        color: 'text-emerald-700 dark:text-emerald-400',
-        bg: 'bg-emerald-100 dark:bg-emerald-500/20',
+        color: 'text-emerald-600 dark:text-emerald-400',
+        bg: 'bg-emerald-50/70 dark:bg-emerald-500/10',
         dot: 'bg-emerald-500',
         label: 'Done',
       };
     case 'in_progress':
     case 'in progress':
       return {
-        color: 'text-blue-700 dark:text-blue-400',
-        bg: 'bg-blue-100 dark:bg-blue-500/20',
+        color: 'text-blue-600 dark:text-blue-400',
+        bg: 'bg-blue-50/70 dark:bg-blue-500/10',
         dot: 'bg-blue-500',
         label: 'In progress',
       };
     case 'pending_approval':
     case 'pending approval':
       return {
-        color: 'text-purple-700 dark:text-purple-400',
-        bg: 'bg-purple-100 dark:bg-purple-500/20',
-        dot: 'bg-purple-500',
+        color: 'text-amber-600 dark:text-amber-400',
+        bg: 'bg-amber-50/70 dark:bg-amber-500/10',
+        dot: 'bg-amber-500',
         label: 'Pending approval',
       };
     case 'review':
       return {
-        color: 'text-purple-700 dark:text-purple-400',
-        bg: 'bg-purple-100 dark:bg-purple-500/20',
-        dot: 'bg-purple-500',
-        label: 'Pending approval',
+        color: 'text-amber-600 dark:text-amber-400',
+        bg: 'bg-amber-50/70 dark:bg-amber-500/10',
+        dot: 'bg-amber-500',
+        label: 'In review',
       };
     case 'blocked':
       return {
@@ -120,16 +145,16 @@ const getStatusConfig = (status?: string) => {
     case 'cancelled':
     case 'canceled':
       return {
-        color: 'text-slate-700 dark:text-slate-400',
-        bg: 'bg-slate-100 dark:bg-slate-500/20',
-        dot: 'bg-slate-500',
+        color: 'text-slate-600 dark:text-slate-400',
+        bg: 'bg-slate-100 dark:bg-navy-800/60',
+        dot: 'bg-slate-400 dark:bg-slate-500',
         label: 'Cancelled',
       };
     default:
       return {
-        color: 'text-slate-700 dark:text-slate-400',
-        bg: 'bg-slate-100 dark:bg-slate-500/20',
-        dot: 'bg-slate-500',
+        color: 'text-slate-600 dark:text-slate-400',
+        bg: 'bg-slate-100 dark:bg-navy-800/60',
+        dot: 'bg-slate-400 dark:bg-slate-500',
         label: 'To Do',
       };
   }
@@ -890,7 +915,9 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
         {tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
             <CheckCircle2 size={48} className="text-slate-600 mb-4" />
-            <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">No tasks yet</h3>
+            <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
+              No tasks yet
+            </h3>
             <p className="text-sm text-slate-500 mb-4">Create your first task to get started</p>
             <button
               onClick={onCreateTask}

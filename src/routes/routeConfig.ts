@@ -62,6 +62,16 @@ export const ROUTES = {
     STRATEGY: '/context/strategy',
   },
 
+  // Organization (Settings-like module)
+  ORGANIZATION: {
+    ROOT: '/organization',
+    PROFILE: '/organization/profile',
+    GOALS: '/organization/goals',
+    CHALLENGES: '/organization/challenges',
+    MEGATRENDS: '/organization/megatrends',
+    STRATEGY: '/organization/strategy',
+  },
+
   // Transformation Modules
   INITIATIVES: '/initiatives',
   ROADMAP: '/roadmap',
@@ -208,6 +218,9 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.CONTEXT_BUILDER_CHALLENGES]: ROUTES.CONTEXT_BUILDER.CHALLENGES,
   [AppView.CONTEXT_BUILDER_MEGATRENDS]: ROUTES.CONTEXT_BUILDER.MEGATRENDS,
   [AppView.CONTEXT_BUILDER_STRATEGY]: ROUTES.CONTEXT_BUILDER.STRATEGY,
+
+  // Organization (Settings-like)
+  [AppView.ORGANIZATION_PROFILE]: ROUTES.ORGANIZATION.PROFILE,
 
   // Transformation
   [AppView.FULL_STEP1_CONTEXT]: ROUTES.CONTEXT_BUILDER.ROOT,
@@ -438,6 +451,7 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.ASSESSMENT.ROOT)) return AppView.ASSESSMENT_OVERVIEW;
   if (normalized.startsWith(ROUTES.DISCOVERY_TOOLS.ROOT)) return AppView.DISCOVERY_TOOLS;
   if (normalized.startsWith(ROUTES.CONTEXT_BUILDER.ROOT)) return AppView.CONTEXT_BUILDER;
+  if (normalized.startsWith(ROUTES.ORGANIZATION.ROOT)) return AppView.ORGANIZATION_PROFILE;
 
   return null;
 }

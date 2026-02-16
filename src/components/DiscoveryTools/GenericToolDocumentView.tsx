@@ -145,7 +145,9 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
               <div className="text-xs text-slate-500">
                 {computedType} · {computedStatus}
               </div>
-              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mt-1 truncate">{computedTitle}</h1>
+              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mt-1 truncate">
+                {computedTitle}
+              </h1>
             </div>
           </div>
 
@@ -187,7 +189,9 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
 
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Context Snapshot</h3>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Context Snapshot
+                </h3>
                 <button
                   onClick={() => copyJson(session?.contextSnapshot)}
                   className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
@@ -202,7 +206,9 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
 
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Answers / Data</h3>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Answers / Data
+                </h3>
                 <button
                   onClick={() => copyJson(session?.answers)}
                   className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
@@ -219,19 +225,27 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
           {/* RIGHT: control */}
           <div className="space-y-6">
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Session Info</h3>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                Session Info
+              </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500 dark:text-slate-400">ID</span>
-                  <span className="text-slate-700 dark:text-slate-200 font-mono text-xs">{session?.id}</span>
+                  <span className="text-slate-700 dark:text-slate-200 font-mono text-xs">
+                    {session?.id}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500 dark:text-slate-400">Tool Type</span>
-                  <span className="text-slate-700 dark:text-slate-200">{session?.toolType || computedType}</span>
+                  <span className="text-slate-700 dark:text-slate-200">
+                    {session?.toolType || computedType}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500 dark:text-slate-400">Status</span>
-                  <span className="text-slate-700 dark:text-slate-200">{session?.status || computedStatus}</span>
+                  <span className="text-slate-700 dark:text-slate-200">
+                    {session?.status || computedStatus}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500 dark:text-slate-400">Project</span>
@@ -243,7 +257,9 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
             </div>
 
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Why you saw the placeholder</h3>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                Why you saw the placeholder
+              </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 This session uses a tool type that doesn’t have a dedicated UI yet. Instead of
                 blocking you, this generic view shows the full session payload so you can work with

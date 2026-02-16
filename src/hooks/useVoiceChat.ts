@@ -47,8 +47,10 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
     const loadVoices = () => {
       const voices = synthRef.current?.getVoices() || [];
 
-      // Get current language from i18n
-      const i18nLang = localStorage.getItem('i18nextLng') || 'pl';
+      // Get current language from browser settings
+      const browserLocale = navigator.languages?.[0] || navigator.language || 'pl-PL';
+      const base = String(browserLocale).split('-')[0].toLowerCase();
+      const i18nLang = base === 'ja' ? 'jp' : base;
       const langCodeMap: Record<string, string> = {
         pl: 'pl',
         en: 'en',

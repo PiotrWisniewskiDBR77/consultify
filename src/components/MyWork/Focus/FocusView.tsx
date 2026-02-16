@@ -213,7 +213,10 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
           {...listeners}
           className="shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
         >
-          <GripVertical size={16} className="text-slate-700 dark:text-slate-300 dark:text-slate-600" />
+          <GripVertical
+            size={16}
+            className="text-slate-700 dark:text-slate-300 dark:text-slate-600"
+          />
         </div>
 
         {/* Type Badge & Completion Toggle */}
@@ -260,7 +263,9 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
               {/* Title */}
               <h4
                 className={`text-sm font-semibold truncate ${
-                  item.isCompleted ? 'text-slate-500 dark:text-slate-400 line-through' : 'text-navy-900 dark:text-white'
+                  item.isCompleted
+                    ? 'text-slate-500 dark:text-slate-400 line-through'
+                    : 'text-navy-900 dark:text-white'
                 }`}
               >
                 {item.title}

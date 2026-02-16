@@ -43,20 +43,20 @@ export const PillNavigation: React.FC<PillNavigationProps> = ({
       label: t('myWork.tasks', 'Tasks'),
       icon: CheckSquare,
       count: counts.tasks,
-      activeColor: 'bg-blue-500 text-white',
+      activeColor: 'bg-slate-800 dark:bg-white/15 text-white',
     },
     {
       key: 'decisions',
       label: t('myWork.decisions', 'Decisions'),
       icon: Scale,
       count: counts.decisions,
-      activeColor: 'bg-purple-500 text-white',
+      activeColor: 'bg-slate-800 dark:bg-white/15 text-white',
     },
     {
       key: 'projects',
       label: t('myWork.projects', 'Projects'),
       icon: FolderKanban,
-      activeColor: 'bg-emerald-500 text-white',
+      activeColor: 'bg-slate-800 dark:bg-white/15 text-white',
       comingSoon: true,
     },
   ];

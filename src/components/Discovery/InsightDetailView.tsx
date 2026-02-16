@@ -348,7 +348,9 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
         {/* Header Card */}
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
           {/* Type Banner */}
-          <div className={`px-6 py-3 ${typeConfig.bgColor} border-b border-slate-200 dark:border-navy-700`}>
+          <div
+            className={`px-6 py-3 ${typeConfig.bgColor} border-b border-slate-200 dark:border-navy-700`}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className={typeConfig.color}>{typeConfig.icon}</span>
@@ -374,7 +376,9 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
 
           {/* Title & Meta */}
           <div className="p-6">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">{insight.title}</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+              {insight.title}
+            </h1>
 
             {/* Metadata Row */}
             <div className="flex flex-wrap items-center gap-4 text-sm">

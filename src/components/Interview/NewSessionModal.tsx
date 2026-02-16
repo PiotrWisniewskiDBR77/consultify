@@ -306,7 +306,9 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                 >
                   {selectedTemplate ? (
                     <div>
-                      <span className="text-slate-900 dark:text-white">{selectedTemplate.name}</span>
+                      <span className="text-slate-900 dark:text-white">
+                        {selectedTemplate.name}
+                      </span>
                       {selectedTemplate.questionCount && (
                         <span className="ml-2 text-xs text-slate-500">
                           ({selectedTemplate.questionCount} {isPolish ? 'pytań' : 'questions'})

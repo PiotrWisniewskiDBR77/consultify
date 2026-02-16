@@ -19,7 +19,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -28,6 +27,8 @@ import {
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { Api } from '@/services/api';
+
+import { RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 
 type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
 type InboxItemType =
@@ -467,9 +468,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               {isPolish ? 'Inbox (Action Queue)' : 'Inbox (Action Queue)'}
             </div>
             <div className="text-sm text-slate-600 dark:text-slate-400">
-              {isPolish
-                ? 'Tylko rzeczy wymagające akcji.'
-                : 'Only items requiring action.'}
+              {isPolish ? 'Tylko rzeczy wymagające akcji.' : 'Only items requiring action.'}
             </div>
           </div>
         </div>
@@ -496,10 +495,16 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             const count = sectionCounts[section];
             const label =
               section === 'today'
-                ? isPolish ? 'Dziś' : 'Today'
+                ? isPolish
+                  ? 'Dziś'
+                  : 'Today'
                 : section === 'this_week'
-                  ? isPolish ? 'Ten tydzień' : 'This Week'
-                  : isPolish ? 'Wszystkie' : 'All';
+                  ? isPolish
+                    ? 'Ten tydzień'
+                    : 'This Week'
+                  : isPolish
+                    ? 'Wszystkie'
+                    : 'All';
             return (
               <button
                 key={section}
@@ -572,7 +577,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                     style={{ width: columnWidths.status }}
                   >
                     <div className="flex items-center gap-1">
-                      <span className={(tableFilters.status as string[])?.length ? 'text-primary-500' : ''}>
+                      <span
+                        className={
+                          (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
+                        }
+                      >
                         Status
                       </span>
                       <FilterDropdown
@@ -580,7 +589,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                         value={tableFilters.status as string[]}
                         onChange={(val) => handleFilterChange('status', val as string[])}
                         isOpen={openFilterId === 'status'}
-                        onToggle={() => setOpenFilterId(openFilterId === 'status' ? null : 'status')}
+                        onToggle={() =>
+                          setOpenFilterId(openFilterId === 'status' ? null : 'status')
+                        }
                         onClose={() => setOpenFilterId(null)}
                       />
                     </div>
@@ -599,7 +610,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                     style={{ width: columnWidths.urgency }}
                   >
                     <div className="flex items-center gap-1">
-                      <span className={(tableFilters.urgency as string[])?.length ? 'text-primary-500' : ''}>
+                      <span
+                        className={
+                          (tableFilters.urgency as string[])?.length ? 'text-primary-500' : ''
+                        }
+                      >
                         Urgency
                       </span>
                       <FilterDropdown
@@ -607,7 +622,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                         value={tableFilters.urgency as string[]}
                         onChange={(val) => handleFilterChange('urgency', val as string[])}
                         isOpen={openFilterId === 'urgency'}
-                        onToggle={() => setOpenFilterId(openFilterId === 'urgency' ? null : 'urgency')}
+                        onToggle={() =>
+                          setOpenFilterId(openFilterId === 'urgency' ? null : 'urgency')
+                        }
                         onClose={() => setOpenFilterId(null)}
                       />
                     </div>
@@ -626,7 +643,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                     style={{ width: columnWidths.type }}
                   >
                     <div className="flex items-center gap-1">
-                      <span className={(tableFilters.type as string[])?.length ? 'text-primary-500' : ''}>
+                      <span
+                        className={
+                          (tableFilters.type as string[])?.length ? 'text-primary-500' : ''
+                        }
+                      >
                         Type
                       </span>
                       <FilterDropdown

@@ -137,7 +137,7 @@ export function getOrganizationMenuItem(t: TranslationFn): MenuItem {
     id: 'ORGANIZATION',
     label: t('sidebar.organization'),
     icon: React.createElement(Factory, { size: 20 }),
-    viewId: AppView.CONTEXT_BUILDER_PROFILE,
+    viewId: AppView.ORGANIZATION_PROFILE,
     // No subItems - organization module has its own internal navigation (like Settings)
   };
 }

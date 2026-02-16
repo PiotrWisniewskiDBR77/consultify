@@ -423,7 +423,9 @@ export const LeanForm: React.FC<LeanFormProps> = ({
             </div>
             <div className="text-left">
               <h4 className="text-slate-900 dark:text-white font-medium">{process.name}</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{process.department || 'No department'}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {process.department || 'No department'}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -605,7 +607,10 @@ export const LeanForm: React.FC<LeanFormProps> = ({
     return (
       <div className="space-y-4">
         {areas.map((area) => (
-          <div key={area.key} className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+          <div
+            key={area.key}
+            className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4"
+          >
             <label className="block text-sm font-medium text-slate-900 dark:text-white mb-3">
               {isPolish ? area.namePL : area.name}
             </label>

@@ -409,7 +409,9 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
                     >
                       {level.level}
                     </div>
-                    <span className="text-slate-500 dark:text-slate-400 text-[10px]">{level.name}</span>
+                    <span className="text-slate-500 dark:text-slate-400 text-[10px]">
+                      {level.name}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -444,7 +446,9 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
               </div>
               <span className="text-sm text-slate-500 dark:text-slate-400">
                 Avg Score:{' '}
-                <span className="text-slate-900 dark:text-white font-medium">{data.overallScore || '-'}</span>
+                <span className="text-slate-900 dark:text-white font-medium">
+                  {data.overallScore || '-'}
+                </span>
               </span>
             </div>
           </div>
@@ -494,7 +498,9 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
                     {categoryData.averageLevel}
                   </span>
                 )}
-                <span className="text-xs text-slate-500 dark:text-slate-400">({category.practiceAreaIds.length})</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  ({category.practiceAreaIds.length})
+                </span>
               </button>
             );
           })}

@@ -46,7 +46,11 @@ import { useNavigate } from 'react-router-dom';
 
 import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
 import { Api } from '@/services/api';
-import { getStatusActions, getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
+import {
+  getStatusActions,
+  getStatusesForModule,
+  STATUS_METADATA,
+} from '@/services/initiativeLifecycle';
 
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
@@ -55,6 +59,7 @@ import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { DecisionsPanel } from '../MyWork/DecisionsPanel';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
+import { StatusDropdown } from '../shared/ModuleHub';
 import {
   FilterableTable,
   FilterChip,
@@ -177,7 +182,9 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <GripVertical size={14} className="text-slate-500 flex-shrink-0" />
-          <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2">{task.title}</h4>
+          <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2">
+            {task.title}
+          </h4>
         </div>
         {isPastDue(task.dueDate) && (
           <span className="text-[10px] text-rose-400 uppercase tracking-wide flex-shrink-0">
@@ -186,7 +193,9 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }
         )}
       </div>
       {task.initiativeName && (
-        <div className="text-xs text-slate-500 dark:text-slate-400 mb-2 ml-6">{task.initiativeName}</div>
+        <div className="text-xs text-slate-500 dark:text-slate-400 mb-2 ml-6">
+          {task.initiativeName}
+        </div>
       )}
       <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 ml-6">
         <span className="capitalize">{task.priority}</span>
@@ -253,7 +262,9 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         {tasks.length === 0 && (
           <div
             className={`text-center text-xs py-6 border-2 border-dashed rounded-lg transition-colors ${
-              isOver ? 'border-cyan-500/50 text-cyan-400' : 'border-slate-300 dark:border-navy-700 text-slate-500 dark:text-slate-400'
+              isOver
+                ? 'border-cyan-500/50 text-cyan-400'
+                : 'border-slate-300 dark:border-navy-700 text-slate-500 dark:text-slate-400'
             }`}
           >
             {isOver ? t('execution.kanban.dropHere') : t('execution.kanban.noTasks')}
@@ -573,7 +584,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           return (
             <div className="flex items-center gap-2">
               <Target size={14} className="text-cyan-400" />
-              <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">{code}</span>
+              <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+                {code}
+              </span>
             </div>
           );
         },
@@ -581,7 +594,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       {
         id: 'name',
         label: t('execution.table.name'),
-        render: (row) => <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>,
+        render: (row) => (
+          <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
+        ),
       },
       {
         id: 'status',
@@ -598,8 +613,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const actions = getStatusActions(row.status as InitiativeStatus);
           return (
             <div className="relative group">
-              <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${meta?.bgColor || ''} ${meta?.color || ''}`}>
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${meta?.dotColor || 'bg-slate-400'}`} />
+              <div
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${meta?.bgColor || ''} ${meta?.color || ''}`}
+              >
+                <div
+                  className={`w-2 h-2 rounded-full flex-shrink-0 ${meta?.dotColor || 'bg-slate-400'}`}
+                />
                 {meta?.label || row.status}
               </div>
               {actions.length > 0 && (
@@ -630,7 +649,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         width: '150px',
         render: (row) => {
           const owner = row.ownerBusiness || row.ownerTechnical;
-          if (!owner) return <span className="text-slate-500 text-sm">{t('execution.table.unassigned')}</span>;
+          if (!owner)
+            return (
+              <span className="text-slate-500 text-sm">{t('execution.table.unassigned')}</span>
+            );
           return (
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-xs text-slate-400 dark:text-white">
@@ -670,7 +692,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                   style={{ width: `${Math.min(progress, 100)}%` }}
                 />
               </div>
-              <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-right">{progress}%</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-right">
+                {progress}%
+              </span>
             </div>
           );
         },
@@ -701,7 +725,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             return (
               <span className="text-xs text-rose-400 font-medium flex items-center gap-1">
                 <AlertTriangle size={12} />
-                {Math.abs(diffDays)}{t('execution.time.daysOverdue')}
+                {Math.abs(diffDays)}
+                {t('execution.time.daysOverdue')}
               </span>
             );
           }
@@ -710,17 +735,28 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             return (
               <span className="text-xs text-amber-400 flex items-center gap-1">
                 <Clock size={12} />
-                {diffDays}{t('execution.time.daysLeft')}
+                {diffDays}
+                {t('execution.time.daysLeft')}
               </span>
             );
           }
 
           if (diffDays <= 30) {
-            return <span className="text-xs text-slate-700 dark:text-slate-300">{diffDays}{t('execution.time.daysLeft')}</span>;
+            return (
+              <span className="text-xs text-slate-700 dark:text-slate-300">
+                {diffDays}
+                {t('execution.time.daysLeft')}
+              </span>
+            );
           }
 
           const weeks = Math.ceil(diffDays / 7);
-          return <span className="text-xs text-slate-500 dark:text-slate-400">{weeks}{t('execution.time.weeksLeft')}</span>;
+          return (
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {weeks}
+              {t('execution.time.weeksLeft')}
+            </span>
+          );
         },
       },
       {
@@ -830,7 +866,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const deadline = row.slaDeadline || row.plannedEndDate;
           const isOverdue = new Date(deadline) < new Date() && row.status !== InitiativeStatus.DONE;
           return (
-            <span className={`text-sm ${isOverdue ? 'text-red-400' : 'text-slate-700 dark:text-slate-300'}`}>
+            <span
+              className={`text-sm ${isOverdue ? 'text-red-400' : 'text-slate-700 dark:text-slate-300'}`}
+            >
               {new Date(deadline).toLocaleDateString()}
             </span>
           );
@@ -840,18 +878,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [t, decisionsByInitiative, tasksByInitiative]
   );
 
-  const statusFilters = useMemo(
-    () => [
-      { id: 'all', label: t('execution.filters.all'), color: 'bg-slate-400', count: initiatives.length },
-      ...EXECUTION_STATUSES.map((status) => ({
-        id: status,
-        label: STATUS_METADATA[status].label,
-        color: STATUS_METADATA[status].dotColor,
-        count: statusCounts[status] ?? 0,
-      })),
-    ],
-    [t, initiatives.length, statusCounts]
-  );
+  // Status counts for the StatusDropdown (replaces legacy inline buttons)
+  const statusDropdownCounts: Record<string, number> = useMemo(() => {
+    const counts: Record<string, number> = { all: initiatives.length };
+    EXECUTION_STATUSES.forEach((s) => {
+      counts[s] = statusCounts[s] ?? 0;
+    });
+    return counts;
+  }, [initiatives.length, statusCounts]);
 
   const portfolioMetrics = useMemo(() => {
     const totalInitiatives = initiatives.length;
@@ -1233,21 +1267,36 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     const columns: { id: KanbanColumnId; label: string; accent: string; icon: React.ReactNode }[] =
       [
-        { id: 'todo', label: t('execution.kanban.toDo'), accent: 'text-slate-300', icon: <ClipboardList size={14} /> },
+        {
+          id: 'todo',
+          label: t('execution.kanban.toDo'),
+          accent: 'text-slate-300',
+          icon: <ClipboardList size={14} />,
+        },
         {
           id: 'in_progress',
           label: t('execution.kanban.inProgress'),
           accent: 'text-cyan-300',
           icon: <Target size={14} />,
         },
-        { id: 'review', label: t('execution.kanban.review'), accent: 'text-amber-300', icon: <Scale size={14} /> },
+        {
+          id: 'review',
+          label: t('execution.kanban.review'),
+          accent: 'text-amber-300',
+          icon: <Scale size={14} />,
+        },
         {
           id: 'blocked',
           label: t('execution.kanban.blocked'),
           accent: 'text-rose-300',
           icon: <AlertTriangle size={14} />,
         },
-        { id: 'done', label: t('execution.kanban.done'), accent: 'text-emerald-300', icon: <CheckCircle2 size={14} /> },
+        {
+          id: 'done',
+          label: t('execution.kanban.done'),
+          accent: 'text-emerald-300',
+          icon: <CheckCircle2 size={14} />,
+        },
       ];
 
     return (
@@ -1319,13 +1368,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const handleInlineStatusChange = useCallback(
     async (initiativeId: string, newStatus: string) => {
       try {
-        await Api.patch(`/initiatives/${initiativeId}`, { status: newStatus });
+        // Backend exposes a dedicated status transition endpoint (with validation + governance rules).
+        await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
         setInitiatives((prev) =>
-          prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus as InitiativeStatus } : i))
+          prev.map((i) =>
+            i.id === initiativeId ? { ...i, status: newStatus as InitiativeStatus } : i
+          )
         );
         toast.success(t('execution.toast.statusUpdated', 'Status updated'));
       } catch (e: any) {
-        toast.error(e?.message || t('execution.toast.statusUpdateFailed', 'Failed to update status'));
+        toast.error(
+          e?.message || t('execution.toast.statusUpdateFailed', 'Failed to update status')
+        );
       }
     },
     [t]
@@ -1384,8 +1438,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.onTrack')}</p>
-              <p className="text-2xl font-semibold text-slate-900 dark:text-white">{portfolioMetrics.onTrackCount}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.portfolio.onTrack')}
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                {portfolioMetrics.onTrackCount}
+              </p>
             </div>
             <CheckCircle2 className="text-emerald-400" />
           </div>
@@ -1393,8 +1451,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.blocked')}</p>
-              <p className="text-2xl font-semibold text-slate-900 dark:text-white">{portfolioMetrics.blockedCount}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.portfolio.blocked')}
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                {portfolioMetrics.blockedCount}
+              </p>
             </div>
             <AlertTriangle className="text-rose-400" />
           </div>
@@ -1402,7 +1464,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.overdueDecisions')}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.portfolio.overdueDecisions')}
+              </p>
               <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                 {portfolioMetrics.overdueDecisions}
               </p>
@@ -1413,8 +1477,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.avgProgress')}</p>
-              <p className="text-2xl font-semibold text-slate-900 dark:text-white">{portfolioMetrics.avgProgress}%</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.portfolio.avgProgress')}
+              </p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                {portfolioMetrics.avgProgress}%
+              </p>
             </div>
             <Target className="text-cyan-400" />
           </div>
@@ -1422,7 +1490,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.budgetHealth')}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.portfolio.budgetHealth')}
+              </p>
               <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                 {portfolioMetrics.budgetHealth === null ? '—' : `${portfolioMetrics.budgetHealth}%`}
               </p>
@@ -1433,7 +1503,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.decisionSla')}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {t('execution.portfolio.decisionSla')}
+              </p>
               <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                 {portfolioMetrics.totalDecisions === 0
                   ? '—'
@@ -1445,13 +1517,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 sm:col-span-2 lg:col-span-3">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t('execution.portfolio.escalationsGates')}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              {t('execution.portfolio.escalationsGates')}
+            </p>
             <span className="text-xs text-slate-500">
               {portfolioMetrics.stageGate?.gateType || 'No gate info'}
             </span>
           </div>
           {portfolioMetrics.blockers.length === 0 ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">{t('execution.portfolio.noActiveEscalations')}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t('execution.portfolio.noActiveEscalations')}
+            </p>
           ) : (
             <div className="space-y-2">
               {portfolioMetrics.blockers.slice(0, 4).map((blocker, idx) => (
@@ -1473,13 +1549,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const renderAIInsights = () => (
     <div className="grid gap-4 lg:grid-cols-3">
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">{t('execution.ai.priorityRecommendations')}</h3>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+          {t('execution.ai.priorityRecommendations')}
+        </h3>
         {aiInsights.priorityRecommendations.length === 0 ? (
-          <p className="text-xs text-slate-500 dark:text-slate-400">{t('execution.ai.noPriorities')}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {t('execution.ai.noPriorities')}
+          </p>
         ) : (
           <div className="space-y-2">
             {aiInsights.priorityRecommendations.map((item, idx) => (
-              <div key={`${item.title}-${idx}`} className="text-xs text-slate-700 dark:text-slate-300">
+              <div
+                key={`${item.title}-${idx}`}
+                className="text-xs text-slate-700 dark:text-slate-300"
+              >
                 <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
                 <span className="text-slate-500"> · {item.context}</span>
               </div>
@@ -1488,13 +1571,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         )}
       </div>
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">{t('execution.ai.timelineConflicts')}</h3>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+          {t('execution.ai.timelineConflicts')}
+        </h3>
         {aiInsights.timelineConflicts.length === 0 ? (
-          <p className="text-xs text-slate-500 dark:text-slate-400">{t('execution.ai.noConflicts')}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {t('execution.ai.noConflicts')}
+          </p>
         ) : (
           <div className="space-y-2">
             {aiInsights.timelineConflicts.map((item, idx) => (
-              <div key={`${item.title}-${idx}`} className="text-xs text-slate-700 dark:text-slate-300">
+              <div
+                key={`${item.title}-${idx}`}
+                className="text-xs text-slate-700 dark:text-slate-300"
+              >
                 <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
                 <span className="text-slate-500"> · {item.context}</span>
               </div>
@@ -1503,13 +1593,18 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         )}
       </div>
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">{t('execution.ai.riskSuggestions')}</h3>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+          {t('execution.ai.riskSuggestions')}
+        </h3>
         {aiInsights.riskAlerts.length === 0 ? (
           <p className="text-xs text-slate-500 dark:text-slate-400">{t('execution.ai.noRisks')}</p>
         ) : (
           <div className="space-y-2">
             {aiInsights.riskAlerts.map((item, idx) => (
-              <div key={`${item.title}-${idx}`} className="text-xs text-slate-700 dark:text-slate-300">
+              <div
+                key={`${item.title}-${idx}`}
+                className="text-xs text-slate-700 dark:text-slate-300"
+              >
                 <span className="font-medium text-slate-900 dark:text-white">{item.title}</span>
                 <span className="text-slate-500"> · {item.context}</span>
               </div>
@@ -1534,8 +1629,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         <div className="flex items-center justify-center h-80 text-slate-500 dark:text-slate-400">
           <div className="text-center">
             <CalendarDays className="w-12 h-12 mx-auto mb-4 text-cyan-400/50" />
-            <p className="text-lg text-slate-900 dark:text-white">{t('execution.empty.noDeadlines')}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{t('execution.empty.deadlinesWillAppear')}</p>
+            <p className="text-lg text-slate-900 dark:text-white">
+              {t('execution.empty.noDeadlines')}
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t('execution.empty.deadlinesWillAppear')}
+            </p>
           </div>
         </div>
       );
@@ -1551,7 +1650,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return (
       <div className="p-4 space-y-4">
         {Object.entries(grouped).map(([dateKey, items]) => (
-          <div key={dateKey} className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+          <div
+            key={dateKey}
+            className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4"
+          >
             <div className="flex items-center gap-2 mb-3 text-slate-700 dark:text-slate-300">
               <Calendar size={16} className="text-cyan-400" />
               <span className="text-sm font-semibold">
@@ -1587,7 +1689,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                   </div>
                   <div className="text-right text-xs text-slate-400">
                     <div>{item.ownerName || t('execution.table.unassigned')}</div>
-                    {isPastDue(item.dueDate) && <div className="text-rose-400">{t('execution.badges.overdue')}</div>}
+                    {isPastDue(item.dueDate) && (
+                      <div className="text-rose-400">{t('execution.badges.overdue')}</div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1656,10 +1760,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const renderRAIDTab = () => (
     <div className="p-4">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('execution.raidLog.title')}</h2>
-        <p className="text-sm text-slate-400">
-          {t('execution.raidLog.description')}
-        </p>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          {t('execution.raidLog.title')}
+        </h2>
+        <p className="text-sm text-slate-400">{t('execution.raidLog.description')}</p>
       </div>
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden p-4">
         <RAIDLog
@@ -1686,19 +1790,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Render Decisions tab
   const renderDecisionsTab = () => (
     <div className="p-4 h-full">
-      <DecisionsPanel onDecisionClick={(id) => {
-        // Open the decision detail — navigate to related initiative if possible
-        if (id) {
-          setActiveDocumentId(null);
-          // Decisions panel handles its own detail view, but we can try to find the related initiative
-          const relatedInitiative = initiatives.find((i) =>
-            (i as any).decisions?.some?.((d: any) => d.id === id)
-          );
-          if (relatedInitiative) {
-            handleOpenDocument(relatedInitiative);
+      <DecisionsPanel
+        onDecisionClick={(id) => {
+          // Open the decision detail — navigate to related initiative if possible
+          if (id) {
+            setActiveDocumentId(null);
+            // Decisions panel handles its own detail view, but we can try to find the related initiative
+            const relatedInitiative = initiatives.find((i) =>
+              (i as any).decisions?.some?.((d: any) => d.id === id)
+            );
+            if (relatedInitiative) {
+              handleOpenDocument(relatedInitiative);
+            }
           }
-        }
-      }} />
+        }}
+      />
     </div>
   );
 
@@ -1838,78 +1944,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     return (
       <div className="p-4 space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-sm text-slate-400">
-            Execution Center actions for tasks, decisions, and reporting.
-          </div>
-          <div className="flex items-center gap-2">
-            {/* D6.9: Presentation style switcher */}
-            <CardViewSwitcher
-              moduleId="execution"
-              value={cardViewStyle}
-              onChange={setCardViewStyle}
-              compact
-            />
-            <button
-              onClick={() => {
-                setViewMode('kanban');
-                toast(
-                  t('execution.toast.openTasksView', 'Otwórz widok Zadań, aby dodać nowe zadanie.')
-                );
-              }}
-              className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-cyan-500/50 transition-colors"
-            >
-              {t('execution.actions.newTask')}
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('decisions' as ModuleTab);
-              }}
-              className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-amber-500/50 transition-colors"
-            >
-              {t('execution.actions.newDecision')}
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('raid' as ModuleTab);
-              }}
-              className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-rose-500/50 transition-colors"
-            >
-              {t('execution.actions.raidLog')}
-            </button>
-            <button
-              onClick={handleExport}
-              className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-emerald-500/50 transition-colors"
-            >
-              {t('execution.actions.export')}
-            </button>
-            {/* D6.5: Report button — executive summary of all initiatives */}
-            <button
-              onClick={() => {
-                navigate('/reports');
-                toast.success(t('execution.reportNav', 'Opening execution report...'), {
-                  duration: 1500,
-                  icon: '📊',
-                });
-              }}
-              className="px-3 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 border border-indigo-500/50 text-sm text-white font-medium hover:from-indigo-500 hover:to-purple-500 transition-colors"
-            >
-              {t('execution.actions.report')}
-            </button>
-            <button
-              onClick={() => {
-                if (isChatCollapsed) {
-                  toggleChatCollapse();
-                }
-              }}
-              className="px-3 py-2 rounded-lg bg-gradient-to-r from-violet-600/20 to-cyan-600/20 border border-violet-500/30 text-sm text-violet-300 hover:text-white hover:border-violet-500/50 transition-colors flex items-center gap-2"
-              title="Open AI Chat for execution context"
-            >
-              <MessageSquare size={14} />
-              {t('execution.actions.aiChat')}
-            </button>
-          </div>
-        </div>
         {renderPortfolioHealth()}
         {renderAIInsights()}
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
@@ -1936,9 +1970,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        statusFilters={statusFilters}
+        statusDropdownContext="execution"
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}
+        statusCounts={statusDropdownCounts}
         availableViewModes={['table', 'grid', 'kanban', 'timeline', 'calendar']}
       >
         {renderContent()}

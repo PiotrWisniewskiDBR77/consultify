@@ -29,13 +29,13 @@ import { type SnoozePreset, useNotificationSnooze } from '@/hooks/useNotificatio
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
-
-import { Api } from '../../services/api';
-import { Notification } from '../../types';
 import {
   isNotificationTypeMuted,
   NOTIFICATION_MUTE_SESSION_CHANGED_EVENT,
 } from '@/utils/notificationMuteSession';
+
+import { Api } from '../../services/api';
+import { Notification } from '../../types';
 
 export const NotificationDropdown = () => {
   const { i18n } = useTranslation();
@@ -57,7 +57,9 @@ export const NotificationDropdown = () => {
         Api.getNotifications(false, 20), // Get recent 20
         Api.getUnreadNotificationCount(),
       ]);
-      setNotifications((Array.isArray(data) ? data : []).filter((n: any) => !isNotificationTypeMuted(n.type)));
+      setNotifications(
+        (Array.isArray(data) ? data : []).filter((n: any) => !isNotificationTypeMuted(n.type))
+      );
       setUnreadCount(count);
     } catch (error) {
       console.error('Failed to fetch notifications', error);

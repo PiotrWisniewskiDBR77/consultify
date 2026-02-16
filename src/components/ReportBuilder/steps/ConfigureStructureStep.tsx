@@ -293,7 +293,10 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
           <h3 className="font-semibold text-slate-900 dark:text-white">
             {isPl ? 'Dodaj Sekcję' : 'Add Section'}
           </h3>
-            <button onClick={onClose} className="text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+          <button
+            onClick={onClose}
+            className="text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -553,7 +556,9 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
                 <span className="font-medium text-slate-900 dark:text-white truncate">
                   {section.title}
                 </span>
-                {section.required && <span className="text-xs text-slate-500 dark:text-slate-400">(required)</span>}
+                {section.required && (
+                  <span className="text-xs text-slate-500 dark:text-slate-400">(required)</span>
+                )}
               </div>
               <div className="flex items-center gap-2 mt-1">
                 <span

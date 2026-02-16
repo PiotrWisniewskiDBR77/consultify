@@ -555,7 +555,9 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
             {/* Header */}
             <div className="sticky top-0 z-10 flex bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
               <div className="w-52 shrink-0 px-4 py-3 border-r border-slate-200 dark:border-navy-700">
-                <span className="text-sm font-semibold text-slate-900 dark:text-white">Team Member</span>
+                <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Team Member
+                </span>
               </div>
               {periods.map((period) => (
                 <div
@@ -598,7 +600,9 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                       .slice(0, 2)}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{person.userName}</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      {person.userName}
+                    </p>
                     {person.role && (
                       <p className="text-xs text-slate-500 truncate">{person.role}</p>
                     )}

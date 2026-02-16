@@ -1,7 +1,18 @@
 /**
  * Portfolio Kanban View
  *
- * Drag-and-drop kanban board organized by status columns.
+ * Kanban board for Initiatives — "pokazywać co przesuwamy dalej".
+ *
+ * Two modes controlled by parent (InitiativesHub):
+ *   ACTIVE  → REVIEW → PROMOTED → PLANNING → APPROVED → SCHEDULED
+ *   ALL     → full lifecycle from DRAFT to ARCHIVED (left → right)
+ *
+ * Cards show: Name · Priority · Owner · Next gate · Missing/Blocking (max 3 chips)
+ *
+ * Tech Sexy v2.0:
+ * - invisible borders, no column header separator line
+ * - subtle hover, no shadow on cards (only on drag overlay)
+ * - monochromatic chrome, semantic color only for dots/badges
  */
 
 import {
@@ -18,153 +29,139 @@ import {
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { AlertTriangle, Calendar, DollarSign, GripVertical, TrendingUp, User } from 'lucide-react';
+import { AlertCircle, User } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import {
-  getAxisColor,
-  getPriorityColors,
-  getStatusColors,
-  KANBAN_COLUMN_COLORS,
-} from '../../config/portfolioColors';
+import { getPriorityStyle, getStatusStyle } from '../../constants/statusColors';
+import { STATUS_METADATA } from '../../services/initiativeLifecycle';
 import { InitiativeStatus, PortfolioInitiative } from '../../types';
+import {
+  ACTIVE_STATUSES,
+  ALL_STATUSES,
+  getHealthInfo,
+  getNextStep,
+} from '../../utils/initiativeHelpers';
+
+// ==========================================
+// TYPES
+// ==========================================
+
+export type KanbanScope = 'active' | 'all';
 
 interface PortfolioKanbanViewProps {
   initiatives: PortfolioInitiative[];
   onInitiativeClick: (initiative: PortfolioInitiative) => void;
   onStatusChange: (id: string, status: InitiativeStatus) => void;
+  /** Controls column set: 'active' = core flow, 'all' = full lifecycle */
+  scope?: KanbanScope;
 }
 
-// Kanban column configuration
-const KANBAN_COLUMNS: { id: InitiativeStatus; label: string }[] = [
-  { id: 'PLANNING' as InitiativeStatus, label: 'Planning' },
-  { id: 'REVIEW' as InitiativeStatus, label: 'Review' },
-  { id: 'APPROVED' as InitiativeStatus, label: 'Approved' },
-];
+// ==========================================
+// COLUMN CONFIG
+// ==========================================
 
-// ============================================
-// INITIATIVE CARD COMPONENT
-// ============================================
+function getColumnsForScope(scope: KanbanScope): { id: InitiativeStatus; label: string }[] {
+  const statuses = scope === 'active' ? ACTIVE_STATUSES : ALL_STATUSES;
+  return statuses.map((s) => ({
+    id: s,
+    label: STATUS_METADATA[s]?.label || s,
+  }));
+}
 
-interface InitiativeCardProps {
+// ==========================================
+// INITIATIVE KANBAN CARD
+// ==========================================
+
+interface KanbanCardProps {
   initiative: PortfolioInitiative;
   onClick: () => void;
   isDragging?: boolean;
 }
 
-const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick, isDragging }) => {
-  const priorityColors = getPriorityColors(initiative.priority);
-  const axisColor = getAxisColor(initiative.axis);
-
-  const formatCurrency = (amount: number) => {
-    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
-    if (amount >= 1000) return `$${(amount / 1000).toFixed(0)}K`;
-    return `$${amount}`;
-  };
+const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging }) => {
+  const { t } = useTranslation();
+  const priorityStyle = getPriorityStyle(initiative.priority);
+  const health = getHealthInfo(initiative);
+  const nextStep = getNextStep(initiative.status);
+  const owner = initiative.ownerBusiness || initiative.ownerExecution;
 
   return (
     <div
       onClick={onClick}
       className={`
-                bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 
-                p-4 cursor-pointer group hover:shadow-md transition-all
-                ${isDragging ? 'shadow-xl scale-105 rotate-2' : ''}
-            `}
+        bg-white dark:bg-navy-900 rounded-xl border border-slate-200/60 dark:border-white/5
+        p-3 cursor-pointer group transition-all
+        hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
+        ${isDragging ? 'shadow-hig-xl dark:shadow-hig-dark-xl scale-[1.02] rotate-1' : ''}
+      `}
     >
-      {/* Priority bar */}
-      <div className={`h-1 -mx-4 -mt-4 mb-3 rounded-t-lg ${priorityColors.bg}`} />
+      {/* Row 1: Name */}
+      <h4 className="font-medium text-sm text-slate-900 dark:text-slate-100 line-clamp-2 mb-2 leading-snug">
+        {initiative.name}
+      </h4>
 
-      {/* Axis indicator + Name */}
-      <div className="flex items-start gap-2 mb-3">
-        <div className={`w-1 h-full min-h-[40px] rounded-full ${axisColor}`} />
-        <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-navy-900 dark:text-white line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-            {initiative.name}
-          </h4>
-          {initiative.projectName && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-              {initiative.projectName}
-            </p>
-          )}
+      {/* Row 2: Priority + Health dot */}
+      <div className="flex items-center gap-2 mb-2">
+        <span
+          className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded-full ${priorityStyle.bg} ${priorityStyle.text}`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${priorityStyle.dot}`} />
+          {initiative.priority || 'N/A'}
+        </span>
+        <div className="flex items-center gap-1">
+          <span className={`w-2 h-2 rounded-full ${health.dotClass}`} />
+          <span className="text-[10px] text-slate-400 dark:text-slate-500">{health.label}</span>
         </div>
       </div>
 
-      {/* Priority badge */}
-      <div className="flex items-center gap-2 mb-3">
-        <span
-          className={`px-2 py-0.5 text-xs font-medium rounded-full ${priorityColors.bg} ${priorityColors.text}`}
-        >
-          {initiative.priority}
-        </span>
-        {initiative.isCriticalPath && (
-          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
-            Critical Path
-          </span>
-        )}
-      </div>
-
-      {/* Owner */}
-      {initiative.ownerBusiness && (
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-5 h-5 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-[10px] font-medium text-purple-700 dark:text-purple-300 overflow-hidden">
-            {initiative.ownerBusiness.avatarUrl ? (
-              <img
-                src={initiative.ownerBusiness.avatarUrl}
-                alt=""
-                className="w-full h-full object-cover"
-              />
+      {/* Row 3: Owner */}
+      {owner ? (
+        <div className="flex items-center gap-1.5 mb-2">
+          <div className="w-4 h-4 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[8px] font-medium text-slate-600 dark:text-slate-300 overflow-hidden flex-shrink-0">
+            {owner.avatarUrl ? (
+              <img src={owner.avatarUrl} alt="" className="w-full h-full object-cover" />
             ) : (
-              `${initiative.ownerBusiness.firstName[0]}${initiative.ownerBusiness.lastName[0]}`
+              `${owner.firstName?.[0] || '?'}${owner.lastName?.[0] || ''}`
             )}
           </div>
-          <span className="text-xs text-slate-600 dark:text-slate-400 truncate">
-            {initiative.ownerBusiness.firstName} {initiative.ownerBusiness.lastName}
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+            {owner.firstName} {owner.lastName}
           </span>
         </div>
-      )}
-
-      {/* Timeline */}
-      {initiative.targetQuarter && (
-        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-3">
-          <Calendar size={12} />
-          {initiative.targetQuarter}
+      ) : (
+        <div className="flex items-center gap-1.5 mb-2 text-[11px] text-slate-400">
+          <User size={12} />
+          <span>{t('initiatives.kanban.noOwner', 'Unassigned')}</span>
         </div>
       )}
 
-      {/* Progress bar */}
-      <div className="mb-3">
-        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-          <span>Progress</span>
-          <span>{initiative.progress}%</span>
-        </div>
-        <div className="h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-purple-500 rounded-full transition-all"
-            style={{ width: `${initiative.progress}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Footer with budget and ROI */}
-      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-navy-700">
-        <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
-          <DollarSign size={12} />
-          {formatCurrency(initiative.budget)}
-        </div>
-        {initiative.expectedRoi && initiative.expectedRoi > 0 && (
-          <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-            <TrendingUp size={12} />
-            {initiative.expectedRoi.toFixed(1)}x ROI
+      {/* Row 4: Next step → gate */}
+      {nextStep && (
+        <div className="pt-2 border-t border-slate-100/70 dark:border-white/[0.03]">
+          <div className="text-[10px] text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider font-medium">
+            {t('initiatives.kanban.nextGate', 'Next gate')}
           </div>
-        )}
-      </div>
+          <div className="text-xs text-slate-600 dark:text-slate-300 font-medium truncate">
+            {nextStep.label}
+          </div>
+          {nextStep.role && (
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+              {nextStep.role}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Row 5: Missing blocking (placeholder — populated when gateReadiness is loaded) */}
+      {/* In future: map gateReadiness.topBlocking to chips */}
     </div>
   );
 };
 
-// ============================================
-// SORTABLE CARD WRAPPER
-// ============================================
+// ==========================================
+// SORTABLE WRAPPER
+// ==========================================
 
 interface SortableCardProps {
   initiative: PortfolioInitiative;
@@ -184,20 +181,21 @@ const SortableCard: React.FC<SortableCardProps> = ({ initiative, onClick }) => {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <InitiativeCard initiative={initiative} onClick={onClick} isDragging={isDragging} />
+      <KanbanCard initiative={initiative} onClick={onClick} isDragging={isDragging} />
     </div>
   );
 };
 
-// ============================================
-// KANBAN COLUMN COMPONENT
-// ============================================
+// ==========================================
+// KANBAN COLUMN
+// ==========================================
 
 interface KanbanColumnProps {
   id: InitiativeStatus;
   label: string;
   initiatives: PortfolioInitiative[];
   onInitiativeClick: (initiative: PortfolioInitiative) => void;
+  isCompact?: boolean;
 }
 
 const KanbanColumn: React.FC<KanbanColumnProps> = ({
@@ -205,34 +203,40 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   label,
   initiatives,
   onInitiativeClick,
+  isCompact,
 }) => {
   const { setNodeRef, isOver } = useDroppable({ id });
-  const statusColors = getStatusColors(id);
-  const columnColors = (KANBAN_COLUMN_COLORS as any)[id] || KANBAN_COLUMN_COLORS.DRAFT;
+  const statusStyle = getStatusStyle(id);
+
+  const columnWidth = isCompact ? 'min-w-[240px] max-w-[240px]' : 'min-w-[280px] max-w-[280px]';
 
   return (
     <div
       ref={setNodeRef}
       data-testid={`kanban-column-${id.toString().toLowerCase()}`}
       className={`
-                flex flex-col min-w-[300px] max-w-[300px] rounded-xl overflow-hidden
-                ${columnColors.bg}
-                ${isOver ? 'ring-2 ring-purple-500' : ''}
-            `}
+        flex flex-col ${columnWidth} rounded-xl overflow-hidden
+        bg-slate-50/50 dark:bg-navy-950/30
+        border border-slate-200/40 dark:border-white/[0.03]
+        ${isOver ? 'ring-2 ring-primary-500/40' : ''}
+        transition-all
+      `}
     >
       {/* Column Header */}
-      <div className={`flex items-center justify-between px-4 py-3 ${columnColors.header}`}>
+      <div className="flex items-center justify-between px-3 py-2.5 bg-white/60 dark:bg-navy-900/40">
         <div className="flex items-center gap-2">
-          <div className={`w-2.5 h-2.5 rounded-full ${statusColors.indicator}`} />
-          <span className="font-semibold text-navy-900 dark:text-white">{label}</span>
+          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusStyle.dot}`} />
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+            {label}
+          </span>
         </div>
-        <span className="px-2 py-0.5 text-xs font-medium bg-white/50 dark:bg-black/20 text-navy-700 dark:text-white rounded-full">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-white/[0.05] text-slate-500 dark:text-slate-400 rounded-full min-w-[20px] text-center">
           {initiatives.length}
         </span>
       </div>
 
       {/* Column Content */}
-      <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-320px)]">
+      <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-280px)]">
         <SortableContext
           items={initiatives.map((i) => i.id)}
           strategy={verticalListSortingStrategy}
@@ -247,7 +251,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         </SortableContext>
 
         {initiatives.length === 0 && (
-          <div className="p-4 text-center text-slate-400 dark:text-slate-500 text-sm">
+          <div className="p-3 text-center text-slate-400 dark:text-slate-500 text-xs">
             Drop initiatives here
           </div>
         )}
@@ -256,41 +260,37 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   );
 };
 
-// ============================================
+// ==========================================
 // MAIN KANBAN VIEW
-// ============================================
+// ==========================================
 
 export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
   initiatives,
   onInitiativeClick,
   onStatusChange,
+  scope = 'active',
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const columns = useMemo(() => getColumnsForScope(scope), [scope]);
+  const isCompact = scope === 'all';
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor)
   );
 
-  // Group initiatives by status
   const columnData = useMemo(() => {
     const grouped: Record<string, PortfolioInitiative[]> = {};
-    KANBAN_COLUMNS.forEach((col) => {
+    columns.forEach((col) => {
       grouped[col.id] = [];
     });
-
     initiatives.forEach((initiative) => {
       if (grouped[initiative.status]) {
         grouped[initiative.status].push(initiative);
       }
     });
-
     return grouped;
-  }, [initiatives]);
+  }, [initiatives, columns]);
 
   const activeInitiative = useMemo(() => {
     if (!activeId) return null;
@@ -304,15 +304,13 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
-
     if (!over) return;
 
-    const activeInitiative = initiatives.find((i) => i.id === active.id);
-    if (!activeInitiative) return;
+    const draggedInitiative = initiatives.find((i) => i.id === active.id);
+    if (!draggedInitiative) return;
 
-    // Check if dropped on a column
-    const newStatus = KANBAN_COLUMNS.find((col) => col.id === over.id)?.id;
-    if (newStatus && newStatus !== activeInitiative.status) {
+    const newStatus = columns.find((col) => col.id === over.id)?.id;
+    if (newStatus && newStatus !== draggedInitiative.status) {
       onStatusChange(active.id as string, newStatus);
     }
   };
@@ -325,14 +323,15 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
       onDragEnd={handleDragEnd}
     >
       <div className="h-full overflow-x-auto p-4">
-        <div className="flex gap-4 h-full">
-          {KANBAN_COLUMNS.map((column) => (
+        <div className="flex gap-3 h-full">
+          {columns.map((column) => (
             <KanbanColumn
               key={column.id}
               id={column.id}
               label={column.label}
               initiatives={columnData[column.id] || []}
               onInitiativeClick={onInitiativeClick}
+              isCompact={isCompact}
             />
           ))}
         </div>
@@ -340,7 +339,7 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
 
       <DragOverlay>
         {activeInitiative && (
-          <InitiativeCard initiative={activeInitiative} onClick={() => {}} isDragging />
+          <KanbanCard initiative={activeInitiative} onClick={() => {}} isDragging />
         )}
       </DragOverlay>
     </DndContext>

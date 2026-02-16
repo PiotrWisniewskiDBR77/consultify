@@ -475,7 +475,7 @@ export const AttachmentsLinksCanvas: React.FC<AttachmentsLinksCanvasProps> = ({
     isPickerOpen,
     activeProvider,
     selectFile,
-    isCloudImplemented,
+    isImplemented: isCloudImplemented,
   } = useCloudIntegrations();
 
   // ── Refs ──────────────────────────────────────────────────────────────────
@@ -822,7 +822,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                         icon: <Eye size={13} />,
                         onClick: () => {
                           setOpenMenuKey(null);
-                          a.url && window.open(a.url, '_blank', 'noopener,noreferrer');
+                          if (a.url) window.open(a.url, '_blank', 'noopener,noreferrer');
                         },
                       },
                       ...(onEditAttachment

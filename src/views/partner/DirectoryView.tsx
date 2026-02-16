@@ -105,9 +105,7 @@ export const DirectoryView: React.FC = () => {
         <div className="rounded-xl border border-brand/30 bg-brand/5 p-4 text-slate-900 dark:text-white">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-widest text-slate-400">
-                Directory CTA
-              </p>
+              <p className="text-xs uppercase tracking-widest text-slate-400">Directory CTA</p>
               <h3 className="text-lg font-semibold text-brand">
                 Zaktualizuj profil i zwiększ widoczność
               </h3>

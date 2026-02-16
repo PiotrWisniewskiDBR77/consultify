@@ -9,34 +9,34 @@ import React from 'react';
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
   success: {
-    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-    text: 'text-emerald-700 dark:text-emerald-400',
+    bg: 'bg-emerald-50/70 dark:bg-emerald-500/10',
+    text: 'text-emerald-600 dark:text-emerald-400',
     dot: 'bg-emerald-500',
   },
   warning: {
-    bg: 'bg-amber-50 dark:bg-amber-900/20',
-    text: 'text-amber-700 dark:text-amber-400',
+    bg: 'bg-amber-50/70 dark:bg-amber-500/10',
+    text: 'text-amber-600 dark:text-amber-400',
     dot: 'bg-amber-500',
   },
   danger: {
-    bg: 'bg-red-50 dark:bg-red-900/20',
+    bg: 'bg-red-100 dark:bg-red-500/20',
     text: 'text-red-700 dark:text-red-400',
     dot: 'bg-red-500',
   },
   info: {
-    bg: 'bg-blue-50 dark:bg-blue-900/20',
-    text: 'text-blue-700 dark:text-blue-400',
+    bg: 'bg-blue-50/70 dark:bg-blue-500/10',
+    text: 'text-blue-600 dark:text-blue-400',
     dot: 'bg-blue-500',
   },
   neutral: {
-    bg: 'bg-slate-100 dark:bg-slate-800',
+    bg: 'bg-slate-100 dark:bg-navy-800/60',
     text: 'text-slate-600 dark:text-slate-400',
-    dot: 'bg-slate-400',
+    dot: 'bg-slate-400 dark:bg-slate-500',
   },
   purple: {
-    bg: 'bg-purple-50 dark:bg-purple-900/20',
-    text: 'text-purple-700 dark:text-purple-400',
-    dot: 'bg-purple-500',
+    bg: 'bg-blue-50/70 dark:bg-blue-500/10',
+    text: 'text-blue-600 dark:text-blue-400',
+    dot: 'bg-blue-500',
   },
 };
 
@@ -69,7 +69,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 
 const PRIORITY_COLORS: Record<string, string> = {
   critical: 'text-red-500',
-  high: 'text-orange-500',
+  high: 'text-amber-500',
   medium: 'text-blue-500',
   low: 'text-slate-400',
 };

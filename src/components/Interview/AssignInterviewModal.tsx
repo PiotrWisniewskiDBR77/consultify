@@ -431,7 +431,9 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                       <div className="flex items-center gap-3">
                         <FileText size={18} className="text-blue-400" />
                         <div>
-                          <span className="text-slate-900 dark:text-white">{selectedTemplate.name}</span>
+                          <span className="text-slate-900 dark:text-white">
+                            {selectedTemplate.name}
+                          </span>
                           {selectedTemplate.category && (
                             <span className="text-xs text-slate-500 ml-2">
                               ({selectedTemplate.category})

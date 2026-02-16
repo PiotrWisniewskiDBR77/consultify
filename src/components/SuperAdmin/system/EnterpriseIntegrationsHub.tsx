@@ -399,7 +399,9 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           >
             <Icon className="w-4 h-4" />
             {label}
-            <span className="px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">{count}</span>
+            <span className="px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">
+              {count}
+            </span>
           </button>
         ))}
       </div>
@@ -414,7 +416,9 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           {activeTab === 'integrations' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-slate-900 dark:text-white">Connected Integrations</h3>
+                <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+                  Connected Integrations
+                </h3>
                 <button
                   onClick={() => setActiveTab('catalog')}
                   className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg transition-colors"
@@ -447,7 +451,9 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                             <div className="text-3xl">{connector?.icon || '🔗'}</div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-slate-900 dark:text-white">{integration.name}</span>
+                                <span className="font-medium text-slate-900 dark:text-white">
+                                  {integration.name}
+                                </span>
                                 <span
                                   className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded ${statusConfig.bg} ${statusConfig.color}`}
                                 >
@@ -542,7 +548,9 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-slate-900 dark:text-white">{webhook.name}</span>
+                            <span className="font-medium text-slate-900 dark:text-white">
+                              {webhook.name}
+                            </span>
                             {webhook.is_active ? (
                               <CheckCircle className="w-4 h-4 text-emerald-400" />
                             ) : (
@@ -651,7 +659,9 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                           <span className="text-3xl">{connector.icon}</span>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-slate-900 dark:text-white">{connector.name}</span>
+                              <span className="font-medium text-slate-900 dark:text-white">
+                                {connector.name}
+                              </span>
                               {connector.status === 'beta' && (
                                 <span className="px-1.5 py-0.5 text-xs bg-amber-500/20 text-amber-400 rounded">
                                   Beta
@@ -776,7 +786,9 @@ const WebhookModal: React.FC<{
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Name *
+            </label>
             <input
               type="text"
               required
@@ -788,7 +800,9 @@ const WebhookModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">URL *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              URL *
+            </label>
             <input
               type="url"
               required
@@ -813,7 +827,9 @@ const WebhookModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Events *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Events *
+            </label>
             <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-slate-800/50 rounded-lg">
               {events.map((event) => (
                 <label key={event.id} className="flex items-center gap-2">
@@ -903,7 +919,9 @@ const DeliveriesModal: React.FC<{
                   ) : (
                     <Clock className="w-4 h-4 text-amber-400" />
                   )}
-                  <span className="text-sm text-slate-900 dark:text-white">{delivery.event_type}</span>
+                  <span className="text-sm text-slate-900 dark:text-white">
+                    {delivery.event_type}
+                  </span>
                   {delivery.response_code && (
                     <span
                       className={`text-xs ${

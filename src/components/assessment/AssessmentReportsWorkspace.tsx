@@ -405,7 +405,10 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
           </div>
         ) : reports.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-center">
-            <AlertCircle className="text-slate-500 dark:text-slate-400 dark:text-slate-600 mb-3" size={48} />
+            <AlertCircle
+              className="text-slate-500 dark:text-slate-400 dark:text-slate-600 mb-3"
+              size={48}
+            />
             <p className="text-slate-500 dark:text-slate-400 text-sm">
               {t('assessment.reports.noReports', 'No reports generated yet')}
             </p>

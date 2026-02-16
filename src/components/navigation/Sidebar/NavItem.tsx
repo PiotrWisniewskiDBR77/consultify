@@ -87,6 +87,7 @@ export const NavItem: React.FC<NavItemProps> = ({
       onMouseLeave={onMouseLeave}
     >
       <motion.button
+        type="button"
         data-chat-toggle={item.id === 'AI_CHAT' ? 'true' : undefined}
         onClick={() => onClick(item)}
         disabled={isLocked}

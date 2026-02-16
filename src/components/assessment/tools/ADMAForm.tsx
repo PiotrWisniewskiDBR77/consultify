@@ -306,7 +306,9 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
               <h4 className="text-slate-900 dark:text-white font-medium">
                 {isPolish ? dimension.namePL : dimension.name}
               </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{dimension.description}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {dimension.description}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -504,7 +506,9 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
             <ArrowRight size={20} className="text-slate-600" />
             <div>
               <span className="text-xs text-slate-400 uppercase tracking-wider">Target</span>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">{currentPillarData.target || '-'}</div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {currentPillarData.target || '-'}
+              </div>
             </div>
             {currentPillarData.gap !== 0 && (
               <div className="ml-auto">

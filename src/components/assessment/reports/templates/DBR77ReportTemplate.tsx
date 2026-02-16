@@ -324,7 +324,9 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
           <p className="text-xl text-slate-500 dark:text-slate-400 mb-2">
             Metoda DBR77: Pomierz → Zoptymalizuj → Automatyzuj
           </p>
-          <p className="text-lg text-slate-500 dark:text-slate-400 dark:text-slate-500">{organizationName}</p>
+          <p className="text-lg text-slate-500 dark:text-slate-400 dark:text-slate-500">
+            {organizationName}
+          </p>
           <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500">
             {assessmentDate || new Date().toLocaleDateString('pl-PL')}
           </p>

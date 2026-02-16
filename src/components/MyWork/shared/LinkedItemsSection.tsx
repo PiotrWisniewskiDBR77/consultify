@@ -517,7 +517,10 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                                   title={isPolish ? 'Otwórz w nowej karcie' : 'Open in new tab'}
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <ExternalLink size={14} className="text-slate-500 dark:text-slate-400" />
+                                  <ExternalLink
+                                    size={14}
+                                    className="text-slate-500 dark:text-slate-400"
+                                  />
                                 </a>
                               )}
                               {!readOnly && (
@@ -526,7 +529,10 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                                   className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors"
                                   title={isPolish ? 'Usuń powiązanie' : 'Remove link'}
                                 >
-                                  <Trash2 size={14} className="text-slate-500 dark:text-slate-400 hover:text-red-500" />
+                                  <Trash2
+                                    size={14}
+                                    className="text-slate-500 dark:text-slate-400 hover:text-red-500"
+                                  />
                                 </button>
                               )}
                             </div>

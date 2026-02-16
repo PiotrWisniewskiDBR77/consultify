@@ -1143,7 +1143,12 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                                 readOnly
                                 className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
                               />
-                              <Icon size={14} className={checked ? cfg.color : 'text-slate-500 dark:text-slate-400'} />
+                              <Icon
+                                size={14}
+                                className={
+                                  checked ? cfg.color : 'text-slate-500 dark:text-slate-400'
+                                }
+                              />
                               <span
                                 className={cn(
                                   'text-sm truncate',
@@ -1181,7 +1186,10 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
         {/* Search */}
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800">
           <div className="relative max-w-md">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+            />
             <input
               type="text"
               value={searchQuery}

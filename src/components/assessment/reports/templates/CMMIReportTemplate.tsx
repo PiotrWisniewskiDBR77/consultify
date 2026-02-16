@@ -407,7 +407,10 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
                     >
                       L{pa.current}: {currentLevelInfo?.name || 'N/A'}
                     </span>
-                    <ArrowRight size={14} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+                    <ArrowRight
+                      size={14}
+                      className="text-slate-500 dark:text-slate-400 dark:text-slate-500"
+                    />
                     <span
                       className={`px-2 py-1 rounded ${getLevelBgColor(pa.target)} text-${getLevelColor(pa.target)}-700 font-medium`}
                     >
@@ -416,7 +419,9 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">Luka</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                    Luka
+                  </div>
                   <div className="text-lg font-bold text-red-600">
                     +{pa.gap} poziom{pa.gap > 1 ? 'y' : ''}
                   </div>

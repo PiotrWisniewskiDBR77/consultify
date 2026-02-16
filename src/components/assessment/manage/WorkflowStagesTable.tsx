@@ -550,7 +550,9 @@ const WorkflowStageRow: FC<{
                     </span>
                   </>
                 )}
-                {canManage && <ChevronDown size={12} className="text-slate-500 dark:text-slate-400 ml-auto" />}
+                {canManage && (
+                  <ChevronDown size={12} className="text-slate-500 dark:text-slate-400 ml-auto" />
+                )}
               </button>
 
               {/* Assignee Dropdown */}

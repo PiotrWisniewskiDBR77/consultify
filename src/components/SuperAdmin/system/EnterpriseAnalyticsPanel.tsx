@@ -267,7 +267,9 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Analytics & Reporting</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Analytics & Reporting
+          </h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
             Monitor system performance and generate insights
           </p>
@@ -352,7 +354,9 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                           {Math.abs(metric.change)}%
                         </div>
                       </div>
-                      <div className="text-2xl font-bold text-slate-900 dark:text-white">{metric.value}</div>
+                      <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                        {metric.value}
+                      </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">
                         {metric.title}
                       </div>
@@ -427,7 +431,9 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                               style={{ width: `${item.value}%` }}
                             />
                           </div>
-                          <span className="text-xs text-slate-900 dark:text-white w-10 text-right">{item.value}%</span>
+                          <span className="text-xs text-slate-900 dark:text-white w-10 text-right">
+                            {item.value}%
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -493,7 +499,9 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                         <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
                           <Icon className="w-5 h-5 text-cyan-400" />
                         </div>
-                        <h3 className="font-medium text-slate-900 dark:text-white">{report.label}</h3>
+                        <h3 className="font-medium text-slate-900 dark:text-white">
+                          {report.label}
+                        </h3>
                       </div>
                       <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
                         Generate a comprehensive {report.label.toLowerCase()} report for the
@@ -516,7 +524,9 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
               </div>
 
               <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h3 className="font-medium text-slate-900 dark:text-white mb-4">Custom Report Builder</h3>
+                <h3 className="font-medium text-slate-900 dark:text-white mb-4">
+                  Custom Report Builder
+                </h3>
                 <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
                   Create custom reports by selecting metrics, filters, and visualization options.
                 </p>
@@ -532,7 +542,9 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           {activeTab === 'scheduled' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-slate-900 dark:text-white">Scheduled Reports</h3>
+                <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+                  Scheduled Reports
+                </h3>
                 <button
                   onClick={() => setShowCreateReport(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-slate-900 dark:text-white rounded-lg"
@@ -701,7 +713,9 @@ const CreateScheduledReportModal: React.FC<{
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Report Name</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Report Name
+            </label>
             <input
               type="text"
               required
@@ -714,7 +728,9 @@ const CreateScheduledReportModal: React.FC<{
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Report Type</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Report Type
+              </label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
@@ -728,7 +744,9 @@ const CreateScheduledReportModal: React.FC<{
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Schedule</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Schedule
+              </label>
               <select
                 value={formData.schedule}
                 onChange={(e) => setFormData({ ...formData, schedule: e.target.value })}

@@ -46,6 +46,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
 
           {/* Collapse Button */}
           <motion.button
+            type="button"
             onClick={onToggleCollapse}
             whileTap={{ scale: 0.95 }}
             className={`
@@ -71,6 +72,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
 
           {/* Expand Button */}
           <motion.button
+            type="button"
             onClick={onToggleCollapse}
             whileTap={{ scale: 0.95 }}
             className={`

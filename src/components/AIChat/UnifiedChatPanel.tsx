@@ -589,7 +589,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         return;
       }
       // Make failures visible in the conversation UI (otherwise user only sees their own messages).
-      const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+      const uiLang = (i18n.language || 'en').split('-')[0];
       const friendly =
         uiLang === 'pl'
           ? '⚠️ Nie udało się uruchomić AI. Sprawdź backend (logi) oraz czy jest skonfigurowany dostawca LLM (np. OPENAI_API_KEY / GEMINI_API_KEY).'

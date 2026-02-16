@@ -1177,9 +1177,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     () => ({
       status,
       escalationLevel: escalation ? 1 : 0,
-      hasBlockingRelations: linkedItems.some(
-        (li) => li.relationshipType === 'blocks' || li.relationshipType === 'blocked_by'
-      ),
+      hasBlockingRelations: linkedItems.some((li) => li.linkRelation === 'blocks'),
       isHighImpact: priority === 'high' || priority === 'critical',
     }),
     [status, escalation, linkedItems, priority]
@@ -4002,7 +4000,7 @@ Context: ${JSON.stringify(projectContext)}`;
           projectsRes.status === 'fulfilled'
             ? Array.isArray(projectsRes.value)
               ? projectsRes.value
-              : projectsRes.value?.projects || []
+              : (projectsRes.value as any)?.projects || []
             : [];
         const assessments =
           assessmentsRes.status === 'fulfilled'
@@ -4207,14 +4205,14 @@ Context: ${JSON.stringify(projectContext)}`;
             onTitleChange={(v) => !isDecisionStageLocked && setTitle(v)}
             titleReadOnly={isDecisionStageLocked}
             titlePlaceholder={{ en: 'Decision title...', pl: 'Tytuł decyzji...' }}
-            artifactId={decisionId}
+            artifactId={decisionId || undefined}
             artifactType="decision"
             onSave={handleSave}
             saving={saving}
             isDirty={isDirty}
             onChat={handleOpenChat}
             onClose={onClose}
-            draftSavedLabel={draftSavedLabel}
+            draftSavedLabel={draftSavedLabel || undefined}
             statusDotColor={statusConfig.color}
             presentationMode={presentationMode}
             onPresentationModeChange={setPresentationMode}
@@ -4879,7 +4877,7 @@ Context: ${JSON.stringify(projectContext)}`;
                         <RiskCanvas
                           risks={risks}
                           onAddRisk={addRisk}
-                          onUpdateRisk={updateRisk}
+                          onUpdateRisk={(id, updates) => updateRisk(id, updates as any)}
                           onRemoveRisk={removeRisk}
                           onAIGenerate={generateRisksAI}
                           isGeneratingAI={isGeneratingRisks}

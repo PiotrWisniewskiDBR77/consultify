@@ -7,6 +7,11 @@ import { initReactI18next } from 'react-i18next';
 export const SUPPORTED_LANGUAGES = ['en', 'pl', 'de', 'ar', 'jp', 'es'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
+// Helper function to check if language is supported
+export const isValidLanguage = (lang: string): lang is SupportedLanguage => {
+  return SUPPORTED_LANGUAGES.includes(lang as SupportedLanguage);
+};
+
 // Available namespaces for translations
 export const NAMESPACES = ['translation', 'assessment-module', 'discovery'] as const;
 export type TranslationNamespace = (typeof NAMESPACES)[number];
@@ -49,6 +54,9 @@ i18n
     // Supported languages
     supportedLngs: SUPPORTED_LANGUAGES,
     fallbackLng: 'en',
+    // Use browser language like "pl-PL" -> "pl"
+    load: 'languageOnly',
+    nonExplicitSupportedLngs: true,
 
     // Default namespace
     defaultNS: 'translation',
@@ -69,9 +77,19 @@ i18n
 
     // Language detection configuration
     detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
-      caches: ['localStorage'],
-      lookupLocalStorage: 'i18nextLng',
+      // Always start from the user's browser settings
+      order: ['navigator', 'htmlTag'],
+      // Do not persist language choice; keep it in sync with browser language
+      caches: [],
+      // Map common browser locales to our supported language codes
+      // (e.g. browser "ja" should use app locale folder "jp")
+      convertDetectedLanguage: (lng: string) => {
+        const base = String(lng || '')
+          .toLowerCase()
+          .split(/[-_]/)[0];
+        if (base === 'ja') return 'jp';
+        return base || lng;
+      },
     },
 
     // React configuration
@@ -96,11 +114,6 @@ if (typeof document !== 'undefined') {
   document.documentElement.lang = currentLang || 'en';
   document.documentElement.dir = LANGUAGE_DIRECTION[currentLang] || 'ltr';
 }
-
-// Helper function to check if language is supported
-export const isValidLanguage = (lang: string): lang is SupportedLanguage => {
-  return SUPPORTED_LANGUAGES.includes(lang as SupportedLanguage);
-};
 
 // Helper function to get current language direction
 export const getCurrentDirection = (): 'ltr' | 'rtl' => {

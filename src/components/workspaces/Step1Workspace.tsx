@@ -25,7 +25,9 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
       {/* Header / Progress */}
       <div className="h-20 border-b border-slate-200 dark:border-white/5 flex flex-col justify-center px-8 bg-white dark:bg-navy-900 shrink-0">
         <div className="flex justify-between items-center mb-1">
-          <span className="text-sm font-semibold text-slate-900 dark:text-white tracking-wide">{t.title}</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-white tracking-wide">
+            {t.title}
+          </span>
           <span className="text-xs text-slate-500 dark:text-slate-400">{t.subtitle}</span>
         </div>
         <div className="w-full h-1 bg-slate-50 dark:bg-navy-800 rounded-full overflow-hidden">

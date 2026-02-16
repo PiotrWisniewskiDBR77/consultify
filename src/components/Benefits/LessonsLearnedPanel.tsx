@@ -116,7 +116,9 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson }) => {
                 {categoryConfig.label}
               </span>
             </div>
-            <p className="text-sm text-slate-900 dark:text-white line-clamp-2">{lesson.description}</p>
+            <p className="text-sm text-slate-900 dark:text-white line-clamp-2">
+              {lesson.description}
+            </p>
             {lesson.initiativeName && (
               <p className="text-xs text-slate-500 mt-1">From: {lesson.initiativeName}</p>
             )}
@@ -233,10 +235,15 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Add Lesson Learned</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Add Lesson Learned
+            </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">{initiativeName}</p>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg">
+          <button
+            onClick={onClose}
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg"
+          >
             <X size={20} />
           </button>
         </div>
@@ -244,7 +251,9 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
         <div className="p-6 space-y-4">
           {/* Type Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Type</label>
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
+              Type
+            </label>
             <div className="flex gap-2">
               {(
                 Object.entries(LESSON_TYPE_CONFIG) as [
@@ -270,7 +279,9 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
 
           {/* Category Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Category</label>
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
+              Category
+            </label>
             <div className="flex flex-wrap gap-2">
               {(
                 Object.entries(LESSON_CATEGORY_CONFIG) as [
@@ -295,7 +306,9 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Description *</label>
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
+              Description *
+            </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
@@ -335,7 +348,10 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
         </div>
 
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          >
             Cancel
           </button>
           <button
@@ -409,13 +425,17 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
   };
 
   return (
-    <div className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}>
+    <div
+      className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}
+    >
       {/* Header */}
       <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Lightbulb size={20} className="text-amber-400" />
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Lessons Learned</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Lessons Learned
+            </h3>
           </div>
           {initiativeId && (
             <button

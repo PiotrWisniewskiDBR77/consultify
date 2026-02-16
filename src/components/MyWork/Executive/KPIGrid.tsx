@@ -136,7 +136,11 @@ const KPICard: React.FC<{
         <span className="text-3xl font-bold text-navy-900 dark:text-white tabular-nums">
           {value}
         </span>
-        {subValue && <span className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{subValue}</span>}
+        {subValue && (
+          <span className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+            {subValue}
+          </span>
+        )}
       </div>
 
       {/* Details */}

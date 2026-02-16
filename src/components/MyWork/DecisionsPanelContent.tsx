@@ -95,7 +95,7 @@ interface DecisionsPanelContentProps {
   onCountsChange: (counts: DecisionCounts) => void;
 }
 
-// Priority config
+// Priority config — 5-color semantic palette
 const getPriorityConfig = (priority?: string) => {
   switch (priority?.toUpperCase()) {
     case 'CRITICAL':
@@ -108,46 +108,46 @@ const getPriorityConfig = (priority?: string) => {
       };
     case 'HIGH':
       return {
-        color: 'text-orange-700 dark:text-orange-400',
-        bg: 'bg-orange-100 dark:bg-orange-500/20',
-        dot: 'bg-orange-500',
+        color: 'text-amber-700 dark:text-amber-400',
+        bg: 'bg-amber-100 dark:bg-amber-500/20',
+        dot: 'bg-amber-500',
         label: 'High',
         icon: Flag,
       };
     case 'MEDIUM':
       return {
-        color: 'text-amber-700 dark:text-amber-400',
-        bg: 'bg-amber-100 dark:bg-amber-500/20',
-        dot: 'bg-amber-500',
+        color: 'text-blue-600 dark:text-blue-400',
+        bg: 'bg-blue-50/70 dark:bg-blue-500/10',
+        dot: 'bg-blue-500',
         label: 'Medium',
         icon: Flag,
       };
     case 'LOW':
       return {
         color: 'text-slate-600 dark:text-slate-400',
-        bg: 'bg-slate-100 dark:bg-slate-500/20',
-        dot: 'bg-slate-500',
+        bg: 'bg-slate-100 dark:bg-navy-800/60',
+        dot: 'bg-slate-400',
         label: 'Low',
         icon: Flag,
       };
     default:
       return {
         color: 'text-slate-600 dark:text-slate-400',
-        bg: 'bg-slate-100 dark:bg-slate-500/20',
-        dot: 'bg-slate-500',
+        bg: 'bg-slate-100 dark:bg-navy-800/60',
+        dot: 'bg-slate-400',
         label: 'Normal',
         icon: Flag,
       };
   }
 };
 
-// Status config
+// Status config — subtle badges, alarm only for blocked/rejected/escalated
 const getStatusConfig = (status?: string) => {
   switch (status?.toUpperCase()) {
     case 'APPROVED':
       return {
-        color: 'text-emerald-700 dark:text-emerald-400',
-        bg: 'bg-emerald-100 dark:bg-emerald-500/20',
+        color: 'text-emerald-600 dark:text-emerald-400',
+        bg: 'bg-emerald-50/70 dark:bg-emerald-500/10',
         dot: 'bg-emerald-500',
         label: 'Approved',
       };
@@ -160,23 +160,23 @@ const getStatusConfig = (status?: string) => {
       };
     case 'DEFERRED':
       return {
-        color: 'text-amber-700 dark:text-amber-400',
-        bg: 'bg-amber-100 dark:bg-amber-500/20',
+        color: 'text-amber-600 dark:text-amber-400',
+        bg: 'bg-amber-50/70 dark:bg-amber-500/10',
         dot: 'bg-amber-500',
         label: 'Deferred',
       };
     case 'ESCALATED':
       return {
-        color: 'text-purple-700 dark:text-purple-400',
-        bg: 'bg-purple-100 dark:bg-purple-500/20',
-        dot: 'bg-purple-500',
+        color: 'text-amber-700 dark:text-amber-400',
+        bg: 'bg-amber-100 dark:bg-amber-500/20',
+        dot: 'bg-amber-500',
         label: 'Escalated',
       };
     case 'PENDING':
     default:
       return {
-        color: 'text-blue-700 dark:text-blue-400',
-        bg: 'bg-blue-100 dark:bg-blue-500/20',
+        color: 'text-blue-600 dark:text-blue-400',
+        bg: 'bg-blue-50/70 dark:bg-blue-500/10',
         dot: 'bg-blue-500',
         label: 'Pending',
       };

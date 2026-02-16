@@ -2,6 +2,7 @@ export type ArtifactType =
   | 'decision'
   | 'initiative'
   | 'task'
+  | 'notification'
   | 'report'
   | 'assessment'
   | 'tool'
@@ -19,6 +20,7 @@ const ARTIFACT_PREFIX: Record<ArtifactType, string> = {
   decision: 'DEC',
   initiative: 'INI',
   task: 'TSK',
+  notification: 'NTF',
   report: 'RPT',
   assessment: 'ASM',
   tool: 'TOL',
@@ -40,6 +42,7 @@ function getBasePath(type: ArtifactType, id: string): string {
   switch (type) {
     case 'task':
     case 'decision':
+    case 'notification':
       return '/my-work';
     case 'initiative':
       return '/initiatives';

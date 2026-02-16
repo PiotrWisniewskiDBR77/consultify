@@ -139,6 +139,11 @@ const SettingsView = React.lazy(() =>
   import('@/views/SettingsView').then((m) => ({ default: m.SettingsView }))
 );
 
+// Organization
+const OrganizationView = React.lazy(() =>
+  import('@/views/OrganizationView').then((m) => ({ default: m.OrganizationView }))
+);
+
 // Admin
 const AdminView = React.lazy(() =>
   import('@/views/admin/AdminView').then((m) => ({ default: m.AdminView }))
@@ -1031,6 +1036,22 @@ export const AppRoutes: React.FC = () => {
                       theme={theme as 'light' | 'dark' | 'system'}
                       toggleTheme={toggleTheme}
                     />
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Organization with nested routes - Protected & Error Boundary */}
+        <Route
+          path={`${ROUTES.ORGANIZATION.ROOT}/*`}
+          element={
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout breadcrumbs={breadcrumbs || ['Organization']} noPadding>
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="fade">
+                    <OrganizationView />
                   </AnimationWrapper>
                 </RouteErrorBoundary>
               </MainLayout>

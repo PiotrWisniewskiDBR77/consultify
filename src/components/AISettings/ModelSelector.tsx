@@ -142,7 +142,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     return (
       <div className={`grid grid-cols-2 md:grid-cols-3 gap-3 ${className}`}>
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-24 rounded-xl bg-slate-200 dark:bg-slate-800/30 animate-pulse" />
+          <div
+            key={i}
+            className="h-24 rounded-xl bg-slate-200 dark:bg-slate-800/30 animate-pulse"
+          />
         ))}
       </div>
     );
@@ -219,7 +222,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                 </div>
 
                 {/* Model name */}
-                <h4 className="font-medium text-slate-900 dark:text-white truncate mb-1">{model.name}</h4>
+                <h4 className="font-medium text-slate-900 dark:text-white truncate mb-1">
+                  {model.name}
+                </h4>
 
                 {/* Model ID */}
                 <p className="text-xs text-slate-500 dark:text-slate-400 truncate mb-2">

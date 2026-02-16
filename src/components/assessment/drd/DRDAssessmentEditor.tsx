@@ -948,25 +948,33 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       <div className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">
                         {avgActual}
                       </div>
-                      <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">Avg. Current Level</div>
+                      <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
+                        Avg. Current Level
+                      </div>
                     </div>
                     <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
                       <div className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">
                         {avgTarget}
                       </div>
-                      <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">Avg. Target Level</div>
+                      <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
+                        Avg. Target Level
+                      </div>
                     </div>
                     <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
                       <div className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">
                         {avgGap}
                       </div>
-                      <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">Avg. Gap</div>
+                      <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
+                        Avg. Gap
+                      </div>
                     </div>
                     <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
                       <div className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">
                         {stats.assessed}/{axisAreas.length}
                       </div>
-                      <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">Areas Assessed</div>
+                      <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
+                        Areas Assessed
+                      </div>
                     </div>
                   </div>
                 );
@@ -1840,7 +1848,8 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                   Back
                 </button>
                 <div className="text-xs text-slate-700 dark:text-slate-300">
-                  Press <span className="font-semibold text-slate-900 dark:text-white">Esc</span> to close
+                  Press <span className="font-semibold text-slate-900 dark:text-white">Esc</span> to
+                  close
                 </div>
               </div>
 
@@ -2111,25 +2120,33 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                           <div className="text-4xl font-extrabold text-slate-900 dark:text-white tabular-nums">
                             {avgActual}
                           </div>
-                          <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">Avg. Current Level</div>
+                          <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
+                            Avg. Current Level
+                          </div>
                         </div>
                         <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
                           <div className="text-4xl font-extrabold text-slate-900 dark:text-white tabular-nums">
                             {avgTarget}
                           </div>
-                          <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">Avg. Target Level</div>
+                          <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
+                            Avg. Target Level
+                          </div>
                         </div>
                         <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
                           <div className="text-4xl font-extrabold text-slate-900 dark:text-white tabular-nums">
                             {avgGap}
                           </div>
-                          <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">Avg. Gap</div>
+                          <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
+                            Avg. Gap
+                          </div>
                         </div>
                         <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
                           <div className="text-4xl font-extrabold text-slate-900 dark:text-white tabular-nums">
                             {stats.assessed}/{axisAreas.length}
                           </div>
-                          <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">Areas Assessed</div>
+                          <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
+                            Areas Assessed
+                          </div>
                         </div>
                       </div>
                     );

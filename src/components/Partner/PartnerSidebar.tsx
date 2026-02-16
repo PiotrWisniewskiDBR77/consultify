@@ -430,7 +430,9 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
                           <Icon
                             className={cn(
                               'w-4 h-4 flex-shrink-0',
-                              isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 dark:text-slate-400'
+                              isActive
+                                ? 'text-violet-600 dark:text-violet-400'
+                                : 'text-slate-500 dark:text-slate-400'
                             )}
                           />
                           <span className="flex-1 text-left">{item.label}</span>

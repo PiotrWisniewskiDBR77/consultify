@@ -417,7 +417,9 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
         {initiative.priority === 'Critical' && (
           <AlertTriangle size={14} className="shrink-0 text-red-500" />
         )}
-        <span className="ml-auto text-xs text-slate-500 dark:text-slate-400 shrink-0">{progress}%</span>
+        <span className="ml-auto text-xs text-slate-500 dark:text-slate-400 shrink-0">
+          {progress}%
+        </span>
       </div>
     </motion.div>
   );
@@ -731,7 +733,9 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                 key={`week-${idx}`}
                 className="flex-1 px-1 py-2 text-center border-r border-slate-200 dark:border-navy-700 last:border-r-0"
               >
-                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{week.label}</div>
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  {week.label}
+                </div>
                 <div className="text-[10px] text-slate-500 dark:text-slate-400">
                   {week.date.toLocaleDateString('en-US', { day: 'numeric' })}
                 </div>
@@ -849,7 +853,10 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
               </div>
             ) : (
               initiativeRows.map((row, rowIdx) => (
-                <div key={rowIdx} className="relative h-14 border-b border-slate-200 dark:border-navy-800">
+                <div
+                  key={rowIdx}
+                  className="relative h-14 border-b border-slate-200 dark:border-navy-800"
+                >
                   {row.map((initiative) => {
                     const initWarnings = warningsByInit.get(initiative.id) || [];
                     return (

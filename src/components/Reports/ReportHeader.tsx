@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 
 interface ReportHeaderProps {

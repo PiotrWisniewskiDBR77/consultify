@@ -1,9 +1,9 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
+import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
-import { LoadingScreen } from '@/components/ui/LoadingScreen';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

@@ -193,7 +193,10 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
 
   const scoreInfo = hasData
     ? getScoreLabel(score)
-    : { label: t('executive.health.noData', 'No data'), color: 'text-slate-500 dark:text-slate-400' };
+    : {
+        label: t('executive.health.noData', 'No data'),
+        color: 'text-slate-500 dark:text-slate-400',
+      };
 
   // A1.1: Filter out breakdown items that have no real data (value === 0 means not populated)
   const hasBreakdownData =
@@ -291,7 +294,9 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                 {scoreDiff > 0 ? '+' : ''}
                 {scoreDiff}%
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">vs last week</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                vs last week
+              </span>
             </div>
           )}
         </div>
@@ -315,7 +320,9 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                 </>
               ) : (
                 <>
-                  <span className="text-3xl font-bold text-slate-700 dark:text-slate-300 dark:text-slate-600">—</span>
+                  <span className="text-3xl font-bold text-slate-700 dark:text-slate-300 dark:text-slate-600">
+                    —
+                  </span>
                   <span className="text-sm font-semibold mt-1 text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {t('executive.health.noData', 'No data')}
                   </span>

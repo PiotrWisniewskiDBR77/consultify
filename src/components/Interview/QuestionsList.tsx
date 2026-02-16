@@ -957,7 +957,9 @@ Rules:
                   <div className="font-semibold text-sm truncate">
                     {isPolish ? 'Czat do pytania' : 'Chat for question'}
                   </div>
-                  <div className="text-xs text-slate-700 dark:text-slate-300 truncate">{chatQuestion.questionText}</div>
+                  <div className="text-xs text-slate-700 dark:text-slate-300 truncate">
+                    {chatQuestion.questionText}
+                  </div>
                 </div>
               </div>
               <button

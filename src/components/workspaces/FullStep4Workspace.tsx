@@ -174,7 +174,9 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
                   className="border-b border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
                 >
                   <td className="p-3">
-                    <div className="font-medium text-slate-900 dark:text-white text-xs">{init.name}</div>
+                    <div className="font-medium text-slate-900 dark:text-white text-xs">
+                      {init.name}
+                    </div>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                       {init.quarter} • {init.priority} Priority
                     </div>

@@ -45,125 +45,63 @@ interface FilterableTableProps {
   emptyMessage?: string;
 }
 
-// Status badge component — supports all status families (assessment, report, initiative)
+// Status badge component — uses canonical color palette
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  const config: Record<string, { bg: string; text: string; dot: string; label: string }> = {
-    // Initiative / shared statuses
-    DRAFT: { bg: 'bg-slate-500/20', text: 'text-slate-300', dot: 'bg-slate-400', label: 'Draft' },
-    PENDING_REVIEW: {
-      bg: 'bg-orange-500/20',
-      text: 'text-orange-300',
-      dot: 'bg-orange-400',
-      label: 'Pending Review',
-    },
-    REVIEW: {
-      bg: 'bg-amber-500/20',
-      text: 'text-amber-300',
-      dot: 'bg-amber-400',
-      label: 'In Review',
-    },
-    PROMOTED: {
-      bg: 'bg-blue-500/20',
-      text: 'text-blue-300',
-      dot: 'bg-blue-400',
-      label: 'Promoted',
-    },
-    PLANNING: {
-      bg: 'bg-indigo-500/20',
-      text: 'text-indigo-300',
-      dot: 'bg-indigo-400',
-      label: 'Planning',
-    },
-    APPROVED: {
-      bg: 'bg-emerald-500/20',
-      text: 'text-emerald-300',
-      dot: 'bg-emerald-400',
-      label: 'Approved',
-    },
-    SCHEDULED: {
-      bg: 'bg-purple-500/20',
-      text: 'text-purple-300',
-      dot: 'bg-purple-400',
-      label: 'Scheduled',
-    },
-    EXECUTING: {
-      bg: 'bg-cyan-500/20',
-      text: 'text-cyan-300',
-      dot: 'bg-cyan-400',
-      label: 'Executing',
-    },
-    BLOCKED: { bg: 'bg-red-500/20', text: 'text-red-300', dot: 'bg-red-400', label: 'Blocked' },
-    DONE: { bg: 'bg-green-500/20', text: 'text-green-300', dot: 'bg-green-400', label: 'Done' },
-    TRACKING: {
-      bg: 'bg-teal-500/20',
-      text: 'text-teal-300',
-      dot: 'bg-teal-400',
-      label: 'Tracking',
-    },
-    CANCELLED: {
-      bg: 'bg-gray-500/20',
-      text: 'text-gray-300',
-      dot: 'bg-gray-400',
-      label: 'Cancelled',
-    },
-    ARCHIVED: {
-      bg: 'bg-slate-500/20',
-      text: 'text-slate-300',
-      dot: 'bg-slate-500',
-      label: 'Archived',
-    },
-    // Assessment-specific statuses
-    IN_REVIEW: {
-      bg: 'bg-amber-500/20',
-      text: 'text-amber-300',
-      dot: 'bg-amber-400',
-      label: 'In Review',
-    },
-    AWAITING_APPROVAL: {
-      bg: 'bg-orange-500/20',
-      text: 'text-orange-300',
-      dot: 'bg-orange-400',
-      label: 'Awaiting Approval',
-    },
-    REJECTED: {
-      bg: 'bg-red-500/20',
-      text: 'text-red-300',
-      dot: 'bg-red-400',
-      label: 'Rejected',
-    },
-    // Report-specific statuses
-    GENERATING: {
-      bg: 'bg-blue-500/20',
-      text: 'text-blue-300',
-      dot: 'bg-blue-400',
-      label: 'Generating',
-    },
-    FINAL: {
-      bg: 'bg-indigo-500/20',
-      text: 'text-indigo-300',
-      dot: 'bg-indigo-400',
-      label: 'Final',
-    },
-    PENDING_APPROVAL: {
-      bg: 'bg-orange-500/20',
-      text: 'text-orange-300',
-      dot: 'bg-orange-400',
-      label: 'Pending Approval',
-    },
-    UTILIZED: {
-      bg: 'bg-teal-500/20',
-      text: 'text-teal-300',
-      dot: 'bg-teal-400',
-      label: 'Utilized',
-    },
+  const LABELS: Record<string, string> = {
+    DRAFT: 'Draft',
+    PENDING_REVIEW: 'Pending Review',
+    REVIEW: 'In Review',
+    PROMOTED: 'Promoted',
+    PLANNING: 'Planning',
+    APPROVED: 'Approved',
+    SCHEDULED: 'Scheduled',
+    EXECUTING: 'Executing',
+    BLOCKED: 'Blocked',
+    DONE: 'Done',
+    TRACKING: 'Tracking',
+    CANCELLED: 'Cancelled',
+    ARCHIVED: 'Archived',
+    IN_REVIEW: 'In Review',
+    AWAITING_APPROVAL: 'Awaiting Approval',
+    REJECTED: 'Rejected',
+    GENERATING: 'Generating',
+    FINAL: 'Final',
+    PENDING_APPROVAL: 'Pending Approval',
+    UTILIZED: 'Utilized',
   };
 
-  const { bg, text, dot, label } = config[status] || config.DRAFT;
+  const style = (() => {
+    const key = status?.toUpperCase().replace(/[\s-]+/g, '_') || 'DRAFT';
+    const alarm = ['BLOCKED', 'REJECTED'];
+    const success = ['DONE', 'COMPLETED', 'APPROVED', 'TRACKING', 'UTILIZED', 'ACTIVE'];
+    const info = ['IN_PROGRESS', 'EXECUTING', 'SCHEDULED', 'GENERATING', 'PROMOTED'];
+    const warning = [
+      'PENDING_REVIEW',
+      'REVIEW',
+      'PLANNING',
+      'PENDING_APPROVAL',
+      'AWAITING_APPROVAL',
+      'IN_REVIEW',
+      'ESCALATED',
+    ];
+
+    if (alarm.includes(key))
+      return { bg: 'bg-red-500/20', text: 'text-red-400', dot: 'bg-red-500' };
+    if (success.includes(key))
+      return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' };
+    if (info.includes(key))
+      return { bg: 'bg-blue-500/10', text: 'text-blue-400', dot: 'bg-blue-500' };
+    if (warning.includes(key))
+      return { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-500' };
+    return { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' };
+  })();
+
+  const label = LABELS[status] || status || 'Draft';
 
   return (
-    <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${bg}`}>
-      <span className={`w-2 h-2 rounded-full ${dot}`} />
-      <span className={`text-xs font-medium ${text}`}>{label}</span>
+    <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${style.bg}`}>
+      <span className={`w-2 h-2 rounded-full ${style.dot}`} />
+      <span className={`text-xs font-medium ${style.text}`}>{label}</span>
     </div>
   );
 };
@@ -351,7 +289,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
 
   return (
     <div className="p-4">
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="bg-slate-50 dark:bg-navy-900/50">
@@ -405,7 +343,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           {formatRelativeTime(row.updatedAt)}
                         </span>
                       ) : (
-                        <span className="text-sm text-slate-700 dark:text-slate-300">{row[column.id]}</span>
+                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                          {row[column.id]}
+                        </span>
                       )}
                     </td>
                   ))}

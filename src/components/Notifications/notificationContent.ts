@@ -159,7 +159,10 @@ const inferWhy = (n: NotificationLike, isPolish: boolean): string => {
   }
   if (t === 'USAGE_ALERT' || t.includes('LIMIT')) {
     const usedPct = Number(
-      (n.data?.usagePercent || n.data?.usage_percent || n.data?.percent_used) as number | string | undefined
+      (n.data?.usagePercent || n.data?.usage_percent || n.data?.percent_used) as
+        | number
+        | string
+        | undefined
     );
     const pct = Number.isFinite(usedPct) && usedPct > 0 ? usedPct : undefined;
     return isPolish
@@ -256,10 +259,18 @@ const buildContextLine = (n: NotificationLike, isPolish: boolean): string => {
   }
   if (t === 'PAYMENT_FAILED') {
     const inv = normalize((data.invoiceId || data.invoice_id) as string | undefined);
-    return inv ? (isPolish ? `Faktura ${inv}` : `Invoice ${inv}`) : (isPolish ? 'Problem z płatnością' : 'Payment issue');
+    return inv
+      ? isPolish
+        ? `Faktura ${inv}`
+        : `Invoice ${inv}`
+      : isPolish
+        ? 'Problem z płatnością'
+        : 'Payment issue';
   }
   if (t === 'USAGE_ALERT' || t.includes('LIMIT')) {
-    const metric = normalize((data.metric || data.limitName || data.limit_name) as string | undefined);
+    const metric = normalize(
+      (data.metric || data.limitName || data.limit_name) as string | undefined
+    );
     const pct = Number((data.usagePercent || data.usage_percent || data.percent_used) as any);
     const pctStr = Number.isFinite(pct) && pct > 0 ? `${pct}%` : '';
     if (metric && pctStr) return `${metric} — ${pctStr}`;
@@ -362,7 +373,9 @@ const inferExpectedAction = (
 
   // TASK_BLOCKED
   if (t === 'TASK_BLOCKED' || t.includes('BLOCKED')) {
-    const blocker = normalize((data.blocker || data.blockerName || data.blocker_name) as string | undefined);
+    const blocker = normalize(
+      (data.blocker || data.blockerName || data.blocker_name) as string | undefined
+    );
     return isPolish
       ? `Usuń blokadę${blocker ? ` ("${blocker}")` : ''} i odblokuj postęp${taskTitle ? ` zadania "${taskTitle}"` : ''}.`
       : `Remove the blocker${blocker ? ` ("${blocker}")` : ''} and unblock progress${taskTitle ? ` on "${taskTitle}"` : ''}.`;
@@ -377,7 +390,9 @@ const inferExpectedAction = (
 
   // DECISION_REQUIRED / DECISION_OVERDUE
   if (t.includes('DECISION')) {
-    const decisionTitle = normalize((data.decision_title || data.decisionTitle) as string | undefined);
+    const decisionTitle = normalize(
+      (data.decision_title || data.decisionTitle) as string | undefined
+    );
     if (t === 'DECISION_OVERDUE') {
       return isPolish
         ? `Natychmiast podejmij decyzję${decisionTitle ? ` w sprawie "${decisionTitle}"` : ''} — opóźnienie blokuje dalsze prace.`
@@ -425,7 +440,9 @@ const inferExpectedAction = (
       : 'Open billing, update your payment method, and retry the transaction.';
   }
   if (t === 'USAGE_ALERT' || t.includes('LIMIT')) {
-    const metric = normalize((data.metric || data.limitName || data.limit_name) as string | undefined);
+    const metric = normalize(
+      (data.metric || data.limitName || data.limit_name) as string | undefined
+    );
     const pct = Number((data.usagePercent || data.usage_percent || data.percent_used) as any);
     const pctStr = Number.isFinite(pct) && pct > 0 ? `${pct}%` : '';
     return isPolish
@@ -476,9 +493,7 @@ const inferExpectedAction = (
 
   // Fallback with CTA
   if (primaryCta.kind !== 'none') {
-    return isPolish
-      ? `Wykonaj: ${primaryCta.label}`
-      : `Do: ${primaryCta.label}`;
+    return isPolish ? `Wykonaj: ${primaryCta.label}` : `Do: ${primaryCta.label}`;
   }
 
   return isPolish
@@ -503,16 +518,39 @@ const inferChecklist = (n: NotificationLike, isPolish: boolean): SuggestedCheckl
     const isCritical = severity === 'CRITICAL' || daysOverdue > 3;
     if (isCritical) {
       return [
-        cl(isPolish ? 'Sprawdź blokery i przyczynę opóźnienia' : 'Check blockers and reason for delay', 'critical'),
-        cl(isPolish ? `Skontaktuj się z ${assignee || 'odpowiedzialnym'}` : `Contact ${assignee || 'the assignee'}`, 'critical'),
+        cl(
+          isPolish
+            ? 'Sprawdź blokery i przyczynę opóźnienia'
+            : 'Check blockers and reason for delay',
+          'critical'
+        ),
+        cl(
+          isPolish
+            ? `Skontaktuj się z ${assignee || 'odpowiedzialnym'}`
+            : `Contact ${assignee || 'the assignee'}`,
+          'critical'
+        ),
         cl(isPolish ? 'Ustal nowy realny termin' : 'Set a new realistic deadline', 'critical'),
-        cl(isPolish ? 'Eskaluj do kierownika jeśli brak odpowiedzi w 2h' : 'Escalate to manager if no response within 2h', 'normal'),
+        cl(
+          isPolish
+            ? 'Eskaluj do kierownika jeśli brak odpowiedzi w 2h'
+            : 'Escalate to manager if no response within 2h',
+          'normal'
+        ),
         cl(isPolish ? 'Zaktualizuj status zadania' : 'Update task status', 'normal'),
-        cl(isPolish ? 'Powiadom interesariuszy o nowym planie' : 'Notify stakeholders about the new plan', 'optional'),
+        cl(
+          isPolish
+            ? 'Powiadom interesariuszy o nowym planie'
+            : 'Notify stakeholders about the new plan',
+          'optional'
+        ),
       ];
     }
     return [
-      cl(isPolish ? 'Otwórz zadanie i przejrzyj szczegóły' : 'Open the task and review details', 'normal'),
+      cl(
+        isPolish ? 'Otwórz zadanie i przejrzyj szczegóły' : 'Open the task and review details',
+        'normal'
+      ),
       cl(isPolish ? 'Sprawdź czy są blokery' : 'Check for blockers', 'normal'),
       cl(isPolish ? 'Zaktualizuj deadline lub status' : 'Update deadline or status', 'normal'),
       cl(isPolish ? 'Powiadom zespół o zmianie' : 'Notify the team about the change', 'optional'),
@@ -523,18 +561,30 @@ const inferChecklist = (n: NotificationLike, isPolish: boolean): SuggestedCheckl
     return [
       cl(isPolish ? 'Zidentyfikuj blokadę' : 'Identify the blocker', 'critical'),
       cl(isPolish ? 'Skontaktuj się z osobą blokującą' : 'Contact the blocking party', 'critical'),
-      cl(isPolish ? 'Ustal plan usunięcia blokady' : 'Establish a plan to remove the blocker', 'normal'),
+      cl(
+        isPolish ? 'Ustal plan usunięcia blokady' : 'Establish a plan to remove the blocker',
+        'normal'
+      ),
       cl(isPolish ? 'Zaktualizuj status zadania' : 'Update task status', 'normal'),
-      cl(isPolish ? 'Eskaluj jeśli blokada trwa > 24h' : 'Escalate if blocker persists > 24h', 'optional'),
+      cl(
+        isPolish ? 'Eskaluj jeśli blokada trwa > 24h' : 'Escalate if blocker persists > 24h',
+        'optional'
+      ),
     ];
   }
 
   if (t === 'TASK_ASSIGNED' || t.includes('ASSIGN')) {
     return [
-      cl(isPolish ? 'Przejrzyj opis i zakres zadania' : 'Review task description and scope', 'normal'),
+      cl(
+        isPolish ? 'Przejrzyj opis i zakres zadania' : 'Review task description and scope',
+        'normal'
+      ),
       cl(isPolish ? 'Potwierdź termin wykonania' : 'Confirm the deadline', 'normal'),
       cl(isPolish ? 'Sprawdź zależności i blokery' : 'Check dependencies and blockers', 'normal'),
-      cl(isPolish ? 'Rozpocznij pracę lub zgłoś wątpliwości' : 'Start work or raise concerns', 'normal'),
+      cl(
+        isPolish ? 'Rozpocznij pracę lub zgłoś wątpliwości' : 'Start work or raise concerns',
+        'normal'
+      ),
     ];
   }
 
@@ -542,7 +592,10 @@ const inferChecklist = (n: NotificationLike, isPolish: boolean): SuggestedCheckl
   if (t === 'DECISION_OVERDUE') {
     return [
       cl(isPolish ? 'Przeanalizuj kontekst decyzji' : 'Analyze decision context', 'critical'),
-      cl(isPolish ? 'Skonsultuj z kluczowymi interesariuszami' : 'Consult key stakeholders', 'critical'),
+      cl(
+        isPolish ? 'Skonsultuj z kluczowymi interesariuszami' : 'Consult key stakeholders',
+        'critical'
+      ),
       cl(isPolish ? 'Podejmij decyzję lub eskaluj' : 'Make the decision or escalate', 'critical'),
       cl(isPolish ? 'Udokumentuj uzasadnienie' : 'Document the rationale', 'normal'),
       cl(isPolish ? 'Powiadom zależne zespoły' : 'Notify dependent teams', 'normal'),
@@ -551,20 +604,35 @@ const inferChecklist = (n: NotificationLike, isPolish: boolean): SuggestedCheckl
 
   if (t === 'DECISION_REQUIRED') {
     return [
-      cl(isPolish ? 'Przejrzyj dane i kontekst decyzji' : 'Review data and decision context', 'normal'),
-      cl(isPolish ? 'Skonsultuj z zespołem jeśli potrzeba' : 'Consult the team if needed', 'normal'),
+      cl(
+        isPolish ? 'Przejrzyj dane i kontekst decyzji' : 'Review data and decision context',
+        'normal'
+      ),
+      cl(
+        isPolish ? 'Skonsultuj z zespołem jeśli potrzeba' : 'Consult the team if needed',
+        'normal'
+      ),
       cl(isPolish ? 'Podejmij decyzję lub deleguj' : 'Make the decision or delegate', 'normal'),
-      cl(isPolish ? 'Udokumentuj wybór i uzasadnienie' : 'Document the choice and rationale', 'optional'),
+      cl(
+        isPolish ? 'Udokumentuj wybór i uzasadnienie' : 'Document the choice and rationale',
+        'optional'
+      ),
     ];
   }
 
   // ── AI types ──
   if (t === 'AI_RISK_DETECTED') {
     return [
-      cl(isPolish ? 'Przejrzyj szczegóły wykrytego ryzyka' : 'Review detected risk details', 'critical'),
+      cl(
+        isPolish ? 'Przejrzyj szczegóły wykrytego ryzyka' : 'Review detected risk details',
+        'critical'
+      ),
       cl(isPolish ? 'Zweryfikuj dane wejściowe AI' : 'Verify AI input data', 'normal'),
       cl(isPolish ? 'Oceń realny wpływ na projekt' : 'Assess real impact on the project', 'normal'),
-      cl(isPolish ? 'Podejmij działanie mitygujące lub odrzuć' : 'Take mitigating action or dismiss', 'normal'),
+      cl(
+        isPolish ? 'Podejmij działanie mitygujące lub odrzuć' : 'Take mitigating action or dismiss',
+        'normal'
+      ),
       cl(isPolish ? 'Zaktualizuj rejestr ryzyk' : 'Update the risk register', 'optional'),
     ];
   }
@@ -573,25 +641,40 @@ const inferChecklist = (n: NotificationLike, isPolish: boolean): SuggestedCheckl
     return [
       cl(isPolish ? 'Przejrzyj rekomendację AI' : 'Review the AI recommendation', 'normal'),
       cl(isPolish ? 'Zweryfikuj założenia i dane' : 'Verify assumptions and data', 'normal'),
-      cl(isPolish ? 'Zastosuj lub odrzuć z uzasadnieniem' : 'Apply or dismiss with justification', 'normal'),
+      cl(
+        isPolish ? 'Zastosuj lub odrzuć z uzasadnieniem' : 'Apply or dismiss with justification',
+        'normal'
+      ),
     ];
   }
 
   if (t === 'AI_OVERLOAD_DETECTED') {
     return [
       cl(isPolish ? 'Przejrzyj obciążenie zespołu' : 'Review team workload', 'critical'),
-      cl(isPolish ? 'Zidentyfikuj najbardziej obciążone osoby' : 'Identify most overloaded people', 'normal'),
-      cl(isPolish ? 'Przedystrybuuj lub odłóż zadania' : 'Redistribute or postpone tasks', 'normal'),
+      cl(
+        isPolish ? 'Zidentyfikuj najbardziej obciążone osoby' : 'Identify most overloaded people',
+        'normal'
+      ),
+      cl(
+        isPolish ? 'Przedystrybuuj lub odłóż zadania' : 'Redistribute or postpone tasks',
+        'normal'
+      ),
       cl(isPolish ? 'Powiadom zespół o zmianach' : 'Notify team about changes', 'optional'),
     ];
   }
 
   if (t === 'AI_DEPENDENCY_CONFLICT') {
     return [
-      cl(isPolish ? 'Przejrzyj konfliktujące zależności' : 'Review conflicting dependencies', 'critical'),
-      cl(isPolish ? 'Porównaj timeline\'y zadań' : 'Compare task timelines', 'normal'),
+      cl(
+        isPolish ? 'Przejrzyj konfliktujące zależności' : 'Review conflicting dependencies',
+        'critical'
+      ),
+      cl(isPolish ? "Porównaj timeline'y zadań" : 'Compare task timelines', 'normal'),
       cl(isPolish ? 'Zmień kolejność lub przesuń terminy' : 'Reorder or shift deadlines', 'normal'),
-      cl(isPolish ? 'Potwierdź nowy harmonogram z zespołem' : 'Confirm new schedule with team', 'optional'),
+      cl(
+        isPolish ? 'Potwierdź nowy harmonogram z zespołem' : 'Confirm new schedule with team',
+        'optional'
+      ),
     ];
   }
 
@@ -619,8 +702,14 @@ const inferChecklist = (n: NotificationLike, isPolish: boolean): SuggestedCheckl
   if (t === 'USAGE_ALERT' || t.includes('LIMIT')) {
     return [
       cl(isPolish ? 'Sprawdź aktualne zużycie' : 'Check current usage', 'normal'),
-      cl(isPolish ? 'Zidentyfikuj co zajmuje zasoby' : 'Identify what consumes resources', 'normal'),
-      cl(isPolish ? 'Zdecyduj: upgrade, porządek lub limit' : 'Decide: upgrade, cleanup, or limit', 'normal'),
+      cl(
+        isPolish ? 'Zidentyfikuj co zajmuje zasoby' : 'Identify what consumes resources',
+        'normal'
+      ),
+      cl(
+        isPolish ? 'Zdecyduj: upgrade, porządek lub limit' : 'Decide: upgrade, cleanup, or limit',
+        'normal'
+      ),
       cl(isPolish ? 'Wdróż wybraną strategię' : 'Implement chosen strategy', 'optional'),
     ];
   }
@@ -645,7 +734,10 @@ const inferChecklist = (n: NotificationLike, isPolish: boolean): SuggestedCheckl
   if (t === 'DBR77_KB_NEW') {
     return [
       cl(isPolish ? 'Przeczytaj nowy artykuł' : 'Read the new article', 'normal'),
-      cl(isPolish ? 'Sprawdź czy dotyczy Twoich zadań' : 'Check if it applies to your tasks', 'normal'),
+      cl(
+        isPolish ? 'Sprawdź czy dotyczy Twoich zadań' : 'Check if it applies to your tasks',
+        'normal'
+      ),
       cl(isPolish ? 'Zastosuj wiedzę w praktyce' : 'Apply the knowledge in practice', 'optional'),
     ];
   }

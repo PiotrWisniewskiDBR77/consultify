@@ -147,6 +147,9 @@ export enum AppView {
   CONTEXT_BUILDER_MEGATRENDS = 'CONTEXT_BUILDER_MEGATRENDS',
   CONTEXT_BUILDER_STRATEGY = 'CONTEXT_BUILDER_STRATEGY',
 
+  // Organization (Settings-like internal navigation)
+  ORGANIZATION_PROFILE = 'ORGANIZATION_PROFILE',
+
   // Teamwork Views
   MY_WORK = 'MY_WORK', // New Module 7 (Tasks & Workflow)
   PROJECT_INTELLIGENCE = 'PROJECT_INTELLIGENCE', // AI-powered project knowledge capture

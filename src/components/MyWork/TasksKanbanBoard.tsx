@@ -410,7 +410,9 @@ const DroppableColumn: React.FC<{
         {taskIds.length === 0 && !isOver && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className={`mb-2 ${column.headerColor} opacity-30`}>{column.icon}</div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">No tasks</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+              No tasks
+            </p>
           </div>
         )}
       </div>
@@ -829,7 +831,9 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
         <div className="flex-1 p-4">
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
             <CheckCircle2 size={48} className="text-slate-600 mb-4" />
-            <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">No tasks yet</h3>
+            <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
+              No tasks yet
+            </h3>
             <p className="text-sm text-slate-500 mb-4">Create your first task to get started</p>
             <button
               onClick={onCreateTask}

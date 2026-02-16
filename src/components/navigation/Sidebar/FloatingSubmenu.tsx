@@ -116,6 +116,7 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
           return (
             <motion.button
               key={item.id}
+              type="button"
               onClick={() => item.viewId && onNavigate(item.viewId)}
               whileTap={{ scale: 0.98 }}
               className={`

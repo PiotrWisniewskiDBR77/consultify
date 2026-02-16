@@ -141,10 +141,7 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
         <div className="h-6 w-48 rounded bg-slate-200 dark:bg-white/10" />
         <div className="grid gap-4 md:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="h-24 rounded-xl bg-slate-100 dark:bg-white/5"
-            />
+            <div key={i} className="h-24 rounded-xl bg-slate-100 dark:bg-white/5" />
           ))}
         </div>
       </div>

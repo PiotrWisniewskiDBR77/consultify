@@ -1682,7 +1682,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     artifactContext={{
                       title: notification.title,
                       status: notification.isRead ? 'read' : 'unread',
-                      priority: aiAnalysis.priority,
+                      priority: aiAnalysis?.priority || 'medium',
                       type: 'notification',
                     }}
                     iconOnly
@@ -1712,7 +1712,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     artifactContext={{
                       title: notification.title,
                       status: notification.isRead ? 'read' : 'unread',
-                      priority: aiAnalysis.priority,
+                      priority: aiAnalysis?.priority || 'medium',
                       type: 'notification',
                     }}
                     iconOnly
@@ -2727,7 +2727,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                 artifactContext={{
                                   title: notification.title,
                                   status: notification.isRead ? 'read' : 'unread',
-                                  priority: aiAnalysis.priority,
+                                  priority: aiAnalysis?.priority || 'medium',
                                   type: 'notification',
                                 }}
                                 iconOnly
@@ -2760,7 +2760,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                   artifactContext={{
                                     title: notification.title,
                                     status: notification.isRead ? 'read' : 'unread',
-                                    priority: aiAnalysis.priority,
+                                    priority: aiAnalysis?.priority || 'medium',
                                     type: 'notification',
                                   }}
                                   iconOnly
