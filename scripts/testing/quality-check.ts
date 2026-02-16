@@ -205,9 +205,25 @@ type Bucket =
   | 'FAKE_UNIT'
   | 'PLACEHOLDER'
   | 'FAKE_INTEGRATION'
+  | 'FAKE_INTEGRATION_RISK'
   | 'SPEC_FILE'
   | 'LOW_SIGNAL'
   | 'OTHER';
+
+function importsServerRoutes(content: string): boolean {
+  const sources = extractImportSources(content);
+  return sources.some((s) => /server\/src\/routes\b|server\/src\/routes\//.test(s));
+}
+
+function importsServerGatewayOrApp(content: string): boolean {
+  const sources = extractImportSources(content);
+  return sources.some((s) => /server\/src\/(Gateway|app|createApp)\b/.test(s));
+}
+
+function definesInlineExpressRoutes(content: string): boolean {
+  // Inline route handlers in a test file are a strong signal of "fake integration".
+  return /\bapp\.(get|post|put|delete|patch|all)\s*\(/.test(content);
+}
 
 function classifyTest(content: string, filePath: string): Bucket {
   // Placeholder always loses to REAL signals (avoid misclassifying real tests).
@@ -215,11 +231,32 @@ function classifyTest(content: string, filePath: string): Bucket {
   const supertest = usesSupertest(content);
   const expressApp = createsLocalExpressApp(content);
   const serverIndex = importsServerIndex(content);
+  const serverRoutes = importsServerRoutes(content);
+  const serverGatewayOrApp = importsServerGatewayOrApp(content);
+  const inlineExpressRoutes = definesInlineExpressRoutes(content);
   const playwright = usesPlaywright(content, filePath);
   const fakeUnit = isFakeUnitTest(content, filePath);
   const placeholder = isPlaceholder(content);
   const specFile = readsSourceFiles(content);
   const lowSignal = isLowSignal(content);
+
+  // Integration honesty: supertest + local express() is "real" only if it mounts our real route stack
+  // (or imports the real server entry). Inline route handlers in the test are treated as fake.
+  if (supertest && expressApp) {
+    const hasRuntimeSignal = serverIndex || serverRoutes || serverGatewayOrApp;
+
+    // Explicit fake: local app with inline handlers and no real route stack imports.
+    if (inlineExpressRoutes && !hasRuntimeSignal) return 'FAKE_INTEGRATION';
+
+    // Risk: the file imports real app code, but also defines inline handlers (common try/catch fallback).
+    // This can silently become fake if the import path changes or fails.
+    if (inlineExpressRoutes && hasRuntimeSignal && !serverRoutes && !serverIndex) {
+      return 'FAKE_INTEGRATION_RISK';
+    }
+
+    // Without any runtime signal, it's almost certainly a mocked app (even if it imports some src types).
+    if (!hasRuntimeSignal) return 'FAKE_INTEGRATION';
+  }
 
   // REAL: must touch application code, not just testing libs.
   if (realCode) return 'REAL_CODE';
@@ -248,6 +285,7 @@ function scan(): void {
     FAKE_UNIT: { count: 0, files: [] },
     PLACEHOLDER: { count: 0, files: [] },
     FAKE_INTEGRATION: { count: 0, files: [] },
+    FAKE_INTEGRATION_RISK: { count: 0, files: [] },
     SPEC_FILE: { count: 0, files: [] },
     LOW_SIGNAL: { count: 0, files: [] },
     OTHER: { count: 0, files: [] },
@@ -271,6 +309,7 @@ function scan(): void {
   const other =
     buckets.OTHER.count +
     buckets.FAKE_INTEGRATION.count +
+    buckets.FAKE_INTEGRATION_RISK.count +
     buckets.SPEC_FILE.count +
     buckets.LOW_SIGNAL.count;
 
@@ -292,6 +331,7 @@ function scan(): void {
   console.log(`  - REAL_CODE: ${buckets.REAL_CODE.count}`);
   console.log(`  - REAL_RUNTIME: ${buckets.REAL_RUNTIME.count}`);
   console.log(`  - FAKE_INTEGRATION: ${buckets.FAKE_INTEGRATION.count}`);
+  console.log(`  - FAKE_INTEGRATION_RISK: ${buckets.FAKE_INTEGRATION_RISK.count}`);
   console.log(`  - FAKE_UNIT: ${buckets.FAKE_UNIT.count}`);
   console.log(`  - SPEC_FILE: ${buckets.SPEC_FILE.count}`);
   console.log(`  - LOW_SIGNAL: ${buckets.LOW_SIGNAL.count}`);
@@ -342,6 +382,14 @@ function scan(): void {
   if (buckets.FAKE_INTEGRATION.count > 0) {
     console.log(`❌ FAKE_INTEGRATION tests detected: ${buckets.FAKE_INTEGRATION.count}`);
     process.exit(1);
+  }
+
+  const failOnRisk = process.env.QUALITY_CHECK_FAIL_ON_RISK === '1';
+  if (buckets.FAKE_INTEGRATION_RISK.count > 0) {
+    console.log(
+      `⚠️  FAKE_INTEGRATION_RISK detected: ${buckets.FAKE_INTEGRATION_RISK.count} (see report JSON)`
+    );
+    if (failOnRisk) process.exit(1);
   }
   process.exit(0);
 }
@@ -401,6 +449,7 @@ function renderMarkdown(report: any): string {
     'REAL_CODE',
     'REAL_RUNTIME',
     'FAKE_INTEGRATION',
+    'FAKE_INTEGRATION_RISK',
     'FAKE_UNIT',
     'PLACEHOLDER',
     'SPEC_FILE',
@@ -417,6 +466,9 @@ function renderMarkdown(report: any): string {
   lines.push(`- REAL_RUNTIME: see \`buckets.REAL_RUNTIME.files\` in JSON`);
   lines.push(
     `- FAKE_INTEGRATION (REAL-but-fake risk): see \`buckets.FAKE_INTEGRATION.files\` in JSON`
+  );
+  lines.push(
+    `- FAKE_INTEGRATION_RISK (REAL-but-fake risk): see \`buckets.FAKE_INTEGRATION_RISK.files\` in JSON`
   );
   lines.push(`- FAKE_UNIT (inline implementations): see \`buckets.FAKE_UNIT.files\` in JSON`);
   lines.push(`- PLACEHOLDER: see \`buckets.PLACEHOLDER.files\` in JSON`);

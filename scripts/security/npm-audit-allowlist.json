@@ -1,0 +1,8 @@
+{
+  "generatedAt": "2026-02-15",
+  "notes": [
+    "This allowlist is a temporary risk acceptance for npm audit high/critical findings that are currently unavoidable without large dependency migrations.",
+    "Goal: keep the gate honest by failing on any NEW high/critical issues outside this allowlist."
+  ],
+  "allowPackages": ["tar", "cacache", "make-fetch-happen", "node-gyp", "sqlite3"]
+}

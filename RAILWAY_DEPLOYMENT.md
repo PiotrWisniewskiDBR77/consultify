@@ -1,6 +1,7 @@
 # Railway Deployment Guide - Quick Start
 
 ## Prerequisites
+
 - GitHub account
 - Railway account (sign up at railway.app)
 - Your API keys ready (GEMINI_API_KEY, etc.)
@@ -8,7 +9,9 @@
 ## Step-by-Step Deployment
 
 ### 1. Prepare Your Repository
+
 Ensure your code is pushed to GitHub:
+
 ```bash
 git add .
 git commit -m "Prepare for Railway deployment"
@@ -16,6 +19,7 @@ git push origin main
 ```
 
 ### 2. Create Railway Project
+
 1. Go to [railway.app](https://railway.app)
 2. Click "New Project"
 3. Select "Deploy from GitHub repo"
@@ -23,12 +27,45 @@ git push origin main
 5. Select your `consultify` repository
 
 ### 3. Add PostgreSQL Database
+
 1. In your Railway project, click "+ New"
 2. Select "Database" → "Add PostgreSQL"
 3. Railway will automatically create the database
 4. Note: `DATABASE_URL` is automatically set as an environment variable
 
+### 3.1 (Optional) Migrate existing SQLite data to Railway Postgres
+
+If you already have data in a local SQLite DB and want to move it into the Railway Postgres instance:
+
+#### Recommended (safe): migrate into a NEW Postgres database (keep old DB as backup)
+
+This creates a **new database** on the same Railway Postgres instance, migrates everything, validates row-count parity,
+and leaves the old database untouched as a rollback option.
+
+Run from your local machine:
+
+```bash
+SQLITE_PATH="./data/dev/consultinity.db" DB_TYPE=postgres DATABASE_URL="<railway DATABASE_URL>" \
+  npm run db:migrate:sqlite-to-new-pg -- --retries 2
+```
+
+When it finishes it prints the **new database name** (e.g. `consultinity_migrated_YYYYMMDD_HHMMSS`).
+Update Railway `DATABASE_URL` to point to that new database name (the part after the last `/`) and redeploy.
+
+#### Legacy (not recommended): import into the existing database
+
+If you import into a non-empty DB you can end up with extra rows vs SQLite (seed data / prior runs).
+Prefer the “NEW database” approach above.
+
+If your Postgres provider requires TLS, set:
+
+```bash
+DB_SSL=true
+DB_SSL_REJECT_UNAUTHORIZED=false
+```
+
 ### 4. Configure Environment Variables
+
 Go to your service → "Variables" tab and add:
 
 ```bash
@@ -51,19 +88,23 @@ STRIPE_WEBHOOK_SECRET=<your-stripe-webhook-secret>
 ```
 
 **Generate JWT_SECRET:**
+
 ```bash
 # On your local machine
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 ### 5. Add Persistent Volume for Uploads
+
 1. Go to your service → "Volumes" tab
 2. Click "Add Volume"
 3. Mount path: `/app/server/uploads`
 4. Size: Start with 1GB (can increase later)
 
 ### 6. Deploy
+
 Railway will automatically:
+
 - Build your Docker image
 - Deploy the container
 - Start your application
@@ -71,21 +112,26 @@ Railway will automatically:
 Wait for deployment to complete (usually 2-5 minutes).
 
 ### 7. Get Your Application URL
+
 1. Go to your service → "Settings"
 2. Click "Generate Domain"
 3. Copy your URL (e.g., `https://consultify-production.up.railway.app`)
 
 ### 8. Update FRONTEND_URL
+
 1. Go back to "Variables"
 2. Update `FRONTEND_URL` with your actual Railway URL
 3. Redeploy (Railway will auto-redeploy on variable change)
 
 ### 9. Verify Deployment
+
 Visit your Railway URL:
+
 - Health check: `https://your-app.up.railway.app/api/health`
 - Should return: `{"status":"ok","timestamp":"..."}`
 
 ### 10. (Optional) Custom Domain
+
 1. Go to "Settings" → "Networking"
 2. Click "Custom Domain"
 3. Add your domain
@@ -105,9 +151,11 @@ Visit your Railway URL:
 ## Monitoring
 
 ### View Logs
+
 - Railway dashboard → Your service → "Deployments" → Click deployment → "View Logs"
 
 ### Metrics
+
 - Railway provides basic metrics (CPU, Memory, Network)
 - For advanced monitoring, consider:
   - Sentry (error tracking)
@@ -117,21 +165,25 @@ Visit your Railway URL:
 ## Troubleshooting
 
 ### Build Fails
+
 - Check Dockerfile syntax
 - Verify all dependencies in package.json
 - Check build logs in Railway dashboard
 
 ### Database Connection Issues
+
 - Verify `DATABASE_URL` is set correctly
 - Check PostgreSQL service is running
 - Review database logs
 
 ### Application Crashes
+
 - Check application logs
 - Verify all required environment variables are set
 - Check health check endpoint
 
 ### File Upload Issues
+
 - Verify volume is mounted correctly
 - Check volume has enough space
 - Verify write permissions
@@ -141,17 +193,20 @@ Visit your Railway URL:
 Railway auto-deploys on git push to your main branch.
 
 To manually trigger deployment:
+
 1. Go to "Deployments"
 2. Click "Redeploy"
 
 ## Scaling
 
 ### Vertical Scaling (More Resources)
+
 1. Go to service → "Settings"
 2. Adjust CPU/Memory allocation
 3. Railway will redeploy automatically
 
 ### Horizontal Scaling (More Instances)
+
 - Railway supports multiple instances
 - Go to "Settings" → "Scaling"
 - Increase instance count
@@ -163,6 +218,7 @@ To manually trigger deployment:
 - **Pro Plan**: $20/month + usage
 
 **Tips:**
+
 - Use persistent volumes efficiently
 - Monitor usage in Railway dashboard
 - Set up usage alerts
@@ -170,18 +226,21 @@ To manually trigger deployment:
 ## Database Backups
 
 Railway automatically backs up PostgreSQL databases:
+
 - Daily backups retained for 7 days
 - Manual backups available in database service settings
 
 ## Environment-Specific Deployments
 
 ### Staging Environment
+
 1. Create new Railway project
 2. Deploy from same repo
 3. Use different branch (e.g., `staging`)
 4. Set `NODE_ENV=staging`
 
 ### Production Environment
+
 - Use main/master branch
 - Set `NODE_ENV=production`
 - Use production API keys
@@ -215,7 +274,3 @@ Railway automatically backs up PostgreSQL databases:
 ---
 
 **Need help?** Check Railway logs or reach out for assistance!
-
-
-
-

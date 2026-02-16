@@ -25,6 +25,41 @@ function parseArgs(argv: string[]) {
 }
 
 function getProfileThresholds(profile: string): Thresholds {
+  if (profile === 'l1') {
+    return {
+      'server/src/middleware/auth.middleware.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/middleware/csrf.middleware.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/middleware/permission.middleware.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/middleware/inputSanitization.middleware.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/services/accessPolicyService.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+    };
+  }
+
   if (profile === 'l2') {
     return {
       'views/auth/LoginView.tsx': { statements: 95, branches: 80, functions: 95, lines: 95 },
@@ -76,6 +111,18 @@ function getProfileThresholds(profile: string): Thresholds {
         functions: 95,
         lines: 95,
       },
+      'src/views/OrganizationView.tsx': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'src/components/Organization/OrganizationSidebar.tsx': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
     };
   }
 
@@ -88,6 +135,30 @@ function getProfileThresholds(profile: string): Thresholds {
         lines: 95,
       },
       'server/src/routes/security/roles.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/routes/notifications/notificationSettings.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/routes/loginHistory.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/routes/healthRoutes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/routes/health.routes.ts': {
         statements: 95,
         branches: 80,
         functions: 95,
@@ -109,7 +180,7 @@ function main() {
   const profile = args.profile;
 
   if (!reportPath || !profile) {
-    console.error('Usage: coverage-thresholds --report <path> --profile <l2>');
+    console.error('Usage: coverage-thresholds --report <path> --profile <l1|l2|l3>');
     process.exit(2);
   }
 

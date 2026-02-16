@@ -90,7 +90,7 @@ EXPOSE 3001
 
 # Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/src/index.js"]
 
 # ==========================================
 # STAGE 5: Production Frontend (nginx)

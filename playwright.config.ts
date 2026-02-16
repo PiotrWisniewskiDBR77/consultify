@@ -3,6 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 const backendUrl = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const frontendUrl = process.env.E2E_BASE_URL || 'http://localhost:3000';
 const useWebServer = process.env.E2E_USE_WEB_SERVER === 'true';
+const backendRunner = process.env.E2E_BACKEND_RUNNER || 'tsx'; // 'tsx' | 'build'
 const backendPort = (() => {
   try {
     return new URL(backendUrl).port || '3001';
@@ -51,19 +52,22 @@ export default defineConfig({
   webServer: useWebServer
     ? [
         {
-          // Start backend directly (skip migrations) for deterministic CI/E2E.
-          // The server's DatabaseInitializer will bootstrap a minimal schema from TEST_SCHEMA in test mode.
-          // NOTE: Avoid `tsx` here. In some restricted environments it fails because it creates an IPC server (needs listen()).
-          // Node 22+ can run TS via --experimental-strip-types, which is enough for our E2E server.
-          command: `cd server && PORT=${backendPort} NODE_ENV=test E2E_MODE=${process.env.E2E_MODE || 'false'} DB_TYPE=sqlite SQLITE_PATH=../data/dev/consultinity-e2e.db MOCK_DB=false node --experimental-strip-types src/index.ts`,
+          // Start backend for deterministic CI/E2E.
+          //
+          // Default: `tsx` (fast, runs TS sources directly).
+          // Sandbox fallback: `E2E_BACKEND_RUNNER=build` (compile to dist/, then run node).
+          command:
+            backendRunner === 'build'
+              ? `cd server && npm run build && PORT=${backendPort} NODE_ENV=test ENABLE_TEST_GATEWAY=true E2E_MODE=${process.env.E2E_MODE || 'false'} DB_TYPE=sqlite SQLITE_PATH=../data/dev/consultinity-e2e.db MOCK_DB=false node dist/src/index.js`
+              : `cd server && TMPDIR=/tmp PORT=${backendPort} NODE_ENV=test ENABLE_TEST_GATEWAY=true E2E_MODE=${process.env.E2E_MODE || 'false'} DB_TYPE=sqlite SQLITE_PATH=../data/dev/consultinity-e2e.db MOCK_DB=false npx tsx src/index.ts`,
           url: `${backendUrl.replace(/\/$/, '')}/api/health`,
-          reuseExistingServer: true,
-          timeout: 120000,
+          reuseExistingServer: !process.env.CI,
+          timeout: backendRunner === 'build' ? 300000 : 120000,
         },
         {
           command: `VITE_API_TARGET=${backendUrl} npm run dev:frontend`,
           url: frontendUrl,
-          reuseExistingServer: true,
+          reuseExistingServer: !process.env.CI,
           timeout: 120000,
         },
       ]

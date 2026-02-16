@@ -33,45 +33,47 @@ docs/ui-standards/
 
 ## Szybka nawigacja
 
-| Obszar                   | Dokument                                                                       | Zakres                                                                 |
-| ------------------------ | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| **Kolory**               | [00-foundation/color-system.md](00-foundation/color-system.md)                 | Paleta DBR77, semantyka, WCAG                                          |
-| **Język wizualny**       | [00-foundation/visual-language.md](00-foundation/visual-language.md)           | Tła, ramki, typografia, motion                                         |
-| **Shell artefaktu**      | [01-shell-layout/artifact-shell.md](01-shell-layout/artifact-shell.md)         | 4-warstwowy shell, tokeny rozmiaru                                     |
-| **Tryby D/N/C**          | [01-shell-layout/presentation-modes.md](01-shell-layout/presentation-modes.md) | Architektura 3 trybów, N blocks kit                                    |
-| **Współdzielone sekcje** | [02-components/shared-sections.md](02-components/shared-sections.md)           | CommentsCanvas, ActivityLog, Risk, Governance                          |
-| **Building blocks**      | [02-components/building-blocks.md](02-components/building-blocks.md)           | Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView |
-| **AI suggestions modal** | [02-components/ai-suggestions-modal.md](02-components/ai-suggestions-modal.md) | Standard modala do przeglądu i zastosowania sugestii AI                |
-| **Task Panel**           | [02-components/task-panel.md](02-components/task-panel.md)                     | TaskDetailView — layout, sekcje                                        |
-| **Decision Panel**       | [02-components/decision-panel.md](02-components/decision-panel.md)             | DecisionDetailView — layout, sekcje                                    |
-| **Notification Panel**   | [02-components/notification-panel.md](02-components/notification-panel.md)     | NotificationDetailView                                                 |
-| **Initiative sections**  | [02-components/initiative-sections.md](02-components/initiative-sections.md)   | Karty inicjatywy (KPI, Decisions, Gates, RAID…)                        |
-| **Moduł hub**            | [03-modules/module-hub-standard.md](03-modules/module-hub-standard.md)         | Struktura ekranu modułu                                                |
-| **Tabele**               | [03-modules/app-table-standard.md](03-modules/app-table-standard.md)           | Standard tabel aplikacyjnych                                           |
+| Obszar                   | Dokument                                                                         | Zakres                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Kolory**               | [00-foundation/color-system.md](00-foundation/color-system.md)                   | Paleta DBR77, semantyka, WCAG                                          |
+| **Język wizualny**       | [00-foundation/visual-language.md](00-foundation/visual-language.md)             | Tła, ramki, typografia, motion                                         |
+| **Shell artefaktu**      | [01-shell-layout/artifact-shell.md](01-shell-layout/artifact-shell.md)           | 4-warstwowy shell, tokeny rozmiaru                                     |
+| **Tryby D/N/C**          | [01-shell-layout/presentation-modes.md](01-shell-layout/presentation-modes.md)   | Architektura 3 trybów, N blocks kit                                    |
+| **Współdzielone sekcje** | [02-components/shared-sections.md](02-components/shared-sections.md)             | CommentsCanvas, ActivityLog, Risk, Governance                          |
+| **Building blocks**      | [02-components/building-blocks.md](02-components/building-blocks.md)             | Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView |
+| **AI suggestions modal** | [02-components/ai-suggestions-modal.md](02-components/ai-suggestions-modal.md)   | Standard modala do przeglądu i zastosowania sugestii AI                |
+| **Team table**           | [02-components/team-management-table.md](02-components/team-management-table.md) | Standard tabeli zespołu (N‑mode)                                       |
+| **Task Panel**           | [02-components/task-panel.md](02-components/task-panel.md)                       | TaskDetailView — layout, sekcje                                        |
+| **Decision Panel**       | [02-components/decision-panel.md](02-components/decision-panel.md)               | DecisionDetailView — layout, sekcje                                    |
+| **Notification Panel**   | [02-components/notification-panel.md](02-components/notification-panel.md)       | NotificationDetailView                                                 |
+| **Initiative sections**  | [02-components/initiative-sections.md](02-components/initiative-sections.md)     | Karty inicjatywy (KPI, Decisions, Gates, RAID…)                        |
+| **Moduł hub**            | [03-modules/module-hub-standard.md](03-modules/module-hub-standard.md)           | Struktura ekranu modułu                                                |
+| **Tabele**               | [03-modules/app-table-standard.md](03-modules/app-table-standard.md)             | Standard tabel aplikacyjnych                                           |
 
 ---
 
 ## Katalog komponentów (alfabetycznie)
 
-| Komponent                | Plik                  | Używany w                                    |
-| ------------------------ | --------------------- | -------------------------------------------- |
-| `ActivityLogCanvas`      | shared-sections.md    | Task, Decision, Initiative, Notification     |
-| `AttachmentsLinksCanvas` | shared-sections.md    | Task, Decision, Initiative                   |
-| `Callout`                | building-blocks.md    | Wszędzie (info/warning/critical)             |
-| `ChecklistBlock`         | building-blocks.md    | Task, Notification                           |
-| `CommentsCanvas`         | shared-sections.md    | Task, Decision, Initiative, Notification     |
-| `DecisionDetailView`     | decision-panel.md     | MyWork                                       |
-| `EmbeddedView`           | building-blocks.md    | Tasks, Decisions, RAID w artefaktach         |
-| `EmptyStateInline`       | building-blocks.md    | Sekcje z pustym stanem                       |
-| `GovernanceCanvas`       | shared-sections.md    | Task, Decision (RACI, Reminders, Escalation) |
-| `InlineTable`            | building-blocks.md    | Options, KPIs, tabele lekkie                 |
-| `NModeHeader`            | presentation-modes.md | Wszystkie artefakty N-mode                   |
-| `NModeLeftNav`           | presentation-modes.md | Wszystkie artefakty N-mode                   |
-| `NModePropertiesStrip`   | artifact-shell.md     | Wszystkie artefakty N-mode                   |
-| `NotificationDetailView` | notification-panel.md | MyWork                                       |
-| `RiskCanvas`             | shared-sections.md    | Task, Decision, Initiative                   |
-| `TaskDetailView`         | task-panel.md         | MyWork                                       |
-| `ToggleBlock`            | building-blocks.md    | Sekcje rozwijane                             |
+| Komponent                | Plik                     | Używany w                                    |
+| ------------------------ | ------------------------ | -------------------------------------------- |
+| `ActivityLogCanvas`      | shared-sections.md       | Task, Decision, Initiative, Notification     |
+| `AttachmentsLinksCanvas` | shared-sections.md       | Task, Decision, Initiative                   |
+| `Callout`                | building-blocks.md       | Wszędzie (info/warning/critical)             |
+| `ChecklistBlock`         | building-blocks.md       | Task, Notification                           |
+| `CommentsCanvas`         | shared-sections.md       | Task, Decision, Initiative, Notification     |
+| `DecisionDetailView`     | decision-panel.md        | MyWork                                       |
+| `EmbeddedView`           | building-blocks.md       | Tasks, Decisions, RAID w artefaktach         |
+| `EmptyStateInline`       | building-blocks.md       | Sekcje z pustym stanem                       |
+| `GovernanceCanvas`       | shared-sections.md       | Task, Decision (RACI, Reminders, Escalation) |
+| `InlineTable`            | building-blocks.md       | Options, KPIs, tabele lekkie                 |
+| `NModeHeader`            | presentation-modes.md    | Wszystkie artefakty N-mode                   |
+| `NModeLeftNav`           | presentation-modes.md    | Wszystkie artefakty N-mode                   |
+| `NModePropertiesStrip`   | artifact-shell.md        | Wszystkie artefakty N-mode                   |
+| `NotificationDetailView` | notification-panel.md    | MyWork                                       |
+| `RiskCanvas`             | shared-sections.md       | Task, Decision, Initiative                   |
+| `TaskDetailView`         | task-panel.md            | MyWork                                       |
+| `TeamManagementPanel`    | team-management-table.md | Initiative → Team, Assessment → Team         |
+| `ToggleBlock`            | building-blocks.md       | Sekcje rozwijane                             |
 
 ---
 

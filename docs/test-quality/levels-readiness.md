@@ -6,16 +6,20 @@ This document summarizes the current automated test system readiness by level L1
 
 ## Global honesty metrics
 
-Based on `test:quality-check` scanning `tests/` + `e2e/`:
+Based on `test:quality-check` scanning `tests/` + `e2e/`.
 
-- REAL_CODE: 471
-- REAL_RUNTIME (Playwright): 124
+Always treat this section as a **snapshot** — refresh with `npm run test:quality-check` and use the generated report as the source of truth.
+
+Snapshot (2026-02-15):
+
+- REAL_CODE: 464
+- REAL_RUNTIME (Playwright): 125
 - PLACEHOLDER: 0
 - FAKE_UNIT: 0
 - FAKE_INTEGRATION: 0
+- FAKE_INTEGRATION_RISK: 0
 - SPEC_FILE: 0
 - OTHER: 0
-- Authenticity (overall): 100%
 
 Report: `test-results/quality-check/quality-check.report.md`
 
@@ -51,6 +55,9 @@ Goal: DB-backed integration tests without fake “supertest + express()” apps,
 ## L4 — E2E / Playwright
 
 Goal: full runtime flows in a real browser against a running frontend+backend.
+
+- Gate (smoke): `npm run test:l4` (runs `tests/e2e/smoke/**`)
+- Full suite: `npm run test:e2e:full` (large, may be flaky until stabilized)
 
 - Test trees:
   - `tests/e2e/` (Playwright `testDir`)

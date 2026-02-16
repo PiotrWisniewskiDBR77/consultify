@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/pyright/main/packages/pyright/schema/pyrightconfig.schema.json",
+  "include": ["scripts/**/*.py"],
+  "exclude": [
+    ".git",
+    ".nx",
+    ".turbo",
+    ".next",
+    ".vite",
+    ".cache",
+    ".idea",
+    ".vscode",
+
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "coverage 2",
+    "test-results",
+
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "env",
+
+    "data",
+    "logs",
+    "_analysis",
+    "_backup",
+    "_quarantine",
+    "Piotr_Tools",
+    "Logo consultinity",
+    "Consulitinity przegląd"
+  ]
+}
