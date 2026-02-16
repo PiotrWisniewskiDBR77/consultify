@@ -30,8 +30,6 @@ WORKDIR /app
 # Copy package files and workspace structure for npm workspaces
 COPY package.json package-lock.json ./
 COPY packages/ ./packages/
-# Copy recharts tarball (needed for file: dependency)
-COPY recharts-2.15.4.tgz ./
 # Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
 # Ignore scripts (like husky) as they're not needed in Docker builds
 RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --ignore-scripts)
@@ -48,8 +46,6 @@ WORKDIR /app
 
 # Copy root package files first (server dependencies are in root package.json due to monorepo/workspace setup)
 COPY package.json package-lock.json ./
-# Copy recharts tarball (needed for file: dependency in root package.json)
-COPY recharts-2.15.4.tgz ./
 # Copy server package.json - some dependencies like cookie-parser are only in server/package.json
 COPY server/package.json ./server-package.json
 # Install dependencies from root package.json (includes most server runtime dependencies)
