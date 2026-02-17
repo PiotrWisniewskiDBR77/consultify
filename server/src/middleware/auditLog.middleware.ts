@@ -63,10 +63,16 @@ const auditLogMiddleware = async (
       try {
         // Extract User Info
         const user = req.user;
-        const userId = user ? user.id : 'anonymous';
+        const userId = user ? user.id : null;
         const organizationId = user
           ? user.organizationId
-          : (req.body as any)?.organizationId || 'unknown';
+          : (req.body as any)?.organizationId || null;
+
+        // Skip audit log if we don't have a valid user context
+        // (avoids FK violation on activity_logs.organization_id)
+        if (!organizationId || !userId) {
+          return;
+        }
 
         // Skip when org unknown – Postgres FK requires organization_id to exist in organizations
         if (!organizationId || organizationId === 'unknown') {

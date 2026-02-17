@@ -59,6 +59,7 @@ interface OrganizationProfile {
   preferred_language: string;
   communication_style: 'FORMAL' | 'PROFESSIONAL' | 'CASUAL';
   industry_jargon_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  currency: string;
 }
 
 const INDUSTRIES = [
@@ -132,6 +133,150 @@ const REGULATIONS = [
   'FISMA',
   'FedRAMP',
 ];
+
+const CURRENCIES = [
+  { code: 'PLN', symbol: 'zł', label: 'PLN – Polski złoty' },
+  { code: 'EUR', symbol: '€', label: 'EUR – Euro' },
+  { code: 'USD', symbol: '$', label: 'USD – US Dollar' },
+  { code: 'GBP', symbol: '£', label: 'GBP – British Pound' },
+  { code: 'CHF', symbol: 'Fr', label: 'CHF – Swiss Franc' },
+  { code: 'SEK', symbol: 'kr', label: 'SEK – Swedish Krona' },
+  { code: 'NOK', symbol: 'kr', label: 'NOK – Norwegian Krone' },
+  { code: 'DKK', symbol: 'kr', label: 'DKK – Danish Krone' },
+  { code: 'CZK', symbol: 'Kč', label: 'CZK – Czech Koruna' },
+  { code: 'HUF', symbol: 'Ft', label: 'HUF – Hungarian Forint' },
+  { code: 'RON', symbol: 'lei', label: 'RON – Romanian Leu' },
+  { code: 'CAD', symbol: 'C$', label: 'CAD – Canadian Dollar' },
+  { code: 'AUD', symbol: 'A$', label: 'AUD – Australian Dollar' },
+  { code: 'JPY', symbol: '¥', label: 'JPY – Japanese Yen' },
+  { code: 'CNY', symbol: '¥', label: 'CNY – Chinese Yuan' },
+  { code: 'INR', symbol: '₹', label: 'INR – Indian Rupee' },
+  { code: 'BRL', symbol: 'R$', label: 'BRL – Brazilian Real' },
+];
+
+const COUNTRY_TO_CURRENCY: Record<string, string> = {
+  poland: 'PLN', polska: 'PLN', pl: 'PLN',
+  germany: 'EUR', deutschland: 'EUR', de: 'EUR',
+  france: 'EUR', fr: 'EUR',
+  italy: 'EUR', italia: 'EUR', it: 'EUR',
+  spain: 'EUR', españa: 'EUR', es: 'EUR',
+  netherlands: 'EUR', nl: 'EUR',
+  austria: 'EUR', österreich: 'EUR', at: 'EUR',
+  belgium: 'EUR', be: 'EUR',
+  ireland: 'EUR', ie: 'EUR',
+  portugal: 'EUR', pt: 'EUR',
+  finland: 'EUR', fi: 'EUR',
+  greece: 'EUR', gr: 'EUR',
+  'united states': 'USD', usa: 'USD', us: 'USD',
+  'united kingdom': 'GBP', uk: 'GBP', gb: 'GBP',
+  switzerland: 'CHF', schweiz: 'CHF', ch: 'CHF',
+  sweden: 'SEK', se: 'SEK',
+  norway: 'NOK', no: 'NOK',
+  denmark: 'DKK', dk: 'DKK',
+  'czech republic': 'CZK', czechia: 'CZK', cz: 'CZK',
+  hungary: 'HUF', hu: 'HUF',
+  romania: 'RON', ro: 'RON',
+  canada: 'CAD', ca: 'CAD',
+  australia: 'AUD', au: 'AUD',
+  japan: 'JPY', jp: 'JPY',
+  china: 'CNY', cn: 'CNY',
+  india: 'INR', in: 'INR',
+  brazil: 'BRL', br: 'BRL',
+};
+
+const getDefaultCurrency = (country: string | undefined): string => {
+  if (!country) return 'USD';
+  return COUNTRY_TO_CURRENCY[country.toLowerCase().trim()] || 'USD';
+};
+
+interface IndustryCodeSystem {
+  label: string;
+  placeholder: string;
+}
+
+const INDUSTRY_CODE_SYSTEMS: Record<string, IndustryCodeSystem> = {
+  poland: { label: 'PKD', placeholder: 'np. 25.11.Z, 62.01.Z' },
+  polska: { label: 'PKD', placeholder: 'np. 25.11.Z, 62.01.Z' },
+  pl: { label: 'PKD', placeholder: 'np. 25.11.Z, 62.01.Z' },
+  germany: { label: 'WZ', placeholder: 'z.B. 25.11, 62.01' },
+  deutschland: { label: 'WZ', placeholder: 'z.B. 25.11, 62.01' },
+  de: { label: 'WZ', placeholder: 'z.B. 25.11, 62.01' },
+  austria: { label: 'ÖNACE', placeholder: 'e.g., 25.11, 62.01' },
+  österreich: { label: 'ÖNACE', placeholder: 'z.B. 25.11, 62.01' },
+  at: { label: 'ÖNACE', placeholder: 'z.B. 25.11, 62.01' },
+  france: { label: 'NAF', placeholder: 'ex. 25.11Z, 62.01Z' },
+  fr: { label: 'NAF', placeholder: 'ex. 25.11Z, 62.01Z' },
+  'united states': { label: 'NAICS', placeholder: 'e.g., 5112, 5221' },
+  usa: { label: 'NAICS', placeholder: 'e.g., 5112, 5221' },
+  us: { label: 'NAICS', placeholder: 'e.g., 5112, 5221' },
+  canada: { label: 'NAICS', placeholder: 'e.g., 5112, 5221' },
+  ca: { label: 'NAICS', placeholder: 'e.g., 5112, 5221' },
+  'united kingdom': { label: 'SIC', placeholder: 'e.g., 25110, 62012' },
+  uk: { label: 'SIC', placeholder: 'e.g., 25110, 62012' },
+  gb: { label: 'SIC', placeholder: 'e.g., 25110, 62012' },
+  netherlands: { label: 'SBI', placeholder: 'e.g., 2511, 6201' },
+  nl: { label: 'SBI', placeholder: 'e.g., 2511, 6201' },
+  italy: { label: 'ATECO', placeholder: 'es. 25.11, 62.01' },
+  italia: { label: 'ATECO', placeholder: 'es. 25.11, 62.01' },
+  it: { label: 'ATECO', placeholder: 'es. 25.11, 62.01' },
+  spain: { label: 'CNAE', placeholder: 'ej. 2511, 6201' },
+  españa: { label: 'CNAE', placeholder: 'ej. 2511, 6201' },
+  es: { label: 'CNAE', placeholder: 'ej. 2511, 6201' },
+  sweden: { label: 'SNI', placeholder: 'e.g., 25.110, 62.010' },
+  se: { label: 'SNI', placeholder: 'e.g., 25.110, 62.010' },
+  japan: { label: 'JSIC', placeholder: 'e.g., 2411, 3911' },
+  jp: { label: 'JSIC', placeholder: 'e.g., 2411, 3911' },
+  australia: { label: 'ANZSIC', placeholder: 'e.g., 2291, 7000' },
+  au: { label: 'ANZSIC', placeholder: 'e.g., 2291, 7000' },
+};
+
+const DEFAULT_INDUSTRY_CODE_SYSTEM: IndustryCodeSystem = {
+  label: 'NAICS/GICS',
+  placeholder: 'e.g., 5112, 5221',
+};
+
+const getIndustryCodeSystem = (country: string | undefined): IndustryCodeSystem => {
+  if (!country) return DEFAULT_INDUSTRY_CODE_SYSTEM;
+  return INDUSTRY_CODE_SYSTEMS[country.toLowerCase().trim()] || DEFAULT_INDUSTRY_CODE_SYSTEM;
+};
+
+/**
+ * Input for comma-separated lists.
+ * Stores raw text while editing, converts to array on blur.
+ */
+const CommaListInput: React.FC<{
+  value: string[];
+  onChange: (value: string[]) => void;
+  placeholder?: string;
+  className?: string;
+}> = ({ value, onChange, placeholder, className }) => {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState('');
+
+  const displayValue = editing ? text : (value || []).join(', ');
+
+  return (
+    <input
+      type="text"
+      value={displayValue}
+      onFocus={() => {
+        setEditing(true);
+        setText((value || []).join(', '));
+      }}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={() => {
+        setEditing(false);
+        const parsed = text
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        onChange(parsed);
+      }}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
+};
 
 export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = ({
   currentUser,
@@ -402,16 +547,23 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Industry Code (NAICS/GICS)
-                </label>
-                <input
-                  type="text"
-                  value={profile.industry_code || ''}
-                  onChange={(e) => updateField('industry_code', e.target.value)}
-                  placeholder="e.g., 5112, 5221"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                />
+                {(() => {
+                  const codeSystem = getIndustryCodeSystem(profile.headquarters_country);
+                  return (
+                    <>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        {t('admin.strategicProfile.industryCode', { system: codeSystem.label, defaultValue: `Industry Code (${codeSystem.label})` })}
+                      </label>
+                      <input
+                        type="text"
+                        value={profile.industry_code || ''}
+                        onChange={(e) => updateField('industry_code', e.target.value)}
+                        placeholder={codeSystem.placeholder}
+                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                      />
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -455,17 +607,33 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Annual Revenue (USD)
+                    {t('admin.strategicProfile.annualRevenue', {
+                      currency: profile.currency || getDefaultCurrency(profile.headquarters_country),
+                      defaultValue: `Annual Revenue (${profile.currency || getDefaultCurrency(profile.headquarters_country)})`,
+                    })}
                   </label>
-                  <input
-                    type="number"
-                    value={profile.annual_revenue || ''}
-                    onChange={(e) =>
-                      updateField('annual_revenue', parseFloat(e.target.value) || null)
-                    }
-                    placeholder="e.g., 50000000"
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={profile.annual_revenue || ''}
+                      onChange={(e) =>
+                        updateField('annual_revenue', parseFloat(e.target.value) || null)
+                      }
+                      placeholder="e.g., 50000000"
+                      className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    />
+                    <select
+                      value={profile.currency || getDefaultCurrency(profile.headquarters_country)}
+                      onChange={(e) => updateField('currency', e.target.value)}
+                      className="w-28 px-2 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none text-sm"
+                    >
+                      {CURRENCIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.code} {c.symbol}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -548,18 +716,9 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Strategic Priorities (comma-separated)
                 </label>
-                <input
-                  type="text"
-                  value={(profile.strategic_priorities || []).join(', ')}
-                  onChange={(e) =>
-                    updateField(
-                      'strategic_priorities',
-                      e.target.value
-                        .split(',')
-                        .map((s) => s.trim())
-                        .filter(Boolean)
-                    )
-                  }
+                <CommaListInput
+                  value={profile.strategic_priorities || []}
+                  onChange={(val) => updateField('strategic_priorities', val)}
                   placeholder="e.g., Digital transformation, Customer experience, Cost optimization"
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 />
@@ -640,18 +799,9 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Technology Stack (comma-separated)
                 </label>
-                <input
-                  type="text"
-                  value={(profile.technology_stack || []).join(', ')}
-                  onChange={(e) =>
-                    updateField(
-                      'technology_stack',
-                      e.target.value
-                        .split(',')
-                        .map((s) => s.trim())
-                        .filter(Boolean)
-                    )
-                  }
+                <CommaListInput
+                  value={profile.technology_stack || []}
+                  onChange={(val) => updateField('technology_stack', val)}
                   placeholder="e.g., AWS, React, Python, Kubernetes"
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 />
@@ -669,18 +819,9 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Primary Markets (comma-separated)
                 </label>
-                <input
-                  type="text"
-                  value={(profile.primary_markets || []).join(', ')}
-                  onChange={(e) =>
-                    updateField(
-                      'primary_markets',
-                      e.target.value
-                        .split(',')
-                        .map((s) => s.trim())
-                        .filter(Boolean)
-                    )
-                  }
+                <CommaListInput
+                  value={profile.primary_markets || []}
+                  onChange={(val) => updateField('primary_markets', val)}
                   placeholder="e.g., Poland, DACH, CEE"
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 />
@@ -689,18 +830,9 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Customer Segments (comma-separated)
                 </label>
-                <input
-                  type="text"
-                  value={(profile.customer_segments || []).join(', ')}
-                  onChange={(e) =>
-                    updateField(
-                      'customer_segments',
-                      e.target.value
-                        .split(',')
-                        .map((s) => s.trim())
-                        .filter(Boolean)
-                    )
-                  }
+                <CommaListInput
+                  value={profile.customer_segments || []}
+                  onChange={(val) => updateField('customer_segments', val)}
                   placeholder="e.g., B2B, Enterprise, SMB"
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 />
@@ -709,18 +841,9 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Key Competitors (comma-separated)
                 </label>
-                <input
-                  type="text"
-                  value={(profile.key_competitors || []).join(', ')}
-                  onChange={(e) =>
-                    updateField(
-                      'key_competitors',
-                      e.target.value
-                        .split(',')
-                        .map((s) => s.trim())
-                        .filter(Boolean)
-                    )
-                  }
+                <CommaListInput
+                  value={profile.key_competitors || []}
+                  onChange={(val) => updateField('key_competitors', val)}
                   placeholder="e.g., Competitor A, Competitor B"
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 />
@@ -751,9 +874,12 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
           {expandedSections.constraints && (
             <div className="p-6 space-y-4 border-t border-slate-200 dark:border-navy-700">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Regulatory Environment
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t('admin.strategicProfile.regulatoryEnvironment', { defaultValue: 'Regulatory Environment' })}
                 </label>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                  {t('admin.strategicProfile.regulatoryEnvironmentHint', { defaultValue: 'Select regulations and standards your organization is currently subject to or must comply with.' })}
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {REGULATIONS.map((reg) => (
                     <button
@@ -792,26 +918,32 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Budget Constraints
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t('admin.strategicProfile.budgetConstraints', { defaultValue: 'Strategic Initiative Budget Constraints' })}
                 </label>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                  {t('admin.strategicProfile.budgetConstraintsHint', { defaultValue: 'Describe budget limits for digital transformation, consulting, or strategic projects — not the overall company budget.' })}
+                </p>
                 <textarea
                   value={profile.budget_constraints || ''}
                   onChange={(e) => updateField('budget_constraints', e.target.value)}
                   rows={2}
-                  placeholder="Describe any budget limitations or constraints..."
+                  placeholder={t('admin.strategicProfile.budgetConstraintsPlaceholder', { defaultValue: 'e.g., Max 500k EUR/year for digital initiatives; IT modernization capped at 200k' })}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none resize-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Timeline Constraints
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t('admin.strategicProfile.timelineConstraints', { defaultValue: 'Timeline Constraints' })}
                 </label>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                  {t('admin.strategicProfile.timelineConstraintsHint', { defaultValue: 'Key deadlines or time pressures affecting strategic decisions — e.g., regulatory deadlines, board milestones, contract renewals.' })}
+                </p>
                 <textarea
                   value={profile.timeline_constraints || ''}
                   onChange={(e) => updateField('timeline_constraints', e.target.value)}
                   rows={2}
-                  placeholder="Describe any timeline pressures or deadlines..."
+                  placeholder={t('admin.strategicProfile.timelineConstraintsPlaceholder', { defaultValue: 'e.g., DORA compliance by Q1 2027; ERP migration must finish before license renewal in Oct 2026' })}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none resize-none"
                 />
               </div>

@@ -709,7 +709,7 @@ export class ProjectController {
       }
 
       // Check project exists and belongs to org
-      const project = await queryHelpers.dbGet<{ id: string; status: string }>(
+      const project = await queryHelpers.queryOne<{ id: string; status: string }>(
         'SELECT id, status FROM projects WHERE id = ? AND organization_id = ?',
         [projectId, orgId]
       );
@@ -729,7 +729,7 @@ export class ProjectController {
       }
 
       // Archive the project
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         `UPDATE projects 
              SET status = 'archived', 
                  archived_at = datetime('now'), 
@@ -763,7 +763,7 @@ export class ProjectController {
       }
 
       // Check project is archived
-      const project = await queryHelpers.dbGet<{ id: string; status: string }>(
+      const project = await queryHelpers.queryOne<{ id: string; status: string }>(
         'SELECT id, status FROM projects WHERE id = ? AND organization_id = ? AND status = ?',
         [projectId, orgId, 'archived']
       );
@@ -774,7 +774,7 @@ export class ProjectController {
       }
 
       // Restore to completed status
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         `UPDATE projects 
              SET status = 'completed', 
                  archived_at = NULL, 
@@ -811,7 +811,7 @@ export class ProjectController {
       }
 
       // Get all project memberships for this user
-      const memberships = await queryHelpers.dbAll<{
+      const memberships = await queryHelpers.queryAll<{
         project_id: string;
         project_name: string;
         project_role: string;
@@ -1320,7 +1320,7 @@ export class ProjectController {
       }
 
       // Get project's PMO standard
-      const project = await queryHelpers.dbGet<{ pmo_standard: string }>(
+      const project = await queryHelpers.queryOne<{ pmo_standard: string }>(
         'SELECT pmo_standard FROM projects WHERE id = ? AND organization_id = ?',
         [projectId, orgId]
       );
@@ -1333,7 +1333,7 @@ export class ProjectController {
       const standard = project.pmo_standard || 'pmbok';
 
       // Get role definitions for this standard
-      const roleDefinitions = await queryHelpers.dbAll<{
+      const roleDefinitions = await queryHelpers.queryAll<{
         role_key: string;
         display_name: string;
         description: string;
@@ -1348,7 +1348,7 @@ export class ProjectController {
       );
 
       // Get current role assignments
-      const assignments = await queryHelpers.dbAll<{
+      const assignments = await queryHelpers.queryAll<{
         id: string;
         user_id: string;
         pmo_role_key: string;
@@ -1397,7 +1397,7 @@ export class ProjectController {
 
       const assignmentId = uuidv4();
 
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         `INSERT INTO project_role_assignments (id, project_id, user_id, pmo_role_key, assigned_by, notes)
              VALUES (?, ?, ?, ?, ?, ?)
              ON CONFLICT(project_id, user_id, pmo_role_key) DO UPDATE SET
@@ -1429,7 +1429,7 @@ export class ProjectController {
         return;
       }
 
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         'DELETE FROM project_role_assignments WHERE id = ? AND project_id = ?',
         [assignmentId, projectId]
       );
@@ -1457,7 +1457,7 @@ export class ProjectController {
         return;
       }
 
-      const locations = await queryHelpers.dbAll<{
+      const locations = await queryHelpers.queryAll<{
         id: string;
         name: string;
         type: string;

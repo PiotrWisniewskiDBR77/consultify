@@ -27,7 +27,7 @@ router.get(
 
     try {
       const { unreadOnly, limit, projectId } = req.query;
-      const notifications = await (service as any).getForUser(userId, {
+      const notifications = await (service as any).getNotifications(userId, {
         unreadOnly: unreadOnly === 'true',
         limit: limit ? parseInt(limit as string) : 50,
         projectId: projectId as string | undefined,
@@ -97,8 +97,8 @@ router.patch(
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       if (!id) return res.status(400).json({ error: 'id is required' });
-      const result = await (service as any).markRead(id, userId);
-      return res.json(result);
+      await (service as any).markAsRead(id, userId);
+      return res.json({ success: true });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -118,8 +118,8 @@ router.post(
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     try {
-      const result = await (service as any).markAllRead(userId);
-      return res.json(result);
+      const updated = await (service as any).markAllAsRead(userId);
+      return res.json({ success: true, updated });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -199,8 +199,8 @@ router.delete(
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       if (!id) return res.status(400).json({ error: 'id is required' });
-      const result = await (service as any).delete(id, userId);
-      return res.json(result);
+      await (service as any).delete(id, userId);
+      return res.json({ success: true });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }

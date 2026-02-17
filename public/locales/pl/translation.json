@@ -373,6 +373,41 @@
     "dashboard": "Panel",
     "calendar": "Kalendarz",
     "decisions": "Decyzje",
+    "heatmap": "Mapa obciążenia",
+    "tabs": {
+      "execution": "Kontrola",
+      "initiatives": "Inicjatywy",
+      "tasks": "Zadania",
+      "decisions": "Decyzje",
+      "team": "Zespół",
+      "reports": "Raporty"
+    },
+    "reports": {
+      "title": "Raporty realizacji",
+      "subtitle": "Generuj prosty pakiet tygodniowy i raporty pogłębione bez dokładania narzutu procesowego.",
+      "open": "Otwórz Raporty",
+      "weeklyPack": "Pakiet tygodniowy",
+      "weeklyPackHint": "Jedno, gotowe do skopiowania podsumowanie na tygodniowy przegląd realizacji.",
+      "copy": "Kopiuj",
+      "copied": "Pakiet tygodniowy skopiowany",
+      "copyFailed": "Nie udało się skopiować"
+    },
+    "tasks": {
+      "subtitle": "Zadania przeterminowane, nadchodzące i zbliżające się dla inicjatyw w realizacji.",
+      "openInitiative": "Otwórz powiązaną inicjatywę",
+      "overdue": "Przeterminowane",
+      "due7": "Termin ≤ 7 dni",
+      "upcoming": "Nadchodzące (8–30 dni)"
+    },
+    "decisionsBuckets": {
+      "subtitle": "Bucket’y wg horyzontu terminu, żeby governance było szybkie i jednoznaczne.",
+      "openInitiative": "Otwórz powiązaną inicjatywę",
+      "done": "Zamknięte",
+      "due7": "Termin ≤ 7 dni",
+      "due14": "Termin 8–14 dni",
+      "due30": "Termin 15–30 dni",
+      "more": "30+ dni / brak terminu"
+    },
     "table": {
       "type": "Typ",
       "name": "Nazwa",
@@ -409,7 +444,8 @@
       "budgetHealth": "Zdrowie budżetu",
       "decisionSla": "SLA decyzji",
       "escalationsGates": "Eskalacje i bramki",
-      "noActiveEscalations": "Brak aktywnych eskalacji."
+      "noActiveEscalations": "Brak aktywnych eskalacji.",
+      "noGateInfo": "Brak info o bramce"
     },
     "ai": {
       "priorityRecommendations": "Rekomendacje priorytetów AI",
@@ -469,12 +505,71 @@
       "done": "Ukończone",
       "dropHere": "Upuść tutaj",
       "noTasks": "Brak zadań"
+    },
+    "attention": {
+      "blocked": "Zablokowane",
+      "overdueDecisions": "Przeterminowane decyzje",
+      "missingDates": "Brakujące daty",
+      "dueSoonTasks": "Wkrótce wymagane",
+      "none": "Nic pilnego",
+      "attention": "Uwaga"
+    },
+    "scope": {
+      "active": "Aktywne",
+      "all": "Wszystkie",
+      "activeHint": "Zaplanowane → W realizacji → Zablokowane",
+      "allHint": "W tym ukończone / anulowane / zarchiwizowane"
+    },
+    "toast": {
+      "taskMoved": "Zadanie przeniesione do {{column}}",
+      "taskStatusError": "Nie udało się zaktualizować statusu zadania",
+      "initiativeNotFound": "Nie znaleziono powiązanej inicjatywy"
     }
   },
   "benefits": {
     "title": "Realizacja Korzyści",
     "kpis": "KPI",
     "lessons": "Wnioski",
+    "tabs": {
+      "completed": "Ukończone",
+      "kpis": "KPI",
+      "roi": "Analiza ROI"
+    },
+    "columns": {
+      "type": "Typ",
+      "name": "Nazwa",
+      "status": "Status",
+      "roi": "ROI",
+      "budget": "Budżet",
+      "completed": "Ukończone",
+      "actions": "Akcje"
+    },
+    "empty": {
+      "noCompleted": "Brak ukończonych inicjatyw."
+    },
+    "kpiCards": {
+      "totalKpis": "Wszystkie KPI",
+      "onTarget": "Na celu",
+      "belowTarget": "Poniżej celu"
+    },
+    "kpiEmpty": {
+      "noKpis": "Brak zdefiniowanych KPI",
+      "completeToTrack": "Ukończ inicjatywy i dodaj KPI, aby śledzić korzyści",
+      "noKpisForInitiative": "Brak KPI zdefiniowanych dla tej inicjatywy"
+    },
+    "kpiActions": {
+      "addKpi": "Dodaj KPI",
+      "createKpi": "Utwórz KPI",
+      "cancel": "Anuluj"
+    },
+    "kpiLabels": {
+      "current": "Aktualny",
+      "target": "Cel"
+    },
+    "roiAnalysis": {
+      "title": "Analiza ROI",
+      "subtitle": "Obliczenia zwrotu z inwestycji"
+    },
     "tracker": {
       "financialBenefits": "Korzyści finansowe",
       "of": "z",
@@ -508,7 +603,47 @@
   "economics": {
     "title": "Ekonomia",
     "analysis": "Analiza",
-    "scenarios": "Scenariusze"
+    "scenarios": "Scenariusze",
+    "tabs": {
+      "catalog": "Katalog",
+      "results": "Wyniki",
+      "compare": "Porównaj"
+    },
+    "columns": {
+      "type": "Typ",
+      "name": "Nazwa",
+      "status": "Status",
+      "score": "Wynik",
+      "updated": "Zaktualizowano",
+      "actions": "Akcje"
+    },
+    "status": {
+      "draft": "Szkic",
+      "inReview": "W przeglądzie",
+      "completed": "Ukończona"
+    },
+    "empty": {
+      "noAnalyses": "Brak analiz. Utwórz swoją pierwszą analizę.",
+      "noCompleted": "Brak ukończonych analiz",
+      "completeToSee": "Ukończ analizy, aby zobaczyć wyniki i rekomendacje."
+    },
+    "actions": {
+      "newAnalysis": "Nowa analiza",
+      "versions": "Wersje",
+      "excel": "Excel",
+      "pdf": "PDF",
+      "viewDetails": "Szczegóły",
+      "importExcel": "Importuj Excel"
+    },
+    "detail": {
+      "project": "Projekt: {{name}}",
+      "noProject": "Brak projektu",
+      "score": "Wynik:"
+    },
+    "toast": {
+      "excelGenerated": "Excel wygenerowany",
+      "exportFailed": "Nie udało się wyeksportować"
+    }
   },
   "reports": {
     "title": "Raporty",
@@ -723,13 +858,318 @@
   },
   "settings": {
     "title": "Ustawienia",
-    "profile": "Profil",
+    "profile": {
+      "label": "Profil",
+      "header": "Dane osobowe",
+      "manage": "Zarządzaj swoimi danymi osobowymi i preferencjami",
+      "saving": "Zapisywanie...",
+      "save": "Zapisz zmiany",
+      "saved": "Zapisano!",
+      "changePhoto": "Zmień zdjęcie",
+      "publicProfile": "PROFIL PUBLICZNY",
+      "displayName": "Nazwa wyświetlana",
+      "displayNameHint": "Tak Twoje imię będzie widoczne dla innych. Zostaw puste, aby użyć pełnego imienia i nazwiska.",
+      "pronouns": "Zaimki",
+      "department": "Dział",
+      "firstName": "Imię",
+      "lastName": "Nazwisko",
+      "company": "Firma",
+      "linkedinId": "LinkedIn Profile ID",
+      "linkedinHint": "Wpisz ID profilu z adresu URL LinkedIn (po /in/)",
+      "jobTitle": "Stanowisko",
+      "jobTitlePlaceholder": "np. Product Manager, Developer...",
+      "availability": "Dostępność i status",
+      "statusMessage": "Wiadomość statusu",
+      "statusPlaceholder": "np. Na spotkaniach do 15, Praca zdalna...",
+      "statusHint": "Poinformuj zespół, czym się zajmujesz ({{count}}/100)",
+      "outOfOffice": "Poza biurem",
+      "outOfOfficeNotify": "Automatycznie powiadamiaj innych, gdy jesteś nieobecny",
+      "outOfOfficeBadge": "Poza biurem",
+      "outOfOfficeUntil": "do {{date}}",
+      "returnDate": "Data powrotu",
+      "outOfOfficeMessage": "Automatyczna odpowiedź",
+      "outOfOfficePlaceholder": "Jestem obecnie poza biurem i odpowiem po powrocie...",
+      "regional": "Ustawienia regionalne",
+      "timezone": "Strefa czasowa",
+      "timezoneHint": "Aktualny czas lokalny:",
+      "dateFormat": "Format daty",
+      "timeFormat": "Format czasu",
+      "preferences": "Preferencje",
+      "theme": "Motyw interfejsu",
+      "themeHint": "Wybierz motyw kolorystyczny interfejsu.",
+      "light": "Jasny",
+      "dark": "Ciemny",
+      "system": "Systemowy",
+      "language": "Język",
+      "languageHint": "Wybierz preferowany język.",
+      "pronounsOptions": {
+        "preferNotToSay": "Wolę nie podawać",
+        "heHim": "On/Jego",
+        "sheHer": "Ona/Jej",
+        "theyThem": "Oni/Ich",
+        "other": "Inne"
+      },
+      "departmentOptions": {
+        "selectDepartment": "Wybierz dział...",
+        "engineering": "Inżynieria",
+        "product": "Produkt",
+        "design": "Design",
+        "marketing": "Marketing",
+        "sales": "Sprzedaż",
+        "operations": "Operacje",
+        "finance": "Finanse",
+        "hr": "Zasoby ludzkie",
+        "legal": "Prawny",
+        "customerSuccess": "Sukces klienta",
+        "support": "Wsparcie",
+        "executive": "Zarząd",
+        "other": "Inne"
+      }
+    },
     "billing": "Rozliczenia",
     "ai": "Ustawienia AI",
     "notifications": "Powiadomienia",
     "integrations": "Integracje",
     "security": "Bezpieczeństwo",
-    "appearance": "Wygląd"
+    "appearance": "Wygląd",
+    "sidebar": {
+      "title": "USTAWIENIA",
+      "subtitle": "Preferencje osobiste",
+      "backToDashboard": "Wróć do panelu",
+      "groups": {
+        "mySettings": "MOJE USTAWIENIA",
+        "workPreferences": "PREFERENCJE PRACY",
+        "aiAutomation": "AI I AUTOMATYZACJA",
+        "notifications": "POWIADOMIENIA",
+        "security": "BEZPIECZEŃSTWO",
+        "integrations": "INTEGRACJE",
+        "dataPrivacy": "DANE I PRYWATNOŚĆ",
+        "appearance": "WYGLĄD",
+        "advanced": "ZAAWANSOWANE"
+      },
+      "profile": "Profil",
+      "avatar": "Awatar i zdjęcie",
+      "signatures": "Podpisy e-mail",
+      "workingHours": "Godziny pracy",
+      "dashboard": "Panel",
+      "workPrefs": "Preferencje pracy",
+      "regional": "Regionalne",
+      "language": "Język",
+      "aiInstructions": "Instrukcje AI",
+      "aiModel": "Wybór modelu",
+      "aiParameters": "Parametry",
+      "aiUsage": "Panel użycia",
+      "aiPersonality": "Osobowość",
+      "aiAutocomplete": "Autouzupełnianie",
+      "aiMemory": "Pamięć",
+      "aiVoice": "Głos i TTS",
+      "notificationsOverview": "Przegląd",
+      "notificationsEmail": "E-mail",
+      "notificationsPush": "Push",
+      "notificationsSounds": "Dźwięki",
+      "quietHours": "Godziny ciszy",
+      "digest": "Podsumowanie",
+      "dnd": "Nie przeszkadzać",
+      "password": "Hasło",
+      "mfa": "Uwierz. dwuskładnikowe",
+      "sessions": "Aktywne sesje",
+      "loginHistory": "Historia logowań",
+      "recovery": "Opcje odzyskiwania",
+      "connectedApps": "Połączone aplikacje",
+      "calendarSync": "Synchronizacja kalendarza",
+      "apiKeys": "Klucze API",
+      "webhooks": "Webhooki",
+      "dataControls": "Kontrola danych",
+      "privacy": "Prywatność",
+      "exportData": "Eksport danych",
+      "deleteAccount": "Usuń konto",
+      "theme": "Motyw",
+      "accessibility": "Dostępność",
+      "shortcuts": "Skróty klawiszowe",
+      "importExport": "Import/Eksport",
+      "templates": "Szablony",
+      "developer": "Deweloper",
+      "betaFeatures": "Funkcje beta",
+      "settingsHistory": "Historia"
+    },
+    "sections": {
+      "profile": {
+        "title": "Profil",
+        "subtitle": "Zarządzaj swoimi danymi osobowymi i kontem"
+      },
+      "avatar": {
+        "title": "Awatar i zdjęcie",
+        "subtitle": "Prześlij i zarządzaj zdjęciem profilowym"
+      },
+      "signatures": {
+        "title": "Podpisy e-mail",
+        "subtitle": "Twórz i zarządzaj podpisami e-mail"
+      },
+      "working-hours": {
+        "title": "Godziny pracy",
+        "subtitle": "Ustaw swój harmonogram dostępności"
+      },
+      "dashboard": {
+        "title": "Panel",
+        "subtitle": "Dostosuj układ i widżety panelu"
+      },
+      "work-preferences": {
+        "title": "Preferencje pracy",
+        "subtitle": "Konfiguruj domyślne ustawienia zadań i projektów"
+      },
+      "regional": {
+        "title": "Ustawienia regionalne",
+        "subtitle": "Ustaw strefę czasową, format daty i preferencje językowe"
+      },
+      "language": {
+        "title": "Język",
+        "subtitle": "Wybierz preferowany język"
+      },
+      "ai-instructions": {
+        "title": "Instrukcje AI",
+        "subtitle": "Dostosuj sposób odpowiadania AI"
+      },
+      "ai-model": {
+        "title": "Wybór modelu",
+        "subtitle": "Wybierz preferowany model AI"
+      },
+      "ai-parameters": {
+        "title": "Parametry AI",
+        "subtitle": "Dostosuj parametry odpowiedzi AI"
+      },
+      "ai-usage": {
+        "title": "Panel użycia AI",
+        "subtitle": "Monitoruj użycie AI i zużycie tokenów"
+      },
+      "ai-voice": {
+        "title": "Głos i TTS",
+        "subtitle": "Konfiguruj wejście głosowe i syntezę mowy"
+      },
+      "ai-memory": {
+        "title": "Pamięć AI",
+        "subtitle": "Zarządzaj kontekstem i pamięcią AI"
+      },
+      "ai-personality": {
+        "title": "Osobowość AI",
+        "subtitle": "Ustaw ton i styl komunikacji AI"
+      },
+      "ai-autocomplete": {
+        "title": "Autouzupełnianie",
+        "subtitle": "Konfiguruj sugestie wspierane przez AI"
+      },
+      "notifications-overview": {
+        "title": "Powiadomienia",
+        "subtitle": "Kontroluj sposób i czas otrzymywania powiadomień"
+      },
+      "notifications-email": {
+        "title": "Powiadomienia e-mail",
+        "subtitle": "Zarządzaj preferencjami powiadomień e-mail"
+      },
+      "notifications-push": {
+        "title": "Powiadomienia push",
+        "subtitle": "Konfiguruj powiadomienia push"
+      },
+      "notifications-sounds": {
+        "title": "Dźwięki powiadomień",
+        "subtitle": "Ustaw dźwięki i głośność powiadomień"
+      },
+      "notifications-quiet-hours": {
+        "title": "Godziny ciszy",
+        "subtitle": "Zaplanuj czasy wyciszenia powiadomień"
+      },
+      "notifications-digest": {
+        "title": "Podsumowanie powiadomień",
+        "subtitle": "Konfiguruj e-maile z podsumowaniem powiadomień"
+      },
+      "notifications-dnd": {
+        "title": "Nie przeszkadzać",
+        "subtitle": "Tymczasowo wstrzymaj wszystkie powiadomienia"
+      },
+      "password": {
+        "title": "Hasło",
+        "subtitle": "Zmień hasło i ustawienia bezpieczeństwa"
+      },
+      "mfa": {
+        "title": "Uwierzytelnianie dwuskładnikowe",
+        "subtitle": "Dodaj dodatkową warstwę bezpieczeństwa"
+      },
+      "sessions": {
+        "title": "Aktywne sesje",
+        "subtitle": "Wyświetl i zarządzaj zalogowanymi urządzeniami"
+      },
+      "login-history": {
+        "title": "Historia logowań",
+        "subtitle": "Przejrzyj ostatnią aktywność konta"
+      },
+      "recovery": {
+        "title": "Opcje odzyskiwania",
+        "subtitle": "Skonfiguruj metody odzyskiwania konta"
+      },
+      "connected-apps": {
+        "title": "Połączone aplikacje",
+        "subtitle": "Zarządzaj połączeniami z aplikacjami zewnętrznymi"
+      },
+      "calendar-sync": {
+        "title": "Synchronizacja kalendarza",
+        "subtitle": "Połącz swoje kalendarze"
+      },
+      "api-keys": {
+        "title": "Klucze API",
+        "subtitle": "Zarządzaj kluczami dostępu API"
+      },
+      "webhooks": {
+        "title": "Webhooki",
+        "subtitle": "Konfiguruj punkty końcowe webhooków"
+      },
+      "data-controls": {
+        "title": "Kontrola danych",
+        "subtitle": "Zarządzaj przechowywaniem i retencją danych"
+      },
+      "privacy": {
+        "title": "Prywatność",
+        "subtitle": "Kontroluj ustawienia prywatności"
+      },
+      "export-data": {
+        "title": "Eksport danych",
+        "subtitle": "Pobierz kopię swoich danych"
+      },
+      "delete-account": {
+        "title": "Usuń konto",
+        "subtitle": "Trwale usuń swoje konto"
+      },
+      "theme": {
+        "title": "Motyw",
+        "subtitle": "Wybierz preferowany motyw kolorystyczny"
+      },
+      "accessibility": {
+        "title": "Dostępność",
+        "subtitle": "Konfiguruj opcje dostępności"
+      },
+      "shortcuts": {
+        "title": "Skróty klawiszowe",
+        "subtitle": "Wyświetl i dostosuj skróty klawiszowe"
+      },
+      "import-export": {
+        "title": "Import/Eksport ustawień",
+        "subtitle": "Kopia zapasowa i przywracanie ustawień"
+      },
+      "templates": {
+        "title": "Szablony ustawień",
+        "subtitle": "Zapisz i stosuj predefiniowane ustawienia"
+      },
+      "developer": {
+        "title": "Tryb deweloperski",
+        "subtitle": "Dostęp do narzędzi deweloperskich i debugowania"
+      },
+      "beta-features": {
+        "title": "Funkcje beta",
+        "subtitle": "Wypróbuj eksperymentalne funkcje"
+      },
+      "settings-history": {
+        "title": "Historia ustawień",
+        "subtitle": "Wyświetl i przywróć poprzednie ustawienia"
+      }
+    },
   },
   "showcase": {
     "common": {
@@ -1292,7 +1732,239 @@
     }
   },
   "partner": {
-    "becomePartner": "Zostań partnerem"
+    "becomePartner": "Zostań partnerem",
+    "hero": {
+      "badge": "Program Partnerski",
+      "title1": "Zostań Naszym Partnerem.",
+      "title2": "Rośnijmy Razem.",
+      "description": "Dołącz do naszej sieci ekspertów transformacji. Zarabiaj powtarzalne przychody, korzystaj z narzędzi premium i pomagaj firmom osiągać cyfrową doskonałość.",
+      "getStarted": "Rozpocznij teraz",
+      "watchOverview": "Obejrzyj prezentację"
+    },
+    "value": {
+      "title": "Dlaczego warto zostać partnerem Consultinity?",
+      "subtitle": "Wszystko, czego potrzebujesz, aby rozwijać praktykę transformacji",
+      "cards": {
+        "revenue": {
+          "title": "Zarabiaj powtarzalne przychody",
+          "description": "Buduj pasywny dochód, który rośnie z Twoją siecią. Otrzymuj wynagrodzenie za każdego klienta.",
+          "highlight": "Do 20% prowizji"
+        },
+        "expertise": {
+          "title": "Rozwijaj swoją wiedzę",
+          "description": "Uzyskaj certyfikaty DRD, LEAN 4.0 i SIRI. Dostęp do ekskluzywnych szkoleń i metodologii.",
+          "highlight": "Darmowe certyfikaty"
+        },
+        "tools": {
+          "title": "Dostęp do narzędzi premium",
+          "description": "Pełny dostęp do platformy dla klientów. Oceny AI, narzędzia PMO i raportowanie.",
+          "highlight": "Platforma klasy enterprise"
+        },
+        "network": {
+          "title": "Dołącz do globalnej sieci",
+          "description": "Pojaw się w naszym katalogu partnerów. Łącz się z klientami szukającymi ekspertów w Twoim regionie.",
+          "highlight": "Globalna widoczność"
+        }
+      }
+    },
+    "beta": {
+      "badge": "Faza Beta",
+      "title": "Wcześni użytkownicy już widzą rezultaty",
+      "subtitle": "Nasi partnerzy beta transformują sposób pracy z klientami",
+      "resultsLabel": "Rezultaty w fazie beta:",
+      "partnerSince": "Partner beta od {{date}}",
+      "launchNotice": "<strong>Oficjalne uruchomienie Programu Partnerskiego Q1 2026.</strong> Dołącz teraz jako wczesny użytkownik i uzyskaj priorytetowy dostęp, specjalne stawki prowizji i bezpośredni wpływ na roadmapę produktu.",
+      "stories": {
+        "0": {
+          "company": "Nordic Digital Solutions",
+          "type": "Firma zajmująca się tworzeniem oprogramowania",
+          "location": "Sztokholm, Szwecja",
+          "quote": "W trakcie programu beta zintegrowaliśmy Consultinity z naszym procesem onboardingu klientów. Oceny oparte na AI pomogły nam zidentyfikować możliwości upsellu, które wcześniej umykały.",
+          "results": ["40% szybsze tworzenie propozycji", "3 nowych klientów enterprise", "2x poprawa zaangażowania klientów"],
+          "since": "Październik 2025"
+        },
+        "1": {
+          "company": "TransformACE Consulting",
+          "type": "Doradztwo w zakresie transformacji cyfrowej",
+          "location": "Monachium, Niemcy",
+          "quote": "Consultinity dało nam ustrukturyzowany framework, którego brakowało. Nasi konsultanci dostarczają teraz oceny w dniach, nie tygodniach. Program beta ukształtował nasze podejście do sukcesu klienta.",
+          "results": ["60% redukcja czasu realizacji", "Satysfakcja klientów: 4.2 → 4.8", "Cykl zamykania transakcji skrócony o 35%"],
+          "since": "Wrzesień 2025"
+        }
+      }
+    },
+    "tiers": {
+      "title": "Twoja droga do sukcesu partnerskiego",
+      "subtitle": "Awansuj na wyższe poziomy wraz z rozwojem. Wyższy poziom = wyższe nagrody.",
+      "registered": {
+        "name": "Zarejestrowany",
+        "requirement": "Zacznij tutaj",
+        "benefits": ["Podstawowe narzędzia", "Wpis w katalogu"]
+      },
+      "bronze": {
+        "name": "Brązowy",
+        "requirement": "3+ klientów, €5K ARR",
+        "benefits": ["Priorytetowe wsparcie", "Materiały szkoleniowe"]
+      },
+      "silver": {
+        "name": "Srebrny",
+        "requirement": "10+ klientów, €25K ARR",
+        "benefits": ["Dedykowany manager", "Dostęp do beta funkcji"]
+      },
+      "gold": {
+        "name": "Złoty",
+        "requirement": "25+ klientów, €75K ARR",
+        "benefits": ["Co-marketing", "Wystąpienia na konferencjach"]
+      },
+      "platinum": {
+        "name": "Platynowy",
+        "requirement": "50+ klientów, €200K+",
+        "benefits": ["Zwiększony udział w przychodach", "Partnerstwo na poziomie zarządu"]
+      }
+    },
+    "onboarding": {
+      "title": "Zacznij w 10 minut",
+      "subtitle": "Uprościliśmy to. Wykonaj te kroki, aby odblokować korzyści partnerskie.",
+      "stepsCompleted": "kroków ukończonych",
+      "step": "Krok {{id}}",
+      "why": "Dlaczego?",
+      "bonus": "Bonus",
+      "secureNote": "Twoje dane są zaszyfrowane i bezpieczne",
+      "steps": {
+        "0": {
+          "title": "Uzupełnij swój profil",
+          "description": "Opowiedz nam o swojej firmie i ekspertyzie",
+          "why": "Abyśmy mogli dopasować Cię do odpowiednich klientów i umieścić w katalogu z dokładnymi informacjami.",
+          "time": "~3 minuty",
+          "cta": "Uzupełnij profil"
+        },
+        "1": {
+          "title": "Uzyskaj pierwszy certyfikat",
+          "description": "Ukończ kurs \"Podstawy platformy\"",
+          "why": "Certyfikowani partnerzy zamykają 2x więcej transakcji i mają priorytet w katalogu.",
+          "time": "~45 minut",
+          "bonus": "Odblokuj materiały marketingowe po ukończeniu",
+          "cta": "Rozpocznij naukę"
+        },
+        "2": {
+          "title": "Wygeneruj swój kod polecający",
+          "description": "Utwórz swój unikalny kod i linki do udostępnienia",
+          "why": "Twój kod automatycznie śledzi wszystkie polecenia, więc otrzymujesz wynagrodzenie za każdego klienta.",
+          "time": "~1 minuta",
+          "cta": "Wygeneruj kod"
+        },
+        "3": {
+          "title": "Podaj dane do płatności",
+          "description": "Dodaj konto bankowe lub PayPal do wypłat prowizji",
+          "why": "Abyśmy mogli Ci zapłacić! Prowizje wypłacane są co miesiąc po osiągnięciu progu €100.",
+          "time": "~2 minuty",
+          "cta": "Dodaj dane płatności"
+        }
+      }
+    },
+    "calculator": {
+      "badge": "Kalkulator prowizji",
+      "title": "Oblicz swój potencjał zarobkowy",
+      "subtitle": "Zobacz, ile możesz zarobić jako Partner Consultinity",
+      "clientsQuestion": "Ilu klientów możesz polecić miesięcznie?",
+      "avgValue": "Średnia wartość klienta (€/miesiąc)",
+      "yourTier": "Twój poziom:",
+      "commission": "prowizji",
+      "estimatedEarnings": "Szacowane roczne zarobki",
+      "basedOn": "Na podstawie {{count}} poleceń/rok przy średniej wartości €{{value}}",
+      "startEarning": "Zacznij zarabiać — wygeneruj swój kod"
+    },
+    "academy": {
+      "title": "Rozwijaj umiejętności z Akademią Partnerów",
+      "subtitle": "Darmowe kursy zaprojektowane, aby pomóc Ci osiągnąć sukces",
+      "free": "DARMOWY",
+      "advanced": "ZAAWANSOWANY",
+      "certificateIncluded": "Certyfikat w cenie",
+      "startCourse": "Rozpocznij kurs",
+      "courses": {
+        "0": {
+          "title": "Podstawy platformy",
+          "description": "Poznaj platformę Consultinity od podszewki. Opanuj oceny, raportowanie i zarządzanie klientami."
+        },
+        "1": {
+          "title": "Jak sprzedawać transformację cyfrową",
+          "description": "Sprawdzona metodologia sprzedaży usług transformacji."
+        },
+        "2": {
+          "title": "Najlepsze praktyki sukcesu klienta",
+          "description": "Maksymalizuj retencję klientów i wyniki satysfakcji."
+        },
+        "3": {
+          "title": "Certyfikacja DRD Framework",
+          "description": "Głębokie zanurzenie w metodologię Digital Readiness Diagnostic."
+        }
+      }
+    },
+    "contact": {
+      "title": "Masz pytania? Porozmawiajmy!",
+      "subtitle": "Twój dedykowany Partner Manager jest tutaj, aby pomóc Ci osiągnąć sukces",
+      "name": "Bartosz Sotomski",
+      "role": "Partner Success Manager",
+      "quote": "Jestem tutaj, aby pomóc Ci rozwijać biznes z Consultinity. Czy masz pytania o program, potrzebujesz pomocy z prezentacją dla klienta, czy chcesz omówić możliwości co-marketingu — skontaktujmy się!",
+      "bookCall": "Umów rozmowę",
+      "bookCallDesc": "Zaplanuj 15-minutową rozmowę wstępną",
+      "sendEmail": "Wyślij e-mail",
+      "connectLinkedin": "Połącz się na LinkedIn",
+      "responseTime": "Średni czas odpowiedzi: < 4 godziny"
+    },
+    "faq": {
+      "badge": "FAQ",
+      "title": "Najczęściej zadawane pytania",
+      "items": {
+        "0": {
+          "question": "Jak zarabiam prowizje jako partner?",
+          "answer": "Zarabiasz prowizje polecając nowych klientów Consultinity. Gdy klient rejestruje się używając Twojego unikalnego kodu polecającego lub linku i zostaje płacącym klientem, otrzymujesz procent od jego opłaty subskrypcyjnej. Stawki prowizji wahają się od 10% do 20% w zależności od poziomu partnerskiego."
+        },
+        "1": {
+          "question": "Kiedy i jak otrzymuję płatność?",
+          "answer": "Prowizje wypłacane są co miesiąc przelewem bankowym lub PayPal, po osiągnięciu minimalnego progu €100. Płatności realizowane są 15. dnia każdego miesiąca za zaakceptowane prowizje z poprzedniego miesiąca. Możesz śledzić wszystkie zarobki w czasie rzeczywistym w Panelu Partnera."
+        },
+        "2": {
+          "question": "Jakie wsparcie otrzymuję jako partner?",
+          "answer": "Wszyscy partnerzy otrzymują dostęp do szkoleń Akademii Partnerów, materiałów marketingowych i naszej społeczności partnerów. Partnerzy od poziomu Brązowego mają priorytetowe wsparcie i dedykowane szkolenia. Partnerzy Złoci i Platynowi mają dedykowanego Partner Managera, możliwości co-marketingu i wczesny dostęp do nowych funkcji."
+        },
+        "3": {
+          "question": "Ile czasu zajmuje uzyskanie certyfikatu?",
+          "answer": "Certyfikacja Podstawy platformy zajmuje około 45 minut. Zaawansowane certyfikacje jak DRD Framework zajmują 2-3 godziny. Wszystkie certyfikacje realizowane są we własnym tempie, więc możesz je ukończyć, kiedy jest Ci wygodnie."
+        },
+        "4": {
+          "question": "Czy mogę polecać klientów z dowolnego kraju?",
+          "answer": "Tak! Consultinity działa globalnie i możesz polecać klientów z dowolnego kraju. Twój wpis w Katalogu Partnerów może podkreślać Twoją regionalną ekspertyzę, pomagając lokalnym klientom Cię znaleźć. Wypłaty prowizji mogą być realizowane w EUR, USD lub GBP."
+        },
+        "5": {
+          "question": "Co się stanie, jeśli polecony klient zrezygnuje?",
+          "answer": "Jeśli polecony klient zrezygnuje w ciągu pierwszych 30 dni (okres odstąpienia), prowizja za tego klienta jest korygowana. Po 30 dniach zachowujesz wszystkie zarobione prowizje, nawet jeśli klient później zrezygnuje. Wierzymy w uczciwą, przejrzystą strukturę prowizji."
+        }
+      }
+    },
+    "footer": {
+      "resources": {
+        "title": "Zasoby",
+        "playbook": "Podręcznik partnera",
+        "marketingKit": "Zestaw marketingowy",
+        "apiDocs": "Dokumentacja API",
+        "brandGuidelines": "Wytyczne marki"
+      },
+      "community": {
+        "title": "Społeczność",
+        "slack": "Partner Slack",
+        "webinars": "Comiesięczne webinary",
+        "successStories": "Historie sukcesu",
+        "forum": "Forum partnerów"
+      },
+      "support": {
+        "title": "Wsparcie",
+        "faq": "FAQ",
+        "helpCenter": "Centrum pomocy",
+        "technical": "Wsparcie techniczne",
+        "featureRequests": "Prośby o funkcje"
+      }
+    }
   },
   "thinking": {
     "processing": "Myślę...",
@@ -1618,6 +2290,73 @@
       "processing": "Przetwarzanie audytu agentów"
     }
   },
+  "system": {
+    "online": "Online",
+    "offline": "Offline",
+    "status": "Status systemu",
+    "database": "Baza danych",
+    "connected": "Połączony",
+    "disconnected": "Rozłączony",
+    "responseTime": "Czas odpowiedzi",
+    "latency": "Opóźnienie API",
+    "resources": "Twoje zasoby",
+    "storage": "Pamięć",
+    "apiCalls": "Wywołania API (miesiąc)",
+    "lastUpdate": "Automatyczne odświeżanie co 30s"
+  },
+  "llm": {
+    "title": "Routing modeli wg poziomu",
+    "offlineMessage": "Offline — sprawdź połączenie sieciowe",
+    "unavailableMessage": "AI niedostępne — sprawdź stan dostawców",
+    "description": "Określ, jakiego poziomu LLM chcesz używać. System automatycznie wybiera najlepszy dostępny model w danym poziomie.",
+    "active": "Aktywny",
+    "currentRouting": "Aktualny routing:",
+    "budgetTier": "Poziom budżetowy",
+    "budgetTierDesc": "Proste pytania, szybkie odpowiedzi",
+    "fastTier": "Poziom szybki",
+    "fastTierDesc": "Większość zadań, zrównoważona wydajność",
+    "premiumTier": "Poziom premium",
+    "premiumTierDesc": "Złożone analizy, raporty",
+    "reasoningTier": "Poziom rozumowania",
+    "reasoningTierDesc": "Tryb MAX, głębokie myślenie"
+  },
+  "taskDropdown": {
+    "title": "Mój plan działania",
+    "pending": "{{count}} oczekujące",
+    "viewAll": "Zobacz wszystkie",
+    "overdue": "Przeterminowane",
+    "totalActive": "Wszystkie aktywne",
+    "loading": "Ładowanie zadań...",
+    "noTasks": "Nie znaleziono zadań",
+    "createNew": "Utwórz nowe zadanie",
+    "done": "Ukończone",
+    "viewMore": "Zobacz jeszcze {{count}} zadań",
+    "noDate": "Brak daty",
+    "dOverdue": "{{count}} dn. spóźnienia",
+    "today": "Dzisiaj",
+    "tomorrow": "Jutro"
+  },
+  "executive": {
+    "health": {
+      "title": "Kondycja portfela",
+      "subtitle": "Ogólna wydajność realizacji",
+      "portfolio": "Kondycja portfela",
+      "excellent": "Doskonała",
+      "good": "Dobra",
+      "attention": "Wymaga uwagi",
+      "critical": "Krytyczna",
+      "noData": "Brak danych",
+      "lastUpdated": "Ostatnia aktualizacja",
+      "live": "Na żywo",
+      "execution": "Realizacja",
+      "decisions": "Szybkość decyzji",
+      "capacity": "Pojemność zespołu",
+      "risk": "Mitygacja ryzyka",
+      "noBreakdown": "Dane szczegółowe jeszcze niedostępne",
+      "noBreakdownHint": "Dane pojawią się w miarę śledzenia zadań i decyzji",
+      "vsLastWeek": "vs ostatni tydzień"
+    }
+  },
   "research": {
     "deepResearch": "Głęboka analiza",
     "generatingQueries": "Generowanie zapytań badawczych...",
@@ -1631,5 +2370,19 @@
     "searchQueries": "Zapytania wyszukiwania",
     "topSources": "Najlepsze źródła",
     "researching": "Badanie"
+  },
+  "admin": {
+    "strategicProfile": {
+      "industryCode": "Kod branżowy ({{system}})",
+      "annualRevenue": "Roczny przychód ({{currency}})",
+      "regulatoryEnvironment": "Otoczenie regulacyjne",
+      "regulatoryEnvironmentHint": "Zaznacz regulacje i standardy, którym Twoja organizacja obecnie podlega lub musi spełniać.",
+      "budgetConstraints": "Ograniczenia budżetowe inicjatyw strategicznych",
+      "budgetConstraintsHint": "Opisz limity budżetowe na transformację cyfrową, consulting lub projekty strategiczne — nie ogólny budżet firmy.",
+      "budgetConstraintsPlaceholder": "np. Maks. 500 tys. EUR/rok na inicjatywy cyfrowe; modernizacja IT do 200 tys.",
+      "timelineConstraints": "Ograniczenia czasowe",
+      "timelineConstraintsHint": "Kluczowe terminy lub presja czasowa wpływająca na decyzje strategiczne — np. terminy regulacyjne, kamienie milowe zarządu, odnowienia umów.",
+      "timelineConstraintsPlaceholder": "np. Zgodność z DORA do Q1 2027; migracja ERP przed odnowieniem licencji w paź. 2026"
+    }
   }
 }

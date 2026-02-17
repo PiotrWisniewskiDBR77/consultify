@@ -439,8 +439,8 @@ router.delete(
 
     try {
       // Check if user has admin role
-      const userRole = req.user?.role;
-      if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
+      const userRole = (req.user?.role || '').toLowerCase();
+      if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(userRole)) {
         return res.status(403).json({ error: 'Admin access required' });
       }
 

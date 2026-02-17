@@ -202,8 +202,6 @@ export const Sidebar: React.FC = () => {
     theme,
     isSidebarCollapsed,
     toggleSidebarCollapse,
-    isChatSlidingPanelOpen,
-    toggleChatSlidingPanel,
     navigateWithChatContext,
     currentProjectId,
   } = useAppStore();
@@ -216,6 +214,8 @@ export const Sidebar: React.FC = () => {
     expandToFullScreen,
     collapseToSplit,
     activeConversationId,
+    isSidebarOpen: isChatHistorySidebarOpen,
+    toggleSidebar: toggleChatHistorySidebar,
   } = useConversationStore();
 
   const { t } = useTranslation();
@@ -247,8 +247,9 @@ export const Sidebar: React.FC = () => {
   const navigateToFullChat = useCallback(() => {
     setDisplayMode('full');
     setCurrentView(AppView.AI_CHAT);
-    toggleChatSlidingPanel();
-  }, [setDisplayMode, setCurrentView, toggleChatSlidingPanel]);
+    // Open the chat history sidebar on entry (Claude-style).
+    toggleChatHistorySidebar();
+  }, [setDisplayMode, setCurrentView, toggleChatHistorySidebar]);
 
   /**
    * Navigate to a view while preserving chat context
@@ -625,7 +626,7 @@ export const Sidebar: React.FC = () => {
             if (item.id === 'AI_CHAT') {
               // If already in AI Chat, just toggle the sliding panel
               if (currentView === AppView.AI_CHAT) {
-                toggleChatSlidingPanel();
+                toggleChatHistorySidebar();
               } else {
                 // Navigate to full-screen AI Chat
                 navigateToFullChat();
@@ -664,7 +665,7 @@ export const Sidebar: React.FC = () => {
             ${paddingLeft}
             ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             ${
-              isActive || (item.id === 'AI_CHAT' && isChatSlidingPanelOpen)
+              isActive || (item.id === 'AI_CHAT' && isChatHistorySidebarOpen)
                 ? 'bg-purple-600/10 text-purple-600 dark:text-purple-400 border-r-2 border-purple-600'
                 : isParentActive
                   ? 'text-navy-900 dark:text-white font-medium bg-slate-50 dark:bg-white/5'

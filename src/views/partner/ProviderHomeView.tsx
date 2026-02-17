@@ -71,28 +71,27 @@ const WelcomeHeroBanner: React.FC = () => {
       <div className="relative z-10 max-w-3xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white/90 text-sm font-medium mb-6">
           <Sparkles className="w-4 h-4" />
-          Partner Program
+          {t('partner.hero.badge', 'Partner Program')}
         </div>
 
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-          Be Our Partner.
+          {t('partner.hero.title1', 'Be Our Partner.')}
           <br />
-          <span className="text-violet-200">Let's Grow Together.</span>
+          <span className="text-violet-200">{t('partner.hero.title2', "Let's Grow Together.")}</span>
         </h1>
 
         <p className="text-lg md:text-xl text-white/80 mb-8 max-w-2xl">
-          Join our network of transformation experts. Earn recurring revenue, access premium tools,
-          and help businesses achieve digital excellence.
+          {t('partner.hero.description', 'Join our network of transformation experts. Earn recurring revenue, access premium tools, and help businesses achieve digital excellence.')}
         </p>
 
         <div className="flex flex-wrap gap-4">
           <button className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-navy-900 text-violet-700 font-semibold rounded-lg hover:bg-violet-50 transition-colors">
-            Get Started Now
+            {t('partner.hero.getStarted', 'Get Started Now')}
             <ArrowRight className="w-5 h-5" />
           </button>
           <button className="inline-flex items-center gap-2 px-6 py-3 bg-slate-50/50 dark:bg-navy-950/30 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors border border-white/20">
             <Play className="w-5 h-5" />
-            Watch Overview
+            {t('partner.hero.watchOverview', 'Watch Overview')}
           </button>
         </div>
       </div>
@@ -115,49 +114,31 @@ interface ValueCard {
 const ValueCardsSection: React.FC = () => {
   const { t } = useTranslation();
 
-  const valueCards: ValueCard[] = [
-    {
-      icon: DollarSign,
-      image: '/images/partner/partner-value-revenue.png',
-      title: 'Earn Recurring Revenue',
-      description:
-        'Build passive income that grows with your network. Get paid for every client you bring in.',
-      highlight: 'Up to 20% commission',
-    },
-    {
-      icon: GraduationCap,
-      image: '/images/partner/partner-value-expertise.png',
-      title: 'Expand Your Expertise',
-      description:
-        'Get certified in DRD, LEAN 4.0, and SIRI frameworks. Access exclusive training and methodology.',
-      highlight: 'Free certifications',
-    },
-    {
-      icon: Zap,
-      image: '/images/partner/partner-value-tools.png',
-      title: 'Access Premium Tools',
-      description:
-        'Full platform access for your clients. AI-powered assessments, PMO tools, and reporting.',
-      highlight: 'Enterprise-grade platform',
-    },
-    {
-      icon: Globe,
-      image: '/images/partner/partner-value-network.png',
-      title: 'Join Global Network',
-      description:
-        'Get listed in our partner directory. Connect with clients searching for experts in your region.',
-      highlight: 'Global visibility',
-    },
+  const cardKeys = ['revenue', 'expertise', 'tools', 'network'] as const;
+  const cardIcons = [DollarSign, GraduationCap, Zap, Globe];
+  const cardImages = [
+    '/images/partner/partner-value-revenue.png',
+    '/images/partner/partner-value-expertise.png',
+    '/images/partner/partner-value-tools.png',
+    '/images/partner/partner-value-network.png',
   ];
+
+  const valueCards: ValueCard[] = cardKeys.map((key, i) => ({
+    icon: cardIcons[i],
+    image: cardImages[i],
+    title: t(`partner.value.cards.${key}.title`),
+    description: t(`partner.value.cards.${key}.description`),
+    highlight: t(`partner.value.cards.${key}.highlight`),
+  }));
 
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          Why Partner with Consultinity?
+          {t('partner.value.title', 'Why Partner with Consultinity?')}
         </h2>
         <p className="text-slate-600 dark:text-slate-400">
-          Everything you need to grow your transformation practice
+          {t('partner.value.subtitle', 'Everything you need to grow your transformation practice')}
         </p>
       </div>
 
@@ -196,49 +177,33 @@ const ValueCardsSection: React.FC = () => {
 const BetaSuccessStories: React.FC = () => {
   const { t } = useTranslation();
 
-  const stories = [
-    {
-      company: 'Nordic Digital Solutions',
-      type: 'Software Development Company',
-      location: 'Stockholm, Sweden',
-      quote:
-        'During the beta program, we integrated Consultinity into our client onboarding process. The AI-powered assessments helped us identify upsell opportunities we were missing before.',
-      results: [
-        '40% faster proposal creation',
-        '3 new enterprise clients acquired',
-        '2x improvement in client engagement',
-      ],
-      since: 'October 2025',
-      logo: '/images/partner/partner-story-nordic.png',
-    },
-    {
-      company: 'TransformACE Consulting',
-      type: 'Digital Transformation Consultancy',
-      location: 'Munich, Germany',
-      quote:
-        'Consultinity gave us a structured framework we were missing. Our consultants now deliver assessments in days, not weeks. The beta program shaped how we think about client success.',
-      results: [
-        '60% reduction in delivery time',
-        'Client satisfaction: 4.2 → 4.8',
-        'Deal closing cycle shortened by 35%',
-      ],
-      since: 'September 2025',
-      logo: '/images/partner/partner-story-transformace.png',
-    },
+  const storyLogos = [
+    '/images/partner/partner-story-nordic.png',
+    '/images/partner/partner-story-transformace.png',
   ];
+
+  const stories = [0, 1].map((i) => ({
+    company: t(`partner.beta.stories.${i}.company`),
+    type: t(`partner.beta.stories.${i}.type`),
+    location: t(`partner.beta.stories.${i}.location`),
+    quote: t(`partner.beta.stories.${i}.quote`),
+    results: (t(`partner.beta.stories.${i}.results`, { returnObjects: true }) as string[]),
+    since: t(`partner.beta.stories.${i}.since`),
+    logo: storyLogos[i],
+  }));
 
   return (
     <div className="space-y-6">
       <div className="text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-sm font-medium mb-3">
           <Clock className="w-4 h-4" />
-          Beta Phase
+          {t('partner.beta.badge', 'Beta Phase')}
         </div>
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          Early Adopters Already See Results
+          {t('partner.beta.title', 'Early Adopters Already See Results')}
         </h2>
         <p className="text-slate-600 dark:text-slate-400">
-          Our beta partners are transforming how they work with clients
+          {t('partner.beta.subtitle', 'Our beta partners are transforming how they work with clients')}
         </p>
       </div>
 
@@ -271,7 +236,7 @@ const BetaSuccessStories: React.FC = () => {
             <div className="mb-4">
               <p className="text-sm font-medium text-navy-900 dark:text-white mb-2 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-emerald-500" />
-                Results in Beta Phase:
+                {t('partner.beta.resultsLabel', 'Results in Beta Phase:')}
               </p>
               <ul className="space-y-1">
                 {story.results.map((result, i) => (
@@ -288,7 +253,7 @@ const BetaSuccessStories: React.FC = () => {
 
             <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
               <Clock className="w-3 h-3" />
-              Beta Partner since {story.since}
+              {t('partner.beta.partnerSince', 'Beta Partner since {{date}}', { date: story.since })}
             </div>
           </div>
         ))}
@@ -297,9 +262,7 @@ const BetaSuccessStories: React.FC = () => {
       <div className="text-center p-4 bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 rounded-xl border border-violet-200 dark:border-violet-800">
         <p className="text-sm text-violet-700 dark:text-violet-300">
           <Rocket className="w-4 h-4 inline mr-2" />
-          <strong>Official Partner Program launch coming Q1 2026.</strong> Join now as an early
-          adopter and get priority access, special commission rates, and direct input on product
-          roadmap.
+          <span dangerouslySetInnerHTML={{ __html: t('partner.beta.launchNotice', '<strong>Official Partner Program launch coming Q1 2026.</strong> Join now as an early adopter and get priority access, special commission rates, and direct input on product roadmap.') }} />
         </p>
       </div>
     </div>
@@ -313,57 +276,34 @@ const BetaSuccessStories: React.FC = () => {
 const TierProgressionSection: React.FC = () => {
   const { t } = useTranslation();
 
-  const tiers = [
-    {
-      name: 'Registered',
-      commission: '10%',
-      requirement: 'Start here',
-      color: 'bg-slate-400',
-      badge: '/images/partner/tier-registered.png',
-      benefits: ['Basic tools', 'Directory listing'],
-    },
-    {
-      name: 'Bronze',
-      commission: '12%',
-      requirement: '3+ clients, €5K ARR',
-      color: 'bg-amber-600',
-      badge: '/images/partner/tier-bronze.png',
-      benefits: ['Priority support', 'Training materials'],
-    },
-    {
-      name: 'Silver',
-      commission: '15%',
-      requirement: '10+ clients, €25K ARR',
-      color: 'bg-slate-300',
-      badge: '/images/partner/tier-silver.png',
-      benefits: ['Dedicated manager', 'Beta feature access'],
-    },
-    {
-      name: 'Gold',
-      commission: '18%',
-      requirement: '25+ clients, €75K ARR',
-      color: 'bg-yellow-500',
-      badge: '/images/partner/tier-gold.png',
-      benefits: ['Co-marketing', 'Conference speaking'],
-    },
-    {
-      name: 'Platinum',
-      commission: '20%',
-      requirement: '50+ clients, €200K+',
-      color: 'bg-violet-600',
-      badge: '/images/partner/tier-platinum.png',
-      benefits: ['Revenue share boost', 'Executive partnership'],
-    },
+  const tierKeys = ['registered', 'bronze', 'silver', 'gold', 'platinum'] as const;
+  const tierCommissions = ['10%', '12%', '15%', '18%', '20%'];
+  const tierColors = ['bg-slate-400', 'bg-amber-600', 'bg-slate-300', 'bg-yellow-500', 'bg-violet-600'];
+  const tierBadges = [
+    '/images/partner/tier-registered.png',
+    '/images/partner/tier-bronze.png',
+    '/images/partner/tier-silver.png',
+    '/images/partner/tier-gold.png',
+    '/images/partner/tier-platinum.png',
   ];
+
+  const tiers = tierKeys.map((key, i) => ({
+    name: t(`partner.tiers.${key}.name`),
+    commission: tierCommissions[i],
+    requirement: t(`partner.tiers.${key}.requirement`),
+    color: tierColors[i],
+    badge: tierBadges[i],
+    benefits: t(`partner.tiers.${key}.benefits`, { returnObjects: true }) as string[],
+  }));
 
   return (
     <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          Your Path to Partnership Success
+          {t('partner.tiers.title', 'Your Path to Partnership Success')}
         </h2>
         <p className="text-slate-600 dark:text-slate-400">
-          Progress through tiers as you grow. Higher tiers = higher rewards.
+          {t('partner.tiers.subtitle', 'Progress through tiers as you grow. Higher tiers = higher rewards.')}
         </p>
       </div>
 
@@ -420,46 +360,17 @@ const TierProgressionSection: React.FC = () => {
 const OnboardingChecklistSection: React.FC = () => {
   const { t } = useTranslation();
 
-  const steps = [
-    {
-      id: 1,
-      title: 'Complete Your Profile',
-      description: 'Tell us about your company and expertise',
-      why: 'So we can match you with the right clients and list you in our directory with accurate information.',
-      time: '~3 minutes',
-      completed: true,
-      cta: 'Complete Profile',
-    },
-    {
-      id: 2,
-      title: 'Get Your First Certification',
-      description: 'Complete "Platform Fundamentals" course',
-      why: 'Certified partners close 2x more deals and get priority listing in our directory.',
-      time: '~45 minutes',
-      bonus: 'Unlock marketing materials after completion',
-      completed: false,
-      cta: 'Start Learning',
-    },
-    {
-      id: 3,
-      title: 'Generate Your Referral Code',
-      description: 'Create your unique code and shareable links',
-      why: 'Your code tracks all referrals automatically so you get credited for every client you bring in.',
-      time: '~1 minute',
-      completed: false,
-      cta: 'Generate Code',
-    },
-    {
-      id: 4,
-      title: 'Submit Payment Details',
-      description: 'Add your bank account or PayPal for commission payouts',
-      why: 'So we can pay you! Commissions are paid monthly once you reach €100 threshold.',
-      time: '~2 minutes',
-      secure: true,
-      completed: false,
-      cta: 'Add Payment Info',
-    },
-  ];
+  const steps = [0, 1, 2, 3].map((i) => ({
+    id: i + 1,
+    title: t(`partner.onboarding.steps.${i}.title`),
+    description: t(`partner.onboarding.steps.${i}.description`),
+    why: t(`partner.onboarding.steps.${i}.why`),
+    time: t(`partner.onboarding.steps.${i}.time`),
+    completed: i === 0,
+    cta: t(`partner.onboarding.steps.${i}.cta`),
+    bonus: i === 1 ? t(`partner.onboarding.steps.${i}.bonus`) : undefined,
+    secure: i === 3,
+  }));
 
   const completedCount = steps.filter((s) => s.completed).length;
   const progress = (completedCount / steps.length) * 100;
@@ -469,17 +380,17 @@ const OnboardingChecklistSection: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-1">
-            Get Started in 10 Minutes
+            {t('partner.onboarding.title', 'Get Started in 10 Minutes')}
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            We've made it simple. Complete these steps to unlock your partner benefits.
+            {t('partner.onboarding.subtitle', "We've made it simple. Complete these steps to unlock your partner benefits.")}
           </p>
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
             {completedCount}/{steps.length}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">steps completed</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('partner.onboarding.stepsCompleted', 'steps completed')}</p>
         </div>
       </div>
 

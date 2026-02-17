@@ -11,6 +11,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -18,8 +19,8 @@ import { useAppStore } from '../store/useAppStore';
 
 interface Tier {
   id: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
-  name: string;
-  description: string;
+  nameKey: string;
+  descKey: string;
   icon: React.ReactNode;
   color: string;
   darkColor: string;
@@ -28,32 +29,32 @@ interface Tier {
 const TIERS: Tier[] = [
   {
     id: 'BUDGET',
-    name: 'Budget Tier',
-    description: 'Simple questions, fast responses',
+    nameKey: 'llm.budgetTier',
+    descKey: 'llm.budgetTierDesc',
     icon: <Coins size={16} />,
     color: 'bg-emerald-500',
     darkColor: 'bg-emerald-400',
   },
   {
     id: 'STANDARD',
-    name: 'Fast Tier',
-    description: 'Most tasks, balanced performance',
+    nameKey: 'llm.fastTier',
+    descKey: 'llm.fastTierDesc',
     icon: <Zap size={16} />,
     color: 'bg-blue-500',
     darkColor: 'bg-blue-400',
   },
   {
     id: 'PREMIUM',
-    name: 'Premium Tier',
-    description: 'Complex analysis, reports',
+    nameKey: 'llm.premiumTier',
+    descKey: 'llm.premiumTierDesc',
     icon: <Crown size={16} />,
     color: 'bg-purple-500',
     darkColor: 'bg-purple-400',
   },
   {
     id: 'REASONING',
-    name: 'Reasoning Tier',
-    description: 'MAX Mode, deep thinking',
+    nameKey: 'llm.reasoningTier',
+    descKey: 'llm.reasoningTierDesc',
     icon: <Cpu size={16} />,
     color: 'bg-amber-500',
     darkColor: 'bg-amber-400',
@@ -65,6 +66,7 @@ interface LLMSelectorProps {
 }
 
 export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => {
+  const { t } = useTranslation();
   const { aiConfig, setAIConfig } = useAppStore();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -181,8 +183,8 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
           className={`w-2 h-2 rounded-full animate-pulse ${!isDisconnected ? activeTier.color : 'bg-red-500'}`}
         />
 
-        {!compact && <span>{activeTier.name}</span>}
-        {compact && <span className="max-w-[60px] truncate">{activeTier.name}</span>}
+        {!compact && <span>{t(activeTier.nameKey)}</span>}
+        {compact && <span className="max-w-[60px] truncate">{t(activeTier.nameKey)}</span>}
 
         <ChevronDown
           size={compact ? 10 : 12}
@@ -195,21 +197,20 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
           {/* Header */}
           <div className="p-3 border-b border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/30">
             <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
-              Model Routing per Tier
+              {t('llm.title', 'Model Routing per Tier')}
             </div>
             {isDisconnected && (
               <div className="mb-2 flex items-center gap-1.5 text-[10px] text-red-600 dark:text-red-400">
                 <AlertTriangle size={11} />
                 <span>
                   {!isNetworkOnline
-                    ? 'Offline - check network connection'
-                    : 'AI unavailable - check provider health'}
+                    ? t('llm.offlineMessage', 'Offline - check network connection')
+                    : t('llm.unavailableMessage', 'AI unavailable - check provider health')}
                 </span>
               </div>
             )}
             <p className="text-[10px] text-slate-400 dark:text-slate-500">
-              Define which LLM level to use. System automatically selects the best available model
-              in that tier.
+              {t('llm.description', 'Define which LLM level to use. System automatically selects the best available model in that tier.')}
             </p>
           </div>
 
@@ -243,16 +244,16 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
                     <div
                       className={`text-sm font-medium ${tier.id === aiConfig.selectedTier ? 'text-navy-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}
                     >
-                      {tier.name}
+                      {t(tier.nameKey)}
                     </div>
                     <div className="text-[10px] text-slate-400 dark:text-slate-500">
-                      {tier.description}
+                      {t(tier.descKey)}
                     </div>
                   </div>
                 </div>
                 {aiConfig.selectedTier === tier.id && (
                   <div className="text-xs font-mono text-purple-600 dark:text-purple-400 bg-white dark:bg-black/20 px-1.5 py-0.5 rounded border border-purple-100 dark:border-purple-500/20">
-                    Active
+                    {t('llm.active', 'Active')}
                   </div>
                 )}
               </button>
@@ -264,7 +265,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
             <div className="px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
                 <Gauge size={10} />
-                <span>Current routing:</span>
+                <span>{t('llm.currentRouting', 'Current routing:')}</span>
               </div>
               <div className="text-[10px] font-mono text-slate-500 dark:text-slate-300">
                 {activeModelName}

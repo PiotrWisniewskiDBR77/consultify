@@ -31,10 +31,58 @@ const resolveTestSchemaPath = async () => {
  */
 const CRITICAL_TABLES = [
   'organizations',
+  'organization_profiles',
+  'organization_settings',
   'users',
   'login_history',
+  // Settings > Preferences uses this table directly.
+  'user_preferences',
+  // GDPR & compliance (public deploy must not 5xx).
+  'user_gdpr_consents',
+  'user_data_retention',
+  'data_export_requests',
+  'account_deletion_requests',
+  'security_policies',
+  'compliance_settings',
+  // Integrations & enterprise endpoints mounted in prod.
+  'connectors',
+  'webhook_events',
+  'webhook_subscriptions',
+  'sso_configs',
+  'groups',
   // Security admin UI relies on these being present (do not rely on DbPromise fallbacks in runtime).
   'security_settings',
+  // Permissions middleware relies on this for org-user overrides.
+  // Missing table causes noisy SQLITE_ERROR logs and can mask permission issues.
+  'org_user_permissions',
+  // User account/settings modules (Settings > Profile, Availability, Security).
+  'user_contact',
+  'user_availability',
+  'trusted_devices',
+  'user_settings_history',
+  'user_settings_templates',
+  // Settings > Notifications automation rules.
+  'notification_rules',
+  // Interview (/discovery) module tables (avoid 500s on public deploy).
+  'interview_sessions',
+  'interview_questions',
+  'interview_question_templates',
+  'interview_library_templates',
+  'interview_library_template_questions',
+  'interview_assignments',
+  'interview_assignment_members',
+  // Report Builder (Reports Builder UI + public report share links)
+  'report_builder_reports',
+  'report_builder_sections',
+  'report_builder_block_types',
+  'report_builder_templates',
+  'report_builder_sessions',
+  'report_builder_activity',
+  'report_builder_versions',
+  'report_builder_comments',
+  'report_builder_comment_activity',
+  'report_exports',
+  'report_public_links',
   'user_sessions',
   'user_2fa',
   'api_logs',
@@ -138,21 +186,276 @@ const CRITICAL_TABLES = [
   'ai_experiment_variants',
   'system_config',
   'user_api_keys',
+  'imported_reports',
 ];
 
 /**
  * Critical columns that must exist in specific tables
  */
 const REQUIRED_COLUMNS: Record<string, string[]> = {
-  projects: ['current_phase', 'organization_id', 'owner_id', 'status', 'name'],
-  users: ['organization_id', 'role', 'status', 'email'],
-  organizations: ['plan', 'status', 'name'],
-  tasks: ['project_id', 'organization_id', 'status', 'priority'],
+  projects: [
+    'current_phase',
+    'organization_id',
+    'owner_id',
+    'status',
+    'name',
+    // Queried by ProjectController in some views; missing columns generate noisy SQLITE_ERROR logs.
+    'health',
+    'progress_pct',
+    'updated_at',
+  ],
+  users: [
+    'organization_id',
+    'role',
+    'status',
+    'email',
+    'is_active',
+    'last_login_at',
+    'extended_preferences',
+  ],
+  organizations: [
+    'plan',
+    'status',
+    'name',
+    'logo_url',
+    'branding_primary_color',
+    'branding_accent_color',
+    'default_timezone',
+    'default_language',
+    'updated_at',
+  ],
+  report_builder_block_types: [
+    // Used by ReportBuilderService.listBlockTypes() ordering + UI metadata.
+    'display_order',
+    'category',
+    'slide_intent',
+    'pptx_prompt_template',
+    'pptx_output_schema',
+  ],
+  organization_profiles: [
+    'id',
+    'organization_id',
+    'industry',
+    'company_size',
+    'preferred_language',
+    'created_by',
+    'updated_by',
+    'created_at',
+    'updated_at',
+  ],
+  organization_settings: ['organization_id', 'setting_key', 'setting_value', 'updated_at'],
+  tasks: [
+    'project_id',
+    'organization_id',
+    'title',
+    'description',
+    'status',
+    'priority',
+    'assignee_id',
+    'backup_assignee_id',
+    'reporter_id',
+    'created_by',
+    'due_date',
+    'started_at',
+    'estimated_hours',
+    'tags',
+    'task_type',
+    'initiative_id',
+    'why',
+    'source',
+    'owner_id',
+    'requires_acceptance',
+    'acceptance_type',
+    'acceptor_id',
+    'weight',
+    'weight_reason',
+    'expected_outcome',
+    'decision_impact',
+    'evidence_required',
+    'strategic_contribution',
+    'roadmap_initiative_id',
+    'kpi_id',
+    'raid_item_id',
+    'assignees',
+    'progress',
+    'blocked_reason',
+    'blocked_by_decision_id',
+    'blocked_at',
+    'created_at',
+    'updated_at',
+  ],
+  // Dependencies API uses these columns directly in SELECT/INSERT; missing columns degrade to empty
+  // arrays due to DbPromise fallback behaviour, which creates "fake green" behaviour in integration tests.
+  task_dependencies: [
+    'from_task_id',
+    'to_task_id',
+    'dependency_type',
+    'lag_days',
+    'notes',
+    'created_by',
+    'created_at',
+  ],
+  // Billing UI relies on stable ordering and toggles.
+  subscription_plans: [
+    'name',
+    'price_monthly',
+    'price_yearly',
+    'currency',
+    'features',
+    'limits',
+    'trial_days',
+    'is_public',
+    'is_active',
+    'sort_order',
+    'created_at',
+    'updated_at',
+  ],
+  spending_alerts: [
+    'organization_id',
+    'type',
+    'threshold',
+    'threshold_type',
+    'action',
+    'notify_emails',
+    'is_active',
+    'created_at',
+    'updated_at',
+  ],
+  // Billing usage endpoints group by `metric_name` and sum `quantity`.
+  // Older SQLite baselines used `type` + `amount` — add the new columns for compatibility.
+  usage_records: ['organization_id', 'metric_name', 'quantity', 'recorded_at', 'metadata'],
+  org_user_permissions: [
+    'user_id',
+    'organization_id',
+    'permission_key',
+    'grant_type',
+    'granted_by',
+    'created_at',
+  ],
+  interview_sessions: ['organization_id', 'project_id', 'template_id', 'status', 'created_at'],
+  interview_library_templates: ['name', 'status', 'visibility', 'is_default', 'created_at'],
+  user_contact: [
+    'user_id',
+    'phone',
+    'address',
+    'city',
+    'country',
+    'postal_code',
+    'linkedin',
+    'website',
+    'updated_at',
+  ],
+  user_availability: ['user_id', 'settings', 'updated_at'],
+  trusted_devices: ['id', 'user_id', 'device_name', 'device_fingerprint', 'trusted_at'],
+  user_settings_history: ['id', 'user_id', 'setting_key', 'old_value', 'new_value', 'changed_at'],
+  user_settings_templates: [
+    'id',
+    'user_id',
+    'name',
+    'settings',
+    'is_default',
+    'is_global',
+    'created_at',
+  ],
+  user_gdpr_consents: [
+    'user_id',
+    'analytics',
+    'personalization',
+    'marketing',
+    'third_party_sharing',
+    'ai_training',
+    'updated_at',
+  ],
+  user_data_retention: ['user_id', 'retention_period', 'auto_delete', 'updated_at'],
+  data_export_requests: [
+    'id',
+    'user_id',
+    'status',
+    'requested_at',
+    'expires_at',
+    'download_url',
+  ],
+  account_deletion_requests: [
+    'id',
+    'user_id',
+    'status',
+    'requested_at',
+    'scheduled_for',
+    'completed_at',
+  ],
+  security_policies: [
+    'id',
+    'organization_id',
+    'name',
+    'category',
+    'settings_json',
+    'enabled',
+    'last_updated',
+  ],
+  compliance_settings: [
+    'id',
+    'organization_id',
+    'setting_type',
+    'settings_data',
+    'enabled',
+    'created_at',
+    'updated_at',
+    'updated_by',
+  ],
+  connectors: [
+    'id',
+    'organization_id',
+    'name',
+    'type',
+    'provider',
+    'status',
+    'config',
+    'last_synced_at',
+    'created_at',
+  ],
+  webhook_events: ['id', 'provider', 'event_type', 'payload', 'processed', 'created_at'],
+  webhook_subscriptions: [
+    'id',
+    'organization_id',
+    'name',
+    'url',
+    'events',
+    'is_active',
+    'secret_hash',
+    'created_at',
+  ],
+  sso_configs: ['domain', 'provider', 'entity_id', 'sso_url', 'certificate', 'is_active'],
+  groups: ['id', 'name', 'created_at'],
+  user_preferences: ['user_id', 'key', 'value', 'updated_at'],
+  notification_rules: [
+    'id',
+    'organization_id',
+    'name',
+    'description',
+    'event_type',
+    'conditions',
+    'actions',
+    'is_active',
+    'priority',
+    'created_by',
+    'created_at',
+    'updated_at',
+  ],
   // Security admin endpoints query by org + order by created time.
   // Missing columns here causes noisy SQLITE_ERROR logs and can silently downgrade
   // functionality via DbPromise fallback behaviour.
   login_history: ['organization_id'],
-  user_sessions: ['created_at'],
+  user_sessions: [
+    'user_id',
+    'device_info',
+    'ip_address',
+    'user_agent',
+    'location',
+    'created_at',
+    'last_active_at',
+    'expires_at',
+    'is_current',
+  ],
   // Initiative detail views (N-mode) rely on these columns for autosave + persistence.
   // We auto-repair missing columns in SQLite dev DBs so the app behaves "online-first".
   initiatives: [
@@ -176,6 +479,12 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
     'resource_tools',
     'tags',
     'target_state',
+    // Needed by report import → initiative creation flow
+    'source_type',
+    'source_id',
+    'source_report_id',
+    'source_assessment_id',
+    'created_from',
   ],
   // Used by audit/activity logging across the app (including AI chat).
   // Older dev SQLite DBs were created from legacy baselines where `activity_logs` had fewer columns.
@@ -195,6 +504,25 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
     'rate_limit_per_minute',
     'rate_limit_per_day',
     'quota_used',
+  ],
+  // Used in project dashboards for counts; older SQLite baselines lacked this column.
+  multi_framework_assessments: ['project_id'],
+  security_events: ['user_id', 'type', 'title', 'description', 'ip_address', 'created_at'],
+  webhook_deliveries: [
+    'id',
+    'webhook_id',
+    'subscription_id',
+    'event',
+    'event_type',
+    'payload',
+    'status',
+    'attempts',
+    'response_code',
+    'status_code',
+    'response_time_ms',
+    'response_body',
+    'delivered_at',
+    'created_at',
   ],
 };
 
@@ -675,6 +1003,106 @@ async function ensureChatConversationTables(): Promise<void> {
   });
 }
 
+// ==========================================
+// TARGETED SELF-HEAL (IMPORTED REPORTS)
+// ==========================================
+
+async function ensureImportedReportsTables(): Promise<void> {
+  const db = await getDatabaseAsync();
+  const dbType = databaseConfig.type;
+
+  if (dbType === 'postgres') {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS imported_reports (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        project_id TEXT,
+        source_file_name TEXT NOT NULL,
+        source_file_path TEXT,
+        source_file_size INTEGER,
+        source_format TEXT NOT NULL DEFAULT 'pdf',
+        detected_framework TEXT NOT NULL DEFAULT 'DRD',
+        detection_confidence REAL DEFAULT 0,
+        extracted_data_json TEXT,
+        mapped_data_json TEXT,
+        extraction_details_json TEXT,
+        document_metadata_json TEXT,
+        canonical_markdown TEXT,
+        auto_summary TEXT,
+        coverage_percent REAL DEFAULT 0,
+        target_type TEXT,
+        target_id TEXT,
+        initiatives_created INTEGER DEFAULT 0,
+        initiatives_target_ids TEXT DEFAULT '[]',
+        status TEXT NOT NULL DEFAULT 'pending',
+        processing_error TEXT,
+        processing_log TEXT,
+        created_by TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        processed_at TIMESTAMP
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_imported_reports_org ON imported_reports(organization_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_imported_reports_status ON imported_reports(status)`
+    );
+    return;
+  }
+
+  // SQLite branch
+  await new Promise<void>((resolve, reject) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS imported_reports (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        project_id TEXT,
+        source_file_name TEXT NOT NULL,
+        source_file_path TEXT,
+        source_file_size INTEGER,
+        source_format TEXT NOT NULL DEFAULT 'pdf',
+        detected_framework TEXT NOT NULL DEFAULT 'DRD',
+        detection_confidence REAL DEFAULT 0,
+        extracted_data_json TEXT,
+        mapped_data_json TEXT,
+        extraction_details_json TEXT,
+        document_metadata_json TEXT,
+        canonical_markdown TEXT,
+        auto_summary TEXT,
+        coverage_percent REAL DEFAULT 0,
+        target_type TEXT,
+        target_id TEXT,
+        initiatives_created INTEGER DEFAULT 0,
+        initiatives_target_ids TEXT DEFAULT '[]',
+        status TEXT NOT NULL DEFAULT 'pending',
+        processing_error TEXT,
+        processing_log TEXT,
+        created_by TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        processed_at TEXT
+      )`,
+      (err: Error | null) => (err ? reject(err) : resolve())
+    );
+  });
+
+  // Indices (best-effort)
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_imported_reports_org ON imported_reports(organization_id)`,
+      () => resolve()
+    );
+  });
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_imported_reports_status ON imported_reports(status)`,
+      () => resolve()
+    );
+  });
+}
+
 /**
  * Initialize database schema
  * This ensures all tables are created if they don't exist
@@ -804,6 +1232,29 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         );
         // Don't fail initialization for verification errors, just log them
       }
+
+      // Auto-repair missing columns for PostgreSQL (like SQLite branch does)
+      if (Object.keys(verification.missingColumns).length > 0) {
+        logger.warn(
+          `[DatabaseInitializer] PostgreSQL schema has missing columns, attempting self-heal: ${JSON.stringify(verification.missingColumns)}`
+        );
+        for (const table of Object.keys(verification.missingColumns)) {
+          for (const column of verification.missingColumns[table]) {
+            try {
+              await db.query(
+                `ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} TEXT`
+              );
+              logger.info(
+                `[DatabaseInitializer] Added missing column ${table}.${column}`
+              );
+            } catch (colErr: any) {
+              logger.warn(
+                `[DatabaseInitializer] Failed to add column ${table}.${column}: ${colErr?.message}`
+              );
+            }
+          }
+        }
+      }
     } else {
       // SQLite: Check if schema exists, if not, initialize
       const verification = await verifySchema();
@@ -914,6 +1365,78 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         }
       }
 
+      // Ensure `security_settings` upsert semantics work on older SQLite DBs.
+      // Some local DBs were created before `organization_id` became PRIMARY KEY, which breaks
+      // `INSERT ... ON CONFLICT(organization_id) DO UPDATE` (conflict target requires UNIQUE/PK).
+      // Fix by de-duping and adding a unique index.
+      try {
+        await new Promise<void>((resolve, reject) => {
+          db.run(
+            `
+            DELETE FROM security_settings
+            WHERE rowid NOT IN (
+              SELECT MAX(rowid) FROM security_settings GROUP BY organization_id
+            )
+          `,
+            (err: Error | null) => {
+              if (err) return reject(err);
+              resolve();
+            }
+          );
+        });
+      } catch (e: any) {
+        logger.warn(
+          '[DatabaseInitializer] Failed to dedupe security_settings (continuing):',
+          e?.message || e
+        );
+      }
+      try {
+        await new Promise<void>((resolve, reject) => {
+          db.run(
+            `CREATE UNIQUE INDEX IF NOT EXISTS idx_security_settings_org ON security_settings(organization_id)`,
+            (err: Error | null) => {
+              if (err) return reject(err);
+              resolve();
+            }
+          );
+        });
+      } catch (e: any) {
+        logger.warn(
+          '[DatabaseInitializer] Failed to ensure unique index on security_settings(organization_id) (continuing):',
+          e?.message || e
+        );
+      }
+
+      // Ensure `knowledge_docs` is compatible with ProjectController queries.
+      // Older schemas omit `project_id` and `deleted_at`, which can crash `/api/projects/:id`.
+      try {
+        await new Promise<void>((resolve) => {
+          db.run(`ALTER TABLE knowledge_docs ADD COLUMN project_id TEXT`, (err: Error | null) => {
+            if (err && !err.message.includes('duplicate column name')) {
+              logger.warn('[DatabaseInitializer] knowledge_docs.project_id add failed:', err.message);
+            }
+            resolve();
+          });
+        });
+      } catch {
+        // ignore
+      }
+      try {
+        await new Promise<void>((resolve) => {
+          db.run(
+            `ALTER TABLE knowledge_docs ADD COLUMN deleted_at DATETIME`,
+            (err: Error | null) => {
+              if (err && !err.message.includes('duplicate column name')) {
+                logger.warn('[DatabaseInitializer] knowledge_docs.deleted_at add failed:', err.message);
+              }
+              resolve();
+            }
+          );
+        });
+      } catch {
+        // ignore
+      }
+
       // Verify again
       const recheck = await verifySchema();
       if (!recheck.valid && recheck.missing.length > 0) {
@@ -948,6 +1471,16 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       );
     }
 
+    // Ensure imported_reports table exists (used by Report Import feature).
+    try {
+      await ensureImportedReportsTables();
+    } catch (e: any) {
+      logger.warn(
+        '[DatabaseInitializer] ensureImportedReportsTables failed (continuing):',
+        e?.message || e
+      );
+    }
+
     // Final verification
     const finalVerification = await verifySchema();
     if (!finalVerification.valid) {
@@ -965,10 +1498,22 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         finalVerification.errors.length > 0 ? `Errors: ${finalVerification.errors.join(', ')}` : '';
 
       const parts = [missingTables, missingCols, errors].filter(Boolean);
-      return {
-        success: false,
-        message: `Database schema verification failed. ${parts.join('. ')}`,
-      };
+
+      // Missing critical tables = hard fail; missing columns/non-critical tables = warn only
+      const hasCriticalMissing = finalVerification.missing.some((t) =>
+        ['organizations', 'users', 'sessions', 'projects', 'tasks'].includes(t)
+      );
+      if (hasCriticalMissing) {
+        return {
+          success: false,
+          message: `Database schema verification failed. ${parts.join('. ')}`,
+        };
+      }
+
+      // Non-critical issues: log warning but allow startup to proceed
+      logger.warn(
+        `[DatabaseInitializer] Schema has non-critical gaps (startup continues): ${parts.join('. ')}`
+      );
     }
 
     logger.info('[DatabaseInitializer] Database schema verified successfully');

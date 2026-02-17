@@ -48,7 +48,12 @@ export const SystemHealth = () => {
           apiCallsUsed: data.apiCallsUsed ?? prev.apiCallsUsed,
           apiCallsLimit: data.apiCallsLimit ?? prev.apiCallsLimit,
         }));
-      } catch {
+      } catch (err: any) {
+        // IMPORTANT: 401/403 here is usually an auth/session problem, not "offline".
+        // Avoid showing a misleading Offline badge; auth recovery/logout will handle it.
+        const statusCode = err?.status;
+        if (statusCode === 401 || statusCode === 403) return;
+
         setStatus('offline');
         setMetrics((prev) => ({ ...prev, dbStatus: 'offline' }));
       }

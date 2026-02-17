@@ -1,23 +1,18 @@
 /**
  * ExecutionInitiativesKanbanView
  *
- * Kanban board for initiatives in the Execution module.
- * Shows initiatives by status with drag-and-drop to change status.
+ * Execution module initiatives kanban — presentation aligned with Initiatives module.
  *
- * Two modes controlled by scope:
- *   ACTIVE  → SCHEDULED → EXECUTING → BLOCKED
- *   ALL     → SCHEDULED → EXECUTING → BLOCKED → DONE → CANCELLED → ARCHIVED
- *
- * Cards show: Name · Priority · Owner · Health · Next step
- * Matches PortfolioKanbanView styling for consistency.
+ * Columns:
+ *  - Active: SCHEDULED → EXECUTING → BLOCKED
+ *  - All:    SCHEDULED → EXECUTING → BLOCKED → DONE → CANCELLED → ARCHIVED
  */
-
 import {
   closestCorners,
   DndContext,
-  DragEndEvent,
+  type DragEndEvent,
   DragOverlay,
-  DragStartEvent,
+  type DragStartEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -30,66 +25,44 @@ import { User } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { getPriorityStyle, getStatusStyle } from '@/constants/statusColors';
-import { STATUS_METADATA } from '@/services/initiativeLifecycle';
-import { InitiativeStatus, PortfolioInitiative } from '@/types';
-import { getHealthInfo, getNextStep } from '@/utils/initiativeHelpers';
+import { getPriorityStyle, getStatusStyle } from '../../constants/statusColors';
+import { STATUS_METADATA } from '../../services/initiativeLifecycle';
+import type { InitiativeStatus, PortfolioInitiative } from '../../types';
+import { getHealthInfo, getNextStep } from '../../utils/initiativeHelpers';
 
-// ==========================================
-// TYPES
-// ==========================================
-
-export type KanbanScope = 'active' | 'all';
+export type ExecutionKanbanScope = 'active' | 'all';
 
 interface ExecutionInitiativesKanbanViewProps {
   initiatives: PortfolioInitiative[];
   onInitiativeClick: (initiative: PortfolioInitiative) => void;
-  onStatusChange: (id: string, status: string) => void;
-  scope?: KanbanScope;
+  onStatusChange: (id: string, status: InitiativeStatus) => void;
+  scope: ExecutionKanbanScope;
 }
 
-// ==========================================
-// COLUMN CONFIG — Execution-specific
-// ==========================================
+const ACTIVE: InitiativeStatus[] = ['SCHEDULED', 'EXECUTING', 'BLOCKED'] as InitiativeStatus[];
+const ALL: InitiativeStatus[] = [
+  'SCHEDULED',
+  'EXECUTING',
+  'BLOCKED',
+  'DONE',
+  'CANCELLED',
+  'ARCHIVED',
+] as InitiativeStatus[];
 
-const ACTIVE_EXECUTION_STATUSES: InitiativeStatus[] = [
-  InitiativeStatus.SCHEDULED,
-  InitiativeStatus.EXECUTING,
-  InitiativeStatus.BLOCKED,
-];
-
-const ALL_EXECUTION_STATUSES: InitiativeStatus[] = [
-  InitiativeStatus.SCHEDULED,
-  InitiativeStatus.EXECUTING,
-  InitiativeStatus.BLOCKED,
-  InitiativeStatus.DONE,
-  InitiativeStatus.CANCELLED,
-  InitiativeStatus.ARCHIVED,
-];
-
-function getColumnsForScope(scope: KanbanScope): { id: InitiativeStatus; label: string }[] {
-  const statuses = scope === 'active' ? ACTIVE_EXECUTION_STATUSES : ALL_EXECUTION_STATUSES;
-  return statuses.map((s) => ({
-    id: s,
-    label: STATUS_METADATA[s]?.label || s,
-  }));
+function getColumns(scope: ExecutionKanbanScope): { id: InitiativeStatus; label: string }[] {
+  const statuses = scope === 'active' ? ACTIVE : ALL;
+  return statuses.map((s) => ({ id: s, label: STATUS_METADATA[s]?.label || s }));
 }
 
-// ==========================================
-// INITIATIVE KANBAN CARD
-// ==========================================
-
-interface KanbanCardProps {
+const KanbanCard: React.FC<{
   initiative: PortfolioInitiative;
   onClick: () => void;
   isDragging?: boolean;
-}
-
-const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging }) => {
+}> = ({ initiative, onClick, isDragging }) => {
   const { t } = useTranslation();
   const priorityStyle = getPriorityStyle(initiative.priority);
   const health = getHealthInfo(initiative);
-  const nextStep = getNextStep(initiative.status as string);
+  const nextStep = getNextStep(initiative.status);
   const owner = initiative.ownerBusiness || initiative.ownerExecution;
 
   return (
@@ -102,12 +75,10 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging
         ${isDragging ? 'shadow-hig-xl dark:shadow-hig-dark-xl scale-[1.02] rotate-1' : ''}
       `}
     >
-      {/* Row 1: Name */}
       <h4 className="font-medium text-sm text-slate-900 dark:text-slate-100 line-clamp-2 mb-2 leading-snug">
         {initiative.name}
       </h4>
 
-      {/* Row 2: Priority + Health dot */}
       <div className="flex items-center gap-2 mb-2">
         <span
           className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded-full ${priorityStyle.bg} ${priorityStyle.text}`}
@@ -121,7 +92,6 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging
         </div>
       </div>
 
-      {/* Row 3: Owner */}
       {owner ? (
         <div className="flex items-center gap-1.5 mb-2">
           <div className="w-4 h-4 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[8px] font-medium text-slate-600 dark:text-slate-300 overflow-hidden flex-shrink-0">
@@ -138,50 +108,41 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging
       ) : (
         <div className="flex items-center gap-1.5 mb-2 text-[11px] text-slate-400">
           <User size={12} />
-          <span>{t('execution.kanban.noOwner', 'Unassigned')}</span>
+          <span>{t('initiatives.kanban.noOwner', 'Unassigned')}</span>
         </div>
       )}
 
-      {/* Row 4: Progress */}
-      <div className="text-[10px] text-slate-400 dark:text-slate-500">
-        {initiative.progress ?? 0}% {t('execution.kanban.complete', 'complete')}
-      </div>
-
-      {/* Row 5: Next step (when applicable) */}
       {nextStep && (
         <div className="pt-2 border-t border-slate-100/70 dark:border-white/[0.03]">
           <div className="text-[10px] text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider font-medium">
-            {t('execution.kanban.nextStep', 'Next step')}
+            {t('initiatives.kanban.nextGate', 'Next gate')}
           </div>
           <div className="text-xs text-slate-600 dark:text-slate-300 font-medium truncate">
             {nextStep.label}
           </div>
+          {nextStep.role && (
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+              {nextStep.role}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 };
 
-// ==========================================
-// SORTABLE WRAPPER
-// ==========================================
-
-interface SortableCardProps {
+const SortableCard: React.FC<{
   initiative: PortfolioInitiative;
   onClick: () => void;
-}
-
-const SortableCard: React.FC<SortableCardProps> = ({ initiative, onClick }) => {
+}> = ({ initiative, onClick }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: initiative.id,
   });
-
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
-
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <KanbanCard initiative={initiative} onClick={onClick} isDragging={isDragging} />
@@ -189,44 +150,28 @@ const SortableCard: React.FC<SortableCardProps> = ({ initiative, onClick }) => {
   );
 };
 
-// ==========================================
-// KANBAN COLUMN
-// ==========================================
-
-interface KanbanColumnProps {
+const KanbanColumn: React.FC<{
   id: InitiativeStatus;
   label: string;
   initiatives: PortfolioInitiative[];
   onInitiativeClick: (initiative: PortfolioInitiative) => void;
-  isCompact?: boolean;
-}
-
-const KanbanColumn: React.FC<KanbanColumnProps> = ({
-  id,
-  label,
-  initiatives,
-  onInitiativeClick,
-  isCompact,
-}) => {
-  const { t } = useTranslation();
+  isCompact: boolean;
+}> = ({ id, label, initiatives, onInitiativeClick, isCompact }) => {
   const { setNodeRef, isOver } = useDroppable({ id });
-  const statusStyle = getStatusStyle(id as string);
-
+  const statusStyle = getStatusStyle(id);
   const columnWidth = isCompact ? 'min-w-[240px] max-w-[240px]' : 'min-w-[280px] max-w-[280px]';
 
   return (
     <div
       ref={setNodeRef}
-      data-testid={`execution-kanban-column-${id.toString().toLowerCase()}`}
       className={`
         flex flex-col ${columnWidth} rounded-xl overflow-hidden
         bg-slate-50/50 dark:bg-navy-950/30
         border border-slate-200/40 dark:border-white/[0.03]
-        ${isOver ? 'ring-2 ring-cyan-500/40' : ''}
+        ${isOver ? 'ring-2 ring-primary-500/40' : ''}
         transition-all
       `}
     >
-      {/* Column Header */}
       <div className="flex items-center justify-between px-3 py-2.5 bg-white/60 dark:bg-navy-900/40">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusStyle.dot}`} />
@@ -238,13 +183,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
           {initiatives.length}
         </span>
       </div>
-
-      {/* Column Content */}
       <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-280px)]">
-        <SortableContext
-          items={initiatives.map((i) => i.id)}
-          strategy={verticalListSortingStrategy}
-        >
+        <SortableContext items={initiatives.map((i) => i.id)} strategy={verticalListSortingStrategy}>
           {initiatives.map((initiative) => (
             <SortableCard
               key={initiative.id}
@@ -253,10 +193,9 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             />
           ))}
         </SortableContext>
-
         {initiatives.length === 0 && (
           <div className="p-3 text-center text-slate-400 dark:text-slate-500 text-xs">
-            {t('execution.kanban.dropHere', 'Drop initiatives here')}
+            Drop initiatives here
           </div>
         )}
       </div>
@@ -264,18 +203,14 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   );
 };
 
-// ==========================================
-// MAIN KANBAN VIEW
-// ==========================================
-
 export const ExecutionInitiativesKanbanView: React.FC<ExecutionInitiativesKanbanViewProps> = ({
   initiatives,
   onInitiativeClick,
   onStatusChange,
-  scope = 'active',
+  scope,
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const columns = useMemo(() => getColumnsForScope(scope), [scope]);
+  const columns = useMemo(() => getColumns(scope), [scope]);
   const isCompact = scope === 'all';
 
   const sensors = useSensors(
@@ -285,13 +220,11 @@ export const ExecutionInitiativesKanbanView: React.FC<ExecutionInitiativesKanban
 
   const columnData = useMemo(() => {
     const grouped: Record<string, PortfolioInitiative[]> = {};
-    columns.forEach((col) => {
-      grouped[col.id] = [];
+    columns.forEach((c) => {
+      grouped[c.id] = [];
     });
-    initiatives.forEach((initiative) => {
-      if (grouped[initiative.status]) {
-        grouped[initiative.status].push(initiative);
-      }
+    initiatives.forEach((i) => {
+      if (grouped[i.status]) grouped[i.status].push(i);
     });
     return grouped;
   }, [initiatives, columns]);
@@ -301,20 +234,16 @@ export const ExecutionInitiativesKanbanView: React.FC<ExecutionInitiativesKanban
     return initiatives.find((i) => i.id === activeId) || null;
   }, [activeId, initiatives]);
 
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
-
+  const handleDragStart = (event: DragStartEvent) => setActiveId(event.active.id as string);
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
     if (!over) return;
 
-    const draggedInitiative = initiatives.find((i) => i.id === active.id);
-    if (!draggedInitiative) return;
-
-    const newStatus = columns.find((col) => col.id === over.id)?.id;
-    if (newStatus && newStatus !== draggedInitiative.status) {
+    const dragged = initiatives.find((i) => i.id === active.id);
+    if (!dragged) return;
+    const newStatus = columns.find((c) => c.id === over.id)?.id;
+    if (newStatus && newStatus !== dragged.status) {
       onStatusChange(active.id as string, newStatus);
     }
   };
@@ -328,19 +257,18 @@ export const ExecutionInitiativesKanbanView: React.FC<ExecutionInitiativesKanban
     >
       <div className="h-full overflow-x-auto p-4">
         <div className="flex gap-3 h-full">
-          {columns.map((column) => (
+          {columns.map((c) => (
             <KanbanColumn
-              key={column.id}
-              id={column.id}
-              label={column.label}
-              initiatives={columnData[column.id] || []}
+              key={c.id}
+              id={c.id}
+              label={c.label}
+              initiatives={columnData[c.id] || []}
               onInitiativeClick={onInitiativeClick}
               isCompact={isCompact}
             />
           ))}
         </div>
       </div>
-
       <DragOverlay>
         {activeInitiative && (
           <KanbanCard initiative={activeInitiative} onClick={() => {}} isDragging />

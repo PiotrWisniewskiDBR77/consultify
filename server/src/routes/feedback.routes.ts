@@ -28,6 +28,7 @@ import NotificationService from '../services/notificationService.js';
 const WhatsAppService = {} as any; // Stubbed missing service
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 
 // Apply rate limiting
@@ -47,23 +48,89 @@ router.post(
     }
 
     const id = uuidv4();
-    const sql = `INSERT INTO system_feedback (id, user_id, user_email, user_name, type, message, rating, status, metadata, created_at) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, 'NEW', ?, CURRENT_TIMESTAMP)`;
+    const cols = await getTableColumns('system_feedback');
 
-    const runResult = await dbRun(sql, [
-      id,
-      userId,
-      userEmail,
-      userName,
-      type,
-      message,
-      rating,
-      JSON.stringify(metadata || {}),
-    ]);
+    // Schema compatibility:
+    // - legacy schema: (id, user_id, organization_id, feedback_type, message, status, created_at)
+    // - enhanced schema: adds user_name, rating, metadata, admin_response, etc.
+    const insertCols: string[] = ['id', 'message'];
+    const values: unknown[] = [id, message];
+
+    if (cols.has('user_id')) {
+      insertCols.push('user_id');
+      values.push(userId || null);
+    }
+
+    // Resolve organizationId when possible
+    let organizationId: string | null = null;
+    try {
+      if ((req as any).user?.organizationId) {
+        organizationId = String((req as any).user.organizationId);
+      } else if (userId) {
+        const userRow = await dbGet<{ organization_id?: string }>(
+          `SELECT organization_id FROM users WHERE id = ?`,
+          [userId]
+        );
+        if (userRow?.organization_id) organizationId = String(userRow.organization_id);
+      }
+    } catch {
+      // ignore
+    }
+
+    if (cols.has('organization_id')) {
+      insertCols.push('organization_id');
+      values.push(organizationId || 'system');
+    }
+
+    // Feedback type column name differs between schemas
+    if (cols.has('type')) {
+      insertCols.push('type');
+      values.push(type);
+    } else if (cols.has('feedback_type')) {
+      insertCols.push('feedback_type');
+      values.push(type);
+    }
+
+    if (cols.has('user_name')) {
+      insertCols.push('user_name');
+      values.push(userName || null);
+    }
+
+    if (cols.has('rating')) {
+      insertCols.push('rating');
+      values.push(typeof rating === 'number' ? rating : rating ? Number(rating) : null);
+    }
+
+    if (cols.has('metadata')) {
+      // Keep original metadata but enrich with email/name/type if present
+      insertCols.push('metadata');
+      values.push(
+        JSON.stringify({
+          ...(metadata || {}),
+          ...(userEmail ? { userEmail } : {}),
+          ...(userName ? { userName } : {}),
+          ...(type ? { type } : {}),
+          ...(severity ? { severity } : {}),
+        })
+      );
+    }
+
+    if (cols.has('status')) {
+      insertCols.push('status');
+      values.push('NEW');
+    }
+
+    const placeholders = insertCols.map(() => '?').join(', ');
+    const sql = `INSERT INTO system_feedback (${insertCols.join(', ')}) VALUES (${placeholders})`;
+    const runResult = await dbRun(sql, values);
 
     if (!runResult.success) {
       throw new Error(runResult.error || 'Failed to insert feedback');
     }
+
+    // Even if `system_feedback` table doesn't store organization_id (legacy schema),
+    // we still want to route notifications/integrations by the user's organization when possible.
+    const orgIdForNotifications = String(organizationId || 'system');
 
     // Send Notifications (Async)
     try {
@@ -80,7 +147,7 @@ router.post(
 
       await NotificationService.send({
         userId: userId,
-        organizationId: 'system',
+        organizationId: orgIdForNotifications,
         type: notificationType,
         severity: notificationSeverity as 'INFO' | 'WARNING' | 'CRITICAL',
         title: isCritical ? `Critical Feedback: ${type}` : `New Feedback: ${type}`,
@@ -90,6 +157,11 @@ router.post(
         relatedObjectId: id,
         isActionable: true,
         actionUrl: '/admin?section=feedback',
+        metadata: {
+          ...(metadata || {}),
+          userEmail,
+          feedbackType: type,
+        },
       });
     } catch (noteErr) {
       logger.error('Failed to create notification for feedback:', noteErr);
@@ -644,8 +716,8 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     // Check if admin/superadmin
-    const userRole = req.user?.role;
-    if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
+    const userRole = (req.user?.role || '').toLowerCase();
+    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(userRole)) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 

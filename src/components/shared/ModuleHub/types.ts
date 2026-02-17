@@ -6,7 +6,15 @@
  * Documentation: wdrozenia/standards/03-STATUS-WORKFLOW.md
  */
 
-export type ModuleTab = 'list' | 'reports' | 'initiatives' | 'raid' | 'decisions' | 'assignments';
+export type ModuleTab =
+  | 'list'
+  | 'reports'
+  | 'initiatives'
+  | 'tasks'
+  | 'team'
+  | 'raid'
+  | 'decisions'
+  | 'assignments';
 
 export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';
 

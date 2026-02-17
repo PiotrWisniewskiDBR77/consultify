@@ -5,7 +5,17 @@ import { tokenService } from './tokenService';
 
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
 // or use env var if provided.
-export const API_URL = '/api';
+const _envApiUrl = (import.meta as any)?.env?.VITE_API_URL as string | undefined;
+const _normalizedEnvApiUrl =
+  _envApiUrl && String(_envApiUrl).trim().length > 0
+    ? (() => {
+        const base = String(_envApiUrl).trim().replace(/\/+$/, '');
+        // Our backend is consistently mounted under `/api` (e.g. `/api/auth/login`).
+        // Allow env to be either an origin (`http://localhost:3001`) or a full base (`http://.../api`).
+        return base.endsWith('/api') ? base : `${base}/api`;
+      })()
+    : null;
+export const API_URL = (_normalizedEnvApiUrl || '/api') as string;
 
 let correlationId = sessionStorage.getItem('correlationId');
 if (!correlationId) {
@@ -283,11 +293,22 @@ export const Api = {
   // --- AUTH ---
   login: async (email: string, password: string): Promise<User> => {
     console.log('Api.login called:', { email, url: `${API_URL}/auth/login` });
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+    } catch (e: any) {
+      // Browser network errors typically surface as TypeError("Load failed"/"Failed to fetch")
+      // and are NOT HTTP errors. Provide a high-signal hint for operators.
+      const msg = e?.message ? String(e.message) : String(e);
+      throw new Error(
+        `Network error contacting API (${API_URL}). ${msg}. ` +
+          `Check that the backend is running and that Vite proxy/VITE_API_URL is configured correctly.`
+      );
+    }
     return handleResponse(res, 'Login failed').then((data) => {
       // Save both access token and refresh token
       tokenService.saveTokens(data.token, data.refreshToken);
@@ -296,11 +317,20 @@ export const Api = {
   },
 
   register: async (userData: any): Promise<User | any> => {
-    const res = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData),
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+    } catch (e: any) {
+      const msg = e?.message ? String(e.message) : String(e);
+      throw new Error(
+        `Network error contacting API (${API_URL}). ${msg}. ` +
+          `Check that the backend is running and that Vite proxy/VITE_API_URL is configured correctly.`
+      );
+    }
     const data = await handleResponse(res, 'Registration failed');
     if (data.status === 'pending') return data;
     tokenService.saveTokens(data.token, data.refreshToken);
@@ -313,10 +343,19 @@ export const Api = {
    */
   demoLogin: async (): Promise<User & { isDemo: boolean }> => {
     console.log('Api.demoLogin called');
-    const res = await fetch(`${API_URL}/auth/demo-login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${API_URL}/auth/demo-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (e: any) {
+      const msg = e?.message ? String(e.message) : String(e);
+      throw new Error(
+        `Network error contacting API (${API_URL}). ${msg}. ` +
+          `Check that the backend is running and that Vite proxy/VITE_API_URL is configured correctly.`
+      );
+    }
     const data = await handleResponse(res, 'Demo login failed');
     tokenService.saveTokens(data.token, data.refreshToken);
     // Store demo flag in session
@@ -351,10 +390,10 @@ export const Api = {
   },
 
   getMe: async (): Promise<User | null> => {
-    const res = await fetch(`${API_URL}/auth/me`, { headers: getHeaders() });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.user;
+    // Use fetchWithRetry so a stale/expired token triggers refresh and/or auth:token-expired.
+    const res = await fetchWithRetry(`${API_URL}/auth/me`, { headers: getHeaders() });
+    const data = await handleResponse(res, 'Failed to fetch profile');
+    return data?.user ?? null;
   },
 
   // --- SECURITY & SESSIONS ---
@@ -2473,15 +2512,13 @@ export const Api = {
   getInitiatives: async (projectId?: string): Promise<any[]> => {
     let url = `${API_URL}/initiatives`;
     if (projectId) url += `?projectId=${encodeURIComponent(projectId)}`;
-    const res = await fetch(url, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch initiatives');
-    return res.json();
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch initiatives');
   },
 
   getInitiativeById: async (id: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/initiatives/${id}`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch initiative');
-    return res.json();
+    const res = await fetchWithRetry(`${API_URL}/initiatives/${id}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch initiative');
   },
 
   createInitiative: async (initiative: any): Promise<any> => {
@@ -2503,21 +2540,19 @@ export const Api = {
   },
 
   validateInitiative: async (id: string) => {
-    const response = await fetch(`${API_URL}/initiatives/${id}/validate`, {
+    const response = await fetchWithRetry(`${API_URL}/initiatives/${id}/validate`, {
       method: 'POST',
       headers: getHeaders(),
     });
-    if (!response.ok) throw new Error('Validation failed');
-    return response.json();
+    return handleResponse(response, 'Validation failed');
   },
 
   enrichInitiative: async (id: string) => {
-    const response = await fetch(`${API_URL}/initiatives/${id}/enrich`, {
+    const response = await fetchWithRetry(`${API_URL}/initiatives/${id}/enrich`, {
       method: 'POST',
       headers: getHeaders(),
     });
-    if (!response.ok) throw new Error('Enrichment failed');
-    return response.json();
+    return handleResponse(response, 'Enrichment failed');
   },
 
   /**
@@ -2528,22 +2563,20 @@ export const Api = {
   getInitiativesByStatus: async (statuses: string, projectId?: string): Promise<any[]> => {
     let url = `${API_URL}/initiatives/by-status/${statuses}`;
     if (projectId) url += `?projectId=${projectId}`;
-    const res = await fetch(url, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch initiatives by status');
-    const data = await res.json();
-    return data.initiatives || data || [];
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    const data = await handleResponse(res, 'Failed to fetch initiatives by status');
+    return data?.initiatives || data || [];
   },
 
   /**
    * Get tasks for an initiative
    */
   getInitiativeTasks: async (initiativeId: string): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/tasks?initiativeId=${initiativeId}`, {
+    const res = await fetchWithRetry(`${API_URL}/tasks?initiativeId=${initiativeId}`, {
       headers: getHeaders(),
     });
-    if (!res.ok) throw new Error('Failed to fetch initiative tasks');
-    const data = await res.json();
-    return data.tasks || data || [];
+    const data = await handleResponse(res, 'Failed to fetch initiative tasks');
+    return data?.tasks || data || [];
   },
 
   // --- TOOLS -> INITIATIVES ---
@@ -8137,6 +8170,110 @@ export const Api = {
       }
       throw e;
     }
+  },
+
+  // ============================================
+  // REPORT IMPORT (PDF → Assessment + Initiatives)
+  // ============================================
+
+  uploadReportImport: async (file: File, projectId?: string): Promise<any> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (projectId) formData.append('projectId', projectId);
+
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_URL}/report-import/upload`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(err.error || 'Upload failed');
+    }
+    return res.json();
+  },
+
+  listReportImports: async (options?: { status?: string; framework?: string }): Promise<any> => {
+    const params = new URLSearchParams();
+    if (options?.status) params.set('status', options.status);
+    if (options?.framework) params.set('framework', options.framework);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const fullUrl = `${API_URL}/report-import${qs}`;
+    const res = await fetch(fullUrl, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to list report imports');
+    return res.json();
+  },
+
+  getReportImport: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/report-import/${id}`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to get report import');
+    return res.json();
+  },
+
+  detectReportImport: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/report-import/detect/${id}`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to detect framework');
+    return res.json();
+  },
+
+  previewReportImport: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/report-import/preview/${id}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to preview import');
+    return res.json();
+  },
+
+  createAssessmentFromImport: async (id: string, projectId?: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/report-import/${id}/create-assessment`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ projectId }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Failed to create assessment' }));
+      throw new Error(err.error || 'Failed to create assessment');
+    }
+    return res.json();
+  },
+
+  createInitiativesFromImport: async (id: string, projectId?: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/report-import/${id}/create-initiatives`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ projectId }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Failed to create initiatives' }));
+      throw new Error(err.error || 'Failed to create initiatives');
+    }
+    return res.json();
+  },
+
+  downloadReportImportFile: async (id: string): Promise<Blob> => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_URL}/report-import/${id}/download`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (!res.ok) throw new Error('Failed to download file');
+    return res.blob();
+  },
+
+  deleteReportImport: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/report-import/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to delete import');
+    return res.json();
   },
 };
 

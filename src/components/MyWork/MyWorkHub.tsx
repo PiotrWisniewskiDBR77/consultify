@@ -1111,7 +1111,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 <select
                   value={currentFilterValue}
                   onChange={(e) => handleFilterChange(e.target.value)}
-                  className="appearance-none pl-4 pr-10 py-2.5 rounded-xl text-sm font-medium bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-500 text-slate-700 dark:text-slate-200 hover:border-primary-300 dark:hover:border-primary-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer min-w-[140px]"
+                  className="
+                    appearance-none h-9 pl-3 pr-9 rounded-lg text-sm font-medium
+                    bg-white dark:bg-navy-800
+                    border border-slate-200 dark:border-navy-600
+                    text-slate-700 dark:text-slate-200
+                    hover:bg-slate-50/70 dark:hover:bg-navy-800/80
+                    focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+                    transition-colors duration-150
+                    cursor-pointer min-w-[140px]
+                  "
                 >
                   {currentFilters.map((filter) => (
                     <option key={filter.id} value={filter.id}>
@@ -1122,7 +1131,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 </select>
                 <ChevronDown
                   size={16}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 dark:text-slate-500 pointer-events-none"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
                 />
               </div>
             )}

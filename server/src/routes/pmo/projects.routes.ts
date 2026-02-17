@@ -59,6 +59,19 @@ router.post(
   ProjectController.createProject
 );
 
+// ==========================================
+// MY MEMBERSHIPS
+// ==========================================
+
+/**
+ * GET /api/projects/my-memberships
+ * GET /api/pmo/projects/my-memberships
+ *
+ * Get all project memberships for current user.
+ * Must be declared before `/:id` to avoid route shadowing.
+ */
+router.get('/my-memberships', ProjectController.getMyMemberships);
+
 /**
  * GET /api/projects/:id
  * Get single project details
@@ -191,13 +204,6 @@ router.post('/:id/unarchive', ProjectController.unarchiveProject);
 // ==========================================
 
 /**
- * GET /api/pmo/projects/my-memberships
- * Get all project memberships for current user
- * Used by useInterviewPermissions hook
- */
-router.get('/my-memberships', ProjectController.getMyMemberships);
-
-// ==========================================
 // PMO ROLES
 // ==========================================
 

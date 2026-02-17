@@ -3059,14 +3059,18 @@ router.post('/:id/comments', async (req: Request, res: Response, next: NextFunct
       return res.status(404).json({ error: 'Report not found' });
     }
 
-    // Get user name from database
+    // Get user display name from database (stay compatible with older schemas)
     const { getDatabase } = await import('../database/index.js');
     const db = getDatabase();
     const user = await new Promise<any>((resolve, reject) => {
-      db.get('SELECT name, avatar FROM users WHERE id = ?', [userId], (err: any, row: any) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
+      db.get(
+        'SELECT first_name, last_name, avatar_url, email FROM users WHERE id = ?',
+        [userId],
+        (err: any, row: any) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
     });
 
     const comment = await ReportBuilderCommentsService.createComment({
@@ -3074,8 +3078,11 @@ router.post('/:id/comments', async (req: Request, res: Response, next: NextFunct
       sectionKey,
       anchor,
       userId,
-      userName: user?.name,
-      userAvatar: user?.avatar,
+      userName:
+        String(`${user?.first_name || ''} ${user?.last_name || ''}`).trim() ||
+        String(user?.email || '') ||
+        undefined,
+      userAvatar: user?.avatar_url,
       commentType,
       content: content.trim(),
       parentCommentId,

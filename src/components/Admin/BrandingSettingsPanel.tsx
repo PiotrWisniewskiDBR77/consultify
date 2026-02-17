@@ -103,6 +103,17 @@ const FONT_OPTIONS = [
   { id: 'DM Sans', label: 'DM Sans' },
 ];
 
+const loadedFonts = new Set<string>(['Inter']);
+
+const loadGoogleFont = (fontFamily: string) => {
+  if (!fontFamily || loadedFonts.has(fontFamily)) return;
+  loadedFonts.add(fontFamily);
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}:wght@300;400;500;600;700&display=swap`;
+  document.head.appendChild(link);
+};
+
 // Preset color themes
 const COLOR_PRESETS = [
   { name: 'Violet', primary: '#8B5CF6', secondary: '#3B82F6', accent: '#10B981' },
@@ -148,16 +159,20 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
 
       if (response.ok) {
         const data = await response.json();
-        if (data.configured && data.branding) {
-          setBranding({
+        if (data.branding) {
+          const merged = {
             ...DEFAULT_BRANDING,
             ...data.branding,
             organizationId: currentOrganization.id,
-          });
+          };
+          setBranding(merged);
+          if (merged.fontFamily) loadGoogleFont(merged.fontFamily);
+          if (merged.fontHeadings) loadGoogleFont(merged.fontHeadings);
         } else {
           // No branding configured, use defaults
           setBranding({
             ...DEFAULT_BRANDING,
+            ...(data.defaults || {}),
             organizationId: currentOrganization.id,
           });
         }
@@ -184,6 +199,25 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
     loadBranding();
   }, [loadBranding]);
 
+  // Load Google Fonts when font selection changes
+  useEffect(() => {
+    if (branding.fontFamily) loadGoogleFont(branding.fontFamily);
+    if (branding.fontHeadings) loadGoogleFont(branding.fontHeadings);
+  }, [branding.fontFamily, branding.fontHeadings]);
+
+  // Apply fonts globally to the document
+  const applyFontsGlobally = useCallback((fontFamily: string, fontHeadings: string) => {
+    const root = document.documentElement;
+    if (fontFamily) {
+      root.style.setProperty('--font-family-base', `'${fontFamily}', sans-serif`);
+      root.style.setProperty('--font-family', `'${fontFamily}', sans-serif`);
+      document.body.style.fontFamily = `'${fontFamily}', sans-serif`;
+    }
+    if (fontHeadings) {
+      root.style.setProperty('--font-family-headings', `'${fontHeadings}', sans-serif`);
+    }
+  }, []);
+
   // Update branding field
   const updateField = (field: keyof BrandingConfig, value: any) => {
     setBranding((prev) => ({ ...prev, [field]: value }));
@@ -208,6 +242,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
       if (response.ok) {
         toast.success(t('admin.branding.saved', 'Branding settings saved'));
         setHasChanges(false);
+        applyFontsGlobally(branding.fontFamily, branding.fontHeadings);
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Save failed');

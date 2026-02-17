@@ -9,6 +9,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { SlackServiceClass } from './slackService.js';
 
 // ==========================================
 // TYPES
@@ -243,62 +244,52 @@ class NotificationService {
     const mergedData = { ...enrichedData, ...(input.metadata || {}), ...(input.data || {}) };
 
     const cols = await this.getNotificationsCols();
-    const isLegacyMinimalSchema =
-      !cols.has('organization_id') && cols.has('read') && cols.has('message') && !cols.has('body');
+    // Schema compatibility: build INSERT based on existing columns.
+    // Different deployments may have partial/legacy schemas (e.g. no `body`).
+    const insertCols: string[] = [];
+    const values: unknown[] = [];
+    const add = (col: string, value: unknown) => {
+      if (!cols.has(col)) return;
+      insertCols.push(col);
+      values.push(value);
+    };
 
-    if (isLegacyMinimalSchema) {
-      // Legacy minimal schema (Postgres):
-      // notifications(id, user_id, type, title, message, data, read, created_at)
-      await db.run(
-        `INSERT INTO notifications (id, user_id, type, title, message, data, read, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, 0, ?)`,
-        [
-          id,
-          input.userId,
-          input.type,
-          input.title,
-          input.message || input.body || input.title,
-          JSON.stringify(mergedData),
-          now,
-        ]
-      );
-    } else {
-      // New schema
-      await db.run(
-        `INSERT INTO notifications (
-                  id, user_id, organization_id, type, title, body, message, icon,
-                  severity, priority, entity_type, entity_id,
-                  related_object_type, related_object_id, project_id,
-                  action_url, actor_id, actor_name,
-                  is_actionable, data, metadata, channels_sent, created_at
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          input.userId,
-          input.organizationId,
-          input.type,
-          input.title,
-          input.body,
-          input.message || input.body,
-          typeConfig?.icon || null,
-          severity,
-          priority,
-          input.entityType || input.relatedObjectType || null,
-          input.entityId || input.relatedObjectId || null,
-          input.relatedObjectType || input.entityType || null,
-          input.relatedObjectId || input.entityId || null,
-          input.projectId || null,
-          input.actionUrl || null,
-          input.actorId || null,
-          input.actorName || null,
-          input.isActionable ? 1 : 0,
-          JSON.stringify(mergedData),
-          JSON.stringify(input.metadata || {}),
-          JSON.stringify(channels),
-          now,
-        ]
-      );
+    add('id', id);
+    add('user_id', input.userId);
+    add('organization_id', input.organizationId);
+    add('type', input.type);
+    add('title', input.title);
+    add('body', input.body);
+    add('message', input.message || input.body || input.title);
+    add('icon', typeConfig?.icon || null);
+    add('severity', severity);
+    add('priority', priority);
+    add('entity_type', input.entityType || input.relatedObjectType || null);
+    add('entity_id', input.entityId || input.relatedObjectId || null);
+    add('related_object_type', input.relatedObjectType || input.entityType || null);
+    add('related_object_id', input.relatedObjectId || input.entityId || null);
+    add('project_id', input.projectId || null);
+    add('action_url', input.actionUrl || null);
+    add('actor_id', input.actorId || null);
+    add('actor_name', input.actorName || null);
+    add('is_actionable', input.isActionable ? 1 : 0);
+    add('data', JSON.stringify(mergedData));
+    add('metadata', JSON.stringify(input.metadata || {}));
+    add('channels_sent', JSON.stringify(channels));
+    add('created_at', now);
+    // read flag differs between schemas
+    add('read', 0);
+    add('is_read', 0);
+
+    if (insertCols.length === 0) {
+      throw new Error('Notifications table schema is incompatible (no insertable columns)');
     }
+
+    const placeholders = insertCols.map(() => '?').join(', ');
+    await db.run(
+      `INSERT INTO notifications (${insertCols.join(', ')}) VALUES (${placeholders})`,
+      values
+    );
 
     // Dispatch to channels
     await this.dispatchToChannels(id, input, channels, prefs);
@@ -1243,6 +1234,26 @@ class NotificationService {
   ): Promise<void> {
     const db = await this.getDb();
 
+    const severity = this.computeSeverity(input.type, input.data || input.metadata, input.severity);
+    const slackWebhookUrl = await this.getSlackWebhookUrlForOrg(input.organizationId);
+    const slackService = slackWebhookUrl
+      ? new SlackServiceClass({ webhookUrl: slackWebhookUrl })
+      : null;
+
+    if (this.shouldAutoSlack(input.type)) {
+      if (slackService) {
+        logger.debug('[NotificationService] Slack dispatch enabled', {
+          type: input.type,
+          organizationId: input.organizationId,
+        });
+      } else {
+        logger.warn('[NotificationService] Slack dispatch skipped (no webhook configured)', {
+          type: input.type,
+          organizationId: input.organizationId,
+        });
+      }
+    }
+
     for (const channel of channels) {
       // Log delivery attempt
       const logId = uuidv4();
@@ -1262,26 +1273,246 @@ class NotificationService {
             }
             break;
           case 'slack':
-            // Would send Slack message here
+            if (!slackService) {
+              status = 'skipped';
+              break;
+            }
+            await this.sendSlackNotification(slackService, input, severity);
             break;
           case 'teams':
             // Would send Teams message here
             break;
         }
 
-        await db.run(
-          `INSERT INTO notification_delivery_log (id, notification_id, channel, status, sent_at)
-                     VALUES (?, ?, ?, ?, ?)`,
-          [logId, notificationId, channel, status, new Date().toISOString()]
-        );
+        try {
+          await db.run(
+            `INSERT INTO notification_delivery_log (id, notification_id, channel, status, sent_at)
+                       VALUES (?, ?, ?, ?, ?)`,
+            [logId, notificationId, channel, status, new Date().toISOString()]
+          );
+        } catch {
+          // Non-critical: delivery log table may not exist in some schemas
+        }
       } catch (error: any) {
-        await db.run(
-          `INSERT INTO notification_delivery_log (id, notification_id, channel, status, error_message, failed_at)
-                     VALUES (?, ?, ?, 'failed', ?, ?)`,
-          [logId, notificationId, channel, error?.message, new Date().toISOString()]
-        );
+        try {
+          await db.run(
+            `INSERT INTO notification_delivery_log (id, notification_id, channel, status, error_message, failed_at)
+                       VALUES (?, ?, ?, 'failed', ?, ?)`,
+            [logId, notificationId, channel, error?.message, new Date().toISOString()]
+          );
+        } catch {
+          // ignore
+        }
       }
     }
+
+    // Some notification types are expected to always notify Slack (ops/product),
+    // even if the notification_types table doesn't include 'slack' in channels.
+    // This matches usage in feedback routes ("Triggers Slack via NotificationService").
+    if (slackService && !channels.includes('slack') && this.shouldAutoSlack(input.type)) {
+      try {
+        await this.sendSlackNotification(slackService, input, severity);
+      } catch (e) {
+        logger.warn('[NotificationService] Auto-Slack dispatch failed:', e);
+      }
+    }
+  }
+
+  private shouldAutoSlack(type: string): boolean {
+    const t = String(type || '').toUpperCase();
+    return (
+      t === 'CLIENT_TICKET' ||
+      t === 'USER_FEEDBACK' ||
+      t === 'FEATURE_REQUEST' ||
+      t === 'LOW_PULSE_ALERT' ||
+      t === 'SYSTEM_ALERT' ||
+      t.startsWith('ADMIN_') ||
+      (t.includes('AI_') && (t.includes('ALERT') || t.includes('RISK') || t.includes('OVERLOAD')))
+    );
+  }
+
+  private async getSlackWebhookUrlForOrg(organizationId: string): Promise<string | null> {
+    const decodeHtmlEntities = (value: string): string =>
+      value
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#x27;/g, "'")
+        .replace(/&#96;/g, '`')
+        .replace(/&#x2F;/g, '/')
+        .replace(/&#x3D;/g, '=');
+
+    // 1) Org-level integration config (preferred)
+    try {
+      const db = await this.getDb();
+      const row = await db.get<{ config?: string }>(
+        `SELECT config FROM integrations
+         WHERE organization_id = ? AND provider = 'slack' AND status = 'connected'
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [organizationId]
+      );
+      if (row?.config) {
+        try {
+          const cfg = JSON.parse(String(row.config || '{}'));
+          const candidates = [
+            cfg.webhookUrl,
+            cfg.webhook_url,
+            cfg.incomingWebhookUrl,
+            cfg.incoming_webhook_url,
+            cfg?.webhook?.url,
+            cfg?.incoming_webhook?.url,
+          ]
+            .map((x) => (typeof x === 'string' ? decodeHtmlEntities(x).trim() : ''))
+            .filter(Boolean);
+          if (candidates.length > 0) return candidates[0];
+        } catch {
+          // ignore invalid JSON config
+        }
+      }
+    } catch {
+      // ignore (schema may differ between deployments)
+    }
+
+    // 1a) New integrations system schema: integrations(provider_id/settings/status) + integration_providers(name='slack')
+    try {
+      const db = await this.getDb();
+      const row = await db.get<{
+        settings?: string | null;
+        notification_settings?: string | null;
+        provider_id?: string | null;
+        provider_name?: string | null;
+        status?: string | null;
+      }>(
+        `
+        SELECT
+          i.settings,
+          i.notification_settings,
+          i.provider_id,
+          i.status,
+          p.name as provider_name
+        FROM integrations i
+        LEFT JOIN integration_providers p ON p.id = i.provider_id
+        WHERE i.organization_id = ?
+          AND (p.name = 'slack' OR i.provider_id = 'int-slack' OR i.provider_id = 'slack')
+          AND (i.status IS NULL OR i.status IN ('active', 'connected'))
+        ORDER BY COALESCE(i.connected_at, i.updated_at, i.last_sync_at) DESC
+        LIMIT 1
+      `,
+        [organizationId]
+      );
+
+      const parseCandidates = (raw?: string | null): string[] => {
+        if (!raw) return [];
+        try {
+          const cfg = JSON.parse(String(raw || '{}'));
+          return [
+            cfg.webhookUrl,
+            cfg.webhook_url,
+            cfg.incomingWebhookUrl,
+            cfg.incoming_webhook_url,
+            cfg?.webhook?.url,
+            cfg?.incoming_webhook?.url,
+            cfg?.incoming_webhook,
+            cfg?.webhook,
+          ]
+            .map((x) => (typeof x === 'string' ? decodeHtmlEntities(x).trim() : ''))
+            .filter(Boolean);
+        } catch {
+          return [];
+        }
+      };
+
+      const candidates = [
+        ...parseCandidates(row?.settings || null),
+        ...parseCandidates(row?.notification_settings || null),
+      ];
+      if (candidates.length > 0) return candidates[0];
+    } catch {
+      // ignore
+    }
+
+    // 1b) Minimal SQLite schema: integrations(type, config, is_active)
+    try {
+      const db = await this.getDb();
+      const row = await db.get<{ type?: string; config?: string; is_active?: number }>(
+        `SELECT type, config, is_active FROM integrations
+         WHERE organization_id = ? AND is_active = 1
+         ORDER BY created_at DESC
+         LIMIT 5`,
+        [organizationId]
+      );
+      if (row) {
+        const t = String(row.type || '').toLowerCase();
+        if (t.includes('slack') && row.config) {
+          try {
+            const cfg = JSON.parse(String(row.config || '{}'));
+            const candidates = [
+              cfg.webhookUrl,
+              cfg.webhook_url,
+              cfg.incomingWebhookUrl,
+              cfg.incoming_webhook_url,
+              cfg?.webhook?.url,
+              cfg?.incoming_webhook?.url,
+            ]
+              .map((x) => (typeof x === 'string' ? decodeHtmlEntities(x).trim() : ''))
+              .filter(Boolean);
+            if (candidates.length > 0) return candidates[0];
+          } catch {
+            // ignore invalid JSON
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // 2) Global env fallback
+    const envUrl = process.env.SLACK_WEBHOOK_URL;
+    if (envUrl && String(envUrl).trim()) return String(envUrl).trim();
+    return null;
+  }
+
+  private async sendSlackNotification(
+    slackService: SlackServiceClass,
+    input: SendNotificationInput,
+    severity: 'INFO' | 'WARNING' | 'CRITICAL'
+  ): Promise<void> {
+    const t = String(input.type || '').toUpperCase();
+    const userEmail =
+      (typeof input.metadata?.userEmail === 'string' && input.metadata.userEmail) ||
+      (typeof input.data?.userEmail === 'string' && (input.data.userEmail as string)) ||
+      undefined;
+
+    // Feedback-style notifications
+    if (t === 'USER_FEEDBACK' || t === 'FEATURE_REQUEST' || t === 'LOW_PULSE_ALERT') {
+      const rawKind =
+        (typeof input.metadata?.feedbackType === 'string' && input.metadata.feedbackType) ||
+        (typeof input.data?.feedbackType === 'string' && (input.data.feedbackType as string)) ||
+        '';
+      const kind = String(rawKind || input.title || '').toUpperCase();
+      const mappedType =
+        kind.includes('BUG') || kind.includes('ERROR')
+          ? 'BUG'
+          : t === 'FEATURE_REQUEST'
+            ? 'FEATURE'
+            : 'IMPROVEMENT';
+
+      await slackService.sendNewFeedbackAlert({
+        type: mappedType as any,
+        userEmail,
+        message: input.body || input.message || input.title,
+      });
+      return;
+    }
+
+    // Generic system alert fallback
+    await slackService.sendSystemAlert(
+      `${input.type}: ${input.title}`,
+      input.body || input.message || input.title,
+      severity
+    );
   }
 }
 

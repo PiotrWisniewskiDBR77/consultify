@@ -113,7 +113,8 @@ router.put(
       return res.status(400).json({ error: 'Organization ID required' });
     }
 
-    if (!['ADMIN', 'SUPERADMIN', 'SUPER_ADMIN', 'OWNER'].includes(userRole || '')) {
+    const normalizedRole = (userRole || '').toLowerCase();
+    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(normalizedRole)) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -230,7 +231,8 @@ router.put(
       return res.status(400).json({ error: 'Organization ID required' });
     }
 
-    if (!['ADMIN', 'SUPERADMIN', 'SUPER_ADMIN', 'OWNER'].includes(userRole || '')) {
+    const normalizedRole = (userRole || '').toLowerCase();
+    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(normalizedRole)) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -334,7 +336,8 @@ router.put(
       return res.status(400).json({ error: 'Organization ID required' });
     }
 
-    if (!['ADMIN', 'SUPERADMIN', 'SUPER_ADMIN', 'OWNER'].includes(userRole || '')) {
+    const normalizedRole = (userRole || '').toLowerCase();
+    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(normalizedRole)) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 

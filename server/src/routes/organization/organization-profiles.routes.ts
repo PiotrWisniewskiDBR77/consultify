@@ -161,7 +161,8 @@ router.put(
       return res.status(403).json({ error: 'Access denied to this organization' });
     }
 
-    if (!['ADMIN', 'SUPERADMIN', 'SUPER_ADMIN', 'OWNER'].includes(userRole || '')) {
+    const normalizedRole = (userRole || '').toLowerCase();
+    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(normalizedRole)) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 

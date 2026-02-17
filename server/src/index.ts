@@ -6,61 +6,15 @@
  * Handles both TypeScript routes (migrated) and CommonJS routes (legacy)
  */
 
-// CRITICAL: Load environment variables FIRST, before any other imports
-// This ensures DATABASE_URL and other env vars are available when DatabaseConfig loads
-import dotenv from 'dotenv';
+// CRITICAL (ESM): load env via a side-effect module that is imported FIRST.
+import './config/loadEnv.js';
+
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Load .env from *repo root* BEFORE other imports.
-// Note: this file lives in `server/src`, so:
-// - `../../.env` points to `server/.env` (NOT repo root)
-// - `../../../.env` points to `<repo>/.env`
-//
-// In local dev we want `.env` to win even if the shell already has stale values exported.
-// In production (e.g. Railway) we want real environment variables to win.
-//
-// In tests (Vitest), we want the *test runner* to be able to set per-worker env vars
-// like SQLITE_PATH without being overwritten by `.env`.
-const isProductionEnv = process.env.NODE_ENV === 'production';
-const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
-const repoRootEnvPath = path.resolve(__dirname, '../../../.env');
-const serverEnvPath = path.resolve(__dirname, '../../.env');
-
-// Prefer repo-root `.env` (workspace-level config), fallback to `server/.env` for legacy setups.
-const envPathToUse = fs.existsSync(repoRootEnvPath) ? repoRootEnvPath : serverEnvPath;
-
-// By default, do NOT override env vars already set by the shell / npm scripts.
-// This is critical for local dev where scripts explicitly set DB_TYPE/SQLITE_PATH.
-// If you really want `.env` to force-override exported variables, set DOTENV_OVERRIDE=1.
-const shouldOverrideDotenv =
-  !isProductionEnv &&
-  !isTestEnv &&
-  (process.env.DOTENV_OVERRIDE === '1' || process.env.DOTENV_OVERRIDE === 'true');
-
-dotenv.config({
-  path: envPathToUse,
-  override: shouldOverrideDotenv,
-});
-
-// Dev-only visibility: confirm which .env was loaded (helps debug "keys pasted but not used").
-if (!isProductionEnv) {
-  // eslint-disable-next-line no-console
-  console.log('[Env] Loaded from:', envPathToUse);
-  // eslint-disable-next-line no-console
-  console.log('[Env] JWT_SECRET length:', process.env.JWT_SECRET?.length || 0);
-  // eslint-disable-next-line no-console
-  console.log('[Env] OPENAI_API_KEY set:', !!process.env.OPENAI_API_KEY);
-  // eslint-disable-next-line no-console
-  console.log(
-    '[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:',
-    !!process.env.GEMINI_API_KEY || !!process.env.GOOGLE_AI_API_KEY
-  );
-}
 
 // Now import other modules (they can use environment variables)
 import compression from 'compression';
@@ -193,6 +147,26 @@ app.get('/api/ready', (_req: Request, res: Response) => {
     status: 'not_ready',
     database: 'initializing',
     error: dbInitError,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// IMPORTANT: In dev we want the HTTP server to LISTEN immediately (so the frontend proxy never sees ECONNREFUSED),
+// but we must not run DB-dependent routes until initialization completes.
+// We allow only health/readiness endpoints through; everything else returns 503 "starting".
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (dbReady) return next();
+
+  // Only gate API routes; static assets / SPA shell can still be served.
+  if (!req.path.startsWith('/api')) return next();
+
+  // Allow health + readiness probes even before DB is ready.
+  if (req.path.startsWith('/api/health') || req.path === '/api/ready') return next();
+
+  return res.status(503).json({
+    error: 'Server starting',
+    code: 'SERVER_STARTING',
+    database: 'initializing',
     timestamp: new Date().toISOString(),
   });
 });
@@ -987,6 +961,32 @@ if (startServer && shouldStartHttpServer) {
     // Register shutdown handlers
     const gracefulShutdown = async (signal: string) => {
       logger.info(`[Shutdown] Received ${signal}, initiating graceful shutdown...`);
+      try {
+        const mem = process.memoryUsage();
+        logger.info('[Shutdown] Process context:', {
+          pid: process.pid,
+          ppid: process.ppid,
+          platform: process.platform,
+          node: process.version,
+          cwd: process.cwd(),
+          uptimeSeconds: Math.round(process.uptime()),
+          argv: process.argv,
+          env: {
+            NODE_ENV: process.env.NODE_ENV,
+            PORT: process.env.PORT,
+            DB_TYPE: process.env.DB_TYPE,
+            START_HTTP_SERVER: process.env.START_HTTP_SERVER,
+          },
+          memory: {
+            rss: mem.rss,
+            heapTotal: mem.heapTotal,
+            heapUsed: mem.heapUsed,
+            external: mem.external,
+          },
+        });
+      } catch {
+        // ignore
+      }
 
       // Stop accepting new connections
       server.close(async () => {
@@ -1027,7 +1027,12 @@ if (startServer && shouldStartHttpServer) {
           await shutdownManager.shutdown(signal);
 
           logger.info('[Shutdown] Graceful shutdown complete');
-          process.exit(0);
+          // NOTE: `concurrently --restart-tries` only restarts processes that exit non-zero.
+          // In dev "stable" runners we intentionally exit non-zero after SIGTERM/SIGINT so the
+          // supervisor restarts the backend instead of leaving the frontend "Offline".
+          const restartOnShutdown =
+            process.env.DEV_RESTART_ON_SHUTDOWN === 'true' && process.env.NODE_ENV !== 'production';
+          process.exit(restartOnShutdown ? 1 : 0);
         } catch (err: any) {
           logger.error('[Shutdown] Error during cleanup:', err);
           process.exit(1);
@@ -1044,10 +1049,19 @@ if (startServer && shouldStartHttpServer) {
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-    // Wait for DB initialization before accepting requests.
-    await databaseInitPromise;
+    // Extra diagnostics: capture exits and crashes (helps identify "who killed us" vs internal exit paths)
+    process.on('exit', (code) => {
+      logger.info('[Process] exit', { code, pid: process.pid, uptimeSeconds: Math.round(process.uptime()) });
+    });
+    process.on('beforeExit', (code) => {
+      logger.info('[Process] beforeExit', { code, pid: process.pid, uptimeSeconds: Math.round(process.uptime()) });
+    });
+    process.on('uncaughtException', (err) => {
+      logger.error('[Process] uncaughtException', { message: err?.message, stack: err?.stack });
+    });
 
-    // Start listening after all routes are registered and DB is ready
+    // Start listening immediately; DB-dependent routes are gated until dbReady=true.
+    logger.info('[Server] Listening immediately (API gated until DB ready)');
     server.listen(PORT, '0.0.0.0', () => {
       logger.info('✅ Server running on http://0.0.0.0:' + PORT);
       logger.info('✅ WebSocket available at ws://0.0.0.0:' + PORT + '/ws');

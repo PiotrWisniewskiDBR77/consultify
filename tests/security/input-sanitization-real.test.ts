@@ -31,7 +31,8 @@ describe('Real Input Sanitization Middleware (P0)', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect((req.body as any).msg).not.toContain('<script>');
     expect((req.body as any).msg).toContain('&lt;script&gt;');
-    expect((req.query as any).q).toBe('&lt;b&gt;bold&lt;&#x2F;b&gt;');
+    // Escaping of `/` in closing tags is optional across encoders; both variants are safe.
+    expect((req.query as any).q).toMatch(/^&lt;b&gt;bold&lt;(?:\/|&#x2F;)b&gt;$/);
   });
 
   it('truncates overly long string fields before sanitization', async () => {

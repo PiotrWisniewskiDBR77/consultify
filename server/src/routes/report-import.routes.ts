@@ -398,6 +398,134 @@ router.delete('/:id', authenticateToken, async (req: any, res: Response) => {
 });
 
 // ============================================
+// POST /api/report-import/:id/create-assessment
+// Create assessment from imported report
+// ============================================
+
+router.post('/:id/create-assessment', authenticateToken, async (req: any, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { projectId } = req.body;
+    const organizationId = req.user?.organizationId;
+    const userId = req.user?.userId;
+
+    if (!organizationId || !userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required',
+      });
+    }
+
+    const result = await reportImportService.createAssessmentFromImport(
+      id,
+      organizationId,
+      userId,
+      projectId
+    );
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error: any) {
+    logger.error('[ReportImport] Create assessment error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// ============================================
+// POST /api/report-import/:id/create-initiatives
+// Create initiatives from imported report
+// ============================================
+
+router.post('/:id/create-initiatives', authenticateToken, async (req: any, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { projectId } = req.body;
+    const organizationId = req.user?.organizationId;
+    const userId = req.user?.userId;
+
+    if (!organizationId || !userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required',
+      });
+    }
+
+    const result = await reportImportService.createInitiativesFromImport(
+      id,
+      organizationId,
+      userId,
+      projectId
+    );
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error: any) {
+    logger.error('[ReportImport] Create initiatives error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// ============================================
+// GET /api/report-import/:id/download
+// Download the original PDF file
+// ============================================
+
+router.get('/:id/download', authenticateToken, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const organizationId = req.user?.organizationId;
+
+    if (!organizationId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required',
+      });
+    }
+
+    const importRecord = await reportImportService.getImport(id, organizationId);
+
+    if (!importRecord.sourceFilePath) {
+      return res.status(404).json({
+        success: false,
+        error: 'File not found',
+      });
+    }
+
+    const fs = await import('fs');
+    if (!fs.existsSync(importRecord.sourceFilePath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'File not found on disk',
+      });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${importRecord.sourceFileName}"`
+    );
+    const stream = fs.createReadStream(importRecord.sourceFilePath);
+    stream.pipe(res);
+  } catch (error: any) {
+    logger.error('[ReportImport] Download error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// ============================================
 // PUT /api/report-import/:id/scores
 // Update extracted scores (manual corrections)
 // ============================================

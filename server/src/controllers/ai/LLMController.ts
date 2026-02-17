@@ -1127,7 +1127,7 @@ export class LLMController {
                     END as health_status
                 FROM llm_tier_assignments t
                 JOIN llm_providers p ON t.provider_id = p.id
-                WHERE t.is_active = 1
+                WHERE t.is_active = true
                 ORDER BY t.tier, t.priority
             `,
         []
@@ -1181,13 +1181,13 @@ export class LLMController {
       await dbRun(
         `
                 INSERT INTO llm_tier_assignments (id, provider_id, tier, priority, is_active)
-                VALUES (?, ?, ?, ?, 1)
+                VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(provider_id, tier) DO UPDATE SET
                     priority = excluded.priority,
-                    is_active = 1,
+                    is_active = true,
                     updated_at = CURRENT_TIMESTAMP
             `,
-        [id, providerId, tier.toUpperCase(), priority]
+        [id, providerId, tier.toUpperCase(), priority, true]
       );
 
       return res.json({ success: true, message: 'Provider assigned to tier' });

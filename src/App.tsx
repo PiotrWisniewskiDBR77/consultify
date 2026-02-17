@@ -178,9 +178,16 @@ function AppContent() {
         }
       } catch (error) {
         console.error('[Auth] Profile sync failed:', error);
-        // If API fails but we have stored user, keep it
-        if (!restoredUser && isMounted) {
-          setCurrentUser(null);
+        // If token is invalid/expired, treat as logged out (don't keep stale restored user).
+        const statusCode = (error as any)?.status;
+        if (statusCode === 401 || statusCode === 403) {
+          logout();
+          if (isMounted) setCurrentUser(null);
+        } else {
+          // If API fails but we have stored user, keep it
+          if (!restoredUser && isMounted) {
+            setCurrentUser(null);
+          }
         }
       } finally {
         if (isMounted) setAuthInitializing(false); // Done initializing - auth check complete
