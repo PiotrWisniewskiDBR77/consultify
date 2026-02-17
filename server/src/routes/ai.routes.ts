@@ -940,7 +940,7 @@ router.post(
       content: string,
       userId: string,
       orgId: string
-    ) => {
+    ) =>
       dbRun(
         `
           INSERT INTO ai_partial_responses (id, session_id, user_id, organization_id, content, updated_at)
@@ -950,10 +950,7 @@ router.post(
               updated_at = CURRENT_TIMESTAMP
         `,
         [uuidv4(), sessionId, userId, orgId, content]
-      ).catch(() => {
-        // content/session_id columns may not exist; skip silently
-      });
-    };
+      );
 
     try {
       // --------------------------------------------------------
