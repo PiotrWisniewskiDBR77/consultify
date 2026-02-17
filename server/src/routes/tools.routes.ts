@@ -9,7 +9,7 @@ import ToolControllerRaw from '../controllers/ToolController.js';
 const ToolController = ToolControllerRaw as any;
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
   ApproveToolSchema,
@@ -22,7 +22,7 @@ import {
 
 const router = Router();
 
-router.use(authRateLimiter);
+router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(demoContextMiddleware);
 

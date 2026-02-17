@@ -21,7 +21,7 @@ import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import feedbackAIService from '../services/feedbackAIService.js';
 import NotificationService from '../services/notificationService.js';
 // import WhatsAppService from '../services/WhatsAppService.js';

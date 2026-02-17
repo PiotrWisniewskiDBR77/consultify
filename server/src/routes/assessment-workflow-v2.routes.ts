@@ -28,7 +28,7 @@ const AssessmentController = AssessmentControllerRaw as any;
 import { getDatabase } from '../database/index.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import activityService from '../services/ActivityService.js';
 import AssessmentInitiativeGenerationRunService from '../services/assessmentInitiativeGenerationRunService.js';
@@ -57,7 +57,7 @@ import {
 const router = Router();
 
 // Apply middleware
-router.use(authRateLimiter);
+router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(demoContextMiddleware);
 

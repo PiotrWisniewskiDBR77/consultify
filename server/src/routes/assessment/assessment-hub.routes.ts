@@ -8,7 +8,7 @@ import { Request, Response, Router } from 'express';
 import { getDatabase } from '../../database/index.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
-import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -31,7 +31,7 @@ const safeJsonParse = <T = unknown>(value: string | null | undefined, fallback: 
 };
 
 // Middleware (keep consistent with other modules like Interview/Initiatives)
-router.use(authRateLimiter);
+router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(demoContextMiddleware);
 

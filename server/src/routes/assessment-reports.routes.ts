@@ -15,7 +15,7 @@ import { getDatabase } from '../database/index.js';
 import { getDatabaseType } from '../config/DatabaseConfig.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import AssessmentInitiativeGenerationRunService from '../services/assessmentInitiativeGenerationRunService.js';
 import AssessmentPermissionService from '../services/assessmentPermissionService.js';
 import { mapReportBuilderStatusToAssessmentReportStatus } from '../services/assessmentReportBuilderLinkService.js';
@@ -34,7 +34,7 @@ interface AuthRequest extends Request {
 }
 
 // Middleware (match other authenticated modules)
-router.use(authRateLimiter);
+router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(demoContextMiddleware);
 
