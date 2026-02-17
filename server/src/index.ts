@@ -39,6 +39,7 @@ import {
 import { get as dbGet } from './utils/DbPromise.js';
 import logger from './utils/Logger.js';
 import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
+import { rateLimitUserIdMiddleware } from './middleware/rateLimitUserId.middleware.js';
 import { correlationMiddleware } from './utils/RequestStore.js';
 import { getShutdownManager } from './utils/ShutdownManager.js';
 
@@ -509,28 +510,24 @@ const apiLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' },
   keyGenerator: (req) => {
     try {
-      // Intelligent Rate Limiting: Key by User ID if auth, else IP
+      // Key by User ID when authenticated (rateLimitUserIdMiddleware sets req._rateLimitUserId)
       // This solves the "Office IP" problem where all users share one IP
-      // Using ipKeyGenerator for IPv6 compatibility (masks IPv6 to /56 subnet)
+      const userId = (req as any)._rateLimitUserId;
+      if (userId) {
+        return `api:user:${userId}`;
+      }
+
+      // Fall back to IP for unauthenticated requests
       const ip =
         req.ip ||
         req.socket?.remoteAddress ||
         req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
         req.headers['x-real-ip']?.toString() ||
         'unknown';
-
-      // Use ipKeyGenerator helper to properly handle IPv6 addresses
-      // This prevents IPv6 users from bypassing limits by rotating addresses
       const safeIpKey = ip !== 'unknown' ? ipKeyGenerator(ip, 56) : 'unknown';
-
-      // Ensure we return a valid string (express-rate-limit requires this)
       const key = `api:ip:${safeIpKey}`;
-      if (!key || key === 'api:ip:') {
-        return 'api:ip:unknown';
-      }
-      return key;
+      return key && key !== 'api:ip:' ? key : 'api:ip:unknown';
     } catch (error) {
-      // Fallback if keyGenerator throws an error
       logger.warn('[RateLimit] keyGenerator error, using fallback:', error);
       return 'api:ip:unknown';
     }
@@ -644,6 +641,9 @@ app.use('/api/', metricsMiddleware);
 
 // Performance metrics middleware - collect detailed performance data
 app.use('/api/', performanceMetricsMiddleware);
+
+// Optional JWT parse for rate-limit keying by user (avoids shared IP quota in offices)
+app.use('/api/', rateLimitUserIdMiddleware);
 
 // Apply rate limiting and security logging to API routes
 app.use('/api/', apiLimiter);
