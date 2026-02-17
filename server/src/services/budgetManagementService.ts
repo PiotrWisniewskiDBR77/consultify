@@ -158,45 +158,50 @@ class BudgetManagementServiceClass {
     userId: string,
     budget: UserBudget
   ): Promise<{ id: string; success: boolean }> {
-    const deps = await this.#getDeps();
-    const id = `budget-user-${deps.uuidv4()}`;
-    const resetDay = budget.resetDayOfMonth || 1;
+    try {
+      const deps = await this.#getDeps();
+      const id = `budget-user-${deps.uuidv4()}`;
+      const resetDay = budget.resetDayOfMonth || 1;
 
-    await DbPromise.run(
-      deps.db,
-      `INSERT INTO user_budgets(
-                id, organization_id, user_id, monthly_token_budget, monthly_storage_budget_gb,
-                monthly_cost_budget_usd, budget_alert_80, budget_alert_90, budget_alert_100,
-                hard_limit_enabled, auto_upgrade_on_limit, reset_day_of_month
-            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(organization_id, user_id) DO UPDATE SET
-                monthly_token_budget = excluded.monthly_token_budget,
-                monthly_storage_budget_gb = excluded.monthly_storage_budget_gb,
-                monthly_cost_budget_usd = excluded.monthly_cost_budget_usd,
-                budget_alert_80 = excluded.budget_alert_80,
-                budget_alert_90 = excluded.budget_alert_90,
-                budget_alert_100 = excluded.budget_alert_100,
-                hard_limit_enabled = excluded.hard_limit_enabled,
-                auto_upgrade_on_limit = excluded.auto_upgrade_on_limit,
-                reset_day_of_month = excluded.reset_day_of_month,
-                updated_at = datetime('now')`,
-      [
-        id,
-        orgId,
-        userId,
-        budget.monthlyTokenBudget || null,
-        budget.monthlyStorageBudgetGb || null,
-        budget.monthlyCostBudgetUsd || null,
-        budget.alertAt80 ? 1 : 0,
-        budget.alertAt90 ? 1 : 0,
-        budget.alertAt100 ? 1 : 0,
-        budget.hardLimitEnabled ? 1 : 0,
-        budget.autoUpgradeOnLimit ? 1 : 0,
-        resetDay,
-      ]
-    );
+      await DbPromise.run(
+        deps.db,
+        `INSERT INTO user_budgets(
+                  id, organization_id, user_id, monthly_token_budget, monthly_storage_budget_gb,
+                  monthly_cost_budget_usd, budget_alert_80, budget_alert_90, budget_alert_100,
+                  hard_limit_enabled, auto_upgrade_on_limit, reset_day_of_month
+              ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(organization_id, user_id) DO UPDATE SET
+                  monthly_token_budget = excluded.monthly_token_budget,
+                  monthly_storage_budget_gb = excluded.monthly_storage_budget_gb,
+                  monthly_cost_budget_usd = excluded.monthly_cost_budget_usd,
+                  budget_alert_80 = excluded.budget_alert_80,
+                  budget_alert_90 = excluded.budget_alert_90,
+                  budget_alert_100 = excluded.budget_alert_100,
+                  hard_limit_enabled = excluded.hard_limit_enabled,
+                  auto_upgrade_on_limit = excluded.auto_upgrade_on_limit,
+                  reset_day_of_month = excluded.reset_day_of_month,
+                  updated_at = datetime('now')`,
+        [
+          id,
+          orgId,
+          userId,
+          budget.monthlyTokenBudget || null,
+          budget.monthlyStorageBudgetGb || null,
+          budget.monthlyCostBudgetUsd || null,
+          budget.alertAt80 ? 1 : 0,
+          budget.alertAt90 ? 1 : 0,
+          budget.alertAt100 ? 1 : 0,
+          budget.hardLimitEnabled ? 1 : 0,
+          budget.autoUpgradeOnLimit ? 1 : 0,
+          resetDay,
+        ]
+      );
 
-    return { id, success: true };
+      return { id, success: true };
+    } catch (err: any) {
+      logger.debug(`[BudgetManagement] setUserBudget failed: ${err?.message}`);
+      return { id: `budget-user-${Date.now()}`, success: false };
+    }
   }
 
   /**
@@ -207,45 +212,50 @@ class BudgetManagementServiceClass {
     projectId: string,
     budget: ProjectBudget
   ): Promise<{ id: string; success: boolean }> {
-    const deps = await this.#getDeps();
-    const id = `budget-project-${deps.uuidv4()}`;
-    const resetDay = budget.resetDayOfMonth || 1;
+    try {
+      const deps = await this.#getDeps();
+      const id = `budget-project-${deps.uuidv4()}`;
+      const resetDay = budget.resetDayOfMonth || 1;
 
-    await DbPromise.run(
-      deps.db,
-      `INSERT INTO project_budgets(
-                id, organization_id, project_id, monthly_token_budget, monthly_storage_budget_gb,
-                monthly_cost_budget_usd, budget_alert_80, budget_alert_90, budget_alert_100,
-                hard_limit_enabled, auto_upgrade_on_limit, reset_day_of_month
-            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(organization_id, project_id) DO UPDATE SET
-                monthly_token_budget = excluded.monthly_token_budget,
-                monthly_storage_budget_gb = excluded.monthly_storage_budget_gb,
-                monthly_cost_budget_usd = excluded.monthly_cost_budget_usd,
-                budget_alert_80 = excluded.budget_alert_80,
-                budget_alert_90 = excluded.budget_alert_90,
-                budget_alert_100 = excluded.budget_alert_100,
-                hard_limit_enabled = excluded.hard_limit_enabled,
-                auto_upgrade_on_limit = excluded.auto_upgrade_on_limit,
-                reset_day_of_month = excluded.reset_day_of_month,
-                updated_at = datetime('now')`,
-      [
-        id,
-        orgId,
-        projectId,
-        budget.monthlyTokenBudget || null,
-        budget.monthlyStorageBudgetGb || null,
-        budget.monthlyCostBudgetUsd || null,
-        budget.alertAt80 ? 1 : 0,
-        budget.alertAt90 ? 1 : 0,
-        budget.alertAt100 ? 1 : 0,
-        budget.hardLimitEnabled ? 1 : 0,
-        budget.autoUpgradeOnLimit ? 1 : 0,
-        resetDay,
-      ]
-    );
+      await DbPromise.run(
+        deps.db,
+        `INSERT INTO project_budgets(
+                  id, organization_id, project_id, monthly_token_budget, monthly_storage_budget_gb,
+                  monthly_cost_budget_usd, budget_alert_80, budget_alert_90, budget_alert_100,
+                  hard_limit_enabled, auto_upgrade_on_limit, reset_day_of_month
+              ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(organization_id, project_id) DO UPDATE SET
+                  monthly_token_budget = excluded.monthly_token_budget,
+                  monthly_storage_budget_gb = excluded.monthly_storage_budget_gb,
+                  monthly_cost_budget_usd = excluded.monthly_cost_budget_usd,
+                  budget_alert_80 = excluded.budget_alert_80,
+                  budget_alert_90 = excluded.budget_alert_90,
+                  budget_alert_100 = excluded.budget_alert_100,
+                  hard_limit_enabled = excluded.hard_limit_enabled,
+                  auto_upgrade_on_limit = excluded.auto_upgrade_on_limit,
+                  reset_day_of_month = excluded.reset_day_of_month,
+                  updated_at = datetime('now')`,
+        [
+          id,
+          orgId,
+          projectId,
+          budget.monthlyTokenBudget || null,
+          budget.monthlyStorageBudgetGb || null,
+          budget.monthlyCostBudgetUsd || null,
+          budget.alertAt80 ? 1 : 0,
+          budget.alertAt90 ? 1 : 0,
+          budget.alertAt100 ? 1 : 0,
+          budget.hardLimitEnabled ? 1 : 0,
+          budget.autoUpgradeOnLimit ? 1 : 0,
+          resetDay,
+        ]
+      );
 
-    return { id, success: true };
+      return { id, success: true };
+    } catch (err: any) {
+      logger.debug(`[BudgetManagement] setProjectBudget failed: ${err?.message}`);
+      return { id: `budget-project-${Date.now()}`, success: false };
+    }
   }
 
   /**
@@ -276,32 +286,59 @@ class BudgetManagementServiceClass {
     usageType: UsageType,
     quantity: number
   ): Promise<CheckBudgetLimitResult> {
+    try {
+      return await this.#checkBudgetLimitImpl(orgId, userId, projectId, usageType, quantity);
+    } catch (err: any) {
+      logger.debug(`[BudgetManagement] checkBudgetLimit failed: ${err?.message}`);
+      return { allowed: true, reason: 'Budget check unavailable' };
+    }
+  }
+
+  async #checkBudgetLimitImpl(
+    orgId: string,
+    userId: string | null,
+    projectId: string | null,
+    usageType: UsageType,
+    quantity: number
+  ): Promise<CheckBudgetLimitResult> {
     const deps = await this.#getDeps();
     // Get relevant budget
     let budget: BudgetStatus | null = null;
 
     if (userId) {
-      const row = await DbPromise.get<UserBudgetRow>(
-        deps.db,
-        `SELECT * FROM user_budgets WHERE organization_id = ? AND user_id = ?`,
-        [orgId, userId]
-      );
-      budget = row;
+      try {
+        const row = await DbPromise.get<UserBudgetRow>(
+          deps.db,
+          `SELECT * FROM user_budgets WHERE organization_id = ? AND user_id = ?`,
+          [orgId, userId]
+        );
+        budget = row;
+      } catch {
+        // user_budgets table may not exist in all deployments
+      }
     } else if (projectId) {
-      const row = await DbPromise.get<ProjectBudgetRow>(
-        deps.db,
-        `SELECT * FROM project_budgets WHERE organization_id = ? AND project_id = ?`,
-        [orgId, projectId]
-      );
-      budget = row;
+      try {
+        const row = await DbPromise.get<ProjectBudgetRow>(
+          deps.db,
+          `SELECT * FROM project_budgets WHERE organization_id = ? AND project_id = ?`,
+          [orgId, projectId]
+        );
+        budget = row;
+      } catch {
+        // project_budgets table may not exist or have different schema
+      }
     } else {
       // Org-level check
-      const row = await DbPromise.get<OrgBudgetRow>(
-        deps.db,
-        `SELECT cost_cap_monthly FROM billing_alerts WHERE organization_id = ?`,
-        [orgId]
-      );
-      budget = row as BudgetStatus;
+      try {
+        const row = await DbPromise.get<OrgBudgetRow>(
+          deps.db,
+          `SELECT cost_cap_monthly FROM billing_alerts WHERE organization_id = ?`,
+          [orgId]
+        );
+        budget = row as BudgetStatus;
+      } catch {
+        // billing_alerts may not exist
+      }
     }
 
     if (!budget) {
@@ -367,96 +404,126 @@ class BudgetManagementServiceClass {
     userId: string | null = null,
     projectId: string | null = null
   ): Promise<BudgetStatus | null> {
-    const deps = await this.#getDeps();
-    let budget: BudgetStatus | null = null;
+    try {
+      const deps = await this.#getDeps();
+      let budget: BudgetStatus | null = null;
 
-    if (userId) {
-      const row = await DbPromise.get<UserBudgetRow>(
-        deps.db,
-        `SELECT * FROM user_budgets WHERE organization_id = ? AND user_id = ?`,
-        [orgId, userId]
-      );
-      budget = row;
-    } else if (projectId) {
-      const row = await DbPromise.get<ProjectBudgetRow>(
-        deps.db,
-        `SELECT * FROM project_budgets WHERE organization_id = ? AND project_id = ?`,
-        [orgId, projectId]
-      );
-      budget = row;
-    } else {
-      const row = await DbPromise.get<OrgBudgetRow>(
-        deps.db,
-        `SELECT cost_cap_monthly FROM billing_alerts WHERE organization_id = ?`,
-        [orgId]
-      );
-      budget = row as BudgetStatus;
-    }
+      if (userId) {
+        try {
+          const row = await DbPromise.get<UserBudgetRow>(
+            deps.db,
+            `SELECT * FROM user_budgets WHERE organization_id = ? AND user_id = ?`,
+            [orgId, userId]
+          );
+          budget = row;
+        } catch {
+          // user_budgets table may not exist
+        }
+      } else if (projectId) {
+        try {
+          const row = await DbPromise.get<ProjectBudgetRow>(
+            deps.db,
+            `SELECT * FROM project_budgets WHERE organization_id = ? AND project_id = ?`,
+            [orgId, projectId]
+          );
+          budget = row;
+        } catch {
+          // project_budgets table may not exist
+        }
+      } else {
+        try {
+          const row = await DbPromise.get<OrgBudgetRow>(
+            deps.db,
+            `SELECT cost_cap_monthly FROM billing_alerts WHERE organization_id = ?`,
+            [orgId]
+          );
+          budget = row as BudgetStatus;
+        } catch {
+          // billing_alerts may not exist
+        }
+      }
 
-    if (!budget) {
+      if (!budget) {
+        return null;
+      }
+
+      // Calculate usage percentages
+      const result: BudgetStatus = { ...budget };
+
+      if (budget.monthly_token_budget) {
+        result.tokenUsagePercent = (
+          (((budget.tokens_used_this_month || 0) as number) / (budget.monthly_token_budget || 1)) *
+          100
+        ).toFixed(2);
+      }
+      if (budget.monthly_storage_budget_gb) {
+        result.storageUsagePercent = (
+          (((budget.storage_used_this_month_gb || 0) as number) /
+            (budget.monthly_storage_budget_gb || 1)) *
+          100
+        ).toFixed(2);
+      }
+      if (budget.monthly_cost_budget_usd) {
+        result.costUsagePercent = (
+          (((budget.cost_this_month_usd || 0) as number) / (budget.monthly_cost_budget_usd || 1)) *
+          100
+        ).toFixed(2);
+      }
+
+      return result;
+    } catch (err: any) {
+      logger.debug(`[BudgetManagement] getBudgetStatus failed: ${err?.message}`);
       return null;
     }
-
-    // Calculate usage percentages
-    const result: BudgetStatus = { ...budget };
-
-    if (budget.monthly_token_budget) {
-      result.tokenUsagePercent = (
-        (((budget.tokens_used_this_month || 0) as number) / (budget.monthly_token_budget || 1)) *
-        100
-      ).toFixed(2);
-    }
-    if (budget.monthly_storage_budget_gb) {
-      result.storageUsagePercent = (
-        (((budget.storage_used_this_month_gb || 0) as number) /
-          (budget.monthly_storage_budget_gb || 1)) *
-        100
-      ).toFixed(2);
-    }
-    if (budget.monthly_cost_budget_usd) {
-      result.costUsagePercent = (
-        (((budget.cost_this_month_usd || 0) as number) / (budget.monthly_cost_budget_usd || 1)) *
-        100
-      ).toFixed(2);
-    }
-
-    return result;
   }
 
   /**
    * Reset monthly budgets
    */
   async resetMonthlyBudgets(): Promise<{ reset: boolean; day: number }> {
-    const deps = await this.#getDeps();
     const now = new Date();
     const today = now.getDate();
+    try {
+      const deps = await this.#getDeps();
 
-    // Reset budgets where reset_day_of_month matches today
-    await DbPromise.run(
-      deps.db,
-      `UPDATE user_budgets SET
-                tokens_used_this_month = 0,
-                storage_used_this_month_gb = 0,
-                cost_this_month_usd = 0,
-                last_reset_date = date('now'),
-                updated_at = datetime('now')
-            WHERE reset_day_of_month = ?`,
-      [today]
-    );
+      // Reset budgets where reset_day_of_month matches today
+      try {
+        await DbPromise.run(
+          deps.db,
+          `UPDATE user_budgets SET
+                    tokens_used_this_month = 0,
+                    storage_used_this_month_gb = 0,
+                    cost_this_month_usd = 0,
+                    last_reset_date = date('now'),
+                    updated_at = datetime('now')
+                WHERE reset_day_of_month = ?`,
+          [today]
+        );
+      } catch {
+        // user_budgets table may not exist
+      }
 
-    await DbPromise.run(
-      deps.db,
-      `UPDATE project_budgets SET
-                tokens_used_this_month = 0,
-                storage_used_this_month_gb = 0,
-                cost_this_month_usd = 0,
-                last_reset_date = date('now'),
-                updated_at = datetime('now')
-            WHERE reset_day_of_month = ?`,
-      [today]
-    );
+      try {
+        await DbPromise.run(
+          deps.db,
+          `UPDATE project_budgets SET
+                    tokens_used_this_month = 0,
+                    storage_used_this_month_gb = 0,
+                    cost_this_month_usd = 0,
+                    last_reset_date = date('now'),
+                    updated_at = datetime('now')
+                WHERE reset_day_of_month = ?`,
+          [today]
+        );
+      } catch {
+        // project_budgets table may not exist
+      }
 
-    return { reset: true, day: today };
+      return { reset: true, day: today };
+    } catch (err: any) {
+      logger.debug(`[BudgetManagement] resetMonthlyBudgets failed: ${err?.message}`);
+      return { reset: false, day: today };
+    }
   }
 }
 

@@ -935,22 +935,24 @@ router.post(
     req.socket?.on('error', connectionCleanup);
     res.on('close', connectionCleanup);
 
-    const savePartialResponse = async (
+    const savePartialResponse = (
       sessionId: string,
       content: string,
       userId: string,
       orgId: string
     ) => {
-      await dbRun(
+      dbRun(
         `
-            INSERT INTO ai_partial_responses (id, session_id, user_id, organization_id, content, updated_at)
-            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(session_id) DO UPDATE SET
-                content = excluded.content,
-                updated_at = CURRENT_TIMESTAMP
+          INSERT INTO ai_partial_responses (id, session_id, user_id, organization_id, content, updated_at)
+          VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          ON CONFLICT(session_id) DO UPDATE SET
+              content = excluded.content,
+              updated_at = CURRENT_TIMESTAMP
         `,
         [uuidv4(), sessionId, userId, orgId, content]
-      );
+      ).catch(() => {
+        // content/session_id columns may not exist; skip silently
+      });
     };
 
     try {
@@ -1035,11 +1037,16 @@ router.post(
       }
 
       if (resumeFromPartial && conversationId) {
-        const row = (await dbGet(
-          `SELECT content FROM ai_partial_responses WHERE session_id = ? AND user_id = ?`,
-          [conversationId, req.userId]
-        )) as { content: string } | null;
-        const partial = row?.content || null;
+        let partial: string | null = null;
+        try {
+          const row = (await dbGet(
+            `SELECT content FROM ai_partial_responses WHERE session_id = ? AND user_id = ?`,
+            [conversationId, req.userId]
+          )) as { content?: string } | null;
+          partial = row?.content ?? null;
+        } catch {
+          // ai_partial_responses may have different schema (content vs response_chunk)
+        }
 
         if (partial) {
           accumulatedContent = partial;

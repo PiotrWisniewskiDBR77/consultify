@@ -443,18 +443,15 @@ export class ModelRouter {
   }
 
   async getLastUsedProvider(tier: Tier, organizationId?: string): Promise<string | null> {
-    const query = `
-            SELECT last_provider_id 
-            FROM tier_round_robin_state 
-            WHERE tier = ? AND (organization_id = ? OR (organization_id IS NULL AND ? IS NULL))
-        `;
-    const row = await DbPromise.get<{ last_provider_id?: string }>(
-      query,
-      [tier, organizationId, organizationId],
-      {
-        fallback: true,
-      }
-    );
+    // Split queries: Postgres can't infer type of "$3 IS NULL" when $3 is null
+    const query =
+      organizationId == null
+        ? `SELECT last_provider_id FROM tier_round_robin_state WHERE tier = ? AND organization_id IS NULL`
+        : `SELECT last_provider_id FROM tier_round_robin_state WHERE tier = ? AND organization_id = ?`;
+    const params = organizationId == null ? [tier] : [tier, organizationId];
+    const row = await DbPromise.get<{ last_provider_id?: string }>(query, params, {
+      fallback: true,
+    });
     return row?.last_provider_id || null;
   }
 

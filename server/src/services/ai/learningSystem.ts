@@ -101,23 +101,30 @@ class LearningSystemService {
   }
 
   async enhancePrompt(basePrompt: string, orgId: string) {
-    try {
-      const instr = (await dbAll(
-        `SELECT instruction FROM ai_instruction_suggestions WHERE organization_id=? AND status='applied' ORDER BY confidence DESC LIMIT 5`,
-        [orgId]
-      )) as any[];
-      if (!instr?.length) return { enhancedPrompt: basePrompt, appliedPatterns: [] as string[] };
-      const additions = instr.map((i: any) => i.instruction).filter(Boolean);
-      return {
-        enhancedPrompt:
-          basePrompt +
-          '\n\n[Learned Instructions]\n' +
-          additions.map((a: string, i: number) => `${i + 1}. ${a}`).join('\n'),
-        appliedPatterns: additions.map((_: any, i: number) => `instr_${i + 1}`),
-      };
-    } catch {
-      return { enhancedPrompt: basePrompt, appliedPatterns: [] as string[] };
+    let instr: any[] = [];
+    // Try schemas in order: 251 has suggested_instruction (no instruction col), 520 has instruction+org_id
+    const queries = [
+      { sql: `SELECT suggested_instruction as instruction FROM ai_instruction_suggestions WHERE organization_id=? AND status='applied' ORDER BY confidence_score DESC LIMIT 5`, params: [orgId] },
+      { sql: `SELECT suggested_instruction as instruction FROM ai_instruction_suggestions WHERE status='applied' ORDER BY confidence_score DESC LIMIT 5`, params: [] },
+      { sql: `SELECT instruction FROM ai_instruction_suggestions WHERE organization_id=? AND status='applied' ORDER BY confidence DESC LIMIT 5`, params: [orgId] },
+    ];
+    for (const q of queries) {
+      try {
+        instr = (await dbAll(q.sql, q.params)) as any[];
+        if (instr?.length) break;
+      } catch {
+        // Schema may differ, try next
+      }
     }
+    if (!instr?.length) return { enhancedPrompt: basePrompt, appliedPatterns: [] as string[] };
+    const additions = instr.map((i: any) => i.instruction).filter(Boolean);
+    return {
+      enhancedPrompt:
+        basePrompt +
+        '\n\n[Learned Instructions]\n' +
+        additions.map((a: string, i: number) => `${i + 1}. ${a}`).join('\n'),
+      appliedPatterns: additions.map((_: any, i: number) => `instr_${i + 1}`),
+    };
   }
 
   private async analyzePattern(entry: {

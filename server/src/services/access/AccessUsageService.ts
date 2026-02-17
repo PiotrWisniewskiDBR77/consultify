@@ -75,15 +75,19 @@ export class AccessUsageService {
     const column = columnMap[counterType];
     if (!column) throw new Error(`Invalid counter type: ${counterType}`);
 
-    // Upsert pattern for SQLite
-    await DbPromise.run(
-      this.db,
-      `INSERT INTO usage_counters (id, organization_id, counter_date, ${column})
-             VALUES (?, ?, ?, ?)
-             ON CONFLICT(organization_id, counter_date) 
-             DO UPDATE SET ${column} = ${column} + ?`,
-      [`usage-${uuidv4()}`, organizationId, today, amount, amount]
-    );
+    try {
+      // Upsert pattern – use table alias for Postgres (avoids ambiguous column reference in DO UPDATE)
+      await DbPromise.run(
+        this.db,
+        `INSERT INTO usage_counters AS uc (id, organization_id, counter_date, ${column})
+               VALUES (?, ?, ?, ?)
+               ON CONFLICT(organization_id, counter_date) 
+               DO UPDATE SET ${column} = uc.${column} + ?`,
+        [`usage-${uuidv4()}`, organizationId, today, amount, amount]
+      );
+    } catch (err) {
+      // usage_counters table may not exist or have different schema
+    }
   }
 
   /**

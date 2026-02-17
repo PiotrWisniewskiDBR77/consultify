@@ -53,6 +53,7 @@ const BOOLEAN_IS_ACTIVE_TABLES = new Set<string>([
   'llm_providers',
   'llm_tier_assignments',
   'locations',
+  'organization_memory',
   'management_report_templates',
   'mobile_devices',
   'module_help',
@@ -2504,6 +2505,36 @@ export async function initDb(): Promise<void> {
       [],
       'Skipping organization_id time index on usage_records'
     );
+
+    // ai_partial_responses (from 000) may have response_chunk but need content/session_id for streaming
+    if (await columnExists('ai_partial_responses', 'id')) {
+      if (!(await columnExists('ai_partial_responses', 'session_id'))) {
+        await querySafe(
+          `ALTER TABLE ai_partial_responses ADD COLUMN session_id TEXT`,
+          [],
+          'Skipping session_id on ai_partial_responses'
+        );
+        await querySafe(
+          `CREATE UNIQUE INDEX IF NOT EXISTS idx_partial_responses_session ON ai_partial_responses(session_id)`,
+          [],
+          'Skipping session index'
+        );
+      }
+      if (!(await columnExists('ai_partial_responses', 'content'))) {
+        await querySafe(
+          `ALTER TABLE ai_partial_responses ADD COLUMN content TEXT DEFAULT ''`,
+          [],
+          'Skipping content on ai_partial_responses'
+        );
+      }
+      if (!(await columnExists('ai_partial_responses', 'updated_at'))) {
+        await querySafe(
+          `ALTER TABLE ai_partial_responses ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`,
+          [],
+          'Skipping updated_at on ai_partial_responses'
+        );
+      }
+    }
 
     logger.info('[Postgres] Schema Check Complete.');
 

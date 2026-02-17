@@ -363,7 +363,7 @@ export const AIContextBuilder = {
     try {
       const patternRows = (await all(
         `SELECT memory_type, title, content FROM organization_memory
-         WHERE organization_id = ? AND active = 1
+         WHERE organization_id = ? AND is_active = 1
          ORDER BY usage_count DESC LIMIT 5`,
         [organizationId]
       )) as any[];
@@ -1001,9 +1001,9 @@ export const AIContextBuilder = {
         const stats: any = await get(
           `SELECT 
              COUNT(*) as total,
-             SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
-             SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled,
-             AVG(CASE WHEN estimated_duration_weeks > 0 THEN estimated_duration_weeks ELSE NULL END) as avg_duration_weeks
+             SUM(CASE WHEN i.status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
+             SUM(CASE WHEN i.status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled,
+             AVG(CASE WHEN i.estimated_duration_weeks > 0 THEN i.estimated_duration_weeks ELSE NULL END) as avg_duration_weeks
            FROM initiatives i
            JOIN projects p ON i.project_id = p.id
            WHERE p.organization_id = ?`,
@@ -1046,22 +1046,22 @@ export const AIContextBuilder = {
         }
       }
 
-      // Decision outcomes (org-wide learning)
+      // Decision outcomes (org-wide learning) – use outcome_notes (actual_outcome may not exist)
       if (organizationId) {
         const decisionOutcomes = await all(
-          `SELECT problem_framing, chosen_option, confidence_score, actual_outcome
+          `SELECT problem_framing, chosen_option, confidence_score, outcome_notes
            FROM ai_decision_outcomes
-           WHERE organization_id = ? AND actual_outcome IS NOT NULL
+           WHERE organization_id = ? AND outcome_notes IS NOT NULL
            ORDER BY created_at DESC LIMIT 5`,
           [organizationId]
-        );
+        ).catch(() => [] as any[]);
 
-        if (decisionOutcomes.length > 0) {
+        if (decisionOutcomes?.length > 0) {
           result.decisionMemory = decisionOutcomes.map((d: any) => ({
             problem: (d.problem_framing || '').slice(0, 100),
             chosen: (d.chosen_option || '').slice(0, 80),
             confidence: d.confidence_score,
-            outcome: d.actual_outcome,
+            outcome: d.outcome_notes,
           }));
         }
       }

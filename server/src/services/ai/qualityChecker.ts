@@ -165,27 +165,25 @@ class QualityCheckerService {
       }
     }
 
-    // Persist quality metrics to DB (non-blocking — table may not exist in all deployments)
-    try {
-      await dbRun(
-        `INSERT INTO ai_quality_metrics (conversation_id,message_id,user_id,organization_id,relevance,groundedness,completeness,coherence,overall_score,flags,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-        [
-          input.conversationId || null,
-          input.messageId || null,
-          input.userId || null,
-          input.organizationId || null,
-          score.relevance,
-          score.groundedness,
-          score.completeness,
-          score.coherence,
-          score.overall,
-          JSON.stringify(score.flags),
-          new Date().toISOString(),
-        ]
-      );
-    } catch (err: any) {
-      logger.warn(`[QualityChecker] Failed to persist quality metrics: ${err?.message}`);
-    }
+    // Persist quality metrics to DB (non-blocking — schema varies: 520 has conversation_id, 251 has metric_date)
+    dbRun(
+      `INSERT INTO ai_quality_metrics (conversation_id,message_id,user_id,organization_id,relevance,groundedness,completeness,coherence,overall_score,flags,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        input.conversationId || null,
+        input.messageId || null,
+        input.userId || null,
+        input.organizationId || null,
+        score.relevance,
+        score.groundedness,
+        score.completeness,
+        score.coherence,
+        score.overall,
+        JSON.stringify(score.flags),
+        new Date().toISOString(),
+      ]
+    ).catch((err: any) => {
+      logger.debug(`[QualityChecker] Persist metrics skipped (schema may differ): ${err?.message}`);
+    });
 
     logger.debug(
       `[QualityChecker] Score=${score.overall} R=${score.relevance} G=${score.groundedness} A=${score.actionability} M=${score.meceQuality} llm=${score.llmJudged}`
