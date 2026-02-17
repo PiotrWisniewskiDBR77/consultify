@@ -286,6 +286,7 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
   ],
   // Dependencies API uses these columns directly in SELECT/INSERT; missing columns degrade to empty
   // arrays due to DbPromise fallback behaviour, which creates "fake green" behaviour in integration tests.
+  initiatives: ['created_by', 'updated_by'],
   task_dependencies: [
     'from_task_id',
     'to_task_id',

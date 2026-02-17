@@ -491,8 +491,9 @@ export class LLMConfigService {
       const assignmentId = `${p.id}-${tier}`;
       try {
         await this.runAsync(
-          `INSERT OR IGNORE INTO llm_tier_assignments (id, provider_id, tier, priority, is_active)
-           VALUES (?, ?, ?, ?, ?)`,
+          `INSERT INTO llm_tier_assignments (id, provider_id, tier, priority, is_active)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT (provider_id, tier) DO NOTHING`,
           [assignmentId, p.id, tier, TIER_PRIORITY[tier] || 1, 1]
         );
       } catch (err: unknown) {

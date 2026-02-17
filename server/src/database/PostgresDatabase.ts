@@ -14,6 +14,7 @@ import type { IDatabase, QueryResult, RunResult } from './IDatabase.js';
 
 let pool: Pool | null = null;
 let readPool: Pool | null = null;
+let initDbPromise: Promise<void> | null = null;
 const SLOW_QUERY_THRESHOLD_MS = 1000;
 
 /**
@@ -141,20 +142,21 @@ function getPool(): Pool {
       logger.info('[Postgres] Client connected');
     });
 
-    // Initialize schema lazily if needed
+    // Initialize schema lazily if needed - must complete before first query
     if (process.env.NODE_ENV !== 'test') {
-      initDb()
+      initDbPromise = initDb()
         .then(() => {
           logger.info('[Postgres] Schema initialization completed successfully');
         })
         .catch((err: Error | null) => {
           logger.error('[Postgres] Failed to initialize database:', err);
-          // In production, this is critical - log but don't crash immediately
-          // The DatabaseInitializer will catch this and handle it
           if (process.env.NODE_ENV === 'production') {
             logger.error('[Postgres] CRITICAL: Schema initialization failed in production!');
           }
+          throw err;
         });
+    } else {
+      initDbPromise = Promise.resolve();
     }
   }
   return pool;
@@ -189,7 +191,8 @@ async function executeWithLogging<T>(
 ): Promise<{ rows: T[]; rowCount: number | null }> {
   const start = Date.now();
   try {
-    const pool = poolFn();
+    const pool = poolFn(); // Triggers getPool() which may start initDb and set initDbPromise
+    if (initDbPromise) await initDbPromise;
     const res = await pool.query(sql, params);
 
     const duration = Date.now() - start;
@@ -755,8 +758,22 @@ export async function initDb(): Promise<void> {
       try {
         const result = await getPool().query(
           `SELECT 1 FROM information_schema.columns 
-           WHERE table_name = $1 AND column_name = $2`,
+           WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2`,
           [tableName, columnName]
+        );
+        return result.rows.length > 0;
+      } catch {
+        return false;
+      }
+    };
+
+    // Helper to check if a table exists
+    const tableExists = async (tableName: string): Promise<boolean> => {
+      try {
+        const result = await getPool().query(
+          `SELECT 1 FROM information_schema.tables 
+           WHERE table_schema = 'public' AND table_name = $1`,
+          [tableName]
         );
         return result.rows.length > 0;
       } catch {
@@ -783,6 +800,16 @@ export async function initDb(): Promise<void> {
         return false;
       }
     };
+
+    // CRITICAL: Ensure initiatives has created_by/updated_by early (table may exist from migrations)
+    if (await tableExists('initiatives')) {
+      if (!(await columnExists('initiatives', 'created_by'))) {
+        await querySafe('ALTER TABLE initiatives ADD COLUMN created_by TEXT', [], 'initiatives.created_by');
+      }
+      if (!(await columnExists('initiatives', 'updated_by'))) {
+        await querySafe('ALTER TABLE initiatives ADD COLUMN updated_by TEXT', [], 'initiatives.updated_by');
+      }
+    }
 
     // Organizations Table
     await query(`CREATE TABLE IF NOT EXISTS organizations (
@@ -1648,6 +1675,8 @@ export async function initDb(): Promise<void> {
     await ensureColumn('source_type', 'source_type TEXT');
     await ensureColumn('source_id', 'source_id TEXT');
     await ensureColumn('created_from', 'created_from TEXT');
+    await ensureColumn('created_by', 'created_by TEXT');
+    await ensureColumn('updated_by', 'updated_by TEXT');
 
     // Task Dependencies
     await query(`CREATE TABLE IF NOT EXISTS task_dependencies(
@@ -1658,6 +1687,23 @@ export async function initDb(): Promise<void> {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(from_task_id) REFERENCES tasks(id) ON DELETE CASCADE,
             FOREIGN KEY(to_task_id) REFERENCES tasks(id) ON DELETE CASCADE
+        )`);
+
+    // PMO Audit Trail (used by TaskController, taskAssignmentService, projectMemberService, pmoDomainRegistry)
+    await query(`CREATE TABLE IF NOT EXISTS pmo_audit_trail (
+            id TEXT PRIMARY KEY,
+            project_id TEXT,
+            pmo_domain_id TEXT,
+            pmo_phase TEXT,
+            object_type TEXT,
+            object_id TEXT,
+            action TEXT,
+            actor_id TEXT,
+            iso21500_mapping TEXT,
+            pmbok_mapping TEXT,
+            prince2_mapping TEXT,
+            metadata TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
 
     // Subscription Plans

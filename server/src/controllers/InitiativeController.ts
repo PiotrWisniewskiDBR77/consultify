@@ -792,7 +792,9 @@ export class InitiativeController {
       const now = new Date().toISOString();
       updates.push('updated_at = ?');
       params.push(now);
-      if (userId) {
+      // Include updated_by only when column exists (skip on Postgres until migration runs)
+      const isPostgres = (process.env.DB_TYPE || '').toLowerCase() === 'postgres';
+      if (userId && !isPostgres) {
         updates.push('updated_by = ?');
         params.push(userId);
       }
@@ -1304,7 +1306,7 @@ export class InitiativeController {
         lifecycleUpdates.push('archived_at = ?');
         lifecycleParams.push(now);
       }
-      if (actorId) {
+      if (actorId && (process.env.DB_TYPE || '').toLowerCase() !== 'postgres') {
         lifecycleUpdates.push('updated_by = ?');
         lifecycleParams.push(actorId);
       }

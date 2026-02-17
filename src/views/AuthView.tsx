@@ -56,6 +56,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
 }) => {
   const { t } = useTranslation();
   const isDev = import.meta.env.DEV;
+  const quickAccessEnabled =
+    isDev || import.meta.env.VITE_QUICK_ACCESS_ENABLED === 'true';
   const brandLogoDarkSrc = new URL(
     '../../Logo consultinity/Consultinity_logo_dark_medium.svg',
     import.meta.url
@@ -77,8 +79,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
   // Quick access login handler
   const handleQuickAccess = async (code: string) => {
-    // Safety: never allow quick access outside dev builds
-    if (!import.meta.env.DEV) return;
+    // Safety: only allow when quick access is enabled (dev or explicit flag)
+    if (!quickAccessEnabled) return;
     const quickAccessCodes: Record<string, { email: string; password: string }> = {
       '7777': { email: 'piotr.wisniewski@dbr77.com', password: '123456' }, // Admin
       '7776': { email: 'admin@dbr77.com', password: '123456' }, // SuperAdmin
@@ -766,8 +768,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <div
             className="cursor-pointer select-none"
             onClick={() => {
-              // Quick access is DEV-only to avoid exposing backdoor in production
-              if (!isDev) return;
+              // Quick access: DEV or when VITE_QUICK_ACCESS_ENABLED is set (e.g. staging)
+              if (!quickAccessEnabled) return;
               setShowQuickAccess(!showQuickAccess);
             }}
             title="DBR77"

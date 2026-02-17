@@ -251,8 +251,11 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
       }
     }
 
-    fields.push('updated_by = ?', 'updated_at = ?');
-    params.push(userId, now, req.params.id, organizationId);
+    const isPostgres = (process.env.DB_TYPE || '').toLowerCase() === 'postgres';
+    if (!isPostgres) fields.push('updated_by = ?');
+    fields.push('updated_at = ?');
+    if (!isPostgres) params.push(userId);
+    params.push(now, req.params.id, organizationId);
 
     await dbRun(
       `UPDATE initiatives SET ${fields.join(', ')} WHERE id = ? AND organization_id = ?`,
