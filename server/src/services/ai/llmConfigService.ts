@@ -493,7 +493,7 @@ export class LLMConfigService {
         await this.runAsync(
           `INSERT OR IGNORE INTO llm_tier_assignments (id, provider_id, tier, priority, is_active)
            VALUES (?, ?, ?, ?, ?)`,
-          [assignmentId, p.id, tier, TIER_PRIORITY[tier] || 1, true]
+          [assignmentId, p.id, tier, TIER_PRIORITY[tier] || 1, 1]
         );
       } catch (err: unknown) {
         const error = err as Error;

@@ -585,7 +585,7 @@ export class ModelRouter {
             INSERT OR REPLACE INTO llm_tier_assignments (id, provider_id, tier, priority, is_active, updated_at)
             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         `;
-    await DbPromise.run(query, [id, providerId, tier, priority, true], { fallback: false });
+    await DbPromise.run(query, [id, providerId, tier, priority, 1], { fallback: false });
     aiLogger.info(
       'ModelRouter',
       `Assigned provider ${providerId} to tier ${tier} with priority ${priority}`

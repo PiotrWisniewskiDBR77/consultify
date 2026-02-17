@@ -1184,10 +1184,10 @@ export class LLMController {
                 VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(provider_id, tier) DO UPDATE SET
                     priority = excluded.priority,
-                    is_active = true,
+                    is_active = 1,
                     updated_at = CURRENT_TIMESTAMP
             `,
-        [id, providerId, tier.toUpperCase(), priority, true]
+        [id, providerId, tier.toUpperCase(), priority, 1]
       );
 
       return res.json({ success: true, message: 'Provider assigned to tier' });
