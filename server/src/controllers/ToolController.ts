@@ -293,28 +293,29 @@ const ensureToolsSchema = async (): Promise<void> => {
       );
     }
 
-    const roleInsertSql = `INSERT OR IGNORE INTO role_permissions (id, role, permission_key, description) VALUES
-      ('rp_tools_request_review_admin', 'ADMIN', 'TOOLS_REQUEST_REVIEW', 'Request review for tools'),
-      ('rp_tools_request_review_pm', 'PROJECT_MANAGER', 'TOOLS_REQUEST_REVIEW', 'Request review for tools'),
-      ('rp_tools_request_review_super', 'SUPERADMIN', 'TOOLS_REQUEST_REVIEW', 'Request review for tools'),
-      ('rp_tools_approve_admin', 'ADMIN', 'TOOLS_APPROVE', 'Approve tools'),
-      ('rp_tools_approve_super', 'SUPERADMIN', 'TOOLS_APPROVE', 'Approve tools'),
-      ('rp_tools_generate_admin', 'ADMIN', 'TOOLS_GENERATE_INITIATIVES', 'Generate initiatives from tools'),
-      ('rp_tools_generate_pm', 'PROJECT_MANAGER', 'TOOLS_GENERATE_INITIATIVES', 'Generate initiatives from tools'),
-      ('rp_tools_generate_super', 'SUPERADMIN', 'TOOLS_GENERATE_INITIATIVES', 'Generate initiatives from tools')`;
+    // role_permissions may have (id, role, permission_key) only in Postgres; description optional
+    const roleInsertSql = `INSERT OR IGNORE INTO role_permissions (id, role, permission_key) VALUES
+      ('rp_tools_request_review_admin', 'ADMIN', 'TOOLS_REQUEST_REVIEW'),
+      ('rp_tools_request_review_pm', 'PROJECT_MANAGER', 'TOOLS_REQUEST_REVIEW'),
+      ('rp_tools_request_review_super', 'SUPERADMIN', 'TOOLS_REQUEST_REVIEW'),
+      ('rp_tools_approve_admin', 'ADMIN', 'TOOLS_APPROVE'),
+      ('rp_tools_approve_super', 'SUPERADMIN', 'TOOLS_APPROVE'),
+      ('rp_tools_generate_admin', 'ADMIN', 'TOOLS_GENERATE_INITIATIVES'),
+      ('rp_tools_generate_pm', 'PROJECT_MANAGER', 'TOOLS_GENERATE_INITIATIVES'),
+      ('rp_tools_generate_super', 'SUPERADMIN', 'TOOLS_GENERATE_INITIATIVES')`;
     try {
       await queryHelpers.queryRun(roleInsertSql);
     } catch {
       await queryHelpers.queryRun(
-        `INSERT INTO role_permissions (id, role, permission_key, description) VALUES
-          ('rp_tools_request_review_admin', 'ADMIN', 'TOOLS_REQUEST_REVIEW', 'Request review for tools'),
-          ('rp_tools_request_review_pm', 'PROJECT_MANAGER', 'TOOLS_REQUEST_REVIEW', 'Request review for tools'),
-          ('rp_tools_request_review_super', 'SUPERADMIN', 'TOOLS_REQUEST_REVIEW', 'Request review for tools'),
-          ('rp_tools_approve_admin', 'ADMIN', 'TOOLS_APPROVE', 'Approve tools'),
-          ('rp_tools_approve_super', 'SUPERADMIN', 'TOOLS_APPROVE', 'Approve tools'),
-          ('rp_tools_generate_admin', 'ADMIN', 'TOOLS_GENERATE_INITIATIVES', 'Generate initiatives from tools'),
-          ('rp_tools_generate_pm', 'PROJECT_MANAGER', 'TOOLS_GENERATE_INITIATIVES', 'Generate initiatives from tools'),
-          ('rp_tools_generate_super', 'SUPERADMIN', 'TOOLS_GENERATE_INITIATIVES', 'Generate initiatives from tools')
+        `INSERT INTO role_permissions (id, role, permission_key) VALUES
+          ('rp_tools_request_review_admin', 'ADMIN', 'TOOLS_REQUEST_REVIEW'),
+          ('rp_tools_request_review_pm', 'PROJECT_MANAGER', 'TOOLS_REQUEST_REVIEW'),
+          ('rp_tools_request_review_super', 'SUPERADMIN', 'TOOLS_REQUEST_REVIEW'),
+          ('rp_tools_approve_admin', 'ADMIN', 'TOOLS_APPROVE'),
+          ('rp_tools_approve_super', 'SUPERADMIN', 'TOOLS_APPROVE'),
+          ('rp_tools_generate_admin', 'ADMIN', 'TOOLS_GENERATE_INITIATIVES'),
+          ('rp_tools_generate_pm', 'PROJECT_MANAGER', 'TOOLS_GENERATE_INITIATIVES'),
+          ('rp_tools_generate_super', 'SUPERADMIN', 'TOOLS_GENERATE_INITIATIVES')
         ON CONFLICT (id) DO NOTHING`
       );
     }

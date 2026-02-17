@@ -550,35 +550,35 @@ const ensureAssessmentSchema = async (): Promise<void> => {
       }
     }
 
-    // Role permissions
-    const roleInsertSql = `INSERT OR IGNORE INTO role_permissions (id, role, permission_key, description) VALUES
-      ('rp_assessment_request_review_admin', 'ADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-      ('rp_assessment_request_review_pm', 'PROJECT_MANAGER', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-      ('rp_assessment_request_review_super', 'SUPERADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-      ('rp_assessment_approve_report_admin', 'ADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
-      ('rp_assessment_approve_report_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
-      ('rp_assessment_approve_admin', 'ADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
-      ('rp_assessment_approve_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
-      ('rp_assessment_generate_admin', 'ADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
-      ('rp_assessment_generate_pm', 'PROJECT_MANAGER', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
-      ('rp_assessment_generate_super', 'SUPERADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments')`;
+    // role_permissions may have (id, role, permission_key) only in Postgres; description optional
+    const roleInsertSql = `INSERT OR IGNORE INTO role_permissions (id, role, permission_key) VALUES
+      ('rp_assessment_request_review_admin', 'ADMIN', 'ASSESSMENT_REQUEST_REVIEW'),
+      ('rp_assessment_request_review_pm', 'PROJECT_MANAGER', 'ASSESSMENT_REQUEST_REVIEW'),
+      ('rp_assessment_request_review_super', 'SUPERADMIN', 'ASSESSMENT_REQUEST_REVIEW'),
+      ('rp_assessment_approve_report_admin', 'ADMIN', 'ASSESSMENT_APPROVE_REPORT'),
+      ('rp_assessment_approve_report_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE_REPORT'),
+      ('rp_assessment_approve_admin', 'ADMIN', 'ASSESSMENT_APPROVE'),
+      ('rp_assessment_approve_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE'),
+      ('rp_assessment_generate_admin', 'ADMIN', 'ASSESSMENT_GENERATE_INITIATIVES'),
+      ('rp_assessment_generate_pm', 'PROJECT_MANAGER', 'ASSESSMENT_GENERATE_INITIATIVES'),
+      ('rp_assessment_generate_super', 'SUPERADMIN', 'ASSESSMENT_GENERATE_INITIATIVES')`;
     try {
       await queryHelpers.queryRun(roleInsertSql);
     } catch {
-      // Try with ON CONFLICT
+      // Try with ON CONFLICT (Postgres)
       try {
         await queryHelpers.queryRun(
-          `INSERT INTO role_permissions (id, role, permission_key, description) VALUES
-            ('rp_assessment_request_review_admin', 'ADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-            ('rp_assessment_request_review_pm', 'PROJECT_MANAGER', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-            ('rp_assessment_request_review_super', 'SUPERADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-            ('rp_assessment_approve_report_admin', 'ADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
-            ('rp_assessment_approve_report_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
-            ('rp_assessment_approve_admin', 'ADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
-            ('rp_assessment_approve_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
-            ('rp_assessment_generate_admin', 'ADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
-            ('rp_assessment_generate_pm', 'PROJECT_MANAGER', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
-            ('rp_assessment_generate_super', 'SUPERADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments')
+          `INSERT INTO role_permissions (id, role, permission_key) VALUES
+            ('rp_assessment_request_review_admin', 'ADMIN', 'ASSESSMENT_REQUEST_REVIEW'),
+            ('rp_assessment_request_review_pm', 'PROJECT_MANAGER', 'ASSESSMENT_REQUEST_REVIEW'),
+            ('rp_assessment_request_review_super', 'SUPERADMIN', 'ASSESSMENT_REQUEST_REVIEW'),
+            ('rp_assessment_approve_report_admin', 'ADMIN', 'ASSESSMENT_APPROVE_REPORT'),
+            ('rp_assessment_approve_report_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE_REPORT'),
+            ('rp_assessment_approve_admin', 'ADMIN', 'ASSESSMENT_APPROVE'),
+            ('rp_assessment_approve_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE'),
+            ('rp_assessment_generate_admin', 'ADMIN', 'ASSESSMENT_GENERATE_INITIATIVES'),
+            ('rp_assessment_generate_pm', 'PROJECT_MANAGER', 'ASSESSMENT_GENERATE_INITIATIVES'),
+            ('rp_assessment_generate_super', 'SUPERADMIN', 'ASSESSMENT_GENERATE_INITIATIVES')
           ON CONFLICT (id) DO NOTHING`
         );
       } catch {

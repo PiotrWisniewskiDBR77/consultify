@@ -385,23 +385,13 @@ function adaptQuery(sql: string): string {
       // Find the position of VALUES in the INSERT statement
       const valuesMatch = adapted.match(/\bVALUES\s*\(/i);
       if (valuesMatch && valuesMatch.index !== undefined) {
-        // Find the matching closing parenthesis for VALUES clause
-        let parenCount = 0;
-        let valuesEndPos = valuesMatch.index + valuesMatch[0].length;
-        let foundEnd = false;
-        
-        for (let i = valuesEndPos; i < adapted.length; i++) {
-          if (adapted[i] === '(') parenCount++;
-          if (adapted[i] === ')') {
-            parenCount--;
-            if (parenCount === 0) {
-              valuesEndPos = i + 1;
-              foundEnd = true;
-              break;
-            }
-          }
-        }
-        
+        // Multi-row INSERT: VALUES (row1),(row2),(row3) - there is no single enclosing ().
+        // Use the LAST ) after VALUES as the end of the VALUES clause.
+        const afterValues = adapted.substring(valuesMatch.index);
+        const lastParen = afterValues.lastIndexOf(')');
+        const foundEnd = lastParen >= 0;
+        const valuesEndPos = foundEnd ? valuesMatch.index + lastParen + 1 : valuesMatch.index + valuesMatch[0].length;
+
         if (foundEnd) {
           // CRITICAL: Verify VALUES comes before any existing ON CONFLICT
           // Insert ON CONFLICT after the VALUES clause
@@ -918,14 +908,27 @@ export async function initDb(): Promise<void> {
                 FOREIGN KEY(project_id) REFERENCES projects(id)
             )`);
 
-    // Knowledge Docs
+    // Knowledge Docs (project_id needed for project list counts; organization_id for org-scoped index)
     await query(`CREATE TABLE IF NOT EXISTS knowledge_docs(
                 id TEXT PRIMARY KEY,
                 filename TEXT,
                 filepath TEXT,
                 status TEXT DEFAULT 'pending',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                organization_id TEXT,
+                project_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
             )`);
+
+    // Ensure knowledge_docs has project_id/organization_id on existing DBs (Railway etc.)
+    const ensureKnowledgeDocColumn = async (col: string, ddl: string) => {
+      if (!(await columnExists('knowledge_docs', col))) {
+        await query(`ALTER TABLE knowledge_docs ADD COLUMN ${ddl}`);
+      }
+    };
+    await ensureKnowledgeDocColumn('organization_id', 'organization_id TEXT');
+    await ensureKnowledgeDocColumn('project_id', 'project_id TEXT');
 
     // Knowledge Chunks
     await query(`CREATE TABLE IF NOT EXISTS knowledge_chunks(
@@ -1625,6 +1628,11 @@ export async function initDb(): Promise<void> {
     await ensureColumn('resource_tools', "resource_tools TEXT DEFAULT '[]'");
     await ensureColumn('tags', "tags TEXT DEFAULT '[]'");
     await ensureColumn('target_state', "target_state TEXT DEFAULT '{}'");
+    await ensureColumn('source_assessment_id', 'source_assessment_id TEXT');
+    await ensureColumn('source_report_id', 'source_report_id TEXT');
+    await ensureColumn('source_type', 'source_type TEXT');
+    await ensureColumn('source_id', 'source_id TEXT');
+    await ensureColumn('created_from', 'created_from TEXT');
 
     // Task Dependencies
     await query(`CREATE TABLE IF NOT EXISTS task_dependencies(
