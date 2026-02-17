@@ -33,6 +33,14 @@ const CRITICAL_TABLES = [
   'organizations',
   'users',
   'login_history',
+  // Security admin UI relies on these being present (do not rely on DbPromise fallbacks in runtime).
+  'security_settings',
+  'user_sessions',
+  'user_2fa',
+  'api_logs',
+  'api_keys',
+  'error_logs',
+  'system_health_history',
   'sessions',
   'projects',
   'tasks',
@@ -140,6 +148,11 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
   users: ['organization_id', 'role', 'status', 'email'],
   organizations: ['plan', 'status', 'name'],
   tasks: ['project_id', 'organization_id', 'status', 'priority'],
+  // Security admin endpoints query by org + order by created time.
+  // Missing columns here causes noisy SQLITE_ERROR logs and can silently downgrade
+  // functionality via DbPromise fallback behaviour.
+  login_history: ['organization_id'],
+  user_sessions: ['created_at'],
   // Initiative detail views (N-mode) rely on these columns for autosave + persistence.
   // We auto-repair missing columns in SQLite dev DBs so the app behaves "online-first".
   initiatives: [

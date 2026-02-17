@@ -679,20 +679,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       return (
         <div className="flex items-center justify-center h-full px-6">
           <div className="max-w-xl w-full p-5 rounded-2xl border border-red-500/20 bg-red-900/10">
-            <div className="text-sm font-semibold text-red-300">Failed to load initiatives</div>
+            <div className="text-sm font-semibold text-red-300">
+              {t('initiatives.hub.failedToLoad')}
+            </div>
             <div className="text-sm text-red-200/80 mt-1">{loadError}</div>
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => fetchData(true)}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-red-500/20 text-red-200 hover:bg-red-500/30 transition-colors"
               >
-                Retry
+                {t('initiatives.hub.retry')}
               </button>
               <button
                 onClick={() => setLoadError(null)}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
               >
-                Dismiss
+                {t('initiatives.hub.dismiss')}
               </button>
             </div>
           </div>

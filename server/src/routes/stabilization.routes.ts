@@ -39,7 +39,7 @@ router.get(
     const history = await dbAll(`
     SELECT date, avg_response_ms, error_rate, uptime_pct FROM system_health_history ORDER BY date DESC LIMIT 30
   `);
-    res.json(history || []);
+    res.json(history);
   })
 );
 

@@ -46,6 +46,12 @@
           "description": "Continue your transformation journey. Your workspace awaits.",
           "meta": "EXISTING USER",
           "cta": "Log In"
+        },
+        "audits": {
+          "title": "Global Audits",
+          "description": "DRD, SIRI, ADMA & Lean 4.0 assessment frameworks.",
+          "meta": "INDUSTRIAL EXCELLENCE",
+          "cta": "Explore Audits"
         }
       }
     },
@@ -71,6 +77,201 @@
       "approval": {
         "title": "Human Governance",
         "desc": "Every strategic decision requires human approval. Full accountability and control remain with your leadership."
+      }
+    },
+    "carousel": {
+      "labels": {
+        "notifications": "Notifications",
+        "tasks": "Tasks",
+        "initiatives": "Initiatives",
+        "decisions": "Decisions"
+      },
+      "priority": {
+        "high": "High",
+        "medium": "Medium"
+      },
+      "status": {
+        "onTrack": "On Track",
+        "atRisk": "At Risk"
+      },
+      "phase": {
+        "execution": "Execution",
+        "planning": "Planning",
+        "assessment": "Assessment"
+      },
+      "roi": "ROI",
+      "votes": "votes",
+      "deadline": {
+        "completed": "Completed"
+      },
+      "decisionType": {
+        "financial": "Financial",
+        "strategic": "Strategic",
+        "stageGate": "Stage-Gate"
+      },
+      "slides": {
+        "notifications": {
+          "badge": "{{count}} New",
+          "items": {
+            "0": {
+              "title": "Initiative Deadline",
+              "desc": "Industry 4.0 Roadmap due in 2 days",
+              "time": "2h ago"
+            },
+            "1": {
+              "title": "Task Completed",
+              "desc": "Assessment phase finished by team",
+              "time": "4h ago"
+            },
+            "2": {
+              "title": "New Comment",
+              "desc": "Dr. Kowalski commented on ROI analysis",
+              "time": "6h ago"
+            }
+          }
+        },
+        "tasks": {
+          "title": "My Tasks",
+          "badge": "{{count}} Active",
+          "items": {
+            "0": { "title": "Complete DRD Assessment" },
+            "1": { "title": "Review ROI Projections" },
+            "2": { "title": "Prepare Stage-Gate Report" }
+          }
+        },
+        "initiatives": {
+          "badge": "{{count}} Active",
+          "items": {
+            "0": { "name": "Industry 4.0 Roadmap" },
+            "1": { "name": "Digital Twin Implementation" },
+            "2": { "name": "Supply Chain Optimization" }
+          }
+        },
+        "decisions": {
+          "badge": "{{count}} Pending",
+          "items": {
+            "0": { "title": "Approve Q2 Budget Allocation", "deadline": "2 days" },
+            "1": { "title": "Select Technology Partner", "deadline": "5 days" },
+            "2": { "title": "Phase 2 Go/No-Go" }
+          }
+        }
+      }
+    },
+    "regional": {
+      "title": "Schedule a",
+      "demo": "Demo",
+      "titleEnd": "in Your Region",
+      "subtitle": "Choose your timezone for the best experience"
+    },
+    "regions": {
+      "japan": "Japan",
+      "saudi": "Saudi Arabia",
+      "europe": "Europe",
+      "usa": "United States"
+    },
+    "demo": {
+      "schedule": "Schedule a Demo",
+      "scheduleShort": "Schedule",
+      "getA": "Get a",
+      "bookA": "Book a",
+      "subtext": "Free 30-min call • See Consultinity in action"
+    },
+    "knowledge": {
+      "badge": "Knowledge Base",
+      "title": "Discover Our Expertise",
+      "subtitle": "Proven methodologies and best practices trusted by industry leaders across Europe.",
+      "readMore": "Read Full Article",
+      "exploreAll": "Access Full Knowledge Base",
+      "ctaSubtext": "Start a free trial to unlock all articles, videos, and resources."
+    },
+    "compliance": {
+      "label": "Enterprise-Grade Security & Compliance",
+      "badges": {
+        "iso27001": "ISO 27001",
+        "soc2": "SOC2 Type II",
+        "gdpr": "GDPR",
+        "encryption": "AES-256"
+      },
+      "dataResidency": "Data Residency Options:",
+      "regions": {
+        "eu": "Europe",
+        "us": "North America",
+        "gcc": "Middle East",
+        "jp": "Japan"
+      },
+      "dataNote": "Your data stays in your chosen region • No AI training on your data • Full regulatory compliance"
+    },
+    "trust": {
+      "carouselTagline": "AI analyzes. You command.",
+      "badge": "Enterprise Integrity",
+      "heading": "Intelligence Guided by Human Approval.",
+      "description": "AI is a partner, not an authority. Consultinity implements a strict governance layer where every strategic move requires high-level human validation.",
+      "points": [
+        "Full accountability for every roadmap item",
+        "Multi-tenant data isolation & military-grade security",
+        "SOC2 compliant infrastructure logic"
+      ],
+      "cta": "View Security Overview"
+    },
+    "faq": {
+      "badge": "FAQ",
+      "heading": "Questions? Answers.",
+      "more": "Have more questions?",
+      "contact": "Contact us",
+      "items": [
+        {
+          "q": "What is Consultinity?",
+          "a": "Consultinity is an AI-powered strategic consulting platform that helps industrial organizations navigate digital transformation. It combines artificial intelligence with human governance to deliver actionable roadmaps, not just reports."
+        },
+        {
+          "q": "How is this different from traditional consulting?",
+          "a": "Traditional consulting delivers PowerPoint decks. Consultinity delivers a living system. Our AI continuously analyzes your context, generates initiatives, and tracks execution. You get real-time strategic guidance, not a one-time report that sits on a shelf."
+        },
+        {
+          "q": "Is my data secure?",
+          "a": "Absolutely. We are GDPR compliant with EU data residency. All data is encrypted at rest (AES-256) and in transit (TLS 1.3). We never train AI models on your proprietary data. Enterprise customers can use their own API keys (BYOK)."
+        },
+        {
+          "q": "Do I need technical expertise to use it?",
+          "a": "No. Consultinity is designed for business leaders, not IT specialists. The interface is intuitive, and our AI guides you through every step. We also offer onboarding support and training for your team."
+        },
+        {
+          "q": "Can I try before I buy?",
+          "a": "Yes! We offer a 14-day free trial with full access to all features. No credit card required. You can also request a personalized demo with our team to see the platform in action with your specific use case."
+        },
+        {
+          "q": "What industries do you serve?",
+          "a": "We specialize in manufacturing and industrial sectors, including automotive, aerospace, electronics, food & beverage, and heavy industry. Our assessment frameworks are tailored to Industry 4.0 transformation challenges."
+        }
+      ]
+    },
+    "footer": {
+      "tagline": "Empowering organizations to navigate digital transformation with AI-driven strategy and human-led governance.",
+      "product": {
+        "title": "Product",
+        "demo": "Demo",
+        "trial": "Trial",
+        "pricing": "Pricing",
+        "login": "Log in"
+      },
+      "resources": {
+        "title": "Resources",
+        "masterclass": "Masterclass",
+        "blog": "Blog",
+        "podcast": "Factory on Air"
+      },
+      "company": {
+        "title": "Company",
+        "about": "About",
+        "contact": "Contact"
+      },
+      "legal": {
+        "title": "Legal",
+        "terms": "Terms",
+        "privacy": "Privacy",
+        "cookies": "Cookies",
+        "security": "Security",
+        "allDocuments": "All Documents"
       }
     }
   },
@@ -119,7 +320,14 @@
     "select": "Select",
     "connected": "connected",
     "comingSoon": "In development",
-    "root": "Root"
+    "root": "Root",
+    "videoUnsupported": "Your browser does not support the video tag.",
+    "switchToLightMode": "Switch to light mode",
+    "switchToDarkMode": "Switch to dark mode",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "themeLabel": "Theme",
+    "languageLabel": "Language"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -165,7 +373,18 @@
     "inbox": "Inbox",
     "focus": "Focus",
     "calendar": "Calendar",
-    "tasks": "Tasks"
+    "tasks": "Tasks",
+    "notifications": {
+      "emptyTitle": "No notifications",
+      "emptySubtitle": "You're all caught up!"
+    },
+    "decisions": {
+      "addDecision": "Add decision",
+      "emptyColumn": "No decisions",
+      "emptyTitle": "No decisions yet",
+      "emptySubtitle": "Create your first decision to get started",
+      "createCta": "Create Decision"
+    }
   },
   "step1": {
     "title": "Step 1"

@@ -41,7 +41,14 @@
     "select": "Wybierz",
     "connected": "połączone",
     "comingSoon": "Już wkrótce",
-    "root": "Główny"
+    "root": "Główny",
+    "videoUnsupported": "Twoja przeglądarka nie obsługuje tagu wideo.",
+    "switchToLightMode": "Przełącz na tryb jasny",
+    "switchToDarkMode": "Przełącz na tryb ciemny",
+    "openMenu": "Otwórz menu",
+    "closeMenu": "Zamknij menu",
+    "themeLabel": "Motyw",
+    "languageLabel": "Język"
   },
   "sidebar": {
     "dashboard": "Panel",
@@ -51,8 +58,8 @@
     "organization": "Organizacja",
     "adminPanel": "Panel Administratora",
     "logOut": "Wyloguj się",
-    "chat": "AI Chat",
-    "aiChat": "Chat",
+    "chat": "Czat AI",
+    "aiChat": "Czat",
     "myWork": "Moja Praca",
     "interview": "Wywiad",
     "tools": "Narzędzia",
@@ -87,7 +94,18 @@
     "inbox": "Skrzynka",
     "focus": "Fokus",
     "calendar": "Kalendarz",
-    "tasks": "Zadania"
+    "tasks": "Zadania",
+    "notifications": {
+      "emptyTitle": "Brak powiadomień",
+      "emptySubtitle": "Jesteś na bieżąco!"
+    },
+    "decisions": {
+      "addDecision": "Dodaj decyzję",
+      "emptyColumn": "Brak decyzji",
+      "emptyTitle": "Brak decyzji",
+      "emptySubtitle": "Utwórz pierwszą decyzję, aby zacząć",
+      "createCta": "Utwórz decyzję"
+    }
   },
   "step1": {
     "title": "Krok 1"
@@ -415,7 +433,7 @@
       "keyRisks": "Kluczowe ryzyka",
       "progress": "Postęp",
       "timeline": "Harmonogram",
-      "start": "Start",
+      "start": "Początek",
       "plannedEnd": "Planowany koniec",
       "actualEnd": "Rzeczywisty koniec",
       "owners": "Właściciele",
@@ -437,7 +455,7 @@
       "raidLog": "Log RAID",
       "export": "Eksport",
       "report": "Raport",
-      "aiChat": "AI Chat"
+      "aiChat": "Czat AI"
     },
     "raidLog": {
       "title": "Log RAID",
@@ -999,81 +1017,282 @@
   },
   "landing": {
     "hero": {
-      "title": "Think bigger.Do smarter",
-      "subtitleLine1": "Your",
-      "subtitleLine1End": "for Enterprise Strategy.",
+      "title": "Myśl szerzej.Działaj mądrzej",
+      "subtitleLine1": "Twój",
+      "subtitleLine1End": "dla strategii przedsiębiorstwa.",
       "slogans": {
-        "1": "Months of consulting. Minutes of AI. Better results.",
-        "2": "Transform decisions. Accelerate outcomes.",
-        "3": "Enterprise intelligence. Instant clarity.",
-        "4": "AI-powered strategy. Real-time insights.",
-        "5": "Consulting reimagined. Results delivered."
+        "1": "Miesiące konsultingu. Minuty AI. Lepsze wyniki.",
+        "2": "Zmieniaj decyzje. Przyspieszaj rezultaty.",
+        "3": "Inteligencja dla firm. Natychmiastowa jasność.",
+        "4": "Strategia wspierana przez AI. Wglądy w czasie rzeczywistym.",
+        "5": "Konsulting na nowo. Dostarczone wyniki."
       },
       "tagline": {
-        "line1": "AI consulting.",
-        "line2": "No slides.",
-        "line3": "Just decisions."
+        "line1": "Konsulting AI.",
+        "line2": "Bez slajdów.",
+        "line3": "Tylko decyzje."
       },
       "cards": {
         "demo": {
-          "title": "Interactive Demo",
-          "description": "Explore Consultinity with AI-guided walkthrough. No signup required.",
-          "meta": "GUIDED EXPERIENCE",
-          "cta": "Start Demo"
+          "title": "Interaktywne demo",
+          "description": "Poznaj Consultinity w przewodniku prowadzonym przez AI. Bez rejestracji.",
+          "meta": "PROWADZONE DOŚWIADCZENIE",
+          "cta": "Uruchom demo"
         },
         "trial": {
-          "title": "Free Trial",
-          "description": "14-day full access to all features. Start your transformation today.",
-          "meta": "14 DAYS FREE",
-          "cta": "Start Free Trial"
+          "title": "Darmowy okres próbny",
+          "description": "14 dni pełnego dostępu do wszystkich funkcji. Zacznij transformację już dziś.",
+          "meta": "14 DNI GRATIS",
+          "cta": "Rozpocznij okres próbny"
         },
         "video": {
-          "title": "Watch How It Works",
-          "description": "See Consultinity in action with real enterprise transformation examples.",
-          "meta": "3 MIN VIDEO",
-          "cta": "Play Video"
+          "title": "Zobacz, jak to działa",
+          "description": "Zobacz Consultinity w akcji na przykładach realnych transformacji w firmach.",
+          "meta": "WIDEO 3 MIN",
+          "cta": "Odtwórz wideo"
         },
         "expert": {
-          "title": "Talk to Expert",
-          "description": "Schedule a personalized consultation with our strategy specialists.",
-          "meta": "HUMAN TOUCH",
-          "cta": "Book Consultation"
+          "title": "Porozmawiaj z ekspertem",
+          "description": "Umów spersonalizowaną konsultację ze specjalistami ds. strategii.",
+          "meta": "LUDZKI KONTAKT",
+          "cta": "Umów konsultację"
         },
         "login": {
-          "title": "Welcome Back",
-          "description": "Continue your transformation journey. Your workspace awaits.",
-          "meta": "EXISTING USER",
-          "cta": "Log In"
+          "title": "Witamy ponownie",
+          "description": "Kontynuuj swoją drogę transformacji. Twoja przestrzeń robocza czeka.",
+          "meta": "MASZ JUŻ KONTO",
+          "cta": "Zaloguj się"
+        },
+        "audits": {
+          "title": "Globalne audyty",
+          "description": "Frameworki oceny DRD, SIRI, ADMA i Lean 4.0.",
+          "meta": "DOSKONAŁOŚĆ PRZEMYSŁOWA",
+          "cta": "Zobacz audyty"
         }
       }
     },
     "topBar": {
       "demo": "Demo",
-      "trial": "Trial",
-      "login": "Log in",
-      "signUp": "Sign up"
+      "trial": "Okres próbny",
+      "login": "Zaloguj się",
+      "signUp": "Zarejestruj się"
     },
     "methodology": {
-      "badge": "Our Methodology",
-      "heading": "AI-Driven Strategic Transformation"
+      "badge": "Nasza metodologia",
+      "heading": "Transformacja strategiczna wspierana przez AI"
     },
     "steps": {
       "diagnostic": {
-        "title": "Diagnostic Assessment",
-        "desc": "AI analyzes your organization's digital maturity, identifies gaps, and benchmarks against industry standards."
+        "title": "Ocena diagnostyczna",
+        "desc": "AI analizuje dojrzałość cyfrową organizacji, identyfikuje luki i porównuje z benchmarkami branżowymi."
       },
       "roadmap": {
-        "title": "Strategic Roadmap",
-        "desc": "Generate actionable transformation roadmap with prioritized initiatives, timelines, and resource requirements."
+        "title": "Strategiczna mapa drogowa",
+        "desc": "Generuj wykonalną mapę transformacji z priorytetami inicjatyw, harmonogramem i wymaganiami zasobowymi."
       },
       "approval": {
-        "title": "Human Governance",
-        "desc": "Every strategic decision requires human approval. Full accountability and control remain with your leadership."
+        "title": "Ład i nadzór człowieka",
+        "desc": "Każda decyzja strategiczna wymaga zatwierdzenia przez człowieka. Odpowiedzialność i kontrola pozostają po stronie liderów."
+      }
+    },
+    "carousel": {
+      "labels": {
+        "notifications": "Powiadomienia",
+        "tasks": "Zadania",
+        "initiatives": "Inicjatywy",
+        "decisions": "Decyzje"
+      },
+      "priority": {
+        "high": "Wysoki",
+        "medium": "Średni"
+      },
+      "status": {
+        "onTrack": "Na ścieżce",
+        "atRisk": "Zagrożone"
+      },
+      "phase": {
+        "execution": "Realizacja",
+        "planning": "Planowanie",
+        "assessment": "Ocena"
+      },
+      "roi": "ROI",
+      "votes": "głosy",
+      "deadline": {
+        "completed": "Ukończone"
+      },
+      "decisionType": {
+        "financial": "Finansowe",
+        "strategic": "Strategiczne",
+        "stageGate": "Stage-Gate"
+      },
+      "slides": {
+        "notifications": {
+          "badge": "{{count}} nowe",
+          "items": {
+            "0": {
+              "title": "Termin inicjatywy",
+              "desc": "Roadmapa Industry 4.0 za 2 dni",
+              "time": "2 godz. temu"
+            },
+            "1": {
+              "title": "Zadanie ukończone",
+              "desc": "Zespół zakończył etap oceny",
+              "time": "4 godz. temu"
+            },
+            "2": {
+              "title": "Nowy komentarz",
+              "desc": "Dr Kowalski skomentował analizę ROI",
+              "time": "6 godz. temu"
+            }
+          }
+        },
+        "tasks": {
+          "title": "Moje zadania",
+          "badge": "{{count}} aktywnych",
+          "items": {
+            "0": { "title": "Ukończ ocenę DRD" },
+            "1": { "title": "Przejrzyj prognozy ROI" },
+            "2": { "title": "Przygotuj raport Stage-Gate" }
+          }
+        },
+        "initiatives": {
+          "badge": "{{count}} aktywne",
+          "items": {
+            "0": { "name": "Roadmapa Industry 4.0" },
+            "1": { "name": "Wdrożenie cyfrowego bliźniaka" },
+            "2": { "name": "Optymalizacja łańcucha dostaw" }
+          }
+        },
+        "decisions": {
+          "badge": "{{count}} oczekujące",
+          "items": {
+            "0": { "title": "Zatwierdź alokację budżetu na Q2", "deadline": "2 dni" },
+            "1": { "title": "Wybierz partnera technologicznego", "deadline": "5 dni" },
+            "2": { "title": "Bramka Go/No-Go – faza 2" }
+          }
+        }
+      }
+    },
+    "regional": {
+      "title": "Umów",
+      "demo": "demo",
+      "titleEnd": "w Twoim regionie",
+      "subtitle": "Wybierz strefę czasową, aby dopasować termin"
+    },
+    "regions": {
+      "japan": "Japonia",
+      "saudi": "Arabia Saudyjska",
+      "europe": "Europa",
+      "usa": "Stany Zjednoczone"
+    },
+    "demo": {
+      "schedule": "Umów demo",
+      "scheduleShort": "Umów",
+      "getA": "Umów",
+      "bookA": "Umów",
+      "subtext": "Bezpłatna 30-min rozmowa • Zobacz Consultinity w akcji"
+    },
+    "knowledge": {
+      "badge": "Baza wiedzy",
+      "title": "Poznaj naszą wiedzę",
+      "subtitle": "Sprawdzone metodyki i najlepsze praktyki zaufane przez liderów przemysłu w Europie.",
+      "readMore": "Czytaj cały artykuł",
+      "exploreAll": "Uzyskaj dostęp do pełnej bazy wiedzy",
+      "ctaSubtext": "Rozpocznij darmowy okres próbny, aby odblokować wszystkie artykuły, wideo i materiały."
+    },
+    "compliance": {
+      "label": "Bezpieczeństwo i zgodność klasy enterprise",
+      "badges": {
+        "iso27001": "ISO 27001",
+        "soc2": "SOC2 Type II",
+        "gdpr": "GDPR",
+        "encryption": "AES-256"
+      },
+      "dataResidency": "Opcje rezydencji danych:",
+      "regions": {
+        "eu": "Europa",
+        "us": "Ameryka Północna",
+        "gcc": "Bliski Wschód",
+        "jp": "Japonia"
+      },
+      "dataNote": "Twoje dane zostają w wybranym regionie • Brak trenowania AI na Twoich danych • Pełna zgodność regulacyjna"
+    },
+    "trust": {
+      "carouselTagline": "AI analizuje. Ty dowodzisz.",
+      "badge": "Zaufanie enterprise",
+      "heading": "Inteligencja prowadzona przez zatwierdzenie człowieka.",
+      "description": "AI jest partnerem, nie autorytetem. Consultinity wdraża rygorystyczną warstwę ładu, w której każdy strategiczny ruch wymaga zatwierdzenia przez człowieka na właściwym poziomie.",
+      "points": [
+        "Pełna odpowiedzialność za każdy element roadmapy",
+        "Izolacja danych w modelu multi-tenant i bezpieczeństwo klasy wojskowej",
+        "Infrastruktura zgodna z SOC2"
+      ],
+      "cta": "Zobacz przegląd bezpieczeństwa"
+    },
+    "faq": {
+      "badge": "FAQ",
+      "heading": "Pytania? Odpowiedzi.",
+      "more": "Masz więcej pytań?",
+      "contact": "Skontaktuj się z nami",
+      "items": [
+        {
+          "q": "Czym jest Consultinity?",
+          "a": "Consultinity to platforma strategicznego konsultingu wspierana przez AI, która pomaga organizacjom przemysłowym przejść przez transformację cyfrową. Łączy sztuczną inteligencję z ładem prowadzonym przez ludzi, aby dostarczać wykonalne mapy drogowe — nie tylko raporty."
+        },
+        {
+          "q": "Czym to się różni od tradycyjnego konsultingu?",
+          "a": "Tradycyjny consulting kończy się slajdami. Consultinity dostarcza żywy system. Nasze AI stale analizuje kontekst, generuje inicjatywy i śledzi realizację. Dostajesz strategiczne wskazówki w czasie rzeczywistym, a nie jednorazowy raport, który ląduje na półce."
+        },
+        {
+          "q": "Czy moje dane są bezpieczne?",
+          "a": "Tak. Jesteśmy zgodni z GDPR i oferujemy rezydencję danych w UE. Dane są szyfrowane w spoczynku (AES-256) i w tranzycie (TLS 1.3). Nigdy nie trenujemy modeli AI na Twoich danych. Klienci enterprise mogą korzystać z własnych kluczy API (BYOK)."
+        },
+        {
+          "q": "Czy potrzebuję wiedzy technicznej, aby z tego korzystać?",
+          "a": "Nie. Consultinity jest zaprojektowane dla liderów biznesu, nie tylko dla specjalistów IT. Interfejs jest intuicyjny, a AI prowadzi przez każdy krok. Oferujemy też onboarding i szkolenia dla zespołu."
+        },
+        {
+          "q": "Czy mogę przetestować przed zakupem?",
+          "a": "Tak. Oferujemy 14-dniowy darmowy okres próbny z pełnym dostępem do wszystkich funkcji. Bez karty płatniczej. Możesz też poprosić o spersonalizowane demo, aby zobaczyć platformę na własnym przykładzie."
+        },
+        {
+          "q": "Dla jakich branż pracujecie?",
+          "a": "Specjalizujemy się w przemyśle i produkcji — m.in. automotive, aerospace, elektronice, spożywce oraz przemyśle ciężkim. Nasze frameworki oceny są dopasowane do wyzwań transformacji Industry 4.0."
+        }
+      ]
+    },
+    "footer": {
+      "tagline": "Wspieramy organizacje w transformacji cyfrowej dzięki strategii wspieranej przez AI i ładowi prowadzonemu przez ludzi.",
+      "product": {
+        "title": "Produkt",
+        "demo": "Demo",
+        "trial": "Okres próbny",
+        "pricing": "Cennik",
+        "login": "Zaloguj się"
+      },
+      "resources": {
+        "title": "Zasoby",
+        "masterclass": "Masterclass",
+        "blog": "Blog",
+        "podcast": "Factory on Air"
+      },
+      "company": {
+        "title": "Firma",
+        "about": "O nas",
+        "contact": "Kontakt"
+      },
+      "legal": {
+        "title": "Dokumenty",
+        "terms": "Regulamin",
+        "privacy": "Prywatność",
+        "cookies": "Cookies",
+        "security": "Bezpieczeństwo",
+        "allDocuments": "Wszystkie dokumenty"
       }
     }
   },
   "partner": {
-    "becomePartner": "Become Partner"
+    "becomePartner": "Zostań partnerem"
   },
   "thinking": {
     "processing": "Myślę...",
@@ -1306,7 +1525,7 @@
     "allConversations": "Wszystkie",
     "openFolder": "Otwórz folder",
     "capabilities": {
-      "deepThinking": "Deep Thinking",
+      "deepThinking": "Głębokie myślenie",
       "deepThinkingDesc": "Wieloetapowa analiza z wyszukiwaniem w sieci",
       "deepThinkingPrompt": "Przeanalizuj największe ryzyko dla naszej obecnej strategii i zaproponuj 3 sposoby mitygacji",
       "scenarios": "Modelowanie scenariuszy",
@@ -1324,7 +1543,7 @@
     }
   },
   "agentAudit": {
-    "title": "Agent Audit Layer",
+    "title": "Warstwa audytu agentów",
     "suggestedReviewers": "Sugerowani recenzenci",
     "willAuditAfterDT": "Zaudytują raport Deep Thinking",
     "selected": "wybrano",
@@ -1366,7 +1585,7 @@
     },
     "intents": {
       "validate": "Walidacja",
-      "stress_test": "Stress-test",
+      "stress_test": "Test warunków skrajnych",
       "approve": "Zatwierdzenie"
     },
     "intentDescriptions": {
@@ -1380,12 +1599,12 @@
       "adversarial": "Kontrarianin"
     },
     "riskAreaLabels": {
-      "cashflow": "Cashflow",
+      "cashflow": "Przepływy pieniężne",
       "capex": "CAPEX",
       "safety": "Bezpieczeństwo",
       "uptime": "Dostępność",
       "quality": "Jakość",
-      "compliance": "Compliance",
+      "compliance": "Zgodność",
       "cybersecurity": "Cyberbezpieczeństwo",
       "vendor_risk": "Ryzyko dostawców",
       "delivery_otif": "OTIF/Dostawa",

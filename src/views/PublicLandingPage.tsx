@@ -24,6 +24,10 @@ import { KnowledgePreviewSection } from '../components/Landing/KnowledgePreviewS
 
 export const PublicLandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const brandLogoSrc = new URL(
+    '../../Logo consultinity/Consultinity_logo_dark_medium.svg',
+    import.meta.url
+  ).href;
 
   const handleDemoClick = () => {
     navigate('/demo');
@@ -46,13 +50,10 @@ export const PublicLandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3 group cursor-default select-none">
             <img
-              src="/assets/logos/logo-light.png"
+              src={brandLogoSrc}
               alt="Consultinity"
-              className="h-8 w-auto drop-shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+              className="h-7 md:h-8 w-auto drop-shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
             />
-            <span className="text-xl font-bold tracking-[0.2em] text-white/90 group-hover:text-white transition-colors duration-500">
-              CONSULTINITY
-            </span>
           </div>
           {/* Navigation Links */}
           <nav className="hidden md:flex items-center gap-6">

@@ -23,7 +23,7 @@ router.get(
     FROM mcp_providers WHERE organization_id = ? ORDER BY name`,
       [orgId]
     );
-    res.json(providers || []);
+    res.json(providers);
   })
 );
 
@@ -43,7 +43,7 @@ router.get(
     res.json({
       user: { id: userId },
       organization: { id: orgId },
-      activeProjects: activeProject || [],
+      activeProjects: activeProject,
       timestamp: new Date().toISOString(),
     });
   })

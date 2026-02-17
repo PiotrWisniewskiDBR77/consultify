@@ -97,10 +97,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     },
     {
       id: 'audits',
-      title: 'Global Audits',
-      description: 'DRD, SIRI, ADMA & Lean 4.0 assessment frameworks.',
-      meta: 'INDUSTRIAL EXCELLENCE',
-      cta: 'Explore Audits',
+      title: t('landing.hero.cards.audits.title', 'Global Audits'),
+      description: t(
+        'landing.hero.cards.audits.description',
+        'DRD, SIRI, ADMA & Lean 4.0 assessment frameworks.'
+      ),
+      meta: t('landing.hero.cards.audits.meta', 'INDUSTRIAL EXCELLENCE'),
+      cta: t('landing.hero.cards.audits.cta', 'Explore Audits'),
       image: '/assets/landing/cinematic/industrial_audits.png',
       color: 'navy',
       onClick: () => navigate('/audits'),
@@ -325,7 +328,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             >
               <video className="w-full h-full object-cover" controls autoPlay>
                 <source src="/videos/en.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
+                {t('common.videoUnsupported', 'Your browser does not support the video tag.')}
               </video>
             </motion.div>
           </motion.div>

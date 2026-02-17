@@ -48,7 +48,20 @@ router.get(
       passwordExpiryDays: row.password_expiry_days,
       sessionTimeoutMinutes: row.session_timeout_minutes,
       maxSessionsPerUser: row.max_sessions_per_user,
-      ipWhitelist: row.ip_whitelist ? JSON.parse(row.ip_whitelist) : [],
+      ipWhitelist: (() => {
+        const v = row.ip_whitelist;
+        if (!v) return [];
+        if (Array.isArray(v)) return v;
+        if (typeof v === 'string') {
+          try {
+            const parsed = JSON.parse(v);
+            return Array.isArray(parsed) ? parsed : [];
+          } catch {
+            return [];
+          }
+        }
+        return [];
+      })(),
       updatedAt: row.updated_at,
     });
   })
@@ -108,16 +121,15 @@ router.get(
   asyncHandler(async (req: AuthRequest, res) => {
     const orgId = req.user!.organizationId;
     const userId = req.user!.id;
-    const rows =
-      (await dbAll(
-        `SELECT s.*, u.email as user_email, u.first_name, u.last_name
-                 FROM user_sessions s
-                 JOIN users u ON u.id = s.user_id
-                 WHERE u.organization_id = ? AND s.user_id = ?
-                 ORDER BY s.created_at DESC
-                 LIMIT 50`,
-        [orgId, userId]
-      )) || [];
+    const rows = await dbAll(
+      `SELECT s.*, u.email as user_email, u.first_name, u.last_name
+               FROM user_sessions s
+               JOIN users u ON u.id = s.user_id
+               WHERE u.organization_id = ? AND s.user_id = ?
+               ORDER BY s.created_at DESC
+               LIMIT 50`,
+      [orgId, userId]
+    );
 
     const sessions = rows.map((r: any) => ({
       id: r.id,
@@ -143,16 +155,15 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
     const orgId = req.user!.organizationId;
-    const rows =
-      (await dbAll(
-        `SELECT s.*, u.email as user_email, u.first_name, u.last_name
-                 FROM user_sessions s
-                 JOIN users u ON u.id = s.user_id
-                 WHERE u.organization_id = ?
-                 ORDER BY s.created_at DESC
-                 LIMIT 200`,
-        [orgId]
-      )) || [];
+    const rows = await dbAll(
+      `SELECT s.*, u.email as user_email, u.first_name, u.last_name
+               FROM user_sessions s
+               JOIN users u ON u.id = s.user_id
+               WHERE u.organization_id = ?
+               ORDER BY s.created_at DESC
+               LIMIT 200`,
+      [orgId]
+    );
 
     const sessions = rows.map((r: any) => ({
       id: r.id,
@@ -203,16 +214,15 @@ router.get(
   asyncHandler(async (req: AuthRequest, res) => {
     const orgId = req.user!.organizationId;
     const limit = parseInt((req.query.limit as string) || '100', 10);
-    const rows =
-      (await dbAll(
-        `SELECT lh.*, u.email as user_email, u.first_name, u.last_name
-                 FROM login_history lh
-                 JOIN users u ON u.id = lh.user_id
-                 WHERE lh.organization_id = ?
-                 ORDER BY lh.created_at DESC
-                 LIMIT ?`,
-        [orgId, limit]
-      )) || [];
+    const rows = await dbAll(
+      `SELECT lh.*, u.email as user_email, u.first_name, u.last_name
+               FROM login_history lh
+               JOIN users u ON u.id = lh.user_id
+               WHERE lh.organization_id = ?
+               ORDER BY lh.created_at DESC
+               LIMIT ?`,
+      [orgId, limit]
+    );
 
     const history = rows.map((r: any) => ({
       id: r.id,
@@ -240,14 +250,13 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
     const orgId = req.user!.organizationId;
-    const rows =
-      (await dbAll(
-        `SELECT u.id, u.first_name, u.last_name, u.email, u.role, COALESCE(f.is_enabled, 0) as has2fa, f.enabled_at
-                 FROM users u
-                 LEFT JOIN user_2fa f ON f.user_id = u.id
-                 WHERE u.organization_id = ?`,
-        [orgId]
-      )) || [];
+    const rows = await dbAll(
+      `SELECT u.id, u.first_name, u.last_name, u.email, u.role, COALESCE(f.is_enabled, 0) as has2fa, f.enabled_at
+               FROM users u
+               LEFT JOIN user_2fa f ON f.user_id = u.id
+               WHERE u.organization_id = ?`,
+      [orgId]
+    );
 
     const enabled = rows.filter((r: any) => r.has2fa).length;
     const total = rows.length;
@@ -280,17 +289,16 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res) => {
     try {
       const { all: dbAll } = await import('../utils/DbPromise.js');
-      const rows =
-        (await dbAll(
-          `
-                SELECT al.*, u.email as user_email
-                FROM activity_logs al
-                LEFT JOIN users u ON u.id = al.user_id
-                ORDER BY al.created_at DESC
-                LIMIT 200
-            `,
-          []
-        )) || [];
+      const rows = await dbAll(
+        `
+              SELECT al.*, u.email as user_email
+              FROM activity_logs al
+              LEFT JOIN users u ON u.id = al.user_id
+              ORDER BY al.created_at DESC
+              LIMIT 200
+          `,
+        []
+      );
 
       const logs = rows.map((r: any) => ({
         id: r.id,
@@ -321,17 +329,16 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res) => {
     try {
       const { all: dbAll } = await import('../utils/DbPromise.js');
-      const rows =
-        (await dbAll(
-          `
-                SELECT api_key_id, COUNT(*) as total_calls, SUM(tokens_used) as tokens, SUM(cost) as cost
-                FROM api_logs
-                GROUP BY api_key_id
-                ORDER BY total_calls DESC
-                LIMIT 50
-            `,
-          []
-        )) || [];
+      const rows = await dbAll(
+        `
+              SELECT api_key_id, COUNT(*) as total_calls, SUM(tokens_used) as tokens, SUM(cost) as cost
+              FROM api_logs
+              GROUP BY api_key_id
+              ORDER BY total_calls DESC
+              LIMIT 50
+          `,
+        []
+      );
       return res.json({ usage: rows });
     } catch (err) {
       console.error('[Security] api-keys/usage fallback', err);

@@ -71,7 +71,7 @@ router.get(
     );
 
     res.json({
-      data: logs || [],
+      data: logs,
       pagination: {
         page: parseInt(page as string),
         limit: parseInt(limit as string),
@@ -96,7 +96,7 @@ router.get(
   `,
       [orgId]
     );
-    res.json(actions || []);
+    res.json(actions);
   })
 );
 
@@ -128,7 +128,7 @@ router.get(
 
     if (format === 'csv') {
       const header = 'id,action_type,resource_type,resource_id,user_id,ip_address,created_at\n';
-      const rows = (logs || [])
+      const rows = logs
         .map(
           (l: any) =>
             `${l.id},${l.action_type},${l.resource_type},${l.resource_id},${l.user_id},${l.ip_address},${l.created_at}`
@@ -139,7 +139,7 @@ router.get(
       return res.send(header + rows);
     }
 
-    res.json(logs || []);
+    res.json(logs);
   })
 );
 

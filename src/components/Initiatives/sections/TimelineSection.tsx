@@ -2076,7 +2076,9 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
               </thead>
               <tbody>
                 <tr className="border-t border-slate-200/40 dark:border-navy-700/40">
-                  <td className="px-5 py-2.5 text-slate-600 dark:text-slate-400">Start</td>
+                  <td className="px-5 py-2.5 text-slate-600 dark:text-slate-400">
+                    {isPolish ? 'Początek' : 'Start'}
+                  </td>
                   <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300">
                     {formatDate(plannedStart, isPolish ? 'pl' : 'en')}
                   </td>
@@ -2103,7 +2105,9 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                   </td>
                 </tr>
                 <tr className="border-t border-slate-200/40 dark:border-navy-700/40">
-                  <td className="px-5 py-2.5 text-slate-600 dark:text-slate-400">End</td>
+                  <td className="px-5 py-2.5 text-slate-600 dark:text-slate-400">
+                    {isPolish ? 'Koniec' : 'End'}
+                  </td>
                   <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300">
                     {formatDate(plannedEnd, isPolish ? 'pl' : 'en')}
                   </td>

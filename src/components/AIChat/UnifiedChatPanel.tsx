@@ -23,7 +23,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { isValidLanguage, type SupportedLanguage } from '@/i18n';
+import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 
 import { useAIStream } from '../../hooks/useAIStream';
 import { useDemoSession } from '../../hooks/useDemoSession';
@@ -190,7 +190,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     // the default chat language is 'pl'.
     const candidate = explicitPref || activeLang || draftChatLanguage || 'pl';
     const base = String(candidate).split('-')[0];
-    return (isValidLanguage(base) ? base : 'pl') as SupportedLanguage;
+    return (normalizeLanguageCode(base) ||
+      (isValidLanguage(base) ? (base as SupportedLanguage) : 'pl')) as SupportedLanguage;
   }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage]);
 
   // Voice Hook (uses autoReadEnabled state)

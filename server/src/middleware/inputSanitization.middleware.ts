@@ -18,17 +18,32 @@ import logger from '../utils/Logger.js';
 
 const MAX_BODY_DEPTH = 10;
 const MAX_STRING_LENGTH = 50000; // 50KB per string field
-const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
+const isVitest = !!process.env.VITEST;
 
 type SecurityUtilsModule = typeof import('../utils/security.utils.ts');
 let securityUtilsPromise: Promise<Pick<SecurityUtilsModule, 'sanitizeObject'>> | null = null;
 
 async function loadSecurityUtils(): Promise<Pick<SecurityUtilsModule, 'sanitizeObject'>> {
-  // NodeNext ESM convention uses `.js` extension in production builds.
-  // In tests we load TS source directly to avoid tooling-specific export loss.
   if (!securityUtilsPromise) {
-    const spec = isTest ? '../utils/security.utils.ts' : '../utils/security.utils.js';
-    securityUtilsPromise = import(spec) as Promise<Pick<SecurityUtilsModule, 'sanitizeObject'>>;
+    // IMPORTANT:
+    // - In Vitest we want TS source (stable + direct coverage).
+    // - In built runtime (dist/) we must import JS (there is no *.ts in dist/).
+    const isBuiltRuntime =
+      import.meta.url.includes('/dist/') ||
+      import.meta.url.includes('\\dist\\') ||
+      import.meta.url.includes('/server/dist/');
+
+    const spec = isBuiltRuntime ? '../utils/security.utils.js' : '../utils/security.utils.ts';
+
+    // If the preferred spec fails (edge tooling), fall back to the other one.
+    securityUtilsPromise = import(spec)
+      .catch(async () => {
+        const fallback = spec.endsWith('.js')
+          ? '../utils/security.utils.ts'
+          : '../utils/security.utils.js';
+        return import(fallback);
+      })
+      .then((m) => m as Pick<SecurityUtilsModule, 'sanitizeObject'>);
   }
   return securityUtilsPromise;
 }
@@ -119,7 +134,7 @@ export const inputSanitizationMiddleware = async (
     // Sanitize request body
     if (req.body && typeof req.body === 'object') {
       // Log suspicious content before sanitization (for security monitoring)
-      if (!isTest) {
+      if (!isVitest) {
         checkForSuspiciousContent(req.body, req.path, req.method);
       }
 
@@ -149,7 +164,7 @@ export const inputSanitizationMiddleware = async (
     logger.error('[Security] Input sanitization error:', error);
     // In production: don't block the request on sanitization errors — log and continue.
     // In tests: fail fast so CI/pre-commit can catch broken sanitization.
-    if (isTest) {
+    if (isVitest) {
       throw error;
     }
     next();

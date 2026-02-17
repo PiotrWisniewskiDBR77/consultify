@@ -28,7 +28,7 @@ router.get(
   `,
       [orgId]
     );
-    res.json(statuses || []);
+    res.json(statuses);
   })
 );
 

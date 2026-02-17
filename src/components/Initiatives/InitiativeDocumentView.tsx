@@ -7069,9 +7069,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
                       <th className="text-left py-2 pr-2">{isPolish ? 'KPI' : 'KPI'}</th>
                       <th className="text-left py-2 pr-2">{isPolish ? 'Jednostka' : 'Unit'}</th>
-                      <th className="text-left py-2 pr-2">Baseline</th>
+                      <th className="text-left py-2 pr-2">{isPolish ? 'Baza' : 'Baseline'}</th>
                       <th className="text-left py-2 pr-2">{isPolish ? 'Obecnie' : 'Current'}</th>
-                      <th className="text-left py-2 pr-2">Target</th>
+                      <th className="text-left py-2 pr-2">{isPolish ? 'Cel' : 'Target'}</th>
                       <th className="text-right py-2">{isPolish ? 'Tracking' : 'Tracking'}</th>
                       <th className="text-right py-2 w-10" />
                     </tr>

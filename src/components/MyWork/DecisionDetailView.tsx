@@ -5547,10 +5547,18 @@ Context: ${JSON.stringify(projectContext)}`;
                                       }
                                       className="mt-1 w-full px-2 py-1.5 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600"
                                     >
-                                      <option value="responsible">Responsible</option>
-                                      <option value="accountable">Accountable</option>
-                                      <option value="consulted">Consulted</option>
-                                      <option value="informed">Informed</option>
+                                      <option value="responsible">
+                                        {isPolish ? 'Odpowiedzialny' : 'Responsible'}
+                                      </option>
+                                      <option value="accountable">
+                                        {isPolish ? 'Rozliczalny' : 'Accountable'}
+                                      </option>
+                                      <option value="consulted">
+                                        {isPolish ? 'Konsultowany' : 'Consulted'}
+                                      </option>
+                                      <option value="informed">
+                                        {isPolish ? 'Informowany' : 'Informed'}
+                                      </option>
                                     </select>
                                   </label>
                                 </div>
@@ -6649,10 +6657,18 @@ Context: ${JSON.stringify(projectContext)}`;
                                         }
                                         className="w-full px-2 py-1 rounded-md text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 disabled:opacity-60"
                                       >
-                                        <option value="responsible">Responsible</option>
-                                        <option value="accountable">Accountable</option>
-                                        <option value="consulted">Consulted</option>
-                                        <option value="informed">Informed</option>
+                                        <option value="responsible">
+                                          {isPolish ? 'Odpowiedzialny' : 'Responsible'}
+                                        </option>
+                                        <option value="accountable">
+                                          {isPolish ? 'Rozliczalny' : 'Accountable'}
+                                        </option>
+                                        <option value="consulted">
+                                          {isPolish ? 'Konsultowany' : 'Consulted'}
+                                        </option>
+                                        <option value="informed">
+                                          {isPolish ? 'Informowany' : 'Informed'}
+                                        </option>
                                       </select>
                                     </td>
                                     <td className="py-2 pr-2 text-slate-700 dark:text-slate-300">

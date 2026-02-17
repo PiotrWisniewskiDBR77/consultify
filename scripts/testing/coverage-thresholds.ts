@@ -134,6 +134,12 @@ function getProfileThresholds(profile: string): Thresholds {
         functions: 95,
         lines: 95,
       },
+      'server/src/routes/security.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
       'server/src/routes/security/roles.routes.ts': {
         statements: 95,
         branches: 80,
@@ -152,6 +158,66 @@ function getProfileThresholds(profile: string): Thresholds {
         functions: 95,
         lines: 95,
       },
+      'server/src/routes/verify.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/routes/mcp.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/routes/audit.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/routes/auditLog.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/routes/systemHealth.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/routes/db-metrics.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/routes/status.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/routes/status-reports.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/routes/stabilization.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/routes/apiKeys.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
       'server/src/routes/healthRoutes.ts': {
         statements: 95,
         branches: 80,
@@ -159,6 +225,12 @@ function getProfileThresholds(profile: string): Thresholds {
         lines: 95,
       },
       'server/src/routes/health.routes.ts': {
+        statements: 95,
+        branches: 80,
+        functions: 95,
+        lines: 95,
+      },
+      'server/src/controllers/HealthCheckController.ts': {
         statements: 95,
         branches: 80,
         functions: 95,

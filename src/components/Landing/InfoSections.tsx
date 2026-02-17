@@ -30,6 +30,7 @@ import { DemoButton, RegionalDemoButtons } from './DemoButton';
 const AppFeatureSlide: React.FC<{
   type: 'notifications' | 'tasks' | 'initiatives' | 'decisions';
 }> = ({ type }) => {
+  const { t } = useTranslation();
   if (type === 'notifications') {
     return (
       <div className="h-full flex flex-col">
@@ -38,10 +39,15 @@ const AppFeatureSlide: React.FC<{
             <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
               <Bell size={20} className="text-purple-400" />
             </div>
-            <span className="text-white font-bold text-lg">Notifications</span>
+            <span className="text-white font-bold text-lg">
+              {t('landing.carousel.labels.notifications', 'Notifications')}
+            </span>
           </div>
           <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-bold">
-            3 New
+            {t('landing.carousel.slides.notifications.badge', {
+              count: 3,
+              defaultValue: '{{count}} New',
+            })}
           </span>
         </div>
         <div className="space-y-3 flex-1">
@@ -50,25 +56,37 @@ const AppFeatureSlide: React.FC<{
               icon: AlertTriangle,
               color: 'text-amber-400',
               bg: 'bg-amber-500/10',
-              title: 'Initiative Deadline',
-              desc: 'Industry 4.0 Roadmap due in 2 days',
-              time: '2h ago',
+              title: t(
+                'landing.carousel.slides.notifications.items.0.title',
+                'Initiative Deadline'
+              ),
+              desc: t(
+                'landing.carousel.slides.notifications.items.0.desc',
+                'Industry 4.0 Roadmap due in 2 days'
+              ),
+              time: t('landing.carousel.slides.notifications.items.0.time', '2h ago'),
             },
             {
               icon: CheckSquare,
               color: 'text-emerald-400',
               bg: 'bg-emerald-500/10',
-              title: 'Task Completed',
-              desc: 'Assessment phase finished by team',
-              time: '4h ago',
+              title: t('landing.carousel.slides.notifications.items.1.title', 'Task Completed'),
+              desc: t(
+                'landing.carousel.slides.notifications.items.1.desc',
+                'Assessment phase finished by team'
+              ),
+              time: t('landing.carousel.slides.notifications.items.1.time', '4h ago'),
             },
             {
               icon: Users,
               color: 'text-blue-400',
               bg: 'bg-blue-500/10',
-              title: 'New Comment',
-              desc: 'Dr. Kowalski commented on ROI analysis',
-              time: '6h ago',
+              title: t('landing.carousel.slides.notifications.items.2.title', 'New Comment'),
+              desc: t(
+                'landing.carousel.slides.notifications.items.2.desc',
+                'Dr. Kowalski commented on ROI analysis'
+              ),
+              time: t('landing.carousel.slides.notifications.items.2.time', '6h ago'),
             },
           ].map((item, i) => (
             <motion.div
@@ -105,25 +123,38 @@ const AppFeatureSlide: React.FC<{
             <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
               <CheckSquare size={20} className="text-blue-400" />
             </div>
-            <span className="text-white font-bold text-lg">My Tasks</span>
+            <span className="text-white font-bold text-lg">
+              {t('landing.carousel.slides.tasks.title', 'My Tasks')}
+            </span>
           </div>
           <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold">
-            12 Active
+            {t('landing.carousel.slides.tasks.badge', {
+              count: 12,
+              defaultValue: '{{count}} Active',
+            })}
           </span>
         </div>
         <div className="space-y-3 flex-1">
           {[
             {
               status: 'in_progress',
-              title: 'Complete DRD Assessment',
-              priority: 'High',
+              title: t('landing.carousel.slides.tasks.items.0.title', 'Complete DRD Assessment'),
+              priority: 'high',
+              priorityLabel: t('landing.carousel.priority.high', 'High'),
               progress: 75,
             },
-            { status: 'pending', title: 'Review ROI Projections', priority: 'Medium', progress: 0 },
+            {
+              status: 'pending',
+              title: t('landing.carousel.slides.tasks.items.1.title', 'Review ROI Projections'),
+              priority: 'medium',
+              priorityLabel: t('landing.carousel.priority.medium', 'Medium'),
+              progress: 0,
+            },
             {
               status: 'in_progress',
-              title: 'Prepare Stage-Gate Report',
-              priority: 'High',
+              title: t('landing.carousel.slides.tasks.items.2.title', 'Prepare Stage-Gate Report'),
+              priority: 'high',
+              priorityLabel: t('landing.carousel.priority.high', 'High'),
               progress: 40,
             },
           ].map((task, i) => (
@@ -142,9 +173,9 @@ const AppFeatureSlide: React.FC<{
                   <span className="text-white font-semibold text-sm">{task.title}</span>
                 </div>
                 <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${task.priority === 'High' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${task.priority === 'high' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}`}
                 >
-                  {task.priority}
+                  {task.priorityLabel}
                 </span>
               </div>
               <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
@@ -170,26 +201,45 @@ const AppFeatureSlide: React.FC<{
             <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
               <Rocket size={20} className="text-emerald-400" />
             </div>
-            <span className="text-white font-bold text-lg">Initiatives</span>
+            <span className="text-white font-bold text-lg">
+              {t('landing.carousel.labels.initiatives', 'Initiatives')}
+            </span>
           </div>
           <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-bold">
-            4 Active
+            {t('landing.carousel.slides.initiatives.badge', {
+              count: 4,
+              defaultValue: '{{count}} Active',
+            })}
           </span>
         </div>
         <div className="space-y-3 flex-1">
           {[
-            { name: 'Industry 4.0 Roadmap', status: 'On Track', roi: '+240%', phase: 'Execution' },
             {
-              name: 'Digital Twin Implementation',
-              status: 'At Risk',
-              roi: '+180%',
-              phase: 'Planning',
+              name: t('landing.carousel.slides.initiatives.items.0.name', 'Industry 4.0 Roadmap'),
+              status: 'onTrack',
+              statusLabel: t('landing.carousel.status.onTrack', 'On Track'),
+              roi: '+240%',
+              phase: t('landing.carousel.phase.execution', 'Execution'),
             },
             {
-              name: 'Supply Chain Optimization',
-              status: 'On Track',
+              name: t(
+                'landing.carousel.slides.initiatives.items.1.name',
+                'Digital Twin Implementation'
+              ),
+              status: 'atRisk',
+              statusLabel: t('landing.carousel.status.atRisk', 'At Risk'),
+              roi: '+180%',
+              phase: t('landing.carousel.phase.planning', 'Planning'),
+            },
+            {
+              name: t(
+                'landing.carousel.slides.initiatives.items.2.name',
+                'Supply Chain Optimization'
+              ),
+              status: 'onTrack',
+              statusLabel: t('landing.carousel.status.onTrack', 'On Track'),
               roi: '+95%',
-              phase: 'Assessment',
+              phase: t('landing.carousel.phase.assessment', 'Assessment'),
             },
           ].map((init, i) => (
             <motion.div
@@ -202,9 +252,9 @@ const AppFeatureSlide: React.FC<{
               <div className="flex items-center justify-between mb-3">
                 <span className="text-white font-semibold text-sm">{init.name}</span>
                 <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${init.status === 'On Track' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${init.status === 'onTrack' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}
                 >
-                  {init.status}
+                  {init.statusLabel}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
@@ -214,7 +264,9 @@ const AppFeatureSlide: React.FC<{
                 </div>
                 <div className="flex items-center gap-1 text-emerald-400 font-bold">
                   <TrendingUp size={12} />
-                  <span>ROI {init.roi}</span>
+                  <span>
+                    {t('landing.carousel.roi', 'ROI')} {init.roi}
+                  </span>
                 </div>
               </div>
             </motion.div>
@@ -232,27 +284,43 @@ const AppFeatureSlide: React.FC<{
           <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
             <Target size={20} className="text-amber-400" />
           </div>
-          <span className="text-white font-bold text-lg">Decisions</span>
+          <span className="text-white font-bold text-lg">
+            {t('landing.carousel.labels.decisions', 'Decisions')}
+          </span>
         </div>
         <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-bold">
-          2 Pending
+          {t('landing.carousel.slides.decisions.badge', {
+            count: 2,
+            defaultValue: '{{count}} Pending',
+          })}
         </span>
       </div>
       <div className="space-y-3 flex-1">
         {[
           {
-            title: 'Approve Q2 Budget Allocation',
-            type: 'Financial',
+            title: t(
+              'landing.carousel.slides.decisions.items.0.title',
+              'Approve Q2 Budget Allocation'
+            ),
+            type: t('landing.carousel.decisionType.financial', 'Financial'),
             votes: '4/5',
-            deadline: '2 days',
+            deadline: t('landing.carousel.slides.decisions.items.0.deadline', '2 days'),
           },
           {
-            title: 'Select Technology Partner',
-            type: 'Strategic',
+            title: t(
+              'landing.carousel.slides.decisions.items.1.title',
+              'Select Technology Partner'
+            ),
+            type: t('landing.carousel.decisionType.strategic', 'Strategic'),
             votes: '2/5',
-            deadline: '5 days',
+            deadline: t('landing.carousel.slides.decisions.items.1.deadline', '5 days'),
           },
-          { title: 'Phase 2 Go/No-Go', type: 'Stage-Gate', votes: '5/5', deadline: 'Completed' },
+          {
+            title: t('landing.carousel.slides.decisions.items.2.title', 'Phase 2 Go/No-Go'),
+            type: t('landing.carousel.decisionType.stageGate', 'Stage-Gate'),
+            votes: '5/5',
+            deadline: t('landing.carousel.deadline.completed', 'Completed'),
+          },
         ].map((dec, i) => (
           <motion.div
             key={i}
@@ -271,14 +339,16 @@ const AppFeatureSlide: React.FC<{
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1 text-slate-400 dark:text-slate-500">
                   <Users size={12} />
-                  <span>{dec.votes} votes</span>
+                  <span>
+                    {dec.votes} {t('landing.carousel.votes', 'votes')}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1 text-slate-400 dark:text-slate-500">
                   <Clock size={12} />
                   <span>{dec.deadline}</span>
                 </div>
               </div>
-              {dec.deadline === 'Completed' && (
+              {dec.deadline === t('landing.carousel.deadline.completed', 'Completed') && (
                 <CheckCircle size={16} className="text-emerald-400" />
               )}
             </div>
@@ -299,7 +369,12 @@ const FeatureCarousel: React.FC = () => {
     'initiatives',
     'decisions',
   ];
-  const slideLabels = ['Notifications', 'Tasks', 'Initiatives', 'Decisions'];
+  const slideLabels = [
+    t('landing.carousel.labels.notifications', 'Notifications'),
+    t('landing.carousel.labels.tasks', 'Tasks'),
+    t('landing.carousel.labels.initiatives', 'Initiatives'),
+    t('landing.carousel.labels.decisions', 'Decisions'),
+  ];
 
   // Auto-advance slides
   useEffect(() => {

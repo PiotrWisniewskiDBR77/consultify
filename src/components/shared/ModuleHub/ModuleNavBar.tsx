@@ -262,27 +262,29 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
         <div className="flex items-center gap-3">
           {rightControls}
           {/* View Mode Toggle - supports 2-5 modes */}
-          <div className="flex items-center bg-slate-50 dark:bg-navy-950/70 border border-slate-200/60 dark:border-white/5 rounded-lg p-1 h-9">
-            {availableViewModes.map((mode) => {
-              const config = viewModeConfig[mode];
-              const isActive = viewMode === mode;
-              return (
-                <button
-                  key={mode}
-                  onClick={() => onViewModeChange(mode)}
-                  data-testid={`view-mode-${mode}`}
-                  className={`p-1.5 rounded transition-colors ${
-                    isActive
-                      ? 'bg-white/70 dark:bg-white/[0.06] text-slate-900 dark:text-slate-100'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
-                  }`}
-                  title={config.label}
-                >
-                  {config.icon}
-                </button>
-              );
-            })}
-          </div>
+          {availableViewModes.length > 1 && (
+            <div className="flex items-center bg-slate-50 dark:bg-navy-950/70 border border-slate-200/60 dark:border-white/5 rounded-lg p-1 h-9">
+              {availableViewModes.map((mode) => {
+                const config = viewModeConfig[mode];
+                const isActive = viewMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => onViewModeChange(mode)}
+                    data-testid={`view-mode-${mode}`}
+                    className={`p-1.5 rounded transition-colors ${
+                      isActive
+                        ? 'bg-white/70 dark:bg-white/[0.06] text-slate-900 dark:text-slate-100'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                    }`}
+                    title={config.label}
+                  >
+                    {config.icon}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Action Buttons */}
           {categoryButtons && categoryButtons.length > 0 ? (

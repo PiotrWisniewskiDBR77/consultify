@@ -47,6 +47,12 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        '/ws': {
+          target: apiTarget,
+          ws: true,
+          changeOrigin: true,
+          secure: false,
+        },
         '/uploads': {
           target: apiTarget,
           changeOrigin: true,
@@ -63,6 +69,12 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/api': {
           target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/ws': {
+          target: apiTarget,
+          ws: true,
           changeOrigin: true,
           secure: false,
         },

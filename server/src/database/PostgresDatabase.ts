@@ -740,6 +740,8 @@ export async function initDb(): Promise<void> {
             description TEXT,
             goal TEXT,
             status TEXT DEFAULT 'active',
+            health TEXT,
+            progress_pct REAL DEFAULT 0,
             owner_id TEXT,
             current_phase TEXT DEFAULT 'Context',
             initiative_count INTEGER DEFAULT 0,
@@ -747,6 +749,7 @@ export async function initDb(): Promise<void> {
             member_count INTEGER DEFAULT 0,
             document_count INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
@@ -759,6 +762,18 @@ export async function initDb(): Promise<void> {
                 IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
                                WHERE table_name = 'projects' AND column_name = 'current_phase') THEN
                     ALTER TABLE projects ADD COLUMN current_phase TEXT DEFAULT 'Context';
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'projects' AND column_name = 'health') THEN
+                    ALTER TABLE projects ADD COLUMN health TEXT;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'projects' AND column_name = 'progress_pct') THEN
+                    ALTER TABLE projects ADD COLUMN progress_pct REAL DEFAULT 0;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'projects' AND column_name = 'updated_at') THEN
+                    ALTER TABLE projects ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
                 END IF;
             END IF;
         EXCEPTION
@@ -934,12 +949,195 @@ export async function initDb(): Promise<void> {
     await query(`CREATE TABLE IF NOT EXISTS login_history(
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
+                organization_id TEXT,
                 ip_address TEXT,
                 user_agent TEXT,
                 location TEXT,
                 status TEXT DEFAULT 'success',
+                failure_reason TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+    // Security Settings (org-level)
+    await query(`CREATE TABLE IF NOT EXISTS security_settings(
+                organization_id TEXT PRIMARY KEY,
+                require_2fa INTEGER DEFAULT 0,
+                password_min_length INTEGER DEFAULT 8,
+                password_require_uppercase INTEGER DEFAULT 1,
+                password_require_number INTEGER DEFAULT 1,
+                password_require_special INTEGER DEFAULT 0,
+                password_expiry_days INTEGER DEFAULT 0,
+                session_timeout_minutes INTEGER DEFAULT 30,
+                max_sessions_per_user INTEGER DEFAULT 5,
+                ip_whitelist TEXT DEFAULT '[]',
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_by TEXT,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
+
+    // User Sessions
+    await query(`CREATE TABLE IF NOT EXISTS user_sessions(
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                device_info TEXT,
+                ip_address TEXT,
+                user_agent TEXT,
+                location TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_active_at TIMESTAMP,
+                expires_at TIMESTAMP,
+                is_current INTEGER DEFAULT 0,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+    // 2FA state
+    await query(`CREATE TABLE IF NOT EXISTS user_2fa(
+                user_id TEXT PRIMARY KEY,
+                is_enabled INTEGER DEFAULT 0,
+                enabled_at TIMESTAMP,
+                secret TEXT,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+    // API usage logs (aggregation)
+    await query(`CREATE TABLE IF NOT EXISTS api_logs(
+                id TEXT PRIMARY KEY,
+                api_key_id TEXT,
+                tokens_used REAL DEFAULT 0,
+                cost REAL DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`);
+
+    // Verification Tokens (email/account verification)
+    await query(`CREATE TABLE IF NOT EXISTS verification_tokens(
+                token TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                type TEXT NOT NULL,
+                expires_at TIMESTAMP,
+                used INTEGER DEFAULT 0,
+                used_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+    // MCP Providers (Model Context Protocol)
+    await query(`CREATE TABLE IF NOT EXISTS mcp_providers(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                type TEXT NOT NULL,
+                status TEXT DEFAULT 'active',
+                config TEXT DEFAULT '{}',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
+
+    // Audit Log (canonical) - used by compliance/audit routes and services
+    await query(`CREATE TABLE IF NOT EXISTS audit_log(
+                id TEXT PRIMARY KEY,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                actor_type TEXT,
+                actor_id TEXT,
+                actor_email TEXT,
+                actor_name TEXT,
+                actor_ip TEXT,
+                actor_user_agent TEXT,
+                action TEXT,
+                action_category TEXT,
+                action_description TEXT,
+                resource_type TEXT,
+                resource_id TEXT,
+                resource_name TEXT,
+                organization_id TEXT,
+                project_id TEXT,
+                previous_values TEXT,
+                new_values TEXT,
+                changed_fields TEXT,
+                metadata TEXT,
+                request_id TEXT,
+                result TEXT,
+                error_message TEXT,
+                retention_category TEXT,
+                -- Compatibility columns used by auditLog.routes.ts
+                user_id TEXT,
+                action_type TEXT,
+                details TEXT,
+                ip_address TEXT,
+                user_agent TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+            )`);
+
+    // Compliance Audits
+    await query(`CREATE TABLE IF NOT EXISTS audits(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                type TEXT DEFAULT 'internal',
+                status TEXT DEFAULT 'planned',
+                score REAL,
+                auditor TEXT,
+                scheduled_date TEXT,
+                completed_date TEXT,
+                findings TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
+
+    // Status reports
+    await query(`CREATE TABLE IF NOT EXISTS status_reports(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                project_id TEXT,
+                title TEXT,
+                content TEXT,
+                health TEXT,
+                period TEXT,
+                created_by TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL,
+                FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+            )`);
+
+    // API keys (programmatic access)
+    await query(`CREATE TABLE IF NOT EXISTS api_keys(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                key_prefix TEXT NOT NULL,
+                key_hash TEXT NOT NULL,
+                permissions TEXT NOT NULL,
+                ip_whitelist TEXT,
+                rate_limit INTEGER DEFAULT 100,
+                expires_at TIMESTAMP,
+                last_used_at TIMESTAMP,
+                last_used_ip TEXT,
+                rotated_from_id TEXT,
+                status TEXT DEFAULT 'active',
+                created_by TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL,
+                FOREIGN KEY(rotated_from_id) REFERENCES api_keys(id) ON DELETE SET NULL
+            )`);
+
+    // Stabilization monitoring tables
+    await query(`CREATE TABLE IF NOT EXISTS error_logs(
+                id TEXT PRIMARY KEY,
+                message TEXT,
+                stack TEXT,
+                context TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`);
+    await query(`CREATE TABLE IF NOT EXISTS system_health_history(
+                date TEXT PRIMARY KEY,
+                avg_response_ms REAL,
+                error_rate REAL,
+                uptime_pct REAL
             )`);
 
     // Activity Logs
@@ -1946,6 +2144,86 @@ export async function initDb(): Promise<void> {
       'Skipping project_id index on sessions'
     );
     await query(`CREATE INDEX IF NOT EXISTS idx_revoked_tokens_user ON revoked_tokens(user_id)`);
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_verification_tokens_user ON verification_tokens(user_id)`,
+      [],
+      'Skipping user_id index on verification_tokens'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_verification_tokens_used ON verification_tokens(used)`,
+      [],
+      'Skipping used index on verification_tokens'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_mcp_providers_org ON mcp_providers(organization_id)`,
+      [],
+      'Skipping organization_id index on mcp_providers'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_audit_log_org ON audit_log(organization_id)`,
+      [],
+      'Skipping organization_id index on audit_log'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_audit_log_user ON audit_log(user_id)`,
+      [],
+      'Skipping user_id index on audit_log'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_audit_log_action_type ON audit_log(action_type)`,
+      [],
+      'Skipping action_type index on audit_log'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at)`,
+      [],
+      'Skipping created_at index on audit_log'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_audits_org ON audits(organization_id)`,
+      [],
+      'Skipping organization_id index on audits'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_audits_status ON audits(status)`,
+      [],
+      'Skipping status index on audits'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_status_reports_org_created ON status_reports(organization_id, created_at)`,
+      [],
+      'Skipping (organization_id, created_at) index on status_reports'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_status_reports_project ON status_reports(project_id)`,
+      [],
+      'Skipping project_id index on status_reports'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_projects_org_updated ON projects(organization_id, updated_at)`,
+      [],
+      'Skipping (organization_id, updated_at) index on projects'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_api_keys_org ON api_keys(organization_id)`,
+      [],
+      'Skipping organization_id index on api_keys'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash)`,
+      [],
+      'Skipping key_hash index on api_keys'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_api_keys_status_expires ON api_keys(status, expires_at)`,
+      [],
+      'Skipping (status, expires_at) index on api_keys'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_error_logs_created_at ON error_logs(created_at)`,
+      [],
+      'Skipping created_at index on error_logs'
+    );
 
     // Teams & Access
     await querySafe(

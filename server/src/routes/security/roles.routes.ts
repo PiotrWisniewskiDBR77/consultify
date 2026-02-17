@@ -38,14 +38,13 @@ router.get(
     const orgId = req.user!.organizationId;
     await ensureRolesSchema();
 
-    const rows =
-      (await dbAll(
-        `SELECT id, name, permissions_json, created_at, updated_at
-         FROM security_roles
-         WHERE organization_id = ?
-         ORDER BY created_at DESC`,
-        [orgId]
-      )) || [];
+    const rows = await dbAll(
+      `SELECT id, name, permissions_json, created_at, updated_at
+       FROM security_roles
+       WHERE organization_id = ?
+       ORDER BY created_at DESC`,
+      [orgId]
+    );
 
     const roles = (rows as any[]).map((r) => ({
       id: r.id,

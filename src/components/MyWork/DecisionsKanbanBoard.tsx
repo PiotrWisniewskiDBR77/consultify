@@ -424,6 +424,7 @@ const DroppableColumn: React.FC<{
   children: React.ReactNode;
   onCreateDecision?: () => void;
 }> = ({ column, itemIds, children, onCreateDecision }) => {
+  const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
     data: { type: 'column', columnId: column.id },
@@ -453,7 +454,7 @@ const DroppableColumn: React.FC<{
               onCreateDecision();
             }}
             className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-primary-400 hover:bg-primary-500/10 transition-colors"
-            title="Add decision"
+            title={t('myWork.decisions.addDecision', 'Add decision')}
           >
             <Plus size={14} />
           </button>
@@ -471,7 +472,9 @@ const DroppableColumn: React.FC<{
               itemIds.length === 0 ? 'h-24' : 'h-14'
             } ${column.headerColor} opacity-40`}
           >
-            <span className={`text-xs font-medium ${column.headerColor}`}>Drop here</span>
+            <span className={`text-xs font-medium ${column.headerColor}`}>
+              {t('execution.kanban.dropHere', 'Drop here')}
+            </span>
           </div>
         )}
 
@@ -480,7 +483,7 @@ const DroppableColumn: React.FC<{
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className={`mb-2 ${column.headerColor} opacity-30`}>{column.icon}</div>
             <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-              No decisions
+              {t('myWork.decisions.emptyColumn', 'No decisions')}
             </p>
           </div>
         )}
@@ -844,16 +847,18 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
             <CheckCircle2 size={48} className="text-slate-600 mb-4" />
             <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
-              No decisions yet
+              {t('myWork.decisions.emptyTitle', 'No decisions yet')}
             </h3>
-            <p className="text-sm text-slate-500 mb-4">Create your first decision to get started</p>
+            <p className="text-sm text-slate-500 mb-4">
+              {t('myWork.decisions.emptySubtitle', 'Create your first decision to get started')}
+            </p>
             {onCreateDecision && (
               <button
                 onClick={onCreateDecision}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-400 border border-purple-500/50 rounded-lg hover:bg-purple-500/10 transition-colors"
               >
                 <Plus size={16} />
-                Create Decision
+                {t('myWork.decisions.createCta', 'Create Decision')}
               </button>
             )}
           </div>

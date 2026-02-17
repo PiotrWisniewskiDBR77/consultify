@@ -23,19 +23,16 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import {
   AlertTriangle,
-  BarChart3,
   Calendar,
   CalendarDays,
   CheckCircle2,
   ClipboardList,
   Clock,
-  FileQuestion,
   GripVertical,
   LayoutDashboard,
   Loader2,
   MessageSquare,
   Scale,
-  Shield,
   Target,
   TrendingUp,
 } from 'lucide-react';
@@ -54,30 +51,24 @@ import {
 
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
-import { RAIDLog } from '../Implementation/RAIDLog';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
-import { DecisionsPanel } from '../MyWork/DecisionsPanel';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
+import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 import { StatusDropdown } from '../shared/ModuleHub';
 import {
   FilterableTable,
   FilterChip,
-  GridItem,
-  GridView,
-  ItemStatus,
   ModuleHub,
   ModuleTab,
   OpenDocument,
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
-import { BenefitsTracker } from './BenefitsTracker';
-import { CorrectiveActions } from './CorrectiveActions';
 import { ExecutionDetailPanel } from './ExecutionDetailPanel';
+import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
 import { ExecutionTimelineView } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
-import { KPIDashboard } from './KPIDashboard';
 
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
@@ -287,6 +278,13 @@ const EXECUTION_STATUSES: InitiativeStatus[] = Array.from(
   new Set([...MODULE_STATUSES, ...EXECUTION_STATUS_FALLBACK])
 );
 
+// Execution "Active" scope = ongoing work only (hide terminal-ish outcomes)
+const ACTIVE_EXECUTION_STATUSES: InitiativeStatus[] = [
+  InitiativeStatus.SCHEDULED,
+  InitiativeStatus.EXECUTING,
+  InitiativeStatus.BLOCKED,
+];
+
 // Type codes
 const getTypeCode = (axis: string): string => {
   const codes: Record<string, string> = {
@@ -375,6 +373,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
+  // Active/All toggle (consistent with InitiativesHub)
+  const [scope, setScope] = useState<'active' | 'all'>('active');
   const [selectedInitiative, setSelectedInitiative] = useState<FullInitiative | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
 
@@ -492,32 +492,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [statusCounts]
   );
 
-  // Filter initiatives
-  const filteredInitiatives = useMemo(() => {
-    let result = initiatives;
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (i) =>
-          i.name.toLowerCase().includes(query) ||
-          (i.description || '').toLowerCase().includes(query)
-      );
-    }
-
-    activeFilters.forEach((filter) => {
-      if (filter.column === 'status') {
-        result = result.filter((i) => i.status === filter.value);
-      }
-    });
-
-    if (activeStatusFilter) {
-      result = result.filter((i) => i.status === activeStatusFilter);
-    }
-
-    return result;
-  }, [initiatives, searchQuery, activeFilters, activeStatusFilter]);
-
   const tasksByInitiative = useMemo(() => {
     return tasks.reduce<Record<string, Task[]>>((acc, task) => {
       if (!task.initiativeId) return acc;
@@ -537,6 +511,85 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }, {});
   }, [decisions]);
 
+  // Filter initiatives
+  const filteredInitiatives = useMemo(() => {
+    let result = initiatives;
+
+    // Scope filter (when user hasn't explicitly chosen a status)
+    if (!activeStatusFilter && scope === 'active') {
+      result = result.filter((i) => ACTIVE_EXECUTION_STATUSES.includes(i.status));
+    }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (i) =>
+          i.name.toLowerCase().includes(query) ||
+          (i.description || '').toLowerCase().includes(query)
+      );
+    }
+
+    activeFilters.forEach((filter) => {
+      if (filter.column === 'status') {
+        result = result.filter((i) => i.status === filter.value);
+      }
+      if (filter.column === 'attention') {
+        if (filter.value === 'blocked') {
+          result = result.filter((i) => i.status === InitiativeStatus.BLOCKED);
+        }
+        if (filter.value === 'missing_dates') {
+          result = result.filter((i) => !i.plannedStartDate || !i.plannedEndDate);
+        }
+        if (filter.value === 'overdue') {
+          result = result.filter((i) => {
+            if (!i.plannedEndDate && !i.slaDeadline) return false;
+            const deadline = i.slaDeadline || i.plannedEndDate!;
+            const isOverdue = new Date(deadline) < new Date();
+            const terminal =
+              i.status === InitiativeStatus.DONE || i.status === InitiativeStatus.ARCHIVED;
+            return isOverdue && !terminal;
+          });
+        }
+        if (filter.value === 'overdue_decisions') {
+          result = result.filter((i) => {
+            const arr = decisionsByInitiative[i.id] || [];
+            return arr.some(
+              (d) => String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate)
+            );
+          });
+        }
+        if (filter.value === 'due_soon_tasks') {
+          const now = Date.now();
+          const sevenDays = 7 * 24 * 60 * 60 * 1000;
+          result = result.filter((i) => {
+            const arr = tasksByInitiative[i.id] || [];
+            return arr.some((t) => {
+              if (!t.dueDate) return false;
+              const due = new Date(t.dueDate).getTime();
+              return (
+                due >= now && due <= now + sevenDays && normalizeTaskStatus(t.status) !== 'done'
+              );
+            });
+          });
+        }
+      }
+    });
+
+    if (activeStatusFilter) {
+      result = result.filter((i) => i.status === activeStatusFilter);
+    }
+
+    return result;
+  }, [
+    initiatives,
+    searchQuery,
+    activeFilters,
+    activeStatusFilter,
+    scope,
+    tasksByInitiative,
+    decisionsByInitiative,
+  ]);
+
   // Tab configuration
   const tabs = useMemo(
     () => [
@@ -552,24 +605,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         icon: <Target size={16} />,
         count: initiatives.length,
       },
-      {
-        id: 'raid' as ModuleTab,
-        label: t('execution.tabs.raid', 'RAID Log'),
-        icon: <Shield size={16} />,
-      },
-      {
-        id: 'decisions' as ModuleTab,
-        label: t('execution.tabs.decisions', 'Decisions'),
-        icon: <FileQuestion size={16} />,
-        count: decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length,
-      },
-      {
-        id: 'kpi' as ModuleTab,
-        label: t('execution.tabs.kpi', 'KPIs & Benefits'),
-        icon: <BarChart3 size={16} />,
-      },
     ],
-    [t, filteredInitiatives.length, initiatives.length, decisions]
+    [t, filteredInitiatives.length, initiatives.length]
   );
 
   // Table columns
@@ -705,7 +742,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         width: '120px',
         render: (row) => {
           if (!row.plannedEndDate) {
-            return <span className="text-xs text-slate-500">No deadline</span>;
+            return (
+              <span className="text-xs text-slate-500">{t('execution.table.noDeadline')}</span>
+            );
           }
           const now = new Date();
           const end = new Date(row.plannedEndDate);
@@ -878,7 +917,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [t, decisionsByInitiative, tasksByInitiative]
   );
 
-  // Status counts for the StatusDropdown (replaces legacy inline buttons)
+  // Status counts for the StatusDropdown (top bar control)
   const statusDropdownCounts: Record<string, number> = useMemo(() => {
     const counts: Record<string, number> = { all: initiatives.length };
     EXECUTION_STATUSES.forEach((s) => {
@@ -886,6 +925,55 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     });
     return counts;
   }, [initiatives.length, statusCounts]);
+
+  const scopeToggle = (
+    <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60">
+      {(
+        [
+          { id: 'active' as const, label: t('execution.scope.active', 'Active') },
+          { id: 'all' as const, label: t('execution.scope.all', 'All') },
+        ] as const
+      ).map((opt) => (
+        <button
+          key={opt.id}
+          type="button"
+          onClick={() => {
+            setScope(opt.id);
+            if (opt.id === 'active') setActiveStatusFilter(null);
+          }}
+          className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-colors ${
+            scope === opt.id
+              ? 'bg-white/80 dark:bg-navy-900/70 text-slate-700 dark:text-slate-200 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-navy-900/50'
+          }`}
+          title={
+            opt.id === 'active'
+              ? t('execution.scope.activeHint', 'Scheduled → Executing → Blocked')
+              : t('execution.scope.allHint', 'Include Done / Cancelled / Archived')
+          }
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  const statusDropdownControl = (
+    <StatusDropdown
+      context="execution"
+      value={activeStatusFilter || 'all'}
+      onChange={(status) => setActiveStatusFilter(status === 'all' ? null : status)}
+      counts={statusDropdownCounts}
+      size="sm"
+    />
+  );
+
+  const rightControls = (
+    <div className="flex items-center gap-2">
+      {scopeToggle}
+      {statusDropdownControl}
+    </div>
+  );
 
   const portfolioMetrics = useMemo(() => {
     const totalInitiatives = initiatives.length;
@@ -1123,37 +1211,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [handleOpenSidePanel, handleOpenDocument]
   );
 
-  // Convert to grid items
-  const gridItems: GridItem[] = useMemo(() => {
-    return filteredInitiatives.map((item) => {
-      const isOverdue =
-        item.plannedEndDate &&
-        new Date(item.plannedEndDate) < new Date() &&
-        item.status !== InitiativeStatus.DONE;
-      const owner = item.ownerBusiness || item.ownerTechnical;
-      const ownerName = owner
-        ? `${owner.firstName || ''} ${owner.lastName || ''}`.trim()
-        : undefined;
-
-      return {
-        id: item.id,
-        name: item.name,
-        type: getTypeCode(item.axis),
-        typeColor: isOverdue ? 'amber' : 'cyan',
-        status:
-          item.status === InitiativeStatus.BLOCKED
-            ? ('BLOCKED' as ItemStatus)
-            : item.status === InitiativeStatus.DONE
-              ? ('DONE' as ItemStatus)
-              : item.status === InitiativeStatus.EXECUTING
-                ? ('EXECUTING' as ItemStatus)
-                : ('DRAFT' as ItemStatus),
-        progress: item.progress || 0,
-        updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
-        ownerName,
-      };
-    });
-  }, [filteredInitiatives]);
+  const portfolioInitiatives = useMemo(
+    () => filteredInitiatives.map((i) => toPortfolioInitiative(i)),
+    [filteredInitiatives]
+  );
 
   // Drag & drop state
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -1615,6 +1676,219 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     </div>
   );
 
+  const dashboardBaseInitiatives = useMemo(() => {
+    let result = initiatives;
+    if (!activeStatusFilter && scope === 'active') {
+      result = result.filter((i) => ACTIVE_EXECUTION_STATUSES.includes(i.status));
+    }
+    if (activeStatusFilter) {
+      result = result.filter((i) => i.status === activeStatusFilter);
+    }
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (i) => i.name.toLowerCase().includes(q) || (i.description || '').toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [initiatives, activeStatusFilter, scope, searchQuery]);
+
+  const actionCenter = useMemo(() => {
+    const now = Date.now();
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+
+    const blocked = dashboardBaseInitiatives.filter((i) => i.status === InitiativeStatus.BLOCKED);
+    const missingDates = dashboardBaseInitiatives.filter(
+      (i) => !i.plannedStartDate || !i.plannedEndDate
+    );
+
+    const overdueDecisions = decisions
+      .filter((d) => String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate))
+      .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+
+    const dueSoonTasks = tasks
+      .filter((t) => {
+        if (!t.dueDate) return false;
+        const due = new Date(t.dueDate).getTime();
+        return due >= now && due <= now + sevenDays && normalizeTaskStatus(t.status) !== 'done';
+      })
+      .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+
+    return {
+      blocked,
+      missingDates,
+      overdueDecisions,
+      dueSoonTasks,
+    };
+  }, [dashboardBaseInitiatives, decisions, tasks]);
+
+  const openInitiativesWithAttention = useCallback(
+    (
+      attention: 'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
+    ) => {
+      setActiveTab('initiatives' as ModuleTab);
+      setShowWorkloadHeatmap(false);
+      setViewMode('table');
+      // Status filter is useful only for pure-status buckets.
+      if (attention === 'blocked') {
+        setActiveStatusFilter(InitiativeStatus.BLOCKED);
+        setActiveFilters([]);
+        return;
+      }
+      setActiveStatusFilter(null);
+      setActiveFilters([
+        {
+          id: `attention:${attention}`,
+          column: 'attention',
+          value: attention,
+          label:
+            attention === 'missing_dates'
+              ? t('execution.attention.missingDates', 'Missing dates')
+              : attention === 'overdue_decisions'
+                ? t('execution.attention.overdueDecisions', 'Overdue decisions')
+                : attention === 'due_soon_tasks'
+                  ? t('execution.attention.dueSoonTasks', 'Due soon tasks')
+                  : t('execution.attention.attention', 'Attention'),
+          color:
+            attention === 'missing_dates'
+              ? 'text-amber-500'
+              : attention === 'overdue_decisions'
+                ? 'text-rose-500'
+                : attention === 'due_soon_tasks'
+                  ? 'text-cyan-500'
+                  : 'text-slate-500',
+        },
+      ]);
+    },
+    [t]
+  );
+
+  const renderActionCenter = () => (
+    <div className="grid gap-4 lg:grid-cols-4" data-testid="execution-action-center">
+      <button
+        type="button"
+        onClick={() => openInitiativesWithAttention('blocked')}
+        className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-rose-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              {t('execution.attention.blocked', 'Blocked')}
+            </p>
+            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+              {actionCenter.blocked.length}
+            </p>
+          </div>
+          <AlertTriangle className="text-rose-400" size={18} />
+        </div>
+        <div className="space-y-1">
+          {actionCenter.blocked.slice(0, 3).map((i) => (
+            <div key={i.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
+              {i.name}
+            </div>
+          ))}
+          {actionCenter.blocked.length === 0 && (
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('execution.attention.none', 'Nothing urgent')}
+            </div>
+          )}
+        </div>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => openInitiativesWithAttention('overdue_decisions')}
+        className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-amber-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              {t('execution.attention.overdueDecisions', 'Overdue decisions')}
+            </p>
+            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+              {actionCenter.overdueDecisions.length}
+            </p>
+          </div>
+          <Scale className="text-amber-400" size={18} />
+        </div>
+        <div className="space-y-1">
+          {actionCenter.overdueDecisions.slice(0, 3).map((d) => (
+            <div key={d.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
+              <span className="font-medium text-slate-900 dark:text-white">{d.title}</span>
+              <span className="text-slate-500"> · {d.relatedObjectName || '—'}</span>
+            </div>
+          ))}
+          {actionCenter.overdueDecisions.length === 0 && (
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('execution.attention.none', 'Nothing urgent')}
+            </div>
+          )}
+        </div>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => openInitiativesWithAttention('missing_dates')}
+        className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-cyan-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              {t('execution.attention.missingDates', 'Missing dates')}
+            </p>
+            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+              {actionCenter.missingDates.length}
+            </p>
+          </div>
+          <Calendar className="text-cyan-400" size={18} />
+        </div>
+        <div className="space-y-1">
+          {actionCenter.missingDates.slice(0, 3).map((i) => (
+            <div key={i.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
+              {i.name}
+            </div>
+          ))}
+          {actionCenter.missingDates.length === 0 && (
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('execution.attention.none', 'Nothing urgent')}
+            </div>
+          )}
+        </div>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => openInitiativesWithAttention('due_soon_tasks')}
+        className="text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-violet-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              {t('execution.attention.dueSoonTasks', 'Due soon')}
+            </p>
+            <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+              {actionCenter.dueSoonTasks.length}
+            </p>
+          </div>
+          <ClipboardList className="text-violet-400" size={18} />
+        </div>
+        <div className="space-y-1">
+          {actionCenter.dueSoonTasks.slice(0, 3).map((task) => (
+            <div key={task.id} className="text-xs text-slate-700 dark:text-slate-300 truncate">
+              <span className="font-medium text-slate-900 dark:text-white">{task.title}</span>
+              <span className="text-slate-500"> · {task.initiativeName || '—'}</span>
+            </div>
+          ))}
+          {actionCenter.dueSoonTasks.length === 0 && (
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('execution.attention.none', 'Nothing urgent')}
+            </div>
+          )}
+        </div>
+      </button>
+    </div>
+  );
+
   const renderCalendarView = () => {
     if (isLoadingTasks || isLoadingDecisions) {
       return (
@@ -1719,22 +1993,43 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     if (viewMode === 'grid') {
       return (
-        <GridView
-          items={gridItems}
-          onItemClick={(item) => {
-            const initiative = filteredInitiatives.find((entry) => entry.id === item.id);
-            if (initiative) handleOpenSidePanel(initiative);
-          }}
-          onItemAction={(action, item) => {
-            const initiative = filteredInitiatives.find((entry) => entry.id === item.id);
-            if (initiative) handleRowAction(action, initiative);
-          }}
-          emptyMessage={t('execution.empty.noAvailable')}
-        />
+        <div className="h-full overflow-auto p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {portfolioInitiatives.map((pi) => (
+              <InitiativeGridCard
+                key={pi.id}
+                initiative={pi}
+                onClick={() => {
+                  const full = filteredInitiatives.find((x) => x.id === pi.id);
+                  if (full) handleOpenSidePanel(full);
+                }}
+              />
+            ))}
+          </div>
+          {portfolioInitiatives.length === 0 && (
+            <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
+              {t('execution.empty.noAvailable')}
+            </div>
+          )}
+        </div>
       );
     }
 
     if (viewMode === 'kanban') {
+      // In Execution → Initiatives, kanban shows initiatives (not tasks) to match Initiatives module
+      if (activeTab === 'initiatives') {
+        return (
+          <ExecutionInitiativesKanbanView
+            initiatives={portfolioInitiatives}
+            scope={scope}
+            onInitiativeClick={(pi) => {
+              const full = filteredInitiatives.find((x) => x.id === pi.id);
+              if (full) handleOpenSidePanel(full);
+            }}
+            onStatusChange={(id, status) => handleInlineStatusChange(id, status)}
+          />
+        );
+      }
       return renderTaskBoard();
     }
 
@@ -1756,58 +2051,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return null;
   };
 
-  // Render RAID Log tab
-  const renderRAIDTab = () => (
-    <div className="p-4">
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-          {t('execution.raidLog.title')}
-        </h2>
-        <p className="text-sm text-slate-400">{t('execution.raidLog.description')}</p>
-      </div>
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden p-4">
-        <RAIDLog
-          initiativeId={selectedInitiative?.id}
-          projectId={currentProjectId || undefined}
-          onItemClick={(item) => {
-            // Navigate to the initiative that owns this RAID item
-            const initiativeId = item?.initiativeId || selectedInitiative?.id;
-            if (initiativeId) {
-              const full = initiatives.find((i) => i.id === initiativeId);
-              if (full) {
-                handleOpenDocument(full);
-              } else {
-                // Fallback: open directly by ID
-                setActiveDocumentId(initiativeId);
-              }
-            }
-          }}
-        />
-      </div>
-    </div>
-  );
-
-  // Render Decisions tab
-  const renderDecisionsTab = () => (
-    <div className="p-4 h-full">
-      <DecisionsPanel
-        onDecisionClick={(id) => {
-          // Open the decision detail — navigate to related initiative if possible
-          if (id) {
-            setActiveDocumentId(null);
-            // Decisions panel handles its own detail view, but we can try to find the related initiative
-            const relatedInitiative = initiatives.find((i) =>
-              (i as any).decisions?.some?.((d: any) => d.id === id)
-            );
-            if (relatedInitiative) {
-              handleOpenDocument(relatedInitiative);
-            }
-          }
-        }}
-      />
-    </div>
-  );
-
   const sidePanelInitiative = useMemo(
     () => (selectedInitiative ? toPortfolioInitiative(selectedInitiative) : null),
     [selectedInitiative]
@@ -1819,66 +2062,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       return (
         <div className="flex items-center justify-center h-full">
           <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
-        </div>
-      );
-    }
-
-    // Handle RAID and Decisions tabs
-    if (activeTab === 'raid') {
-      return renderRAIDTab();
-    }
-
-    if (activeTab === 'decisions') {
-      return renderDecisionsTab();
-    }
-
-    // KPIs & Benefits tab
-    if (activeTab === ('kpi' as ModuleTab)) {
-      return (
-        <div className="p-4 space-y-8 overflow-auto">
-          <KPIDashboard
-            projectId={currentProjectId || ''}
-            onAddKPI={() =>
-              toast(
-                t('execution.kpi.addHint', 'Use the AI chat to define KPIs for your initiatives'),
-                { icon: 'ℹ️' }
-              )
-            }
-            onUpdateKPI={(kpiId, value) => {
-              Api.patch(`/pmo/kpis/${kpiId}`, { actual: value })
-                .then(() => {
-                  toast.success(t('execution.kpi.updated', 'KPI updated'));
-                })
-                .catch(() => toast.error(t('execution.kpi.updateFailed', 'Failed to update KPI')));
-            }}
-            onCreateCorrectiveAction={() => {
-              toast(t('execution.kpi.correctiveHint', 'Creating corrective action for KPI...'), {
-                icon: '🎯',
-              });
-            }}
-          />
-          <BenefitsTracker projectId={currentProjectId || ''} />
-          <CorrectiveActions
-            projectId={currentProjectId || ''}
-            onCreateAction={() =>
-              toast(
-                t(
-                  'execution.corrective.createHint',
-                  'Use the AI chat to create corrective actions'
-                ),
-                { icon: 'ℹ️' }
-              )
-            }
-            onUpdateAction={(actionId, updates) => {
-              Api.patch(`/pmo/corrective-actions/${actionId}`, updates)
-                .then(() => {
-                  toast.success(t('execution.corrective.updated', 'Action updated'));
-                })
-                .catch(() =>
-                  toast.error(t('execution.corrective.updateFailed', 'Failed to update action'))
-                );
-            }}
-          />
         </div>
       );
     }
@@ -1899,7 +2082,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 )}
               </p>
             </div>
-            {/* D5.2: Heatmap toggle */}
+            {/* D5.2: Heatmap toggle (kept as optional utility inside tab) */}
             <button
               onClick={() => setShowWorkloadHeatmap((v) => !v)}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -1912,6 +2095,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               {t('execution.heatmap', 'Workload Heatmap')}
             </button>
           </div>
+
           {showWorkloadHeatmap ? (
             <ExecutionWorkloadView
               initiatives={initiatives}
@@ -1920,11 +2104,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               }}
             />
           ) : (
-            <div className="text-sm text-slate-400">
-              {t(
-                'execution.initiativesTab.info',
-                'Select an initiative from the Execution Center tab to view details, or use the Workload Heatmap to see resource allocation.'
-              )}
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+              {renderExecutionView()}
             </div>
           )}
         </div>
@@ -1945,13 +2126,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return (
       <div className="p-4 space-y-6">
         {renderPortfolioHealth()}
+        {renderActionCenter()}
         {renderAIInsights()}
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-          {renderExecutionView()}
-        </div>
       </div>
     );
   };
+
+  const availableViewModes = useMemo(
+    () =>
+      activeTab === 'initiatives'
+        ? (['table', 'grid', 'kanban', 'timeline', 'calendar'] as ViewMode[])
+        : (['table'] as ViewMode[]),
+    [activeTab]
+  );
 
   return (
     <>
@@ -1970,11 +2157,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        statusDropdownContext="execution"
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}
-        statusCounts={statusDropdownCounts}
-        availableViewModes={['table', 'grid', 'kanban', 'timeline', 'calendar']}
+        rightControls={rightControls}
+        availableViewModes={availableViewModes}
       >
         {renderContent()}
       </ModuleHub>

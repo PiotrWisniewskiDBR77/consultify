@@ -1,21 +1,5 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+#!/usr/bin/env sh
 
-# Blokada duplikatów
-./scripts/testing/block-duplicates.sh || exit 1
-
-# Fast lint
-npx lint-staged --no-stash
-
-# Security integrity check (fast, ~1s)
-npx tsx scripts/security/verify-security-integrity.ts || {
-  echo "❌ Security integrity check failed! Fix before committing."
-  exit 1
-}
-
-# Critical security tests (fast, ~2-5s)
-npm run test:unit:critical || {
-  echo "❌ Critical tests failed! Fix before committing."
-  echo "Run 'npm run test:unit:critical' to see details."
-  exit 1
-}
+# Disabled: Husky pre-commit checks
+# Requested: "remove check and husky from commit"
+exit 0

@@ -328,6 +328,7 @@ const DroppableColumn: React.FC<{
   itemIds: string[];
   children: React.ReactNode;
 }> = ({ column, itemIds, children }) => {
+  const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
     data: { type: 'column', columnId: column.id },
@@ -363,7 +364,9 @@ const DroppableColumn: React.FC<{
               itemIds.length === 0 ? 'h-24' : 'h-14'
             } ${column.headerColor} opacity-40`}
           >
-            <span className={`text-xs font-medium ${column.headerColor}`}>Drop here</span>
+            <span className={`text-xs font-medium ${column.headerColor}`}>
+              {t('execution.kanban.dropHere', 'Drop here')}
+            </span>
           </div>
         )}
 
@@ -372,7 +375,7 @@ const DroppableColumn: React.FC<{
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className={`mb-2 ${column.headerColor} opacity-30`}>{column.icon}</div>
             <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-              No notifications
+              {t('myWork.notifications.emptyTitle', 'No notifications')}
             </p>
           </div>
         )}
@@ -761,9 +764,11 @@ export const NotificationsKanbanBoard: React.FC<NotificationsKanbanBoardProps> =
               className="text-slate-500 dark:text-slate-400 dark:text-slate-600 mb-4"
             />
             <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
-              No notifications
+              {t('myWork.notifications.emptyTitle', 'No notifications')}
             </h3>
-            <p className="text-sm text-slate-500">You're all caught up!</p>
+            <p className="text-sm text-slate-500">
+              {t('myWork.notifications.emptySubtitle', "You're all caught up!")}
+            </p>
           </div>
         </div>
       </div>

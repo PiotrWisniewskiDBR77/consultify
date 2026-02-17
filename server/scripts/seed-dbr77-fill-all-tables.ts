@@ -1156,6 +1156,361 @@ async function seedDiscoveryToolSessions(
   }
 }
 
+async function seedInterviewModuleDemoData(
+  db: any,
+  anchors: { orgId: string; userId: string; projectId: string }
+) {
+  const tableExists = async (name: string): Promise<boolean> => {
+    const row = await db
+      .get(`SELECT name FROM sqlite_master WHERE type='table' AND name=? LIMIT 1`, [name])
+      .catch(() => null);
+    return !!row?.name;
+  };
+
+  const hasTemplates = await tableExists('interview_library_templates');
+  const hasTemplateQuestions = await tableExists('interview_library_template_questions');
+  const hasSessions = await tableExists('interview_sessions');
+  const hasQuestions = await tableExists('interview_questions');
+  const hasAssignments = await tableExists('interview_assignments');
+  const hasInsights = await tableExists('interview_insights');
+
+  if (!hasTemplates) return;
+
+  const now = Date.now();
+  const daysAgo = (d: number) => new Date(now - d * 24 * 60 * 60 * 1000).toISOString();
+  const daysFromNow = (d: number) => new Date(now + d * 24 * 60 * 60 * 1000).toISOString();
+
+  // Pick a few users (if available) for realism.
+  const usersRes = await db
+    .query(`SELECT id FROM users WHERE organization_id = ? ORDER BY created_at DESC LIMIT 8`, [
+      anchors.orgId,
+    ])
+    .catch(() => ({ rows: [] as any[] }));
+  const orgUserIds = (usersRes?.rows || [])
+    .map((r: any) => String(r?.id || '').trim())
+    .filter(Boolean);
+  const pickUser = (i: number) => orgUserIds[i % Math.max(1, orgUserIds.length)] || anchors.userId;
+
+  const categories = ['strategy', 'operations', 'digital', 'people', 'finance'] as const;
+  const templateIds = Array.from(
+    { length: 10 },
+    (_, i) => `itpl-dbr77-${String(i + 1).padStart(2, '0')}`
+  );
+
+  // ------------------------------------------------------------------
+  // Templates + template questions (Library tab)
+  // ------------------------------------------------------------------
+  for (let i = 0; i < templateIds.length; i += 1) {
+    const templateId = templateIds[i];
+    const cat = categories[i % categories.length];
+
+    await upsertDynamicRow(db, 'interview_library_templates', {
+      id: templateId,
+      organization_id: anchors.orgId,
+      name: `DBR77 — ${cat.toUpperCase()} Discovery v${(i % 3) + 1}`,
+      description:
+        'Seeded interview template for demo: short, structured questions across the 5-category model.',
+      category: cat,
+      status: 'approved',
+      visibility: 'org',
+      is_default: 0,
+      version: 1,
+      created_by: anchors.userId,
+      created_at: daysAgo(30 + i),
+      updated_at: daysAgo(10 + i),
+    });
+
+    if (!hasTemplateQuestions) continue;
+
+    // 10 questions per template: 2 per category, consulting-grade phrasing.
+    const qDefs: Array<{ category: (typeof categories)[number]; text: string; sort: number }> = [
+      {
+        category: 'strategy',
+        text: 'What are the top 3 business priorities for the next 12 months?',
+        sort: 10,
+      },
+      { category: 'strategy', text: 'Which KPIs define success for your teams?', sort: 20 },
+      {
+        category: 'operations',
+        text: 'Where do you see the biggest bottlenecks in day-to-day execution?',
+        sort: 30,
+      },
+      { category: 'operations', text: 'Which processes fail most often and why?', sort: 40 },
+      { category: 'digital', text: 'Which tools are critical, and where do they break?', sort: 50 },
+      {
+        category: 'digital',
+        text: 'What data is missing to make faster decisions?',
+        sort: 60,
+      },
+      {
+        category: 'people',
+        text: 'What blocks adoption of change (skills, mindset, incentives)?',
+        sort: 70,
+      },
+      {
+        category: 'people',
+        text: 'Who are the key stakeholders and how do they influence outcomes?',
+        sort: 80,
+      },
+      {
+        category: 'finance',
+        text: 'Where do you see avoidable costs or budget leakage?',
+        sort: 90,
+      },
+      {
+        category: 'finance',
+        text: 'What are the biggest financial risks this quarter?',
+        sort: 100,
+      },
+    ];
+
+    for (let j = 0; j < qDefs.length; j += 1) {
+      const q = qDefs[j];
+      const qid = `itplq-dbr77-${String(i + 1).padStart(2, '0')}-${String(j + 1).padStart(2, '0')}`;
+      await upsertDynamicRow(db, 'interview_library_template_questions', {
+        id: qid,
+        template_id: templateId,
+        category: q.category,
+        question_text: q.text,
+        sort_order: q.sort,
+        answer_type: 'open',
+        is_required: 1,
+        help_hint: 'Seeded demo question',
+        answer_options: JSON.stringify([]),
+        created_at: daysAgo(29 + i),
+        updated_at: daysAgo(9 + i),
+      });
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Sessions + questions (Sessions tab)
+  // ------------------------------------------------------------------
+  const sessionIds = Array.from(
+    { length: 10 },
+    (_, i) => `isess-dbr77-${String(i + 1).padStart(2, '0')}`
+  );
+  const completedSessionIds: string[] = [];
+
+  if (hasSessions && hasQuestions) {
+    for (let i = 0; i < sessionIds.length; i += 1) {
+      const sid = sessionIds[i];
+      const tplId = templateIds[i % templateIds.length];
+      const statusRaw = i % 5 === 0 ? 'paused' : i % 3 === 0 ? 'completed' : 'active';
+      const startedAt = daysAgo(14 - (i % 7));
+      const lastActivityAt = daysAgo(2 + (i % 6));
+      const completedAt = statusRaw === 'completed' ? daysAgo(1 + (i % 5)) : null;
+      const totalQuestions = 12;
+      const answeredTarget =
+        statusRaw === 'completed'
+          ? Math.min(10, totalQuestions)
+          : Math.min(4 + (i % 4), totalQuestions);
+
+      // Create / upsert session
+      await upsertDynamicRow(db, 'interview_sessions', {
+        id: sid,
+        organization_id: anchors.orgId,
+        project_id: anchors.projectId,
+        user_id: pickUser(i),
+        topic: `Discovery Interview — ${String(i + 1).padStart(2, '0')}`,
+        name: `Interview — ${faker.company.name().slice(0, 28)}`,
+        owner_id: pickUser(i + 1),
+        status: statusRaw,
+        progress_json: JSON.stringify({
+          strategy: Math.min(100, 20 + i * 7),
+          operations: Math.min(100, 15 + i * 6),
+          digital: Math.min(100, 10 + i * 5),
+          people: Math.min(100, 12 + i * 4),
+          finance: Math.min(100, 8 + i * 4),
+        }),
+        template_id: tplId,
+        template_version: 1,
+        started_at: startedAt,
+        last_activity_at: lastActivityAt,
+        completed_at: completedAt,
+        created_at: startedAt,
+        updated_at: lastActivityAt,
+        summary_facts: JSON.stringify([
+          { category: 'operations', fact: 'Manual approvals cause delays during peak hours.' },
+          {
+            category: 'digital',
+            fact: 'Data is fragmented across 3 tools; no single source of truth.',
+          },
+        ]),
+        summary_gaps: JSON.stringify([
+          { category: 'finance', gap: 'No agreed definition of cost-to-serve across segments.' },
+        ]),
+        summary_constraints: JSON.stringify([
+          { category: 'people', constraint: 'Limited change capacity in key teams this quarter.' },
+        ]),
+        summary_pain_points: JSON.stringify([
+          {
+            category: 'strategy',
+            painPoint: 'Priorities change too often; execution loses focus.',
+          },
+        ]),
+        total_questions: totalQuestions,
+        answered_questions: answeredTarget,
+      });
+
+      // Seed 12 questions (mix answered / in-progress / follow-up)
+      const qCats = categories;
+      let answered = 0;
+      for (let q = 0; q < totalQuestions; q += 1) {
+        const qid = `iq-dbr77-${String(i + 1).padStart(2, '0')}-${String(q + 1).padStart(2, '0')}`;
+        const cat = qCats[q % qCats.length];
+        const isAnswered = q < answeredTarget;
+        const qStatus = isAnswered ? 'answered' : q % 4 === 0 ? 'needs_follow_up' : 'not_started';
+        if (isAnswered) answered += 1;
+
+        await upsertDynamicRow(db, 'interview_questions', {
+          id: qid,
+          session_id: sid,
+          organization_id: anchors.orgId,
+          category: cat,
+          question_text: `(${cat}) ${faker.lorem.sentence({ min: 6, max: 10 })}`,
+          answer_text: isAnswered ? faker.lorem.paragraph({ min: 1, max: 3 }) : '',
+          status: qStatus,
+          confidence_score: isAnswered ? 3 + (q % 3) : 0,
+          answered_by: isAnswered ? anchors.userId : null,
+          answered_at: isAnswered ? lastActivityAt : null,
+          tags: JSON.stringify(isAnswered ? ['seeded', cat] : ['seeded']),
+          sort_order: (q + 1) * 10,
+          is_template: 1,
+          created_at: startedAt,
+          updated_at: lastActivityAt,
+        });
+      }
+      // Best-effort UPDATE (won't fail if schema differs)
+      await db
+        .run(
+          `UPDATE interview_sessions SET total_questions = ?, answered_questions = ? WHERE id = ?`,
+          [totalQuestions, answered, sid]
+        )
+        .catch(() => null);
+
+      if (statusRaw === 'completed') completedSessionIds.push(sid);
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Assignments (Inbox + Assigned + Overdue tabs)
+  // ------------------------------------------------------------------
+  if (hasAssignments) {
+    const statuses = ['assigned', 'in_progress', 'sent_back', 'submitted', 'approved'] as const;
+    const priorities = ['low', 'medium', 'high', 'urgent'] as const;
+
+    for (let i = 0; i < 10; i += 1) {
+      const id = `ia-dbr77-${String(i + 1).padStart(2, '0')}`;
+      const status = statuses[i % statuses.length];
+      const priority = priorities[(i + 1) % priorities.length];
+      const dueAt =
+        i % 4 === 0
+          ? daysAgo(2 + (i % 3)) // overdue
+          : daysFromNow(2 + (i % 10));
+      const maybeSessionId =
+        status === 'in_progress' || status === 'submitted' || status === 'approved'
+          ? sessionIds[i % sessionIds.length]
+          : null;
+
+      await upsertDynamicRow(db, 'interview_assignments', {
+        id,
+        organization_id: anchors.orgId,
+        project_id: anchors.projectId,
+        assignee_user_id: anchors.userId, // show up in Inbox
+        template_id: templateIds[i % templateIds.length],
+        template_version: 1,
+        process_ref: `PROC-${String(1000 + i)}`,
+        status,
+        session_id: maybeSessionId,
+        due_at: dueAt,
+        priority,
+        is_team_assignment: 0,
+        notes: 'Seeded assignment for demo (Inbox/Assigned/Overdue coverage).',
+        escalate_to: anchors.userId,
+        created_by: anchors.userId, // also show up in Assigned (managed)
+        created_at: daysAgo(12 + i),
+        updated_at: daysAgo(1 + (i % 5)),
+        started_at: status !== 'assigned' ? daysAgo(10 + (i % 4)) : null,
+        submitted_at: status === 'submitted' || status === 'approved' ? daysAgo(3 + (i % 3)) : null,
+        sent_back_at: status === 'sent_back' ? daysAgo(1 + (i % 2)) : null,
+        sent_back_reason:
+          status === 'sent_back' ? 'Please add concrete examples and evidence links.' : null,
+      });
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Insights (Insights + Assessments tabs)
+  // ------------------------------------------------------------------
+  if (hasInsights) {
+    const promptTypes = [
+      'summary',
+      'trends',
+      'problems',
+      'comparison',
+      'gaps',
+      'risk_assessment',
+      'opportunity_scan',
+      'maturity',
+      'stakeholder_map',
+      'recommendations',
+    ] as const;
+
+    const sessionsPool =
+      completedSessionIds.length > 0 ? completedSessionIds : sessionIds.slice(0, 4);
+
+    for (let i = 0; i < 10; i += 1) {
+      const id = `ii-dbr77-${String(i + 1).padStart(2, '0')}`;
+      const promptType = promptTypes[i % promptTypes.length] as any;
+      const sourceIds = sessionsPool.slice(0, 1 + (i % Math.min(3, sessionsPool.length)));
+      const content = `## Executive Summary
+
+- Approvals are a recurring bottleneck across multiple teams.
+- Data fragmentation leads to duplicated work and low confidence decisions.
+
+## Main Themes
+
+1. **Speed vs control** — too many gates for low-risk changes.
+2. **Tool sprawl** — teams work in silos, no shared workflow.
+3. **Ownership ambiguity** — decisions lack a clear single owner.
+
+## Evidence (anonymized)
+
+- “We wait 2–3 days for approvals on routine changes.”
+- “We export to spreadsheets because the system doesn't show end-to-end status.”
+`;
+
+      await upsertDynamicRow(db, 'interview_insights', {
+        id,
+        session_id: sourceIds[0] || null,
+        organization_id: anchors.orgId,
+        category: 'general',
+        title: `DBR77 Insight ${String(i + 1).padStart(2, '0')} — ${promptType}`,
+        prompt_type: promptType,
+        insight_type: promptType, // legacy schema compatibility
+        source_session_ids: JSON.stringify(sourceIds),
+        filters: JSON.stringify({ seeded: true, promptType }),
+        status: 'completed',
+        source_session_count: sourceIds.length,
+        content,
+        description: content, // legacy schema compatibility
+        tokens_used: 0,
+        generation_time_ms: 0,
+        exported_to_tools: i % 3 === 0 ? 1 : 0,
+        exported_to_assessment: i % 4 === 0 ? 1 : 0,
+        created_by: anchors.userId,
+        created_at: daysAgo(7 + i),
+        updated_at: daysAgo(1 + (i % 4)),
+      });
+    }
+  }
+
+  log.step(
+    `Seeded Interview module demo data: templates=${templateIds.length}, sessions=${sessionIds.length}, assignments=10, insights=10`
+  );
+}
+
 async function main() {
   console.log('\n🧩 DBR77: Fill All Tables Seeder (SQLite)\n');
 
@@ -1272,6 +1627,7 @@ async function main() {
   await seedReportBuilderBlockLibrary(db, anchors);
   await seedInitiativeModuleDemoData(db, anchors);
   await seedDiscoveryToolSessions(db, anchors);
+  await seedInterviewModuleDemoData(db, anchors);
 
   // Baseline table inventory (before fill)
   const tables = await getTables(db);
