@@ -426,8 +426,11 @@ class PostgresDatabase implements IDatabase {
         return result;
       })
       .catch((err: Error | null) => {
-        logger.error('[Postgres] Run Error:', err?.message, adaptedSql);
-        if (callback) callback(err);
+        logger.error('[Postgres] Run Error:');
+        if (callback) {
+          callback(err);
+          return { changes: 0, lastID: undefined } as RunResult;
+        }
         throw err;
       });
 
@@ -459,8 +462,10 @@ class PostgresDatabase implements IDatabase {
         return row as T | null;
       })
       .catch((err: Error | null) => {
-        // Error logged in executeWithLogging
-        if (callback) callback(err, null);
+        if (callback) {
+          callback(err, null);
+          return null as T | null;
+        }
         throw err;
       });
 
@@ -491,7 +496,10 @@ class PostgresDatabase implements IDatabase {
         return res.rows;
       })
       .catch((err: Error | null) => {
-        if (callback) callback(err, []);
+        if (callback) {
+          callback(err, []);
+          return [] as T[];
+        }
         throw err;
       });
 
@@ -522,17 +530,20 @@ class PostgresDatabase implements IDatabase {
       if (callback) callback(null);
       return Promise.resolve();
     }
+    // Capture and nullify immediately to prevent double-close race condition
+    const poolToClose = pool;
+    const readPoolToClose = readPool;
+    pool = null;
+    readPool = null;
+
     const promise = Promise.resolve()
       .then(() => {
         logger.info('[Postgres] Closing connection pool...');
-        return pool?.end();
+        return poolToClose?.end();
       })
       .then(() => {
-        pool = null;
-        if (readPool) {
-          return readPool.end().then(() => {
-            readPool = null;
-          });
+        if (readPoolToClose && readPoolToClose !== poolToClose) {
+          return readPoolToClose.end().then(() => {});
         }
         return Promise.resolve();
       })
@@ -540,7 +551,10 @@ class PostgresDatabase implements IDatabase {
         if (callback) callback(null);
       })
       .catch((err: Error | null) => {
-        if (callback) callback(err);
+        if (callback) {
+          callback(err);
+          return;
+        }
         throw err;
       });
 

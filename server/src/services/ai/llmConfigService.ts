@@ -158,6 +158,18 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     tier: 'STANDARD',
     requiresJWT: true,
   },
+  openrouter: {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    envKey: 'OPENROUTER_API_KEY',
+    defaultEndpoint: 'https://openrouter.ai/api/v1/chat/completions',
+    defaultModel: 'anthropic/claude-3.5-sonnet',
+    costPer1k: 0.008,
+    supportsStreaming: true,
+    supportsVision: true,
+    supportsTools: true,
+    tier: 'STANDARD',
+  },
   ollama: {
     id: 'ollama',
     name: 'Ollama (Local)',
@@ -353,12 +365,12 @@ export class LLMConfigService {
 
   async migrateTable(): Promise<void> {
     const migrations = [
-      'ALTER TABLE llm_providers ADD COLUMN priority INTEGER DEFAULT 0',
-      'ALTER TABLE llm_providers ADD COLUMN last_health_check TEXT',
-      "ALTER TABLE llm_providers ADD COLUMN health_status TEXT DEFAULT 'unknown'",
-      'ALTER TABLE llm_providers ADD COLUMN updated_at TEXT',
-      'ALTER TABLE llm_providers ADD COLUMN description TEXT',
-      "ALTER TABLE llm_providers ADD COLUMN tier TEXT DEFAULT 'STANDARD'",
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0',
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_health_check TEXT',
+      "ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS health_status TEXT DEFAULT 'unknown'",
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS updated_at TEXT',
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS description TEXT',
+      "ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS tier TEXT DEFAULT 'STANDARD'",
     ];
 
     for (const sql of migrations) {
@@ -366,10 +378,26 @@ export class LLMConfigService {
         await this.runAsync(sql);
       } catch (error: unknown) {
         const err = error as Error;
-        if (!err.message.includes('duplicate column')) {
+        if (
+          !err.message.includes('duplicate column') &&
+          !err.message.includes('already exists')
+        ) {
           aiLogger.warn('LLMConfigService', `Migration warning: ${err.message}`);
         }
       }
+    }
+
+    // Allow FREE tier in llm_tier_assignments (Railway Postgres has a CHECK constraint without it)
+    try {
+      await this.runAsync(
+        'ALTER TABLE llm_tier_assignments DROP CONSTRAINT IF EXISTS llm_tier_assignments_tier_check'
+      );
+      await this.runAsync(
+        "ALTER TABLE llm_tier_assignments ADD CONSTRAINT llm_tier_assignments_tier_check CHECK ((tier = ANY (ARRAY['BUDGET'::text, 'STANDARD'::text, 'PREMIUM'::text, 'REASONING'::text, 'FREE'::text])))"
+      );
+    } catch (error: unknown) {
+      const err = error as Error;
+      aiLogger.warn('LLMConfigService', `Tier constraint migration warning: ${err.message}`);
     }
   }
 
@@ -464,8 +492,8 @@ export class LLMConfigService {
       try {
         await this.runAsync(
           `INSERT OR IGNORE INTO llm_tier_assignments (id, provider_id, tier, priority, is_active)
-           VALUES (?, ?, ?, ?, 1)`,
-          [assignmentId, p.id, tier, TIER_PRIORITY[tier] || 1]
+           VALUES (?, ?, ?, ?, ?)`,
+          [assignmentId, p.id, tier, TIER_PRIORITY[tier] || 1, true]
         );
       } catch (err: unknown) {
         const error = err as Error;

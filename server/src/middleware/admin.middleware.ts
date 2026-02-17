@@ -19,7 +19,7 @@ type UserRole = string;
 // HELPERS
 // ==========================================
 
-const isAdminRole = (role: UserRole | undefined): boolean => {
+export const isAdminRole = (role: UserRole | undefined): boolean => {
   if (!role) return false;
   const normalized = String(role).toLowerCase();
   return ['admin', 'administrator', 'superadmin', 'owner'].includes(normalized);

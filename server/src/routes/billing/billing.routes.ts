@@ -2587,6 +2587,25 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
+      const parseNotifyEmails = (raw: unknown): string[] => {
+        if (!raw) return [];
+        if (Array.isArray(raw)) return raw.map(String).filter(Boolean);
+        if (typeof raw !== 'string') return [];
+        const trimmed = raw.trim();
+        if (!trimmed) return [];
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+        } catch {
+          // fall through
+        }
+        // Legacy rows may store a single email or a comma/semicolon separated list.
+        return trimmed
+          .split(/[,\s;]+/g)
+          .map((s) => s.trim())
+          .filter(Boolean);
+      };
+
       const orgId = req.user!.organizationId;
       interface SpendingAlertRow {
         id: string;
@@ -2607,7 +2626,7 @@ router.get(
       return res.json(
         alerts.map((a) => ({
           ...a,
-          notifyEmails: JSON.parse(a.notify_emails || '[]'),
+          notifyEmails: parseNotifyEmails(a.notify_emails),
           thresholdType: a.threshold_type,
           isActive: !!a.is_active,
           lastTriggeredAt: a.last_triggered_at,

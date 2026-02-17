@@ -130,7 +130,7 @@ export const useBreadcrumbs = () => {
   else if (currentView.startsWith('CONTEXT_BUILDER')) {
     section = t('sidebar.organization', 'Organization');
     if (currentView === AppView.CONTEXT_BUILDER_PROFILE) {
-      sub = t('settings.profile', 'Profile');
+      sub = t('settings.sidebar.profile', 'Profile');
     } else if (currentView === AppView.CONTEXT_BUILDER_GOALS) {
       sub = t('common.goals', 'Goals');
     } else if (currentView === AppView.CONTEXT_BUILDER_CHALLENGES) {
@@ -140,7 +140,7 @@ export const useBreadcrumbs = () => {
     } else if (currentView === AppView.CONTEXT_BUILDER_STRATEGY) {
       sub = t('common.strategy', 'Strategy');
     } else {
-      sub = t('settings.profile', 'Profile');
+      sub = t('settings.sidebar.profile', 'Profile');
     }
   }
   // =====================================================
@@ -250,7 +250,7 @@ export const useBreadcrumbs = () => {
       currentView === AppView.SETTINGS_PROFILE ||
       currentView === AppView.SETTINGS_PROFILE_MODULE
     ) {
-      sub = t('settings.profile', 'Profile');
+      sub = t('settings.sidebar.profile', 'Profile');
     } else if (currentView === AppView.SETTINGS_BILLING) {
       sub = t('settings.billing', 'Billing');
     } else if (currentView === AppView.SETTINGS_AI || currentView === AppView.SETTINGS_AI_MODULE) {

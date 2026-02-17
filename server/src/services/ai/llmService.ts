@@ -270,6 +270,11 @@ function getProviderSync(modelConfig: ModelConfig) {
         apiKey: effectiveApiKey,
         baseURL: endpoint || 'https://api.cohere.ai/v1',
       });
+    case 'openrouter':
+      return createOpenAI({
+        apiKey: effectiveApiKey || process.env.OPENROUTER_API_KEY,
+        baseURL: endpoint || 'https://openrouter.ai/api/v1',
+      });
     case 'ollama':
       return createOpenAI({
         apiKey: 'ollama',

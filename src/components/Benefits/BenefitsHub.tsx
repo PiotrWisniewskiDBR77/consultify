@@ -274,7 +274,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
     () => [
       {
         id: 'type',
-        label: 'Type',
+        label: t('benefits.columns.type', 'Type'),
         width: '80px',
         render: (row) => {
           const code = getTypeCode(row.axis);
@@ -288,7 +288,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       },
       {
         id: 'name',
-        label: 'Name',
+        label: t('benefits.columns.name', 'Name'),
         render: (row) => (
           <div>
             <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
@@ -302,7 +302,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       },
       {
         id: 'status',
-        label: 'Status',
+        label: t('benefits.columns.status', 'Status'),
         width: '130px',
         filterable: true,
         filterOptions: BENEFITS_STATUSES.map((status) => ({
@@ -313,7 +313,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       },
       {
         id: 'roi',
-        label: 'ROI',
+        label: t('benefits.columns.roi', 'ROI'),
         width: '100px',
         render: (row) => {
           if (!row.expectedRoi || row.expectedRoi <= 0) {
@@ -324,7 +324,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       },
       {
         id: 'budget',
-        label: 'Budget',
+        label: t('benefits.columns.budget', 'Budget'),
         width: '120px',
         render: (row) => {
           if (!row.costCapex) return <span className="text-slate-500 text-sm">-</span>;
@@ -339,12 +339,12 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       },
       {
         id: 'updatedAt',
-        label: 'Completed',
+        label: t('benefits.columns.completed', 'Completed'),
         width: '100px',
         sortable: true,
       },
     ],
-    []
+    [t]
   );
 
   // Handlers
@@ -437,7 +437,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                 <Target className="w-5 h-5 text-purple-400" />
               </div>
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Total KPIs</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t('benefits.kpiCards.totalKpis', 'Total KPIs')}</p>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">
                   {kpiStats.total}
                 </p>
@@ -450,7 +450,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                 <TrendingUp className="w-5 h-5 text-green-400" />
               </div>
               <div>
-                <p className="text-sm text-slate-400">On Target</p>
+                <p className="text-sm text-slate-400">{t('benefits.kpiCards.onTarget', 'On Target')}</p>
                 <p className="text-2xl font-bold text-green-400">{kpiStats.onTarget}</p>
               </div>
             </div>
@@ -461,7 +461,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                 <TrendingDown className="w-5 h-5 text-red-400" />
               </div>
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Below Target</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t('benefits.kpiCards.belowTarget', 'Below Target')}</p>
                 <p className="text-2xl font-bold text-red-400">{kpiStats.belowTarget}</p>
               </div>
             </div>
@@ -472,9 +472,9 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
         {kpis.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <BarChart3 className="w-12 h-12 text-slate-600 mb-3" />
-            <p className="text-slate-500 dark:text-slate-400">No KPIs defined yet</p>
+            <p className="text-slate-500 dark:text-slate-400">{t('benefits.kpiEmpty.noKpis', 'No KPIs defined yet')}</p>
             <p className="text-sm text-slate-500 mt-1">
-              Complete initiatives and add KPIs to track benefits
+              {t('benefits.kpiEmpty.completeToTrack', 'Complete initiatives and add KPIs to track benefits')}
             </p>
           </div>
         ) : (
@@ -499,13 +499,13 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                     className="flex items-center gap-1 text-sm text-purple-400 hover:text-purple-300"
                   >
                     <Plus size={14} />
-                    Add KPI
+                    {t('benefits.kpiActions.addKpi', 'Add KPI')}
                   </button>
                 </div>
 
                 {initiativeKpis.length === 0 ? (
                   <div className="p-6 text-center text-slate-500">
-                    No KPIs defined for this initiative
+                    {t('benefits.kpiEmpty.noKpisForInitiative', 'No KPIs defined for this initiative')}
                   </div>
                 ) : (
                   <div className="divide-y divide-navy-700">
@@ -538,7 +538,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                           </div>
                           <div className="flex items-center gap-6 text-right">
                             <div>
-                              <p className="text-xs text-slate-500">Current</p>
+                              <p className="text-xs text-slate-500">{t('benefits.kpiLabels.current', 'Current')}</p>
                               <p
                                 className={`text-lg font-bold ${kpi.isOnTarget ? 'text-green-400' : 'text-red-400'}`}
                               >
@@ -546,7 +546,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                               </p>
                             </div>
                             <div>
-                              <p className="text-xs text-slate-500">Target</p>
+                              <p className="text-xs text-slate-500">{t('benefits.kpiLabels.target', 'Target')}</p>
                               <p className="text-lg font-bold text-slate-900 dark:text-white">
                                 {kpi.targetValue ?? '-'} {kpi.unit}
                               </p>
@@ -598,7 +598,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
             onItemAction={(action: string, item: GridItem) =>
               handleRowAction(action, item as unknown as BenefitsInitiative)
             }
-            emptyMessage="No completed initiatives yet."
+            emptyMessage={t('benefits.empty.noCompleted', 'No completed initiatives yet.')}
           />
         );
       }
@@ -612,7 +612,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
           }
           activeFilters={activeFilters}
           onFilterChange={setActiveFilters}
-          emptyMessage="No completed initiatives yet."
+          emptyMessage={t('benefits.empty.noCompleted', 'No completed initiatives yet.')}
         />
       );
     }
@@ -628,11 +628,10 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
         <div className="flex items-center justify-center h-full text-slate-500">
           <div className="text-center">
             <TrendingUp className="w-12 h-12 mx-auto mb-4 text-emerald-400/50" />
-            <p className="text-lg text-slate-900 dark:text-white">ROI Analysis</p>
+            <p className="text-lg text-slate-900 dark:text-white">{t('benefits.roiAnalysis.title', 'ROI Analysis')}</p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Return on investment calculations
+              {t('benefits.roiAnalysis.subtitle', 'Return on investment calculations')}
             </p>
-            <p className="mt-4 text-xs">Connect to existing ROI component</p>
           </div>
         </div>
       );
@@ -647,7 +646,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       return [
         {
           id: 'add-kpi',
-          label: 'Add KPI',
+          label: t('benefits.kpiActions.addKpi', 'Add KPI'),
           icon: <Plus size={16} />,
           count: 0,
           onClick: handleAddKpi,

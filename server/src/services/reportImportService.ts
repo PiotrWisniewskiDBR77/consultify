@@ -23,9 +23,22 @@ export type ImportStatus =
   | 'detecting'
   | 'extracting'
   | 'ready_for_review'
-  | 'processed'
+  | 'assessment_created'
+  | 'initiatives_created'
+  | 'completed'
   | 'failed';
 export type TargetType = 'assessment' | 'report';
+
+export interface ExtractedInitiative {
+  title: string;
+  description?: string;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  effort?: 'low' | 'medium' | 'high';
+  impact?: 'low' | 'medium' | 'high';
+  timeline?: string;
+  category?: string;
+  sourceSection?: string;
+}
 
 export interface ExtractedMetadata {
   sourceFileName: string;
@@ -107,7 +120,11 @@ export interface ExtractedReportData {
   metadata: ExtractedMetadata;
   scores: ExtractedScores;
   rawText: string;
+  canonicalMarkdown?: string;
+  autoSummary?: string;
+  initiatives?: ExtractedInitiative[];
   extractionDetails: ExtractionDetails;
+  coveragePercent?: number;
 }
 
 export interface ImportedReport {
@@ -124,8 +141,13 @@ export interface ImportedReport {
   mappedData: any;
   extractionDetails: ExtractionDetails;
   documentMetadata: ExtractedMetadata;
+  canonicalMarkdown?: string;
+  autoSummary?: string;
+  coveragePercent?: number;
   targetType?: TargetType;
   targetId?: string;
+  initiativesCreated?: number;
+  initiativesTargetIds?: string[];
   status: ImportStatus;
   processingError?: string;
   processingLog?: string;
@@ -1088,14 +1110,23 @@ Extract and return JSON:
       extractionMethod: this.aiService ? 'ai_assisted' : 'pattern_based',
     };
 
+    // Extract initiatives
+    const initiatives = await this.extractInitiatives(rawText, detection.framework);
+
     const extractedData: ExtractedReportData = {
       framework: detection.framework,
       confidence: detection.confidence,
       metadata,
       scores,
-      rawText: rawText.substring(0, 10000), // Limit stored text
+      rawText: rawText.substring(0, 10000),
+      canonicalMarkdown: rawText.substring(0, 50000),
+      initiatives,
       extractionDetails,
+      coveragePercent: validation.completeness,
     };
+
+    // Generate auto-summary
+    extractedData.autoSummary = this.generateAutoSummary(extractedData);
 
     // Update database
     await this.updateExtractedData(
@@ -1106,7 +1137,7 @@ Extract and return JSON:
     );
 
     logger.info(
-      `[ReportImport] Processing complete: ${importId}, framework: ${detection.framework}`
+      `[ReportImport] Processing complete: ${importId}, framework: ${detection.framework}, initiatives: ${initiatives.length}`
     );
 
     return extractedData;
@@ -1116,9 +1147,6 @@ Extract and return JSON:
    * Extract text from file based on format
    */
   private async extractText(filePath: string, format: SupportedFormat): Promise<string> {
-    // For now, use simple text extraction
-    // In production, integrate with pdf-parse, xlsx, mammoth, etc.
-
     if (format === 'json') {
       const content = fs.readFileSync(filePath, 'utf-8');
       return JSON.stringify(JSON.parse(content), null, 2);
@@ -1128,10 +1156,26 @@ Extract and return JSON:
       return fs.readFileSync(filePath, 'utf-8');
     }
 
-    // For PDF/DOCX/XLSX, we would use specialized libraries
-    // For now, return placeholder
+    if (format === 'pdf') {
+      try {
+        const pdfParse = (await import('pdf-parse')).default;
+        const buffer = fs.readFileSync(filePath);
+        const pdfData = await pdfParse(buffer);
+        logger.info(`[ReportImport] PDF parsed: ${pdfData.numpages} pages, ${pdfData.text.length} chars`);
+        return pdfData.text;
+      } catch (err: any) {
+        logger.warn(`[ReportImport] pdf-parse failed: ${err.message}, falling back to raw read`);
+        // Fallback: try to read as text
+        try {
+          return fs.readFileSync(filePath, 'utf-8');
+        } catch {
+          return `[PDF parsing failed: ${err.message}]`;
+        }
+      }
+    }
+
+    // For DOCX/XLSX, try to read as text (basic fallback)
     try {
-      // Try to read as text (works for some PDFs)
       const content = fs.readFileSync(filePath, 'utf-8');
       return content;
     } catch {
@@ -1238,6 +1282,287 @@ Extract and return JSON:
     }
 
     return missing;
+  }
+
+  // ============================================
+  // INITIATIVE EXTRACTION
+  // ============================================
+
+  /**
+   * Extract initiatives from document text using pattern matching + AI
+   */
+  async extractInitiatives(text: string, framework: SupportedFramework): Promise<ExtractedInitiative[]> {
+    const initiatives: ExtractedInitiative[] = [];
+
+    // Pattern-based extraction: look for numbered initiative lists
+    const initiativePatterns = [
+      // "Initiative N:" or "Inicjatywa N:"
+      /(?:Initiative|Inicjatywa|Recommendation|Rekomendacja)\s*[\d#]+[:.]\s*(.+?)(?:\n|$)/gi,
+      // Bullet points with action verbs
+      /[-•]\s*((?:Implement|Deploy|Develop|Create|Build|Migrate|Upgrade|Automate|Optimize|Establish|Design|Launch|Integrate|Wdrożyć|Opracować|Stworzyć|Zbudować|Zmigrować|Zautomatyzować|Zoptymalizować)\s+.+?)(?:\n|$)/gi,
+      // Numbered lists (1. / 1) style)
+      /(?:^|\n)\s*\d+[.)]\s*((?:Implement|Deploy|Develop|Create|Build|Migrate|Upgrade|Automate|Optimize|Establish|Design|Launch|Integrate|Wdrożyć|Opracować|Stworzyć|Zbudować|Zmigrować|Zautomatyzować|Zoptymalizować)\s+.+?)(?:\n|$)/gi,
+    ];
+
+    for (const pattern of initiativePatterns) {
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        const title = match[1]?.trim();
+        if (title && title.length > 10 && title.length < 500) {
+          // Avoid duplicates
+          if (!initiatives.find(i => i.title.toLowerCase() === title.toLowerCase())) {
+            initiatives.push({
+              title,
+              priority: 'medium',
+              sourceSection: 'pattern_extraction',
+            });
+          }
+        }
+      }
+    }
+
+    // If AI service is available, use it for better extraction
+    if (this.aiService && text.length > 500) {
+      try {
+        const prompt = `Extract all initiatives, recommendations, and action items from the following assessment report.
+For each initiative, provide:
+- title: concise name (max 100 chars)
+- description: brief description (max 300 chars)
+- priority: low/medium/high/critical
+- effort: low/medium/high
+- impact: low/medium/high
+- timeline: when should be implemented (e.g. "Q1 2026", "3-6 months")
+- category: area/axis this initiative relates to
+
+Document text (first 10000 characters):
+${text.substring(0, 10000)}
+
+Respond in JSON format:
+{
+  "initiatives": [
+    { "title": "...", "description": "...", "priority": "...", "effort": "...", "impact": "...", "timeline": "...", "category": "..." }
+  ]
+}`;
+
+        const response = await this.aiService.generateText(prompt, {
+          maxTokens: 4000,
+          temperature: 0.2,
+        });
+
+        const parsed = JSON.parse(response);
+        if (Array.isArray(parsed.initiatives) && parsed.initiatives.length > 0) {
+          return parsed.initiatives.map((init: any) => ({
+            title: String(init.title || '').substring(0, 200),
+            description: String(init.description || '').substring(0, 500),
+            priority: ['low', 'medium', 'high', 'critical'].includes(init.priority) ? init.priority : 'medium',
+            effort: ['low', 'medium', 'high'].includes(init.effort) ? init.effort : 'medium',
+            impact: ['low', 'medium', 'high'].includes(init.impact) ? init.impact : 'medium',
+            timeline: String(init.timeline || ''),
+            category: String(init.category || ''),
+            sourceSection: 'ai_extraction',
+          }));
+        }
+      } catch (error) {
+        logger.warn('[ReportImport] AI initiative extraction failed, using pattern-based results');
+      }
+    }
+
+    return initiatives;
+  }
+
+  // ============================================
+  // AUTO-SUMMARY GENERATION
+  // ============================================
+
+  /**
+   * Generate auto-summary from extracted data
+   */
+  generateAutoSummary(data: ExtractedReportData): string {
+    const { framework, metadata, scores, initiatives, extractionDetails } = data;
+    const parts: string[] = [];
+
+    parts.push(`## Imported ${framework} Assessment Report`);
+    parts.push('');
+
+    if (metadata.organizationName) {
+      parts.push(`**Organization:** ${metadata.organizationName}`);
+    }
+    if (metadata.assessmentDate) {
+      parts.push(`**Assessment Date:** ${metadata.assessmentDate}`);
+    }
+    parts.push(`**Source File:** ${metadata.sourceFileName}`);
+    parts.push(`**Detection Confidence:** ${data.confidence}%`);
+    parts.push('');
+
+    // Scores summary
+    if (framework === 'DRD') {
+      const drd = scores as DRDExtractedScores;
+      if (drd.overallScore) {
+        parts.push(`### Overall Score: ${drd.overallScore}`);
+      }
+      const axisCount = Object.keys(drd.axes).length;
+      const areaCount = Object.keys(drd.areas).length;
+      parts.push(`**Axes recognized:** ${axisCount}/7`);
+      parts.push(`**Areas recognized:** ${areaCount}/34`);
+
+      if (axisCount > 0) {
+        parts.push('');
+        parts.push('### Axis Scores');
+        for (const axis of DRD_AXES) {
+          const axisScore = drd.axes[axis.id.toString()];
+          if (axisScore) {
+            parts.push(`- **${axis.name}**: ${axisScore.actual}${axisScore.target ? ` → ${axisScore.target}` : ''}`);
+          } else {
+            parts.push(`- **${axis.name}**: _not recognized_`);
+          }
+        }
+      }
+    }
+
+    // Initiatives summary
+    if (initiatives && initiatives.length > 0) {
+      parts.push('');
+      parts.push(`### Initiatives Extracted: ${initiatives.length}`);
+      for (const init of initiatives.slice(0, 10)) {
+        parts.push(`- ${init.title}`);
+      }
+      if (initiatives.length > 10) {
+        parts.push(`- _...and ${initiatives.length - 10} more_`);
+      }
+    }
+
+    // Coverage
+    parts.push('');
+    parts.push('### Extraction Quality');
+    parts.push(`- **Fields found:** ${extractionDetails.fieldsFound.length}`);
+    parts.push(`- **Fields missing:** ${extractionDetails.fieldsMissing.length}`);
+    if (extractionDetails.warnings.length > 0) {
+      parts.push(`- **Warnings:** ${extractionDetails.warnings.join('; ')}`);
+    }
+
+    return parts.join('\n');
+  }
+
+  // ============================================
+  // CREATE ASSESSMENT FROM IMPORT
+  // ============================================
+
+  /**
+   * Create Assessment from an imported report (separate action from confirm)
+   */
+  async createAssessmentFromImport(
+    importId: string,
+    organizationId: string,
+    userId: string,
+    projectId?: string
+  ): Promise<{ assessmentId: string }> {
+    const importRecord = await this.getImport(importId, organizationId);
+
+    if (!importRecord.extractedData) {
+      throw new Error('Import has not been processed yet. Call /detect first.');
+    }
+
+    if (importRecord.targetId) {
+      throw new Error(`Assessment already created: ${importRecord.targetId}`);
+    }
+
+    const { scores, framework, metadata } = importRecord.extractedData;
+    const assessmentId = await this.createAssessment(
+      scores,
+      framework,
+      metadata,
+      organizationId,
+      userId,
+      projectId || importRecord.projectId
+    );
+
+    // Update import record with assessment reference
+    await this.updateTarget(importId, 'assessment', assessmentId);
+
+    logger.info(`[ReportImport] Assessment created from import ${importId}: ${assessmentId}`);
+    return { assessmentId };
+  }
+
+  // ============================================
+  // CREATE INITIATIVES FROM IMPORT
+  // ============================================
+
+  /**
+   * Create Initiatives from an imported report (separate action)
+   */
+  async createInitiativesFromImport(
+    importId: string,
+    organizationId: string,
+    userId: string,
+    projectId?: string
+  ): Promise<{ initiativeIds: string[]; count: number }> {
+    const importRecord = await this.getImport(importId, organizationId);
+
+    if (!importRecord.extractedData) {
+      throw new Error('Import has not been processed yet. Call /detect first.');
+    }
+
+    const initiatives = importRecord.extractedData.initiatives || [];
+    if (initiatives.length === 0) {
+      throw new Error('No initiatives found in the imported report.');
+    }
+
+    const initiativeIds: string[] = [];
+
+    for (const init of initiatives) {
+      const initiativeId = uuidv4();
+      const sql = `
+        INSERT INTO initiatives (
+          id, organization_id, project_id,
+          title, name, summary, hypothesis, description,
+          priority, status,
+          source_type, source_id, source_report_id, created_from,
+          tags,
+          created_by, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_REVIEW', 'pdf_import', ?, ?, 'assessment', ?, ?, datetime('now'), datetime('now'))
+      `;
+
+      try {
+        await DbPromise.run(this.db, sql, [
+          initiativeId,
+          organizationId,
+          projectId || importRecord.projectId || null,
+          init.title,
+          init.title,
+          init.description || '',
+          init.description || '',
+          init.description || '',
+          init.priority || 'medium',
+          importId,
+          importId,
+          JSON.stringify([init.category || 'imported', 'pdf-import']),
+          userId,
+        ]);
+        initiativeIds.push(initiativeId);
+      } catch (error: any) {
+        logger.warn(`[ReportImport] Failed to create initiative "${init.title}":`, error.message);
+      }
+    }
+
+    // Update import record with initiative references
+    const updateSql = `
+      UPDATE imported_reports
+      SET initiatives_created = ?,
+          initiatives_target_ids = ?,
+          status = CASE WHEN target_id IS NOT NULL THEN 'completed' ELSE 'initiatives_created' END,
+          updated_at = datetime('now')
+      WHERE id = ?
+    `;
+    await DbPromise.run(this.db, updateSql, [
+      initiativeIds.length,
+      JSON.stringify(initiativeIds),
+      importId,
+    ]);
+
+    logger.info(
+      `[ReportImport] ${initiativeIds.length} initiatives created from import ${importId}`
+    );
+    return { initiativeIds, count: initiativeIds.length };
   }
 
   // ============================================
@@ -1467,7 +1792,11 @@ Extract and return JSON:
         extracted_data_json = ?,
         extraction_details_json = ?,
         document_metadata_json = ?,
-        status = 'ready_for_review'
+        canonical_markdown = ?,
+        auto_summary = ?,
+        coverage_percent = ?,
+        status = 'ready_for_review',
+        updated_at = datetime('now')
       WHERE id = ?
     `;
 
@@ -1477,6 +1806,9 @@ Extract and return JSON:
       JSON.stringify(data),
       JSON.stringify(data.extractionDetails),
       JSON.stringify(data.metadata),
+      data.canonicalMarkdown || '',
+      data.autoSummary || '',
+      data.coveragePercent || 0,
       importId,
     ]);
   }
@@ -1494,7 +1826,11 @@ Extract and return JSON:
       SET 
         target_type = ?,
         target_id = ?,
-        status = 'processed',
+        status = CASE
+          WHEN initiatives_created > 0 THEN 'completed'
+          ELSE 'assessment_created'
+        END,
+        updated_at = datetime('now'),
         processed_at = datetime('now')
       WHERE id = ?
     `;
@@ -1538,8 +1874,15 @@ Extract and return JSON:
       documentMetadata: row.document_metadata_json
         ? JSON.parse(row.document_metadata_json)
         : { sourceFileName: row.source_file_name },
+      canonicalMarkdown: row.canonical_markdown,
+      autoSummary: row.auto_summary,
+      coveragePercent: row.coverage_percent,
       targetType: row.target_type,
       targetId: row.target_id,
+      initiativesCreated: row.initiatives_created || 0,
+      initiativesTargetIds: row.initiatives_target_ids
+        ? JSON.parse(row.initiatives_target_ids)
+        : [],
       status: row.status,
       processingError: row.processing_error,
       processingLog: row.processing_log,

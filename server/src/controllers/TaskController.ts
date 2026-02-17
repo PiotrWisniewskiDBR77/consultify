@@ -1388,12 +1388,17 @@ export class TaskController {
    */
   static addTaskComment = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      const { id: taskId } = req.params;
+      const taskId = (req.params as any).taskId || (req.params as any).id;
       const orgId = req.user?.organizationId;
       const userId = req.user?.id;
       const { content } = req.body as AddTaskCommentRequest;
       if (!orgId || !userId) {
         res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      if (!taskId) {
+        res.status(400).json({ error: 'taskId is required' });
         return;
       }
 

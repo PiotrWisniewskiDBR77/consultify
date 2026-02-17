@@ -27,8 +27,9 @@ export class RedisRateLimitStore {
       const hits = await (redisClient as any).incr(key);
       // Sliding window: refresh TTL on each hit (simple + safe).
       await (redisClient as any).expire(key, windowSeconds);
+      const numHits = typeof hits === 'number' ? hits : Number(hits || 0);
       return {
-        totalHits: typeof hits === 'number' ? hits : Number(hits || 0),
+        totalHits: Math.max(1, numHits),
         resetTime: new Date(Date.now() + windowMs),
       };
     } catch {

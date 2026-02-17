@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -16,6 +17,7 @@ import { useAppStore } from '../store/useAppStore';
 import { AppView, Task, TaskPriority, TaskStatus } from '../types';
 
 export const TaskDropdown = () => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [stats, setStats] = useState({ total: 0, pending: 0, overdue: 0 });
@@ -110,14 +112,14 @@ export const TaskDropdown = () => {
   };
 
   const formatDueDate = (date?: string) => {
-    if (!date) return 'No date';
+    if (!date) return t('taskDropdown.noDate', 'No date');
     const d = new Date(date);
     const now = new Date();
     const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 0) return `${Math.abs(diffDays)}d overdue`;
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Tomorrow';
+    if (diffDays < 0) return t('taskDropdown.dOverdue', '{{count}}d overdue', { count: Math.abs(diffDays) });
+    if (diffDays === 0) return t('taskDropdown.today', 'Today');
+    if (diffDays === 1) return t('taskDropdown.tomorrow', 'Tomorrow');
     return d.toLocaleDateString();
   };
 
@@ -145,11 +147,11 @@ export const TaskDropdown = () => {
           <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-700 flex items-center justify-between bg-white/50 dark:bg-black/20 backdrop-blur-sm">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-navy-900 dark:text-white text-sm">
-                My Action Plan
+                {t('taskDropdown.title', 'My Action Plan')}
               </h3>
               {stats.pending > 0 && (
                 <span className="bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 px-2 py-0.5 rounded-full text-xs font-medium">
-                  {stats.pending} Pending
+                  {t('taskDropdown.pending', '{{count}} Pending', { count: stats.pending })}
                 </span>
               )}
             </div>
@@ -157,7 +159,7 @@ export const TaskDropdown = () => {
               onClick={handleNavigateToTasks}
               className="text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors flex items-center gap-1"
             >
-              View all <ArrowRight size={12} />
+              {t('taskDropdown.viewAll', 'View all')} <ArrowRight size={12} />
             </button>
           </div>
 
@@ -165,7 +167,7 @@ export const TaskDropdown = () => {
           <div className="grid grid-cols-2 text-center py-2 bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-navy-700">
             <div>
               <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">
-                Overdue
+                {t('taskDropdown.overdue', 'Overdue')}
               </div>
               <div
                 className={`text-sm font-bold ${stats.overdue > 0 ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}
@@ -175,7 +177,7 @@ export const TaskDropdown = () => {
             </div>
             <div className="border-l border-slate-200 dark:border-navy-700">
               <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">
-                Total Active
+                {t('taskDropdown.totalActive', 'Total Active')}
               </div>
               <div className="text-sm font-bold text-navy-900 dark:text-white">{stats.pending}</div>
             </div>
@@ -186,7 +188,7 @@ export const TaskDropdown = () => {
             {loading ? (
               <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-sm">
                 <Loader2 className="animate-spin w-5 h-5 mx-auto mb-2 text-purple-500" />
-                Loading tasks...
+                {t('taskDropdown.loading', 'Loading tasks...')}
               </div>
             ) : tasks.length === 0 ? (
               <div className="p-8 text-center flex flex-col items-center">
@@ -194,13 +196,13 @@ export const TaskDropdown = () => {
                   <CheckSquare size={20} className="text-slate-700 dark:text-slate-300" />
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                  No tasks found
+                  {t('taskDropdown.noTasks', 'No tasks found')}
                 </p>
                 <button
                   onClick={handleNavigateToTasks}
                   className="text-xs text-purple-600 font-medium mt-2"
                 >
-                  Create new task
+                  {t('taskDropdown.createNew', 'Create new task')}
                 </button>
               </div>
             ) : (
@@ -218,7 +220,7 @@ export const TaskDropdown = () => {
                         <div className="mt-0.5">
                           {task.status === TaskStatus.DONE ? (
                             <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded textxs font-bold uppercase">
-                              <CheckCircle size={10} /> Done
+                              <CheckCircle size={10} /> {t('taskDropdown.done', 'Done')}
                             </div>
                           ) : (
                             <span
@@ -276,7 +278,7 @@ export const TaskDropdown = () => {
                       onClick={handleNavigateToTasks}
                       className="text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors"
                     >
-                      View {tasks.length - 5} more tasks
+                      {t('taskDropdown.viewMore', 'View {{count}} more tasks', { count: tasks.length - 5 })}
                     </button>
                   </div>
                 )}

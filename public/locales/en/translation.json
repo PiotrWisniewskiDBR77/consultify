@@ -276,7 +276,239 @@
     }
   },
   "partner": {
-    "becomePartner": "Become Partner"
+    "becomePartner": "Become Partner",
+    "hero": {
+      "badge": "Partner Program",
+      "title1": "Be Our Partner.",
+      "title2": "Let's Grow Together.",
+      "description": "Join our network of transformation experts. Earn recurring revenue, access premium tools, and help businesses achieve digital excellence.",
+      "getStarted": "Get Started Now",
+      "watchOverview": "Watch Overview"
+    },
+    "value": {
+      "title": "Why Partner with Consultinity?",
+      "subtitle": "Everything you need to grow your transformation practice",
+      "cards": {
+        "revenue": {
+          "title": "Earn Recurring Revenue",
+          "description": "Build passive income that grows with your network. Get paid for every client you bring in.",
+          "highlight": "Up to 20% commission"
+        },
+        "expertise": {
+          "title": "Expand Your Expertise",
+          "description": "Get certified in DRD, LEAN 4.0, and SIRI frameworks. Access exclusive training and methodology.",
+          "highlight": "Free certifications"
+        },
+        "tools": {
+          "title": "Access Premium Tools",
+          "description": "Full platform access for your clients. AI-powered assessments, PMO tools, and reporting.",
+          "highlight": "Enterprise-grade platform"
+        },
+        "network": {
+          "title": "Join Global Network",
+          "description": "Get listed in our partner directory. Connect with clients searching for experts in your region.",
+          "highlight": "Global visibility"
+        }
+      }
+    },
+    "beta": {
+      "badge": "Beta Phase",
+      "title": "Early Adopters Already See Results",
+      "subtitle": "Our beta partners are transforming how they work with clients",
+      "resultsLabel": "Results in Beta Phase:",
+      "partnerSince": "Beta Partner since {{date}}",
+      "launchNotice": "<strong>Official Partner Program launch coming Q1 2026.</strong> Join now as an early adopter and get priority access, special commission rates, and direct input on product roadmap.",
+      "stories": {
+        "0": {
+          "company": "Nordic Digital Solutions",
+          "type": "Software Development Company",
+          "location": "Stockholm, Sweden",
+          "quote": "During the beta program, we integrated Consultinity into our client onboarding process. The AI-powered assessments helped us identify upsell opportunities we were missing before.",
+          "results": ["40% faster proposal creation", "3 new enterprise clients acquired", "2x improvement in client engagement"],
+          "since": "October 2025"
+        },
+        "1": {
+          "company": "TransformACE Consulting",
+          "type": "Digital Transformation Consultancy",
+          "location": "Munich, Germany",
+          "quote": "Consultinity gave us a structured framework we were missing. Our consultants now deliver assessments in days, not weeks. The beta program shaped how we think about client success.",
+          "results": ["60% reduction in delivery time", "Client satisfaction: 4.2 → 4.8", "Deal closing cycle shortened by 35%"],
+          "since": "September 2025"
+        }
+      }
+    },
+    "tiers": {
+      "title": "Your Path to Partnership Success",
+      "subtitle": "Progress through tiers as you grow. Higher tiers = higher rewards.",
+      "registered": {
+        "name": "Registered",
+        "requirement": "Start here",
+        "benefits": ["Basic tools", "Directory listing"]
+      },
+      "bronze": {
+        "name": "Bronze",
+        "requirement": "3+ clients, €5K ARR",
+        "benefits": ["Priority support", "Training materials"]
+      },
+      "silver": {
+        "name": "Silver",
+        "requirement": "10+ clients, €25K ARR",
+        "benefits": ["Dedicated manager", "Beta feature access"]
+      },
+      "gold": {
+        "name": "Gold",
+        "requirement": "25+ clients, €75K ARR",
+        "benefits": ["Co-marketing", "Conference speaking"]
+      },
+      "platinum": {
+        "name": "Platinum",
+        "requirement": "50+ clients, €200K+",
+        "benefits": ["Revenue share boost", "Executive partnership"]
+      }
+    },
+    "onboarding": {
+      "title": "Get Started in 10 Minutes",
+      "subtitle": "We've made it simple. Complete these steps to unlock your partner benefits.",
+      "stepsCompleted": "steps completed",
+      "step": "Step {{id}}",
+      "why": "Why?",
+      "bonus": "Bonus",
+      "secureNote": "Your data is encrypted and secure",
+      "steps": {
+        "0": {
+          "title": "Complete Your Profile",
+          "description": "Tell us about your company and expertise",
+          "why": "So we can match you with the right clients and list you in our directory with accurate information.",
+          "time": "~3 minutes",
+          "cta": "Complete Profile"
+        },
+        "1": {
+          "title": "Get Your First Certification",
+          "description": "Complete \"Platform Fundamentals\" course",
+          "why": "Certified partners close 2x more deals and get priority listing in our directory.",
+          "time": "~45 minutes",
+          "bonus": "Unlock marketing materials after completion",
+          "cta": "Start Learning"
+        },
+        "2": {
+          "title": "Generate Your Referral Code",
+          "description": "Create your unique code and shareable links",
+          "why": "Your code tracks all referrals automatically so you get credited for every client you bring in.",
+          "time": "~1 minute",
+          "cta": "Generate Code"
+        },
+        "3": {
+          "title": "Submit Payment Details",
+          "description": "Add your bank account or PayPal for commission payouts",
+          "why": "So we can pay you! Commissions are paid monthly once you reach €100 threshold.",
+          "time": "~2 minutes",
+          "cta": "Add Payment Info"
+        }
+      }
+    },
+    "calculator": {
+      "badge": "Commission Calculator",
+      "title": "Calculate Your Earning Potential",
+      "subtitle": "See how much you could earn as a Consultinity Partner",
+      "clientsQuestion": "How many clients can you refer per month?",
+      "avgValue": "Average client value (€/month)",
+      "yourTier": "Your tier:",
+      "commission": "commission",
+      "estimatedEarnings": "Your Estimated Annual Earnings",
+      "basedOn": "Based on {{count}} referrals/year at €{{value}} avg value",
+      "startEarning": "Start Earning Now - Generate Your Code"
+    },
+    "academy": {
+      "title": "Sharpen Your Skills with Partner Academy",
+      "subtitle": "Free courses designed to help you succeed",
+      "free": "FREE",
+      "advanced": "ADVANCED",
+      "certificateIncluded": "Certificate included",
+      "startCourse": "Start Course",
+      "courses": {
+        "0": {
+          "title": "Platform Fundamentals",
+          "description": "Learn the Consultinity platform inside out. Master assessments, reporting, and client management."
+        },
+        "1": {
+          "title": "How to Sell Digital Transformation",
+          "description": "Proven sales methodology for transformation services."
+        },
+        "2": {
+          "title": "Client Success Best Practices",
+          "description": "Maximize client retention and satisfaction scores."
+        },
+        "3": {
+          "title": "DRD Framework Certification",
+          "description": "Deep dive into Digital Readiness Diagnostic methodology."
+        }
+      }
+    },
+    "contact": {
+      "title": "Questions? Let's Talk!",
+      "subtitle": "Your dedicated Partner Manager is here to help you succeed",
+      "name": "Bartosz Sotomski",
+      "role": "Partner Success Manager",
+      "quote": "I'm here to help you grow your business with Consultinity. Whether you have questions about the program, need help with a client pitch, or want to discuss co-marketing opportunities - let's connect!",
+      "bookCall": "Book a Call",
+      "bookCallDesc": "Schedule 15-min intro call",
+      "sendEmail": "Send Email",
+      "connectLinkedin": "Connect on LinkedIn",
+      "responseTime": "Average response time: < 4 hours"
+    },
+    "faq": {
+      "badge": "FAQ",
+      "title": "Frequently Asked Questions",
+      "items": {
+        "0": {
+          "question": "How do I earn commissions as a partner?",
+          "answer": "You earn commissions by referring new clients to Consultinity. When a client signs up using your unique referral code or link and becomes a paying customer, you receive a percentage of their subscription fee. Commission rates range from 10% to 20% depending on your partner tier."
+        },
+        "1": {
+          "question": "When and how do I get paid?",
+          "answer": "Commissions are paid monthly via bank transfer or PayPal, once you reach the €100 minimum threshold. Payments are processed on the 15th of each month for the previous month's approved commissions. You can track all earnings in real-time through your Partner Dashboard."
+        },
+        "2": {
+          "question": "What support do I get as a partner?",
+          "answer": "All partners receive access to Partner Academy training, marketing materials, and our partner community. Bronze tier and above get priority support and dedicated training. Gold and Platinum partners receive a dedicated Partner Manager, co-marketing opportunities, and early access to new features."
+        },
+        "3": {
+          "question": "How long does it take to become certified?",
+          "answer": "The Platform Fundamentals certification takes about 45 minutes to complete. Advanced certifications like DRD Framework take 2-3 hours. All certifications are self-paced, so you can complete them whenever it's convenient for you."
+        },
+        "4": {
+          "question": "Can I refer clients from any country?",
+          "answer": "Yes! Consultinity operates globally, and you can refer clients from any country. Your Partner Directory listing can highlight your regional expertise, helping local clients find you. Commission payments can be made in EUR, USD, or GBP."
+        },
+        "5": {
+          "question": "What happens if a referred client cancels?",
+          "answer": "If a referred client cancels within the first 30 days (cooling-off period), the commission for that client is adjusted. After 30 days, you keep all earned commissions even if the client later cancels. We believe in fair, transparent commission structures."
+        }
+      }
+    },
+    "footer": {
+      "resources": {
+        "title": "Resources",
+        "playbook": "Partner Playbook",
+        "marketingKit": "Marketing Kit",
+        "apiDocs": "API Documentation",
+        "brandGuidelines": "Brand Guidelines"
+      },
+      "community": {
+        "title": "Community",
+        "slack": "Partner Slack",
+        "webinars": "Monthly Webinars",
+        "successStories": "Success Stories",
+        "forum": "Partner Forum"
+      },
+      "support": {
+        "title": "Support",
+        "faq": "FAQ",
+        "helpCenter": "Help Center",
+        "technical": "Technical Support",
+        "featureRequests": "Feature Requests"
+      }
+    }
   },
   "common": {
     "save": "Save",
@@ -652,6 +884,41 @@
     "dashboard": "Dashboard",
     "calendar": "Calendar",
     "decisions": "Decisions",
+    "heatmap": "Workload Heatmap",
+    "tabs": {
+      "execution": "Control",
+      "initiatives": "Initiatives",
+      "tasks": "Tasks",
+      "decisions": "Decisions",
+      "team": "Team",
+      "reports": "Reports"
+    },
+    "reports": {
+      "title": "Execution reports",
+      "subtitle": "Generate a simple weekly pack and deep-dive reports without adding process overhead.",
+      "open": "Open Reports",
+      "weeklyPack": "Weekly pack",
+      "weeklyPackHint": "One copy-ready snapshot for the weekly execution review.",
+      "copy": "Copy",
+      "copied": "Weekly pack copied",
+      "copyFailed": "Copy failed"
+    },
+    "tasks": {
+      "subtitle": "Overdue, due soon, and upcoming tasks for initiatives in execution.",
+      "openInitiative": "Open related initiative",
+      "overdue": "Overdue",
+      "due7": "Due in 7 days",
+      "upcoming": "Upcoming (8–30d)"
+    },
+    "decisionsBuckets": {
+      "subtitle": "Buckets by due horizon to keep governance fast and explicit.",
+      "openInitiative": "Open related initiative",
+      "done": "Done",
+      "due7": "Due ≤7d",
+      "due14": "Due 8–14d",
+      "due30": "Due 15–30d",
+      "more": "30d+ / No date"
+    },
     "table": {
       "type": "Type",
       "name": "Name",
@@ -688,7 +955,8 @@
       "budgetHealth": "Budget Health",
       "decisionSla": "Decision SLA",
       "escalationsGates": "Escalations & Gates",
-      "noActiveEscalations": "No active escalations."
+      "noActiveEscalations": "No active escalations.",
+      "noGateInfo": "No gate info"
     },
     "ai": {
       "priorityRecommendations": "AI Priority Recommendations",
@@ -748,12 +1016,71 @@
       "done": "Done",
       "dropHere": "Drop here",
       "noTasks": "No tasks"
+    },
+    "attention": {
+      "blocked": "Blocked",
+      "overdueDecisions": "Overdue Decisions",
+      "missingDates": "Missing Dates",
+      "dueSoonTasks": "Due Soon",
+      "none": "Nothing urgent",
+      "attention": "Attention"
+    },
+    "scope": {
+      "active": "Active",
+      "all": "All",
+      "activeHint": "Scheduled → Executing → Blocked",
+      "allHint": "Include Done / Cancelled / Archived"
+    },
+    "toast": {
+      "taskMoved": "Task moved to {{column}}",
+      "taskStatusError": "Failed to update task status",
+      "initiativeNotFound": "Related initiative not found"
     }
   },
   "benefits": {
     "title": "Benefits Realization",
     "kpis": "KPIs",
     "lessons": "Lessons Learned",
+    "tabs": {
+      "completed": "Completed",
+      "kpis": "KPIs",
+      "roi": "ROI Analysis"
+    },
+    "columns": {
+      "type": "Type",
+      "name": "Name",
+      "status": "Status",
+      "roi": "ROI",
+      "budget": "Budget",
+      "completed": "Completed",
+      "actions": "Actions"
+    },
+    "empty": {
+      "noCompleted": "No completed initiatives yet."
+    },
+    "kpiCards": {
+      "totalKpis": "Total KPIs",
+      "onTarget": "On Target",
+      "belowTarget": "Below Target"
+    },
+    "kpiEmpty": {
+      "noKpis": "No KPIs defined yet",
+      "completeToTrack": "Complete initiatives and add KPIs to track benefits",
+      "noKpisForInitiative": "No KPIs defined for this initiative"
+    },
+    "kpiActions": {
+      "addKpi": "Add KPI",
+      "createKpi": "Create KPI",
+      "cancel": "Cancel"
+    },
+    "kpiLabels": {
+      "current": "Current",
+      "target": "Target"
+    },
+    "roiAnalysis": {
+      "title": "ROI Analysis",
+      "subtitle": "Return on investment calculations"
+    },
     "tracker": {
       "financialBenefits": "Financial Benefits",
       "of": "of",
@@ -787,7 +1114,47 @@
   "economics": {
     "title": "Economics",
     "analysis": "Analysis",
-    "scenarios": "Scenarios"
+    "scenarios": "Scenarios",
+    "tabs": {
+      "catalog": "Catalog",
+      "results": "Results",
+      "compare": "Compare"
+    },
+    "columns": {
+      "type": "Type",
+      "name": "Name",
+      "status": "Status",
+      "score": "Score",
+      "updated": "Updated",
+      "actions": "Actions"
+    },
+    "status": {
+      "draft": "Draft",
+      "inReview": "In Review",
+      "completed": "Completed"
+    },
+    "empty": {
+      "noAnalyses": "No analyses yet. Create your first analysis.",
+      "noCompleted": "No completed analyses",
+      "completeToSee": "Complete analyses to see results and recommendations."
+    },
+    "actions": {
+      "newAnalysis": "New Analysis",
+      "versions": "Versions",
+      "excel": "Excel",
+      "pdf": "PDF",
+      "viewDetails": "View Details",
+      "importExcel": "Import Excel"
+    },
+    "detail": {
+      "project": "Project: {{name}}",
+      "noProject": "No project",
+      "score": "Score:"
+    },
+    "toast": {
+      "excelGenerated": "Excel generated",
+      "exportFailed": "Failed to export"
+    }
   },
   "reports": {
     "title": "Reports",
@@ -1002,13 +1369,318 @@
   },
   "settings": {
     "title": "Settings",
-    "profile": "Profile",
+    "profile": {
+      "label": "Profile",
+      "header": "Personal Information",
+      "manage": "Manage your personal information and preferences",
+      "saving": "Saving...",
+      "save": "Save Changes",
+      "saved": "Saved!",
+      "changePhoto": "Change Photo",
+      "publicProfile": "PUBLIC PROFILE",
+      "displayName": "Display Name",
+      "displayNameHint": "This is how your name will appear to other users. Leave empty to use your full name.",
+      "pronouns": "Pronouns",
+      "department": "Department",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "company": "Company",
+      "linkedinId": "LinkedIn Profile ID",
+      "linkedinHint": "Enter your profile ID from the LinkedIn URL (after /in/)",
+      "jobTitle": "Job Title",
+      "jobTitlePlaceholder": "e.g. Product Manager, Developer...",
+      "availability": "Availability & Status",
+      "statusMessage": "Status Message",
+      "statusPlaceholder": "e.g. In meetings until 3pm, Working remotely...",
+      "statusHint": "Let your team know what you're up to ({{count}}/100)",
+      "outOfOffice": "Out of Office",
+      "outOfOfficeNotify": "Automatically notify others when you're away",
+      "outOfOfficeBadge": "Out of Office",
+      "outOfOfficeUntil": "until {{date}}",
+      "returnDate": "Return Date",
+      "outOfOfficeMessage": "Auto-reply Message",
+      "outOfOfficePlaceholder": "I'm currently out of office and will respond when I return...",
+      "regional": "Regional Settings",
+      "timezone": "Timezone",
+      "timezoneHint": "Current local time:",
+      "dateFormat": "Date Format",
+      "timeFormat": "Time Format",
+      "preferences": "Preferences",
+      "theme": "Interface Theme",
+      "themeHint": "Select your interface color theme.",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "language": "Language",
+      "languageHint": "Select your preferred language.",
+      "pronounsOptions": {
+        "preferNotToSay": "Prefer not to say",
+        "heHim": "He/Him",
+        "sheHer": "She/Her",
+        "theyThem": "They/Them",
+        "other": "Other"
+      },
+      "departmentOptions": {
+        "selectDepartment": "Select department...",
+        "engineering": "Engineering",
+        "product": "Product",
+        "design": "Design",
+        "marketing": "Marketing",
+        "sales": "Sales",
+        "operations": "Operations",
+        "finance": "Finance",
+        "hr": "Human Resources",
+        "legal": "Legal",
+        "customerSuccess": "Customer Success",
+        "support": "Support",
+        "executive": "Executive",
+        "other": "Other"
+      }
+    },
     "billing": "Billing",
     "ai": "AI Settings",
     "notifications": "Notifications",
     "integrations": "Integrations",
     "security": "Security",
-    "appearance": "Appearance"
+    "appearance": "Appearance",
+    "sidebar": {
+      "title": "SETTINGS",
+      "subtitle": "Personal preferences",
+      "backToDashboard": "Back to Dashboard",
+      "groups": {
+        "mySettings": "MY SETTINGS",
+        "workPreferences": "WORK PREFERENCES",
+        "aiAutomation": "AI & AUTOMATION",
+        "notifications": "NOTIFICATIONS",
+        "security": "SECURITY",
+        "integrations": "INTEGRATIONS",
+        "dataPrivacy": "DATA & PRIVACY",
+        "appearance": "APPEARANCE",
+        "advanced": "ADVANCED"
+      },
+      "profile": "Profile",
+      "avatar": "Avatar & Photo",
+      "signatures": "Email Signatures",
+      "workingHours": "Working Hours",
+      "dashboard": "Dashboard",
+      "workPrefs": "Work Preferences",
+      "regional": "Regional",
+      "language": "Language",
+      "aiInstructions": "AI Instructions",
+      "aiModel": "Model Selection",
+      "aiParameters": "Parameters",
+      "aiUsage": "Usage Dashboard",
+      "aiPersonality": "Personality",
+      "aiAutocomplete": "Autocomplete",
+      "aiMemory": "Memory",
+      "aiVoice": "Voice & TTS",
+      "notificationsOverview": "Overview",
+      "notificationsEmail": "Email",
+      "notificationsPush": "Push",
+      "notificationsSounds": "Sounds",
+      "quietHours": "Quiet Hours",
+      "digest": "Digest",
+      "dnd": "Do Not Disturb",
+      "password": "Password",
+      "mfa": "Two-Factor Auth",
+      "sessions": "Active Sessions",
+      "loginHistory": "Login History",
+      "recovery": "Recovery Options",
+      "connectedApps": "Connected Apps",
+      "calendarSync": "Calendar Sync",
+      "apiKeys": "API Keys",
+      "webhooks": "Webhooks",
+      "dataControls": "Data Controls",
+      "privacy": "Privacy",
+      "exportData": "Export Data",
+      "deleteAccount": "Delete Account",
+      "theme": "Theme",
+      "accessibility": "Accessibility",
+      "shortcuts": "Keyboard Shortcuts",
+      "importExport": "Import/Export",
+      "templates": "Templates",
+      "developer": "Developer",
+      "betaFeatures": "Beta Features",
+      "settingsHistory": "History"
+    },
+    "sections": {
+      "profile": {
+        "title": "Profile",
+        "subtitle": "Manage your personal information and account"
+      },
+      "avatar": {
+        "title": "Avatar & Photo",
+        "subtitle": "Upload and manage your profile picture"
+      },
+      "signatures": {
+        "title": "Email Signatures",
+        "subtitle": "Create and manage email signatures"
+      },
+      "working-hours": {
+        "title": "Working Hours",
+        "subtitle": "Set your availability schedule"
+      },
+      "dashboard": {
+        "title": "Dashboard",
+        "subtitle": "Customize dashboard layout and widgets"
+      },
+      "work-preferences": {
+        "title": "Work Preferences",
+        "subtitle": "Configure default task and project settings"
+      },
+      "regional": {
+        "title": "Regional Settings",
+        "subtitle": "Set timezone, date format, and language preferences"
+      },
+      "language": {
+        "title": "Language",
+        "subtitle": "Choose your preferred language"
+      },
+      "ai-instructions": {
+        "title": "AI Instructions",
+        "subtitle": "Customize how AI responds to you"
+      },
+      "ai-model": {
+        "title": "Model Selection",
+        "subtitle": "Choose your preferred AI model"
+      },
+      "ai-parameters": {
+        "title": "AI Parameters",
+        "subtitle": "Fine-tune AI response parameters"
+      },
+      "ai-usage": {
+        "title": "AI Usage Dashboard",
+        "subtitle": "Monitor AI usage and token consumption"
+      },
+      "ai-voice": {
+        "title": "Voice & TTS",
+        "subtitle": "Configure voice input and text-to-speech"
+      },
+      "ai-memory": {
+        "title": "AI Memory",
+        "subtitle": "Manage AI context and memory"
+      },
+      "ai-personality": {
+        "title": "AI Personality",
+        "subtitle": "Set AI communication tone and style"
+      },
+      "ai-autocomplete": {
+        "title": "Autocomplete",
+        "subtitle": "Configure AI-powered suggestions"
+      },
+      "notifications-overview": {
+        "title": "Notifications",
+        "subtitle": "Control how and when you receive notifications"
+      },
+      "notifications-email": {
+        "title": "Email Notifications",
+        "subtitle": "Manage email notification preferences"
+      },
+      "notifications-push": {
+        "title": "Push Notifications",
+        "subtitle": "Configure push notification settings"
+      },
+      "notifications-sounds": {
+        "title": "Notification Sounds",
+        "subtitle": "Set notification sounds and volume"
+      },
+      "notifications-quiet-hours": {
+        "title": "Quiet Hours",
+        "subtitle": "Schedule notification quiet times"
+      },
+      "notifications-digest": {
+        "title": "Notification Digest",
+        "subtitle": "Configure notification summary emails"
+      },
+      "notifications-dnd": {
+        "title": "Do Not Disturb",
+        "subtitle": "Temporarily pause all notifications"
+      },
+      "password": {
+        "title": "Password",
+        "subtitle": "Change your password and security settings"
+      },
+      "mfa": {
+        "title": "Two-Factor Authentication",
+        "subtitle": "Add an extra layer of security"
+      },
+      "sessions": {
+        "title": "Active Sessions",
+        "subtitle": "View and manage logged-in devices"
+      },
+      "login-history": {
+        "title": "Login History",
+        "subtitle": "Review recent account activity"
+      },
+      "recovery": {
+        "title": "Recovery Options",
+        "subtitle": "Configure account recovery methods"
+      },
+      "connected-apps": {
+        "title": "Connected Apps",
+        "subtitle": "Manage third-party app connections"
+      },
+      "calendar-sync": {
+        "title": "Calendar Sync",
+        "subtitle": "Connect your calendars"
+      },
+      "api-keys": {
+        "title": "API Keys",
+        "subtitle": "Manage API access keys"
+      },
+      "webhooks": {
+        "title": "Webhooks",
+        "subtitle": "Configure webhook endpoints"
+      },
+      "data-controls": {
+        "title": "Data Controls",
+        "subtitle": "Manage data storage and retention"
+      },
+      "privacy": {
+        "title": "Privacy",
+        "subtitle": "Control privacy settings"
+      },
+      "export-data": {
+        "title": "Export Data",
+        "subtitle": "Download a copy of your data"
+      },
+      "delete-account": {
+        "title": "Delete Account",
+        "subtitle": "Permanently delete your account"
+      },
+      "theme": {
+        "title": "Theme",
+        "subtitle": "Choose your preferred color theme"
+      },
+      "accessibility": {
+        "title": "Accessibility",
+        "subtitle": "Configure accessibility options"
+      },
+      "shortcuts": {
+        "title": "Keyboard Shortcuts",
+        "subtitle": "View and customize keyboard shortcuts"
+      },
+      "import-export": {
+        "title": "Import/Export Settings",
+        "subtitle": "Backup and restore settings"
+      },
+      "templates": {
+        "title": "Settings Templates",
+        "subtitle": "Save and apply preset configurations"
+      },
+      "developer": {
+        "title": "Developer Mode",
+        "subtitle": "Access developer tools and debugging"
+      },
+      "beta-features": {
+        "title": "Beta Features",
+        "subtitle": "Try out experimental features"
+      },
+      "settings-history": {
+        "title": "Settings History",
+        "subtitle": "View and restore previous settings"
+      }
+    }
   },
   "showcase": {
     "common": {
@@ -1593,6 +2265,73 @@
       "processing": "Agent Audit Processing"
     }
   },
+  "system": {
+    "online": "Online",
+    "offline": "Offline",
+    "status": "System Status",
+    "database": "Database",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "responseTime": "Response Time",
+    "latency": "API Latency",
+    "resources": "Your Resources",
+    "storage": "Storage",
+    "apiCalls": "API Calls (month)",
+    "lastUpdate": "Auto-refresh every 30s"
+  },
+  "llm": {
+    "title": "Model Routing per Tier",
+    "offlineMessage": "Offline - check network connection",
+    "unavailableMessage": "AI unavailable - check provider health",
+    "description": "Define which LLM level to use. System automatically selects the best available model in that tier.",
+    "active": "Active",
+    "currentRouting": "Current routing:",
+    "budgetTier": "Budget Tier",
+    "budgetTierDesc": "Simple questions, fast responses",
+    "fastTier": "Fast Tier",
+    "fastTierDesc": "Most tasks, balanced performance",
+    "premiumTier": "Premium Tier",
+    "premiumTierDesc": "Complex analysis, reports",
+    "reasoningTier": "Reasoning Tier",
+    "reasoningTierDesc": "MAX Mode, deep thinking"
+  },
+  "taskDropdown": {
+    "title": "My Action Plan",
+    "pending": "{{count}} Pending",
+    "viewAll": "View all",
+    "overdue": "Overdue",
+    "totalActive": "Total Active",
+    "loading": "Loading tasks...",
+    "noTasks": "No tasks found",
+    "createNew": "Create new task",
+    "done": "Done",
+    "viewMore": "View {{count}} more tasks",
+    "noDate": "No date",
+    "dOverdue": "{{count}}d overdue",
+    "today": "Today",
+    "tomorrow": "Tomorrow"
+  },
+  "executive": {
+    "health": {
+      "title": "Portfolio Health",
+      "subtitle": "Overall execution performance",
+      "portfolio": "Portfolio Health",
+      "excellent": "Excellent",
+      "good": "Good",
+      "attention": "Needs Attention",
+      "critical": "Critical",
+      "noData": "No data",
+      "lastUpdated": "Last updated",
+      "live": "Live",
+      "execution": "Execution",
+      "decisions": "Decision Velocity",
+      "capacity": "Team Capacity",
+      "risk": "Risk Mitigation",
+      "noBreakdown": "Breakdown data not yet available",
+      "noBreakdownHint": "Data will appear as tasks and decisions are tracked",
+      "vsLastWeek": "vs last week"
+    }
+  },
   "research": {
     "deepResearch": "Deep Research",
     "generatingQueries": "Generating research queries...",
@@ -1613,5 +2352,19 @@
     "structuring": "Structuring...",
     "synthesizing": "Synthesizing...",
     "finalizing": "Finalizing..."
+  },
+  "admin": {
+    "strategicProfile": {
+      "industryCode": "Industry Code ({{system}})",
+      "annualRevenue": "Annual Revenue ({{currency}})",
+      "regulatoryEnvironment": "Regulatory Environment",
+      "regulatoryEnvironmentHint": "Select regulations and standards your organization is currently subject to or must comply with.",
+      "budgetConstraints": "Strategic Initiative Budget Constraints",
+      "budgetConstraintsHint": "Describe budget limits for digital transformation, consulting, or strategic projects — not the overall company budget.",
+      "budgetConstraintsPlaceholder": "e.g., Max 500k EUR/year for digital initiatives; IT modernization capped at 200k",
+      "timelineConstraints": "Timeline Constraints",
+      "timelineConstraintsHint": "Key deadlines or time pressures affecting strategic decisions — e.g., regulatory deadlines, board milestones, contract renewals.",
+      "timelineConstraintsPlaceholder": "e.g., DORA compliance by Q1 2027; ERP migration must finish before license renewal in Oct 2026"
+    }
   }
 }

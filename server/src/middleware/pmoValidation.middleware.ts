@@ -254,8 +254,13 @@ export const logStatusChange = (entityType: string) => {
     const originalSend = res.json.bind(res);
 
     (res.json as any) = async (data: unknown) => {
-      // Only log if successful and status changed
-      if (res.statusCode < 400 && req.previousStatus && req.body.status) {
+      // Only log if successful and status changed, and we have a valid org context
+      if (
+        res.statusCode < 400 &&
+        req.previousStatus &&
+        req.body.status &&
+        req.organizationId
+      ) {
         const logSql = `INSERT INTO activity_logs 
                     (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)
                     VALUES (?, ?, ?, 'status_changed', ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
@@ -263,7 +268,7 @@ export const logStatusChange = (entityType: string) => {
         try {
           await DbPromise.run(logSql, [
             uuidv4(),
-            req.organizationId || 'unknown',
+            req.organizationId,
             req.userId,
             entityType,
             req.params.id,

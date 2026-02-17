@@ -6,6 +6,7 @@
  * Switch by setting DATABASE_URL environment variable
  */
 
+import './loadEnv.js';
 import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';

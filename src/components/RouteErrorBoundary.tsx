@@ -10,6 +10,7 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  didAutoReload: boolean;
 }
 
 /**
@@ -25,6 +26,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
+      didAutoReload: false,
     };
   }
 
@@ -33,6 +35,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
       hasError: true,
       error,
       errorInfo: null,
+      didAutoReload: false,
     };
   }
 
@@ -45,6 +48,27 @@ export class RouteErrorBoundary extends Component<Props, State> {
       error,
       errorInfo,
     });
+
+    // System recovery: dynamic-import/module-script failures are typically fixed by a hard reload,
+    // but users shouldn't have to click anything. Guard against infinite reload loops by allowing
+    // only one auto-reload per path per session.
+    if (this.shouldHardReload(error) && !this.state.didAutoReload) {
+      try {
+        const path = typeof window !== 'undefined' ? window.location.pathname : 'unknown';
+        const key = `__route_error_boundary_hard_reload__:${path}`;
+        const already =
+          typeof window !== 'undefined' ? window.sessionStorage.getItem(key) : '1';
+        if (!already && typeof window !== 'undefined') {
+          window.sessionStorage.setItem(key, String(Date.now()));
+          this.setState({ didAutoReload: true }, () => {
+            // Slight delay so logs/state flush before reload.
+            setTimeout(() => window.location.reload(), 50);
+          });
+        }
+      } catch {
+        // ignore - don't make error handling worse
+      }
+    }
 
     // TODO: Send to error tracking service (Sentry, LogRocket, etc.)
     // trackError(error, errorInfo);

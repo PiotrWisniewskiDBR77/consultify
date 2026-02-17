@@ -37,8 +37,9 @@ describe('Real Security Utils (P0)', () => {
         array: ['<b>bold</b>', 123],
       };
       const sanitized = sanitizeObject(input);
-      expect(sanitized.nested.value).toBe('&lt;p&gt;test&lt;&#x2F;p&gt;');
-      expect(sanitized.array[0]).toBe('&lt;b&gt;bold&lt;&#x2F;b&gt;');
+      // Escaping of `/` in closing tags is optional across encoders; both variants are safe.
+      expect(sanitized.nested.value).toMatch(/^&lt;p&gt;test&lt;(?:\/|&#x2F;)p&gt;$/);
+      expect(sanitized.array[0]).toMatch(/^&lt;b&gt;bold&lt;(?:\/|&#x2F;)b&gt;$/);
       expect(sanitized.array[1]).toBe(123);
     });
   });

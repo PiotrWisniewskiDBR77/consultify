@@ -1711,7 +1711,7 @@ For example: REMEMBER: preferred_language: Polish`;
         </div>
 
         {/* Centered Content */}
-        <div className="flex-1 flex flex-col items-center justify-center px-4">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 relative z-10">
           {/* Personalized Greeting */}
           <div className="text-center mb-10">
             <h1 className="text-4xl md:text-5xl font-semibold text-navy-900 dark:text-white">
@@ -1852,23 +1852,26 @@ For example: REMEMBER: preferred_language: Polish`;
             </p>
           </div>
         </div>
+      </div>
 
-        {/* Footer */}
-        <div className="shrink-0 p-4 flex flex-col items-center gap-3">
-          <img
-            src={brandLogoDarkSrc}
-            alt="Consultinity"
-            className="h-40 sm:h-48 md:h-60 w-auto opacity-40 hidden dark:block"
-          />
-          <img
-            src={brandLogoLightSrc}
-            alt="Consultinity"
-            className="h-40 sm:h-48 md:h-60 w-auto opacity-40 dark:hidden"
-          />
-          <p className="text-center text-[11px] text-slate-400 dark:text-slate-600 tracking-[0.25em] uppercase">
-            DBR77 Industrial Intelligence
-          </p>
-        </div>
+      {/* Footer (overlay) - does NOT affect centering above */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center gap-1.5 pointer-events-none select-none z-0">
+        <img
+          src={brandLogoDarkSrc}
+          alt="Consultinity"
+          className="h-24 sm:h-28 md:h-32 w-auto opacity-100 hidden dark:block drop-shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
+          draggable={false}
+        />
+        <img
+          src={brandLogoLightSrc}
+          alt="Consultinity"
+          className="h-24 sm:h-28 md:h-32 w-auto opacity-35 dark:hidden"
+          draggable={false}
+        />
+        <p className="text-center text-[11px] text-slate-400 dark:text-slate-600 tracking-[0.25em] uppercase">
+          <span className="text-primary-600 dark:text-primary-400">DBR77</span>{' '}
+          <span>Industrial Intelligence</span>
+        </p>
       </div>
 
       {/* Export Modal */}

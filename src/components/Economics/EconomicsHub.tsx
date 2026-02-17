@@ -52,11 +52,11 @@ import { DigitizationAnalysis } from './types';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 
 // Analysis status mapping
-const STATUS_META: Record<string, { label: string; dotColor: string; itemStatus: ItemStatus }> = {
-  DRAFT: { label: 'Draft', dotColor: 'bg-slate-400', itemStatus: 'DRAFT' },
-  REVIEW: { label: 'In Review', dotColor: 'bg-amber-400', itemStatus: 'REVIEW' },
-  APPROVED: { label: 'Completed', dotColor: 'bg-emerald-400', itemStatus: 'DONE' },
-};
+const getStatusMeta = (t: (key: string, fallback?: string) => string): Record<string, { label: string; dotColor: string; itemStatus: ItemStatus }> => ({
+  DRAFT: { label: t('economics.status.draft', 'Draft'), dotColor: 'bg-slate-400', itemStatus: 'DRAFT' },
+  REVIEW: { label: t('economics.status.inReview', 'In Review'), dotColor: 'bg-amber-400', itemStatus: 'REVIEW' },
+  APPROVED: { label: t('economics.status.completed', 'Completed'), dotColor: 'bg-emerald-400', itemStatus: 'DONE' },
+});
 
 // Type codes for analysis types
 const getTypeCode = (analysisType: string): string => {
@@ -75,6 +75,10 @@ interface EconomicsHubProps {
 
 export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' }) => {
   const { t } = useTranslation();
+  const STATUS_META = useMemo(
+    () => getStatusMeta((key: string, fallback?: string) => t(key, { defaultValue: fallback })),
+    [t]
+  );
 
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
@@ -175,7 +179,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
     () => [
       {
         id: 'type',
-        label: 'Type',
+        label: t('economics.columns.type', 'Type'),
         width: '80px',
         render: (row: DigitizationAnalysis) => {
           const code = getTypeCode(row.analysisType || '');
@@ -189,7 +193,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'name',
-        label: 'Name',
+        label: t('economics.columns.name', 'Name'),
         render: (row: DigitizationAnalysis) => (
           <div>
             <span className="text-sm text-white font-medium">{row.name}</span>
@@ -199,7 +203,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'status',
-        label: 'Status',
+        label: t('economics.columns.status', 'Status'),
         width: '130px',
         filterable: true,
         filterOptions: Object.entries(STATUS_META).map(([value, meta]) => ({
@@ -219,7 +223,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'score',
-        label: 'Score',
+        label: t('economics.columns.score', 'Score'),
         width: '100px',
         render: (row: DigitizationAnalysis) => {
           const score = row.overallScore || 0;
@@ -240,12 +244,12 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
       },
       {
         id: 'updatedAt',
-        label: 'Updated',
+        label: t('economics.columns.updated', 'Updated'),
         width: '100px',
         sortable: true,
       },
     ],
-    []
+    [t]
   );
 
   // Handlers
@@ -333,12 +337,12 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
     if (!selectedAnalysis) return;
     try {
       const result = await Api.exportDigitizationAnalysis(selectedAnalysis.id);
-      toast.success('Excel generated');
+      toast.success(t('economics.toast.excelGenerated', 'Excel generated'));
       if (result.downloadUrl) {
         window.open(result.downloadUrl, '_blank');
       }
     } catch (err: any) {
-      toast.error(err.message || 'Failed to export');
+      toast.error(err.message || t('economics.toast.exportFailed', 'Failed to export'));
     }
   }, [selectedAnalysis]);
 
@@ -374,9 +378,9 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
               <h3 className="text-sm font-semibold text-white">{selectedAnalysis.name}</h3>
               <p className="text-xs text-slate-400">
                 {selectedAnalysis.projectName
-                  ? `Project: ${selectedAnalysis.projectName}`
-                  : 'No project'}{' '}
-                • Score:{' '}
+                  ? t('economics.detail.project', 'Project: {{name}}', { name: selectedAnalysis.projectName })
+                  : t('economics.detail.noProject', 'No project')}{' '}
+                • {t('economics.detail.score', 'Score:')}{' '}
                 <span className="text-emerald-400 font-medium">
                   {selectedAnalysis.overallScore?.toFixed(1) || '0'}/7
                 </span>
@@ -390,7 +394,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
               title="Version History"
             >
               <History size={14} />
-              Versions
+              {t('economics.actions.versions', 'Versions')}
             </button>
             <button
               onClick={handleExcelExport}
@@ -398,7 +402,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
               title="Export Excel"
             >
               <Download size={14} />
-              Excel
+              {t('economics.actions.excel', 'Excel')}
             </button>
             <button
               onClick={() => setShowPDFExport(true)}
@@ -406,7 +410,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
               title="Export PDF"
             >
               <FileText size={14} />
-              PDF
+              {t('economics.actions.pdf', 'PDF')}
             </button>
           </div>
         </div>
@@ -462,8 +466,8 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
               if (analysis) handleRowAction(action, analysis);
             }}
             onNewItem={handleNewAnalysis}
-            newItemLabel="New Analysis"
-            emptyMessage="No analyses yet. Create your first analysis."
+            newItemLabel={t('economics.actions.newAnalysis', 'New Analysis')}
+            emptyMessage={t('economics.empty.noAnalyses', 'No analyses yet. Create your first analysis.')}
           />
         );
       }
@@ -477,7 +481,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
           }
           activeFilters={activeFilters}
           onFilterChange={setActiveFilters}
-          emptyMessage="No analyses yet. Create your first analysis."
+          emptyMessage={t('economics.empty.noAnalyses', 'No analyses yet. Create your first analysis.')}
         />
       );
     }
@@ -490,9 +494,9 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
         return (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <BarChart3 className="w-16 h-16 text-slate-600 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No completed analyses</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">{t('economics.empty.noCompleted', 'No completed analyses')}</h3>
             <p className="text-sm text-slate-400 mb-6">
-              Complete analyses to see results and recommendations.
+              {t('economics.empty.completeToSee', 'Complete analyses to see results and recommendations.')}
             </p>
           </div>
         );
@@ -514,7 +518,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
                   onClick={() => handleOpenDocument(analysis)}
                   className="text-sm text-emerald-400 hover:text-emerald-300"
                 >
-                  View Details
+                  {t('economics.actions.viewDetails', 'View Details')}
                 </button>
               </div>
               <div className="p-4">
@@ -539,13 +543,13 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
     () => [
       {
         id: 'import',
-        label: 'Import Excel',
+        label: t('economics.actions.importExcel', 'Import Excel'),
         icon: <Upload size={16} />,
         count: 0,
         onClick: () => setShowImportWizard(true),
       },
     ],
-    []
+    [t]
   );
 
   return (
@@ -570,7 +574,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         onNewItem={handleNewAnalysis}
-        newItemLabel="New Analysis"
+        newItemLabel={t('economics.actions.newAnalysis', 'New Analysis')}
         categoryButtons={categoryButtons}
         availableViewModes={['table', 'grid']}
       >

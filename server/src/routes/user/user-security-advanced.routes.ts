@@ -18,8 +18,14 @@ router.get(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const sessions = await dbAll(
-      `SELECT id, device, ip_address, last_active, created_at
-    FROM user_sessions WHERE user_id = ? AND is_active = 1 ORDER BY last_active DESC`,
+      `SELECT id,
+              device_info as device,
+              ip_address,
+              last_active_at as last_active,
+              created_at
+       FROM user_sessions
+       WHERE user_id = ?
+       ORDER BY COALESCE(last_active_at, created_at) DESC`,
       [req.user?.id]
     );
     res.json(sessions || []);
@@ -31,7 +37,7 @@ router.delete(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await dbRun('UPDATE user_sessions SET is_active = 0 WHERE id = ? AND user_id = ?', [
+    await dbRun('DELETE FROM user_sessions WHERE id = ? AND user_id = ?', [
       req.params.sessionId,
       req.user?.id,
     ]);
@@ -45,8 +51,16 @@ router.get(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const history = await dbAll(
-      `SELECT id, ip_address, device, location, success, created_at
-    FROM login_history WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`,
+      `SELECT id,
+              ip_address,
+              user_agent as device,
+              location,
+              CASE WHEN status = 'success' THEN 1 ELSE 0 END as success,
+              created_at
+       FROM login_history
+       WHERE user_id = ?
+       ORDER BY created_at DESC
+       LIMIT 20`,
       [req.user?.id]
     );
     res.json(history || []);

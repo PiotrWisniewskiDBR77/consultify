@@ -21,7 +21,7 @@ import {
   User,
   Users,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { type Dispatch, type SetStateAction, useCallback, useMemo, useState } from 'react';
 
 import { FullInitiative, InitiativeStatus } from '../../types';
 
@@ -29,6 +29,22 @@ interface ExecutionWorkloadViewProps {
   initiatives: FullInitiative[];
   onInitiativeClick: (initiative: FullInitiative) => void;
   projectId?: string;
+  /**
+   * If provided, the view becomes controlled and will use this state instead of internal one.
+   * Useful when you want to render controls in a parent (e.g. top module bar).
+   */
+  controls?: {
+    viewMode: ViewMode;
+    setViewMode: (mode: ViewMode) => void;
+    weekCount: number;
+    setWeekCount: (count: number) => void;
+    monthCount: number;
+    setMonthCount: (count: number) => void;
+    startDate: Date;
+    setStartDate: Dispatch<SetStateAction<Date>>;
+  };
+  /** Hide the internal controls bar (date range / toggles). */
+  showControls?: boolean;
 }
 
 // ============================================
@@ -310,15 +326,26 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
 export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
   initiatives,
   onInitiativeClick,
+  controls,
+  showControls = true,
 }) => {
-  const [viewMode, setViewMode] = useState<ViewMode>('monthly');
-  const [weekCount, setWeekCount] = useState(8);
-  const [monthCount, setMonthCount] = useState(6);
-  const [startDate, setStartDate] = useState(() => {
+  const [internalViewMode, setInternalViewMode] = useState<ViewMode>('monthly');
+  const [internalWeekCount, setInternalWeekCount] = useState(8);
+  const [internalMonthCount, setInternalMonthCount] = useState(6);
+  const [internalStartDate, setInternalStartDate] = useState(() => {
     const today = new Date();
     today.setDate(today.getDate() - 7);
     return today;
   });
+
+  const viewMode = controls?.viewMode ?? internalViewMode;
+  const setViewMode = controls?.setViewMode ?? setInternalViewMode;
+  const weekCount = controls?.weekCount ?? internalWeekCount;
+  const setWeekCount = controls?.setWeekCount ?? setInternalWeekCount;
+  const monthCount = controls?.monthCount ?? internalMonthCount;
+  const setMonthCount = controls?.setMonthCount ?? setInternalMonthCount;
+  const startDate = controls?.startDate ?? internalStartDate;
+  const setStartDate = controls?.setStartDate ?? setInternalStartDate;
   const [selectedCell, setSelectedCell] = useState<{
     person: PersonWorkload;
     periodKey: string;
@@ -455,88 +482,90 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
       {/* Controls */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
-        {/* Left: Navigation */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigateTimeline('prev')}
-            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <span className="text-sm font-medium text-slate-900 dark:text-white min-w-[140px] text-center">
-            {periods[0]?.label} — {periods[periods.length - 1]?.label}
-          </span>
-          <button
-            onClick={() => navigateTimeline('next')}
-            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
-
-        {/* Right: View controls */}
-        <div className="flex items-center gap-3">
-          {/* View mode toggle */}
-          <div className="flex items-center bg-slate-100 dark:bg-navy-800 rounded-lg p-0.5 border border-slate-200 dark:border-navy-700">
+      {showControls && (
+        <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+          {/* Left: Navigation */}
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setViewMode('weekly')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-                viewMode === 'weekly'
-                  ? 'bg-purple-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              onClick={() => navigateTimeline('prev')}
+              className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
             >
-              <LayoutGrid size={12} />
-              Weekly
+              <ChevronLeft size={18} />
             </button>
+            <span className="text-sm font-medium text-slate-900 dark:text-white min-w-[140px] text-center">
+              {periods[0]?.label} — {periods[periods.length - 1]?.label}
+            </span>
             <button
-              onClick={() => setViewMode('monthly')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-                viewMode === 'monthly'
-                  ? 'bg-purple-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              onClick={() => navigateTimeline('next')}
+              className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
             >
-              <CalendarDays size={12} />
-              Monthly
+              <ChevronRight size={18} />
             </button>
           </div>
 
-          <div className="w-px h-4 bg-slate-300 dark:bg-navy-700" />
+          {/* Right: View controls */}
+          <div className="flex items-center gap-3">
+            {/* View mode toggle */}
+            <div className="flex items-center bg-slate-100 dark:bg-navy-800 rounded-lg p-0.5 border border-slate-200 dark:border-navy-700">
+              <button
+                onClick={() => setViewMode('weekly')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                  viewMode === 'weekly'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <LayoutGrid size={12} />
+                Weekly
+              </button>
+              <button
+                onClick={() => setViewMode('monthly')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                  viewMode === 'monthly'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <CalendarDays size={12} />
+                Monthly
+              </button>
+            </div>
 
-          {/* Period count */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-800 rounded-lg p-1 border border-slate-200 dark:border-navy-700">
-            {viewMode === 'weekly'
-              ? [6, 8, 12].map((w) => (
-                  <button
-                    key={w}
-                    onClick={() => setWeekCount(w)}
-                    className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                      weekCount === w
-                        ? 'bg-purple-500/20 text-purple-400'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {w}W
-                  </button>
-                ))
-              : [3, 6, 12].map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setMonthCount(m)}
-                    className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                      monthCount === m
-                        ? 'bg-purple-500/20 text-purple-400'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {m}M
-                  </button>
-                ))}
+            <div className="w-px h-4 bg-slate-300 dark:bg-navy-700" />
+
+            {/* Period count */}
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-800 rounded-lg p-1 border border-slate-200 dark:border-navy-700">
+              {viewMode === 'weekly'
+                ? [6, 8, 12].map((w) => (
+                    <button
+                      key={w}
+                      onClick={() => setWeekCount(w)}
+                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                        weekCount === w
+                          ? 'bg-purple-500/20 text-purple-400'
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {w}W
+                    </button>
+                  ))
+                : [3, 6, 12].map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setMonthCount(m)}
+                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                        monthCount === m
+                          ? 'bg-purple-500/20 text-purple-400'
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {m}M
+                    </button>
+                  ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Workload Grid */}
       <div className="flex-1 overflow-auto">

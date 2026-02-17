@@ -111,7 +111,8 @@ router.post(
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    if (!['ADMIN', 'SUPERADMIN', 'SUPER_ADMIN', 'OWNER'].includes(userRole || '')) {
+    const normalizedRole = (userRole || '').toLowerCase();
+    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(normalizedRole)) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -182,7 +183,8 @@ router.put(
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    if (!['ADMIN', 'SUPERADMIN', 'SUPER_ADMIN', 'OWNER'].includes(userRole || '')) {
+    const normalizedRole = (userRole || '').toLowerCase();
+    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(normalizedRole)) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -215,7 +217,8 @@ router.delete(
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    if (!['ADMIN', 'SUPERADMIN', 'SUPER_ADMIN', 'OWNER'].includes(userRole || '')) {
+    const normalizedRole = (userRole || '').toLowerCase();
+    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(normalizedRole)) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 

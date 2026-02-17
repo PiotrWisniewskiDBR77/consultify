@@ -346,7 +346,7 @@ export class ModelRouter {
                 INNER JOIN llm_tier_assignments mta ON p.id = mta.provider_id
                 LEFT JOIN organization_provider_settings ops ON p.id = ops.provider_id AND ops.organization_id = ?
                 WHERE mta.tier = ?
-                  AND mta.is_active = 1
+                  AND mta.is_active = true
                   AND p.is_active = 1
                   AND p.api_key IS NOT NULL
                   AND p.api_key != ''
@@ -361,7 +361,7 @@ export class ModelRouter {
                 FROM llm_providers p
                 INNER JOIN llm_tier_assignments mta ON p.id = mta.provider_id
                 WHERE mta.tier = ?
-                  AND mta.is_active = 1
+                  AND mta.is_active = true
                   AND p.is_active = 1
                   AND p.api_key IS NOT NULL
                   AND p.api_key != ''
@@ -586,9 +586,9 @@ export class ModelRouter {
     const id = `${providerId}-${tier}`;
     const query = `
             INSERT OR REPLACE INTO llm_tier_assignments (id, provider_id, tier, priority, is_active, updated_at)
-            VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         `;
-    await DbPromise.run(query, [id, providerId, tier, priority], { fallback: false });
+    await DbPromise.run(query, [id, providerId, tier, priority, true], { fallback: false });
     aiLogger.info(
       'ModelRouter',
       `Assigned provider ${providerId} to tier ${tier} with priority ${priority}`
@@ -828,6 +828,7 @@ export class ModelRouter {
       nvidia: 'https://integrate.api.nvidia.com/v1/chat/completions',
       qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
       zai: 'https://api.z.ai/api/paas/v4/chat/completions',
+      openrouter: 'https://openrouter.ai/api/v1/chat/completions',
       ollama: `${ollamaUrl}/v1`,
     };
     return endpoints[provider] || null;

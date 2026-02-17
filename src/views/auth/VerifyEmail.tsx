@@ -1,9 +1,8 @@
-import axios from 'axios';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import { Api } from '@/services/api';
 
 export const VerifyEmail = () => {
   const { t } = useTranslation();
@@ -25,7 +24,7 @@ export const VerifyEmail = () => {
     hasVerifiedRef.current = true;
 
     try {
-      await axios.post(`${API_URL}/verify/email`, { token });
+      await Api.verifyEmail(token);
       queueMicrotask(() => setStatus('success'));
       setTimeout(() => {
         navigate('/login');
@@ -33,7 +32,7 @@ export const VerifyEmail = () => {
     } catch (error: any) {
       queueMicrotask(() => {
         setStatus('error');
-        setMessage(error.response?.data?.error || t('auth.verifyEmail.failedMessage'));
+        setMessage(error?.message || t('auth.verifyEmail.failedMessage'));
       });
     }
   }, [token, navigate, t]);

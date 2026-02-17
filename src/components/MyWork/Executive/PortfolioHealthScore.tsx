@@ -295,7 +295,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                 {scoreDiff}%
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
-                vs last week
+                {t('executive.health.vsLastWeek', 'vs last week')}
               </span>
             </div>
           )}

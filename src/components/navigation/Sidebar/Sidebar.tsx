@@ -57,11 +57,15 @@ export const Sidebar: React.FC = () => {
   const theme = useAppStore((s) => s.theme);
   const isSidebarCollapsed = useAppStore((s) => s.isSidebarCollapsed);
   const toggleSidebarCollapse = useAppStore((s) => s.toggleSidebarCollapse);
-  const isChatSlidingPanelOpen = useAppStore((s) => s.isChatSlidingPanelOpen);
-  const toggleChatSlidingPanel = useAppStore((s) => s.toggleChatSlidingPanel);
   const currentProjectId = useAppStore((s) => s.currentProjectId);
 
-  const { setDisplayMode, setWorkspaceContext, activeConversationId } = useConversationStore();
+  const {
+    setDisplayMode,
+    setWorkspaceContext,
+    activeConversationId,
+    isSidebarOpen: isChatHistorySidebarOpen,
+    toggleSidebar: toggleChatHistorySidebar,
+  } = useConversationStore();
 
   // Floating menu state
   const [activeFloating, setActiveFloating] = React.useState<ActiveFloatingState | null>(null);
@@ -110,8 +114,7 @@ export const Sidebar: React.FC = () => {
     setDisplayMode('full');
     setCurrentViewState(AppView.AI_CHAT);
     navigate(getRouteFromAppView(AppView.AI_CHAT));
-    toggleChatSlidingPanel();
-  }, [navigate, setCurrentViewState, setDisplayMode, toggleChatSlidingPanel]);
+  }, [navigate, setCurrentViewState, setDisplayMode]);
 
   const navigateToView = React.useCallback(
     (viewId: AppView) => {
@@ -162,7 +165,7 @@ export const Sidebar: React.FC = () => {
           action: currentView === AppView.AI_CHAT ? 'togglePanel' : 'navigateToFullChat',
         });
         if (currentView === AppView.AI_CHAT) {
-          toggleChatSlidingPanel();
+          toggleChatHistorySidebar();
         } else {
           navigateToFullChat();
         }
@@ -198,7 +201,7 @@ export const Sidebar: React.FC = () => {
       completedViews,
       currentUser?.role,
       currentView,
-      toggleChatSlidingPanel,
+      toggleChatHistorySidebar,
       navigateToFullChat,
       navigateToView,
       activeConversationId,
@@ -271,7 +274,7 @@ export const Sidebar: React.FC = () => {
       completedViews={completedViews}
       showFull={showFull}
       isTouchDevice={isTouchDevice}
-      isChatSlidingPanelOpen={isChatSlidingPanelOpen}
+      isChatSlidingPanelOpen={isChatHistorySidebarOpen}
       isFloatingActive={activeFloating?.id === item.id}
       currentUserRole={currentUser?.role as any}
       onMouseEnter={handleItemMouseEnter}
