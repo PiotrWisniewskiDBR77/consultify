@@ -5,12 +5,13 @@
  */
 
 import { Check, Globe } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
   changeLanguage,
   LANGUAGE_NAMES,
+  normalizeLanguageCode,
   SUPPORTED_LANGUAGES,
   type SupportedLanguage,
 } from '../../i18n';
@@ -40,7 +41,7 @@ const ALL_LANGUAGES = SUPPORTED_LANGUAGES.map((code) => ({
 export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = '' }) => {
   const { t, i18n } = useTranslation();
   const { currentUser } = useAppStore();
-  const [currentLang, setCurrentLang] = useState(i18n.language || 'en');
+  const currentLang = normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || 'en';
 
   // SuperAdmin: only Polish and English
   // Regular users: all supported languages
@@ -50,10 +51,7 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
     : ALL_LANGUAGES;
 
   const handleLanguageChange = async (langCode: string) => {
-    const success = await changeLanguage(langCode);
-    if (success) {
-      setCurrentLang(langCode);
-    }
+    await changeLanguage(langCode);
   };
 
   return (

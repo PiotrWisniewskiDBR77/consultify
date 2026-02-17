@@ -33,12 +33,12 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
           whileTap={{ scale: 0.95 }}
           onClick={(e) => {
             e.stopPropagation();
-            handleGenerateAI('financial');
+            handleGenerateAI('financialAnalysis');
           }}
-          disabled={isGeneratingAI === 'financial'}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
+          disabled={isGeneratingAI === 'financialAnalysis'}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 text-xs font-medium transition-colors disabled:opacity-50"
         >
-          {isGeneratingAI === 'financial' ? (
+          {isGeneratingAI === 'financialAnalysis' ? (
             <Loader2 size={14} className="animate-spin" />
           ) : (
             <Sparkles size={14} />
@@ -49,7 +49,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
     >
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/50 dark:border-navy-700/50">
+          <div className="p-4 rounded-xl bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-700/60">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign size={14} className="text-blue-500" />
               <span className="text-xs font-medium text-slate-500 uppercase">CAPEX</span>
@@ -63,7 +63,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
               {isPolish ? 'Nakłady inwestycyjne' : 'Capital expenditure'}
             </p>
           </div>
-          <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200/50 dark:border-navy-700/50">
+          <div className="p-4 rounded-xl bg-slate-50/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-700/60">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign size={14} className="text-orange-500" />
               <span className="text-xs font-medium text-slate-500 uppercase">OPEX</span>
@@ -79,7 +79,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
           </div>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-500/10 border border-emerald-200/50 dark:border-emerald-500/20 text-center">
+          <div className="p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-200/40 dark:border-emerald-500/20 text-center">
             <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase mb-1">
               ROI
             </div>
@@ -89,7 +89,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
                 : '-'}
             </div>
           </div>
-          <div className="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20 text-center">
+          <div className="p-3 rounded-xl bg-blue-50/50 dark:bg-blue-500/5 border border-blue-200/40 dark:border-blue-500/20 text-center">
             <div className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase mb-1">
               NPV
             </div>
@@ -97,7 +97,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
               {initiative.npv ? `$${initiative.npv.toLocaleString()}` : '-'}
             </div>
           </div>
-          <div className="p-3 rounded-xl bg-purple-50/80 dark:bg-purple-500/10 border border-purple-200/50 dark:border-purple-500/20 text-center">
+          <div className="p-3 rounded-xl bg-purple-50/50 dark:bg-purple-500/5 border border-purple-200/40 dark:border-purple-500/20 text-center">
             <div className="text-xs font-medium text-purple-600 dark:text-purple-400 uppercase mb-1">
               {isPolish ? 'Zwrot' : 'Payback'}
             </div>

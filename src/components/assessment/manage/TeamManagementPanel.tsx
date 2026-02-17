@@ -7,6 +7,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
+  Briefcase,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -38,7 +39,35 @@ import { Api } from '@/services/api';
 // Types
 // ============================================
 
-export type TeamRole = 'admin' | 'manager' | 'editor' | 'viewer';
+/**
+ * TeamRole
+ * - Assessment mode (DRD): legacy role set (admin/manager/editor/viewer)
+ * - Initiative mode: project membership roles (canonical + expanded)
+ */
+export type TeamRole =
+  | 'admin'
+  | 'manager'
+  | 'editor'
+  | 'viewer'
+  // Canonical project roles (UI + governance semantics)
+  | 'SPONSOR'
+  | 'PROJECT_LEADER'
+  | 'INITIATIVE_OWNER'
+  | 'TEAM_MEMBER'
+  | 'PMO'
+  | 'PORTFOLIO_OWNER'
+  | 'BUSINESS_OWNER'
+  | 'STEERING_COMMITTEE'
+  // Expanded project roles (execution + governance)
+  | 'DECISION_OWNER'
+  | 'PMO_LEAD'
+  | 'WORKSTREAM_OWNER'
+  | 'TASK_ASSIGNEE'
+  | 'SME'
+  | 'REVIEWER'
+  | 'OBSERVER'
+  | 'CONSULTANT'
+  | 'STAKEHOLDER';
 
 export interface TeamMember {
   id: string;
@@ -46,6 +75,12 @@ export interface TeamMember {
   userId: string;
   organizationId: string;
   role: TeamRole;
+  /** Initiative mode: mark member as external (partner/consultant) */
+  isExternal?: boolean;
+  /** Initiative mode: optional external type */
+  externalType?: 'CONSULTANT' | 'PARTNER';
+  /** Initiative mode: optional external organization/vendor name */
+  externalOrgName?: string;
   canEdit: boolean;
   canApprove: boolean;
   canManageTeam: boolean;
@@ -58,6 +93,13 @@ export interface TeamMember {
   updatedAt: string;
   userName?: string;
   userEmail?: string;
+  /** Initiative/project mode: permissions payload from `/projects/:id/members` */
+  permissions?: Record<string, boolean>;
+  /** Initiative/project mode: canonical role key from backend payload */
+  projectRole?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
 }
 
 export interface AreaAssignment {
@@ -83,6 +125,8 @@ export interface OrgUser {
 export interface TeamManagementPanelProps {
   assessmentId: string;
   assessmentType: string;
+  /** Optional UI language hint (defaults to English) */
+  uiLanguage?: 'pl' | 'en';
   members: TeamMember[];
   assignments: AreaAssignment[];
   canManageTeam: boolean;
@@ -159,7 +203,183 @@ const ROLE_CONFIG: Record<
     description: 'Read-only access',
     permissions: ['View'],
   },
+  // ---- Canonical / project roles ----
+  SPONSOR: {
+    label: 'Sponsor',
+    icon: Crown,
+    color: 'text-amber-600 dark:text-amber-400',
+    bgColor: 'bg-amber-50 dark:bg-amber-500/10',
+    borderColor: 'border-amber-200 dark:border-amber-500/30',
+    description: 'Executive sponsor with approval authority',
+    permissions: ['Approve', 'Manage'],
+  },
+  PROJECT_LEADER: {
+    label: 'Project Leader',
+    icon: Briefcase,
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
+    borderColor: 'border-blue-200 dark:border-blue-500/30',
+    description: 'Operational delivery lead',
+    permissions: ['Manage', 'Edit'],
+  },
+  INITIATIVE_OWNER: {
+    label: 'Initiative Owner',
+    icon: Users,
+    color: 'text-teal-600 dark:text-teal-400',
+    bgColor: 'bg-teal-50 dark:bg-teal-500/10',
+    borderColor: 'border-teal-200 dark:border-teal-500/30',
+    description: 'Owns delivery for an initiative',
+    permissions: ['Edit', 'Status'],
+  },
+  TEAM_MEMBER: {
+    label: 'Team Member',
+    icon: Users,
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
+    borderColor: 'border-emerald-200 dark:border-emerald-500/30',
+    description: 'Executes assigned work',
+    permissions: ['Edit'],
+  },
+  PMO: {
+    label: 'PMO',
+    icon: Shield,
+    color: 'text-violet-600 dark:text-violet-400',
+    bgColor: 'bg-violet-50 dark:bg-violet-500/10',
+    borderColor: 'border-violet-200 dark:border-violet-500/30',
+    description: 'Governance and standards control',
+    permissions: ['Manage', 'Approve'],
+  },
+  PORTFOLIO_OWNER: {
+    label: 'Portfolio Owner',
+    icon: ShieldCheck,
+    color: 'text-purple-600 dark:text-purple-400',
+    bgColor: 'bg-purple-50 dark:bg-purple-500/10',
+    borderColor: 'border-purple-200 dark:border-purple-500/30',
+    description: 'Investment-level decisions across projects',
+    permissions: ['Approve', 'Manage'],
+  },
+  BUSINESS_OWNER: {
+    label: 'Business Owner',
+    icon: Crown,
+    color: 'text-indigo-600 dark:text-indigo-400',
+    bgColor: 'bg-indigo-50 dark:bg-indigo-500/10',
+    borderColor: 'border-indigo-200 dark:border-indigo-500/30',
+    description: 'Owns benefits and KPI outcomes',
+    permissions: ['Approve'],
+  },
+  STEERING_COMMITTEE: {
+    label: 'Steering Board',
+    icon: Eye,
+    color: 'text-slate-700 dark:text-slate-300',
+    bgColor: 'bg-slate-50 dark:bg-slate-500/10',
+    borderColor: 'border-slate-200 dark:border-slate-500/30',
+    description: 'Strategic approvals and escalations',
+    permissions: ['Approve'],
+  },
+  // ---- Expanded / execution roles ----
+  DECISION_OWNER: {
+    label: 'Decision Owner',
+    icon: ShieldCheck,
+    color: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-50 dark:bg-rose-500/10',
+    borderColor: 'border-rose-200 dark:border-rose-500/30',
+    description: 'Final authority for a decision stream',
+    permissions: ['Approve'],
+  },
+  PMO_LEAD: {
+    label: 'PMO Lead',
+    icon: Shield,
+    color: 'text-violet-600 dark:text-violet-400',
+    bgColor: 'bg-violet-50 dark:bg-violet-500/10',
+    borderColor: 'border-violet-200 dark:border-violet-500/30',
+    description: 'Coordinates execution and governance',
+    permissions: ['Manage', 'Edit'],
+  },
+  WORKSTREAM_OWNER: {
+    label: 'Workstream Owner',
+    icon: ShieldCheck,
+    color: 'text-cyan-600 dark:text-cyan-400',
+    bgColor: 'bg-cyan-50 dark:bg-cyan-500/10',
+    borderColor: 'border-cyan-200 dark:border-cyan-500/30',
+    description: 'Owns a workstream delivery',
+    permissions: ['Edit', 'Status'],
+  },
+  TASK_ASSIGNEE: {
+    label: 'Assignee',
+    icon: UserCheck,
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
+    borderColor: 'border-emerald-200 dark:border-emerald-500/30',
+    description: 'Executes tasks',
+    permissions: ['Edit'],
+  },
+  SME: {
+    label: 'SME',
+    icon: User,
+    color: 'text-slate-700 dark:text-slate-300',
+    bgColor: 'bg-slate-50 dark:bg-slate-500/10',
+    borderColor: 'border-slate-200 dark:border-slate-500/30',
+    description: 'Subject matter expert',
+    permissions: ['View'],
+  },
+  REVIEWER: {
+    label: 'Reviewer',
+    icon: Eye,
+    color: 'text-slate-700 dark:text-slate-300',
+    bgColor: 'bg-slate-50 dark:bg-slate-500/10',
+    borderColor: 'border-slate-200 dark:border-slate-500/30',
+    description: 'Quality reviewer',
+    permissions: ['View'],
+  },
+  OBSERVER: {
+    label: 'Observer',
+    icon: Eye,
+    color: 'text-slate-600 dark:text-slate-400',
+    bgColor: 'bg-slate-50 dark:bg-slate-500/10',
+    borderColor: 'border-slate-200 dark:border-slate-500/30',
+    description: 'Read-only visibility',
+    permissions: ['View'],
+  },
+  CONSULTANT: {
+    label: 'Consultant',
+    icon: UserCheck,
+    color: 'text-pink-600 dark:text-pink-400',
+    bgColor: 'bg-pink-50 dark:bg-pink-500/10',
+    borderColor: 'border-pink-200 dark:border-pink-500/30',
+    description: 'External advisor (limited scope)',
+    permissions: ['View'],
+  },
+  STAKEHOLDER: {
+    label: 'Stakeholder',
+    icon: Eye,
+    color: 'text-slate-600 dark:text-slate-400',
+    bgColor: 'bg-slate-50 dark:bg-slate-500/10',
+    borderColor: 'border-slate-200 dark:border-slate-500/30',
+    description: 'Notifications and updates',
+    permissions: ['View'],
+  },
 };
+
+const INITIATIVE_ROLE_ORDER: TeamRole[] = [
+  'SPONSOR',
+  'PORTFOLIO_OWNER',
+  'STEERING_COMMITTEE',
+  'BUSINESS_OWNER',
+  'PROJECT_LEADER',
+  'PMO_LEAD',
+  'WORKSTREAM_OWNER',
+  'INITIATIVE_OWNER',
+  'DECISION_OWNER',
+  'TEAM_MEMBER',
+  'TASK_ASSIGNEE',
+  'CONSULTANT',
+  'SME',
+  'REVIEWER',
+  'STAKEHOLDER',
+  'OBSERVER',
+];
+
+const ASSESSMENT_ROLE_ORDER: TeamRole[] = ['admin', 'manager', 'editor', 'viewer'];
 
 // ============================================
 // Add Member Modal Component
@@ -171,11 +391,13 @@ const AddMemberModal: FC<{
   onAdd: (userId: string, role: TeamRole) => Promise<void>;
   onSearchUsers: (query: string) => Promise<OrgUser[]>;
   existingMemberIds: Set<string>;
-}> = ({ isOpen, onClose, onAdd, onSearchUsers, existingMemberIds }) => {
+  availableRoles: TeamRole[];
+  isPolish?: boolean;
+}> = ({ isOpen, onClose, onAdd, onSearchUsers, existingMemberIds, availableRoles, isPolish }) => {
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<OrgUser | null>(null);
-  const [selectedRole, setSelectedRole] = useState<TeamRole>('editor');
+  const [selectedRole, setSelectedRole] = useState<TeamRole>(availableRoles?.[0] || 'viewer');
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState(false);
 
@@ -184,9 +406,9 @@ const AddMemberModal: FC<{
       setQuery('');
       setUsers([]);
       setSelectedUser(null);
-      setSelectedRole('editor');
+      setSelectedRole(availableRoles?.[0] || 'viewer');
     }
-  }, [isOpen]);
+  }, [isOpen, availableRoles]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -247,10 +469,12 @@ const AddMemberModal: FC<{
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  Add Team Member
+                  {isPolish ? 'Dodaj osobę do zespołu' : 'Add Team Member'}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Search and add users to the assessment team
+                  {isPolish
+                    ? 'Wyszukaj i dodaj użytkowników do zespołu'
+                    : 'Search and add users to the team'}
                 </p>
               </div>
             </div>
@@ -268,18 +492,20 @@ const AddMemberModal: FC<{
           {/* Search */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Search Users
+              {isPolish ? 'Szukaj użytkowników' : 'Search Users'}
             </label>
             <div className="relative">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
               />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by name or email..."
+                placeholder={
+                  isPolish ? 'Szukaj po nazwie lub email…' : 'Search by name or email...'
+                }
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
@@ -291,7 +517,7 @@ const AddMemberModal: FC<{
               {searching && (
                 <Loader2
                   size={16}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 animate-spin"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 animate-spin"
                 />
               )}
             </div>
@@ -373,41 +599,40 @@ const AddMemberModal: FC<{
           {/* Role Selection */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Select Role
+              {isPolish ? 'Wybierz rolę' : 'Select Role'}
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {(Object.entries(ROLE_CONFIG) as [TeamRole, (typeof ROLE_CONFIG)[TeamRole]][]).map(
-                ([role, config]) => {
-                  const Icon = config.icon;
-                  return (
-                    <button
-                      key={role}
-                      onClick={() => setSelectedRole(role)}
-                      className={`p-3 rounded-xl border-2 text-left transition-all ${
-                        selectedRole === role
-                          ? `${config.borderColor} ${config.bgColor}`
-                          : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Icon size={16} className={config.color} />
-                        <span
-                          className={`text-sm font-semibold ${
-                            selectedRole === role
-                              ? config.color
-                              : 'text-slate-700 dark:text-slate-300'
-                          }`}
-                        >
-                          {config.label}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        {config.description}
-                      </p>
-                    </button>
-                  );
-                }
-              )}
+              {availableRoles.map((role) => {
+                const config = ROLE_CONFIG[role];
+                const Icon = config.icon;
+                return (
+                  <button
+                    key={role}
+                    onClick={() => setSelectedRole(role)}
+                    className={`p-3 rounded-xl border-2 text-left transition-all ${
+                      selectedRole === role
+                        ? `${config.borderColor} ${config.bgColor}`
+                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon size={16} className={config.color} />
+                      <span
+                        className={`text-sm font-semibold ${
+                          selectedRole === role
+                            ? config.color
+                            : 'text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        {config.label}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {config.description}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -428,12 +653,12 @@ const AddMemberModal: FC<{
             {adding ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                Adding...
+                {isPolish ? 'Dodaję…' : 'Adding...'}
               </>
             ) : (
               <>
                 <UserPlus size={16} />
-                Add Member
+                {isPolish ? 'Dodaj' : 'Add Member'}
               </>
             )}
           </button>
@@ -452,13 +677,27 @@ const TeamMemberRow: FC<{
   canManageTeam: boolean;
   onUpdateRole: (userId: string, role: TeamRole) => Promise<void>;
   onRemove: (userId: string) => Promise<void>;
-}> = ({ member, canManageTeam, onUpdateRole, onRemove }) => {
+  isInitiative?: boolean;
+  isPolish?: boolean;
+}> = ({
+  member,
+  canManageTeam,
+  onUpdateRole,
+  onRemove,
+  isInitiative = false,
+  isPolish = false,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedRole, setSelectedRole] = useState<TeamRole>(member.role);
   const [busy, setBusy] = useState(false);
   const [showActions, setShowActions] = useState(false);
 
-  const roleConfig = ROLE_CONFIG[member.role];
+  const roleKey: TeamRole = Object.prototype.hasOwnProperty.call(ROLE_CONFIG, member.role)
+    ? (member.role as TeamRole)
+    : isInitiative
+      ? 'TEAM_MEMBER'
+      : 'viewer';
+  const roleConfig = ROLE_CONFIG[roleKey];
   const RoleIcon = roleConfig.icon;
 
   const handleSaveRole = async () => {
@@ -536,9 +775,9 @@ const TeamMemberRow: FC<{
               onChange={(e) => setSelectedRole(e.target.value as TeamRole)}
               className="h-9 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
             >
-              {Object.entries(ROLE_CONFIG).map(([role, config]) => (
-                <option key={role} value={role}>
-                  {config.label}
+              {(isInitiative ? INITIATIVE_ROLE_ORDER : ASSESSMENT_ROLE_ORDER).map((r) => (
+                <option key={r} value={r}>
+                  {ROLE_CONFIG[r]?.label || String(r)}
                 </option>
               ))}
             </select>
@@ -592,9 +831,38 @@ const TeamMemberRow: FC<{
         </div>
       </td>
 
-      {/* Assigned Areas */}
+      {/* Assigned Areas / Organization */}
       <td className="px-4 py-3">
-        {member.assignedAreas && member.assignedAreas.length > 0 ? (
+        {isInitiative ? (
+          member.isExternal ? (
+            <div className="flex flex-col gap-1">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-200">
+                {isPolish ? 'Poza organizacją' : 'Outside org'}
+              </span>
+              {(member.externalOrgName || member.externalType) && (
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  {member.externalOrgName ||
+                    (member.externalType === 'PARTNER'
+                      ? isPolish
+                        ? 'Partner'
+                        : 'Partner'
+                      : isPolish
+                        ? 'Konsultant'
+                        : 'Consultant')}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+                {isPolish ? 'W organizacji' : 'In org'}
+              </span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+                {member.userEmail ? String(member.userEmail).split('@')[1] || '' : '—'}
+              </span>
+            </div>
+          )
+        ) : member.assignedAreas && member.assignedAreas.length > 0 ? (
           <div className="flex items-center gap-1">
             <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">
               {member.assignedAreas.length} areas
@@ -625,7 +893,7 @@ const TeamMemberRow: FC<{
             <button
               onClick={() => setIsEditing(true)}
               disabled={isEditing || busy}
-              className="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-navy-700 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
+              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
               title="Edit role"
             >
               <Edit3 size={14} />
@@ -652,6 +920,7 @@ const TeamMemberRow: FC<{
 export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
   assessmentId,
   assessmentType,
+  uiLanguage,
   members,
   assignments,
   canManageTeam,
@@ -679,16 +948,29 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
     }
   };
 
-  const isDRD = assessmentType?.toUpperCase() === 'DRD';
+  const typeKey = String(assessmentType || '').toUpperCase();
+  const isDRD = typeKey === 'DRD';
+  const isInitiative = typeKey === 'INITIATIVE';
+  const isPolish = (uiLanguage || 'en') === 'pl';
+  const addRoleOptions = useMemo(
+    () => (isInitiative ? INITIATIVE_ROLE_ORDER : ASSESSMENT_ROLE_ORDER),
+    [isInitiative]
+  );
 
   // Role distribution stats
   const roleStats = useMemo(() => {
-    const stats: Record<TeamRole, number> = { admin: 0, manager: 0, editor: 0, viewer: 0 };
+    const keys = isInitiative ? INITIATIVE_ROLE_ORDER : ASSESSMENT_ROLE_ORDER;
+    const stats = Object.fromEntries(keys.map((k) => [k, 0])) as Record<TeamRole, number>;
     members.forEach((m) => {
-      if (stats[m.role] !== undefined) stats[m.role]++;
+      const key = Object.prototype.hasOwnProperty.call(ROLE_CONFIG, m.role)
+        ? (m.role as TeamRole)
+        : isInitiative
+          ? 'TEAM_MEMBER'
+          : 'viewer';
+      if (stats[key] !== undefined) stats[key] += 1;
     });
     return stats;
-  }, [members]);
+  }, [isInitiative, members]);
 
   return (
     <div className="space-y-4">
@@ -705,8 +987,13 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                   Team Management
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {members.length} member{members.length !== 1 ? 's' : ''} • {assignments.length}{' '}
-                  area assignment{assignments.length !== 1 ? 's' : ''}
+                  {members.length} member{members.length !== 1 ? 's' : ''}
+                  {!isInitiative ? (
+                    <>
+                      {' '}
+                      • {assignments.length} area assignment{assignments.length !== 1 ? 's' : ''}
+                    </>
+                  ) : null}
                 </p>
               </div>
             </div>
@@ -734,24 +1021,23 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
         {/* Role Stats */}
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900">
           <div className="flex items-center gap-4 overflow-x-auto">
-            {(Object.entries(ROLE_CONFIG) as [TeamRole, (typeof ROLE_CONFIG)[TeamRole]][]).map(
-              ([role, config]) => {
-                const Icon = config.icon;
-                const count = roleStats[role];
-                return (
-                  <div
-                    key={role}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg ${config.bgColor} ${config.borderColor} border`}
-                  >
-                    <Icon size={14} className={config.color} />
-                    <span className={`text-sm font-medium ${config.color}`}>
-                      {count} {config.label}
-                      {count !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                );
-              }
-            )}
+            {addRoleOptions.map((role) => {
+              const config = ROLE_CONFIG[role];
+              const Icon = config.icon;
+              const count = roleStats[role] || 0;
+              return (
+                <div
+                  key={role}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg ${config.bgColor} ${config.borderColor} border`}
+                >
+                  <Icon size={14} className={config.color} />
+                  <span className={`text-sm font-medium ${config.color}`}>
+                    {count} {config.label}
+                    {count !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -805,7 +1091,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                     Permissions
                   </th>
                   <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[100px]">
-                    Areas
+                    {isInitiative ? (isPolish ? 'Organizacja' : 'Organization') : 'Areas'}
                   </th>
                   <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[100px]">
                     Added
@@ -822,7 +1108,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                       <td colSpan={6} className="px-4 py-12 text-center">
                         <div className="flex flex-col items-center gap-3">
                           <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800">
-                            <Users size={24} className="text-slate-400" />
+                            <Users size={24} className="text-slate-500 dark:text-slate-400" />
                           </div>
                           <div>
                             <p className="text-sm font-medium text-slate-900 dark:text-white">
@@ -852,6 +1138,8 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                         canManageTeam={canManageTeam}
                         onUpdateRole={onUpdateMember}
                         onRemove={onRemoveMember}
+                        isInitiative={isInitiative}
+                        isPolish={isPolish}
                       />
                     ))
                   )}
@@ -867,7 +1155,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
             {assignments.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-12">
                 <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800">
-                  <ClipboardList size={24} className="text-slate-400" />
+                  <ClipboardList size={24} className="text-slate-500 dark:text-slate-400" />
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-medium text-slate-900 dark:text-white">
@@ -923,7 +1211,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                       {canManageTeam && (
                         <button
                           onClick={() => onRemoveAssignment(assignment.id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                          className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -952,7 +1240,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
               <span>Editor - Edit content</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Eye size={12} className="text-slate-400" />
+              <Eye size={12} className="text-slate-500 dark:text-slate-400" />
               <span>Viewer - Read only</span>
             </div>
           </div>
@@ -968,6 +1256,8 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
             onAdd={onAddMember}
             onSearchUsers={onSearchUsers}
             existingMemberIds={existingMemberIds}
+            availableRoles={addRoleOptions}
+            isPolish={isPolish}
           />
         )}
       </AnimatePresence>

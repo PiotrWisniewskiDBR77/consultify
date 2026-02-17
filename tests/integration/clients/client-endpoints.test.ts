@@ -1,87 +1,49 @@
-/**
- * Clients Integration Tests
- * Testing client management endpoints
- *
- * @module tests/integration/clients/client-endpoints.test.ts
- */
-
-import { describe, it, expect, beforeAll } from 'vitest';
-import express from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
-describe('Client Endpoints Integration', () => {
-  let app: express.Application;
-  const clients = new Map<string, any>();
+import { makeTestApp } from '../_helpers/testApp';
 
-  beforeAll(() => {
-    app = express();
-    app.use(express.json());
+async function loadPartnersRouter() {
+  return (await import('../../../server/src/routes/partners.routes.ts')).default;
+}
 
-    const authMiddleware = (req: any, res: any, next: any) => {
-      if (!req.headers.authorization) return res.status(401).json({ error: 'Unauthorized' });
-      req.user = { id: '1', orgId: 'org-1' };
-      next();
-    };
+async function makePartnersApp() {
+  const router = await loadPartnersRouter();
+  return makeTestApp({ mountPath: '/api/partners', router });
+}
 
-    app.get('/api/clients', authMiddleware, (req, res) => {
-      res.json(Array.from(clients.values()).filter((c) => c.orgId === req.user.orgId));
-    });
-
-    app.get('/api/clients/:id', authMiddleware, (req, res) => {
-      const client = clients.get(req.params.id);
-      if (!client) return res.status(404).json({ error: 'Not found' });
-      res.json(client);
-    });
-
-    app.post('/api/clients', authMiddleware, (req, res) => {
-      const { name, email, company, phone } = req.body;
-      if (!name || !email) return res.status(400).json({ error: 'Name and email required' });
-      const id = `client-${Date.now()}`;
-      const client = { id, name, email, company, phone, orgId: req.user.orgId };
-      clients.set(id, client);
-      res.status(201).json(client);
-    });
-
-    app.put('/api/clients/:id', authMiddleware, (req, res) => {
-      const client = clients.get(req.params.id);
-      if (!client) return res.status(404).json({ error: 'Not found' });
-      const updated = { ...client, ...req.body };
-      clients.set(req.params.id, updated);
-      res.json(updated);
-    });
-
-    app.delete('/api/clients/:id', authMiddleware, (req, res) => {
-      if (!clients.has(req.params.id)) return res.status(404).json({ error: 'Not found' });
-      clients.delete(req.params.id);
-      res.status(204).send();
-    });
+describe('Clients endpoints (partners routes demo) - REAL integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  describe('GET /api/clients', () => {
-    it('should return clients', async () => {
-      const response = await request(app).get('/api/clients').set('Authorization', 'Bearer token');
-      expect(response.status).toBe(200);
-    });
+  it('GET /clients returns demo list and pagination', async () => {
+    const app = await makePartnersApp();
+    const res = await request(app).get('/api/partners/clients');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        success: true,
+        data: expect.any(Array),
+        pagination: expect.objectContaining({ total: expect.any(Number) }),
+      })
+    );
   });
 
-  describe('POST /api/clients', () => {
-    it('should create client', async () => {
-      const response = await request(app)
-        .post('/api/clients')
-        .set('Authorization', 'Bearer token')
-        .send({ name: 'John Doe', email: 'john@example.com', company: 'Acme Inc' });
+  it('POST /clients returns 201 with created client object', async () => {
+    const app = await makePartnersApp();
+    const res = await request(app)
+      .post('/api/partners/clients')
+      .send({ name: 'N', industry: 'I', contactEmail: 'a@b.com' });
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toEqual(expect.objectContaining({ name: 'N', status: 'onboarding' }));
+  });
 
-      expect(response.status).toBe(201);
-      expect(response.body.name).toBe('John Doe');
-    });
-
-    it('should require name and email', async () => {
-      const response = await request(app)
-        .post('/api/clients')
-        .set('Authorization', 'Bearer token')
-        .send({});
-
-      expect(response.status).toBe(400);
-    });
+  it('GET /clients/:clientId echoes the clientId in response', async () => {
+    const app = await makePartnersApp();
+    const res = await request(app).get('/api/partners/clients/client-999');
+    expect(res.status).toBe(200);
+    expect(res.body.data.id).toBe('client-999');
   });
 });

@@ -48,7 +48,7 @@ export const StatusChangeToast: React.FC<StatusChangeToastProps> = ({
     <div
       className={`${
         t.visible ? 'animate-enter' : 'animate-leave'
-      } max-w-md w-full bg-navy-900 shadow-xl rounded-xl pointer-events-auto ring-1 ring-navy-700 overflow-hidden`}
+      } max-w-md w-full bg-white dark:bg-navy-900 shadow-xl rounded-xl pointer-events-auto ring-1 ring-slate-200 dark:ring-navy-700 overflow-hidden`}
     >
       <div className="p-4">
         <div className="flex items-start gap-3">
@@ -56,8 +56,12 @@ export const StatusChangeToast: React.FC<StatusChangeToastProps> = ({
             <CheckCircle2 size={20} className={statusMeta.color} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white">Status updated to {statusMeta.label}</p>
-            <p className="text-xs text-slate-400 truncate mt-0.5">{initiativeName}</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white">
+              Status updated to {statusMeta.label}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+              {initiativeName}
+            </p>
 
             {hasModuleChanged && (
               <button
@@ -71,7 +75,7 @@ export const StatusChangeToast: React.FC<StatusChangeToastProps> = ({
           </div>
           <button
             onClick={() => toast.dismiss(t.id)}
-            className="p-1 text-slate-400 hover:text-white rounded"
+            className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded"
           >
             <X size={16} />
           </button>

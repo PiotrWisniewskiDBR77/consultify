@@ -191,17 +191,20 @@ class TokenService {
   private async _doRefresh(): Promise<string | null> {
     const refreshToken = this.getRefreshToken();
 
-    if (!refreshToken) {
-      console.log('[TokenService] No refresh token available');
-      return null;
-    }
-
     try {
-      console.log('[TokenService] Refreshing token...');
+      // Prefer cookie-based refresh when available (httpOnly cookie set by backend).
+      // Fallback to legacy localStorage refreshToken for older sessions.
+      if (!refreshToken) {
+        console.log('[TokenService] No refresh token in localStorage; trying cookie refresh...');
+      } else {
+        console.log('[TokenService] Refreshing token...');
+      }
+
       const res = await fetch(`${API_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
+        credentials: 'include',
+        body: JSON.stringify(refreshToken ? { refreshToken } : {}),
       });
 
       if (!res.ok) {

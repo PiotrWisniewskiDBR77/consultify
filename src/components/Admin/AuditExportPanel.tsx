@@ -25,10 +25,10 @@ export const AuditExportPanel: React.FC = () => {
   };
 
   return (
-    <div className="bg-navy-800 rounded-xl border border-white/10 p-6 space-y-6">
+    <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-6 space-y-6">
       <div className="flex items-center gap-3">
         <FileText className="w-5 h-5 text-primary-400" />
-        <h3 className="text-lg font-semibold text-white">Export Audit Logs</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Export Audit Logs</h3>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -40,7 +40,7 @@ export const AuditExportPanel: React.FC = () => {
             type="date"
             value={dateRange.start}
             onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-            className="w-full px-3 py-2 bg-navy-900 border border-white/10 rounded-lg text-white"
+            className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
           />
         </div>
         <div>
@@ -49,7 +49,7 @@ export const AuditExportPanel: React.FC = () => {
             type="date"
             value={dateRange.end}
             onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-            className="w-full px-3 py-2 bg-navy-900 border border-white/10 rounded-lg text-white"
+            className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
           />
         </div>
       </div>
@@ -66,7 +66,7 @@ export const AuditExportPanel: React.FC = () => {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 exportFormat === format
                   ? 'bg-primary-500 text-white'
-                  : 'bg-navy-900 text-slate-400 dark:text-slate-500 hover:text-white'
+                  : 'bg-white dark:bg-navy-900 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {format.toUpperCase()}

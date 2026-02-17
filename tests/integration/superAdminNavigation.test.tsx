@@ -1,26 +1,24 @@
 /**
- * SuperAdmin Navigation Integration Tests - Simplified
+ * L1: SuperAdmin route config mapping (honest)
  */
-import { describe, it, expect, vi } from 'vitest';
 
-describe('SuperAdmin Navigation', () => {
-  it('should render main navigation', () => {
-    const navItems = ['Dashboard', 'Customers', 'Revenue', 'System'];
-    expect(navItems.length).toBeGreaterThan(0);
+import { describe, expect, it } from 'vitest';
+
+import { APP_VIEW_TO_ROUTE, ROUTES } from '../../src/routes/routeConfig';
+import { AppView } from '../../src/types';
+
+describe('SuperAdmin routes', () => {
+  it('ROUTES.SUPERADMIN defines the canonical paths', () => {
+    expect(ROUTES.SUPERADMIN.ROOT).toBe('/superadmin');
+    expect(ROUTES.SUPERADMIN.OVERVIEW).toBe('/superadmin/overview');
+    expect(ROUTES.SUPERADMIN.CUSTOMERS).toBe('/superadmin/customers');
+    expect(ROUTES.SUPERADMIN.AI_PLATFORM).toBe('/superadmin/ai-platform');
   });
 
-  it('should navigate between modules', () => {
-    const currentPath = '/superadmin/customers';
-    expect(currentPath).toContain('superadmin');
-  });
-
-  it('should show active state', () => {
-    const isActive = true;
-    expect(isActive).toBe(true);
-  });
-
-  it('should handle unauthorized access', () => {
-    const status = 403;
-    expect(status).toBe(403);
+  it('APP_VIEW_TO_ROUTE maps superadmin views to correct paths', () => {
+    expect(APP_VIEW_TO_ROUTE[AppView.SUPERADMIN_OVERVIEW]).toBe(ROUTES.SUPERADMIN.OVERVIEW);
+    expect(APP_VIEW_TO_ROUTE[AppView.SUPERADMIN_CUSTOMERS]).toBe(ROUTES.SUPERADMIN.CUSTOMERS);
+    expect(APP_VIEW_TO_ROUTE[AppView.SUPERADMIN_AI_PLATFORM]).toBe(ROUTES.SUPERADMIN.AI_PLATFORM);
+    expect(APP_VIEW_TO_ROUTE[AppView.SUPERADMIN_SYSTEM]).toBe(ROUTES.SUPERADMIN.SYSTEM);
   });
 });

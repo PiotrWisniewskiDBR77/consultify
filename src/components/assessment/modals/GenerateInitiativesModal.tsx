@@ -365,7 +365,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
             >
               <X size={20} />
             </button>
@@ -393,7 +393,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                     {stepLabels[idx]}
                   </div>
                   {idx < 2 && (
-                    <ChevronRight size={16} className="text-slate-300 dark:text-slate-600" />
+                    <ChevronRight size={16} className="text-slate-500 dark:text-slate-600" />
                   )}
                 </React.Fragment>
               );
@@ -427,11 +427,11 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                 </div>
               ) : reports.length === 0 ? (
                 <div className="text-center py-12">
-                  <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                  <FileText className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
                   <p className="text-slate-500 dark:text-slate-400 font-medium">
                     Brak sfinalizowanych raportów
                   </p>
-                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                     Najpierw sfinalizuj raport w zakładce Reports
                   </p>
                 </div>
@@ -441,7 +441,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                   {reports.length > 3 && (
                     <div className="relative mb-4">
                       <Search
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                         size={16}
                       />
                       <input
@@ -499,7 +499,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                 <CheckCircle2 size={10} />
                                 Final
                               </span>
-                              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                                 {report.createdAt ? formatDate(report.createdAt) : ''}
                               </p>
                             </div>
@@ -663,7 +663,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                             </div>
                             <button
                               onClick={() => removeInitiative(initiative.id)}
-                              className="p-1 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
+                              className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -709,7 +709,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
               {generatedInitiatives.length === 0 && (
                 <div className="text-center py-8">
-                  <Lightbulb className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                  <Lightbulb className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
                   <p className="text-slate-500 dark:text-slate-400">
                     Nie wygenerowano żadnych inicjatyw
                   </p>

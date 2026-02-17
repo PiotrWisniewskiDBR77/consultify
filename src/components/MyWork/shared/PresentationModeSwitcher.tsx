@@ -4,7 +4,7 @@
  * 2-button toggle between N / C presentation modes (D mode removed).
  * Placed between Chat and AI buttons in detail view headers.
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md (5.1-5.3)
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md (5.1-5.3)
  *
  * a11y: full keyboard support (tab/focus/enter/space), tooltips i18n
  * Motion: 160-220ms base transition, respects prefers-reduced-motion

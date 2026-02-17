@@ -21,14 +21,16 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
   const t = translate('step1', { returnObjects: true }) as any;
 
   return (
-    <div className="flex flex-col h-full bg-navy-900">
+    <div className="flex flex-col h-full bg-white dark:bg-navy-900">
       {/* Header / Progress */}
-      <div className="h-20 border-b border-white/5 flex flex-col justify-center px-8 bg-navy-900 shrink-0">
+      <div className="h-20 border-b border-slate-200 dark:border-white/5 flex flex-col justify-center px-8 bg-white dark:bg-navy-900 shrink-0">
         <div className="flex justify-between items-center mb-1">
-          <span className="text-sm font-semibold text-white tracking-wide">{t.title}</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-white tracking-wide">
+            {t.title}
+          </span>
           <span className="text-xs text-slate-500 dark:text-slate-400">{t.subtitle}</span>
         </div>
-        <div className="w-full h-1 bg-navy-800 rounded-full overflow-hidden">
+        <div className="w-full h-1 bg-slate-50 dark:bg-navy-800 rounded-full overflow-hidden">
           <div className="h-full bg-purple-500 w-1/3 shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
         </div>
       </div>
@@ -36,8 +38,8 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
       {/* Content Scrollable */}
       <div className="flex-1 overflow-y-auto p-8 space-y-6">
         {/* Card 1: Basic Info */}
-        <div className="bg-gradient-to-br from-navy-950/80 to-navy-900/80 border border-white/10 rounded-xl p-6 relative group hover:border-purple-500/30 transition-colors backdrop-blur-sm shadow-xl">
-          <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+        <div className="bg-gradient-to-br from-slate-50 dark:from-navy-950/80 to-white dark:to-navy-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-6 relative group hover:border-purple-500/30 transition-colors backdrop-blur-sm shadow-xl">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
             <span className="w-1 h-6 bg-purple-500 rounded-full"></span>
             {t.profile}
           </h3>
@@ -46,32 +48,32 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
               <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">
                 {t.industry}
               </label>
-              <p className="text-slate-200">{profile.industry || '---'}</p>
+              <p className="text-slate-700 dark:text-slate-200">{profile.industry || '---'}</p>
             </div>
             <div className="space-y-1">
               <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">
                 {t.size}
               </label>
-              <p className="text-slate-200">{profile.size || '---'}</p>
+              <p className="text-slate-700 dark:text-slate-200">{profile.size || '---'}</p>
             </div>
             <div className="space-y-1 col-span-2">
               <label className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">
                 {t.country}
               </label>
-              <p className="text-slate-200">{profile.country || '---'}</p>
+              <p className="text-slate-700 dark:text-slate-200">{profile.country || '---'}</p>
             </div>
           </div>
         </div>
 
         {/* Card 2: Business Model */}
-        <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6">
+        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-purple-200 mb-4 flex items-center gap-2">
             <Box size={20} />
             Business Model
           </h3>
           <div className="space-y-4">
-            <div className="p-3 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-white/5">
-              <p className="text-sm text-slate-300">
+            <div className="p-3 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-white/5">
+              <p className="text-sm text-slate-700 dark:text-slate-300">
                 {profile.businessModel?.description || 'No model description.'}
               </p>
               <div className="flex gap-2 mt-2">
@@ -89,7 +91,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
         </div>
 
         {/* Card 3: Core Processes */}
-        <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6">
+        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-blue-200 mb-4 flex items-center gap-2">
             <Layers size={20} />
             Core Processes
@@ -113,31 +115,31 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
         </div>
 
         {/* Card 4: IT Landscape */}
-        <div className="bg-navy-950/50 border border-white/10 rounded-xl p-6">
+        <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-green-200 mb-4 flex items-center gap-2">
             <Server size={20} />
             IT Landscape
           </h3>
           <div className="grid grid-cols-2 gap-4">
-            <div className="p-3 bg-white/5 rounded-lg">
+            <div className="p-3 bg-slate-100 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-transparent">
               <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">ERP</label>
-              <span className="text-slate-200 text-sm font-medium">
+              <span className="text-slate-700 dark:text-slate-200 text-sm font-medium">
                 {profile.itLandscape?.erp || 'Not Set'}
               </span>
             </div>
-            <div className="p-3 bg-white/5 rounded-lg">
+            <div className="p-3 bg-slate-100 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-transparent">
               <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">CRM</label>
-              <span className="text-slate-200 text-sm font-medium">
+              <span className="text-slate-700 dark:text-slate-200 text-sm font-medium">
                 {profile.itLandscape?.crm || 'Not Set'}
               </span>
             </div>
-            <div className="p-3 bg-white/5 rounded-lg">
+            <div className="p-3 bg-slate-100 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-transparent">
               <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">MES</label>
-              <span className="text-slate-200 text-sm font-medium">
+              <span className="text-slate-700 dark:text-slate-200 text-sm font-medium">
                 {profile.itLandscape?.mes || 'Not Set'}
               </span>
             </div>
-            <div className="p-3 bg-white/5 rounded-lg">
+            <div className="p-3 bg-slate-100 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-transparent">
               <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">
                 Integrations
               </label>
@@ -158,14 +160,14 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
       </div>
 
       {/* Footer / CTA */}
-      <div className="p-6 border-t border-white/5 bg-navy-900 flex justify-end">
+      <div className="p-6 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900 flex justify-end">
         <button
           onClick={onNextStep}
           disabled={!isStepComplete}
           className={`flex items-center gap-2 px-8 py-4 rounded-lg font-semibold text-sm transition-all shadow-lg ${
             isStepComplete
               ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30'
-              : 'bg-navy-800 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+              : 'bg-slate-50 dark:bg-navy-800 text-slate-500 dark:text-slate-400 cursor-not-allowed'
           } `}
         >
           {t.nextStep}

@@ -35,10 +35,10 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+    className="bg-white/70 dark:bg-navy-900/70 backdrop-blur rounded-2xl border border-slate-200 dark:border-navy-700/60 overflow-hidden"
   >
     <div
-      className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
+      className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50/70 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
       onClick={onToggle}
     >
       <div className="flex items-center gap-3">
@@ -59,7 +59,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
           initial={{ height: 0 }}
           animate={{ height: 'auto' }}
           exit={{ height: 0 }}
-          className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+          className="border-t border-slate-200/80 dark:border-navy-700/80 overflow-hidden"
         >
           <div className="p-4">{children}</div>
         </motion.div>

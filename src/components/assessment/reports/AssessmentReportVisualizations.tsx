@@ -121,7 +121,7 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({
     <div className={`${classes.bg} border ${classes.border} rounded-xl p-4`}>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-slate-400">{title}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{title}</p>
           <p className={`text-3xl font-bold ${classes.text} mt-1`}>{value}</p>
           {subtitle && <p className="text-xs text-slate-500 mt-1">{subtitle}</p>}
         </div>
@@ -137,7 +137,7 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({
                 ? 'text-emerald-400'
                 : trend === 'down'
                   ? 'text-red-400'
-                  : 'text-slate-400'
+                  : 'text-slate-500 dark:text-slate-400'
             }`}
           >
             {trend === 'up' ? 'Above target' : trend === 'down' ? 'Below target' : 'On track'}
@@ -228,8 +228,10 @@ export const AssessmentRadarChart: React.FC<AssessmentRadarChartProps> = ({
   }, [data.dimensions, isPolish]);
 
   return (
-    <div className="bg-navy-800 border border-navy-700 rounded-xl p-6">
-      <h3 className="text-lg font-semibold text-white mb-4">Maturity Overview</h3>
+    <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        Maturity Overview
+      </h3>
       <ResponsiveContainer width="100%" height={height}>
         <RechartsRadar data={chartData}>
           <PolarGrid stroke="#334155" />
@@ -264,7 +266,9 @@ export const AssessmentRadarChart: React.FC<AssessmentRadarChartProps> = ({
           )}
           <Legend
             wrapperStyle={{ paddingTop: 20 }}
-            formatter={(value) => <span className="text-slate-300 text-sm">{value}</span>}
+            formatter={(value) => (
+              <span className="text-slate-700 dark:text-slate-300 text-sm">{value}</span>
+            )}
           />
           <Tooltip
             contentStyle={{
@@ -314,26 +318,26 @@ export const GapHeatmap: React.FC<GapHeatmapProps> = ({ data, onDimensionClick }
   };
 
   return (
-    <div className="bg-navy-800 border border-navy-700 rounded-xl p-6">
+    <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
       <h3 className="text-lg font-semibold text-white mb-4">Gap Analysis</h3>
 
       {/* Legend */}
       <div className="flex items-center gap-4 mb-4 text-xs">
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded bg-red-500"></span>
-          <span className="text-slate-400">Critical (≥3)</span>
+          <span className="text-slate-500 dark:text-slate-400">Critical (≥3)</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded bg-orange-500"></span>
-          <span className="text-slate-400">High (2)</span>
+          <span className="text-slate-500 dark:text-slate-400">High (2)</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded bg-amber-500"></span>
-          <span className="text-slate-400">Medium (1)</span>
+          <span className="text-slate-500 dark:text-slate-400">Medium (1)</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded bg-emerald-500"></span>
-          <span className="text-slate-400">On Track</span>
+          <span className="text-slate-500 dark:text-slate-400">On Track</span>
         </div>
       </div>
 
@@ -347,11 +351,11 @@ export const GapHeatmap: React.FC<GapHeatmapProps> = ({ data, onDimensionClick }
             <button
               key={dim.id}
               onClick={() => onDimensionClick?.(dim.id)}
-              className="w-full flex items-center gap-4 p-3 bg-navy-900 rounded-lg hover:bg-navy-750 transition-colors"
+              className="w-full flex items-center gap-4 p-3 bg-white dark:bg-navy-900 rounded-lg hover:bg-navy-750 transition-colors"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-white truncate">
+                  <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
                     {isPolish && dim.namePL ? dim.namePL : dim.name}
                   </span>
                   <span
@@ -360,7 +364,7 @@ export const GapHeatmap: React.FC<GapHeatmapProps> = ({ data, onDimensionClick }
                     {getGapLabel(gap)}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-slate-400">
+                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                   <span>Current: {dim.current}</span>
                   <ArrowRight size={12} />
                   <span>Target: {dim.target}</span>
@@ -408,8 +412,10 @@ export const DimensionBars: React.FC<DimensionBarsProps> = ({ data, height = 300
   }, [data.dimensions, isPolish]);
 
   return (
-    <div className="bg-navy-800 border border-navy-700 rounded-xl p-6">
-      <h3 className="text-lg font-semibold text-white mb-4">Dimension Comparison</h3>
+    <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        Dimension Comparison
+      </h3>
       <ResponsiveContainer width="100%" height={height}>
         <BarChart data={chartData} layout="vertical" margin={{ left: 100, right: 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -428,7 +434,11 @@ export const DimensionBars: React.FC<DimensionBarsProps> = ({ data, height = 300
             }}
             labelStyle={{ color: '#f8fafc' }}
           />
-          <Legend formatter={(value) => <span className="text-slate-300 text-sm">{value}</span>} />
+          <Legend
+            formatter={(value) => (
+              <span className="text-slate-700 dark:text-slate-300 text-sm">{value}</span>
+            )}
+          />
           <Bar dataKey="current" name="Current" fill="#3b82f6" radius={[0, 4, 4, 0]} />
           <Bar dataKey="target" name="Target" fill="#10b981" radius={[0, 4, 4, 0]} />
         </BarChart>

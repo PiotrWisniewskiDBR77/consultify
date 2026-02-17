@@ -11,7 +11,7 @@
  * - AIFieldEnhancer per risk field
  * - Level legend, sorted by score
  *
- * @see docs/ui-standards/shared-nmode-sections-standard.md
+ * @see docs/ui-standards/02-components/shared-sections.md
  */
 
 import { AlertTriangle, Loader2, Plus, Sparkles, X } from 'lucide-react';

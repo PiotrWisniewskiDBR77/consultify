@@ -24,11 +24,12 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { ProjectTeamPanel } from '../../components/PMO/ProjectTeamPanel';
 import { ProjectTeamBoard } from '../../components/Projects/ProjectTeamBoard';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
-import { Project, ProjectRole } from '../../types';
+import { Project } from '../../types';
 import { AppView } from '../../types';
 
 interface ProjectDetailsViewProps {
@@ -447,7 +448,10 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
         {/* --- TEAM TAB --- */}
         {activeTab === 'team' && (
           <div className="animate-in fade-in duration-300">
-            <ProjectTeamBoard projectId={projectId} projectName={project.name} />
+            <div className="space-y-6">
+              <ProjectTeamPanel projectId={projectId} canManageTeam />
+              <ProjectTeamBoard projectId={projectId} projectName={project.name} />
+            </div>
           </div>
         )}
 

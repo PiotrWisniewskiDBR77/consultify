@@ -232,7 +232,7 @@ export const BulkOperationsToolbar: React.FC<Props> = ({
                 </span>
                 <button
                   onClick={handleClearSelection}
-                  className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded"
+                  className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded"
                   title={isPolish ? 'Wyczyść zaznaczenie (Esc)' : 'Clear selection (Esc)'}
                 >
                   <X size={16} />

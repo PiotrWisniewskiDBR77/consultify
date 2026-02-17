@@ -7,6 +7,27 @@ import { initReactI18next } from 'react-i18next';
 export const SUPPORTED_LANGUAGES = ['en', 'pl', 'de', 'ar', 'jp', 'es'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
+// Helper function to check if language is supported
+export const isValidLanguage = (lang: string): lang is SupportedLanguage => {
+  return SUPPORTED_LANGUAGES.includes(lang as SupportedLanguage);
+};
+
+// Normalize language codes (aliases -> supported codes)
+// Example: browser/system often uses "ja" which we map to our app locale folder "jp".
+const LANGUAGE_ALIASES: Record<string, SupportedLanguage> = {
+  ja: 'jp',
+};
+
+export const normalizeLanguageCode = (lng: string | null | undefined): SupportedLanguage | null => {
+  const base = String(lng || '')
+    .toLowerCase()
+    .split(/[-_]/)[0];
+  if (!base) return null;
+  if (isValidLanguage(base)) return base;
+  if (LANGUAGE_ALIASES[base]) return LANGUAGE_ALIASES[base];
+  return null;
+};
+
 // Available namespaces for translations
 export const NAMESPACES = ['translation', 'assessment-module', 'discovery'] as const;
 export type TranslationNamespace = (typeof NAMESPACES)[number];
@@ -48,7 +69,19 @@ i18n
   .init({
     // Supported languages
     supportedLngs: SUPPORTED_LANGUAGES,
-    fallbackLng: 'en',
+    // Prefer per-language fallback chains (and always end with EN)
+    fallbackLng: {
+      en: ['en'],
+      pl: ['pl', 'en'],
+      de: ['de', 'en'],
+      es: ['es', 'en'],
+      ar: ['ar', 'en'],
+      jp: ['jp', 'en'],
+      default: ['en'],
+    },
+    // Use browser language like "pl-PL" -> "pl"
+    load: 'languageOnly',
+    nonExplicitSupportedLngs: true,
 
     // Default namespace
     defaultNS: 'translation',
@@ -57,6 +90,8 @@ i18n
     // IMPORTANT: i18next debug logs (especially missingKey) can significantly slow down the app.
     // Keep it OFF by default. Enable explicitly via: VITE_I18N_DEBUG=true
     debug: import.meta.env.VITE_I18N_DEBUG === 'true',
+    returnNull: false,
+    returnEmptyString: false,
 
     interpolation: {
       escapeValue: false, // React already escapes values
@@ -69,9 +104,18 @@ i18n
 
     // Language detection configuration
     detection: {
+      // Prefer explicit user choice first, then browser settings.
       order: ['localStorage', 'navigator', 'htmlTag'],
+      // Persist language choice so switching language is stable across reloads.
       caches: ['localStorage'],
-      lookupLocalStorage: 'i18nextLng',
+      // Map common browser locales to our supported language codes
+      // (e.g. browser "ja" should use app locale folder "jp")
+      convertDetectedLanguage: (lng: string) => {
+        const base = String(lng || '')
+          .toLowerCase()
+          .split(/[-_]/)[0];
+        return normalizeLanguageCode(base) || base || lng;
+      },
     },
 
     // React configuration
@@ -85,44 +129,52 @@ i18n
 
 // Listen for language changes and update document attributes
 i18n.on('languageChanged', (lng: string) => {
-  const lang = lng as SupportedLanguage;
-  document.documentElement.lang = lang;
-  document.documentElement.dir = LANGUAGE_DIRECTION[lang] || 'ltr';
+  const lang = normalizeLanguageCode(lng) || 'en';
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = LANGUAGE_DIRECTION[lang] || 'ltr';
+  }
 });
 
 // Set initial language on document
 if (typeof document !== 'undefined') {
-  const currentLang = i18n.language as SupportedLanguage;
-  document.documentElement.lang = currentLang || 'en';
+  const currentLang = normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || 'en';
+  document.documentElement.lang = currentLang;
   document.documentElement.dir = LANGUAGE_DIRECTION[currentLang] || 'ltr';
 }
 
-// Helper function to check if language is supported
-export const isValidLanguage = (lang: string): lang is SupportedLanguage => {
-  return SUPPORTED_LANGUAGES.includes(lang as SupportedLanguage);
-};
-
 // Helper function to get current language direction
 export const getCurrentDirection = (): 'ltr' | 'rtl' => {
-  const currentLang = i18n.language as SupportedLanguage;
+  const currentLang = normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || 'en';
   return LANGUAGE_DIRECTION[currentLang] || 'ltr';
 };
 
 // Helper function to safely change language
 export const changeLanguage = async (lang: string): Promise<boolean> => {
-  if (!isValidLanguage(lang)) {
+  const normalized = normalizeLanguageCode(lang);
+  if (!normalized) {
     console.warn(`[i18n] Attempted to switch to unsupported language: ${lang}`);
     return false;
   }
 
   try {
-    await i18n.changeLanguage(lang);
+    await i18n.changeLanguage(normalized);
+    // Ensure persistence even if detector is not available
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('i18nextLng', normalized);
+      }
+    } catch {
+      // ignore
+    }
     // Update document direction for RTL languages
-    document.documentElement.dir = LANGUAGE_DIRECTION[lang];
-    document.documentElement.lang = lang;
+    if (typeof document !== 'undefined') {
+      document.documentElement.dir = LANGUAGE_DIRECTION[normalized];
+      document.documentElement.lang = normalized;
+    }
     return true;
   } catch (error) {
-    console.error(`[i18n] Failed to change language to ${lang}:`, error);
+    console.error(`[i18n] Failed to change language to ${normalized}:`, error);
     return false;
   }
 };

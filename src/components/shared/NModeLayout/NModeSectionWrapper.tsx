@@ -4,7 +4,7 @@
  * Utility wrapper for individual section canvas content.
  * Provides consistent spacing, optional heading with AI button, and empty states.
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.3
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.3
  */
 
 import { Loader2, Sparkles } from 'lucide-react';
@@ -47,7 +47,7 @@ export const NModeSectionWrapper: React.FC<NModeSectionWrapperProps> = ({
       {/* Heading + AI action */}
       {heading && (
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
             {isPolish ? heading.pl : heading.en}
           </h2>
           {aiAction && (

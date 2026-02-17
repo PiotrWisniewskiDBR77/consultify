@@ -6,6 +6,8 @@
 
 import React from 'react';
 
+import { Api } from '@/services/api';
+
 import { CommentsSection as SharedCommentsSection } from '../../MyWork/shared';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
@@ -16,6 +18,7 @@ export const CommentsSection: React.FC<InitiativeSectionProps> = ({
   onToggle,
 }) => {
   const {
+    initiativeId,
     comments,
     setComments,
     handleAddComment,
@@ -31,6 +34,11 @@ export const CommentsSection: React.FC<InitiativeSectionProps> = ({
       onAddComment={handleAddComment}
       onDeleteComment={async (id) => {
         setComments((prev) => prev.filter((c) => c.id !== id));
+        try {
+          await Api.delete(`/initiatives/${initiativeId}/comments/${id}`);
+        } catch {
+          // best-effort
+        }
       }}
       onLikeComment={async (id) => {
         setComments((prev) =>

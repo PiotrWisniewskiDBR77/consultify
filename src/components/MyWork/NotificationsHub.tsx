@@ -9,6 +9,7 @@ import {
   AlertCircle,
   ArrowRight,
   Bell,
+  BellOff,
   Briefcase,
   Building2,
   Calendar,
@@ -26,6 +27,7 @@ import {
   Target,
   Trash2,
   User,
+  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -34,6 +36,13 @@ import { useTranslation } from 'react-i18next';
 import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
 import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
 import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
+import {
+  clearMutedNotificationTypesForSession,
+  getMutedNotificationTypes,
+  isNotificationTypeMuted,
+  NOTIFICATION_MUTE_SESSION_CHANGED_EVENT,
+  unmuteNotificationTypeForSession,
+} from '@/utils/notificationMuteSession';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -182,7 +191,9 @@ const getRelatedObjectIcon = (type: string | undefined) => {
     case 'PROJECT':
       return <FolderOpen size={12} className="text-emerald-500" />;
     default:
-      return <FileText size={12} className="text-slate-400 dark:text-slate-500" />;
+      return (
+        <FileText size={12} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+      );
   }
 };
 
@@ -266,7 +277,7 @@ const NotificationItem: React.FC<{
             >
               {notification.title}
             </p>
-            <span className="shrink-0 text-[10px] text-slate-400 dark:text-slate-500">
+            <span className="shrink-0 text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
               {formatRelativeTime(notification.createdAt)}
             </span>
           </div>
@@ -282,7 +293,7 @@ const NotificationItem: React.FC<{
         <div className="shrink-0 pt-0.5">
           <ChevronDown
             size={14}
-            className={`text-slate-400 dark:text-slate-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+            className={`text-slate-500 dark:text-slate-400 dark:text-slate-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
           />
         </div>
 
@@ -295,7 +306,7 @@ const NotificationItem: React.FC<{
                   e.stopPropagation();
                   onMarkRead(notification.id);
                 }}
-                className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                className="p-1.5 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
                 title="Mark as read"
               >
                 <Check size={14} />
@@ -306,7 +317,7 @@ const NotificationItem: React.FC<{
                 e.stopPropagation();
                 onDelete(notification.id);
               }}
-              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+              className="p-1.5 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
               title="Delete"
             >
               <Trash2 size={14} />
@@ -460,12 +471,18 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
 
   const currentUserId = useAppStore((state) => state.currentUser?.id);
 
+  // Session-muted types UI (lightweight)
+  const [mutedTypesOpen, setMutedTypesOpen] = useState(false);
+  const [mutedTypes, setMutedTypes] = useState<string[]>(() => getMutedNotificationTypes());
+
   // Fetch notifications
   const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       const data = (await Api.getNotifications(false, 50)) as any;
-      setNotifications(data || []);
+      setNotifications(
+        (Array.isArray(data) ? data : []).filter((n: any) => !isNotificationTypeMuted(n.type))
+      );
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -475,6 +492,20 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
 
   useEffect(() => {
     fetchNotifications();
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    if (mutedTypes.length === 0 && mutedTypesOpen) setMutedTypesOpen(false);
+  }, [mutedTypes.length, mutedTypesOpen]);
+
+  // Refresh on session mute changes
+  useEffect(() => {
+    const handle = () => {
+      setMutedTypes(getMutedNotificationTypes());
+      fetchNotifications();
+    };
+    window.addEventListener(NOTIFICATION_MUTE_SESSION_CHANGED_EVENT, handle as any);
+    return () => window.removeEventListener(NOTIFICATION_MUTE_SESSION_CHANGED_EVENT, handle as any);
   }, [fetchNotifications]);
 
   // Filter by mode
@@ -668,7 +699,14 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
         ? [{ id: 'info', label: 'Information', items: info, accentColor: 'text-blue-500' }]
         : []),
       ...(other.length > 0
-        ? [{ id: 'other', label: 'Other', items: other, accentColor: 'text-slate-400' }]
+        ? [
+            {
+              id: 'other',
+              label: 'Other',
+              items: other,
+              accentColor: 'text-slate-500 dark:text-slate-400',
+            },
+          ]
         : []),
     ];
   }, [filteredNotifications]);
@@ -746,7 +784,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                                     ${
                                       isActive
                                         ? `${tab.activeColor} shadow-sm`
-                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/50 dark:hover:bg-white/5'
                                     }
                                 `}
               >
@@ -800,7 +838,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
 
       {/* Filter Chips - EXACTLY matching QuickFilterBar */}
       <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-100 dark:border-navy-700">
-        <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mr-1">
+        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 mr-1">
           {t('common.show', 'Show')}:
         </span>
 
@@ -823,7 +861,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                                         ? 'bg-slate-700 text-white dark:bg-slate-600 shadow-sm'
                                         : hasItems
                                           ? 'bg-white dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
-                                          : 'bg-slate-100 dark:bg-navy-800/50 text-slate-400 dark:text-slate-500 border border-transparent cursor-not-allowed opacity-50'
+                                          : 'bg-slate-100 dark:bg-navy-800/50 text-slate-500 dark:text-slate-400 dark:text-slate-500 border border-transparent cursor-not-allowed opacity-50'
                                     }
                                 `}
               >
@@ -843,6 +881,68 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
             );
           })}
         </div>
+
+        {/* Session-muted types quick control */}
+        {mutedTypes.length > 0 && (
+          <div className="ml-auto relative" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setMutedTypesOpen((v) => !v)}
+              className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium bg-white dark:bg-navy-800 text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20 transition-all"
+              title={t('notifications.mutedSession', 'Muted types (session)')}
+            >
+              <BellOff size={11} className="text-slate-500 dark:text-slate-400" />
+              {t('common.muted', 'Muted')} ({mutedTypes.length})
+              <ChevronDown size={12} className="text-slate-500 dark:text-slate-400" />
+            </button>
+
+            {mutedTypesOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setMutedTypesOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/60 shadow-xl overflow-hidden">
+                  <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700/60 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      {t('notifications.mutedSession', 'Muted types (session)')}
+                    </span>
+                    <button
+                      onClick={() => setMutedTypesOpen(false)}
+                      className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+                    >
+                      <X size={14} className="text-slate-500 dark:text-slate-400" />
+                    </button>
+                  </div>
+
+                  <div className="max-h-56 overflow-auto">
+                    {mutedTypes.map((type) => (
+                      <div
+                        key={type}
+                        className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-navy-800/60"
+                      >
+                        <span className="text-xs text-slate-600 dark:text-slate-300 truncate">
+                          {type.replace(/_/g, ' ')}
+                        </span>
+                        <button
+                          onClick={() => unmuteNotificationTypeForSession(type)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-slate-300/60 dark:border-navy-600/60 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                        >
+                          {t('common.unmute', 'Unmute')}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-700/60 flex justify-end">
+                    <button
+                      onClick={() => clearMutedNotificationTypesForSession()}
+                      className="text-[11px] font-medium text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white"
+                    >
+                      {t('common.clearAll', 'Clear all')}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Notifications content — switches layout based on cardViewStyle (A7.2/A7.3) */}
@@ -853,7 +953,10 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
           </div>
         ) : filteredNotifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-            <Bell size={40} className="text-slate-300 dark:text-slate-600 mb-3" />
+            <Bell
+              size={40}
+              className="text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-3"
+            />
             <p className="text-[13px] text-slate-500 dark:text-slate-400">
               {t('myWork.noNotifications', 'No notifications')}
             </p>
@@ -948,7 +1051,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                           </span>
                         </span>
                       ) : (
-                        <span className="text-[11px] text-slate-400">—</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">—</span>
                       )}
                     </td>
                     {/* Source (A6.3) */}
@@ -985,7 +1088,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                               e.stopPropagation();
                               handleMarkRead(notification.id);
                             }}
-                            className="p-1 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                            className="p-1 text-slate-500 dark:text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
                             title={t('notifications.markRead', 'Mark as read')}
                           >
                             <Check size={13} />
@@ -996,7 +1099,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
                             e.stopPropagation();
                             handleDelete(notification.id);
                           }}
-                          className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                          className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
                           title={t('notifications.delete', 'Delete')}
                         >
                           <Trash2 size={13} />

@@ -1,116 +1,35 @@
 /**
- * Users Integration Tests
- * Testing user management endpoints
- *
- * @module tests/integration/users/user-endpoints.test.ts
+ * L1: User validators (honest unit tests).
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import express from 'express';
-import request from 'supertest';
+import { describe, expect, it } from 'vitest';
 
-describe('User Endpoints Integration', () => {
-  let app: express.Application;
-  const users = new Map<string, any>();
+import {
+  GetUsersQuerySchema,
+  UpdateUserRoleSchema,
+  UpdateUserSchema,
+  UserRoleEnum,
+  UserStatusEnum,
+} from '../../../server/src/validators/user.validators.js';
 
-  beforeAll(() => {
-    app = express();
-    app.use(express.json());
-
-    // Auth middleware mock
-    const authMiddleware = (req: any, res: any, next: any) => {
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-      req.user = { id: '1', role: 'admin' };
-      next();
-    };
-
-    // Mock user routes
-    app.get('/api/users', authMiddleware, (req, res) => {
-      res.json(Array.from(users.values()));
-    });
-
-    app.get('/api/users/:id', authMiddleware, (req, res) => {
-      const user = users.get(req.params.id);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      res.json(user);
-    });
-
-    app.post('/api/users', authMiddleware, (req, res) => {
-      const { email, name, role } = req.body;
-      if (!email || !name) {
-        return res.status(400).json({ error: 'Missing required fields' });
-      }
-      const id = `user-${Date.now()}`;
-      const user = { id, email, name, role: role || 'user' };
-      users.set(id, user);
-      res.status(201).json(user);
-    });
-
-    app.put('/api/users/:id', authMiddleware, (req, res) => {
-      const user = users.get(req.params.id);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      const updated = { ...user, ...req.body };
-      users.set(req.params.id, updated);
-      res.json(updated);
-    });
-
-    app.delete('/api/users/:id', authMiddleware, (req, res) => {
-      if (!users.has(req.params.id)) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      users.delete(req.params.id);
-      res.status(204).send();
-    });
+describe('user.validators', () => {
+  it('UpdateUserSchema: accepts partial updates', () => {
+    const parsed = UpdateUserSchema.parse({ email: 'a@b.com' });
+    expect(parsed.email).toBe('a@b.com');
   });
 
-  describe('GET /api/users', () => {
-    it('should require authentication', async () => {
-      const response = await request(app).get('/api/users');
-      expect(response.status).toBe(401);
-    });
-
-    it('should return users list', async () => {
-      const response = await request(app).get('/api/users').set('Authorization', 'Bearer token');
-      expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-    });
+  it('UpdateUserRoleSchema: requires role', () => {
+    const parsed = UpdateUserRoleSchema.safeParse({});
+    expect(parsed.success).toBe(false);
   });
 
-  describe('POST /api/users', () => {
-    it('should create user', async () => {
-      const response = await request(app)
-        .post('/api/users')
-        .set('Authorization', 'Bearer token')
-        .send({ email: 'test@example.com', name: 'Test User' });
-
-      expect(response.status).toBe(201);
-      expect(response.body.email).toBe('test@example.com');
-    });
-
-    it('should require email and name', async () => {
-      const response = await request(app)
-        .post('/api/users')
-        .set('Authorization', 'Bearer token')
-        .send({});
-
-      expect(response.status).toBe(400);
-    });
+  it('GetUsersQuerySchema: supports canReview true/false', () => {
+    const parsed = GetUsersQuerySchema.parse({ canReview: 'true' });
+    expect(parsed.canReview).toBe('true');
   });
 
-  describe('GET /api/users/:id', () => {
-    it('should return 404 for non-existent user', async () => {
-      const response = await request(app)
-        .get('/api/users/non-existent')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(404);
-    });
+  it('enums: contain expected values', () => {
+    expect(UserRoleEnum.options).toContain('SUPERADMIN');
+    expect(UserStatusEnum.options).toContain('ACTIVE');
   });
 });

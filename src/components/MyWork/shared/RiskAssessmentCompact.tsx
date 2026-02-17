@@ -128,7 +128,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
       case 'critical':
         return <AlertTriangle size={16} className="text-red-500" />;
       default:
-        return <Shield size={16} className="text-slate-400" />;
+        return <Shield size={16} className="text-slate-500 dark:text-slate-400" />;
     }
   };
 
@@ -149,7 +149,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
     >
       {/* Collapsible Header */}
       <motion.button
@@ -166,7 +166,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {risks.length > 0 && (
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
               {risks.length}
             </span>
           )}
@@ -197,7 +197,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
             )}
           </AnimatePresence>
           <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={18} className="text-slate-400" />
+            <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
           </motion.div>
         </div>
       </motion.button>
@@ -214,7 +214,7 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
             <div className="p-4 space-y-3">
               {/* Risk List */}
               {risks.length === 0 ? (
-                <div className="text-center py-6 text-slate-400 dark:text-slate-500">
+                <div className="text-center py-6 text-slate-500 dark:text-slate-400 dark:text-slate-500">
                   <Shield size={32} className="mx-auto mb-2 opacity-50" />
                   <p className="text-sm">
                     {isPolish ? 'Brak zidentyfikowanych ryzyk' : 'No risks identified'}
@@ -272,14 +272,14 @@ export const RiskAssessmentCompact: React.FC<RiskAssessmentCompactProps> = ({
                                   e.stopPropagation();
                                   onRemove(risk.id);
                                 }}
-                                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-colors"
+                                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
                               >
                                 <Trash2 size={14} />
                               </button>
                             )}
                             <ChevronDown
                               size={16}
-                              className={`text-slate-400 transition-transform ${isEditing ? 'rotate-180' : ''}`}
+                              className={`text-slate-500 dark:text-slate-400 transition-transform ${isEditing ? 'rotate-180' : ''}`}
                             />
                           </div>
                         </div>

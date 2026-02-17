@@ -284,7 +284,7 @@ export function SLADashboard() {
       {/* Header */}
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Shield size={24} className="text-emerald-400" />
             SLA Dashboard
           </h2>
@@ -294,15 +294,15 @@ export function SLADashboard() {
         </div>
         <div className="flex items-center gap-3">
           {/* Time Range */}
-          <div className="flex bg-navy-800 rounded-lg p-1">
+          <div className="flex bg-slate-50 dark:bg-navy-800 rounded-lg p-1">
             {(['24h', '7d', '30d', '90d'] as TimeRange[]).map((range) => (
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
                 className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                   timeRange === range
-                    ? 'bg-emerald-600 text-white'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-white'
+                    ? 'bg-emerald-600 text-slate-900 dark:text-white'
+                    : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 {range}
@@ -314,8 +314,8 @@ export function SLADashboard() {
             onClick={() => setAutoRefresh(!autoRefresh)}
             className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
               autoRefresh
-                ? 'bg-emerald-600 text-white'
-                : 'bg-navy-800 text-slate-300 hover:bg-navy-700'
+                ? 'bg-emerald-600 text-slate-900 dark:text-white'
+                : 'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700'
             }`}
           >
             <Zap size={14} />
@@ -323,7 +323,7 @@ export function SLADashboard() {
           </button>
           <button
             onClick={handleExport}
-            className="flex items-center gap-2 px-3 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors"
           >
             <Download size={14} />
             Export
@@ -331,7 +331,7 @@ export function SLADashboard() {
           <button
             onClick={loadSLAData}
             disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             Refresh
@@ -359,7 +359,7 @@ export function SLADashboard() {
               </div>
             )}
             <div>
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {metrics.slaCompliant ? 'SLA Compliant' : 'SLA Breach Detected'}
               </h3>
               <p className="text-sm text-slate-400 dark:text-slate-500">
@@ -370,7 +370,7 @@ export function SLADashboard() {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-bold text-white">
+            <div className="text-3xl font-bold text-slate-900 dark:text-white">
               {metrics.uptimePercentage.toFixed(3)}%
             </div>
             <div className="text-sm text-slate-400 dark:text-slate-500">
@@ -426,8 +426,8 @@ export function SLADashboard() {
       {/* Detailed Stats and Uptime Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Request Statistics */}
-        <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <Target size={18} className="text-blue-400" />
             Request Statistics
           </h3>
@@ -448,7 +448,7 @@ export function SLADashboard() {
               value={`${metrics.averageLatency.toFixed(2)}s`}
               color="text-cyan-400"
             />
-            <div className="pt-3 border-t border-white/10">
+            <div className="pt-3 border-t border-slate-200 dark:border-white/10">
               <StatRow
                 label="Success Rate"
                 value={`${((metrics.successfulRequests / metrics.totalRequests) * 100).toFixed(2)}%`}
@@ -459,8 +459,8 @@ export function SLADashboard() {
         </div>
 
         {/* Uptime History Chart */}
-        <div className="lg:col-span-2 bg-navy-900 border border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <div className="lg:col-span-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <TrendingUp size={18} className="text-emerald-400" />
             Uptime History
           </h3>
@@ -506,8 +506,8 @@ export function SLADashboard() {
       </div>
 
       {/* SLA Breach Alerts */}
-      <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Bell size={18} className="text-amber-400" />
           SLA Breach History
           {activeBreaches.length > 0 && (
@@ -529,7 +529,7 @@ export function SLADashboard() {
                 key={breach.id}
                 className={`flex items-center gap-4 p-4 rounded-lg ${
                   breach.resolved
-                    ? 'bg-navy-950/50'
+                    ? 'bg-slate-100 dark:bg-navy-950/50'
                     : breach.severity === 'critical'
                       ? 'bg-red-900/20 border border-red-500/30'
                       : 'bg-amber-900/20 border border-amber-500/30'
@@ -538,7 +538,7 @@ export function SLADashboard() {
                 <div
                   className={`p-2 rounded-full ${
                     breach.resolved
-                      ? 'bg-slate-700'
+                      ? 'bg-slate-300 dark:bg-slate-700'
                       : breach.severity === 'critical'
                         ? 'bg-red-500/20'
                         : 'bg-amber-500/20'
@@ -554,7 +554,9 @@ export function SLADashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-white">{breach.metric}</span>
+                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                      {breach.metric}
+                    </span>
                     <span
                       className={`text-xs px-2 py-0.5 rounded ${
                         breach.severity === 'critical'
@@ -585,8 +587,8 @@ export function SLADashboard() {
       </div>
 
       {/* SLA Targets Reference */}
-      <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Target size={18} className="text-purple-400" />
           SLA Targets Reference
         </h3>
@@ -632,8 +634,8 @@ const SLAMetricCard: React.FC<{
   color: string;
 }> = ({ icon: Icon, label, value, target, status, color }) => (
   <div
-    className={`bg-navy-900 border rounded-xl p-4 ${
-      status === 'compliant' ? 'border-white/10' : 'border-red-500/30'
+    className={`bg-white dark:bg-navy-900 border rounded-xl p-4 ${
+      status === 'compliant' ? 'border-slate-200 dark:border-white/10' : 'border-red-500/30'
     }`}
   >
     <div className="flex items-center justify-between mb-3">
@@ -646,7 +648,7 @@ const SLAMetricCard: React.FC<{
         <XCircle size={16} className="text-red-400" />
       )}
     </div>
-    <div className="text-2xl font-bold text-white mb-1">{value}</div>
+    <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{value}</div>
     <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
       {label}
     </div>
@@ -660,7 +662,7 @@ const StatRow: React.FC<{
   label: string;
   value: string;
   color?: string;
-}> = ({ label, value, color = 'text-white' }) => (
+}> = ({ label, value, color = 'text-slate-900 dark:text-white' }) => (
   <div className="flex justify-between items-center">
     <span className="text-sm text-slate-400 dark:text-slate-500">{label}</span>
     <span className={`text-sm font-medium ${color}`}>{value}</span>
@@ -672,8 +674,8 @@ const SLATargetCard: React.FC<{
   target: string;
   description: string;
 }> = ({ metric, target, description }) => (
-  <div className="p-4 bg-navy-950/50 rounded-lg">
-    <div className="text-sm font-medium text-white">{metric}</div>
+  <div className="p-4 bg-slate-100 dark:bg-navy-950/50 rounded-lg">
+    <div className="text-sm font-medium text-slate-900 dark:text-white">{metric}</div>
     <div className="text-lg font-bold text-purple-400 mt-1">{target}</div>
     <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{description}</div>
   </div>

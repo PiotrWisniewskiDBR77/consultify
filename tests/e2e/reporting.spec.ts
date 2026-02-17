@@ -145,7 +145,10 @@ test.describe('Reporting Module', () => {
 
       // Skip if no projects available
       if (!projectId) {
-        test.skip();
+        test.skip(
+          true,
+          'No projects available in the E2E environment (GET /api/projects returned empty list)'
+        );
         return;
       }
 
@@ -184,7 +187,10 @@ test.describe('Reporting Module', () => {
       const projectId = projectsData?.projects?.[0]?.id;
 
       if (!projectId) {
-        test.skip();
+        test.skip(
+          true,
+          'No projects available in the E2E environment (GET /api/projects returned empty list)'
+        );
         return;
       }
 
@@ -428,10 +434,9 @@ test.describe('Reporting Module', () => {
       const reportId = reportData?.report?.id;
 
       // Submit for approval
-      const submitResponse = await page.request.post(
-        `/api/management-reports/${reportId}/submit`,
-        { headers }
-      );
+      const submitResponse = await page.request.post(`/api/management-reports/${reportId}/submit`, {
+        headers,
+      });
       expect(submitResponse.ok()).toBeTruthy();
 
       // Check approval status

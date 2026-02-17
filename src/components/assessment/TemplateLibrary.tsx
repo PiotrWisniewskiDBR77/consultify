@@ -135,7 +135,7 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
         <div className="relative flex-1">
           <Search
             size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 dark:text-slate-500"
           />
           <input
             type="text"
@@ -214,9 +214,9 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                     </span>
                   </div>
                   {isExpanded ? (
-                    <ChevronDown size={16} className="text-slate-400" />
+                    <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
                   ) : (
-                    <ChevronRight size={16} className="text-slate-400" />
+                    <ChevronRight size={16} className="text-slate-500 dark:text-slate-400" />
                   )}
                 </button>
 
@@ -239,7 +239,7 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                           {/* Selected Check */}
                           {isSelected && (
                             <div className="absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                              <Check size={14} className="text-white" />
+                              <Check size={14} className="text-slate-900 dark:text-white" />
                             </div>
                           )}
 
@@ -252,7 +252,7 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                           </p>
 
                           {/* Quick Stats */}
-                          <div className="flex items-center gap-4 text-[10px] text-slate-400 dark:text-slate-500">
+                          <div className="flex items-center gap-4 text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
                             {template.typicalTimeline && (
                               <span className="flex items-center gap-1">
                                 <Clock size={10} />

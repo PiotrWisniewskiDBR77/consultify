@@ -6,7 +6,7 @@ test('debug login error', async ({ page }) => {
 
   await page.goto('/login', { waitUntil: 'networkidle' });
   await page.fill('input[type="email"]', 'admin@dbr77.com');
-  await page.fill('input[type="password"]', 'Admin123!');
+  await page.fill('input[type="password"]', '123456');
 
   // Intercept response
   const loginResponse = page.waitForResponse(

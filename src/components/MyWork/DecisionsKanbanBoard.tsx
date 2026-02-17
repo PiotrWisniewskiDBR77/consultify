@@ -218,7 +218,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-slate-400',
         bg: 'bg-slate-500/5 dark:bg-slate-500/10',
-        badge: 'bg-slate-500/15 text-slate-400 border border-slate-500/20',
+        badge: 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/20',
         label: 'Low',
         dot: 'bg-slate-400',
         icon: Flag,
@@ -227,7 +227,7 @@ const getPriorityCardStyle = (priority?: string) => {
       return {
         border: 'border-l-4 border-l-slate-300',
         bg: 'bg-slate-500/5 dark:bg-slate-500/10',
-        badge: 'bg-slate-500/15 text-slate-400 border border-slate-500/20',
+        badge: 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/20',
         label: 'Normal',
         dot: 'bg-slate-400',
         icon: Flag,
@@ -310,7 +310,7 @@ const KanbanCardContent: React.FC<{
       `}
     >
       <div className="flex items-start gap-1.5">
-        <div className="mt-0.5 text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
+        <div className="mt-0.5 text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-500 dark:text-slate-400 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
           <GripVertical size={14} />
         </div>
         <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-1 line-clamp-2 leading-snug flex-1">
@@ -332,13 +332,13 @@ const KanbanCardContent: React.FC<{
           {priorityStyle.label}
         </span>
         {(decision.decisionType || decision.type) && (
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-400 dark:text-slate-500 border border-slate-500/10">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 border border-slate-500/10">
             <Scale size={10} />
             {decision.decisionType || decision.type}
           </span>
         )}
         {decision.projectName && (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-400 dark:text-slate-500 border border-slate-500/10 truncate max-w-[120px]">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 border border-slate-500/10 truncate max-w-[120px]">
             {decision.projectName}
           </span>
         )}
@@ -355,7 +355,7 @@ const KanbanCardContent: React.FC<{
             {dueLabel}
           </span>
         ) : (
-          <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+          <span className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
             <Clock size={11} />
             {daysWaiting}d waiting
           </span>
@@ -368,7 +368,7 @@ const KanbanCardContent: React.FC<{
           </div>
         ) : (
           <div className="w-5 h-5 rounded-full bg-slate-500/10 flex items-center justify-center">
-            <User size={10} className="text-slate-400" />
+            <User size={10} className="text-slate-500 dark:text-slate-400" />
           </div>
         )}
       </div>
@@ -424,6 +424,7 @@ const DroppableColumn: React.FC<{
   children: React.ReactNode;
   onCreateDecision?: () => void;
 }> = ({ column, itemIds, children, onCreateDecision }) => {
+  const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
     data: { type: 'column', columnId: column.id },
@@ -442,7 +443,7 @@ const DroppableColumn: React.FC<{
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${column.dotColor}`} />
           <span className={`text-sm font-semibold ${column.headerColor}`}>{column.label}</span>
-          <span className="ml-1 text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-navy-700/50 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+          <span className="ml-1 text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-navy-700/50 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
             {itemIds.length}
           </span>
         </div>
@@ -452,8 +453,8 @@ const DroppableColumn: React.FC<{
               e.stopPropagation();
               onCreateDecision();
             }}
-            className="p-1 rounded-md text-slate-400 hover:text-primary-400 hover:bg-primary-500/10 transition-colors"
-            title="Add decision"
+            className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-primary-400 hover:bg-primary-500/10 transition-colors"
+            title={t('myWork.decisions.addDecision', 'Add decision')}
           >
             <Plus size={14} />
           </button>
@@ -471,7 +472,9 @@ const DroppableColumn: React.FC<{
               itemIds.length === 0 ? 'h-24' : 'h-14'
             } ${column.headerColor} opacity-40`}
           >
-            <span className={`text-xs font-medium ${column.headerColor}`}>Drop here</span>
+            <span className={`text-xs font-medium ${column.headerColor}`}>
+              {t('execution.kanban.dropHere', 'Drop here')}
+            </span>
           </div>
         )}
 
@@ -479,7 +482,9 @@ const DroppableColumn: React.FC<{
         {itemIds.length === 0 && !isOver && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className={`mb-2 ${column.headerColor} opacity-30`}>{column.icon}</div>
-            <p className="text-xs text-slate-400 dark:text-slate-500">No decisions</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+              {t('myWork.decisions.emptyColumn', 'No decisions')}
+            </p>
           </div>
         )}
       </div>
@@ -780,7 +785,10 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
         // Persist via API
         try {
           if (newStatus === 'APPROVED' || newStatus === 'REJECTED' || newStatus === 'DEFERRED') {
-            await Api.decideDecision(activeId, newStatus.toLowerCase());
+            await Api.decideDecision(
+              activeId,
+              newStatus.toLowerCase() as 'approved' | 'rejected' | 'deferred'
+            );
           } else if (newStatus === 'ESCALATED') {
             await Api.escalateDecision(activeId, 'Moved to escalated via kanban');
           } else {
@@ -838,15 +846,19 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
         <div className="flex-1 p-4">
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
             <CheckCircle2 size={48} className="text-slate-600 mb-4" />
-            <h3 className="text-lg font-medium text-slate-400 mb-2">No decisions yet</h3>
-            <p className="text-sm text-slate-500 mb-4">Create your first decision to get started</p>
+            <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
+              {t('myWork.decisions.emptyTitle', 'No decisions yet')}
+            </h3>
+            <p className="text-sm text-slate-500 mb-4">
+              {t('myWork.decisions.emptySubtitle', 'Create your first decision to get started')}
+            </p>
             {onCreateDecision && (
               <button
                 onClick={onCreateDecision}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-400 border border-purple-500/50 rounded-lg hover:bg-purple-500/10 transition-colors"
               >
                 <Plus size={16} />
-                Create Decision
+                {t('myWork.decisions.createCta', 'Create Decision')}
               </button>
             )}
           </div>

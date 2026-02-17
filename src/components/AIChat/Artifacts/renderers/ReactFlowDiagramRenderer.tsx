@@ -101,7 +101,7 @@ const InnerRenderer: React.FC<{ nodes: Node[]; edges: Edge[]; diagramType: strin
   }, [diagramType]);
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-navy-900">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-900">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
         <div className="flex items-center gap-2">

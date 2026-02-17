@@ -215,13 +215,13 @@ const BUTTON_BASE = `
 
 const BUTTON_INACTIVE = `
   ${BUTTON_BASE}
-  bg-navy-800 border-navy-600 text-slate-300
-  hover:bg-navy-700 hover:border-slate-500 hover:text-white
+  bg-slate-100 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300
+  hover:bg-slate-200 dark:hover:bg-navy-700 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-white
 `;
 
 const BUTTON_ACTIVE = `
   ${BUTTON_BASE}
-  bg-primary-500/15 border-primary-500 text-primary-400
+  bg-primary-500/15 border-primary-500 text-primary-600 dark:text-primary-400
   shadow-sm shadow-primary-500/10
 `;
 
@@ -233,13 +233,13 @@ const TAB_BASE = `
 
 const TAB_INACTIVE = `
   ${TAB_BASE}
-  bg-navy-800 border-navy-600 text-slate-400
-  hover:bg-navy-700 hover:border-slate-500 hover:text-white
+  bg-slate-100 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-600 dark:text-slate-400
+  hover:bg-slate-200 dark:hover:bg-navy-700 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-white
 `;
 
 const TAB_ACTIVE = `
   ${TAB_BASE}
-  bg-primary-500/15 border-primary-500 text-primary-400
+  bg-primary-500/15 border-primary-500 text-primary-600 dark:text-primary-400
   shadow-sm shadow-primary-500/10
 `;
 
@@ -1047,7 +1047,7 @@ export const InterviewHub: React.FC = () => {
     const isListActive = activeDocumentId === null;
 
     return (
-      <div className="flex items-center gap-2 px-4 py-2 bg-navy-900/50 border-b border-navy-700">
+      <div className="flex items-center gap-2 px-4 py-2 bg-slate-100/50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
         {/* List button */}
         <button
           onClick={handleShowList}
@@ -1062,7 +1062,7 @@ export const InterviewHub: React.FC = () => {
         </button>
 
         {/* Separator */}
-        <div className="w-px h-6 bg-navy-600" />
+        <div className="w-px h-6 bg-slate-300 dark:bg-navy-600" />
 
         {/* Document Tabs */}
         {openDocuments.map((doc) => {
@@ -1093,7 +1093,7 @@ export const InterviewHub: React.FC = () => {
                   e.stopPropagation();
                   handleCloseDocument(doc.id);
                 }}
-                className="p-0.5 rounded opacity-0 group-hover:opacity-100 text-slate-400 hover:text-white hover:bg-navy-600 transition-all"
+                className="p-0.5 rounded opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-600 transition-all"
               >
                 <X size={14} />
               </button>
@@ -1137,13 +1137,13 @@ export const InterviewHub: React.FC = () => {
       paused: {
         label: { en: 'Paused', pl: 'Wstrzymany' },
         bgColor: 'bg-slate-500/20',
-        textColor: 'text-slate-300',
+        textColor: 'text-slate-600 dark:text-slate-300',
         dotColor: 'bg-slate-400',
       },
       archived: {
         label: { en: 'Archived', pl: 'Zarchiwizowany' },
         bgColor: 'bg-slate-500/20',
-        textColor: 'text-slate-300',
+        textColor: 'text-slate-600 dark:text-slate-300',
         dotColor: 'bg-slate-400',
       },
     };
@@ -1152,23 +1152,23 @@ export const InterviewHub: React.FC = () => {
 
   // Render table view for sessions
   const renderSessionsTable = () => (
-    <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
       <table className="w-full table-fixed">
         <thead>
-          <tr className="border-b border-navy-700">
-            <th className="w-[40%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+          <tr className="border-b border-slate-200 dark:border-navy-700">
+            <th className="w-[40%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Nazwa' : 'Name'}
             </th>
-            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Status' : 'Status'}
             </th>
-            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Postęp' : 'Progress'}
             </th>
-            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Data' : 'Date'}
             </th>
-            <th className="w-[15%] px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[15%] px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Akcje' : 'Actions'}
             </th>
           </tr>
@@ -1186,7 +1186,7 @@ export const InterviewHub: React.FC = () => {
               <tr
                 key={session.id}
                 onClick={() => handleViewSession(session)}
-                className="group hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-navy-700/50 last:border-0"
+                className="group hover:bg-slate-50 dark:hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0"
               >
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3 min-w-0">
@@ -1196,7 +1196,7 @@ export const InterviewHub: React.FC = () => {
                       <Brain size={16} className={statusConfig.textColor} />
                     </div>
                     <div className="min-w-0">
-                      <span className="text-sm text-white font-medium block truncate">
+                      <span className="text-sm text-slate-900 dark:text-white font-medium block truncate">
                         {session.name || 'Discovery Interview'}
                       </span>
                       {session.ownerId && (
@@ -1221,7 +1221,7 @@ export const InterviewHub: React.FC = () => {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 max-w-[100px] h-1.5 bg-navy-700 rounded-full overflow-hidden">
+                    <div className="flex-1 max-w-[100px] h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${
                           progress === 100 ? 'bg-emerald-500' : 'bg-purple-500'
@@ -1229,11 +1229,11 @@ export const InterviewHub: React.FC = () => {
                         style={{ width: `${progress}%` }}
                       />
                     </div>
-                    <span className="text-xs text-slate-400">{progress}%</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">{progress}%</span>
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-1 text-xs text-slate-400">
+                  <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                     <Calendar size={12} />
                     {new Date(session.startedAt).toLocaleDateString()}
                   </div>
@@ -1247,7 +1247,7 @@ export const InterviewHub: React.FC = () => {
                           e.stopPropagation();
                           handleGenerateInsight(session);
                         }}
-                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-amber-400 transition-colors"
+                        className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-amber-400 transition-colors"
                         title={isPolish ? 'Generuj wnioski AI' : 'Generate AI insights'}
                       >
                         <Lightbulb size={14} />
@@ -1259,13 +1259,13 @@ export const InterviewHub: React.FC = () => {
                         e.stopPropagation();
                         setShowExportModal(true);
                       }}
-                      className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-blue-400 transition-colors"
+                      className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-blue-400 transition-colors"
                       title={isPolish ? 'Eksportuj' : 'Export'}
                     >
                       <Download size={14} />
                     </button>
                     {/* Open */}
-                    <button className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-white">
+                    <button className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
                       <ChevronRight size={14} />
                     </button>
                   </div>
@@ -1278,7 +1278,7 @@ export const InterviewHub: React.FC = () => {
               <td colSpan={5} className="px-4 py-12 text-center">
                 <div className="flex flex-col items-center">
                   <MessageSquare className="w-12 h-12 text-slate-600 mb-3" />
-                  <p className="text-slate-400 text-sm">
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">
                     {isPolish ? 'Brak sesji wywiadów' : 'No interview sessions yet'}
                   </p>
                   <button
@@ -1303,7 +1303,7 @@ export const InterviewHub: React.FC = () => {
       {/* New Session Card */}
       <button
         onClick={handleNewSession}
-        className="flex flex-col items-center justify-center gap-2 min-h-[180px] rounded-xl border-2 border-dashed border-navy-600 text-slate-500 hover:text-primary-400 hover:border-primary-500/50 transition-all"
+        className="flex flex-col items-center justify-center gap-2 min-h-[180px] rounded-xl border-2 border-dashed border-slate-300 dark:border-navy-600 text-slate-500 hover:text-primary-400 hover:border-primary-500/50 transition-all"
       >
         <Plus size={24} />
         <span className="text-sm font-medium">{isPolish ? 'Nowa sesja' : 'New Session'}</span>
@@ -1346,7 +1346,7 @@ export const InterviewHub: React.FC = () => {
                             : 'text-slate-400'
                     }
                   />
-                  <span className="font-mono text-xs font-bold text-slate-300">
+                  <span className="font-mono text-xs font-bold text-slate-600 dark:text-slate-300">
                     {session.status === 'completed'
                       ? 'DONE'
                       : session.status === 'in_progress'
@@ -1361,7 +1361,7 @@ export const InterviewHub: React.FC = () => {
 
             {/* Title */}
             <div className="px-4 pb-3">
-              <h4 className="text-sm font-medium text-white line-clamp-2 min-h-[40px]">
+              <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2 min-h-[40px]">
                 {session.name || 'Discovery Interview'}
               </h4>
             </div>
@@ -1369,7 +1369,7 @@ export const InterviewHub: React.FC = () => {
             {/* Progress */}
             <div className="px-4 pb-3">
               <div className="flex items-center gap-2">
-                <div className="flex-1 h-1.5 bg-navy-700 rounded-full overflow-hidden">
+                <div className="flex-1 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${
                       progress === 100 ? 'bg-emerald-500' : 'bg-purple-500'
@@ -1377,7 +1377,7 @@ export const InterviewHub: React.FC = () => {
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <span className="text-xs text-slate-400">{progress}%</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">{progress}%</span>
               </div>
             </div>
 
@@ -1556,26 +1556,26 @@ export const InterviewHub: React.FC = () => {
 
   // Render insights table
   const renderInsightsTable = () => (
-    <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
       <table className="w-full table-fixed">
         <thead>
-          <tr className="border-b border-navy-700">
-            <th className="w-[30%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+          <tr className="border-b border-slate-200 dark:border-navy-700">
+            <th className="w-[30%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Tytuł' : 'Title'}
             </th>
-            <th className="w-[14%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[14%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Typ' : 'Type'}
             </th>
-            <th className="w-[12%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[12%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Status' : 'Status'}
             </th>
-            <th className="w-[12%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[12%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Źródło' : 'Source'}
             </th>
-            <th className="w-[12%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[12%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Data' : 'Date'}
             </th>
-            <th className="w-[20%] px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[20%] px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Akcje' : 'Actions'}
             </th>
           </tr>
@@ -1612,7 +1612,7 @@ export const InterviewHub: React.FC = () => {
               <tr
                 key={insight.id}
                 onClick={() => handleViewInsight(insight)}
-                className="group hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-navy-700/50 last:border-0"
+                className="group hover:bg-slate-50 dark:hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0"
               >
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3 min-w-0">
@@ -1622,7 +1622,7 @@ export const InterviewHub: React.FC = () => {
                       <Lightbulb size={16} className={typeConfig.textColor} />
                     </div>
                     <div className="min-w-0">
-                      <span className="text-sm text-white font-medium block truncate">
+                      <span className="text-sm text-slate-900 dark:text-white font-medium block truncate">
                         {insight.title}
                       </span>
                       {insight.createdBy && (
@@ -1648,13 +1648,13 @@ export const InterviewHub: React.FC = () => {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     {insight.sourceSessionCount
                       ? `${insight.sourceSessionCount} ${isPolish ? 'sesji' : 'sessions'}`
                       : '-'}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs text-slate-400">
+                <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
                   {insight.createdAt ? new Date(insight.createdAt).toLocaleDateString() : '-'}
                 </td>
                 <td className="px-4 py-3 text-right">
@@ -1666,7 +1666,7 @@ export const InterviewHub: React.FC = () => {
                           e.stopPropagation();
                           handleExportInsightToTools(insight.id);
                         }}
-                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-emerald-400 transition-colors"
+                        className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-emerald-400 transition-colors"
                         title={isPolish ? 'Eksportuj do Tools' : 'Export to Tools'}
                       >
                         <Send size={14} />
@@ -1687,7 +1687,7 @@ export const InterviewHub: React.FC = () => {
                           e.stopPropagation();
                           handleExportInsightToAssessment(insight.id);
                         }}
-                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-blue-400 transition-colors"
+                        className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-blue-400 transition-colors"
                         title={isPolish ? 'Eksportuj do Assessment' : 'Export to Assessment'}
                       >
                         <FileText size={14} />
@@ -1721,7 +1721,7 @@ export const InterviewHub: React.FC = () => {
                           a.click();
                           URL.revokeObjectURL(url);
                         }}
-                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-blue-400 transition-colors"
+                        className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-blue-400 transition-colors"
                         title={isPolish ? 'Pobierz' : 'Download'}
                       >
                         <Download size={14} />
@@ -1733,14 +1733,14 @@ export const InterviewHub: React.FC = () => {
                           e.stopPropagation();
                           handleDeleteInsight(insight.id);
                         }}
-                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-red-400 transition-colors"
+                        className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-red-400 transition-colors"
                         title={isPolish ? 'Usuń' : 'Delete'}
                       >
                         <Trash2 size={14} />
                       </button>
 
                       {/* Open */}
-                      <button className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-white">
+                      <button className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
                         <ChevronRight size={14} />
                       </button>
                     </div>
@@ -1754,7 +1754,7 @@ export const InterviewHub: React.FC = () => {
               <td colSpan={6} className="px-4 py-12 text-center">
                 <div className="flex flex-col items-center">
                   <Lightbulb className="w-12 h-12 text-slate-600 mb-3" />
-                  <p className="text-slate-400 text-sm mb-4">
+                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
                     {isPolish ? 'Brak wniosków' : 'No insights yet'}
                   </p>
                   <p className="text-xs text-slate-500 mb-4 max-w-md">
@@ -1783,23 +1783,23 @@ export const InterviewHub: React.FC = () => {
 
   // Render templates table
   const renderTemplatesTable = () => (
-    <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
       <table className="w-full table-fixed">
         <thead>
-          <tr className="border-b border-navy-700">
-            <th className="w-[35%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+          <tr className="border-b border-slate-200 dark:border-navy-700">
+            <th className="w-[35%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Nazwa' : 'Name'}
             </th>
-            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Kategoria' : 'Category'}
             </th>
-            <th className="w-[10%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[10%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Pytania' : 'Questions'}
             </th>
-            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Status' : 'Status'}
             </th>
-            <th className="w-[25%] px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+            <th className="w-[25%] px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {isPolish ? 'Akcje' : 'Actions'}
             </th>
           </tr>
@@ -1809,7 +1809,7 @@ export const InterviewHub: React.FC = () => {
             <tr
               key={template.id}
               onClick={() => handleViewTemplate(template)}
-              className="group hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-navy-700/50 last:border-0"
+              className="group hover:bg-slate-50 dark:hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0"
             >
               <td className="px-4 py-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -1817,7 +1817,7 @@ export const InterviewHub: React.FC = () => {
                     <FileText size={16} className="text-blue-400" />
                   </div>
                   <div className="min-w-0">
-                    <span className="text-sm text-white font-medium block truncate">
+                    <span className="text-sm text-slate-900 dark:text-white font-medium block truncate">
                       {template.name}
                     </span>
                     <span className="text-xs text-slate-500 truncate block">
@@ -1827,11 +1827,13 @@ export const InterviewHub: React.FC = () => {
                 </div>
               </td>
               <td className="px-4 py-3">
-                <span className="px-2 py-1 bg-navy-700 text-slate-300 text-xs rounded-full">
+                <span className="px-2 py-1 bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 text-xs rounded-full">
                   {template.category}
                 </span>
               </td>
-              <td className="px-4 py-3 text-sm text-slate-400">{template.questionCount}</td>
+              <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                {template.questionCount}
+              </td>
               <td className="px-4 py-3">
                 {template.isDefault ? (
                   <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
@@ -1899,7 +1901,7 @@ export const InterviewHub: React.FC = () => {
                             );
                           });
                       }}
-                      className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-emerald-400 transition-colors"
+                      className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-emerald-400 transition-colors"
                       title={isPolish ? 'Użyj szablonu' : 'Use template'}
                     >
                       <Sparkles size={14} />
@@ -1911,7 +1913,7 @@ export const InterviewHub: React.FC = () => {
                         e.stopPropagation();
                         handleCloneTemplate(template);
                       }}
-                      className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-blue-400 transition-colors"
+                      className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-blue-400 transition-colors"
                       title={isPolish ? 'Klonuj szablon' : 'Clone template'}
                     >
                       <Copy size={14} />
@@ -1924,7 +1926,7 @@ export const InterviewHub: React.FC = () => {
                           e.stopPropagation();
                           handleEditTemplate(template.id);
                         }}
-                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-amber-400 transition-colors"
+                        className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-amber-400 transition-colors"
                         title={isPolish ? 'Edytuj szablon' : 'Edit template'}
                       >
                         <Edit3 size={14} />
@@ -1938,7 +1940,7 @@ export const InterviewHub: React.FC = () => {
                           e.stopPropagation();
                           handleDeleteTemplate(template);
                         }}
-                        className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-red-400 transition-colors"
+                        className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-red-400 transition-colors"
                         title={isPolish ? 'Usuń szablon' : 'Delete template'}
                       >
                         <Trash2 size={14} />
@@ -1954,7 +1956,7 @@ export const InterviewHub: React.FC = () => {
               <td colSpan={5} className="px-4 py-12 text-center">
                 <div className="flex flex-col items-center">
                   <FileText className="w-12 h-12 text-slate-600 mb-3" />
-                  <p className="text-slate-400 text-sm mb-4">
+                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
                     {isPolish ? 'Brak szablonów' : 'No templates yet'}
                   </p>
                   {canAssign && (
@@ -2033,16 +2035,20 @@ export const InterviewHub: React.FC = () => {
 
       return (
         <div className="p-6 max-w-4xl mx-auto">
-          <div className="bg-navy-900 border border-navy-700 rounded-xl p-6">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
                 <FileText size={24} className="text-blue-400" />
               </div>
               <div className="flex-1">
-                <h1 className="text-xl font-semibold text-white mb-2">{template.name}</h1>
-                <p className="text-slate-400 text-sm mb-3">{template.description}</p>
+                <h1 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                  {template.name}
+                </h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">
+                  {template.description}
+                </p>
                 <div className="flex items-center gap-3">
-                  <span className="px-2 py-1 bg-navy-700 text-slate-300 text-xs rounded-full">
+                  <span className="px-2 py-1 bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 text-xs rounded-full">
                     {template.questionCount} {isPolish ? 'pytań' : 'questions'}
                   </span>
                   <span className="text-xs text-slate-500">{template.category}</span>
@@ -2054,14 +2060,14 @@ export const InterviewHub: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="border-t border-navy-700 pt-6 space-y-4">
+            <div className="border-t border-slate-200 dark:border-navy-700 pt-6 space-y-4">
               {/* Questions Preview (read-only) */}
               <div>
-                <h2 className="text-sm font-semibold text-white mb-3">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
                   {isPolish ? 'Podgląd pytań' : 'Questions preview'}
                 </h2>
                 {isTemplateQuestionsLoading ? (
-                  <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     {isPolish ? 'Ładowanie pytań...' : 'Loading questions...'}
                   </div>
@@ -2073,7 +2079,7 @@ export const InterviewHub: React.FC = () => {
                       return (
                         <div
                           key={cat}
-                          className="bg-navy-950/40 border border-navy-700 rounded-lg p-4"
+                          className="bg-slate-100/40 dark:bg-navy-950/40 border border-slate-200 dark:border-navy-700 rounded-lg p-4"
                         >
                           <div className="flex items-center justify-between mb-3">
                             <span className="text-xs font-semibold text-slate-200">
@@ -2428,22 +2434,22 @@ export const InterviewHub: React.FC = () => {
     };
 
     return (
-      <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
         <table className="w-full table-fixed">
           <thead>
-            <tr className="border-b border-navy-700">
+            <tr className="border-b border-slate-200 dark:border-navy-700">
               <th
-                className={`${showAssignee ? 'w-[25%]' : 'w-[30%]'} px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider`}
+                className={`${showAssignee ? 'w-[25%]' : 'w-[30%]'} px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
               >
                 {isPolish ? 'Szablon' : 'Template'}
               </th>
               {showAssignee && (
-                <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   {isPolish ? 'Przydzielony do' : 'Assignee'}
                 </th>
               )}
               <th
-                className="w-[13%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 transition-colors"
+                className="w-[13%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 transition-colors"
                 onClick={() => toggleAssignmentSort('status')}
               >
                 {isPolish ? 'Status' : 'Status'}
@@ -2455,7 +2461,7 @@ export const InterviewHub: React.FC = () => {
                 )}
               </th>
               <th
-                className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 transition-colors"
+                className="w-[15%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 transition-colors"
                 onClick={() => toggleAssignmentSort('progress')}
               >
                 {isPolish ? 'Postęp' : 'Progress'}
@@ -2467,7 +2473,7 @@ export const InterviewHub: React.FC = () => {
                 )}
               </th>
               <th
-                className="w-[13%] px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 transition-colors"
+                className="w-[13%] px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 transition-colors"
                 onClick={() => toggleAssignmentSort('dueAt')}
               >
                 {isPolish ? 'Do terminu' : 'Days to Due'}
@@ -2478,7 +2484,7 @@ export const InterviewHub: React.FC = () => {
                   />
                 )}
               </th>
-              <th className="w-[19%] px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="w-[19%] px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 {isPolish ? 'Akcje' : 'Actions'}
               </th>
             </tr>
@@ -2499,7 +2505,7 @@ export const InterviewHub: React.FC = () => {
                     }
                     handleOpenAssignmentRow(assignment);
                   }}
-                  className="group hover:bg-navy-800/50 active:bg-navy-700/50 transition-colors border-b border-navy-700/50 last:border-0 cursor-pointer"
+                  className="group hover:bg-slate-50 dark:hover:bg-navy-800/50 active:bg-slate-100 dark:active:bg-navy-700/50 transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 cursor-pointer"
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -2517,7 +2523,7 @@ export const InterviewHub: React.FC = () => {
                         <ClipboardList size={16} className="text-blue-400" />
                       </div>
                       <div className="min-w-0">
-                        <span className="text-sm text-white font-medium block truncate">
+                        <span className="text-sm text-slate-900 dark:text-white font-medium block truncate">
                           {assignment.template?.name || 'Interview'}
                         </span>
                         {assignment.template?.category && (
@@ -2531,7 +2537,7 @@ export const InterviewHub: React.FC = () => {
                   {showAssignee && (
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-navy-700 flex items-center justify-center text-xs text-slate-300">
+                        <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-xs text-slate-700 dark:text-slate-300">
                           {assignment.assignee?.name?.charAt(0) || '?'}
                         </div>
                         <span className="text-sm text-slate-300">
@@ -2550,13 +2556,15 @@ export const InterviewHub: React.FC = () => {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 max-w-[100px] h-1.5 bg-navy-700 rounded-full overflow-hidden">
+                      <div className="flex-1 max-w-[100px] h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all ${progress === 100 ? 'bg-emerald-500' : 'bg-purple-500'}`}
                           style={{ width: `${progress}%` }}
                         />
                       </div>
-                      <span className="text-xs text-slate-400">{progress}%</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {progress}%
+                      </span>
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -2684,7 +2692,7 @@ export const InterviewHub: React.FC = () => {
                                 e.stopPropagation();
                                 handleOpenReminderModal(assignment);
                               }}
-                              className="p-1.5 rounded hover:bg-navy-700 text-slate-400 hover:text-amber-400 transition-colors"
+                              className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-amber-400 transition-colors"
                               title={isPolish ? 'Wyślij przypomnienie' : 'Send reminder'}
                             >
                               <Bell size={14} />
@@ -2729,7 +2737,7 @@ export const InterviewHub: React.FC = () => {
                 <td colSpan={showAssignee ? 6 : 5} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center">
                     <Inbox className="w-12 h-12 text-slate-600 mb-3" />
-                    <p className="text-slate-400 text-sm">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">
                       {isPolish ? 'Brak przydziałów' : 'No assignments'}
                     </p>
                   </div>
@@ -2768,7 +2776,7 @@ export const InterviewHub: React.FC = () => {
           {assessmentInsights.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Target className="w-12 h-12 text-slate-600 mb-3" />
-              <p className="text-slate-400 text-sm mb-2">
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-2">
                 {isPolish ? 'Brak ocen' : 'No assessments yet'}
               </p>
               <p className="text-xs text-slate-500 max-w-md">
@@ -2819,12 +2827,12 @@ export const InterviewHub: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* E4.3: Group-by filter toggle */}
-              <div className="inline-flex items-center rounded-lg border border-navy-700 bg-navy-900 p-0.5">
+              <div className="inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-0.5">
                 <button
                   onClick={() => setInsightGroupBy('report')}
                   className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
                     insightGroupBy === 'report'
-                      ? 'bg-navy-800 text-primary-400 shadow-sm border border-navy-600'
+                      ? 'bg-slate-100 dark:bg-navy-800 text-primary-400 shadow-sm border border-slate-300 dark:border-navy-600'
                       : 'text-slate-400 hover:text-slate-300'
                   }`}
                 >
@@ -2835,7 +2843,7 @@ export const InterviewHub: React.FC = () => {
                   onClick={() => setInsightGroupBy('person')}
                   className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
                     insightGroupBy === 'person'
-                      ? 'bg-navy-800 text-primary-400 shadow-sm border border-navy-600'
+                      ? 'bg-slate-100 dark:bg-navy-800 text-primary-400 shadow-sm border border-slate-300 dark:border-navy-600'
                       : 'text-slate-400 hover:text-slate-300'
                   }`}
                 >
@@ -2863,11 +2871,11 @@ export const InterviewHub: React.FC = () => {
                   <div key={groupName}>
                     <div className="flex items-center gap-2 mb-2 px-1">
                       {insightGroupBy === 'person' ? (
-                        <Users size={14} className="text-slate-400" />
+                        <Users size={14} className="text-slate-500 dark:text-slate-400" />
                       ) : (
                         <FileText size={14} className="text-slate-400" />
                       )}
-                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         {groupName}
                       </span>
                       <span className="text-xs text-slate-500">({groupInsights.length})</span>
@@ -2887,11 +2895,11 @@ export const InterviewHub: React.FC = () => {
                   {Object.keys(groupedInsights).length > 1 && (
                     <div className="flex items-center gap-2 mb-2 px-1">
                       {insightGroupBy === 'person' ? (
-                        <Users size={14} className="text-slate-400" />
+                        <Users size={14} className="text-slate-500 dark:text-slate-400" />
                       ) : (
                         <FileText size={14} className="text-slate-400" />
                       )}
-                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         {groupName}
                       </span>
                       <span className="text-xs text-slate-500">({groupInsights.length})</span>
@@ -2906,7 +2914,7 @@ export const InterviewHub: React.FC = () => {
                         <div
                           key={insight.id}
                           onClick={() => handleViewInsight(insight)}
-                          className="group bg-navy-900 border border-navy-700 rounded-xl p-4 hover:bg-navy-800/50 cursor-pointer transition-colors"
+                          className="group bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:bg-slate-50 dark:hover:bg-navy-800/50 cursor-pointer transition-colors"
                         >
                           <div className="flex items-start gap-3">
                             <div
@@ -2915,7 +2923,7 @@ export const InterviewHub: React.FC = () => {
                               <Lightbulb size={18} className={typeConfig.textColor} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="text-sm font-medium text-white truncate">
+                              <h4 className="text-sm font-medium text-slate-900 dark:text-white truncate">
                                 {insight.title}
                               </h4>
                               <div className="flex items-center gap-2 mt-1">
@@ -2936,7 +2944,7 @@ export const InterviewHub: React.FC = () => {
                                 )}
                               </div>
                               {insight.content && (
-                                <p className="text-xs text-slate-400 mt-2 line-clamp-2">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2">
                                   {insight.content.slice(0, 200)}
                                 </p>
                               )}
@@ -2951,7 +2959,7 @@ export const InterviewHub: React.FC = () => {
               {filteredInsights.length === 0 && (
                 <div className="flex flex-col items-center py-12 text-center">
                   <Lightbulb className="w-12 h-12 text-slate-600 mb-3" />
-                  <p className="text-slate-400 text-sm">
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">
                     {isPolish ? 'Brak wniosków' : 'No insights yet'}
                   </p>
                 </div>
@@ -2959,17 +2967,17 @@ export const InterviewHub: React.FC = () => {
             </div>
           ) : (
             // ClickUp/Dense: compact rows with max info
-            <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
               {Object.entries(groupedInsights).map(([groupName, groupInsights]) => (
                 <div key={groupName}>
                   {Object.keys(groupedInsights).length > 1 && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-navy-800/50 border-b border-navy-700">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-100/50 dark:bg-navy-800/50 border-b border-slate-200 dark:border-navy-700">
                       {insightGroupBy === 'person' ? (
-                        <Users size={12} className="text-slate-400" />
+                        <Users size={12} className="text-slate-500 dark:text-slate-400" />
                       ) : (
-                        <FileText size={12} className="text-slate-400" />
+                        <FileText size={12} className="text-slate-500 dark:text-slate-400" />
                       )}
-                      <span className="text-xs font-semibold text-slate-400 uppercase">
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                         {groupName}
                       </span>
                       <span className="text-xs text-slate-500">({groupInsights.length})</span>
@@ -2987,10 +2995,10 @@ export const InterviewHub: React.FC = () => {
                       <div
                         key={insight.id}
                         onClick={() => handleViewInsight(insight)}
-                        className="flex items-center gap-3 px-4 py-2 hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-navy-700/50 last:border-0"
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-navy-800/50 cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0"
                       >
                         <Lightbulb size={14} className={typeConfig.textColor} />
-                        <span className="text-sm text-white font-medium truncate flex-1 min-w-0">
+                        <span className="text-sm text-slate-900 dark:text-white font-medium truncate flex-1 min-w-0">
                           {insight.title}
                         </span>
                         <span
@@ -3030,7 +3038,7 @@ export const InterviewHub: React.FC = () => {
               {filteredInsights.length === 0 && (
                 <div className="flex flex-col items-center py-12 text-center">
                   <Lightbulb className="w-12 h-12 text-slate-600 mb-3" />
-                  <p className="text-slate-400 text-sm">
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">
                     {isPolish ? 'Brak wniosków' : 'No insights yet'}
                   </p>
                 </div>
@@ -3091,9 +3099,9 @@ export const InterviewHub: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-navy-950">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white">
       {/* Navigation Bar (Golden Standard) */}
-      <div className="bg-navy-900 border-b border-navy-700">
+      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
         {/* Main Navigation Row */}
         <div className="flex items-center justify-between px-4 py-3">
           {/* Left: Search + Tabs + Status Filters */}
@@ -3103,8 +3111,8 @@ export const InterviewHub: React.FC = () => {
               onClick={() => setShowSearch(!showSearch)}
               className={`p-2 rounded-lg border transition-all duration-200 ${
                 showSearch
-                  ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                  : 'bg-navy-800 border-navy-600 text-slate-400 hover:text-white hover:border-slate-500'
+                  ? 'bg-primary-500/15 border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'bg-slate-100 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-slate-500'
               }`}
               title="Search"
             >
@@ -3133,7 +3141,7 @@ export const InterviewHub: React.FC = () => {
                             ? 'bg-red-500/30 text-red-300'
                             : isActive
                               ? 'bg-primary-500/30 text-primary-300'
-                              : 'bg-navy-700 text-slate-400'
+                              : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                         }`}
                       >
                         {tab.count}
@@ -3157,7 +3165,7 @@ export const InterviewHub: React.FC = () => {
                   <select
                     value={sessionStatusFilter}
                     onChange={(e) => setSessionStatusFilter(e.target.value)}
-                    className="appearance-none pr-9 pl-3 py-2 rounded-lg text-sm font-medium border bg-navy-800 border-navy-600 text-slate-200 hover:bg-navy-700 hover:border-slate-500 transition-all duration-200"
+                    className="appearance-none pr-9 pl-3 py-2 rounded-lg text-sm font-medium border bg-slate-100 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 hover:border-slate-400 dark:hover:border-slate-500 transition-all duration-200"
                     title={isPolish ? 'Filtr statusu' : 'Status filter'}
                   >
                     {sessionStatusOptions.map((o) => (
@@ -3168,7 +3176,7 @@ export const InterviewHub: React.FC = () => {
                   </select>
                   <ChevronDown
                     size={16}
-                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                   />
                 </div>
                 <button
@@ -3243,7 +3251,7 @@ export const InterviewHub: React.FC = () => {
             <div className="relative">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
               />
               <input
                 type="text"
@@ -3263,12 +3271,12 @@ export const InterviewHub: React.FC = () => {
                         : 'Search templates...'
                 }
                 autoFocus
-                className="w-full pl-10 pr-10 py-2 rounded-lg bg-navy-800 border border-navy-600 text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
               />
               {searchQuery && (
                 <button
                   onClick={handleCloseSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 >
                   <X size={16} />
                 </button>
@@ -3317,31 +3325,33 @@ export const InterviewHub: React.FC = () => {
       {/* Export Modal */}
       {showExportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-navy-900 border border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-4 border-b border-navy-700">
-              <h2 className="text-lg font-semibold text-white">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {isPolish ? 'Eksportuj dane' : 'Export Data'}
               </h2>
               <button
                 onClick={() => setShowExportModal(false)}
-                className="p-1 rounded hover:bg-navy-700 text-slate-400 hover:text-white transition-colors"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
             <div className="p-4 space-y-3">
-              <p className="text-sm text-slate-400 mb-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                 {isPolish ? 'Wybierz format eksportu:' : 'Choose export format:'}
               </p>
               <button
                 onClick={() => handleExport('pdf')}
-                className="w-full flex items-center gap-3 p-3 rounded-lg bg-navy-800 border border-navy-600 hover:border-red-500/50 hover:bg-red-500/10 transition-all group"
+                className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 hover:border-red-500/50 hover:bg-red-500/10 transition-all group"
               >
                 <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
                   <FileText size={20} className="text-red-400" />
                 </div>
                 <div className="text-left">
-                  <span className="text-sm font-medium text-white block">PDF</span>
+                  <span className="text-sm font-medium text-slate-900 dark:text-white block">
+                    PDF
+                  </span>
                   <span className="text-xs text-slate-500">
                     {isPolish ? 'Raport profesjonalny' : 'Professional report'}
                   </span>
@@ -3349,13 +3359,15 @@ export const InterviewHub: React.FC = () => {
               </button>
               <button
                 onClick={() => handleExport('excel')}
-                className="w-full flex items-center gap-3 p-3 rounded-lg bg-navy-800 border border-navy-600 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all group"
+                className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all group"
               >
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                   <FileText size={20} className="text-emerald-400" />
                 </div>
                 <div className="text-left">
-                  <span className="text-sm font-medium text-white block">Excel</span>
+                  <span className="text-sm font-medium text-slate-900 dark:text-white block">
+                    Excel
+                  </span>
                   <span className="text-xs text-slate-500">
                     {isPolish ? 'Dane do analizy' : 'Data for analysis'}
                   </span>
@@ -3369,9 +3381,9 @@ export const InterviewHub: React.FC = () => {
       {/* Reminder Modal */}
       {showReminderModal && selectedAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-navy-900 border border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-4 border-b border-navy-700">
-              <h2 className="text-lg font-semibold text-white">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {isPolish ? 'Wyślij przypomnienie' : 'Send Reminder'}
               </h2>
               <button
@@ -3379,19 +3391,19 @@ export const InterviewHub: React.FC = () => {
                   setShowReminderModal(false);
                   setSelectedAssignment(null);
                 }}
-                className="p-1 rounded hover:bg-navy-700 text-slate-400 hover:text-white transition-colors"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
             <div className="p-4">
-              <p className="text-sm text-slate-400 mb-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                 {isPolish
                   ? `Czy na pewno chcesz wysłać przypomnienie do ${selectedAssignment.assignee?.name || 'użytkownika'}?`
                   : `Are you sure you want to send a reminder to ${selectedAssignment.assignee?.name || 'the user'}?`}
               </p>
-              <div className="bg-navy-800 rounded-lg p-3 mb-4">
-                <div className="text-sm text-white font-medium">
+              <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
+                <div className="text-sm text-slate-900 dark:text-white font-medium">
                   {selectedAssignment.template?.name}
                 </div>
                 <div className="text-xs text-slate-500 mt-1">
@@ -3408,7 +3420,7 @@ export const InterviewHub: React.FC = () => {
                     setShowReminderModal(false);
                     setSelectedAssignment(null);
                   }}
-                  className="flex-1 px-4 py-2 rounded-lg bg-navy-800 border border-navy-600 text-slate-300 hover:bg-navy-700 transition-colors"
+                  className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
                 >
                   {isPolish ? 'Anuluj' : 'Cancel'}
                 </button>
@@ -3442,9 +3454,9 @@ export const InterviewHub: React.FC = () => {
       {/* Send Back Modal */}
       {showSendBackModal && selectedAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-navy-900 border border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-4 border-b border-navy-700">
-              <h2 className="text-lg font-semibold text-white">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {isPolish ? 'Zwróć do poprawy' : 'Send Back for Revision'}
               </h2>
               <button
@@ -3452,7 +3464,7 @@ export const InterviewHub: React.FC = () => {
                   setShowSendBackModal(false);
                   setSelectedAssignment(null);
                 }}
-                className="p-1 rounded hover:bg-navy-700 text-slate-400 hover:text-white transition-colors"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <X size={20} />
               </button>
@@ -3466,7 +3478,7 @@ export const InterviewHub: React.FC = () => {
               }}
               className="p-4"
             >
-              <p className="text-sm text-slate-400 mb-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                 {isPolish
                   ? 'Podaj powód zwrotu wywiadu do poprawy:'
                   : 'Provide a reason for sending the interview back:'}
@@ -3478,7 +3490,7 @@ export const InterviewHub: React.FC = () => {
                 placeholder={
                   isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs to be improved...'
                 }
-                className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-600 text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
+                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
               />
               <div className="flex gap-3 mt-4">
                 <button
@@ -3487,7 +3499,7 @@ export const InterviewHub: React.FC = () => {
                     setShowSendBackModal(false);
                     setSelectedAssignment(null);
                   }}
-                  className="flex-1 px-4 py-2 rounded-lg bg-navy-800 border border-navy-600 text-slate-300 hover:bg-navy-700 transition-colors"
+                  className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
                 >
                   {isPolish ? 'Anuluj' : 'Cancel'}
                 </button>
@@ -3507,15 +3519,15 @@ export const InterviewHub: React.FC = () => {
       {/* Analytics Modal (Placeholder) */}
       {showAnalytics && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-navy-900 border border-navy-700 rounded-xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-navy-700">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                 <BarChart3 size={20} className="text-primary-400" />
                 {isPolish ? 'Analityka wywiadów' : 'Interview Analytics'}
               </h2>
               <button
                 onClick={() => setShowAnalytics(false)}
-                className="p-1 rounded hover:bg-navy-700 text-slate-400 hover:text-white transition-colors"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <X size={20} />
               </button>
@@ -3523,39 +3535,39 @@ export const InterviewHub: React.FC = () => {
             <div className="p-6 overflow-auto max-h-[calc(90vh-80px)]">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-navy-800 border border-navy-700 rounded-xl p-4">
+                <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-white">{sessions.length}</div>
-                  <div className="text-sm text-slate-400">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
                     {isPolish ? 'Wszystkie sesje' : 'Total Sessions'}
                   </div>
                 </div>
-                <div className="bg-navy-800 border border-navy-700 rounded-xl p-4">
+                <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-emerald-400">
                     {sessions.filter((s) => s.status === 'completed').length}
                   </div>
-                  <div className="text-sm text-slate-400">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
                     {isPolish ? 'Zakończone' : 'Completed'}
                   </div>
                 </div>
-                <div className="bg-navy-800 border border-navy-700 rounded-xl p-4">
+                <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-purple-400">
                     {sessions.filter((s) => s.status === 'active').length}
                   </div>
-                  <div className="text-sm text-slate-400">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
                     {isPolish ? 'W trakcie' : 'In Progress'}
                   </div>
                 </div>
-                <div className="bg-navy-800 border border-navy-700 rounded-xl p-4">
+                <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-amber-400">{insights.length}</div>
-                  <div className="text-sm text-slate-400">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
                     {isPolish ? 'Wnioski AI' : 'AI Insights'}
                   </div>
                 </div>
               </div>
 
               {/* Assignment Stats */}
-              <div className="bg-navy-800 border border-navy-700 rounded-xl p-4 mb-6">
-                <h3 className="text-sm font-semibold text-white mb-4">
+              <div className="bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4 mb-6">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
                   {isPolish ? 'Statystyki przydziałów' : 'Assignment Statistics'}
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -3595,8 +3607,8 @@ export const InterviewHub: React.FC = () => {
               </div>
 
               {/* Template Usage */}
-              <div className="bg-navy-800 border border-navy-700 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-white mb-4">
+              <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
                   {isPolish ? 'Użycie szablonów' : 'Template Usage'}
                 </h3>
                 <div className="space-y-3">

@@ -9,7 +9,7 @@ test.describe('Navigation Smoke Test', () => {
     // Fill login form
     await page.waitForSelector('input[type="email"]', { timeout: 10000 });
     await page.fill('input[type="email"]', 'admin@dbr77.com');
-    await page.fill('input[type="password"]', 'Admin123!');
+    await page.fill('input[type="password"]', '123456');
     await page.click('button[type="submit"]');
 
     // Wait for redirect away from login
@@ -17,14 +17,17 @@ test.describe('Navigation Smoke Test', () => {
   });
 
   test('should have navigation elements after login', async ({ page }) => {
+    // Wait for sidebar or main content to mount
+    await page.waitForSelector('nav, aside, [data-tour="sidebar-nav"], main', { timeout: 15000 });
+
     // After login, should have some navigation
     const hasNav = await page
-      .locator('nav, [role="navigation"], aside, .sidebar')
+      .locator('nav, [role="navigation"], aside, [data-tour="sidebar-nav"]')
       .first()
       .isVisible()
       .catch(() => false);
     const hasContent = await page
-      .locator('main, [role="main"], .content, .dashboard')
+      .locator('main, [role="main"], [data-testid="dashboard"]')
       .first()
       .isVisible()
       .catch(() => false);
@@ -74,7 +77,13 @@ test.describe('Navigation Smoke Test', () => {
 
   test('should have working navigation links', async ({ page }) => {
     // Find all navigation links - broader selector
-    const links = page.locator('a[href], button, [role="button"], [role="link"]');
+    const linksSelector =
+      '[data-tour="sidebar-nav"] button, nav button, aside button, a[href], [role="button"]';
+
+    // Wait for at least one link/button to appear - increase timeout for slow loading
+    await page.waitForSelector(linksSelector, { timeout: 30000 });
+
+    const links = page.locator(linksSelector);
     const count = await links.count();
 
     // Should have at least some interactive elements

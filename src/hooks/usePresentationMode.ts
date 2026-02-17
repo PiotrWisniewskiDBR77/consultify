@@ -2,7 +2,7 @@
  * usePresentationMode
  *
  * Shared hook for detail view presentation mode persistence.
- * Implements the contract from docs/ui-standards/detail-view-presentation-modes.md
+ * Implements the contract from docs/ui-standards/01-shell-layout/presentation-modes.md
  *
  * Modes: 'n' (N mode) | 'c' (C mode)
  * Note: D mode (accordion) has been removed. Legacy 'd' values redirect to 'n'.
@@ -109,7 +109,6 @@ export function usePresentationMode({
   // Resolve initial mode following priority chain
   const initial = useMemo<PresentationMode>(() => {
     return readFromURL() ?? readFromStorage(entityType) ?? FALLBACK_MODE;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityType]);
 
   const [mode, setModeState] = useState<PresentationMode>(initial);

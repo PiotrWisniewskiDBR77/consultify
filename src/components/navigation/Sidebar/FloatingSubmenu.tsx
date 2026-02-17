@@ -116,6 +116,7 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
           return (
             <motion.button
               key={item.id}
+              type="button"
               onClick={() => item.viewId && onNavigate(item.viewId)}
               whileTap={{ scale: 0.98 }}
               className={`
@@ -128,8 +129,8 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
                       ? 'bg-primary-900/20 text-primary-300'
                       : 'bg-primary-50 text-primary-600'
                     : isDark
-                      ? 'text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/20 dark:hover:bg-navy-800/20 hover:text-white'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20 hover:text-navy-900'
+                      ? 'text-slate-300 hover:bg-navy-800 hover:text-white'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/20 hover:text-slate-900 dark:hover:text-white'
                 }
               `}
             >

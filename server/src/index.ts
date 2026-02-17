@@ -34,9 +34,17 @@ const serverEnvPath = path.resolve(__dirname, '../../.env');
 // Prefer repo-root `.env` (workspace-level config), fallback to `server/.env` for legacy setups.
 const envPathToUse = fs.existsSync(repoRootEnvPath) ? repoRootEnvPath : serverEnvPath;
 
+// By default, do NOT override env vars already set by the shell / npm scripts.
+// This is critical for local dev where scripts explicitly set DB_TYPE/SQLITE_PATH.
+// If you really want `.env` to force-override exported variables, set DOTENV_OVERRIDE=1.
+const shouldOverrideDotenv =
+  !isProductionEnv &&
+  !isTestEnv &&
+  (process.env.DOTENV_OVERRIDE === '1' || process.env.DOTENV_OVERRIDE === 'true');
+
 dotenv.config({
   path: envPathToUse,
-  override: !isProductionEnv && !isTestEnv,
+  override: shouldOverrideDotenv,
 });
 
 // Dev-only visibility: confirm which .env was loaded (helps debug "keys pasted but not used").
@@ -190,7 +198,7 @@ app.get('/api/ready', (_req: Request, res: Response) => {
 });
 
 const databaseInitPromise: Promise<void> =
-  !isTest || process.env.E2E_MODE === 'true'
+  !isTest || process.env.E2E_MODE === 'true' || process.env.ENABLE_TEST_GATEWAY === 'true'
     ? (async () => {
         try {
           logger.info('[Server] Initializing database...');
@@ -298,6 +306,20 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
       registerCQRSHandlers();
     } catch (err: any) {
       logger.error('[Server] CQRS initialization failed:', { error: err });
+    }
+  })();
+
+  // ============================================================
+  // LLM CONFIG INITIALIZATION - Create tables & sync providers
+  // ============================================================
+  (async () => {
+    try {
+      const { llmConfigService } = await import('./services/ai/llmConfigService.js');
+      await llmConfigService.initialize();
+      logger.info('[Server] ✅ LLM Config Service initialized (tables + providers synced)');
+    } catch (err: any) {
+      const error = err as Error;
+      logger.error('[Server] LLM Config initialization failed:', error.message);
     }
   })();
 
@@ -593,7 +615,7 @@ const authLimiter = rateLimit({
 const corsOptions: cors.CorsOptions = {
   origin:
     process.env.FRONTEND_URL ||
-    (isProduction ? false : ['http://localhost:3000', 'http://127.0.0.1:3000', '*']),
+    (isProduction ? false : ['http://localhost:3000', 'http://127.0.0.1:3000']),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token', 'x-csrf-token'],
@@ -675,8 +697,8 @@ app.use((req, res, next) => {
     req.path === '/api/auth/login' ||
     req.originalUrl.includes('/auth/login')
   ) {
-    logger.info('[Index] Login Request Body:', JSON.stringify(req.body));
-    logger.info('[Index] Login Request Headers:', JSON.stringify(req.headers));
+    // Do NOT log request body/headers here (credentials/token leak risk).
+    logger.info('[Index] Login request received');
   }
   next();
 });
@@ -754,6 +776,27 @@ logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 
 // Helper function to serve index.html
 const serveIndexHtml = (req: Request, res: Response): void => {
+  // In stable dev mode we run Vite separately on :3000.
+  // Serving /dist from the backend (:3001) in dev is a common source of "dead UI"
+  // (stale assets, missing HMR, mismatched chunks) where navigation/sidebar appears unresponsive.
+  // When VITE_STABLE_DEV=1 is set (used by `npm run dev:stable`), redirect HTML requests to Vite.
+  const isDev = process.env.NODE_ENV !== 'production';
+  const shouldRedirectToVite =
+    isDev &&
+    (process.env.VITE_STABLE_DEV === '1' || process.env.VITE_REDIRECT_TO_DEV_SERVER === '1');
+  const accept = String(req.headers.accept || '');
+  const wantsHtml = accept.includes('text/html') || accept.includes('application/xhtml+xml');
+  const viteUrl = String(process.env.VITE_DEV_SERVER_URL || 'http://localhost:3000').replace(
+    /\/$/,
+    ''
+  );
+
+  if (shouldRedirectToVite && req.method === 'GET' && wantsHtml) {
+    const target = `${viteUrl}${req.originalUrl || req.path || '/'}`;
+    res.redirect(302, target);
+    return;
+  }
+
   // Use absolute path for res.sendFile (required for Railway/Docker)
   const indexPath = path.resolve(frontendDistPath, 'index.html');
 
@@ -912,8 +955,15 @@ if (!isTest) {
 // ============================================================
 
 const startServer = true; // Always start server when running via tsx
+// IMPORTANT:
+// - We DO want to start an HTTP server when this file is executed directly (e.g. `tsx src/index.ts`)
+//   even if NODE_ENV=test (common for Playwright / smoke environments).
+// - We do NOT want to start an HTTP server when running unit tests under Vitest, where this module
+//   may be imported for app wiring.
+const shouldStartHttpServer =
+  process.env.START_HTTP_SERVER !== 'false' && !process.env.VITEST && process.env.VITEST !== 'true';
 
-if (startServer && (!isTest || process.env.E2E_MODE === 'true')) {
+if (startServer && shouldStartHttpServer) {
   (async () => {
     logger.info('[Server] Starting HTTP server after route registration...');
     const server = http.createServer(app);

@@ -75,7 +75,9 @@ export const AssessmentMatrixCard: React.FC<AssessmentMatrixCardProps> = ({
 
         <div className="flex flex-col items-end gap-1">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-400 dark:text-slate-500">Avg Actual</span>
+            <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500">
+              Avg Actual
+            </span>
             <div className={getScoreBadgeClasses('actual')}>{actual.toFixed(1)}</div>
           </div>
           <div className="flex items-center gap-2 text-xs">

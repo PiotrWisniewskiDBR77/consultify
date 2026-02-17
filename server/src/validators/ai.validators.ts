@@ -433,7 +433,7 @@ export const ActionTypeParamSchema = z.object({
 // Refine Text Request (AI Field Enhancer)
 export const RefineTextRequestSchema = z.object({
   text: z.string().min(1, 'Text to refine is required'),
-  mode: z.enum(['improve', 'shorten', 'expand', 'formal']),
+  mode: z.enum(['improve', 'shorten', 'expand', 'formal', 'generate']),
   systemInstruction: z.string().optional(),
   fieldLabel: z.string().optional(),
   artifactContext: z

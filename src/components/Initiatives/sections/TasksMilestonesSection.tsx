@@ -1,342 +1,1655 @@
 /**
  * TasksMilestonesSection
  *
- * Displays initiative tasks with milestone tracking and progress bar.
- * Extracted from InitiativeDocumentView.
+ * Card-based task management for initiatives.
+ * Inspired by ImplementationIdeasSection — each task has its own expandable card
+ * with status indicator on the left, full task form, and inline editing.
  */
 
-import { motion } from 'framer-motion';
-import { CheckSquare, ExternalLink, Loader2, Milestone, Plus, Sparkles } from 'lucide-react';
-import React from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  Calendar,
+  Edit3,
+  ExternalLink,
+  Loader2,
+  MoreVertical,
+  Plus,
+  Sparkles,
+  Trash2,
+  User,
+  X,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 
-import { CollapsibleSection } from './CollapsibleSection';
+import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { Api } from '@/services/api';
+
 import { useInitiativeContext } from './InitiativeContext';
-import type { InitiativeSectionProps } from './types';
+import type { InitiativeSectionProps, TaskItem } from './types';
 
-export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({
-  sectionType,
-  expanded,
-  onToggle,
-}) => {
+type AITaskProposal = {
+  add: Array<{
+    title: string;
+    description?: string;
+    rationale?: string;
+  }>;
+  remove: Array<{
+    taskId: string;
+    reason: string;
+  }>;
+  reorder?: {
+    /** Recommended task order by taskId (existing tasks only). */
+    order: string[];
+    note?: string;
+  };
+};
+
+type RemovalCandidate = {
+  taskId: string;
+  title: string;
+  why: string;
+};
+
+// ==========================================
+// STATUS CONFIG
+// ==========================================
+
+const TASK_STATUS_CONFIG: Record<
+  string,
+  {
+    label: { en: string; pl: string };
+    color: string;
+    dotColor: string;
+    bgColor: string;
+    textColor: string;
+  }
+> = {
+  todo: {
+    label: { en: 'To Do', pl: 'Do zrobienia' },
+    color: 'bg-slate-400',
+    dotColor: 'bg-slate-400',
+    bgColor: 'bg-slate-100 dark:bg-slate-500/20',
+    textColor: 'text-slate-600 dark:text-slate-400',
+  },
+  in_progress: {
+    label: { en: 'In Progress', pl: 'W trakcie' },
+    color: 'bg-blue-500',
+    dotColor: 'bg-blue-500 animate-pulse',
+    bgColor: 'bg-blue-100 dark:bg-blue-500/20',
+    textColor: 'text-blue-600 dark:text-blue-400',
+  },
+  review: {
+    label: { en: 'Review', pl: 'Przegląd' },
+    color: 'bg-purple-500',
+    dotColor: 'bg-purple-500',
+    bgColor: 'bg-purple-100 dark:bg-purple-500/20',
+    textColor: 'text-purple-600 dark:text-purple-400',
+  },
+  blocked: {
+    label: { en: 'Blocked', pl: 'Zablokowane' },
+    color: 'bg-red-500',
+    dotColor: 'bg-red-500',
+    bgColor: 'bg-red-100 dark:bg-red-500/20',
+    textColor: 'text-red-600 dark:text-red-400',
+  },
+  done: {
+    label: { en: 'Done', pl: 'Ukończone' },
+    color: 'bg-emerald-500',
+    dotColor: 'bg-emerald-500',
+    bgColor: 'bg-emerald-100 dark:bg-emerald-500/20',
+    textColor: 'text-emerald-600 dark:text-emerald-400',
+  },
+};
+
+const PRIORITY_CONFIG: Record<string, { label: { en: string; pl: string }; color: string }> = {
+  low: { label: { en: 'Low', pl: 'Niski' }, color: 'text-slate-500' },
+  medium: { label: { en: 'Medium', pl: 'Średni' }, color: 'text-blue-500' },
+  high: { label: { en: 'High', pl: 'Wysoki' }, color: 'text-orange-500' },
+  urgent: { label: { en: 'Urgent', pl: 'Pilny' }, color: 'text-red-500' },
+  critical: { label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-red-600 font-bold' },
+};
+
+// ==========================================
+// SOURCE CONFIG (Manual / AI)
+// ==========================================
+
+const SOURCE_CONFIG: Record<
+  string,
+  { label: { en: string; pl: string }; icon: typeof User; color: string }
+> = {
+  manual: {
+    label: { en: 'Manual', pl: 'Ręczny' },
+    icon: User,
+    color: 'text-slate-500 dark:text-slate-400',
+  },
+  ai: {
+    label: { en: 'AI', pl: 'AI' },
+    icon: Sparkles,
+    color: 'text-violet-500 dark:text-violet-400',
+  },
+};
+
+// ==========================================
+// HELPER: normalize status for case-insensitive lookup
+// ==========================================
+function normalizeStatus(s: string): string {
+  const lower = s.toLowerCase();
+  if (lower === 'in_progress' || lower === 'inprogress') return 'in_progress';
+  if (lower === 'todo' || lower === 'to_do') return 'todo';
+  if (lower === 'done' || lower === 'completed') return 'done';
+  if (lower === 'blocked') return 'blocked';
+  if (lower === 'review' || lower === 'in_review') return 'review';
+  return lower;
+}
+
+function normalizeTaskTitleForDedupe(title: string): string {
+  const t = String(title || '')
+    .trim()
+    .toLowerCase()
+    // remove long suffixes often auto-appended like "— Initiative name"
+    .replace(/\s+—\s+.+$/g, '')
+    .replace(/\s*-\s*.+$/g, (m) => (m.length > 35 ? '' : m))
+    .replace(/\s+/g, ' ');
+  // strip punctuation-ish noise
+  return t.replace(/[^\p{L}\p{N}\s]/gu, '').trim();
+}
+
+function buildRemovalCandidates(tasks: TaskItem[]): RemovalCandidate[] {
+  const candidates: RemovalCandidate[] = [];
+  const seen = new Map<string, string>(); // normTitle -> firstTaskId
+
+  const junkPatterns: Array<{ re: RegExp; why: string }> = [
+    { re: /\b(test|demo|dummy)\b/i, why: 'Test/demo placeholder — not a real delivery task.' },
+    { re: /\b(wip|tmp|temp)\b/i, why: 'Temporary/WIP placeholder — not a real delivery task.' },
+    {
+      re: /\b(menu|modal|ui)\b/i,
+      why: 'UI/debug item — belongs to dev backlog, not initiative delivery tasks.',
+    },
+    { re: /\bfix\b/i, why: 'Generic “fix” task without a concrete deliverable/outcome.' },
+  ];
+
+  const tooShort = (s: string) => String(s || '').trim().length < 6;
+  const looksLikeGarbage = (s: string) =>
+    /^\?+$/.test(s.trim()) || /^[\d\W_]+$/.test(s.trim()) || /^(new task|task)$/i.test(s.trim());
+
+  for (const t of tasks) {
+    const id = String(t.id);
+    const title = String(t.title || '').trim();
+    const norm = normalizeTaskTitleForDedupe(title);
+
+    if (!title) {
+      candidates.push({ taskId: id, title: '(empty title)', why: 'Empty title — invalid task.' });
+      continue;
+    }
+
+    if (tooShort(title) || looksLikeGarbage(title)) {
+      candidates.push({ taskId: id, title, why: 'Placeholder/garbage title — not actionable.' });
+    }
+
+    for (const p of junkPatterns) {
+      if (p.re.test(title)) {
+        candidates.push({ taskId: id, title, why: p.why });
+        break;
+      }
+    }
+
+    if (norm) {
+      const first = seen.get(norm);
+      if (!first) {
+        seen.set(norm, id);
+      } else if (first !== id) {
+        candidates.push({
+          taskId: id,
+          title,
+          why: 'Duplicate task title (or same intent) — candidate for removal/merge.',
+        });
+      }
+    }
+  }
+
+  // De-dupe candidates by taskId, keep first reason.
+  const byId = new Map<string, RemovalCandidate>();
+  for (const c of candidates) {
+    if (!byId.has(c.taskId)) byId.set(c.taskId, c);
+  }
+  return Array.from(byId.values()).slice(0, 20);
+}
+
+function inferPhaseRank(title: string, description?: string): number {
+  const text = `${title || ''}\n${description || ''}`.toLowerCase();
+  const has = (re: RegExp) => re.test(text);
+
+  // Rough delivery lifecycle ordering (lower = earlier)
+  if (has(/\b(kick[- ]?off|workshop|align|alignment|scope|scoping)\b/i)) return 10;
+  if (has(/\b(discover|discovery|as[- ]?is|current state|baseline|diagnos)\b/i)) return 20;
+  if (has(/\b(requirements?|spec|specification|acceptance|criteria)\b/i)) return 30;
+  if (has(/\b(design|architecture|solution design|blueprint)\b/i)) return 40;
+  if (has(/\b(configure|configuration|setup|implement|build|develop|integrat|automation)\b/i))
+    return 50;
+  if (has(/\b(pilot|test|testing|qa|validate|verification|u[a]?t)\b/i)) return 60;
+  if (has(/\b(rollout|deploy|release|go[- ]?live|cutover|launch)\b/i)) return 70;
+  if (has(/\b(training|enablement|handover|documentation|doc)\b/i)) return 80;
+  if (has(/\b(monitor|stabiliz|hypercare|refine|optimi[sz]e|continuous)\b/i)) return 90;
+  return 55; // default to build-ish
+}
+
+function inferRemovalRank(reason: string): number {
+  const r = String(reason || '').toLowerCase();
+  if (r.includes('test/demo') || r.includes('placeholder') || r.includes('wip')) return 10;
+  if (r.includes('duplicate')) return 20;
+  if (r.includes('out-of-scope') || r.includes('out of scope')) return 30;
+  if (r.includes('garbage') || r.includes('not actionable') || r.includes('low-quality')) return 40;
+  return 50;
+}
+
+const formatDueDate = (value?: string) => {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString();
+};
+
+// ==========================================
+// MAIN SECTION COMPONENT
+// ==========================================
+
+export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ readonly }) => {
   const {
     tasks,
+    setTasks,
     tasksDone,
-    milestones,
     isPolish,
-    isGeneratingAI,
-    handleGenerateAI,
-    isMutating,
+    onOpenTask,
+    users,
+    initiative,
     showCreateTask,
     setShowCreateTask,
-    newTaskTitle,
-    setNewTaskTitle,
-    newTaskIsMilestone,
-    setNewTaskIsMilestone,
-    newTaskMilestoneDate,
-    setNewTaskMilestoneDate,
-    handleCreateTask,
-    onOpenTask,
+    tasksAiRequest,
+    clearTasksAiRequest,
   } = useInitiativeContext();
 
+  const [menuTaskId, setMenuTaskId] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [isAIProposing, setIsAIProposing] = useState(false);
+  const [aiProposal, setAiProposal] = useState<AITaskProposal | null>(null);
+  const [aiNoSuggestionsMessage, setAiNoSuggestionsMessage] = useState<string | null>(null);
+  const aiNoSuggestionsTimerRef = useRef<number | null>(null);
+  const [selectedAddIdx, setSelectedAddIdx] = useState<Record<number, boolean>>({});
+  const [selectedRemoveIds, setSelectedRemoveIds] = useState<Record<string, boolean>>({});
+  const [applySuggestedOrder, setApplySuggestedOrder] = useState(false);
+  const [taskOrderOverride, setTaskOrderOverride] = useState<string[] | null>(null);
+  const [aiMode, setAiMode] = useState<'generate' | 'review'>('generate');
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [newTaskAssigneeId, setNewTaskAssigneeId] = useState('');
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [taskQuery, setTaskQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [ownerFilter, setOwnerFilter] = useState('all');
+  const [dueFilter, setDueFilter] = useState<'all' | 'upcoming' | 'overdue' | 'no_due'>('all');
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'ai'>('all');
+  const [demoRowsInjected, setDemoRowsInjected] = useState(false);
+  const addTriggered = useRef(false);
+  const createTitleInputRef = useRef<HTMLInputElement | null>(null);
+  const initiativeId = initiative?.id;
+  const projectId =
+    initiative?.projectId || initiative?.project_id || initiative?.project?.id || null;
+
+  const closeAIModal = useCallback(() => {
+    setShowAIModal(false);
+    setAiProposal(null);
+    setSelectedAddIdx({});
+    setSelectedRemoveIds({});
+    setApplySuggestedOrder(false);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (aiNoSuggestionsTimerRef.current) window.clearTimeout(aiNoSuggestionsTimerRef.current);
+    };
+  }, []);
+
+  const parseAIJson = (raw: string): any | null => {
+    const text = String(raw || '').trim();
+    if (!text) return null;
+    // Prefer fenced json if present
+    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    const candidate = (fenced?.[1] || text).trim();
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      // Try to extract first JSON object
+      const start = candidate.indexOf('{');
+      const end = candidate.lastIndexOf('}');
+      if (start >= 0 && end > start) {
+        try {
+          return JSON.parse(candidate.slice(start, end + 1));
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    }
+  };
+
+  const proposeOneTaskWithAI = useCallback(async () => {
+    if (readonly) return;
+    setIsAIProposing(true);
+    setAiNoSuggestionsMessage(null);
+    try {
+      const aiLanguage = isPolish ? 'pl' : 'en';
+      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const existingTitles = tasks
+        .map((t) => String(t.title || '').trim())
+        .filter(Boolean)
+        .slice(0, 80);
+
+      const systemInstruction = [
+        `You are a senior PMO delivery lead.`,
+        `Propose exactly ONE additional task for this initiative.`,
+        `Rules:`,
+        `- Title starts with a strong verb and describes one deliverable/outcome (atomic).`,
+        `- Description contains assumptions/notes and optionally 2–6 short hyphen bullets for acceptance criteria.`,
+        `- Do NOT propose dates, estimates, or priorities. We will fill those later in the task panel.`,
+        `- Avoid duplicates of existing tasks (same intent).`,
+        `- Do NOT invent project facts, systems, numbers, owners, KPIs, or deadlines that are not in context.`,
+        `- Output language MUST be ${targetLanguageName}. Translate if needed.`,
+        ``,
+        `Return ONLY valid JSON (no markdown, no code fences, no commentary).`,
+        `Schema: { "title": string, "description": string, "rationale"?: string }`,
+      ].join('\n');
+
+      const contextText = [
+        `[INITIATIVE CONTEXT]`,
+        `Initiative name: ${initiative?.name || ''}`,
+        `Status: ${initiative?.status || ''}`,
+        `Priority: ${initiative?.priority || ''}`,
+        `Summary: ${(initiative?.summary || initiative?.description || '').toString()}`,
+        `Scope (if available): ${JSON.stringify(initiative?.scope || null)}`,
+        `Target state (if available): ${JSON.stringify(initiative?.targetState || initiative?.target_state || null)}`,
+        `Problem definition (if available): ${JSON.stringify(initiative?.problemDefinition || initiative?.problem_definition || initiative?.problemStatement || initiative?.problem_statement || null)}`,
+        ``,
+        `[EXISTING TASK TITLES]`,
+        JSON.stringify(existingTitles, null, 2),
+      ].join('\n');
+
+      const aiRes = await Api.post('/ai/refine-text?timeoutMs=20000', {
+        text: contextText,
+        mode: 'generate',
+        systemInstruction,
+        fieldLabel: 'Add one initiative task',
+        artifactContext: {
+          title: initiative?.name || '',
+          status: initiative?.status || '',
+          priority: initiative?.priority || '',
+          type: 'initiative',
+        },
+        language: aiLanguage,
+      });
+
+      const parsed = parseAIJson(String(aiRes?.text || '')) as any;
+      const title = String(parsed?.title || '').trim();
+      const description = String(parsed?.description || '').trim();
+      const rationale = String(parsed?.rationale || '').trim();
+
+      if (!title) {
+        toast.error(isPolish ? 'AI nie zwróciło tytułu taska' : 'AI returned no task title');
+        return;
+      }
+
+      setNewTaskTitle(title);
+      setNewTaskDescription(
+        [description, rationale ? `\n\nRationale: ${rationale}` : ''].join('').trim()
+      );
+      setNewTaskAssigneeId('');
+      setShowCreateModal(true);
+    } catch (e: any) {
+      toast.error(
+        e?.message || (isPolish ? 'Nie udało się zaproponować taska' : 'Failed to propose a task')
+      );
+    } finally {
+      setIsAIProposing(false);
+    }
+  }, [initiative, isPolish, parseAIJson, readonly, tasks]);
+
+  const proposeTasksWithAI = useCallback(
+    async (mode: 'generate' | 'review') => {
+      if (readonly) return;
+      setIsAIProposing(true);
+      setAiNoSuggestionsMessage(null);
+      setAiMode(mode);
+      try {
+        const aiLanguage = isPolish ? 'pl' : 'en';
+        const targetLanguageName = isPolish ? 'Polish' : 'English';
+        const removalCandidates = mode === 'review' ? buildRemovalCandidates(tasks) : [];
+        const existingTasksCompact = tasks.map((t) => ({
+          id: String(t.id),
+          title: t.title || '',
+          status: normalizeStatus(t.status || 'todo'),
+          priority: String(t.priority || 'medium').toLowerCase(),
+          dueDate: t.dueDate || null,
+          owner: t.assigneeName || null,
+        }));
+
+        const systemInstruction = [
+          `You are a senior PMO delivery lead.`,
+          `Your goal is to propose a practical task backlog for executing an initiative in our delivery application.`,
+          `You MUST follow our task methodology:`,
+          `- Each task title starts with a strong verb and describes a single deliverable/outcome (atomic, actionable).`,
+          `- Descriptions are concise but specific; include acceptance criteria or checklist as short hyphen bullets when useful.`,
+          `- Default status for new tasks: "todo".`,
+          `- Do NOT propose due dates, estimates, or priorities. We will fill those later in the task panel.`,
+          `- Provide "add" tasks in a logical execution order (from discovery/scope -> design -> build -> test/pilot -> rollout -> enablement -> monitoring).`,
+          `- Keep the backlog lean. Prefer fewer, higher-quality tasks over many generic tasks.`,
+          `- It is OK to return zero additions/removals if the backlog is already good; in that case, return a reorder proposal only.`,
+          `- Remove suggestions should focus on items that are NOT real delivery tasks (tests/demos/debug), duplicates, out-of-scope, or low-quality placeholders.`,
+          `- If removal candidates are provided, you MUST include up to 5 removals chosen from them (unless you can explicitly justify keeping them).`,
+          `- Do NOT invent project facts, systems, dates, numbers, owners, or KPIs that are not in the provided context.`,
+          `- Output language MUST be ${targetLanguageName}. Translate if needed.`,
+          ``,
+          `Return ONLY valid JSON (no markdown, no code fences, no commentary).`,
+          `IMPORTANT: For "remove", you MUST use existing taskIds only (prefer from REMOVAL CANDIDATES). Never fabricate taskId values.`,
+          `IMPORTANT: For "reorder.order", include only existing taskIds (from EXISTING TASKS). Never fabricate ids.`,
+          `Schema:`,
+          `{`,
+          `  "add": [`,
+          `    { "title": string, "description"?: string, "rationale"?: string }`,
+          `  ],`,
+          `  "remove": [`,
+          `    { "taskId": string, "reason": string }`,
+          `  ]`,
+          `  "reorder"?: { "order": string[], "note"?: string }`,
+          `}`,
+          ``,
+          mode === 'generate'
+            ? `Mode: generate an initial backlog. Return 8–14 tasks in "add". "remove" MUST be empty. Do not include "reorder".`
+            : `Mode: review the existing backlog. Return 0–6 tasks in "add" (missing/valuable). Return 0–5 items in "remove" ONLY if clearly redundant, out-of-scope, placeholder, or low-quality; always include a reason. Optionally include "reorder" to suggest a better sequence; if you return no adds/removes, you MUST return "reorder".`,
+        ].join('\n');
+
+        const contextText = [
+          `[INITIATIVE CONTEXT]`,
+          `Initiative name: ${initiative?.name || ''}`,
+          `Status: ${initiative?.status || ''}`,
+          `Priority: ${initiative?.priority || ''}`,
+          `Summary: ${(initiative?.summary || initiative?.description || '').toString()}`,
+          `Target date: ${initiative?.plannedEndDate || initiative?.targetDate || ''}`,
+          `Scope (if available): ${JSON.stringify(initiative?.scope || null)}`,
+          `Target state (if available): ${JSON.stringify(initiative?.targetState || initiative?.target_state || null)}`,
+          `Problem definition (if available): ${JSON.stringify(initiative?.problemDefinition || initiative?.problem_definition || null)}`,
+          ``,
+          `[EXISTING TASKS]`,
+          JSON.stringify(existingTasksCompact, null, 2),
+          mode === 'review'
+            ? [
+                ``,
+                `[REMOVAL CANDIDATES]`,
+                `These are flagged by deterministic quality rules. Prefer removing these if they are truly not delivery tasks:`,
+                JSON.stringify(removalCandidates, null, 2),
+              ].join('\n')
+            : '',
+        ].join('\n');
+
+        const aiRes = await Api.post('/ai/refine-text?timeoutMs=20000', {
+          text: contextText,
+          mode: 'generate',
+          systemInstruction,
+          fieldLabel: mode === 'generate' ? 'Initiative tasks backlog' : 'Initiative tasks review',
+          artifactContext: {
+            title: initiative?.name || '',
+            status: initiative?.status || '',
+            priority: initiative?.priority || '',
+            type: 'initiative',
+          },
+          language: aiLanguage,
+        });
+
+        const parsed = parseAIJson(String(aiRes?.text || ''));
+        const proposal: AITaskProposal = {
+          add: Array.isArray(parsed?.add) ? parsed.add : [],
+          remove: Array.isArray(parsed?.remove) ? parsed.remove : [],
+          reorder:
+            parsed?.reorder && Array.isArray(parsed?.reorder?.order)
+              ? { order: parsed.reorder.order, note: parsed.reorder.note }
+              : Array.isArray(parsed?.order)
+                ? { order: parsed.order, note: parsed.note }
+                : undefined,
+        };
+
+        // Basic validation + normalization
+        proposal.add = proposal.add
+          .map((t: any) => ({
+            title: String(t?.title || '').trim(),
+            description: t?.description ? String(t.description).trim() : '',
+            rationale: t?.rationale ? String(t.rationale).trim() : '',
+          }))
+          .filter((t) => t.title.length > 0)
+          .sort((a, b) => {
+            const ra = inferPhaseRank(a.title, a.description);
+            const rb = inferPhaseRank(b.title, b.description);
+            if (ra !== rb) return ra - rb;
+            return a.title.localeCompare(b.title);
+          })
+          .slice(0, mode === 'generate' ? 25 : 15);
+
+        proposal.remove = proposal.remove
+          .map((r: any) => ({
+            taskId: String(r?.taskId || '').trim(),
+            reason: String(r?.reason || '').trim(),
+          }))
+          .filter((r) => r.taskId.length > 0 && r.reason.length > 0)
+          .sort((a, b) => {
+            const ra = inferRemovalRank(a.reason);
+            const rb = inferRemovalRank(b.reason);
+            if (ra !== rb) return ra - rb;
+            return a.taskId.localeCompare(b.taskId);
+          })
+          .slice(0, 8);
+
+        if (mode === 'generate') {
+          proposal.remove = [];
+          proposal.reorder = undefined;
+        }
+
+        const existingTaskIds = new Set(tasks.map((t) => String(t.id)));
+        const reorderOrder = Array.isArray(proposal.reorder?.order) ? proposal.reorder!.order : [];
+        const normalizedOrder = reorderOrder
+          .map((id) => String(id).trim())
+          .filter((id) => existingTaskIds.has(id));
+        const uniqueOrder: string[] = [];
+        const seen = new Set<string>();
+        for (const id of normalizedOrder) {
+          if (seen.has(id)) continue;
+          seen.add(id);
+          uniqueOrder.push(id);
+        }
+        if (proposal.reorder) proposal.reorder.order = uniqueOrder;
+
+        if (
+          proposal.add.length === 0 &&
+          proposal.remove.length === 0 &&
+          (!proposal.reorder || proposal.reorder.order.length === 0)
+        ) {
+          const msg = isPolish
+            ? 'AI nie znalazło sugestii zmian — backlog wygląda OK.'
+            : 'AI found no change suggestions — the backlog looks good.';
+          setAiNoSuggestionsMessage(msg);
+          if (aiNoSuggestionsTimerRef.current) {
+            window.clearTimeout(aiNoSuggestionsTimerRef.current);
+          }
+          aiNoSuggestionsTimerRef.current = window.setTimeout(() => {
+            setAiNoSuggestionsMessage(null);
+            aiNoSuggestionsTimerRef.current = null;
+          }, 7000);
+          setAiProposal(null);
+          return;
+        }
+
+        setAiProposal(proposal);
+        setShowAIModal(true);
+        // default selections: add checked, remove unchecked
+        setSelectedAddIdx(
+          Object.fromEntries(proposal.add.map((_, idx) => [idx, true])) as Record<number, boolean>
+        );
+        setSelectedRemoveIds(
+          Object.fromEntries(proposal.remove.map((r) => [r.taskId, false])) as Record<
+            string,
+            boolean
+          >
+        );
+        setApplySuggestedOrder(!!proposal.reorder?.order?.length);
+      } catch (e: any) {
+        toast.error(
+          e?.message ||
+            (isPolish ? 'Nie udało się wygenerować propozycji AI' : 'AI proposal failed')
+        );
+      } finally {
+        setIsAIProposing(false);
+      }
+    },
+    [readonly, isPolish, tasks, initiative, parseAIJson]
+  );
+
+  useEffect(() => {
+    if (!tasksAiRequest) return;
+    const run = async () => {
+      try {
+        if (tasksAiRequest.mode === 'analyze') {
+          await proposeTasksWithAI(tasks.length === 0 ? 'generate' : 'review');
+          return;
+        }
+        if (tasksAiRequest.mode === 'addOne') {
+          await proposeOneTaskWithAI();
+        }
+      } finally {
+        clearTasksAiRequest();
+      }
+    };
+    void run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasksAiRequest?.nonce]);
+
+  const sortedTasks = useMemo(() => {
+    const list = [...tasks];
+    const order = taskOrderOverride;
+    if (order && order.length > 0) {
+      const rank = new Map(order.map((id, idx) => [id, idx]));
+      return list.sort((a, b) => {
+        const ra = rank.has(a.id) ? (rank.get(a.id) as number) : Number.MAX_SAFE_INTEGER;
+        const rb = rank.has(b.id) ? (rank.get(b.id) as number) : Number.MAX_SAFE_INTEGER;
+        if (ra !== rb) return ra - rb;
+        const ad = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+        const bd = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+        return ad - bd;
+      });
+    }
+    return list.sort((a, b) => {
+      const ad = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+      const bd = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+      return ad - bd;
+    });
+  }, [tasks, taskOrderOverride]);
+
+  const ownerFilterOptions = useMemo(() => {
+    const names = Array.from(
+      new Set(
+        sortedTasks
+          .map((t) => String(t.assigneeName || '').trim())
+          .filter((name) => name.length > 0)
+      )
+    );
+    return names.sort((a, b) => a.localeCompare(b));
+  }, [sortedTasks]);
+
+  const filteredTasks = useMemo(() => {
+    const now = Date.now();
+    return sortedTasks.filter((task) => {
+      const normalizedStatus = normalizeStatus(task.status || 'todo');
+      const normalizedPriority = String(task.priority || 'medium').toLowerCase();
+      const normalizedSource =
+        String(task.source || 'manual').toLowerCase() === 'ai' ? 'ai' : 'manual';
+      const ownerName = String(task.assigneeName || '').trim();
+      const title = String(task.title || '').toLowerCase();
+      const dueTs = task.dueDate ? new Date(task.dueDate).getTime() : NaN;
+
+      if (taskQuery.trim() && !title.includes(taskQuery.trim().toLowerCase())) return false;
+      if (statusFilter !== 'all' && normalizedStatus !== statusFilter) return false;
+      if (priorityFilter !== 'all' && normalizedPriority !== priorityFilter) return false;
+      if (sourceFilter !== 'all' && normalizedSource !== sourceFilter) return false;
+      if (ownerFilter === '__none' && ownerName) return false;
+      if (ownerFilter !== 'all' && ownerFilter !== '__none' && ownerName !== ownerFilter)
+        return false;
+
+      if (dueFilter === 'no_due') return !task.dueDate;
+      if (dueFilter === 'overdue') return Number.isFinite(dueTs) && dueTs < now;
+      if (dueFilter === 'upcoming') return Number.isFinite(dueTs) && dueTs >= now;
+
+      return true;
+    });
+  }, [dueFilter, ownerFilter, priorityFilter, sortedTasks, sourceFilter, statusFilter, taskQuery]);
+
+  const closeMenu = useCallback(() => setMenuTaskId(null), []);
+
+  useEffect(() => {
+    if (!menuTaskId) return;
+    const onDocClick = () => setMenuTaskId(null);
+    const t = setTimeout(() => document.addEventListener('click', onDocClick), 0);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener('click', onDocClick);
+    };
+  }, [menuTaskId]);
+
+  useEffect(() => {
+    if (showCreateModal) {
+      setTimeout(() => createTitleInputRef.current?.focus(), 20);
+    }
+  }, [showCreateModal]);
+
+  const createTaskArtifact = useCallback(
+    async (
+      title: string,
+      source: 'manual' | 'ai' = 'manual',
+      options?: {
+        description?: string;
+        status?: string;
+        priority?: string;
+        dueDate?: string | null;
+        assigneeId?: string | null;
+      }
+    ) => {
+      if (!initiativeId) return;
+      const safeTitle = (title || '').trim() || (isPolish ? 'Nowe zadanie' : 'New task');
+
+      const res = await Api.post('/tasks', {
+        title: safeTitle,
+        description: options?.description || '',
+        projectId,
+        initiativeId,
+        status: options?.status || 'todo',
+        priority: options?.priority || 'medium',
+        taskType: 'execution',
+        source,
+        dueDate: options?.dueDate || null,
+        assigneeId: options?.assigneeId || null,
+        estimatedHours: null,
+      });
+
+      const selectedUser = users.find((u) => u.id === (options?.assigneeId || ''));
+
+      const newTask: TaskItem = {
+        id: res.id,
+        title: safeTitle,
+        description: options?.description || '',
+        status: options?.status || 'todo',
+        priority: options?.priority || 'medium',
+        taskType: 'execution',
+        dueDate: options?.dueDate || undefined,
+        assigneeId: options?.assigneeId || undefined,
+        assigneeName: selectedUser
+          ? `${selectedUser.firstName} ${selectedUser.lastName}`.trim()
+          : undefined,
+        estimatedHours: null,
+        isMilestone: false,
+        milestoneDate: undefined,
+        source,
+      };
+
+      setTasks((prev) => [...prev, newTask]);
+      return newTask;
+    },
+    [initiativeId, isPolish, projectId, setTasks, users]
+  );
+
+  const handleStartInlineAdd = useCallback(() => {
+    if (readonly) return;
+    setShowCreateModal(true);
+    setNewTaskTitle('');
+    setNewTaskDescription('');
+    setNewTaskAssigneeId('');
+  }, [readonly]);
+
+  const handleCreateInlineTask = useCallback(async () => {
+    if (isCreatingTask) return;
+    if (!newTaskTitle.trim()) return;
+    setIsCreatingTask(true);
+    try {
+      await createTaskArtifact(newTaskTitle, 'manual', {
+        description: newTaskDescription.trim() || '',
+        status: 'todo', // first status in flow
+        priority: 'medium',
+        dueDate: null,
+        assigneeId: newTaskAssigneeId || null,
+      });
+      setShowCreateModal(false);
+      setNewTaskTitle('');
+      setNewTaskDescription('');
+      setNewTaskAssigneeId('');
+      // Keep user in list context after creation; task appears immediately with first status.
+    } catch (e: any) {
+      toast.error(isPolish ? 'Nie udało się utworzyć zadania' : 'Failed to create task');
+    } finally {
+      setIsCreatingTask(false);
+    }
+  }, [
+    isCreatingTask,
+    createTaskArtifact,
+    newTaskTitle,
+    newTaskDescription,
+    newTaskAssigneeId,
+    isPolish,
+    onOpenTask,
+  ]);
+
+  // Remove task
+  const handleRemoveTask = useCallback(
+    async (id: string) => {
+      try {
+        await Api.delete(`/tasks/${id}`);
+        setTasks((prev) => prev.filter((t) => t.id !== id));
+        toast.success(isPolish ? 'Zadanie usunięte' : 'Task removed');
+      } catch {
+        toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to remove');
+      }
+    },
+    [isPolish, setTasks]
+  );
+
+  const handleDuplicateTask = useCallback(
+    async (task: TaskItem) => {
+      try {
+        const created = await createTaskArtifact(
+          `${task.title || (isPolish ? 'Nowe zadanie' : 'New task')} ${isPolish ? '(kopia)' : '(copy)'}`,
+          task.source === 'ai' ? 'ai' : 'manual',
+          {
+            description: task.description || '',
+            status: 'todo', // Always start from first status in flow
+            priority: String(task.priority || 'medium').toLowerCase(),
+            dueDate: task.dueDate || null,
+            assigneeId: task.assigneeId || null,
+          }
+        );
+        if (created?.id) {
+          toast.success(isPolish ? 'Task zduplikowany' : 'Task duplicated');
+        }
+      } catch {
+        toast.error(isPolish ? 'Nie udało się zduplikować taska' : 'Failed to duplicate task');
+      }
+    },
+    [createTaskArtifact, isPolish]
+  );
+
+  const applyAIProposal = useCallback(async () => {
+    if (!aiProposal) return;
+    const toAdd = aiProposal.add.filter((_, idx) => selectedAddIdx[idx]);
+    const toRemove = aiProposal.remove.filter((r) => selectedRemoveIds[r.taskId]);
+    const hasOrder = !!aiProposal.reorder?.order?.length;
+
+    if (toAdd.length === 0 && toRemove.length === 0 && !(applySuggestedOrder && hasOrder)) {
+      toast(isPolish ? 'Brak wybranych zmian' : 'No selected changes');
+      return;
+    }
+
+    if (toRemove.length > 0) {
+      const ok = window.confirm(
+        isPolish
+          ? `Usunąć ${toRemove.length} task(ów)? To działanie jest nieodwracalne.`
+          : `Delete ${toRemove.length} task(s)? This action cannot be undone.`
+      );
+      if (!ok) return;
+    }
+
+    try {
+      // Add tasks sequentially to keep API load predictable
+      for (const t of toAdd) {
+        await createTaskArtifact(t.title, 'ai', {
+          description: t.description || '',
+          status: 'todo',
+          priority: 'medium',
+          dueDate: null,
+          assigneeId: null,
+        });
+      }
+
+      // Remove selected tasks
+      for (const r of toRemove) {
+        await handleRemoveTask(r.taskId);
+      }
+
+      // Apply suggested ordering locally (view-only) so the list reads logically.
+      if (applySuggestedOrder && hasOrder) {
+        const removedIds = new Set(toRemove.map((r) => r.taskId));
+        const filtered = aiProposal.reorder!.order.filter((id) => !removedIds.has(id));
+        if (filtered.length > 0) {
+          setTaskOrderOverride(filtered);
+        }
+      }
+
+      toast.success(
+        isPolish
+          ? `Zastosowano propozycje AI (${toAdd.length} dodano${toRemove.length ? `, ${toRemove.length} usunięto` : ''}${applySuggestedOrder && hasOrder ? ', uporządkowano listę' : ''})`
+          : `Applied AI proposals (${toAdd.length} added${toRemove.length ? `, ${toRemove.length} removed` : ''}${applySuggestedOrder && hasOrder ? ', reordered list' : ''})`
+      );
+      closeAIModal();
+    } catch {
+      toast.error(isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals');
+    }
+  }, [
+    aiProposal,
+    selectedAddIdx,
+    selectedRemoveIds,
+    isPolish,
+    createTaskArtifact,
+    handleRemoveTask,
+    closeAIModal,
+    applySuggestedOrder,
+  ]);
+
+  const selectedAddCount = useMemo(() => {
+    if (!aiProposal) return 0;
+    return aiProposal.add.reduce((sum, _t, idx) => sum + (selectedAddIdx[idx] ? 1 : 0), 0);
+  }, [aiProposal, selectedAddIdx]);
+
+  const selectedRemoveCount = useMemo(() => {
+    if (!aiProposal) return 0;
+    return aiProposal.remove.reduce((sum, r) => sum + (selectedRemoveIds[r.taskId] ? 1 : 0), 0);
+  }, [aiProposal, selectedRemoveIds]);
+
+  // When "New Task" button in toolbar triggers showCreateTask, auto-add a task card
+  useEffect(() => {
+    if (showCreateTask && !addTriggered.current) {
+      addTriggered.current = true;
+      handleStartInlineAdd();
+      setShowCreateTask(false);
+      setTimeout(() => {
+        addTriggered.current = false;
+      }, 300);
+    }
+  }, [showCreateTask, handleStartInlineAdd, setShowCreateTask]);
+
+  useEffect(() => {
+    setDemoRowsInjected(false);
+  }, [initiativeId]);
+
+  useEffect(() => {
+    if (!initiativeId || demoRowsInjected) return;
+    const hasLegacyDemo = tasks.some((t) => String(t.id).startsWith('demo-task-'));
+    const nonDemoCount = tasks.filter((t) => !String(t.id).startsWith('demo-task-')).length;
+    if (tasks.length > 0 && !hasLegacyDemo) return;
+    let cancelled = false;
+    const run = async () => {
+      const now = Date.now();
+      const inDays = (days: number) => new Date(now + days * 24 * 60 * 60 * 1000).toISOString();
+      let createdAny = false;
+      try {
+        if (hasLegacyDemo) {
+          if (nonDemoCount > 0) {
+            setTasks((prev) => prev.filter((t) => !String(t.id).startsWith('demo-task-')));
+            setDemoRowsInjected(true);
+            return;
+          }
+          setTasks([]);
+        }
+        await createTaskArtifact('Kick-off and scope alignment', 'manual', {
+          description: 'Initial workshop and scope confirmation.',
+          status: 'done',
+          priority: 'high',
+          dueDate: inDays(-2),
+          assigneeId: users[0]?.id || null,
+        });
+        createdAny = true;
+        await createTaskArtifact('Define target process and acceptance criteria', 'manual', {
+          description: 'Define measurable criteria for successful rollout.',
+          status: 'in_progress',
+          priority: 'critical',
+          dueDate: inDays(5),
+          assigneeId: users[1]?.id || null,
+        });
+        createdAny = true;
+        await createTaskArtifact('Prepare pilot environment', 'ai', {
+          description: 'Create pilot environment and validate readiness checklist.',
+          status: 'todo',
+          priority: 'medium',
+          dueDate: inDays(12),
+          assigneeId: users[2]?.id || null,
+        });
+        createdAny = true;
+      } catch {
+        // keep silent; UI works without demo seed
+      } finally {
+        if (!cancelled && (createdAny || tasks.length > 0)) setDemoRowsInjected(true);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [initiativeId, demoRowsInjected, tasks, createTaskArtifact, users, setTasks]);
+
   return (
-    <CollapsibleSection
-      id="tasks"
-      title={isPolish ? 'Zadania i kamienie milowe' : 'Tasks & Milestones'}
-      icon={<CheckSquare size={18} className="text-emerald-500 dark:text-emerald-400" />}
-      iconBg="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20"
-      expanded={expanded}
-      onToggle={onToggle}
-      badge={
-        <div className="flex items-center gap-2">
-          {milestones.length > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 flex items-center gap-1">
-              <Milestone size={10} />
-              {milestones.length}
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+            {isPolish ? 'Tasks' : 'Tasks'}
+          </h2>
+          {tasks.length > 0 && (
+            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+              {tasks.length}
             </span>
           )}
-          <span className="text-xs text-slate-400">
-            {tasksDone}/{tasks.length}
-          </span>
+          {isAIProposing && (
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-navy-800/50 px-2 py-0.5 rounded-full">
+              <Loader2 size={12} className="animate-spin" />
+              {isPolish ? 'AI pracuje...' : 'AI working...'}
+            </span>
+          )}
         </div>
-      }
-      actions={
         <div className="flex items-center gap-2">
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowCreateTask(true);
-            }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-all"
-          >
-            <Plus size={14} />
-            <span>{isPolish ? 'Nowe' : 'New'}</span>
-          </motion.button>
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleGenerateAI('tasks');
-            }}
-            disabled={isGeneratingAI === 'tasks'}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-medium transition-all disabled:opacity-50"
-            title={isPolish ? 'AI zasugeruje zadania' : 'AI will suggest tasks'}
-          >
-            {isGeneratingAI === 'tasks' ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Sparkles size={14} />
-            )}
-            <span>AI</span>
-          </motion.button>
+          {!readonly && (
+            <button
+              onClick={handleStartInlineAdd}
+              className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+            >
+              <Plus size={12} />
+              {isPolish ? 'Dodaj task' : 'Add task'}
+            </button>
+          )}
         </div>
-      }
-    >
-      {/* Create Task Form */}
-      {showCreateTask && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4 p-4 rounded-xl border-2 border-emerald-300 dark:border-emerald-500/50 bg-emerald-50/30 dark:bg-emerald-500/5 space-y-3"
+      </div>
+
+      {aiNoSuggestionsMessage && !showAIModal && (
+        <Callout
+          variant="purple"
+          compact
+          title={isPolish ? 'AI' : 'AI'}
+          action={
+            readonly
+              ? undefined
+              : {
+                  label: isPolish ? 'AI: dodaj task' : 'AI: add task',
+                  onClick: () => void proposeOneTaskWithAI(),
+                }
+          }
         >
-          <input
-            type="text"
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-            placeholder={isPolish ? 'Tytuł zadania...' : 'Task title...'}
-            className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
-            autoFocus
-          />
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={newTaskIsMilestone}
-                onChange={(e) => setNewTaskIsMilestone(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-purple-500 focus:ring-purple-500"
-              />
-              <span className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                <Milestone size={14} />
-                {isPolish ? 'Kamień milowy' : 'Milestone'}
-              </span>
-            </label>
-            {newTaskIsMilestone && (
-              <input
-                type="date"
-                value={newTaskMilestoneDate}
-                onChange={(e) => setNewTaskMilestoneDate(e.target.value)}
-                className="px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm"
-              />
-            )}
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={() => setShowCreateTask(false)}
-              className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700"
-            >
-              {isPolish ? 'Anuluj' : 'Cancel'}
-            </button>
-            <button
-              onClick={handleCreateTask}
-              disabled={isMutating || !newTaskTitle.trim()}
-              className="px-3 py-1.5 text-xs bg-emerald-500 text-white rounded-lg disabled:opacity-50"
-            >
-              {isPolish ? 'Utwórz' : 'Create'}
-            </button>
-          </div>
-        </motion.div>
+          {aiNoSuggestionsMessage}
+        </Callout>
       )}
 
-      {/* Milestones Timeline */}
-      {milestones.length > 0 && (
-        <div className="mb-4 p-3 rounded-xl bg-purple-50/50 dark:bg-purple-500/5 border border-purple-200/50 dark:border-purple-500/20">
-          <div className="flex items-center gap-2 mb-3">
-            <Milestone size={14} className="text-purple-500" />
-            <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase">
-              {isPolish ? 'Kamienie milowe' : 'Milestones'}
-            </span>
-          </div>
-          <div className="space-y-2">
-            {milestones.map((m) => (
-              <div
-                key={m.id}
-                className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-navy-800/50 cursor-pointer hover:bg-white/80 dark:hover:bg-navy-800/80 transition-colors"
-                onClick={() => onOpenTask?.(m.id)}
+      {/* AI proposal modal */}
+      {showAIModal && aiProposal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
+            <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+                  {aiMode === 'generate'
+                    ? isPolish
+                      ? 'Propozycja backlogu tasków (AI)'
+                      : 'Proposed task backlog (AI)'
+                    : isPolish
+                      ? 'Propozycje zmian w taskach (AI)'
+                      : 'Proposed task changes (AI)'}
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  {isPolish
+                    ? 'Zaznacz elementy do dodania/usunięcia, a następnie kliknij „Zastosuj”.'
+                    : 'Select items to add/remove, then click “Apply”.'}
+                </p>
+              </div>
+              <button
+                onClick={closeAIModal}
+                className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                title={isPolish ? 'Zamknij' : 'Close'}
               >
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-2.5 h-2.5 rounded-full ${m.status === 'done' || m.status === 'DONE' ? 'bg-emerald-500' : 'bg-purple-500'}`}
-                  />
-                  <span className="text-sm text-slate-700 dark:text-slate-300">{m.title}</span>
-                </div>
-                {m.milestoneDate && (
-                  <span className="text-xs text-slate-400">
-                    {new Date(m.milestoneDate).toLocaleDateString()}
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
+              {/* Remove suggestions (top) */}
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Do wywalenia' : 'To remove'} ({aiProposal.remove.length})
                   </span>
+                  {aiProposal.remove.length > 0 && (
+                    <button
+                      onClick={() =>
+                        setSelectedRemoveIds(
+                          Object.fromEntries(
+                            aiProposal.remove.map((r) => [r.taskId, true])
+                          ) as Record<string, boolean>
+                        )
+                      }
+                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    >
+                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                    </button>
+                  )}
+                </div>
+                {aiProposal.remove.length === 0 ? (
+                  <EmptyStateInline
+                    icon={Trash2}
+                    dashed={false}
+                    className="p-5"
+                    message={
+                      aiMode === 'generate'
+                        ? isPolish
+                          ? 'Tryb generowania: brak usuwania.'
+                          : 'Generate mode: no removals.'
+                        : isPolish
+                          ? 'AI nie zasugerowało usunięć.'
+                          : 'No removal suggestions from AI.'
+                    }
+                    hint={
+                      isPolish
+                        ? 'Jeśli backlog jest OK, AI może zaproponować tylko dodania lub kolejność.'
+                        : 'If the backlog is already good, AI may propose only additions or ordering.'
+                    }
+                  />
+                ) : (
+                  <div className="space-y-1.5">
+                    {aiProposal.remove.map((r) => {
+                      const existing = tasks.find((t) => String(t.id) === String(r.taskId));
+                      return (
+                        <label
+                          key={r.taskId}
+                          className="flex items-start gap-2 p-2 rounded-xl bg-amber-50/40 dark:bg-amber-500/5 hover:bg-amber-50/70 dark:hover:bg-amber-500/10 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!selectedRemoveIds[r.taskId]}
+                            onChange={(e) =>
+                              setSelectedRemoveIds((prev) => ({
+                                ...prev,
+                                [r.taskId]: e.target.checked,
+                              }))
+                            }
+                            className="mt-1"
+                          />
+                          <div className="min-w-0">
+                            <span className="text-sm font-medium text-slate-800 dark:text-white">
+                              {existing?.title || r.taskId}
+                            </span>
+                            <p className="text-xs text-amber-800/90 dark:text-amber-200 mt-0.5">
+                              {r.reason}
+                            </p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
 
-      {/* Task Filter Tabs */}
-      {tasks.length > 0 && (
-        <div className="flex items-center gap-1 mb-3 p-1 bg-slate-100/50 dark:bg-navy-800/50 rounded-lg">
-          {[
-            {
-              key: 'all',
-              label: isPolish ? 'Wszystkie' : 'All',
-              count: tasks.filter((t) => !t.isMilestone).length,
-            },
-            {
-              key: 'open',
-              label: isPolish ? 'Otwarte' : 'Open',
-              count: tasks.filter((t) => !t.isMilestone && !['done', 'DONE'].includes(t.status))
-                .length,
-            },
-            {
-              key: 'blocked',
-              label: isPolish ? 'Zablokowane' : 'Blocked',
-              count: tasks.filter((t) => ['blocked', 'BLOCKED'].includes(t.status)).length,
-            },
-            {
-              key: 'done',
-              label: isPolish ? 'Ukończone' : 'Done',
-              count: tasks.filter((t) => ['done', 'DONE'].includes(t.status)).length,
-            },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-medium transition-all ${
-                tab.count > 0 || tab.key === 'all'
-                  ? 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-navy-700'
-                  : 'text-slate-300 dark:text-slate-600 cursor-default'
-              }`}
-            >
-              {tab.label}
-              {tab.count > 0 && (
-                <span className="ml-1 text-[9px] text-slate-400">({tab.count})</span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Tasks List */}
-      {tasks.length === 0 && !showCreateTask ? (
-        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-          <CheckSquare size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-          <p className="text-sm text-slate-400">{isPolish ? 'Brak zadań' : 'No tasks yet'}</p>
-          <p className="text-xs text-slate-400 mt-1">
-            {isPolish
-              ? 'Dodaj zadanie ręcznie lub pozwól AI zasugerować'
-              : 'Add tasks manually or let AI suggest them'}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {tasks
-            .filter((t) => !t.isMilestone)
-            .map((task) => {
-              const isDone = task.status === 'done' || task.status === 'DONE';
-              const isBlocked = task.status === 'blocked' || task.status === 'BLOCKED';
-              const isInProgress = task.status === 'in_progress' || task.status === 'IN_PROGRESS';
-              const isOverdue = task.dueDate && !isDone && new Date(task.dueDate) < new Date();
-              const priorityColor =
-                task.priority === 'CRITICAL' || task.priority === 'critical'
-                  ? 'text-red-500'
-                  : task.priority === 'HIGH' || task.priority === 'high'
-                    ? 'text-orange-500'
-                    : '';
-
-              return (
-                <div
-                  key={task.id}
-                  className={`flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer group ${
-                    isBlocked
-                      ? 'bg-red-50/50 dark:bg-red-500/5 border-red-200/50 dark:border-red-500/20'
-                      : isDone
-                        ? 'bg-emerald-50/30 dark:bg-emerald-500/5 border-emerald-200/50 dark:border-emerald-500/20'
-                        : 'bg-slate-50/50 dark:bg-navy-800/50 border-slate-200/50 dark:border-navy-700/50 hover:border-emerald-500/30'
-                  }`}
-                  onClick={() => onOpenTask?.(task.id)}
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div
-                      className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                        isDone
-                          ? 'bg-emerald-500'
-                          : isInProgress
-                            ? 'bg-blue-500 animate-pulse'
-                            : isBlocked
-                              ? 'bg-red-500'
-                              : 'bg-slate-400'
-                      }`}
-                    />
-                    <span
-                      className={`text-sm truncate ${
-                        isDone
-                          ? 'text-slate-400 line-through'
-                          : 'text-slate-700 dark:text-slate-300'
-                      } ${priorityColor}`}
+              {/* Add proposals */}
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.add.length})
+                  </span>
+                  {aiProposal.add.length > 0 && (
+                    <button
+                      onClick={() =>
+                        setSelectedAddIdx(
+                          Object.fromEntries(aiProposal.add.map((_, idx) => [idx, true])) as Record<
+                            number,
+                            boolean
+                          >
+                        )
+                      }
+                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {task.title}
-                    </span>
-                    {isBlocked && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-medium flex-shrink-0">
-                        {isPolish ? 'ZABLOK.' : 'BLOCKED'}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                    {task.assigneeName && (
-                      <span className="text-xs text-slate-400 hidden sm:inline">
-                        {task.assigneeName}
-                      </span>
-                    )}
-                    {task.dueDate && (
-                      <span
-                        className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-slate-400'}`}
-                      >
-                        {new Date(task.dueDate).toLocaleDateString()}
-                      </span>
-                    )}
-                    <ExternalLink
-                      size={14}
-                      className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                    />
-                  </div>
+                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                    </button>
+                  )}
                 </div>
-              );
-            })}
+                {aiProposal.add.length === 0 ? (
+                  <EmptyStateInline
+                    icon={Plus}
+                    dashed={false}
+                    className="p-5"
+                    message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
+                    hint={
+                      isPolish
+                        ? 'Jeśli backlog jest kompletny, AI może zaproponować tylko kolejność.'
+                        : 'If the backlog is complete, AI may propose only an ordering.'
+                    }
+                  />
+                ) : (
+                  <div className="space-y-1.5">
+                    {aiProposal.add.map((t, idx) => (
+                      <label
+                        key={idx}
+                        className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!selectedAddIdx[idx]}
+                          onChange={(e) =>
+                            setSelectedAddIdx((prev) => ({ ...prev, [idx]: e.target.checked }))
+                          }
+                          className="mt-1"
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium text-slate-800 dark:text-white">
+                              {t.title}
+                            </span>
+                          </div>
+                          {t.description ? (
+                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
+                              {t.description}
+                            </p>
+                          ) : null}
+                          {t.rationale ? (
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                              {t.rationale}
+                            </p>
+                          ) : null}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Suggested ordering */}
+              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Proponowana kolejność' : 'Suggested order'} (
+                    {aiProposal.reorder?.order?.length || 0})
+                  </span>
+                  <label className="inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 select-none">
+                    <input
+                      type="checkbox"
+                      checked={applySuggestedOrder}
+                      onChange={(e) => setApplySuggestedOrder(e.target.checked)}
+                      disabled={!aiProposal.reorder?.order?.length}
+                    />
+                    {isPolish ? 'Zastosuj kolejność' : 'Apply order'}
+                  </label>
+                </div>
+                {!aiProposal.reorder?.order?.length ? (
+                  <EmptyStateInline
+                    icon={Sparkles}
+                    dashed={false}
+                    className="p-5"
+                    message={isPolish ? 'Brak sugestii kolejności.' : 'No ordering suggestion.'}
+                    hint={
+                      isPolish
+                        ? 'AI może zwrócić tylko dodania/usunięcia bez re-order.'
+                        : 'AI may return only additions/removals without re-ordering.'
+                    }
+                  />
+                ) : (
+                  <>
+                    {aiProposal.reorder.note ? (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {aiProposal.reorder.note}
+                      </p>
+                    ) : null}
+                    <ol className="space-y-1.5 list-decimal pl-5">
+                      {aiProposal.reorder.order.map((id) => {
+                        const existing = tasks.find((t) => String(t.id) === String(id));
+                        return (
+                          <li key={id} className="text-xs text-slate-700 dark:text-slate-200">
+                            {existing?.title || id}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </>
+                )}
+              </div>
+
+              {/* Plan (bottom) */}
+              <Callout
+                variant="purple"
+                title={isPolish ? 'Plan' : 'Plan'}
+                compact
+                className="rounded-xl"
+              >
+                <ul className="list-disc pl-4 space-y-1">
+                  <li>
+                    {isPolish
+                      ? `Usuń zaznaczone taski: ${selectedRemoveCount}.`
+                      : `Remove selected tasks: ${selectedRemoveCount}.`}
+                  </li>
+                  <li>
+                    {isPolish
+                      ? `Dodaj zaznaczone taski: ${selectedAddCount} (status: To Do, source: AI).`
+                      : `Add selected tasks: ${selectedAddCount} (status: To Do, source: AI).`}
+                  </li>
+                  <li>
+                    {isPolish
+                      ? applySuggestedOrder && aiProposal.reorder?.order?.length
+                        ? 'Zastosuj proponowaną kolejność dla czytelności backlogu.'
+                        : 'Opcjonalnie: zastosuj proponowaną kolejność.'
+                      : applySuggestedOrder && aiProposal.reorder?.order?.length
+                        ? 'Apply the suggested ordering to make the backlog read better.'
+                        : 'Optional: apply the suggested ordering.'}
+                  </li>
+                </ul>
+              </Callout>
+            </div>
+
+            <div className="px-5 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-end gap-2">
+              <button
+                onClick={closeAIModal}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              >
+                {isPolish ? 'Anuluj' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => void applyAIProposal()}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors"
+              >
+                {isPolish ? 'Zastosuj' : 'Apply'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Progress Bar */}
-      {tasks.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500">{isPolish ? 'Postęp' : 'Progress'}</span>
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-              {Math.round((tasksDone / tasks.length) * 100)}%
-            </span>
-          </div>
-          <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${(tasksDone / tasks.length) * 100}%` }}
-              className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
-            />
+      <div className="overflow-x-auto overflow-y-visible rounded-xl border border-slate-200 dark:border-navy-700/40">
+        <table className="w-full text-sm table-fixed">
+          <colgroup>
+            <col style={{ width: '4%' }} />
+            <col style={{ width: '38%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '14%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '4%' }} />
+          </colgroup>
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200 dark:border-navy-700/40">
+              <th className="text-right py-2.5 pl-3 pr-2">#</th>
+              <th className="text-left py-2.5 pl-3 pr-2">{isPolish ? 'Task' : 'Task'}</th>
+              <th className="text-left py-2.5 pr-2">{isPolish ? 'Status' : 'Status'}</th>
+              <th className="text-left py-2.5 pr-2">{isPolish ? 'Priority' : 'Priority'}</th>
+              <th className="text-left py-2.5 pr-2">{isPolish ? 'Owner' : 'Owner'}</th>
+              <th className="text-left py-2.5 pr-2">{isPolish ? 'Due' : 'Due'}</th>
+              <th className="text-left py-2.5 pr-2">{isPolish ? 'Source' : 'Source'}</th>
+              <th className="text-right py-2.5 pr-3"></th>
+            </tr>
+            <tr className="bg-slate-50/30 dark:bg-navy-800/20 border-b border-slate-200/60 dark:border-navy-700/40">
+              <th className="py-1.5 pl-3 pr-2" />
+              <th className="py-1.5 pl-3 pr-2">
+                <input
+                  value={taskQuery}
+                  onChange={(e) => setTaskQuery(e.target.value)}
+                  placeholder={isPolish ? 'Filtruj...' : 'Filter...'}
+                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                />
+              </th>
+              <th className="py-1.5 pr-2">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                >
+                  <option value="all">{isPolish ? 'Wszystkie' : 'All'}</option>
+                  {Object.entries(TASK_STATUS_CONFIG).map(([key, cfg]) => (
+                    <option key={key} value={key}>
+                      {isPolish ? cfg.label.pl : cfg.label.en}
+                    </option>
+                  ))}
+                </select>
+              </th>
+              <th className="py-1.5 pr-2">
+                <select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                >
+                  <option value="all">{isPolish ? 'Wszystkie' : 'All'}</option>
+                  {Object.entries(PRIORITY_CONFIG).map(([key, cfg]) => (
+                    <option key={key} value={key}>
+                      {isPolish ? cfg.label.pl : cfg.label.en}
+                    </option>
+                  ))}
+                </select>
+              </th>
+              <th className="py-1.5 pr-2">
+                <select
+                  value={ownerFilter}
+                  onChange={(e) => setOwnerFilter(e.target.value)}
+                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                >
+                  <option value="all">{isPolish ? 'Wszyscy' : 'All'}</option>
+                  <option value="__none">{isPolish ? 'Bez ownera' : 'Unassigned'}</option>
+                  {ownerFilterOptions.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </th>
+              <th className="py-1.5 pr-2">
+                <select
+                  value={dueFilter}
+                  onChange={(e) =>
+                    setDueFilter(e.target.value as 'all' | 'upcoming' | 'overdue' | 'no_due')
+                  }
+                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                >
+                  <option value="all">{isPolish ? 'Wszystkie' : 'All'}</option>
+                  <option value="upcoming">{isPolish ? 'Nadchodzące' : 'Upcoming'}</option>
+                  <option value="overdue">{isPolish ? 'Po terminie' : 'Overdue'}</option>
+                  <option value="no_due">{isPolish ? 'Bez terminu' : 'No due date'}</option>
+                </select>
+              </th>
+              <th className="py-1.5 pr-2">
+                <select
+                  value={sourceFilter}
+                  onChange={(e) => setSourceFilter(e.target.value as 'all' | 'manual' | 'ai')}
+                  className="w-full h-7 rounded-md border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/60 px-2 text-[11px] text-slate-600 dark:text-slate-300 focus:outline-none focus:border-primary-400"
+                >
+                  <option value="all">{isPolish ? 'Wszystkie' : 'All'}</option>
+                  <option value="manual">{isPolish ? 'Manualne' : 'Manual'}</option>
+                  <option value="ai">AI</option>
+                </select>
+              </th>
+              <th className="py-1.5 pr-3" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
+            <AnimatePresence mode="popLayout">
+              {filteredTasks.map((task, index) => {
+                const status = normalizeStatus(task.status || 'todo');
+                const statusConfig = TASK_STATUS_CONFIG[status] || TASK_STATUS_CONFIG.todo;
+                const source = task.source || 'manual';
+                const sourceCfg = SOURCE_CONFIG[source] || SOURCE_CONFIG.manual;
+                const priorityKey = String(task.priority || 'medium').toLowerCase();
+                return (
+                  <motion.tr
+                    key={task.id}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
+                  >
+                    <td className="py-2.5 pl-3 pr-2 text-xs text-right text-slate-500 dark:text-slate-400">
+                      {index + 1}
+                    </td>
+                    <td className="py-2.5 pl-3 pr-2">
+                      <button
+                        onClick={() => onOpenTask?.(task.id)}
+                        className="block w-full truncate text-left text-slate-700 dark:text-slate-200 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
+                        title={task.title || (isPolish ? 'Bez nazwy' : 'Untitled')}
+                      >
+                        {task.title || (isPolish ? 'Bez nazwy' : 'Untitled')}
+                      </button>
+                    </td>
+                    <td className="py-2.5 pr-2">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs ${statusConfig.bgColor} ${statusConfig.textColor}`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.color}`} />
+                        {isPolish ? statusConfig.label.pl : statusConfig.label.en}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-2 text-xs">
+                      <span className={PRIORITY_CONFIG[priorityKey]?.color || 'text-slate-500'}>
+                        {isPolish
+                          ? PRIORITY_CONFIG[priorityKey]?.label.pl || task.priority || '—'
+                          : PRIORITY_CONFIG[priorityKey]?.label.en || task.priority || '—'}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-2 text-xs text-slate-600 dark:text-slate-300">
+                      {task.assigneeName || '—'}
+                    </td>
+                    <td className="py-2.5 pr-2 text-xs text-slate-500 dark:text-slate-400">
+                      {task.dueDate ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar size={11} />
+                          {formatDueDate(task.dueDate)}
+                        </span>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-2 text-xs">
+                      <span className={`inline-flex items-center gap-1 ${sourceCfg.color}`}>
+                        <sourceCfg.icon size={10} />
+                        {isPolish ? sourceCfg.label.pl : sourceCfg.label.en}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-3 text-right relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMenuTaskId((prev) => (prev === task.id ? null : task.id));
+                        }}
+                        className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/10 transition-colors"
+                        title={isPolish ? 'Akcje' : 'Actions'}
+                      >
+                        <MoreVertical size={14} />
+                      </button>
+                      {menuTaskId === task.id && (
+                        <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
+                          <button
+                            onClick={() => {
+                              closeMenu();
+                              onOpenTask?.(task.id);
+                            }}
+                            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                          >
+                            <ExternalLink size={13} />
+                            {isPolish ? 'Otwórz task' : 'Open task'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              closeMenu();
+                              void handleDuplicateTask(task);
+                            }}
+                            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                          >
+                            <Edit3 size={13} />
+                            {isPolish ? 'Duplikuj' : 'Duplicate'}
+                          </button>
+                          {!readonly && (
+                            <>
+                              <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
+                              <button
+                                onClick={() => {
+                                  closeMenu();
+                                  void handleRemoveTask(task.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                              >
+                                <Trash2 size={13} />
+                                {isPolish ? 'Usuń' : 'Delete'}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                  </motion.tr>
+                );
+              })}
+            </AnimatePresence>
+            {filteredTasks.length === 0 && (
+              <tr>
+                <td
+                  colSpan={8}
+                  className="py-8 text-center text-sm text-slate-500 dark:text-slate-400"
+                >
+                  {tasks.length === 0
+                    ? isPolish
+                      ? 'Brak tasków'
+                      : 'No tasks yet'
+                    : isPolish
+                      ? 'Brak wyników dla aktualnych filtrów'
+                      : 'No results for current filters'}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {!readonly && showCreateModal && (
+        <div className="fixed inset-0 z-[120] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-xl rounded-2xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 shadow-2xl">
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700/70 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {isPolish ? 'Nowy task' : 'New task'}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setNewTaskTitle('');
+                }}
+                className="p-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-navy-800"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              <div>
+                <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
+                  {isPolish ? 'Tytuł' : 'Title'}
+                </label>
+                <input
+                  ref={createTitleInputRef}
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  placeholder={
+                    isPolish ? 'Np. Przygotuj raport wdrożenia' : 'E.g. Prepare rollout report'
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
+                  {isPolish ? 'Założenia / notatki' : 'Assumptions / notes'}
+                </label>
+                <textarea
+                  value={newTaskDescription}
+                  onChange={(e) => setNewTaskDescription(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-1">
+                  {isPolish ? 'Owner' : 'Owner'}
+                </label>
+                <select
+                  value={newTaskAssigneeId}
+                  onChange={(e) => setNewTaskAssigneeId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 text-sm"
+                >
+                  <option value="">{isPolish ? '— Brak —' : '— None —'}</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {`${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700/70 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setNewTaskTitle('');
+                }}
+                className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700"
+              >
+                {isPolish ? 'Anuluj' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => void handleCreateInlineTask()}
+                disabled={isCreatingTask || !newTaskTitle.trim()}
+                className="px-3 py-1.5 rounded-md text-xs font-medium bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50"
+              >
+                {isCreatingTask
+                  ? isPolish
+                    ? 'Tworzenie...'
+                    : 'Creating...'
+                  : isPolish
+                    ? 'Utwórz task'
+                    : 'Create task'}
+              </button>
+            </div>
           </div>
         </div>
       )}
-    </CollapsibleSection>
+
+      {tasks.length > 0 && (
+        <div className="pt-2 border-t border-slate-200/70 dark:border-navy-700/50 text-xs text-slate-500 dark:text-slate-400">
+          {tasksDone}/{tasks.length} {isPolish ? 'ukończone' : 'done'}
+        </div>
+      )}
+    </motion.div>
   );
 };

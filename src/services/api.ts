@@ -57,28 +57,29 @@ function getDemoFlags(): DemoFlags {
   return _cachedDemoFlags;
 }
 
-let _cachedI18nRaw: string | null | undefined = undefined;
+let _cachedNavigatorRaw: string | null | undefined = undefined;
 let _cachedLang = 'en';
 
+function getBrowserLanguage(): string {
+  try {
+    const raw =
+      (typeof navigator !== 'undefined' && (navigator.languages?.[0] || navigator.language)) || '';
+    const base = String(raw).split('-')[0].toLowerCase();
+    if (base === 'ja') return 'jp'; // app uses "jp" locale folder/code
+    return base || 'en';
+  } catch {
+    return 'en';
+  }
+}
+
 function getCachedUserLanguage(): string {
-  let raw: string | null = null;
-  try {
-    raw = localStorage.getItem('i18nextLng');
-  } catch {
-    // ignore
-  }
+  const raw =
+    (typeof navigator !== 'undefined' && (navigator.languages?.[0] || navigator.language)) || null;
 
-  if (raw === _cachedI18nRaw) return _cachedLang;
-  _cachedI18nRaw = raw;
+  if (raw === _cachedNavigatorRaw) return _cachedLang;
+  _cachedNavigatorRaw = raw;
 
-  let userLanguage = 'en';
-  try {
-    if (raw) userLanguage = raw.split('-')[0].toLowerCase();
-  } catch {
-    // ignore
-  }
-
-  _cachedLang = userLanguage;
+  _cachedLang = getBrowserLanguage();
   return _cachedLang;
 }
 
@@ -106,7 +107,34 @@ export const getHeaders = () => {
 // Wrapper for fetch that handles 401 with automatic token refresh
 const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<Response> => {
   const headers = { ...getHeaders(), ...((options.headers as Record<string, string>) || {}) };
-  let res = await fetch(url, { ...options, headers });
+  const hasExternalSignal = !!options.signal;
+  const shouldApplyTimeout =
+    !hasExternalSignal && typeof url === 'string' && url.includes('/api/ai/refine-text');
+  const timeoutMs = shouldApplyTimeout ? 25000 : null;
+  const controller = shouldApplyTimeout ? new AbortController() : null;
+  const timer = controller
+    ? window.setTimeout(() => {
+        try {
+          controller.abort();
+        } catch {
+          // ignore
+        }
+      }, timeoutMs as number)
+    : null;
+
+  let res: Response;
+  try {
+    res = await fetch(url, { ...options, headers, signal: options.signal || controller?.signal });
+  } catch (err: any) {
+    if (controller && err?.name === 'AbortError') {
+      const e: any = new Error('AI request timed out');
+      e.code = 'AI_TIMEOUT';
+      throw e;
+    }
+    throw err;
+  } finally {
+    if (timer) window.clearTimeout(timer);
+  }
 
   // If 401, try to refresh token and retry once
   if (res.status === 401) {
@@ -114,7 +142,8 @@ const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<R
     const newToken = await tokenService.refreshToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
-      res = await fetch(url, { ...options, headers });
+      // Note: keep the same abort signal (if any) for the retry.
+      res = await fetch(url, { ...options, headers, signal: options.signal || controller?.signal });
     } else {
       // Token refresh failed, notify app
       window.dispatchEvent(new CustomEvent('auth:token-expired'));
@@ -501,10 +530,10 @@ export const Api = {
     apiCallsUsed?: number;
     apiCallsLimit?: number;
   }> => {
-    const res = await fetch(`${API_URL}/health`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Health check failed');
-    return data;
+    // Use the same robust request path as the rest of the API layer.
+    // This avoids false "Offline" when a proxy returns non-JSON errors, etc.
+    const res = await fetchWithRetry(`${API_URL}/health`, { headers: getHeaders() });
+    return handleResponse(res, 'Health check failed');
   },
 
   // --- ANALYTICS (Leadership Dashboard) ---
@@ -553,6 +582,53 @@ export const Api = {
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to delete notification');
+  },
+
+  dismissNotification: async (id: string): Promise<void> => {
+    const res = await fetchWithRetry(`${API_URL}/notifications/${id}/dismiss`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to dismiss notification');
+  },
+
+  // Preferences (notification_preferences table; per-type mute lives here)
+  getNotificationPreferencesV2: async (): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/notifications/preferences`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) return null;
+    return res.json();
+  },
+
+  updateNotificationPreferencesV2: async (updates: any): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/notifications/preferences`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) throw new Error('Failed to update notification preferences');
+    return res.json();
+  },
+
+  // Admin-only: broadcast app/DBR77 communication
+  broadcastNotification: async (payload: {
+    type: string;
+    title: string;
+    body?: string;
+    message?: string;
+    severity?: 'INFO' | 'WARNING' | 'CRITICAL';
+    category?: string;
+    actionUrl?: string;
+    data?: Record<string, unknown>;
+    userIds?: string[];
+  }): Promise<{ success: true; sent: number; failed: number }> => {
+    const res = await fetchWithRetry(`${API_URL}/notifications/broadcast`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to broadcast notification');
   },
 
   // --- SETTINGS (NotificationSettings, IntegrationSettings) ---
@@ -1106,7 +1182,7 @@ export const Api = {
         }
 
         // Also show a short inline error so the assistant bubble doesn't stay empty.
-        const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+        const uiLang = getCachedUserLanguage();
         const friendly =
           code === 'ORG_NOT_FOUND'
             ? uiLang === 'pl'
@@ -1155,7 +1231,7 @@ export const Api = {
               // If stream ends without any visible output, show a friendly fallback
               // (prevents "nothing happens" UX).
               if (!hasAnyVisibleOutput) {
-                const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+                const uiLang = getCachedUserLanguage();
                 const friendly =
                   uiLang === 'pl'
                     ? '⚠️ AI nie zwróciło odpowiedzi. Sprawdź konfigurację providera (OPENAI_API_KEY / GEMINI_API_KEY) oraz logi backendu.'
@@ -1212,7 +1288,7 @@ export const Api = {
                 if (isAccessError) {
                   if (!accessErrorShownInline) {
                     accessErrorShownInline = true;
-                    const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+                    const uiLang = getCachedUserLanguage();
                     const friendly =
                       data.code === 'ORG_NOT_FOUND'
                         ? uiLang === 'pl'
@@ -1232,7 +1308,7 @@ export const Api = {
                   // Deep Thinking requires Confirm step - this is a flow control error, not a user-facing error.
                   // The frontend should handle this by calling /api/ai/chat/confirm first.
                   // Show a user-friendly message instead of the raw error.
-                  const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+                  const uiLang = getCachedUserLanguage();
                   const friendly =
                     uiLang === 'pl'
                       ? '⚠️ Tryb Deep Thinking wymaga najpierw potwierdzenia zrozumienia zadania. Spróbuj ponownie.'
@@ -1291,7 +1367,7 @@ export const Api = {
       // If the SSE stream ended without any visible output, show a friendly fallback.
       // This prevents the UX where the assistant bubble stays empty and gets hidden.
       if (!hasAnyVisibleOutput) {
-        const uiLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+        const uiLang = getCachedUserLanguage();
         const friendly =
           uiLang === 'pl'
             ? 'Nie udało się wygenerować odpowiedzi. Proszę spróbować ponownie za chwilę lub skontaktować się z administratorem.'
@@ -1810,7 +1886,10 @@ export const Api = {
     lastCheck: number;
     overall?: string;
   }> => {
-    const res = await fetch(`${API_URL}/llm/providers/health`);
+    // Keep it fast in UI polls (local providers like Ollama can hang if not running).
+    const res = await fetchWithRetry(`${API_URL}/llm/providers/health?timeoutMs=1200`, {
+      headers: getHeaders(),
+    });
     if (!res.ok) throw new Error('Health check failed');
     return res.json();
   },
@@ -2107,6 +2186,37 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to update checklist');
   },
 
+  // Update editable worksheet drafts for a notification (NotificationDetailView)
+  updateNotificationWorksheet: async (
+    id: string,
+    draft: {
+      description?: string;
+      whyImportant?: string;
+      blocked?: string;
+      expectedAction?: string;
+    }
+  ): Promise<void> => {
+    const res = await fetch(`${API_URL}/notifications/${id}/worksheet`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(draft),
+    });
+    if (!res.ok) throw new Error('Failed to update notification worksheet');
+  },
+
+  // Get a single notification by ID (direct fetch instead of filter-all)
+  getNotificationById: async (id: string): Promise<any | null> => {
+    try {
+      const res = await fetch(`${API_URL}/notifications/${id}`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) return null;
+      return res.json();
+    } catch {
+      return null;
+    }
+  },
+
   // Get source entity (task/decision/initiative) linked to a notification
   getNotificationSourceEntity: async (id: string): Promise<Record<string, any> | null> => {
     try {
@@ -2118,6 +2228,69 @@ export const Api = {
     } catch {
       return null;
     }
+  },
+
+  // Get comments for a notification
+  getNotificationComments: async (
+    id: string
+  ): Promise<
+    {
+      id: string;
+      notificationId: string;
+      userId: string;
+      user: { id: string; firstName: string; lastName: string; avatarUrl?: string };
+      content: string;
+      priority?: string;
+      createdAt: string;
+      updatedAt: string;
+    }[]
+  > => {
+    const res = await fetch(`${API_URL}/notifications/${id}/comments`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  // Add a comment to a notification
+  addNotificationComment: async (id: string, content: string, priority?: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/notifications/${id}/comments`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ content, priority }),
+    });
+    if (!res.ok) throw new Error('Failed to add comment');
+    return res.json();
+  },
+
+  // Delete a notification comment
+  deleteNotificationComment: async (notificationId: string, commentId: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/notifications/${notificationId}/comments/${commentId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to delete comment');
+  },
+
+  // Get activity log for a notification
+  getNotificationActivityLog: async (
+    id: string
+  ): Promise<
+    {
+      id: string;
+      notificationId: string;
+      userId: string;
+      userName?: string;
+      action: string;
+      description: string;
+      createdAt: string;
+    }[]
+  > => {
+    const res = await fetch(`${API_URL}/notifications/${id}/activity-log`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) return [];
+    return res.json();
   },
 
   createNotification: async (notification: {
@@ -2299,7 +2472,7 @@ export const Api = {
   // --- INITIATIVES (Phase 2) ---
   getInitiatives: async (projectId?: string): Promise<any[]> => {
     let url = `${API_URL}/initiatives`;
-    if (projectId) url += `? projectId=${projectId}`;
+    if (projectId) url += `?projectId=${encodeURIComponent(projectId)}`;
     const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch initiatives');
     return res.json();

@@ -1,94 +1,37 @@
-/**
- * Files Integration Tests
- * Testing file upload endpoints
- *
- * @module tests/integration/files/file-endpoints.test.ts
- */
+import { describe, expect, it } from 'vitest';
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import express from 'express';
-import request from 'supertest';
+import { fileFilter, uploadLimits } from '../../../server/src/middleware/fileUpload.middleware.ts';
 
-describe('File Endpoints Integration', () => {
-  let app: express.Application;
-  const files = new Map<string, any>();
-
-  beforeAll(() => {
-    app = express();
-    app.use(express.json());
-
-    const authMiddleware = (req: any, res: any, next: any) => {
-      if (!req.headers.authorization) return res.status(401).json({ error: 'Unauthorized' });
-      req.user = { id: '1' };
-      next();
+describe('File upload middleware - REAL_CODE', () => {
+  it('accepts PDF by extension + mimetype', () => {
+    const cb = (err: any, accept: boolean) => {
+      expect(err).toBeNull();
+      expect(accept).toBe(true);
     };
-
-    app.get('/api/files', authMiddleware, (req, res) => {
-      res.json(Array.from(files.values()));
-    });
-
-    app.get('/api/files/:id', authMiddleware, (req, res) => {
-      const file = files.get(req.params.id);
-      if (!file) return res.status(404).json({ error: 'Not found' });
-      res.json(file);
-    });
-
-    app.post('/api/files/upload', authMiddleware, (req, res) => {
-      const id = `file-${Date.now()}`;
-      const file = {
-        id,
-        name: 'uploaded-file.pdf',
-        size: 1024,
-        mimeType: 'application/pdf',
-        url: `/files/${id}`,
-      };
-      files.set(id, file);
-      res.status(201).json(file);
-    });
-
-    app.delete('/api/files/:id', authMiddleware, (req, res) => {
-      if (!files.has(req.params.id)) return res.status(404).json({ error: 'Not found' });
-      files.delete(req.params.id);
-      res.status(204).send();
-    });
-
-    app.get('/api/files/:id/download', authMiddleware, (req, res) => {
-      const file = files.get(req.params.id);
-      if (!file) return res.status(404).json({ error: 'Not found' });
-      res.set('Content-Disposition', `attachment; filename="${file.name}"`);
-      res.send(Buffer.from('file-content'));
-    });
+    fileFilter({} as any, { originalname: 'a.pdf', mimetype: 'application/pdf' } as any, cb as any);
   });
 
-  describe('GET /api/files', () => {
-    it('should return files list', async () => {
-      const response = await request(app).get('/api/files').set('Authorization', 'Bearer token');
-      expect(response.status).toBe(200);
-    });
+  it('rejects disallowed extensions', () => {
+    const cb = (err: any, accept: boolean) => {
+      expect(err).toBeInstanceOf(Error);
+      expect(accept).toBe(false);
+    };
+    fileFilter(
+      {} as any,
+      { originalname: 'a.exe', mimetype: 'application/octet-stream' } as any,
+      cb as any
+    );
   });
 
-  describe('POST /api/files/upload', () => {
-    it('should upload file', async () => {
-      const response = await request(app)
-        .post('/api/files/upload')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(201);
-      expect(response.body.id).toBeDefined();
-    });
+  it('rejects disallowed mimetypes even with allowed extension', () => {
+    const cb = (err: any, accept: boolean) => {
+      expect(err).toBeInstanceOf(Error);
+      expect(accept).toBe(false);
+    };
+    fileFilter({} as any, { originalname: 'a.pdf', mimetype: 'text/plain' } as any, cb as any);
   });
 
-  describe('GET /api/files/:id/download', () => {
-    it('should download file', async () => {
-      const uploadRes = await request(app)
-        .post('/api/files/upload')
-        .set('Authorization', 'Bearer token');
-
-      const response = await request(app)
-        .get(`/api/files/${uploadRes.body.id}/download`)
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-    });
+  it('upload middleware has a 10MB fileSize limit', () => {
+    expect(uploadLimits.fileSize).toBe(10 * 1024 * 1024);
   });
 });

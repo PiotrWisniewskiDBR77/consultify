@@ -5,12 +5,9 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertCircle,
-  BarChart3,
   Calendar,
   CheckCircle2,
   CheckSquare,
-  Clock,
   Edit,
   Eye,
   Loader2,
@@ -18,7 +15,6 @@ import {
   Plus,
   Square,
   Trash2,
-  TrendingUp,
   User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -62,57 +58,82 @@ interface MyTasksListContentProps {
   onCountsChange: (counts: TaskCounts) => void;
 }
 
-// Priority colors
+// Priority colors — 5-color semantic palette
 const getPriorityConfig = (priority?: string) => {
   switch (priority?.toLowerCase()) {
     case 'urgent':
     case 'critical':
-      return { color: 'text-red-400', bg: 'bg-red-500', dot: 'bg-red-500', label: 'Critical' };
+      return {
+        color: 'text-red-600 dark:text-red-400',
+        bg: 'bg-red-500',
+        dot: 'bg-red-500',
+        label: 'Critical',
+      };
     case 'high':
-      return { color: 'text-orange-400', bg: 'bg-orange-500', dot: 'bg-orange-500', label: 'High' };
+      return {
+        color: 'text-amber-600 dark:text-amber-400',
+        bg: 'bg-amber-500',
+        dot: 'bg-amber-500',
+        label: 'High',
+      };
     case 'medium':
-      return { color: 'text-blue-400', bg: 'bg-blue-500', dot: 'bg-blue-500', label: 'Medium' };
+      return {
+        color: 'text-blue-600 dark:text-blue-400',
+        bg: 'bg-blue-500',
+        dot: 'bg-blue-500',
+        label: 'Medium',
+      };
     case 'low':
-      return { color: 'text-slate-400', bg: 'bg-slate-500', dot: 'bg-slate-500', label: 'Low' };
+      return {
+        color: 'text-slate-500 dark:text-slate-400',
+        bg: 'bg-slate-400',
+        dot: 'bg-slate-400',
+        label: 'Low',
+      };
     default:
-      return { color: 'text-slate-400', bg: 'bg-slate-500', dot: 'bg-slate-500', label: 'Normal' };
+      return {
+        color: 'text-slate-500 dark:text-slate-400',
+        bg: 'bg-slate-400',
+        dot: 'bg-slate-400',
+        label: 'Normal',
+      };
   }
 };
 
-// Status config
+// Status config — subtle/ghost badges, alarm only for blocked/rejected
 const getStatusConfig = (status?: string) => {
   switch (status?.toLowerCase()) {
     case 'done':
     case 'completed':
     case 'validated':
       return {
-        color: 'text-emerald-700 dark:text-emerald-400',
-        bg: 'bg-emerald-100 dark:bg-emerald-500/20',
+        color: 'text-emerald-600 dark:text-emerald-400',
+        bg: 'bg-emerald-50/70 dark:bg-emerald-500/10',
         dot: 'bg-emerald-500',
         label: 'Done',
       };
     case 'in_progress':
     case 'in progress':
       return {
-        color: 'text-blue-700 dark:text-blue-400',
-        bg: 'bg-blue-100 dark:bg-blue-500/20',
+        color: 'text-blue-600 dark:text-blue-400',
+        bg: 'bg-blue-50/70 dark:bg-blue-500/10',
         dot: 'bg-blue-500',
         label: 'In progress',
       };
     case 'pending_approval':
     case 'pending approval':
       return {
-        color: 'text-purple-700 dark:text-purple-400',
-        bg: 'bg-purple-100 dark:bg-purple-500/20',
-        dot: 'bg-purple-500',
+        color: 'text-amber-600 dark:text-amber-400',
+        bg: 'bg-amber-50/70 dark:bg-amber-500/10',
+        dot: 'bg-amber-500',
         label: 'Pending approval',
       };
     case 'review':
       return {
-        color: 'text-purple-700 dark:text-purple-400',
-        bg: 'bg-purple-100 dark:bg-purple-500/20',
-        dot: 'bg-purple-500',
-        label: 'Pending approval',
+        color: 'text-amber-600 dark:text-amber-400',
+        bg: 'bg-amber-50/70 dark:bg-amber-500/10',
+        dot: 'bg-amber-500',
+        label: 'In review',
       };
     case 'blocked':
       return {
@@ -124,16 +145,16 @@ const getStatusConfig = (status?: string) => {
     case 'cancelled':
     case 'canceled':
       return {
-        color: 'text-slate-700 dark:text-slate-400',
-        bg: 'bg-slate-100 dark:bg-slate-500/20',
-        dot: 'bg-slate-500',
+        color: 'text-slate-600 dark:text-slate-400',
+        bg: 'bg-slate-100 dark:bg-navy-800/60',
+        dot: 'bg-slate-400 dark:bg-slate-500',
         label: 'Cancelled',
       };
     default:
       return {
-        color: 'text-slate-700 dark:text-slate-400',
-        bg: 'bg-slate-100 dark:bg-slate-500/20',
-        dot: 'bg-slate-500',
+        color: 'text-slate-600 dark:text-slate-400',
+        bg: 'bg-slate-100 dark:bg-navy-800/60',
+        dot: 'bg-slate-400 dark:bg-slate-500',
         label: 'To Do',
       };
   }
@@ -211,17 +232,17 @@ const TASK_COLUMNS: ColumnDef[] = [
   {
     id: 'title',
     label: 'Task',
-    width: 300,
-    minWidth: 200,
+    width: 999, // flex — will stretch to fill remaining space
+    minWidth: 300,
     resizable: false,
     filterable: false,
   },
   {
     id: 'status',
     label: 'Status',
-    width: 120,
-    minWidth: 100,
-    maxWidth: 160,
+    width: 140,
+    minWidth: 110,
+    maxWidth: 200,
     resizable: true,
     filterable: true,
     filterType: 'multiselect',
@@ -230,9 +251,9 @@ const TASK_COLUMNS: ColumnDef[] = [
   {
     id: 'priority',
     label: 'Priority',
-    width: 100,
-    minWidth: 80,
-    maxWidth: 130,
+    width: 120,
+    minWidth: 90,
+    maxWidth: 160,
     resizable: true,
     filterable: true,
     filterType: 'multiselect',
@@ -241,27 +262,27 @@ const TASK_COLUMNS: ColumnDef[] = [
   {
     id: 'date',
     label: 'Due Date',
-    width: 110,
-    minWidth: 90,
-    maxWidth: 140,
+    width: 130,
+    minWidth: 100,
+    maxWidth: 170,
     resizable: true,
     filterable: false,
   },
   {
     id: 'assignee',
     label: 'Assignee',
-    width: 130,
-    minWidth: 100,
-    maxWidth: 180,
+    width: 160,
+    minWidth: 120,
+    maxWidth: 220,
     resizable: true,
     filterable: false,
   },
   {
     id: 'actions',
     label: 'Actions',
-    width: 100,
-    minWidth: 80,
-    maxWidth: 120,
+    width: 80,
+    minWidth: 60,
+    maxWidth: 100,
     resizable: false,
     filterable: false,
     align: 'right',
@@ -361,8 +382,7 @@ const TaskTableRow: React.FC<{
       </td>
 
       {/* Task Title */}
-      {/* Task Title */}
-      <td className="px-3 py-2.5" style={{ minWidth: 200 }}>
+      <td className="px-3 py-2.5 w-full" style={{ minWidth: 300 }}>
         <div className="flex flex-col">
           <span
             className={`text-sm font-medium ${
@@ -399,7 +419,7 @@ const TaskTableRow: React.FC<{
         <div
           className={`flex items-center gap-1.5 text-xs ${
             !task.dueDate
-              ? 'text-slate-300 dark:text-slate-600 italic'
+              ? 'text-slate-700 dark:text-slate-300 dark:text-slate-600 italic'
               : overdue
                 ? 'text-red-700 dark:text-red-400 font-medium'
                 : 'text-slate-600 dark:text-slate-400'
@@ -418,12 +438,12 @@ const TaskTableRow: React.FC<{
               {assigneeInitial}
             </div>
           ) : (
-            <User size={14} className="text-slate-300 dark:text-slate-600" />
+            <User size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-600" />
           )}
           <span
-            className={`text-xs truncate max-w-[80px] ${
+            className={`text-xs truncate max-w-[120px] ${
               assigneeName === 'Unassigned'
-                ? 'text-slate-300 dark:text-slate-600 italic'
+                ? 'text-slate-700 dark:text-slate-300 dark:text-slate-600 italic'
                 : 'text-slate-600 dark:text-slate-400'
             }`}
           >
@@ -593,38 +613,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       return p === 'urgent' || p === 'critical' || p === 'high';
     }).length;
   }, [tasks]);
-
-  // Calculate task statistics (PMO standards) - BEFORE early returns
-  const taskStats = useMemo(() => {
-    const allTasks = groupedTasks.all;
-    const total = allTasks.length;
-    const completed = allTasks.filter((t) =>
-      ['done', 'completed', 'validated'].includes(t.status?.toLowerCase() || '')
-    ).length;
-    const inProgress = allTasks.filter((t) =>
-      ['in_progress', 'in progress', 'review'].includes(t.status?.toLowerCase() || '')
-    ).length;
-    const blocked = allTasks.filter((t) => t.status?.toLowerCase() === 'blocked').length;
-    const todo = allTasks.filter((t) =>
-      ['todo', 'to do'].includes(t.status?.toLowerCase() || '')
-    ).length;
-    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-    const overdue = groupedTasks.overdue.length;
-    const critical = allTasks.filter((t) =>
-      ['critical', 'urgent'].includes(t.priority?.toLowerCase() || '')
-    ).length;
-
-    return {
-      total,
-      completed,
-      inProgress,
-      blocked,
-      todo,
-      overdue,
-      critical,
-      completionRate,
-    };
-  }, [groupedTasks]);
 
   useEffect(() => {
     const counts: TaskCounts = {
@@ -913,19 +901,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     return (
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
         <div className="flex-1 overflow-y-auto p-4">
-          {/* Task Statistics Panel - PMO Standards - Always visible */}
-          <div className="mb-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-            {/* Show loading state for stats */}
-            {[...Array(7)].map((_, i) => (
-              <div
-                key={i}
-                className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4 animate-pulse"
-              >
-                <div className="h-4 bg-slate-200 dark:bg-navy-700 rounded w-16 mb-2"></div>
-                <div className="h-8 bg-slate-200 dark:bg-navy-700 rounded w-12"></div>
-              </div>
-            ))}
-          </div>
           <div className="flex-1 flex items-center justify-center h-64">
             <Loader2 className="animate-spin text-blue-500" size={32} />
           </div>
@@ -937,141 +912,12 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
       <div className="flex-1 overflow-y-auto p-4">
-        {/* Task Statistics Panel - PMO Standards - Always visible */}
-        <div className="mb-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          {/* Total Tasks */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <BarChart3 size={16} className="text-slate-500 dark:text-slate-400" />
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                {t('myWork.stats.total', 'Total')}
-              </span>
-            </div>
-            <div className="text-2xl font-bold text-slate-900 dark:text-white">
-              {taskStats.total}
-            </div>
-          </div>
-
-          {/* Completed */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle2 size={16} className="text-emerald-500" />
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                {t('myWork.stats.completed', 'Completed')}
-              </span>
-            </div>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-              {taskStats.completed}
-            </div>
-          </div>
-
-          {/* In Progress */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock size={16} className="text-blue-500" />
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                {t('myWork.stats.inProgress', 'In Progress')}
-              </span>
-            </div>
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              {taskStats.inProgress}
-            </div>
-          </div>
-
-          {/* Blocked */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle size={16} className="text-red-500" />
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                {t('myWork.stats.blocked', 'Blocked')}
-              </span>
-            </div>
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-              {taskStats.blocked}
-            </div>
-          </div>
-
-          {/* Overdue */}
-          <div className="bg-white dark:bg-navy-900 border border-red-200 dark:border-red-900/30 rounded-lg p-4 bg-red-50/50 dark:bg-red-950/20">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle size={16} className="text-red-500" />
-              <span className="text-xs font-medium text-red-600 dark:text-red-400 uppercase">
-                {t('myWork.stats.overdue', 'Overdue')}
-              </span>
-            </div>
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-              {taskStats.overdue}
-            </div>
-          </div>
-
-          {/* Critical */}
-          <div className="bg-white dark:bg-navy-900 border border-orange-200 dark:border-orange-900/30 rounded-lg p-4 bg-orange-50/50 dark:bg-orange-950/20">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle size={16} className="text-orange-500" />
-              <span className="text-xs font-medium text-orange-600 dark:text-orange-400 uppercase">
-                {t('myWork.stats.critical', 'Critical')}
-              </span>
-            </div>
-            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-              {taskStats.critical}
-            </div>
-          </div>
-
-          {/* Status Summary */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <BarChart3 size={16} className="text-slate-500 dark:text-slate-400" />
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                {t('myWork.stats.statusSummary', 'Status')}
-              </span>
-            </div>
-            <div className="text-xs text-slate-600 dark:text-slate-300 space-y-0.5">
-              {taskStats.todo > 0 && (
-                <div>
-                  <span className="font-medium">{taskStats.todo}</span> todo
-                </div>
-              )}
-              {taskStats.inProgress > 0 && (
-                <div>
-                  <span className="font-medium">{taskStats.inProgress}</span> in progress
-                </div>
-              )}
-              {taskStats.blocked > 0 && (
-                <div>
-                  <span className="font-medium">{taskStats.blocked}</span> blocked
-                </div>
-              )}
-              {taskStats.overdue > 0 && (
-                <div>
-                  <span className="font-medium">{taskStats.overdue}</span> overdue
-                </div>
-              )}
-              {taskStats.critical > 0 && (
-                <div>
-                  <span className="font-medium">{taskStats.critical}</span> critical
-                </div>
-              )}
-              {taskStats.completed > 0 && (
-                <div>
-                  <span className="font-medium">{taskStats.completed}</span> done
-                </div>
-              )}
-              {taskStats.todo === 0 &&
-                taskStats.inProgress === 0 &&
-                taskStats.blocked === 0 &&
-                taskStats.overdue === 0 &&
-                taskStats.critical === 0 &&
-                taskStats.completed === 0 && (
-                  <div className="text-slate-400 dark:text-slate-500">No tasks</div>
-                )}
-            </div>
-          </div>
-        </div>
-
         {tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
             <CheckCircle2 size={48} className="text-slate-600 mb-4" />
-            <h3 className="text-lg font-medium text-slate-400 mb-2">No tasks yet</h3>
+            <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
+              No tasks yet
+            </h3>
             <p className="text-sm text-slate-500 mb-4">Create your first task to get started</p>
             <button
               onClick={onCreateTask}
@@ -1083,7 +929,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
           </div>
         ) : (
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-            <table className="w-full" style={{ minWidth: 900 }}>
+            <table className="w-full table-fixed" style={{ minWidth: 900 }}>
               <thead>
                 <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
                   {/* Select All */}
@@ -1097,7 +943,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           ? 'bg-primary-500 border-primary-500 text-white'
                           : someSelected
                             ? 'bg-primary-500/50 border-primary-500 text-white'
-                            : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
+                            : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-500 dark:text-slate-400'
                       }
                     `}
                     >
@@ -1111,7 +957,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                     </button>
                   </th>
                   <th className="w-8 px-1 py-2"></th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-full">
                     Task
                   </th>
 

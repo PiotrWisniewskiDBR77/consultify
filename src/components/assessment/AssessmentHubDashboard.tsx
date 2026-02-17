@@ -337,7 +337,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
         <div className="flex items-center justify-between mb-2">
           {icon}
           <span
-            className={`px-2 py-1 text-xs rounded ${status === 'complete' ? 'bg-white/20' : 'bg-white/10'}`}
+            className={`px-2 py-1 text-xs rounded ${status === 'complete' ? 'bg-white/20' : 'bg-slate-100 dark:bg-white/10'}`}
           >
             {status === 'complete' ? 'Complete' : 'Pending'}
           </span>

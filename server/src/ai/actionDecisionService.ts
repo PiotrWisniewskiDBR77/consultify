@@ -9,7 +9,6 @@ import actionErrors from './actionErrors.js';
 import ActionProposalEngine from './actionProposalEngine.js';
 import PolicyEngine from './policyEngine.js';
 const { ACTION_ERROR_CODES, classifyError } = actionErrors;
-import EvidenceLedgerService from '../services/evidenceLedgerService.js';
 
 // Database row type definitions
 interface ActionDecisionRow {
@@ -45,7 +44,7 @@ const deps = {
   db: defaultDb,
   uuidv4: defaultUuidv4,
   ActionProposalEngine,
-  EvidenceLedgerService,
+  EvidenceLedgerService: null as any,
   auditLogger,
 };
 
@@ -205,6 +204,8 @@ const ActionDecisionService = {
           // Step 15: Record evidence and reasoning for this decision
           (async () => {
             try {
+              if (!deps.EvidenceLedgerService) return;
+
               // Create evidence object from proposal snapshot
               const evidence = await deps.EvidenceLedgerService.createEvidenceObject(
                 organization_id,

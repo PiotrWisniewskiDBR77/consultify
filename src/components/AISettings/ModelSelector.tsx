@@ -142,7 +142,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     return (
       <div className={`grid grid-cols-2 md:grid-cols-3 gap-3 ${className}`}>
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-24 rounded-xl bg-slate-800/30 animate-pulse" />
+          <div
+            key={i}
+            className="h-24 rounded-xl bg-slate-200 dark:bg-slate-800/30 animate-pulse"
+          />
         ))}
       </div>
     );
@@ -154,12 +157,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Cpu className="w-5 h-5 text-violet-400" />
-          <h3 className="font-semibold text-white">AI Models</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-white">AI Models</h3>
         </div>
         {value && (
           <button
             onClick={() => onChange(null)}
-            className="text-xs text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+            className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             Clear selection
           </button>
@@ -188,7 +191,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                     ${
                                       isSelected
                                         ? `bg-gradient-to-br ${providerColor} bg-opacity-20 border-2 border-white/30 shadow-lg`
-                                        : 'bg-slate-800/30 border border-slate-700/50 hover:border-slate-600'
+                                        : 'bg-slate-100 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600'
                                     }
                                     ${!isVisible && showVisibilityToggle ? 'opacity-50' : ''}
                                     ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -219,10 +222,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                 </div>
 
                 {/* Model name */}
-                <h4 className="font-medium text-white truncate mb-1">{model.name}</h4>
+                <h4 className="font-medium text-slate-900 dark:text-white truncate mb-1">
+                  {model.name}
+                </h4>
 
                 {/* Model ID */}
-                <p className="text-xs text-slate-400 dark:text-slate-500 truncate mb-2">
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate mb-2">
                   {model.model_id}
                 </p>
 
@@ -234,7 +239,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       return (
                         <span
                           key={cap}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-slate-700/50 text-slate-300"
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-slate-200 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300"
                         >
                           <CapIcon className="w-3 h-3" />
                           {cap}
@@ -262,7 +267,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                         ${
                                           isVisible
                                             ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30'
-                                            : 'bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:text-slate-300'
+                                            : 'bg-slate-200 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                         }
                                     `}
                   title={isVisible ? 'Hide model' : 'Show model'}
@@ -279,7 +284,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       {models.length === 0 && !loading && (
         <div className="text-center py-8">
           <Cpu className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-          <p className="text-slate-400 dark:text-slate-500">No models available</p>
+          <p className="text-slate-500 dark:text-slate-400">No models available</p>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Contact your administrator to enable AI models
           </p>

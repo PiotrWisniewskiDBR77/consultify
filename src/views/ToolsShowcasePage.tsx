@@ -305,7 +305,7 @@ export const ToolsShowcasePage: React.FC = () => {
       </div>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-slate-900 dark:bg-navy-950 text-white pt-24 border-b border-slate-800 dark:border-navy-900">
+      <section className="relative overflow-hidden bg-slate-900 dark:bg-navy-950 text-white pt-36 border-b border-slate-800 dark:border-navy-900">
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl opacity-50" />

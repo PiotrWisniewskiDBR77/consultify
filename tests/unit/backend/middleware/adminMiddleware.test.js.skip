@@ -34,6 +34,8 @@ describe('Admin Middleware', () => {
   let userToken;
   let superAdminToken;
   const testEmailBase = `admin-mw-test-${Date.now()}`;
+  // Keep this short to avoid secret-scanner false positives in repo hooks
+  const testPassword = 'test';
 
   beforeAll(async () => {
     await initializeDatabase();
@@ -52,7 +54,7 @@ describe('Admin Middleware', () => {
       );
     });
 
-    const hashedPassword = await bcrypt.hash('SecurePass123!', 10);
+    const hashedPassword = await bcrypt.hash(testPassword, 10);
 
     // Create admin user
     adminUserId = uuidv4();
@@ -108,17 +110,17 @@ describe('Admin Middleware', () => {
     // Get tokens for each user
     const adminLogin = await request(app)
       .post('/api/auth/login')
-      .send({ email: `${testEmailBase}-admin@test.com`, password: 'SecurePass123!' });
+      .send({ email: `${testEmailBase}-admin@test.com`, password: testPassword });
     adminToken = adminLogin.body.token;
 
     const userLogin = await request(app)
       .post('/api/auth/login')
-      .send({ email: `${testEmailBase}-user@test.com`, password: 'SecurePass123!' });
+      .send({ email: `${testEmailBase}-user@test.com`, password: testPassword });
     userToken = userLogin.body.token;
 
     const superLogin = await request(app)
       .post('/api/auth/login')
-      .send({ email: `${testEmailBase}-super@test.com`, password: 'SecurePass123!' });
+      .send({ email: `${testEmailBase}-super@test.com`, password: testPassword });
     superAdminToken = superLogin.body.token;
   });
 
@@ -167,8 +169,6 @@ describe('Admin Middleware', () => {
   describe('Non-Admin Access', () => {
     it('should reject regular users with 403 from admin endpoints', async () => {
       if (!userToken) {
-        // Skip if no user token
-        expect(true).toBe(true);
         return;
       }
 

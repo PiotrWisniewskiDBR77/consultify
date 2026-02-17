@@ -177,6 +177,30 @@ Added new "Documentation" section with:
 | `docs/README.md`                      | Comprehensive documentation index with navigation by role |
 | `docs/DOCUMENTATION_MIGRATION_MAP.md` | This file - mapping old → new paths                       |
 
+## UI/UX Standards Consolidation (2026-02-14)
+
+**Jedyne kanoniczne źródło:** `docs/ui-standards/README.md`
+
+Wszystkie dokumenty UI/UX skonsolidowane w `docs/ui-standards/`:
+
+| Stara lokalizacja                                      | Nowa lokalizacja                                          |
+| ------------------------------------------------------ | --------------------------------------------------------- |
+| `docs/00_foundation/COLOR_SYSTEM_STANDARD.md`          | `docs/ui-standards/00-foundation/color-system.md`         |
+| `docs/00_foundation/DBR77_VISUAL_LANGUAGE_STANDARD.md` | `docs/ui-standards/00-foundation/visual-language.md`      |
+| `docs/ui-standards/artifact-shell-future-standard.md`  | `docs/ui-standards/01-shell-layout/artifact-shell.md`     |
+| `docs/ui-standards/detail-view-presentation-modes.md`  | `docs/ui-standards/01-shell-layout/presentation-modes.md` |
+| `docs/ui-standards/shared-nmode-sections-standard.md`  | `docs/ui-standards/02-components/shared-sections.md`      |
+| `docs/TASK_PANEL_SPECIFICATION.md`                     | `docs/ui-standards/02-components/task-panel.md`           |
+| `docs/DECISION_PANEL_SPECIFICATION.md`                 | `docs/ui-standards/02-components/decision-panel.md`       |
+| `docs/ui-standards/notification-detail-view.md`        | `docs/ui-standards/02-components/notification-panel.md`   |
+| `docs/ui-standards/task-detail-view.md`                | `docs/ui-standards/02-components/task-panel.md` (merged)  |
+| `docs/UI_UX_MODULE_STANDARD.md`                        | `docs/ui-standards/03-modules/module-hub-standard.md`     |
+| `docs/ui-standards/app-table-standard.md`              | `docs/ui-standards/03-modules/app-table-standard.md`      |
+
+**Nowe pliki:** `docs/ui-standards/02-components/building-blocks.md`, `initiative-sections.md`
+
+---
+
 ## Key Navigation Points
 
 Start here for documentation:

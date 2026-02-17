@@ -9,7 +9,24 @@ Projekt naprawy ~265+ fałszywych testów w Consultinity.
 
 ---
 
-## 🤖 DELEGACJA DO AGENTÓW
+## 🆕 PLAN 3 AGENTÓW + NADZÓR (2026-02-14)
+
+**Nowy model:** 3 agenty + nadzór do pełnego sukcesu.
+
+| Dokument                          | Opis                                                                  |
+| --------------------------------- | --------------------------------------------------------------------- |
+| **docs/TEST_REMEDIATION_PLAN.md** | Plan główny — 3 agenty, zależności, kryteria sukcesu                  |
+| **AGENT-1-CLEANUP.md**            | Agent 1: Oczyszczenie (duplikaty, workflow)                           |
+| **AGENT-2-INFRASTRUCTURE.md**     | Agent 2: Infrastruktura weryfikacji (quality-check, block-duplicates) |
+| **AGENT-3-REAL-TESTS.md**         | Agent 3: Prawdziwe testy P0                                           |
+| **SUPERVISOR-GUIDE.md**           | Przewodnik nadzorcy — checkpointy, weryfikacja                        |
+| **PROMPT-FOR-3-AGENTS.md**        | Prompty do wklejenia dla agentów                                      |
+
+**Kolejność:** Agent 1 → (Agent 2 + Agent 3 równolegle) → Weryfikacja końcowa.
+
+---
+
+## 🤖 DELEGACJA DO AGENTÓW (legacy 5-agent)
 
 ### Agent 1: Auth & Security (42 pliki)
 

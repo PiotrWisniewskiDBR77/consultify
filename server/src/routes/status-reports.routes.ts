@@ -29,7 +29,7 @@ router.get(
       params.push(projectId);
     }
     query += ' ORDER BY created_at DESC LIMIT 50';
-    res.json((await dbAll(query, params)) || []);
+    res.json(await dbAll(query, params));
   })
 );
 

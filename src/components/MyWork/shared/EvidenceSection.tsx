@@ -143,7 +143,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
     >
       {/* Collapsible Header */}
       <motion.button
@@ -177,12 +177,12 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {evidenceItems.length > 0 && (
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
               {completedEvidence}/{evidenceItems.length}
             </span>
           )}
           <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={18} className="text-slate-400" />
+            <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
           </motion.div>
         </div>
       </motion.button>
@@ -245,8 +245,11 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
 
                 {evidenceItems.length === 0 ? (
                   <div className="text-center py-4 border border-dashed border-slate-200 dark:border-navy-700 rounded-lg">
-                    <Upload size={20} className="mx-auto mb-1 text-slate-300 dark:text-slate-600" />
-                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                    <Upload
+                      size={20}
+                      className="mx-auto mb-1 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                    />
+                    <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Brak załączonych dowodów' : 'No evidence attached'}
                     </p>
                   </div>
@@ -277,7 +280,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                             {!item.verified && !readOnly && (
                               <button
                                 onClick={() => onVerifyEvidence(item.id)}
-                                className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-600 transition-colors"
+                                className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-slate-500 dark:text-slate-400 hover:text-emerald-600 transition-colors"
                                 title={isPolish ? 'Zweryfikuj' : 'Verify'}
                               >
                                 <Check size={14} />
@@ -286,7 +289,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                             {!readOnly && (
                               <button
                                 onClick={() => onRemoveEvidence(item.id)}
-                                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-colors"
+                                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -439,7 +442,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                 </h3>
                 <button
                   onClick={() => setShowAddEvidence(false)}
-                  className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-400"
+                  className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400"
                 >
                   <X size={20} />
                 </button>

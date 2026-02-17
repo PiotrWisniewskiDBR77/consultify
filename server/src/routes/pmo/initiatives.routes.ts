@@ -7,6 +7,7 @@
 
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
 
 import InitiativeControllerRaw from '../../controllers/InitiativeController.js';
 const InitiativeController = InitiativeControllerRaw as any;
@@ -867,6 +868,31 @@ router.patch(
   InitiativeController.quickUpdateInitiative
 );
 
+/**
+ * PATCH /api/initiatives/:id
+ * Backwards-compatible alias for clients that used a generic PATCH.
+ *
+ * - If the payload contains `status`, delegate to the canonical `/status` handler
+ *   (keeps transition validation + governance rules).
+ * - Otherwise, delegate to the canonical update handler (same as PUT, but accepts partial payloads).
+ */
+router.patch('/:id', (req, res, next) => {
+  const body = (req as any)?.body || {};
+  const hasStatus = body && Object.prototype.hasOwnProperty.call(body, 'status');
+
+  if (hasStatus) {
+    return (validateBody(UpdateInitiativeStatusSchema) as any)(req, res, (err?: unknown) => {
+      if (err) return next(err);
+      return (InitiativeController.updateInitiativeStatus as any)(req, res, next);
+    });
+  }
+
+  return (validateBody(UpdateInitiativeSchema) as any)(req, res, (err?: unknown) => {
+    if (err) return next(err);
+    return (InitiativeController.updateInitiative as any)(req, res, next);
+  });
+});
+
 // ==========================================
 // FLOW-INITIATIVE-001: STATUS TRANSITIONS
 // ==========================================
@@ -979,6 +1005,15 @@ router.delete('/:id/milestones/:milestoneId', InitiativeController.deleteMilesto
 // ROADMAP MODULE: RESOURCES ENDPOINTS
 // ==========================================
 
+const ResourcesAiApplyLogSchema = z.object({
+  scope: z.enum(['budget', 'fte', 'tools', 'intangibles', 'all']),
+  budgetAdded: z.number().int().min(0),
+  fteAdded: z.number().int().min(0),
+  toolsAdded: z.number().int().min(0),
+  intangiblesAdded: z.number().int().min(0),
+  note: z.string().nullable().optional(),
+});
+
 /**
  * GET /api/initiatives/:id/resources
  * Get resources allocated to an initiative
@@ -990,6 +1025,112 @@ router.get('/:id/resources', InitiativeController.getResources);
  * Add a resource to an initiative
  */
 router.post('/:id/resources', InitiativeController.addResource);
+
+/**
+ * DELETE /api/initiatives/:id/resources/:resourceId
+ * Remove a resource from an initiative
+ */
+router.delete('/:id/resources/:resourceId', InitiativeController.deleteResource);
+
+/**
+ * PUT /api/initiatives/:id/resources/:resourceId
+ * Update a resource in an initiative
+ */
+router.put('/:id/resources/:resourceId', InitiativeController.updateResource);
+
+/**
+ * POST /api/initiatives/:id/resources/ai-apply-log
+ * Write a single audit entry after applying AI proposals.
+ */
+router.post(
+  '/:id/resources/ai-apply-log',
+  validateBody(ResourcesAiApplyLogSchema),
+  InitiativeController.logResourcesAiApply
+);
+
+// ==========================================
+// ROADMAP MODULE: BUDGET ITEMS ENDPOINTS
+// ==========================================
+
+/**
+ * GET /api/initiatives/:id/budget-items
+ * Get all budget items for an initiative
+ */
+router.get('/:id/budget-items', InitiativeController.getBudgetItems);
+
+/**
+ * POST /api/initiatives/:id/budget-items
+ * Add a budget item to an initiative
+ */
+router.post('/:id/budget-items', InitiativeController.addBudgetItem);
+
+/**
+ * PUT /api/initiatives/:id/budget-items/:itemId
+ * Update a budget item
+ */
+router.put('/:id/budget-items/:itemId', InitiativeController.updateBudgetItem);
+
+/**
+ * DELETE /api/initiatives/:id/budget-items/:itemId
+ * Delete a budget item
+ */
+router.delete('/:id/budget-items/:itemId', InitiativeController.deleteBudgetItem);
+
+// ==========================================
+// ROADMAP MODULE: TOOLS ENDPOINTS
+// ==========================================
+
+/**
+ * GET /api/initiatives/:id/tools
+ * Get all tools for an initiative
+ */
+router.get('/:id/tools', InitiativeController.getTools);
+
+/**
+ * POST /api/initiatives/:id/tools
+ * Add a tool to an initiative
+ */
+router.post('/:id/tools', InitiativeController.addTool);
+
+/**
+ * PUT /api/initiatives/:id/tools/:toolId
+ * Update a tool
+ */
+router.put('/:id/tools/:toolId', InitiativeController.updateTool);
+
+/**
+ * DELETE /api/initiatives/:id/tools/:toolId
+ * Delete a tool
+ */
+router.delete('/:id/tools/:toolId', InitiativeController.deleteTool);
+
+// ==========================================
+// ROADMAP MODULE: INTANGIBLE ASSETS ENDPOINTS
+// ==========================================
+
+/**
+ * GET /api/initiatives/:id/intangible-assets
+ * Get all intangible assets for an initiative
+ */
+router.get('/:id/intangible-assets', InitiativeController.getIntangibleAssets);
+
+/**
+ * POST /api/initiatives/:id/intangible-assets
+ * Add an intangible asset to an initiative
+ */
+router.post('/:id/intangible-assets', InitiativeController.addIntangibleAsset);
+
+/**
+ * PUT /api/initiatives/:id/intangible-assets/:assetId
+ * Update an intangible asset
+ */
+router.put('/:id/intangible-assets/:assetId', InitiativeController.updateIntangibleAsset);
+
+/**
+ * DELETE /api/initiatives/:id/intangible-assets/:assetId
+ * Delete an intangible asset
+ */
+router.delete('/:id/intangible-assets/:assetId', InitiativeController.deleteIntangibleAsset);
 
 // ==========================================
 // P0: RAID / Stakeholders / Watchers / History
@@ -1009,5 +1150,32 @@ router.patch('/:id/raid/:raidId', InitiativeController.updateRaidItem);
 router.delete('/:id/raid/:raidId', InitiativeController.deleteRaidItem);
 
 router.get('/:id/history', InitiativeController.getHistory);
+
+// ==========================================
+// INITIATIVE COMMENTS
+// ==========================================
+
+router.get('/:id/comments', InitiativeController.getInitiativeComments);
+router.post('/:id/comments', InitiativeController.addInitiativeComment);
+router.delete('/:id/comments/:commentId', InitiativeController.deleteInitiativeComment);
+
+// ==========================================
+// INITIATIVE TASK DEPENDENCIES (aggregated)
+// ==========================================
+
+/**
+ * GET /api/initiatives/:id/task-dependencies
+ * Aggregate task dependencies within the initiative (for Dependencies section).
+ */
+router.get('/:id/task-dependencies', InitiativeController.getInitiativeTaskDependencies);
+
+// ==========================================
+// Gate Roles & Governance
+// ==========================================
+
+router.get('/:id/gate-roles', InitiativeController.getGateRoles);
+router.put('/:id/gate-roles', InitiativeController.updateGateRoles);
+router.get('/:id/gate-readiness-check', InitiativeController.getGateReadinessCheck);
+router.get('/:id/status-history', InitiativeController.getStatusHistory);
 
 export default router;

@@ -133,7 +133,7 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -262,7 +262,7 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
               onChange={(e) => setJustification(e.target.value)}
               placeholder="Explain why you need access to this assessment..."
               rows={4}
-              className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none resize-none"
+              className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none resize-none"
             />
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Your request will be sent to the assessment owner for approval.

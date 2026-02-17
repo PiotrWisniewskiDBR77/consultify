@@ -46,6 +46,12 @@ if [[ "${1:-}" == "--stop" || "${1:-}" == "--stop-only" ]]; then
   exit 0
 fi
 
+LIVE_MODE=false
+if [[ "${1:-}" == "--live" ]]; then
+  LIVE_MODE=true
+  echo "Mode: LIVE (backend auto-restart on file changes, HMR enabled)"
+fi
+
 echo "Ensuring git is on branch 'Londyn'..."
 current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
 if [[ "$current_branch" != "Londyn" ]]; then
@@ -67,14 +73,26 @@ fi
 
 echo "Starting Londyn (frontend:3000, backend:3001) ..."
 echo "Login: piotr.wisniewski@dbr77.com / 123456"
+if [[ "$LIVE_MODE" == "true" ]]; then
+  echo "Tip: Changes in frontend/backend will auto-reload (no manual restart needed)"
+fi
 
 # IMPORTANT:
 # - dotenv in backend loads .env, but does NOT override existing env vars
 # - so we force DB_TYPE/SQLITE_PATH here to always use the seeded DB
 # - Use ABSOLUTE path to avoid issues with server running from different CWD
-DB_TYPE=sqlite \
-SQLITE_PATH="$DB_PATH" \
-PORT=3001 \
-VITE_API_URL="http://localhost:3001" \
-npm run dev
+# - --live: uses dev:watch so backend restarts on file changes; HMR stays on (no VITE_STABLE_DEV)
+if [[ "$LIVE_MODE" == "true" ]]; then
+  DB_TYPE=sqlite \
+  SQLITE_PATH="$DB_PATH" \
+  PORT=3001 \
+  VITE_API_URL="http://localhost:3001" \
+  npm run dev:watch
+else
+  DB_TYPE=sqlite \
+  SQLITE_PATH="$DB_PATH" \
+  PORT=3001 \
+  VITE_API_URL="http://localhost:3001" \
+  npm run dev
+fi
 

@@ -100,14 +100,14 @@ const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {
         <div className="mt-2 space-y-2">
           <div>
             <span className="text-slate-500 dark:text-slate-400">Arguments:</span>
-            <pre className="mt-1 p-2 bg-slate-100 dark:bg-navy-900 rounded text-[10px] overflow-x-auto">
+            <pre className="mt-1 p-2 bg-slate-50 dark:bg-navy-900 rounded text-[10px] overflow-x-auto">
               {JSON.stringify(tool.args, null, 2)}
             </pre>
           </div>
           {tool.result != null && (
             <div>
               <span className="text-slate-500 dark:text-slate-400">Result:</span>
-              <pre className="mt-1 p-2 bg-slate-100 dark:bg-navy-900 rounded text-[10px] overflow-x-auto">
+              <pre className="mt-1 p-2 bg-slate-50 dark:bg-navy-900 rounded text-[10px] overflow-x-auto">
                 {typeof tool.result === 'string'
                   ? tool.result
                   : JSON.stringify(tool.result, null, 2)}
@@ -350,11 +350,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   );
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-navy-900 shadow-sm relative">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-900 shadow-sm relative">
       {/* Chat Header */}
-      <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-800 flex justify-between items-center bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm sticky top-0 z-10">
+      <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 flex justify-between items-center bg-slate-50/80 dark:bg-navy-900/80 backdrop-blur-sm sticky top-0 z-10">
         <div>
-          <h2 className="text-xs font-bold text-navy-900 dark:text-white tracking-wide uppercase">
+          <h2 className="text-xs font-bold text-slate-900 dark:text-white tracking-wide uppercase">
             {displayTitle}
           </h2>
           <p className="text-[10px] text-slate-500 dark:text-slate-400">{displaySubtitle}</p>
@@ -426,7 +426,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   className={`relative max-w-[85%] rounded-xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
                     msg.role === 'user'
                       ? 'bg-primary-600 text-white rounded-tr-none'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
+                      : 'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
                   }`}
                 >
                   {/* AI Message Header */}
@@ -464,7 +464,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                               );
                             }
                             return (
-                              <pre className="bg-slate-900 dark:bg-navy-950 text-slate-100 p-3 rounded-lg overflow-x-auto text-xs my-2">
+                              <pre className="bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-slate-100 p-3 rounded-lg overflow-x-auto text-xs my-2">
                                 <code className={codeClassName}>{children}</code>
                               </pre>
                             );
@@ -509,7 +509,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   {/* Hover Actions - World-Class Chat 2025 */}
                   {enableEnhancedMessages && isHovered && !msg.isStreaming && (
                     <div
-                      className={`absolute ${msg.role === 'user' ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'} top-0 flex items-center gap-0.5 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 p-1`}
+                      className={`absolute ${msg.role === 'user' ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'} top-0 flex items-center gap-0.5 bg-slate-50 dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 p-1`}
                     >
                       {/* Copy */}
                       <button
@@ -755,7 +755,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             <div className="w-6 h-6 rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5">
               <Bot size={14} className="text-primary-600 dark:text-primary-400" />
             </div>
-            <div className="bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl rounded-tl-none px-4 py-3 flex items-center gap-1">
+            <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl rounded-tl-none px-4 py-3 flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"></span>
               <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-100"></span>
               <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-200"></span>
@@ -766,7 +766,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="p-3 border-t border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950">
+      <div className="p-3 border-t border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-950">
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <div className="relative flex-1">
             <input

@@ -2,24 +2,30 @@ import {
   AlertCircle,
   AlertTriangle,
   Archive,
-  ArrowRight,
   Bell,
   Calendar,
   Check,
   CheckCheck,
+  CheckSquare,
   Clock,
   Eye,
   Inbox,
   Loader2,
+  Minus,
   Scale,
+  Square,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
-import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
-import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
+import {
+  type ColumnDef,
+  ColumnResizer,
+  type ColumnWidths,
+  type TableFilters,
+} from '@/components/ui/ResizableTable';
+import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { Api } from '@/services/api';
 
 import { RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
@@ -43,6 +49,7 @@ interface InboxItem {
   title: string;
   description?: string;
   receivedAt: string;
+  dueDate?: string;
   urgency: InboxUrgency;
   linkedTaskId?: string;
   linkedDecisionId?: string;
@@ -69,6 +76,7 @@ interface InboxContentProps {
   onCountsChange: (counts: { total: number; critical: number }) => void;
 }
 
+// ── Urgency styles ──
 const urgencyStyles: Record<
   InboxUrgency,
   { icon: React.ElementType; pill: string; label: string }
@@ -95,6 +103,7 @@ const urgencyStyles: Record<
   },
 };
 
+// ── Type icons / labels ──
 const typeIcon: Record<InboxItemType, React.ElementType> = {
   new_assignment: Inbox,
   mention: Bell,
@@ -104,12 +113,176 @@ const typeIcon: Record<InboxItemType, React.ElementType> = {
   ai_suggestion: AlertCircle,
 };
 
-const isoToLocal = (iso: string) => {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+const typeLabel: Record<InboxItemType, string> = {
+  new_assignment: 'new assign…',
+  mention: 'mention',
+  escalation: 'escalation',
+  review_request: 'review req…',
+  decision_request: 'decision req…',
+  ai_suggestion: 'ai suggestion',
 };
 
+// ── Status config ──
+const statusConfig = (triaged: boolean) =>
+  triaged
+    ? {
+        bg: 'bg-green-100 dark:bg-green-500/15',
+        color: 'text-green-700 dark:text-green-300',
+        dot: 'bg-green-500',
+        label: 'Triaged',
+      }
+    : {
+        bg: 'bg-amber-100 dark:bg-amber-500/15',
+        color: 'text-amber-700 dark:text-amber-300',
+        dot: 'bg-amber-500',
+        label: 'New',
+      };
+
+// ── Date helpers ──
+const formatReceivedDate = (iso: string): string => {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const formatDueDate = (dueDate?: string): string => {
+  if (!dueDate) return '-';
+  const date = new Date(dueDate);
+  if (isNaN(date.getTime())) return dueDate;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const dateOnly = new Date(date);
+  dateOnly.setHours(0, 0, 0, 0);
+  if (dateOnly.getTime() === today.getTime()) return 'Today';
+  if (dateOnly.getTime() === tomorrow.getTime()) return 'Tomorrow';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+const isDueDateOverdue = (dueDate?: string, triaged?: boolean): boolean => {
+  if (!dueDate || triaged) return false;
+  const date = new Date(dueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date < today;
+};
+
+// ── Filter option sets ──
+const INBOX_STATUS_FILTER_OPTIONS = [
+  { value: 'new', label: 'New' },
+  { value: 'triaged', label: 'Triaged' },
+];
+
+const INBOX_URGENCY_FILTER_OPTIONS = [
+  { value: 'critical', label: 'Critical', color: 'text-red-500' },
+  { value: 'high', label: 'High', color: 'text-amber-500' },
+  { value: 'normal', label: 'Normal', color: 'text-slate-500' },
+  { value: 'low', label: 'Low', color: 'text-slate-400' },
+];
+
+const INBOX_TYPE_FILTER_OPTIONS = [
+  { value: 'new_assignment', label: 'New assignment' },
+  { value: 'mention', label: 'Mention' },
+  { value: 'escalation', label: 'Escalation' },
+  { value: 'review_request', label: 'Review request' },
+  { value: 'decision_request', label: 'Decision request' },
+  { value: 'ai_suggestion', label: 'AI suggestion' },
+];
+
+// ── Column definitions ──
+const INBOX_COLUMNS: ColumnDef[] = [
+  {
+    id: 'select',
+    label: '',
+    width: 40,
+    minWidth: 40,
+    maxWidth: 40,
+    resizable: false,
+    filterable: false,
+  },
+  {
+    id: 'title',
+    label: 'Title',
+    width: 999, // flex – stretches
+    minWidth: 300,
+    resizable: false,
+    filterable: false,
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    width: 110,
+    minWidth: 90,
+    maxWidth: 160,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect',
+    filterOptions: INBOX_STATUS_FILTER_OPTIONS,
+  },
+  {
+    id: 'urgency',
+    label: 'Urgency',
+    width: 120,
+    minWidth: 90,
+    maxWidth: 170,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect',
+    filterOptions: INBOX_URGENCY_FILTER_OPTIONS,
+  },
+  {
+    id: 'type',
+    label: 'Type',
+    width: 140,
+    minWidth: 100,
+    maxWidth: 180,
+    resizable: true,
+    filterable: true,
+    filterType: 'multiselect',
+    filterOptions: INBOX_TYPE_FILTER_OPTIONS,
+  },
+  {
+    id: 'received',
+    label: 'Received',
+    width: 160,
+    minWidth: 120,
+    maxWidth: 200,
+    resizable: true,
+    filterable: false,
+  },
+  {
+    id: 'dueDate',
+    label: 'Due Date',
+    width: 120,
+    minWidth: 90,
+    maxWidth: 160,
+    resizable: true,
+    filterable: false,
+  },
+  {
+    id: 'actions',
+    label: 'Actions',
+    width: 70,
+    minWidth: 50,
+    maxWidth: 90,
+    resizable: false,
+    filterable: false,
+    align: 'right',
+  },
+];
+
+const getDefaultColumnWidths = (): ColumnWidths =>
+  INBOX_COLUMNS.reduce((acc, col) => ({ ...acc, [col.id]: col.width }), {});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────────────────────────────────────
 export const InboxContent: React.FC<InboxContentProps> = ({
   searchQuery,
   onOpenTask,
@@ -122,10 +295,19 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   const [data, setData] = useState<InboxResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  // A2.3: Section filter analogous to Focus
   const [inboxSection, setInboxSection] = useState<'today' | 'this_week' | 'all'>('all');
-  const [cardViewStyle, setCardViewStyle] = useState<CardViewStyle>('d');
 
+  // Selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Column widths (resizable)
+  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(getDefaultColumnWidths());
+
+  // Filter state (session-only)
+  const [tableFilters, setTableFilters] = useState<TableFilters>({});
+  const [openFilterId, setOpenFilterId] = useState<string | null>(null);
+
+  // ── Fetch ──
   const fetchInbox = useCallback(async () => {
     try {
       setLoading(true);
@@ -144,6 +326,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     fetchInbox();
   }, [fetchInbox]);
 
+  // ── Items with search + section filtering ──
   const items = useMemo(() => {
     let all = data?.items || [];
     const q = (searchQuery || '').trim().toLowerCase();
@@ -153,7 +336,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         return t.includes(q);
       });
     }
-    // A2.3: Filter by section
     if (inboxSection !== 'all') {
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -168,6 +350,31 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     return all;
   }, [data?.items, searchQuery, inboxSection]);
 
+  // ── Apply table-level filters ──
+  const filteredItems = useMemo(() => {
+    let result = [...items];
+
+    const statusFilter = tableFilters.status as string[] | undefined;
+    const urgencyFilter = tableFilters.urgency as string[] | undefined;
+    const typeFilter = tableFilters.type as string[] | undefined;
+
+    if (statusFilter?.length) {
+      result = result.filter((item) => {
+        const val = item.triaged ? 'triaged' : 'new';
+        return statusFilter.includes(val);
+      });
+    }
+    if (urgencyFilter?.length) {
+      result = result.filter((item) => urgencyFilter.includes(item.urgency));
+    }
+    if (typeFilter?.length) {
+      result = result.filter((item) => typeFilter.includes(item.type));
+    }
+
+    return result;
+  }, [items, tableFilters]);
+
+  // ── Triage ──
   const triage = useCallback(
     async (item: InboxItem, action: TriageAction) => {
       try {
@@ -175,7 +382,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           action,
           itemKey: item._key,
         });
-        // optimistic: remove from list
         setData((prev) => {
           if (!prev) return prev;
           return { ...prev, items: prev.items.filter((x) => x._key !== item._key) };
@@ -193,7 +399,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     (item: InboxItem) => {
       if (item.linkedTaskId) return onOpenTask?.(item.linkedTaskId);
       if (item.linkedDecisionId) return onOpenDecision?.(item.linkedDecisionId);
-      // notification:<id> can be parsed from _key
       if (String(item._key).startsWith('notification:')) {
         const id = String(item._key).replace(/^notification:/, '');
         return onOpenNotification?.(id);
@@ -202,243 +407,315 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     [onOpenDecision, onOpenNotification, onOpenTask]
   );
 
-  /* ─── Mapping for N / C views ─── */
-  const inboxItemToGeneric = (item: InboxItem): GenericListItem => {
-    const u = urgencyStyles[item.urgency] || urgencyStyles.normal;
+  // ── Selection ──
+  const allVisibleIds = useMemo(() => new Set(filteredItems.map((i) => i.id)), [filteredItems]);
+  const allSelected = selectedIds.size > 0 && selectedIds.size === allVisibleIds.size;
+  const someSelected = selectedIds.size > 0 && selectedIds.size < allVisibleIds.size;
+
+  const handleSelectItem = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = (selected: boolean) => {
+    if (selected) setSelectedIds(new Set(allVisibleIds));
+    else setSelectedIds(new Set());
+  };
+
+  // ── Column resize ──
+  const handleColumnResize = (columnId: string, newWidth: number) => {
+    setColumnWidths((prev) => ({ ...prev, [columnId]: newWidth }));
+  };
+
+  // ── Filter change ──
+  const handleFilterChange = (columnId: string, values: string[]) => {
+    setTableFilters((prev) => ({
+      ...prev,
+      [columnId]: values.length > 0 ? values : undefined,
+    }));
+  };
+
+  // ── Section tab counts ──
+  const sectionCounts = useMemo(() => {
+    const all = data?.items || [];
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekEnd = new Date(todayStart.getTime() + 7 * 86400000);
     return {
-      id: item.id,
-      title: item.title || 'Untitled',
-      subtitle: item.description || undefined,
-      status: item.triaged ? 'Triaged' : 'New',
-      statusVariant: item.triaged ? 'success' : 'warning',
-      priority: u.label,
-      priorityVariant:
-        item.urgency === 'critical'
-          ? 'critical'
-          : item.urgency === 'high'
-            ? 'high'
-            : item.urgency === 'low'
-              ? 'low'
-              : 'medium',
-      dueDate: item.receivedAt
-        ? new Date(item.receivedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-        : undefined,
-      secondaryLabel: item.type.replace(/_/g, ' '),
-      isHighlighted: item.urgency === 'critical' || !item.triaged,
-      _raw: item,
+      today: all.filter((i) => new Date(i.receivedAt || '') >= todayStart).length,
+      this_week: all.filter((i) => {
+        const d = new Date(i.receivedAt || '');
+        return d >= todayStart && d < weekEnd;
+      }).length,
+      all: all.length,
     };
-  };
+  }, [data?.items]);
 
-  const inboxViewSections: ListSection[] = useMemo(() => {
-    const critical = items.filter((i) => i.urgency === 'critical').map(inboxItemToGeneric);
-    const high = items.filter((i) => i.urgency === 'high').map(inboxItemToGeneric);
-    const normal = items.filter((i) => i.urgency === 'normal').map(inboxItemToGeneric);
-    const low = items.filter((i) => i.urgency === 'low').map(inboxItemToGeneric);
-    return [
-      ...(critical.length
-        ? [
-            {
-              id: 'critical',
-              label: isPolish ? 'Krytyczne' : 'Critical',
-              items: critical,
-              accentColor: 'text-red-500',
-            },
-          ]
-        : []),
-      ...(high.length
-        ? [
-            {
-              id: 'high',
-              label: isPolish ? 'Wysokie' : 'High',
-              items: high,
-              accentColor: 'text-amber-500',
-            },
-          ]
-        : []),
-      ...(normal.length
-        ? [
-            {
-              id: 'normal',
-              label: isPolish ? 'Normalne' : 'Normal',
-              items: normal,
-              accentColor: 'text-slate-500',
-            },
-          ]
-        : []),
-      ...(low.length
-        ? [
-            {
-              id: 'low',
-              label: isPolish ? 'Niskie' : 'Low',
-              items: low,
-              accentColor: 'text-slate-400',
-            },
-          ]
-        : []),
-    ];
-  }, [items, isPolish]);
-
-  const INBOX_CLICKUP_COLUMNS: ListColumn[] = [
-    { key: 'title', label: 'Title', width: 'flex-1 min-w-0' },
-    { key: 'status', label: 'Status', width: 'w-24' },
-    { key: 'priority', label: 'Urgency', width: 'w-24' },
-    { key: 'secondaryLabel', label: 'Type', width: 'w-28' },
-    { key: 'dueDate', label: 'Received', width: 'w-28' },
-  ];
-
-  const handleInboxItemClick = (item: GenericListItem) => {
-    const raw = item._raw as InboxItem;
-    if (raw) open(raw);
-  };
-
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Render
+  // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <div className="p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-lg font-semibold text-slate-900 dark:text-white">
-            {isPolish ? 'Inbox (Action Queue)' : 'Inbox (Action Queue)'}
-          </div>
-          <div className="text-sm text-slate-600 dark:text-slate-400">
-            {isPolish
-              ? 'Tylko rzeczy wymagające akcji. 4-linijkowy format + CTA.'
-              : 'Only items requiring action. 4-line format + CTA.'}
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+      {/* Header */}
+      <div className="px-4 pt-4 pb-0">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-lg font-semibold text-slate-900 dark:text-white">
+              {isPolish ? 'Inbox (Action Queue)' : 'Inbox (Action Queue)'}
+            </div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">
+              {isPolish ? 'Tylko rzeczy wymagające akcji.' : 'Only items requiring action.'}
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <CardViewSwitcher
-            moduleId="my-work-inbox"
-            value={cardViewStyle}
-            onChange={setCardViewStyle}
-            compact
-          />
-          <button
-            onClick={fetchInbox}
-            className="px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-          >
-            {isPolish ? 'Odśwież' : 'Refresh'}
-          </button>
+
+        {/* Summary pills */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 text-sm text-slate-700 dark:text-slate-200">
+            <Inbox size={14} />
+            {isPolish ? 'W kolejce' : 'In queue'}: <b>{data?.summary?.total ?? 0}</b>
+          </span>
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-500/15 border border-red-200/70 dark:border-red-500/25 text-sm text-red-700 dark:text-red-200">
+            <AlertTriangle size={14} />
+            {isPolish ? 'Krytyczne' : 'Critical'}: <b>{data?.summary?.critical ?? 0}</b>
+          </span>
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-500/15 border border-amber-200/70 dark:border-amber-500/25 text-sm text-amber-700 dark:text-amber-200">
+            <Clock size={14} />
+            {isPolish ? 'Nowe dziś' : 'New today'}: <b>{data?.summary?.newToday ?? 0}</b>
+          </span>
         </div>
-      </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 text-sm text-slate-700 dark:text-slate-200">
-          <Inbox size={14} />
-          {isPolish ? 'W kolejce' : 'In queue'}: <b>{data?.summary?.total ?? 0}</b>
-        </span>
-        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-500/15 border border-red-200/70 dark:border-red-500/25 text-sm text-red-700 dark:text-red-200">
-          <AlertTriangle size={14} />
-          {isPolish ? 'Krytyczne' : 'Critical'}: <b>{data?.summary?.critical ?? 0}</b>
-        </span>
-        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-500/15 border border-amber-200/70 dark:border-amber-500/25 text-sm text-amber-700 dark:text-amber-200">
-          <Clock size={14} />
-          {isPolish ? 'Nowe dziś' : 'New today'}: <b>{data?.summary?.newToday ?? 0}</b>
-        </span>
-      </div>
-
-      {/* A2.3: Section tabs analogous to Focus (Today / This Week / All) */}
-      <div className="mt-4 flex items-center gap-1 border-b border-slate-200 dark:border-navy-700 mb-0">
-        {(['today', 'this_week', 'all'] as const).map((section) => {
-          const now = new Date();
-          const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          const weekEnd = new Date(todayStart.getTime() + 7 * 86400000);
-          const sectionCount =
-            section === 'today'
-              ? items.filter((i) => new Date(i.receivedAt || '') >= todayStart).length
-              : section === 'this_week'
-                ? items.filter((i) => {
-                    const d = new Date(i.receivedAt || '');
-                    return d >= todayStart && d < weekEnd;
-                  }).length
-                : items.length;
-          const label =
-            section === 'today'
-              ? isPolish
-                ? 'Dziś'
-                : 'Today'
-              : section === 'this_week'
+        {/* Section tabs */}
+        <div className="mt-4 flex items-center gap-1 border-b border-slate-200 dark:border-navy-700">
+          {(['today', 'this_week', 'all'] as const).map((section) => {
+            const count = sectionCounts[section];
+            const label =
+              section === 'today'
                 ? isPolish
-                  ? 'Ten tydzień'
-                  : 'This Week'
-                : isPolish
-                  ? 'Wszystkie'
-                  : 'All';
-          return (
-            <button
-              key={section}
-              onClick={() => setInboxSection(section)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                inboxSection === section
-                  ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
-                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-              }`}
-            >
-              {label} <span className="text-xs opacity-60">({sectionCount})</span>
-            </button>
-          );
-        })}
+                  ? 'Dziś'
+                  : 'Today'
+                : section === 'this_week'
+                  ? isPolish
+                    ? 'Ten tydzień'
+                    : 'This Week'
+                  : isPolish
+                    ? 'Wszystkie'
+                    : 'All';
+            return (
+              <button
+                key={section}
+                onClick={() => setInboxSection(section)}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  inboxSection === section
+                    ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                }`}
+              >
+                {label} <span className="text-xs opacity-60">({count})</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Unified table layout (A2.1, A2.2, A2.3) — switches layout based on cardViewStyle */}
-      <div className="mt-0">
+      {/* Table content */}
+      <div className="flex-1 overflow-y-auto p-4 pt-0">
         {loading ? (
           <div className="flex items-center justify-center py-12 text-slate-600 dark:text-slate-300">
             <Loader2 className="animate-spin mr-2" size={18} />
             {isPolish ? 'Ładowanie...' : 'Loading...'}
           </div>
-        ) : items.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <div className="py-12 text-center text-slate-600 dark:text-slate-300">
             <Inbox size={32} className="mx-auto mb-3 text-slate-400" />
             <p className="text-sm font-medium">
               {isPolish ? 'Inbox jest pusty — zero zaległości!' : 'Inbox is empty — zero backlog!'}
             </p>
           </div>
-        ) : cardViewStyle === 'n' ? (
-          <div className="mt-4">
-            <NotionListView
-              sections={inboxViewSections}
-              onItemClick={handleInboxItemClick}
-              emptyMessage={isPolish ? 'Inbox jest pusty' : 'Inbox is empty'}
-            />
-          </div>
-        ) : cardViewStyle === 'c' ? (
-          <div className="mt-4">
-            <ClickUpListView
-              sections={inboxViewSections}
-              columns={INBOX_CLICKUP_COLUMNS}
-              onItemClick={handleInboxItemClick}
-              emptyMessage={isPolish ? 'Inbox jest pusty' : 'Inbox is empty'}
-            />
-          </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
-            <table className="w-full">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden mt-4">
+            <table className="w-full table-fixed" style={{ minWidth: 900 }}>
               <thead>
                 <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[80px]">
-                    {isPolish ? 'Pilność' : 'Urgency'}
+                  {/* Select All */}
+                  <th className="w-10 px-2 py-2">
+                    <button
+                      onClick={() => handleSelectAll(!allSelected)}
+                      className={`
+                        w-5 h-5 rounded border flex items-center justify-center transition-colors
+                        ${
+                          allSelected
+                            ? 'bg-primary-500 border-primary-500 text-white'
+                            : someSelected
+                              ? 'bg-primary-500/50 border-primary-500 text-white'
+                              : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
+                        }
+                      `}
+                    >
+                      {allSelected ? (
+                        <CheckSquare size={14} />
+                      ) : someSelected ? (
+                        <Minus size={14} />
+                      ) : (
+                        <Square size={14} />
+                      )}
+                    </button>
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[100px]">
-                    {isPolish ? 'Typ' : 'Type'}
+
+                  {/* Title */}
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-full">
+                    Title
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    {isPolish ? 'Tytuł' : 'Title'}
+
+                  {/* Status — filterable + resizable */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.status }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={
+                          (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
+                        }
+                      >
+                        Status
+                      </span>
+                      <FilterDropdown
+                        column={INBOX_COLUMNS.find((c) => c.id === 'status')!}
+                        value={tableFilters.status as string[]}
+                        onChange={(val) => handleFilterChange('status', val as string[])}
+                        isOpen={openFilterId === 'status'}
+                        onToggle={() =>
+                          setOpenFilterId(openFilterId === 'status' ? null : 'status')
+                        }
+                        onClose={() => setOpenFilterId(null)}
+                      />
+                    </div>
+                    <ColumnResizer
+                      columnId="status"
+                      currentWidth={columnWidths.status}
+                      minWidth={90}
+                      maxWidth={160}
+                      onResize={handleColumnResize}
+                    />
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[140px]">
-                    {isPolish ? 'Odebrane' : 'Received'}
+
+                  {/* Urgency — filterable + resizable */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.urgency }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={
+                          (tableFilters.urgency as string[])?.length ? 'text-primary-500' : ''
+                        }
+                      >
+                        Urgency
+                      </span>
+                      <FilterDropdown
+                        column={INBOX_COLUMNS.find((c) => c.id === 'urgency')!}
+                        value={tableFilters.urgency as string[]}
+                        onChange={(val) => handleFilterChange('urgency', val as string[])}
+                        isOpen={openFilterId === 'urgency'}
+                        onToggle={() =>
+                          setOpenFilterId(openFilterId === 'urgency' ? null : 'urgency')
+                        }
+                        onClose={() => setOpenFilterId(null)}
+                      />
+                    </div>
+                    <ColumnResizer
+                      columnId="urgency"
+                      currentWidth={columnWidths.urgency}
+                      minWidth={90}
+                      maxWidth={170}
+                      onResize={handleColumnResize}
+                    />
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[80px]">
-                    {isPolish ? 'Status' : 'Status'}
+
+                  {/* Type — filterable + resizable */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.type }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={
+                          (tableFilters.type as string[])?.length ? 'text-primary-500' : ''
+                        }
+                      >
+                        Type
+                      </span>
+                      <FilterDropdown
+                        column={INBOX_COLUMNS.find((c) => c.id === 'type')!}
+                        value={tableFilters.type as string[]}
+                        onChange={(val) => handleFilterChange('type', val as string[])}
+                        isOpen={openFilterId === 'type'}
+                        onToggle={() => setOpenFilterId(openFilterId === 'type' ? null : 'type')}
+                        onClose={() => setOpenFilterId(null)}
+                      />
+                    </div>
+                    <ColumnResizer
+                      columnId="type"
+                      currentWidth={columnWidths.type}
+                      minWidth={100}
+                      maxWidth={180}
+                      onResize={handleColumnResize}
+                    />
                   </th>
-                  <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-[60px]">
-                    {isPolish ? 'Akcje' : 'Actions'}
+
+                  {/* Received — resizable */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.received }}
+                  >
+                    <span>Received</span>
+                    <ColumnResizer
+                      columnId="received"
+                      currentWidth={columnWidths.received}
+                      minWidth={120}
+                      maxWidth={200}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+
+                  {/* Due Date — resizable */}
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                    style={{ width: columnWidths.dueDate }}
+                  >
+                    <span>Due Date</span>
+                    <ColumnResizer
+                      columnId="dueDate"
+                      currentWidth={columnWidths.dueDate}
+                      minWidth={90}
+                      maxWidth={160}
+                      onResize={handleColumnResize}
+                    />
+                  </th>
+
+                  {/* Actions */}
+                  <th
+                    className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+                    style={{ width: columnWidths.actions }}
+                  >
+                    Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-navy-800 divide-y divide-slate-200 dark:divide-white/5">
-                {items.map((item) => {
+
+              <tbody>
+                {filteredItems.map((item) => {
                   const u = urgencyStyles[item.urgency] || urgencyStyles.normal;
                   const UIcon = u.icon;
                   const TIcon = typeIcon[item.type] || Inbox;
+                  const sc = statusConfig(item.triaged);
+                  const isSelected = selectedIds.has(item.id);
+                  const overdue = isDueDateOverdue(item.dueDate, item.triaged);
 
                   const rowActions: RowAction[] = [
                     {
@@ -472,60 +749,104 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   return (
                     <tr
                       key={item.id}
-                      className="hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
+                      className={`
+                        group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
+                        ${isSelected ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
+                        transition-colors duration-150
+                        hover:bg-slate-50 dark:hover:bg-navy-800/50
+                      `}
                       onClick={() => open(item)}
                     >
-                      {/* Urgency */}
-                      <td className="px-3 py-2.5">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${u.pill}`}
+                      {/* Checkbox */}
+                      <td className="w-10 px-2 py-2.5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectItem(item.id);
+                          }}
+                          className={`
+                            w-5 h-5 rounded border flex items-center justify-center transition-all
+                            ${
+                              isSelected
+                                ? 'bg-primary-500 border-primary-500 text-white'
+                                : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
+                            }
+                          `}
                         >
-                          <UIcon size={11} />
-                          {u.label}
-                        </span>
+                          {isSelected && <CheckSquare size={12} />}
+                        </button>
                       </td>
-                      {/* Type */}
-                      <td className="px-3 py-2.5">
-                        <span className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
-                          <TIcon size={12} />
-                          <span className="truncate max-w-[80px]">
-                            {item.type.replace(/_/g, ' ')}
-                          </span>
-                        </span>
-                      </td>
-                      {/* Title — single line, truncated (A2.2) */}
-                      <td className="px-3 py-2.5">
+
+                      {/* Title */}
+                      <td className="px-3 py-2.5 w-full">
                         <span
-                          className="text-sm font-medium text-slate-900 dark:text-white truncate block max-w-[400px]"
+                          className="text-sm font-medium text-slate-900 dark:text-white truncate block"
                           title={item.title}
                         >
                           {item.title}
                         </span>
                       </td>
-                      {/* Received */}
-                      <td className="px-3 py-2.5 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                        {isoToLocal(item.receivedAt)}
-                      </td>
-                      {/* Status (A2.3) */}
-                      <td className="px-3 py-2.5">
+
+                      {/* Status */}
+                      <td className="px-3 py-2.5" style={{ width: columnWidths.status }}>
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                            item.triaged
-                              ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300'
-                              : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-                          }`}
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${sc.bg} ${sc.color}`}
                         >
-                          {item.triaged
-                            ? isPolish
-                              ? 'Obsłużone'
-                              : 'Triaged'
-                            : isPolish
-                              ? 'Nowe'
-                              : 'New'}
+                          <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
+                          {sc.label}
                         </span>
                       </td>
-                      {/* Actions — "⋯" menu */}
-                      <td className="px-3 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
+
+                      {/* Urgency */}
+                      <td className="px-3 py-2.5" style={{ width: columnWidths.urgency }}>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${u.pill}`}
+                        >
+                          <UIcon size={11} />
+                          {u.label}
+                        </span>
+                      </td>
+
+                      {/* Type */}
+                      <td className="px-3 py-2.5" style={{ width: columnWidths.type }}>
+                        <span className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                          <TIcon size={12} />
+                          <span className="truncate">
+                            {typeLabel[item.type] || item.type.replace(/_/g, ' ')}
+                          </span>
+                        </span>
+                      </td>
+
+                      {/* Received */}
+                      <td
+                        className="px-3 py-2.5 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap"
+                        style={{ width: columnWidths.received }}
+                      >
+                        {formatReceivedDate(item.receivedAt)}
+                      </td>
+
+                      {/* Due Date */}
+                      <td className="px-3 py-2.5" style={{ width: columnWidths.dueDate }}>
+                        <div
+                          className={`flex items-center gap-1.5 text-xs ${
+                            !item.dueDate
+                              ? 'text-slate-300 dark:text-slate-600'
+                              : overdue
+                                ? 'text-red-700 dark:text-red-400 font-medium'
+                                : 'text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
+                          {item.dueDate && <Calendar size={12} />}
+                          <span>{formatDueDate(item.dueDate)}</span>
+                        </div>
+                      </td>
+
+                      {/* Actions */}
+                      <td
+                        className="px-3 py-2.5 text-right"
+                        style={{ width: columnWidths.actions }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <RowActionsMenu actions={rowActions} size="sm" />
                       </td>
                     </tr>

@@ -16,7 +16,9 @@ export const asyncHandler = (fn: AsyncHandler) => {
     res: Response,
     next: NextFunction
   ): Promise<void | Response> => {
-    return Promise.resolve(fn(req, res, next)).catch(next);
+    return Promise.resolve()
+      .then(() => fn(req, res, next))
+      .catch(next);
   };
 };
 

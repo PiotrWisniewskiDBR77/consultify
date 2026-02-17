@@ -66,7 +66,6 @@ import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
-import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 
 import {
   type Attachment,
@@ -76,6 +75,7 @@ import {
   type LinkedItem,
   LinkedItemsSection,
 } from '../MyWork/shared';
+import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 
 // ==========================================
 // TYPES
@@ -1154,7 +1154,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             animate={{ rotate: expandedSections.has(id) ? 180 : 0 }}
             transition={{ duration: 0.2 }}
           >
-            <ChevronDown size={18} className="text-slate-400" />
+            <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
           </motion.div>
         </div>
       </motion.button>
@@ -1204,7 +1204,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onClose}
-                className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-navy-800/80 transition-all"
+                className="p-2 -ml-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-navy-800/80 transition-all"
               >
                 <ChevronLeft size={20} />
               </motion.button>
@@ -1378,9 +1378,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 : 'Low confidence'}
                         </span>
                         {finding.category && (
-                          <span className="text-xs text-slate-400">{finding.category}</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {finding.category}
+                          </span>
                         )}
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
                           {finding.sourceCount} {isPolish ? 'źródeł' : 'sources'}
                         </span>
                       </div>
@@ -1508,7 +1510,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12">
                     <FileText size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
-                    <p className="text-slate-400">{isPolish ? 'Brak treści' : 'No content'}</p>
+                    <p className="text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Brak treści' : 'No content'}
+                    </p>
                   </div>
                 )}
               </div>
@@ -1919,7 +1923,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           )}
                         </div>
                       </div>
-                      <button className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                      <button className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
                         <ExternalLink size={14} />
                       </button>
                     </div>
@@ -2042,7 +2046,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     {isPolish ? 'Utworzono' : 'Created'}
                   </label>
                   <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
-                    <Calendar size={14} className="text-slate-400" />
+                    <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       {insight?.createdAt
                         ? new Date(insight.createdAt).toLocaleDateString(
@@ -2060,7 +2064,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       {isPolish ? 'Czas generacji' : 'Generation Time'}
                     </label>
                     <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
-                      <Clock size={14} className="text-slate-400" />
+                      <Clock size={14} className="text-slate-500 dark:text-slate-400" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
                         {(insight.generationTimeMs / 1000).toFixed(1)}s
                       </span>
@@ -2075,7 +2079,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       {isPolish ? 'Użyte tokeny' : 'Tokens Used'}
                     </label>
                     <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
-                      <Sparkles size={14} className="text-slate-400" />
+                      <Sparkles size={14} className="text-slate-500 dark:text-slate-400" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
                         {insight.tokensUsed.toLocaleString()}
                       </span>

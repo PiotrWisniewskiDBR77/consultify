@@ -162,11 +162,11 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     id: 'ollama',
     name: 'Ollama (Local)',
     envKey: 'OLLAMA_BASE_URL',
-    defaultEndpoint: 'http://localhost:11434/api/chat',
-    defaultModel: 'llama2',
+    defaultEndpoint: 'http://localhost:11434/v1',
+    defaultModel: process.env.OLLAMA_MODEL || 'gemma3:27b',
     costPer1k: 0,
     supportsStreaming: true,
-    supportsVision: false,
+    supportsVision: true,
     supportsTools: false,
     tier: 'FREE',
     isLocal: true,
@@ -189,6 +189,7 @@ export const DEFAULT_FALLBACK_CHAIN = [
   'qwen',
   'cohere',
   'nvidia',
+  'ollama', // Local fallback - last resort when all cloud APIs are down
 ];
 
 export class LLMConfigService {
@@ -213,6 +214,7 @@ export class LLMConfigService {
     try {
       await this.ensureTableExists();
       await this.syncDatabaseWithEnv();
+      await this.seedTierAssignments();
 
       await this.runAsync(`
                 CREATE TABLE IF NOT EXISTS llm_logs (
@@ -292,6 +294,60 @@ export class LLMConfigService {
         `;
 
     await this.runAsync(orgSettingsSql);
+
+    // Tier assignments table (used by modelRouter for tier-based routing)
+    await this.runAsync(`
+            CREATE TABLE IF NOT EXISTS llm_tier_assignments (
+                id TEXT PRIMARY KEY,
+                provider_id TEXT NOT NULL,
+                tier TEXT NOT NULL CHECK(tier IN ('BUDGET', 'STANDARD', 'PREMIUM', 'REASONING')),
+                priority INTEGER DEFAULT 0,
+                is_active INTEGER DEFAULT 1,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(provider_id, tier)
+            )
+        `);
+
+    // Organization-level model overrides (used by modelRouter)
+    await this.runAsync(`
+            CREATE TABLE IF NOT EXISTS ai_model_overrides (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                capability TEXT NOT NULL,
+                model_id TEXT NOT NULL,
+                tier TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(organization_id, capability)
+            )
+        `);
+
+    // Organization-level provider settings (used by modelRouter)
+    await this.runAsync(`
+            CREATE TABLE IF NOT EXISTS organization_provider_settings (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                provider_id TEXT NOT NULL,
+                is_enabled INTEGER DEFAULT 1,
+                custom_priority INTEGER,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(organization_id, provider_id)
+            )
+        `);
+
+    // Round-robin state for load balancing (used by modelRouter)
+    await this.runAsync(`
+            CREATE TABLE IF NOT EXISTS tier_round_robin_state (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT,
+                tier TEXT NOT NULL,
+                last_provider_id TEXT,
+                last_used_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
     await this.migrateTable();
   }
 
@@ -393,6 +449,34 @@ export class LLMConfigService {
     }
 
     this.clearCache();
+  }
+
+  async seedTierAssignments(): Promise<void> {
+    aiLogger.info('LLMConfigService', 'Seeding tier assignments for active providers...');
+
+    const activeProviders = await this.allAsync<{ id: string; provider: string; tier: string }>(
+      'SELECT id, provider, tier FROM llm_providers WHERE is_active = 1'
+    );
+
+    for (const p of activeProviders || []) {
+      const tier = (p.tier || 'STANDARD').toUpperCase();
+      const assignmentId = `${p.id}-${tier}`;
+      try {
+        await this.runAsync(
+          `INSERT OR IGNORE INTO llm_tier_assignments (id, provider_id, tier, priority, is_active)
+           VALUES (?, ?, ?, ?, 1)`,
+          [assignmentId, p.id, tier, TIER_PRIORITY[tier] || 1]
+        );
+      } catch (err: unknown) {
+        const error = err as Error;
+        if (!error.message.includes('UNIQUE constraint')) {
+          aiLogger.warn(
+            'LLMConfigService',
+            `Failed to seed tier assignment for ${p.id}: ${error.message}`
+          );
+        }
+      }
+    }
   }
 
   clearCache(): void {

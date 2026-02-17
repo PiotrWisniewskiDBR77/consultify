@@ -12,9 +12,7 @@ import type { StatusAction } from '@/services/initiativeLifecycle';
 import type {
   Attachment,
   Comment,
-  EscalationRule,
   LinkedItem,
-  ReminderRule,
   Stakeholder,
   StakeholderNotificationSettings,
   StakeholderRole,
@@ -22,11 +20,24 @@ import type {
   WarningThresholds,
 } from '../../MyWork/shared';
 import type {
+  EscalationRuleWithConfig,
+  ReminderRuleWithDelivery,
+} from '../../shared/NModeSections';
+import type {
+  BudgetItem,
   Decision,
+  GateReadinessCheck,
+  GateRoleAssignment,
   HistoryEvent,
+  IntangibleAssetItem,
   PendingApproval,
   RaidItem,
+  ResourceItem,
+  StatusHistoryEntry,
   TaskItem,
+  TimelineMilestone,
+  TimelinePhase,
+  ToolItem,
   UserInfo,
   Watcher,
 } from './types';
@@ -37,6 +48,16 @@ export interface InitiativeContextValue {
   initiativeId: string;
   initiativeTemplate: any;
   isPolish: boolean;
+
+  // Capabilities (backend source of truth via gate-readiness-check)
+  canEditPriority: boolean;
+  canEditOwner: boolean;
+  canEditTargetDate: boolean;
+  canEditCards: boolean;
+
+  // Navigation helpers (guided workflow)
+  openSection: (sectionId: string) => void;
+  focusTopBarField: (field: 'title' | 'priority' | 'owner' | 'targetDate') => void;
 
   // Related data
   decisions: Decision[];
@@ -63,11 +84,29 @@ export interface InitiativeContextValue {
   users: UserInfo[];
   pendingApprovals: PendingApproval[];
 
+  // Gate governance
+  gateRoles: GateRoleAssignment[];
+  setGateRoles: React.Dispatch<React.SetStateAction<GateRoleAssignment[]>>;
+  userGateRoles: string[]; // Current user's gate roles on this initiative
+  statusHistory: StatusHistoryEntry[];
+  gateReadiness: GateReadinessCheck | null;
+
   // Editable fields
   summary: string;
   setSummary: (v: string) => void;
   description: string;
   setDescription: (v: string) => void;
+  // Target state / success criteria (initiative definition)
+  targetDescriptionDraft: string;
+  setTargetDescriptionDraft: (v: string) => void;
+  successCriteriaItems: Array<{ id: string; text: string; done: boolean }>;
+  setSuccessCriteriaItems: React.Dispatch<
+    React.SetStateAction<Array<{ id: string; text: string; done: boolean }>>
+  >;
+  deliverableItems: Array<{ id: string; text: string; done: boolean }>;
+  setDeliverableItems: React.Dispatch<
+    React.SetStateAction<Array<{ id: string; text: string; done: boolean }>>
+  >;
   priority: string;
   setPriority: (v: any) => void;
   ownerId: string;
@@ -80,12 +119,34 @@ export interface InitiativeContextValue {
   setStartDate: (v: string | null) => void;
   endDate: string | null;
   setEndDate: (v: string | null) => void;
-  reminders: ReminderRule[];
-  setReminders: React.Dispatch<React.SetStateAction<ReminderRule[]>>;
-  escalation: EscalationRule | null;
-  setEscalation: React.Dispatch<React.SetStateAction<EscalationRule | null>>;
+  reminders: ReminderRuleWithDelivery[];
+  setReminders: React.Dispatch<React.SetStateAction<ReminderRuleWithDelivery[]>>;
+  escalationRules: EscalationRuleWithConfig[];
+  setEscalationRules: React.Dispatch<React.SetStateAction<EscalationRuleWithConfig[]>>;
   thresholds: WarningThresholds;
   setThresholds: React.Dispatch<React.SetStateAction<WarningThresholds>>;
+
+  // Resources data (Team / Budget / Tools)
+  resourceItems: ResourceItem[];
+  setResourceItems: React.Dispatch<React.SetStateAction<ResourceItem[]>>;
+  budgetItems: BudgetItem[];
+  setBudgetItems: React.Dispatch<React.SetStateAction<BudgetItem[]>>;
+  toolItems: ToolItem[];
+  setToolItems: React.Dispatch<React.SetStateAction<ToolItem[]>>;
+  handleAddResource: (data: Omit<ResourceItem, 'id'>) => Promise<void>;
+  handleUpdateResource: (id: string, data: Partial<ResourceItem>) => Promise<void>;
+  handleDeleteResource: (id: string) => Promise<void>;
+  handleAddBudgetItem: (data: Omit<BudgetItem, 'id'>) => Promise<void>;
+  handleUpdateBudgetItem: (id: string, data: Partial<BudgetItem>) => Promise<void>;
+  handleDeleteBudgetItem: (id: string) => Promise<void>;
+  handleAddTool: (data: Omit<ToolItem, 'id'>) => Promise<void>;
+  handleUpdateTool: (id: string, data: Partial<ToolItem>) => Promise<void>;
+  handleDeleteTool: (id: string) => Promise<void>;
+  intangibleAssets: IntangibleAssetItem[];
+  setIntangibleAssets: React.Dispatch<React.SetStateAction<IntangibleAssetItem[]>>;
+  handleAddIntangibleAsset: (data: Omit<IntangibleAssetItem, 'id'>) => Promise<void>;
+  handleUpdateIntangibleAsset: (id: string, data: Partial<IntangibleAssetItem>) => Promise<void>;
+  handleDeleteIntangibleAsset: (id: string) => Promise<void>;
 
   // UI state
   expandedSections: Set<string>;
@@ -93,6 +154,22 @@ export interface InitiativeContextValue {
   isGeneratingAI: string | null;
   isMutating: boolean;
   currentUserId: string;
+
+  // Timeline milestones & phases
+  timelineMilestones: TimelineMilestone[];
+  setTimelineMilestones: React.Dispatch<React.SetStateAction<TimelineMilestone[]>>;
+  timelinePhases: TimelinePhase[];
+  setTimelinePhases: React.Dispatch<React.SetStateAction<TimelinePhase[]>>;
+  timelineLocked: boolean;
+  baselineVersion: number | null;
+  estimatedDurationMonths: number | null;
+  setEstimatedDurationMonths: (v: number | null) => void;
+
+  // Resources (budget/tools) drafts
+  budgetDraft: string;
+  setBudgetDraft: (v: string) => void;
+  resourceTools: string[];
+  setResourceTools: React.Dispatch<React.SetStateAction<string[]>>;
 
   // Computed values
   status: string;
@@ -114,9 +191,52 @@ export interface InitiativeContextValue {
   handleStatusAction: (action: StatusAction) => Promise<void>;
   handleToggleWatch: () => Promise<void>;
   handleGenerateAI: (section: string) => Promise<any>;
+  // Tasks AI actions (triggered from CTA)
+  tasksAiRequest: { mode: 'analyze' | 'addOne'; nonce: number } | null;
+  requestTasksAi: (mode: 'analyze' | 'addOne') => void;
+  clearTasksAiRequest: () => void;
+  // Decisions AI actions (triggered from CTA)
+  decisionsAiRequest: { mode: 'analyze' | 'addOne'; nonce: number } | null;
+  requestDecisionsAi: (mode: 'analyze' | 'addOne') => void;
+  clearDecisionsAiRequest: () => void;
+  // RAID AI actions (triggered from CTA)
+  raidAiRequest: { nonce: number } | null;
+  requestRaidAi: () => void;
+  clearRaidAiRequest: () => void;
+  // Resources AI actions (triggered from CTA)
+  resourcesAiRequest: { nonce: number } | null;
+  requestResourcesAi: () => void;
+  clearResourcesAiRequest: () => void;
+  // Timeline AI actions (triggered from CTA)
+  timelineAiRequest: { nonce: number } | null;
+  requestTimelineAi: () => void;
+  clearTimelineAiRequest: () => void;
+  // Dependencies AI actions (triggered from CTA)
+  dependenciesAiRequest: { nonce: number } | null;
+  requestDependenciesAi: () => void;
+  clearDependenciesAiRequest: () => void;
+  // Team AI actions (triggered from CTA)
+  teamAiRequest: { nonce: number } | null;
+  requestTeamAi: () => void;
+  clearTeamAiRequest: () => void;
+  // Gates AI actions (triggered from CTA)
+  gatesAiRequest: { nonce: number } | null;
+  requestGatesAi: () => void;
+  clearGatesAiRequest: () => void;
+  // KPIs AI actions (triggered from CTA)
+  kpisAiRequest: { nonce: number } | null;
+  requestKpisAi: () => void;
+  clearKpisAiRequest: () => void;
+  // Success Criteria (targetState) AI actions (triggered from CTA)
+  targetStateAiRequest: { nonce: number } | null;
+  requestTargetStateAi: () => void;
+  clearTargetStateAiRequest: () => void;
   handleCreateTask: () => Promise<void>;
   handleCreateDecision: () => Promise<void>;
+  handleRemoveDecision: (id: string) => Promise<void>;
   handleCreateRaid: () => Promise<void>;
+  handleUpdateRaid: (id: string, updates: Partial<RaidItem>) => void;
+  handleDeleteRaid: (id: string) => Promise<void>;
   handleAddComment: (content: string) => Promise<void>;
   handleRequestApproval: (role: 'owner' | 'sponsor', gateType: string) => Promise<void>;
   handleOpenChat: () => void;

@@ -11,6 +11,9 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
+// Used by security integrity gate and to ensure test bypasses never run in prod.
+const isProductionEnv = process.env.NODE_ENV === 'production';
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -93,6 +96,12 @@ const extractToken = (req: AuthRequest): string | null => {
   if (authHeader) {
     return authHeader;
   }
+
+  // Try cookie (common browser auth)
+  // NOTE: cookie-parser (or compatible) should populate `req.cookies`.
+  // This gate is enforced by scripts/security/verify-security-integrity.ts
+  const cookieToken = (req as any).cookies?.access_token || (req as any).cookies?.token;
+  if (typeof cookieToken === 'string' && cookieToken.length > 0) return cookieToken;
 
   // Try body or query (legacy support)
   const bodyToken = req.body?.token;
@@ -309,7 +318,7 @@ export const verifyToken = asyncHandler(
     //
     // This enables CI Playwright runtime tests without relying on seeded
     // credentials or secrets in CI.
-    if (process.env.E2E_MODE === 'true') {
+    if (!isProductionEnv && process.env.E2E_MODE === 'true') {
       try {
         const decoded = jwtLib.decode(token) as JWTPayload | null;
         if (decoded && (decoded as any).e2e === true && decoded.id) {
@@ -512,6 +521,21 @@ export const setDependencies = (newDeps: Partial<Dependencies>): void => {
     deps = {} as Dependencies;
   }
   deps = { ...deps, ...newDeps };
+};
+
+/**
+ * Internal helpers exposed for unit testing.
+ * Not part of the public middleware API.
+ */
+export const __private__ = {
+  extractToken,
+  mapRole,
+  normalizePermissionRole,
+  getDeps,
+  resetDepsForTests: () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    deps = undefined as any;
+  },
 };
 
 // ==========================================

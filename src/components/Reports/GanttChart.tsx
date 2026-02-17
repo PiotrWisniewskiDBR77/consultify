@@ -234,21 +234,6 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   const [showCriticalPath, setShowCriticalPath] = useState(false);
   const [showWarnings, setShowWarnings] = useState(true);
 
-  // Empty state when no phases provided
-  if (phases.length === 0) {
-    return (
-      <div
-        className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center ${className}`}
-      >
-        <Calendar className="w-12 h-12 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-        <p className="text-lg font-medium text-navy-900 dark:text-white">No schedule data</p>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Add phases to your roadmap to see the Gantt chart
-        </p>
-      </div>
-    );
-  }
-
   // D4.1: Validation
   const scheduleWarnings = useMemo(() => validatePhaseSchedule(phases), [phases]);
   const warningsByPhase = useMemo(() => {
@@ -265,7 +250,8 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   const criticalPathIds = useMemo(() => computePhaseCriticalPath(phases), [phases]);
 
   // Calculate timeline range
-  const maxMonth = Math.max(...phases.map((p) => p.startMonth + p.duration));
+  const maxMonth =
+    phases.length > 0 ? Math.max(...phases.map((p) => p.startMonth + p.duration)) : 12;
   const totalMonths = Math.ceil(maxMonth / 12) * 12;
 
   // Generate timeline headers
@@ -367,6 +353,21 @@ export const GanttChart: React.FC<GanttChartProps> = ({
 
     return lines;
   }, [phases, totalWidth, totalMonths, warningsByPhase, showCriticalPath, criticalPathIds]);
+
+  // Empty state when no phases provided (must be after hooks)
+  if (phases.length === 0) {
+    return (
+      <div
+        className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center ${className}`}
+      >
+        <Calendar className="w-12 h-12 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+        <p className="text-lg font-medium text-navy-900 dark:text-white">No schedule data</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Add phases to your roadmap to see the Gantt chart
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -751,7 +752,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                             <Flag className="w-2 h-2" style={{ color: phase.color }} />
                           </div>
                           {/* Tooltip */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-navy-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white dark:bg-navy-900 text-slate-900 dark:text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                             {isPolish ? milestone.labelPl : milestone.label}
                           </div>
                         </div>

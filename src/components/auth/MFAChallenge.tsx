@@ -86,11 +86,6 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
 
   // Verify TOTP
   const verifyTOTP = async () => {
-    if (code.length !== 6) {
-      setError(t('mfa.challenge.invalidCode', 'Please enter a 6-digit code'));
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -132,11 +127,6 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
 
   // Verify backup code
   const verifyBackupCode = async () => {
-    if (!backupCode.trim()) {
-      setError(t('mfa.challenge.enterBackupCode', 'Please enter a backup code'));
-      return;
-    }
-
     setLoading(true);
     setError(null);
 

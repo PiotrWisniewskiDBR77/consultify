@@ -93,8 +93,8 @@ const getTypeActions = (type: string): string[] => {
 const SNOOZE_PRESETS: { preset: SnoozePreset; labelEn: string; labelPl: string }[] = [
   { preset: '1h', labelEn: '1 hour', labelPl: '1 godzina' },
   { preset: '4h', labelEn: '4 hours', labelPl: '4 godziny' },
-  { preset: 'tomorrow', labelEn: 'Tomorrow', labelPl: 'Jutro' },
-  { preset: 'next_week', labelEn: 'Next week', labelPl: 'Za tydzień' },
+  { preset: '1d', labelEn: '1 day', labelPl: '1 dzień' },
+  { preset: '3d', labelEn: '3 days', labelPl: '3 dni' },
 ];
 
 export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> = ({
@@ -135,7 +135,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
           className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors"
         >
           <CheckSquare size={12} />
-          {isPolish ? 'Otwórz zadanie' : 'Open Task'}
+          {isPolish ? 'Otwórz dokument' : 'Open document'}
         </button>
       );
     }
@@ -151,7 +151,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
           className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-xs font-medium rounded-lg transition-colors"
         >
           <Scale size={12} />
-          {isPolish ? 'Otwórz decyzję' : 'Open Decision'}
+          {isPolish ? 'Otwórz dokument' : 'Open document'}
         </button>
       );
     }
@@ -171,7 +171,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
           className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium rounded-lg transition-colors"
         >
           <Target size={12} />
-          {isPolish ? 'Otwórz inicjatywę' : 'Open Initiative'}
+          {isPolish ? 'Otwórz dokument' : 'Open document'}
         </button>
       );
     }

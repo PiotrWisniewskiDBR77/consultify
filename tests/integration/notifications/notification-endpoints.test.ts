@@ -1,117 +1,65 @@
-/**
- * Notifications Integration Tests
- * Testing notification endpoints
- *
- * @module tests/integration/notifications/notification-endpoints.test.ts
- */
-
-import { describe, it, expect, beforeAll } from 'vitest';
-import express from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
-describe('Notification Endpoints Integration', () => {
-  let app: express.Application;
-  const notifications: any[] = [];
+import { makeTestApp } from '../_helpers/testApp';
 
-  beforeAll(() => {
-    app = express();
-    app.use(express.json());
+const { dbGet, dbRun } = vi.hoisted(() => ({
+  dbGet: vi.fn(),
+  dbRun: vi.fn(),
+}));
 
-    const authMiddleware = (req: any, res: any, next: any) => {
-      if (!req.headers.authorization) return res.status(401).json({ error: 'Unauthorized' });
-      req.user = { id: '1' };
-      next();
-    };
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
+  get: (...args: any[]) => dbGet(...args),
+  run: (...args: any[]) => dbRun(...args),
+}));
 
-    app.get('/api/notifications', authMiddleware, (req, res) => {
-      const unreadOnly = req.query.unread === 'true';
-      let result = notifications.filter((n) => n.userId === req.user.id);
-      if (unreadOnly) result = result.filter((n) => !n.read);
-      res.json(result);
-    });
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+  verifyToken: (_req: any, _res: any, next: any) => next(),
+  isAuthenticated: (_req: any, _res: any, next: any) => next(),
+}));
 
-    app.post('/api/notifications/:id/read', authMiddleware, (req, res) => {
-      const notification = notifications.find((n) => n.id === req.params.id);
-      if (!notification) return res.status(404).json({ error: 'Not found' });
-      notification.read = true;
-      notification.readAt = new Date().toISOString();
-      res.json(notification);
-    });
+async function loadNotificationSettingsRouter() {
+  return (await import('../../../server/src/routes/notifications/notificationSettings.routes.ts'))
+    .default;
+}
 
-    app.post('/api/notifications/read-all', authMiddleware, (req, res) => {
-      notifications
-        .filter((n) => n.userId === req.user.id)
-        .forEach((n) => {
-          n.read = true;
-          n.readAt = new Date().toISOString();
-        });
-      res.json({ success: true });
-    });
+async function makeNotificationSettingsApp() {
+  const router = await loadNotificationSettingsRouter();
+  return makeTestApp({
+    mountPath: '/api/notification-settings',
+    router,
+    beforeMount: (app) => {
+      app.use((req, _res, next) => {
+        (req as any).user = { id: 'u-1', organizationId: 'org-1' };
+        next();
+      });
+    },
+  });
+}
 
-    app.delete('/api/notifications/:id', authMiddleware, (req, res) => {
-      const index = notifications.findIndex((n) => n.id === req.params.id);
-      if (index === -1) return res.status(404).json({ error: 'Not found' });
-      notifications.splice(index, 1);
-      res.status(204).send();
-    });
-
-    // Setup test notifications
-    notifications.push(
-      {
-        id: 'n1',
-        userId: '1',
-        title: 'New message',
-        read: false,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: 'n2',
-        userId: '1',
-        title: 'Task assigned',
-        read: true,
-        createdAt: new Date().toISOString(),
-      }
-    );
+describe('Notification settings routes - REAL integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    dbGet.mockResolvedValue(null);
+    dbRun.mockResolvedValue({ success: true });
   });
 
-  describe('GET /api/notifications', () => {
-    it('should return notifications', async () => {
-      const response = await request(app)
-        .get('/api/notifications')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-    });
-
-    it('should filter unread only', async () => {
-      const response = await request(app)
-        .get('/api/notifications?unread=true')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-    });
+  it('GET / returns defaults when no row exists', async () => {
+    const app = await makeNotificationSettingsApp();
+    const res = await request(app).get('/api/notification-settings');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(expect.objectContaining({ email: expect.any(Object) }));
   });
 
-  describe('POST /api/notifications/:id/read', () => {
-    it('should mark as read', async () => {
-      const response = await request(app)
-        .post('/api/notifications/n1/read')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-      expect(response.body.read).toBe(true);
-    });
+  it('PUT / returns 400 when body is not an object', async () => {
+    const app = await makeNotificationSettingsApp();
+    const res = await request(app).put('/api/notification-settings').send('nope');
+    expect(res.status).toBe(400);
   });
 
-  describe('POST /api/notifications/read-all', () => {
-    it('should mark all as read', async () => {
-      const response = await request(app)
-        .post('/api/notifications/read-all')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-    });
+  it('PATCH /:channel returns 400 for invalid channel', async () => {
+    const app = await makeNotificationSettingsApp();
+    const res = await request(app).patch('/api/notification-settings/nope').send({});
+    expect(res.status).toBe(400);
   });
 });

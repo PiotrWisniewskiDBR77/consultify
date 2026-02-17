@@ -9,7 +9,7 @@
  * - Comment thread with avatars, priorities, timestamps
  * - Inline comment input with priority selector (L/N/H) and AI enhance
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.3
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.3
  */
 
 import { Loader2, MessageSquare, Plus, Sparkles, X } from 'lucide-react';
@@ -276,6 +276,16 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
             }}
           />
 
+          {/* Send */}
+          <button
+            onClick={onSubmitComment}
+            disabled={!commentDraft.trim()}
+            className="text-xs font-medium text-slate-700 dark:text-white hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-40 disabled:text-slate-400 dark:disabled:text-slate-500"
+            title={isPolish ? 'Wyślij komentarz' : 'Send comment'}
+          >
+            {isPolish ? 'Wyślij' : 'Send'}
+          </button>
+
           {/* AI enhance */}
           {onAIEnhance && (
             <button
@@ -292,16 +302,6 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
               AI
             </button>
           )}
-
-          {/* Send */}
-          <button
-            onClick={onSubmitComment}
-            disabled={!commentDraft.trim()}
-            className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40"
-            title={isPolish ? 'Wyślij komentarz' : 'Send comment'}
-          >
-            {isPolish ? 'Wyślij' : 'Send'}
-          </button>
         </div>
       </div>
     </div>

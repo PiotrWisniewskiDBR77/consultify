@@ -1,112 +1,78 @@
-/**
- * Organizations Integration Tests
- * Testing organization endpoints
- *
- * @module tests/integration/organizations/organization-endpoints.test.ts
- */
-
-import { describe, it, expect, beforeAll } from 'vitest';
-import express from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
-describe('Organization Endpoints Integration', () => {
-  let app: express.Application;
-  const orgs = new Map<string, any>();
+import { makeTestApp } from '../_helpers/testApp';
 
-  beforeAll(() => {
-    app = express();
-    app.use(express.json());
+const { getAttributionByOrganization, validateReferralCode, createAttribution } = vi.hoisted(
+  () => ({
+    getAttributionByOrganization: vi.fn(),
+    validateReferralCode: vi.fn(),
+    createAttribution: vi.fn(),
+  })
+);
 
-    const authMiddleware = (req: any, res: any, next: any) => {
-      if (!req.headers.authorization) return res.status(401).json({ error: 'Unauthorized' });
-      req.user = { id: '1', role: 'admin' };
-      next();
-    };
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+  verifyToken: (_req: any, _res: any, next: any) => next(),
+}));
 
-    app.get('/api/organizations', authMiddleware, (req, res) => {
-      res.json(Array.from(orgs.values()));
-    });
+vi.mock('../../../server/src/services/partnerReferralService.js', () => ({
+  getAttributionByOrganization: (...args: any[]) => getAttributionByOrganization(...args),
+  validateReferralCode: (...args: any[]) => validateReferralCode(...args),
+  createAttribution: (...args: any[]) => createAttribution(...args),
+}));
 
-    app.get('/api/organizations/:id', authMiddleware, (req, res) => {
-      const org = orgs.get(req.params.id);
-      if (!org) return res.status(404).json({ error: 'Not found' });
-      res.json(org);
-    });
+vi.mock('../../../server/src/database/Database.js', () => ({
+  getDatabase: () => ({}),
+}));
 
-    app.post('/api/organizations', authMiddleware, (req, res) => {
-      const { name, slug, plan } = req.body;
-      if (!name || !slug) return res.status(400).json({ error: 'Name and slug required' });
-      const id = `org-${Date.now()}`;
-      const org = { id, name, slug, plan: plan || 'free', createdAt: new Date().toISOString() };
-      orgs.set(id, org);
-      res.status(201).json(org);
-    });
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
+  get: vi.fn(async () => null),
+}));
 
-    app.put('/api/organizations/:id', authMiddleware, (req, res) => {
-      const org = orgs.get(req.params.id);
-      if (!org) return res.status(404).json({ error: 'Not found' });
-      const updated = { ...org, ...req.body };
-      orgs.set(req.params.id, updated);
-      res.json(updated);
-    });
+async function loadPartnerCodeRouter() {
+  return (await import('../../../server/src/routes/organization/partner-code.routes.ts')).default;
+}
 
-    app.get('/api/organizations/:id/members', authMiddleware, (req, res) => {
-      res.json([
-        { id: '1', email: 'admin@example.com', role: 'admin' },
-        { id: '2', email: 'member@example.com', role: 'member' },
-      ]);
-    });
+async function makePartnerCodeApp(opts?: { organization_id?: string }) {
+  const router = await loadPartnerCodeRouter();
+  return makeTestApp({
+    mountPath: '/api/organization',
+    router,
+    beforeMount: (app) => {
+      app.use((req, _res, next) => {
+        (req as any).user = { id: 'u-1', organization_id: opts?.organization_id };
+        next();
+      });
+    },
+  });
+}
 
-    app.post('/api/organizations/:id/invite', authMiddleware, (req, res) => {
-      const { email, role } = req.body;
-      if (!email) return res.status(400).json({ error: 'Email required' });
-      res.json({ inviteId: `inv-${Date.now()}`, email, role: role || 'member' });
-    });
+describe('Organization partner code routes - REAL integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getAttributionByOrganization.mockResolvedValue(null);
+    validateReferralCode.mockResolvedValue({ valid: false, error: 'Invalid' });
+    createAttribution.mockResolvedValue({ id: 'attr-1' });
   });
 
-  describe('GET /api/organizations', () => {
-    it('should return organizations', async () => {
-      const response = await request(app)
-        .get('/api/organizations')
-        .set('Authorization', 'Bearer token');
-      expect(response.status).toBe(200);
-    });
+  it('GET /partner-attribution returns 400 when organization_id is missing', async () => {
+    const app = await makePartnerCodeApp();
+    const res = await request(app).get('/api/organization/partner-attribution');
+    expect(res.status).toBe(400);
   });
 
-  describe('POST /api/organizations', () => {
-    it('should create organization', async () => {
-      const response = await request(app)
-        .post('/api/organizations')
-        .set('Authorization', 'Bearer token')
-        .send({ name: 'Test Org', slug: 'test-org', plan: 'pro' });
-
-      expect(response.status).toBe(201);
-      expect(response.body.name).toBe('Test Org');
-    });
-
-    it('should require name and slug', async () => {
-      const response = await request(app)
-        .post('/api/organizations')
-        .set('Authorization', 'Bearer token')
-        .send({});
-
-      expect(response.status).toBe(400);
-    });
+  it('GET /partner-attribution returns null data when no attribution exists', async () => {
+    const app = await makePartnerCodeApp({ organization_id: 'org-1' });
+    const res = await request(app).get('/api/organization/partner-attribution');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ success: true, data: null });
   });
 
-  describe('GET /api/organizations/:id/members', () => {
-    it('should return members', async () => {
-      const createRes = await request(app)
-        .post('/api/organizations')
-        .set('Authorization', 'Bearer token')
-        .send({ name: 'Org', slug: 'org' });
-
-      const response = await request(app)
-        .get(`/api/organizations/${createRes.body.id}/members`)
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-    });
+  it('POST /partner-code returns 400 for invalid partner code', async () => {
+    const app = await makePartnerCodeApp({ organization_id: 'org-1' });
+    const res = await request(app)
+      .post('/api/organization/partner-code')
+      .send({ partnerCode: 'X' });
+    expect(res.status).toBe(400);
   });
 });

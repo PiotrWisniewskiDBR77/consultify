@@ -19,6 +19,7 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import NotificationService from '../services/notificationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
@@ -202,6 +203,10 @@ router.get(
     const limit = Number(req.query.limit) || 50;
     const onlyPending = String(req.query.onlyPending ?? 'true') !== 'false';
 
+    const decisionCols = await getTableColumns('decisions');
+    const prioritySelect = decisionCols.has('priority') ? 'd.priority' : `'MEDIUM' as priority`;
+    const impactSelect = decisionCols.has('impact') ? 'd.impact' : `'MEDIUM' as impact`;
+
     const rows =
       (await queryHelpers.queryAll<any>(
         `
@@ -211,6 +216,8 @@ router.get(
           d.description,
           d.type as decisionType,
           d.status,
+          ${prioritySelect},
+          ${impactSelect},
           d.deadline as dueDate,
           d.created_at as createdAt,
           p.name as projectName
@@ -305,10 +312,14 @@ router.get(
       )) || [];
 
     // 2) Pending decisions (owned)
+    const decisionCols = await getTableColumns('decisions');
+    const decisionPrioritySelect = decisionCols.has('priority')
+      ? 'd.priority'
+      : `'MEDIUM' as priority`;
     const pendingDecisions =
       (await queryHelpers.queryAll<any>(
         `
-        SELECT d.id, d.title, d.description, d.type as decisionType, d.status, d.deadline as dueDate, d.created_at as createdAt,
+        SELECT d.id, d.title, d.description, d.type as decisionType, d.status, ${decisionPrioritySelect}, d.deadline as dueDate, d.created_at as createdAt,
                p.name as projectName
         FROM decisions d
         LEFT JOIN projects p ON d.project_id = p.id
@@ -322,30 +333,31 @@ router.get(
       )) || [];
 
     // 3) Unread notifications (owned)
+    const notifCols = await getTableColumns('notifications');
+    const notifHasRead = notifCols.has('read');
+    const notifReadExpr = notifHasRead ? 'COALESCE(read, 0)' : '0';
+    const notifPrioritySelect = notifCols.has('priority') ? 'priority' : `'normal' as priority`;
+    const notifMessageSelect = notifCols.has('message')
+      ? 'message as body'
+      : notifCols.has('body')
+        ? 'body as body'
+        : `'' as body`;
+
     const unreadNotifications =
       (await queryHelpers.queryAll<any>(
         `
-        -- NOTE: SQLite dev schema uses message + related_object_* (legacy).
-        -- We alias to {body, entityType, entityId} for inbox compatibility.
         SELECT
           id,
           type,
           title,
-          message as body,
-          priority,
-          COALESCE(related_object_type,
-            CASE
-              WHEN task_id IS NOT NULL THEN 'task'
-              WHEN initiative_id IS NOT NULL THEN 'initiative'
-              WHEN project_id IS NOT NULL THEN 'project'
-              ELSE NULL
-            END
-          ) as entityType,
-          COALESCE(related_object_id, task_id, initiative_id, project_id, related_id) as entityId,
+          ${notifMessageSelect},
+          ${notifPrioritySelect},
+          NULL as entityType,
+          NULL as entityId,
           created_at as createdAt
         FROM notifications
         WHERE user_id = ?
-          AND COALESCE(is_read, read, 0) = 0
+          AND ${notifReadExpr} = 0
         ORDER BY created_at DESC
         LIMIT ?
       `,

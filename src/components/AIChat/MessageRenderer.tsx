@@ -294,7 +294,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           {msg.role === 'ai' ? (
             <Bot size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" />
           ) : (
-            <User size={isCompact ? 12 : 14} className="text-slate-400 dark:text-slate-300" />
+            <User size={isCompact ? 12 : 14} className="text-slate-500 dark:text-slate-400" />
           )}
         </div>
 
@@ -302,7 +302,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         <div className="flex flex-col max-w-[85%]">
           {/* Author name for team messages */}
           {msg.role === 'user' && msg.authorName && (
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 mb-0.5 text-right pr-1 font-medium">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 mb-0.5 text-right pr-1 font-medium">
               {msg.authorName}
             </span>
           )}
@@ -310,7 +310,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             className={`relative rounded-xl px-3 py-2 ${isCompact ? 'text-xs' : 'text-sm'} leading-relaxed shadow-sm ${
               msg.role === 'user'
                 ? 'bg-primary-600 text-white rounded-tr-none'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
+                : 'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
             }`}
           >
             {/* AI Message Content */}
@@ -330,7 +330,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                         .map((it: any) => (
                           <div
                             key={it.id}
-                            className="flex items-start justify-between gap-2 text-[11px] bg-white/60 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1"
+                            className="flex items-start justify-between gap-2 text-[11px] bg-slate-100 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1"
                           >
                             <div className="min-w-0">
                               <div className="text-slate-700 dark:text-slate-200 truncate">
@@ -499,7 +499,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               return (
                                 <label
                                   key={id}
-                                  className="flex items-start gap-2 bg-white/60 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1"
+                                  className="flex items-start gap-2 bg-slate-100 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 rounded-md px-2 py-1"
                                 >
                                   <input
                                     type="checkbox"
@@ -598,7 +598,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                             );
                           }
                           return (
-                            <pre className="bg-slate-900 dark:bg-navy-950 text-slate-100 p-2 rounded-lg overflow-x-auto text-xs my-2">
+                            <pre className="bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-slate-100 p-2 rounded-lg overflow-x-auto text-xs my-2">
                               <code className={codeClassName}>{children}</code>
                             </pre>
                           );
@@ -673,7 +673,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                       {meta ? `: ${meta}` : ''}
                                     </div>
                                     {s.snippet ? (
-                                      <div className="mt-1 px-2 py-1 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded text-[10px] leading-snug">
+                                      <div className="mt-1 px-2 py-1 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded text-[10px] leading-snug">
                                         {String(s.snippet).slice(0, 220)}
                                       </div>
                                     ) : null}
@@ -813,7 +813,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                                 .map((f: any, i: number) => (
                                                   <div
                                                     key={`${String(f?.area || 'other')}-${i}`}
-                                                    className="p-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-md"
+                                                    className="p-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-md"
                                                   >
                                                     <div className="text-[11px] text-slate-700 dark:text-slate-200">
                                                       <span className="font-semibold">
@@ -895,13 +895,13 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       value={editingText}
                       onChange={(e) => setEditingText(e.target.value)}
                       rows={3}
-                      className="w-full text-sm bg-white/90 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 outline-none focus:ring-2 focus:ring-primary-500/40 text-navy-900 dark:text-slate-100"
+                      className="w-full text-sm bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-2 outline-none focus:ring-2 focus:ring-primary-500/40 text-slate-900 dark:text-slate-100"
                     />
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={handleCancelEditMessage}
                         disabled={editBusy}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white/80 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-50"
                       >
                         {t('common.cancel', 'Cancel')}
                       </button>
@@ -1080,7 +1080,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             {/* Hover Actions */}
             {isHovered && !msg.isStreaming && (
               <div
-                className={`absolute ${msg.role === 'user' ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'} top-0 flex items-center gap-0.5 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 p-1`}
+                className={`absolute ${msg.role === 'user' ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'} top-0 flex items-center gap-0.5 bg-slate-50 dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 p-1`}
               >
                 {/* Copy */}
                 <button

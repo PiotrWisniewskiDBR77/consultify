@@ -424,7 +424,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
       <div className="space-y-4">
         {webhooks.length === 0 ? (
           <div className="text-center py-12 bg-slate-50 dark:bg-navy-800/50 rounded-xl">
-            <Webhook className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+            <Webhook className="w-12 h-12 mx-auto text-slate-700 dark:text-slate-600 mb-3" />
             <p className="text-slate-500 dark:text-slate-400">
               {t('settings.webhooks.empty', 'No webhooks configured')}
             </p>
@@ -479,7 +479,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
                       <button
                         onClick={() => testWebhook(webhook.id)}
                         disabled={testingWebhook === webhook.id}
-                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand rounded-lg transition-colors disabled:opacity-50"
+                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-brand rounded-lg transition-colors disabled:opacity-50"
                         title={t('settings.webhooks.test', 'Send test event')}
                       >
                         {testingWebhook === webhook.id ? (
@@ -495,7 +495,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
                         className={`p-2 rounded-lg transition-colors ${
                           showSettings === webhook.id
                             ? 'bg-brand text-white'
-                            : 'text-slate-400 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
                         }`}
                         title={t('common.settings', 'Settings')}
                       >
@@ -503,7 +503,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
                       </button>
                       <button
                         onClick={() => setSelectedWebhook(isExpanded ? null : webhook.id)}
-                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand rounded-lg transition-colors"
+                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-brand rounded-lg transition-colors"
                         title={t('settings.webhooks.viewDeliveries', 'View deliveries')}
                       >
                         {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -697,7 +697,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
                       </h5>
                       <button
                         onClick={() => fetchDeliveries(webhook.id)}
-                        className="p-1 text-slate-400 dark:text-slate-500 hover:text-brand rounded"
+                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-brand rounded"
                       >
                         <RefreshCw size={14} />
                       </button>

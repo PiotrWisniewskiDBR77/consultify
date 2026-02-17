@@ -46,6 +46,12 @@
           "description": "Continue your transformation journey. Your workspace awaits.",
           "meta": "EXISTING USER",
           "cta": "Log In"
+        },
+        "audits": {
+          "title": "Global Audits",
+          "description": "DRD, SIRI, ADMA & Lean 4.0 assessment frameworks.",
+          "meta": "INDUSTRIAL EXCELLENCE",
+          "cta": "Explore Audits"
         }
       }
     },
@@ -71,6 +77,201 @@
       "approval": {
         "title": "Human Governance",
         "desc": "Every strategic decision requires human approval. Full accountability and control remain with your leadership."
+      }
+    },
+    "carousel": {
+      "labels": {
+        "notifications": "Notifications",
+        "tasks": "Tasks",
+        "initiatives": "Initiatives",
+        "decisions": "Decisions"
+      },
+      "priority": {
+        "high": "High",
+        "medium": "Medium"
+      },
+      "status": {
+        "onTrack": "On Track",
+        "atRisk": "At Risk"
+      },
+      "phase": {
+        "execution": "Execution",
+        "planning": "Planning",
+        "assessment": "Assessment"
+      },
+      "roi": "ROI",
+      "votes": "votes",
+      "deadline": {
+        "completed": "Completed"
+      },
+      "decisionType": {
+        "financial": "Financial",
+        "strategic": "Strategic",
+        "stageGate": "Stage-Gate"
+      },
+      "slides": {
+        "notifications": {
+          "badge": "{{count}} New",
+          "items": {
+            "0": {
+              "title": "Initiative Deadline",
+              "desc": "Industry 4.0 Roadmap due in 2 days",
+              "time": "2h ago"
+            },
+            "1": {
+              "title": "Task Completed",
+              "desc": "Assessment phase finished by team",
+              "time": "4h ago"
+            },
+            "2": {
+              "title": "New Comment",
+              "desc": "Dr. Kowalski commented on ROI analysis",
+              "time": "6h ago"
+            }
+          }
+        },
+        "tasks": {
+          "title": "My Tasks",
+          "badge": "{{count}} Active",
+          "items": {
+            "0": { "title": "Complete DRD Assessment" },
+            "1": { "title": "Review ROI Projections" },
+            "2": { "title": "Prepare Stage-Gate Report" }
+          }
+        },
+        "initiatives": {
+          "badge": "{{count}} Active",
+          "items": {
+            "0": { "name": "Industry 4.0 Roadmap" },
+            "1": { "name": "Digital Twin Implementation" },
+            "2": { "name": "Supply Chain Optimization" }
+          }
+        },
+        "decisions": {
+          "badge": "{{count}} Pending",
+          "items": {
+            "0": { "title": "Approve Q2 Budget Allocation", "deadline": "2 days" },
+            "1": { "title": "Select Technology Partner", "deadline": "5 days" },
+            "2": { "title": "Phase 2 Go/No-Go" }
+          }
+        }
+      }
+    },
+    "regional": {
+      "title": "Schedule a",
+      "demo": "Demo",
+      "titleEnd": "in Your Region",
+      "subtitle": "Choose your timezone for the best experience"
+    },
+    "regions": {
+      "japan": "Japan",
+      "saudi": "Saudi Arabia",
+      "europe": "Europe",
+      "usa": "United States"
+    },
+    "demo": {
+      "schedule": "Schedule a Demo",
+      "scheduleShort": "Schedule",
+      "getA": "Get a",
+      "bookA": "Book a",
+      "subtext": "Free 30-min call • See Consultinity in action"
+    },
+    "knowledge": {
+      "badge": "Knowledge Base",
+      "title": "Discover Our Expertise",
+      "subtitle": "Proven methodologies and best practices trusted by industry leaders across Europe.",
+      "readMore": "Read Full Article",
+      "exploreAll": "Access Full Knowledge Base",
+      "ctaSubtext": "Start a free trial to unlock all articles, videos, and resources."
+    },
+    "compliance": {
+      "label": "Enterprise-Grade Security & Compliance",
+      "badges": {
+        "iso27001": "ISO 27001",
+        "soc2": "SOC2 Type II",
+        "gdpr": "GDPR",
+        "encryption": "AES-256"
+      },
+      "dataResidency": "Data Residency Options:",
+      "regions": {
+        "eu": "Europe",
+        "us": "North America",
+        "gcc": "Middle East",
+        "jp": "Japan"
+      },
+      "dataNote": "Your data stays in your chosen region • No AI training on your data • Full regulatory compliance"
+    },
+    "trust": {
+      "carouselTagline": "AI analyzes. You command.",
+      "badge": "Enterprise Integrity",
+      "heading": "Intelligence Guided by Human Approval.",
+      "description": "AI is a partner, not an authority. Consultinity implements a strict governance layer where every strategic move requires high-level human validation.",
+      "points": [
+        "Full accountability for every roadmap item",
+        "Multi-tenant data isolation & military-grade security",
+        "SOC2 compliant infrastructure logic"
+      ],
+      "cta": "View Security Overview"
+    },
+    "faq": {
+      "badge": "FAQ",
+      "heading": "Questions? Answers.",
+      "more": "Have more questions?",
+      "contact": "Contact us",
+      "items": [
+        {
+          "q": "What is Consultinity?",
+          "a": "Consultinity is an AI-powered strategic consulting platform that helps industrial organizations navigate digital transformation. It combines artificial intelligence with human governance to deliver actionable roadmaps, not just reports."
+        },
+        {
+          "q": "How is this different from traditional consulting?",
+          "a": "Traditional consulting delivers PowerPoint decks. Consultinity delivers a living system. Our AI continuously analyzes your context, generates initiatives, and tracks execution. You get real-time strategic guidance, not a one-time report that sits on a shelf."
+        },
+        {
+          "q": "Is my data secure?",
+          "a": "Absolutely. We are GDPR compliant with EU data residency. All data is encrypted at rest (AES-256) and in transit (TLS 1.3). We never train AI models on your proprietary data. Enterprise customers can use their own API keys (BYOK)."
+        },
+        {
+          "q": "Do I need technical expertise to use it?",
+          "a": "No. Consultinity is designed for business leaders, not IT specialists. The interface is intuitive, and our AI guides you through every step. We also offer onboarding support and training for your team."
+        },
+        {
+          "q": "Can I try before I buy?",
+          "a": "Yes! We offer a 14-day free trial with full access to all features. No credit card required. You can also request a personalized demo with our team to see the platform in action with your specific use case."
+        },
+        {
+          "q": "What industries do you serve?",
+          "a": "We specialize in manufacturing and industrial sectors, including automotive, aerospace, electronics, food & beverage, and heavy industry. Our assessment frameworks are tailored to Industry 4.0 transformation challenges."
+        }
+      ]
+    },
+    "footer": {
+      "tagline": "Empowering organizations to navigate digital transformation with AI-driven strategy and human-led governance.",
+      "product": {
+        "title": "Product",
+        "demo": "Demo",
+        "trial": "Trial",
+        "pricing": "Pricing",
+        "login": "Log in"
+      },
+      "resources": {
+        "title": "Resources",
+        "masterclass": "Masterclass",
+        "blog": "Blog",
+        "podcast": "Factory on Air"
+      },
+      "company": {
+        "title": "Company",
+        "about": "About",
+        "contact": "Contact"
+      },
+      "legal": {
+        "title": "Legal",
+        "terms": "Terms",
+        "privacy": "Privacy",
+        "cookies": "Cookies",
+        "security": "Security",
+        "allDocuments": "All Documents"
       }
     }
   },
@@ -119,7 +320,14 @@
     "select": "Select",
     "connected": "connected",
     "comingSoon": "In development",
-    "root": "Root"
+    "root": "Root",
+    "videoUnsupported": "Your browser does not support the video tag.",
+    "switchToLightMode": "Switch to light mode",
+    "switchToDarkMode": "Switch to dark mode",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "themeLabel": "Theme",
+    "languageLabel": "Language"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -165,7 +373,18 @@
     "inbox": "Inbox",
     "focus": "Focus",
     "calendar": "Calendar",
-    "tasks": "Tasks"
+    "tasks": "Tasks",
+    "notifications": {
+      "emptyTitle": "No notifications",
+      "emptySubtitle": "You're all caught up!"
+    },
+    "decisions": {
+      "addDecision": "Add decision",
+      "emptyColumn": "No decisions",
+      "emptyTitle": "No decisions yet",
+      "emptySubtitle": "Create your first decision to get started",
+      "createCta": "Create Decision"
+    }
   },
   "step1": {
     "title": "Step 1"
@@ -327,18 +546,243 @@
       "needsTasks": "At least 1 task is required before approval",
       "needsDeadline": "A deadline (end date) is required before approval",
       "needsOwner": "A business owner must be assigned before approval"
+    },
+    "toast": {
+      "saveError": "Failed to save",
+      "watchError": "Failed to change watch status",
+      "createTaskError": "Failed to create task",
+      "createDecisionError": "Failed to create decision",
+      "createRaidError": "Failed to add RAID item"
+    },
+    "drawer": {
+      "overview": "Overview",
+      "timeline": "Timeline",
+      "resources": "Resources",
+      "decisions": "Decisions",
+      "goNoGo": "Go/No-Go",
+      "resourcesCommit": "Resources Commit",
+      "scheduleLock": "Schedule Lock",
+      "quickReview": "Quick review",
+      "gateReadiness": "Gate readiness",
+      "viewDecisions": "View decisions",
+      "notRequested": "Not requested",
+      "summary": "Summary",
+      "noSummary": "No summary provided.",
+      "progress": "Progress",
+      "roi": "ROI",
+      "budget": "Budget",
+      "priority": "Priority",
+      "start": "Start:",
+      "end": "End:",
+      "nextMilestone": "Next milestone",
+      "topRisks": "Top risks / issues",
+      "noRaidItems": "No RAID items yet.",
+      "milestones": "Milestones",
+      "manageInFullView": "Manage in full view",
+      "noMilestones": "No milestones defined yet",
+      "gate": "Gate",
+      "ownership": "Ownership",
+      "businessOwner": "Business Owner",
+      "noBusinessOwner": "No business owner assigned",
+      "executionOwner": "Execution Owner",
+      "noExecutionOwner": "No execution owner assigned",
+      "resourceCapacity": "Resource Capacity",
+      "requiredFte": "Required FTE",
+      "allocatedFte": "Allocated FTE",
+      "manageTeam": "Manage team members in full view",
+      "openFullCard": "Open full card",
+      "gateDecisions": "Gate Decisions",
+      "requestDecision": "+ Request Decision",
+      "noDecisions": "No decisions linked to this initiative",
+      "gateRequirements": "Gate Requirements",
+      "initiative": "Initiative"
+    },
+    "compact": {
+      "summary": "Summary",
+      "tasks": "Tasks",
+      "decisions": "Decisions",
+      "raid": "RAID",
+      "finance": "Finance",
+      "noGoal": "No goal / summary defined yet — add one in the full view.",
+      "team": "Team",
+      "timeline": "Timeline",
+      "budget": "Budget",
+      "risks": "Risks",
+      "openFullCard": "Open Full Initiative Card",
+      "description": "Description",
+      "owner": "Owner",
+      "sponsor": "Sponsor",
+      "targetDate": "Target Date",
+      "created": "Created",
+      "strategicAxis": "Strategic Axis",
+      "tags": "Tags",
+      "killCriteria": "Kill Criteria",
+      "progress": "Progress",
+      "milestones": "Milestones",
+      "blocked": "Blocked ({{count}})",
+      "showLess": "Show less",
+      "showMore": "Show {{count}} more…",
+      "active": "Active ({{count}})",
+      "done": "Done ({{count}})",
+      "noTasks": "No tasks yet",
+      "noDecisions": "No decisions yet",
+      "noRaid": "No RAID items yet",
+      "spent": "Spent",
+      "impact": "Impact",
+      "budgetUtilization": "Budget utilization",
+      "noFinancialData": "No financial data",
+      "pending": "Pending ({{count}})",
+      "resolved": "Resolved ({{count}})"
+    },
+    "hub": {
+      "failedToLoad": "Failed to load initiatives",
+      "retry": "Retry",
+      "dismiss": "Dismiss",
+      "noInitiativesFound": "No initiatives found"
+    },
+    "levelDesc": {
+      "quick_win": "Minimal governance. Can be self-approved.",
+      "standard": "Standard approval flow. Requires owner + deadline + tasks.",
+      "strategic": "Executive approval required. Full charter + RAID analysis.",
+      "transformation": "Board-level governance. Full charter, steering committee, gate reviews."
     }
   },
   "execution": {
     "title": "Execution Center",
     "dashboard": "Dashboard",
     "calendar": "Calendar",
-    "decisions": "Decisions"
+    "decisions": "Decisions",
+    "table": {
+      "type": "Type",
+      "name": "Name",
+      "status": "Status",
+      "assignee": "Assignee",
+      "progress": "Progress",
+      "timeLeft": "Time Left",
+      "alerts": "Alerts",
+      "tasks": "Tasks",
+      "deadline": "Deadline",
+      "unassigned": "Unassigned",
+      "noDeadline": "No deadline"
+    },
+    "badges": {
+      "done": "Done",
+      "overdue": "Overdue",
+      "blocked": "Blocked",
+      "decision": "Decision",
+      "ok": "OK"
+    },
+    "time": {
+      "daysOverdue": "d overdue",
+      "daysLeft": "d left",
+      "weeksLeft": "w left"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "portfolio": {
+      "onTrack": "On Track",
+      "blocked": "Blocked",
+      "overdueDecisions": "Overdue Decisions",
+      "avgProgress": "Avg Progress",
+      "budgetHealth": "Budget Health",
+      "decisionSla": "Decision SLA",
+      "escalationsGates": "Escalations & Gates",
+      "noActiveEscalations": "No active escalations."
+    },
+    "ai": {
+      "priorityRecommendations": "AI Priority Recommendations",
+      "noPriorities": "No upcoming priorities detected.",
+      "timelineConflicts": "AI Timeline Conflicts",
+      "noConflicts": "No timeline conflicts detected.",
+      "riskSuggestions": "AI Risk Suggestions",
+      "noRisks": "No active risks detected."
+    },
+    "empty": {
+      "noInExecution": "No initiatives in execution. Move initiatives to execution first.",
+      "noAvailable": "No initiatives available.",
+      "noDeadlines": "No deadlines scheduled",
+      "deadlinesWillAppear": "Tasks and decisions will appear here"
+    },
+    "detail": {
+      "description": "Description",
+      "blockedReason": "Blocked Reason",
+      "tasks": "Tasks",
+      "noTasks": "No tasks defined for this initiative",
+      "keyRisks": "Key Risks",
+      "progress": "Progress",
+      "timeline": "Timeline",
+      "start": "Start",
+      "plannedEnd": "Planned End",
+      "actualEnd": "Actual End",
+      "owners": "Owners",
+      "businessOwner": "Business Owner",
+      "technicalOwner": "Technical Owner",
+      "noOwners": "No owners assigned",
+      "economics": "Economics",
+      "budgetCapex": "Budget (CAPEX)",
+      "expectedRoi": "Expected ROI",
+      "statusChangeReason": "Please provide a reason for this change.",
+      "statusChangeConfirm": "Are you sure you want to proceed?",
+      "enterReason": "Enter reason...",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "actions": {
+      "newTask": "New Task",
+      "newDecision": "New Decision",
+      "raidLog": "RAID Log",
+      "export": "Export",
+      "report": "Report",
+      "aiChat": "AI Chat"
+    },
+    "raidLog": {
+      "title": "RAID Log",
+      "description": "Track Risks, Assumptions, Issues, and Decisions across all execution initiatives"
+    },
+    "kanban": {
+      "toDo": "To Do",
+      "inProgress": "In Progress",
+      "review": "Review",
+      "blocked": "Blocked",
+      "done": "Done",
+      "dropHere": "Drop here",
+      "noTasks": "No tasks"
+    }
   },
   "benefits": {
     "title": "Benefits Realization",
     "kpis": "KPIs",
-    "lessons": "Lessons Learned"
+    "lessons": "Lessons Learned",
+    "tracker": {
+      "financialBenefits": "Financial Benefits",
+      "of": "of",
+      "target": "target",
+      "avgRealization": "Avg. Realization",
+      "benefitsAchieved": "Benefits Achieved",
+      "inProgress": "In Progress",
+      "allTypes": "All Types",
+      "targetLabel": "Target:",
+      "measurement": "Measurement:",
+      "initiative": "Initiative:",
+      "fetchError": "Failed to load benefits data",
+      "retry": "Retry"
+    },
+    "kpiDashboard": {
+      "title": "KPI Dashboard",
+      "totalKpis": "Total KPIs",
+      "onTarget": "On Target",
+      "atRisk": "At Risk",
+      "offTarget": "Off Target",
+      "achieved": "Achieved",
+      "allCategories": "All Categories",
+      "target": "Target:",
+      "updated": "Updated",
+      "createAction": "Create Action",
+      "linked": "Linked:",
+      "fetchError": "Failed to load KPI data",
+      "retry": "Retry"
+    }
   },
   "economics": {
     "title": "Economics",
@@ -354,10 +798,40 @@
     "logIn": "Log in",
     "logOut": "Log out",
     "welcomeBack": "Welcome back",
+    "signInText": "Sign in to continue",
+    "signinText": "Sign in to continue",
     "email": "Email",
     "password": "Password",
     "forgotPassword": "Forgot password?",
-    "register": "Register"
+    "register": "Register",
+    "orContinueWith": "Or continue with",
+    "orRegisterWith": "Or register with",
+    "noAccount": "Don't have an account?",
+    "createOne": "Create one",
+    "haveAccount": "Already have an account?",
+    "unlockFull": "Unlock full access",
+    "enterCode": "Enter the access code to unlock full mode",
+    "verifyCode": "Verify code",
+    "startQuick": "Start quickly",
+    "setupFull": "Set up full access",
+    "personalize": "Let's personalize your workspace",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "phone": "Phone",
+    "company": "Company",
+    "accessCode": "Access code",
+    "optional": "optional",
+    "accessCodePlaceholder": "Enter code (if you have one)",
+    "createStart": "Create account & start",
+    "tryDemo": "Try demo",
+    "backToStart": "Back to start",
+    "demoMode": "Demo Mode",
+    "demoModeDescription": "For commercial purposes, please contact our sales team. You can explore the platform in demo mode now.",
+    "loginAs": "You will be logged in as:",
+    "loading": "Loading...",
+    "enterDemo": "Enter Demo Mode",
+    "contactSales": "Contact Sales for Full Access",
+    "back": "Back"
   },
   "help": {
     "title": "Help Center",

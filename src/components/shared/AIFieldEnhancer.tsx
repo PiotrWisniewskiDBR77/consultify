@@ -26,7 +26,9 @@ import { Api } from '@/services/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type AIEnhanceMode = 'improve' | 'shorten' | 'expand' | 'formal';
+export type AIEnhanceMode = 'improve' | 'shorten' | 'expand' | 'formal' | 'generate';
+
+export type AIEnhancerOutputFormat = 'paragraph' | 'short' | 'list';
 
 interface ArtifactContext {
   /** Artifact title for prompt context */
@@ -54,16 +56,54 @@ interface AIFieldEnhancerProps {
   disabled?: boolean;
   /** Custom disabled tooltip */
   disabledTooltip?: string;
+  /** Render as icon-only trigger (no "AI" label) */
+  iconOnly?: boolean;
+  /**
+   * Output format hint for the AI.
+   * - paragraph: 2–4 sentences (default)
+   * - short: a single concise line (good for list items / table cells)
+   * - list: multiple items, one per line (good for checklist-like lists)
+   */
+  outputFormat?: AIEnhancerOutputFormat;
 }
 
 // ── Fallback local refinement (when API unavailable) ─────────────────────────
 
-function fallbackRefineText(input: string, mode: AIEnhanceMode, isPolish: boolean): string {
+function fallbackRefineText(
+  input: string,
+  mode: AIEnhanceMode,
+  isPolish: boolean,
+  outputFormat: AIEnhancerOutputFormat
+): string {
+  if (outputFormat === 'list') {
+    const lines = String(input || '')
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (lines.length === 0) return input;
+    const refined = lines.map((l) => fallbackRefineText(l, mode, isPolish, 'short'));
+    return refined.join('\n');
+  }
+
   const normalized = input
     .replace(/\s+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
   if (!normalized) return input;
+
+  if (outputFormat === 'short') {
+    if (mode === 'shorten') {
+      return normalized.length > 90 ? `${normalized.slice(0, 87).trim()}...` : normalized;
+    }
+    if (mode === 'formal') {
+      return normalized.replace(/(^\w)/, (m) => m.toUpperCase());
+    }
+    // improve / expand (fallback): basic cleanup only
+    return normalized
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\.\s*\./g, '.')
+      .replace(/(^\w)/, (m) => m.toUpperCase());
+  }
 
   if (mode === 'shorten') {
     const target = Math.max(120, Math.floor(normalized.length * 0.65));
@@ -101,6 +141,7 @@ function fallbackRefineText(input: string, mode: AIEnhanceMode, isPolish: boolea
 // ── Menu items configuration ─────────────────────────────────────────────────
 
 const MENU_ITEMS: { mode: AIEnhanceMode; label: { en: string; pl: string } }[] = [
+  { mode: 'generate', label: { en: 'Generate', pl: 'Wygeneruj' } },
   { mode: 'improve', label: { en: 'Improve', pl: 'Popraw' } },
   { mode: 'shorten', label: { en: 'Shorten', pl: 'Skróć' } },
   { mode: 'expand', label: { en: 'Expand', pl: 'Rozwiń' } },
@@ -117,9 +158,14 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
   artifactContext,
   disabled = false,
   disabledTooltip,
+  iconOnly = false,
+  outputFormat = 'paragraph',
 }) => {
   const { i18n } = useTranslation();
+  // UI language stays localized, but AI output is standardized to English for international teams.
   const isPolish = i18n.language === 'pl';
+  const targetLanguageName = 'English';
+  const aiLanguage = 'en';
 
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -138,59 +184,144 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [isOpen]);
 
+  const handleGenerate = useCallback(async () => {
+    setLoading(true);
+    setIsOpen(false);
+
+    try {
+      const formatInstruction =
+        outputFormat === 'list'
+          ? [
+              `Format: return 5–8 distinct items.`,
+              `- ONE item per line`,
+              `- No bullets, no numbering, no markdown`,
+              `- No empty lines`,
+            ].join('\n')
+          : outputFormat === 'short'
+            ? [
+                `Format: return ONE concise line (max ~12–16 words).`,
+                `- No quotes, no markdown, no prefixes.`,
+              ].join('\n')
+            : `Length: 2–4 sentences. Style: concrete, delivery-oriented, executive/PMO.`;
+
+      const systemInstruction = [
+        `You are a senior PMO consultant and an expert business writer.`,
+        `Generate professional content for the field "${sectionLabel}" in the context of the artifact "${artifactContext.title || 'initiative'}".`,
+        `Rules:`,
+        `- Output language MUST be ${targetLanguageName}. If the input/context is in another language, translate as needed.`,
+        `- Do NOT invent new facts, numbers, dates, systems, or KPI values that are not present in the provided context. If information is missing, keep it generic and/or explicitly mark what needs confirmation in a single short sentence.`,
+        `- Return ONLY the final field text. No commentary, no quotes, no prefixes, no markdown.`,
+        formatInstruction,
+      ].join('\n');
+
+      let generatedText = '';
+      try {
+        const aiRes = await Api.post('/ai/refine-text', {
+          text: [
+            `[GENERATE FROM SCRATCH]`,
+            `Field: ${sectionLabel}`,
+            `Artifact: ${artifactContext.title || 'initiative'} (${artifactContext.type})`,
+            `Status: ${artifactContext.status || 'draft'}`,
+            `Priority: ${artifactContext.priority || 'medium'}`,
+          ].join('\n'),
+          mode: 'generate',
+          systemInstruction,
+          fieldLabel: sectionLabel,
+          artifactContext,
+          language: aiLanguage,
+        });
+        generatedText = String(aiRes?.text || '').trim();
+      } catch {
+        generatedText = '';
+      }
+
+      if (!generatedText) {
+        throw new Error('Empty AI response');
+      }
+
+      setUndoValue(currentValue);
+      onApply(generatedText);
+      toast.success(isPolish ? 'Treść wygenerowana przez AI' : 'Content generated by AI');
+    } catch {
+      toast.error(
+        isPolish
+          ? 'Nie udało się wygenerować treści przez AI'
+          : 'Failed to generate content with AI'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [currentValue, onApply, isPolish, sectionLabel, artifactContext, outputFormat]);
+
   const handleEnhance = useCallback(
     async (mode: AIEnhanceMode) => {
-      if (!currentValue.trim()) {
-        toast.error(
-          isPolish
-            ? 'Najpierw wpisz treść do edycji AI'
-            : 'Enter some content first to edit with AI'
-        );
-        return;
+      // For generate mode or when field is empty, use generate flow
+      if (mode === 'generate' || !currentValue.trim()) {
+        return handleGenerate();
       }
 
       setLoading(true);
       setIsOpen(false);
 
       try {
-        const instructionByMode: Record<AIEnhanceMode, string> = {
-          improve: isPolish
+        const formatRules =
+          outputFormat === 'list'
             ? [
-                'Popraw tekst wykonując WSZYSTKIE poniższe kroki:',
-                '1. Literówki i ortografia — napraw WSZYSTKIE błędy',
-                '2. Gramatyka i interpunkcja — popraw składnię',
-                '3. Język — zachowaj oryginalny język (polski/angielski)',
-                '4. Skróty myślowe — rozwiń w pełne zdania',
-                '5. Czytelność — popraw strukturę',
-                '6. Profesjonalizm — ton odpowiedni do dokumentacji PMO',
-                '',
-                'WAŻNE: Zwróć TYLKO poprawiony tekst. Zachowaj cały oryginalny sens.',
+                `Formatting requirements:`,
+                `- Keep ONE item per line`,
+                `- Do NOT add bullets/numbering/markdown`,
+                `- Do NOT change the number of lines/items`,
+                `- Do NOT add empty lines`,
               ].join('\n')
-            : [
-                'Improve the text by performing ALL of the following steps:',
-                '1. Typos & spelling — fix ALL errors',
-                '2. Grammar & punctuation — fix syntax',
-                '3. Language — keep the original language (Polish/English)',
-                '4. Shorthand notes — expand into full sentences',
-                '5. Readability — improve structure',
-                '6. Professionalism — PMO documentation tone',
-                '',
-                'IMPORTANT: Return ONLY the corrected text. Keep all original meaning.',
-              ].join('\n'),
-          shorten: isPolish
-            ? 'Skróć tekst o 30-40%, zachowując kluczowy sens i decyzjotwórcze informacje. Napraw po drodze wszelkie literówki i błędy.'
-            : 'Shorten the text by about 30-40% while keeping key meaning and decision-relevant information. Fix any typos and errors along the way.',
-          expand: isPolish
-            ? 'Rozwiń tekst, dodając istotny kontekst, ryzyka i implikacje biznesowe. Napraw po drodze wszelkie literówki i błędy. NIE dodawaj generycznych frazesów — pisz konkretnie w kontekście tego artefaktu.'
-            : 'Expand the text with useful context, risks, and business implications. Fix any typos and errors along the way. Do NOT add generic filler — write specifically in context of this artifact.',
-          formal: isPolish
-            ? 'Przeredaguj tekst w bardziej formalnym, zarządczym tonie. Napraw po drodze wszelkie literówki, błędy ortograficzne i gramatyczne.'
-            : 'Rewrite the text in a more formal executive tone. Fix any typos, spelling errors, and grammar issues along the way.',
+            : outputFormat === 'short'
+              ? [
+                  `Formatting requirements:`,
+                  `- Return ONE concise line (max ~12–16 words)`,
+                  `- No prefixes, no quotes, no markdown`,
+                ].join('\n')
+              : `Keep a professional paragraph form.`;
+
+        // Keep AI instructions in English (international team standard).
+        const instructionByMode: Record<string, string> = {
+          improve: [
+            `Improve the text (keep the meaning) by:`,
+            `- fixing typos, spelling, grammar, punctuation`,
+            `- making it clearer and more decision-oriented`,
+            `- using a professional PMO tone`,
+            `- removing filler and ambiguity where possible`,
+          ].join('\n'),
+          shorten:
+            outputFormat === 'list'
+              ? 'Shorten each item by ~20–30% while preserving meaning (keep one item per line).'
+              : outputFormat === 'short'
+                ? 'Shorten the line while preserving meaning (still one line).'
+                : 'Shorten the text by ~30–40% while preserving decision-relevant information.',
+          expand:
+            outputFormat === 'list'
+              ? 'Make each item more specific and action-oriented without adding new items (keep one item per line).'
+              : outputFormat === 'short'
+                ? 'Make the line slightly more specific/actionable without making it long (still one line).'
+                : 'Expand the text with useful context, risks, dependencies, and business implications. Do NOT add generic filler.',
+          formal:
+            outputFormat === 'list'
+              ? 'Rewrite each item in a more formal, executive tone (keep one item per line).'
+              : outputFormat === 'short'
+                ? 'Rewrite the line in a more formal, executive tone (still one line).'
+                : 'Rewrite in a more formal, executive tone suitable for a steering committee.',
         };
 
-        const systemInstruction = isPolish
-          ? `Jesteś profesjonalnym redaktorem treści PMO. Twoim zadaniem jest NAPRAWIĆ i POPRAWIĆ istniejący tekst użytkownika. Zwróć TYLKO poprawiony tekst — bez komentarzy, bez wyjaśnień, bez cudzysłowów, bez prefiksów. Zachowaj język oryginału.\n\nInstrukcja trybu "${mode}":\n${instructionByMode[mode]}`
-          : `You are a professional PMO content editor. Your job is to FIX and IMPROVE the user's existing text. Return ONLY the corrected text — no commentary, no explanations, no quotes, no prefixes. Keep the original language.\n\nMode "${mode}" instruction:\n${instructionByMode[mode]}`;
+        const systemInstruction = [
+          `You are a professional PMO content editor.`,
+          `Your job is to refine the user's text for the field "${sectionLabel}".`,
+          `Rules:`,
+          `- Output language MUST be ${targetLanguageName}. If the input/context is in another language, translate as needed.`,
+          `- Return ONLY the refined text. No commentary, no explanations, no quotes, no prefixes, no markdown.`,
+          `- Do NOT invent new facts, numbers, dates, systems, or KPI values. If something is unknown, keep it generic.`,
+          formatRules,
+          ``,
+          `Mode "${mode}" instructions:`,
+          instructionByMode[mode] || '',
+        ].join('\n');
 
         let refinedText = '';
         try {
@@ -200,7 +331,7 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
             systemInstruction,
             fieldLabel: sectionLabel,
             artifactContext,
-            language: isPolish ? 'pl' : 'en',
+            language: aiLanguage,
           });
           refinedText = String(aiRes?.text || '').trim();
         } catch {
@@ -209,7 +340,7 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
 
         // Fallback only when API is truly unavailable
         if (!refinedText) {
-          refinedText = fallbackRefineText(currentValue, mode, isPolish);
+          refinedText = fallbackRefineText(currentValue, mode, false, outputFormat);
           toast(
             isPolish
               ? 'Użyto trybu awaryjnego edycji lokalnej (AI chwilowo niedostępne).'
@@ -237,7 +368,7 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
         setLoading(false);
       }
     },
-    [currentValue, onApply, isPolish, sectionLabel, artifactContext]
+    [currentValue, onApply, isPolish, sectionLabel, artifactContext, handleGenerate, outputFormat]
   );
 
   const handleUndo = useCallback(() => {
@@ -259,23 +390,32 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
         title={
           disabledTooltip || (isPolish ? 'Akcje AI dla tego pola' : 'AI actions for this field')
         }
+        aria-label="AI"
       >
         {loading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
-        AI
+        {!iconOnly && 'AI'}
       </button>
 
       {/* Dropdown menu */}
       {isOpen && !disabled && !loading && (
         <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-44 rounded-lg border border-slate-200/70 dark:border-navy-700/70 bg-white/95 dark:bg-navy-900/95 backdrop-blur p-1 shadow-xl">
-          {MENU_ITEMS.map(({ mode, label }) => (
-            <button
-              key={mode}
-              onClick={() => handleEnhance(mode)}
-              className="w-full text-left px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-md transition-colors"
-            >
-              {isPolish ? label.pl : label.en}
-            </button>
-          ))}
+          {MENU_ITEMS.map(({ mode, label }) => {
+            const isGenerate = mode === 'generate';
+            return (
+              <button
+                key={mode}
+                onClick={() => handleEnhance(mode)}
+                className={
+                  isGenerate
+                    ? 'w-full text-left px-2.5 py-1.5 text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-md transition-colors font-medium flex items-center gap-1.5'
+                    : 'w-full text-left px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-md transition-colors'
+                }
+              >
+                {isGenerate ? <Sparkles size={12} /> : null}
+                {isPolish ? label.pl : label.en}
+              </button>
+            );
+          })}
           {undoValue !== undefined && (
             <button
               onClick={handleUndo}

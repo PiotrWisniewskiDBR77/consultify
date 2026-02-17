@@ -362,17 +362,17 @@ export const UsageAnalyticsDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <BarChart2 size={24} className="text-violet-400" />
             AI Usage Analytics
           </h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
+          <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-sm mt-1">
             Comprehensive insights into AI usage patterns and costs
           </p>
         </div>
         <div className="flex items-center gap-3">
           {/* Time Range */}
-          <div className="flex bg-navy-800 rounded-lg p-1">
+          <div className="flex bg-slate-50 dark:bg-navy-800 rounded-lg p-1">
             {(['7d', '30d', '90d'] as TimeRange[]).map((range) => (
               <button
                 key={range}
@@ -380,7 +380,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                 className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
                   timeRange === range
                     ? 'bg-violet-600 text-white'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-white'
+                    : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 {range}
@@ -392,7 +392,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={() => handleExport('csv')}
-              className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors"
             >
               <Download size={16} />
               CSV
@@ -409,7 +409,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
           <button
             onClick={loadAnalytics}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             Refresh
@@ -458,18 +458,18 @@ export const UsageAnalyticsDashboard: React.FC = () => {
       </div>
 
       {/* Period Comparison */}
-      <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <TrendingUp size={18} className="text-emerald-400" />
           Period Comparison (vs Previous {timeRange})
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {comparison.map((item) => (
-            <div key={item.metric} className="p-4 bg-navy-950/50 rounded-lg">
+            <div key={item.metric} className="p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg">
               <div className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
                 {item.metric}
               </div>
-              <div className="text-xl font-bold text-white mb-1">
+              <div className="text-xl font-bold text-slate-900 dark:text-white mb-1">
                 {item.metric.includes('Cost')
                   ? formatCurrency(item.current)
                   : item.metric.includes('Time')
@@ -496,8 +496,8 @@ export const UsageAnalyticsDashboard: React.FC = () => {
       </div>
 
       {/* Trends Chart */}
-      <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Activity size={18} className="text-violet-400" />
           Usage Trends
         </h3>
@@ -515,12 +515,12 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                   style={{ height: `${(point.requests / maxTrendValue) * 100}%`, minHeight: '4px' }}
                 />
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                  <div className="bg-slate-900 border border-white/10 rounded-lg p-2 text-xs whitespace-nowrap">
-                    <div className="font-medium text-white">{point.date}</div>
-                    <div className="text-slate-400 dark:text-slate-500">
+                  <div className="bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg p-2 text-xs whitespace-nowrap">
+                    <div className="font-medium text-slate-900 dark:text-white">{point.date}</div>
+                    <div className="text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {point.requests} requests
                     </div>
-                    <div className="text-slate-400 dark:text-slate-500">
+                    <div className="text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {formatNumber(point.tokens)} tokens
                     </div>
                     <div className="text-emerald-400">{formatCurrency(point.cost)}</div>
@@ -539,29 +539,36 @@ export const UsageAnalyticsDashboard: React.FC = () => {
       {/* Model Usage & Capability Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Model Usage */}
-        <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <Cpu size={18} className="text-blue-400" />
             Model Popularity
           </h3>
           <div className="space-y-3">
             {modelUsage.map((model) => (
               <div key={model.model} className="flex items-center gap-4">
-                <div className="w-28 text-sm text-white font-medium truncate" title={model.model}>
+                <div
+                  className="w-28 text-sm text-slate-900 dark:text-white font-medium truncate"
+                  title={model.model}
+                >
                   {model.model}
                 </div>
                 <div className="flex-1">
-                  <div className="h-6 bg-navy-950 rounded-full overflow-hidden">
+                  <div className="h-6 bg-slate-50 dark:bg-navy-950 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all flex items-center justify-end pr-2"
                       style={{ width: `${model.percentage}%` }}
                     >
-                      <span className="text-xs font-medium text-white">{model.percentage}%</span>
+                      <span className="text-xs font-medium text-slate-900 dark:text-white">
+                        {model.percentage}%
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div className="w-24 text-right">
-                  <div className="text-sm text-white">{formatNumber(model.requests)}</div>
+                  <div className="text-sm text-slate-900 dark:text-white">
+                    {formatNumber(model.requests)}
+                  </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     {formatCurrency(model.cost)}
                   </div>
@@ -572,8 +579,8 @@ export const UsageAnalyticsDashboard: React.FC = () => {
         </div>
 
         {/* Capability Usage */}
-        <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <Target size={18} className="text-amber-400" />
             Usage by Capability
           </h3>
@@ -581,23 +588,27 @@ export const UsageAnalyticsDashboard: React.FC = () => {
             {capabilityUsage.map((cap) => (
               <div key={cap.capability} className="flex items-center gap-4">
                 <div
-                  className="w-32 text-sm text-white font-medium truncate"
+                  className="w-32 text-sm text-slate-900 dark:text-white font-medium truncate"
                   title={cap.capability}
                 >
                   {cap.capability}
                 </div>
                 <div className="flex-1">
-                  <div className="h-6 bg-navy-950 rounded-full overflow-hidden">
+                  <div className="h-6 bg-slate-50 dark:bg-navy-950 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all flex items-center justify-end pr-2"
                       style={{ width: `${cap.percentage}%` }}
                     >
-                      <span className="text-xs font-medium text-white">{cap.percentage}%</span>
+                      <span className="text-xs font-medium text-slate-900 dark:text-white">
+                        {cap.percentage}%
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div className="w-24 text-right">
-                  <div className="text-sm text-white">{formatNumber(cap.requests)}</div>
+                  <div className="text-sm text-slate-900 dark:text-white">
+                    {formatNumber(cap.requests)}
+                  </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     {formatCurrency(cap.cost)}
                   </div>
@@ -609,8 +620,8 @@ export const UsageAnalyticsDashboard: React.FC = () => {
       </div>
 
       {/* Hourly Usage Heatmap */}
-      <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Clock size={18} className="text-cyan-400" />
           Peak Usage Hours
         </h3>
@@ -625,8 +636,8 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                 {hour.hour % 4 === 0 ? `${hour.hour}:00` : ''}
               </div>
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                <div className="bg-slate-900 border border-white/10 rounded px-2 py-1 text-xs whitespace-nowrap">
-                  <div className="text-white">
+                <div className="bg-slate-900 border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-xs whitespace-nowrap">
+                  <div className="text-slate-900 dark:text-white">
                     {hour.hour}:00 - {hour.hour + 1}:00
                   </div>
                   <div className="text-cyan-400">{hour.requests} requests</div>
@@ -683,14 +694,14 @@ const SummaryCard: React.FC<{
   value: string;
   color: string;
 }> = ({ icon: Icon, label, value, color }) => (
-  <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
+  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
     <div className="flex items-center gap-2 mb-2">
       <Icon size={16} className={color} />
       <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
         {label}
       </span>
     </div>
-    <div className="text-xl font-bold text-white">{value}</div>
+    <div className="text-xl font-bold text-slate-900 dark:text-white">{value}</div>
   </div>
 );
 
@@ -701,14 +712,14 @@ const InsightCard: React.FC<{
   icon: any;
   color: string;
 }> = ({ title, value, description, icon: Icon, color }) => (
-  <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
+  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
     <div className="flex items-center gap-3 mb-3">
-      <div className={`p-2 rounded-lg bg-navy-800`}>
+      <div className={`p-2 rounded-lg bg-slate-50 dark:bg-navy-800`}>
         <Icon size={20} className={color} />
       </div>
       <div>
-        <h4 className="text-sm text-slate-400 dark:text-slate-500">{title}</h4>
-        <div className="text-lg font-bold text-white">{value}</div>
+        <h4 className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">{title}</h4>
+        <div className="text-lg font-bold text-slate-900 dark:text-white">{value}</div>
       </div>
     </div>
     <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>

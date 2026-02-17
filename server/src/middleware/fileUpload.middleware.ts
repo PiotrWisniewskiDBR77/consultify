@@ -80,12 +80,14 @@ const fileFilter = (
 /**
  * Multer upload middleware
  */
+export const uploadLimits = {
+  fileSize: 10 * 1024 * 1024, // 10MB max
+  files: 1, // Single file upload
+};
+
 export const upload = multer({
   storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB max
-    files: 1, // Single file upload
-  },
+  limits: uploadLimits,
   fileFilter: fileFilter as any,
 });
 

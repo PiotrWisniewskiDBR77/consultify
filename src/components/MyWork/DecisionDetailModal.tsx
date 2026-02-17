@@ -305,7 +305,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
 
                   <button
                     onClick={onClose}
-                    className="shrink-0 p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                    className="shrink-0 p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                   >
                     <X size={20} />
                   </button>
@@ -410,13 +410,15 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                 <Section title={t('decisions.details', 'Details')} icon={<Calendar size={14} />}>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-xs text-slate-400 dark:text-slate-500">Owner</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                        Owner
+                      </span>
                       <p className="text-slate-700 dark:text-slate-200">
                         {decision.ownerName || 'Unassigned'}
                       </p>
                     </div>
                     <div>
-                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                         Requested by
                       </span>
                       <p className="text-slate-700 dark:text-slate-200">
@@ -424,14 +426,18 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                       </p>
                     </div>
                     <div>
-                      <span className="text-xs text-slate-400 dark:text-slate-500">Created</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                        Created
+                      </span>
                       <p className="text-slate-700 dark:text-slate-200">
                         {formatDateTime(decision.createdAt)}
                       </p>
                     </div>
                     {decision.dueDate && (
                       <div>
-                        <span className="text-xs text-slate-400 dark:text-slate-500">Due Date</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                          Due Date
+                        </span>
                         <p className="text-slate-700 dark:text-slate-200">
                           {formatDateTime(decision.dueDate)}
                         </p>
@@ -457,7 +463,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                                 by {entry.byName}
                               </span>
                             )}
-                            <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">
+                            <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 ml-2">
                               {formatDateTime(entry.at)}
                             </span>
                             {entry.notes && (

@@ -1,6 +1,6 @@
 {
   "discovery": {
-    "title": "Discovery Consultant",
+    "title": "Konsultant Discovery",
     "subtitle": "AI-powered rozmowa z konsultantem",
     "chatTitle": "Konsultant AI",
     "chatSubtitle": "Twój wirtualny partner transformacyjny",
@@ -23,7 +23,7 @@
       "completed": "Sesja zakończona"
     },
     "canvas": {
-      "title": "Discovery Canvas",
+      "title": "Tablica Discovery",
       "categories": {
         "pains": "Problemy",
         "insights": "Spostrzeżenia",
@@ -68,12 +68,12 @@
         "impact": "Wpływ"
       },
       "assessment": {
-        "title": "Assessment",
+        "title": "Ocena",
         "framework": "Framework"
       },
       "initiative": {
         "title": "Inicjatywa",
-        "quickWin": "Quick Win"
+        "quickWin": "Szybki efekt"
       }
     },
     "severity": {
@@ -116,7 +116,7 @@
     "conversion": {
       "title": "Utwórz projekt z Discovery",
       "projectName": "Nazwa projektu",
-      "defaultName": "Discovery: {{company}}",
+      "defaultName": "Rozpoznanie: {{company}}",
       "whatWillBeTransferred": "Co zostanie przeniesione",
       "painPointsCount": "{{count}} problemów",
       "insightsCount": "{{count}} spostrzeżeń",

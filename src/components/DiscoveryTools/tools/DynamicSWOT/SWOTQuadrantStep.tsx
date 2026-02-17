@@ -183,7 +183,7 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
           ))
         ) : (
           <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center">
-            <p className="text-slate-400">
+            <p className="text-slate-500 dark:text-slate-400">
               {isPolish
                 ? 'Dodaj elementy lub poproś AI o sugestie'
                 : 'Add items or ask AI for suggestions'}

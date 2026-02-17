@@ -1,121 +1,93 @@
-/**
- * Analytics Integration Tests
- * Testing analytics endpoints
- *
- * @module tests/integration/analytics/analytics-endpoints.test.ts
- */
-
-import { describe, it, expect, beforeAll } from 'vitest';
-import express from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
-describe('Analytics Endpoints Integration', () => {
-  let app: express.Application;
+import { makeTestApp } from '../_helpers/testApp';
 
-  beforeAll(() => {
-    app = express();
-    app.use(express.json());
+const { dbAll, dbGet } = vi.hoisted(() => ({
+  dbAll: vi.fn(),
+  dbGet: vi.fn(),
+}));
 
-    const authMiddleware = (req: any, res: any, next: any) => {
-      if (!req.headers.authorization) return res.status(401).json({ error: 'Unauthorized' });
-      req.user = { id: '1', orgId: 'org-1' };
-      next();
-    };
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
+  all: (...args: any[]) => dbAll(...args),
+  get: (...args: any[]) => dbGet(...args),
+}));
 
-    app.get('/api/analytics/overview', authMiddleware, (req, res) => {
-      res.json({
-        totalUsers: 150,
-        activeUsers: 85,
-        totalProjects: 42,
-        totalRevenue: 125000,
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+  verifyToken: (_req: any, _res: any, next: any) => next(),
+}));
+
+async function loadAnalyticsRouter() {
+  return (await import('../../../server/src/routes/analytics.routes.ts')).default;
+}
+
+async function makeAnalyticsApp(opts?: { orgId?: string }) {
+  const router = await loadAnalyticsRouter();
+  return makeTestApp({
+    mountPath: '/api/analytics',
+    router,
+    beforeMount: (app) => {
+      app.use((req, _res, next) => {
+        (req as any).user = { id: 'u-1', organizationId: opts?.orgId };
+        next();
       });
-    });
+    },
+  });
+}
 
-    app.get('/api/analytics/users', authMiddleware, (req, res) => {
-      res.json({
-        total: 150,
-        active: 85,
-        new: 12,
-        byPlan: { free: 50, pro: 80, enterprise: 20 },
-      });
-    });
-
-    app.get('/api/analytics/revenue', authMiddleware, (req, res) => {
-      const { from, to } = req.query;
-      res.json({
-        total: 125000,
-        recurring: 95000,
-        oneTime: 30000,
-        period: { from, to },
-      });
-    });
-
-    app.get('/api/analytics/usage', authMiddleware, (req, res) => {
-      res.json({
-        apiCalls: 50000,
-        storage: '45GB',
-        bandwidth: '120GB',
-      });
-    });
-
-    app.post('/api/analytics/events', authMiddleware, (req, res) => {
-      const { event, properties } = req.body;
-      if (!event) return res.status(400).json({ error: 'Event required' });
-      res.status(201).json({ tracked: true, event, properties });
-    });
+describe('Analytics routes - REAL integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    dbAll.mockResolvedValue([]);
+    dbGet.mockResolvedValue(undefined);
   });
 
-  describe('GET /api/analytics/overview', () => {
-    it('should return overview stats', async () => {
-      const response = await request(app)
-        .get('/api/analytics/overview')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-      expect(response.body.totalUsers).toBeDefined();
-    });
+  it('GET /health returns 400 when organizationId is missing', async () => {
+    const app = await makeAnalyticsApp();
+    const res = await request(app).get('/api/analytics/health');
+    expect(res.status).toBe(400);
   });
 
-  describe('GET /api/analytics/users', () => {
-    it('should return user analytics', async () => {
-      const response = await request(app)
-        .get('/api/analytics/users')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-      expect(response.body.byPlan).toBeDefined();
-    });
+  it('GET /health returns initiativesByStatus + overdueTasks', async () => {
+    dbAll.mockResolvedValueOnce([{ status: 'OK', count: 1 }]);
+    dbGet.mockResolvedValueOnce({ overdue_count: 2 });
+    const app = await makeAnalyticsApp({ orgId: 'org-1' });
+    const res = await request(app).get('/api/analytics/health');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(
+      expect.objectContaining({ initiativesByStatus: expect.any(Array), overdueTasks: 2 })
+    );
   });
 
-  describe('GET /api/analytics/revenue', () => {
-    it('should return revenue analytics', async () => {
-      const response = await request(app)
-        .get('/api/analytics/revenue?from=2026-01-01&to=2026-01-31')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-      expect(response.body.total).toBe(125000);
-    });
+  it('GET /performance returns rows from dbAll', async () => {
+    dbAll.mockResolvedValueOnce([{ id: 'u1', total_tasks: 1 }]);
+    const app = await makeAnalyticsApp({ orgId: 'org-1' });
+    const res = await request(app).get('/api/analytics/performance');
+    expect(res.status).toBe(200);
+    expect(res.body[0]).toEqual(expect.objectContaining({ id: 'u1' }));
   });
 
-  describe('POST /api/analytics/events', () => {
-    it('should track event', async () => {
-      const response = await request(app)
-        .post('/api/analytics/events')
-        .set('Authorization', 'Bearer token')
-        .send({ event: 'button_click', properties: { button: 'submit' } });
+  it('GET /economics returns row with actualSpend', async () => {
+    dbGet
+      .mockResolvedValueOnce({ total_capex: 1, total_opex: 2, expected_benefit: 3, total_cost: 3 })
+      .mockResolvedValueOnce({ actual_spend: 9 });
+    const app = await makeAnalyticsApp({ orgId: 'org-1' });
+    const res = await request(app).get('/api/analytics/economics');
+    expect(res.status).toBe(200);
+    expect(res.body.actualSpend).toBe(9);
+  });
 
-      expect(response.status).toBe(201);
-      expect(response.body.tracked).toBe(true);
+  it('GET /economics defaults actualSpend to 0 when spendRow is missing', async () => {
+    dbGet.mockResolvedValueOnce({
+      total_capex: 0,
+      total_opex: 0,
+      expected_benefit: 0,
+      total_cost: 0,
     });
-
-    it('should require event', async () => {
-      const response = await request(app)
-        .post('/api/analytics/events')
-        .set('Authorization', 'Bearer token')
-        .send({});
-
-      expect(response.status).toBe(400);
-    });
+    dbGet.mockResolvedValueOnce(undefined);
+    const app = await makeAnalyticsApp({ orgId: 'org-1' });
+    const res = await request(app).get('/api/analytics/economics');
+    expect(res.status).toBe(200);
+    expect(res.body.actualSpend).toBe(0);
   });
 });

@@ -10,6 +10,7 @@ import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.
 const EscalationService = {} as any; // Stubbed missing service
 import NotificationService from '../../services/notificationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { all as dbAll } from '../../utils/DbPromise.js';
 
 // Validate verifyToken is available at module load time
 if (!verifyToken || typeof verifyToken !== 'function') {
@@ -53,6 +54,83 @@ router.get(
 );
 
 /**
+ * POST /api/notifications/broadcast
+ * Admin-only: broadcast an app/DBR77 message to users in the org (or selected userIds).
+ *
+ * Body:
+ * {
+ *   type: string,
+ *   title: string,
+ *   body?: string,
+ *   message?: string,
+ *   severity?: 'INFO'|'WARNING'|'CRITICAL',
+ *   category?: string,
+ *   actionUrl?: string,
+ *   data?: object,
+ *   userIds?: string[]
+ * }
+ */
+router.post(
+  '/broadcast',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+    const orgId = (req as any).organizationId || req.user?.organizationId;
+    const role = (req as any).userRole || req.user?.role;
+
+    if (!userId || !orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const isAdmin =
+      role === 'ADMIN' ||
+      role === 'SUPERADMIN' ||
+      (req.can && typeof req.can === 'function' && req.can('edit_organization_settings'));
+    if (!isAdmin) return res.status(403).json({ error: 'Admin required' });
+
+    const { type, title, body, message, severity, category, actionUrl, data, userIds } =
+      req.body || {};
+
+    if (!type || typeof type !== 'string')
+      return res.status(400).json({ error: 'type is required' });
+    if (!title || typeof title !== 'string')
+      return res.status(400).json({ error: 'title is required' });
+
+    const resolvedBody =
+      typeof body === 'string' ? body : typeof message === 'string' ? message : '';
+
+    const targets: { id: string }[] =
+      Array.isArray(userIds) && userIds.length > 0
+        ? userIds.filter((x: any) => typeof x === 'string').map((id: string) => ({ id }))
+        : await dbAll<{ id: string }>(
+            `SELECT id FROM users WHERE organization_id = ? AND (status IS NULL OR status = 'active')`,
+            [orgId]
+          );
+
+    const results = await Promise.allSettled(
+      (targets || []).map((u) =>
+        service.send({
+          userId: u.id,
+          organizationId: orgId,
+          type,
+          title,
+          body: resolvedBody || title,
+          message: typeof message === 'string' ? message : resolvedBody,
+          severity: severity as any,
+          isActionable: false,
+          actionUrl: typeof actionUrl === 'string' ? actionUrl : undefined,
+          metadata: typeof category === 'string' ? { category } : undefined,
+          data: typeof data === 'object' && data ? data : undefined,
+        })
+      )
+    );
+
+    const ok = results.filter((r) => r.status === 'fulfilled').length;
+    const failed = results.length - ok;
+    return res.json({ success: true, sent: ok, failed });
+  })
+);
+
+/**
  * GET /api/notifications/counts
  * Get notification counts for user
  */
@@ -68,6 +146,52 @@ router.get(
     try {
       const counts = await service.getCounts(userId);
       return res.json(counts);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * GET /api/notifications/preferences
+ * Get notification preferences for current user (notification_preferences table)
+ */
+router.get(
+  '/preferences',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const prefs = await service.getPreferences(userId);
+      return res.json(prefs || {});
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PATCH /api/notifications/preferences
+ * Update notification preferences for current user (notification_preferences table)
+ */
+router.patch(
+  '/preferences',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const updates = req.body || {};
+      await service.updatePreferences(userId, updates);
+      const next = await service.getPreferences(userId);
+      return res.json(next || {});
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -109,6 +233,28 @@ router.patch(
 
     try {
       await service.markAsRead(req.params.id, userId);
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PATCH /api/notifications/:id/dismiss
+ * Dismiss (hide) a notification without deleting
+ */
+router.patch(
+  '/:id/dismiss',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      await service.dismiss(req.params.id, userId);
       return res.json({ success: true });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -208,6 +354,123 @@ router.delete(
 );
 
 /**
+ * GET /api/notifications/:id
+ * Get a single notification by ID
+ */
+router.get(
+  '/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const notification = await service.getById(req.params.id, userId);
+      if (!notification) {
+        return res.status(404).json({ error: 'Notification not found' });
+      }
+      return res.json(notification);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * GET /api/notifications/:id/comments
+ * Get comments for a notification
+ */
+router.get(
+  '/:id/comments',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const comments = await service.getComments(req.params.id, userId);
+      return res.json(comments);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * POST /api/notifications/:id/comments
+ * Add a comment to a notification
+ */
+router.post(
+  '/:id/comments',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const { content, priority } = req.body;
+      if (!content || typeof content !== 'string') {
+        return res.status(400).json({ error: 'content is required' });
+      }
+      const comment = await service.addComment(req.params.id, userId, content, priority);
+      return res.json(comment);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * DELETE /api/notifications/:id/comments/:commentId
+ * Delete a notification comment
+ */
+router.delete(
+  '/:id/comments/:commentId',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      await service.deleteComment(req.params.commentId, userId);
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * GET /api/notifications/:id/activity-log
+ * Get activity log entries for a notification
+ */
+router.get(
+  '/:id/activity-log',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const log = await service.getActivityLog(req.params.id, userId);
+      return res.json(log);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
  * POST /api/notifications/:id/snooze
  * Snooze a notification until a given time
  */
@@ -235,6 +498,12 @@ router.post(
             break;
           case '4h':
             now.setHours(now.getHours() + 4);
+            break;
+          case '1d':
+            now.setDate(now.getDate() + 1);
+            break;
+          case '3d':
+            now.setDate(now.getDate() + 3);
             break;
           case 'tomorrow':
             now.setDate(now.getDate() + 1);
@@ -281,6 +550,36 @@ router.patch(
       }
 
       await service.updateChecklist(req.params.id, userId, checklist);
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PATCH /api/notifications/:id/worksheet
+ * Persist editable worksheet drafts from NotificationDetailView
+ *
+ * Body: { description?, whyImportant?, blocked?, expectedAction? }
+ */
+router.patch(
+  '/:id/worksheet',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const service = NotificationService;
+    const userId = (req as any).userId || req.user?.id;
+
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const { description, whyImportant, blocked, expectedAction } = req.body || {};
+      await (service as any).updateWorksheetDraft(req.params.id, userId, {
+        ...(description !== undefined ? { description: String(description) } : {}),
+        ...(whyImportant !== undefined ? { whyImportant: String(whyImportant) } : {}),
+        ...(blocked !== undefined ? { blocked: String(blocked) } : {}),
+        ...(expectedAction !== undefined ? { expectedAction: String(expectedAction) } : {}),
+      });
       return res.json({ success: true });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

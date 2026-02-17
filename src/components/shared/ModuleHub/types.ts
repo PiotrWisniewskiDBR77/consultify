@@ -31,7 +31,7 @@ export type ItemStatus =
 
 export interface OpenDocument {
   id: string;
-  type: 'assessment' | 'tool' | 'report' | 'initiative';
+  type: 'assessment' | 'tool' | 'report' | 'initiative' | 'task' | 'decision';
   subType: string; // DRD, SWOT, VSM, etc.
   name: string;
   status: ItemStatus;

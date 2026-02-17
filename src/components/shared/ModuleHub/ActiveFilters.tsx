@@ -30,7 +30,7 @@ export const ActiveFilters: React.FC<ActiveFiltersProps> = ({
   }
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-navy-900/50 border-b border-navy-700">
+    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
       <span className="text-xs text-slate-500 uppercase tracking-wider">Filters:</span>
 
       <div className="flex items-center gap-2 flex-wrap">
@@ -39,15 +39,15 @@ export const ActiveFilters: React.FC<ActiveFiltersProps> = ({
             key={filter.id}
             className={`
               flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium
-              bg-navy-800 border border-navy-600 text-slate-300
+              bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300
               ${filter.color ? `border-l-2 ${filter.color}` : ''}
             `}
           >
-            <span className="text-slate-500">{filter.column}:</span>
+            <span className="text-slate-500 dark:text-slate-400">{filter.column}:</span>
             <span>{filter.label}</span>
             <button
               onClick={() => onRemoveFilter(filter.id)}
-              className="p-0.5 rounded-full hover:bg-navy-600 text-slate-400 hover:text-white transition-colors"
+              className="p-0.5 rounded-full hover:bg-slate-200 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               <X size={12} />
             </button>

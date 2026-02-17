@@ -208,7 +208,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
               </div>
               <button
                 onClick={onClose}
-                className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               >
                 <X size={20} />
               </button>
@@ -251,7 +251,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                           className={`transition-colors ${
                             star <= (hoverRating || rating)
                               ? 'text-amber-400 fill-amber-400'
-                              : 'text-slate-300 dark:text-slate-600'
+                              : 'text-slate-700 dark:text-slate-300 dark:text-slate-600'
                           }`}
                         />
                       </button>
@@ -287,7 +287,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                           className={
                             recommendation === rec.id
                               ? rec.color
-                              : 'text-slate-400 dark:text-slate-500'
+                              : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'
                           }
                         >
                           {rec.icon}
@@ -383,7 +383,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                                         ${
                                           recommendation && !submitting
                                             ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500 cursor-not-allowed'
                                         }
                                     `}
                 >

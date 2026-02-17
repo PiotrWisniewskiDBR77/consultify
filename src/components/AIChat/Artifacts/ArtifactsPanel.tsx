@@ -125,7 +125,7 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
   return (
     <div
       className={`
-        flex flex-col bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700
+        flex flex-col bg-slate-50 dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700
         ${isFullscreen ? 'fixed inset-0 z-50' : 'h-full'}
       `}
     >

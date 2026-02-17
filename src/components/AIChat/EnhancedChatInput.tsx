@@ -84,8 +84,12 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   startVoiceListening,
   stopVoiceListening,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { aiFreezeStatus } = useAppStore();
+  const uiLangBase = String(i18n.language || 'pl')
+    .split('-')[0]
+    .toLowerCase();
+  const uiLang = uiLangBase === 'ja' ? 'jp' : uiLangBase;
 
   // Cloud integrations
   const {
@@ -294,7 +298,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
     // Use chatLanguage prop (conversation language) for speech recognition,
     // falling back to localStorage/default only if not provided.
-    const effectiveLang = chatLanguage || localStorage.getItem('i18nextLng') || 'pl';
+    const effectiveLang = chatLanguage || uiLang || 'pl';
     const langMap: Record<string, string> = {
       pl: 'pl-PL',
       en: 'en-US',
@@ -475,7 +479,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           try {
             const formData = new FormData();
             formData.append('audio', audioBlob, 'audio.webm');
-            formData.append('language', localStorage.getItem('i18nextLng') || 'pl');
+            formData.append('language', chatLanguage || uiLang || 'pl');
 
             const response = await fetch('/api/voice/stt', {
               method: 'POST',

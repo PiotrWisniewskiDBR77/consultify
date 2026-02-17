@@ -8,7 +8,7 @@
  *
  * Follows DBR77 Visual Language — quiet UI, operational feel.
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.5, §2.5.6
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.5, §2.5.6
  */
 
 import { ExternalLink, Filter, List, Plus, Search, SortAsc } from 'lucide-react';

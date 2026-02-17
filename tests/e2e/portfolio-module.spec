@@ -10,7 +10,8 @@ import { test, expect, Page } from '@playwright/test';
 // Test user credentials
 const TEST_USER = {
     email: 'john.smith@dbr77.com',
-    password: 'password123'
+    // Test-only default password (non-secret)
+    password: '123456'
 };
 
 // Helper to login

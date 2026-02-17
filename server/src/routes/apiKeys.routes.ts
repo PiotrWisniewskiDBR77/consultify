@@ -23,7 +23,7 @@ const router = Router();
 
 // All routes require authentication and org context
 router.use(verifyToken);
-router.use(orgContextMiddleware);
+router.use(orgContextMiddleware({ strictWrite: false }));
 
 // ==========================================
 // ROUTES
@@ -35,13 +35,10 @@ router.use(orgContextMiddleware);
  */
 router.get(
   '/',
-  requireOrgAccess({ roles: ['OWNER', 'ADMIN'] }),
+  requireOrgAccess(),
+  requireOrgRole('owner', 'administrator'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.params.orgId || (req as any).org?.id;
-
-    if (!orgId) {
-      return res.status(400).json({ error: 'Organization ID required' });
-    }
 
     const keys = await ApiKeyService.listKeys(orgId);
 
@@ -58,14 +55,10 @@ router.get(
  */
 router.post(
   '/',
-  requireOrgRole(['OWNER', 'ADMIN']),
+  requireOrgRole('owner', 'administrator'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.params.orgId || (req as any).org?.id;
     const { name, permissions, ipWhitelist, rateLimit, expiresInDays } = req.body;
-
-    if (!orgId) {
-      return res.status(400).json({ error: 'Organization ID required' });
-    }
 
     if (!name) {
       return res.status(400).json({ error: 'Name is required' });
@@ -118,7 +111,7 @@ router.post(
  */
 router.post(
   '/:keyId/rotate',
-  requireOrgRole(['OWNER', 'ADMIN']),
+  requireOrgRole('owner', 'administrator'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { keyId } = req.params;
     const { gracePeriodHours } = req.body;
@@ -152,7 +145,7 @@ router.post(
  */
 router.delete(
   '/:keyId',
-  requireOrgRole(['OWNER', 'ADMIN']),
+  requireOrgRole('owner', 'administrator'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { keyId } = req.params;
 

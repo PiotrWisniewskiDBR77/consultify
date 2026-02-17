@@ -43,6 +43,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
+import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 
 import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 
@@ -107,8 +108,8 @@ const TASK_STATUS_COLORS: Record<string, string> = {
   DONE: 'text-emerald-500',
   in_progress: 'text-blue-500',
   IN_PROGRESS: 'text-blue-500',
-  todo: 'text-slate-400',
-  TODO: 'text-slate-400',
+  todo: 'text-slate-500 dark:text-slate-400',
+  TODO: 'text-slate-500 dark:text-slate-400',
   blocked: 'text-red-500',
   BLOCKED: 'text-red-500',
 };
@@ -131,12 +132,12 @@ const RAID_TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string 
   DEPENDENCY: { icon: ChevronRight, color: 'text-purple-500' },
 };
 
-const COMPACT_TABS: { id: CompactTab; label: string; icon: React.ElementType }[] = [
-  { id: 'summary', label: 'Summary', icon: FileText },
-  { id: 'tasks', label: 'Tasks', icon: CheckSquare },
-  { id: 'decisions', label: 'Decisions', icon: Scale },
-  { id: 'raid', label: 'RAID', icon: AlertTriangle },
-  { id: 'finance', label: 'Finance', icon: DollarSign },
+const COMPACT_TABS: { id: CompactTab; labelKey: string; icon: React.ElementType }[] = [
+  { id: 'summary', labelKey: 'initiatives.compact.summary', icon: FileText },
+  { id: 'tasks', labelKey: 'initiatives.compact.tasks', icon: CheckSquare },
+  { id: 'decisions', labelKey: 'initiatives.compact.decisions', icon: Scale },
+  { id: 'raid', labelKey: 'initiatives.compact.raid', icon: AlertTriangle },
+  { id: 'finance', labelKey: 'initiatives.compact.finance', icon: DollarSign },
 ];
 
 // ==========================================
@@ -190,6 +191,10 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
   const [decisions, setDecisions] = useState<DecisionItem[]>([]);
   const [raidItems, setRaidItems] = useState<RaidItem[]>([]);
   const [activeTab, setActiveTab] = useState<CompactTab>('summary');
+  const [gateReadiness, setGateReadiness] = useState<{
+    readiness: any[];
+    availableTransitions: any[];
+  } | null>(null);
 
   const id = initiative?.id || propInitiativeId;
 
@@ -208,10 +213,11 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
       }
 
       // Fetch related data in parallel
-      const [tasksRes, decisionsRes, raidRes] = await Promise.allSettled([
+      const [tasksRes, decisionsRes, raidRes, gateRes] = await Promise.allSettled([
         Api.get(`/tasks?initiativeId=${id}`),
         Api.get(`/decisions?relatedObjectId=${id}&relatedObjectType=initiative`),
         Api.get(`/initiatives/${id}/raid`),
+        Api.get(`/initiatives/${id}/gate-readiness-check`),
       ]);
 
       if (tasksRes.status === 'fulfilled') {
@@ -243,6 +249,10 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           (Array.isArray(raidRes.value) ? raidRes.value : []);
         setRaidItems(arr);
       }
+
+      if (gateRes.status === 'fulfilled') {
+        setGateReadiness(gateRes.value);
+      }
     } catch (e: any) {
       console.error('Failed to load initiative data', e);
     } finally {
@@ -269,6 +279,17 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
   const statusActions = getStatusActions(status);
   const priority = (initiative?.priority || 'medium').toLowerCase();
   const priorityStyle = PRIORITY_COLORS[priority] || PRIORITY_COLORS.medium;
+
+  // Next step CTA data
+  const nextStepInfo = useMemo(
+    () => (initiative ? getNextStep(initiative.status) : null),
+    [initiative]
+  );
+  const healthInfo = useMemo(() => (initiative ? getHealthInfo(initiative) : null), [initiative]);
+  const blockingItems = useMemo(() => {
+    if (!gateReadiness?.readiness) return [];
+    return gateReadiness.readiness.filter((r: any) => r.severity === 'blocking' && !r.pass);
+  }, [gateReadiness]);
 
   const tasksDone = useMemo(
     () => tasks.filter((t) => t.status === 'done' || t.status === 'DONE').length,
@@ -299,13 +320,13 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
       const approvalErrors: string[] = [];
 
       if (tasksTotal === 0) {
-        approvalErrors.push('At least 1 task is required');
+        approvalErrors.push(t('initiatives.approval.needsTasks'));
       }
       if (!initiative.plannedEndDate) {
-        approvalErrors.push('A deadline (end date) must be set');
+        approvalErrors.push(t('initiatives.approval.needsDeadline'));
       }
       if (!initiative.ownerBusiness?.id) {
-        approvalErrors.push('A business owner must be assigned');
+        approvalErrors.push(t('initiatives.approval.needsOwner'));
       }
 
       if (approvalErrors.length > 0) {
@@ -322,7 +343,9 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
     }
 
     try {
-      await Api.patch(`/initiatives/${id}`, { status: action.targetStatus });
+      // Keep in sync with InitiativesHub API routes.
+      // The backend exposes a dedicated status endpoint.
+      await Api.patch(`/initiatives/${id}/status`, { status: action.targetStatus });
       toast.success(
         t('initiatives.toast.statusChangedLabel', 'Status zmieniony na {{label}}', {
           label: action.label,
@@ -358,22 +381,22 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${statusMeta.dotColor}`} />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-              {initiative?.name || 'Loading...'}
+              {initiative?.name || t('common.loading')}
             </h3>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
             {onOpenFull && initiative && (
               <button
                 onClick={() => onOpenFull(initiative)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-purple-500 hover:bg-purple-500/10 transition-all"
-                title="Open full card"
+                className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-purple-500 hover:bg-purple-500/10 transition-all"
+                title={t('initiatives.compact.openFullCard')}
               >
                 <Maximize2 size={14} />
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-all"
+              className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-all"
             >
               <X size={14} />
             </button>
@@ -408,6 +431,57 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             ))}
         </div>
       </div>
+
+      {/* Next Step CTA — "jaki jest kolejny krok z daną inicjatywą" */}
+      {nextStepInfo && initiative && (
+        <div className="flex-shrink-0 px-4 py-2.5 border-b border-slate-100 dark:border-navy-800 bg-primary-50/50 dark:bg-primary-900/10">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {t('initiatives.compact.nextStep', 'Next step')}
+            </span>
+            {healthInfo && (
+              <div className="flex items-center gap-1">
+                <span className={`w-2 h-2 rounded-full ${healthInfo.dotClass}`} />
+                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                  {healthInfo.label}
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <ArrowRight size={14} className="text-primary-500 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                {nextStepInfo.label}
+              </span>
+              {nextStepInfo.role && (
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 ml-1.5">
+                  ({nextStepInfo.role})
+                </span>
+              )}
+            </div>
+          </div>
+          {/* Blocking items — max 3 */}
+          {blockingItems.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {blockingItems.slice(0, 3).map((item: any) => (
+                <span
+                  key={item.key || item.label}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400"
+                >
+                  <AlertTriangle size={10} />
+                  {item.label || item.key}
+                </span>
+              ))}
+              {blockingItems.length > 3 && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
+                  +{blockingItems.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* D3.3 / D3.4: Missing data banner — motivates to fill in initiative info */}
       {initiative &&
@@ -447,7 +521,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             </p>
           ) : (
             <p className="text-[11px] text-slate-400 dark:text-slate-500 italic">
-              No goal / summary defined yet — add one in the full view.
+              {t('initiatives.compact.noGoal')}
             </p>
           )}
         </div>
@@ -458,20 +532,24 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
         <div className="grid grid-cols-5 gap-2">
           <MetricBox
             icon={CheckSquare}
-            label="Tasks"
+            label={t('initiatives.compact.tasks')}
             value={`${tasksDone}/${tasksTotal}`}
             color="text-blue-500"
             progress={taskProgress}
           />
           <MetricBox
             icon={Users}
-            label="Team"
+            label={t('initiatives.compact.team')}
             value={(initiative as any)?.ownerBusiness ? '✓' : '—'}
-            color={(initiative as any)?.ownerBusiness ? 'text-purple-500' : 'text-slate-400'}
+            color={
+              (initiative as any)?.ownerBusiness
+                ? 'text-purple-500'
+                : 'text-slate-500 dark:text-slate-400'
+            }
           />
           <MetricBox
             icon={Calendar}
-            label="Timeline"
+            label={t('initiatives.compact.timeline')}
             value={
               initiative?.plannedEndDate
                 ? new Date(initiative.plannedEndDate).toLocaleDateString('en-GB', {
@@ -484,7 +562,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           />
           <MetricBox
             icon={DollarSign}
-            label="Budget"
+            label={t('initiatives.compact.budget')}
             value={(() => {
               const amt =
                 (initiative as any)?.estimatedBudget ||
@@ -499,9 +577,9 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           />
           <MetricBox
             icon={AlertTriangle}
-            label="Risks"
+            label={t('initiatives.compact.risks')}
             value={`${riskCount}R/${issueCount}I`}
-            color={riskCount > 0 ? 'text-red-500' : 'text-slate-400'}
+            color={riskCount > 0 ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'}
           />
         </div>
       </div>
@@ -529,7 +607,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               }`}
             >
               <Icon size={12} />
-              {tab.label}
+              {t(tab.labelKey)}
               {count !== undefined && count > 0 && (
                 <span
                   className={`ml-0.5 px-1 py-0 rounded text-[9px] font-bold ${activeTab === tab.id ? 'bg-purple-500/15 text-purple-500' : 'bg-slate-200 dark:bg-navy-700 text-slate-500'}`}
@@ -567,7 +645,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500/10 to-violet-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-semibold hover:from-purple-500/20 hover:to-violet-500/20 transition-all"
           >
             <Maximize2 size={14} />
-            Open Full Initiative Card
+            {t('initiatives.compact.openFullCard')}
           </button>
         </div>
       )}
@@ -609,7 +687,7 @@ const MetricBox: React.FC<{
   <div className="text-center">
     <Icon size={14} className={`mx-auto mb-1 ${color}`} />
     <p className={`text-xs font-bold ${color}`}>{value}</p>
-    <p className="text-[9px] text-slate-400">{label}</p>
+    <p className="text-[9px] text-slate-500 dark:text-slate-400">{label}</p>
     {progress !== undefined && (
       <div className="mt-1 w-full h-1 rounded-full bg-slate-200 dark:bg-navy-700">
         <div
@@ -629,6 +707,7 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
   initiative,
   users,
 }) => {
+  const { t } = useTranslation();
   if (!initiative) return null;
   const init = initiative as any;
 
@@ -637,8 +716,8 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
       {/* Description */}
       {(init.summary || init.description) && (
         <div>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            Description
+          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+            {t('initiatives.compact.description')}
           </p>
           <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-6">
             {init.summary || init.description}
@@ -649,25 +728,43 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
       {/* Key Info Grid */}
       <div className="grid grid-cols-2 gap-2">
         {[
-          { label: 'Owner', value: init.ownerName || init.owner?.name || '—', icon: Users },
-          { label: 'Sponsor', value: init.sponsorName || init.sponsor?.name || '—', icon: Shield },
           {
-            label: 'Target Date',
+            labelKey: 'initiatives.compact.owner',
+            value: init.ownerName || init.owner?.name || '—',
+            icon: Users,
+          },
+          {
+            labelKey: 'initiatives.compact.sponsor',
+            value: init.sponsorName || init.sponsor?.name || '—',
+            icon: Shield,
+          },
+          {
+            labelKey: 'initiatives.compact.targetDate',
             value: formatDate(init.plannedEndDate || init.targetDate),
             icon: Calendar,
           },
-          { label: 'Created', value: formatDate(init.createdAt || init.created_at), icon: Clock },
-          { label: 'Strategic Axis', value: init.strategicAxis || init.axis || '—', icon: Target },
           {
-            label: 'Budget',
+            labelKey: 'initiatives.compact.created',
+            value: formatDate(init.createdAt || init.created_at),
+            icon: Clock,
+          },
+          {
+            labelKey: 'initiatives.compact.strategicAxis',
+            value: init.strategicAxis || init.axis || '—',
+            icon: Target,
+          },
+          {
+            labelKey: 'initiatives.compact.budget',
             value: init.estimatedBudget ? `${init.estimatedBudget.toLocaleString()} PLN` : '—',
             icon: DollarSign,
           },
         ].map((item) => (
-          <div key={item.label} className="p-2 rounded-lg bg-slate-50 dark:bg-navy-800/50">
+          <div key={item.labelKey} className="p-2 rounded-lg bg-slate-50 dark:bg-navy-800/50">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <item.icon size={10} className="text-slate-400" />
-              <span className="text-[9px] text-slate-400 font-medium">{item.label}</span>
+              <item.icon size={10} className="text-slate-500 dark:text-slate-400" />
+              <span className="text-[9px] text-slate-500 dark:text-slate-400 font-medium">
+                {t(item.labelKey)}
+              </span>
             </div>
             <p className="text-xs text-slate-700 dark:text-slate-300 font-medium truncate">
               {item.value}
@@ -679,8 +776,8 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
       {/* Tags */}
       {init.tags?.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-            Tags
+          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+            {t('initiatives.compact.tags')}
           </p>
           <div className="flex flex-wrap gap-1">
             {init.tags.map((tag: string) => (
@@ -699,7 +796,7 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
       {init.killCriteria?.length > 0 && (
         <div>
           <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-1.5">
-            Kill Criteria
+            {t('initiatives.compact.killCriteria')}
           </p>
           <ul className="space-y-1">
             {init.killCriteria.map((kc: string, i: number) => (
@@ -725,14 +822,15 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
   tasks,
   milestones,
 }) => {
+  const { t } = useTranslation();
   const [showAllActive, setShowAllActive] = React.useState(false);
   const [showAllBlocked, setShowAllBlocked] = React.useState(false);
 
   if (tasks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-32 text-slate-400">
+      <div className="flex flex-col items-center justify-center h-32 text-slate-500 dark:text-slate-400">
         <CheckSquare size={24} className="mb-2 opacity-30" />
-        <p className="text-xs">No tasks yet</p>
+        <p className="text-xs">{t('initiatives.compact.noTasks')}</p>
       </div>
     );
   }
@@ -768,7 +866,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
       {milestones.length > 0 && (
         <div>
           <p className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-            <Flag size={10} /> Milestones
+            <Flag size={10} /> {t('initiatives.compact.milestones')}
           </p>
           {milestones.map((ms) => (
             <div
@@ -779,7 +877,9 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
               <span className="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate">
                 {ms.title}
               </span>
-              <span className="text-[10px] text-slate-400">{formatDate(ms.dueDate)}</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                {formatDate(ms.dueDate)}
+              </span>
             </div>
           ))}
         </div>
@@ -789,7 +889,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
       {byStatus.blocked.length > 0 && (
         <div>
           <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-1">
-            Blocked ({byStatus.blocked.length})
+            {t('initiatives.compact.blocked', { count: byStatus.blocked.length })}
           </p>
           {visibleBlocked.map((t) => (
             <CompactTaskRow key={t.id} task={t} />
@@ -800,8 +900,10 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
               className="w-full text-center py-1 text-[10px] font-medium text-red-400 hover:text-red-300 transition-colors"
             >
               {showAllBlocked
-                ? 'Show less'
-                : `Show ${byStatus.blocked.length - MAX_VISIBLE_TASKS} more…`}
+                ? t('initiatives.compact.showLess')
+                : t('initiatives.compact.showMore', {
+                    count: byStatus.blocked.length - MAX_VISIBLE_TASKS,
+                  })}
             </button>
           )}
         </div>
@@ -810,8 +912,8 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
       {/* Active — B7.3: truncated */}
       {byStatus.active.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            Active ({byStatus.active.length})
+          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+            {t('initiatives.compact.active', { count: byStatus.active.length })}
           </p>
           {visibleActive.map((t) => (
             <CompactTaskRow key={t.id} task={t} />
@@ -819,11 +921,13 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
           {byStatus.active.length > MAX_VISIBLE_TASKS && (
             <button
               onClick={() => setShowAllActive((v) => !v)}
-              className="w-full text-center py-1 text-[10px] font-medium text-slate-400 hover:text-slate-300 transition-colors"
+              className="w-full text-center py-1 text-[10px] font-medium text-slate-400 hover:text-slate-700 dark:text-slate-300 transition-colors"
             >
               {showAllActive
-                ? 'Show less'
-                : `Show ${byStatus.active.length - MAX_VISIBLE_TASKS} more…`}
+                ? t('initiatives.compact.showLess')
+                : t('initiatives.compact.showMore', {
+                    count: byStatus.active.length - MAX_VISIBLE_TASKS,
+                  })}
             </button>
           )}
         </div>
@@ -833,7 +937,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
       {byStatus.done.length > 0 && (
         <details className="group">
           <summary className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider cursor-pointer hover:text-emerald-500 transition-colors">
-            Done ({byStatus.done.length})
+            {t('initiatives.compact.done', { count: byStatus.done.length })}
           </summary>
           <div className="mt-1 opacity-60">
             {byStatus.done.map((t) => (
@@ -848,7 +952,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
 
 const CompactTaskRow: React.FC<{ task: TaskItem }> = ({ task }) => {
   const isDone = task.status === 'done' || task.status === 'DONE';
-  const statusColor = TASK_STATUS_COLORS[task.status] || 'text-slate-400';
+  const statusColor = TASK_STATUS_COLORS[task.status] || 'text-slate-500 dark:text-slate-400';
 
   return (
     <div
@@ -859,7 +963,9 @@ const CompactTaskRow: React.FC<{ task: TaskItem }> = ({ task }) => {
         {task.title}
       </span>
       {task.dueDate && (
-        <span className="text-[9px] text-slate-400 flex-shrink-0">{formatDate(task.dueDate)}</span>
+        <span className="text-[9px] text-slate-500 dark:text-slate-400 flex-shrink-0">
+          {formatDate(task.dueDate)}
+        </span>
       )}
     </div>
   );
@@ -870,11 +976,12 @@ const CompactTaskRow: React.FC<{ task: TaskItem }> = ({ task }) => {
 // ==========================================
 
 const DecisionsTab: React.FC<{ decisions: DecisionItem[] }> = ({ decisions }) => {
+  const { t } = useTranslation();
   if (decisions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-32 text-slate-400">
+      <div className="flex flex-col items-center justify-center h-32 text-slate-500 dark:text-slate-400">
         <Scale size={24} className="mb-2 opacity-30" />
-        <p className="text-xs">No decisions yet</p>
+        <p className="text-xs">{t('initiatives.compact.noDecisions')}</p>
       </div>
     );
   }
@@ -887,7 +994,7 @@ const DecisionsTab: React.FC<{ decisions: DecisionItem[] }> = ({ decisions }) =>
       {pending.length > 0 && (
         <div>
           <p className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider mb-1.5">
-            Pending ({pending.length})
+            {t('initiatives.compact.pending', { count: pending.length })}
           </p>
           {pending.map((d) => (
             <CompactDecisionRow key={d.id} decision={d} />
@@ -896,8 +1003,8 @@ const DecisionsTab: React.FC<{ decisions: DecisionItem[] }> = ({ decisions }) =>
       )}
       {resolved.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-            Resolved ({resolved.length})
+          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+            {t('initiatives.compact.resolved', { count: resolved.length })}
           </p>
           {resolved.map((d) => (
             <CompactDecisionRow key={d.id} decision={d} />
@@ -915,7 +1022,7 @@ const CompactDecisionRow: React.FC<{ decision: DecisionItem }> = ({ decision }) 
       <Scale size={12} className="text-amber-500 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-xs text-slate-700 dark:text-slate-300 truncate">{decision.title}</p>
-        <p className="text-[9px] text-slate-400">
+        <p className="text-[9px] text-slate-500 dark:text-slate-400">
           {decision.type} {decision.dueDate ? `• Due ${formatDate(decision.dueDate)}` : ''}
         </p>
       </div>
@@ -933,11 +1040,12 @@ const CompactDecisionRow: React.FC<{ decision: DecisionItem }> = ({ decision }) 
 // ==========================================
 
 const RaidTab: React.FC<{ items: RaidItem[] }> = ({ items }) => {
+  const { t } = useTranslation();
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-32 text-slate-400">
+      <div className="flex flex-col items-center justify-center h-32 text-slate-500 dark:text-slate-400">
         <AlertTriangle size={24} className="mb-2 opacity-30" />
-        <p className="text-xs">No RAID items yet</p>
+        <p className="text-xs">{t('initiatives.compact.noRaid')}</p>
       </div>
     );
   }
@@ -984,10 +1092,12 @@ const RaidTab: React.FC<{ items: RaidItem[] }> = ({ items }) => {
             <div className="flex-1 min-w-0">
               <p className="text-xs text-slate-700 dark:text-slate-300">{item.title}</p>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[9px] text-slate-400 uppercase">{item.type}</span>
+                <span className="text-[9px] text-slate-500 dark:text-slate-400 uppercase">
+                  {item.type}
+                </span>
                 {item.severity && (
                   <span
-                    className={`text-[9px] font-medium ${item.severity === 'CRITICAL' || item.severity === 'HIGH' ? 'text-red-500' : 'text-slate-400'}`}
+                    className={`text-[9px] font-medium ${item.severity === 'CRITICAL' || item.severity === 'HIGH' ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'}`}
                   >
                     {item.severity}
                   </span>
@@ -1006,6 +1116,7 @@ const RaidTab: React.FC<{ items: RaidItem[] }> = ({ items }) => {
 // ==========================================
 
 const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ initiative }) => {
+  const { t } = useTranslation();
   const init = initiative as any;
   if (!init) return null;
 
@@ -1018,37 +1129,39 @@ const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ init
       <div className="grid grid-cols-2 gap-3">
         {[
           {
-            label: 'Budget',
+            labelKey: 'initiatives.compact.budget',
             value: budget ? `${Number(budget).toLocaleString()} PLN` : '—',
             icon: DollarSign,
             color: 'text-blue-500',
           },
           {
-            label: 'Spent',
+            labelKey: 'initiatives.compact.spent',
             value: spent ? `${Number(spent).toLocaleString()} PLN` : '—',
             icon: TrendingUp,
             color: 'text-amber-500',
           },
           {
-            label: 'ROI',
+            labelKey: 'initiatives.drawer.roi',
             value: roi ? `${roi}%` : '—',
             icon: BarChart3,
             color: 'text-emerald-500',
           },
           {
-            label: 'Impact',
+            labelKey: 'initiatives.compact.impact',
             value: init.impact || init.strategicImpact || '—',
             icon: Target,
             color: 'text-purple-500',
           },
         ].map((item) => (
           <div
-            key={item.label}
+            key={item.labelKey}
             className="p-3 rounded-xl bg-slate-50 dark:bg-navy-800/50 border border-slate-100 dark:border-navy-700/50 text-center"
           >
             <item.icon size={16} className={`mx-auto mb-1 ${item.color}`} />
             <p className={`text-sm font-bold ${item.color}`}>{item.value}</p>
-            <p className="text-[9px] text-slate-400 mt-0.5">{item.label}</p>
+            <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
+              {t(item.labelKey)}
+            </p>
           </div>
         ))}
       </div>
@@ -1056,7 +1169,7 @@ const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ init
       {budget && spent && (
         <div className="p-3 rounded-xl bg-slate-50 dark:bg-navy-800/50">
           <div className="flex justify-between text-[10px] text-slate-500 mb-1">
-            <span>Budget utilization</span>
+            <span>{t('initiatives.compact.budgetUtilization')}</span>
             <span>{Math.round((Number(spent) / Number(budget)) * 100)}%</span>
           </div>
           <ProgressBar
@@ -1068,9 +1181,9 @@ const FinanceTab: React.FC<{ initiative: PortfolioInitiative | null }> = ({ init
       )}
 
       {!budget && !roi && !spent && (
-        <div className="flex flex-col items-center justify-center h-24 text-slate-400">
+        <div className="flex flex-col items-center justify-center h-24 text-slate-500 dark:text-slate-400">
           <DollarSign size={24} className="mb-2 opacity-30" />
-          <p className="text-xs">No financial data</p>
+          <p className="text-xs">{t('initiatives.compact.noFinancialData')}</p>
         </div>
       )}
     </div>

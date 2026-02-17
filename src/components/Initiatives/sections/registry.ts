@@ -18,11 +18,13 @@ import { FinancialAnalysisSection } from './FinancialAnalysisSection';
 import { FinancialImpactSection } from './FinancialImpactSection';
 import { GateReadinessSection } from './GateReadinessSection';
 import { HistorySection } from './HistorySection';
+import { InitiativeTeamSection } from './InitiativeTeamSection';
 import { KpisSection } from './KpisSection';
 import { LinkedItemsSection } from './LinkedItemsSection';
 import { OverviewSection } from './OverviewSection';
 import { PilotSection } from './PilotSection';
 import { ProblemDefinitionSection } from './ProblemDefinitionSection';
+import { RaciEscalationSection } from './RaciEscalationSection';
 import { RaidSection } from './RaidSection';
 import { RemindersSection } from './RemindersSection';
 import { ResourcesSection } from './ResourcesSection';
@@ -63,6 +65,8 @@ export const SECTION_REGISTRY: Record<string, React.ComponentType<InitiativeSect
   // Right column - Control/Meta
   control: ControlSection,
   team: TeamSection,
+  initiativeTeam: InitiativeTeamSection,
+  raciEscalation: RaciEscalationSection,
   timeline: TimelineSection,
   resources: ResourcesSection,
   stakeholders: StakeholdersSection,
@@ -88,6 +92,8 @@ export function getSectionComponent(
  * Maps section keys to their default order values.
  */
 export const DEFAULT_SECTION_ORDER: Record<string, number> = {
+  // Match system defaults seeded in `server/migrations/529_initiative_section_types.sql`
+  // Left column (content)
   overview: 10,
   problemDefinition: 20,
   targetState: 30,
@@ -102,7 +108,7 @@ export const DEFAULT_SECTION_ORDER: Record<string, number> = {
   pilot: 120,
   comments: 130,
   history: 140,
-  // Right column
+  // Right column (control/meta)
   control: 10,
   team: 20,
   timeline: 30,
@@ -110,10 +116,13 @@ export const DEFAULT_SECTION_ORDER: Record<string, number> = {
   stakeholders: 50,
   dependencies: 60,
   attachments: 70,
-  linkedItems: 75,
   tags: 80,
   reminders: 90,
   watchers: 100,
+  // Legacy/optional sections kept for compatibility
+  initiativeTeam: 120,
+  raciEscalation: 130,
+  linkedItems: 140,
 };
 
 /**
@@ -121,22 +130,33 @@ export const DEFAULT_SECTION_ORDER: Record<string, number> = {
  * Matches the current "show everything" behavior.
  */
 export const DEFAULT_VISIBLE_SECTIONS: Record<string, boolean> = {
+  // Core initiative cards enabled by default (aligned with system seed)
   overview: true,
+  problemDefinition: true,
+  targetState: true,
+  scope: true,
   tasks: true,
   decisions: true,
   raid: true,
   gates: true,
   financialAnalysis: true,
   financialImpact: true,
+  kpis: true,
   comments: true,
   history: true,
   control: true,
   team: true,
   timeline: true,
-  attachments: true,
-  linkedItems: true,
+  resources: true,
   stakeholders: true,
-  reminders: true,
-  tags: true,
   dependencies: true,
+  attachments: true,
+  tags: true,
+  reminders: true,
+  // Optional sections (off by default unless enabled by template)
+  pilot: false,
+  watchers: false,
+  initiativeTeam: false,
+  raciEscalation: false,
+  linkedItems: false,
 };

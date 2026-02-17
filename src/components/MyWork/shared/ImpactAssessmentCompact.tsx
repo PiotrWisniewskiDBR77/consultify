@@ -176,7 +176,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
             const colorClass = getImpactColor(level);
             return (
               <div key={dim.id} className="flex items-center gap-2">
-                <Icon size={16} className="text-slate-400" />
+                <Icon size={16} className="text-slate-500 dark:text-slate-400" />
                 <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">
                   {isPolish ? dim.name.pl : dim.name.en}
                 </span>
@@ -227,7 +227,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Icon size={14} className="text-slate-400" />
+                    <Icon size={14} className="text-slate-500 dark:text-slate-400" />
                     <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
                       {isPolish ? dim.name.pl : dim.name.en}
                     </span>
@@ -235,7 +235,7 @@ export const ImpactAssessmentCompact: React.FC<ImpactAssessmentCompactProps> = (
                   {!readOnly && (
                     <ChevronDown
                       size={14}
-                      className={`text-slate-400 transition-transform ${
+                      className={`text-slate-500 dark:text-slate-400 transition-transform ${
                         isExpanded ? 'rotate-180' : ''
                       }`}
                     />

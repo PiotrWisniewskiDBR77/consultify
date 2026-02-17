@@ -411,6 +411,8 @@ class MetricsService {
     this.throughputUpdateInterval = setInterval(() => {
       this.calculateThroughput();
     }, 1000);
+    // Do not keep the Node.js event loop alive (important for tests/CLI runs).
+    this.throughputUpdateInterval.unref?.();
   }
 
   /**
@@ -505,9 +507,11 @@ export function getMetricsService(): MetricsService {
   if (!instance) {
     instance = new MetricsService();
     // Start periodic memory updates (every 30 seconds)
-    setInterval(() => {
+    const memoryInterval = setInterval(() => {
       instance?.updateMemoryMetrics();
     }, 30000);
+    // Do not keep the Node.js event loop alive (important for tests/CLI runs).
+    memoryInterval.unref?.();
   }
   return instance;
 }

@@ -76,10 +76,8 @@ export const ReferralToolsSection: React.FC = () => {
       setError(null);
       const response = await Api.get('/api/partners/referral-tools');
 
-      if (response?.data?.success && response?.data?.data) {
-        setTools(response.data.data);
-      } else if (response?.data?.data) {
-        setTools(response.data.data);
+      if (response?.success && response?.data) {
+        setTools(response.data);
       } else {
         setError(t('partner.referrals.loadError', 'Failed to load referral tools'));
       }
@@ -129,7 +127,7 @@ export const ReferralToolsSection: React.FC = () => {
         utmCampaign: newCampaign.utmCampaign || undefined,
       });
 
-      if (response?.data?.success) {
+      if (response?.success) {
         // Refresh tools to get updated list
         await fetchTools();
         setShowNewCampaign(false);
@@ -137,7 +135,7 @@ export const ReferralToolsSection: React.FC = () => {
         toast.success(t('partner.referrals.campaignCreated', 'Campaign link created!'));
       } else {
         toast.error(
-          response?.data?.error || t('partner.referrals.createFailed', 'Failed to create campaign')
+          response?.error || t('partner.referrals.createFailed', 'Failed to create campaign')
         );
       }
     } catch (err: any) {
@@ -165,7 +163,7 @@ export const ReferralToolsSection: React.FC = () => {
       setDeleting(campaignId);
       const response = await Api.delete(`/api/partners/campaign-links/${campaignId}`);
 
-      if (response?.data?.success) {
+      if (response?.success) {
         // Remove from local state
         setTools((prev) =>
           prev
@@ -175,7 +173,7 @@ export const ReferralToolsSection: React.FC = () => {
         toast.success(t('partner.referrals.campaignDeleted', 'Campaign link deleted'));
       } else {
         toast.error(
-          response?.data?.error || t('partner.referrals.deleteFailed', 'Failed to delete campaign')
+          response?.error || t('partner.referrals.deleteFailed', 'Failed to delete campaign')
         );
       }
     } catch (err: any) {
@@ -218,7 +216,7 @@ export const ReferralToolsSection: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold text-white">
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
           {t('partner.referrals.title', 'My Referral Links & Codes')}
         </h2>
         <p className="text-slate-400 dark:text-slate-500">
@@ -229,7 +227,7 @@ export const ReferralToolsSection: React.FC = () => {
       {/* Main Referral Code & Link */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Referral Code */}
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
           <div className="flex items-center gap-2 mb-3">
             <div className="p-2 rounded-lg bg-violet-500/20">
               <Link2 className="w-5 h-5 text-violet-400" />
@@ -239,7 +237,7 @@ export const ReferralToolsSection: React.FC = () => {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <code className="flex-1 px-4 py-3 bg-navy-900 rounded-lg text-lg font-mono text-white border border-white/10">
+            <code className="flex-1 px-4 py-3 bg-slate-50 dark:bg-navy-900 rounded-lg text-lg font-mono text-slate-900 dark:text-white border border-white/10">
               {tools?.referralCode}
             </code>
             <button
@@ -259,7 +257,7 @@ export const ReferralToolsSection: React.FC = () => {
         </div>
 
         {/* Referral Link */}
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
           <div className="flex items-center gap-2 mb-3">
             <div className="p-2 rounded-lg bg-emerald-500/20">
               <Share2 className="w-5 h-5 text-emerald-400" />
@@ -273,7 +271,7 @@ export const ReferralToolsSection: React.FC = () => {
               type="text"
               value={tools?.referralLink || ''}
               readOnly
-              className="flex-1 px-4 py-3 bg-navy-900 rounded-lg text-sm text-white border border-white/10 truncate"
+              className="flex-1 px-4 py-3 bg-slate-50 dark:bg-navy-900 rounded-lg text-sm text-slate-900 dark:text-white border border-white/10 truncate"
             />
             <button
               onClick={() => copyToClipboard(tools?.referralLink || '', 'link')}
@@ -300,10 +298,10 @@ export const ReferralToolsSection: React.FC = () => {
       </div>
 
       {/* Campaign Links Section */}
-      <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
               {t('partner.referrals.campaignLinks', 'Campaign Links')}
             </h3>
             <p className="text-sm text-slate-400 dark:text-slate-500">
@@ -324,8 +322,8 @@ export const ReferralToolsSection: React.FC = () => {
 
         {/* New Campaign Form */}
         {showNewCampaign && (
-          <div className="mb-4 p-4 bg-navy-900/50 rounded-lg border border-violet-500/30">
-            <h4 className="text-sm font-medium text-white mb-3">
+          <div className="mb-4 p-4 bg-slate-50 dark:bg-navy-900/50 rounded-lg border border-violet-500/30">
+            <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-3">
               {t('partner.referrals.createCampaign', 'Create Campaign Link')}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -338,7 +336,7 @@ export const ReferralToolsSection: React.FC = () => {
                   value={newCampaign.name}
                   onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
                   placeholder="e.g., LinkedIn Q1"
-                  className="w-full px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-sm text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                 />
               </div>
               <div>
@@ -350,7 +348,7 @@ export const ReferralToolsSection: React.FC = () => {
                   value={newCampaign.utmSource}
                   onChange={(e) => setNewCampaign({ ...newCampaign, utmSource: e.target.value })}
                   placeholder="e.g., linkedin"
-                  className="w-full px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-sm text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                 />
               </div>
               <div>
@@ -362,7 +360,7 @@ export const ReferralToolsSection: React.FC = () => {
                   value={newCampaign.utmMedium}
                   onChange={(e) => setNewCampaign({ ...newCampaign, utmMedium: e.target.value })}
                   placeholder="e.g., social"
-                  className="w-full px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-sm text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                 />
               </div>
               <div>
@@ -374,14 +372,14 @@ export const ReferralToolsSection: React.FC = () => {
                   value={newCampaign.utmCampaign}
                   onChange={(e) => setNewCampaign({ ...newCampaign, utmCampaign: e.target.value })}
                   placeholder="e.g., partner-q1-2026"
-                  className="w-full px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-sm text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-3">
               <button
                 onClick={() => setShowNewCampaign(false)}
-                className="px-4 py-2 text-sm text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -428,7 +426,9 @@ export const ReferralToolsSection: React.FC = () => {
                   <tr key={campaign.id} className="hover:bg-white/5">
                     <td className="px-3 py-3">
                       <div>
-                        <p className="font-medium text-white">{campaign.name}</p>
+                        <p className="font-medium text-slate-900 dark:text-white">
+                          {campaign.name}
+                        </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-xs">
                           {campaign.utmSource && `${campaign.utmSource}`}
                           {campaign.utmMedium && ` / ${campaign.utmMedium}`}
@@ -436,10 +436,12 @@ export const ReferralToolsSection: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="text-white font-medium">{campaign.clickCount}</span>
+                      <span className="text-slate-900 dark:text-white font-medium">
+                        {campaign.clickCount}
+                      </span>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="text-white">{campaign.signupCount}</span>
+                      <span className="text-slate-900 dark:text-white">{campaign.signupCount}</span>
                     </td>
                     <td className="px-3 py-3 text-center">
                       <span className="text-emerald-400 font-medium">
@@ -457,7 +459,7 @@ export const ReferralToolsSection: React.FC = () => {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => copyToClipboard(campaign.fullUrl, campaign.id)}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition-colors"
+                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition-colors"
                           title="Copy link"
                         >
                           {copiedField === campaign.id ? (
@@ -504,7 +506,7 @@ export const ReferralToolsSection: React.FC = () => {
           <TrendingUp className="w-4 h-4" />
           {t('partner.referrals.tips', 'Tips for Better Conversions')}
         </h4>
-        <ul className="space-y-2 text-sm text-slate-300">
+        <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
           <li className="flex items-start gap-2">
             <span className="text-violet-400">•</span>
             Share your link on LinkedIn with a compelling message about digital transformation

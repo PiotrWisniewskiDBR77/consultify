@@ -101,6 +101,14 @@ export const AIChatWelcomeView: React.FC = () => {
   // App state
   const { currentUser, currentProjectId, aiConfig } = useAppStore();
   const { projectName } = usePMOStore();
+  const brandLogoDarkSrc = new URL(
+    '../../Logo consultinity/Consultinity_logo_dark_medium.svg',
+    import.meta.url
+  ).href;
+  const brandLogoLightSrc = new URL(
+    '../../Logo consultinity/Consultinity_logo_light_transparent.svg',
+    import.meta.url
+  ).href;
 
   // Derived state for compatibility
   const selectedProject = useMemo(
@@ -1846,7 +1854,17 @@ For example: REMEMBER: preferred_language: Polish`;
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 p-4">
+        <div className="shrink-0 p-4 flex flex-col items-center gap-3">
+          <img
+            src={brandLogoDarkSrc}
+            alt="Consultinity"
+            className="h-40 sm:h-48 md:h-60 w-auto opacity-40 hidden dark:block"
+          />
+          <img
+            src={brandLogoLightSrc}
+            alt="Consultinity"
+            className="h-40 sm:h-48 md:h-60 w-auto opacity-40 dark:hidden"
+          />
           <p className="text-center text-[11px] text-slate-400 dark:text-slate-600 tracking-[0.25em] uppercase">
             DBR77 Industrial Intelligence
           </p>

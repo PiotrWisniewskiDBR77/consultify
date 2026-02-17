@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
         ignored: watchIgnored,
         // Reduce "save storm" events (esp. from sync tools) that can trigger cascaded reloads.
         awaitWriteFinish: {
-          stabilityThreshold: stableDev ? 2000 : 250,
+          stabilityThreshold: stableDev ? 2000 : 200,
           pollInterval: 100,
         },
         ...(stableDev ? { usePolling: true, interval: 2000 } : {}),
@@ -44,6 +44,12 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/api': {
           target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/ws': {
+          target: apiTarget,
+          ws: true,
           changeOrigin: true,
           secure: false,
         },
@@ -63,6 +69,12 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/api': {
           target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/ws': {
+          target: apiTarget,
+          ws: true,
           changeOrigin: true,
           secure: false,
         },

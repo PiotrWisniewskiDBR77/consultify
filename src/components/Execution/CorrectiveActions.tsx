@@ -190,7 +190,7 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
             New Action
           </button>
         </div>
-        <div className="flex flex-col items-center justify-center h-48 text-slate-400 dark:text-slate-500">
+        <div className="flex flex-col items-center justify-center h-48 text-slate-500 dark:text-slate-400 dark:text-slate-500">
           <CheckCircle2 size={48} className="mb-4 text-green-500 opacity-50" />
           <p className="text-lg font-medium text-navy-900 dark:text-white">No corrective actions</p>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -290,7 +290,7 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
       {/* Actions List */}
       <div className="space-y-3">
         {filteredActions.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+          <div className="text-center py-12 text-slate-500 dark:text-slate-400 dark:text-slate-500">
             <Target size={48} className="mx-auto mb-4 opacity-50" />
             <p>No corrective actions found</p>
           </div>
@@ -357,7 +357,7 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
 
                   <ChevronRight
                     size={20}
-                    className={`text-slate-400 dark:text-slate-500 transition-transform ${
+                    className={`text-slate-500 dark:text-slate-400 dark:text-slate-500 transition-transform ${
                       selectedAction?.id === action.id ? 'rotate-90' : ''
                     }`}
                   />

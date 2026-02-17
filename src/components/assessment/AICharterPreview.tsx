@@ -218,7 +218,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
           </button>
           <button
             onClick={cancelEditing}
-            className="p-1 bg-slate-50 dark:bg-navy-800/300 text-white rounded hover:bg-slate-400"
+            className="p-1 bg-slate-50 dark:bg-navy-800/300 text-slate-900 dark:text-white rounded hover:bg-slate-400"
           >
             <X size={14} />
           </button>
@@ -229,11 +229,15 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
     return (
       <div className="group flex items-start gap-2">
         <span className="flex-1">
-          {value || <span className="italic text-slate-400 dark:text-slate-500">Not set</span>}
+          {value || (
+            <span className="italic text-slate-500 dark:text-slate-400 dark:text-slate-500">
+              Not set
+            </span>
+          )}
         </span>
         <button
           onClick={() => startEditing(field, value || '')}
-          className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 dark:text-slate-500 hover:text-blue-500 transition-opacity"
+          className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-blue-500 transition-opacity"
         >
           <Edit2 size={12} />
         </button>
@@ -463,7 +467,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                               const updated = charter.killCriteria.filter((_, idx) => idx !== i);
                               onUpdate({ killCriteria: updated });
                             }}
-                            className="text-slate-400 dark:text-slate-500 hover:text-red-500"
+                            className="text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-red-500"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -528,7 +532,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                               </p>
                             )}
                             {task.estimatedHours && (
-                              <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-1">
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-1">
                                 <Clock size={10} /> {task.estimatedHours}h
                               </span>
                             )}
@@ -538,7 +542,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
                               const updated = charter.suggestedTasks.filter((_, idx) => idx !== i);
                               onUpdate({ suggestedTasks: updated });
                             }}
-                            className="text-slate-400 dark:text-slate-500 hover:text-red-500"
+                            className="text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-red-500"
                           >
                             <Trash2 size={14} />
                           </button>

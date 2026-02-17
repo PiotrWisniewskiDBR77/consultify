@@ -6,6 +6,7 @@
 import bcrypt from 'bcryptjs';
 import { Request, Response, Router } from 'express';
 
+import { databaseConfig } from '../config/DatabaseConfig.js';
 import { getDatabaseAsync } from '../database/index.js';
 import logger from '../utils/Logger.js';
 
@@ -25,6 +26,33 @@ interface SystemHealth {
   timestamp: string;
   checks: HealthCheck[];
   autoRepairsApplied: number;
+}
+
+function isPostgres(): boolean {
+  try {
+    return databaseConfig.type === 'postgres';
+  } catch {
+    // Fallback for edge cases where config proxy isn't ready yet
+    return process.env.DB_TYPE === 'postgres';
+  }
+}
+
+async function tableExists(db: any, tableName: string): Promise<boolean> {
+  if (isPostgres()) {
+    const result = await db.query(
+      `SELECT 1 AS ok
+       FROM information_schema.tables
+       WHERE table_schema = 'public' AND table_name = $1
+       LIMIT 1`,
+      [tableName]
+    );
+    return (result?.rows || []).length > 0;
+  }
+
+  const result = await db.query(`SELECT name FROM sqlite_master WHERE type='table' AND name=?`, [
+    tableName,
+  ]);
+  return (result?.rows || []).length > 0;
 }
 
 /**
@@ -62,12 +90,8 @@ async function checkTables(): Promise<HealthCheck> {
     const existing: string[] = [];
 
     for (const table of criticalTables) {
-      const result = await db.query(
-        `SELECT name FROM sqlite_master WHERE type='table' AND name=?`,
-        [table]
-      );
-
-      if (result.rows.length > 0) {
+      const exists = await tableExists(db as any, table);
+      if (exists) {
         existing.push(table);
       } else {
         missing.push(table);
@@ -108,12 +132,8 @@ async function checkUsers(): Promise<HealthCheck> {
     const db = await getDatabaseAsync();
 
     // Check if users table exists
-    const tableCheck = await db.query(
-      `SELECT name FROM sqlite_master WHERE type='table' AND name='users'`,
-      []
-    );
-
-    if (tableCheck.rows.length === 0) {
+    const hasUsersTable = await tableExists(db as any, 'users');
+    if (!hasUsersTable) {
       return {
         name: 'User Accounts',
         status: 'error',
@@ -124,7 +144,7 @@ async function checkUsers(): Promise<HealthCheck> {
 
     // Count users
     const users = await db.query<any>('SELECT COUNT(*) as count FROM users', []);
-    const userCount = users.rows[0].count;
+    const userCount = Number(users?.rows?.[0]?.count ?? 0);
 
     // Check for admin users
     const admins = await db.query(
@@ -181,7 +201,10 @@ async function checkDefaultLogin(): Promise<HealthCheck> {
     const testEmail = 'admin@dbr77.com';
     const testPassword = '123456';
 
-    const user = await db.query<any>('SELECT * FROM users WHERE email = ?', [testEmail]);
+    const user = await db.query<any>(
+      isPostgres() ? 'SELECT * FROM users WHERE email = $1' : 'SELECT * FROM users WHERE email = ?',
+      [testEmail]
+    );
 
     if (user.rows.length === 0) {
       return {
@@ -234,12 +257,8 @@ async function checkLLMProviders(): Promise<HealthCheck> {
     const db = await getDatabaseAsync();
 
     // Check if table exists
-    const tableCheck = await db.query(
-      `SELECT name FROM sqlite_master WHERE type='table' AND name='llm_providers'`,
-      []
-    );
-
-    if (tableCheck.rows.length === 0) {
+    const hasTable = await tableExists(db as any, 'llm_providers');
+    if (!hasTable) {
       return {
         name: 'LLM Providers',
         status: 'warning',
@@ -248,12 +267,13 @@ async function checkLLMProviders(): Promise<HealthCheck> {
       };
     }
 
-    const providers = await db.query(
-      'SELECT name, provider, is_active FROM llm_providers WHERE is_active = 1',
-      []
-    );
+    const providers = await db.query('SELECT name, provider, is_active FROM llm_providers', []);
+    const activeProviders = (providers?.rows || []).filter((p: any) => {
+      const v = p?.is_active;
+      return v === true || v === 1 || v === '1' || v === 'true';
+    });
 
-    if (providers.rows.length === 0) {
+    if (activeProviders.length === 0) {
       return {
         name: 'LLM Providers',
         status: 'warning',
@@ -266,10 +286,10 @@ async function checkLLMProviders(): Promise<HealthCheck> {
     return {
       name: 'LLM Providers',
       status: 'healthy',
-      message: `${providers.rows.length} active LLM provider(s)`,
+      message: `${activeProviders.length} active LLM provider(s)`,
       details: {
-        activeCount: providers.rows.length,
-        providers: providers.rows.map((p: any) => ({
+        activeCount: activeProviders.length,
+        providers: activeProviders.map((p: any) => ({
           name: p.name,
           provider: p.provider,
         })),

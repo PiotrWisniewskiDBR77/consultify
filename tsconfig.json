@@ -58,6 +58,10 @@
     // Exclude duplicate/copy files like \"file 2.tsx\"
     "**/* [0-9]*.*",
     "**/* copy.*",
+    // Extra safety: exclude common "name 2.tsx" editor copies in src/
+    "src/components/layout/ChatPanel *.tsx",
+    "src/components/layout/NotificationDropdown *.tsx",
+    "src/components/layout/SplitLayout *.tsx",
     "**/*.icloud"
   ]
 }

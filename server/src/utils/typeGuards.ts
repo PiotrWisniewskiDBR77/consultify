@@ -104,7 +104,8 @@ export function isPaginatedResponse<T>(value: unknown): value is {
     'data' in value &&
     Array.isArray((value as { data: unknown }).data) &&
     'pagination' in value &&
-    typeof (value as { pagination: unknown }).pagination === 'object'
+    typeof (value as { pagination: unknown }).pagination === 'object' &&
+    (value as { pagination: unknown }).pagination !== null
   );
 }
 

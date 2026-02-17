@@ -23,7 +23,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 /**
  * DBR77 Color System - Button Variants
- * See: docs/00_foundation/COLOR_SYSTEM_STANDARD.md
+ * See: docs/ui-standards/00-foundation/color-system.md
  */
 const variantClasses: Record<ButtonVariant, string> = {
   primary: 'bg-primary-600 hover:bg-primary-700 text-white', // Fiolet

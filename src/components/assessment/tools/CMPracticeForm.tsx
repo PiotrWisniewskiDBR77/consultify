@@ -263,7 +263,7 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
                     ? `bg-${levelColor}-500 text-white shadow-lg shadow-${levelColor}-500/30`
                     : isBelow
                       ? `bg-${levelColor}-500/30 text-${levelColor}-300`
-                      : 'bg-navy-700 text-slate-400 hover:bg-navy-600'
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-600'
                 }
                 ${readOnly ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
               `}
@@ -288,14 +288,14 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
     return (
       <div
         key={practiceArea.id}
-        className={`bg-navy-800 border border-navy-700 rounded-xl overflow-hidden transition-all ${
+        className={`bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden transition-all ${
           isExpanded ? 'ring-1 ring-' + color + '-500/30' : ''
         }`}
       >
         {/* Practice Area Header */}
         <button
           onClick={() => togglePracticeArea(practiceArea.id)}
-          className="w-full flex items-center justify-between p-4 hover:bg-navy-750 transition-colors"
+          className="w-full flex items-center justify-between p-4 hover:bg-slate-100 dark:hover:bg-navy-750 transition-colors"
         >
           <div className="flex items-center gap-3">
             <div
@@ -307,10 +307,10 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
               <span className="text-[10px] text-slate-500">{practiceArea.code}</span>
             </div>
             <div className="text-left">
-              <h4 className="text-white font-medium">
+              <h4 className="text-slate-900 dark:text-white font-medium">
                 {isPolish ? practiceArea.namePL : practiceArea.name}
               </h4>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {isPolish ? practiceArea.descriptionPL : practiceArea.description}
               </p>
             </div>
@@ -332,35 +332,35 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
               </div>
             )}
             {isExpanded ? (
-              <ChevronUp size={20} className="text-slate-400" />
+              <ChevronUp size={20} className="text-slate-500 dark:text-slate-400" />
             ) : (
-              <ChevronDown size={20} className="text-slate-400" />
+              <ChevronDown size={20} className="text-slate-500 dark:text-slate-400" />
             )}
           </div>
         </button>
 
         {/* Expanded Content */}
         {isExpanded && (
-          <div className="px-4 pb-4 space-y-4 border-t border-navy-700 pt-4">
+          <div className="px-4 pb-4 space-y-4 border-t border-slate-200 dark:border-navy-700 pt-4">
             {/* Current Level */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Current Level (Stan Obecny)
               </label>
               {renderLevelSelector(practiceArea, 'level', paScore.level)}
               {paScore.level > 0 && (
-                <div className="mt-2 p-3 bg-navy-900 rounded-lg">
+                <div className="mt-2 p-3 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
                   <div className="flex items-center gap-2 mb-1">
                     <span
                       className={`px-2 py-0.5 text-xs font-medium rounded bg-${LEVEL_COLORS[paScore.level]}-500/20 text-${LEVEL_COLORS[paScore.level]}-400`}
                     >
                       Level {paScore.level}
                     </span>
-                    <span className="text-white font-medium">
+                    <span className="text-slate-900 dark:text-white font-medium">
                       {CMMI_MATURITY_LEVELS[paScore.level - 1]?.name}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     {CMMI_MATURITY_LEVELS[paScore.level - 1]?.description}
                   </p>
                 </div>
@@ -369,23 +369,23 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
 
             {/* Target Level */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Target Level (Cel)
               </label>
               {renderLevelSelector(practiceArea, 'target', paScore.target || 0)}
               {paScore.target && paScore.target > 0 && (
-                <div className="mt-2 p-3 bg-navy-900 rounded-lg">
+                <div className="mt-2 p-3 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700">
                   <div className="flex items-center gap-2 mb-1">
                     <span
                       className={`px-2 py-0.5 text-xs font-medium rounded bg-${LEVEL_COLORS[paScore.target]}-500/20 text-${LEVEL_COLORS[paScore.target]}-400`}
                     >
                       Level {paScore.target}
                     </span>
-                    <span className="text-white font-medium">
+                    <span className="text-slate-900 dark:text-white font-medium">
                       {CMMI_MATURITY_LEVELS[paScore.target - 1]?.name}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     {CMMI_MATURITY_LEVELS[paScore.target - 1]?.description}
                   </p>
                 </div>
@@ -393,8 +393,8 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
             </div>
 
             {/* Maturity Level Reference */}
-            <div className="bg-navy-900 rounded-lg p-3">
-              <h5 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">
+            <div className="bg-slate-100 dark:bg-navy-900 rounded-lg p-3">
+              <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
                 CMMI Maturity Levels
               </h5>
               <div className="grid grid-cols-5 gap-2 text-xs">
@@ -404,12 +404,14 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
                       className={`w-8 h-8 rounded mx-auto mb-1 flex items-center justify-center ${
                         level.level <= paScore.level
                           ? `bg-${LEVEL_COLORS[level.level]}-500 text-white`
-                          : 'bg-navy-700 text-slate-500'
+                          : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       {level.level}
                     </div>
-                    <span className="text-slate-400 text-[10px]">{level.name}</span>
+                    <span className="text-slate-500 dark:text-slate-400 text-[10px]">
+                      {level.name}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -421,34 +423,36 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-navy-950">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
       {/* Progress Bar */}
       {showProgress && (
-        <div className="bg-navy-900 border-b border-navy-700 px-6 py-4">
+        <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700 px-6 py-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-4">
               <BarChart3 size={20} className="text-primary-400" />
-              <span className="text-sm text-slate-300">
+              <span className="text-sm text-slate-700 dark:text-slate-300">
                 {progress.completedPracticeAreas} / {progress.totalPracticeAreas} practice areas
                 assessed
               </span>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Maturity Level:</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">Maturity Level:</span>
                 <span
                   className={`px-2 py-0.5 rounded text-sm font-medium bg-${LEVEL_COLORS[data.maturityLevel]}-500/20 text-${LEVEL_COLORS[data.maturityLevel]}-400`}
                 >
                   {data.maturityLevel} - {CMMI_MATURITY_LEVELS[data.maturityLevel - 1]?.name}
                 </span>
               </div>
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
                 Avg Score:{' '}
-                <span className="text-white font-medium">{data.overallScore || '-'}</span>
+                <span className="text-slate-900 dark:text-white font-medium">
+                  {data.overallScore || '-'}
+                </span>
               </span>
             </div>
           </div>
-          <div className="h-2 bg-navy-700 rounded-full overflow-hidden">
+          <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-primary-500 to-primary-400 transition-all duration-500"
               style={{ width: `${progress.percent}%` }}
@@ -458,7 +462,7 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
       )}
 
       {/* Category Navigation */}
-      <div className="bg-navy-900 border-b border-navy-700 px-6 py-3">
+      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700 px-6 py-3">
         <div className="flex items-center gap-2 overflow-x-auto">
           {categoryIds.map((categoryId) => {
             const category = CMMI_CATEGORIES[categoryId];
@@ -478,8 +482,8 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
                     isActive
                       ? `bg-${color}-500/15 border-${color}-500 text-${color}-400`
                       : isCompleted
-                        ? `bg-navy-800 border-${color}-500/30 text-slate-300`
-                        : 'bg-navy-800 border-navy-600 text-slate-400 hover:border-slate-500'
+                        ? `bg-slate-100 dark:bg-navy-800 border-${color}-500/30 text-slate-700 dark:text-slate-300`
+                        : 'bg-slate-100 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500'
                   }
                 `}
               >
@@ -494,7 +498,9 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
                     {categoryData.averageLevel}
                   </span>
                 )}
-                <span className="text-xs text-slate-500">({category.practiceAreaIds.length})</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  ({category.practiceAreaIds.length})
+                </span>
               </button>
             );
           })}
@@ -514,19 +520,19 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
               </span>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                 {isPolish ? currentCategory.namePL : currentCategory.name}
               </h2>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 {isPolish ? currentCategory.descriptionPL : currentCategory.description}
               </p>
             </div>
           </div>
 
           {/* Category Score Summary */}
-          <div className="flex items-center gap-6 mt-4 p-4 bg-navy-800 rounded-lg">
+          <div className="flex items-center gap-6 mt-4 p-4 bg-slate-100 dark:bg-navy-800 rounded-lg">
             <div>
-              <span className="text-xs text-slate-400 uppercase tracking-wider">
+              <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Category Average
               </span>
               <div className={`text-2xl font-bold text-${CATEGORY_COLORS[activeCategoryId]}-400`}>
@@ -534,10 +540,10 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
               </div>
             </div>
             <div className="flex-1">
-              <span className="text-xs text-slate-400 uppercase tracking-wider">
+              <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Practice Areas
               </span>
-              <div className="text-lg font-medium text-white">
+              <div className="text-lg font-medium text-slate-900 dark:text-white">
                 {currentPracticeAreas.length} areas
               </div>
             </div>
@@ -553,7 +559,7 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
 
         {/* Practice Areas */}
         <div className="space-y-4">
-          <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
+          <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             Practice Areas ({currentPracticeAreas.length})
           </h3>
           {currentPracticeAreas.map(renderPracticeAreaCard)}
@@ -561,14 +567,14 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
       </div>
 
       {/* Navigation Footer */}
-      <div className="bg-navy-900 border-t border-navy-700 px-6 py-4">
+      <div className="bg-white dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <button
             onClick={() => goToCategory('prev')}
             disabled={categoryIds.indexOf(activeCategoryId) === 0}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-              bg-navy-800 border border-navy-600 text-slate-300
-              hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed
+              bg-slate-100 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300
+              hover:bg-slate-200 dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed
               transition-colors"
           >
             <ChevronLeft size={16} />

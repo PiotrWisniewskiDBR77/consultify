@@ -119,14 +119,14 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
           <div className="flex items-center gap-1 shrink-0">
             <button
               onClick={onEdit}
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
               title="Edit"
             >
               <Edit size={18} />
             </button>
             <button
               onClick={onRemove}
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
               title="Remove"
             >
               <Trash2 size={18} />
@@ -220,7 +220,7 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+            <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 italic">
               No objectives defined
             </p>
           )}

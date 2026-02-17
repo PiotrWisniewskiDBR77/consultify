@@ -64,7 +64,8 @@ router.get(
              WHERE user_id = ?
              ORDER BY created_at DESC
              LIMIT ?`,
-        [userId, limit]
+        [userId, limit],
+        { fallback: false }
       )) as Array<{
         id: string;
         ip_address: string | null;
@@ -148,7 +149,8 @@ router.get(
              WHERE user_id = ? AND status = 'failed'
              ORDER BY created_at DESC
              LIMIT 10`,
-        [userId]
+        [userId],
+        { fallback: false }
       );
 
       return res.json({

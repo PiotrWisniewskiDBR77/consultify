@@ -100,7 +100,7 @@ const WorkstationPage: React.FC<{
             >
               {roleEvolution.name}
             </span>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
               Strona {index + 1} z {total}
             </p>
           </div>
@@ -268,7 +268,7 @@ const WorkstationPage: React.FC<{
         <div className="text-right">
           <p className="text-sm text-slate-500 dark:text-slate-400">Ewolucja roli:</p>
           <p className={`font-bold text-${roleEvolution.color}-600`}>{roleEvolution.name}</p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
             {roleEvolution.description}
           </p>
         </div>
@@ -324,8 +324,10 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
           <p className="text-xl text-slate-500 dark:text-slate-400 mb-2">
             Metoda DBR77: Pomierz → Zoptymalizuj → Automatyzuj
           </p>
-          <p className="text-lg text-slate-400 dark:text-slate-500">{organizationName}</p>
-          <p className="text-slate-400 dark:text-slate-500">
+          <p className="text-lg text-slate-500 dark:text-slate-400 dark:text-slate-500">
+            {organizationName}
+          </p>
+          <p className="text-slate-500 dark:text-slate-400 dark:text-slate-500">
             {assessmentDate || new Date().toLocaleDateString('pl-PL')}
           </p>
         </div>
@@ -443,7 +445,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
       ))}
 
       {/* Footer */}
-      <footer className="p-8 border-t border-slate-200 dark:border-navy-700 text-center text-xs text-slate-400 dark:text-slate-500">
+      <footer className="p-8 border-t border-slate-200 dark:border-navy-700 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
         <p>Raport wygenerowany przez Consultinity • {new Date().toLocaleDateString('pl-PL')}</p>
         <p className="mt-1">DBR77 Lean 4.0 Assessment • {organizationName}</p>
       </footer>

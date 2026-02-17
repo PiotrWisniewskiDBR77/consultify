@@ -141,7 +141,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({ initiative, startCol, endCol,
       </div>
 
       {/* Tooltip on hover */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-navy-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-xl">
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-white dark:bg-navy-900 text-slate-900 dark:text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-xl">
         <div className="font-medium mb-1">{initiative.name}</div>
         <div className="text-slate-400 dark:text-slate-500">
           {initiative.targetQuarter || 'No timeline'} • {initiative.progress}% complete

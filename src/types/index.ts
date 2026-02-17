@@ -202,6 +202,9 @@ export * from './discovery';
 export * from './myWork';
 export * from './workspace';
 
+// Initiative runtime values (const maps, helpers)
+export { INITIATIVE_STATUS_METADATA } from './initiative';
+
 // Re-export config types
 export type { CardDocumentation } from '../config/cardDocumentation';
 export type { FAQItem } from '../config/faqContent';

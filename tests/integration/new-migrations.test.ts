@@ -7,8 +7,9 @@
 
 import { beforeAll, afterAll, describe, expect, it } from 'vitest';
 import sqlite3 from 'sqlite3';
-import * as fs from 'fs';
+import { promises as fs } from 'fs';
 import * as path from 'path';
+import { splitSqlStatements } from '../../server/src/database/migrations/sqlUtils.js';
 
 describe('New Migrations (260-267)', () => {
   let db: sqlite3.Database;
@@ -71,10 +72,11 @@ describe('New Migrations (260-267)', () => {
   // Helper to run migration file
   const runMigration = async (filename: string) => {
     const filePath = path.join(migrationsPath, filename);
-    if (fs.existsSync(filePath)) {
-      const sql = fs.readFileSync(filePath, 'utf-8');
+    try {
+      await fs.access(filePath);
+      const sql = await fs.readFile(filePath, 'utf-8');
       // Split by semicolon and run each statement
-      const statements = sql.split(';').filter((s) => s.trim() && !s.trim().startsWith('--'));
+      const statements = splitSqlStatements(sql);
       for (const statement of statements) {
         if (statement.trim()) {
           try {
@@ -92,7 +94,7 @@ describe('New Migrations (260-267)', () => {
           }
         }
       }
-    } else {
+    } catch {
       migrationErrors[filename] = 'File not found';
       console.warn(`Migration file not found: ${filename}`);
     }

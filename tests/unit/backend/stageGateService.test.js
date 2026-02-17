@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockDatabaseWithResults } from '../../../server/tests/helpers/mockDatabase.ts';
+import { createMockDatabaseWithResults } from '../../helpers/mockDatabase.ts';
 import StageGateService from '../../../server/src/services/stageGateService.js';
 
 // Minimal mock to prevent real DB connection on import

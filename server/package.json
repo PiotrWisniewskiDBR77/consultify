@@ -2,7 +2,7 @@
   "name": "server",
   "version": "1.0.0",
   "description": "Consultinity Backend Server",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "type": "module",
   "scripts": {
     "dev": "tsx src/index.ts",
@@ -26,7 +26,7 @@
     "test:migration:imports": "cd .. && vitest run --config vitest.migration.config.ts tests/migration/imports.test.ts",
     "test:migration:duplicates": "cd .. && vitest run --config vitest.migration.config.ts tests/migration/duplicates.test.ts",
     "test:migration:performance": "cd .. && vitest run --config vitest.migration.config.ts tests/migration/performance.test.ts",
-    "start": "node dist/index.js",
+    "start": "node dist/src/index.js",
     "clean": "rm -rf dist .tsbuildinfo"
   },
   "keywords": [],

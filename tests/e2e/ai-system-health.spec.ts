@@ -96,7 +96,7 @@ test.describe('L6.2: Tools Menu', () => {
     ];
 
     expect(aiModes).toHaveLength(4);
-    expect(aiModes.every(m => m.enabled)).toBe(true);
+    expect(aiModes.every((m) => m.enabled)).toBe(true);
 
     console.log(`[L6.2] ✓ AI Modes: ${aiModes.length} configured`);
   });
@@ -109,7 +109,7 @@ test.describe('L6.2: Tools Menu', () => {
     ];
 
     expect(knowledgeSources).toHaveLength(3);
-    expect(knowledgeSources.every(s => s.accessible)).toBe(true);
+    expect(knowledgeSources.every((s) => s.accessible)).toBe(true);
 
     console.log(`[L6.2] ✓ Knowledge Sources: ${knowledgeSources.length} configured`);
   });
@@ -182,8 +182,8 @@ test.describe('L6.4: Voice System', () => {
     ];
 
     expect(sttProviders).toHaveLength(2);
-    expect(sttProviders.find(p => p.primary)).toBeDefined();
-    expect(sttProviders.find(p => p.fallback)).toBeDefined();
+    expect(sttProviders.find((p) => p.primary)).toBeDefined();
+    expect(sttProviders.find((p) => p.fallback)).toBeDefined();
 
     console.log('[L6.4] ✓ STT Providers: 2 configured');
   });
@@ -283,7 +283,7 @@ test.describe('L6.6: LLM Management', () => {
     ];
 
     expect(tiers).toHaveLength(4);
-    expect(tiers.every(t => t.models.length > 0)).toBe(true);
+    expect(tiers.every((t) => t.models.length > 0)).toBe(true);
 
     console.log('[L6.6] ✓ LLM Tiers: 4 configured');
   });
@@ -296,7 +296,7 @@ test.describe('L6.6: LLM Management', () => {
     ];
 
     expect(providers).toHaveLength(3);
-    expect(providers.every(p => p.envKey.length > 0)).toBe(true);
+    expect(providers.every((p) => p.envKey.length > 0)).toBe(true);
 
     console.log('[L6.6] ✓ LLM Providers: 3 supported');
   });
@@ -333,7 +333,7 @@ test.describe('L6.7: End-to-End Flow', () => {
     ];
 
     expect(flowSteps).toHaveLength(6);
-    expect(flowSteps.every(s => s.required)).toBe(true);
+    expect(flowSteps.every((s) => s.required)).toBe(true);
 
     console.log('[L6.7] ✓ Conversation Flow: 6 steps verified');
   });
@@ -418,7 +418,7 @@ test.describe('L6.8: Health Summary', () => {
     ];
 
     expect(endpoints).toHaveLength(3);
-    expect(endpoints.every(e => e.auth === false)).toBe(true);
+    expect(endpoints.every((e) => e.auth === false)).toBe(true);
 
     console.log('[L6.8] ✓ Health Endpoints: 3 available (public)');
   });
@@ -451,11 +451,19 @@ test.describe('L6.9: Vector Database & Embeddings', () => {
         { name: 'PostgreSQL', type: 'pgvector', production: true },
       ],
       table: 'ai_knowledge_embeddings',
-      columns: ['id', 'document_id', 'chunk_index', 'chunk_text', 'embedding', 'metadata', 'source_type'],
+      columns: [
+        'id',
+        'document_id',
+        'chunk_index',
+        'chunk_text',
+        'embedding',
+        'metadata',
+        'source_type',
+      ],
     };
 
     expect(storageSpec.backends).toHaveLength(2);
-    expect(storageSpec.backends.find(b => b.name === 'PostgreSQL')?.type).toBe('pgvector');
+    expect(storageSpec.backends.find((b) => b.name === 'PostgreSQL')?.type).toBe('pgvector');
     expect(storageSpec.columns).toContain('embedding');
     expect(storageSpec.columns).toContain('chunk_text');
 
@@ -487,7 +495,7 @@ test.describe('L6.9: Vector Database & Embeddings', () => {
     ];
 
     expect(endpoints).toHaveLength(4);
-    expect(endpoints.find(e => e.path.includes('search'))).toBeDefined();
+    expect(endpoints.find((e) => e.path.includes('search'))).toBeDefined();
 
     console.log('[L6.9] ✓ Embedding API: 4 endpoints specified');
   });
@@ -589,7 +597,7 @@ test.describe('L6.10: AI Memory System', () => {
     ];
 
     expect(endpoints).toHaveLength(8);
-    expect(endpoints.filter(e => e.path.includes('organization'))).toHaveLength(3);
+    expect(endpoints.filter((e) => e.path.includes('organization'))).toHaveLength(3);
 
     console.log('[L6.10] ✓ Memory API: 8 endpoints (user, org, project)');
   });
@@ -619,9 +627,17 @@ test.describe('L6.11: AI Learning System', () => {
       table: 'ai_feedback',
       feedbackTypes: ['like', 'dislike', 'correction', 'suggestion'],
       fields: [
-        'userId', 'organizationId', 'conversationId', 'messageId',
-        'feedbackType', 'rating', 'comment', 'correction',
-        'aiResponseSnippet', 'contextType', 'category',
+        'userId',
+        'organizationId',
+        'conversationId',
+        'messageId',
+        'feedbackType',
+        'rating',
+        'comment',
+        'correction',
+        'aiResponseSnippet',
+        'contextType',
+        'category',
       ],
       features: ['async_pattern_extraction', 'review_workflow'],
     };
@@ -724,7 +740,7 @@ test.describe('L6.11: AI Learning System', () => {
     ];
 
     expect(endpoints).toHaveLength(9);
-    expect(endpoints.filter(e => e.method === 'POST')).toHaveLength(5);
+    expect(endpoints.filter((e) => e.method === 'POST')).toHaveLength(5);
 
     console.log('[L6.11] ✓ Learning API: 9 endpoints');
   });
@@ -761,7 +777,12 @@ test.describe('L6.12: User Style Profiles', () => {
   test('should verify style learning patterns specification', async () => {
     const learningSpec = {
       table: 'ai_style_learning_patterns',
-      patternTypes: ['length_preference', 'format_preference', 'depth_preference', 'context_specific'],
+      patternTypes: [
+        'length_preference',
+        'format_preference',
+        'depth_preference',
+        'context_specific',
+      ],
       statuses: ['active', 'applied', 'rejected', 'expired'],
       confidenceThreshold: 0.7,
     };
@@ -828,7 +849,9 @@ test.describe('L6.13: Context Builder', () => {
     expect(contextSources.organizationData).toHaveLength(5);
     expect(contextSources.memoryData).toHaveLength(3);
 
-    console.log('[L6.13] ✓ Context Sources: 5 categories (project, org, memory, docs, conversation)');
+    console.log(
+      '[L6.13] ✓ Context Sources: 5 categories (project, org, memory, docs, conversation)'
+    );
   });
 
   test('should verify RAG pipeline specification', async () => {
@@ -858,8 +881,14 @@ test.describe('L6.13: Context Builder', () => {
   test('should verify context response mapping specification', async () => {
     const mappingSpec = {
       screenContexts: [
-        'dashboard', 'initiative_detail', 'task_detail', 'assessment',
-        'report', 'tools', 'settings', 'ai_chat',
+        'dashboard',
+        'initiative_detail',
+        'task_detail',
+        'assessment',
+        'report',
+        'tools',
+        'settings',
+        'ai_chat',
       ],
       responseFormats: {
         dashboard: { length: 'concise', format: 'bullets' },
@@ -900,8 +929,19 @@ test.describe('L6.14: AI Database Tables', () => {
   test('should verify core chat tables specification', async () => {
     const chatTables = {
       conversations: {
-        columns: ['id', 'user_id', 'organization_id', 'title', 'title_source', 'status',
-          'chat_project_id', 'is_starred', 'is_archived', 'created_at', 'updated_at'],
+        columns: [
+          'id',
+          'user_id',
+          'organization_id',
+          'title',
+          'title_source',
+          'status',
+          'chat_project_id',
+          'is_starred',
+          'is_archived',
+          'created_at',
+          'updated_at',
+        ],
         indexes: ['user_id', 'organization_id', 'chat_project_id'],
       },
       conversation_messages: {
@@ -920,8 +960,17 @@ test.describe('L6.14: AI Database Tables', () => {
   test('should verify embedding tables specification', async () => {
     const embeddingTables = {
       ai_knowledge_embeddings: {
-        columns: ['id', 'organization_id', 'document_id', 'chunk_index', 'chunk_text',
-          'embedding', 'metadata', 'source_type', 'created_at'],
+        columns: [
+          'id',
+          'organization_id',
+          'document_id',
+          'chunk_index',
+          'chunk_text',
+          'embedding',
+          'metadata',
+          'source_type',
+          'created_at',
+        ],
         vectorColumn: 'embedding',
         vectorType: { sqlite: 'TEXT (JSON)', postgres: 'vector(1536)' },
       },
@@ -937,13 +986,34 @@ test.describe('L6.14: AI Database Tables', () => {
   test('should verify memory tables specification', async () => {
     const memoryTables = {
       ai_user_memory: {
-        columns: ['id', 'user_id', 'preferences', 'expertise', 'recent_topics',
-          'assigned_projects', 'interaction_count', 'last_interaction_at'],
+        columns: [
+          'id',
+          'user_id',
+          'preferences',
+          'expertise',
+          'recent_topics',
+          'assigned_projects',
+          'interaction_count',
+          'last_interaction_at',
+        ],
       },
       organization_memory: {
-        columns: ['id', 'organization_id', 'memory_type', 'title', 'description',
-          'content', 'embedding', 'applicability_score', 'usage_count',
-          'tags', 'industry', 'is_active', 'created_at', 'updated_at'],
+        columns: [
+          'id',
+          'organization_id',
+          'memory_type',
+          'title',
+          'description',
+          'content',
+          'embedding',
+          'applicability_score',
+          'usage_count',
+          'tags',
+          'industry',
+          'is_active',
+          'created_at',
+          'updated_at',
+        ],
       },
     };
 
@@ -957,18 +1027,49 @@ test.describe('L6.14: AI Database Tables', () => {
   test('should verify learning tables specification', async () => {
     const learningTables = {
       ai_feedback: {
-        columns: ['id', 'organization_id', 'user_id', 'conversation_id', 'message_id',
-          'feedback_type', 'rating', 'comment', 'correction', 'reviewed_by',
-          'reviewed_at', 'action_taken', 'created_at'],
+        columns: [
+          'id',
+          'organization_id',
+          'user_id',
+          'conversation_id',
+          'message_id',
+          'feedback_type',
+          'rating',
+          'comment',
+          'correction',
+          'reviewed_by',
+          'reviewed_at',
+          'action_taken',
+          'created_at',
+        ],
       },
       ai_learning_patterns: {
-        columns: ['id', 'organization_id', 'pattern_type', 'pattern_category',
-          'pattern_data', 'occurrence_count', 'success_count', 'failure_count',
-          'confidence_score', 'created_at', 'updated_at'],
+        columns: [
+          'id',
+          'organization_id',
+          'pattern_type',
+          'pattern_category',
+          'pattern_data',
+          'occurrence_count',
+          'success_count',
+          'failure_count',
+          'confidence_score',
+          'created_at',
+          'updated_at',
+        ],
       },
       ai_instruction_suggestions: {
-        columns: ['id', 'organization_id', 'suggested_instruction', 'category',
-          'reason', 'confidence_score', 'status', 'reviewed_by', 'created_at'],
+        columns: [
+          'id',
+          'organization_id',
+          'suggested_instruction',
+          'category',
+          'reason',
+          'confidence_score',
+          'status',
+          'reviewed_by',
+          'created_at',
+        ],
       },
     };
 
@@ -976,21 +1077,44 @@ test.describe('L6.14: AI Database Tables', () => {
     expect(learningTables.ai_learning_patterns.columns).toContain('confidence_score');
     expect(learningTables.ai_instruction_suggestions.columns).toContain('status');
 
-    console.log('[L6.14] ✓ Learning Tables: ai_feedback + ai_learning_patterns + ai_instruction_suggestions');
+    console.log(
+      '[L6.14] ✓ Learning Tables: ai_feedback + ai_learning_patterns + ai_instruction_suggestions'
+    );
   });
 
   test('should verify style tables specification', async () => {
     const styleTables = {
       ai_user_style_profiles: {
-        columns: ['id', 'user_id', 'organization_id', 'preferred_depth', 'preferred_format',
-          'technical_level', 'response_length', 'detected_expertise_areas',
-          'common_question_types', 'auto_adapt_enabled', 'confidence_score',
-          'created_at', 'updated_at'],
+        columns: [
+          'id',
+          'user_id',
+          'organization_id',
+          'preferred_depth',
+          'preferred_format',
+          'technical_level',
+          'response_length',
+          'detected_expertise_areas',
+          'common_question_types',
+          'auto_adapt_enabled',
+          'confidence_score',
+          'created_at',
+          'updated_at',
+        ],
       },
       ai_style_learning_patterns: {
-        columns: ['id', 'user_id', 'organization_id', 'pattern_type', 'pattern_key',
-          'pattern_value', 'occurrence_count', 'confidence_score', 'status',
-          'created_at', 'updated_at'],
+        columns: [
+          'id',
+          'user_id',
+          'organization_id',
+          'pattern_type',
+          'pattern_key',
+          'pattern_value',
+          'occurrence_count',
+          'confidence_score',
+          'status',
+          'created_at',
+          'updated_at',
+        ],
       },
     };
 
@@ -1003,12 +1127,32 @@ test.describe('L6.14: AI Database Tables', () => {
   test('should verify LLM tables specification', async () => {
     const llmTables = {
       llm_providers: {
-        columns: ['id', 'name', 'display_name', 'api_key_env', 'base_url',
-          'is_active', 'tier', 'priority', 'rate_limit', 'created_at'],
+        columns: [
+          'id',
+          'name',
+          'display_name',
+          'api_key_env',
+          'base_url',
+          'is_active',
+          'tier',
+          'priority',
+          'rate_limit',
+          'created_at',
+        ],
       },
       llm_usage_logs: {
-        columns: ['id', 'organization_id', 'user_id', 'provider_id', 'model',
-          'input_tokens', 'output_tokens', 'cost', 'latency_ms', 'created_at'],
+        columns: [
+          'id',
+          'organization_id',
+          'user_id',
+          'provider_id',
+          'model',
+          'input_tokens',
+          'output_tokens',
+          'cost',
+          'latency_ms',
+          'created_at',
+        ],
       },
     };
 
@@ -1275,7 +1419,7 @@ test.describe('L6.16: AI Admin Management', () => {
     ];
 
     expect(endpoints).toHaveLength(8);
-    expect(endpoints.filter(e => e.role === 'SUPERADMIN')).toHaveLength(5);
+    expect(endpoints.filter((e) => e.role === 'SUPERADMIN')).toHaveLength(5);
 
     console.log('[L6.16] ✓ Admin API: 8 endpoints (5 SUPERADMIN, 3 ADMIN)');
   });
@@ -1335,7 +1479,15 @@ test.describe('L6.17: AI Quality & Observability', () => {
     const loggingSpec = {
       levels: ['debug', 'info', 'warn', 'error', 'fatal'],
       destinations: ['console', 'file', 'external_service'],
-      structuredFields: ['timestamp', 'level', 'service', 'traceId', 'userId', 'message', 'metadata'],
+      structuredFields: [
+        'timestamp',
+        'level',
+        'service',
+        'traceId',
+        'userId',
+        'message',
+        'metadata',
+      ],
       retention: {
         debug: '1 day',
         info: '7 days',
@@ -1371,7 +1523,13 @@ test.describe('L6.17: AI Quality & Observability', () => {
 
   test('should verify alerting specification', async () => {
     const alertingSpec = {
-      alertTypes: ['error_spike', 'latency_degradation', 'quota_warning', 'provider_down', 'quality_drop'],
+      alertTypes: [
+        'error_spike',
+        'latency_degradation',
+        'quota_warning',
+        'provider_down',
+        'quality_drop',
+      ],
       channels: ['email', 'slack', 'webhook', 'in_app'],
       thresholds: {
         error_rate: 0.05,
@@ -1410,7 +1568,7 @@ test.describe('L6.17: AI Quality & Observability', () => {
     };
 
     expect(healthMonitoring.checks).toHaveLength(5);
-    expect(healthMonitoring.checks.filter(c => c.critical)).toHaveLength(2);
+    expect(healthMonitoring.checks.filter((c) => c.critical)).toHaveLength(2);
     expect(healthMonitoring.statuses).toHaveLength(4);
 
     console.log('[L6.17] ✓ Health Monitoring: 5 checks (2 critical) with real-time dashboard');
@@ -1523,14 +1681,16 @@ test.describe('L6.18: Complete System Summary', () => {
     };
 
     const totalLevels = Object.keys(testCoverage).length;
-    const implementedLevels = Object.values(testCoverage).filter(l => l.implemented).length;
+    const implementedLevels = Object.values(testCoverage).filter((l) => l.implemented).length;
     const totalTests = Object.values(testCoverage).reduce((sum, l) => sum + l.tests, 0);
 
     expect(totalLevels).toBe(19);
     expect(implementedLevels).toBe(19);
     expect(totalTests).toBeGreaterThan(80);
 
-    console.log(`[L6.20] ✓ Test Coverage: ${implementedLevels}/${totalLevels} levels (${totalTests} tests)`);
+    console.log(
+      `[L6.20] ✓ Test Coverage: ${implementedLevels}/${totalLevels} levels (${totalTests} tests)`
+    );
   });
 });
 
@@ -1622,7 +1782,7 @@ test.describe('L6.18: Cost & Budget Monitoring', () => {
     ];
 
     expect(endpoints).toHaveLength(5);
-    expect(endpoints.filter(e => e.auth)).toHaveLength(4);
+    expect(endpoints.filter((e) => e.auth)).toHaveLength(4);
 
     console.log('[L6.18] ✓ Cost API: 5 endpoints (1 public, 4 authenticated)');
   });
@@ -1672,8 +1832,15 @@ test.describe('L6.19: Security & Compliance', () => {
   test('should verify PII filtering specification', async () => {
     const piiFilteringSpec = {
       detectedTypes: [
-        'email', 'phone', 'ssn', 'credit_card', 'address',
-        'name', 'date_of_birth', 'ip_address', 'password',
+        'email',
+        'phone',
+        'ssn',
+        'credit_card',
+        'address',
+        'name',
+        'date_of_birth',
+        'ip_address',
+        'password',
       ],
       actions: ['mask', 'redact', 'hash', 'block'],
       defaultAction: 'mask',
@@ -1714,8 +1881,12 @@ test.describe('L6.19: Security & Compliance', () => {
   test('should verify audit logging specification', async () => {
     const auditLoggingSpec = {
       events: [
-        'ai_request', 'ai_response', 'feedback_submitted',
-        'data_accessed', 'config_changed', 'security_alert',
+        'ai_request',
+        'ai_response',
+        'feedback_submitted',
+        'data_accessed',
+        'config_changed',
+        'security_alert',
       ],
       fields: ['timestamp', 'userId', 'organizationId', 'action', 'resource', 'ip', 'metadata'],
       storage: {
@@ -1744,7 +1915,7 @@ test.describe('L6.19: Security & Compliance', () => {
     ];
 
     expect(endpoints).toHaveLength(6);
-    expect(endpoints.filter(e => e.role === 'SUPERADMIN')).toHaveLength(3);
+    expect(endpoints.filter((e) => e.role === 'SUPERADMIN')).toHaveLength(3);
 
     console.log('[L6.19] ✓ Security API: 6 endpoints (admin-only)');
   });

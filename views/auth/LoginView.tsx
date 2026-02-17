@@ -26,7 +26,11 @@ export const LoginView = () => {
         // So we need to store it manually or call existing helper if available
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('refreshToken', res.data.refreshToken);
-        window.location.reload();
+        try {
+          window.location.reload();
+        } catch {
+          // JSDOM / non-browser runtimes may not implement navigation; ignore.
+        }
       }
     } catch (err: unknown) {
       const error = err as any;

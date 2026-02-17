@@ -20,6 +20,8 @@ import {
   Briefcase,
   Check,
   ChevronDown,
+  Crown,
+  Eye,
   Percent,
   Shield,
   UserPlus,
@@ -30,7 +32,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { api } from '../../services/api';
-import { ProjectMember, ProjectRole } from '../../types';
+import type { ProjectMember } from '../../types';
 
 interface ProjectTeamPanelProps {
   projectId: string;
@@ -38,96 +40,124 @@ interface ProjectTeamPanelProps {
   onMemberChange?: () => void;
 }
 
-const ROLE_LABELS: Record<ProjectRole, { label: string; color: string; icon: React.ElementType }> =
-  {
-    [ProjectRole.SPONSOR]: {
-      label: 'Sponsor',
-      color: 'bg-purple-100 text-purple-800',
-      icon: Shield,
-    },
-    [ProjectRole.DECISION_OWNER]: {
-      label: 'Decision Owner',
-      color: 'bg-indigo-100 text-indigo-800',
-      icon: Shield,
-    },
-    [ProjectRole.PMO_LEAD]: {
-      label: 'PMO Lead',
-      color: 'bg-blue-100 text-blue-800',
-      icon: Briefcase,
-    },
-    [ProjectRole.WORKSTREAM_OWNER]: {
-      label: 'Workstream Owner',
-      color: 'bg-cyan-100 text-cyan-800',
-      icon: Users,
-    },
-    [ProjectRole.INITIATIVE_OWNER]: {
-      label: 'Initiative Owner',
-      color: 'bg-teal-100 text-teal-800',
-      icon: Users,
-    },
-    [ProjectRole.TASK_ASSIGNEE]: {
-      label: 'Task Assignee',
-      color: 'bg-green-100 text-green-800',
-      icon: Users,
-    },
-    [ProjectRole.SME]: {
-      label: 'Subject Matter Expert',
-      color: 'bg-yellow-100 text-yellow-800',
-      icon: Users,
-    },
-    [ProjectRole.REVIEWER]: {
-      label: 'Reviewer',
-      color: 'bg-orange-100 text-orange-800',
-      icon: Users,
-    },
-    [ProjectRole.OBSERVER]: {
-      label: 'Observer',
-      color: 'bg-gray-100 dark:bg-navy-800 text-gray-800',
-      icon: Users,
-    },
-    [ProjectRole.CONSULTANT]: {
-      label: 'Consultant',
-      color: 'bg-pink-100 text-pink-800',
-      icon: Users,
-    },
-    [ProjectRole.STAKEHOLDER]: {
-      label: 'Stakeholder',
-      color: 'bg-slate-100 text-slate-800 dark:text-slate-200',
-      icon: Users,
-    },
-    [ProjectRole.PROJECT_EXECUTIVE]: {
-      label: 'Project Executive',
-      color: 'bg-violet-100 text-violet-800',
-      icon: Shield,
-    },
-    [ProjectRole.PROJECT_MANAGER]: {
-      label: 'Project Manager',
-      color: 'bg-blue-100 text-blue-800',
-      icon: Briefcase,
-    },
-    [ProjectRole.TEAM_LEAD]: {
-      label: 'Team Lead',
-      color: 'bg-emerald-100 text-emerald-800',
-      icon: Users,
-    },
-    [ProjectRole.TEAM_MEMBER]: {
-      label: 'Team Member',
-      color: 'bg-green-100 text-green-800',
-      icon: Users,
-    },
-  };
+type CanonicalProjectRole =
+  | 'SPONSOR'
+  | 'PROJECT_LEADER'
+  | 'INITIATIVE_OWNER'
+  | 'TEAM_MEMBER'
+  | 'PMO'
+  | 'PORTFOLIO_OWNER'
+  | 'BUSINESS_OWNER'
+  | 'STEERING_COMMITTEE';
+
+type CanonicalRoleKey = CanonicalProjectRole | 'OTHER';
+
+type ExtendedProjectMember = ProjectMember & {
+  accountRole?: string | null;
+  consultantProfile?: string | null;
+  engagementType?: string | null;
+  isInvoked?: boolean;
+  projectRole?: string; // allow backend payload that doesn't match PMOProjectRole enum
+};
+
+const CANONICAL_ROLE_DEFS: Record<
+  CanonicalProjectRole,
+  { labelEn: string; labelPl: string; color: string; icon: React.ElementType; invokable?: boolean }
+> = {
+  SPONSOR: {
+    labelEn: 'Sponsor (Business Owner)',
+    labelPl: 'Sponsor (Właściciel biznesowy)',
+    color: 'bg-amber-100 text-amber-800',
+    icon: Crown,
+  },
+  PROJECT_LEADER: {
+    labelEn: 'Project Leader',
+    labelPl: 'Project Leader',
+    color: 'bg-blue-100 text-blue-800',
+    icon: Briefcase,
+  },
+  INITIATIVE_OWNER: {
+    labelEn: 'Initiative Owner',
+    labelPl: 'Właściciel inicjatywy',
+    color: 'bg-teal-100 text-teal-800',
+    icon: Users,
+  },
+  TEAM_MEMBER: {
+    labelEn: 'Team Member',
+    labelPl: 'Członek zespołu',
+    color: 'bg-green-100 text-green-800',
+    icon: Users,
+  },
+  PMO: {
+    labelEn: 'Project Office (PMO)',
+    labelPl: 'Project Office (PMO)',
+    color: 'bg-violet-100 text-violet-800',
+    icon: Shield,
+    invokable: true,
+  },
+  PORTFOLIO_OWNER: {
+    labelEn: 'Portfolio Owner',
+    labelPl: 'Właściciel portfela',
+    color: 'bg-purple-100 text-purple-800',
+    icon: Shield,
+    invokable: true,
+  },
+  BUSINESS_OWNER: {
+    labelEn: 'Business Owner (Benefits)',
+    labelPl: 'Business Owner (Korzyści)',
+    color: 'bg-indigo-100 text-indigo-800',
+    icon: Shield,
+  },
+  STEERING_COMMITTEE: {
+    labelEn: 'Steering Committee',
+    labelPl: 'Komitet sterujący',
+    color: 'bg-slate-100 text-slate-800 dark:text-slate-200',
+    icon: Eye,
+  },
+};
+
+const CANONICAL_ROLE_ORDER: CanonicalRoleKey[] = [
+  'SPONSOR',
+  'PROJECT_LEADER',
+  'INITIATIVE_OWNER',
+  'TEAM_MEMBER',
+  'PMO',
+  'PORTFOLIO_OWNER',
+  'BUSINESS_OWNER',
+  'STEERING_COMMITTEE',
+  'OTHER',
+];
+
+const normalizeUpper = (v: unknown) =>
+  String(v || '')
+    .trim()
+    .toUpperCase();
+
+const toCanonicalRoleKey = (rawRole: unknown): CanonicalRoleKey => {
+  const r = normalizeUpper(rawRole);
+  if (!r) return 'OTHER';
+  if ((Object.keys(CANONICAL_ROLE_DEFS) as string[]).includes(r)) return r as CanonicalProjectRole;
+  if (['PROJECT_EXECUTIVE', 'PROJECT_SPONSOR', 'SPONSOR'].includes(r)) return 'SPONSOR';
+  if (['PROJECT_MANAGER', 'PROJECT_LEAD', 'TEAM_LEAD', 'PMO_LEAD', 'MANAGER'].includes(r))
+    return 'PROJECT_LEADER';
+  if (r === 'INITIATIVE_OWNER') return 'INITIATIVE_OWNER';
+  if (['TASK_ASSIGNEE', 'TEAM_MEMBER', 'DEVELOPER', 'ANALYST', 'SME', 'REVIEWER'].includes(r))
+    return 'TEAM_MEMBER';
+  if (r === 'CONSULTANT') return 'TEAM_MEMBER'; // consultant is overlay, not project role in canon
+  if (['OBSERVER', 'STAKEHOLDER', 'VIEWER'].includes(r)) return 'OTHER';
+  return 'OTHER';
+};
 
 export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
   projectId,
   canManageTeam = false,
   onMemberChange,
 }) => {
-  const { t } = useTranslation();
-  const [members, setMembers] = useState<ProjectMember[]>([]);
+  const { t, i18n } = useTranslation();
+  const [members, setMembers] = useState<ExtendedProjectMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<ProjectRole | null>(null);
 
   useEffect(() => {
     loadMembers();
@@ -160,7 +190,7 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: ProjectRole) => {
+  const handleRoleChange = async (userId: string, newRole: CanonicalProjectRole) => {
     try {
       await api.patch(`/projects/${projectId}/members/${userId}`, {
         projectRole: newRole,
@@ -172,31 +202,28 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
     }
   };
 
+  const handleInvokedChange = async (userId: string, isInvoked: boolean) => {
+    try {
+      await api.patch(`/projects/${projectId}/members/${userId}`, { isInvoked });
+      await loadMembers();
+      onMemberChange?.();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update invoked flag');
+    }
+  };
+
   // Group members by role
   const groupedMembers = members.reduce(
     (acc, member) => {
-      const role = (member.projectRole || ProjectRole.TEAM_MEMBER) as ProjectRole;
-      if (!acc[role]) acc[role] = [];
-      acc[role].push(member);
+      const roleKey = toCanonicalRoleKey((member as any).projectRole);
+      if (!acc[roleKey]) acc[roleKey] = [];
+      acc[roleKey].push(member);
       return acc;
     },
-    {} as Record<ProjectRole, ProjectMember[]>
+    {} as Record<CanonicalRoleKey, ExtendedProjectMember[]>
   );
 
-  // Order roles by hierarchy
-  const roleOrder: ProjectRole[] = [
-    ProjectRole.SPONSOR,
-    ProjectRole.DECISION_OWNER,
-    ProjectRole.PMO_LEAD,
-    ProjectRole.WORKSTREAM_OWNER,
-    ProjectRole.INITIATIVE_OWNER,
-    ProjectRole.TASK_ASSIGNEE,
-    ProjectRole.SME,
-    ProjectRole.REVIEWER,
-    ProjectRole.CONSULTANT,
-    ProjectRole.OBSERVER,
-    ProjectRole.STAKEHOLDER,
-  ];
+  const roleOrder = CANONICAL_ROLE_ORDER;
 
   if (loading) {
     return (
@@ -250,17 +277,28 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
           const roleMembers = groupedMembers[role];
           if (!roleMembers || roleMembers.length === 0) return null;
 
-          const roleInfo = ROLE_LABELS[role];
-          const RoleIcon = roleInfo.icon;
+          const roleInfo =
+            role === 'OTHER' ? null : CANONICAL_ROLE_DEFS[role as CanonicalProjectRole] || null;
+          const RoleIcon = roleInfo?.icon || Users;
+          const roleLabel =
+            role === 'OTHER'
+              ? t('pmo.roles.other', 'Other / legacy roles')
+              : t(`pmo.roles.${role}`, {
+                  defaultValue:
+                    (i18n.language === 'pl' ? roleInfo?.labelPl : roleInfo?.labelEn) ||
+                    (roleInfo ? roleInfo.labelEn : role),
+                });
+          const roleColor =
+            role === 'OTHER' ? 'bg-gray-100 dark:bg-navy-800 text-gray-800' : roleInfo?.color;
 
           return (
             <div key={role} className="px-6 py-4">
               <div className="flex items-center gap-2 mb-3">
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${roleInfo.color}`}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${roleColor}`}
                 >
                   <RoleIcon className="w-3.5 h-3.5" />
-                  {roleInfo.label}
+                  {roleLabel}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   ({roleMembers.length})
@@ -275,6 +313,7 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
                     canManage={canManageTeam}
                     onRemove={() => handleRemoveMember(member.userId)}
                     onRoleChange={(newRole) => handleRoleChange(member.userId, newRole)}
+                    onInvokedChange={(newValue) => handleInvokedChange(member.userId, newValue)}
                   />
                 ))}
               </div>
@@ -300,6 +339,11 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
         )}
       </div>
 
+      {/* Steering Board (optional) */}
+      <div className="border-t border-gray-200 dark:border-gray-700">
+        <SteeringBoardPanel projectId={projectId} canManage={canManageTeam} />
+      </div>
+
       {/* Add Member Modal would go here */}
       {showAddModal && (
         <AddMemberModal
@@ -317,14 +361,33 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
 };
 
 interface MemberRowProps {
-  member: ProjectMember;
+  member: ExtendedProjectMember;
   canManage: boolean;
   onRemove: () => void;
-  onRoleChange: (newRole: ProjectRole) => void;
+  onRoleChange: (newRole: CanonicalProjectRole) => void;
+  onInvokedChange: (newValue: boolean) => void;
 }
 
-const MemberRow: React.FC<MemberRowProps> = ({ member, canManage, onRemove, onRoleChange }) => {
+const MemberRow: React.FC<MemberRowProps> = ({
+  member,
+  canManage,
+  onRemove,
+  onRoleChange,
+  onInvokedChange,
+}) => {
+  const { i18n, t } = useTranslation();
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const roleKey = toCanonicalRoleKey((member as any).projectRole);
+  const roleLabel =
+    roleKey === 'OTHER'
+      ? normalizeUpper((member as any).projectRole) || t('pmo.roles.other', 'Other')
+      : i18n.language === 'pl'
+        ? CANONICAL_ROLE_DEFS[roleKey].labelPl
+        : CANONICAL_ROLE_DEFS[roleKey].labelEn;
+  const isInvokable = roleKey !== 'OTHER' && !!CANONICAL_ROLE_DEFS[roleKey].invokable;
+  const invoked = !!(member as any).isInvoked;
+  const consultantProfile = normalizeUpper((member as any).consultantProfile);
+  const isConsultant = consultantProfile && consultantProfile !== 'NONE';
 
   return (
     <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
@@ -344,6 +407,32 @@ const MemberRow: React.FC<MemberRowProps> = ({ member, canManage, onRemove, onRo
             {member.firstName} {member.lastName}
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400">{member.email}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            {(member as any).accountRole && (
+              <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-navy-800 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-slate-200">
+                {normalizeUpper((member as any).accountRole)}
+              </span>
+            )}
+            <span className="inline-flex items-center rounded-full bg-white/70 dark:bg-navy-900/60 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-navy-700/60">
+              {roleLabel}
+            </span>
+            {isInvokable && (
+              <span
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                  invoked
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200'
+                }`}
+              >
+                {invoked ? t('pmo.invoked', 'Invoked') : t('pmo.notInvoked', 'Not invoked')}
+              </span>
+            )}
+            {isConsultant && (
+              <span className="inline-flex items-center rounded-full bg-pink-100 text-pink-800 px-2 py-0.5 text-[10px] font-semibold">
+                {t('pmo.consultant', 'Consultant')}: {consultantProfile}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -361,6 +450,18 @@ const MemberRow: React.FC<MemberRowProps> = ({ member, canManage, onRemove, onRo
           </span>
         )}
 
+        {/* Invoked toggle for invokable roles */}
+        {canManage && isInvokable && (
+          <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 select-none">
+            <input
+              type="checkbox"
+              checked={invoked}
+              onChange={(e) => onInvokedChange(e.target.checked)}
+            />
+            {t('pmo.invokedShort', 'Invoked')}
+          </label>
+        )}
+
         {/* Role change dropdown */}
         {canManage && (
           <div className="relative">
@@ -373,7 +474,7 @@ const MemberRow: React.FC<MemberRowProps> = ({ member, canManage, onRemove, onRo
 
             {showRoleDropdown && (
               <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10">
-                {Object.values(ProjectRole).map((role) => (
+                {(Object.keys(CANONICAL_ROLE_DEFS) as CanonicalProjectRole[]).map((role) => (
                   <button
                     key={role}
                     onClick={() => {
@@ -381,13 +482,17 @@ const MemberRow: React.FC<MemberRowProps> = ({ member, canManage, onRemove, onRo
                       setShowRoleDropdown(false);
                     }}
                     className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:bg-navy-800 dark:hover:bg-gray-700 flex items-center gap-2 ${
-                      member.projectRole === role
+                      normalizeUpper((member as any).projectRole) === role
                         ? 'text-blue-600 dark:text-blue-400'
                         : 'text-gray-700 dark:text-gray-300'
                     }`}
                   >
-                    {member.projectRole === role && <Check className="w-3.5 h-3.5" />}
-                    {ROLE_LABELS[role].label}
+                    {normalizeUpper((member as any).projectRole) === role && (
+                      <Check className="w-3.5 h-3.5" />
+                    )}
+                    {i18n.language === 'pl'
+                      ? CANONICAL_ROLE_DEFS[role].labelPl
+                      : CANONICAL_ROLE_DEFS[role].labelEn}
                   </button>
                 ))}
               </div>
@@ -409,6 +514,258 @@ const MemberRow: React.FC<MemberRowProps> = ({ member, canManage, onRemove, onRo
   );
 };
 
+interface SteeringBoardApiResponse {
+  board: { projectId: string; enabled: number | boolean; quorumRule?: string; slaHours?: number };
+  members: Array<{
+    userId: string;
+    memberType: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    avatarUrl?: string | null;
+  }>;
+}
+
+const SteeringBoardPanel: React.FC<{ projectId: string; canManage: boolean }> = ({
+  projectId,
+  canManage,
+}) => {
+  const { t, i18n } = useTranslation();
+  const isPl = i18n.language === 'pl';
+
+  const [loading, setLoading] = useState(true);
+  const [enabled, setEnabled] = useState(false);
+  const [members, setMembers] = useState<SteeringBoardApiResponse['members']>([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [newUserId, setNewUserId] = useState('');
+  const [newMemberType, setNewMemberType] = useState<'CHAIR' | 'BOARD_MEMBER' | 'OBSERVER'>(
+    'BOARD_MEMBER'
+  );
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get(`/projects/${projectId}/steering-board`);
+      const data = res.data as SteeringBoardApiResponse;
+      setEnabled(!!(data?.board?.enabled as any));
+      setMembers(data?.members || []);
+    } catch {
+      setEnabled(false);
+      setMembers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // Load org users for add-member modal (best-effort)
+    (async () => {
+      try {
+        const response = await api.get('/users');
+        setAvailableUsers(
+          Array.isArray(response.data) ? response.data : response.data?.users || []
+        );
+      } catch {
+        setAvailableUsers([]);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
+  const toggleEnabled = async () => {
+    const next = !enabled;
+    setEnabled(next);
+    try {
+      await api.put(`/projects/${projectId}/steering-board`, { enabled: next });
+      await load();
+    } catch {
+      setEnabled(!next);
+    }
+  };
+
+  const addMember = async () => {
+    if (!newUserId) return;
+    try {
+      await api.post(`/projects/${projectId}/steering-board/members`, {
+        userId: newUserId,
+        memberType: newMemberType,
+      });
+      setShowAdd(false);
+      setNewUserId('');
+      setNewMemberType('BOARD_MEMBER');
+      await load();
+    } catch {
+      // best-effort
+    }
+  };
+
+  const removeMember = async (userId: string) => {
+    try {
+      await api.delete(`/projects/${projectId}/steering-board/members/${userId}`);
+      await load();
+    } catch {
+      // best-effort
+    }
+  };
+
+  return (
+    <div className="px-6 py-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="text-sm font-semibold text-slate-900 dark:text-white">
+            {t('pmo.steeringBoard', 'Steering Board')}
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {t('pmo.steeringBoardHint', 'Optional governance body for approvals and escalations.')}
+          </div>
+        </div>
+
+        {canManage && (
+          <button
+            onClick={toggleEnabled}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+              enabled
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-navy-800 dark:text-slate-200 dark:border-navy-700'
+            }`}
+          >
+            {enabled ? t('common.enabled', 'Enabled') : t('common.disabled', 'Disabled')}
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+          {t('common.loading', 'Loading...')}
+        </div>
+      ) : (
+        <div className="mt-3 space-y-2">
+          {members.length === 0 ? (
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {t('pmo.steeringBoardEmpty', 'No Steering Board members yet.')}
+            </div>
+          ) : (
+            members.map((m) => (
+              <div
+                key={m.userId}
+                className="flex items-center justify-between p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60"
+              >
+                <div className="text-sm text-slate-800 dark:text-slate-200">
+                  {(m.firstName || '') + ' ' + (m.lastName || '')}{' '}
+                  <span className="text-xs text-slate-500 dark:text-slate-400">({m.email})</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-semibold rounded-full px-2 py-0.5 bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200">
+                    {normalizeUpper(m.memberType)}
+                  </span>
+                  {canManage && (
+                    <button
+                      onClick={() => removeMember(m.userId)}
+                      className="p-1.5 text-slate-400 hover:text-red-500"
+                      title={t('common.remove', 'Remove')}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+
+          {canManage && (
+            <div className="pt-2">
+              <button
+                onClick={() => setShowAdd(true)}
+                className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+              >
+                {t('pmo.addSteeringBoardMember', 'Add Steering Board member')}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {showAdd && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {t('pmo.addSteeringBoardMember', 'Add Steering Board member')}
+              </h3>
+              <button
+                onClick={() => setShowAdd(false)}
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-400"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('pmo.selectUser', 'Select User')}
+                </label>
+                <select
+                  value={newUserId}
+                  onChange={(e) => setNewUserId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">{t('pmo.chooseUser', 'Choose a user...')}</option>
+                  {availableUsers.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {(u.firstName || u.first_name || '') +
+                        ' ' +
+                        (u.lastName || u.last_name || '')}{' '}
+                      ({u.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('pmo.memberType', 'Member type')}
+                </label>
+                <select
+                  value={newMemberType}
+                  onChange={(e) =>
+                    setNewMemberType(e.target.value as 'CHAIR' | 'BOARD_MEMBER' | 'OBSERVER')
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="CHAIR">{isPl ? 'Przewodniczący' : 'Chair'}</option>
+                  <option value="BOARD_MEMBER">{isPl ? 'Członek' : 'Board member'}</option>
+                  <option value="OBSERVER">{isPl ? 'Obserwator' : 'Observer'}</option>
+                </select>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAdd(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:bg-navy-800 dark:hover:bg-gray-700"
+                >
+                  {t('common.cancel', 'Cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={addMember}
+                  disabled={!newUserId}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {t('common.add', 'Add')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface AddMemberModalProps {
   projectId: string;
   onClose: () => void;
@@ -416,15 +773,13 @@ interface AddMemberModalProps {
 }
 
 const AddMemberModal: React.FC<AddMemberModalProps> = ({ projectId, onClose, onAdded }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [userId, setUserId] = useState('');
-  const [role, setRole] = useState<ProjectRole>(ProjectRole.TASK_ASSIGNEE);
+  const [role, setRole] = useState<CanonicalProjectRole>('TEAM_MEMBER');
   const [allocation, setAllocation] = useState(100);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [users, setUsers] = useState<
-    Array<{ id: string; firstName: string; lastName: string; email: string }>
-  >([]);
+  const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
     // Load available users from organization
@@ -492,7 +847,8 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ projectId, onClose, onA
               <option value="">{t('pmo.chooseUser', 'Choose a user...')}</option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.firstName} {user.lastName} ({user.email})
+                  {(user.firstName || user.first_name) ?? ''}{' '}
+                  {(user.lastName || user.last_name) ?? ''} ({user.email})
                 </option>
               ))}
             </select>
@@ -505,12 +861,14 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ projectId, onClose, onA
             </label>
             <select
               value={role}
-              onChange={(e) => setRole(e.target.value as ProjectRole)}
+              onChange={(e) => setRole(e.target.value as CanonicalProjectRole)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              {Object.values(ProjectRole).map((r) => (
+              {(Object.keys(CANONICAL_ROLE_DEFS) as CanonicalProjectRole[]).map((r) => (
                 <option key={r} value={r}>
-                  {ROLE_LABELS[r].label}
+                  {i18n.language === 'pl'
+                    ? CANONICAL_ROLE_DEFS[r].labelPl
+                    : CANONICAL_ROLE_DEFS[r].labelEn}
                 </option>
               ))}
             </select>

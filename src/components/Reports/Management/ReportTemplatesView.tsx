@@ -295,7 +295,7 @@ export const ReportTemplatesView: React.FC = () => {
                       ) : null;
                     })}
                   </div>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
                     {selectedSections.length} section{selectedSections.length !== 1 ? 's' : ''} ·{' '}
                     {reportType.replace(/_/g, ' ')}
                   </p>
@@ -325,7 +325,9 @@ export const ReportTemplatesView: React.FC = () => {
           <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
             Saved Templates{' '}
             {templates.length > 0 && (
-              <span className="text-slate-400 font-normal">({templates.length})</span>
+              <span className="text-slate-500 dark:text-slate-400 font-normal">
+                ({templates.length})
+              </span>
             )}
           </h3>
           <ChevronDown

@@ -8,8 +8,8 @@ Zapewnić spójny UI/UX we wszystkich modułach (ModuleHub pattern + wspólne st
 
 - Golden Standard: `wdrozenia/UI_UX_GOLDEN_STANDARD 4.md`
 - (Legacy) `wdrozenia/standards/UI-UX-STANDARD 2.md` – **nie jest kanoniczny**
-- DBR77 Visual Language: `docs/00_foundation/DBR77_VISUAL_LANGUAGE_STANDARD.md`
-- DBR77 Color System: `docs/00_foundation/COLOR_SYSTEM_STANDARD.md`
+- DBR77 Visual Language: `docs/ui-standards/00-foundation/visual-language.md`
+- DBR77 Color System: `docs/ui-standards/00-foundation/color-system.md`
 
 ## Wymagania MUST (minimum)
 
@@ -60,9 +60,9 @@ Wymóg:
 - Nagłówek detail view jest **stały i identyczny** we wszystkich trybach; zmienia się wyłącznie treść poniżej.
 - Toggle trybu prezentacji: **3 przyciski pomiędzy Chat a AI**.
 - Tryby są tylko innym renderem **tych samych danych** (nic nie znika).
-- Wszystkie 3 tryby MUSZĄ być zgodne z DBR77 Visual Language (kolory/tła/ramki/typografia): `docs/00_foundation/DBR77_VISUAL_LANGUAGE_STANDARD.md`.
+- Wszystkie 3 tryby MUSZĄ być zgodne z DBR77 Visual Language (kolory/tła/ramki/typografia): `docs/ui-standards/00-foundation/visual-language.md`.
 
-Źródło prawdy: `docs/ui-standards/detail-view-presentation-modes.md`.
+Źródło prawdy: `docs/ui-standards/01-shell-layout/presentation-modes.md`.
 
 ---
 

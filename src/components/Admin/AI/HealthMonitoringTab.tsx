@@ -450,7 +450,7 @@ export const HealthMonitoringTab: React.FC = () => {
                 </span>
                 <button
                   onClick={() => setResults({})}
-                  className="text-gray-500 dark:text-gray-400 hover:text-white text-xs"
+                  className="text-gray-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white text-xs"
                 >
                   Clear
                 </button>
@@ -577,7 +577,7 @@ export const HealthMonitoringTab: React.FC = () => {
 
           {/* Placeholder for charts */}
           <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-8 text-center shadow-sm dark:shadow-none">
-            <TrendingUp className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-4" />
+            <TrendingUp className="w-12 h-12 text-slate-500 dark:text-slate-400 dark:text-slate-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-navy-900 dark:text-white">Usage Trends</h3>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
               Interactive usage charts are available in the Analytics tab
@@ -659,7 +659,7 @@ export const HealthMonitoringTab: React.FC = () => {
                           {log.error}
                         </span>
                       ) : (
-                        <span className="text-slate-400 dark:text-slate-600 text-xs italic">
+                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-600 text-xs italic">
                           Success
                         </span>
                       )}

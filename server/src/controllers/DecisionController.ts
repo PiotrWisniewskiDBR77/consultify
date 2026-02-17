@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
   CreateDecisionRequest,
@@ -277,6 +278,8 @@ export class DecisionController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { projectId, status, relatedObjectId, taskId, initiativeId, limit, offset } = req.query;
       const orgId = req.user?.organizationId;
+      const decisionCols = await getTableColumns('decisions');
+      const hasEscalationLevelCol = decisionCols.has('escalation_level');
 
       let sql = `
         SELECT 
@@ -342,13 +345,26 @@ export class DecisionController {
           const nextStatus = shouldEscalate ? 'escalated' : statusNormalized;
           const escalationLevel = escalation.level;
 
-          if (
-            nextStatus !== statusNormalized ||
+          // Persist escalation status only if the column exists (Postgres schema may omit it).
+          if (nextStatus !== statusNormalized) {
+            if (hasEscalationLevelCol) {
+              await queryHelpers.queryRun(
+                `UPDATE decisions SET status = ?, escalation_level = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+                [nextStatus, escalationLevel, row.id]
+              );
+            } else {
+              await queryHelpers.queryRun(
+                `UPDATE decisions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+                [nextStatus, row.id]
+              );
+            }
+          } else if (
+            hasEscalationLevelCol &&
             escalationLevel !== (row.escalation_level || 'none')
           ) {
             await queryHelpers.queryRun(
-              `UPDATE decisions SET status = ?, escalation_level = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-              [nextStatus, escalationLevel, row.id]
+              `UPDATE decisions SET escalation_level = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+              [escalationLevel, row.id]
             );
           }
 

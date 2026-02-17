@@ -83,7 +83,7 @@ const KPICard: React.FC<{
     // For some metrics, down is good (e.g., overdue, wait time)
     if (trend === 'up') return 'text-emerald-500';
     if (trend === 'down') return 'text-rose-500';
-    return 'text-slate-400 dark:text-slate-500';
+    return 'text-slate-500 dark:text-slate-400 dark:text-slate-500';
   };
 
   const getStatusBorder = () => {
@@ -136,7 +136,11 @@ const KPICard: React.FC<{
         <span className="text-3xl font-bold text-navy-900 dark:text-white tabular-nums">
           {value}
         </span>
-        {subValue && <span className="text-sm text-slate-400 dark:text-slate-500">{subValue}</span>}
+        {subValue && (
+          <span className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
+            {subValue}
+          </span>
+        )}
       </div>
 
       {/* Details */}
@@ -281,7 +285,7 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
       {/* Tasks KPI – A1.1: data source: /my-work/stats?period=week */}
       <KPICard
         title={t('executive.kpi.tasks', 'Task Execution')}
-        icon={<CheckCircle2 size={22} className="text-white" />}
+        icon={<CheckCircle2 size={22} className="text-slate-900 dark:text-white" />}
         iconBg="bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/30"
         value={hasTaskData ? `${completionRate}%` : '—'}
         subValue={
@@ -321,7 +325,7 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
       {/* Decisions KPI – A1.1: data source: /decisions?limit=10 */}
       <KPICard
         title={t('executive.kpi.decisions', 'Decisions Pending')}
-        icon={<FileQuestion size={22} className="text-white" />}
+        icon={<FileQuestion size={22} className="text-slate-900 dark:text-white" />}
         iconBg="bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/30"
         value={hasDecisionData ? kpiData.decisions.pending : '—'}
         subValue={
@@ -361,7 +365,7 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
       {/* Team Capacity KPI – A1.1: data source: /my-work/team-workload */}
       <KPICard
         title={t('executive.kpi.teamCapacity', 'Team Capacity')}
-        icon={<Users size={22} className="text-white" />}
+        icon={<Users size={22} className="text-slate-900 dark:text-white" />}
         iconBg="bg-gradient-to-br from-cyan-500 to-blue-600 shadow-cyan-500/30"
         value={hasTeamData ? `${kpiData.team.avgCapacity}%` : '—'}
         subValue={
@@ -398,7 +402,7 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
       {/* Risk Level KPI – A1.1: data source: derived from overdue tasks */}
       <KPICard
         title={t('executive.kpi.riskLevel', 'Risk Level')}
-        icon={<AlertTriangle size={22} className="text-white" />}
+        icon={<AlertTriangle size={22} className="text-slate-900 dark:text-white" />}
         iconBg={`bg-gradient-to-br ${
           !hasRiskData
             ? 'from-slate-400 to-slate-500 shadow-slate-500/30'

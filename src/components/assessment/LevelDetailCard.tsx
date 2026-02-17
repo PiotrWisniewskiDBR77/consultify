@@ -237,7 +237,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
             className={`
                             touch-target touch-ripple rounded-xl font-medium transition-all border 
                             bg-slate-100 dark:bg-navy-950/30 border-slate-200 dark:border-navy-700 
-                            text-slate-400 dark:text-slate-500 active:bg-slate-200 dark:active:bg-white/10
+                            text-slate-500 dark:text-slate-400 dark:text-slate-500 active:bg-slate-200 dark:active:bg-white/10
                             flex items-center justify-center gap-2
                             ${
                               isCompact

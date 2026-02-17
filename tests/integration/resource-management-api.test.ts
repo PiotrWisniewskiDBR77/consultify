@@ -1,279 +1,100 @@
 /**
- * Backend API Tests - Resource Management
- * Test subscription plans CRUD, organization resources, and budget endpoints
+ * L2: resourceManagement.routes (honest router test)
+ *
+ * Replaces nondeterministic "hit localhost if server is running" checks.
  */
 
+import express from 'express';
 import request from 'supertest';
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const API_URL = process.env.API_URL || 'http://localhost:3001';
-let superAdminToken: string;
-let testOrgId: string;
-let testPlanId: string;
+const fakeDb = vi.hoisted(() => ({
+  all: vi.fn(async () => []),
+  get: vi.fn(async () => null),
+  run: vi.fn(async () => ({ changes: 1 })),
+}));
 
-describe('Resource Management API Tests', () => {
-  let serverAvailable = false;
+vi.mock('../../server/src/database/Database.js', () => ({
+  getDatabase: () => fakeDb,
+}));
 
-  beforeAll(async () => {
-    try {
-      // Get SuperAdmin token (assumes test auth setup)
-      const authResponse = await request(API_URL)
-        .post('/api/auth/login')
-        .send({ email: 'superadmin@test.com', password: 'test123' })
-        .timeout(2000);
+vi.mock('../../server/src/middleware/auth.middleware.js', () => ({
+  verifyToken: (req: any, _res: any, next: any) => {
+    req.user = { id: 'u-1', organizationId: 'org-1' };
+    next();
+  },
+  requireSuperAdmin: (_req: any, _res: any, next: any) => next(),
+}));
 
-      superAdminToken = authResponse.body.token;
+vi.mock('../../server/src/services/budgetTrackingService.js', () => ({
+  budgetTrackingService: {
+    getBudgetStatus: vi.fn(async () => ({ ok: true })),
+    getExpenseHistory: vi.fn(async () => []),
+    initializeBudget: vi.fn(async () => undefined),
+    recordExpense: vi.fn(async () => undefined),
+  },
+}));
 
-      if (superAdminToken) {
-        // Create test organization
-        const orgResponse = await request(API_URL)
-          .post('/api/superadmin/organizations')
-          .set('Authorization', `Bearer ${superAdminToken}`)
-          .send({ name: 'Test Org for Resource Tests' });
+import resourceManagementRouter from '../../server/src/routes/resourceManagement.routes.js';
 
-        testOrgId = orgResponse.body?.organization?.id;
-        serverAvailable = true;
-      }
-    } catch (error: any) {
-      console.log('Resource Management API Tests: Server not available, skipping tests');
-      serverAvailable = false;
-    }
+describe('resourceManagement.routes', () => {
+  let app: express.Express;
+
+  beforeEach(() => {
+    fakeDb.all.mockReset();
+    fakeDb.get.mockReset();
+    fakeDb.run.mockReset();
+
+    app = express();
+    app.use(express.json());
+    app.use('/api/superadmin', resourceManagementRouter);
   });
 
-  describe('Subscription Plans CRUD', () => {
-    it('should create a new subscription plan', async () => {
-      if (!serverAvailable) {
-        console.log('Skipping: Server not available');
-        return;
-      }
-      const response = await request(API_URL)
-        .post('/api/superadmin/subscription-plans')
-        .set('Authorization', `Bearer ${superAdminToken}`)
-        .send({
-          name: 'Test Plan',
-          priceMonthly: 29.99,
-          tokenLimit: 100000,
-          storageLimitGb: 10,
-          memoryLimitMb: 1024,
-          cpuQuotaPercent: 30,
-          maxConcurrentAiJobs: 5,
-          tokenOverageRate: 0.01,
-          storageOverageRate: 0.1,
-          stripePriceId: 'price_test_123',
-        });
+  it('GET /api/superadmin/subscription-plans returns plans', async () => {
+    fakeDb.all.mockResolvedValueOnce([{ id: 'p1', name: 'Plan 1' }]);
 
-      // Server may return various status codes depending on state
-      expect([200, 201, 400, 401, 403, 500]).toContain(response.status);
-      if (response.status === 201 && response.body.plan) {
-        testPlanId = response.body.plan.id;
-      }
-    });
-
-    it('should get all subscription plans', async () => {
-      const response = await request(API_URL)
-        .get('/api/superadmin/subscription-plans')
-        .set('Authorization', `Bearer ${superAdminToken}`);
-
-      expect([200, 400, 401, 404, 500]).toContain(response.status);
-    });
-
-    it('should update a subscription plan', async () => {
-      if (!serverAvailable || !testPlanId) {
-        console.log('Skipping: Server not available or no test plan');
-        return;
-      }
-      const response = await request(API_URL)
-        .put(`/api/superadmin/subscription-plans/${testPlanId}`)
-        .set('Authorization', `Bearer ${superAdminToken}`)
-        .send({ priceMonthly: 39.99, cpuQuotaPercent: 50 });
-
-      expect([200, 400, 404, 500]).toContain(response.status);
-    });
-
-    it('should delete a subscription plan', async () => {
-      if (!serverAvailable || !testPlanId) {
-        console.log('Skipping: Server not available or no test plan');
-        return;
-      }
-      const response = await request(API_URL)
-        .delete(`/api/superadmin/subscription-plans/${testPlanId}`)
-        .set('Authorization', `Bearer ${superAdminToken}`);
-
-      expect([200, 400, 404, 500]).toContain(response.status);
-    });
-
-    it('should reject plan creation without auth', async () => {
-      if (!serverAvailable) {
-        console.log('Skipping: Server not available');
-        return;
-      }
-      const response = await request(API_URL)
-        .post('/api/superadmin/subscription-plans')
-        .send({ name: 'Unauthorized Plan', priceMonthly: 10 });
-
-      // Accept 401 or 403 for unauthorized access
-      expect([401, 403, 404]).toContain(response.status);
-    });
+    const res = await request(app).get('/api/superadmin/subscription-plans').expect(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.plans).toEqual([{ id: 'p1', name: 'Plan 1' }]);
   });
 
-  describe('Organization Resource Management', () => {
-    it('should get organization resources', async () => {
-      if (!serverAvailable) {
-        console.log('Skipping: Server not available');
-        return;
-      }
-      const response = await request(API_URL)
-        .get(`/api/superadmin/organizations/${testOrgId}/resources`)
-        .set('Authorization', `Bearer ${superAdminToken}`);
+  it('POST /api/superadmin/subscription-plans creates plan', async () => {
+    const res = await request(app)
+      .post('/api/superadmin/subscription-plans')
+      .send({
+        name: 'Test Plan',
+        priceMonthly: 10,
+        tokenLimit: 100,
+        storageLimitGb: 1,
+        memoryLimitMb: 256,
+        cpuQuotaPercent: 10,
+        maxConcurrentAiJobs: 1,
+        tokenOverageRate: 0.01,
+        storageOverageRate: 0.1,
+        stripePriceId: 'price_123',
+      })
+      .expect(200);
 
-      expect([200, 400, 404, 500]).toContain(response.status);
-    });
-
-    it('should update organization budget', async () => {
-      if (!serverAvailable) {
-        console.log('Skipping: Server not available');
-        return;
-      }
-      const response = await request(API_URL)
-        .put(`/api/superadmin/organizations/${testOrgId}/budget`)
-        .set('Authorization', `Bearer ${superAdminToken}`)
-        .send({ monthlyBudgetUsd: 1000, alertThreshold: 0.8 });
-
-      expect([200, 400, 404, 500]).toContain(response.status);
-    });
-
-    it('should update organization quotas', async () => {
-      if (!serverAvailable) {
-        console.log('Skipping: Server not available');
-        return;
-      }
-      const response = await request(API_URL)
-        .put(`/api/superadmin/organizations/${testOrgId}/quotas`)
-        .set('Authorization', `Bearer ${superAdminToken}`)
-        .send({ memoryLimitMb: 2048, cpuQuotaPercent: 60, tokenBalance: 50000 });
-
-      expect([200, 400, 404, 500]).toContain(response.status);
-    });
-
-    it('should charge for resource change', async () => {
-      if (!serverAvailable) {
-        console.log('Skipping: Server not available');
-        return;
-      }
-      const response = await request(API_URL)
-        .post(`/api/superadmin/organizations/${testOrgId}/charge-resource-change`)
-        .set('Authorization', `Bearer ${superAdminToken}`)
-        .send({
-          changeType: 'memory_increase',
-          oldValue: 1024,
-          newValue: 2048,
-          chargeAmount: 50,
-          description: 'Memory upgrade',
-        });
-
-      expect([200, 201, 400, 404, 500]).toContain(response.status);
-    });
+    expect(res.body.success).toBe(true);
+    expect(String(res.body.planId)).toMatch(/^plan_/);
+    expect(fakeDb.run).toHaveBeenCalled();
   });
 
-  describe('Budget Management (Admin)', () => {
-    let adminToken: string;
-
-    beforeAll(async () => {
-      if (!serverAvailable) return;
-      try {
-        // Get admin token
-        const authResponse = await request(API_URL)
-          .post('/api/auth/login')
-          .send({ email: 'admin@test.com', password: 'test123' })
-          .timeout(2000);
-
-        adminToken = authResponse.body.token;
-      } catch (e) {}
-    });
-
-    it('should get budget status', async () => {
-      if (!serverAvailable) {
-        console.log('Skipping: Server not available');
-        return;
-      }
-      const response = await request(API_URL)
-        .get('/api/admin/budget')
-        .set('Authorization', `Bearer ${adminToken}`);
-
-      expect([200, 400, 401, 403, 404, 500]).toContain(response.status);
-    });
-
-    it('should get expense history', async () => {
-      if (!serverAvailable) {
-        console.log('Skipping: Server not available');
-        return;
-      }
-      const response = await request(API_URL)
-        .get('/api/admin/budget/expenses')
-        .set('Authorization', `Bearer ${adminToken}`);
-
-      expect([200, 400, 401, 403, 404, 500]).toContain(response.status);
-    });
-
-    it('should filter expenses by category', async () => {
-      if (!serverAvailable) {
-        console.log('Skipping: Server not available');
-        return;
-      }
-      const response = await request(API_URL)
-        .get('/api/admin/budget/expenses?category=TOKENS')
-        .set('Authorization', `Bearer ${adminToken}`);
-
-      expect([200, 400, 401, 403, 404, 500]).toContain(response.status);
-    });
+  it('DELETE /api/superadmin/subscription-plans/:id rejects deletion when in use', async () => {
+    fakeDb.get.mockResolvedValueOnce({ count: 2 });
+    const res = await request(app).delete('/api/superadmin/subscription-plans/p1').expect(400);
+    expect(res.body.error).toMatch(/in use/i);
+    expect(res.body.organizationsUsing).toBe(2);
   });
 
-  describe('Authorization Tests', () => {
-    let regularUserToken: string;
-
-    beforeAll(async () => {
-      if (!serverAvailable) return;
-      try {
-        const authResponse = await request(API_URL)
-          .post('/api/auth/login')
-          .send({ email: 'user@test.com', password: 'test123' })
-          .timeout(2000);
-
-        regularUserToken = authResponse.body.token;
-      } catch (e) {}
-    });
-
-    it('should reject regular user accessing SuperAdmin endpoints', async () => {
-      if (!serverAvailable) {
-        console.log('Skipping: Server not available');
-        return;
-      }
-      const response = await request(API_URL)
-        .get('/api/superadmin/subscription-plans')
-        .set('Authorization', `Bearer ${regularUserToken}`);
-
-      // Accept 401 or 403 for auth failures
-      expect([401, 403, 404]).toContain(response.status);
-    });
-
-    it('should reject admin accessing other org resources', async () => {
-      if (!serverAvailable) {
-        console.log('Skipping: Server not available');
-        return;
-      }
-      const response = await request(API_URL)
-        .get(`/api/superadmin/organizations/${testOrgId}/resources`)
-        .set('Authorization', `Bearer ${regularUserToken}`);
-
-      // Accept 401 or 403 for auth failures
-      expect([401, 403, 404]).toContain(response.status);
-    });
+  it('DELETE /api/superadmin/subscription-plans/:id deletes when not in use', async () => {
+    fakeDb.get.mockResolvedValueOnce({ count: 0 });
+    await request(app).delete('/api/superadmin/subscription-plans/p1').expect(200);
+    expect(fakeDb.run).toHaveBeenCalled();
   });
 
-  afterAll(async () => {
-    // Cleanup: delete test organization
-    await request(API_URL)
-      .delete(`/api/superadmin/organizations/${testOrgId}`)
-      .set('Authorization', `Bearer ${superAdminToken}`);
+  it('GET /api/superadmin/organizations/:id/resources returns 404 when org missing', async () => {
+    fakeDb.get.mockResolvedValueOnce(null);
+    await request(app).get('/api/superadmin/organizations/org-404/resources').expect(404);
   });
 });

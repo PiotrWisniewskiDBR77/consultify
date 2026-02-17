@@ -37,6 +37,12 @@ interface AuditResult {
   skipped: number;
   passRate: string;
   duration: number;
+  coverage?: {
+    statements: number;
+    branches: number;
+    functions: number;
+    lines: number;
+  };
 }
 
 interface AuditSummary {
@@ -249,6 +255,29 @@ function runTestLevel(level: (typeof testLevels)[0]): AuditResult {
 }
 
 /**
+ * Read real coverage summary from Vitest
+ */
+function readCoverageSummary(): AuditResult['coverage'] | undefined {
+  const summaryPath = path.join(projectRoot, 'coverage', 'coverage-summary.json');
+  if (!fs.existsSync(summaryPath)) return undefined;
+
+  try {
+    const data = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
+    const total = data.total;
+    if (!total) return undefined;
+
+    return {
+      statements: total.statements.pct,
+      branches: total.branches.pct,
+      functions: total.functions.pct,
+      lines: total.lines.pct,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Generate audit report
  */
 function generateReport(summary: AuditSummary): void {
@@ -377,7 +406,12 @@ function updateRegistry(summary: AuditSummary): void {
 
 | Poziom        | Pliki | Pokrycie | Pass Rate | Zmiana |
 | ------------- | ----- | -------- | --------- | ------ |
-${summary.levels.map((l) => `| ${l.name.padEnd(13)} | ${String(l.files).padEnd(5)} | ~96%     | ${l.passRate.padEnd(9)} | Automated audit |`).join('\n')}
+${summary.levels
+      .map((l) => {
+        const coverage = l.coverage ? `${l.coverage.statements}%` : 'N/A';
+        return `| ${l.name.padEnd(13)} | ${String(l.files).padEnd(5)} | ${coverage.padEnd(8)} | ${l.passRate.padEnd(9)} | Automated audit |`;
+      })
+      .join('\n')}
 
 **Totals:** ${summary.totals.passed} passed / ${summary.totals.failed} failed (${summary.totals.passRate})
 
@@ -419,6 +453,10 @@ ${colors.cyan}╔═════════════════════
 
   for (const level of levelsToRun) {
     const result = runTestLevel(level);
+
+    // Attempt to read coverage if it was generated
+    result.coverage = readCoverageSummary();
+
     results.push(result);
   }
 

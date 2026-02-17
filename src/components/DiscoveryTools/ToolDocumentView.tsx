@@ -261,7 +261,7 @@ const CollapsibleSection: React.FC<{
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
+    className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
   >
     <div
       className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
@@ -275,7 +275,7 @@ const CollapsibleSection: React.FC<{
         {badge}
         {expanded && actions}
         <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronDown size={18} className="text-slate-400" />
+          <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
         </motion.div>
       </div>
     </div>
@@ -714,7 +714,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       {/* ==================== HEADER ==================== */}
-      <div className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-navy-700/60 px-6 py-4">
+      <div className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-navy-700/60 px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Left: Back + Title */}
           <div className="flex items-center gap-4">
@@ -926,7 +926,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             >
               {currentSession ? (
                 <div className="space-y-4">
-                  <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 overflow-hidden bg-white/50 dark:bg-navy-900/40">
+                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 overflow-hidden bg-white/50 dark:bg-navy-900/40">
                     <ToolCanvas
                       toolType={toolType}
                       currentStep={currentStep}
@@ -1137,9 +1137,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           </div>
 
           {/* ==================== RIGHT COLUMN ==================== */}
-          <div className="w-96 border-l border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-900/50 overflow-y-auto p-6 space-y-4">
+          <div className="w-96 border-l border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-900/50 overflow-y-auto p-6 space-y-4">
             {/* Control Panel */}
-            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-5">
+            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 p-5">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">
                 {isPolish ? 'Panel sterowania' : 'Control Panel'}
               </h3>
@@ -1250,7 +1250,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             </div>
 
             {/* DoD Checklist */}
-            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-5">
+            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                   {isPolish ? 'Lista kontrolna (DoD)' : 'Completion Checklist (DoD)'}
@@ -1294,7 +1294,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             </div>
 
             {/* AI Configuration */}
-            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-5">
+            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 p-5">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
                 <Settings className="w-4 h-4" />
                 {isPolish ? 'Ustawienia generowania' : 'Generation Settings'}
@@ -1359,7 +1359,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
             {/* Decisions */}
             {toolDecisions.length > 0 && (
-              <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-5">
+              <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 p-5">
                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">
                   {isPolish ? 'Decyzje bramkowe' : 'Gate Decisions'}
                 </h3>
@@ -1389,7 +1389,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             )}
 
             {/* Generated Initiatives */}
-            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-5">
+            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 p-5">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
                 <Lightbulb className="w-4 h-4 text-amber-500" />
                 {isPolish ? 'Wygenerowane inicjatywy' : 'Generated Initiatives'}
@@ -1418,7 +1418,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             </div>
 
             {/* Team / Permissions */}
-            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 p-5">
+            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 p-5">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 {isPolish ? 'Uprawnienia' : 'Permissions'}

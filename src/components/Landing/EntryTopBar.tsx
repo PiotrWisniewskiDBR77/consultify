@@ -8,6 +8,7 @@ import {
   changeLanguage,
   LANGUAGE_DISPLAY_CODES,
   LANGUAGE_NAMES,
+  normalizeLanguageCode,
   SUPPORTED_LANGUAGES,
 } from '../../i18n';
 import { useAppStore } from '../../store/useAppStore';
@@ -36,6 +37,14 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
   const langRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useAppStore();
+  const brandLogoSrc =
+    theme === 'dark'
+      ? new URL('../../../Logo consultinity/Consultinity_logo_dark_medium.svg', import.meta.url)
+          .href
+      : new URL(
+          '../../../Logo consultinity/Consultinity_logo_light_transparent.svg',
+          import.meta.url
+        ).href;
 
   // Use centralized language configuration
   const languages = SUPPORTED_LANGUAGES.map((code) => ({
@@ -44,8 +53,9 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
     displayCode: LANGUAGE_DISPLAY_CODES[code],
   }));
 
-  const currentLang =
-    languages.find((l) => l.code === (i18n.language || 'en').split('-')[0]) || languages[0];
+  const currentCode =
+    normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || SUPPORTED_LANGUAGES[0];
+  const currentLang = languages.find((l) => l.code === currentCode) || languages[0];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -77,27 +87,17 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-20 bg-white/70 dark:bg-navy-950/70 backdrop-blur-xl border-b border-white/20 dark:border-navy-700 z-[100] transition-colors duration-300">
+    <header className="fixed top-0 left-0 right-0 h-20 md:h-28 bg-white/70 dark:bg-navy-950/70 backdrop-blur-xl border-b border-white/20 dark:border-navy-700 z-[100] transition-colors duration-300">
       <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
         {/* Logo + Brand Name */}
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            {/* Consultinity Logo */}
-            <a href="/" className="group" title="Consultinity">
-              <img
-                src="/assets/logos/logo-dark.png"
-                alt="Consultinity"
-                className="h-8 transition-transform duration-300 group-hover:scale-110 group-hover:brightness-110"
-              />
-            </a>
-            {/* Consultinity - links to homepage */}
-            <a
-              href="/"
-              className="text-xl font-black tracking-tight text-navy-950 dark:text-white uppercase font-sans hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-            >
-              Consultinity
-            </a>
-          </div>
+          <a href="/" className="group flex items-center" title="Consultinity">
+            <img
+              src={brandLogoSrc}
+              alt="Consultinity"
+              className="h-14 sm:h-16 md:h-20 lg:h-24 w-auto transition-transform duration-300 group-hover:scale-[1.02] group-hover:brightness-110"
+            />
+          </a>
 
           {/* Partner Program Button - Desktop Only */}
           <button
@@ -158,7 +158,11 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
           <button
             onClick={() => toggleTheme(theme === 'dark' ? 'light' : 'dark')}
             className="p-2 text-slate-600 dark:text-slate-400 hover:text-navy-950 dark:hover:text-white transition-colors"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={
+              theme === 'dark'
+                ? t('common.switchToLightMode', 'Switch to light mode')
+                : t('common.switchToDarkMode', 'Switch to dark mode')
+            }
           >
             {theme === 'dark' ? (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -231,7 +235,11 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 text-navy-950 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-            aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-label={
+              isMobileMenuOpen
+                ? t('common.closeMenu', 'Close menu')
+                : t('common.openMenu', 'Open menu')
+            }
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -308,7 +316,9 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                   <div className="flex items-center justify-between px-4 py-2">
                     {/* Theme Toggle */}
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-500 dark:text-slate-400">Theme:</span>
+                      <span className="text-sm text-slate-500 dark:text-slate-400">
+                        {t('common.themeLabel', 'Theme')}:
+                      </span>
                       <button
                         onClick={() => toggleTheme(theme === 'dark' ? 'light' : 'dark')}
                         className="p-2 text-slate-600 dark:text-slate-400 hover:text-navy-950 dark:hover:text-white transition-colors bg-slate-100 dark:bg-white/10 rounded-lg"
@@ -319,7 +329,9 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
 
                     {/* Language Selector */}
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-500 dark:text-slate-400">Lang:</span>
+                      <span className="text-sm text-slate-500 dark:text-slate-400">
+                        {t('common.languageLabel', 'Language')}:
+                      </span>
                       <div className="flex gap-1">
                         {languages.slice(0, 3).map((lang) => (
                           <button

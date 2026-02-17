@@ -189,7 +189,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
               />
             ) : (
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
-                <span className="text-xs font-medium text-white">
+                <span className="text-xs font-medium text-slate-900 dark:text-white">
                   {comment.authorName.charAt(0).toUpperCase()}
                 </span>
               </div>
@@ -205,11 +205,11 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   <span className="font-medium text-sm text-slate-800 dark:text-white">
                     {comment.authorName}
                   </span>
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {formatDate(comment.createdAt)}
                   </span>
                   {comment.updatedAt && comment.updatedAt !== comment.createdAt && (
-                    <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 italic">
                       ({isPolish ? 'edytowano' : 'edited'})
                     </span>
                   )}
@@ -222,7 +222,10 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                     className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-slate-200 dark:hover:bg-navy-700 transition-all"
                     title={isPolish ? 'Usuń' : 'Delete'}
                   >
-                    <Trash2 size={14} className="text-slate-400 hover:text-red-500" />
+                    <Trash2
+                      size={14}
+                      className="text-slate-500 dark:text-slate-400 hover:text-red-500"
+                    />
                   </button>
                 )}
               </div>
@@ -241,7 +244,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 className={`flex items-center gap-1.5 text-xs transition-colors ${
                   comment.likedByMe
                     ? 'text-primary-500'
-                    : 'text-slate-400 hover:text-primary-500 dark:text-slate-500'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-primary-500 dark:text-slate-500'
                 }`}
               >
                 <ThumbsUp size={14} className={comment.likedByMe ? 'fill-current' : ''} />
@@ -252,7 +255,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
               {!readOnly && !isReply && (
                 <button
                   onClick={() => setReplyingTo(comment.id)}
-                  className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-primary-500 dark:text-slate-500 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-primary-500 dark:text-slate-500 transition-colors"
                 >
                   <CornerDownRight size={14} />
                   <span>{isPolish ? 'Odpowiedz' : 'Reply'}</span>
@@ -263,7 +266,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
               {hasReplies && (
                 <button
                   onClick={() => toggleReplies(comment.id)}
-                  className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
                 >
                   {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   <span>
@@ -356,7 +359,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+      className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
     >
       {/* Collapsible Header */}
       <motion.button
@@ -373,7 +376,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {comments.length > 0 && (
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
               {comments.length}
             </span>
           )}
@@ -404,7 +407,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
             )}
           </AnimatePresence>
           <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={18} className="text-slate-400" />
+            <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
           </motion.div>
         </div>
       </motion.button>
@@ -424,7 +427,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-10 text-slate-400 dark:text-slate-500"
+                  className="text-center py-10 text-slate-500 dark:text-slate-400 dark:text-slate-500"
                 >
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
@@ -439,7 +442,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   <p className="text-sm font-medium">
                     {isPolish ? 'Brak komentarzy' : 'No comments yet'}
                   </p>
-                  <p className="text-xs mt-1 text-slate-400 dark:text-slate-500">
+                  <p className="text-xs mt-1 text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {isPolish ? 'Rozpocznij dyskusję...' : 'Start the conversation...'}
                   </p>
                 </motion.div>
@@ -456,7 +459,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                 <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
-                      <User size={16} className="text-white" />
+                      <User size={16} className="text-slate-900 dark:text-white" />
                     </div>
                   </div>
                   <div className="flex-1 flex gap-2">

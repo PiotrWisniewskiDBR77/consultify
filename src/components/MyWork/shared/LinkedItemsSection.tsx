@@ -114,9 +114,9 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
       case 'insight':
         return <AlertTriangle size={size} className="text-teal-400" />;
       case 'external':
-        return <ExternalLink size={size} className="text-slate-400" />;
+        return <ExternalLink size={size} className="text-slate-500 dark:text-slate-400" />;
       default:
-        return <LinkIcon size={size} className="text-slate-400" />;
+        return <LinkIcon size={size} className="text-slate-500 dark:text-slate-400" />;
     }
   };
 
@@ -137,7 +137,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
   };
 
   const getStatusColor = (status?: string) => {
-    if (!status) return 'bg-slate-500/20 text-slate-400';
+    if (!status) return 'bg-slate-500/20 text-slate-500 dark:text-slate-400';
 
     const statusLower = status.toLowerCase();
     if (['done', 'completed', 'approved', 'closed', 'mitigated'].includes(statusLower)) {
@@ -152,7 +152,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
     if (['pending', 'review', 'deferred'].includes(statusLower)) {
       return 'bg-amber-500/20 text-amber-400';
     }
-    return 'bg-slate-500/20 text-slate-400';
+    return 'bg-slate-500/20 text-slate-500 dark:text-slate-400';
   };
 
   const handleSearch = useCallback(
@@ -260,7 +260,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
   );
 
   return (
-    <div className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+    <div className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/50 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
       {/* Collapsible Header */}
       <motion.button
         whileHover={{ backgroundColor: 'rgba(148, 163, 184, 0.1)' }}
@@ -276,12 +276,12 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {items.length > 0 && (
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500">
               {items.length}
             </span>
           )}
           <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={18} className="text-slate-400" />
+            <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
           </motion.div>
         </div>
       </motion.button>
@@ -338,7 +338,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                       <div className="relative">
                         <Search
                           size={16}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                         />
                         <input
                           type="text"
@@ -354,7 +354,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                         {searching && (
                           <Loader2
                             size={16}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-slate-400"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-slate-500 dark:text-slate-400"
                           />
                         )}
                       </div>
@@ -377,14 +377,14 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                                   {getTypeLabel(result.type)}
                                 </p>
                               </div>
-                              <Plus size={16} className="text-slate-400" />
+                              <Plus size={16} className="text-slate-500 dark:text-slate-400" />
                             </button>
                           ))}
                         </div>
                       )}
 
                       {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
-                        <p className="mt-3 text-center text-sm text-slate-400 dark:text-slate-500">
+                        <p className="mt-3 text-center text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                           {isPolish ? 'Brak wyników' : 'No results found'}
                         </p>
                       )}
@@ -456,7 +456,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
 
               {/* Items List */}
               {items.length === 0 ? (
-                <div className="text-center py-6 text-slate-400 dark:text-slate-500">
+                <div className="text-center py-6 text-slate-500 dark:text-slate-400 dark:text-slate-500">
                   <LinkIcon size={32} className="mx-auto mb-2 opacity-50" />
                   <p className="text-sm">{isPolish ? 'Brak powiązań' : 'No linked items'}</p>
                 </div>
@@ -491,7 +491,7 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                               </span>
                               <ChevronRight
                                 size={14}
-                                className="flex-shrink-0 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="flex-shrink-0 text-slate-500 dark:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
                               />
                             </button>
 
@@ -517,7 +517,10 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                                   title={isPolish ? 'Otwórz w nowej karcie' : 'Open in new tab'}
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <ExternalLink size={14} className="text-slate-400" />
+                                  <ExternalLink
+                                    size={14}
+                                    className="text-slate-500 dark:text-slate-400"
+                                  />
                                 </a>
                               )}
                               {!readOnly && (
@@ -526,7 +529,10 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
                                   className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors"
                                   title={isPolish ? 'Usuń powiązanie' : 'Remove link'}
                                 >
-                                  <Trash2 size={14} className="text-slate-400 hover:text-red-500" />
+                                  <Trash2
+                                    size={14}
+                                    className="text-slate-500 dark:text-slate-400 hover:text-red-500"
+                                  />
                                 </button>
                               )}
                             </div>

@@ -249,7 +249,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-            <Shield className="w-7 h-7 text-white" />
+            <Shield className="w-7 h-7 text-slate-900 dark:text-white" />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -290,7 +290,9 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                     <span className={`text-4xl font-bold ${getScoreColor(score.total)}`}>
                       {score.total}
                     </span>
-                    <span className="text-slate-400 dark:text-slate-500 text-lg">/100</span>
+                    <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-lg">
+                      /100
+                    </span>
                   </div>
                 </div>
               </div>
@@ -560,13 +562,15 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                       {event.description}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <Clock className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+                      <Clock className="w-3 h-3 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
                       <span className="text-xs text-slate-500 dark:text-slate-400">
                         {formatTimestamp(event.timestamp)}
                       </span>
                       {event.ip && (
                         <>
-                          <span className="text-slate-300 dark:text-slate-600">•</span>
+                          <span className="text-slate-700 dark:text-slate-300 dark:text-slate-600">
+                            •
+                          </span>
                           <span className="text-xs text-slate-500 dark:text-slate-400">
                             {event.ip}
                           </span>

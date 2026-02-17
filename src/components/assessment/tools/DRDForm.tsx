@@ -243,7 +243,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
               <span className="text-blue-600 dark:text-blue-400">
                 {isPolish ? 'Aktualny' : 'Current'}: {scores[0] || '-'}
               </span>
-              <span className="text-slate-400">/</span>
+              <span className="text-slate-500 dark:text-slate-400">/</span>
               <span className="text-green-600 dark:text-green-400">
                 {isPolish ? 'Cel' : 'Target'}: {scores[1] || '-'}
               </span>
@@ -255,7 +255,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
             </div>
             <ChevronRight
               size={20}
-              className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+              className={`text-slate-500 dark:text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
             />
           </div>
         </button>
@@ -333,7 +333,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
                       </div>
                       <ChevronRight
                         size={16}
-                        className={`text-slate-400 transition-transform ${isLevelExpanded ? 'rotate-90' : ''}`}
+                        className={`text-slate-500 dark:text-slate-400 transition-transform ${isLevelExpanded ? 'rotate-90' : ''}`}
                       />
                     </button>
                     {isLevelExpanded && (
@@ -474,7 +474,7 @@ export const DRDForm: React.FC<DRDFormProps> = ({
           disabled={activeAxisId === 1}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
             activeAxisId === 1
-              ? 'text-slate-400 cursor-not-allowed'
+              ? 'text-slate-500 dark:text-slate-400 cursor-not-allowed'
               : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
           }`}
         >

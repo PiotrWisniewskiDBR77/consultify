@@ -28,10 +28,11 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 import { Api } from '@/services/api';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
@@ -41,6 +42,8 @@ export type DependencyType = 'FS' | 'SS' | 'FF' | 'SF';
 
 export interface TaskDependency {
   id: string;
+  /** When rendered outside a single task context (e.g. initiative aggregation), this is the "current" task id for API ops */
+  sourceTaskId?: string;
   taskId: string;
   taskTitle: string;
   taskStatus?: string;
@@ -69,14 +72,23 @@ interface ConnectedTask {
 }
 
 interface DependenciesSectionProps {
-  /** Current task ID */
-  taskId: string;
+  /** Current task ID (optional — omit for initiative-level usage) */
+  taskId?: string;
   /** Called when user clicks to open a linked task */
   onOpenTask?: (taskId: string) => void;
   /** Read-only mode (no add/remove) */
   readOnly?: boolean;
   /** Existing task links from the global connection system */
   connectedTasks?: ConnectedTask[];
+  /** External dependencies — when provided, skip API fetch and use these directly */
+  externalDependencies?: TaskDependency[];
+  /** Optional refresher for externalDependencies after mutations (initiative aggregation) */
+  onRefreshExternalDependencies?: () => void | Promise<void>;
+  /** Show read-only sample rows when dependency list is empty */
+  showSampleDataWhenEmpty?: boolean;
+  /** Initiative ID + tasks for initiative-level add (when taskId is omitted) */
+  initiativeId?: string;
+  initiativeTasks?: { id: string; title: string }[];
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -103,7 +115,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   critical: 'text-red-500',
   high: 'text-orange-500',
   medium: 'text-amber-500',
-  low: 'text-slate-400',
+  low: 'text-slate-500 dark:text-slate-400',
 };
 
 const DEP_TYPE_LABELS: Record<
@@ -145,6 +157,11 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   onOpenTask,
   readOnly = false,
   connectedTasks = [],
+  externalDependencies,
+  onRefreshExternalDependencies,
+  showSampleDataWhenEmpty = false,
+  initiativeId,
+  initiativeTasks = [],
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -164,18 +181,60 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   const [noteText, setNoteText] = useState('');
   const [addingTaskId, setAddingTaskId] = useState<string | null>(null);
   const [editingDependency, setEditingDependency] = useState<TaskDependency | null>(null);
-  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [selectedSourceTaskId, setSelectedSourceTaskId] = useState<string | null>(null);
 
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const effectiveTaskId = taskId || selectedSourceTaskId;
+
   const displayedDependencies = [...predecessors, ...successors];
+  const sampleDependencies = useMemo<TaskDependency[]>(
+    () => [
+      {
+        id: 'sample-dep-1',
+        taskId: 'sample-task-1',
+        taskTitle: 'Kick-off workshop with key stakeholders',
+        taskStatus: 'done',
+        taskPriority: 'high',
+        taskIndexCode: 'sample-task-1',
+        dependencyType: 'FS',
+        lagDays: 0,
+        notes:
+          'Sample data: process definition starts after the stakeholder kick-off is completed.',
+        direction: 'predecessor',
+      },
+      {
+        id: 'sample-dep-2',
+        taskId: 'sample-task-2',
+        taskTitle: 'Configure pilot environment and integrations',
+        taskStatus: 'in_progress',
+        taskPriority: 'medium',
+        taskIndexCode: 'sample-task-2',
+        dependencyType: 'SS',
+        lagDays: 2,
+        notes: 'Sample data: pilot setup starts with a 2-day lead overlap.',
+        direction: 'successor',
+      },
+    ],
+    []
+  );
+  const isShowingSampleData =
+    showSampleDataWhenEmpty && !loading && displayedDependencies.length === 0;
+  const visibleDependencies = isShowingSampleData ? sampleDependencies : displayedDependencies;
+  const visiblePredecessors = isShowingSampleData
+    ? sampleDependencies.filter((d) => d.direction === 'predecessor')
+    : predecessors;
   const availableConnectedTasks = connectedTasks.filter(
-    (t) => t.id && t.id !== taskId && !combinedDependencies.some((d) => d.taskId === t.id)
+    (t) => t.id && t.id !== taskId && !displayedDependencies.some((d) => d.taskId === t.id)
   );
 
   // ── Fetch dependencies ───────────────────────────────────────
   const fetchDependencies = useCallback(async () => {
-    if (!taskId) return;
+    if (!taskId) {
+      setLoading(false);
+      return;
+    }
     try {
       const data = await Api.get(`/tasks/${taskId}/dependencies`);
       setPredecessors(
@@ -191,20 +250,31 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
     }
   }, [taskId]);
 
+  // When external dependencies are provided, populate state from them directly
   useEffect(() => {
-    fetchDependencies();
-  }, [fetchDependencies]);
+    if (externalDependencies) {
+      setPredecessors(externalDependencies.filter((d) => d.direction === 'predecessor'));
+      setSuccessors(externalDependencies.filter((d) => d.direction === 'successor'));
+      setLoading(false);
+    }
+  }, [externalDependencies]);
 
-  // Close action menu on click outside
   useEffect(() => {
-    if (!openActionMenuId) return;
-    const handler = () => setOpenActionMenuId(null);
+    if (!externalDependencies) {
+      fetchDependencies();
+    }
+  }, [fetchDependencies, externalDependencies]);
+
+  // Close action menu on outside click
+  useEffect(() => {
+    if (!openMenuId) return;
+    const handler = () => setOpenMenuId(null);
     const timer = setTimeout(() => document.addEventListener('click', handler), 0);
     return () => {
       clearTimeout(timer);
       document.removeEventListener('click', handler);
     };
-  }, [openActionMenuId]);
+  }, [openMenuId]);
 
   // ── Search tasks ─────────────────────────────────────────────
   const doSearch = useCallback(
@@ -254,10 +324,15 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
   // ── Add dependency ───────────────────────────────────────────
   const handleAddDependency = async (targetTask: SearchResult) => {
     if (!addDirection || addingTaskId) return;
+    const baseId = effectiveTaskId;
+    if (!baseId) {
+      toast.error(isPolish ? 'Wybierz zadanie źródłowe' : 'Select a source task first');
+      return;
+    }
     setAddingTaskId(targetTask.id);
 
     try {
-      const res = await Api.post(`/tasks/${taskId}/dependencies`, {
+      const res = await Api.post(`/tasks/${baseId}/dependencies`, {
         targetTaskId: targetTask.id,
         direction: addDirection,
         dependencyType: selectedDepType,
@@ -288,6 +363,8 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
         toast.success(isPolish ? 'Zależność dodana' : 'Dependency added');
         closeModal();
+        if (taskId) fetchDependencies();
+        await onRefreshExternalDependencies?.();
       } else {
         toast.error(isPolish ? 'Nie udało się dodać zależności' : 'Failed to add dependency');
       }
@@ -311,22 +388,35 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
   // ── Remove dependency ────────────────────────────────────────
   const handleRemove = async (dep: TaskDependency) => {
+    const baseTaskId = effectiveTaskId || dep.sourceTaskId;
+    if (!baseTaskId) {
+      toast.error(
+        isPolish ? 'Brak kontekstu zadania do usunięcia zależności' : 'Missing task context'
+      );
+      return;
+    }
     try {
-      await Api.delete(`/tasks/${taskId}/dependencies/${dep.id}`);
-      if (dep.direction === 'predecessor') {
-        setPredecessors((prev) => prev.filter((d) => d.id !== dep.id));
-      } else {
-        setSuccessors((prev) => prev.filter((d) => d.id !== dep.id));
-      }
+      await Api.delete(`/tasks/${baseTaskId}/dependencies/${dep.id}`);
+      // Remove from both lists (initiative aggregation can render same dep.id in both arrays)
+      setPredecessors((prev) => prev.filter((d) => d.id !== dep.id));
+      setSuccessors((prev) => prev.filter((d) => d.id !== dep.id));
       toast.success(isPolish ? 'Zależność usunięta' : 'Dependency removed');
+      await onRefreshExternalDependencies?.();
     } catch {
       toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to remove');
     }
   };
 
   const handleDuplicate = async (dep: TaskDependency) => {
+    const baseTaskId = effectiveTaskId || dep.sourceTaskId;
+    if (!baseTaskId) {
+      toast.error(
+        isPolish ? 'Brak kontekstu zadania do skopiowania zależności' : 'Missing task context'
+      );
+      return;
+    }
     try {
-      const res = await Api.post(`/tasks/${taskId}/dependencies`, {
+      const res = await Api.post(`/tasks/${baseTaskId}/dependencies`, {
         targetTaskId: dep.taskId,
         direction: dep.direction,
         dependencyType: dep.dependencyType,
@@ -334,7 +424,8 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
       });
       if (res?.success) {
         toast.success(isPolish ? 'Dodano duplikat' : 'Duplicate added');
-        fetchDependencies();
+        if (taskId) fetchDependencies();
+        await onRefreshExternalDependencies?.();
       } else {
         toast.error(
           isPolish ? 'Nie udało się zduplikować zależności' : 'Failed to duplicate dependency'
@@ -361,7 +452,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
     setLagDays(depToEdit?.lagDays ?? 0);
     setNoteText(depToEdit?.notes || '');
     setEditingDependency(depToEdit || null);
-    setOpenActionMenuId(null);
+    setSelectedSourceTaskId(!taskId && initiativeTasks.length > 0 ? initiativeTasks[0].id : null);
   };
 
   const closeModal = () => {
@@ -371,10 +462,18 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
     setAddingTaskId(null);
     setEditingDependency(null);
     setNoteText('');
+    setSelectedSourceTaskId(null);
   };
 
   const handleEditDependency = async () => {
     if (!editingDependency || !addDirection) return;
+    const baseTaskId = effectiveTaskId || editingDependency.sourceTaskId;
+    if (!baseTaskId) {
+      toast.error(
+        isPolish ? 'Brak kontekstu zadania do edycji zależności' : 'Missing task context'
+      );
+      return;
+    }
 
     const unchanged =
       editingDependency.direction === addDirection &&
@@ -388,8 +487,8 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
     try {
       // No PATCH endpoint exists for dependencies, so recreate link.
-      await Api.delete(`/tasks/${taskId}/dependencies/${editingDependency.id}`);
-      await Api.post(`/tasks/${taskId}/dependencies`, {
+      await Api.delete(`/tasks/${baseTaskId}/dependencies/${editingDependency.id}`);
+      await Api.post(`/tasks/${baseTaskId}/dependencies`, {
         targetTaskId: editingDependency.taskId,
         direction: addDirection,
         dependencyType: selectedDepType,
@@ -398,7 +497,8 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
       });
       toast.success(isPolish ? 'Zależność zaktualizowana' : 'Dependency updated');
       closeModal();
-      fetchDependencies();
+      if (taskId) fetchDependencies();
+      await onRefreshExternalDependencies?.();
     } catch {
       toast.error(
         isPolish ? 'Nie udało się zaktualizować zależności' : 'Failed to update dependency'
@@ -427,18 +527,21 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
             <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
               {isPolish ? 'Zależności' : 'Dependencies'}
             </h2>
-            {displayedDependencies.length > 0 && (
-              <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
-                {displayedDependencies.length}
+            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+              {visibleDependencies.length}
+            </span>
+            {isShowingSampleData && (
+              <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-full">
+                {isPolish ? 'dane przykładowe' : 'sample data'}
               </span>
             )}
           </div>
-          {!readOnly && (
+          {!readOnly && (taskId || (externalDependencies && initiativeTasks.length > 0)) && (
             <button
               onClick={() => openModal('predecessor')}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/15 px-3 py-1.5 rounded-lg transition-all"
+              className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
             >
-              <Plus size={13} />
+              <Plus size={12} />
               {isPolish ? 'Dodaj zależność' : 'Add dependency'}
             </button>
           )}
@@ -450,15 +553,18 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
             <div className="flex items-center justify-center py-6">
               <div className="w-5 h-5 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
             </div>
-          ) : displayedDependencies.length === 0 ? (
+          ) : visibleDependencies.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-3">
-                <ArrowDown size={18} className="text-slate-400 dark:text-slate-500" />
+                <ArrowDown
+                  size={18}
+                  className="text-slate-500 dark:text-slate-400 dark:text-slate-500"
+                />
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
                 {isPolish ? 'Brak zależności' : 'No dependencies yet'}
               </p>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
                 {isPolish
                   ? 'Użyj przycisku powyżej, aby dodać zależność do innego zadania.'
                   : 'Use the button above to add a dependency to another task.'}
@@ -467,10 +573,10 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
           ) : (
             <>
               {/* ── Combined dependencies table ───────────────── */}
-              <div className="overflow-auto rounded-xl border border-slate-200/50 dark:border-navy-700/40">
+              <div className="overflow-auto rounded-xl border border-slate-200 dark:border-navy-700/40">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200/50 dark:border-navy-700/40">
+                    <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200 dark:border-navy-700/40">
                       <th className="text-left py-2.5 pl-3 pr-2">
                         {isPolish ? 'Kierunek' : 'Direction'}
                       </th>
@@ -485,7 +591,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
-                    {displayedDependencies.map((dep) => {
+                    {visibleDependencies.map((dep) => {
                       const code = buildArtifactCode('task', dep.taskIndexCode || dep.taskId);
                       const statusLabel = STATUS_LABELS[dep.taskStatus || 'todo'];
                       const isPredecessor = dep.direction === 'predecessor';
@@ -495,7 +601,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                         dep.taskStatus !== 'cancelled';
                       return (
                         <tr
-                          key={dep.id}
+                          key={`${dep.id}-${dep.direction}-${dep.taskId}`}
                           className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
                         >
                           <td className="py-2.5 pl-3 pr-2 text-xs">
@@ -521,7 +627,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                               <span
                                 className={`w-2 h-2 rounded-full shrink-0 ${STATUS_COLORS[dep.taskStatus || 'todo']}`}
                               />
-                              <span className="text-[10px] font-mono text-slate-400 shrink-0">
+                              <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 shrink-0">
                                 {code}
                               </span>
                               {onOpenTask ? (
@@ -538,18 +644,20 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                 </span>
                               )}
                               {dep.notes && (
-                                <MessageSquare
-                                  size={12}
-                                  className="text-slate-400 shrink-0"
-                                  title={dep.notes}
-                                />
+                                <span title={dep.notes} className="shrink-0">
+                                  <MessageSquare
+                                    size={12}
+                                    className="text-slate-500 dark:text-slate-400"
+                                  />
+                                </span>
                               )}
                               {isBlocking && (
-                                <AlertTriangle
-                                  size={13}
-                                  className="text-amber-500 shrink-0"
+                                <span
                                   title={isPolish ? 'Blokuje ten task' : 'Blocking this task'}
-                                />
+                                  className="shrink-0"
+                                >
+                                  <AlertTriangle size={13} className="text-amber-500" />
+                                </span>
                               )}
                             </div>
                           </td>
@@ -567,76 +675,76 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                           <td className="py-2.5 pr-2 text-xs">
                             {dep.taskPriority ? (
                               <span
-                                className={`font-medium ${PRIORITY_COLORS[dep.taskPriority] || 'text-slate-400'}`}
+                                className={`font-medium ${PRIORITY_COLORS[dep.taskPriority] || 'text-slate-500 dark:text-slate-400'}`}
                               >
                                 {dep.taskPriority}
                               </span>
                             ) : (
-                              <span className="text-slate-400">—</span>
+                              <span className="text-slate-500 dark:text-slate-400">—</span>
                             )}
                           </td>
                           <td className="py-2.5 pr-3 text-right relative">
-                            <div className="inline-flex items-center gap-2">
-                              <button
-                                onClick={() =>
-                                  setOpenActionMenuId((prev) => (prev === dep.id ? null : dep.id))
-                                }
-                                className="p-1 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-100/10 transition-colors"
-                                title={isPolish ? 'Akcje' : 'Actions'}
-                              >
-                                <MoreVertical size={14} />
-                              </button>
-                            </div>
-                            {openActionMenuId === dep.id && (
-                              <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-900 backdrop-blur-lg p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
-                                <button
-                                  onClick={() => {
-                                    openModal(dep.direction, dep);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                                >
-                                  <Edit3 size={13} className="text-slate-400" />
-                                  {isPolish ? 'Edytuj' : 'Edit'}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    openModal(dep.direction);
-                                    setSelectedDepType(dep.dependencyType);
-                                    setLagDays(dep.lagDays);
-                                    setNoteText(dep.notes || '');
-                                    setOpenActionMenuId(null);
-                                    toast(
-                                      isPolish
-                                        ? 'Skopiowano ustawienia zależności'
-                                        : 'Dependency settings copied',
-                                      { icon: '📋' }
-                                    );
-                                  }}
-                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                                >
-                                  <Copy size={13} className="text-slate-400" />
-                                  {isPolish ? 'Kopiuj' : 'Copy'}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setOpenActionMenuId(null);
-                                    handleDuplicate(dep);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                                >
-                                  <Copy size={13} className="text-slate-400" />
-                                  {isPolish ? 'Duplikat' : 'Duplicate'}
-                                </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId((prev) => (prev === dep.id ? null : dep.id));
+                              }}
+                              className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                              title={isPolish ? 'Akcje' : 'Actions'}
+                            >
+                              <MoreVertical size={14} />
+                            </button>
+
+                            {openMenuId === dep.id && (
+                              <div className="absolute right-3 top-9 z-30 w-44 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 backdrop-blur-lg p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
+                                {isShowingSampleData && (
+                                  <div className="px-2.5 py-1.5 text-[10px] text-slate-500 dark:text-slate-400 italic">
+                                    {isPolish ? 'Dane przykładowe' : 'Sample data'}
+                                  </div>
+                                )}
                                 {onOpenTask && (
                                   <button
                                     onClick={() => {
-                                      setOpenActionMenuId(null);
+                                      setOpenMenuId(null);
                                       onOpenTask(dep.taskId);
                                     }}
-                                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${isShowingSampleData ? 'opacity-50 pointer-events-none' : ''}`}
                                   >
-                                    <ExternalLink size={13} className="text-slate-400" />
-                                    {isPolish ? 'Otwórz' : 'Open'}
+                                    <ExternalLink
+                                      size={13}
+                                      className="text-slate-500 dark:text-slate-400"
+                                    />
+                                    {isPolish ? 'Otwórz kartę' : 'Open card'}
+                                  </button>
+                                )}
+                                {!readOnly && (
+                                  <button
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      openModal(dep.direction, dep);
+                                    }}
+                                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${isShowingSampleData ? 'opacity-50 pointer-events-none' : ''}`}
+                                  >
+                                    <Edit3
+                                      size={13}
+                                      className="text-slate-500 dark:text-slate-400"
+                                    />
+                                    {isPolish ? 'Edytuj' : 'Edit'}
+                                  </button>
+                                )}
+                                {!readOnly && (
+                                  <button
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      handleDuplicate(dep);
+                                    }}
+                                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${isShowingSampleData ? 'opacity-50 pointer-events-none' : ''}`}
+                                  >
+                                    <Copy
+                                      size={13}
+                                      className="text-slate-500 dark:text-slate-400"
+                                    />
+                                    {isPolish ? 'Kopiuj' : 'Copy'}
                                   </button>
                                 )}
                                 {!readOnly && (
@@ -644,13 +752,13 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                     <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
                                     <button
                                       onClick={() => {
-                                        setOpenActionMenuId(null);
+                                        setOpenMenuId(null);
                                         handleRemove(dep);
                                       }}
-                                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                      className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors ${isShowingSampleData ? 'opacity-50 pointer-events-none' : ''}`}
                                     >
                                       <Trash2 size={13} />
-                                      {isPolish ? 'Usuń' : 'Delete'}
+                                      {isPolish ? 'Kasuj' : 'Delete'}
                                     </button>
                                   </>
                                 )}
@@ -665,7 +773,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
               </div>
 
               {/* ── Blocking warning ──────────────────── */}
-              {predecessors.some(
+              {visiblePredecessors.some(
                 (d) => d.taskStatus !== 'done' && d.taskStatus !== 'cancelled'
               ) && (
                 <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
@@ -682,12 +790,15 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
               {/* ── Legend ─────────────────────────────── */}
               <div className="pt-2 border-t border-slate-100 dark:border-navy-700/50">
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-1.5">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1.5">
                   {isPolish ? 'Typy zależności:' : 'Dependency types:'}
                 </p>
                 <div className="flex flex-wrap gap-x-4 gap-y-1">
                   {(Object.keys(DEP_TYPE_LABELS) as DependencyType[]).map((dt) => (
-                    <span key={dt} className="text-[10px] text-slate-400 dark:text-slate-500">
+                    <span
+                      key={dt}
+                      className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500"
+                    >
                       <span className="font-mono font-medium text-slate-500 dark:text-slate-400">
                         {dt}
                       </span>{' '}
@@ -716,7 +827,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.96, opacity: 0, y: 12 }}
               transition={{ type: 'spring', duration: 0.35, bounce: 0.15 }}
-              className="bg-white dark:bg-navy-900 rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-slate-200/60 dark:border-navy-700/60"
+              className="bg-white dark:bg-navy-900 rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-slate-200 dark:border-navy-700/60"
               onClick={(e) => e.stopPropagation()}
             >
               {/* ── Header ─────────────────────────────── */}
@@ -745,7 +856,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                           ? 'Nowa zależność'
                           : 'New Dependency'}
                     </h3>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-0.5">
                       {editingDependency
                         ? isPolish
                           ? 'Zmień ustawienia tej zależności'
@@ -758,7 +869,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 </div>
                 <button
                   onClick={closeModal}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                 >
                   <X size={18} />
                 </button>
@@ -766,13 +877,32 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
               {/* ── Scrollable body ────────────────────── */}
               <div className="overflow-y-auto max-h-[calc(80vh-140px)]">
+                {/* ── Section: Source task (initiative mode) ─── */}
+                {!taskId && initiativeTasks.length > 0 && !editingDependency && (
+                  <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
+                    <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-2 block">
+                      {isPolish ? 'Zadanie źródłowe' : 'Source task'}
+                    </label>
+                    <select
+                      value={selectedSourceTaskId || ''}
+                      onChange={(e) => setSelectedSourceTaskId(e.target.value || null)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-slate-700 dark:text-slate-200"
+                    >
+                      {initiativeTasks.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.title || t.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 {/* ── Section: Linked Task (edit mode) ─── */}
                 {editingDependency && (
                   <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
-                    <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 mb-2 block">
+                    <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2 block">
                       {isPolish ? 'Powiązane zadanie' : 'Linked Task'}
                     </label>
-                    <div className="flex items-center gap-3 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/30 px-3.5 py-2.5 group/card">
+                    <div className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/30 px-3.5 py-2.5 group/card">
                       <div
                         className={`w-2.5 h-2.5 rounded-full shrink-0 ${STATUS_COLORS[editingDependency.taskStatus || 'todo']}`}
                       />
@@ -781,14 +911,14 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                           {editingDependency.taskTitle}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-mono text-slate-400">
+                          <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
                             {buildArtifactCode(
                               'task',
                               editingDependency.taskIndexCode || editingDependency.taskId
                             )}
                           </span>
                           {editingDependency.taskStatus && (
-                            <span className="text-[10px] text-slate-400">
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400">
                               {isPolish
                                 ? STATUS_LABELS[editingDependency.taskStatus]?.pl
                                 : STATUS_LABELS[editingDependency.taskStatus]?.en}
@@ -812,7 +942,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                             closeModal();
                             onOpenTask(editingDependency.taskId);
                           }}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors opacity-60 group-hover/card:opacity-100"
+                          className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors opacity-60 group-hover/card:opacity-100"
                           title={isPolish ? 'Otwórz zadanie' : 'Open task'}
                         >
                           <ExternalLink size={14} />
@@ -824,7 +954,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
                 {/* ── Section: Direction ────────────────── */}
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
-                  <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 mb-2.5 block">
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 block">
                     {isPolish ? 'Kierunek' : 'Direction'}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -839,7 +969,9 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                       <ArrowDown
                         size={16}
                         className={
-                          addDirection === 'predecessor' ? 'text-blue-500' : 'text-slate-400'
+                          addDirection === 'predecessor'
+                            ? 'text-blue-500'
+                            : 'text-slate-500 dark:text-slate-400'
                         }
                       />
                       <span
@@ -848,7 +980,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                         {isPolish ? 'Poprzednik' : 'Predecessor'}
                       </span>
                       <span
-                        className={`text-[10px] leading-tight ${addDirection === 'predecessor' ? 'text-blue-500/70 dark:text-blue-400/60' : 'text-slate-400 dark:text-slate-500'}`}
+                        className={`text-[10px] leading-tight ${addDirection === 'predecessor' ? 'text-blue-500/70 dark:text-blue-400/60' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
                       >
                         {isPolish ? 'To zadanie zależy od innego' : 'This task depends on another'}
                       </span>
@@ -864,7 +996,9 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                       <ArrowUp
                         size={16}
                         className={
-                          addDirection === 'successor' ? 'text-orange-500' : 'text-slate-400'
+                          addDirection === 'successor'
+                            ? 'text-orange-500'
+                            : 'text-slate-500 dark:text-slate-400'
                         }
                       />
                       <span
@@ -873,7 +1007,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                         {isPolish ? 'Następnik' : 'Successor'}
                       </span>
                       <span
-                        className={`text-[10px] leading-tight ${addDirection === 'successor' ? 'text-orange-500/70 dark:text-orange-400/60' : 'text-slate-400 dark:text-slate-500'}`}
+                        className={`text-[10px] leading-tight ${addDirection === 'successor' ? 'text-orange-500/70 dark:text-orange-400/60' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
                       >
                         {isPolish ? 'Inne zadanie zależy od tego' : 'Another task depends on this'}
                       </span>
@@ -883,7 +1017,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
                 {/* ── Section: Relationship Type ───────── */}
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
-                  <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 mb-2.5 block">
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 block">
                     {isPolish ? 'Typ relacji' : 'Relationship Type'}
                   </label>
                   <div className="grid grid-cols-4 gap-2">
@@ -894,7 +1028,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                         className={`group relative px-2 py-2.5 rounded-xl text-center transition-all ${
                           selectedDepType === dt
                             ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25 ring-1 ring-indigo-400/50'
-                            : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 border border-slate-200/50 dark:border-navy-700/50'
+                            : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 border border-slate-200 dark:border-navy-700/50'
                         }`}
                       >
                         <span className="block text-sm font-mono font-bold">{dt}</span>
@@ -902,7 +1036,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                           className={`block text-[9px] leading-tight mt-1 ${
                             selectedDepType === dt
                               ? 'text-white/70'
-                              : 'text-slate-400 dark:text-slate-500'
+                              : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'
                           }`}
                         >
                           {isPolish ? DEP_TYPE_LABELS[dt].pl : DEP_TYPE_LABELS[dt].en}
@@ -911,7 +1045,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                     ))}
                   </div>
                   {/* Type description */}
-                  <p className="mt-2.5 text-[11px] text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/30 rounded-lg px-3 py-2 border border-slate-100 dark:border-navy-700/30">
+                  <p className="mt-2.5 text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/30 rounded-lg px-3 py-2 border border-slate-100 dark:border-navy-700/30">
                     {isPolish
                       ? DEP_TYPE_LABELS[selectedDepType].desc_pl
                       : DEP_TYPE_LABELS[selectedDepType].desc_en}
@@ -920,7 +1054,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
                 {/* ── Section: Lag / Lead ───────────────── */}
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
-                  <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 mb-2.5 block">
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 block">
                     {isPolish ? 'Opóźnienie / Wyprzedzenie' : 'Lag / Lead'}
                   </label>
                   <div className="flex items-center gap-2">
@@ -959,7 +1093,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                         ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-500/20'
                         : lagDays < 0
                           ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20'
-                          : 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/30 border border-slate-100 dark:border-navy-700/30'
+                          : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/30 border border-slate-100 dark:border-navy-700/30'
                     }`}
                   >
                     <span>
@@ -991,11 +1125,27 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
                 {/* ── Section: Notes ────────────────────── */}
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
-                  <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 mb-2.5 flex items-center gap-1.5">
+                  <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 flex items-center gap-1.5">
                     <MessageSquare size={11} />
                     {isPolish ? 'Notatki' : 'Notes'}
-                    <span className="text-[9px] font-normal text-slate-300 dark:text-slate-600 ml-1">
+                    <span className="text-[9px] font-normal text-slate-700 dark:text-slate-300 dark:text-slate-600 ml-1">
                       ({isPolish ? 'opcjonalne' : 'optional'})
+                    </span>
+                    <span className="ml-auto">
+                      <AIFieldEnhancer
+                        fieldKey="dependencies.notes"
+                        sectionLabel={isPolish ? 'Zależność — notatki' : 'Dependency — notes'}
+                        currentValue={noteText}
+                        onApply={setNoteText}
+                        artifactContext={{
+                          type: taskId ? 'task' : 'initiative',
+                          title: editingDependency?.taskTitle || 'dependency',
+                          status: editingDependency?.taskStatus || '',
+                          priority: editingDependency?.taskPriority || '',
+                        }}
+                        iconOnly
+                        outputFormat="paragraph"
+                      />
                     </span>
                   </label>
                   <textarea
@@ -1014,13 +1164,13 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 {/* ── Section: Find Task (add mode) ────── */}
                 {!editingDependency && (
                   <div className="px-6 py-4">
-                    <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 mb-2.5 block">
+                    <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 block">
                       {isPolish ? 'Wybierz zadanie' : 'Select Task'}
                     </label>
                     <div className="relative">
                       <Search
                         size={15}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                       />
                       <input
                         type="text"
@@ -1043,7 +1193,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
                     {/* Search results */}
                     {searchResults.length > 0 && (
-                      <div className="mt-3 max-h-48 overflow-y-auto space-y-0.5 rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-800/20 p-1.5">
+                      <div className="mt-3 max-h-48 overflow-y-auto space-y-0.5 rounded-xl border border-slate-200 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-800/20 p-1.5">
                         {searchResults.map((task) => {
                           const code = buildArtifactCode('task', task.id);
                           const isAdding = addingTaskId === task.id;
@@ -1059,7 +1209,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                               />
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-mono text-slate-400">
+                                  <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
                                     {code}
                                   </span>
                                   {task.priority && (
@@ -1074,7 +1224,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                   {task.title}
                                 </p>
                                 {task.initiativeName && (
-                                  <p className="text-[10px] text-slate-400 truncate">
+                                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                                     {task.initiativeName}
                                   </p>
                                 )}
@@ -1097,12 +1247,12 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                       <div className="mt-4 text-center py-4">
                         <Search
                           size={20}
-                          className="mx-auto text-slate-300 dark:text-slate-600 mb-2"
+                          className="mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-2"
                         />
-                        <p className="text-sm text-slate-400">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
                           {isPolish ? 'Nie znaleziono zadań' : 'No tasks found'}
                         </p>
-                        <p className="text-[11px] text-slate-300 dark:text-slate-600 mt-0.5">
+                        <p className="text-[11px] text-slate-700 dark:text-slate-300 dark:text-slate-600 mt-0.5">
                           {isPolish ? 'Spróbuj innej frazy' : 'Try a different search term'}
                         </p>
                       </div>
@@ -1110,7 +1260,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
                     {/* Empty state */}
                     {!searchQuery && searchResults.length === 0 && !isSearching && (
-                      <p className="mt-3 text-center text-xs text-slate-400 dark:text-slate-500 py-2">
+                      <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 py-2">
                         {isPolish
                           ? 'Zacznij wpisywać, aby wyszukać zadanie do powiązania'
                           : 'Start typing to search for a task to link'}
@@ -1121,14 +1271,14 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                     {availableConnectedTasks.length > 0 && (
                       <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700/40">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">
+                          <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">
                             {isPolish ? 'Połączone zadania' : 'Connected Tasks'}
                           </span>
-                          <span className="text-[10px] text-slate-300 dark:text-slate-600">
+                          <span className="text-[10px] text-slate-700 dark:text-slate-300 dark:text-slate-600">
                             {isPolish ? 'szybkie dodawanie' : 'quick add'}
                           </span>
                         </div>
-                        <div className="space-y-0.5 rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-800/20 p-1.5">
+                        <div className="space-y-0.5 rounded-xl border border-slate-200 dark:border-navy-700/50 bg-slate-50/30 dark:bg-navy-800/20 p-1.5">
                           {availableConnectedTasks.slice(0, 6).map((task) => (
                             <button
                               key={`linked-${task.id}`}
@@ -1149,7 +1299,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                 <p className="text-sm text-slate-700 dark:text-slate-300 truncate">
                                   {task.title}
                                 </p>
-                                <p className="text-[10px] text-slate-400">
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400">
                                   {buildArtifactCode('task', task.id)}
                                 </p>
                               </div>
@@ -1168,7 +1318,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
               {/* ── Footer (edit mode) ─────────────────── */}
               {editingDependency && (
                 <div className="px-6 py-3.5 border-t border-slate-100 dark:border-navy-700/70 bg-slate-50/30 dark:bg-navy-800/20 flex items-center justify-between">
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {isPolish
                       ? 'Zmiany zostaną zapisane natychmiast'
                       : 'Changes will be saved immediately'}

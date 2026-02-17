@@ -15,6 +15,12 @@ const _emailVerificationService = {} as any; // Stubbed missing service
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import {
+  ACCESS_TOKEN_COOKIE,
+  clearAuthCookies,
+  REFRESH_TOKEN_COOKIE,
+  setAuthCookies,
+} from '../utils/cookieAuth.js';
 import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import {
   ChangePasswordRequestSchema,
@@ -62,9 +68,21 @@ router.post(
   '/refresh',
   validateBody(RefreshTokenRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { refreshToken } = req.body;
+    const bodyRefreshToken = req.body?.refreshToken;
+    const cookieRefreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
+    const refreshToken =
+      (typeof bodyRefreshToken === 'string' && bodyRefreshToken.trim().length > 0
+        ? bodyRefreshToken.trim()
+        : null) ||
+      (typeof cookieRefreshToken === 'string' && cookieRefreshToken.trim().length > 0
+        ? cookieRefreshToken.trim()
+        : null);
 
     try {
+      if (!refreshToken) {
+        return res.status(400).json({ error: 'Refresh token is required' });
+      }
+
       // ------------------------------------------------------------
       // E2E_MODE: deterministic token refresh (no DB / sessions needed)
       // ------------------------------------------------------------
@@ -92,6 +110,13 @@ router.post(
         });
         const token = `${header}.${payload}.e2e`;
 
+        try {
+          // Provide cookie-based auth in E2E_MODE as well (best-effort).
+          setAuthCookies(res, token, refreshToken || 'e2e-refresh');
+        } catch {
+          // ignore
+        }
+
         return res.json({
           token,
           refreshToken: refreshToken || 'e2e-refresh',
@@ -107,6 +132,13 @@ router.post(
       if (!result) {
         return res.status(401).json({ error: 'Invalid or expired refresh token' });
         return;
+      }
+
+      // Set cookie-based auth for stability across reloads/restarts.
+      try {
+        setAuthCookies(res, result.accessToken, result.refreshToken);
+      } catch {
+        // ignore
       }
 
       return res.json({
@@ -344,14 +376,26 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        return res.status(401).json({ error: 'No token provided' });
-        return;
+      // Always clear cookie-based auth (even if revocation fails).
+      try {
+        clearAuthCookies(res);
+      } catch {
+        // ignore
       }
 
-      const token = authHeader.split(' ')[1];
-      const decoded = jwt.decode(token) as { jti?: string; exp?: number; id?: string } | null;
+      // Token can come from Authorization header OR cookie-based auth.
+      const authHeader = req.headers.authorization;
+      const headerToken =
+        authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : authHeader;
+      const cookieToken = req.cookies?.[ACCESS_TOKEN_COOKIE];
+      const rawToken = headerToken || cookieToken;
+
+      if (!rawToken) {
+        // If we got here, verifyToken probably used a different extraction; still return OK.
+        return res.json({ message: 'Logged out successfully' });
+      }
+
+      const decoded = jwt.decode(rawToken) as { jti?: string; exp?: number; id?: string } | null;
 
       if (!decoded || !decoded.jti) {
         // Token doesn't have jti (old token format), just acknowledge logout
@@ -365,7 +409,7 @@ router.post(
       // Add token to revocation list
       await dbRun(
         `INSERT OR IGNORE INTO revoked_tokens (jti, user_id, expires_at, reason) VALUES (?, ?, ?, ?)`,
-        [decoded.jti, req.user!.id, expiresAt, 'logout']
+        [decoded.jti, (req.user as any)?.id || decoded.id || 'unknown', expiresAt, 'logout']
       );
       return res.json({ message: 'Logged out successfully' });
     } catch (error: unknown) {
@@ -479,12 +523,58 @@ router.post(
       }
 
       if (!user) {
-        logger.error('[Auth] Demo user not found - please run seed script');
-        return res.status(404).json({
-          error: 'Demo user not found. Please contact support.',
-          code: 'DEMO_USER_NOT_FOUND',
-        });
-        return;
+        // Deterministic E2E/CI support: auto-provision a demo user when running in test gateway mode.
+        // This avoids flaky smoke tests that depend on external seed scripts.
+        const isTestGateway =
+          process.env.NODE_ENV === 'test' ||
+          process.env.E2E_MODE === 'true' ||
+          process.env.ENABLE_TEST_GATEWAY === 'true';
+
+        if (!isTestGateway) {
+          logger.error('[Auth] Demo user not found - please run seed script');
+          return res.status(404).json({
+            error: 'Demo user not found. Please contact support.',
+            code: 'DEMO_USER_NOT_FOUND',
+          });
+        }
+
+        const demoOrgId = 'demo-org';
+        const demoUserId = 'demo-user-id';
+        const demoEmail = DEMO_EMAILS[0];
+
+        await dbRun(
+          `
+            INSERT INTO organizations (id, name, plan, status)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(id) DO NOTHING
+          `,
+          [demoOrgId, 'Demo Organization', 'enterprise', 'active']
+        );
+
+        await dbRun(
+          `
+            INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO NOTHING
+          `,
+          [demoUserId, demoOrgId, demoEmail, 'demo-not-used', 'ADMIN', 'active', 'Demo', 'User']
+        );
+
+        user = await dbGet<{
+          id: string;
+          email: string;
+          role: string;
+          organization_id: string;
+          first_name: string;
+          last_name: string;
+          status: string;
+        }>('SELECT * FROM users WHERE id = ?', [demoUserId]);
+        matchedEmail = demoEmail;
+
+        if (!user) {
+          logger.error('[Auth] Demo user auto-provision failed');
+          return res.status(500).json({ error: 'Demo login failed. Please try again.' });
+        }
       }
 
       const org = await dbGet<{
@@ -524,6 +614,11 @@ router.post(
       };
 
       logger.info('[Auth] Demo login successful');
+      try {
+        setAuthCookies(res, tokenResult.accessToken, tokenResult.refreshToken);
+      } catch {
+        // ignore
+      }
       return res.json({
         user: safeUser,
         token: tokenResult.accessToken,

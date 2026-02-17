@@ -59,7 +59,7 @@ const STATUS_META: Record<
 > = {
   DRAFT: {
     label: 'Draft',
-    color: 'text-slate-400',
+    color: 'text-slate-500 dark:text-slate-400',
     bgColor: 'bg-slate-500/20',
     icon: <FileText size={14} />,
   },
@@ -223,14 +223,14 @@ const TruncatedListSection: React.FC<{
   const hasMore = items.length > maxVisible;
 
   return (
-    <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-      <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3 flex items-center justify-between">
+    <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+      <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3 flex items-center justify-between">
         <span>{title}</span>
         <span className="text-slate-500 font-normal">{items.length}</span>
       </h3>
       <ul className="space-y-2">
         {visible.map((item, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
+          <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
             {icon}
             {item}
           </li>
@@ -536,7 +536,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
       case 'BLOCKED':
         return 'bg-red-500/20 text-red-400';
       default:
-        return 'bg-slate-500/20 text-slate-400';
+        return 'bg-slate-500/20 text-slate-500 dark:text-slate-400';
     }
   };
 
@@ -549,7 +549,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
       case 'MEDIUM':
         return 'text-amber-400';
       default:
-        return 'text-slate-400';
+        return 'text-slate-500 dark:text-slate-400';
     }
   };
 
@@ -580,8 +580,8 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
   // Loading state
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center bg-navy-950">
-        <div className="flex flex-col items-center gap-3 text-slate-400">
+      <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
+        <div className="flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
           <Loader2 className="w-8 h-8 animate-spin" />
           <span>Loading initiative...</span>
         </div>
@@ -592,15 +592,17 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
   // Error state
   if (error || !initiative) {
     return (
-      <div className="h-full flex items-center justify-center bg-navy-950">
+      <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
         <div className="text-center">
           <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-red-400" />
-          <p className="text-lg text-white mb-2">Failed to load initiative</p>
-          <p className="text-slate-400 mb-4">{error || 'Initiative not found'}</p>
+          <p className="text-lg text-slate-900 dark:text-white mb-2">Failed to load initiative</p>
+          <p className="text-slate-500 dark:text-slate-400 mb-4">
+            {error || 'Initiative not found'}
+          </p>
           {onBack && (
             <button
               onClick={onBack}
-              className="px-4 py-2 bg-navy-700 hover:bg-navy-600 text-white rounded-lg text-sm transition-colors"
+              className="px-4 py-2 bg-slate-200 dark:bg-navy-700 hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-900 dark:text-white rounded-lg text-sm transition-colors"
             >
               Back to List
             </button>
@@ -613,11 +615,11 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
   const statusMeta = STATUS_META[initiative.status] || STATUS_META.DRAFT;
 
   return (
-    <div className="h-full flex flex-col bg-navy-950 overflow-hidden">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950 overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 border-b border-navy-700 bg-navy-900">
+      <div className="shrink-0 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
         {/* Lifecycle Progress */}
-        <div className="h-12 border-b border-navy-800 flex items-center px-6 gap-0">
+        <div className="h-12 border-b border-slate-200 dark:border-navy-800 flex items-center px-6 gap-0">
           {LIFECYCLE_PHASES.map((phase, idx) => {
             const isActive = phase.statuses.includes(initiative.status);
             const isPassed = idx < currentPhaseIndex;
@@ -629,7 +631,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                       ? 'bg-blue-500/20 text-blue-400 shadow-sm'
                       : isPassed
                         ? 'bg-green-500/10 text-green-400'
-                        : 'bg-slate-800 text-slate-500'
+                        : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
                   }`}
                 >
                   <span
@@ -647,7 +649,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 </div>
                 {idx < LIFECYCLE_PHASES.length - 1 && (
                   <div
-                    className={`w-8 h-0.5 mx-1 ${isPassed || isActive ? 'bg-green-500/30' : 'bg-slate-700'}`}
+                    className={`w-8 h-0.5 mx-1 ${isPassed || isActive ? 'bg-green-500/30' : 'bg-slate-300 dark:bg-slate-700'}`}
                   />
                 )}
               </React.Fragment>
@@ -669,7 +671,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               {onBack && (
                 <button
                   onClick={onBack}
-                  className="p-2 text-slate-400 hover:text-white hover:bg-navy-700 rounded-lg transition-colors mt-1"
+                  className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors mt-1"
                 >
                   <ArrowLeft size={20} />
                 </button>
@@ -695,9 +697,11 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                     </span>
                   )}
                 </div>
-                <h1 className="text-xl font-bold text-white">{initiative.name}</h1>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+                  {initiative.name}
+                </h1>
                 {initiative.summary && (
-                  <p className="text-sm text-slate-400 mt-1 max-w-2xl line-clamp-2">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl line-clamp-2">
                     {initiative.summary}
                   </p>
                 )}
@@ -741,14 +745,14 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all ${
                 activeTab === tab.id
-                  ? 'bg-navy-950 text-white border-t border-x border-navy-700'
-                  : 'text-slate-400 hover:text-white hover:bg-navy-800'
+                  ? 'bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white border-t border-x border-slate-200 dark:border-navy-700'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800'
               }`}
             >
               {tab.icon}
               <span>{tab.label}</span>
               {tab.id === 'tasks' && taskStats.total > 0 && (
-                <span className="px-1.5 py-0.5 text-xs rounded-full bg-navy-700 text-slate-400">
+                <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400">
                   {taskStats.total}
                 </span>
               )}
@@ -766,19 +770,21 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
             <div className="lg:col-span-2 space-y-6">
               {/* Summary */}
               {initiative.summary && (
-                <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                  <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3 flex items-center gap-2">
+                <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+                  <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3 flex items-center gap-2">
                     <FileText size={14} />
                     Summary
                   </h3>
-                  <p className="text-sm text-slate-300 leading-relaxed">{initiative.summary}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                    {initiative.summary}
+                  </p>
                 </div>
               )}
 
               {/* Tasks Summary */}
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
+              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-2">
+                  <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2">
                     <ListTodo size={14} />
                     Tasks ({taskStats.total})
                   </h3>
@@ -793,11 +799,11 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
 
                 {taskStats.total > 0 && (
                   <div className="mb-4">
-                    <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
                       <span>Completion</span>
                       <span>{completionPercent}%</span>
                     </div>
-                    <div className="h-2 bg-navy-700 rounded-full overflow-hidden">
+                    <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all"
                         style={{ width: `${completionPercent}%` }}
@@ -816,7 +822,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                     {tasks.slice(0, 5).map((task) => (
                       <div
                         key={task.id}
-                        className="flex items-center gap-3 p-3 bg-navy-800 rounded-lg border border-navy-700"
+                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700"
                       >
                         <div
                           className={`w-2 h-2 rounded-full ${
@@ -829,7 +835,9 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                                   : 'bg-slate-400'
                           }`}
                         />
-                        <span className="flex-1 text-sm text-white truncate">{task.title}</span>
+                        <span className="flex-1 text-sm text-slate-900 dark:text-white truncate">
+                          {task.title}
+                        </span>
                         <span
                           className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getTaskStatusColor(task.status)}`}
                         >
@@ -840,7 +848,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                     {tasks.length > 5 && (
                       <button
                         onClick={() => setActiveTab('tasks')}
-                        className="w-full py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                        className="w-full py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                       >
                         View all {tasks.length} tasks →
                       </button>
@@ -851,12 +859,14 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
 
               {/* Source Info */}
               {initiative.sourceType && (
-                <div className="bg-navy-900/50 rounded-xl border border-navy-700 p-4">
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                <div className="bg-white/50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <Zap size={12} className="text-amber-400" />
                     <span>
                       Generated from:{' '}
-                      <span className="text-white capitalize">{initiative.sourceType}</span>
+                      <span className="text-slate-900 dark:text-white capitalize">
+                        {initiative.sourceType}
+                      </span>
                     </span>
                     {initiative.sourceId && (
                       <span className="text-slate-500">({initiative.sourceId.slice(0, 8)}...)</span>
@@ -869,29 +879,31 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
             {/* Right Column */}
             <div className="space-y-4">
               {/* Key Metrics */}
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-4">Key Metrics</h3>
+              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4">
+                  Key Metrics
+                </h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-400 flex items-center gap-2">
+                    <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
                       <DollarSign size={14} />
                       CAPEX
                     </span>
-                    <span className="text-sm font-semibold text-white">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
                       {formatCurrency(initiative.costCapex)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-400 flex items-center gap-2">
+                    <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
                       <DollarSign size={14} />
                       OPEX
                     </span>
-                    <span className="text-sm font-semibold text-white">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
                       {formatCurrency(initiative.costOpex)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-400 flex items-center gap-2">
+                    <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
                       <TrendingUp size={14} />
                       Expected ROI
                     </span>
@@ -903,21 +915,21 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               </div>
 
               {/* Timeline */}
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-4 flex items-center gap-2">
+              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4 flex items-center gap-2">
                   <Calendar size={14} />
                   Timeline
                 </h3>
                 <div className="space-y-3">
                   <div>
                     <span className="text-xs text-slate-500">Start Date</span>
-                    <div className="text-sm text-white">
+                    <div className="text-sm text-slate-900 dark:text-white">
                       {formatDate(initiative.plannedStartDate)}
                     </div>
                   </div>
                   <div>
                     <span className="text-xs text-slate-500">End Date</span>
-                    <div className="text-sm text-white">
+                    <div className="text-sm text-slate-900 dark:text-white">
                       {formatDate(initiative.plannedEndDate)}
                     </div>
                   </div>
@@ -925,15 +937,15 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               </div>
 
               {/* Ownership */}
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-4 flex items-center gap-2">
+              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4 flex items-center gap-2">
                   <Users size={14} />
                   Ownership
                 </h3>
                 <div className="space-y-3">
                   <div>
                     <span className="text-xs text-slate-500">Business Owner</span>
-                    <div className="text-sm text-white">
+                    <div className="text-sm text-slate-900 dark:text-white">
                       {initiative.ownerBusiness ? (
                         `${initiative.ownerBusiness.firstName} ${initiative.ownerBusiness.lastName}`
                       ) : (
@@ -943,7 +955,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                   </div>
                   <div>
                     <span className="text-xs text-slate-500">Execution Owner</span>
-                    <div className="text-sm text-white">
+                    <div className="text-sm text-slate-900 dark:text-white">
                       {initiative.ownerExecution ? (
                         `${initiative.ownerExecution.firstName} ${initiative.ownerExecution.lastName}`
                       ) : (
@@ -954,7 +966,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                   {initiative.sponsor && (
                     <div>
                       <span className="text-xs text-slate-500">Sponsor</span>
-                      <div className="text-sm text-white">
+                      <div className="text-sm text-slate-900 dark:text-white">
                         {`${initiative.sponsor.firstName} ${initiative.sponsor.lastName}`}
                       </div>
                     </div>
@@ -963,7 +975,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               </div>
 
               {/* Timestamps */}
-              <div className="bg-navy-900/50 rounded-xl border border-navy-700 p-4">
+              <div className="bg-white/50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
                 <div className="space-y-2 text-xs text-slate-500">
                   <div className="flex justify-between">
                     <span>Created</span>
@@ -985,14 +997,14 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
             {tasks.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
                 <ListTodo className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg text-white mb-2">No tasks yet</p>
+                <p className="text-lg text-slate-900 dark:text-white mb-2">No tasks yet</p>
                 <p className="text-sm">Tasks will be added during planning phase</p>
               </div>
             ) : (
               tasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center gap-4 p-4 bg-navy-900 rounded-xl border border-navy-700 hover:border-purple-500/30 transition-colors"
+                  className="flex items-center gap-4 p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-purple-500/30 transition-colors"
                 >
                   <div
                     className={`w-3 h-3 rounded-full ${
@@ -1007,7 +1019,9 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-white font-medium truncate">{task.title}</span>
+                      <span className="text-sm text-slate-900 dark:text-white font-medium truncate">
+                        {task.title}
+                      </span>
                       <span
                         className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getTaskStatusColor(task.status)}`}
                       >
@@ -1046,27 +1060,33 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
         {activeTab === 'definition' && (
           <div className="space-y-6">
             {initiative.strategicIntent && (
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3">
+              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
                   Strategic Intent
                 </h3>
-                <p className="text-sm text-slate-300">{initiative.strategicIntent}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300">
+                  {initiative.strategicIntent}
+                </p>
               </div>
             )}
             {initiative.businessValue && (
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3">
+              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
                   Business Value
                 </h3>
-                <p className="text-sm text-slate-300">{initiative.businessValue}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300">
+                  {initiative.businessValue}
+                </p>
               </div>
             )}
             {initiative.problemStatement && (
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3">
+              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
                   Problem Statement
                 </h3>
-                <p className="text-sm text-slate-300">{initiative.problemStatement}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300">
+                  {initiative.problemStatement}
+                </p>
               </div>
             )}
             {initiative.deliverables && initiative.deliverables.length > 0 && (
@@ -1090,7 +1110,9 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               !initiative.problemStatement && (
                 <div className="text-center py-12 text-slate-500">
                   <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg text-white mb-2">No definition details yet</p>
+                  <p className="text-lg text-slate-900 dark:text-white mb-2">
+                    No definition details yet
+                  </p>
                   <p className="text-sm">
                     Add strategic intent, business value, and problem statement
                   </p>
@@ -1102,41 +1124,43 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
         {/* Economics Tab */}
         {activeTab === 'economics' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-navy-900 rounded-xl border border-navy-700 p-6">
+            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
                   <DollarSign size={20} />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-400 uppercase">CAPEX</div>
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 uppercase">CAPEX</div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white">
                     {formatCurrency(initiative.costCapex)}
                   </div>
                 </div>
               </div>
               <p className="text-xs text-slate-500">Capital expenditure</p>
             </div>
-            <div className="bg-navy-900 rounded-xl border border-navy-700 p-6">
+            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400">
                   <DollarSign size={20} />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-400 uppercase">OPEX</div>
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 uppercase">OPEX</div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white">
                     {formatCurrency(initiative.costOpex)}
                   </div>
                 </div>
               </div>
               <p className="text-xs text-slate-500">Operational expenditure (annual)</p>
             </div>
-            <div className="bg-navy-900 rounded-xl border border-navy-700 p-6">
+            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 rounded-lg bg-green-500/20 text-green-400">
                   <TrendingUp size={20} />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-400 uppercase">Expected ROI</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 uppercase">
+                    Expected ROI
+                  </div>
                   <div className="text-2xl font-bold text-green-400">
                     {initiative.expectedRoi ? `${initiative.expectedRoi.toFixed(1)}x` : '-'}
                   </div>
@@ -1150,14 +1174,16 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
         {/* Team Tab */}
         {activeTab === 'team' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
+            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
                   <User size={20} />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-400 uppercase">Business Owner</div>
-                  <div className="text-sm font-medium text-white">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 uppercase">
+                    Business Owner
+                  </div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-white">
                     {initiative.ownerBusiness
                       ? `${initiative.ownerBusiness.firstName} ${initiative.ownerBusiness.lastName}`
                       : 'Not assigned'}
@@ -1166,14 +1192,16 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               </div>
               <p className="text-xs text-slate-500">Responsible for business decisions</p>
             </div>
-            <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
+            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
                   <User size={20} />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-400 uppercase">Execution Owner</div>
-                  <div className="text-sm font-medium text-white">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 uppercase">
+                    Execution Owner
+                  </div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-white">
                     {initiative.ownerExecution
                       ? `${initiative.ownerExecution.firstName} ${initiative.ownerExecution.lastName}`
                       : 'Not assigned'}
@@ -1183,14 +1211,16 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               <p className="text-xs text-slate-500">Responsible for delivery</p>
             </div>
             {initiative.sponsor && (
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
+              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
                     <Shield size={20} />
                   </div>
                   <div>
-                    <div className="text-xs text-slate-400 uppercase">Sponsor</div>
-                    <div className="text-sm font-medium text-white">
+                    <div className="text-xs text-slate-500 dark:text-slate-400 uppercase">
+                      Sponsor
+                    </div>
+                    <div className="text-sm font-medium text-slate-900 dark:text-white">
                       {`${initiative.sponsor.firstName} ${initiative.sponsor.lastName}`}
                     </div>
                   </div>
@@ -1205,7 +1235,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
         {activeTab === 'history' && (
           <div className="text-center py-12 text-slate-500">
             <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg text-white mb-2">History</p>
+            <p className="text-lg text-slate-900 dark:text-white mb-2">History</p>
             <p className="text-sm">Activity history will be shown here</p>
           </div>
         )}

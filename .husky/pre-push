@@ -1,40 +1,5 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
-echo "🔍 Running pre-push validation..."
-
-# Run linting
-echo "📝 Checking code style..."
-npm run lint || {
-    echo "❌ Lint failed. Please fix errors before pushing."
-    exit 1
-}
-
-# Run type checking
-echo "🔷 Checking TypeScript types..."
-npm run type-check || {
-    echo "❌ Type check failed. Please fix type errors before pushing."
-    exit 1
-}
-
-# Run Docker-compatible build check (catches errors that would fail in Docker)
-echo "🐳 Checking Docker-compatible build..."
-cd server && npm run build:docker || {
-    echo "❌ Docker build check failed. Please fix errors before pushing."
-    echo "💡 Run 'npm run build:docker' in server/ to see the errors"
-    exit 1
-}
-cd ..
-
-# Run unit tests (fast)
-echo "🧪 Running unit tests..."
-npm run test:unit || {
-    echo "❌ Unit tests failed. Please fix tests before pushing."
-    exit 1
-}
-
-echo "✅ Pre-push validation passed!"
-echo "💡 Tip: Run 'npm run verify' for full validation including security tests"
-
-
-
+# Disabled: pre-push checks (lint/typecheck/tests)
+# Requested: "remove any check before git push"
+exit 0

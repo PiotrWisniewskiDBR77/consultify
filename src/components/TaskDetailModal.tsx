@@ -135,7 +135,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
             <div className="px-4 py-2.5 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-blue-50 via-purple-50/50 to-transparent dark:from-blue-900/20 dark:via-purple-900/10 dark:to-transparent flex items-center gap-3 shrink-0">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded bg-blue-600 flex items-center justify-center">
-                  <Target size={12} className="text-white" />
+                  <Target size={12} className="text-slate-900 dark:text-white" />
                 </div>
                 <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
                   Initiative:

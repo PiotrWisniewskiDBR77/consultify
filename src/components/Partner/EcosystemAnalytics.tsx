@@ -94,14 +94,14 @@ export const PMODomainBadge: React.FC<{ mapping: PMOStandardsMapping; showToolti
   const domainInfo = PMO_DOMAIN_INFO[mapping.domain];
 
   return (
-    <div className="group relative inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-navy-800/40 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-300">
+    <div className="group relative inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-white/10 px-2 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-300">
       <span className={`h-2 w-2 rounded-full ${domainInfo.color}`} />
       {domainInfo.label}
 
       {showTooltip && (
-        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-64 -translate-x-1/2 rounded-lg bg-navy-900 p-3 text-left text-xs text-white shadow-xl group-hover:block dark:bg-slate-800">
+        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-64 -translate-x-1/2 rounded-lg bg-white dark:bg-navy-900 p-3 text-left text-xs text-slate-900 dark:text-white shadow-xl ring-1 ring-slate-200 dark:ring-0 group-hover:block">
           <div className="mb-2 font-semibold">{domainInfo.label}</div>
-          <div className="space-y-1 text-slate-300">
+          <div className="space-y-1 text-slate-700 dark:text-slate-300">
             <div>
               <span className="text-slate-400 dark:text-slate-500">ISO 21500:</span>{' '}
               {mapping.iso21500}
@@ -113,7 +113,7 @@ export const PMODomainBadge: React.FC<{ mapping: PMOStandardsMapping; showToolti
               <span className="text-slate-400 dark:text-slate-500">PRINCE2:</span> {mapping.prince2}
             </div>
           </div>
-          <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-navy-900 dark:bg-slate-800" />
+          <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-white dark:bg-navy-900" />
         </div>
       )}
     </div>
@@ -141,10 +141,7 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
         <div className="h-6 w-48 rounded bg-slate-200 dark:bg-white/10" />
         <div className="grid gap-4 md:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="h-24 rounded-xl bg-slate-100 dark:bg-navy-800/40 dark:bg-white/5"
-            />
+            <div key={i} className="h-24 rounded-xl bg-slate-100 dark:bg-white/5" />
           ))}
         </div>
       </div>
@@ -252,7 +249,7 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
               {metrics.ecosystemHealthScore}/100
             </span>
           </div>
-          <div className="h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-navy-800/40 dark:bg-white/10">
+          <div className="h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
                 metrics.ecosystemHealthScore >= 80

@@ -475,7 +475,7 @@ export const AttachmentsLinksCanvas: React.FC<AttachmentsLinksCanvasProps> = ({
     isPickerOpen,
     activeProvider,
     selectFile,
-    isCloudImplemented,
+    isImplemented: isCloudImplemented,
   } = useCloudIntegrations();
 
   // ── Refs ──────────────────────────────────────────────────────────────────
@@ -777,9 +777,9 @@ Write a clear, professional comment explaining why this link exists and its sign
             {!readOnly && (
               <button
                 onClick={openAttachmentModal}
-                className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-400 transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
               >
-                <Plus size={13} />
+                <Plus size={12} />
                 {isPolish ? 'Dodaj' : 'Add file'}
               </button>
             )}
@@ -822,7 +822,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                         icon: <Eye size={13} />,
                         onClick: () => {
                           setOpenMenuKey(null);
-                          a.url && window.open(a.url, '_blank', 'noopener,noreferrer');
+                          if (a.url) window.open(a.url, '_blank', 'noopener,noreferrer');
                         },
                       },
                       ...(onEditAttachment
@@ -878,9 +878,9 @@ Write a clear, professional comment explaining why this link exists and its sign
                   setExternalLinkComment('');
                   setIsExternalLinkModalOpen(true);
                 }}
-                className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-400 transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
               >
-                <Plus size={13} />
+                <Plus size={12} />
                 {isPolish ? 'Dodaj' : 'Add link'}
               </button>
             )}
@@ -993,9 +993,9 @@ Write a clear, professional comment explaining why this link exists and its sign
                   setInternalLinkComment('');
                   setIsInternalLinkModalOpen(true);
                 }}
-                className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-400 transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
               >
-                <Plus size={13} />
+                <Plus size={12} />
                 {isPolish ? 'Dodaj' : 'Add link'}
               </button>
             )}

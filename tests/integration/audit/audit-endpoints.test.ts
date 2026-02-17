@@ -1,134 +1,97 @@
-/**
- * Audit Logs Integration Tests
- * Testing audit log endpoints
- *
- * @module tests/integration/audit/audit-endpoints.test.ts
- */
-
-import { describe, it, expect, beforeAll } from 'vitest';
-import express from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
-describe('Audit Endpoints Integration', () => {
-  let app: express.Application;
-  const auditLogs: any[] = [];
+import { makeTestApp } from '../_helpers/testApp';
 
-  beforeAll(() => {
-    app = express();
-    app.use(express.json());
+const { dbAll, dbGet, dbRun } = vi.hoisted(() => ({
+  dbAll: vi.fn(),
+  dbGet: vi.fn(),
+  dbRun: vi.fn(),
+}));
 
-    const authMiddleware = (req: any, res: any, next: any) => {
-      if (!req.headers.authorization) return res.status(401).json({ error: 'Unauthorized' });
-      req.user = { id: '1', role: 'admin' };
-      next();
-    };
+vi.mock('../../../server/src/utils/DbPromise.js', () => ({
+  all: (...args: any[]) => dbAll(...args),
+  get: (...args: any[]) => dbGet(...args),
+  run: (...args: any[]) => dbRun(...args),
+}));
 
-    // Seed some logs
-    auditLogs.push(
-      {
-        id: 'log-1',
-        action: 'user.login',
-        userId: 'u1',
-        ip: '192.168.1.1',
-        timestamp: new Date().toISOString(),
-      },
-      {
-        id: 'log-2',
-        action: 'project.create',
-        userId: 'u1',
-        resource: 'proj-1',
-        timestamp: new Date().toISOString(),
-      },
-      {
-        id: 'log-3',
-        action: 'user.logout',
-        userId: 'u2',
-        ip: '192.168.1.2',
-        timestamp: new Date().toISOString(),
-      }
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+  verifyToken: (_req: any, _res: any, next: any) => next(),
+  isAuthenticated: (_req: any, _res: any, next: any) => next(),
+}));
+
+vi.mock('../../../server/src/middleware/admin.middleware.js', () => ({
+  verifyAdmin: (_req: any, _res: any, next: any) => next(),
+}));
+
+vi.mock('uuid', () => ({ v4: () => 'a-1' }));
+
+async function loadAuditRouter() {
+  return (await import('../../../server/src/routes/audit.routes.ts')).default;
+}
+
+async function makeAuditApp() {
+  const router = await loadAuditRouter();
+  return makeTestApp({
+    mountPath: '/api/audits',
+    router,
+    beforeMount: (app) => {
+      app.use((req, _res, next) => {
+        (req as any).user = { id: 'u-1', organizationId: 'org-1' };
+        next();
+      });
+    },
+  });
+}
+
+describe('Audit routes - REAL integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    dbAll.mockResolvedValue([]);
+    dbGet.mockResolvedValue(undefined);
+    dbRun.mockResolvedValue({ success: true, changes: 1 });
+  });
+
+  it('GET / returns list from dbAll', async () => {
+    dbAll.mockResolvedValueOnce([{ id: 'x' }]);
+    const app = await makeAuditApp();
+    const res = await request(app).get('/api/audits');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([{ id: 'x' }]);
+  });
+
+  it('POST / returns 400 when name missing', async () => {
+    const app = await makeAuditApp();
+    const res = await request(app).post('/api/audits').send({ type: 'internal' });
+    expect(res.status).toBe(400);
+  });
+
+  it('POST / inserts row and returns 201 with id', async () => {
+    const app = await makeAuditApp();
+    const res = await request(app)
+      .post('/api/audits')
+      .send({ name: 'N', type: 'internal', scheduledDate: '2026-01-01' });
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ success: true, id: 'a-1' });
+    expect(dbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO audits'),
+      expect.any(Array)
     );
-
-    app.get('/api/audit/logs', authMiddleware, (req, res) => {
-      let result = [...auditLogs];
-      if (req.query.action) {
-        result = result.filter((l) => l.action.includes(req.query.action as string));
-      }
-      if (req.query.userId) {
-        result = result.filter((l) => l.userId === req.query.userId);
-      }
-      res.json(result);
-    });
-
-    app.get('/api/audit/logs/:id', authMiddleware, (req, res) => {
-      const log = auditLogs.find((l) => l.id === req.params.id);
-      if (!log) return res.status(404).json({ error: 'Not found' });
-      res.json(log);
-    });
-
-    app.get('/api/audit/stats', authMiddleware, (req, res) => {
-      const stats = {
-        total: auditLogs.length,
-        byAction: {},
-        byUser: {},
-      };
-      res.json(stats);
-    });
   });
 
-  describe('GET /api/audit/logs', () => {
-    it('should return audit logs', async () => {
-      const response = await request(app)
-        .get('/api/audit/logs')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-    });
-
-    it('should filter by action', async () => {
-      const response = await request(app)
-        .get('/api/audit/logs?action=login')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-    });
-
-    it('should filter by userId', async () => {
-      const response = await request(app)
-        .get('/api/audit/logs?userId=u1')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-    });
+  it('PUT /:id returns 400 when no updates', async () => {
+    const app = await makeAuditApp();
+    const res = await request(app).put('/api/audits/a-1').send({});
+    expect(res.status).toBe(400);
   });
 
-  describe('GET /api/audit/logs/:id', () => {
-    it('should return specific log', async () => {
-      const response = await request(app)
-        .get('/api/audit/logs/log-1')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-      expect(response.body.action).toBe('user.login');
-    });
-
-    it('should return 404 for non-existent log', async () => {
-      const response = await request(app)
-        .get('/api/audit/logs/non-existent')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(404);
-    });
-  });
-
-  describe('GET /api/audit/stats', () => {
-    it('should return audit stats', async () => {
-      const response = await request(app)
-        .get('/api/audit/stats')
-        .set('Authorization', 'Bearer token');
-
-      expect(response.status).toBe(200);
-      expect(response.body.total).toBeDefined();
-    });
+  it('PUT /:id stringifies findings when provided', async () => {
+    const app = await makeAuditApp();
+    const res = await request(app)
+      .put('/api/audits/a-1')
+      .send({ findings: [{ id: 1 }] });
+    expect(res.status).toBe(200);
+    const params = dbRun.mock.calls[0]?.[1] as any[];
+    expect(params[0]).toBe(JSON.stringify([{ id: 1 }]));
   });
 });

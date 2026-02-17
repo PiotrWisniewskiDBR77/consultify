@@ -74,7 +74,7 @@ const severityConfig = {
   low: {
     bg: 'bg-slate-50 dark:bg-slate-800/50',
     border: 'border-slate-200 dark:border-navy-700',
-    badge: 'bg-slate-400 text-white',
+    badge: 'bg-slate-400 text-slate-900 dark:text-white',
     text: 'text-slate-600 dark:text-slate-400',
   },
 };
@@ -137,7 +137,7 @@ const BottleneckCard: React.FC<{
 
       {/* Blocking Info */}
       {item.blockedByTitle && (
-        <div className="flex items-center gap-2 mb-3 p-2 bg-white/50 dark:bg-white/5 rounded-lg">
+        <div className="flex items-center gap-2 mb-3 p-2 bg-slate-50 dark:bg-white/50 dark:bg-white/5 rounded-lg">
           <XCircle size={12} className="text-rose-500 shrink-0" />
           <span className="text-xs text-slate-600 dark:text-slate-400">
             {t('team.bottleneck.blockedBy', 'Blocked by')}:
@@ -151,7 +151,7 @@ const BottleneckCard: React.FC<{
       {/* Stats Row */}
       <div className="flex items-center gap-4 text-xs mb-3">
         <div className="flex items-center gap-1.5">
-          <Clock size={12} className="text-slate-400 dark:text-slate-500" />
+          <Clock size={12} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
           <span
             className={
               item.daysBlocked > 3
@@ -164,7 +164,7 @@ const BottleneckCard: React.FC<{
         </div>
         {item.owner && (
           <div className="flex items-center gap-1.5">
-            <User size={12} className="text-slate-400 dark:text-slate-500" />
+            <User size={12} className="text-slate-500 dark:text-slate-400 dark:text-slate-500" />
             <span className="text-slate-600 dark:text-slate-400">{item.owner}</span>
           </div>
         )}
@@ -255,7 +255,7 @@ export const BottleneckMap: React.FC<BottleneckMapProps> = ({
                   : 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-500/30'
               }`}
             >
-              <AlertTriangle size={20} className="text-white" />
+              <AlertTriangle size={20} className="text-slate-900 dark:text-white" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">

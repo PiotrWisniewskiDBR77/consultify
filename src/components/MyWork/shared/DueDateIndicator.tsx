@@ -70,29 +70,29 @@ const getRelativeTime = (dueDate: Date, t: (key: string, fallback: string) => st
  */
 const statusStyles: Record<DueStatus, { bg: string; text: string; icon: string }> = {
   overdue: {
-    bg: 'bg-red-100 dark:bg-red-900/30',
-    text: 'text-red-700 dark:text-red-300',
+    bg: 'bg-red-100 dark:bg-red-500/20',
+    text: 'text-red-700 dark:text-red-400',
     icon: 'text-red-500',
   },
   due_today: {
-    bg: 'bg-amber-100 dark:bg-amber-900/30',
-    text: 'text-amber-700 dark:text-amber-300',
+    bg: 'bg-amber-100 dark:bg-amber-500/20',
+    text: 'text-amber-700 dark:text-amber-400',
     icon: 'text-amber-500',
   },
   due_soon: {
-    bg: 'bg-orange-100 dark:bg-orange-900/30',
-    text: 'text-orange-700 dark:text-orange-300',
-    icon: 'text-orange-500',
+    bg: 'bg-amber-50/70 dark:bg-amber-500/10',
+    text: 'text-amber-600 dark:text-amber-400',
+    icon: 'text-amber-500',
   },
   upcoming: {
-    bg: 'bg-slate-100 dark:bg-slate-800',
+    bg: 'bg-slate-100 dark:bg-navy-800/60',
     text: 'text-slate-600 dark:text-slate-400',
-    icon: 'text-slate-500 dark:text-slate-400',
+    icon: 'text-slate-400 dark:text-slate-500',
   },
   completed: {
-    bg: 'bg-green-100 dark:bg-green-900/30',
-    text: 'text-green-700 dark:text-green-300',
-    icon: 'text-green-500',
+    bg: 'bg-emerald-50/70 dark:bg-emerald-500/10',
+    text: 'text-emerald-600 dark:text-emerald-400',
+    icon: 'text-emerald-500',
   },
   no_date: {
     bg: 'bg-slate-50 dark:bg-slate-800/50',

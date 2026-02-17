@@ -2,10 +2,11 @@
  * ModuleNavBar
  * Top navigation bar with tabs, search, view toggle, and action buttons
  *
- * Design: All buttons have consistent bordered style
- * - Active tab: purple border + purple background tint
- * - Inactive tab: gray border
- * - Category buttons: same style as tabs
+ * Tech Sexy v2.0:
+ * - monochromatic chrome (color only for semantic data + single CTA)
+ * - invisible borders (prefer bg/spacing; borders only as subtle dividers)
+ * - hover = background shift only (no border/text color flips)
+ * - shadow only on floating elements (no button shadows by default)
  */
 
 import {
@@ -83,20 +84,19 @@ interface ModuleNavBarProps {
 
 // Shared button styles for consistency
 const BUTTON_BASE = `
-  flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
-  border transition-all duration-200
+  inline-flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-medium
+  transition-colors duration-150
 `;
 
 const BUTTON_INACTIVE = `
   ${BUTTON_BASE}
-  bg-navy-800 border-navy-600 text-slate-300
-  hover:bg-navy-700 hover:border-slate-500 hover:text-white
+  text-slate-700 dark:text-slate-300
+  hover:bg-slate-100/70 dark:hover:bg-white/[0.05]
 `;
 
 const BUTTON_ACTIVE = `
   ${BUTTON_BASE}
-  bg-primary-500/15 border-primary-500 text-primary-400
-  shadow-sm shadow-primary-500/10
+  bg-primary-500/10 text-slate-900 dark:text-slate-100
 `;
 
 export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
@@ -158,7 +158,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   }, []);
 
   return (
-    <div className="bg-navy-900 border-b border-navy-700">
+    <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5">
       {/* Main Navigation Row */}
       <div className="flex items-center justify-between px-4 py-3">
         {/* Left: Search + Tabs + Status Filters */}
@@ -166,10 +166,10 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
           {/* Search Toggle */}
           <button
             onClick={() => setShowSearch(!showSearch)}
-            className={`p-2 rounded-lg border transition-all duration-200 ${
+            className={`h-9 w-9 inline-flex items-center justify-center rounded-lg transition-colors duration-150 ${
               showSearch
-                ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                : 'bg-navy-800 border-navy-600 text-slate-400 hover:text-white hover:border-slate-500'
+                ? 'bg-white/70 dark:bg-white/[0.06] text-slate-900 dark:text-slate-100'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
             }`}
             title="Search"
           >
@@ -194,8 +194,8 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                       px-1.5 py-0.5 text-xs rounded-full
                       ${
                         isActive
-                          ? 'bg-primary-500/30 text-primary-300'
-                          : 'bg-navy-700 text-slate-400'
+                          ? 'bg-primary-500/30 text-primary-600 dark:text-primary-300'
+                          : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
                       }
                     `}
                     >
@@ -210,7 +210,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
           {/* Status Filter Dropdown (replaces button row) */}
           {statusDropdownContext && onStatusFilterChange && (
             <>
-              <div className="w-px h-6 bg-navy-600" />
+              <div className="w-px h-6 bg-slate-200 dark:bg-white/5" />
               <StatusDropdown
                 context={statusDropdownContext}
                 value={activeStatusFilter || 'all'}
@@ -224,7 +224,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
           {/* Legacy: Status Filter Buttons (fallback when no dropdown context) */}
           {!statusDropdownContext && statusFilters && statusFilters.length > 0 && (
             <>
-              <div className="w-px h-6 bg-navy-600" />
+              <div className="w-px h-6 bg-slate-200 dark:bg-white/5" />
               <div className="flex items-center gap-1.5">
                 {statusFilters.map((filter) => {
                   const isActive =
@@ -236,19 +236,19 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                       onClick={() => onStatusFilterChange?.(filter.id === 'all' ? null : filter.id)}
                       data-testid={`status-filter-${filter.id}`}
                       className={`
-                        flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
-                        border transition-all duration-200
+                        inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium
+                        transition-colors duration-150
                         ${
                           isActive
-                            ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                            : 'bg-navy-800/50 border-navy-600 text-slate-400 hover:text-white hover:border-slate-500'
+                            ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
                         }
                       `}
                     >
                       <span className={`w-2 h-2 rounded-full ${filter.color}`} />
                       <span>{filter.label}</span>
                       {filter.count !== undefined && (
-                        <span className="text-slate-500">{filter.count}</span>
+                        <span className="text-slate-500 dark:text-slate-400">{filter.count}</span>
                       )}
                     </button>
                   );
@@ -262,27 +262,29 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
         <div className="flex items-center gap-3">
           {rightControls}
           {/* View Mode Toggle - supports 2-5 modes */}
-          <div className="flex items-center bg-navy-950 border border-navy-700 rounded-lg p-1">
-            {availableViewModes.map((mode) => {
-              const config = viewModeConfig[mode];
-              const isActive = viewMode === mode;
-              return (
-                <button
-                  key={mode}
-                  onClick={() => onViewModeChange(mode)}
-                  data-testid={`view-mode-${mode}`}
-                  className={`p-1.5 rounded transition-colors ${
-                    isActive
-                      ? 'bg-navy-700 text-white shadow-sm'
-                      : 'text-slate-500 hover:text-slate-300 hover:bg-navy-800/50'
-                  }`}
-                  title={config.label}
-                >
-                  {config.icon}
-                </button>
-              );
-            })}
-          </div>
+          {availableViewModes.length > 1 && (
+            <div className="flex items-center bg-slate-50 dark:bg-navy-950/70 border border-slate-200/60 dark:border-white/5 rounded-lg p-1 h-9">
+              {availableViewModes.map((mode) => {
+                const config = viewModeConfig[mode];
+                const isActive = viewMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => onViewModeChange(mode)}
+                    data-testid={`view-mode-${mode}`}
+                    className={`p-1.5 rounded transition-colors ${
+                      isActive
+                        ? 'bg-white/70 dark:bg-white/[0.06] text-slate-900 dark:text-slate-100'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                    }`}
+                    title={config.label}
+                  >
+                    {config.icon}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Action Buttons */}
           {categoryButtons && categoryButtons.length > 0 ? (
@@ -297,7 +299,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                 >
                   {btn.icon}
                   <span>{btn.label}</span>
-                  <span className="px-1.5 py-0.5 text-xs rounded-full bg-navy-700 text-slate-400">
+                  <span className="px-1.5 py-0.5 text-xs rounded-full bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
                     {btn.count}
                   </span>
                 </button>
@@ -308,12 +310,10 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             <button
               onClick={onNewItem}
               className="
-                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                bg-gradient-to-r from-primary-500 to-primary-600 text-white
-                border border-primary-400/30
-                hover:from-primary-400 hover:to-primary-500
-                shadow-lg shadow-primary-500/25
-                transition-all duration-200
+                inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-medium
+                bg-hig-primary text-white
+                hover:bg-hig-primary-hover
+                transition-colors duration-150
               "
             >
               <Plus size={16} />
@@ -327,17 +327,20 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
       {showSearch && (
         <div className="px-4 pb-3">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+            />
             <input
               ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Search assessments..."
+              placeholder="Search..."
               className="
                 w-full pl-10 pr-10 py-2 rounded-lg
-                bg-navy-800 border border-navy-600
-                text-white placeholder-slate-500
+                bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600
+                text-slate-900 dark:text-white placeholder-slate-500
                 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50
                 transition-all
               "
@@ -345,7 +348,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             {searchQuery && (
               <button
                 onClick={handleCloseSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               >
                 <X size={16} />
               </button>

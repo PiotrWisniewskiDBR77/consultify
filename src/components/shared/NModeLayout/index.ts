@@ -23,7 +23,7 @@
  * import { NModeShell, type NModeSection, type NModePropertyField } from '@/components/shared/NModeLayout';
  * ```
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md
  */
 
 // ── Layout Components ───────────────────────────────────────────────────────

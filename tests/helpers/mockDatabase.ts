@@ -1,0 +1,181 @@
+/**
+ * Mock Database Helper
+ * Enterprise SaaS Architecture - TypeScript Backend Tests
+ *
+ * Advanced database mocking utilities
+ */
+
+import { vi } from 'vitest';
+
+import type { IDatabase } from '../../server/src/database/IDatabase.js';
+
+export interface QueryResult {
+  rows?: unknown[];
+  row?: unknown;
+  changes?: number;
+  lastInsertRowid?: number;
+}
+
+export function createMockDatabaseWithResults(
+  results: Record<string, QueryResult> = {}
+): IDatabase {
+  const mockDb: IDatabase = {
+    get: vi.fn(
+      (sql: string, params: unknown[], callback?: (err: Error | null, row: unknown) => void) => {
+        const key = sql.trim().toLowerCase();
+        const result = results[key] || results['*'] || { row: null };
+
+        if (callback) {
+          callback(null, result.row || null);
+        }
+        return mockDb;
+      }
+    ),
+    all: vi.fn(
+      (sql: string, params: unknown[], callback?: (err: Error | null, rows: unknown[]) => void) => {
+        const key = sql.trim().toLowerCase();
+        const result = results[key] || results['*'] || { rows: [] };
+
+        if (callback) {
+          callback(null, result.rows || []);
+        }
+        return mockDb;
+      }
+    ),
+    run: vi.fn((sql: string, params: unknown[], callback?: (err: Error | null) => void) => {
+      const key = sql.trim().toLowerCase();
+      const result = results[key] || results['*'] || { changes: 1 };
+
+      if (callback) {
+        callback(null);
+      }
+      return mockDb;
+    }),
+    exec: vi.fn((sql: string, callback?: (err: Error | null) => void) => {
+      if (callback) {
+        callback(null);
+      }
+      return mockDb;
+    }),
+    serialize: vi.fn((callback: () => void) => {
+      callback();
+    }),
+    close: vi.fn((callback?: (err: Error | null) => void) => {
+      if (callback) {
+        callback(null);
+      }
+    }),
+    query: vi.fn(),
+  };
+
+  return mockDb;
+}
+
+export interface MockDatabaseContextOptions {
+  lastID?: number;
+  changes?: number;
+  getResult?: unknown;
+  allResult?: unknown[];
+}
+
+export function createMockDatabaseWithContext(options: MockDatabaseContextOptions = {}): IDatabase {
+  const { lastID = 1, changes = 1, getResult = null, allResult = [] } = options;
+
+  const mockDb: IDatabase = {
+    get: vi.fn(
+      (sql: string, params: unknown[], callback?: (err: Error | null, row: unknown) => void) => {
+        if (callback) {
+          callback(null, getResult);
+        }
+        return mockDb;
+      }
+    ),
+    all: vi.fn(
+      (sql: string, params: unknown[], callback?: (err: Error | null, rows: unknown[]) => void) => {
+        if (callback) {
+          callback(null, allResult);
+        }
+        return mockDb;
+      }
+    ),
+    run: vi.fn(
+      (
+        sql: string,
+        params: unknown[],
+        callback?: (this: { lastID: number; changes: number }, err: Error | null) => void
+      ) => {
+        if (callback) {
+          callback.call({ lastID, changes }, null);
+        }
+        return mockDb;
+      }
+    ),
+    exec: vi.fn((sql: string, callback?: (err: Error | null) => void) => {
+      if (callback) {
+        callback(null);
+      }
+      return mockDb;
+    }),
+    serialize: vi.fn((callback: () => void) => {
+      callback();
+    }),
+    close: vi.fn((callback?: (err: Error | null) => void) => {
+      if (callback) {
+        callback(null);
+      }
+    }),
+    query: vi.fn().mockResolvedValue([]),
+  };
+
+  return mockDb;
+}
+
+export function createMockDatabase(): IDatabase {
+  return createMockDatabaseWithContext();
+}
+
+export function createMockDatabaseWithErrors(errorMessage: string = 'Database error'): IDatabase {
+  const error = new Error(errorMessage);
+
+  const mockDb: IDatabase = {
+    get: vi.fn(
+      (sql: string, params: unknown[], callback?: (err: Error | null, row: unknown) => void) => {
+        if (callback) {
+          callback(error, null);
+        }
+        return mockDb;
+      }
+    ),
+    all: vi.fn(
+      (sql: string, params: unknown[], callback?: (err: Error | null, rows: unknown[]) => void) => {
+        if (callback) {
+          callback(error, []);
+        }
+        return mockDb;
+      }
+    ),
+    run: vi.fn((sql: string, params: unknown[], callback?: (err: Error | null) => void) => {
+      if (callback) {
+        callback(error);
+      }
+      return mockDb;
+    }),
+    exec: vi.fn((sql: string, callback?: (err: Error | null) => void) => {
+      if (callback) {
+        callback(error);
+      }
+      return mockDb;
+    }),
+    serialize: vi.fn((callback: () => void) => {
+      callback();
+    }),
+    close: vi.fn((callback?: (err: Error | null) => void) => {
+      if (callback) {
+        callback(error);
+      }
+    }),
+    query: vi.fn(),
+  };
+
+  return mockDb;
+}

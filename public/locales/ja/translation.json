@@ -23,7 +23,25 @@
     "submit": "送信",
     "confirm": "確認",
     "yes": "はい",
-    "no": "いいえ"
+    "no": "いいえ",
+    "goals": "Goals",
+    "challenges": "Challenges",
+    "megatrends": "Megatrends",
+    "strategy": "Strategy",
+    "rollout": "Rollout",
+    "users": "Users",
+    "projects": "Projects",
+    "analytics": "Analytics",
+    "team": "Team",
+    "workspace": "Workspace",
+    "consultant": "Consultant",
+    "invites": "Invites",
+    "affiliate": "Affiliate",
+    "active": "active",
+    "select": "Select",
+    "connected": "connected",
+    "comingSoon": "In development",
+    "root": "Root"
   },
   "sidebar": {
     "dashboard": "ダッシュボード",
@@ -121,18 +139,353 @@
   "initiatives": {
     "title": "イニシアチブ",
     "roadmap": "ロードマップ",
-    "portfolio": "ポートフォリオ"
+    "portfolio": "ポートフォリオ",
+    "form": {
+      "createNew": "Create New Initiative",
+      "edit": "Edit Initiative",
+      "newInitiative": "New Initiative",
+      "title": "Title",
+      "titleRequired": "Title *",
+      "titlePlaceholder": "e.g. Submit compliance documentation",
+      "axis": "Axis",
+      "summary": "Summary",
+      "summaryPlaceholder": "Short problem/goal statement…",
+      "description": "Description",
+      "descriptionOptional": "Description (optional)",
+      "descriptionPlaceholder": "Describe the initiative...",
+      "category": "Category",
+      "categoryOptional": "Category (optional)",
+      "categoryPlaceholder": "e.g. Cybersecurity",
+      "priority": "Priority",
+      "risk": "Risk",
+      "riskLevel": "Risk Level",
+      "sourceAxis": "Source Axis",
+      "budget": "Budget (PLN)",
+      "expectedROI": "Expected ROI",
+      "timeline": "Timeline",
+      "objectives": "Objectives",
+      "addObjective": "Add new objective...",
+      "create": "Create",
+      "creating": "Creating…",
+      "save": "Save Changes",
+      "cancel": "Cancel",
+      "nameRequired": "Initiative Name *",
+      "namePlaceholder": "Enter initiative name",
+      "nameMinLength": "Name must be at least 5 characters",
+      "descriptionMinLength": "Description must be at least 20 characters",
+      "budgetRequired": "Budget must be greater than 0",
+      "roiRequired": "ROI must be greater than 0",
+      "highRiskHighBudget": "High-Risk, High-Budget Initiative",
+      "highRiskHighBudgetDesc": "Consider breaking this into smaller phases or implementing additional governance controls.",
+      "titleTooShort": "Title is too short",
+      "titleRequiredError": "Title is required",
+      "initiativeCreated": "Initiative created",
+      "initiativeUpdated": "Initiative updated",
+      "createFailed": "Failed to create initiative",
+      "updateFailed": "Failed to update initiative",
+      "duplicateWarning": "A similar initiative already exists: {{name}}",
+      "duplicateWarningDesc": "This initiative title is very similar to an existing one. Please verify this is not a duplicate."
+    },
+    "bulkEdit": {
+      "title": "Bulk edit initiatives",
+      "selectedCount": "{{count}} initiatives selected",
+      "status": "Status",
+      "priority": "Priority",
+      "businessOwner": "Business Owner",
+      "executionOwner": "Execution Owner",
+      "noChange": "No change",
+      "applyChanges": "Apply changes",
+      "updatesFailed": "{{count}} updates failed",
+      "bulkUpdateApplied": "Bulk update applied"
+    },
+    "empty": {
+      "title": "No Initiatives Yet",
+      "description": "Create your first initiative to get started"
+    },
+    "axis": {
+      "operational": "Operational",
+      "strategic": "Strategic",
+      "transformational": "Transformational",
+      "compliance": "Compliance"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "risk": {
+      "low": "Low Risk",
+      "medium": "Medium Risk",
+      "high": "High Risk"
+    },
+    "level": {
+      "label": "Initiative Type / Level",
+      "quick_win": "Quick Win",
+      "standard": "Standard Project",
+      "strategic": "Strategic Program",
+      "transformation": "Transformation",
+      "cannotDowngrade": "Initiative level cannot be downgraded",
+      "upgradeNote": "Level can be upgraded later but not downgraded"
+    },
+    "status": {
+      "draft": "Draft",
+      "pending_review": "Pending Review",
+      "review": "In Review",
+      "promoted": "Promoted",
+      "planning": "Planning",
+      "approved": "Approved",
+      "scheduled": "Scheduled",
+      "executing": "Executing",
+      "blocked": "Blocked",
+      "done": "Done",
+      "tracking": "Tracking",
+      "cancelled": "Cancelled",
+      "archived": "Archived"
+    },
+    "approval": {
+      "cannotApprove": "Cannot approve initiative",
+      "missingFields": "Missing required fields",
+      "needsTasks": "At least 1 task is required before approval",
+      "needsDeadline": "A deadline (end date) is required before approval",
+      "needsOwner": "A business owner must be assigned before approval"
+    },
+    "toast": {
+      "saveError": "Failed to save",
+      "watchError": "Failed to change watch status",
+      "createTaskError": "Failed to create task",
+      "createDecisionError": "Failed to create decision",
+      "createRaidError": "Failed to add RAID item"
+    },
+    "drawer": {
+      "overview": "Overview",
+      "timeline": "Timeline",
+      "resources": "Resources",
+      "decisions": "Decisions",
+      "goNoGo": "Go/No-Go",
+      "resourcesCommit": "Resources Commit",
+      "scheduleLock": "Schedule Lock",
+      "quickReview": "Quick review",
+      "gateReadiness": "Gate readiness",
+      "viewDecisions": "View decisions",
+      "notRequested": "Not requested",
+      "summary": "Summary",
+      "noSummary": "No summary provided.",
+      "progress": "Progress",
+      "roi": "ROI",
+      "budget": "Budget",
+      "priority": "Priority",
+      "start": "Start:",
+      "end": "End:",
+      "nextMilestone": "Next milestone",
+      "topRisks": "Top risks / issues",
+      "noRaidItems": "No RAID items yet.",
+      "milestones": "Milestones",
+      "manageInFullView": "Manage in full view",
+      "noMilestones": "No milestones defined yet",
+      "gate": "Gate",
+      "ownership": "Ownership",
+      "businessOwner": "Business Owner",
+      "noBusinessOwner": "No business owner assigned",
+      "executionOwner": "Execution Owner",
+      "noExecutionOwner": "No execution owner assigned",
+      "resourceCapacity": "Resource Capacity",
+      "requiredFte": "Required FTE",
+      "allocatedFte": "Allocated FTE",
+      "manageTeam": "Manage team members in full view",
+      "openFullCard": "Open full card",
+      "gateDecisions": "Gate Decisions",
+      "requestDecision": "+ Request Decision",
+      "noDecisions": "No decisions linked to this initiative",
+      "gateRequirements": "Gate Requirements",
+      "initiative": "Initiative"
+    },
+    "compact": {
+      "summary": "Summary",
+      "tasks": "Tasks",
+      "decisions": "Decisions",
+      "raid": "RAID",
+      "finance": "Finance",
+      "noGoal": "No goal / summary defined yet — add one in the full view.",
+      "team": "Team",
+      "timeline": "Timeline",
+      "budget": "Budget",
+      "risks": "Risks",
+      "openFullCard": "Open Full Initiative Card",
+      "description": "Description",
+      "owner": "Owner",
+      "sponsor": "Sponsor",
+      "targetDate": "Target Date",
+      "created": "Created",
+      "strategicAxis": "Strategic Axis",
+      "tags": "Tags",
+      "killCriteria": "Kill Criteria",
+      "progress": "Progress",
+      "milestones": "Milestones",
+      "blocked": "Blocked ({{count}})",
+      "showLess": "Show less",
+      "showMore": "Show {{count}} more…",
+      "active": "Active ({{count}})",
+      "done": "Done ({{count}})",
+      "noTasks": "No tasks yet",
+      "noDecisions": "No decisions yet",
+      "noRaid": "No RAID items yet",
+      "spent": "Spent",
+      "impact": "Impact",
+      "budgetUtilization": "Budget utilization",
+      "noFinancialData": "No financial data",
+      "pending": "Pending ({{count}})",
+      "resolved": "Resolved ({{count}})"
+    },
+    "hub": {
+      "failedToLoad": "Failed to load initiatives",
+      "retry": "Retry",
+      "dismiss": "Dismiss",
+      "noInitiativesFound": "No initiatives found"
+    },
+    "levelDesc": {
+      "quick_win": "Minimal governance. Can be self-approved.",
+      "standard": "Standard approval flow. Requires owner + deadline + tasks.",
+      "strategic": "Executive approval required. Full charter + RAID analysis.",
+      "transformation": "Board-level governance. Full charter, steering committee, gate reviews."
+    }
   },
   "execution": {
     "title": "実行センター",
     "dashboard": "ダッシュボード",
     "calendar": "カレンダー",
-    "decisions": "意思決定"
+    "decisions": "意思決定",
+    "table": {
+      "type": "Type",
+      "name": "Name",
+      "status": "Status",
+      "assignee": "Assignee",
+      "progress": "Progress",
+      "timeLeft": "Time Left",
+      "alerts": "Alerts",
+      "tasks": "Tasks",
+      "deadline": "Deadline",
+      "unassigned": "Unassigned",
+      "noDeadline": "No deadline"
+    },
+    "badges": {
+      "done": "Done",
+      "overdue": "Overdue",
+      "blocked": "Blocked",
+      "decision": "Decision",
+      "ok": "OK"
+    },
+    "time": {
+      "daysOverdue": "d overdue",
+      "daysLeft": "d left",
+      "weeksLeft": "w left"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "portfolio": {
+      "onTrack": "On Track",
+      "blocked": "Blocked",
+      "overdueDecisions": "Overdue Decisions",
+      "avgProgress": "Avg Progress",
+      "budgetHealth": "Budget Health",
+      "decisionSla": "Decision SLA",
+      "escalationsGates": "Escalations & Gates",
+      "noActiveEscalations": "No active escalations."
+    },
+    "ai": {
+      "priorityRecommendations": "AI Priority Recommendations",
+      "noPriorities": "No upcoming priorities detected.",
+      "timelineConflicts": "AI Timeline Conflicts",
+      "noConflicts": "No timeline conflicts detected.",
+      "riskSuggestions": "AI Risk Suggestions",
+      "noRisks": "No active risks detected."
+    },
+    "empty": {
+      "noInExecution": "No initiatives in execution. Move initiatives to execution first.",
+      "noAvailable": "No initiatives available.",
+      "noDeadlines": "No deadlines scheduled",
+      "deadlinesWillAppear": "Tasks and decisions will appear here"
+    },
+    "detail": {
+      "description": "Description",
+      "blockedReason": "Blocked Reason",
+      "tasks": "Tasks",
+      "noTasks": "No tasks defined for this initiative",
+      "keyRisks": "Key Risks",
+      "progress": "Progress",
+      "timeline": "Timeline",
+      "start": "Start",
+      "plannedEnd": "Planned End",
+      "actualEnd": "Actual End",
+      "owners": "Owners",
+      "businessOwner": "Business Owner",
+      "technicalOwner": "Technical Owner",
+      "noOwners": "No owners assigned",
+      "economics": "Economics",
+      "budgetCapex": "Budget (CAPEX)",
+      "expectedRoi": "Expected ROI",
+      "statusChangeReason": "Please provide a reason for this change.",
+      "statusChangeConfirm": "Are you sure you want to proceed?",
+      "enterReason": "Enter reason...",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "actions": {
+      "newTask": "New Task",
+      "newDecision": "New Decision",
+      "raidLog": "RAID Log",
+      "export": "Export",
+      "report": "Report",
+      "aiChat": "AI Chat"
+    },
+    "raidLog": {
+      "title": "RAID Log",
+      "description": "Track Risks, Assumptions, Issues, and Decisions across all execution initiatives"
+    },
+    "kanban": {
+      "toDo": "To Do",
+      "inProgress": "In Progress",
+      "review": "Review",
+      "blocked": "Blocked",
+      "done": "Done",
+      "dropHere": "Drop here",
+      "noTasks": "No tasks"
+    }
   },
   "benefits": {
     "title": "ベネフィット実現",
     "kpis": "KPI",
-    "lessons": "学んだ教訓"
+    "lessons": "学んだ教訓",
+    "tracker": {
+      "financialBenefits": "Financial Benefits",
+      "of": "of",
+      "target": "target",
+      "avgRealization": "Avg. Realization",
+      "benefitsAchieved": "Benefits Achieved",
+      "inProgress": "In Progress",
+      "allTypes": "All Types",
+      "targetLabel": "Target:",
+      "measurement": "Measurement:",
+      "initiative": "Initiative:",
+      "fetchError": "Failed to load benefits data",
+      "retry": "Retry"
+    },
+    "kpiDashboard": {
+      "title": "KPI Dashboard",
+      "totalKpis": "Total KPIs",
+      "onTarget": "On Target",
+      "atRisk": "At Risk",
+      "offTarget": "Off Target",
+      "achieved": "Achieved",
+      "allCategories": "All Categories",
+      "target": "Target:",
+      "updated": "Updated",
+      "createAction": "Create Action",
+      "linked": "Linked:",
+      "fetchError": "Failed to load KPI data",
+      "retry": "Retry"
+    }
   },
   "economics": {
     "title": "経済性",
@@ -185,6 +538,139 @@
       "bestPractices": "ベストプラクティス",
       "faq": "よくある質問",
       "troubleshooting": "トラブルシューティング"
+    },
+    "sidePanel": {
+      "title": "Help Center",
+      "tabs": {
+        "overview": "Overview",
+        "faq": "FAQ",
+        "knowledge": "Knowledge Base"
+      },
+      "fullDocs": "Full documentation",
+      "overview": {
+        "title": "Welcome to Consultinity",
+        "intro": "Your complete PMO platform for digital transformation. Assess, plan, and track your organization's journey to digital excellence with AI-powered insights and proven methodologies.",
+        "watchVideo": "Watch introduction video",
+        "videoDuration": "3 min overview",
+        "guides": "Quick guides",
+        "guidesList": {
+          "gettingStarted": "Getting started",
+          "assessment": "Assessment",
+          "initiatives": "Initiatives & roadmap",
+          "reports": "Reports & exports",
+          "aiFeatures": "AI features"
+        },
+        "whatToKnow": "Key things to know",
+        "tip1": "Start with Quick Assessment (5 min) for instant AI recommendations",
+        "tip2": "AI generates initiatives from assessment gaps — review in Roadmap",
+        "tip3": "Track implementation in Execution module with real-time dashboards",
+        "tip4": "Use AI Chat anytime to ask questions or get recommendations",
+        "tip5": "Export reports in PDF/PowerPoint for stakeholder presentations",
+        "keyboardShortcuts": "Keyboard shortcuts",
+        "keyboardShortcutsHint": "Press ? anytime to view"
+      },
+      "faq": {
+        "searchPlaceholder": "Search questions...",
+        "noResults": "No matching questions found.",
+        "noFAQ": "No FAQ available."
+      },
+      "knowledge": {
+        "title": "Knowledge Base",
+        "description": "Explore articles, tutorials, and best practices.",
+        "comingSoon": "In development",
+        "categories": {
+          "tools": "Tools",
+          "methodologies": "Methodologies",
+          "caseStudies": "Case studies",
+          "bestPractices": "Best practices"
+        },
+        "notify": {
+          "success": "You'll be notified when it's ready!"
+        }
+      }
+    },
+    "search": {
+      "placeholder": "Search help articles, tutorials...",
+      "searching": "Searching...",
+      "results": "Results",
+      "found": "found",
+      "viewAll": "View all results",
+      "noResults": "No results found for \"{{query}}\"",
+      "tryDifferent": "Try different keywords or browse categories",
+      "recent": "Recent searches",
+      "clearRecent": "Clear",
+      "suggested": "Suggested articles",
+      "startTyping": "Start typing to search",
+      "navigate": "Navigate",
+      "select": "Select",
+      "close": "Close",
+      "buttonText": "Search help..."
+    },
+    "article": {
+      "tableOfContents": "Table of Contents",
+      "showMeHow": "Show me how",
+      "completed": "completed",
+      "thanksFeedback": "Thanks for your feedback!",
+      "loading": "Loading article...",
+      "notFound": "Article not found",
+      "minRead": "min read"
+    },
+    "contact": {
+      "title": "Contact Support",
+      "selectCategory": "Select a category to get started",
+      "describeIssue": "Describe your issue or request",
+      "requestSubmitted": "Request submitted successfully",
+      "categoryIntro": "What can we help you with today?",
+      "quickLinks": "Quick Links",
+      "documentation": "Documentation",
+      "systemStatus": "System Status",
+      "changeCategory": "Change category",
+      "priority": "Priority",
+      "subject": "Subject",
+      "description": "Description",
+      "email": "Email",
+      "emailPlaceholder": "Your email for follow-up",
+      "attachments": "Attachments",
+      "dropFiles": "Click to attach files",
+      "fileLimit": "Max {{max}} files, 10MB each",
+      "includeSystemInfo": "Include system information",
+      "thankYou": "Thank you!",
+      "submitAnother": "Submit another",
+      "responseTime": "Typical response time: 24 hours",
+      "submitting": "Submitting...",
+      "submit": "Submit Request",
+      "success": "Support request submitted successfully!",
+      "error": "Failed to submit request. Please try again.",
+      "fileTooLarge": "File {{name}} is too large (max 10MB)",
+      "tooManyFiles": "Maximum {{max}} files allowed",
+      "errors": {
+        "subjectRequired": "Subject is required",
+        "invalidEmail": "Invalid email address"
+      }
+    },
+    "dashboard": {
+      "overview": "Dashboard overview",
+      "overviewContent": "Use the Dashboard to monitor progress, key metrics, and the overall health of your transformation program.",
+      "navigation": "Navigation tips",
+      "navigationContent": "Use the left sidebar to move between modules. The Help panel adapts to the screen you're on."
+    },
+    "initiatives": {
+      "create": "Creating initiatives",
+      "createContent": "Create initiatives from assessment gaps or add them manually. Define owners, milestones, and expected benefits.",
+      "manage": "Managing initiatives",
+      "manageContent": "Prioritize initiatives, track progress, and keep stakeholders aligned using execution boards and reports."
+    },
+    "assessment": {
+      "start": "Starting an assessment",
+      "startContent": "Choose a framework, complete the questionnaire, and review gaps and recommendations generated from your inputs.",
+      "methodology": "Methodology",
+      "methodologyContent": "Assessments benchmark your current maturity and translate results into a prioritized roadmap of initiatives."
+    },
+    "general": {
+      "gettingStarted": "Getting started",
+      "gettingStartedContent": "Open the Help Center for quick guides, then run an assessment to generate a first roadmap.",
+      "support": "Support",
+      "supportContent": "If you get stuck, contact support and attach screenshots/logs. The AI Chat can also explain features and workflows."
     }
   },
   "settings": {
@@ -196,5 +682,705 @@
     "integrations": "連携",
     "security": "セキュリティ",
     "appearance": "外観"
+  },
+  "landing": {
+    "hero": {
+      "title": "Think bigger.Do smarter",
+      "subtitleLine1": "Your",
+      "subtitleLine1End": "for Enterprise Strategy.",
+      "slogans": {
+        "1": "Months of consulting. Minutes of AI. Better results.",
+        "2": "Transform decisions. Accelerate outcomes.",
+        "3": "Enterprise intelligence. Instant clarity.",
+        "4": "AI-powered strategy. Real-time insights.",
+        "5": "Consulting reimagined. Results delivered."
+      },
+      "tagline": {
+        "line1": "AI consulting.",
+        "line2": "No slides.",
+        "line3": "Just decisions."
+      },
+      "cards": {
+        "demo": {
+          "title": "Interactive Demo",
+          "description": "Explore Consultinity with AI-guided walkthrough. No signup required.",
+          "meta": "GUIDED EXPERIENCE",
+          "cta": "Start Demo"
+        },
+        "trial": {
+          "title": "Free Trial",
+          "description": "14-day full access to all features. Start your transformation today.",
+          "meta": "14 DAYS FREE",
+          "cta": "Start Free Trial"
+        },
+        "video": {
+          "title": "Watch How It Works",
+          "description": "See Consultinity in action with real enterprise transformation examples.",
+          "meta": "3 MIN VIDEO",
+          "cta": "Play Video"
+        },
+        "expert": {
+          "title": "Talk to Expert",
+          "description": "Schedule a personalized consultation with our strategy specialists.",
+          "meta": "HUMAN TOUCH",
+          "cta": "Book Consultation"
+        },
+        "login": {
+          "title": "Welcome Back",
+          "description": "Continue your transformation journey. Your workspace awaits.",
+          "meta": "EXISTING USER",
+          "cta": "Log In"
+        }
+      }
+    },
+    "topBar": {
+      "demo": "Demo",
+      "trial": "Trial",
+      "login": "Log in",
+      "signUp": "Sign up"
+    },
+    "methodology": {
+      "badge": "Our Methodology",
+      "heading": "AI-Driven Strategic Transformation"
+    },
+    "steps": {
+      "diagnostic": {
+        "title": "Diagnostic Assessment",
+        "desc": "AI analyzes your organization's digital maturity, identifies gaps, and benchmarks against industry standards."
+      },
+      "roadmap": {
+        "title": "Strategic Roadmap",
+        "desc": "Generate actionable transformation roadmap with prioritized initiatives, timelines, and resource requirements."
+      },
+      "approval": {
+        "title": "Human Governance",
+        "desc": "Every strategic decision requires human approval. Full accountability and control remain with your leadership."
+      }
+    }
+  },
+  "partner": {
+    "becomePartner": "Become Partner"
+  },
+  "showcase": {
+    "common": {
+      "execute": "Execute",
+      "moreTools": "More Tools",
+      "watchVideo": "Watch Video",
+      "tryFree": "Try It Free",
+      "methodologyIntro": "Methodology Introduction",
+      "framework": "Framework",
+      "learnOurMethods": "Learn Our Methods",
+      "watchTeaser": "Watch our 90-second teaser explaining this methodology.",
+      "readyToTry": "Ready to try it? Start your transformation today.",
+      "startTrial": "Start Free Trial",
+      "integratedHint": "Knowledge base and audits integrated in the Discovery panel"
+    },
+    "audits": {
+      "hero": {
+        "badge": "Industrial Excellence",
+        "title1": "BASELINE YOUR",
+        "title2": "DIGITAL MATURITY",
+        "subtitle": "Consultinity integrates world-class audit methodologies used by Harvard experts to drive data-driven change across global industries."
+      },
+      "cta": {
+        "header": "TAKE THE NEXT STEP IN",
+        "headerAccent": "YOUR TRANSFORMATION",
+        "description": "Assessments are only the beginning. Discover the full suite of AI-powered tools designed to turn maturity insights into operational results."
+      },
+      "items": {
+        "drd": {
+          "fullName": "Digital Readiness Diagnosis",
+          "description": "Advanced tool for assessing digital maturity and creating development roadmaps.",
+          "longDescription": "Digital Readiness Diagnosis (DRD) is a proprietary DBR77 methodology designed to support companies in their digital transformation journey. It covers assessment of digital maturity, analysis of external factors, and creation of detailed development roadmaps.",
+          "externalLinkLabel": "About DRD",
+          "dimensions": {
+            "0": "Organizational Readiness",
+            "1": "Digital Maturity",
+            "2": "External Factors",
+            "3": "Development Roadmap"
+          },
+          "benefits": {
+            "0": "Structured Transformation",
+            "1": "Clear Investment Path",
+            "2": "Risk Mitigation",
+            "3": "Strategic Alignment"
+          }
+        },
+        "siri": {
+          "fullName": "Smart Industry Readiness Index",
+          "description": "Global standard for evaluating Industry 4.0 maturity across 3 key pillars.",
+          "longDescription": "The Smart Industry Readiness Index (SIRI) is a global initiative created in partnership with the Singapore EDB and WEF. As the international standard for I4.0, it evaluates 16 dimensions across Process, Technology, and Organization to prioritize transformation efforts.",
+          "externalLinkLabel": "About SIRI",
+          "dimensions": {
+            "0": "Process Maturity",
+            "1": "Technology Adoption",
+            "2": "Organizational Excellence",
+            "3": "Industry 4.0 Alignment"
+          },
+          "benefits": {
+            "0": "Global Benchmarking",
+            "1": "Standardized Framework",
+            "2": "Cross-Industry Comparison",
+            "3": "Strategic Prioritization"
+          }
+        },
+        "adma": {
+          "fullName": "Advanced Digital Maturity Assessment",
+          "description": "European standard for \"Factory of the Future\" digital transformation audits.",
+          "longDescription": "ADMA was developed by the European Commission to assist companies in adopting advanced manufacturing technologies. It assesses a company's digital maturity across seven key areas, guiding them towards becoming a world-class Factory of the Future.",
+          "externalLinkLabel": "About ADMA",
+          "dimensions": {
+            "0": "Advanced Technologies",
+            "1": "Digital Factory",
+            "2": "Value Chain Integration",
+            "3": "People-Centric Change"
+          },
+          "benefits": {
+            "0": "European Standards",
+            "1": "Factory of the Future Roadmap",
+            "2": "Innovation Focus",
+            "3": "Eco-System Integration"
+          }
+        },
+        "lean-4-0": {
+          "name": "Lean 4.0",
+          "fullName": "Lean 4.0 (DBR77 Methodology)",
+          "description": "3-Phase optimization path: Measure, Optimize, and Automate.",
+          "longDescription": "Lean 4.0 is a specialized DBR77 methodology that bridges classic Lean manufacturing with Industry 4.0 technology. It follows a rigorous 3-phase path: Measure (establishing data-driven baselines), Optimize (eliminating waste), and Automate (high-ROI technology injection).",
+          "externalLinkLabel": "About Lean 4.0",
+          "dimensions": {
+            "0": "Measure",
+            "1": "Optimize",
+            "2": "Automate",
+            "3": "ROI Focus"
+          },
+          "benefits": {
+            "0": "Waste Elimination",
+            "1": "Data-Driven Baselines",
+            "2": "High-ROI Automation",
+            "3": "Operational Stabilisation"
+          }
+        }
+      }
+    },
+    "tools": {
+      "hero": {
+        "badge": "Elite Education",
+        "title1": "MASTER OUR",
+        "title2": "METHODOLOGIES",
+        "subtitle": "Discover the AI-powered frameworks that drive high-impact consulting results. Short teasers on how to apply classic tools to modern industry."
+      },
+      "blocks": {
+        "strategic": {
+          "name": "Strategic Consulting Tools",
+          "description": "Classic frameworks powered by AI for strategic analysis and decision-making"
+        },
+        "operational": {
+          "name": "Operational Excellence Tools",
+          "description": "Process optimization, efficiency analysis, and lean manufacturing tools"
+        },
+        "digital": {
+          "name": "Digital Transformation",
+          "description": "Technology assessment, automation roadmaps, and digital maturity tools"
+        },
+        "change-management": {
+          "name": "Change Management",
+          "description": "People-centric tools for adoption, communication, and organizational change"
+        }
+      },
+      "items": {
+        "dynamic-swot": {
+          "name": "Dynamic SWOT Analysis",
+          "description": "AI-driven SWOT that connects strengths with opportunities and weaknesses with threats to generate actionable strategic initiatives.",
+          "outputs": {
+            "0": "SWOT Matrix",
+            "1": "S+O/W+T Combinations",
+            "2": "Strategic Initiatives"
+          }
+        },
+        "market-forces": {
+          "name": "Market Forces Analysis",
+          "description": "Analyze competitive forces with data-driven scoring and margin protection initiatives for sustainable competitive advantage.",
+          "outputs": {
+            "0": "5 Forces Diagram",
+            "1": "Margin Risk Assessment",
+            "2": "Competitive Initiatives"
+          }
+        },
+        "portfolio-priority": {
+          "name": "Strategic Portfolio Prioritization",
+          "description": "Classify and prioritize strategic initiatives based on impact potential and resource constraints using proven BCG methodology.",
+          "outputs": {
+            "0": "BCG-style Grid",
+            "1": "Priority Ranking",
+            "2": "Stop/Scale/Merge Decisions"
+          }
+        },
+        "growth-paths": {
+          "name": "Growth Paths Analysis",
+          "description": "Map growth opportunities with ROI estimates, risk profiles, and capability requirements for strategic expansion.",
+          "outputs": {
+            "0": "Ansoff Matrix",
+            "1": "Growth ROI Estimates",
+            "2": "Capability Gap Analysis"
+          }
+        },
+        "value-chain": {
+          "name": "Value Chain Analysis",
+          "description": "Identify where value is created and leaked across activities, with optimization initiatives.",
+          "outputs": {
+            "0": "Value Chain Map",
+            "1": "Leakage Points",
+            "2": "Optimization Initiatives"
+          }
+        },
+        "value-stream-mapping": {
+          "name": "Value Stream Mapping",
+          "description": "Visualize end-to-end process flows, identify waste, and design future-state optimized value streams.",
+          "outputs": {
+            "0": "Current State Map",
+            "1": "Waste Identification",
+            "2": "Future State Design"
+          }
+        },
+        "oee-analysis": {
+          "name": "OEE Analysis",
+          "description": "Measure and improve equipment effectiveness by analyzing availability, performance, and quality metrics.",
+          "outputs": {
+            "0": "OEE Dashboard",
+            "1": "Loss Waterfall",
+            "2": "Improvement Actions"
+          }
+        },
+        "lean-assessment": {
+          "name": "Lean Maturity Assessment",
+          "description": "Assess organizational lean maturity across key dimensions and identify improvement opportunities.",
+          "outputs": {
+            "0": "Maturity Scorecard",
+            "1": "Gap Analysis",
+            "2": "Improvement Roadmap"
+          }
+        },
+        "process-capability": {
+          "name": "Process Capability Analysis",
+          "description": "Evaluate process performance against specifications and identify variation reduction opportunities.",
+          "outputs": {
+            "0": "Capability Metrics",
+            "1": "Control Charts",
+            "2": "Improvement Projects"
+          }
+        },
+        "digital-maturity": {
+          "name": "Digital Maturity Assessment",
+          "description": "Evaluate digital readiness across technology, processes, and people dimensions using industry-standard frameworks.",
+          "outputs": {
+            "0": "Maturity Radar",
+            "1": "Benchmark Comparison",
+            "2": "Transformation Roadmap"
+          }
+        },
+        "automation-roadmap": {
+          "name": "Automation Roadmap Builder",
+          "description": "Identify automation opportunities, prioritize use cases, and build a phased implementation roadmap.",
+          "outputs": {
+            "0": "Opportunity Matrix",
+            "1": "ROI Projections",
+            "2": "Implementation Timeline"
+          }
+        },
+        "technology-scanner": {
+          "name": "Technology Landscape Scanner",
+          "description": "Scan emerging technologies relevant to your industry and assess adoption readiness.",
+          "outputs": {
+            "0": "Technology Radar",
+            "1": "Adoption Assessment",
+            "2": "Pilot Recommendations"
+          }
+        },
+        "data-strategy": {
+          "name": "Data Strategy Framework",
+          "description": "Design data architecture, governance policies, and analytics capabilities for data-driven decision making.",
+          "outputs": {
+            "0": "Data Architecture",
+            "1": "Governance Framework",
+            "2": "Analytics Roadmap"
+          }
+        },
+        "adkar-assessment": {
+          "name": "ADKAR Change Assessment",
+          "description": "Assess individual and organizational readiness for change using the proven ADKAR model.",
+          "outputs": {
+            "0": "ADKAR Scores",
+            "1": "Barrier Analysis",
+            "2": "Reinforcement Plan"
+          }
+        },
+        "stakeholder-analysis": {
+          "name": "Stakeholder Analysis",
+          "description": "Map stakeholder influence, interests, and engagement strategies for successful change adoption.",
+          "outputs": {
+            "0": "Stakeholder Map",
+            "1": "Engagement Strategy",
+            "2": "Communication Plan"
+          }
+        },
+        "resistance-mapper": {
+          "name": "Resistance Pattern Mapper",
+          "description": "Identify resistance patterns, root causes, and develop targeted intervention strategies.",
+          "outputs": {
+            "0": "Resistance Heatmap",
+            "1": "Root Cause Analysis",
+            "2": "Intervention Playbook"
+          }
+        },
+        "communication-planner": {
+          "name": "Change Communication Planner",
+          "description": "Design multi-channel communication campaigns aligned with change milestones.",
+          "outputs": {
+            "0": "Communication Calendar",
+            "1": "Message Templates",
+            "2": "Channel Strategy"
+          }
+        }
+      }
+    }
+  },
+  "thinking": {
+    "processing": "Thinking...",
+    "analyzing": "Analyzing...",
+    "structuring": "Structuring...",
+    "synthesizing": "Synthesizing...",
+    "finalizing": "Finalizing..."
+  },
+  "contextBadge": {
+    "aiSees": "AI sees",
+    "project": "Project",
+    "focus": "Focus"
+  },
+  "aiChat": {
+    "language": "Conversation language",
+    "chatMenuTitle": "Menu",
+    "openSidebar": "Open sidebar",
+    "newChat": "New conversation",
+    "dailyBrief": "Daily brief",
+    "suggestions": {
+      "title": "Suggested for you",
+      "startAssessment": "Start your digital maturity assessment"
+    },
+    "quickActions": {
+      "planWeek": {
+        "label": "Plan the week",
+        "prompt": "Help me plan priorities for the next week"
+      },
+      "createDiagram": {
+        "label": "Create a diagram",
+        "prompt": "Create a process diagram for onboarding a new client"
+      }
+    },
+    "history": "History",
+    "placeholder": "How can I help you?",
+    "contextPlaceholder": "How can I help with {{context}}?",
+    "welcome": "Start a conversation",
+    "welcomeSubtitle": "Ask questions, get insights, and collaborate with AI",
+    "loadingConversation": "Loading conversation…",
+    "autoReadOn": "Enable voice reading",
+    "autoReadOff": "Disable voice reading",
+    "retry": "Try again",
+    "expandFullScreen": "Expand to full screen",
+    "actions": {
+      "helpful": "Helpful",
+      "notHelpful": "Not helpful",
+      "copy": "Copy",
+      "rename": "Rename",
+      "star": "Pin to top",
+      "unstar": "Unpin",
+      "archive": "Archive",
+      "unarchive": "Unarchive",
+      "delete": "Delete",
+      "addToProject": "Add to folder",
+      "moveProject": "Change folder"
+    },
+    "feedback": {
+      "thankYou": "Thank you for your feedback!",
+      "helpUsImprove": "Help us improve",
+      "length": "Response length:",
+      "tooShort": "Too short",
+      "justRight": "Just right",
+      "tooLong": "Too long",
+      "detail": "Detail level:",
+      "tooLittle": "Too little",
+      "tooMuch": "Too much",
+      "advancedOptions": "More options",
+      "actionability": "Usefulness:",
+      "notUseful": "Not useful",
+      "veryUseful": "Very useful",
+      "accuracy": "Accuracy:",
+      "inaccurate": "Inaccurate",
+      "veryAccurate": "Accurate",
+      "preferredFormat": "Preferred format:",
+      "formatBullets": "Bullets",
+      "formatParagraphs": "Paragraphs",
+      "formatStructured": "Structured",
+      "formatConversational": "Conversational",
+      "missingInfo": "What was missing? (optional)",
+      "missingInfoPlaceholder": "Describe what was missing from the response...",
+      "submit": "Submit feedback"
+    },
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "subtitle": {
+      "morning": "Ready to drive your transformation forward?",
+      "afternoon": "Let's make progress on your initiatives",
+      "evening": "Review your transformation journey"
+    },
+    "frozenPlaceholder": "AI temporarily unavailable",
+    "dictating": "Dictating…",
+    "voiceConversation": "Listening… speak naturally",
+    "groups": {
+      "pinned": "Pinned",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This week",
+      "lastMonth": "Last month",
+      "older": "Older",
+      "archived": "Archived"
+    },
+    "menu": {
+      "tools": "AI tools",
+      "aiModes": "AI modes",
+      "knowledgeSources": "Knowledge sources",
+      "responseStyle": "Response style",
+      "ttsSettings": "Voice settings",
+      "ttsSpeed": "Speed",
+      "ttsVoice": "Voice",
+      "ttsAutoVoice": "Auto (detect language)",
+      "ttsVoiceChanged": "Voice changed",
+      "ttsTest": "Test voice",
+      "ttsTestUtterance": "Hi, this is a voice test.",
+      "addFiles": "Add files",
+      "uploadFromDevice": "From device",
+      "cloudStorage": "Cloud",
+      "connectInSettings": "Connect more in Settings → Integrations",
+      "modes": {
+        "deepResearch": {
+          "label": "Deep analysis",
+          "desc": "In-depth exploration of a topic"
+        },
+        "webSearch": {
+          "label": "Web search",
+          "desc": "Real-time information"
+        },
+        "showReasoning": {
+          "label": "Show reasoning",
+          "desc": "Expose the AI's chain of thought"
+        },
+        "multiAgent": {
+          "label": "Multi-agent analysis",
+          "desc": "CFO/CTO/CHRO/COO perspectives"
+        },
+        "textToSpeech": {
+          "label": "Read responses",
+          "desc": "Automatically read responses aloud"
+        }
+      },
+      "sources": {
+        "pmoDocuments": {
+          "label": "PMO documents",
+          "desc": "ISO 21500, PMBOK, PRINCE2"
+        },
+        "projectData": {
+          "label": "Project data",
+          "desc": "Initiatives, tasks, decisions"
+        },
+        "organizationData": {
+          "label": "Organization data",
+          "desc": "Teams, roles, processes"
+        }
+      },
+      "styles": {
+        "normal": "Normal",
+        "normalDesc": "Balanced, conversational responses",
+        "executive": "Executive",
+        "executiveDesc": "Concise, decision-focused, 3-5 bullet points",
+        "analyst": "Analyst",
+        "analystDesc": "Data-driven with metrics, tables, benchmarks",
+        "coach": "Coach",
+        "coachDesc": "Guiding questions, step-by-step explanations",
+        "concise": "Concise",
+        "conciseDesc": "Key points only, no digressions",
+        "formal": "Formal",
+        "formalDesc": "Business/official language, precise and neutral"
+      },
+      "customInstructions": "My instructions",
+      "customInstructionsPlaceholder": "e.g. \"Always respond in English\", \"I prefer tables over text\", \"I am a CTO at a manufacturing company\"",
+      "instructionsSaved": "Instructions saved",
+      "instructionsSaveError": "Failed to save instructions",
+      "toast": {
+        "enabled": "{{label}}: enabled",
+        "disabled": "{{label}}: disabled",
+        "responseStyle": "Response style: {{style}}",
+        "filesAddedOne": "Added: {{name}}",
+        "filesAddedMany": "Added {{count}} files",
+        "cloudComingSoon": "Cloud integrations will be added soon",
+        "openingProvider": "Opening {{provider}}…",
+        "redirectIntegrations": "Redirecting to integration settings"
+      }
+    },
+    "cloudPicker": {
+      "demoMode": "Demo mode",
+      "demoModeDesc": "Sample files are shown. Cloud integration will be added soon.",
+      "noFiles": "No files",
+      "selectFile": "Select file",
+      "downloading": "Downloading: {{name}}",
+      "loadError": "Failed to load files"
+    },
+    "myProjects": "My Folders",
+    "teamProjects": "Team Folders",
+    "myFolders": "My Folders",
+    "teamFolders": "Team Folders",
+    "folders": "Folders",
+    "createFolder": "Create folder",
+    "createTeamFolder": "Create team folder",
+    "newPersonalFolder": "New personal folder",
+    "newTeamFolder": "New team folder",
+    "newFolder": "New folder",
+    "projectName": "Folder name...",
+    "folderName": "Folder name...",
+    "noProjectConversations": "No conversations in this folder",
+    "noFolderConversations": "No conversations in this folder",
+    "noConversations": "No conversations yet",
+    "noResults": "No conversations found",
+    "startNewChat": "Start a new chat to begin",
+    "newConversation": "New conversation",
+    "closeSidebar": "Close sidebar",
+    "searchPlaceholder": "Search conversations...",
+    "confirmDelete": "Are you sure you want to delete this conversation?",
+    "sections": {
+      "archived": "Archived"
+    },
+    "moveToFolder": "Move to folder",
+    "moveToFolderFailed": "Failed to move conversation. Please try again.",
+    "removeFromFolder": "Remove from folder",
+    "currentFolder": "Current",
+    "noFolder": "No folder",
+    "noFolders": "No folders found",
+    "searchFoldersPlaceholder": "Search folders...",
+    "personalFolder": "Personal",
+    "teamFolder": "Team",
+    "createFolderFailed": "Failed to create folder. Please try again.",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "allConversations": "All",
+    "openFolder": "Open folder",
+    "capabilities": {
+      "deepThinking": "Deep Thinking",
+      "deepThinkingDesc": "Multi-step analysis with web research",
+      "deepThinkingPrompt": "Analyze the biggest risk to our current strategy and suggest 3 mitigations",
+      "scenarios": "Scenario Modeling",
+      "scenariosDesc": "Monte Carlo ROI & what-if analysis",
+      "scenariosPrompt": "Run a Monte Carlo simulation for the ROI of our top initiative",
+      "riskAlerts": "Risk Alerts",
+      "riskAlertsDesc": "Predictive risk & budget warnings",
+      "riskAlertsPrompt": "What are the top risks in my portfolio right now?",
+      "actions": "Quick Actions",
+      "actionsDesc": "Create tasks, decisions & reports",
+      "actionsPrompt": "Create a task to review our Q1 roadmap progress"
+    },
+    "onboarding": {
+      "hint": "Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis"
+    }
+  },
+  "agentAudit": {
+    "title": "Agent Audit Layer",
+    "suggestedReviewers": "Suggested Reviewers",
+    "willAuditAfterDT": "Will audit the Deep Thinking report",
+    "selected": "selected",
+    "settings": "Settings",
+    "auditIntent": "Audit Intent",
+    "maxReviewers": "Max Reviewers",
+    "refreshSuggestions": "Refresh Suggestions",
+    "refreshing": "Refreshing...",
+    "expectedFindings": "Expected Findings",
+    "riskAreas": "Risk Areas",
+    "detectedSignals": "Detected Signals",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "noInterference": "Agents will audit the final report only — no interference with Deep Thinking process.",
+    "reviewers": "reviewers",
+    "gatesTriggered": "gates triggered",
+    "triggeredGates": "Triggered Quality Gates",
+    "criticalRisks": "Critical Risks",
+    "agentReviews": "Agent Reviews",
+    "impactIfIgnored": "Impact if ignored",
+    "whenItFails": "When it fails",
+    "findings": "Findings",
+    "topQuestions": "Top Questions",
+    "actionableFollowups": "Actionable Followups",
+    "acceptRisk": "Accept Risk & Proceed",
+    "accepting": "Accepting...",
+    "triggerDeepening": "Trigger Directed Deepening",
+    "auditTrailNote": "Actions are recorded in the audit trail.",
+    "qualityStatus": {
+      "PASS": "PASS",
+      "PASS_WITH_RISKS": "PASS WITH RISKS",
+      "FAIL": "FAIL"
+    },
+    "gates": {
+      "A": "Gate A: Critical Finance",
+      "B": "Gate B: Consensus Risk",
+      "C": "Gate C: Missing Data",
+      "D": "Gate D: Overreach"
+    },
+    "intents": {
+      "validate": "Validate",
+      "stress_test": "Stress-test",
+      "approve": "Approve"
+    },
+    "intentDescriptions": {
+      "validate": "Standard risk and quality validation",
+      "stress_test": "Deep analysis with adversarial agent",
+      "approve": "Quick validation before approval"
+    },
+    "agentKinds": {
+      "industry": "Industry",
+      "functional": "Function",
+      "adversarial": "Adversarial"
+    },
+    "riskAreaLabels": {
+      "cashflow": "Cashflow",
+      "capex": "CAPEX",
+      "safety": "Safety",
+      "uptime": "Uptime",
+      "quality": "Quality",
+      "compliance": "Compliance",
+      "cybersecurity": "Cybersecurity",
+      "vendor_risk": "Vendor Risk",
+      "delivery_otif": "Delivery/OTIF",
+      "change_management": "Change Management",
+      "architecture_integrations": "Architecture/Integrations",
+      "other": "Other"
+    },
+    "streaming": {
+      "reviewing": "Multi-Agent Review in Progress",
+      "aggregating": "Aggregating Agent Findings",
+      "processing": "Agent Audit Processing"
+    }
+  },
+  "research": {
+    "deepResearch": "Deep Research",
+    "generatingQueries": "Generating research queries...",
+    "queriesReady": "Research queries ready",
+    "searching": "Searching sources...",
+    "aggregating": "Aggregating results...",
+    "synthesizing": "Synthesizing findings...",
+    "complete": "Research complete",
+    "queries": "queries",
+    "sources": "sources",
+    "searchQueries": "Search Queries",
+    "topSources": "Top Sources",
+    "researching": "Researching"
   }
 }

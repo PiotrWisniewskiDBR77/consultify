@@ -1,63 +1,232 @@
-/**
- * Auth Controller Tests - Simplified
- */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { login, setDependencies } from '../../../../server/src/controllers/AuthController.js';
+import type { Request, Response } from 'express';
 
-describe('AuthController', () => {
+// Mock dependencies
+const mockDb = {
+  get: vi.fn(),
+  run: vi.fn(),
+};
+
+const mockBcrypt = {
+  compareSync: vi.fn(),
+};
+
+const mockActivityService = {
+  log: vi.fn(),
+};
+
+const mockMFAService = {
+  getMFAStatus: vi.fn(),
+  isDeviceTrusted: vi.fn(),
+  verifyTOTP: vi.fn(),
+  trustDevice: vi.fn(),
+};
+
+const mockRefreshTokenService = {
+  generateTokenPair: vi.fn(),
+};
+
+const mockRedisStore = vi.fn().mockImplementation(() => ({
+  resetKey: vi.fn().mockResolvedValue(undefined),
+}));
+
+describe('AuthController (Genuine)', () => {
+  let mockReq: Partial<Request>;
+  let mockRes: Partial<Response>;
+  let jsonFn: any;
+  let statusFn: any;
+  let sendFn: any;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+
+    // Setup request/response
+    mockReq = {
+      body: {},
+      ip: '127.0.0.1',
+      get: vi.fn().mockReturnValue('TestAgent'),
+    };
+
+    jsonFn = vi.fn().mockReturnThis();
+    statusFn = vi.fn().mockReturnThis();
+    sendFn = vi.fn().mockReturnThis();
+
+    mockRes = {
+      status: statusFn,
+      json: jsonFn,
+      send: sendFn,
+    };
+
+    // Inject mocks using the controller's helper
+    await setDependencies({
+      db: mockDb as any,
+      bcrypt: mockBcrypt,
+      ActivityService: mockActivityService,
+      MFAService: mockMFAService as any,
+      RefreshTokenService: mockRefreshTokenService as any,
+      RedisStore: mockRedisStore as any,
+    });
+  });
+
   describe('login', () => {
-    it('should handle login request', () => {
-      const mockRequest = { body: { email: 'test@example.com', password: 'pass' } };
-      expect(mockRequest.body.email).toBe('test@example.com');
+    it('should return 401 if user not found', async () => {
+      mockReq.body = { email: 'nonexistent@example.com', password: 'password' };
+
+      // Mock DB to return null for user query
+      mockDb.get.mockImplementation((sql, params, cb) => {
+        if (sql.includes('FROM users')) cb(null, null);
+      });
+
+      await login(mockReq as Request, mockRes as Response);
+
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(jsonFn).toHaveBeenCalledWith({ error: 'Invalid email or password' });
     });
 
-    it('should validate credentials', () => {
-      const mockResult = { user: { id: 'user-123' }, token: 'jwt-token' };
-      expect(mockResult.token).toBeDefined();
+    it('should return 401 if password does not match', async () => {
+      mockReq.body = { email: 'test@example.com', password: 'wrong' };
+
+      // Mock DB to return user
+      mockDb.get.mockImplementation((sql, params, cb) => {
+        if (sql.includes('FROM users')) {
+          cb(null, {
+            id: 'u1',
+            email: 'test@example.com',
+            password: 'hashed',
+            organization_id: 'o1',
+          });
+        }
+      });
+
+      // Mock bcrypt to fail
+      mockBcrypt.compareSync.mockReturnValue(false);
+
+      await login(mockReq as Request, mockRes as Response);
+
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(jsonFn).toHaveBeenCalledWith({ error: 'Invalid email or password' });
     });
 
-    it('should handle invalid credentials', () => {
-      const error = new Error('Invalid credentials');
-      expect(error.message).toBe('Invalid credentials');
-    });
-  });
+    it('should return 404 if organization not found', async () => {
+      mockReq.body = { email: 'test@example.com', password: 'correct' };
 
-  describe('register', () => {
-    it('should handle registration', () => {
-      const registerData = { email: 'new@example.com', password: 'pass' };
-      expect(registerData.email).toContain('@');
+      mockDb.get.mockImplementation((sql, params, cb) => {
+        if (sql.includes('FROM users')) {
+          cb(null, {
+            id: 'u1',
+            email: 'test@example.com',
+            password: 'hashed',
+            organization_id: 'o1',
+          });
+        } else if (sql.includes('FROM organizations')) {
+          cb(null, null); // Org not found
+        }
+      });
+
+      mockBcrypt.compareSync.mockReturnValue(true);
+
+      await login(mockReq as Request, mockRes as Response);
+
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(jsonFn).toHaveBeenCalledWith({ error: 'Organization not found' });
     });
 
-    it('should validate registration data', () => {
-      const mockResult = { user: { id: 'user-456' }, token: 'jwt-token' };
-      expect(mockResult.user.id).toBeDefined();
-    });
-  });
+    it('should return 403 if organization is blocked (and user not SUPERADMIN)', async () => {
+      mockReq.body = { email: 'test@example.com', password: 'correct' };
 
-  describe('logout', () => {
-    it('should handle logout', () => {
-      const token = 'valid-jwt-token';
-      expect(token).toBeDefined();
-    });
-  });
+      mockDb.get.mockImplementation((sql, params, cb) => {
+        if (sql.includes('FROM users')) {
+          cb(null, { id: 'u1', role: 'USER', password: 'hashed', organization_id: 'o1' });
+        } else if (sql.includes('FROM organizations')) {
+          cb(null, { id: 'o1', status: 'blocked' });
+        }
+      });
 
-  describe('refreshToken', () => {
-    it('should refresh access token', () => {
-      const mockResult = { token: 'new-jwt', refreshToken: 'new-refresh' };
-      expect(mockResult.token).toBeDefined();
-    });
-  });
+      mockBcrypt.compareSync.mockReturnValue(true);
 
-  describe('getCurrentUser', () => {
-    it('should get current user profile', () => {
-      const mockUser = { id: 'user-123', email: 'test@example.com' };
-      expect(mockUser.id).toBeDefined();
-    });
-  });
+      await login(mockReq as Request, mockRes as Response);
 
-  describe('updatePassword', () => {
-    it('should update user password', () => {
-      const passwordData = { currentPassword: 'old', newPassword: 'new' };
-      expect(passwordData.newPassword).toBe('new');
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(jsonFn).toHaveBeenCalledWith(
+        expect.objectContaining({ error: expect.stringContaining('blocked') })
+      );
+    });
+
+    it('should login successfully and return tokens', async () => {
+      mockReq.body = { email: 'valid@example.com', password: 'correct' };
+
+      mockDb.get.mockImplementation((sql, params, cb) => {
+        if (sql.includes('FROM users')) {
+          cb(null, {
+            id: 'u1',
+            role: 'USER',
+            password: 'hashed',
+            organization_id: 'o1',
+            first_name: 'John',
+            last_name: 'Doe',
+            status: 'active',
+            email: 'valid@example.com',
+          });
+        } else if (sql.includes('FROM organizations')) {
+          cb(null, { id: 'o1', status: 'active', plan: 'pro', name: 'Acme' });
+        }
+      });
+
+      mockBcrypt.compareSync.mockReturnValue(true);
+      mockMFAService.getMFAStatus.mockResolvedValue({ enabled: false });
+      mockRefreshTokenService.generateTokenPair.mockResolvedValue({
+        accessToken: 'at',
+        refreshToken: 'rt',
+        expiresIn: 3600,
+      });
+
+      // Mock DB run for updating last login
+      mockDb.run.mockImplementation((sql, params, cb) => cb(null));
+
+      await login(mockReq as Request, mockRes as Response);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(sendFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          token: 'at',
+          refreshToken: 'rt',
+          user: expect.objectContaining({ email: 'valid@example.com' }),
+        })
+      );
+
+      // Verify activity log
+      expect(mockActivityService.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'login',
+          userId: 'u1',
+        })
+      );
+    });
+
+    it('should require MFA if enabled and device not trusted', async () => {
+      mockReq.body = { email: 'mfa@example.com', password: 'correct' };
+
+      mockDb.get.mockImplementation((sql, params, cb) => {
+        if (sql.includes('FROM users')) {
+          cb(null, { id: 'u1', role: 'USER', password: 'hashed', organization_id: 'o1' });
+        } else if (sql.includes('FROM organizations')) {
+          cb(null, { id: 'o1', status: 'active' });
+        }
+      });
+
+      mockBcrypt.compareSync.mockReturnValue(true);
+      mockMFAService.getMFAStatus.mockResolvedValue({ enabled: true });
+      mockMFAService.isDeviceTrusted.mockResolvedValue(false);
+
+      await login(mockReq as Request, mockRes as Response);
+
+      expect(jsonFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mfaRequired: true,
+          message: 'Please enter your 2FA code',
+        })
+      );
     });
   });
 });

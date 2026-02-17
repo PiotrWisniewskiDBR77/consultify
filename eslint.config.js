@@ -24,6 +24,9 @@ export default tseslint.config(
       'node_modules 2',
       '**/trash_node_modules*/**',
       'playwright-report',
+      // Generated test artifacts / coverage output
+      'test-results/**',
+      '**/test-results/**',
       '*.config.js',
       'server/**/*.js',
       'server/**/*.d.ts',

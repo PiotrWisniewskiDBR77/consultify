@@ -63,6 +63,10 @@ export const MODEL_PROVIDER_MAP: Record<string, string> = {
   'glm-4-plus': 'zai',
   'glm-4': 'zai',
   'glm-4.6': 'zai',
+  // Ollama local models (fallback)
+  'gemma3:27b': 'ollama',
+  'qwen3-coder:30b': 'ollama',
+  'devstral-2:latest': 'ollama',
 };
 
 export const TIER_DEFAULTS: Record<string, string> = {
@@ -73,13 +77,16 @@ export const TIER_DEFAULTS: Record<string, string> = {
   VISION: 'gpt-4o',
 };
 
+// Ollama local model used as last-resort fallback when all cloud APIs fail
+const OLLAMA_FALLBACK = process.env.OLLAMA_MODEL || 'gemma3:27b';
+
 export const TIER_FALLBACK_CHAINS: Record<string, string[]> = {
-  // Active providers: OpenAI + Gemini + Anthropic (Mistral not configured)
-  BUDGET: ['gpt-4o-mini', 'gemini-2.0-flash', 'claude-3-haiku'],
-  STANDARD: ['gpt-4o', 'gemini-2.5-flash', 'claude-3-sonnet'],
-  PREMIUM: ['gpt-4o', 'gemini-2.5-pro', 'claude-3-5-sonnet'],
-  REASONING: ['o1-preview', 'gpt-4o', 'gemini-2.5-pro', 'claude-3-5-sonnet'],
-  VISION: ['gpt-4o', 'gemini-2.5-flash', 'claude-3-5-sonnet'],
+  // Active providers: OpenAI + Gemini + Anthropic + Ollama (local last-resort)
+  BUDGET: ['gpt-4o-mini', 'gemini-2.0-flash', 'claude-3-haiku', OLLAMA_FALLBACK],
+  STANDARD: ['gpt-4o', 'gemini-2.5-flash', 'claude-3-sonnet', OLLAMA_FALLBACK],
+  PREMIUM: ['gpt-4o', 'gemini-2.5-pro', 'claude-3-5-sonnet', OLLAMA_FALLBACK],
+  REASONING: ['o1-preview', 'gpt-4o', 'gemini-2.5-pro', 'claude-3-5-sonnet', OLLAMA_FALLBACK],
+  VISION: ['gpt-4o', 'gemini-2.5-flash', 'claude-3-5-sonnet', OLLAMA_FALLBACK],
 };
 
 export const TIER_FALLBACKS: Record<string, string> = {
@@ -336,7 +343,7 @@ export class ModelRouter {
       query = `
                 SELECT p.*, mta.priority as tier_priority
                 FROM llm_providers p
-                INNER JOIN model_tier_assignments mta ON p.id = mta.provider_id
+                INNER JOIN llm_tier_assignments mta ON p.id = mta.provider_id
                 LEFT JOIN organization_provider_settings ops ON p.id = ops.provider_id AND ops.organization_id = ?
                 WHERE mta.tier = ?
                   AND mta.is_active = 1
@@ -352,7 +359,7 @@ export class ModelRouter {
       query = `
                 SELECT p.*, mta.priority as tier_priority
                 FROM llm_providers p
-                INNER JOIN model_tier_assignments mta ON p.id = mta.provider_id
+                INNER JOIN llm_tier_assignments mta ON p.id = mta.provider_id
                 WHERE mta.tier = ?
                   AND mta.is_active = 1
                   AND p.is_active = 1
@@ -385,7 +392,7 @@ export class ModelRouter {
                 p.provider,
                 p.model_id,
                 p.health_status
-            FROM model_tier_assignments mta
+            FROM llm_tier_assignments mta
             INNER JOIN llm_providers p ON mta.provider_id = p.id
             WHERE p.is_active = 1
             ORDER BY mta.tier, mta.priority
@@ -578,7 +585,7 @@ export class ModelRouter {
   ): Promise<{ id: string; providerId: string; tier: Tier; priority: number }> {
     const id = `${providerId}-${tier}`;
     const query = `
-            INSERT OR REPLACE INTO model_tier_assignments (id, provider_id, tier, priority, is_active, updated_at)
+            INSERT OR REPLACE INTO llm_tier_assignments (id, provider_id, tier, priority, is_active, updated_at)
             VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
         `;
     await DbPromise.run(query, [id, providerId, tier, priority], { fallback: false });
@@ -590,7 +597,7 @@ export class ModelRouter {
   }
 
   async removeModelFromTier(providerId: string, tier: Tier): Promise<{ success: true }> {
-    const query = `DELETE FROM model_tier_assignments WHERE provider_id = ? AND tier = ?`;
+    const query = `DELETE FROM llm_tier_assignments WHERE provider_id = ? AND tier = ?`;
     await DbPromise.run(query, [providerId, tier], { fallback: false });
     aiLogger.info('ModelRouter', `Removed provider ${providerId} from tier ${tier}`);
     return { success: true };
@@ -602,7 +609,7 @@ export class ModelRouter {
     priority: number
   ): Promise<{ success: true }> {
     const query = `
-            UPDATE model_tier_assignments 
+            UPDATE llm_tier_assignments 
             SET priority = ?, updated_at = CURRENT_TIMESTAMP
             WHERE provider_id = ? AND tier = ?
         `;
@@ -666,6 +673,22 @@ export class ModelRouter {
         [providerName],
         { fallback: true }
       );
+    }
+
+    // Ollama is local and doesn't require an API key - just a reachable URL
+    if (providerName === 'ollama') {
+      const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+      aiLogger.info('ModelRouter', `Using local Ollama at ${ollamaUrl} for model ${modelId}`);
+      return {
+        id: modelId,
+        tier,
+        provider: 'ollama',
+        apiKey: 'ollama', // Dummy key required by OpenAI SDK
+        endpoint: `${ollamaUrl}/v1`,
+        source: 'local',
+        markupMultiplier: 0,
+        raw: provider || null,
+      };
     }
 
     if (!provider || !provider.api_key) {
@@ -769,6 +792,9 @@ export class ModelRouter {
     if (modelLower.startsWith('command')) return 'cohere';
     if (modelLower.startsWith('glm')) return 'zai';
     if (modelLower.includes('llama') || modelLower.includes('meta/')) return 'nvidia';
+    // Ollama local models (typically use name:tag format like "gemma3:27b")
+    if (modelLower.includes('gemma') || modelLower.includes('devstral') || modelLower.includes(':'))
+      return 'ollama';
 
     return 'openai';
   }
@@ -785,11 +811,13 @@ export class ModelRouter {
       nvidia: 'NVIDIA_API_KEY',
       qwen: 'ALIBABA_API_KEY',
       zai: 'ZAI_API_KEY',
+      ollama: 'OLLAMA_BASE_URL',
     };
     return envKeys[provider] || `${provider.toUpperCase()}_API_KEY`;
   }
 
   getDefaultEndpoint(provider: string): string | null {
+    const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
     const endpoints: Record<string, string> = {
       openai: 'https://api.openai.com/v1/chat/completions',
       anthropic: 'https://api.anthropic.com/v1/messages',
@@ -800,6 +828,7 @@ export class ModelRouter {
       nvidia: 'https://integrate.api.nvidia.com/v1/chat/completions',
       qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
       zai: 'https://api.z.ai/api/paas/v4/chat/completions',
+      ollama: `${ollamaUrl}/v1`,
     };
     return endpoints[provider] || null;
   }

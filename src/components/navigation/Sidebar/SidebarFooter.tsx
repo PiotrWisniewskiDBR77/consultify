@@ -28,10 +28,10 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   showPartnerPortal = true,
 }) => {
   return (
-    <div className="p-3 border-t border-slate-200 dark:border-navy-700 shrink-0">
+    <div className="p-3 mt-2 shrink-0">
       <div className="space-y-1">
-        {/* Separator */}
-        <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
+        {/* Separator — ultra-subtle */}
+        <div className="my-1 border-t border-slate-200/30 dark:border-white/5" />
 
         {/* Admin/Settings menu items passed as children */}
         {children}
@@ -39,14 +39,14 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
         {/* Partner Portal Button - between Settings and Logout */}
         {showPartnerPortal && (
           <motion.button
+            type="button"
             onClick={() => onNavigate(AppView.PARTNER_LANDING)}
             whileTap={{ scale: 0.98 }}
             className={`
                             w-full flex items-center gap-3 py-2.5 rounded-xl
                             text-sm font-medium transition-all duration-150
-                            text-slate-500 dark:text-slate-400
-                            hover:bg-purple-50 dark:hover:bg-purple-500/10
-                            hover:text-purple-600 dark:hover:text-purple-400
+                            text-slate-600 dark:text-slate-400
+                            hover:bg-slate-200/60 dark:hover:bg-white/[0.06]
                             ${!showFull ? 'justify-center px-0' : 'px-3'}
                         `}
             title={t('sidebar.partnerPortal', 'Partner Portal')}
@@ -58,14 +58,14 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
 
         {/* Logout Button */}
         <motion.button
+          type="button"
           onClick={onLogout}
           whileTap={{ scale: 0.98 }}
           className={`
                         w-full flex items-center gap-3 py-2.5 rounded-xl
                         text-sm font-medium transition-all duration-150
-                        text-slate-500 dark:text-slate-400 
-                        hover:bg-danger-50 dark:hover:bg-danger-500/10 
-                        hover:text-danger-600 dark:hover:text-danger-400
+                        text-slate-600 dark:text-slate-400 
+                        hover:bg-danger-50/50 dark:hover:bg-danger-500/10
                         ${!showFull ? 'justify-center px-0' : 'px-3'}
                     `}
           title={t('sidebar.logOut')}

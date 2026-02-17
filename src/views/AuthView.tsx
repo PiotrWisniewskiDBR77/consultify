@@ -55,6 +55,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
   onBack,
 }) => {
   const { t } = useTranslation();
+  const brandLogoDarkSrc = new URL(
+    '../../Logo consultinity/Consultinity_logo_dark_medium.svg',
+    import.meta.url
+  ).href;
+  const brandLogoLightSrc = new URL(
+    '../../Logo consultinity/Consultinity_logo_light_transparent.svg',
+    import.meta.url
+  ).href;
   const [step, setStep] = useState<AuthStep>(initialStep);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -758,13 +766,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
             title="DBR77"
           >
             <img
-              src="/assets/logos/logo-dark.png"
-              className="h-10 w-auto object-contain hidden dark:block"
+              src={brandLogoDarkSrc}
+              className="h-16 md:h-20 w-auto object-contain hidden dark:block drop-shadow-[0_18px_40px_rgba(0,0,0,0.45)]"
               alt="Consultinity"
             />
             <img
-              src="/assets/logos/logo-light.png"
-              className="h-10 w-auto object-contain block dark:hidden"
+              src={brandLogoLightSrc}
+              className="h-16 md:h-20 w-auto object-contain block dark:hidden drop-shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
               alt="Consultinity"
             />
           </div>

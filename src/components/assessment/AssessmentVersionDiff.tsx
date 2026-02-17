@@ -360,7 +360,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                             <span className="font-medium text-slate-600 dark:text-slate-300">
                               {diff.v1Actual ?? '-'}
                             </span>
-                            <ArrowRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                            <ArrowRight className="w-4 h-4 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
                             <span
                               className={`font-medium ${
                                 diff.actualChange > 0
@@ -391,7 +391,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                             <span className="font-medium text-slate-600 dark:text-slate-300">
                               {diff.v1Target ?? '-'}
                             </span>
-                            <ArrowRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                            <ArrowRight className="w-4 h-4 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
                             <span
                               className={`font-medium ${
                                 diff.targetChange > 0
@@ -408,9 +408,9 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                       </div>
 
                       {expandedAxis === diff.axisId ? (
-                        <ChevronUp className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                        <ChevronUp className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
                       ) : (
-                        <ChevronDown className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                        <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
                       )}
                     </button>
 
@@ -422,12 +422,12 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                         </p>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1">
                               Wersja {olderVersion}
                             </p>
                             <div className="p-3 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 text-sm text-slate-600 dark:text-slate-300 min-h-[80px]">
                               {diff.v1Justification || (
-                                <span className="text-slate-400 dark:text-slate-500 italic">
+                                <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 italic">
                                   Brak uzasadnienia
                                 </span>
                               )}
@@ -437,7 +437,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                             <p className="text-xs text-purple-500 mb-1">Wersja {newerVersion}</p>
                             <div className="p-3 bg-white dark:bg-navy-900 rounded-lg border border-purple-200 dark:border-purple-500/30 text-sm text-slate-600 dark:text-slate-300 min-h-[80px]">
                               {diff.v2Justification || (
-                                <span className="text-slate-400 dark:text-slate-500 italic">
+                                <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 italic">
                                   Brak uzasadnienia
                                 </span>
                               )}

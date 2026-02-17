@@ -10,7 +10,7 @@
       "quickActions": "Szybkie Akcje",
       "startRapidLean": "Rozpocznij Ocenę RapidLean",
       "uploadExternal": "Prześlij Zewnętrzną Ocenę",
-      "uploadGeneric": "Prześlij Raport ",
+      "uploadGeneric": "Prześlij ogólny raport",
       "noData": "Brak danych oceny. Rozpocznij pierwszą ocenę, aby zobaczyć wyniki."
     },
     "rapidLean": {
@@ -29,7 +29,7 @@
         "dimension": "Wymiar {{current}}/6: {{name}}",
         "helpTooltip": "Pokaż pomoc dla tego pytania",
         "scale": {
-          "1": "Ad-Hoc",
+          "1": "Ad hoc",
           "2": "Początkowy",
           "3": "Zdefiniowany",
           "4": "Zarządzany",
@@ -111,7 +111,7 @@
     },
     "gapAnalysis": {
       "title": "Analiza Luk & Inicjatywy",
-      "subtitle": "Analiza Cross-Framework & Generowanie Inicjatyw AI",
+      "subtitle": "Analiza między frameworkami i generowanie inicjatyw przez AI",
       "coverage": "Pokrycie Oceny",
       "modules": {
         "drd": "DRD",
@@ -137,7 +137,7 @@
       "title": "Porównanie z Benchmarkiem",
       "yourScore": "Twój Wynik",
       "industryAvg": "Średnia Branżowa",
-      "vsBenchmark": "vs. benchmark",
+      "vsBenchmark": "względem benchmarku",
       "percentile": {
         "top10": "Top 10%",
         "top25": "Top 25%",

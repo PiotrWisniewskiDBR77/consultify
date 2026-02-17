@@ -213,7 +213,10 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
           {...listeners}
           className="shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
         >
-          <GripVertical size={16} className="text-slate-300 dark:text-slate-600" />
+          <GripVertical
+            size={16}
+            className="text-slate-700 dark:text-slate-300 dark:text-slate-600"
+          />
         </div>
 
         {/* Type Badge & Completion Toggle */}
@@ -260,7 +263,9 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
               {/* Title */}
               <h4
                 className={`text-sm font-semibold truncate ${
-                  item.isCompleted ? 'text-slate-400 line-through' : 'text-navy-900 dark:text-white'
+                  item.isCompleted
+                    ? 'text-slate-500 dark:text-slate-400 line-through'
+                    : 'text-navy-900 dark:text-white'
                 }`}
               >
                 {item.title}
@@ -280,7 +285,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
               />
             )}
             {item.assignee && (
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500 flex items-center gap-1">
                 <User size={10} />
                 {item.assignee.name}
               </span>
@@ -403,12 +408,12 @@ const FocusColumnComponent: React.FC<FocusColumnProps> = ({
         <div className="flex items-center gap-2">
           <span className={config.color}>{config.icon}</span>
           <h3 className={`font-semibold ${config.color}`}>{t(config.titleKey, config.title)}</h3>
-          <span className="text-xs text-slate-400 dark:text-slate-500">
+          <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
             {completedCount}/{items.length}
           </span>
         </div>
         {items.length > 0 && (
-          <div className="w-16 h-1.5 bg-white/50 dark:bg-white/10 rounded-full overflow-hidden">
+          <div className="w-16 h-1.5 bg-slate-50 dark:bg-white/50 dark:bg-white/10 rounded-full overflow-hidden">
             <div
               className="h-full bg-green-500 transition-all duration-500"
               style={{ width: `${items.length > 0 ? (completedCount / items.length) * 100 : 0}%` }}
@@ -437,7 +442,7 @@ const FocusColumnComponent: React.FC<FocusColumnProps> = ({
         {items.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <div className={`p-3 rounded-full ${config.bgColor} mb-2`}>{config.icon}</div>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
               {t('myWork.focus.emptyColumn', 'No items')}
             </p>
           </div>
@@ -519,7 +524,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                     <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-purple-600 flex items-center justify-center">
-                      <span className="text-xs font-medium text-white">
+                      <span className="text-xs font-medium text-slate-900 dark:text-white">
                         {user.name.charAt(0).toUpperCase()}
                       </span>
                     </div>

@@ -164,7 +164,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
             >
               <X size={20} />
             </button>
@@ -203,7 +203,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                                                 px-3 py-2 rounded-lg text-sm font-medium transition-all border-2
                                                 ${
                                                   quarter.isPast
-                                                    ? 'bg-slate-50 dark:bg-navy-950 text-slate-400 dark:text-slate-600 border-transparent cursor-not-allowed'
+                                                    ? 'bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-600 border-transparent cursor-not-allowed'
                                                     : selectedQuarter === quarter.value
                                                       ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-500'
                                                       : 'bg-white dark:bg-navy-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/30'
@@ -252,7 +252,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Dodatkowe uwagi dotyczące planowania..."
                   rows={3}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 resize-none text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 

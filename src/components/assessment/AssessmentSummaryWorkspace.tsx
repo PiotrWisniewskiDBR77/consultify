@@ -226,7 +226,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
           <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-navy-700 text-center min-w-[100px]">
             <div className="text-3xl font-bold text-purple-500">
               {overallProgress.axesWorked}
-              <span className="text-lg text-slate-400 dark:text-slate-500">/{axes.length}</span>
+              <span className="text-lg text-slate-500 dark:text-slate-400">/{axes.length}</span>
             </div>
             <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 font-bold">
               Przepracowane
@@ -242,7 +242,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
           <div className="bg-white dark:bg-navy-950/50 p-3 rounded-xl border border-slate-200 dark:border-navy-700 text-center min-w-[100px]">
             <div className="text-3xl font-bold text-green-500">
               {overallProgress.axesRated}
-              <span className="text-lg text-slate-400 dark:text-slate-500">/{axes.length}</span>
+              <span className="text-lg text-slate-500 dark:text-slate-400">/{axes.length}</span>
             </div>
             <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 font-bold">
               Ocenione
@@ -338,7 +338,7 @@ export const AssessmentSummaryWorkspace: React.FC<AssessmentSummaryWorkspaceProp
                   }`}
                 ></div>
 
-                <div className="mt-2 text-xs font-mono text-slate-400 dark:text-slate-500">
+                <div className="mt-2 text-xs font-mono text-slate-500 dark:text-slate-400">
                   {actual} <span className="text-slate-600 dark:text-slate-400">/</span>{' '}
                   <span className="text-purple-400 font-bold">{target}</span>
                 </div>

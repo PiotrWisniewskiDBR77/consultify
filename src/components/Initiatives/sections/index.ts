@@ -17,9 +17,12 @@ export type { InitiativeSectionProps, SectionTypeInfo } from './types';
 // Re-export types and constants
 export type {
   Decision,
+  GateReadinessCheck,
+  GateRoleAssignment,
   HistoryEvent,
   PendingApproval,
   RaidItem,
+  StatusHistoryEntry,
   TaskItem,
   UserInfo,
   Watcher,

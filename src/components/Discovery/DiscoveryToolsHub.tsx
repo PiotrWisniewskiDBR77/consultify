@@ -731,7 +731,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
           return (
             <div className="flex items-center gap-2">
               <span className={`text-${categoryMeta.color}-400`}>{categoryMeta.icon}</span>
-              <span className="font-mono text-xs font-bold text-slate-300">
+              <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
                 {meta?.shortName || row.toolType}
               </span>
             </div>
@@ -741,7 +741,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       {
         id: 'name',
         label: 'Name',
-        render: (row) => <span className="text-sm text-white font-medium">{row.name}</span>,
+        render: (row) => (
+          <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
+        ),
       },
       {
         id: 'category',
@@ -796,7 +798,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         label: 'Initiative',
         render: (row) => (
           <div>
-            <span className="text-sm text-white font-medium">{row.name}</span>
+            <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
             {row._fullData?.description && (
               <p className="text-xs text-slate-500 truncate max-w-xs">
                 {row._fullData.description}
@@ -1142,7 +1144,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     if (isLoadingInitiative) {
       return (
         <div className="flex items-center justify-center h-full">
-          <div className="flex flex-col items-center gap-3 text-slate-400">
+          <div className="flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
             <Loader2 className="w-8 h-8 animate-spin" />
             <span>Loading initiative details...</span>
           </div>
@@ -1155,10 +1157,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         <div className="flex items-center justify-center h-full text-slate-500">
           <div className="text-center">
             <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-amber-400/50" />
-            <p className="text-lg text-white">Initiative not found</p>
+            <p className="text-lg text-slate-900 dark:text-white">Initiative not found</p>
             <button
               onClick={handleShowList}
-              className="mt-4 px-4 py-2 bg-navy-700 hover:bg-navy-600 text-white rounded-lg text-sm transition-colors"
+              className="mt-4 px-4 py-2 bg-slate-200 dark:bg-navy-700 hover:bg-slate-300 dark:hover:bg-navy-600 text-slate-900 dark:text-white rounded-lg text-sm transition-colors"
             >
               Back to List
             </button>
@@ -1177,15 +1179,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       taskStats.total > 0 ? Math.round((taskStats.done / taskStats.total) * 100) : 0;
 
     return (
-      <div className="h-full flex flex-col overflow-hidden bg-navy-950">
+      <div className="h-full flex flex-col overflow-hidden bg-slate-50 dark:bg-navy-950">
         {/* Header */}
-        <div className="shrink-0 border-b border-navy-700 bg-navy-900 px-6 py-4">
+        <div className="shrink-0 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-6 py-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <button
                   onClick={handleShowList}
-                  className="p-1.5 text-slate-400 hover:text-white hover:bg-navy-700 rounded-lg transition-colors"
+                  className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
                 >
                   <ChevronRight size={18} className="rotate-180" />
                 </button>
@@ -1205,9 +1207,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                   </span>
                 )}
               </div>
-              <h1 className="text-xl font-bold text-white">{selectedInitiative.name}</h1>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+                {selectedInitiative.name}
+              </h1>
               {selectedInitiative.description && (
-                <p className="text-sm text-slate-400 mt-1 line-clamp-2">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
                   {selectedInitiative.description}
                 </p>
               )}
@@ -1215,7 +1219,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             <div className="flex items-center gap-2">
               <button
                 onClick={() => navigate(`/initiatives/${selectedInitiative.id}`)}
-                className="px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-navy-700 rounded-lg transition-colors"
+                className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
               >
                 Open Full View
               </button>
@@ -1237,21 +1241,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             <div className="lg:col-span-2 space-y-6">
               {/* Summary Section */}
               {selectedInitiative.summary && (
-                <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                  <h3 className="text-xs font-semibold text-slate-400 uppercase mb-3 flex items-center gap-2">
+                <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+                  <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3 flex items-center gap-2">
                     <FileText size={14} />
                     Summary
                   </h3>
-                  <p className="text-sm text-slate-300 leading-relaxed">
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                     {selectedInitiative.summary}
                   </p>
                 </div>
               )}
 
               {/* Tasks Section */}
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
+              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-2">
+                  <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2">
                     <ListTodo size={14} />
                     Tasks ({taskStats.total})
                   </h3>
@@ -1267,11 +1271,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                 {/* Task Progress Bar */}
                 {taskStats.total > 0 && (
                   <div className="mb-4">
-                    <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
                       <span>Completion</span>
                       <span>{completionPercent}%</span>
                     </div>
-                    <div className="h-2 bg-navy-700 rounded-full overflow-hidden">
+                    <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all"
                         style={{ width: `${completionPercent}%` }}
@@ -1294,7 +1298,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                     {initiativeTasks.map((task) => (
                       <div
                         key={task.id}
-                        className="flex items-center gap-3 p-3 bg-navy-800 rounded-lg border border-navy-700 hover:border-purple-500/30 transition-colors"
+                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-500/30 transition-colors"
                       >
                         <div
                           className={`w-2 h-2 rounded-full ${
@@ -1309,7 +1313,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-white font-medium truncate">
+                            <span className="text-sm text-slate-900 dark:text-white font-medium truncate">
                               {task.title}
                             </span>
                             <span
@@ -1348,12 +1352,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
 
               {/* Source Info */}
               {selectedInitiative.sourceType && (
-                <div className="bg-navy-900/50 rounded-xl border border-navy-700 p-4">
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                <div className="bg-slate-100/50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <Zap size={12} className="text-amber-400" />
                     <span>
                       Generated from:{' '}
-                      <span className="text-white capitalize">{selectedInitiative.sourceType}</span>
+                      <span className="text-slate-900 dark:text-white capitalize">
+                        {selectedInitiative.sourceType}
+                      </span>
                     </span>
                     {selectedInitiative.sourceId && (
                       <span className="text-slate-500">
@@ -1368,29 +1374,31 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             {/* Right Column - Metrics & Info */}
             <div className="space-y-4">
               {/* Key Metrics */}
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-4">Key Metrics</h3>
+              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4">
+                  Key Metrics
+                </h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-400 flex items-center gap-2">
+                    <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
                       <DollarSign size={14} />
                       CAPEX
                     </span>
-                    <span className="text-sm font-semibold text-white">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
                       {formatCurrency(selectedInitiative.costCapex)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-400 flex items-center gap-2">
+                    <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
                       <DollarSign size={14} />
                       OPEX
                     </span>
-                    <span className="text-sm font-semibold text-white">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
                       {formatCurrency(selectedInitiative.costOpex)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-400 flex items-center gap-2">
+                    <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
                       <TrendingUp size={14} />
                       Expected ROI
                     </span>
@@ -1404,21 +1412,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
               </div>
 
               {/* Timeline */}
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-4 flex items-center gap-2">
+              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4 flex items-center gap-2">
                   <Calendar size={14} />
                   Timeline
                 </h3>
                 <div className="space-y-3">
                   <div>
                     <span className="text-xs text-slate-500">Start Date</span>
-                    <div className="text-sm text-white">
+                    <div className="text-sm text-slate-900 dark:text-white">
                       {formatDate(selectedInitiative.plannedStartDate)}
                     </div>
                   </div>
                   <div>
                     <span className="text-xs text-slate-500">End Date</span>
-                    <div className="text-sm text-white">
+                    <div className="text-sm text-slate-900 dark:text-white">
                       {formatDate(selectedInitiative.plannedEndDate)}
                     </div>
                   </div>
@@ -1426,15 +1434,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
               </div>
 
               {/* Ownership */}
-              <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
-                <h3 className="text-xs font-semibold text-slate-400 uppercase mb-4 flex items-center gap-2">
+              <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-4 flex items-center gap-2">
                   <Users size={14} />
                   Ownership
                 </h3>
                 <div className="space-y-3">
                   <div>
                     <span className="text-xs text-slate-500">Business Owner</span>
-                    <div className="text-sm text-white">
+                    <div className="text-sm text-slate-900 dark:text-white">
                       {selectedInitiative.ownerBusiness ? (
                         `${selectedInitiative.ownerBusiness.firstName} ${selectedInitiative.ownerBusiness.lastName}`
                       ) : (
@@ -1444,7 +1452,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                   </div>
                   <div>
                     <span className="text-xs text-slate-500">Execution Owner</span>
-                    <div className="text-sm text-white">
+                    <div className="text-sm text-slate-900 dark:text-white">
                       {selectedInitiative.ownerExecution ? (
                         `${selectedInitiative.ownerExecution.firstName} ${selectedInitiative.ownerExecution.lastName}`
                       ) : (
@@ -1458,7 +1466,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
               {/* Next Steps */}
               <div className="bg-purple-500/10 rounded-xl border border-purple-500/20 p-5">
                 <h3 className="text-xs font-semibold text-purple-400 uppercase mb-3">Next Steps</h3>
-                <ul className="space-y-2 text-sm text-slate-300">
+                <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 size={14} className="mt-0.5 text-purple-400" />
                     <span>Review initiative details</span>
@@ -1486,7 +1494,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-full">
-          <div className="flex flex-col items-center gap-3 text-slate-400">
+          <div className="flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
             <Loader2 className="w-8 h-8 animate-spin" />
             <span>Loading tool sessions...</span>
           </div>
@@ -1617,7 +1625,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
           ${
             isStatusDropdownOpen
               ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-              : 'bg-navy-800 border-navy-600 text-slate-300 hover:bg-navy-700 hover:border-slate-500 hover:text-white'
+              : 'bg-slate-50 dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 hover:border-slate-500 hover:text-slate-900 dark:hover:text-white'
           }
         `}
       >
@@ -1631,7 +1639,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       </button>
 
       {isStatusDropdownOpen && (
-        <div className="absolute top-full right-0 mt-1 z-50 min-w-[180px] py-1 bg-navy-800 border border-navy-600 rounded-lg shadow-xl shadow-black/30">
+        <div className="absolute top-full right-0 mt-1 z-50 min-w-[180px] py-1 bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg shadow-xl shadow-black/30">
           {currentStatusOptions.map((option) => {
             const isSelected = statusFilter === option.id;
             return (
@@ -1646,8 +1654,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                   transition-colors duration-150
                   ${
                     isSelected
-                      ? 'bg-primary-500/15 text-white'
-                      : 'text-slate-300 hover:bg-navy-700 hover:text-white'
+                      ? 'bg-primary-500/15 text-slate-900 dark:text-white'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 hover:text-slate-900 dark:hover:text-white'
                   }
                 `}
               >
@@ -1702,8 +1710,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       {/* Tool Selection Modal */}
       {selectedCategory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-lg max-h-[80vh] overflow-auto">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-lg max-h-[80vh] overflow-auto">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               {CATEGORY_META[selectedCategory].icon}
               <span>{CATEGORY_META[selectedCategory].name} Tools</span>
               <span className="text-slate-500 text-sm font-normal">
@@ -1745,17 +1753,19 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                     }}
                     className={`
                       flex items-center gap-3 w-full p-3 rounded-lg
-                      bg-navy-800 border border-navy-600
-                      hover:border-${CATEGORY_META[selectedCategory].color}-500/50 hover:bg-navy-700
+                      bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600
+                      hover:border-${CATEGORY_META[selectedCategory].color}-500/50 hover:bg-slate-100 dark:hover:bg-navy-700
                       transition-all text-left
                     `}
                   >
-                    <span className="font-mono text-xs font-bold text-slate-400 w-8">
+                    <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400 w-8">
                       {meta.shortName}
                     </span>
                     <div className="flex-1">
-                      <div className="text-white font-medium">{meta.name}</div>
-                      <div className="text-xs text-slate-400">{meta.description}</div>
+                      <div className="text-slate-900 dark:text-white font-medium">{meta.name}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {meta.description}
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -1763,8 +1773,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
               {/* Docs-driven frameworks catalog (Strategy only) */}
               {selectedCategory === 'strategic' && strategyCatalogSlugs.length > 0 && (
                 <>
-                  <div className="my-4 border-t border-navy-700" />
-                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide px-1">
+                  <div className="my-4 border-t border-slate-200 dark:border-navy-700" />
+                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide px-1">
                     Framework catalog (docs-driven)
                   </div>
                   <div className="text-xs text-slate-500 px-1 -mt-1">
@@ -1794,14 +1804,16 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                           toast.error('Failed to create tool session');
                         }
                       }}
-                      className="flex items-center gap-3 w-full p-3 rounded-lg bg-navy-800 border border-navy-600 hover:bg-navy-700 transition-all text-left"
+                      className="flex items-center gap-3 w-full p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 hover:bg-slate-100 dark:hover:bg-navy-700 transition-all text-left"
                     >
-                      <span className="font-mono text-xs font-bold text-slate-400 w-12 truncate">
+                      <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400 w-12 truncate">
                         {slug}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <div className="text-white font-medium truncate">{titleFromSlug(slug)}</div>
-                        <div className="text-xs text-slate-400 truncate">
+                        <div className="text-slate-900 dark:text-white font-medium truncate">
+                          {titleFromSlug(slug)}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                           Catalog tool · `wdrozenia/.../strategy/{slug}.md`
                         </div>
                       </div>
@@ -1812,7 +1824,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
             </div>
             <button
               onClick={() => setSelectedCategory(null)}
-              className="mt-4 w-full py-2 text-sm text-slate-400 hover:text-white transition-colors"
+              className="mt-4 w-full py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               Cancel
             </button>

@@ -49,11 +49,6 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
 
   // Verify TOTP and enable MFA
   const verifyAndEnable = async () => {
-    if (verificationCode.length !== 6) {
-      setError('Please enter a 6-digit code');
-      return;
-    }
-
     setLoading(true);
     setError(null);
     try {

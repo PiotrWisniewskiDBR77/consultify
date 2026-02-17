@@ -300,7 +300,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
             AI is analyzing gaps, applying template patterns, and creating a comprehensive
             initiative charter...
           </p>
-          <div className="mt-6 flex gap-4 text-xs text-slate-400 dark:text-slate-500">
+          <div className="mt-6 flex gap-4 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
             <span className="flex items-center gap-1">
               <Check size={12} className="text-green-500" /> Problem Analysis
             </span>

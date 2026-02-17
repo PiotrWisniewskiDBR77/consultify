@@ -95,7 +95,7 @@ const ScoreRing: React.FC<{ score: number; size?: number }> = ({ score, size = 2
         fill="none"
         stroke="currentColor"
         strokeWidth={strokeWidth}
-        className="text-slate-200 dark:text-white/10"
+        className="text-slate-700 dark:text-slate-200 dark:text-white/10"
       />
       {/* Score ring with glow */}
       <motion.circle
@@ -180,7 +180,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
       ? 'text-emerald-500'
       : trend === 'down'
         ? 'text-rose-500'
-        : 'text-slate-400 dark:text-slate-500';
+        : 'text-slate-500 dark:text-slate-400 dark:text-slate-500';
 
   const getScoreLabel = (value: number) => {
     if (value >= 80)
@@ -193,7 +193,10 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
 
   const scoreInfo = hasData
     ? getScoreLabel(score)
-    : { label: t('executive.health.noData', 'No data'), color: 'text-slate-400' };
+    : {
+        label: t('executive.health.noData', 'No data'),
+        color: 'text-slate-500 dark:text-slate-400',
+      };
 
   // A1.1: Filter out breakdown items that have no real data (value === 0 means not populated)
   const hasBreakdownData =
@@ -263,7 +266,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-              <Activity size={20} className="text-white" />
+              <Activity size={20} className="text-slate-900 dark:text-white" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-navy-900 dark:text-white">
@@ -291,7 +294,9 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                 {scoreDiff > 0 ? '+' : ''}
                 {scoreDiff}%
               </span>
-              <span className="text-xs text-slate-400 dark:text-slate-500">vs last week</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                vs last week
+              </span>
             </div>
           )}
         </div>
@@ -315,8 +320,10 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                 </>
               ) : (
                 <>
-                  <span className="text-3xl font-bold text-slate-300 dark:text-slate-600">—</span>
-                  <span className="text-sm font-semibold mt-1 text-slate-400 dark:text-slate-500">
+                  <span className="text-3xl font-bold text-slate-700 dark:text-slate-300 dark:text-slate-600">
+                    —
+                  </span>
+                  <span className="text-sm font-semibold mt-1 text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {t('executive.health.noData', 'No data')}
                   </span>
                 </>
@@ -331,7 +338,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                 <BreakdownBar
                   label={t('executive.health.execution', 'Execution')}
                   value={breakdown!.execution}
-                  icon={<Target size={16} className="text-white" />}
+                  icon={<Target size={16} className="text-slate-900 dark:text-white" />}
                   color="bg-emerald-500"
                 />
               )}
@@ -339,7 +346,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                 <BreakdownBar
                   label={t('executive.health.decisions', 'Decision Velocity')}
                   value={breakdown!.decisions}
-                  icon={<Zap size={16} className="text-white" />}
+                  icon={<Zap size={16} className="text-slate-900 dark:text-white" />}
                   color="bg-cyan-500"
                 />
               )}
@@ -347,7 +354,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                 <BreakdownBar
                   label={t('executive.health.capacity', 'Team Capacity')}
                   value={breakdown!.capacity}
-                  icon={<CheckCircle2 size={16} className="text-white" />}
+                  icon={<CheckCircle2 size={16} className="text-slate-900 dark:text-white" />}
                   color="bg-violet-500"
                 />
               )}
@@ -355,17 +362,17 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                 <BreakdownBar
                   label={t('executive.health.risk', 'Risk Mitigation')}
                   value={breakdown!.risk}
-                  icon={<AlertTriangle size={16} className="text-white" />}
+                  icon={<AlertTriangle size={16} className="text-slate-900 dark:text-white" />}
                   color="bg-amber-500"
                 />
               )}
             </div>
           ) : (
             <div className="flex-1 w-full flex flex-col items-center justify-center py-4 text-center">
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                 {t('executive.health.noBreakdown', 'Breakdown data not yet available')}
               </p>
-              <p className="text-xs text-slate-300 dark:text-slate-600 mt-1">
+              <p className="text-xs text-slate-700 dark:text-slate-300 dark:text-slate-600 mt-1">
                 {/* A1.1: TODO – populate breakdown.decisions from decision velocity,
                     breakdown.capacity from team workload, breakdown.risk from risk assessment */}
                 {t(

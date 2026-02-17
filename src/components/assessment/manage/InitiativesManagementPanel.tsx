@@ -568,7 +568,7 @@ const InitiativeRow: FC<{
               <TrendingUp size={12} className="text-emerald-500" />
               <span className="text-slate-600 dark:text-slate-400">{initiative.impact}</span>
             </div>
-            <span className="text-slate-300 dark:text-slate-600">/</span>
+            <span className="text-slate-700 dark:text-slate-600">/</span>
             <div className="flex items-center gap-1 text-xs">
               <Target size={12} className="text-blue-500" />
               <span className="text-slate-600 dark:text-slate-400">{initiative.effort}</span>
@@ -617,7 +617,7 @@ const InitiativeRow: FC<{
           <div className="relative">
             <button
               onClick={() => setShowActions(!showActions)}
-              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 rounded transition-colors"
+              className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 rounded transition-colors"
             >
               <MoreHorizontal size={14} />
             </button>
@@ -1009,7 +1009,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                       isApproved
                         ? 'bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700'
-                        : 'bg-slate-200 dark:bg-navy-700 text-slate-400 cursor-not-allowed'
+                        : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                     }`}
                     title={
                       !isApproved
@@ -1027,7 +1027,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                         isApproved
                           ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                          : 'bg-slate-200 dark:bg-navy-700 text-slate-400 cursor-not-allowed'
+                          : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                       }`}
                       title={
                         !isApproved
@@ -1083,7 +1083,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                 />
                 <span className="text-slate-700 dark:text-slate-200">Status</span>
                 <span className="text-slate-500 dark:text-slate-400">{statusFilterLabel}</span>
-                <ChevronDown size={14} className="text-slate-400" />
+                <ChevronDown size={14} className="text-slate-500 dark:text-slate-400" />
               </button>
 
               <AnimatePresence>
@@ -1093,7 +1093,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 6, scale: 0.98 }}
                     transition={{ duration: 0.12 }}
-                    className="absolute left-0 mt-2 w-[320px] rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden z-20"
+                    className="absolute left-0 mt-2 w-[320px] rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 shadow-2xl overflow-hidden z-20"
                   >
                     <div className="px-3 py-2 border-b border-slate-100 dark:border-navy-800 flex items-center justify-between">
                       <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -1110,7 +1110,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                         <button
                           type="button"
                           onClick={() => setStatusFilter([])}
-                          className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                          className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                           title="Clear selection"
                         >
                           Clear
@@ -1143,7 +1143,12 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                                 readOnly
                                 className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
                               />
-                              <Icon size={14} className={checked ? cfg.color : 'text-slate-400'} />
+                              <Icon
+                                size={14}
+                                className={
+                                  checked ? cfg.color : 'text-slate-500 dark:text-slate-400'
+                                }
+                              />
                               <span
                                 className={cn(
                                   'text-sm truncate',
@@ -1181,7 +1186,10 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
         {/* Search */}
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800">
           <div className="relative max-w-md">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+            />
             <input
               type="text"
               value={searchQuery}
@@ -1201,7 +1209,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
           ) : filteredInitiatives.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 mb-3">
-                <Lightbulb size={24} className="text-slate-400" />
+                <Lightbulb size={24} className="text-slate-500 dark:text-slate-400" />
               </div>
               <p className="text-sm font-medium text-slate-900 dark:text-white">
                 {searchQuery ? 'No initiatives match your search' : 'No initiatives yet'}
@@ -1354,7 +1362,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   <input
                     value={manualTitle}
                     onChange={(e) => setManualTitle(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                     placeholder={t('initiatives.form.titlePlaceholder')}
                   />
                 </div>
@@ -1378,7 +1386,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                     <select
                       value={manualPriority}
                       onChange={(e) => setManualPriority(e.target.value as any)}
-                      className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                      className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                     >
                       <option value="low">{t('initiatives.priority.low')}</option>
                       <option value="medium">{t('initiatives.priority.medium')}</option>
@@ -1393,7 +1401,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                     <select
                       value={manualRisk}
                       onChange={(e) => setManualRisk(e.target.value as any)}
-                      className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                      className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                     >
                       <option value="low">{t('initiatives.risk.low')}</option>
                       <option value="medium">{t('initiatives.risk.medium')}</option>
@@ -1408,7 +1416,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   <input
                     value={manualCategory}
                     onChange={(e) => setManualCategory(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                     placeholder={t('initiatives.form.categoryPlaceholder')}
                   />
                 </div>
@@ -1519,7 +1527,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   <input
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
@@ -1541,7 +1549,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                     <select
                       value={editPriority}
                       onChange={(e) => setEditPriority(e.target.value as any)}
-                      className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                      className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -1556,7 +1564,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                     <select
                       value={editRisk}
                       onChange={(e) => setEditRisk(e.target.value as any)}
-                      className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                      className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -1571,7 +1579,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   <input
                     value={editCategory}
                     onChange={(e) => setEditCategory(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                   />
                 </div>
               </div>

@@ -27,7 +27,7 @@ router.get(
   `,
       [orgId]
     );
-    res.json(audits || []);
+    res.json(audits);
   })
 );
 

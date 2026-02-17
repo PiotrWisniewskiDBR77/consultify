@@ -68,8 +68,9 @@
 
 ## 🎨 UI/UX Standards
 
-- [UI/UX Module Standard](UI_UX_MODULE_STANDARD.md) - Global layout patterns (breadcrumbs, top bar, table conventions)
-- [App Table Standard (Golden Standard)](ui-standards/app-table-standard.md) - Decisions/Report Templates table pattern
+- [UI/UX Standards](ui-standards/README.md) - Kanoniczne źródło wszystkich standardów UI/UX
+- [Module Hub Standard](ui-standards/03-modules/module-hub-standard.md) - Global layout patterns
+- [App Table Standard](ui-standards/03-modules/app-table-standard.md) - Decisions/Report Templates table pattern
 
 ---
 

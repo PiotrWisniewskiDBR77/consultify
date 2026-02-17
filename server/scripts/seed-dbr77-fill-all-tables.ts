@@ -693,6 +693,824 @@ async function seedReportBuilderBlockLibrary(
   }
 }
 
+async function upsertDynamicRow(
+  db: any,
+  table: string,
+  values: Record<string, unknown>,
+  conflictCol: string = 'id'
+) {
+  const cols = await getColumns(db, table).catch(() => []);
+  const existing = new Set(cols.map((c) => c.name));
+  if (existing.size === 0) return;
+
+  const filteredEntries = Object.entries(values).filter(
+    ([k, v]) => existing.has(k) && v !== undefined
+  );
+  if (filteredEntries.length === 0) return;
+
+  const insertCols = filteredEntries.map(([k]) => k);
+  const params = filteredEntries.map(([, v]) => v);
+
+  const updateCols = insertCols.filter((c) => c !== conflictCol);
+  const updates =
+    updateCols.length === 0
+      ? ''
+      : ` DO UPDATE SET ${updateCols
+          .map((c) => `${safeSqlIdent(c)} = excluded.${safeSqlIdent(c)}`)
+          .join(', ')}`;
+
+  const sql = `INSERT INTO ${safeSqlIdent(table)} (${insertCols
+    .map(safeSqlIdent)
+    .join(', ')}) VALUES (${insertCols.map(() => '?').join(', ')})
+    ON CONFLICT(${safeSqlIdent(conflictCol)})${updates}`;
+
+  await db.run(sql, params);
+}
+
+async function seedInitiativeModuleDemoData(
+  db: any,
+  anchors: { orgId: string; userId: string; projectId: string }
+) {
+  // Seed one "realistic" initiative with real tasks + dependencies + KPIs,
+  // so the initiative view can be tested against live DB-backed behavior.
+  const now = new Date().toISOString();
+
+  // Ensure initiatives table exists in this DB (older DBs may not have it)
+  const hasInitiatives = await db
+    .get(`SELECT name FROM sqlite_master WHERE type='table' AND name='initiatives' LIMIT 1`, [])
+    .catch(() => null);
+  if (!hasInitiatives) return;
+
+  const initiativeId = 'init-adma-09';
+  await upsertDynamicRow(db, 'initiatives', {
+    id: initiativeId,
+    organization_id: anchors.orgId,
+    project_id: anchors.projectId,
+    title: 'Automated Changeover Optimization',
+    name: 'Automated Changeover Optimization',
+    summary:
+      'Automate and standardize key handover activities to reduce cycle time and improve quality.',
+    description:
+      'This initiative introduces a structured handover flow with clear ownership, checkpoints and escalation.',
+    status: 'draft',
+    priority: 'low',
+    risk_level: 'medium',
+    progress: 25,
+    planned_start_date: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+    planned_end_date: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+    owner_business_id: anchors.userId,
+    owner_execution_id: anchors.userId,
+    sponsor_id: anchors.userId,
+    created_by: anchors.userId,
+    updated_by: anchors.userId,
+    created_at: now,
+    updated_at: now,
+  });
+
+  // Tasks
+  const tasks = [
+    {
+      id: 'task-adma-0901',
+      title: 'Kick-off workshop with key stakeholders',
+      status: 'done',
+      priority: 'high',
+      due_date: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
+      description: 'Align goals, scope and success metrics.',
+      estimated_hours: 6,
+    },
+    {
+      id: 'task-adma-0902',
+      title: 'Define target process and acceptance criteria',
+      status: 'in_progress',
+      priority: 'high',
+      due_date: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
+      description: 'Document future-state flow and measurable outcomes.',
+      estimated_hours: 12,
+    },
+    {
+      id: 'task-adma-0903',
+      title: 'Configure pilot environment and integrations',
+      status: 'todo',
+      priority: 'medium',
+      due_date: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString(),
+      description: 'Prepare pilot setup and data exchange between systems.',
+      estimated_hours: 16,
+    },
+  ];
+
+  for (const t of tasks) {
+    await upsertDynamicRow(db, 'tasks', {
+      id: t.id,
+      organization_id: anchors.orgId,
+      project_id: anchors.projectId,
+      initiative_id: initiativeId,
+      title: t.title,
+      description: t.description,
+      status: t.status,
+      priority: t.priority,
+      due_date: t.due_date,
+      estimated_hours: t.estimated_hours,
+      created_by: anchors.userId,
+      reporter_id: anchors.userId,
+      created_at: now,
+      updated_at: now,
+    });
+  }
+
+  // Task dependencies (Gantt-style) — use from_task_id / to_task_id (migration 533)
+  const hasTaskDeps = await db
+    .get(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name='task_dependencies' LIMIT 1`,
+      []
+    )
+    .catch(() => null);
+  if (hasTaskDeps) {
+    await upsertDynamicRow(db, 'task_dependencies', {
+      id: 'dep-adma-0901',
+      // Support both schema variants (predecessor/successor OR from/to)
+      predecessor_id: tasks[0].id,
+      successor_id: tasks[1].id,
+      from_task_id: tasks[0].id,
+      to_task_id: tasks[1].id,
+      dependency_type: 'finish_to_start',
+      lag_days: 0,
+      notes: 'Process definition starts after kick-off alignment.',
+      created_by: anchors.userId,
+      created_at: now,
+    });
+    await upsertDynamicRow(db, 'task_dependencies', {
+      id: 'dep-adma-0902',
+      predecessor_id: tasks[1].id,
+      successor_id: tasks[2].id,
+      from_task_id: tasks[1].id,
+      to_task_id: tasks[2].id,
+      dependency_type: 'start_to_start',
+      lag_days: 2,
+      notes: 'Pilot setup can start 2 days after process definition starts.',
+      created_by: anchors.userId,
+      created_at: now,
+    });
+  }
+
+  // KPIs (Benefits)
+  const hasKpis = await db
+    .get(`SELECT name FROM sqlite_master WHERE type='table' AND name='initiative_kpis' LIMIT 1`, [])
+    .catch(() => null);
+  if (hasKpis) {
+    const kpis = [
+      {
+        id: 'kpi-adma-0901',
+        name: 'Changeover time reduction',
+        unit: 'min',
+        baseline_value: 92,
+        current_value: 92,
+        target_value: 75,
+        status: 'on_track',
+      },
+      {
+        id: 'kpi-adma-0902',
+        name: 'Startup scrap reduction',
+        unit: '%',
+        baseline_value: 5.2,
+        current_value: 5.2,
+        target_value: 4.0,
+        status: 'at_risk',
+      },
+      {
+        id: 'kpi-adma-0903',
+        name: 'Post-changeover OEE',
+        unit: '%',
+        baseline_value: 76,
+        current_value: 76,
+        target_value: 80,
+        status: 'on_track',
+      },
+    ];
+    for (const k of kpis) {
+      await upsertDynamicRow(db, 'initiative_kpis', {
+        id: k.id,
+        initiative_id: initiativeId,
+        organization_id: anchors.orgId,
+        name: k.name,
+        description: null,
+        category: 'benefits',
+        unit: k.unit,
+        baseline_value: k.baseline_value,
+        current_value: k.current_value,
+        target_value: k.target_value,
+        progress_percentage:
+          k.target_value && Number(k.target_value) !== 0
+            ? Number(((Number(k.current_value) / Number(k.target_value)) * 100).toFixed(1))
+            : 0,
+        status: k.status,
+        measurement_frequency: 'monthly',
+        trend_data: JSON.stringify([]),
+        created_at: now,
+        updated_at: now,
+      });
+    }
+
+    // Measurements (optional)
+    const hasMeasurements = await db
+      .get(
+        `SELECT name FROM sqlite_master WHERE type='table' AND name='kpi_measurements' LIMIT 1`,
+        []
+      )
+      .catch(() => null);
+    if (hasMeasurements) {
+      for (const k of kpis) {
+        await upsertDynamicRow(db, 'kpi_measurements', {
+          id: `${k.id}-m1`,
+          kpi_id: k.id,
+          value: k.current_value,
+          measured_at: now,
+          notes: 'Seeded baseline measurement',
+          created_by: anchors.userId,
+          created_at: now,
+        });
+      }
+    }
+  }
+
+  // RACI stakeholders + watchers (if tables exist)
+  const hasStakeholders = await db
+    .get(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name='initiative_stakeholders' LIMIT 1`,
+      []
+    )
+    .catch(() => null);
+  const hasWatchers = await db
+    .get(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name='initiative_watchers' LIMIT 1`,
+      []
+    )
+    .catch(() => null);
+  if (hasStakeholders || hasWatchers) {
+    const users = (await db.query(
+      `SELECT id FROM users WHERE organization_id = ? ORDER BY created_at DESC LIMIT 6`,
+      [anchors.orgId]
+    )) as any;
+    const userIds = (users?.rows || []).map((r: any) => String(r.id)).filter(Boolean);
+    const pick = (idx: number) => userIds[idx] || anchors.userId;
+
+    if (hasStakeholders) {
+      const stakeholderRows = [
+        {
+          id: 'stk-adma-0901',
+          user_id: pick(0),
+          role: 'SPONSOR',
+          raci_type: 'A',
+          influence_level: 5,
+          interest_level: 5,
+        },
+        {
+          id: 'stk-adma-0902',
+          user_id: pick(1),
+          role: 'OWNER',
+          raci_type: 'R',
+          influence_level: 4,
+          interest_level: 4,
+        },
+        {
+          id: 'stk-adma-0903',
+          user_id: pick(2),
+          role: 'CONTRIBUTOR',
+          raci_type: 'C',
+          influence_level: 3,
+          interest_level: 3,
+        },
+        {
+          id: 'stk-adma-0904',
+          user_id: pick(3),
+          role: 'INFORMED',
+          raci_type: 'I',
+          influence_level: 2,
+          interest_level: 4,
+        },
+      ];
+      for (const s of stakeholderRows) {
+        await upsertDynamicRow(db, 'initiative_stakeholders', {
+          id: s.id,
+          initiative_id: initiativeId,
+          organization_id: anchors.orgId,
+          user_id: s.user_id,
+          role: s.role,
+          raci_type: s.raci_type,
+          influence_level: s.influence_level,
+          interest_level: s.interest_level,
+          created_by: anchors.userId,
+          created_at: now,
+        });
+      }
+    }
+
+    if (hasWatchers) {
+      const watcherIds = [pick(0), pick(1)];
+      for (let i = 0; i < watcherIds.length; i += 1) {
+        await upsertDynamicRow(db, 'initiative_watchers', {
+          id: `watch-adma-09${i + 1}`,
+          initiative_id: initiativeId,
+          organization_id: anchors.orgId,
+          user_id: watcherIds[i],
+          created_at: now,
+        });
+      }
+    }
+  }
+
+  // RAID items (if table exists)
+  const hasRaid = await db
+    .get(`SELECT name FROM sqlite_master WHERE type='table' AND name='raid_items' LIMIT 1`, [])
+    .catch(() => null);
+  if (hasRaid) {
+    await upsertDynamicRow(db, 'raid_items', {
+      id: 'raid-adma-0901',
+      initiative_id: initiativeId,
+      organization_id: anchors.orgId,
+      type: 'RISK',
+      title: 'Data quality may delay pilot readiness',
+      description: 'Source systems still contain inconsistent master data.',
+      severity: 'HIGH',
+      status: 'OPEN',
+      created_at: now,
+      updated_at: now,
+    });
+  }
+
+  // Initiative history (activity log)
+  const hasHistory = await db
+    .get(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name='initiative_history' LIMIT 1`,
+      []
+    )
+    .catch(() => null);
+  if (hasHistory) {
+    await upsertDynamicRow(db, 'initiative_history', {
+      id: 'hist-adma-0901',
+      initiative_id: initiativeId,
+      organization_id: anchors.orgId,
+      action: 'seeded',
+      changed_by: anchors.userId,
+      old_value: null,
+      new_value: JSON.stringify({ seeded: true }),
+      notes: 'Initial seed',
+      created_at: now,
+    });
+  }
+
+  log.step(`Seeded initiative module demo data: ${initiativeId}`);
+}
+
+async function seedDiscoveryToolSessions(
+  db: any,
+  anchors: { orgId: string; userId: string; projectId: string }
+) {
+  // DiscoveryToolsHub (frontend) lists tool sessions filtered by currentProjectId.
+  // If tool_sessions exist only for a different project_id, the Tools → Discovery list will look empty.
+  //
+  // Seed a small, curated set of tool_sessions for the latest projects in the org,
+  // using real supported toolType slugs so the UI can open documents.
+  try {
+    const hasToolSessions = await db
+      .get(`SELECT name FROM sqlite_master WHERE type='table' AND name='tool_sessions' LIMIT 1`, [])
+      .catch(() => null);
+    if (!hasToolSessions) return;
+
+    const projRes = await db
+      .query(
+        `SELECT id FROM projects WHERE organization_id = ? ORDER BY created_at DESC LIMIT 10`,
+        [anchors.orgId]
+      )
+      .catch(() => ({ rows: [] as any[] }));
+    const projectIds = (projRes?.rows || [])
+      .map((r: any) => String(r?.id || '').trim())
+      .filter(Boolean);
+
+    const uniqueProjectIds = Array.from(
+      new Set(projectIds.length > 0 ? projectIds : [anchors.projectId])
+    );
+    const now = nowIso();
+
+    const sessionsTemplate = [
+      {
+        suffix: 'swot-draft',
+        tool_type: 'dynamic-swot',
+        name: 'SWOT — Current State Snapshot',
+        status: 'DRAFT',
+        completion_percent: 35,
+        confidence_avg: 2.8,
+        answers_json: JSON.stringify({
+          seeded: true,
+          sections: { strengths: [], weaknesses: [], opportunities: [], threats: [] },
+        }),
+      },
+      {
+        suffix: 'porter-review',
+        tool_type: 'market-forces',
+        name: 'Porter — Market Forces (In Review)',
+        status: 'REVIEW',
+        completion_percent: 100,
+        confidence_avg: 3.4,
+        answers_json: JSON.stringify({ seeded: true, draft: 'ready_for_review' }),
+      },
+      {
+        suffix: 'bcg-approved',
+        tool_type: 'portfolio-priority',
+        name: 'Portfolio Priority — Approved',
+        status: 'APPROVED',
+        completion_percent: 100,
+        confidence_avg: 4.1,
+        answers_json: JSON.stringify({ seeded: true, snapshot: 'approved' }),
+      },
+    ] as const;
+
+    for (const pid of uniqueProjectIds) {
+      for (const tpl of sessionsTemplate) {
+        const id = `tool-${pid}-${tpl.suffix}`;
+        await upsertDynamicRow(db, 'tool_sessions', {
+          id,
+          organization_id: anchors.orgId,
+          project_id: pid,
+          tool_type: tpl.tool_type,
+          name: tpl.name,
+          status: tpl.status,
+          completion_percent: tpl.completion_percent,
+          confidence_avg: tpl.confidence_avg,
+          answers_json: tpl.answers_json,
+          context_snapshot: JSON.stringify({ seeded: true, toolType: tpl.tool_type }),
+          review_requested_at: tpl.status === 'REVIEW' || tpl.status === 'APPROVED' ? now : null,
+          approved_at: tpl.status === 'APPROVED' ? now : null,
+          created_by: anchors.userId,
+          updated_by: anchors.userId,
+          created_at: now,
+          updated_at: now,
+        });
+      }
+    }
+
+    log.step(
+      `Seeded Discovery tool sessions: ${uniqueProjectIds.length} project(s) × ${sessionsTemplate.length} sessions`
+    );
+  } catch (e: any) {
+    log.warn(`Discovery tool sessions seeding skipped: ${e?.message || String(e)}`);
+  }
+}
+
+async function seedInterviewModuleDemoData(
+  db: any,
+  anchors: { orgId: string; userId: string; projectId: string }
+) {
+  const tableExists = async (name: string): Promise<boolean> => {
+    const row = await db
+      .get(`SELECT name FROM sqlite_master WHERE type='table' AND name=? LIMIT 1`, [name])
+      .catch(() => null);
+    return !!row?.name;
+  };
+
+  const hasTemplates = await tableExists('interview_library_templates');
+  const hasTemplateQuestions = await tableExists('interview_library_template_questions');
+  const hasSessions = await tableExists('interview_sessions');
+  const hasQuestions = await tableExists('interview_questions');
+  const hasAssignments = await tableExists('interview_assignments');
+  const hasInsights = await tableExists('interview_insights');
+
+  if (!hasTemplates) return;
+
+  const now = Date.now();
+  const daysAgo = (d: number) => new Date(now - d * 24 * 60 * 60 * 1000).toISOString();
+  const daysFromNow = (d: number) => new Date(now + d * 24 * 60 * 60 * 1000).toISOString();
+
+  // Pick a few users (if available) for realism.
+  const usersRes = await db
+    .query(`SELECT id FROM users WHERE organization_id = ? ORDER BY created_at DESC LIMIT 8`, [
+      anchors.orgId,
+    ])
+    .catch(() => ({ rows: [] as any[] }));
+  const orgUserIds = (usersRes?.rows || [])
+    .map((r: any) => String(r?.id || '').trim())
+    .filter(Boolean);
+  const pickUser = (i: number) => orgUserIds[i % Math.max(1, orgUserIds.length)] || anchors.userId;
+
+  const categories = ['strategy', 'operations', 'digital', 'people', 'finance'] as const;
+  const templateIds = Array.from(
+    { length: 10 },
+    (_, i) => `itpl-dbr77-${String(i + 1).padStart(2, '0')}`
+  );
+
+  // ------------------------------------------------------------------
+  // Templates + template questions (Library tab)
+  // ------------------------------------------------------------------
+  for (let i = 0; i < templateIds.length; i += 1) {
+    const templateId = templateIds[i];
+    const cat = categories[i % categories.length];
+
+    await upsertDynamicRow(db, 'interview_library_templates', {
+      id: templateId,
+      organization_id: anchors.orgId,
+      name: `DBR77 — ${cat.toUpperCase()} Discovery v${(i % 3) + 1}`,
+      description:
+        'Seeded interview template for demo: short, structured questions across the 5-category model.',
+      category: cat,
+      status: 'approved',
+      visibility: 'org',
+      is_default: 0,
+      version: 1,
+      created_by: anchors.userId,
+      created_at: daysAgo(30 + i),
+      updated_at: daysAgo(10 + i),
+    });
+
+    if (!hasTemplateQuestions) continue;
+
+    // 10 questions per template: 2 per category, consulting-grade phrasing.
+    const qDefs: Array<{ category: (typeof categories)[number]; text: string; sort: number }> = [
+      {
+        category: 'strategy',
+        text: 'What are the top 3 business priorities for the next 12 months?',
+        sort: 10,
+      },
+      { category: 'strategy', text: 'Which KPIs define success for your teams?', sort: 20 },
+      {
+        category: 'operations',
+        text: 'Where do you see the biggest bottlenecks in day-to-day execution?',
+        sort: 30,
+      },
+      { category: 'operations', text: 'Which processes fail most often and why?', sort: 40 },
+      { category: 'digital', text: 'Which tools are critical, and where do they break?', sort: 50 },
+      {
+        category: 'digital',
+        text: 'What data is missing to make faster decisions?',
+        sort: 60,
+      },
+      {
+        category: 'people',
+        text: 'What blocks adoption of change (skills, mindset, incentives)?',
+        sort: 70,
+      },
+      {
+        category: 'people',
+        text: 'Who are the key stakeholders and how do they influence outcomes?',
+        sort: 80,
+      },
+      {
+        category: 'finance',
+        text: 'Where do you see avoidable costs or budget leakage?',
+        sort: 90,
+      },
+      {
+        category: 'finance',
+        text: 'What are the biggest financial risks this quarter?',
+        sort: 100,
+      },
+    ];
+
+    for (let j = 0; j < qDefs.length; j += 1) {
+      const q = qDefs[j];
+      const qid = `itplq-dbr77-${String(i + 1).padStart(2, '0')}-${String(j + 1).padStart(2, '0')}`;
+      await upsertDynamicRow(db, 'interview_library_template_questions', {
+        id: qid,
+        template_id: templateId,
+        category: q.category,
+        question_text: q.text,
+        sort_order: q.sort,
+        answer_type: 'open',
+        is_required: 1,
+        help_hint: 'Seeded demo question',
+        answer_options: JSON.stringify([]),
+        created_at: daysAgo(29 + i),
+        updated_at: daysAgo(9 + i),
+      });
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Sessions + questions (Sessions tab)
+  // ------------------------------------------------------------------
+  const sessionIds = Array.from(
+    { length: 10 },
+    (_, i) => `isess-dbr77-${String(i + 1).padStart(2, '0')}`
+  );
+  const completedSessionIds: string[] = [];
+
+  if (hasSessions && hasQuestions) {
+    for (let i = 0; i < sessionIds.length; i += 1) {
+      const sid = sessionIds[i];
+      const tplId = templateIds[i % templateIds.length];
+      const statusRaw = i % 5 === 0 ? 'paused' : i % 3 === 0 ? 'completed' : 'active';
+      const startedAt = daysAgo(14 - (i % 7));
+      const lastActivityAt = daysAgo(2 + (i % 6));
+      const completedAt = statusRaw === 'completed' ? daysAgo(1 + (i % 5)) : null;
+      const totalQuestions = 12;
+      const answeredTarget =
+        statusRaw === 'completed'
+          ? Math.min(10, totalQuestions)
+          : Math.min(4 + (i % 4), totalQuestions);
+
+      // Create / upsert session
+      await upsertDynamicRow(db, 'interview_sessions', {
+        id: sid,
+        organization_id: anchors.orgId,
+        project_id: anchors.projectId,
+        user_id: pickUser(i),
+        topic: `Discovery Interview — ${String(i + 1).padStart(2, '0')}`,
+        name: `Interview — ${faker.company.name().slice(0, 28)}`,
+        owner_id: pickUser(i + 1),
+        status: statusRaw,
+        progress_json: JSON.stringify({
+          strategy: Math.min(100, 20 + i * 7),
+          operations: Math.min(100, 15 + i * 6),
+          digital: Math.min(100, 10 + i * 5),
+          people: Math.min(100, 12 + i * 4),
+          finance: Math.min(100, 8 + i * 4),
+        }),
+        template_id: tplId,
+        template_version: 1,
+        started_at: startedAt,
+        last_activity_at: lastActivityAt,
+        completed_at: completedAt,
+        created_at: startedAt,
+        updated_at: lastActivityAt,
+        summary_facts: JSON.stringify([
+          { category: 'operations', fact: 'Manual approvals cause delays during peak hours.' },
+          {
+            category: 'digital',
+            fact: 'Data is fragmented across 3 tools; no single source of truth.',
+          },
+        ]),
+        summary_gaps: JSON.stringify([
+          { category: 'finance', gap: 'No agreed definition of cost-to-serve across segments.' },
+        ]),
+        summary_constraints: JSON.stringify([
+          { category: 'people', constraint: 'Limited change capacity in key teams this quarter.' },
+        ]),
+        summary_pain_points: JSON.stringify([
+          {
+            category: 'strategy',
+            painPoint: 'Priorities change too often; execution loses focus.',
+          },
+        ]),
+        total_questions: totalQuestions,
+        answered_questions: answeredTarget,
+      });
+
+      // Seed 12 questions (mix answered / in-progress / follow-up)
+      const qCats = categories;
+      let answered = 0;
+      for (let q = 0; q < totalQuestions; q += 1) {
+        const qid = `iq-dbr77-${String(i + 1).padStart(2, '0')}-${String(q + 1).padStart(2, '0')}`;
+        const cat = qCats[q % qCats.length];
+        const isAnswered = q < answeredTarget;
+        const qStatus = isAnswered ? 'answered' : q % 4 === 0 ? 'needs_follow_up' : 'not_started';
+        if (isAnswered) answered += 1;
+
+        await upsertDynamicRow(db, 'interview_questions', {
+          id: qid,
+          session_id: sid,
+          organization_id: anchors.orgId,
+          category: cat,
+          question_text: `(${cat}) ${faker.lorem.sentence({ min: 6, max: 10 })}`,
+          answer_text: isAnswered ? faker.lorem.paragraph({ min: 1, max: 3 }) : '',
+          status: qStatus,
+          confidence_score: isAnswered ? 3 + (q % 3) : 0,
+          answered_by: isAnswered ? anchors.userId : null,
+          answered_at: isAnswered ? lastActivityAt : null,
+          tags: JSON.stringify(isAnswered ? ['seeded', cat] : ['seeded']),
+          sort_order: (q + 1) * 10,
+          is_template: 1,
+          created_at: startedAt,
+          updated_at: lastActivityAt,
+        });
+      }
+      // Best-effort UPDATE (won't fail if schema differs)
+      await db
+        .run(
+          `UPDATE interview_sessions SET total_questions = ?, answered_questions = ? WHERE id = ?`,
+          [totalQuestions, answered, sid]
+        )
+        .catch(() => null);
+
+      if (statusRaw === 'completed') completedSessionIds.push(sid);
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Assignments (Inbox + Assigned + Overdue tabs)
+  // ------------------------------------------------------------------
+  if (hasAssignments) {
+    const statuses = ['assigned', 'in_progress', 'sent_back', 'submitted', 'approved'] as const;
+    const priorities = ['low', 'medium', 'high', 'urgent'] as const;
+
+    for (let i = 0; i < 10; i += 1) {
+      const id = `ia-dbr77-${String(i + 1).padStart(2, '0')}`;
+      const status = statuses[i % statuses.length];
+      const priority = priorities[(i + 1) % priorities.length];
+      const dueAt =
+        i % 4 === 0
+          ? daysAgo(2 + (i % 3)) // overdue
+          : daysFromNow(2 + (i % 10));
+      const maybeSessionId =
+        status === 'in_progress' || status === 'submitted' || status === 'approved'
+          ? sessionIds[i % sessionIds.length]
+          : null;
+
+      await upsertDynamicRow(db, 'interview_assignments', {
+        id,
+        organization_id: anchors.orgId,
+        project_id: anchors.projectId,
+        assignee_user_id: anchors.userId, // show up in Inbox
+        template_id: templateIds[i % templateIds.length],
+        template_version: 1,
+        process_ref: `PROC-${String(1000 + i)}`,
+        status,
+        session_id: maybeSessionId,
+        due_at: dueAt,
+        priority,
+        is_team_assignment: 0,
+        notes: 'Seeded assignment for demo (Inbox/Assigned/Overdue coverage).',
+        escalate_to: anchors.userId,
+        created_by: anchors.userId, // also show up in Assigned (managed)
+        created_at: daysAgo(12 + i),
+        updated_at: daysAgo(1 + (i % 5)),
+        started_at: status !== 'assigned' ? daysAgo(10 + (i % 4)) : null,
+        submitted_at: status === 'submitted' || status === 'approved' ? daysAgo(3 + (i % 3)) : null,
+        sent_back_at: status === 'sent_back' ? daysAgo(1 + (i % 2)) : null,
+        sent_back_reason:
+          status === 'sent_back' ? 'Please add concrete examples and evidence links.' : null,
+      });
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Insights (Insights + Assessments tabs)
+  // ------------------------------------------------------------------
+  if (hasInsights) {
+    const promptTypes = [
+      'summary',
+      'trends',
+      'problems',
+      'comparison',
+      'gaps',
+      'risk_assessment',
+      'opportunity_scan',
+      'maturity',
+      'stakeholder_map',
+      'recommendations',
+    ] as const;
+
+    const sessionsPool =
+      completedSessionIds.length > 0 ? completedSessionIds : sessionIds.slice(0, 4);
+
+    for (let i = 0; i < 10; i += 1) {
+      const id = `ii-dbr77-${String(i + 1).padStart(2, '0')}`;
+      const promptType = promptTypes[i % promptTypes.length] as any;
+      const sourceIds = sessionsPool.slice(0, 1 + (i % Math.min(3, sessionsPool.length)));
+      const content = `## Executive Summary
+
+- Approvals are a recurring bottleneck across multiple teams.
+- Data fragmentation leads to duplicated work and low confidence decisions.
+
+## Main Themes
+
+1. **Speed vs control** — too many gates for low-risk changes.
+2. **Tool sprawl** — teams work in silos, no shared workflow.
+3. **Ownership ambiguity** — decisions lack a clear single owner.
+
+## Evidence (anonymized)
+
+- “We wait 2–3 days for approvals on routine changes.”
+- “We export to spreadsheets because the system doesn't show end-to-end status.”
+`;
+
+      await upsertDynamicRow(db, 'interview_insights', {
+        id,
+        session_id: sourceIds[0] || null,
+        organization_id: anchors.orgId,
+        category: 'general',
+        title: `DBR77 Insight ${String(i + 1).padStart(2, '0')} — ${promptType}`,
+        prompt_type: promptType,
+        insight_type: promptType, // legacy schema compatibility
+        source_session_ids: JSON.stringify(sourceIds),
+        filters: JSON.stringify({ seeded: true, promptType }),
+        status: 'completed',
+        source_session_count: sourceIds.length,
+        content,
+        description: content, // legacy schema compatibility
+        tokens_used: 0,
+        generation_time_ms: 0,
+        exported_to_tools: i % 3 === 0 ? 1 : 0,
+        exported_to_assessment: i % 4 === 0 ? 1 : 0,
+        created_by: anchors.userId,
+        created_at: daysAgo(7 + i),
+        updated_at: daysAgo(1 + (i % 4)),
+      });
+    }
+  }
+
+  log.step(
+    `Seeded Interview module demo data: templates=${templateIds.length}, sessions=${sessionIds.length}, assignments=10, insights=10`
+  );
+}
+
 async function main() {
   console.log('\n🧩 DBR77: Fill All Tables Seeder (SQLite)\n');
 
@@ -807,6 +1625,9 @@ async function main() {
   // Key, app-visible data first
   await seedKeyDbr77Data(db, anchors);
   await seedReportBuilderBlockLibrary(db, anchors);
+  await seedInitiativeModuleDemoData(db, anchors);
+  await seedDiscoveryToolSessions(db, anchors);
+  await seedInterviewModuleDemoData(db, anchors);
 
   // Baseline table inventory (before fill)
   const tables = await getTables(db);

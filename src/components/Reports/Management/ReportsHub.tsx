@@ -290,7 +290,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         label: 'Title',
         render: (row: ReportHistoryItem) => (
           <div>
-            <span className="text-sm text-white font-medium">{row.title}</span>
+            <span className="text-sm text-slate-900 dark:text-white font-medium">{row.title}</span>
             {row.projectName && <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>}
           </div>
         ),
@@ -420,7 +420,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         label: 'Name',
         render: (row: ReportTemplate) => (
           <div>
-            <span className="text-sm text-white font-medium">{row.name}</span>
+            <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
             {row.description && <p className="text-xs text-slate-400 mt-0.5">{row.description}</p>}
           </div>
         ),
@@ -472,7 +472,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         label: 'Scope',
         render: (row: ReportSchedule) => (
           <div>
-            <span className="text-sm text-white font-medium">
+            <span className="text-sm text-slate-900 dark:text-white font-medium">
               {row.scope === 'PROJECT' ? row.projectName || 'Project' : 'Portfolio'}
             </span>
           </div>
@@ -694,8 +694,10 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         return (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <FileBarChart2 className="w-16 h-16 text-slate-600 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No reports yet</h3>
-            <p className="text-sm text-slate-400 mb-6 max-w-md">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              No reports yet
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-md">
               Generate your first management report to track project status, team progress, and
               portfolio health.
             </p>
@@ -733,11 +735,11 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
 
           {/* Quick Version Preview Panel (B5.2) */}
           {previewReport && (
-            <div className="w-80 shrink-0 bg-navy-950/50 overflow-y-auto">
+            <div className="w-80 shrink-0 bg-slate-50 dark:bg-navy-950/50 overflow-y-auto">
               <div className="p-4">
                 {/* Panel Header */}
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                     <History size={14} className="text-violet-400" />
                     Quick Preview
                   </h4>
@@ -745,19 +747,21 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                     onClick={() => setPreviewReportId(null)}
                     className="p-1 hover:bg-white/10 rounded-lg transition-colors"
                   >
-                    <X size={14} className="text-slate-400" />
+                    <X size={14} className="text-slate-500 dark:text-slate-400" />
                   </button>
                 </div>
 
                 {/* Report Info Card */}
-                <div className="bg-navy-900/80 rounded-xl border border-navy-700 p-4 space-y-3">
+                <div className="bg-white dark:bg-navy-900/80 rounded-xl border border-slate-200 dark:border-navy-700 p-4 space-y-3">
                   {/* Title */}
                   <div>
-                    <h5 className="text-sm font-semibold text-white leading-tight">
+                    <h5 className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
                       {previewReport.title}
                     </h5>
                     {previewReport.projectName && (
-                      <p className="text-xs text-slate-400 mt-0.5">{previewReport.projectName}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {previewReport.projectName}
+                      </p>
                     )}
                   </div>
 
@@ -767,17 +771,17 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                       <span className={`${REPORT_TYPE_META[previewReport.reportType].color}`}>
                         {REPORT_TYPE_META[previewReport.reportType].icon}
                       </span>
-                      <span className="text-slate-300">
+                      <span className="text-slate-700 dark:text-slate-300">
                         {REPORT_TYPE_META[previewReport.reportType].label}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                       <Calendar size={12} />
                       <span>{new Date(previewReport.createdAt).toLocaleString()}</span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                       <User size={12} />
                       <span>{previewReport.generatedByName}</span>
                     </div>
@@ -786,12 +790,12 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                       <span
                         className={`w-2 h-2 rounded-full ${STATUS_META[previewReport.status].dotColor}`}
                       />
-                      <span className="text-slate-300">
+                      <span className="text-slate-700 dark:text-slate-300">
                         {STATUS_META[previewReport.status].label}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                       <span
                         className={`px-2 py-0.5 rounded text-[10px] font-medium ${SCOPE_META[previewReport.scope].color} text-white`}
                       >
@@ -810,7 +814,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
 
                   {/* Period */}
                   {previewReport.periodStart && previewReport.periodEnd && (
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
                       <span className="text-slate-500">Period:</span> {previewReport.periodStart} –{' '}
                       {previewReport.periodEnd}
                     </div>
@@ -830,7 +834,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                   {previewReport.pdfPath && (
                     <button
                       onClick={() => handleDownloadPDF(previewReport.id)}
-                      className="w-full flex items-center gap-2 px-3 py-2 border border-navy-700 hover:bg-white/5 text-slate-300 text-sm font-medium rounded-lg transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 border border-slate-300 dark:border-navy-700 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-colors"
                     >
                       <Download size={14} />
                       Download PDF
@@ -839,7 +843,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
 
                   <button
                     onClick={() => handleShare(previewReport.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2 border border-navy-700 hover:bg-white/5 text-slate-300 text-sm font-medium rounded-lg transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 border border-slate-300 dark:border-navy-700 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-colors"
                   >
                     <Share2 size={14} />
                     Share Link
@@ -891,8 +895,10 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         return (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Wand2 className="w-16 h-16 text-slate-600 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No templates yet</h3>
-            <p className="text-sm text-slate-400 mb-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              No templates yet
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
               Create templates to quickly generate reports with predefined sections.
             </p>
           </div>
@@ -917,8 +923,10 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         return (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <CalendarClock className="w-16 h-16 text-slate-600 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No schedules yet</h3>
-            <p className="text-sm text-slate-400 mb-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              No schedules yet
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
               Set up recurring schedules to automatically generate reports.
             </p>
           </div>

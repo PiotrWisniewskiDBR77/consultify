@@ -1,105 +1,53 @@
 /**
- * Webhooks Integration Tests
- * Testing webhook endpoints
- *
- * @module tests/integration/webhooks/webhook-endpoints.test.ts
+ * L1: Webhooks validators (honest unit tests).
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import express from 'express';
-import request from 'supertest';
+import { describe, expect, it } from 'vitest';
 
-describe('Webhook Endpoints Integration', () => {
-  let app: express.Application;
-  const webhooks = new Map<string, any>();
+import {
+  CreateWebhookBodySchema,
+  GetDeliveriesQuerySchema,
+  GetWebhooksQuerySchema,
+  RetryDeliveryBodySchema,
+  StripeWebhookBodySchema,
+  TestWebhookBodySchema,
+  WebhookIdParamSchema,
+} from '../../../server/src/validators/webhooks.validators.js';
 
-  beforeAll(() => {
-    app = express();
-    app.use(express.json());
-
-    const authMiddleware = (req: any, res: any, next: any) => {
-      if (!req.headers.authorization) return res.status(401).json({ error: 'Unauthorized' });
-      req.user = { id: '1', orgId: 'org-1' };
-      next();
-    };
-
-    app.get('/api/webhooks', authMiddleware, (req, res) => {
-      const orgWebhooks = Array.from(webhooks.values()).filter((w) => w.orgId === req.user.orgId);
-      res.json(orgWebhooks);
-    });
-
-    app.post('/api/webhooks', authMiddleware, (req, res) => {
-      const { url, events, secret } = req.body;
-      if (!url || !events?.length)
-        return res.status(400).json({ error: 'URL and events required' });
-      const id = `wh-${Date.now()}`;
-      const webhook = { id, url, events, secret, orgId: req.user.orgId, active: true };
-      webhooks.set(id, webhook);
-      res.status(201).json(webhook);
-    });
-
-    app.put('/api/webhooks/:id', authMiddleware, (req, res) => {
-      const webhook = webhooks.get(req.params.id);
-      if (!webhook) return res.status(404).json({ error: 'Not found' });
-      const updated = { ...webhook, ...req.body };
-      webhooks.set(req.params.id, updated);
-      res.json(updated);
-    });
-
-    app.delete('/api/webhooks/:id', authMiddleware, (req, res) => {
-      if (!webhooks.has(req.params.id)) return res.status(404).json({ error: 'Not found' });
-      webhooks.delete(req.params.id);
-      res.status(204).send();
-    });
-
-    app.post('/api/webhooks/:id/test', authMiddleware, (req, res) => {
-      const webhook = webhooks.get(req.params.id);
-      if (!webhook) return res.status(404).json({ error: 'Not found' });
-      res.json({ success: true, deliveryId: `del-${Date.now()}` });
-    });
+describe('webhooks.validators', () => {
+  it('WebhookIdParamSchema: requires uuid', () => {
+    const parsed = WebhookIdParamSchema.safeParse({ id: 'not-a-uuid' });
+    expect(parsed.success).toBe(false);
   });
 
-  describe('GET /api/webhooks', () => {
-    it('should return webhooks', async () => {
-      const response = await request(app).get('/api/webhooks').set('Authorization', 'Bearer token');
-      expect(response.status).toBe(200);
-    });
+  it('CreateWebhookBodySchema: requires url + at least one event', () => {
+    const parsed = CreateWebhookBodySchema.safeParse({ url: 'https://x.y' });
+    expect(parsed.success).toBe(false);
   });
 
-  describe('POST /api/webhooks', () => {
-    it('should create webhook', async () => {
-      const response = await request(app)
-        .post('/api/webhooks')
-        .set('Authorization', 'Bearer token')
-        .send({ url: 'https://example.com/hook', events: ['invoice.created'] });
-
-      expect(response.status).toBe(201);
-      expect(response.body.url).toBe('https://example.com/hook');
-    });
-
-    it('should require url and events', async () => {
-      const response = await request(app)
-        .post('/api/webhooks')
-        .set('Authorization', 'Bearer token')
-        .send({});
-
-      expect(response.status).toBe(400);
-    });
+  it('GetWebhooksQuerySchema: accepts enabled true/false', () => {
+    const parsed = GetWebhooksQuerySchema.parse({ enabled: 'false' });
+    expect(parsed.enabled).toBe('false');
   });
 
-  describe('POST /api/webhooks/:id/test', () => {
-    it('should test webhook', async () => {
-      const createRes = await request(app)
-        .post('/api/webhooks')
-        .set('Authorization', 'Bearer token')
-        .send({ url: 'https://test.com', events: ['test'] });
+  it('GetDeliveriesQuerySchema: defaults page=1 and pageSize=50', () => {
+    const parsed = GetDeliveriesQuerySchema.parse({});
+    expect(parsed.page).toBe(1);
+    expect(parsed.pageSize).toBe(50);
+  });
 
-      const response = await request(app)
-        .post(`/api/webhooks/${createRes.body.id}/test`)
-        .set('Authorization', 'Bearer token');
+  it('TestWebhookBodySchema: allows optional payload record', () => {
+    const parsed = TestWebhookBodySchema.parse({ payload: { a: 1 } });
+    expect(parsed.payload?.a).toBe(1);
+  });
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-    });
+  it('RetryDeliveryBodySchema: requires deliveryId uuid', () => {
+    const parsed = RetryDeliveryBodySchema.safeParse({ deliveryId: 'x' });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('StripeWebhookBodySchema: validates minimal shape', () => {
+    const parsed = StripeWebhookBodySchema.parse({ type: 'evt', data: { object: { id: '1' } } });
+    expect(parsed.type).toBe('evt');
   });
 });

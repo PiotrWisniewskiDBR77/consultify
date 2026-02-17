@@ -6,9 +6,41 @@ import { setupAutoCleanup } from './helpers/testCleanup';
 // Setup automatic cleanup for all tests
 setupAutoCleanup();
 
+// --------------------------------------------------------
+// Billing/Stripe safety defaults for tests
+// --------------------------------------------------------
+// Some server-side config paths require Stripe secrets in production-like modes.
+// Ensure tests never fail due to missing Stripe env vars.
+process.env.MOCK_BILLING = process.env.MOCK_BILLING || 'true';
+process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_dummy';
+process.env.STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_dummy';
+
 // Provide jest compatibility for legacy tests
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (globalThis as any).jest = vi;
+
+// --------------------------------------------------------
+// JSDOM navigation stubs
+// --------------------------------------------------------
+// Some components trigger window.location navigation (assign/replace/reload),
+// which JSDOM implements as "Not implemented: navigation to another Document".
+// Stub these to no-op so tests stay signal-rich and deterministic.
+if (typeof window !== 'undefined') {
+  try {
+    const noop = () => {};
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...window.location,
+        assign: vi.fn(noop),
+        replace: vi.fn(noop),
+        reload: vi.fn(noop),
+      },
+      writable: true,
+    });
+  } catch {
+    // If JSDOM makes window.location non-configurable in a given environment, skip.
+  }
+}
 
 // Global mock for react-i18next to prevent "Cannot read properties of undefined (reading 'en')" errors
 vi.mock('react-i18next', () => {
@@ -351,7 +383,6 @@ const mockRouter = (req: any, res: any, next: any) => next();
 vi.mock('../server/src/routes/aiPlaybooks.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/content.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/premiumReports.routes.js', () => ({ default: mockRouter }));
-vi.mock('../server/src/routes/studio.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/managementReports.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/voice.routes.js', () => ({ default: mockRouter }));
 // vi.mock('../server/src/routes/ai.routes.js', () => ({ default: mockRouter }));
@@ -460,13 +491,6 @@ vi.mock('../server/src/middleware/planLimits.middleware.js', async (importOrigin
     },
   };
 });
-
-// Mock Input Sanitization to avoid "Cannot set property query" errors
-vi.mock('../server/src/middleware/inputSanitization.middleware.js', () => ({
-  inputSanitizationMiddleware: (req: any, res: any, next: any) => next(),
-  queryParamSanitizationMiddleware: (req: any, res: any, next: any) => next(),
-  sqlParamValidationMiddleware: (req: any, res: any, next: any) => next(),
-}));
 
 // Mock Permission Service to avoid DB calls
 // COMMENTED OUT: We need real PermissionService for unit tests. Use DI instead.

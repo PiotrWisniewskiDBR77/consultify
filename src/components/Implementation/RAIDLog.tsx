@@ -259,8 +259,8 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
               )}
             </div>
 
-            <h4 className="font-medium text-navy-900 dark:text-white mb-1">{item.title}</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+            <h4 className="font-medium text-slate-900 dark:text-white mb-1">{item.title}</h4>
+            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
               {item.description}
             </p>
 
@@ -282,7 +282,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
 
             {/* Mitigation plan */}
             {item.mitigationPlan && (
-              <div className="mt-2 p-2 bg-slate-50 dark:bg-navy-950 rounded text-xs text-slate-600 dark:text-slate-400">
+              <div className="mt-2 p-2 bg-slate-50 dark:bg-navy-950 rounded text-xs text-slate-500 dark:text-slate-400">
                 <span className="font-medium">Mitigation: </span>
                 {item.mitigationPlan}
               </div>
@@ -301,7 +301,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
           <div className="flex items-center gap-1">
             <button
               onClick={() => setEditingItem(item)}
-              className="p-1.5 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-white/10 rounded"
+              className="p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
               title="Edit"
             >
               <Edit2 size={14} />
@@ -312,7 +312,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                   onClick={() =>
                     handleStatusChange(item, item.type === 'RISK' ? 'MITIGATED' : 'CLOSED')
                   }
-                  className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"
+                  className="p-1.5 text-green-400 hover:bg-green-900/20 rounded"
                   title={item.type === 'RISK' ? 'Mark Mitigated' : 'Close'}
                 >
                   <CheckCircle2 size={16} />
@@ -320,7 +320,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                 {item.type === 'RISK' && (
                   <button
                     onClick={() => handleStatusChange(item, 'REALIZED')}
-                    className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                    className="p-1.5 text-red-400 hover:bg-red-900/20 rounded"
                     title="Mark Realized"
                   >
                     <XCircle size={16} />
@@ -334,7 +334,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                   handleDeleteItem(item.id);
                 }
               }}
-              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+              className="p-1.5 text-slate-500 hover:text-red-500 hover:bg-red-900/20 rounded"
               title="Delete"
             >
               <Trash2 size={14} />
@@ -349,7 +349,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
     <div className="space-y-4">
       {/* Header with tabs */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-navy-800 rounded-lg overflow-x-auto">
+        <div className="flex items-center gap-1 p-1 bg-slate-50 dark:bg-navy-800 rounded-lg overflow-x-auto">
           {(['ALL', 'RISK', 'ASSUMPTION', 'ISSUE', 'DECISION', 'DEPENDENCY'] as const).map(
             (tab) => {
               const config = tab === 'ALL' ? null : RAID_TYPES[tab];
@@ -362,8 +362,8 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                   onClick={() => setActiveTab(tab)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     activeTab === tab
-                      ? 'bg-white dark:bg-navy-900 text-navy-900 dark:text-white shadow-sm'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
+                      ? 'bg-white dark:bg-navy-900 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   {tab === 'ALL' ? 'All' : <Icon size={14} className={config?.color} />}
@@ -371,8 +371,8 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded-full ${
                         tab === 'ISSUE' && count > 0
-                          ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                          : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
+                          ? 'bg-red-900/30 text-red-400'
+                          : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       {count}
@@ -396,11 +396,11 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
       {/* Items list */}
       <div className="space-y-3">
         {isLoading ? (
-          <div className="flex items-center justify-center h-32 text-slate-400 dark:text-slate-500">
+          <div className="flex items-center justify-center h-32 text-slate-500 dark:text-slate-400">
             Loading...
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 text-slate-400 dark:text-slate-500">
+          <div className="flex flex-col items-center justify-center h-32 text-slate-500 dark:text-slate-400">
             <CheckCircle2 size={24} className="mb-2 text-green-500" />
             <span>No open items</span>
           </div>
@@ -413,8 +413,8 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
       {/* Edit Modal */}
       {editingItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg p-6 m-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg p-6 m-4 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-navy-700">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
               Edit {RAID_TYPES[editingItem.type]?.label || editingItem.type}
             </h3>
             <div className="space-y-4">
@@ -428,7 +428,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                   onChange={(e) =>
                     setEditingItem((prev) => (prev ? { ...prev, title: e.target.value } : null))
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white"
                 />
               </div>
               <div>
@@ -442,7 +442,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                       prev ? { ...prev, description: e.target.value } : null
                     )
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white"
                   rows={3}
                 />
               </div>
@@ -458,7 +458,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                         prev ? { ...prev, status: e.target.value as RAIDStatus } : null
                       )
                     }
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white"
                   >
                     <option value="OPEN">Open</option>
                     <option value="MITIGATED">Mitigated</option>
@@ -480,7 +480,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                     onChange={(e) =>
                       setEditingItem((prev) => (prev ? { ...prev, dueDate: e.target.value } : null))
                     }
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -496,7 +496,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                         prev ? { ...prev, mitigationPlan: e.target.value } : null
                       )
                     }
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white"
                     rows={2}
                   />
                 </div>
@@ -505,7 +505,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
             <div className="flex justify-end gap-2 mt-6">
               <button
                 onClick={() => setEditingItem(null)}
-                className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+                className="px-4 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
               >
                 Cancel
               </button>
@@ -523,8 +523,8 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
       {/* Add Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg p-6 m-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">Add RAID Item</h3>
+          <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg p-6 m-4 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-navy-700">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Add RAID Item</h3>
 
             <div className="space-y-4">
               {/* Type selector */}
@@ -543,7 +543,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                         className={`flex flex-col items-center p-3 rounded-lg border transition-colors ${
                           newItem.type === type
                             ? `${config.bgColor} border-current ${config.color}`
-                            : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
+                            : 'border-slate-200 dark:border-navy-700 hover:border-slate-500'
                         }`}
                       >
                         <Icon
@@ -551,10 +551,12 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                           className={
                             newItem.type === type
                               ? config.color
-                              : 'text-slate-400 dark:text-slate-500'
+                              : 'text-slate-500 dark:text-slate-400'
                           }
                         />
-                        <span className="text-xs mt-1">{config.label}</span>
+                        <span className="text-xs mt-1 text-slate-700 dark:text-slate-300">
+                          {config.label}
+                        </span>
                       </button>
                     );
                   })}
@@ -570,7 +572,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                   type="text"
                   value={newItem.title || ''}
                   onChange={(e) => setNewItem((prev) => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white"
                   placeholder="Brief title..."
                 />
               </div>
@@ -583,7 +585,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                 <textarea
                   value={newItem.description || ''}
                   onChange={(e) => setNewItem((prev) => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white"
                   rows={3}
                   placeholder="Detailed description..."
                 />
@@ -604,7 +606,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                           probability: e.target.value as RAIDProbability,
                         }))
                       }
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white"
                     >
                       <option value="LOW">Low</option>
                       <option value="MEDIUM">Medium</option>
@@ -623,7 +625,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                           impact: e.target.value as RAIDImpact,
                         }))
                       }
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white"
                     >
                       <option value="LOW">Low</option>
                       <option value="MEDIUM">Medium</option>
@@ -645,7 +647,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                     onChange={(e) =>
                       setNewItem((prev) => ({ ...prev, mitigationPlan: e.target.value }))
                     }
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white"
                     rows={2}
                     placeholder="How will we mitigate this?"
                   />
@@ -663,7 +665,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                     newItem.dueDate ? new Date(newItem.dueDate).toISOString().split('T')[0] : ''
                   }
                   onChange={(e) => setNewItem((prev) => ({ ...prev, dueDate: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white"
                 />
               </div>
             </div>
@@ -674,7 +676,7 @@ export const RAIDLog: React.FC<RAIDLogProps> = ({ initiativeId, projectId, onIte
                   setShowAddModal(false);
                   setNewItem({ type: 'RISK', status: 'OPEN' });
                 }}
-                className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+                className="px-4 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
               >
                 Cancel
               </button>

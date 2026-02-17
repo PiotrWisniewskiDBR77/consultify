@@ -1,469 +1,141 @@
-/**
- * Partner Portal Integration Tests
- *
- * End-to-end flow tests for the partner referral and commission system
- */
+import { describe, expect, it } from 'vitest';
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
+import { PARTNER_TYPES, PartnerServiceClass } from '../../server/src/services/partnerService.js';
 
-// Note: These tests require a test database and actual app instance
-// In real implementation, you would set up test database and app context
+type Db = {
+  all: (sql: string, params: unknown[], cb: (err: Error | null, rows?: unknown) => void) => void;
+  get: (sql: string, params: unknown[], cb: (err: Error | null, row?: unknown) => void) => void;
+  run: (
+    sql: string,
+    params: unknown[],
+    cb: (this: { lastID?: number; changes: number }, err: Error | null) => void
+  ) => void;
+};
 
-const API_BASE = '/api';
+function makeDb(
+  overrides?: Partial<{
+    onAll: (sql: string, params: unknown[]) => unknown[];
+    onGet: (sql: string, params: unknown[]) => unknown | null;
+    onRun: (sql: string, params: unknown[]) => { lastID?: number; changes: number };
+  }>
+): { db: Db; calls: { all: any[]; get: any[]; run: any[] } } {
+  const calls = { all: [] as any[], get: [] as any[], run: [] as any[] };
+  const db: Db = {
+    all: (sql, params, cb) => {
+      calls.all.push([sql, params]);
+      const rows = overrides?.onAll?.(sql, params) ?? [];
+      cb(null, rows);
+    },
+    get: (sql, params, cb) => {
+      calls.get.push([sql, params]);
+      const row = overrides?.onGet?.(sql, params) ?? null;
+      cb(null, row as any);
+    },
+    run: function (sql, params, cb) {
+      calls.run.push([sql, params]);
+      const result = overrides?.onRun?.(sql, params) ?? { changes: 1 };
+      cb.call({ lastID: result.lastID, changes: result.changes }, null);
+    },
+  };
+  return { db, calls };
+}
 
-describe('Partner Portal - Integration Tests', () => {
-  // Mock authentication token
-  const partnerAuthToken = 'test-partner-token';
-  const adminAuthToken = 'test-admin-token';
-  const superadminAuthToken = 'test-superadmin-token';
+describe('Partner Portal (PartnerService) - REAL_CODE', () => {
+  it('createPartner rejects missing required fields', async () => {
+    const { db } = makeDb();
+    const service = new PartnerServiceClass({ db: db as any });
 
-  describe('Partner Referral Flow', () => {
-    describe('Referral Code Generation and Validation', () => {
-      it('should generate a unique referral code for new partner', async () => {
-        // Test flow:
-        // 1. Create new partner organization
-        // 2. Verify referral code is generated
-        // 3. Verify referral link is accessible
-
-        const expectedCode = expect.stringMatching(/^[A-Z0-9]{8,}$/);
-        // In real test: POST to create partner, verify response has referral_code
-      });
-
-      it('should validate referral code via public endpoint', async () => {
-        // Test flow:
-        // 1. Use valid referral code
-        // 2. Call public validation endpoint
-        // 3. Verify partner info and discount is returned
-
-        const validCode = 'DBR77PARTNER';
-        const expectedResponse = {
-          valid: true,
-          partnerName: expect.any(String),
-          partnerTier: expect.stringMatching(/REGISTERED|BRONZE|SILVER|GOLD|PLATINUM/),
-          discountPercent: expect.any(Number),
-          discountDurationMonths: expect.any(Number),
-        };
-
-        // In real test:
-        // const response = await request(app)
-        //     .get(`${API_BASE}/public/partner/validate-code/${validCode}`)
-        //     .expect(200);
-        // expect(response.body.data).toMatchObject(expectedResponse);
-      });
-
-      it('should return invalid for non-existent code', async () => {
-        const invalidCode = 'NONEXISTENT123';
-        // In real test: verify response has valid: false
-      });
-    });
-
-    describe('Click Tracking', () => {
-      it('should track click from referral link', async () => {
-        // Test flow:
-        // 1. Send click tracking request
-        // 2. Verify click is recorded
-        // 3. Verify campaign link click count increases
-
-        const clickData = {
-          referralCode: 'DBR77PARTNER',
-          campaignLinkId: 'campaign-link-1',
-          userAgent: 'Mozilla/5.0 (Test)',
-          referrerUrl: 'https://linkedin.com/posts/test',
-        };
-
-        // In real test:
-        // const response = await request(app)
-        //     .post(`${API_BASE}/public/partner/track-click`)
-        //     .send(clickData)
-        //     .expect(200);
-        // expect(response.body.success).toBe(true);
-      });
-
-      it('should rate limit excessive click tracking', async () => {
-        // Test flow:
-        // 1. Send many click requests from same IP
-        // 2. Verify rate limiting kicks in
-        // 3. Verify click deduplication works
-      });
-    });
-
-    describe('Campaign Link Management', () => {
-      it('should create campaign link with UTM parameters', async () => {
-        const campaignData = {
-          name: 'Q1 LinkedIn Campaign',
-          utm_source: 'linkedin',
-          utm_medium: 'social',
-          utm_campaign: 'q1-2026-partner-promo',
-        };
-
-        // In real test:
-        // const response = await request(app)
-        //     .post(`${API_BASE}/partners/campaign-links`)
-        //     .set('Authorization', `Bearer ${partnerAuthToken}`)
-        //     .send(campaignData)
-        //     .expect(201);
-      });
-
-      it('should delete campaign link', async () => {
-        const linkId = 'test-link-id';
-        // In real test: DELETE request and verify removal
-      });
-
-      it('should track clicks per campaign link', async () => {
-        // Test flow:
-        // 1. Get initial click count
-        // 2. Simulate clicks
-        // 3. Verify count increased
-      });
-    });
+    await expect(
+      service.createPartner({ name: '', partnerType: PARTNER_TYPES.REFERRAL } as any)
+    ).rejects.toEqual(expect.objectContaining({ errorCode: 'MISSING_REQUIRED' }));
   });
 
-  describe('Attribution System', () => {
-    describe('Client Attribution', () => {
-      it('should create attribution when client signs up with referral code', async () => {
-        // Test flow:
-        // 1. New organization signs up using referral code
-        // 2. Verify attribution record is created
-        // 3. Verify status is "lead" initially
+  it('createPartner rejects invalid partnerType', async () => {
+    const { db } = makeDb();
+    const service = new PartnerServiceClass({ db: db as any });
 
-        const signupData = {
-          organizationName: 'Test Corp',
-          email: 'admin@testcorp.com',
-          referralCode: 'DBR77PARTNER',
-        };
-
-        // In real test: simulate signup flow
-      });
-
-      it('should update attribution status on conversion', async () => {
-        // Test flow:
-        // 1. Attribution exists with status "trial"
-        // 2. Client converts to paid
-        // 3. Verify status changes to "converted"
-        // 4. Verify commission is created
-      });
-
-      it('should track lifetime value for converted clients', async () => {
-        // Test flow:
-        // 1. Client makes payments
-        // 2. Verify LTV is updated
-        // 3. Verify commission calculations are correct
-      });
-    });
-
-    describe('Admin Code Input', () => {
-      it('should allow admin to apply partner code after signup', async () => {
-        // Test flow:
-        // 1. Organization exists without attribution
-        // 2. Admin enters partner code in settings
-        // 3. Verify attribution is created retroactively
-        // 4. Verify discount is applied to organization
-
-        const codeData = {
-          code: 'DBR77PARTNER',
-        };
-
-        // In real test:
-        // const response = await request(app)
-        //     .post(`${API_BASE}/organization/partner-code`)
-        //     .set('Authorization', `Bearer ${adminAuthToken}`)
-        //     .send(codeData)
-        //     .expect(200);
-      });
-
-      it('should not allow duplicate attribution', async () => {
-        // Test flow:
-        // 1. Organization already has attribution
-        // 2. Try to apply another code
-        // 3. Verify error is returned
-      });
-
-      it('should allow removing attribution', async () => {
-        // Test flow:
-        // 1. Delete partner code from organization
-        // 2. Verify attribution is removed/cancelled
-        // 3. Verify discount is removed
-      });
-    });
+    await expect(service.createPartner({ name: 'X', partnerType: 'NOPE' as any })).rejects.toEqual(
+      expect.objectContaining({ errorCode: 'INVALID_PARTNER_TYPE' })
+    );
   });
 
-  describe('Commission System', () => {
-    describe('Commission Calculation', () => {
-      it('should create commission on client payment', async () => {
-        // Test flow:
-        // 1. Client with attribution makes payment
-        // 2. Verify commission transaction is created
-        // 3. Verify amount is correct based on tier rate
-        // In real test: simulate Stripe webhook
-      });
+  it('createPartner inserts metadata JSON into DB', async () => {
+    const { db, calls } = makeDb();
+    const service = new PartnerServiceClass({ db: db as any });
 
-      it('should apply correct commission rate based on partner tier', async () => {
-        const tierRates = {
-          REGISTERED: 10,
-          BRONZE: 12,
-          SILVER: 15,
-          GOLD: 18,
-          PLATINUM: 20,
-        };
-
-        // Test for each tier
-        for (const [tier, rate] of Object.entries(tierRates)) {
-          // Verify commission calculation uses correct rate
-        }
-      });
-
-      it('should handle renewal commissions', async () => {
-        // Test flow:
-        // 1. Initial commission created
-        // 2. Client renews subscription
-        // 3. Verify renewal commission is created
-        // 4. Verify commission duration limit is respected
-      });
+    const created = await service.createPartner({
+      name: 'Acme',
+      partnerType: PARTNER_TYPES.RESELLER,
+      metadata: { source: 'test' },
     });
 
-    describe('Commission Approval', () => {
-      it('should list pending commissions for SuperAdmin', async () => {
-        // In real test:
-        // const response = await request(app)
-        //     .get(`${API_BASE}/superadmin/partner-settlements/pending-commissions`)
-        //     .set('Authorization', `Bearer ${superadminAuthToken}`)
-        //     .expect(200);
-      });
-
-      it('should approve selected commissions', async () => {
-        const approvalData = {
-          commissionIds: ['comm-1', 'comm-2', 'comm-3'],
-        };
-
-        // In real test:
-        // const response = await request(app)
-        //     .post(`${API_BASE}/superadmin/partner-settlements/approve-commissions`)
-        //     .set('Authorization', `Bearer ${superadminAuthToken}`)
-        //     .send(approvalData)
-        //     .expect(200);
-      });
-
-      it('should not allow non-SuperAdmin to approve', async () => {
-        // Verify 403 for partner/admin trying to approve
-      });
-    });
+    expect(created.name).toBe('Acme');
+    expect(calls.run).toHaveLength(1);
+    const [sql, params] = calls.run[0];
+    expect(String(sql)).toContain('INSERT INTO partners');
+    expect(params).toEqual(
+      expect.arrayContaining(['Acme', PARTNER_TYPES.RESELLER, JSON.stringify({ source: 'test' })])
+    );
   });
 
-  describe('Payout System', () => {
-    describe('Payout Request', () => {
-      it('should allow payout request when above threshold', async () => {
-        // Test flow:
-        // 1. Partner has approved commissions >= threshold
-        // 2. Partner requests payout
-        // 3. Verify payout is created with "pending" status
-        // In real test:
-        // const response = await request(app)
-        //     .post(`${API_BASE}/partners/payouts/request`)
-        //     .set('Authorization', `Bearer ${partnerAuthToken}`)
-        //     .send({ amount: 500 })
-        //     .expect(200);
-      });
-
-      it('should reject payout below minimum threshold', async () => {
-        // In real test:
-        // const response = await request(app)
-        //     .post(`${API_BASE}/partners/payouts/request`)
-        //     .set('Authorization', `Bearer ${partnerAuthToken}`)
-        //     .send({ amount: 50 }) // Below €100 threshold
-        //     .expect(400);
-      });
-
-      it('should require verified payout account', async () => {
-        // Test flow:
-        // 1. Partner has no verified payout account
-        // 2. Request payout
-        // 3. Verify error about missing payout account
-      });
+  it('getPartner parses metadata JSON and maps isActive', async () => {
+    const { db } = makeDb({
+      onGet: () => ({
+        id: 'p-1',
+        name: 'Partner',
+        partner_type: PARTNER_TYPES.SALES,
+        email: null,
+        contact_name: null,
+        default_revenue_share_percent: 10,
+        metadata: JSON.stringify({ tier: 'gold' }),
+        is_active: 0,
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z',
+      }),
     });
+    const service = new PartnerServiceClass({ db: db as any });
 
-    describe('Payout Processing', () => {
-      it('should allow SuperAdmin to process payout', async () => {
-        const payoutId = 'payout-123';
-
-        // In real test:
-        // const response = await request(app)
-        //     .post(`${API_BASE}/superadmin/partner-settlements/process-payout/${payoutId}`)
-        //     .set('Authorization', `Bearer ${superadminAuthToken}`)
-        //     .expect(200);
-      });
-
-      it('should mark payout as completed', async () => {
-        const payoutId = 'payout-123';
-
-        // In real test:
-        // const response = await request(app)
-        //     .post(`${API_BASE}/superadmin/partner-settlements/complete-payout/${payoutId}`)
-        //     .set('Authorization', `Bearer ${superadminAuthToken}`)
-        //     .expect(200);
-      });
-
-      it('should handle payout failure', async () => {
-        const payoutId = 'payout-123';
-
-        // In real test:
-        // const response = await request(app)
-        //     .post(`${API_BASE}/superadmin/partner-settlements/fail-payout/${payoutId}`)
-        //     .set('Authorization', `Bearer ${superadminAuthToken}`)
-        //     .send({ reason: 'Bank rejected transfer' })
-        //     .expect(200);
-      });
-    });
+    const partner = await service.getPartner('p-1');
+    expect(partner).toEqual(
+      expect.objectContaining({
+        id: 'p-1',
+        metadata: { tier: 'gold' },
+        isActive: false,
+      })
+    );
   });
 
-  describe('Partner Portal API', () => {
-    describe('Dashboard', () => {
-      it('should return dashboard summary for partner', async () => {
-        // In real test:
-        // const response = await request(app)
-        //     .get(`${API_BASE}/partners/dashboard`)
-        //     .set('Authorization', `Bearer ${partnerAuthToken}`)
-        //     .expect(200);
-      });
+  it('getPartners applies filters and returns mapped rows', async () => {
+    const { db, calls } = makeDb({
+      onAll: () => [
+        {
+          id: 'p-2',
+          name: 'B',
+          partner_type: PARTNER_TYPES.REFERRAL,
+          default_revenue_share_percent: 10,
+          metadata: null,
+          is_active: 1,
+          created_at: '2026-01-01T00:00:00.000Z',
+          updated_at: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    });
+    const service = new PartnerServiceClass({ db: db as any });
+
+    const rows = await service.getPartners({
+      partnerType: PARTNER_TYPES.REFERRAL,
+      isActive: true,
+      limit: 5,
+      offset: 10,
     });
 
-    describe('Metrics', () => {
-      it('should return metrics for partner', async () => {
-        // In real test:
-        // const response = await request(app)
-        //     .get(`${API_BASE}/partners/metrics`)
-        //     .set('Authorization', `Bearer ${partnerAuthToken}`)
-        //     .expect(200);
-      });
-    });
-
-    describe('Clients', () => {
-      it('should return referred clients list', async () => {
-        // In real test:
-        // const response = await request(app)
-        //     .get(`${API_BASE}/partners/clients`)
-        //     .set('Authorization', `Bearer ${partnerAuthToken}`)
-        //     .expect(200);
-      });
-    });
-
-    describe('Organization Profile', () => {
-      it('should return partner organization details', async () => {
-        // In real test:
-        // const response = await request(app)
-        //     .get(`${API_BASE}/partners/organization`)
-        //     .set('Authorization', `Bearer ${partnerAuthToken}`)
-        //     .expect(200);
-      });
-
-      it('should update partner organization details', async () => {
-        const updateData = {
-          name: 'Updated Partner Name',
-          contactEmail: 'new@partner.com',
-        };
-
-        // In real test:
-        // const response = await request(app)
-        //     .put(`${API_BASE}/partners/organization`)
-        //     .set('Authorization', `Bearer ${partnerAuthToken}`)
-        //     .send(updateData)
-        //     .expect(200);
-      });
-
-      it('should update specializations', async () => {
-        const updateData = {
-          specializations: ['DRD', 'SIRI', 'ADMA'],
-        };
-
-        // In real test:
-        // const response = await request(app)
-        //     .put(`${API_BASE}/partners/organization/specializations`)
-        //     .set('Authorization', `Bearer ${partnerAuthToken}`)
-        //     .send(updateData)
-        //     .expect(200);
-      });
-    });
-  });
-
-  describe('SuperAdmin Partner Config', () => {
-    it('should get commission rates', async () => {
-      // In real test:
-      // const response = await request(app)
-      //     .get(`${API_BASE}/superadmin/partner-config/commission-rates`)
-      //     .set('Authorization', `Bearer ${superadminAuthToken}`)
-      //     .expect(200);
-    });
-
-    it('should update commission rates', async () => {
-      const ratesData = {
-        REGISTERED: 11,
-        BRONZE: 13,
-        SILVER: 16,
-        GOLD: 19,
-        PLATINUM: 22,
-      };
-
-      // In real test:
-      // const response = await request(app)
-      //     .put(`${API_BASE}/superadmin/partner-config/commission-rates`)
-      //     .set('Authorization', `Bearer ${superadminAuthToken}`)
-      //     .send(ratesData)
-      //     .expect(200);
-    });
-
-    it('should update discount config', async () => {
-      const discountData = {
-        type: 'percentage',
-        value: 20,
-        durationMonths: 6,
-        maxValue: 1000,
-      };
-
-      // In real test:
-      // const response = await request(app)
-      //     .put(`${API_BASE}/superadmin/partner-config/discount`)
-      //     .set('Authorization', `Bearer ${superadminAuthToken}`)
-      //     .send(discountData)
-      //     .expect(200);
-    });
-  });
-});
-
-describe('Partner Portal - Security Tests', () => {
-  it('should require authentication for partner endpoints', async () => {
-    // Test without auth token
-    // Expect 401 for all /api/partners/* endpoints
-  });
-
-  it('should require partner role for partner endpoints', async () => {
-    // Test with non-partner token
-    // Expect 403 for /api/partners/* endpoints
-  });
-
-  it('should require superadmin role for settlement endpoints', async () => {
-    // Test with partner token
-    // Expect 403 for /api/superadmin/* endpoints
-  });
-
-  it('should validate referral code format', async () => {
-    // Test with invalid code formats
-    // Expect 400 for malformed codes
-  });
-
-  it('should prevent SQL injection in code lookup', async () => {
-    const maliciousCode = "'; DROP TABLE partner_organizations; --";
-    // Verify safe handling
-  });
-});
-
-describe('Partner Portal - Performance Tests', () => {
-  it('should handle concurrent click tracking', async () => {
-    // Simulate many concurrent clicks
-    // Verify all are tracked correctly
-  });
-
-  it('should efficiently query large attribution lists', async () => {
-    // Test with pagination
-    // Verify response time is acceptable
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.isActive).toBe(true);
+    const [sql, params] = calls.all[0];
+    expect(String(sql)).toContain('partner_type = ?');
+    expect(String(sql)).toContain('is_active = ?');
+    expect(String(sql)).toContain('LIMIT ?');
+    expect(String(sql)).toContain('OFFSET ?');
+    expect(params).toEqual([PARTNER_TYPES.REFERRAL, 1, 5, 10]);
   });
 });

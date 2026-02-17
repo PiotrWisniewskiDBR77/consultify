@@ -129,7 +129,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
       default:
         return {
           bg: 'bg-slate-300 dark:bg-slate-600',
-          text: 'text-slate-400 dark:text-slate-500',
+          text: 'text-slate-500 dark:text-slate-400 dark:text-slate-500',
           border: 'border-slate-300 dark:border-slate-600',
           connector: 'bg-slate-200 dark:bg-slate-700',
         };
@@ -186,7 +186,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                   <div className="hidden sm:block">
                     <span className={`text-xs font-medium ${colors.text}`}>{stage.label}</span>
                     {stage.id === 'IN_REVIEW' && reviewCount > 0 && (
-                      <span className="ml-1 text-xs text-slate-400 dark:text-slate-500">
+                      <span className="ml-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
                         ({completedReviews}/{reviewCount})
                       </span>
                     )}

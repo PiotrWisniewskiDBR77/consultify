@@ -122,7 +122,7 @@ export function AdminTable<T extends Record<string, any>>({
 
 /**
  * Status Badge component for use in tables
- * DBR77 Color System - See: docs/00_foundation/COLOR_SYSTEM_STANDARD.md
+ * DBR77 Color System - See: docs/ui-standards/00-foundation/color-system.md
  *
  * Variants:
  * - success: Zielony (Active, Healthy)

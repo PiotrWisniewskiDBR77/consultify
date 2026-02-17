@@ -234,7 +234,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
             </div>
             <button
               onClick={handleClose}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             >
               <X size={20} />
             </button>
@@ -303,7 +303,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                     }`}
                   >
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                      <span className="text-xs font-medium text-white">
+                      <span className="text-xs font-medium text-slate-900 dark:text-white">
                         {user.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
@@ -321,7 +321,7 @@ export const DelegationModal: React.FC<DelegationModalProps> = ({
                   </button>
                 ))}
                 {filteredUsers.length === 0 && (
-                  <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-4">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 text-center py-4">
                     {isPolish ? 'Brak dostępnych użytkowników' : 'No users available'}
                   </p>
                 )}

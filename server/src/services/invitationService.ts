@@ -24,6 +24,7 @@ import {
   RequestInfo,
   RESEND_COOLDOWN_MINUTES,
 } from './invitation/InvitationTypes.js';
+import { mapToCanonicalProjectRole } from './projectRoleCanon.js';
 
 // Dynamic imports
 let AccessPolicyService: any = null;
@@ -486,16 +487,62 @@ export class InvitationServiceClass {
       ]
     );
 
-    // Add to project
+    // Add to project (project invitation)
     if (invitation.invitation_type === INVITATION_TYPES.PROJECT && invitation.project_id) {
-      const metadata = JSON.parse(invitation.metadata || '{}') as { projectRole?: string };
-      const projectRole = metadata.projectRole || 'member';
+      const metadata = JSON.parse(invitation.metadata || '{}') as {
+        projectRole?: string;
+        consultantProfile?: string;
+        engagementType?: string;
+      };
 
-      await this.deps.db.run(
-        `INSERT OR REPLACE INTO project_users (project_id, user_id, role, assigned_at)
-                 VALUES (?, ?, ?, datetime('now'))`,
-        [invitation.project_id, userId, projectRole]
-      );
+      const rawProjectRole = String(metadata.projectRole || 'member');
+      const canonicalProjectRole = mapToCanonicalProjectRole(rawProjectRole);
+      const projectRole = canonicalProjectRole || rawProjectRole;
+
+      // Canonical membership table (preferred)
+      try {
+        const memberId = this.deps.uuidv4();
+        await this.deps.db.run(
+          `INSERT OR REPLACE INTO project_members (id, project_id, user_id, project_role, allocation_percent, permissions, added_by_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            memberId,
+            invitation.project_id,
+            userId,
+            projectRole,
+            100,
+            '{}',
+            invitation.invited_by || null,
+          ]
+        );
+
+        // Best-effort consultant overlay columns (migration 542)
+        const consultantProfile = String(metadata.consultantProfile || 'NONE');
+        const engagementType = String(metadata.engagementType || 'INTERNAL');
+        try {
+          await this.deps.db.run(
+            `UPDATE project_members
+             SET consultant_profile = ?, engagement_type = ?, updated_at = datetime('now')
+             WHERE project_id = ? AND user_id = ?`,
+            [consultantProfile, engagementType, invitation.project_id, userId]
+          );
+        } catch {
+          // ignore if columns don't exist
+        }
+      } catch {
+        // ignore if project_members doesn't exist
+      }
+
+      // Legacy membership table (backward compatibility)
+      try {
+        await this.deps.db.run(
+          `INSERT OR REPLACE INTO project_users (project_id, user_id, role, assigned_at)
+           VALUES (?, ?, ?, datetime('now'))`,
+          [invitation.project_id, userId, rawProjectRole]
+        );
+      } catch {
+        // ignore
+      }
     }
 
     // Mark accepted

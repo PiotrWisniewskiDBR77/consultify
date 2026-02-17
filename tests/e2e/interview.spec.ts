@@ -88,7 +88,9 @@ test.describe('Interview API - v2.0', () => {
   const EMAIL = 'piotr.wisniewski@dbr77.com';
   const PASSWORD = '123456';
 
-  async function login(request: any): Promise<{ token: string; userId: string; projectId: string }> {
+  async function login(
+    request: any
+  ): Promise<{ token: string; userId: string; projectId: string }> {
     const res = await request.post('/api/auth/login', {
       data: { email: EMAIL, password: PASSWORD },
     });
@@ -102,7 +104,9 @@ test.describe('Interview API - v2.0', () => {
     });
     expect(projectsRes.ok()).toBeTruthy();
     const projects = await projectsRes.json();
-    const preferred = Array.isArray(projects) ? projects.find((p: any) => p?.id === 'project-dbr77-001') : null;
+    const preferred = Array.isArray(projects)
+      ? projects.find((p: any) => p?.id === 'project-dbr77-001')
+      : null;
     const projectId = (preferred?.id || projects?.[0]?.id) as string;
     expect(projectId).toBeTruthy();
 

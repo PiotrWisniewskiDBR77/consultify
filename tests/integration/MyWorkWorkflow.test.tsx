@@ -1,36 +1,62 @@
-/**
- * MyWork Workflow Integration Tests - Simplified
- */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-describe('MyWork Workflow', () => {
-  it('should display task list', () => {
-    const tasks = [{ id: 'task-1', title: 'Review document', status: 'pending' }];
-    expect(tasks.length).toBeGreaterThan(0);
+import { evaluateGatePolicy } from '../../server/src/services/workflow/gatePolicy.js';
+
+describe('MyWork Workflow (gatePolicy) - REAL_CODE', () => {
+  const base = {
+    contextType: 'interview_assignment',
+    user: { id: 'u-1', organizationId: 'org-1' },
+    context: { assignment: { session_id: 's-1', status: 'in_progress' } },
+  } as const;
+
+  it('denies SUBMIT_INTERVIEW when assignment has no session', () => {
+    const decision = evaluateGatePolicy({
+      ...base,
+      action: 'SUBMIT_INTERVIEW',
+      context: { assignment: { status: 'in_progress' } },
+    });
+    expect(decision).toEqual(
+      expect.objectContaining({ allow: false, code: 'MISSING_DATA', error: expect.any(String) })
+    );
   });
 
-  it('should filter by status', () => {
-    const filtered = [{ status: 'pending' }];
-    expect(filtered[0].status).toBe('pending');
+  it('denies SUBMIT_INTERVIEW when status is not in_progress', () => {
+    const decision = evaluateGatePolicy({
+      ...base,
+      action: 'SUBMIT_INTERVIEW',
+      context: { assignment: { session_id: 's-1', status: 'submitted' } },
+    });
+    expect(decision).toEqual(
+      expect.objectContaining({ allow: false, code: 'INVALID_STATE', error: expect.any(String) })
+    );
   });
 
-  it('should update task status', () => {
-    const updated = { id: 'task-1', status: 'completed' };
-    expect(updated.status).toBe('completed');
+  it('allows SUBMIT_INTERVIEW when session exists and status is in_progress', () => {
+    const decision = evaluateGatePolicy({ ...base, action: 'SUBMIT_INTERVIEW' });
+    expect(decision).toEqual({ allow: true });
   });
 
-  it('should handle task assignment', () => {
-    const assigned = { taskId: 'task-1', userId: 'user-1' };
-    expect(assigned.userId).toBeDefined();
+  it('allows SEND_BACK_INTERVIEW only from submitted state', () => {
+    const ok = evaluateGatePolicy({
+      ...base,
+      action: 'SEND_BACK_INTERVIEW',
+      context: { assignment: { session_id: 's-1', status: 'submitted' } },
+    });
+    expect(ok).toEqual({ allow: true });
+
+    const bad = evaluateGatePolicy({ ...base, action: 'SEND_BACK_INTERVIEW' });
+    expect(bad).toEqual(expect.objectContaining({ allow: false }));
   });
 
-  it('should show task details', () => {
-    const details = {
-      id: 'task-1',
-      title: 'Review document',
-      description: 'Please review the attached document',
-      dueDate: '2026-01-15',
-    };
-    expect(details.description).toBeDefined();
+  it('defaults to FORBIDDEN for unknown context/action', () => {
+    const decision = evaluateGatePolicy({
+      action: 'SUBMIT_INTERVIEW',
+      contextType: 'task',
+      user: { id: 'u-1', organizationId: 'org-1' },
+      context: {},
+    });
+    expect(decision).toEqual(
+      expect.objectContaining({ allow: false, code: 'FORBIDDEN', error: expect.any(String) })
+    );
   });
 });

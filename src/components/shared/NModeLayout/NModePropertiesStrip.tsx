@@ -5,7 +5,7 @@
  * Renders a responsive grid of form fields (select, date, text, custom).
  * Supports alert border highlighting (e.g. overdue deadline).
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.4
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.4
  */
 
 import React from 'react';
@@ -20,6 +20,17 @@ interface NModePropertiesStripProps {
   maxColumns?: number;
 }
 
+// Static class map so Tailwind JIT can detect all variants at build time
+const LG_GRID_MAP: Record<number, string> = {
+  4: 'lg:grid-cols-4',
+  5: 'lg:grid-cols-5',
+  6: 'lg:grid-cols-6',
+  7: 'lg:grid-cols-7',
+  8: 'lg:grid-cols-8',
+  9: 'lg:grid-cols-9',
+  10: 'lg:grid-cols-10',
+};
+
 export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
   fields,
   maxColumns = 6,
@@ -27,10 +38,11 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
-  const gridClass = `grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-${maxColumns} gap-3`;
+  const lgCols = LG_GRID_MAP[maxColumns] || 'lg:grid-cols-6';
+  const gridClass = `grid grid-cols-2 sm:grid-cols-3 ${lgCols} gap-3`;
 
   return (
-    <div className="mb-4 p-4 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60">
+    <div className="mb-4 p-4 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
       <div className={gridClass}>
         {fields.map((field) => {
           // Tailwind needs static class names — map colSpan to known utilities
@@ -51,9 +63,9 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
                   value={field.value}
                   onChange={(e) => field.onChange(e.target.value)}
                   disabled={field.readOnly}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-navy-800 border ${
-                    field.alertBorderClass || 'border-slate-200/60 dark:border-navy-600/60'
-                  } text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors disabled:opacity-60`}
+                  className={`w-full h-8 px-2.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-800 border ${
+                    field.alertBorderClass || 'border-slate-300/60 dark:border-navy-600/40'
+                  } text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors disabled:opacity-60`}
                 >
                   {(field.options || []).map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -68,9 +80,9 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
                   value={field.value}
                   onChange={(e) => field.onChange(e.target.value)}
                   readOnly={field.readOnly}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border ${
-                    field.alertBorderClass || 'border-slate-200/60 dark:border-navy-600/60'
-                  } text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors`}
+                  className={`w-full h-8 px-2.5 rounded-lg text-xs bg-white dark:bg-navy-800 border ${
+                    field.alertBorderClass || 'border-slate-300/60 dark:border-navy-600/40'
+                  } text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors`}
                 />
               ) : (
                 /* Text field */
@@ -86,9 +98,9 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
                         : field.placeholder.en
                       : undefined
                   }
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border ${
-                    field.alertBorderClass || 'border-slate-200/60 dark:border-navy-600/60'
-                  } text-slate-700 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors`}
+                  className={`w-full h-8 px-2.5 rounded-lg text-xs bg-white dark:bg-navy-800 border ${
+                    field.alertBorderClass || 'border-slate-300/60 dark:border-navy-600/40'
+                  } text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary-400 transition-colors`}
                 />
               )}
             </div>

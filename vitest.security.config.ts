@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['tests/security/**/*.test.js'],
+    include: ['tests/security/**/*.test.{js,ts}'],
     exclude: ['node_modules/**'],
     env: {
       MOCK_DB: 'false',

@@ -6,7 +6,7 @@
  *
  * Follows DBR77 Visual Language — quiet UI, no heavy frames.
  *
- * @see docs/ui-standards/detail-view-presentation-modes.md §2.5.5
+ * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.5
  */
 
 import type { LucideIcon } from 'lucide-react';

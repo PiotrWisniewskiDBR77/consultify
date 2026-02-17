@@ -72,14 +72,15 @@ interface RaidItem {
 }
 
 // Tabs are built dynamically to include counts
-const getTabLabel = (id: DrawerTab, count?: number) => {
-  const labels: Record<DrawerTab, string> = {
-    overview: 'Overview',
-    timeline: 'Timeline',
-    resources: 'Resources',
-    decisions: 'Decisions',
+const getTabLabel = (t: (key: string) => string, id: DrawerTab, count?: number) => {
+  const keys: Record<DrawerTab, string> = {
+    overview: 'initiatives.drawer.overview',
+    timeline: 'initiatives.drawer.timeline',
+    resources: 'initiatives.drawer.resources',
+    decisions: 'initiatives.drawer.decisions',
   };
-  return count && count > 0 ? `${labels[id]} (${count})` : labels[id];
+  const label = t(keys[id]);
+  return count && count > 0 ? `${label} (${count})` : label;
 };
 
 const TAB_ICONS: Record<DrawerTab, React.ReactNode> = {
@@ -100,21 +101,21 @@ const TAB_ICONS: Record<DrawerTab, React.ReactNode> = {
 const GATE_DEFINITIONS = [
   {
     id: 'GO_NO_GO',
-    label: 'Go/No-Go',
+    tKey: 'goNoGo' as const,
     forStatus: 'REVIEW',
     targetStatus: 'PROMOTED',
     pmoDomain: 'GOVERNANCE_DECISION_MAKING',
   },
   {
     id: 'RESOURCES_COMMIT',
-    label: 'Resources Commit',
+    tKey: 'resourcesCommit' as const,
     forStatus: 'PROMOTED',
     targetStatus: 'PLANNING',
     pmoDomain: 'RESOURCE_RESPONSIBILITY',
   },
   {
     id: 'SCHEDULE_LOCK',
-    label: 'Schedule Lock',
+    tKey: 'scheduleLock' as const,
     forStatus: 'APPROVED',
     targetStatus: 'SCHEDULED',
     pmoDomain: 'SCHEDULE_MILESTONES',
@@ -128,6 +129,7 @@ const DrawerRaidList: React.FC<{ items: RaidItem[]; maxVisible?: number }> = ({
   items,
   maxVisible = 3,
 }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? items : items.slice(0, maxVisible);
   const hasMore = items.length > maxVisible;
@@ -136,7 +138,7 @@ const DrawerRaidList: React.FC<{ items: RaidItem[]; maxVisible?: number }> = ({
     <div className="space-y-2">
       {visible.map((item) => (
         <div key={item.id} className="flex items-center justify-between text-sm">
-          <div className="text-slate-200 truncate pr-2">{item.title}</div>
+          <div className="text-slate-700 dark:text-slate-200 truncate pr-2">{item.title}</div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {item.severity && (
               <span
@@ -149,7 +151,9 @@ const DrawerRaidList: React.FC<{ items: RaidItem[]; maxVisible?: number }> = ({
                 {item.severity}
               </span>
             )}
-            <span className="text-[10px] text-slate-400 uppercase">{item.type}</span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">
+              {item.type}
+            </span>
           </div>
         </div>
       ))}
@@ -158,7 +162,9 @@ const DrawerRaidList: React.FC<{ items: RaidItem[]; maxVisible?: number }> = ({
           onClick={() => setExpanded(!expanded)}
           className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
         >
-          {expanded ? 'Show less' : `Show ${items.length - maxVisible} more…`}
+          {expanded
+            ? t('initiatives.drawer.showLess')
+            : t('initiatives.drawer.showMore', { count: items.length - maxVisible })}
         </button>
       )}
     </div>
@@ -172,13 +178,14 @@ const DrawerDependenciesList: React.FC<{ dependencies: any[]; maxVisible?: numbe
   dependencies,
   maxVisible = 3,
 }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? dependencies : dependencies.slice(0, maxVisible);
   const hasMore = dependencies.length > maxVisible;
 
   return (
-    <div className="pt-4 border-t border-navy-700">
-      <h4 className="text-xs font-semibold text-slate-400 uppercase mb-3 flex items-center justify-between">
+    <div className="pt-4 border-t border-slate-200 dark:border-navy-700">
+      <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3 flex items-center justify-between">
         <span>Dependencies</span>
         <span className="text-slate-500 font-normal">{dependencies.length}</span>
       </h4>
@@ -186,7 +193,7 @@ const DrawerDependenciesList: React.FC<{ dependencies: any[]; maxVisible?: numbe
         {visible.map((dep: any) => (
           <div
             key={dep.initiativeId || dep.id}
-            className="flex items-center gap-2 p-2 bg-navy-900/50 rounded-lg text-sm text-slate-300"
+            className="flex items-center gap-2 p-2 bg-white/50 dark:bg-navy-900/50 rounded-lg text-sm text-slate-700 dark:text-slate-300"
           >
             <ChevronRight size={14} className="text-slate-500 flex-shrink-0" />
             <span className="truncate">Depends on: {dep.name || dep.initiativeId}</span>
@@ -198,7 +205,9 @@ const DrawerDependenciesList: React.FC<{ dependencies: any[]; maxVisible?: numbe
           onClick={() => setExpanded(!expanded)}
           className="mt-2 text-xs text-purple-400 hover:text-purple-300 transition-colors"
         >
-          {expanded ? 'Show less' : `Show ${dependencies.length - maxVisible} more…`}
+          {expanded
+            ? t('initiatives.drawer.showLess')
+            : t('initiatives.drawer.showMore', { count: dependencies.length - maxVisible })}
         </button>
       )}
     </div>
@@ -356,11 +365,15 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         {/* Gate readiness */}
         <div
           className={`p-4 rounded-xl border ${
-            isGateReady ? 'bg-navy-900/50 border-navy-700' : 'bg-amber-900/10 border-amber-500/20'
+            isGateReady
+              ? 'bg-white/50 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700'
+              : 'bg-amber-900/10 border-amber-500/20'
           }`}
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-400 uppercase">Quick review</span>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+              {t('initiatives.drawer.quickReview')}
+            </span>
             <span
               className={`px-2 py-0.5 text-xs font-medium rounded ${statusMeta?.bgColor} ${statusMeta?.color}`}
             >
@@ -370,8 +383,10 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
 
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-sm font-medium text-white">Gate readiness</div>
-              <div className="text-xs text-slate-400 mt-0.5">
+              <div className="text-sm font-medium text-slate-900 dark:text-white">
+                {t('initiatives.drawer.gateReadiness')}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {requiredGates.length === 0
                   ? 'No gate required for current status.'
                   : isGateReady
@@ -384,7 +399,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                 onClick={() => setActiveTab('decisions')}
                 className="text-xs text-purple-400 hover:text-purple-300"
               >
-                View decisions
+                {t('initiatives.drawer.viewDecisions')}
               </button>
             )}
           </div>
@@ -396,9 +411,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                 const ok = status === 'APPROVED';
                 return (
                   <div key={gate.id} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2 text-slate-300">
+                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                       <Scale size={14} className={ok ? 'text-emerald-400' : 'text-amber-400'} />
-                      <span>{gate.label}</span>
+                      <span>{t(`initiatives.drawer.${gate.tKey}`)}</span>
                     </div>
                     <span
                       className={`px-2 py-0.5 text-[10px] font-medium rounded ${
@@ -406,10 +421,10 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                           ? 'bg-emerald-500/20 text-emerald-400'
                           : status === 'PENDING'
                             ? 'bg-amber-500/20 text-amber-400'
-                            : 'bg-slate-500/20 text-slate-400'
+                            : 'bg-slate-500/20 text-slate-500 dark:text-slate-400'
                       }`}
                     >
-                      {status === 'MISSING' ? 'Not requested' : status}
+                      {status === 'MISSING' ? t('initiatives.drawer.notRequested') : status}
                     </span>
                   </div>
                 );
@@ -420,54 +435,58 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
 
         {/* Summary */}
         <div>
-          <h4 className="text-xs font-semibold text-slate-400 uppercase mb-2">Summary</h4>
-          <p className="text-sm text-slate-300 leading-relaxed">
-            {initiative.summary || initiative.description || 'No summary provided.'}
+          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
+            {t('initiatives.drawer.summary')}
+          </h4>
+          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            {initiative.summary || initiative.description || t('initiatives.drawer.noSummary')}
           </p>
         </div>
 
         {/* Key Metrics */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 bg-navy-900/50 rounded-lg border border-navy-700">
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+          <div className="p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-1">
               <Target size={12} />
-              Progress
+              {t('initiatives.drawer.progress')}
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex-1 h-1.5 bg-navy-700 rounded-full overflow-hidden">
+              <div className="flex-1 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-purple-500 rounded-full"
                   style={{ width: `${initiative.progress || 0}%` }}
                 />
               </div>
-              <span className="text-sm font-semibold text-white">{initiative.progress || 0}%</span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                {initiative.progress || 0}%
+              </span>
             </div>
           </div>
 
-          <div className="p-3 bg-navy-900/50 rounded-lg border border-navy-700">
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+          <div className="p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-1">
               <TrendingUp size={12} />
-              ROI
+              {t('initiatives.drawer.roi')}
             </div>
             <div className="text-lg font-semibold text-green-400">
               {initiative.expectedRoi ? `${initiative.expectedRoi.toFixed(1)}x` : '-'}
             </div>
           </div>
 
-          <div className="p-3 bg-navy-900/50 rounded-lg border border-navy-700">
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+          <div className="p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-1">
               <DollarSign size={12} />
-              Budget
+              {t('initiatives.drawer.budget')}
             </div>
-            <div className="text-sm font-semibold text-white">
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">
               {formatCurrency(initiative.budget || (initiative as any).costCapex)}
             </div>
           </div>
 
-          <div className="p-3 bg-navy-900/50 rounded-lg border border-navy-700">
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+          <div className="p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-1">
               <Flag size={12} />
-              Priority
+              {t('initiatives.drawer.priority')}
             </div>
             <div
               className={`text-sm font-semibold ${
@@ -477,7 +496,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                     ? 'text-orange-400'
                     : initiative.priority === 'MEDIUM'
                       ? 'text-amber-400'
-                      : 'text-slate-400'
+                      : 'text-slate-500 dark:text-slate-400'
               }`}
             >
               {initiative.priority || 'Medium'}
@@ -486,28 +505,32 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         </div>
 
         {/* Timeline */}
-        <div className="p-3 bg-navy-900/50 rounded-lg border border-navy-700">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-2">
+        <div className="p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-2">
             <Calendar size={12} />
-            Timeline
+            {t('initiatives.drawer.timeline')}
           </div>
           <div className="flex items-center justify-between text-sm">
             <div>
-              <span className="text-slate-500">Start: </span>
-              <span className="text-white">{formatDate(initiative.plannedStartDate)}</span>
+              <span className="text-slate-500">{t('initiatives.drawer.start')} </span>
+              <span className="text-slate-900 dark:text-white">
+                {formatDate(initiative.plannedStartDate)}
+              </span>
             </div>
             <ChevronRight size={14} className="text-slate-600" />
             <div>
-              <span className="text-slate-500">End: </span>
-              <span className="text-white">{formatDate(initiative.plannedEndDate)}</span>
+              <span className="text-slate-500">{t('initiatives.drawer.end')} </span>
+              <span className="text-slate-900 dark:text-white">
+                {formatDate(initiative.plannedEndDate)}
+              </span>
             </div>
           </div>
-          <div className="flex items-center justify-between text-xs text-slate-400 mt-2">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mt-2">
             <span className="flex items-center gap-1.5">
               <Milestone size={12} />
-              Next milestone
+              {t('initiatives.drawer.nextMilestone')}
             </span>
-            <span className="text-slate-200">
+            <span className="text-slate-700 dark:text-slate-200">
               {nextMilestone
                 ? `${nextMilestone.name} · ${formatDate(nextMilestone.targetDate)}`
                 : '-'}
@@ -516,18 +539,18 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         </div>
 
         {/* Top RAID — B7.3: truncated with Show more */}
-        <div className="p-3 bg-navy-900/50 rounded-lg border border-navy-700">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+        <div className="p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-2">
             <span className="flex items-center gap-1.5">
               <AlertTriangle size={12} />
-              Top risks / issues
+              {t('initiatives.drawer.topRisks')}
             </span>
             {raidItems.length > 0 && (
               <span className="text-[10px] text-slate-500">{raidItems.length}</span>
             )}
           </div>
           {raidItems.length === 0 ? (
-            <div className="text-sm text-slate-500">No RAID items yet.</div>
+            <div className="text-sm text-slate-500">{t('initiatives.drawer.noRaidItems')}</div>
           ) : (
             <DrawerRaidList items={raidItems} maxVisible={3} />
           )}
@@ -544,7 +567,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                 className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-colors ${
                   action.variant === 'primary'
                     ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                    : 'bg-navy-800 hover:bg-navy-700 text-slate-300'
+                    : 'bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300'
                 } disabled:opacity-50`}
               >
                 {action.label}
@@ -563,7 +586,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
       <div className="space-y-5">
         {/* Timeline Header */}
         <div className="flex items-center justify-between">
-          <h4 className="text-xs font-semibold text-slate-400 uppercase">Milestones</h4>
+          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+            Milestones
+          </h4>
           {milestones.length > 0 && (
             <button
               onClick={() => onOpenWider(initiative)}
@@ -586,7 +611,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
               <div
                 key={milestone.id}
                 className={`relative pl-6 pb-4 ${
-                  idx < milestones.length - 1 ? 'border-l-2 border-navy-700' : ''
+                  idx < milestones.length - 1
+                    ? 'border-l-2 border-slate-200 dark:border-navy-700'
+                    : ''
                 }`}
               >
                 <div
@@ -600,16 +627,18 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                           : 'bg-navy-600'
                   }`}
                 />
-                <div className="bg-navy-900/50 rounded-lg p-3 border border-navy-700">
+                <div className="bg-white/50 dark:bg-navy-900/50 rounded-lg p-3 border border-slate-200 dark:border-navy-700">
                   <div className="flex items-center justify-between mb-1">
-                    <h5 className="text-sm font-medium text-white">{milestone.name}</h5>
+                    <h5 className="text-sm font-medium text-slate-900 dark:text-white">
+                      {milestone.name}
+                    </h5>
                     {milestone.isGate && (
                       <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-500/20 text-amber-400 rounded">
                         Gate
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-slate-400">
+                  <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                     <span className="flex items-center gap-1">
                       <Clock size={10} />
                       {formatDate(milestone.targetDate)}
@@ -622,7 +651,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                             ? 'bg-blue-500/20 text-blue-400'
                             : milestone.status === 'DELAYED'
                               ? 'bg-red-500/20 text-red-400'
-                              : 'bg-slate-500/20 text-slate-400'
+                              : 'bg-slate-500/20 text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       {milestone.status}
@@ -649,10 +678,12 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
       <div className="space-y-5">
         {/* Owners */}
         <div>
-          <h4 className="text-xs font-semibold text-slate-400 uppercase mb-3">Ownership</h4>
+          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
+            Ownership
+          </h4>
           <div className="space-y-3">
             {/* Business Owner */}
-            <div className="flex items-center gap-3 p-3 bg-navy-900/50 rounded-lg border border-navy-700">
+            <div className="flex items-center gap-3 p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700">
               {initiative.ownerBusiness ? (
                 <>
                   <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-sm font-medium text-purple-300">
@@ -667,10 +698,10 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                     )}
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-white">
+                    <div className="text-sm font-medium text-slate-900 dark:text-white">
                       {initiative.ownerBusiness.firstName} {initiative.ownerBusiness.lastName}
                     </div>
-                    <div className="text-xs text-slate-400">Business Owner</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">Business Owner</div>
                   </div>
                 </>
               ) : (
@@ -682,7 +713,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
             </div>
 
             {/* Execution Owner */}
-            <div className="flex items-center gap-3 p-3 bg-navy-900/50 rounded-lg border border-navy-700">
+            <div className="flex items-center gap-3 p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700">
               {initiative.ownerExecution ? (
                 <>
                   <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-sm font-medium text-blue-300">
@@ -697,10 +728,12 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                     )}
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-white">
+                    <div className="text-sm font-medium text-slate-900 dark:text-white">
                       {initiative.ownerExecution.firstName} {initiative.ownerExecution.lastName}
                     </div>
-                    <div className="text-xs text-slate-400">Execution Owner</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      Execution Owner
+                    </div>
                   </div>
                 </>
               ) : (
@@ -714,18 +747,20 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         </div>
 
         {/* Capacity */}
-        <div className="p-4 bg-navy-900/50 rounded-xl border border-navy-700">
-          <h4 className="text-xs font-semibold text-slate-400 uppercase mb-3">Resource Capacity</h4>
+        <div className="p-4 bg-white/50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700">
+          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
+            Resource Capacity
+          </h4>
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-400">Required FTE</span>
-              <span className="text-white font-medium">
+              <span className="text-slate-500 dark:text-slate-400">Required FTE</span>
+              <span className="text-slate-900 dark:text-white font-medium">
                 {(initiative as any).required_capacity_fte || '0'} FTE
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-400">Allocated FTE</span>
-              <span className="text-white font-medium">
+              <span className="text-slate-500 dark:text-slate-400">Allocated FTE</span>
+              <span className="text-slate-900 dark:text-white font-medium">
                 {(initiative as any).allocated_capacity_fte || '0'} FTE
               </span>
             </div>
@@ -735,12 +770,12 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         {/* Team - link to full view */}
         <div className="text-center py-6 text-slate-500">
           <Users className="w-10 h-10 mx-auto mb-2 opacity-50" />
-          <p className="text-sm mb-2">Manage team members in full view</p>
+          <p className="text-sm mb-2">{t('initiatives.drawer.manageTeam')}</p>
           <button
             onClick={() => onOpenWider(initiative)}
             className="text-xs text-purple-400 hover:text-purple-300"
           >
-            Open full card
+            {t('initiatives.drawer.openFullCard')}
           </button>
         </div>
       </div>
@@ -755,29 +790,33 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         {/* Gate Decisions */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-semibold text-slate-400 uppercase">Gate Decisions</h4>
+            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+              {t('initiatives.drawer.gateDecisions')}
+            </h4>
             <button
               onClick={() => onOpenWider(initiative)}
               className="text-xs text-purple-400 hover:text-purple-300"
             >
-              + Request Decision
+              {t('initiatives.drawer.requestDecision')}
             </button>
           </div>
 
           {decisions.length === 0 ? (
             <div className="text-center py-8 text-slate-500">
               <Scale className="w-10 h-10 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No decisions linked to this initiative</p>
+              <p className="text-sm">{t('initiatives.drawer.noDecisions')}</p>
             </div>
           ) : (
             <div className="space-y-2">
               {decisions.map((decision) => (
                 <div
                   key={decision.id}
-                  className="p-3 bg-navy-900/50 rounded-lg border border-navy-700 hover:border-purple-500/30 cursor-pointer transition-colors"
+                  className="p-3 bg-white/50 dark:bg-navy-900/50 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-500/30 cursor-pointer transition-colors"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <h5 className="text-sm font-medium text-white">{decision.title}</h5>
+                    <h5 className="text-sm font-medium text-slate-900 dark:text-white">
+                      {decision.title}
+                    </h5>
                     <span
                       className={`px-2 py-0.5 text-[10px] font-medium rounded ${
                         decision.status === 'APPROVED'
@@ -790,7 +829,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                       {decision.status}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-slate-400">
+                  <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                     <span className="capitalize">
                       {decision.type?.toLowerCase().replace(/_/g, ' ')}
                     </span>
@@ -808,20 +847,22 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
         </div>
 
         {/* Gate Requirements Info */}
-        <div className="p-4 bg-slate-800/30 rounded-xl border border-navy-700">
-          <h4 className="text-xs font-semibold text-slate-400 uppercase mb-3">Gate Requirements</h4>
-          <div className="space-y-2 text-xs text-slate-400">
+        <div className="p-4 bg-slate-200/30 dark:bg-slate-800/30 rounded-xl border border-slate-200 dark:border-navy-700">
+          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">
+            Gate Requirements
+          </h4>
+          <div className="space-y-2 text-xs text-slate-500 dark:text-slate-400">
             <p>
-              <strong className="text-slate-300">REVIEW → PROMOTED:</strong> Requires Go/No-Go
-              decision
+              <strong className="text-slate-700 dark:text-slate-300">REVIEW → PROMOTED:</strong>{' '}
+              Requires Go/No-Go decision
             </p>
             <p>
-              <strong className="text-slate-300">PROMOTED → PLANNING:</strong> Requires Resources
-              Commit decision
+              <strong className="text-slate-700 dark:text-slate-300">PROMOTED → PLANNING:</strong>{' '}
+              Requires Resources Commit decision
             </p>
             <p>
-              <strong className="text-slate-300">APPROVED → SCHEDULED:</strong> Requires Schedule
-              Lock decision + planned dates
+              <strong className="text-slate-700 dark:text-slate-300">APPROVED → SCHEDULED:</strong>{' '}
+              Requires Schedule Lock decision + planned dates
             </p>
           </div>
         </div>
@@ -858,18 +899,19 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
 
       {/* Drawer Panel - 50% width */}
       <div
-        className={`fixed top-0 right-0 h-full w-1/2 max-w-3xl min-w-[480px] bg-navy-950 shadow-2xl z-50 transform transition-transform duration-300 ease-out border-l border-navy-700 ${
+        className={`fixed top-0 right-0 h-full w-1/2 max-w-3xl min-w-[480px] bg-slate-50 dark:bg-navy-950 shadow-2xl z-50 transform transition-transform duration-300 ease-out border-l border-slate-200 dark:border-navy-700 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <div className="h-full flex flex-col">
           {/* Header */}
-          <div className="shrink-0 px-6 py-4 border-b border-navy-700 bg-navy-900/50">
+          <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-white/50 dark:bg-navy-900/50">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0 pr-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs text-slate-400 uppercase tracking-wide">
-                    {initiative.axis?.replace(/([A-Z])/g, ' $1').trim() || 'Initiative'}
+                  <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                    {initiative.axis?.replace(/([A-Z])/g, ' $1').trim() ||
+                      t('initiatives.drawer.initiative')}
                   </span>
                   {initiative.targetQuarter && (
                     <span className="px-2 py-0.5 text-[10px] font-medium bg-purple-500/20 text-purple-300 rounded">
@@ -877,20 +919,22 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                     </span>
                   )}
                 </div>
-                <h2 className="text-xl font-bold text-white line-clamp-2">{initiative.name}</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white line-clamp-2">
+                  {initiative.name}
+                </h2>
               </div>
 
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => onOpenWider(initiative)}
-                  className="p-2 text-slate-400 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"
+                  className="p-2 text-slate-500 dark:text-slate-400 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"
                   title="Open wider"
                 >
                   <Maximize2 size={18} />
                 </button>
                 <button
                   onClick={onClose}
-                  className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                 >
                   <X size={18} />
                 </button>
@@ -899,7 +943,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
           </div>
 
           {/* Tabs */}
-          <div className="shrink-0 px-6 py-2 border-b border-navy-700 bg-navy-900/30">
+          <div className="shrink-0 px-6 py-2 border-b border-slate-200 dark:border-navy-700 bg-white/30 dark:bg-navy-900/30">
             <div className="flex items-center gap-1">
               {(['overview', 'timeline', 'resources', 'decisions'] as DrawerTab[]).map((tabId) => {
                 const count =
@@ -915,11 +959,11 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                     className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                       activeTab === tabId
                         ? 'bg-purple-500/20 text-purple-400'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                     }`}
                   >
                     {TAB_ICONS[tabId]}
-                    {getTabLabel(tabId, count)}
+                    {getTabLabel(t, tabId, count)}
                   </button>
                 );
               })}
@@ -930,13 +974,13 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
           <div className="flex-1 overflow-y-auto p-6">{renderTabContent()}</div>
 
           {/* Footer - Open wider button */}
-          <div className="shrink-0 px-6 py-4 border-t border-navy-700 bg-navy-900/30">
+          <div className="shrink-0 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-white/30 dark:bg-navy-900/30">
             <button
               onClick={() => onOpenWider(initiative)}
               className="w-full flex items-center justify-center gap-2 py-3 text-sm font-medium text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 rounded-lg transition-colors"
             >
               <ExternalLink size={16} />
-              Open full card
+              {t('initiatives.drawer.openFullCard')}
             </button>
           </div>
         </div>

@@ -159,7 +159,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
             >
               <X size={20} />
             </button>
@@ -186,7 +186,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
             </div>
           ) : users.length === 0 ? (
             <div className="text-center py-8">
-              <Users className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <Users className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
               <p className="text-slate-500 dark:text-slate-400">
                 Brak użytkowników z uprawnieniami do recenzji
               </p>
@@ -205,14 +205,14 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
                 >
                   Zaznacz wszystkich
                 </button>
-                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span className="text-slate-500 dark:text-slate-600">|</span>
                 <button
                   onClick={clearSelection}
                   className="text-xs text-slate-500 dark:text-slate-400 hover:underline"
                 >
                   Wyczyść wybór
                 </button>
-                <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
+                <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
                   Wybrano: {selectedReviewers.length}
                 </span>
               </div>
@@ -222,7 +222,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
                 {Object.entries(groupedUsers).map(([dept, deptUsers]) => (
                   <div key={dept}>
                     {Object.keys(groupedUsers).length > 1 && (
-                      <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                         {dept}
                       </p>
                     )}

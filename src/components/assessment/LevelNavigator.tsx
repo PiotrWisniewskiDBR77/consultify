@@ -75,7 +75,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
                 {statusDot}
                 <span className={`text-lg font-bold ${isActive ? 'text-white' : ''}`}>{key}</span>
                 <span
-                  className={`text-[9px] font-medium uppercase tracking-wide ${isActive ? 'text-purple-200' : 'text-slate-400 dark:text-slate-500'}`}
+                  className={`text-[9px] font-medium uppercase tracking-wide ${isActive ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
                 >
                   {t('common.level')}
                 </span>
@@ -104,7 +104,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
         <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
           {t('assessment.workspace.maturityLevels')}
         </h3>
-        <p className="text-[10px] text-slate-400 dark:text-slate-500">
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
           {t('assessment.workspace.levelDetailsHint')}
         </p>
       </div>
@@ -175,7 +175,7 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
               </div>
               {/* Short preview of title if available in levels prop, otherwise generic */}
               <div
-                className={`text-xs truncate ml-9 ${isActive ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}
+                className={`text-xs truncate ml-9 ${isActive ? 'text-slate-600 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'}`}
               >
                 {levels[key] || `Level ${key} Description`}
               </div>

@@ -17,26 +17,33 @@ let config;
 
 if (process.env.DATABASE_URL) {
   let connectionString = process.env.DATABASE_URL;
-  
+
   // Fix user in connection string if it's 'railway'
   if (connectionString.includes('railway@') && !connectionString.includes('postgres@')) {
     connectionString = connectionString.replace(/railway@/g, 'postgres@');
     console.log('[Fix] Updated DATABASE_URL to use postgres user');
   }
-  
+
   config = {
     connectionString: connectionString,
     ssl: false,
   };
 } else {
   config = {
-    host: process.env.DB_HOST || 'caboose.proxy.rlwy.net',
-    port: parseInt(process.env.DB_PORT || '15646', 10),
-    database: process.env.DB_NAME || 'railway',
-    user: 'postgres',
-    password: process.env.DB_PASSWORD || 'l5jjc8wrhxmkuxlsuvc7ic1j998gbp5l',
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT || '5432', 10),
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
     ssl: false,
   };
+
+  if (!config.host || !config.database || !config.user || !config.password) {
+    console.error(
+      '❌ Missing DB_* variables. Set DATABASE_URL or DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD.'
+    );
+    process.exit(1);
+  }
 }
 
 const pool = new Pool(config);
@@ -51,12 +58,12 @@ async function fixConversations() {
     const sql = fs.readFileSync(sqlFile, 'utf8');
 
     console.log('[Fix] Executing SQL to create conversations tables...');
-    
+
     // Execute the SQL
     await client.query(sql);
-    
+
     console.log('[Fix] ✅ Conversations tables created successfully!');
-    
+
     // Verify the table exists
     const result = await client.query(`
       SELECT EXISTS (
@@ -65,13 +72,12 @@ async function fixConversations() {
         AND table_name = 'conversations'
       );
     `);
-    
+
     if (result.rows[0].exists) {
       console.log('[Fix] ✅ Verified: conversations table exists');
     } else {
       console.log('[Fix] ⚠️  Warning: conversations table not found after creation');
     }
-    
   } catch (error) {
     console.error('[Fix] ❌ Error:', error.message);
     console.error('[Fix] Full error:', error);

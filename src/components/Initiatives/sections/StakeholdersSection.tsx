@@ -5,6 +5,8 @@
 import React from 'react';
 import toast from 'react-hot-toast';
 
+import { Api } from '@/services/api';
+
 import type {
   Stakeholder,
   StakeholderNotificationSettings,
@@ -21,6 +23,13 @@ export const StakeholdersSection: React.FC<InitiativeSectionProps> = ({
 }) => {
   const { stakeholders, setStakeholders, users, initiativeId, isPolish } = useInitiativeContext();
 
+  const toRaciLetter = (role: StakeholderRole): 'A' | 'R' | 'C' | 'I' => {
+    if (role === 'accountable') return 'A';
+    if (role === 'responsible') return 'R';
+    if (role === 'consulted') return 'C';
+    return 'I';
+  };
+
   return (
     <SharedStakeholdersSection
       stakeholders={stakeholders}
@@ -29,29 +38,50 @@ export const StakeholdersSection: React.FC<InitiativeSectionProps> = ({
         name: `${u.firstName} ${u.lastName}`,
         email: u.email,
       }))}
-      onAdd={(
+      onAdd={async (
         userId: string,
         role: StakeholderRole,
         notificationSettings: StakeholderNotificationSettings
       ) => {
         const user = users.find((u) => u.id === userId);
-        const newStakeholder: Stakeholder = {
-          id: Math.random().toString(36).substr(2, 9),
-          decisionId: initiativeId,
-          userId,
-          userName: user ? `${user.firstName} ${user.lastName}` : undefined,
-          userEmail: user?.email,
-          role,
-          notificationSettings,
-        };
-        setStakeholders([...stakeholders, newStakeholder]);
-        toast.success(isPolish ? 'Dodano interesariusza' : 'Stakeholder added');
+        try {
+          const res = await Api.post(`/initiatives/${initiativeId}/stakeholders`, {
+            userId,
+            // Persist RACI in raciType; backend maps to DB-safe role internally.
+            raciType: toRaciLetter(role),
+            role,
+            influenceLevel: 3,
+            interestLevel: 3,
+          });
+          const id = res?.id || res?.stakeholderId || Math.random().toString(36).substr(2, 9);
+          const newStakeholder: Stakeholder = {
+            id,
+            decisionId: initiativeId,
+            userId,
+            userName: user ? `${user.firstName} ${user.lastName}` : undefined,
+            userEmail: user?.email,
+            role,
+            notificationSettings,
+          };
+          setStakeholders([...stakeholders, newStakeholder]);
+          toast.success(isPolish ? 'Dodano interesariusza' : 'Stakeholder added');
+        } catch (e: any) {
+          toast.error(
+            e?.message ||
+              (isPolish ? 'Nie udało się dodać interesariusza' : 'Failed to add stakeholder')
+          );
+        }
       }}
       onUpdate={(id: string, updates: Partial<Stakeholder>) => {
         setStakeholders(stakeholders.map((s) => (s.id === id ? { ...s, ...updates } : s)));
       }}
-      onRemove={(id: string) => {
+      onRemove={async (id: string) => {
         setStakeholders(stakeholders.filter((s) => s.id !== id));
+        try {
+          await Api.delete(`/initiatives/${initiativeId}/stakeholders/${id}`);
+        } catch {
+          // best-effort
+        }
         toast.success(isPolish ? 'Usunięto interesariusza' : 'Stakeholder removed');
       }}
     />

@@ -32,6 +32,8 @@ import { Api } from '@/services/api';
 
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
+import { DecisionDetailView } from '../MyWork/DecisionDetailView';
+import { TaskDetailView } from '../MyWork/TaskDetailView';
 import {
   ASSESSMENT_STATUSES,
   FilterableTable,
@@ -284,8 +286,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
     if (assessmentId) {
       const fromList = assessments.find((a) => a.id === assessmentId);
-      if (fromList?.assessmentType) {
-        const framework = String(fromList.assessmentType).toLowerCase();
+      if (fromList?.type) {
+        const framework = String(fromList.type).toLowerCase();
         const next = new URLSearchParams(searchParams);
         next.delete('assessmentId');
         setSearchParams(next, { replace: true });
@@ -492,11 +494,16 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       })),
       render: (row) => {
         const meta = FRAMEWORK_META[row.framework as AssessmentFramework];
-        if (!meta) return <span className="text-xs text-slate-400">{row.framework}</span>;
+        if (!meta)
+          return (
+            <span className="text-xs text-slate-500 dark:text-slate-400">{row.framework}</span>
+          );
         return (
           <div className="flex items-center gap-2">
             <span className={`text-${meta.color}-400`}>{meta.icon}</span>
-            <span className="font-mono text-xs font-bold text-slate-300">{meta.shortName}</span>
+            <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+              {meta.shortName}
+            </span>
           </div>
         );
       },
@@ -504,7 +511,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     const nameCol: TableColumn = {
       id: 'name',
       label: 'Name',
-      render: (row) => <span className="text-sm text-white font-medium">{row.name}</span>,
+      render: (row) => (
+        <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
+      ),
     };
     const progressCol: TableColumn = { id: 'progress', label: 'Progress', width: '150px' };
     const updatedCol: TableColumn = {
@@ -544,7 +553,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           width: '200px',
           render: (row) => (
             <span
-              className="text-xs text-slate-400 truncate block max-w-[180px]"
+              className="text-xs text-slate-500 dark:text-slate-400 truncate block max-w-[180px]"
               title={row.sourceReport || ''}
             >
               {row.sourceReport || '—'}
@@ -702,6 +711,36 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
+  }, []);
+
+  const handleOpenTaskFromInitiative = useCallback((taskId: string) => {
+    const doc: OpenDocument = {
+      id: taskId,
+      type: 'task',
+      subType: 'TASK',
+      name: `Task ${taskId.slice(0, 8)}`,
+      status: 'DRAFT',
+    };
+    setOpenDocuments((prev) => {
+      if (prev.find((d) => d.id === doc.id)) return prev;
+      return [...prev, doc];
+    });
+    setActiveDocumentId(taskId);
+  }, []);
+
+  const handleOpenDecisionFromInitiative = useCallback((decisionId: string) => {
+    const doc: OpenDocument = {
+      id: decisionId,
+      type: 'decision',
+      subType: 'DECISION',
+      name: `Decision ${decisionId.slice(0, 8)}`,
+      status: 'DRAFT',
+    };
+    setOpenDocuments((prev) => {
+      if (prev.find((d) => d.id === doc.id)) return prev;
+      return [...prev, doc];
+    });
+    setActiveDocumentId(decisionId);
   }, []);
 
   const handleRemoveFilter = useCallback((id: string) => {
@@ -969,14 +1008,38 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     if (activeDocumentId) {
       const doc = openDocuments.find((d) => d.id === activeDocumentId);
 
+      // Show Task artifact in dynamic tab inside Assessment module
+      if (doc && doc.type === 'task') {
+        return (
+          <TaskDetailView
+            taskId={doc.id}
+            onClose={() => handleCloseDocument(doc.id)}
+            onSaved={() => refreshData()}
+          />
+        );
+      }
+
+      // Show Decision artifact in dynamic tab inside Assessment module
+      if (doc && doc.type === 'decision') {
+        return (
+          <DecisionDetailView
+            decisionId={doc.id}
+            onClose={() => handleCloseDocument(doc.id)}
+            onSaved={() => refreshData()}
+          />
+        );
+      }
+
       // Show Initiative Document View for initiatives
-      if (doc && (doc.type === 'initiative' || activeTab === 'initiatives')) {
+      if (doc && doc.type === 'initiative') {
         return (
           <InitiativeDocumentView
             initiativeId={doc.id}
             onBack={handleShowList}
             onStatusChange={refreshData}
             sourceModule="assessment"
+            onOpenTask={handleOpenTaskFromInitiative}
+            onOpenDecision={handleOpenDecisionFromInitiative}
           />
         );
       }
@@ -1128,7 +1191,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-slate-400">Loading assessments...</p>
+          <p className="text-slate-500 dark:text-slate-400">Loading assessments...</p>
         </div>
       </div>
     );
@@ -1232,16 +1295,18 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           />
           {/* Slide-over panel — compact width */}
           <div
-            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-navy-900 border-l border-navy-700 shadow-2xl overflow-hidden flex flex-col"
+            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden flex flex-col"
             style={{ animation: 'slideInRight 0.25s ease-out' }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-navy-700 bg-navy-800/80">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/80">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-purple-500/20 flex items-center justify-center">
                   <FileText size={14} className="text-purple-400" />
                 </div>
-                <h3 className="text-white font-semibold text-sm">Report Summary</h3>
+                <h3 className="text-slate-900 dark:text-white font-semibold text-sm">
+                  Report Summary
+                </h3>
               </div>
               <button
                 onClick={() => {
@@ -1251,7 +1316,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                     setSlideOverBuilderReportId(null);
                   }, 300);
                 }}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -1276,7 +1341,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             </div>
             {/* Sticky footer — Open Full Editor */}
             {slideOverReportId && (
-              <div className="shrink-0 px-5 py-4 border-t border-navy-700 bg-navy-900/95 backdrop-blur-sm">
+              <div className="shrink-0 px-5 py-4 border-t border-slate-200 dark:border-navy-700 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm">
                 <button
                   onClick={() => {
                     setSlideOverReportOpen(false);
@@ -1312,43 +1377,43 @@ const REPORT_STATUS_CONFIG: Record<
 > = {
   DRAFT: {
     label: 'Draft',
-    color: 'text-slate-300',
+    color: 'text-slate-600 dark:text-slate-300',
     bgColor: 'bg-slate-500/20 border-slate-500/30',
     icon: 'clock',
   },
   GENERATING: {
     label: 'Generating...',
-    color: 'text-amber-300',
+    color: 'text-amber-600 dark:text-amber-300',
     bgColor: 'bg-amber-500/20 border-amber-500/30',
     icon: 'spinner',
   },
   FINAL: {
     label: 'Final',
-    color: 'text-indigo-300',
+    color: 'text-indigo-600 dark:text-indigo-300',
     bgColor: 'bg-indigo-500/20 border-indigo-500/30',
     icon: 'check',
   },
   PENDING_APPROVAL: {
     label: 'Pending Approval',
-    color: 'text-amber-300',
+    color: 'text-amber-600 dark:text-amber-300',
     bgColor: 'bg-amber-500/20 border-amber-500/30',
     icon: 'clock',
   },
   APPROVED: {
     label: 'Approved',
-    color: 'text-emerald-300',
+    color: 'text-emerald-600 dark:text-emerald-300',
     bgColor: 'bg-emerald-500/20 border-emerald-500/30',
     icon: 'check',
   },
   REJECTED: {
     label: 'Rejected',
-    color: 'text-red-300',
+    color: 'text-red-600 dark:text-red-300',
     bgColor: 'bg-red-500/20 border-red-500/30',
     icon: 'clock',
   },
   UTILIZED: {
     label: 'Utilized',
-    color: 'text-cyan-300',
+    color: 'text-cyan-600 dark:text-cyan-300',
     bgColor: 'bg-cyan-500/20 border-cyan-500/30',
     icon: 'check',
   },
@@ -1511,11 +1576,13 @@ const ReportSlideOverContent: React.FC<{
     <div className="space-y-4">
       {/* Report title & framework */}
       <div>
-        <h4 className="text-white font-semibold text-base leading-snug mb-1.5">{reportName}</h4>
+        <h4 className="text-slate-900 dark:text-white font-semibold text-base leading-snug mb-1.5">
+          {reportName}
+        </h4>
         {frameworkMeta && (
           <div className="flex items-center gap-1.5">
             <span className={`text-${frameworkMeta.color}-400`}>{frameworkMeta.icon}</span>
-            <span className="text-xs text-slate-400">{frameworkMeta.name}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">{frameworkMeta.name}</span>
           </div>
         )}
       </div>
@@ -1546,17 +1613,19 @@ const ReportSlideOverContent: React.FC<{
       </div>
 
       {/* Key details */}
-      <div className="bg-navy-800/50 rounded-xl border border-navy-700/60 divide-y divide-navy-700/40">
+      <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl border border-slate-200/60 dark:border-navy-700/60 divide-y divide-slate-200/40 dark:divide-navy-700/40">
         {templateId && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
             <span className="text-xs text-slate-500">Template</span>
-            <span className="text-xs text-slate-300 font-medium">{templateId}</span>
+            <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+              {templateId}
+            </span>
           </div>
         )}
         {report.assessmentName && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
             <span className="text-xs text-slate-500">Source Assessment</span>
-            <span className="text-xs text-slate-300 font-medium truncate max-w-[180px]">
+            <span className="text-xs text-slate-700 dark:text-slate-300 font-medium truncate max-w-[180px]">
               {report.assessmentName}
             </span>
           </div>
@@ -1564,14 +1633,16 @@ const ReportSlideOverContent: React.FC<{
         {sectionCount > 0 && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
             <span className="text-xs text-slate-500">Sections</span>
-            <span className="text-xs text-slate-300 font-medium">{sectionCount}</span>
+            <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+              {sectionCount}
+            </span>
           </div>
         )}
         <div className="flex items-center justify-between px-3.5 py-2.5">
           <span className="text-xs text-slate-500 flex items-center gap-1">
             <Calendar size={11} /> Created
           </span>
-          <span className="text-xs text-slate-300">
+          <span className="text-xs text-slate-700 dark:text-slate-300">
             {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : '—'}
           </span>
         </div>
@@ -1579,15 +1650,15 @@ const ReportSlideOverContent: React.FC<{
           <span className="text-xs text-slate-500 flex items-center gap-1">
             <Clock size={11} /> Last updated
           </span>
-          <span className="text-xs text-slate-300">
+          <span className="text-xs text-slate-700 dark:text-slate-300">
             {report.updatedAt ? new Date(report.updatedAt).toLocaleDateString() : '—'}
           </span>
         </div>
       </div>
 
       {/* Generated Reports / Exports */}
-      <div className="bg-navy-800/50 rounded-xl border border-navy-700/60 overflow-hidden">
-        <div className="px-3.5 py-2.5 border-b border-navy-700/40">
+      <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
+        <div className="px-3.5 py-2.5 border-b border-slate-200/40 dark:border-navy-700/40">
           <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1.5">
             <Download size={11} />
             Generated Reports
@@ -1599,7 +1670,7 @@ const ReportSlideOverContent: React.FC<{
             <Loader2 size={16} className="animate-spin text-slate-500" />
           </div>
         ) : exports.length > 0 ? (
-          <div className="divide-y divide-navy-700/30">
+          <div className="divide-y divide-slate-200/30 dark:divide-navy-700/30">
             {exports.map((exp: any) => {
               const fmt = (exp.format || '').toLowerCase();
               const cfg = EXPORT_FORMAT_CONFIG[fmt] || EXPORT_FORMAT_CONFIG.pdf;
@@ -1609,7 +1680,7 @@ const ReportSlideOverContent: React.FC<{
                   key={exp.id}
                   onClick={() => handleDownloadExport(fmt)}
                   disabled={downloadingId === fmt}
-                  className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-navy-700/40 transition-colors group"
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-100 dark:hover:bg-navy-700/40 transition-colors group"
                 >
                   <div
                     className={`w-7 h-7 rounded-lg ${cfg.bgColor} flex items-center justify-center ${cfg.color} shrink-0`}
@@ -1617,7 +1688,9 @@ const ReportSlideOverContent: React.FC<{
                     {cfg.icon}
                   </div>
                   <div className="flex-1 text-left min-w-0">
-                    <div className="text-xs font-medium text-slate-300">{cfg.label}</div>
+                    <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      {cfg.label}
+                    </div>
                     <div className="text-[10px] text-slate-500">
                       {exportDate
                         ? new Date(exportDate).toLocaleDateString('pl-PL', {
@@ -1637,7 +1710,7 @@ const ReportSlideOverContent: React.FC<{
                     ) : (
                       <Download
                         size={14}
-                        className="text-slate-600 group-hover:text-slate-300 transition-colors"
+                        className="text-slate-400 group-hover:text-slate-700 dark:text-slate-600 dark:group-hover:text-slate-300 transition-colors"
                       />
                     )}
                   </div>
@@ -1657,7 +1730,7 @@ const ReportSlideOverContent: React.FC<{
                     key={fmt}
                     onClick={() => handleDownloadExport(fmt)}
                     disabled={!!downloadingId}
-                    className={`flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-lg border border-navy-700/60 hover:border-navy-600 hover:bg-navy-700/40 transition-all disabled:opacity-50 group`}
+                    className={`flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-lg border border-slate-200/60 dark:border-navy-700/60 hover:border-slate-300 dark:hover:border-navy-600 hover:bg-slate-100 dark:hover:bg-navy-700/40 transition-all disabled:opacity-50 group`}
                   >
                     <div
                       className={`w-8 h-8 rounded-lg ${cfg.bgColor} flex items-center justify-center ${cfg.color}`}
@@ -1668,7 +1741,7 @@ const ReportSlideOverContent: React.FC<{
                         cfg.icon
                       )}
                     </div>
-                    <span className="text-[10px] font-medium text-slate-400 group-hover:text-slate-300">
+                    <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300">
                       {cfg.label}
                     </span>
                   </button>
@@ -1679,21 +1752,23 @@ const ReportSlideOverContent: React.FC<{
         )}
 
         {/* Web preview link — always visible */}
-        <div className="border-t border-navy-700/40">
+        <div className="border-t border-slate-200/40 dark:border-navy-700/40">
           <button
             onClick={handleOpenWebPreview}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-navy-700/40 transition-colors group"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-100 dark:hover:bg-navy-700/40 transition-colors group"
           >
             <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400 shrink-0">
               <Monitor size={14} />
             </div>
             <div className="flex-1 text-left">
-              <div className="text-xs font-medium text-slate-300">Web Preview</div>
+              <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                Web Preview
+              </div>
               <div className="text-[10px] text-slate-500">Open in editor</div>
             </div>
             <ArrowRight
               size={14}
-              className="text-slate-600 group-hover:text-slate-300 transition-colors shrink-0"
+              className="text-slate-400 group-hover:text-slate-700 dark:text-slate-600 dark:group-hover:text-slate-300 transition-colors shrink-0"
             />
           </button>
         </div>
@@ -1701,11 +1776,11 @@ const ReportSlideOverContent: React.FC<{
 
       {/* Executive Summary — truncated */}
       {report.executiveSummary && (
-        <div className="bg-navy-800/50 rounded-xl p-3.5 border border-navy-700/60">
+        <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl p-3.5 border border-slate-200/60 dark:border-navy-700/60">
           <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-1.5">
             Executive Summary
           </h5>
-          <p className="text-xs text-slate-300 leading-relaxed line-clamp-4">
+          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed line-clamp-4">
             {report.executiveSummary}
           </p>
         </div>
@@ -1713,7 +1788,7 @@ const ReportSlideOverContent: React.FC<{
 
       {/* Sections overview — compact list */}
       {sectionCount > 0 && (
-        <div className="bg-navy-800/50 rounded-xl p-3.5 border border-navy-700/60">
+        <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl p-3.5 border border-slate-200/60 dark:border-navy-700/60">
           <h5 className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mb-2">
             Report Scope
           </h5>
@@ -1728,7 +1803,9 @@ const ReportSlideOverContent: React.FC<{
                   <span className="w-4 h-4 rounded bg-purple-500/15 text-purple-400 text-[10px] font-bold flex items-center justify-center shrink-0">
                     {idx + 1}
                   </span>
-                  <span className="text-xs text-slate-400 truncate">{sectionTitle}</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    {sectionTitle}
+                  </span>
                 </div>
               );
             })}

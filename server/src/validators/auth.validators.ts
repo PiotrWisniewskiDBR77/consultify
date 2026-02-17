@@ -31,7 +31,8 @@ export const RegisterRequestSchema = z.object({
 
 // Refresh Token Request
 export const RefreshTokenRequestSchema = z.object({
-  refreshToken: z.string().min(1, 'Refresh token is required'),
+  // Can be provided in body (legacy) OR via httpOnly cookie (preferred).
+  refreshToken: z.string().min(1, 'Refresh token is required').optional(),
 });
 
 // Change Password Request

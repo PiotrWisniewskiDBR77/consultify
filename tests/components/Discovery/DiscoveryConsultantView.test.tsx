@@ -105,8 +105,8 @@ describe('DiscoveryConsultantView', () => {
   });
 
   it('creates a new session if none exists', () => {
-    // This test verifies the component mounts without error
-    expect(true).toBe(true);
+    render(<DiscoveryConsultantView />);
+    expect(mockDiscoveryStore.createSession).toHaveBeenCalledTimes(1);
   });
 
   it('displays the canvas area', () => {

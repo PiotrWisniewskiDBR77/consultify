@@ -156,6 +156,7 @@ const ensureTableExists = async () => {
             consultant_email TEXT NOT NULL,
             consultant_id TEXT,
             project_id TEXT NOT NULL,
+            project_role TEXT, -- desired project role (stored even before consultant accepts)
             access_code TEXT,
             permissions TEXT, -- JSON object
             status TEXT DEFAULT 'pending', -- pending, accepted, revoked
@@ -171,6 +172,14 @@ const ensureTableExists = async () => {
     `;
   await dbRun(createTableSQL, []);
 
+  // Best-effort schema evolution (for existing SQLite DBs).
+  // If the table exists without project_role, add it.
+  try {
+    await dbRun('ALTER TABLE consultant_project_access ADD COLUMN project_role TEXT', []);
+  } catch {
+    // ignore (already exists or not supported)
+  }
+
   // Create index for faster lookups
   await dbRun(
     'CREATE INDEX IF NOT EXISTS idx_cpa_org ON consultant_project_access(organization_id)',
@@ -178,6 +187,10 @@ const ensureTableExists = async () => {
   );
   await dbRun(
     'CREATE INDEX IF NOT EXISTS idx_cpa_email ON consultant_project_access(consultant_email)',
+    []
+  );
+  await dbRun(
+    'CREATE INDEX IF NOT EXISTS idx_cpa_project ON consultant_project_access(project_id)',
     []
   );
 };
@@ -205,6 +218,7 @@ router.get(
       consultant_email: string;
       consultant_id: string | null;
       project_id: string;
+      project_role: string | null;
       access_code: string | null;
       permissions: string;
       status: string;
@@ -253,6 +267,7 @@ router.get(
         project_id: record.project_id,
         projectName: (record as any).project_name || 'Unknown Project',
         status: record.status,
+        projectRole: record.project_role || null,
         permissions: JSON.parse(record.permissions || '{}'),
         invited_at: record.invited_at,
         accepted_at: record.accepted_at,
@@ -314,7 +329,14 @@ router.post(
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { email, projectId, permissions, generateCode = true, accessCode } = req.body;
+    const {
+      email,
+      projectId,
+      permissions,
+      generateCode = true,
+      accessCode,
+      projectRole,
+    } = req.body;
 
     if (!email || !projectId) {
       return res.status(400).json({ error: 'Email and project ID are required' });
@@ -343,8 +365,8 @@ router.post(
 
     const sql = `
             INSERT INTO consultant_project_access 
-            (id, organization_id, consultant_email, consultant_id, project_id, access_code, permissions, status, invited_at, invited_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, organization_id, consultant_email, consultant_id, project_id, project_role, access_code, permissions, status, invited_at, invited_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
     const result = await dbRun(sql, [
@@ -353,6 +375,7 @@ router.post(
       email.toLowerCase(),
       existingUser?.id || null,
       projectId,
+      projectRole ? String(projectRole) : null,
       code,
       JSON.stringify(permissions || {}),
       'pending',
@@ -366,10 +389,44 @@ router.post(
 
     logger.info(`Consultant invited: ${email} to project ${projectId} in org ${orgId}`);
 
+    // Compatibility layer (v1):
+    // If the invited consultant already exists as a user, ensure canonical project membership exists
+    // and mark consultant overlay fields on that membership.
+    if (existingUser?.id) {
+      try {
+        const memberId = uuidv4();
+        await dbRun(
+          `INSERT OR IGNORE INTO project_members
+           (id, project_id, user_id, project_role, allocation_percent, permissions, added_by_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            memberId,
+            projectId,
+            existingUser.id,
+            projectRole ? String(projectRole) : 'CONSULTANT',
+            100,
+            JSON.stringify({}),
+            invitedBy || null,
+          ]
+        );
+
+        // Overlay fields were added in migration 542; best-effort update
+        await dbRun(
+          `UPDATE project_members
+           SET consultant_profile = ?, engagement_type = ?, updated_at = datetime('now')
+           WHERE project_id = ? AND user_id = ?`,
+          ['EXTERNAL', 'INVITED_BY_CLIENT', projectId, existingUser.id]
+        );
+      } catch {
+        // best-effort
+      }
+    }
+
     return res.status(201).json({
       id,
       email: email.toLowerCase(),
       projectId,
+      projectRole: projectRole ? String(projectRole) : null,
       accessCode: code,
       permissions: permissions || {},
       status: 'pending',
@@ -395,12 +452,26 @@ router.put(
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { permissions } = req.body;
+    const { permissions, projectRole } = req.body;
 
-    const result = await dbRun(
-      `UPDATE consultant_project_access SET permissions = ? WHERE id = ? AND organization_id = ?`,
-      [JSON.stringify(permissions || {}), accessId, orgId]
-    );
+    const updates: string[] = [];
+    const params: any[] = [];
+    if (permissions !== undefined) {
+      updates.push('permissions = ?');
+      params.push(JSON.stringify(permissions || {}));
+    }
+    if (projectRole !== undefined) {
+      updates.push('project_role = ?');
+      params.push(projectRole ? String(projectRole) : null);
+    }
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No updates provided' });
+    }
+    const sql = `UPDATE consultant_project_access SET ${updates.join(
+      ', '
+    )} WHERE id = ? AND organization_id = ?`;
+    params.push(accessId, orgId);
+    const result = await dbRun(sql, params);
 
     if (!result.success || (result.changes || 0) === 0) {
       return res.status(404).json({ error: 'Access record not found' });
@@ -408,7 +479,7 @@ router.put(
 
     logger.info(`Consultant permissions updated: ${accessId} in org ${orgId}`);
 
-    return res.json({ message: 'Permissions updated' });
+    return res.json({ message: 'Access updated' });
   })
 );
 
@@ -429,6 +500,17 @@ router.delete(
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    // Fetch record for compatibility cleanup
+    let accessRecord: { consultant_id: string | null; project_id: string } | null = null;
+    try {
+      accessRecord = await dbGet<{ consultant_id: string | null; project_id: string }>(
+        `SELECT consultant_id, project_id FROM consultant_project_access WHERE id = ? AND organization_id = ?`,
+        [accessId, orgId]
+      );
+    } catch {
+      accessRecord = null;
+    }
+
     const now = new Date().toISOString();
 
     // Soft delete - set status to revoked
@@ -442,6 +524,31 @@ router.delete(
     }
 
     logger.info(`Consultant access revoked: ${accessId} in org ${orgId}`);
+
+    // Compatibility cleanup: revoke canonical membership created via consultant access
+    try {
+      if (accessRecord?.consultant_id && accessRecord?.project_id) {
+        // Prefer removing only memberships that look like an external consultant overlay.
+        // Columns may not exist in older DBs, so keep this best-effort.
+        try {
+          await dbRun(
+            `DELETE FROM project_members
+             WHERE project_id = ? AND user_id = ?
+               AND (UPPER(consultant_profile) = 'EXTERNAL' OR UPPER(engagement_type) = 'INVITED_BY_CLIENT')`,
+            [accessRecord.project_id, accessRecord.consultant_id]
+          );
+        } catch {
+          // Fallback: remove the consultant membership by user+project only
+          await dbRun(
+            `DELETE FROM project_members
+             WHERE project_id = ? AND user_id = ?`,
+            [accessRecord.project_id, accessRecord.consultant_id]
+          );
+        }
+      }
+    } catch {
+      // best-effort
+    }
 
     return res.json({ message: 'Access revoked' });
   })

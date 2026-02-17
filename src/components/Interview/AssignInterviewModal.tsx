@@ -382,18 +382,18 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden bg-navy-900 border border-navy-700 rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-navy-700">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
               <UserPlus size={20} className="text-blue-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {isPolish ? 'Przydziel wywiad' : 'Assign Interview'}
               </h2>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 {isPolish
                   ? 'Wybierz szablon i przydziel do użytkowników'
                   : 'Select a template and assign to users'}
@@ -402,7 +402,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-navy-800 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <X size={20} />
           </button>
@@ -418,20 +418,22 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
             <>
               {/* Template Selection */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   {isPolish ? 'Szablon wywiadu' : 'Interview Template'} *
                 </label>
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-navy-800 border border-navy-600 rounded-lg text-left hover:border-slate-500 transition-colors"
+                    className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-left hover:border-slate-400 dark:hover:border-slate-500 transition-colors"
                   >
                     {selectedTemplate ? (
                       <div className="flex items-center gap-3">
                         <FileText size={18} className="text-blue-400" />
                         <div>
-                          <span className="text-white">{selectedTemplate.name}</span>
+                          <span className="text-slate-900 dark:text-white">
+                            {selectedTemplate.name}
+                          </span>
                           {selectedTemplate.category && (
                             <span className="text-xs text-slate-500 ml-2">
                               ({selectedTemplate.category})
@@ -446,26 +448,26 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                     )}
                     <ChevronDown
                       size={18}
-                      className={`text-slate-400 transition-transform ${
+                      className={`text-slate-500 dark:text-slate-400 transition-transform ${
                         showTemplateDropdown ? 'rotate-180' : ''
                       }`}
                     />
                   </button>
 
                   {showTemplateDropdown && (
-                    <div className="absolute z-10 w-full mt-2 bg-navy-800 border border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                      <div className="p-2 border-b border-navy-700">
+                    <div className="absolute z-10 w-full mt-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                      <div className="p-2 border-b border-slate-200 dark:border-navy-700">
                         <div className="relative">
                           <Search
                             size={16}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                           />
                           <input
                             type="text"
                             value={templateSearchQuery}
                             onChange={(e) => setTemplateSearchQuery(e.target.value)}
                             placeholder={isPolish ? 'Szukaj szablonu...' : 'Search templates...'}
-                            className="w-full pl-9 pr-3 py-2 bg-navy-900 border border-navy-600 rounded-lg text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
                           />
                         </div>
                       </div>
@@ -478,13 +480,13 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                                 setSelectedTemplateId(template.id);
                                 setShowTemplateDropdown(false);
                               }}
-                              className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-navy-700 transition-colors ${
+                              className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
                                 template.id === selectedTemplateId ? 'bg-blue-500/10' : ''
                               }`}
                             >
                               <FileText size={16} className="text-blue-400 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
-                                <span className="text-sm text-white block truncate">
+                                <span className="text-sm text-slate-900 dark:text-white block truncate">
                                   {template.name}
                                 </span>
                                 {template.description && (
@@ -500,7 +502,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                           ))
                         ) : (
                           <div className="px-4 py-6 text-center">
-                            <div className="text-sm text-slate-400 mb-2">
+                            <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">
                               {isPolish ? 'Brak szablonów' : 'No templates found'}
                             </div>
                             {templates.length === 0 && !isLoading && (
@@ -527,14 +529,14 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
               {/* User Selection */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   {isPolish ? 'Przydziel do' : 'Assign to'} *
                 </label>
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setShowUserDropdown(!showUserDropdown)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-navy-800 border border-navy-600 rounded-lg text-left hover:border-slate-500 transition-colors"
+                    className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-left hover:border-slate-400 dark:hover:border-slate-500 transition-colors"
                   >
                     {selectedUsers.length > 0 ? (
                       <div className="flex items-center gap-2 flex-wrap">
@@ -547,7 +549,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                           </span>
                         ))}
                         {selectedUsers.length > 3 && (
-                          <span className="text-xs text-slate-400">
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
                             +{selectedUsers.length - 3} {isPolish ? 'więcej' : 'more'}
                           </span>
                         )}
@@ -559,26 +561,26 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                     )}
                     <ChevronDown
                       size={18}
-                      className={`text-slate-400 transition-transform ${
+                      className={`text-slate-500 dark:text-slate-400 transition-transform ${
                         showUserDropdown ? 'rotate-180' : ''
                       }`}
                     />
                   </button>
 
                   {showUserDropdown && (
-                    <div className="absolute z-10 w-full mt-2 bg-navy-800 border border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                      <div className="p-2 border-b border-navy-700">
+                    <div className="absolute z-10 w-full mt-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                      <div className="p-2 border-b border-slate-200 dark:border-navy-700">
                         <div className="relative">
                           <Search
                             size={16}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                           />
                           <input
                             type="text"
                             value={userSearchQuery}
                             onChange={(e) => setUserSearchQuery(e.target.value)}
                             placeholder={isPolish ? 'Szukaj użytkownika...' : 'Search users...'}
-                            className="w-full pl-9 pr-3 py-2 bg-navy-900 border border-navy-600 rounded-lg text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
                           />
                         </div>
                       </div>
@@ -590,7 +592,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                               <button
                                 key={user.id}
                                 onClick={() => toggleUserSelection(user.id)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-navy-700 transition-colors ${
+                                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
                                   isSelected ? 'bg-blue-500/10' : ''
                                 }`}
                               >
@@ -598,16 +600,16 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                                   className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
                                     isSelected
                                       ? 'bg-blue-500 border-blue-500'
-                                      : 'border-navy-500 bg-navy-900'
+                                      : 'border-slate-300 dark:border-navy-500 bg-white dark:bg-navy-900'
                                   }`}
                                 >
                                   {isSelected && <Check size={12} className="text-white" />}
                                 </div>
-                                <div className="w-8 h-8 rounded-full bg-navy-700 flex items-center justify-center text-xs text-slate-300">
+                                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-xs text-slate-700 dark:text-slate-300">
                                   {user.name.charAt(0)}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <span className="text-sm text-white block truncate">
+                                  <span className="text-sm text-slate-900 dark:text-white block truncate">
                                     {user.name}
                                   </span>
                                   <span className="text-xs text-slate-500 block truncate">
@@ -619,7 +621,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                           })
                         ) : (
                           <div className="px-4 py-6 text-center">
-                            <div className="text-sm text-slate-400 mb-2">
+                            <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">
                               {isPolish ? 'Brak użytkowników' : 'No users found'}
                             </div>
                             {users.length === 0 && !isLoading && (
@@ -645,17 +647,17 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
                 {/* Team Assignment Toggle */}
                 {selectedUserIds.length >= 2 && (
-                  <div className="mt-3 p-3 bg-navy-800/50 border border-navy-700 rounded-lg">
+                  <div className="mt-3 p-3 bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-700 rounded-lg">
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={isTeamAssignment}
                         onChange={(e) => setIsTeamAssignment(e.target.checked)}
-                        className="w-4 h-4 rounded border-navy-500 bg-navy-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                        className="w-4 h-4 rounded border-slate-300 dark:border-navy-500 bg-white dark:bg-navy-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
                       />
                       <div className="flex items-center gap-2">
-                        <Users size={16} className="text-slate-400" />
-                        <span className="text-sm text-slate-300">
+                        <Users size={16} className="text-slate-500 dark:text-slate-400" />
+                        <span className="text-sm text-slate-700 dark:text-slate-300">
                           {isPolish ? 'Przydzielenie zespołowe' : 'Team assignment'}
                         </span>
                       </div>
@@ -663,13 +665,13 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
                     {isTeamAssignment && (
                       <div className="mt-3 pl-7">
-                        <label className="block text-xs font-medium text-slate-400 mb-1">
+                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                           {isPolish ? 'Lider zespołu' : 'Team Lead'}
                         </label>
                         <select
                           value={teamLeadId}
                           onChange={(e) => setTeamLeadId(e.target.value)}
-                          className="w-full px-3 py-2 bg-navy-900 border border-navy-600 rounded-lg text-sm text-white focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none"
                         >
                           <option value="">
                             {isPolish ? 'Wybierz lidera...' : 'Select lead...'}
@@ -689,32 +691,32 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
               {/* Due Date & Priority */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     {isPolish ? 'Termin' : 'Due Date'} *
                   </label>
                   <div className="relative">
                     <Calendar
                       size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                     />
                     <input
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full pl-10 pr-3 py-3 bg-navy-800 border border-navy-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+                      className="w-full pl-10 pr-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     {isPolish ? 'Priorytet' : 'Priority'}
                   </label>
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value as Priority)}
-                    className="w-full px-3 py-3 bg-navy-800 border border-navy-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none"
                   >
                     <option value="low">{isPolish ? 'Niski' : 'Low'}</option>
                     <option value="medium">{isPolish ? 'Średni' : 'Medium'}</option>
@@ -726,7 +728,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
               {/* Notes */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   {isPolish ? 'Notatki (opcjonalne)' : 'Notes (optional)'}
                 </label>
                 <textarea
@@ -738,7 +740,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                       : 'Additional instructions for assignees...'
                   }
                   rows={3}
-                  className="w-full px-3 py-3 bg-navy-800 border border-navy-600 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none resize-none"
+                  className="w-full px-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none resize-none"
                 />
               </div>
 
@@ -758,11 +760,11 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-navy-700 bg-navy-900/50">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50">
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-navy-800 transition-colors"
+            className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             {isPolish ? 'Anuluj' : 'Cancel'}
           </button>
