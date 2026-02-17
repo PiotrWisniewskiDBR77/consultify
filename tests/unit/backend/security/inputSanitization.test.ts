@@ -65,11 +65,11 @@ describe('sanitizeString (L1)', () => {
   it('escapes backticks', () => {
     expect(sanitizeString('`code`')).toContain('&#96;');
   });
-  it('escapes forward slashes', () => {
-    expect(sanitizeString('a/b')).toContain('&#x2F;');
+  it('does not escape forward slashes (URLs/tokens must remain intact)', () => {
+    expect(sanitizeString('a/b')).toBe('a/b');
   });
-  it('escapes equals sign', () => {
-    expect(sanitizeString('a=b')).toContain('&#x3D;');
+  it('does not escape equals sign (base64/query-like strings must remain intact)', () => {
+    expect(sanitizeString('a=b')).toBe('a=b');
   });
   it('returns empty string for null', () => {
     expect(sanitizeString(null)).toBe('');
@@ -94,7 +94,8 @@ describe('sanitizeString (L1)', () => {
     const result = sanitizeString(xss);
     expect(result).not.toContain('<');
     expect(result).not.toContain('"');
-    expect(result).not.toContain('=');
+    // Keep '=' and '/' intact; security relies on escaping HTML special chars.
+    expect(result).toContain('onerror=');
   });
 });
 

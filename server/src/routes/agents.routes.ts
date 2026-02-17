@@ -69,7 +69,8 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.processMessageWithAgents) {
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
+      // Degraded mode: avoid 5xx on public deploy.
+      return res.status(400).json({ error: 'SERVICE_UNAVAILABLE' });
     }
 
     try {
@@ -117,7 +118,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.querySpecialistAgent) {
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
+      return res.status(400).json({ error: 'SERVICE_UNAVAILABLE' });
     }
 
     try {
@@ -169,7 +170,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.getMultiAgentRecommendations) {
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
+      return res.status(400).json({ error: 'SERVICE_UNAVAILABLE' });
     }
 
     try {
@@ -212,7 +213,7 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.getAvailableAgents) {
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
+      return res.json({ agents: [], degraded: true });
     }
 
     try {
@@ -220,9 +221,11 @@ router.get(
       return res.json({ agents });
     } catch (error: unknown) {
       logger.error('[Agents API] Error getting agents:', error);
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      return res.json({
+        agents: [],
+        degraded: true,
+        error: 'SERVICE_UNAVAILABLE',
+      });
     }
   })
 );
@@ -238,7 +241,7 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.getAgentMetrics) {
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
+      return res.json({ degraded: true, error: 'SERVICE_UNAVAILABLE' });
     }
 
     try {
@@ -263,7 +266,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.processMessageWithAgents) {
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
+      return res.status(400).json({ error: 'SERVICE_UNAVAILABLE' });
     }
 
     try {
@@ -315,7 +318,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.processMessageWithAgents) {
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
+      return res.status(400).json({ error: 'SERVICE_UNAVAILABLE' });
     }
 
     try {

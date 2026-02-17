@@ -29,14 +29,23 @@ if [ ! -f ".env.local" ] && [ ! -f ".env" ]; then
     echo ""
     echo "# Consultinity Environment Variables" > .env.local
     echo "NODE_ENV=development" >> .env.local
-    echo "PORT=3005" >> .env.local
+    echo "PORT=3001" >> .env.local
     echo "FRONTEND_URL=http://localhost:3000" >> .env.local
-    echo "DB_TYPE=sqlite" >> .env.local
-    echo "SQLITE_PATH=./server/consultinity.db" >> .env.local
+    echo "" >> .env.local
+    echo "# Database (recommended)" >> .env.local
+    echo "DB_TYPE=postgres" >> .env.local
+    echo "DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME" >> .env.local
+    echo "" >> .env.local
+    echo "# To use local SQLite instead, set:" >> .env.local
+    echo "# DB_TYPE=sqlite" >> .env.local
+    echo "# SQLITE_PATH=./data/dev/consultinity.db" >> .env.local
     echo "REDIS_URL=redis://localhost:6379" >> .env.local
     echo "MOCK_REDIS=false" >> .env.local
     echo "JWT_SECRET=supersecretkey_change_this_in_production" >> .env.local
-    echo "GEMINI_API_KEY=your_gemini_api_key_here" >> .env.local
+    echo "" >> .env.local
+    echo "# LLM provider (at least one)" >> .env.local
+    echo "OPENAI_API_KEY=your_openai_api_key_here" >> .env.local
+    echo "# OPENROUTER_API_KEY=your_openrouter_api_key_here" >> .env.local
     echo ""
     echo "📝 Created .env.local - Please configure it with your API keys!"
     echo "   See LOCAL_SETUP.md for detailed instructions."
@@ -103,7 +112,7 @@ echo "🚀 Starting Consultinity..."
 echo "=========================================="
 echo ""
 echo "Frontend will be available at: http://localhost:3000"
-echo "Backend API will be available at: http://localhost:3005"
+echo "Backend API will be available at: http://localhost:3001"
 echo ""
 echo "Press Ctrl+C to stop the application"
 echo ""

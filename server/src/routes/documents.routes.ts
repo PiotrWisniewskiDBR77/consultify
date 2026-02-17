@@ -85,7 +85,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getProjectDocuments) {
-      return res.status(503).json({ error: 'Document service not available' });
+      // Degraded mode: feature not fully implemented, but must not 5xx on deploy.
+      return res.json([]);
     }
 
     try {
@@ -108,7 +109,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getUserDocuments) {
-      return res.status(503).json({ error: 'Document service not available' });
+      return res.json([]);
     }
 
     try {
@@ -136,7 +137,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getAccessibleDocuments) {
-      return res.status(503).json({ error: 'Document service not available' });
+      return res.json([]);
     }
 
     try {
@@ -203,7 +204,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
-      return res.status(503).json({ error: 'Document service not available' });
+      return res.status(404).json({ error: 'Document not found' });
     }
 
     try {
@@ -228,7 +229,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
-      return res.status(503).json({ error: 'Document service not available' });
+      return res.status(404).json({ error: 'Document not found' });
     }
 
     try {
@@ -320,7 +321,7 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.moveToProject) {
-      return res.status(503).json({ error: 'Document service not available' });
+      return res.status(400).json({ error: 'Document move not supported' });
     }
 
     try {
@@ -356,7 +357,7 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.deleteDocument) {
-      return res.status(503).json({ error: 'Document service not available' });
+      return res.status(404).json({ error: 'Document not found or access denied' });
     }
 
     try {

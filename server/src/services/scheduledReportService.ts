@@ -8,6 +8,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { getDatabase } from '../database/index.js';
+
 // ============================================
 // TYPES
 // ============================================
@@ -139,13 +141,24 @@ class ScheduledReportService {
   private emailService: any;
 
   constructor() {
-    // Dependencies will be injected
+    // Dependencies can be injected, but routes may call the service without doing so.
+    // Default to the app database connection to avoid 500s in production.
+    try {
+      this.db = getDatabase();
+    } catch {
+      // ignore; can be injected later
+    }
   }
 
   setDependencies(deps: { db: any; reportBuilderService?: any; emailService?: any }) {
     this.db = deps.db;
     this.reportBuilderService = deps.reportBuilderService;
     this.emailService = deps.emailService;
+  }
+
+  private ensureDb() {
+    if (this.db) return;
+    this.db = getDatabase();
   }
 
   // ============================================
@@ -160,6 +173,7 @@ class ScheduledReportService {
     organizationId: string,
     userId: string
   ): Promise<ReportSchedule> {
+    this.ensureDb();
     const id = uuidv4();
     const now = new Date().toISOString();
 
@@ -240,6 +254,7 @@ class ScheduledReportService {
     organizationId: string,
     updates: ScheduleUpdateRequest
   ): Promise<ReportSchedule | null> {
+    this.ensureDb();
     const existing = await this.getSchedule(scheduleId, organizationId);
     if (!existing) return null;
 
@@ -298,6 +313,7 @@ class ScheduledReportService {
    * Get a schedule by ID
    */
   async getSchedule(scheduleId: string, organizationId: string): Promise<ReportSchedule | null> {
+    this.ensureDb();
     const row = await this.db.get(
       `SELECT * FROM report_schedules WHERE id = ? AND organization_id = ?`,
       [scheduleId, organizationId]
@@ -318,6 +334,7 @@ class ScheduledReportService {
       offset?: number;
     }
   ): Promise<ReportSchedule[]> {
+    this.ensureDb();
     let query = `SELECT * FROM report_schedules WHERE organization_id = ?`;
     const params: any[] = [organizationId];
 
@@ -346,6 +363,7 @@ class ScheduledReportService {
    * Delete a schedule
    */
   async deleteSchedule(scheduleId: string, organizationId: string): Promise<boolean> {
+    this.ensureDb();
     const result = await this.db.run(
       `DELETE FROM report_schedules WHERE id = ? AND organization_id = ?`,
       [scheduleId, organizationId]
@@ -358,6 +376,7 @@ class ScheduledReportService {
    * Pause a schedule
    */
   async pauseSchedule(scheduleId: string, organizationId: string): Promise<ReportSchedule | null> {
+    this.ensureDb();
     return this.updateSchedule(scheduleId, organizationId, { isActive: false });
   }
 
@@ -365,6 +384,7 @@ class ScheduledReportService {
    * Resume a schedule
    */
   async resumeSchedule(scheduleId: string, organizationId: string): Promise<ReportSchedule | null> {
+    this.ensureDb();
     const schedule = await this.getSchedule(scheduleId, organizationId);
     if (!schedule) return null;
 
@@ -388,6 +408,7 @@ class ScheduledReportService {
    * Get schedules due for execution
    */
   async getDueSchedules(): Promise<ReportSchedule[]> {
+    this.ensureDb();
     const now = new Date().toISOString();
 
     const rows = await this.db.all(
@@ -404,6 +425,7 @@ class ScheduledReportService {
    * Execute a scheduled report generation
    */
   async executeSchedule(scheduleId: string): Promise<ScheduleExecution> {
+    this.ensureDb();
     const executionId = uuidv4();
     const startedAt = new Date().toISOString();
 
@@ -695,6 +717,7 @@ class ScheduledReportService {
     organizationId: string,
     limit: number = 10
   ): Promise<ScheduleExecution[]> {
+    this.ensureDb();
     const rows = await this.db.all(
       `SELECT e.* FROM schedule_executions e
        JOIN report_schedules s ON e.schedule_id = s.id

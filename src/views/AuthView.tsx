@@ -81,6 +81,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
     if (!import.meta.env.DEV) return;
     const quickAccessCodes: Record<string, { email: string; password: string }> = {
       '7777': { email: 'piotr.wisniewski@dbr77.com', password: '123456' }, // Admin
+      '7775': { email: 'pawel.mroczkowski@dbr77.com', password: '123456' }, // Paweł (DBR77)
+      '1212': { email: 'pawel.mroczkowski@plastmetcentrum.pl', password: '123456' }, // Paweł (Plast-Met)
       '7776': { email: 'admin@dbr77.com', password: '123456' }, // SuperAdmin
       '7778': { email: 'piotr.wisniewski@demo.com', password: '123456' }, // Demo
     };

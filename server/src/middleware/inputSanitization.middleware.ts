@@ -36,14 +36,18 @@ async function loadSecurityUtils(): Promise<Pick<SecurityUtilsModule, 'sanitizeO
     const spec = isBuiltRuntime ? '../utils/security.utils.js' : '../utils/security.utils.ts';
 
     // If the preferred spec fails (edge tooling), fall back to the other one.
-    securityUtilsPromise = import(spec)
-      .catch(async () => {
+    securityUtilsPromise = (async () => {
+      try {
+        const m = await import(spec);
+        return m as Pick<SecurityUtilsModule, 'sanitizeObject'>;
+      } catch {
         const fallback = spec.endsWith('.js')
           ? '../utils/security.utils.ts'
           : '../utils/security.utils.js';
-        return import(fallback);
-      })
-      .then((m) => m as Pick<SecurityUtilsModule, 'sanitizeObject'>);
+        const m = await import(fallback);
+        return m as Pick<SecurityUtilsModule, 'sanitizeObject'>;
+      }
+    })();
   }
   return securityUtilsPromise;
 }

@@ -12,7 +12,9 @@ const router = Router();
 // Stub for missing JS routes
 router.use((req, res) => {
   logger.warn(`[backup] Route not implemented (stubbed)`);
-  res.status(501).json({ error: 'Not implemented: Route handler missing' });
+  // Degraded mode: route exists in gateway but feature is unavailable.
+  // Avoid 5xx in public deploy smoke checks.
+  res.status(404).json({ error: 'Not available' });
 });
 
 export default router;

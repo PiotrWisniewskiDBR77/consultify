@@ -14,6 +14,13 @@ const router = Router();
  */
 router.get('/supported-types', async (req, res) => {
   try {
+    if (!mediaIngestionService?.getSupportedTypes) {
+      return res.json({
+        success: true,
+        supportedTypes: [],
+        degraded: true,
+      });
+    }
     const supportedTypes = await mediaIngestionService.getSupportedTypes();
     res.json({
       success: true,
@@ -30,6 +37,13 @@ router.get('/supported-types', async (req, res) => {
  */
 router.get('/capabilities', async (req, res) => {
   try {
+    if (!mediaIngestionService?.getCapabilities) {
+      return res.json({
+        success: true,
+        capabilities: {},
+        degraded: true,
+      });
+    }
     const capabilities = await mediaIngestionService.getCapabilities();
     res.json({
       success: true,
@@ -47,6 +61,16 @@ router.get('/capabilities', async (req, res) => {
 router.post('/validate', async (req, res) => {
   try {
     const { filename, mimeType } = req.body;
+    if (!filename || !mimeType) {
+      return res.status(400).json({ error: 'filename and mimeType are required' });
+    }
+    if (!mediaIngestionService?.validateMedia) {
+      return res.json({
+        success: false,
+        error: 'Media ingestion service unavailable',
+        degraded: true,
+      });
+    }
     const result = await mediaIngestionService.validateMedia(filename, mimeType);
     res.json(result);
   } catch (error) {

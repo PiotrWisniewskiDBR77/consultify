@@ -397,6 +397,25 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      {t('admin.org.logoUrl', 'Logo URL')}
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.logoUrl || ''}
+                      onChange={(e) => updateProfile('logoUrl', e.target.value)}
+                      placeholder="/images/org-logos/plastmetcentrum.png"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                    />
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      {t(
+                        'admin.org.logoUrlHint',
+                        'Paste a full URL or a public path (e.g. /images/org-logos/...).'
+                      )}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                       {t('admin.org.description', 'Description')}
                     </label>
                     <textarea

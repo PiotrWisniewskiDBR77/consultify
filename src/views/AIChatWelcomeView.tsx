@@ -99,7 +99,7 @@ export const AIChatWelcomeView: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // App state
-  const { currentUser, currentProjectId, aiConfig } = useAppStore();
+  const { currentUser, currentProjectId, aiConfig, currentOrganization } = useAppStore();
   const { projectName } = usePMOStore();
   const brandLogoDarkSrc = new URL(
     '../../Logo consultinity/Consultinity_logo_dark_medium.svg',
@@ -318,6 +318,7 @@ export const AIChatWelcomeView: React.FC = () => {
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
   const [continuousVoiceMode, setContinuousVoiceMode] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [orgLogoUrl, setOrgLogoUrl] = useState<string | null>(null);
   const [aiMemoryContext, setAiMemoryContext] = useState<string | null>(null);
   const [coThinkerPhase, setCoThinkerPhase] = useState<string>('discovery');
   const [messageFeedback, setMessageFeedback] = useState<Record<string, MessageFeedback>>({});
@@ -329,6 +330,33 @@ export const AIChatWelcomeView: React.FC = () => {
   // Get time-aware context
   const timeContext = useMemo(() => getTimeContext(), []);
   const firstName = currentUser?.firstName || '';
+  const orgId = currentOrganization?.id || currentUser?.organizationId || null;
+
+  // Fetch org logo for white-label branding (set in Admin → Organization Profile)
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchOrgLogo = async () => {
+      if (!orgId) {
+        setOrgLogoUrl(null);
+        return;
+      }
+
+      try {
+        const resp = await Api.get(`/organization-profiles/${orgId}`);
+        const url = resp?.profile?.logoUrl ? String(resp.profile.logoUrl || '') : '';
+        if (!cancelled) setOrgLogoUrl(url || null);
+      } catch (err) {
+        // Non-blocking: branding is optional.
+        if (!cancelled) setOrgLogoUrl(null);
+      }
+    };
+
+    fetchOrgLogo();
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId]);
 
   // Fetch AI memory context on mount
   useEffect(() => {
@@ -1853,6 +1881,20 @@ For example: REMEMBER: preferred_language: Polish`;
           </div>
         </div>
       </div>
+
+      {/* Organization logo (if configured in Admin settings) */}
+      {!!orgLogoUrl && (
+        <div className="absolute bottom-4 right-16 sm:right-20 z-20 pointer-events-none select-none">
+          <div className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-navy-950/40 backdrop-blur-md px-3 py-2 shadow-lg">
+            <img
+              src={orgLogoUrl}
+              alt={currentOrganization?.name || currentUser?.organizationName || 'Organization'}
+              className="h-10 sm:h-12 w-auto max-w-[190px] object-contain opacity-95"
+              draggable={false}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Footer (overlay) - does NOT affect centering above */}
       <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center gap-1.5 pointer-events-none select-none z-0">

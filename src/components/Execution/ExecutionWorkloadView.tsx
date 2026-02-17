@@ -365,7 +365,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
     const peopleMap = new Map<string, PersonWorkload>();
 
     initiatives.forEach((initiative) => {
-      const owners = [initiative.ownerBusiness, initiative.ownerTechnical].filter(Boolean);
+      const owners = [initiative.ownerBusiness, initiative.ownerExecution].filter(Boolean);
       if (owners.length === 0) return;
 
       const startDateStr = initiative.startDate;

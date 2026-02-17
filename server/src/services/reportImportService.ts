@@ -390,10 +390,10 @@ class ReportImportService {
         source_file_name, source_file_path, source_file_size, source_format,
         detected_framework, detection_confidence,
         status, created_by, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'DRD', 0, 'pending', ?, datetime('now'))
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'DRD', 0, 'pending', ?, CURRENT_TIMESTAMP)
     `;
 
-    await DbPromise.run(this.db, sql, [
+    await DbPromise.run(sql, [
       importId,
       organizationId,
       projectId || null,
@@ -1519,11 +1519,11 @@ Respond in JSON format:
           source_type, source_id, source_report_id, created_from,
           tags,
           created_by, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_REVIEW', 'pdf_import', ?, ?, 'assessment', ?, ?, datetime('now'), datetime('now'))
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_REVIEW', 'pdf_import', ?, ?, 'assessment', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       `;
 
       try {
-        await DbPromise.run(this.db, sql, [
+        await DbPromise.run(sql, [
           initiativeId,
           organizationId,
           projectId || importRecord.projectId || null,
@@ -1550,10 +1550,10 @@ Respond in JSON format:
       SET initiatives_created = ?,
           initiatives_target_ids = ?,
           status = CASE WHEN target_id IS NOT NULL THEN 'completed' ELSE 'initiatives_created' END,
-          updated_at = datetime('now')
+          updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `;
-    await DbPromise.run(this.db, updateSql, [
+    await DbPromise.run(updateSql, [
       initiativeIds.length,
       JSON.stringify(initiativeIds),
       importId,
@@ -1646,10 +1646,10 @@ Respond in JSON format:
         assessment_type, name, status,
         answers_json, score_summary, context_snapshot,
         created_by, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     `;
 
-    await DbPromise.run(this.db, sql, [
+    await DbPromise.run(sql, [
       assessmentId,
       organizationId,
       projectId || null,
@@ -1685,10 +1685,10 @@ Respond in JSON format:
         source_type, name, status,
         intent_config, sections_config, generated_content,
         created_by, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     `;
 
-    await DbPromise.run(this.db, sql, [
+    await DbPromise.run(sql, [
       reportId,
       organizationId,
       projectId || null,
@@ -1713,7 +1713,7 @@ Respond in JSON format:
    */
   async getImport(importId: string, organizationId: string): Promise<ImportedReport> {
     const sql = `SELECT * FROM imported_reports WHERE id = ? AND organization_id = ?`;
-    const row: any = await DbPromise.get(this.db, sql, [importId, organizationId]);
+    const row: any = await DbPromise.get(sql, [importId, organizationId]);
 
     if (!row) {
       throw new Error('Import not found');
@@ -1759,7 +1759,7 @@ Respond in JSON format:
       params.push(options.offset);
     }
 
-    const rows = await DbPromise.all(this.db, sql, params);
+    const rows = await DbPromise.all(sql, params);
     return (rows || []).map((row: any) => this.mapRowToImport(row));
   }
 
@@ -1772,7 +1772,7 @@ Respond in JSON format:
       SET status = ?, processing_error = ?
       WHERE id = ?
     `;
-    await DbPromise.run(this.db, sql, [status, error || null, importId]);
+    await DbPromise.run(sql, [status, error || null, importId]);
   }
 
   /**
@@ -1796,11 +1796,11 @@ Respond in JSON format:
         auto_summary = ?,
         coverage_percent = ?,
         status = 'ready_for_review',
-        updated_at = datetime('now')
+        updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `;
 
-    await DbPromise.run(this.db, sql, [
+    await DbPromise.run(sql, [
       framework,
       confidence,
       JSON.stringify(data),
@@ -1830,11 +1830,11 @@ Respond in JSON format:
           WHEN initiatives_created > 0 THEN 'completed'
           ELSE 'assessment_created'
         END,
-        updated_at = datetime('now'),
-        processed_at = datetime('now')
+        updated_at = CURRENT_TIMESTAMP,
+        processed_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `;
-    await DbPromise.run(this.db, sql, [targetType, targetId, importId]);
+    await DbPromise.run(sql, [targetType, targetId, importId]);
   }
 
   /**
@@ -1849,7 +1849,7 @@ Respond in JSON format:
     }
 
     const sql = `DELETE FROM imported_reports WHERE id = ? AND organization_id = ?`;
-    await DbPromise.run(this.db, sql, [importId, organizationId]);
+    await DbPromise.run(sql, [importId, organizationId]);
   }
 
   /**

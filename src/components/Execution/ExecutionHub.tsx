@@ -30,7 +30,6 @@ import {
   ChevronRight,
   ClipboardList,
   Clock,
-  FileText,
   GripVertical,
   LayoutDashboard,
   LayoutGrid,
@@ -433,11 +432,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [currentProjectId, fullSessionData?.initiatives]);
 
   useEffect(() => {
-    if (!currentProjectId) return;
     const loadTasks = async () => {
       setIsLoadingTasks(true);
       try {
-        const data = await Api.getTasks({ projectId: currentProjectId });
+        const data = await Api.getTasks({ projectId: currentProjectId || undefined });
         setTasks(Array.isArray(data) ? (data as Task[]) : []);
       } catch (err) {
         console.error('[ExecutionHub] Failed to load tasks:', err);
@@ -450,13 +448,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [currentProjectId]);
 
   useEffect(() => {
-    if (!currentProjectId) return;
     const loadDecisions = async () => {
       setIsLoadingDecisions(true);
       try {
-        const response = await Api.get(`/decisions?projectId=${currentProjectId}`);
-        const data = Array.isArray(response) ? response : response?.decisions || [];
-        setDecisions(data);
+        const data = await Api.getDecisions(currentProjectId || undefined);
+        setDecisions(Array.isArray(data) ? (data as ExecutionDecision[]) : []);
       } catch (err) {
         console.error('[ExecutionHub] Failed to load decisions:', err);
         setDecisions([]);
@@ -640,11 +636,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         id: 'team' as ModuleTab,
         label: t('execution.tabs.team', 'Team'),
         icon: <Users size={16} />,
-      },
-      {
-        id: 'reports' as ModuleTab,
-        label: t('execution.tabs.reports', 'Reports'),
-        icon: <FileText size={16} />,
       },
     ],
     [
@@ -2732,35 +2723,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 setStartDate: setWorkloadStartDate,
               }}
             />
-          </div>
-        </div>
-      );
-    }
-
-    if (activeTab === 'reports') {
-      return (
-        <div className="p-4">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {t('execution.reports.title', 'Execution reports')}
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {t(
-                    'execution.reports.subtitle',
-                    'Generate a simple weekly pack and deep-dive reports without adding process overhead.'
-                  )}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate('/reports')}
-                className="h-9 px-4 rounded-xl text-sm font-medium bg-hig-primary text-white hover:bg-hig-primary-hover transition-colors"
-              >
-                {t('execution.reports.open', 'Open Reports')}
-              </button>
-            </div>
           </div>
         </div>
       );

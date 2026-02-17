@@ -58,6 +58,9 @@ Run the stable mode:
 npm run dev:stable
 ```
 
+**Database note:** `npm run dev` / `npm run dev:stable` now start the backend in **PostgreSQL mode** (`DB_TYPE=postgres`).
+If you want the old SQLite demo flow, use `npm run dev:backend:sqlite` (or `npm run dev:backend:sqlite:seeded` for full demo seeding), or the Londyn launcher (`./start-londyn.sh`).
+
 Diagnostics:
 
 ```bash
@@ -92,7 +95,7 @@ chmod +x start.sh
     ```
 2.  **Configure Environment**:
     Create `.env.local` file (see [docs/development/DEVELOPMENT.md](docs/development/DEVELOPMENT.md) for detailed instructions).
-    Minimum required: `GEMINI_API_KEY` (or other LLM provider key).
+    Minimum required: at least one LLM provider key (e.g. `OPENAI_API_KEY` or `OPENROUTER_API_KEY`).
 3.  **Run Application**:
     ```bash
     npm run dev
@@ -148,7 +151,7 @@ npm run typecheck      # Type check only
    ```
 2. **Required variables**:
    - `JWT_SECRET` — generate with: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
-   - `GEMINI_API_KEY` or `OPENAI_API_KEY` — at least one AI provider
+   - `OPENAI_API_KEY` (or `OPENROUTER_API_KEY`) — at least one AI provider
    - `DATABASE_URL` — for PostgreSQL production mode
 3. See [.env.production.example](.env.production.example) for full production template.
 

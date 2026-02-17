@@ -33,9 +33,8 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(next).toHaveBeenCalled();
     expect(String(req.body.title)).not.toContain('<script>');
     expect(String(req.body.nested.html)).not.toContain('<img');
-    // We escape HTML entities; we don't remove attribute names from plain text.
-    // The critical property is that it can't remain as an active attribute like `onerror=...`.
-    expect(String(req.body.nested.html)).not.toContain('onerror=');
+    // We escape HTML entities; attribute names may still appear as text (safe when < > are escaped).
+    expect(String(req.body.nested.html)).toContain('onerror=');
     expect(String(req.body.nested.html)).not.toContain('<');
     expect(req.body.nullable).toBeNull();
     expect(Array.isArray(req.body.arr)).toBe(true);

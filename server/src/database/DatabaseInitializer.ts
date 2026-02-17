@@ -83,6 +83,9 @@ const CRITICAL_TABLES = [
   'report_builder_comment_activity',
   'report_exports',
   'report_public_links',
+  // Scheduled reports (/api/scheduled-reports/*) must not 5xx on deploy.
+  'report_schedules',
+  'schedule_executions',
   'user_sessions',
   'user_2fa',
   'api_logs',
@@ -104,6 +107,8 @@ const CRITICAL_TABLES = [
   'user_ai_settings',
   'ai_policies',
   'initiatives',
+  // Report Builder sources + assessment hub use this table (legacy schemas may omit columns).
+  'assessments',
   'maturity_assessments',
   'subscription_plans',
   'organization_billing',
@@ -213,6 +218,19 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
     'last_login_at',
     'extended_preferences',
   ],
+  assessments: [
+    'organization_id',
+    'name',
+    'status',
+    // Report Builder source adapter expects workflow-v2 style columns.
+    'assessment_type',
+    'answers_json',
+    'score_summary',
+    'context_snapshot',
+    'completion_percent',
+    'approved_at',
+    'created_by',
+  ],
   organizations: [
     'plan',
     'status',
@@ -231,6 +249,30 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
     'slide_intent',
     'pptx_prompt_template',
     'pptx_output_schema',
+  ],
+  report_schedules: [
+    'organization_id',
+    'schedule_name',
+    'cron_expression',
+    'timezone',
+    'next_run_at',
+    'last_run_at',
+    'run_count',
+    'is_active',
+    'config_json',
+    'created_by',
+    'created_at',
+    'updated_at',
+  ],
+  schedule_executions: [
+    'schedule_id',
+    'status',
+    'started_at',
+    'completed_at',
+    'generated_report_id',
+    'error',
+    'delivery_results_json',
+    'created_at',
   ],
   organization_profiles: [
     'id',
@@ -1440,13 +1482,24 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       // Verify again
       const recheck = await verifySchema();
       if (!recheck.valid && recheck.missing.length > 0) {
-        logger.error(
-          `[DatabaseInitializer] SQLite schema still incomplete after initialization. Missing: ${recheck.missing.join(', ')}`
+        // Only fail hard if truly critical tables are missing.
+        // Some modules (connectors/webhooks/notifications rules/etc.) are optional in local SQLite dev.
+        const trulyCritical = new Set(['organizations', 'users', 'sessions', 'projects', 'tasks']);
+        const criticalMissing = recheck.missing.filter((t) => trulyCritical.has(t));
+
+        if (criticalMissing.length > 0) {
+          logger.error(
+            `[DatabaseInitializer] SQLite schema still incomplete after initialization. Missing CRITICAL: ${criticalMissing.join(', ')}`
+          );
+          return {
+            success: false,
+            message: `SQLite schema incomplete. Missing critical tables: ${criticalMissing.join(', ')}`,
+          };
+        }
+
+        logger.warn(
+          `[DatabaseInitializer] SQLite schema has non-critical gaps (startup continues). Missing: ${recheck.missing.join(', ')}`
         );
-        return {
-          success: false,
-          message: `SQLite schema incomplete. Missing tables: ${recheck.missing.join(', ')}`,
-        };
       }
     }
 

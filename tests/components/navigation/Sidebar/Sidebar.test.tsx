@@ -48,6 +48,8 @@ const conversationState = {
   setDisplayMode: vi.fn(),
   setWorkspaceContext: vi.fn(),
   activeConversationId: null as string | null,
+  isSidebarOpen: false,
+  toggleSidebar: vi.fn(),
 };
 vi.mock('../../../../src/store/useConversationStore', () => ({
   useConversationStore: (selector?: any) =>
@@ -177,6 +179,7 @@ describe('Sidebar (L2)', () => {
     getDefaultWorkspaceTypeMock.mockClear();
     conversationState.setDisplayMode.mockClear();
     conversationState.setWorkspaceContext.mockClear();
+    conversationState.toggleSidebar.mockClear();
     appState.setCurrentViewState.mockClear();
     appState.setIsSidebarOpen.mockClear();
     appState.toggleChatSlidingPanel.mockClear();
@@ -231,7 +234,7 @@ describe('Sidebar (L2)', () => {
     expect(conversationState.setDisplayMode).toHaveBeenCalledWith('full');
     expect(appState.setCurrentViewState).toHaveBeenCalledWith(AppView.AI_CHAT);
     expect(navigateMock).toHaveBeenCalledWith(`/route/${String(AppView.AI_CHAT)}`);
-    expect(appState.toggleChatSlidingPanel).toHaveBeenCalledTimes(1);
+    expect(conversationState.toggleSidebar).not.toHaveBeenCalled();
   });
 
   it('AI_CHAT click toggles panel when already on chat (no navigation)', () => {
@@ -240,7 +243,7 @@ describe('Sidebar (L2)', () => {
 
     fireEvent.click(screen.getByTestId('navitem-AI_CHAT'));
 
-    expect(appState.toggleChatSlidingPanel).toHaveBeenCalledTimes(1);
+    expect(conversationState.toggleSidebar).toHaveBeenCalledTimes(1);
     expect(navigateMock).not.toHaveBeenCalled();
   });
 

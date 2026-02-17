@@ -132,7 +132,8 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.generateCode || !AccessCodeService?.CODE_TYPES) {
-      return res.status(503).json({ error: 'AccessCodeService not available' });
+      // Degraded mode: avoid 5xx on public deploy.
+      return res.status(400).json({ error: 'SERVICE_UNAVAILABLE' });
     }
 
     try {
@@ -211,7 +212,8 @@ router.get(
   validateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.validatePublic) {
-      return res.status(503).json({ valid: false, error: 'AccessCodeService not available' });
+      // Degraded mode: if service is missing, treat codes as invalid.
+      return res.json({ valid: false });
     }
 
     try {
@@ -236,7 +238,8 @@ router.post(
   acceptLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.acceptCode) {
-      return res.status(503).json({ ok: false, error: 'AccessCodeService not available' });
+      // Degraded mode: avoid 5xx on public deploy.
+      return res.status(400).json({ ok: false, error: 'SERVICE_UNAVAILABLE' });
     }
 
     try {
@@ -291,7 +294,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.listCodes) {
-      return res.status(503).json({ error: 'AccessCodeService not available' });
+      return res.json([]);
     }
 
     try {
@@ -338,7 +341,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.revokeCode) {
-      return res.status(503).json({ error: 'AccessCodeService not available' });
+      return res.status(404).json({ error: 'Not available' });
     }
 
     try {

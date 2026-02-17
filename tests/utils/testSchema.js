@@ -2606,6 +2606,27 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
+  // Assessments (Report Builder source adapter expects workflow-v2 columns too).
+  `CREATE TABLE IF NOT EXISTS assessments (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        project_id TEXT,
+        name TEXT,
+        description TEXT,
+        status TEXT DEFAULT 'DRAFT',
+        assessment_type TEXT,
+        framework_type TEXT,
+        framework_data TEXT,
+        answers_json TEXT DEFAULT '{}',
+        score_summary TEXT DEFAULT '{}',
+        context_snapshot TEXT DEFAULT '{}',
+        completion_percent INTEGER DEFAULT 0,
+        approved_at DATETIME,
+        created_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (organization_id) REFERENCES organizations(id)
+    )`,
   // Imported reports (external assessment import pipeline).
   `CREATE TABLE IF NOT EXISTS imported_reports (
         id TEXT PRIMARY KEY,
@@ -2631,6 +2652,42 @@ export const TEST_SCHEMA = [
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         processed_at TIMESTAMP
     )`,
+  // ==========================================================
+  // Scheduled reports (deploy gate: /api/scheduled-reports/*)
+  // ==========================================================
+  `CREATE TABLE IF NOT EXISTS report_schedules (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        schedule_name TEXT NOT NULL,
+        cron_expression TEXT NOT NULL,
+        timezone TEXT DEFAULT 'UTC',
+        next_run_at TEXT,
+        last_run_at TEXT,
+        last_run_status TEXT,
+        last_run_report_id TEXT,
+        run_count INTEGER DEFAULT 0,
+        is_active INTEGER DEFAULT 1,
+        config_json TEXT DEFAULT '{}',
+        created_by TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (organization_id) REFERENCES organizations(id)
+    )`,
+  `CREATE INDEX IF NOT EXISTS idx_report_schedules_org ON report_schedules(organization_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_report_schedules_next_run ON report_schedules(next_run_at)`,
+  `CREATE TABLE IF NOT EXISTS schedule_executions (
+        id TEXT PRIMARY KEY,
+        schedule_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        completed_at TEXT,
+        generated_report_id TEXT,
+        error TEXT,
+        delivery_results_json TEXT DEFAULT '[]',
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (schedule_id) REFERENCES report_schedules(id) ON DELETE CASCADE
+    )`,
+  `CREATE INDEX IF NOT EXISTS idx_schedule_executions_schedule ON schedule_executions(schedule_id)`,
   // ==========================================================
   // Report Builder (deploy gate: Reports Builder + public report links)
   // ==========================================================
@@ -2814,6 +2871,36 @@ export const TEST_SCHEMA = [
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         revoked_at TIMESTAMP
     )`,
+  `CREATE TABLE IF NOT EXISTS report_schedules (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        report_template_id TEXT,
+        source_assessment_id TEXT,
+        schedule_name TEXT NOT NULL,
+        cron_expression TEXT NOT NULL,
+        timezone TEXT DEFAULT 'UTC',
+        next_run_at TIMESTAMP,
+        last_run_at TIMESTAMP,
+        last_run_status TEXT,
+        last_run_report_id TEXT,
+        run_count INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT 1,
+        config_json TEXT DEFAULT '{}',
+        created_by TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS schedule_executions (
+        id TEXT PRIMARY KEY,
+        schedule_id TEXT NOT NULL,
+        status TEXT,
+        started_at TIMESTAMP,
+        completed_at TIMESTAMP,
+        generated_report_id TEXT,
+        error TEXT,
+        delivery_results_json TEXT DEFAULT '[]',
+        FOREIGN KEY (schedule_id) REFERENCES report_schedules(id) ON DELETE CASCADE
+    )`,
   `CREATE TABLE IF NOT EXISTS report_builder_comments (
         id TEXT PRIMARY KEY,
         report_id TEXT NOT NULL,
@@ -2863,13 +2950,28 @@ export const TEST_SCHEMA = [
   `INSERT OR IGNORE INTO organizations (id, name, plan, status)
     VALUES ('demo-org', 'Demo Organization', 'free', 'active')`,
   `INSERT OR IGNORE INTO users (id, organization_id, email, password, first_name, last_name, role, status)
-    VALUES ('demo-user', 'demo-org', 'piotr.wisniewski@demo.com', '123456', 'Demo', 'User', 'user', 'active')`,
+    VALUES ('demo-user', 'demo-org', 'piotr.wisniewski@demo.com', '$2b$08$jUih5LigeFKTIdG3emcMielyW40GjM2UY36W1B7ZIv4kflarGcZre', 'Demo', 'User', 'user', 'active')`,
   `INSERT OR IGNORE INTO users (id, organization_id, email, password, first_name, last_name, role, status)
     VALUES ('e2e-user', 'demo-org', 'e2e-test@consultinity.dev', '$2b$10$xKTb1.5vZT.2ThRs/iRCLuHni43AUHaG7Hf9STKRQCudtsY1ZXxTe', 'E2E', 'User', 'user', 'active')`,
   `INSERT OR IGNORE INTO organization_members (id, organization_id, user_id, role, status, created_at)
     VALUES ('om-demo-owner', 'demo-org', 'demo-user', 'OWNER', 'ACTIVE', CURRENT_TIMESTAMP)`,
   `INSERT OR IGNORE INTO organization_members (id, organization_id, user_id, role, status, created_at)
     VALUES ('om-e2e-member', 'demo-org', 'e2e-user', 'MEMBER', 'ACTIVE', CURRENT_TIMESTAMP)`,
+  `INSERT OR IGNORE INTO organizations (id, name, domain, logo_url, plan, status, default_language)
+    VALUES ('org-plastmetcentrum', 'Plast-Met Centrum', 'plastmetcentrum.pl', '/images/org-logos/plastmetcentrum.png', 'enterprise', 'active', 'pl')`,
+  `INSERT OR IGNORE INTO users (id, organization_id, email, password, first_name, last_name, role, status, is_owner, email_verified)
+    VALUES ('user-plastmet-owner', 'org-plastmetcentrum', 'pawel.mroczkowski@plastmetcentrum.pl', '$2b$08$jUih5LigeFKTIdG3emcMielyW40GjM2UY36W1B7ZIv4kflarGcZre', 'Paweł', 'Mroczkowski', 'OWNER', 'active', 1, 1)`,
+  // If the user already exists (seed re-run), enforce the correct email/password.
+  `UPDATE users
+      SET email = 'pawel.mroczkowski@plastmetcentrum.pl',
+          password = '$2b$08$jUih5LigeFKTIdG3emcMielyW40GjM2UY36W1B7ZIv4kflarGcZre',
+          role = 'OWNER',
+          status = 'active',
+          is_owner = 1,
+          email_verified = 1
+    WHERE id = 'user-plastmet-owner'`,
+  `INSERT OR IGNORE INTO organization_members (id, organization_id, user_id, role, status, created_at)
+    VALUES ('om-plastmet-owner', 'org-plastmetcentrum', 'user-plastmet-owner', 'OWNER', 'ACTIVE', CURRENT_TIMESTAMP)`,
   `CREATE TABLE IF NOT EXISTS budget_expenses (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
