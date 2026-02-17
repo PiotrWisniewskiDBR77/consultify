@@ -35,9 +35,9 @@ const dbRun = (sql: string, params: any[] = []): Promise<void> =>
 const dbGet = <T = any>(sql: string, params: any[] = []): Promise<T | null> =>
   new Promise((resolve, reject) => {
     const db = getDatabase();
-    db.get(sql, params, (err: Error | null, row: T) => {
+    db.get(sql, params, (err: Error | null, row: T | null) => {
       if (err) reject(err);
-      else resolve(row || null);
+      else resolve(row ?? null);
     });
   });
 

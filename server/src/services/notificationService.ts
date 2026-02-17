@@ -372,7 +372,7 @@ class NotificationService {
       relatedObjectType: relatedObjectType,
       relatedObjectId: relatedObjectId,
       projectId: r.project_id || null,
-      projectName: (data.projectName as string) || (data.project_name as string) || null,
+      projectName: ((data.projectName as string) || (data.project_name as string) || null) ?? undefined,
       actionUrl: r.action_url,
       actorId: r.actor_id,
       actorName: r.actor_name,

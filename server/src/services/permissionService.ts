@@ -373,22 +373,23 @@ export async function hasPermission(
       return override.grant_type === 'GRANT';
     }
 
-    // Fall back to role-based permission from role_permissions table
+    // Fall back to role-based permission from builtin_role_permissions table
+    // (PostgreSQL deployments may have role_permissions with role_id/permission_id schema instead of role/permission_key)
     const rolePermission = await DbPromise.get<{ '1'?: number }>(
       db,
-      `SELECT 1 FROM role_permissions 
+      `SELECT 1 FROM builtin_role_permissions 
              WHERE role = ? AND permission_key = ?`,
       [userRole, permissionKey]
     );
 
     if (rolePermission) return true;
 
-    // If the role has no permissions seeded at all, use narrow fallback mapping.
+    // If the role has no permissions seeded at all, try role_permissions (legacy schema) and use fallback mapping.
     let hasAnyRolePerm: { '1'?: number } | null = null;
     try {
       hasAnyRolePerm = await DbPromise.get<{ '1'?: number }>(
         db,
-        `SELECT 1 FROM role_permissions WHERE role = ? LIMIT 1`,
+        `SELECT 1 FROM builtin_role_permissions WHERE role = ? LIMIT 1`,
         [userRole]
       );
     } catch {
@@ -422,10 +423,10 @@ export async function getUserPermissions(
   orgId: string,
   userRole: Role
 ): Promise<UserPermissionsResult> {
-  // Get role-based permissions
+  // Get role-based permissions from builtin_role_permissions
   const rolePerms = await DbPromise.all<RolePermissionRow>(
     db,
-    `SELECT permission_key FROM role_permissions WHERE role = ?`,
+    `SELECT permission_key FROM builtin_role_permissions WHERE role = ?`,
     [userRole]
   );
 
@@ -594,8 +595,8 @@ export async function getRolePermissions(
   role: Role | null = null
 ): Promise<RolePermissionMappingRow[]> {
   let sql = `SELECT rp.role, rp.permission_key, p.description, p.category
-               FROM role_permissions rp
-               JOIN permissions p ON p.key = rp.permission_key`;
+               FROM builtin_role_permissions rp
+               LEFT JOIN permissions p ON p.key = rp.permission_key`;
   const params: unknown[] = [];
 
   if (role) {
