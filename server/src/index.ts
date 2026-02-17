@@ -430,6 +430,8 @@ app.use(
               'https://api.mistral.ai',
               'https://api.stripe.com',
               'https://*.sentry.io',
+              'https://fonts.googleapis.com',
+              'https://fonts.gstatic.com',
             ],
             fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
             objectSrc: ["'none'"],
