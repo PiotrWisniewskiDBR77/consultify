@@ -1628,7 +1628,7 @@ export class InitiativeController {
         );
       } catch (err: any) {
         const msg = String(err?.message || '').toLowerCase();
-        if (!msg.includes('no such column')) throw err;
+        if (!msg.includes('no such column') && !msg.includes('does not exist')) throw err;
         // Legacy fallback: from_task_id / to_task_id
         rows = await queryHelpers.queryAll(
           `SELECT
@@ -3001,10 +3001,10 @@ export class InitiativeController {
         );
       } catch (err: any) {
         const msg = String(err?.message || '').toLowerCase();
-        if (!msg.includes('no such column')) {
+        if (!msg.includes('no such column') && !msg.includes('does not exist')) {
           throw err;
         }
-        // Backward-compatible fallback for legacy SQLite schema
+        // Backward-compatible fallback for legacy initiative_kpis schema (061)
         kpis = await queryHelpers.queryAll(
           `SELECT
             ik.id,
@@ -5171,8 +5171,8 @@ export class InitiativeController {
 
       let rows: any[] = [];
       try {
-        // Some dev SQLite schemas don't have the newer `gate_type` column yet.
-        // Try selecting it first, then fall back to a NULL gateType to avoid 500s.
+        // Try full schema (532+) first: gate_type, created_at, organization_id.
+        // Fall back to legacy schema (061): changed_at only, filter org via initiatives join.
         try {
           rows = await queryHelpers.queryAll(
             `SELECT
@@ -5195,11 +5195,14 @@ export class InitiativeController {
             [initiativeId, orgId]
           );
         } catch (e: any) {
-          const msg = String(e?.message || e || '');
-          if (
-            msg.toLowerCase().includes('gate_type') ||
-            msg.toLowerCase().includes('no such column')
-          ) {
+          const msg = String(e?.message || e || '').toLowerCase();
+          const missingColumn =
+            msg.includes('does not exist') ||
+            msg.includes('no such column') ||
+            msg.includes('gate_type') ||
+            msg.includes('created_at') ||
+            msg.includes('organization_id');
+          if (missingColumn) {
             rows = await queryHelpers.queryAll(
               `SELECT
                 h.id,
@@ -5209,16 +5212,17 @@ export class InitiativeController {
                 h.changed_by as changedBy,
                 h.reason,
                 NULL as gateType,
-                h.created_at as createdAt,
+                h.changed_at as createdAt,
                 u.first_name as changedByFirstName,
                 u.last_name as changedByLastName,
                 u.email as changedByEmail
               FROM initiative_status_history h
               LEFT JOIN users u ON u.id = h.changed_by
-              WHERE h.initiative_id = ? AND h.organization_id = ?
-              ORDER BY h.created_at DESC
+              JOIN initiatives i ON i.id = h.initiative_id AND i.organization_id = ?
+              WHERE h.initiative_id = ?
+              ORDER BY h.changed_at DESC
               LIMIT 100`,
-              [initiativeId, orgId]
+              [orgId, initiativeId]
             );
           } else {
             throw e;

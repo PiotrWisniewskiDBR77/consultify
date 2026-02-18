@@ -702,41 +702,36 @@ logger.info(`[Server] NODE_ENV: ${process.env.NODE_ENV}`);
 logger.info(`[Server] __dirname: ${__dirname}`);
 
 // Determine frontend dist path
-// In production Docker: frontend is at /app/dist (confirmed by test route)
+// 1. FRONTEND_DIST_PATH env var - explicit override for any deployment
+// 2. Production (NODE_ENV=production): frontend is at /app/dist in Docker
+// 3. Docker context (__dirname under /app/server): use /app/dist - avoids wrong path
+//    when NODE_ENV isn't set but we're in Docker.api (path.join gives /app/server/dist)
+// 4. Development: frontend is at project root /dist (path.join(__dirname, '../../dist'))
 let frontendDistPath: string;
-if (process.env.NODE_ENV === 'production') {
-  // Production (Docker): frontend is at /app/dist
+if (process.env.FRONTEND_DIST_PATH) {
+  frontendDistPath = path.resolve(process.env.FRONTEND_DIST_PATH);
+  logger.info(`[Server] Using FRONTEND_DIST_PATH: ${frontendDistPath}`);
+} else if (process.env.NODE_ENV === 'production') {
   frontendDistPath = '/app/dist';
-
   logger.info(`[Server] Production mode - using frontend path: ${frontendDistPath}`);
-  logger.info(`[Server] Production mode - using frontend path: ${frontendDistPath}`);
-
-  // Verify it exists
-  if (fs.existsSync(frontendDistPath)) {
-    const indexPath = path.join(frontendDistPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      logger.info(`[Server] ✓ Frontend index.html confirmed at: ${indexPath}`);
-    } else {
-      logger.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
-      logger.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
-    }
-  } else {
-    logger.error(`[Server] ✗ Frontend dist directory NOT found at: ${frontendDistPath}`);
-    logger.error(`[Server] ✗ Frontend dist directory NOT found at: ${frontendDistPath}`);
-  }
+} else if (__dirname.includes('/app/server')) {
+  // Docker.api combined deployment when NODE_ENV isn't 'production'
+  // path.join(__dirname, '../../dist') would wrongly resolve to /app/server/dist
+  frontendDistPath = '/app/dist';
+  logger.info(`[Server] Docker context detected - using frontend path: ${frontendDistPath}`);
 } else {
-  // Development: frontend is at project root /dist
   frontendDistPath = path.join(__dirname, '../../dist');
   logger.info(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
-  logger.info(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
-  const indexPath = path.join(frontendDistPath, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
-    logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
-  } else {
-    logger.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
-    logger.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
-  }
+}
+
+// Verify it exists
+const indexPath = path.join(frontendDistPath, 'index.html');
+if (fs.existsSync(frontendDistPath) && fs.existsSync(indexPath)) {
+  logger.info(`[Server] ✓ Frontend index.html confirmed at: ${indexPath}`);
+} else if (fs.existsSync(indexPath)) {
+  logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
+} else {
+  logger.error(`[Server] Frontend index.html not found at: ${indexPath}`);
 }
 
 // Store globally for test route and ensure it's set

@@ -330,23 +330,22 @@ const ensureAssessmentSchema = async (): Promise<void> => {
       columnName: string,
       columnDefSql: string
     ): Promise<void> => {
-      // Prefer a schema check in SQLite to avoid noisy "duplicate column" errors.
-      if (isSQLite) {
-        const cols = await getTableColumns(table);
-        if (cols.has(columnName)) return;
+      // PostgreSQL: use IF NOT EXISTS to avoid errors and log spam when column exists
+      if (!isSQLite) {
+        await queryHelpers.queryRun(
+          `ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${columnDefSql}`
+        );
+        return;
       }
+      // SQLite: check first (SQLite lacks ADD COLUMN IF NOT EXISTS in older versions)
+      const cols = await getTableColumns(table);
+      if (cols.has(columnName)) return;
       try {
         await queryHelpers.queryRun(`ALTER TABLE ${table} ADD COLUMN ${columnDefSql}`);
-        if (isSQLite) {
-          const cols = await getTableColumns(table);
-          cols.add(columnName);
-        }
+        cols.add(columnName);
       } catch (e: any) {
         const msg = String(e?.message || e || '');
-        // SQLite: "duplicate column name: foo"
-        // Postgres: 'column "foo" of relation "table" already exists'
-        if (msg.includes('duplicate column name') || msg.includes('already exists')) return;
-        // If table doesn't exist (shouldn't happen after CREATE TABLE), ignore to keep init resilient
+        if (msg.includes('duplicate column name')) return;
         if (msg.includes('no such table') || msg.includes('does not exist')) return;
         throw e;
       }
