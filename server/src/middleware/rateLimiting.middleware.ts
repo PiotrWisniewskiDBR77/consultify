@@ -52,7 +52,7 @@ function extractKey(req: Request): string {
 function createLimiter(opts: { windowMs: number; max: number; prefix: string; message?: string }) {
   const { windowMs, max, prefix, message = 'Too many requests, please try again later.' } = opts;
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (process.env.NODE_ENV === 'test') return next();
+    if (process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === 'true') return next();
     if (req.method === 'OPTIONS') return next();
     const key = `rl:${prefix}:${extractKey(req)}`;
     const { count, resetAt } = increment(key, windowMs);

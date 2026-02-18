@@ -49,6 +49,7 @@ const app: Express = express();
 const PORT = Number(process.env.PORT) || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
+const skipRateLimit = process.env.DISABLE_RATE_LIMIT === 'true';
 
 // Validate environment variables on startup (skip in test mode)
 if (!isTest && !process.env.SKIP_ENV_VALIDATION) {
@@ -506,7 +507,7 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: redisStore,
-  skip: (req) => isTest || req.originalUrl.includes('/api/auth/'),
+  skip: (req) => skipRateLimit || isTest || req.originalUrl.includes('/api/auth/'),
   message: { error: 'Too many requests, please try again later.' },
   keyGenerator: (req) => {
     try {
@@ -539,7 +540,7 @@ const authLimiter = rateLimit({
   max: isProduction ? 15 : 1000,
   store: authRedisStore,
   skip: (req) => {
-    if (isTest) return true;
+    if (skipRateLimit || isTest) return true;
     if (req.method === 'OPTIONS') return true;
     return false;
   },

@@ -97,25 +97,23 @@ try {
  * (Prevents enumeration attacks)
  */
 const validateLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000,
   max: 60,
   message: { valid: false, error: 'RATE_LIMIT_EXCEEDED' },
   standardHeaders: true,
   legacyHeaders: false,
   validate: { xForwardedForHeader: false, default: true },
+  skip: () => process.env.DISABLE_RATE_LIMIT === 'true',
 });
 
-/**
- * Accept endpoint: 20 requests/min per IP
- * (Prevents trial spam)
- */
 const acceptLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000,
   max: 20,
   message: { ok: false, error: 'RATE_LIMIT_EXCEEDED' },
   standardHeaders: true,
   legacyHeaders: false,
   validate: { xForwardedForHeader: false, default: true },
+  skip: () => process.env.DISABLE_RATE_LIMIT === 'true',
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
