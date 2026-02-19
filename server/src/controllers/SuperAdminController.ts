@@ -10,6 +10,7 @@ import { activityService } from '../services/ActivityService.js';
 import adminSessionService from '../services/adminSessionService.js';
 import complianceService from '../services/complianceService.js';
 import integrationService from '../services/integrationService.js';
+import legalService from '../services/legalService.js';
 import permissionsMatrixService from '../services/permissionsMatrixService.js';
 import securityIncidentService from '../services/securityIncidentService.js';
 import usageService from '../services/usageService.js';
@@ -102,13 +103,7 @@ const deps: {
     listFiles: async () => [],
     deleteFile: async () => true,
   } as any,
-  LegalService: {
-    getDocument: async () => ({}),
-    getAllDocuments: async () => [],
-    publishDocument: async (d: any) => d,
-    toggleDocumentActive: async () => ({}),
-    getDocumentById: async () => null,
-  } as any,
+  LegalService: legalService as any,
   LegalEventLogger: {
     logEvent: async () => ({}),
     getEvents: async () => [],
