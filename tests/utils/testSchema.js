@@ -538,14 +538,17 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     )`,
   `CREATE TABLE IF NOT EXISTS user_preferences (
+        id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
-        key TEXT NOT NULL,
+        preferences_type TEXT NOT NULL,
+        preferences_data TEXT,
+        key TEXT,
         value TEXT,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY(user_id, key),
+        UNIQUE(user_id, preferences_type),
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     )`,
-  `CREATE INDEX IF NOT EXISTS idx_user_preferences_user ON user_preferences(user_id, key)`,
+  `CREATE INDEX IF NOT EXISTS idx_user_preferences_user_type ON user_preferences(user_id, preferences_type)`,
   `CREATE TABLE IF NOT EXISTS user_gdpr_consents (
         user_id TEXT PRIMARY KEY,
         analytics INTEGER DEFAULT 1,
@@ -887,6 +890,19 @@ export const TEST_SCHEMA = [
         key_risks TEXT DEFAULT '[]',
         report_id TEXT,
         wave_id TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+        FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+    )`,
+  // Legacy: report builder expects "assessments" table for source lookups.
+  `CREATE TABLE IF NOT EXISTS assessments (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        project_id TEXT,
+        name TEXT,
+        status TEXT,
+        created_by TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,

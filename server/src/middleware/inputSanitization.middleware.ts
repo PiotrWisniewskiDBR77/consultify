@@ -25,18 +25,17 @@ let securityUtilsPromise: Promise<Pick<SecurityUtilsModule, 'sanitizeObject'>> |
 
 async function loadSecurityUtils(): Promise<Pick<SecurityUtilsModule, 'sanitizeObject'>> {
   if (!securityUtilsPromise) {
-    // IMPORTANT:
-    // - In Vitest we want TS source (stable + direct coverage).
-    // - In built runtime (dist/) we must import JS (there is no *.ts in dist/).
-    const isBuiltRuntime =
-      import.meta.url.includes('/dist/') ||
-      import.meta.url.includes('\\dist\\') ||
-      import.meta.url.includes('/server/dist/');
-
-    const spec = isBuiltRuntime ? '../utils/security.utils.js' : '../utils/security.utils.ts';
-
-    // If the preferred spec fails (edge tooling), fall back to the other one.
     securityUtilsPromise = (async () => {
+      // IMPORTANT:
+      // - In Vitest we want TS source (stable + direct coverage).
+      // - In built runtime (dist/) we must import JS (there is no *.ts in dist/).
+      const isBuiltRuntime =
+        import.meta.url.includes('/dist/') ||
+        import.meta.url.includes('\\dist\\') ||
+        import.meta.url.includes('/server/dist/');
+
+      const spec = isBuiltRuntime ? '../utils/security.utils.js' : '../utils/security.utils.ts';
+      // If the preferred spec fails (edge tooling), fall back to the other one.
       try {
         const m = await import(spec);
         return m as Pick<SecurityUtilsModule, 'sanitizeObject'>;

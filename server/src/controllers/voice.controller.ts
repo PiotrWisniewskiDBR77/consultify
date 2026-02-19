@@ -6,6 +6,18 @@ import { voiceService } from '../services/ai/VoiceService.js';
 import logger from '../utils/Logger.js';
 
 export class VoiceController {
+  private isServiceUnavailableError(error: unknown): boolean {
+    const msg = String((error as any)?.message || '').toLowerCase();
+    return (
+      msg.includes('api key not configured') ||
+      msg.includes('not configured in llmconfigservice') ||
+      msg.includes('no such table') ||
+      msg.includes('does not exist') ||
+      msg.includes('relation') ||
+      msg.includes('database not initialized')
+    );
+  }
+
   /**
    * STT: Transcribe audio file to text
    */
@@ -27,6 +39,10 @@ export class VoiceController {
 
       res.status(200).json({ text });
     } catch (error) {
+      if (this.isServiceUnavailableError(error)) {
+        res.status(503).json({ error: 'Speech-to-text temporarily unavailable' });
+        return;
+      }
       if (error instanceof Error) {
         logger.error(`[VoiceController] STT Error: ${error.message}`);
       }
@@ -55,6 +71,10 @@ export class VoiceController {
 
       res.status(200).send(audioBuffer);
     } catch (error) {
+      if (this.isServiceUnavailableError(error)) {
+        res.status(503).json({ error: 'Text-to-speech temporarily unavailable' });
+        return;
+      }
       if (error instanceof Error) {
         logger.error(`[VoiceController] TTS Error: ${error.message}`);
       }

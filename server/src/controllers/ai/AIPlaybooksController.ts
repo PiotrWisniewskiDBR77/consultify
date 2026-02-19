@@ -6,35 +6,10 @@ import { AuthRequest } from '../../middleware/auth.middleware.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
-// Fallback templates when database is empty or unavailable
-const FALLBACK_TEMPLATES = [
-  {
-    id: '1',
-    key: 'test_template',
-    title: 'Test Playbook Template',
-    description: 'A template for testing',
-    status: 'PUBLISHED',
-    triggerSignal: 'project_risk_high',
-    estimatedDurationMins: 30,
-    version: 1,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    usageStats: { totalRuns: 10, successRate: 0.9 },
-  },
-  {
-    id: 'draft-1',
-    key: 'draft_template',
-    title: 'Draft Playbook Template',
-    description: 'A template in draft',
-    status: 'DRAFT',
-    triggerSignal: 'project_risk_low',
-    estimatedDurationMins: 15,
-    version: 1,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    usageStats: { totalRuns: 0, successRate: 0 },
-  },
-];
+function isSchemaMissingError(err: unknown): boolean {
+  const msg = String((err as any)?.message || '').toLowerCase();
+  return msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation');
+}
 
 export class AIPlaybooksController {
   /**
@@ -75,15 +50,10 @@ export class AIPlaybooksController {
 
       query += ' ORDER BY apt.created_at DESC';
 
-      const templates = await dbAll(query, params);
+      const templates = await dbAll(query, params, { fallback: false });
 
       if (!templates || templates.length === 0) {
-        // Return fallback data if DB is empty
-        let fallback = FALLBACK_TEMPLATES;
-        if (status) {
-          fallback = fallback.filter((t) => t.status === status);
-        }
-        return res.json(fallback);
+        return res.json([]);
       }
 
       // Transform templates
@@ -115,8 +85,12 @@ export class AIPlaybooksController {
       return res.json(transformedTemplates);
     } catch (err: any) {
       logger.error('[AIPlaybooks] Get templates error:', err);
-      // Return fallback on error
-      return res.json(FALLBACK_TEMPLATES);
+      if (isSchemaMissingError(err)) {
+        return res
+          .status(503)
+          .json({ error: 'AI playbooks storage not available (schema missing or misconfigured)' });
+      }
+      return res.status(500).json({ error: err.message });
     }
   }
 
@@ -139,18 +113,24 @@ export class AIPlaybooksController {
                 FROM ai_playbook_templates
                 WHERE COALESCE(status, 'DRAFT') = 'PUBLISHED'
                 ORDER BY title ASC
-            `,
-        []
+	            `,
+        [],
+        { fallback: false }
       );
 
       if (!templates || templates.length === 0) {
-        return res.json(FALLBACK_TEMPLATES.filter((t) => t.status === 'PUBLISHED'));
+        return res.json([]);
       }
 
       return res.json(templates);
     } catch (err: any) {
       logger.error('[AIPlaybooks] Get published templates error:', err);
-      return res.json(FALLBACK_TEMPLATES.filter((t) => t.status === 'PUBLISHED'));
+      if (isSchemaMissingError(err)) {
+        return res
+          .status(503)
+          .json({ error: 'AI playbooks storage not available (schema missing or misconfigured)' });
+      }
+      return res.status(500).json({ error: err.message });
     }
   }
 
@@ -592,32 +572,19 @@ export class AIPlaybooksController {
                 WHERE apr.organization_id = ? OR ? IS NULL
                 ORDER BY apr.created_at DESC
                 LIMIT 100
-            `,
-        [req.user?.organizationId, req.user?.organizationId]
+	            `,
+        [req.user?.organizationId, req.user?.organizationId],
+        { fallback: false }
       );
 
-      if (!runs || runs.length === 0) {
-        // Return demo data
-        return res.json([
-          {
-            id: 'run-1',
-            templateId: '1',
-            templateKey: 'test_template',
-            templateTitle: 'Test Playbook Template',
-            organizationId: req.user?.organizationId,
-            correlationId: 'corr-12345',
-            initiatedBy: req.user?.id || 'unknown',
-            status: 'COMPLETED',
-            startedAt: new Date(Date.now() - 3600000).toISOString(),
-            completedAt: new Date().toISOString(),
-            createdAt: new Date(Date.now() - 3600000).toISOString(),
-          },
-        ]);
-      }
-
-      return res.json(runs);
+      return res.json(runs || []);
     } catch (err: any) {
       logger.error('[AIPlaybooks] Get runs error:', err);
+      if (isSchemaMissingError(err)) {
+        return res
+          .status(503)
+          .json({ error: 'AI playbooks storage not available (schema missing or misconfigured)' });
+      }
       return res.status(500).json({ error: err.message });
     }
   }

@@ -173,10 +173,18 @@ async function resolveValidProjectId(params: {
     if (p?.id) return String(p.id);
   }
   // Fallback to first project in org (prevents SQLITE_CONSTRAINT on NOT NULL/FK)
-  const first = await queryHelpers.queryOne(
-    `SELECT id FROM projects WHERE organization_id = ? ORDER BY created_at ASC LIMIT 1`,
-    [organizationId]
-  );
+  let first: any;
+  try {
+    first = await queryHelpers.queryOne(
+      `SELECT id FROM projects WHERE organization_id = ? ORDER BY created_at ASC LIMIT 1`,
+      [organizationId]
+    );
+  } catch {
+    first = await queryHelpers.queryOne(
+      `SELECT id FROM projects WHERE organization_id = ? ORDER BY id ASC LIMIT 1`,
+      [organizationId]
+    );
+  }
   return first?.id ? String(first.id) : null;
 }
 
@@ -302,13 +310,24 @@ const isLockedSessionStatus = (status?: string): boolean => {
 };
 
 async function assertSessionEditable(sessionId: string, organizationId: string): Promise<any> {
-  const session = await queryHelpers.queryOne(
-    `SELECT s.id, s.status, s.user_id as owner_id 
-     FROM interview_sessions s
-     JOIN projects p ON p.id = s.project_id
-     WHERE s.id = ? AND p.organization_id = ?`,
-    [sessionId, organizationId]
-  );
+  let session: any;
+  try {
+    session = await queryHelpers.queryOne(
+      `SELECT s.id, s.status, s.owner_id as owner_id
+       FROM interview_sessions s
+       JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ? AND p.organization_id = ?`,
+      [sessionId, organizationId]
+    );
+  } catch {
+    session = await queryHelpers.queryOne(
+      `SELECT s.id, s.status, s.user_id as owner_id
+       FROM interview_sessions s
+       JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ? AND p.organization_id = ?`,
+      [sessionId, organizationId]
+    );
+  }
   if (!session) throw new Error('Session not found');
   if (isLockedSessionStatus((session as any).status)) throw new Error('Session is locked');
   return session;
@@ -319,13 +338,24 @@ async function assertSessionOwnedByUser(
   organizationId: string,
   userId: string
 ): Promise<void> {
-  const session = await queryHelpers.queryOne(
-    `SELECT s.id, s.user_id as owner_id 
-     FROM interview_sessions s
-     JOIN projects p ON p.id = s.project_id
-     WHERE s.id = ? AND p.organization_id = ?`,
-    [sessionId, organizationId]
-  );
+  let session: any;
+  try {
+    session = await queryHelpers.queryOne(
+      `SELECT s.id, s.owner_id as owner_id
+       FROM interview_sessions s
+       JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ? AND p.organization_id = ?`,
+      [sessionId, organizationId]
+    );
+  } catch {
+    session = await queryHelpers.queryOne(
+      `SELECT s.id, s.user_id as owner_id
+       FROM interview_sessions s
+       JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ? AND p.organization_id = ?`,
+      [sessionId, organizationId]
+    );
+  }
   if (!session) throw new Error('Session not found');
   if (String((session as any).owner_id) !== String(userId)) throw new Error('Forbidden');
 }

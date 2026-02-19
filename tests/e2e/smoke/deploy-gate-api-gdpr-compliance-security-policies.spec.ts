@@ -9,6 +9,8 @@
 
 import { expect, test } from '@playwright/test';
 
+import { readTestSupportState } from '../_helpers/testSupportState';
+
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 
 async function jsonOrText(res: any): Promise<any> {
@@ -34,21 +36,12 @@ async function assertNo5xx(res: any, label: string) {
   throw new Error(`${label} 5xx: ${res.status()} ${res.statusText()} body=${JSON.stringify(body)}`);
 }
 
-async function demoLoginApi(request: any): Promise<{
+async function demoLoginApi(_request: any): Promise<{
   token: string;
   userId: string;
   organizationId: string;
 }> {
-  const res = await request.post(`${API_BASE_URL}/api/auth/demo-login`);
-  expect(res.ok()).toBeTruthy();
-  const data = await res.json();
-  const token = String(data?.token || '');
-  const userId = String(data?.user?.id || '');
-  const organizationId = String(data?.user?.organizationId || '');
-  expect(token.length).toBeGreaterThan(10);
-  expect(userId.length).toBeGreaterThan(0);
-  expect(organizationId.length).toBeGreaterThan(0);
-  return { token, userId, organizationId };
+  return readTestSupportState();
 }
 
 function authHeaders(token: string) {

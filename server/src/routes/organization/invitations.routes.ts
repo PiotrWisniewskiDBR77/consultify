@@ -84,8 +84,7 @@ router.post('/accept', validateBody(AcceptInvitationSchema), InvitationControlle
  */
 router.get(
   '/validate/:token',
-  InvitationController.validateToken ||
-    ((req, res) => res.status(501).json({ error: 'Not implemented' }))
+  InvitationController.validateToken
 );
 
 /**
@@ -102,8 +101,7 @@ router.post('/:id/revoke', verifyToken, InvitationController.cancelInvitation);
 router.get(
   '/:id/audit',
   verifyToken,
-  InvitationController.getInvitationAudit ||
-    ((req, res) => res.status(501).json({ error: 'Not implemented' }))
+  InvitationController.getInvitationAudit
 );
 
 export default router;

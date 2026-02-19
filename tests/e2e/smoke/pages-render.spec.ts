@@ -7,8 +7,6 @@
 
 import { expect, Page, test } from '@playwright/test';
 
-const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
-
 async function dismissTourModal(page: Page) {
   const skipTour = page.getByRole('button', { name: /Skip tour|Pomiń/i }).first();
   const consultantCard = page.getByRole('button', { name: /Consultant|Konsultant/i }).first();
@@ -31,44 +29,6 @@ async function dismissTourModal(page: Page) {
   }
 }
 
-async function demoLogin(page: Page): Promise<void> {
-  const response = await page.request.post(`${API_BASE_URL}/api/auth/demo-login`);
-  if (!response.ok()) {
-    const bodyText = await response.text().catch(() => '<unreadable>');
-    throw new Error(`Demo login failed: ${response.status()} ${response.statusText()} ${bodyText}`);
-  }
-  const data = await response.json();
-
-  await page.addInitScript(
-    ({ token, refreshToken }) => {
-      localStorage.setItem('token', token);
-      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-      sessionStorage.setItem('isDemo', 'true');
-
-      try {
-        localStorage.setItem(
-          'consultinity_demo_session',
-          JSON.stringify({
-            sessionId: 'e2e',
-            startTime: new Date().toISOString(),
-            hasCompletedTour: true,
-            hasSeenWelcome: true,
-            hasInteractedWithAI: false,
-            aiInteractionsUsed: 0,
-            featuresExplored: [],
-            upgradePromptsShown: 0,
-            exitIntentTriggered: false,
-            milestones: [],
-          })
-        );
-      } catch {
-        // ignore
-      }
-    },
-    { token: data.token, refreshToken: data.refreshToken }
-  );
-}
-
 async function expectRouteMounted(page: Page) {
   await dismissTourModal(page);
   await expect(page.locator('#root')).toContainText(/./, { timeout: 30000 });
@@ -77,10 +37,6 @@ async function expectRouteMounted(page: Page) {
 
 test.describe('L4 Smoke — routes render', () => {
   test.setTimeout(90000);
-
-  test.beforeEach(async ({ page }) => {
-    await demoLogin(page);
-  });
 
   test('renders Reports builder', async ({ page }) => {
     await page.goto('/reports/builder');
@@ -132,4 +88,3 @@ test.describe('L4 Smoke — routes render', () => {
     await expectRouteMounted(page);
   });
 });
-

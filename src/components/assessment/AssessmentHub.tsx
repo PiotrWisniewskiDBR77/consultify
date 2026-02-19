@@ -353,9 +353,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             setReports(Array.isArray(reportData) ? reportData : []);
 
             // Fetch initiatives derived from assessments
-            const initiativesResponse = await Api.get('/initiatives?source=assessment').catch(
-              () => []
-            );
+            // IMPORTANT: Do NOT swallow errors here — this runs inside the cold-start retry loop.
+            // If we `catch(() => [])` we can incorrectly "succeed" on attempt 1 and persist an empty list,
+            // which looks like "the first initiative didn't load until I come back".
+            const initiativesResponse = await Api.get('/initiatives?source=assessment');
             const rawInits = Array.isArray(initiativesResponse) ? initiativesResponse : [];
             setInitiatives(rawInits.filter(isAssessmentModuleInitiative));
 

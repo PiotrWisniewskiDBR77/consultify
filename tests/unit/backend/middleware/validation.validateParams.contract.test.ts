@@ -34,4 +34,20 @@ describe('validateParams (contract)', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect((req.params as any).id).toBe(uuid);
   });
+
+  it('uses defineProperty fallback when req.params is read-only', async () => {
+    const uuid = '11111111-1111-4111-8111-111111111111';
+    const mw = validateParams(schema);
+    const req: any = {};
+    Object.defineProperty(req, 'params', {
+      get: () => ({ id: uuid }),
+      configurable: true,
+    });
+    const res: any = { status: vi.fn(() => res), json: vi.fn(() => res) };
+    const next = vi.fn();
+
+    mw(req, res, next);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect((req.params as any).id).toBe(uuid);
+  });
 });

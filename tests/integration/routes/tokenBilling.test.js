@@ -19,12 +19,13 @@ vi.hoisted(() => {
  * Tests token billing API endpoints
  */
 const db = getDatabase();
-describe('Integration Test: Token Billing Routes', () => {
-  let authToken;
-  const testId = Date.now();
-  const testOrgId = `token-billing-org-${testId}`;
-  const testUserId = `token-billing-user-${testId}`;
-  const testEmail = `token-billing-${testId}@test.com`;
+	describe('Integration Test: Token Billing Routes', () => {
+	  let authToken;
+	  const testId = Date.now();
+	  const testOrgId = `token-billing-org-${testId}`;
+	  const testUserId = `token-billing-user-${testId}`;
+	  const testEmail = `token-billing-${testId}@test.com`;
+	  const testPackageId = `token-pkg-${testId}`;
 
   beforeAll(async () => {
     await initializeDatabase();
@@ -32,21 +33,39 @@ describe('Integration Test: Token Billing Routes', () => {
 
     const hash = bcrypt.hashSync('test123', 8);
 
-    await new Promise((resolve) => {
-      db.serialize(() => {
-        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
-          testOrgId,
-          'Token Billing Test Org',
-          'free',
-          'active',
-        ]);
-        db.run(
-          'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-          [testUserId, testOrgId, testEmail, hash, 'Test', 'ADMIN'],
-          resolve
-        );
-      });
-    });
+	    await new Promise((resolve) => {
+	      db.serialize(() => {
+	        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
+	          testOrgId,
+	          'Token Billing Test Org',
+	          'free',
+	          'active',
+	        ]);
+	        db.run(
+	          'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+	          [testUserId, testOrgId, testEmail, hash, 'Test', 'ADMIN'],
+	          () => {
+	            db.run(
+	              `INSERT INTO token_packages (id, name, description, tokens, price_usd, bonus_percent, is_active, is_popular, sort_order, stripe_price_id)
+	               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	              [
+	                testPackageId,
+	                'Test Package (no Stripe)',
+	                'Used to verify purchase is blocked without Stripe config',
+	                1000,
+	                10.0,
+	                0,
+	                1,
+	                0,
+	                1,
+	                null,
+	              ],
+	              resolve
+	            );
+	          }
+	        );
+	      });
+	    });
 
     // Login to get token
     const loginRes = await request(app).post('/api/auth/login').send({
@@ -122,8 +141,8 @@ describe('Integration Test: Token Billing Routes', () => {
     });
   });
 
-  describe('GET /api/token-billing/margins', () => {
-    it('should return margins (admin only)', async () => {
+	  describe('GET /api/token-billing/margins', () => {
+	    it('should return margins (admin only)', async () => {
       if (!authToken) {
         console.log('Skipping margins test - no auth token');
         return;
@@ -135,6 +154,24 @@ describe('Integration Test: Token Billing Routes', () => {
 
       // May require admin, so 200 or 403 is acceptable
       expect([200, 403, 404]).toContain(res.status);
-    });
-  });
-});
+	    });
+	  });
+
+	  describe('POST /api/token-billing/purchase', () => {
+	    it('should return 503 when Stripe is not configured for the package/environment', async () => {
+	      if (!authToken) {
+	        console.log('Skipping purchase test - no auth token');
+	        return;
+	      }
+
+	      const res = await request(app)
+	        .post('/api/token-billing/purchase')
+	        .set('Authorization', `Bearer ${authToken}`)
+	        .send({ packageId: testPackageId });
+
+	      expect(res.status).toBe(503);
+	      expect(res.body.success).toBe(false);
+	      expect(String(res.body.error || '')).toMatch(/stripe/i);
+	    });
+	  });
+	});

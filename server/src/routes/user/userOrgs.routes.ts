@@ -11,8 +11,11 @@ const router = Router();
 
 // Stub for missing JS routes
 router.use((req, res) => {
-  logger.warn(`[userOrgs] Route not implemented (stubbed)`);
-  res.status(501).json({ error: 'Not implemented: Route handler missing' });
+  logger.warn(`[userOrgs] Route unavailable (no real implementation)`);
+  res.status(503).json({
+    success: false,
+    error: 'User organizations endpoint is not available (no real implementation)',
+  });
 });
 
 export default router;

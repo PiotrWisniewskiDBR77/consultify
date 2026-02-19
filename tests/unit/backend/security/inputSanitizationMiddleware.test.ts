@@ -138,24 +138,15 @@ describe('inputSanitizationMiddleware (L1)', () => {
       process.env.NODE_ENV = 'production';
       delete process.env.VITEST;
       vi.resetModules();
-
-      // Provide a JS-version security utils module for the non-test import path.
-      vi.doMock('../../../../server/src/utils/security.utils.js', () => ({
-        sanitizeObject: (x: unknown) => x,
-      }));
-
+      const mod = await import('../../../../server/src/middleware/inputSanitization.middleware.ts');
       const logger = (await import('../../../../server/src/utils/Logger.js')).default as any;
       const origWarn = logger.warn;
       logger.warn = vi.fn();
       try {
-        const mod =
-          await import('../../../../server/src/middleware/inputSanitization.middleware.ts');
-        const req = createReq({
-          body: { html: '<script>alert(1)</script>' },
-        });
+        const req = createReq({ body: { x: '<script>alert(1)</script>' } });
         const next = vi.fn();
 
-        await mod.inputSanitizationMiddleware(req, {} as any, next);
+        await expect(mod.inputSanitizationMiddleware(req, {} as any, next)).resolves.toBeUndefined();
         expect(next).toHaveBeenCalled();
         expect(logger.warn).toHaveBeenCalled();
       } finally {
@@ -176,14 +167,17 @@ describe('inputSanitizationMiddleware (L1)', () => {
       delete process.env.VITEST;
       vi.resetModules();
 
-      vi.doMock('../../../../server/src/utils/security.utils.js', () => ({
-        sanitizeObject: () => {
-          throw new Error('boom');
-        },
-      }));
-
       const mod = await import('../../../../server/src/middleware/inputSanitization.middleware.ts');
-      const req = createReq({ body: { x: '<b>y</b>' } });
+      const req = createReq({
+        body: new Proxy(
+          {},
+          {
+            ownKeys() {
+              throw new Error('ownKeys boom');
+            },
+          }
+        ),
+      });
       const next = vi.fn();
 
       await expect(mod.inputSanitizationMiddleware(req, {} as any, next)).resolves.toBeUndefined();
@@ -196,17 +190,22 @@ describe('inputSanitizationMiddleware (L1)', () => {
   });
 
   it('fails fast in test env when sanitization throws', async () => {
-    vi.resetModules();
-    vi.doMock('../../../../server/src/utils/security.utils.ts', () => ({
-      sanitizeObject: () => {
-        throw new Error('boom');
-      },
-    }));
-
-    const mod = await import('../../../../server/src/middleware/inputSanitization.middleware.ts');
-    const req = createReq({ body: { x: '<b>y</b>' } });
+    const req = createReq({
+      body: new Proxy(
+        {},
+        {
+          ownKeys() {
+            throw new Error('ownKeys boom');
+          },
+        }
+      ),
+    });
     const next = vi.fn();
 
-    await expect(mod.inputSanitizationMiddleware(req, {} as any, next)).rejects.toThrow('boom');
+    await expect(inputSanitizationMiddleware(req, {} as any, next)).rejects.toThrow(/ownKeys boom/);
+    expect(next).not.toHaveBeenCalled();
   });
+
+  // Note: loader fallback is exercised indirectly by runtime tests; unit tests avoid mocking module
+  // resolution because Vitest treats throwing mock factories as a hard error.
 });

@@ -380,13 +380,7 @@ if (typeof process !== 'undefined' && process.env) {
 
 // Mock legacy/broken route modules globally to prevent import crashes in Gateway.ts
 const mockRouter = (req: any, res: any, next: any) => next();
-vi.mock('../server/src/routes/aiPlaybooks.routes.js', () => ({ default: mockRouter }));
-vi.mock('../server/src/routes/content.routes.js', () => ({ default: mockRouter }));
-vi.mock('../server/src/routes/premiumReports.routes.js', () => ({ default: mockRouter }));
-vi.mock('../server/src/routes/managementReports.routes.js', () => ({ default: mockRouter }));
-vi.mock('../server/src/routes/voice.routes.js', () => ({ default: mockRouter }));
 // vi.mock('../server/src/routes/ai.routes.js', () => ({ default: mockRouter }));
-vi.mock('../server/src/routes/documents.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/services/backupService.js', () => ({
   default: { backupDatabase: vi.fn(), restoreDatabase: vi.fn() },
 }));

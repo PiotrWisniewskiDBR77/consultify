@@ -24,6 +24,11 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+function isSchemaMissingError(err: unknown): boolean {
+  const msg = String((err as any)?.message || '').toLowerCase();
+  return msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation');
+}
+
 // Apply authentication to all routes
 router.use(verifyToken);
 
@@ -37,29 +42,10 @@ router.use(verifyToken);
  */
 router.get('/organization', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req as any).user?.id;
-
-    // Return demo data for now - will be replaced with DB query
-    const organization = {
-      id: 'partner-org-001',
-      name: 'Acme Consulting GmbH',
-      legalName: 'Acme Consulting GmbH',
-      taxId: 'DE123456789',
-      contactEmail: 'partner@acme-consulting.de',
-      contactPhone: '+49 30 12345678',
-      website: 'https://acme-consulting.de',
-      tier: 'certified',
-      status: 'active',
-      partnerSince: '2024-01-15',
-      licenseDiscountPercent: 20,
-      commissionRatePercent: 15,
-      performanceScore: 85,
-      publicListingEnabled: true,
-      specializations: ['DRD', 'SIRI', 'Lean4.0'],
-      regions: ['DACH', 'CEE', 'Baltics'],
-    };
-
-    res.json({ success: true, data: organization });
+    return res.status(503).json({
+      success: false,
+      error: 'Partner portal organization endpoint not available (no real implementation)',
+    });
   } catch (error: any) {
     logger.error('Error fetching partner organization:', error);
     next(error);
@@ -72,13 +58,9 @@ router.get('/organization', async (req: Request, res: Response, next: NextFuncti
  */
 router.put('/organization', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, taxId, contactEmail, contactPhone, website } = req.body;
-
-    // TODO: Update in database
-    res.json({
-      success: true,
-      message: 'Organization updated successfully',
-      data: req.body,
+    return res.status(503).json({
+      success: false,
+      error: 'Partner portal organization updates not available (no real implementation)',
     });
   } catch (error: any) {
     logger.error('Error updating partner organization:', error);
@@ -94,12 +76,9 @@ router.put(
   '/organization/specializations',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { specializations } = req.body;
-
-      res.json({
-        success: true,
-        message: 'Specializations updated successfully',
-        data: { specializations },
+      return res.status(503).json({
+        success: false,
+        error: 'Partner portal organization updates not available (no real implementation)',
       });
     } catch (error: any) {
       logger.error('Error updating specializations:', error);
@@ -114,12 +93,9 @@ router.put(
  */
 router.put('/organization/regions', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { regions } = req.body;
-
-    res.json({
-      success: true,
-      message: 'Regions updated successfully',
-      data: { regions },
+    return res.status(503).json({
+      success: false,
+      error: 'Partner portal organization updates not available (no real implementation)',
     });
   } catch (error: any) {
     logger.error('Error updating regions:', error);
@@ -156,29 +132,25 @@ router.put('/organization/listing', async (req: Request, res: Response, next: Ne
  */
 router.get('/referral-tools', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
-
-    let tools;
-    try {
-      tools = await PartnerReferralService.getReferralTools(partnerOrgId);
-    } catch (dbError: any) {
-      logger.warn('Referral tools: DB query failed, using fallback data:', dbError?.message);
+    const partnerOrgId = (req as any).user?.partnerOrgId;
+    if (!partnerOrgId) {
+      return res.status(403).json({ success: false, error: 'Partner organization required' });
     }
 
+    const tools = await PartnerReferralService.getReferralTools(partnerOrgId);
     if (!tools) {
-      // Return fallback demo data when DB is unavailable
-      tools = {
-        referralCode: 'ACME-2024',
-        referralLink: `${process.env.APP_URL || 'https://app.consultinity.com'}/ref/acme-consulting`,
-        referralLinkSlug: 'acme-consulting',
-        qrCodeUrl: null,
-        campaignLinks: [],
-      };
+      return res.status(404).json({ success: false, error: 'Partner organization not found' });
     }
 
     res.json({ success: true, data: tools });
   } catch (error: any) {
     logger.error('Error fetching referral tools:', error);
+    if (isSchemaMissingError(error)) {
+      return res.status(503).json({
+        success: false,
+        error: 'Partner referral tools unavailable (database schema missing or misconfigured)',
+      });
+    }
     next(error);
   }
 });
@@ -446,8 +418,12 @@ router.get('/payouts', async (req: Request, res: Response, next: NextFunction) =
  */
 router.get('/dashboard', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Default fallback dashboard data
-    const fallbackDashboard = {
+    const partnerOrgId = (req as any).user?.partnerOrgId;
+    if (!partnerOrgId) {
+      return res.status(403).json({ success: false, error: 'Partner organization required' });
+    }
+
+    const result = {
       stats: {
         activeClients: 0,
         activeProjects: 0,
@@ -460,20 +436,13 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
       },
       recentActivity: [] as Array<{ type: string; text: string; time: string }>,
       certificationProgress: {
-        completed: 2,
-        total: 4,
-        courses: [
-          { name: 'Consultinity Foundations', status: 'completed' },
-          { name: 'PMO Standards', status: 'completed' },
-          { name: 'AI Intelligence Modules', status: 'in-progress', progress: 45 },
-          { name: 'Assessment Specialist', status: 'locked' },
-        ],
+        completed: 0,
+        total: 0,
+        courses: [] as Array<{ name: string; status: string; progress?: number }>,
       },
     };
 
-    // Try to load from database, fallback to demo data
     try {
-      const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
       const { getDatabase } = await import('../database/Database.js');
       const db = getDatabase();
       const { get: dbGet, all: dbAll } = await import('../utils/DbPromise.js');
@@ -485,13 +454,15 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
       }>(
         db,
         `SELECT tier, status, commission_rate_percent FROM partner_organizations WHERE id = ?`,
-        [partnerOrgId]
+        [partnerOrgId],
+        { fallback: false }
       );
 
       const clientStats = await dbGet<{ count: number }>(
         db,
         `SELECT COUNT(*) as count FROM partner_attributions WHERE partner_org_id = ? AND status = 'ACTIVE'`,
-        [partnerOrgId]
+        [partnerOrgId],
+        { fallback: false }
       );
 
       const thisMonthRevenue = await dbGet<{ total: number }>(
@@ -500,7 +471,8 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
                FROM partner_commission_transactions 
                WHERE partner_org_id = ? 
                AND transaction_date >= date('now', 'start of month')`,
-        [partnerOrgId]
+        [partnerOrgId],
+        { fallback: false }
       );
 
       const lastMonthRevenue = await dbGet<{ total: number }>(
@@ -510,7 +482,8 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
                WHERE partner_org_id = ? 
                AND transaction_date >= date('now', 'start of month', '-1 month')
                AND transaction_date < date('now', 'start of month')`,
-        [partnerOrgId]
+        [partnerOrgId],
+        { fallback: false }
       );
 
       const currentRev = thisMonthRevenue?.total || 0;
@@ -528,7 +501,8 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
                WHERE partner_org_id = ? 
                ORDER BY created_at DESC 
                LIMIT 3`,
-        [partnerOrgId]
+        [partnerOrgId],
+        { fallback: false }
       );
 
       const recentAttributions = await dbAll<{
@@ -542,7 +516,8 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
                WHERE pa.partner_org_id = ? 
                ORDER BY pa.attributed_at DESC 
                LIMIT 2`,
-        [partnerOrgId]
+        [partnerOrgId],
+        { fallback: false }
       );
 
       const recentActivity: Array<{ type: string; text: string; time: string }> = [];
@@ -571,16 +546,20 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
         return aTime - bTime;
       });
 
-      fallbackDashboard.stats.activeClients = clientStats?.count || 0;
-      fallbackDashboard.stats.certificationLevel = partnerOrg?.tier || 'registered';
-      fallbackDashboard.stats.monthlyRevenue = Math.round(currentRev);
-      fallbackDashboard.stats.revenueChange = revenueChange;
-      fallbackDashboard.recentActivity = recentActivity.slice(0, 5);
+      result.stats.activeClients = clientStats?.count || 0;
+      result.stats.certificationLevel = partnerOrg?.tier || 'registered';
+      result.stats.monthlyRevenue = Math.round(currentRev);
+      result.stats.revenueChange = revenueChange;
+      result.recentActivity = recentActivity.slice(0, 5);
     } catch (dbError: any) {
-      logger.warn('Dashboard: DB query failed, using fallback data:', dbError?.message);
+      logger.warn('Dashboard: DB query failed:', dbError?.message);
+      return res.status(503).json({
+        success: false,
+        error: 'Partner dashboard unavailable (database schema missing or misconfigured)',
+      });
     }
 
-    res.json({ success: true, data: fallbackDashboard });
+    res.json({ success: true, data: result });
   } catch (error: any) {
     logger.error('Error fetching dashboard:', error);
     next(error);

@@ -8,6 +8,8 @@
 
 import { expect, test } from '@playwright/test';
 
+import { readTestSupportState } from '../_helpers/testSupportState';
+
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 
 async function jsonOrText(res: any): Promise<any> {
@@ -27,22 +29,6 @@ async function assertOk(res: any, label: string) {
   throw new Error(`${label} failed: ${res.status()} ${res.statusText()} body=${JSON.stringify(body)}`);
 }
 
-async function demoLoginApi(request: any): Promise<{
-  token: string;
-  userId: string;
-  organizationId?: string;
-}> {
-  const res = await request.post(`${API_BASE_URL}/api/auth/demo-login`);
-  expect(res.ok()).toBeTruthy();
-  const data = await res.json();
-  const token = String(data?.token || '');
-  const userId = String(data?.user?.id || '');
-  const organizationId = data?.user?.organizationId ? String(data.user.organizationId) : undefined;
-  expect(token.length).toBeGreaterThan(10);
-  expect(userId.length).toBeGreaterThan(0);
-  return { token, userId, organizationId };
-}
-
 function authHeaders(token: string) {
   return { Authorization: `Bearer ${token}` };
 }
@@ -51,7 +37,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   test.setTimeout(60000);
 
   test('GET /api/settings returns key-value object', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/settings`, { headers: authHeaders(token) });
     await assertOk(res, 'GET /api/settings');
     const data = await res.json();
@@ -59,7 +45,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('POST /api/settings persists a key', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const key = `e2e_smoke_${Date.now()}`;
     const value = `v_${Date.now()}`;
 
@@ -78,7 +64,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/settings/preferences/regional returns preferences', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/settings/preferences/regional`, {
       headers: authHeaders(token),
     });
@@ -88,7 +74,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/settings/preferences/notifications returns preferences', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/settings/preferences/notifications`, {
       headers: authHeaders(token),
     });
@@ -98,7 +84,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/settings/preferences/quietHours returns preferences', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/settings/preferences/quietHours`, {
       headers: authHeaders(token),
     });
@@ -108,7 +94,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/settings/preferences/privacy returns preferences', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/settings/preferences/privacy`, {
       headers: authHeaders(token),
     });
@@ -118,7 +104,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/settings/preferences/dashboard returns preferences', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/settings/preferences/dashboard`, {
       headers: authHeaders(token),
     });
@@ -128,7 +114,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/settings/preferences/work returns preferences', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/settings/preferences/work`, {
       headers: authHeaders(token),
     });
@@ -138,7 +124,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/settings/preferences/ai-instructions returns preferences', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/settings/preferences/ai-instructions`, {
       headers: authHeaders(token),
     });
@@ -148,7 +134,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/settings/preferences/appearance returns preferences', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/settings/preferences/appearance`, {
       headers: authHeaders(token),
     });
@@ -158,7 +144,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/notifications returns an array', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/notifications?limit=5`, {
       headers: authHeaders(token),
     });
@@ -168,7 +154,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/notifications/counts returns unread count', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/notifications/counts`, {
       headers: authHeaders(token),
     });
@@ -178,7 +164,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/notifications/unread-count returns count', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/notifications/unread-count`, {
       headers: authHeaders(token),
     });
@@ -188,7 +174,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('POST /api/notifications/mark-all-read succeeds', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.post(`${API_BASE_URL}/api/notifications/mark-all-read`, {
       headers: authHeaders(token),
     });
@@ -201,7 +187,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   test('GET /api/pmo/projects/my-memberships returns memberships (route not shadowed)', async ({
     request,
   }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/pmo/projects/my-memberships`, {
       headers: authHeaders(token),
     });
@@ -211,7 +197,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/projects returns an array', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/projects?limit=5`, { headers: authHeaders(token) });
     await assertOk(res, 'GET /api/projects');
     const data = await res.json();
@@ -219,7 +205,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/teams returns an array', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/teams`, { headers: authHeaders(token) });
     await assertOk(res, 'GET /api/teams');
     const data = await res.json();
@@ -227,7 +213,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/organizations/current returns organizations array', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/organizations/current`, {
       headers: authHeaders(token),
     });
@@ -237,7 +223,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/organizations/:orgId returns org payload', async ({ request }) => {
-    const { token, organizationId } = await demoLoginApi(request);
+    const { token, organizationId } = readTestSupportState();
     const orgId = organizationId || 'demo-org';
     const res = await request.get(`${API_BASE_URL}/api/organizations/${orgId}`, {
       headers: authHeaders(token),
@@ -249,7 +235,7 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
   });
 
   test('GET /api/settings/preferences/ai-model returns preferences', async ({ request }) => {
-    const { token } = await demoLoginApi(request);
+    const { token } = readTestSupportState();
     const res = await request.get(`${API_BASE_URL}/api/settings/preferences/ai-model`, {
       headers: authHeaders(token),
     });
@@ -258,4 +244,3 @@ test.describe('L4 Smoke — deploy gate API (app core)', () => {
     expect(data).toEqual(expect.objectContaining({ preferences: expect.any(Object) }));
   });
 });
-

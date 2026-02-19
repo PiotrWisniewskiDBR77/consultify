@@ -169,9 +169,8 @@ router.get(
   '/',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    // Return empty array if service not available (for tests)
     if (!DocumentService?.getAccessibleDocuments) {
-      return res.json([]);
+      return res.status(503).json({ error: 'Document service not available' });
     }
 
     try {
@@ -261,13 +260,16 @@ router.post(
   upload.single('file'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.uploadDocument) {
-      // Return 400 for missing file (tests expect this, not 503)
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
-      return res
-        .status(201)
-        .json({ message: 'Document uploaded (stub)', document: { id: 'stub-doc-id' } });
+      // Best-effort cleanup of the uploaded file to avoid leaking files when service is unavailable.
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch {
+        // ignore
+      }
+      return res.status(503).json({ error: 'Document service not available' });
     }
 
     try {

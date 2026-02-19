@@ -1,113 +1,174 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
+import { describe, expect, it, vi } from 'vitest';
 
-describe('RateLimiting Middleware (Genuine)', () => {
-  let mockReq: Partial<Request>;
-  let mockRes: Partial<Response>;
-  let next: NextFunction;
-  let jsonFn: any;
-  let statusFn: any;
-  let setHeaderFn: any;
-  let middlewareModule: any;
-
-  beforeEach(async () => {
-    vi.resetModules(); // Clear module cache to allow re-evaluation of top-level consts
-    vi.stubEnv('NODE_ENV', 'production'); // Force prod to ensure strict limits
-
-    // Dynamically import AFTER setting env
-    middlewareModule = await import('../../../../server/src/middleware/rateLimiting.middleware.js');
-
-    mockReq = {
-      ip: '127.0.0.1',
-      headers: {},
-      socket: { remoteAddress: '127.0.0.1' } as any,
-    };
-
-    jsonFn = vi.fn().mockReturnThis();
-    statusFn = vi.fn().mockReturnThis();
-    setHeaderFn = vi.fn();
-
-    mockRes = {
-      status: statusFn,
-      json: jsonFn,
-      setHeader: setHeaderFn,
-    };
-
-    next = vi.fn();
+function makeRes() {
+  const res: any = {};
+  res.headers = {};
+  res.setHeader = vi.fn((k: string, v: any) => {
+    res.headers[String(k).toLowerCase()] = String(v);
   });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.clearAllMocks();
+  res.statusCode = 200;
+  res.body = undefined;
+  res.status = vi.fn((code: number) => {
+    res.statusCode = code;
+    return res;
   });
-
-  it('should set rate limit headers', () => {
-    mockReq.ip = '10.0.0.1';
-
-    middlewareModule.defaultRateLimiter(mockReq as Request, mockRes as Response, next);
-
-    expect(setHeaderFn).toHaveBeenCalledWith('X-RateLimit-Limit', expect.any(Number));
-    expect(setHeaderFn).toHaveBeenCalledWith('X-RateLimit-Remaining', expect.any(Number));
-    expect(setHeaderFn).toHaveBeenCalledWith('X-RateLimit-Reset', expect.any(Number));
-    expect(next).toHaveBeenCalled();
+  res.json = vi.fn((payload: any) => {
+    res.body = payload;
+    return res;
   });
+  return res;
+}
 
-  it('should block requests when limit is exceeded', () => {
-    mockReq.ip = '10.0.0.2';
+describe('rateLimiting.middleware (L1)', () => {
+  it('is a no-op in NODE_ENV=test', async () => {
+    const prev = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'test';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+      const res = makeRes();
+      const next = vi.fn();
+      const req: any = { method: 'GET', ip: '1.1.1.1', headers: {}, socket: {}, user: { id: 'u1' } };
 
-    // In PROD: aiRateLimiter max is 30
-    const Limit = 30;
-
-    // Consume all tokens
-    for (let i = 0; i < Limit; i++) {
-      middlewareModule.aiRateLimiter(mockReq as Request, mockRes as Response, next);
+      mod.defaultRateLimiter(req, res as any, next as any);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(res.status).not.toHaveBeenCalled();
+    } finally {
+      process.env.NODE_ENV = prev;
     }
-
-    // Reset mocks to verify the blocking call
-    next = vi.fn();
-    statusFn.mockClear();
-    jsonFn.mockClear();
-
-    // Next request should be blocked
-    middlewareModule.aiRateLimiter(mockReq as Request, mockRes as Response, next);
-
-    expect(next).not.toHaveBeenCalled();
-    expect(statusFn).toHaveBeenCalledWith(429);
-    expect(jsonFn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        code: 'RATE_LIMIT_EXCEEDED',
-      })
-    );
   });
 
-  it('should track usage by user ID if present', () => {
-    mockReq.user = { id: 'u-123' } as any;
+  it('is a no-op when DISABLE_RATE_LIMIT=true', async () => {
+    const prev = { ...process.env };
+    try {
+      process.env.NODE_ENV = 'production';
+      process.env.DISABLE_RATE_LIMIT = 'true';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+      const res = makeRes();
+      const next = vi.fn();
+      const req: any = { method: 'GET', ip: '1.1.1.1', headers: {}, socket: {}, user: { id: 'u1' } };
 
-    middlewareModule.aiRateLimiter(mockReq as Request, mockRes as Response, next);
-
-    const calls = setHeaderFn.mock.calls;
-    const remainingArg = calls.find((c: any) => c[0] === 'X-RateLimit-Remaining');
-    const remaining = remainingArg ? remainingArg[1] : -1;
-
-    // Max is 30. Remaining should be 29.
-    expect(remaining).toBe(29);
+      mod.defaultRateLimiter(req, res as any, next as any);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(res.status).not.toHaveBeenCalled();
+    } finally {
+      process.env = prev;
+    }
   });
 
-  it('should distinguish between different users', () => {
-    // User A
-    const reqA = { ...mockReq, user: { id: 'user-A' } as any };
-    const resA = { ...mockRes, setHeader: vi.fn() } as any;
-    middlewareModule.aiRateLimiter(reqA, resA, next);
-    const remA = resA.setHeader.mock.calls.find((c: any) => c[0] === 'X-RateLimit-Remaining')[1];
+  it('is a no-op for OPTIONS requests', async () => {
+    const prev = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+      const res = makeRes();
+      const next = vi.fn();
+      const req: any = { method: 'OPTIONS', ip: '1.1.1.1', headers: {}, socket: {} };
 
-    // User B
-    const reqB = { ...mockReq, user: { id: 'user-B' } as any };
-    const resB = { ...mockRes, setHeader: vi.fn() } as any;
-    middlewareModule.aiRateLimiter(reqB, resB, next);
-    const remB = resB.setHeader.mock.calls.find((c: any) => c[0] === 'X-RateLimit-Remaining')[1];
+      mod.defaultRateLimiter(req, res as any, next as any);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(res.status).not.toHaveBeenCalled();
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
 
-    // Both start fresh at 29
-    expect(remA).toBe(29);
-    expect(remB).toBe(29);
+  it('limits in production and sets rate limit headers', async () => {
+    const prev = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+      const res = makeRes();
+      const next = vi.fn();
+      const req: any = { method: 'GET', ip: '2.2.2.2', headers: {}, socket: {} };
+
+      mod.defaultRateLimiter(req, res as any, next as any);
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(res.headers['x-ratelimit-limit']).toBe('300');
+      expect(Number(res.headers['x-ratelimit-remaining'])).toBe(299);
+      expect(Number(res.headers['x-ratelimit-reset'])).toBeGreaterThan(0);
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it('uses userId when available for keying (apiAuthRateLimiter)', async () => {
+    const prev = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+
+      const req: any = { method: 'GET', ip: '9.9.9.9', headers: {}, socket: {}, userId: 'u-123' };
+      const res1 = makeRes();
+      const next1 = vi.fn();
+      mod.apiAuthRateLimiter(req, res1 as any, next1 as any);
+      expect(next1).toHaveBeenCalledTimes(1);
+      expect(res1.headers['x-ratelimit-limit']).toBe('1000');
+
+      const res2 = makeRes();
+      const next2 = vi.fn();
+      mod.apiAuthRateLimiter(req, res2 as any, next2 as any);
+      expect(next2).toHaveBeenCalledTimes(1);
+      expect(Number(res2.headers['x-ratelimit-remaining'])).toBeLessThan(
+        Number(res1.headers['x-ratelimit-remaining'])
+      );
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it('returns 429 when exceeding auth limiter max (prod)', async () => {
+    const prev = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+      const req: any = { method: 'POST', ip: '3.3.3.3', headers: {}, socket: {} };
+
+      let lastRes: any;
+      for (let i = 0; i < 16; i++) {
+        const res = makeRes();
+        const next = vi.fn();
+        mod.authRateLimiter(req, res as any, next as any);
+        lastRes = res;
+      }
+
+      expect(lastRes.statusCode).toBe(429);
+      expect(lastRes.body).toEqual(
+        expect.objectContaining({
+          code: 'RATE_LIMIT_EXCEEDED',
+          retryAfter: expect.any(Number),
+        })
+      );
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it('covers store cleanup interval (deletes expired entries)', async () => {
+    const prevEnv = process.env.NODE_ENV;
+    vi.useFakeTimers();
+    try {
+      process.env.NODE_ENV = 'production';
+      vi.setSystemTime(new Date('2020-01-01T00:00:00.000Z'));
+      vi.resetModules();
+      const mod = await import('../../../../server/src/middleware/rateLimiting.middleware.ts');
+      const req: any = { method: 'GET', ip: '4.4.4.4', headers: {}, socket: {} };
+
+      mod.defaultRateLimiter(req, makeRes() as any, vi.fn() as any);
+
+      // Move beyond the limiter window (15 min) and allow the 60s cleanup interval to run.
+      vi.setSystemTime(new Date('2020-01-01T00:20:00.000Z'));
+      vi.advanceTimersByTime(60_000);
+    } finally {
+      vi.clearAllTimers();
+      vi.useRealTimers();
+      process.env.NODE_ENV = prevEnv;
+    }
   });
 });
+

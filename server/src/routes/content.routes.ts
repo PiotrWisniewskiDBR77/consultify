@@ -55,20 +55,7 @@ router.get(
       return res.json({ categories: categories || [] });
     } catch (error: any) {
       logger.error('[Content] Get categories error:', error);
-      // Fallback to demo data
-      return res.json({
-        categories: [
-          { id: 'cat_email_welcome', name: 'Welcome', contentType: 'EMAIL', color: '#10B981' },
-          {
-            id: 'cat_email_notifications',
-            name: 'Notifications',
-            contentType: 'EMAIL',
-            color: '#6366F1',
-          },
-          { id: 'cat_email_reports', name: 'Reports', contentType: 'EMAIL', color: '#F59E0B' },
-          { id: 'cat_email_security', name: 'Security', contentType: 'EMAIL', color: '#EF4444' },
-        ],
-      });
+      return res.status(500).json({ error: 'Failed to fetch categories' });
     }
   })
 );
@@ -106,14 +93,7 @@ router.get(
       return res.json({ tags: tags || [] });
     } catch (error: any) {
       logger.error('[Content] Get tags error:', error);
-      // Fallback to demo data
-      return res.json({
-        tags: [
-          { id: 'tag_critical', name: 'Critical', color: '#EF4444' },
-          { id: 'tag_automated', name: 'Automated', color: '#3B82F6' },
-          { id: 'tag_production', name: 'Production', color: '#10B981' },
-        ],
-      });
+      return res.status(500).json({ error: 'Failed to fetch tags' });
     }
   })
 );
