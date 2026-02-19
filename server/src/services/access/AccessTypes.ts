@@ -108,6 +108,7 @@ export interface PolicySnapshot {
   isDemo: boolean;
   isTrial: boolean;
   isPaid: boolean;
+  subscriptionStatus: SubscriptionStatus | null;
   trialStartedAt?: string | null;
   trialExpiresAt?: string | null;
   trialDaysLeft: number;
@@ -119,23 +120,40 @@ export interface PolicySnapshot {
     maxAICallsPerDay: number;
     maxInitiatives: number;
     maxStorageMb: number;
+    maxTotalTokens: number;
     aiRolesEnabled: string[];
   } | null;
   usageToday: {
     aiCalls: number;
     projects: number;
     users: number;
+    initiatives: number;
+    storageMb: number;
+    tokensUsed: number;
+  };
+  usagePercent: {
+    aiCalls: number;
+    projects: number;
+    users: number;
+    initiatives: number;
+    storage: number;
+    tokens: number;
   };
   blockedFeatures: string[];
   blockedActions: string[];
   upgradeCtas: {
     primaryAction: string;
+    primaryActionKey: string;
     urlOrRoute: string;
+    reason?: string;
   };
   messages: {
     bannerText: string | null;
+    bannerTextKey: string | null;
     modalText: string | null;
+    modalTextKey: string | null;
   };
+  hasPaymentMethod: boolean;
 }
 
 export interface OrganizationRow {
@@ -194,3 +212,41 @@ export interface SeatAvailabilityEnhanced extends SeatAvailability {
   additionalSeatsPurchased: number;
   autoAddEnabled: boolean;
 }
+
+export interface TrialConversionResult {
+  newOrganizationId: string;
+  previousOrgType: OrgType;
+  newOrgType: OrgType;
+  convertedAt: string;
+}
+
+export interface TrialWarningResult {
+  organizationId: string;
+  warningLevel: 'warning' | 'critical';
+  daysRemaining: number;
+  notifiedUserIds: string[];
+}
+
+export interface TrialLockdownResult {
+  organizationId: string;
+  lockedAt: string;
+  previousStatus: string;
+}
+
+export type AccessErrorCode =
+  | 'ORG_NOT_FOUND'
+  | 'ORG_INACTIVE'
+  | 'TRIAL_EXPIRED'
+  | 'TRIAL_PROFILE_INCOMPLETE'
+  | 'DEMO_READ_ONLY'
+  | 'DEMO_TIME_EXPIRED'
+  | 'DEMO_AI_SESSION_LIMIT_REACHED'
+  | 'AI_LIMIT_REACHED'
+  | 'AI_TOKEN_BUDGET_EXCEEDED'
+  | 'INSUFFICIENT_TOKENS'
+  | 'PROJECT_LIMIT_REACHED'
+  | 'INITIATIVE_LIMIT_REACHED'
+  | 'USER_LIMIT_REACHED'
+  | 'STORAGE_LIMIT_REACHED'
+  | 'SUBSCRIPTION_PAST_DUE'
+  | 'SUBSCRIPTION_CANCELLED';

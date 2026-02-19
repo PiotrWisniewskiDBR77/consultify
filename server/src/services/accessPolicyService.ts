@@ -16,6 +16,7 @@ import {
   DailyUsage,
   DEFAULT_DEMO_LIMITS,
   DEFAULT_TRIAL_LIMITS,
+  ENTITLEMENTS_MATRIX,
   IsAIRoleAllowedResult,
   ORG_TYPES,
   OrganizationLimits,
@@ -24,9 +25,12 @@ import {
   PolicySnapshot,
   SeatAvailability,
   SeatAvailabilityEnhanced,
+  SUBSCRIPTION_STATUSES,
+  SubscriptionStatus,
   TRIAL_DURATION_DAYS,
   TrialStatus,
   TrialUsage,
+  USAGE_THRESHOLD_PERCENT,
 } from './access/AccessTypes.js';
 import { AccessUsageService } from './access/AccessUsageService.js';
 
@@ -355,11 +359,12 @@ class AccessPolicyServiceClass {
   }
 
   async buildPolicySnapshot(organizationId: string): Promise<PolicySnapshot | null> {
-    const [orgInfo, trialStatus, limits, usage] = await Promise.all([
+    const [orgInfo, trialStatus, limits, usage, trialUsage] = await Promise.all([
       this.getOrganizationType(organizationId),
       this.checkTrialStatus(organizationId),
       this.getOrganizationLimits(organizationId),
       this.getDailyUsage(organizationId),
+      this.getTrialUsage(organizationId),
     ]);
 
     if (!orgInfo) return null;
@@ -368,11 +373,54 @@ class AccessPolicyServiceClass {
     const isTrial = orgInfo.organizationType === ORG_TYPES.TRIAL;
     const isPaid = orgInfo.organizationType === ORG_TYPES.PAID;
 
+    const projectCount = await this.deps.resourceService.countOrgProjects(organizationId);
+    const userCount = await this.deps.resourceService.countOrgUsers(organizationId);
+    let initiativeCount = 0;
+    try {
+      initiativeCount = await this.deps.resourceService.countOrgInitiatives(organizationId);
+    } catch {
+      // fail open
+    }
+
+    let hasPaymentMethod = false;
+    try {
+      const pmRow = await DbPromise.get<{ count: number | string }>(
+        this.deps.db,
+        `SELECT COUNT(*) as count FROM payment_methods WHERE organization_id = ?`,
+        [organizationId],
+        { fallback: false }
+      );
+      hasPaymentMethod = parseInt(String((pmRow as any)?.count ?? 0), 10) > 0;
+    } catch {
+      // table may not exist
+    }
+
+    let subscriptionStatus: SubscriptionStatus | null = null;
+    try {
+      const subRow = await DbPromise.get<{ status: string }>(
+        this.deps.db,
+        `SELECT status FROM subscriptions WHERE organization_id = ? ORDER BY created_at DESC LIMIT 1`,
+        [organizationId],
+        { fallback: false }
+      );
+      if (subRow?.status) {
+        subscriptionStatus = subRow.status as SubscriptionStatus;
+      }
+    } catch {
+      // table may not exist
+    }
+
     const blockedFeatures: string[] = [];
     const blockedActions: string[] = [];
+    const entitlements = ENTITLEMENTS_MATRIX[orgInfo.organizationType] || {};
+
+    for (const [feature, status] of Object.entries(entitlements)) {
+      if (status === 'blocked') {
+        blockedFeatures.push(feature.toUpperCase());
+      }
+    }
 
     if (isDemo) {
-      blockedFeatures.push('ADVANCED_ANALYTICS', 'EXPORT_PDF', 'CUSTOM_INTEGRATIONS', 'SSO');
       blockedActions.push(
         'AI_DO_ACTIONS',
         'INVITES',
@@ -380,39 +428,107 @@ class AccessPolicyServiceClass {
         'CREATE_PROJECT',
         'CREATE_INITIATIVE'
       );
-    } else if (isTrial) {
-      blockedFeatures.push('ADVANCED_ANALYTICS', 'CUSTOM_INTEGRATIONS', 'SSO', 'DEDICATED_SUPPORT');
-      if (trialStatus.expired) {
-        blockedActions.push(
-          'AI_DO_ACTIONS',
-          'INVITES',
-          'EXPORT',
-          'CREATE_PROJECT',
-          'CREATE_INITIATIVE',
-          'WRITE'
-        );
+    } else if (isTrial && trialStatus.expired) {
+      blockedActions.push(
+        'AI_DO_ACTIONS',
+        'INVITES',
+        'EXPORT',
+        'CREATE_PROJECT',
+        'CREATE_INITIATIVE',
+        'WRITE'
+      );
+    }
+
+    if (subscriptionStatus === SUBSCRIPTION_STATUSES.PAST_DUE) {
+      blockedActions.push('AI_DO_ACTIONS', 'CREATE_PROJECT', 'CREATE_INITIATIVE', 'INVITES');
+    }
+
+    if ((isTrial || isDemo) && limits) {
+      if (projectCount >= limits.maxProjects && limits.maxProjects >= 0)
+        blockedActions.push('CREATE_PROJECT');
+      if (userCount >= limits.maxUsers && limits.maxUsers >= 0) blockedActions.push('INVITES');
+      if (usage.aiCallsCount >= limits.maxAICallsPerDay && limits.maxAICallsPerDay >= 0)
+        blockedActions.push('AI_CALL');
+      if (initiativeCount >= limits.maxInitiatives && limits.maxInitiatives >= 0)
+        blockedActions.push('CREATE_INITIATIVE');
+      if (
+        limits.maxTotalTokens > 0 &&
+        trialUsage.tokensUsed >= limits.maxTotalTokens &&
+        !hasPaymentMethod
+      ) {
+        blockedActions.push('AI_TOKEN_BUDGET');
       }
     }
 
-    if (isTrial && limits) {
-      const projectCount = await this.deps.resourceService.countOrgProjects(organizationId);
-      const userCount = await this.deps.resourceService.countOrgUsers(organizationId);
-      if (projectCount >= limits.maxProjects) blockedActions.push('CREATE_PROJECT');
-      if (userCount >= limits.maxUsers) blockedActions.push('INVITES');
-      if (usage.aiCallsCount >= limits.maxAICallsPerDay) blockedActions.push('AI_CALL');
-    }
+    const safePercent = (used: number, limit: number): number => {
+      if (limit <= 0) return 0;
+      return Math.min(100, Math.round((used / limit) * 100));
+    };
+
+    const usagePercent = {
+      aiCalls: safePercent(usage?.aiCallsCount || 0, limits?.maxAICallsPerDay || 1),
+      projects: safePercent(projectCount, limits?.maxProjects || 1),
+      users: safePercent(userCount, limits?.maxUsers || 1),
+      initiatives: safePercent(initiativeCount, limits?.maxInitiatives || 1),
+      storage: safePercent(usage?.storageUsedMb || 0, limits?.maxStorageMb || 1),
+      tokens: safePercent(trialUsage.tokensUsed, limits?.maxTotalTokens || 1),
+    };
 
     let bannerText: string | null = null;
+    let bannerTextKey: string | null = null;
     let modalText: string | null = null;
+    let modalTextKey: string | null = null;
 
     if (isDemo) {
       bannerText = 'You are viewing a demo environment (read-only)';
+      bannerTextKey = 'access.banner.demo';
+    } else if (subscriptionStatus === SUBSCRIPTION_STATUSES.PAST_DUE) {
+      bannerText = 'Payment failed. Please update your payment method to avoid service interruption.';
+      bannerTextKey = 'access.banner.pastDue';
     } else if (isTrial && trialStatus.expired) {
       bannerText = 'Your trial has expired. Upgrade to continue.';
+      bannerTextKey = 'access.banner.trialExpired';
       modalText =
         'Your trial period has ended. Your data is safe, but your organization is now in read-only mode. Upgrade to restore full access.';
-    } else if (isTrial && trialStatus.warningLevel !== 'none') {
-      bannerText = `Trial: ${trialStatus.daysRemaining} day${trialStatus.daysRemaining !== 1 ? 's' : ''} remaining`;
+      modalTextKey = 'access.modal.trialExpired';
+    } else if (isTrial && trialStatus.warningLevel === 'critical') {
+      bannerText = `Trial expires in ${trialStatus.daysRemaining} day${trialStatus.daysRemaining !== 1 ? 's' : ''}. Upgrade now to keep full access.`;
+      bannerTextKey = 'access.banner.trialCritical';
+    } else if (isTrial && trialStatus.warningLevel === 'warning') {
+      bannerText = `${trialStatus.daysRemaining} day${trialStatus.daysRemaining !== 1 ? 's' : ''} left in your trial`;
+      bannerTextKey = 'access.banner.trialWarning';
+    }
+
+    const anyApproaching = Object.values(usagePercent).some(
+      (p) => p >= USAGE_THRESHOLD_PERCENT.APPROACHING && p < USAGE_THRESHOLD_PERCENT.EXCEEDED
+    );
+    if (isTrial && !trialStatus.expired && anyApproaching && !bannerText) {
+      bannerText = 'You are approaching your usage limits. Consider upgrading for uninterrupted access.';
+      bannerTextKey = 'access.banner.approachingLimits';
+    }
+
+    let primaryAction = 'Upgrade Plan';
+    let primaryActionKey = 'access.cta.upgradePlan';
+    let ctaReason: string | undefined;
+
+    if (trialStatus.expired) {
+      primaryAction = 'Upgrade Now';
+      primaryActionKey = 'access.cta.upgradeNow';
+      ctaReason = 'trial_expired';
+    } else if (subscriptionStatus === SUBSCRIPTION_STATUSES.PAST_DUE) {
+      primaryAction = 'Fix Payment';
+      primaryActionKey = 'access.cta.fixPayment';
+      ctaReason = 'payment_failed';
+    } else if (
+      isTrial &&
+      limits &&
+      limits.maxTotalTokens > 0 &&
+      trialUsage.tokensUsed >= limits.maxTotalTokens &&
+      !hasPaymentMethod
+    ) {
+      primaryAction = 'Add Payment Method';
+      primaryActionKey = 'access.cta.addPaymentMethod';
+      ctaReason = 'token_budget_exceeded';
     }
 
     return {
@@ -420,6 +536,7 @@ class AccessPolicyServiceClass {
       isDemo,
       isTrial,
       isPaid,
+      subscriptionStatus,
       trialStartedAt: orgInfo.trialStartedAt,
       trialExpiresAt: orgInfo.trialExpiresAt,
       trialDaysLeft: trialStatus.daysRemaining,
@@ -432,24 +549,34 @@ class AccessPolicyServiceClass {
             maxAICallsPerDay: limits.maxAICallsPerDay,
             maxInitiatives: limits.maxInitiatives,
             maxStorageMb: limits.maxStorageMb,
+            maxTotalTokens: limits.maxTotalTokens,
             aiRolesEnabled: limits.aiRolesEnabled,
           }
         : null,
       usageToday: {
         aiCalls: usage?.aiCallsCount || 0,
-        projects: await this.deps.resourceService.countOrgProjects(organizationId),
-        users: await this.deps.resourceService.countOrgUsers(organizationId),
+        projects: projectCount,
+        users: userCount,
+        initiatives: initiativeCount,
+        storageMb: usage?.storageUsedMb || 0,
+        tokensUsed: trialUsage.tokensUsed,
       },
+      usagePercent,
       blockedFeatures: [...new Set(blockedFeatures)],
       blockedActions: [...new Set(blockedActions)],
       upgradeCtas: {
-        primaryAction: trialStatus.expired ? 'Upgrade Now' : 'Upgrade Plan',
+        primaryAction,
+        primaryActionKey,
         urlOrRoute: '/settings?tab=billing',
+        reason: ctaReason,
       },
       messages: {
         bannerText,
+        bannerTextKey,
         modalText,
+        modalTextKey,
       },
+      hasPaymentMethod,
     };
   }
 

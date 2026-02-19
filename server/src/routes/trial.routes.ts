@@ -1,8 +1,6 @@
 /**
  * Trial Routes
- * API endpoints for trial
- *
- * Fully migrated to TypeScript ES modules
+ * API endpoints for trial lifecycle management
  */
 
 import { Response, Router } from 'express';
@@ -15,16 +13,16 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
-// Apply rate limiting
 router.use(apiAuthRateLimiter);
 
-// Service interfaces
 interface TrialServiceInterface {
   convertTrialToOrg?: (
     trialId: string,
     userId: string,
     newOrgName: string
   ) => Promise<{ newOrganizationId: string }>;
+  sendTrialWarnings?: () => Promise<number>;
+  processExpiredTrials?: () => Promise<number>;
 }
 
 interface AuditServiceInterface {
@@ -37,9 +35,9 @@ interface AuditServiceInterface {
   }) => Promise<void>;
 }
 
-// Dynamic imports for services (may not be migrated yet)
 let TrialService: TrialServiceInterface | null = null;
 let AuditService: AuditServiceInterface | null = null;
+let AccessPolicyService: any = null;
 
 try {
   const trialModule = (await import('../services/trialService.js')) as any;
@@ -54,6 +52,60 @@ try {
 } catch {
   logger.warn('[Trial Routes] AuditService not available');
 }
+
+try {
+  const apsModule = (await import('../services/accessPolicyService.js')) as any;
+  AccessPolicyService = apsModule.default || apsModule;
+} catch {
+  logger.warn('[Trial Routes] AccessPolicyService not available');
+}
+
+/**
+ * GET /api/trial/status
+ * Get trial status for the current user's organization
+ */
+router.get(
+  '/status',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      if (!AccessPolicyService?.buildPolicySnapshot) {
+        return res.status(503).json({ error: 'Policy service not available' });
+      }
+
+      const snapshot = await AccessPolicyService.buildPolicySnapshot(orgId);
+      if (!snapshot) {
+        return res.status(404).json({ error: 'Organization not found' });
+      }
+
+      return res.json({
+        orgType: snapshot.orgType,
+        isTrial: snapshot.isTrial,
+        isDemo: snapshot.isDemo,
+        isPaid: snapshot.isPaid,
+        subscriptionStatus: snapshot.subscriptionStatus,
+        trialDaysLeft: snapshot.trialDaysLeft,
+        isTrialExpired: snapshot.isTrialExpired,
+        warningLevel: snapshot.warningLevel,
+        trialStartedAt: snapshot.trialStartedAt,
+        trialExpiresAt: snapshot.trialExpiresAt,
+        usagePercent: snapshot.usagePercent,
+        hasPaymentMethod: snapshot.hasPaymentMethod,
+        upgradeCtas: snapshot.upgradeCtas,
+      });
+    } catch (error: unknown) {
+      logger.error('Trial Status Error:', error);
+      return res
+        .status(500)
+        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  })
+);
 
 /**
  * POST /api/trial/:trialId/convert
@@ -74,16 +126,35 @@ router.post(
       }
 
       if (!newOrgName) {
-        return res.status(400).json({ error: 'New organization name is required' });
+        return res.status(400).json({
+          error: 'New organization name is required',
+          errorCode: 'MISSING_ORG_NAME',
+        });
       }
 
       if (!TrialService?.convertTrialToOrg) {
-        return res.status(503).json({ error: 'Trial service not available' });
+        return res.status(503).json({
+          error: 'Trial service not available',
+          errorCode: 'SERVICE_UNAVAILABLE',
+        });
       }
 
       const result = await TrialService.convertTrialToOrg(trialId, userId, newOrgName);
       if (!result || typeof (result as any).newOrganizationId !== 'string') {
-        return res.status(503).json({ error: 'Trial conversion unavailable' });
+        return res.status(503).json({
+          error: 'Trial conversion unavailable',
+          errorCode: 'CONVERSION_FAILED',
+        });
+      }
+
+      if (AuditService?.log) {
+        await AuditService.log({
+          userId,
+          action: 'trial_converted',
+          entityType: 'organization',
+          entityId: trialId,
+          metadata: { newOrganizationId: result.newOrganizationId, newOrgName },
+        });
       }
 
       return res.json({
@@ -93,16 +164,20 @@ router.post(
       });
     } catch (error: unknown) {
       logger.error('Trial Conversion Error:', error);
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      const status = message.includes('not found')
+        ? 404
+        : message.includes('already')
+          ? 409
+          : 500;
+      return res.status(status).json({ error: message });
     }
   })
 );
 
 /**
  * POST /api/trial/confirm-transition
- * Records explicit user confirmations before organization creation (Phase C → D Gate)
+ * Records explicit user confirmations before organization creation (Phase C -> D Gate)
  */
 router.post(
   '/confirm-transition',
@@ -120,7 +195,6 @@ router.post(
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      // Validate all 3 confirmations are present
       if (
         !confirmations?.timeCommitment ||
         !confirmations?.teamScope ||
@@ -132,7 +206,6 @@ router.post(
         });
       }
 
-      // Log to audit trail
       await AuditService.log({
         userId,
         action: 'trial_transition_confirmed',
