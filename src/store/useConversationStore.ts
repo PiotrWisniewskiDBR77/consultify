@@ -863,6 +863,18 @@ export const useConversationStore = create<ConversationState>()(
               return;
             }
             if (STORE_DEBUG) console.warn('[ConversationStore] Title generation failed:', err);
+            // T001: Fallback when AI unavailable — "New chat (YYYY-MM-DD)"
+            const fallbackTitle = `New chat (${new Date().toISOString().slice(0, 10)})`;
+            set((state) => {
+              const next = state.conversations.map((c) =>
+                c.id === id ? { ...c, title: fallbackTitle, titleSource: 'auto' as const } : c
+              );
+              return {
+                conversations: next,
+                groupedConversations: groupConversations(next),
+              };
+            });
+            void get().updateConversation(id, { title: fallbackTitle, titleSource: 'auto' });
           }
         };
 
