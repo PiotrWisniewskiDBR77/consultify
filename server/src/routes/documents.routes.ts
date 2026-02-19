@@ -8,8 +8,6 @@
 import { Response, Router } from 'express';
 import fs from 'fs';
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -29,30 +27,9 @@ try {
   logger.warn('[Documents] DocumentService not available');
 }
 
-// Get directory paths
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../../../uploads/documents');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Configure Multer for document uploads
-const storage = multer.diskStorage({
-  destination: function (_req, _file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (_req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-    cb(null, uniqueSuffix + '-' + sanitizedName);
-  },
-});
-
 const upload = multer({
-  storage: storage,
+  // Avoid runtime filesystem writes when the feature is unavailable.
+  storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit
   fileFilter: (_req, file, cb) => {
     const allowedTypes = [
@@ -85,7 +62,15 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getProjectDocuments) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'Document service not available' });
+=======
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
+>>>>>>> Stashed changes
     }
 
     try {
@@ -108,7 +93,15 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getUserDocuments) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'Document service not available' });
+=======
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
+>>>>>>> Stashed changes
     }
 
     try {
@@ -136,7 +129,15 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getAccessibleDocuments) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'Document service not available' });
+=======
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
+>>>>>>> Stashed changes
     }
 
     try {
@@ -170,7 +171,15 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     // Return empty array if service not available (for tests)
     if (!DocumentService?.getAccessibleDocuments) {
+<<<<<<< Updated upstream
       return res.json([]);
+=======
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
+>>>>>>> Stashed changes
     }
 
     try {
@@ -203,7 +212,15 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'Document service not available' });
+=======
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
+>>>>>>> Stashed changes
     }
 
     try {
@@ -228,7 +245,15 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'Document service not available' });
+=======
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
+>>>>>>> Stashed changes
     }
 
     try {
@@ -264,9 +289,17 @@ router.post(
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
+<<<<<<< Updated upstream
       return res
         .status(201)
         .json({ message: 'Document uploaded (stub)', document: { id: 'stub-doc-id' } });
+=======
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
+>>>>>>> Stashed changes
     }
 
     try {
@@ -320,7 +353,15 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.moveToProject) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'Document service not available' });
+=======
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
+>>>>>>> Stashed changes
     }
 
     try {
@@ -356,7 +397,15 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.deleteDocument) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'Document service not available' });
+=======
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
+>>>>>>> Stashed changes
     }
 
     try {

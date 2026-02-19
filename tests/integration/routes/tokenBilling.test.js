@@ -135,6 +135,31 @@ describe('Integration Test: Token Billing Routes', () => {
 
       // May require admin, so 200 or 403 is acceptable
       expect([200, 403, 404]).toContain(res.status);
+<<<<<<< Updated upstream
     });
   });
 });
+=======
+	    });
+	  });
+
+	  describe('POST /api/token-billing/purchase', () => {
+	    it('should return 503 when Stripe is not configured for the package/environment', async () => {
+	      if (!authToken) {
+	        console.log('Skipping purchase test - no auth token');
+	        return;
+	      }
+
+	      const res = await request(app)
+	        .post('/api/token-billing/purchase')
+	        .set('Authorization', `Bearer ${authToken}`)
+	        .send({ packageId: testPackageId });
+
+	      expect(res.status).toBe(503);
+	      expect(res.body.success).toBe(false);
+	      expect(res.body.code).toBe('FEATURE_UNAVAILABLE');
+	      expect(String(res.body.error || '')).toMatch(/stripe/i);
+	    });
+	  });
+	});
+>>>>>>> Stashed changes

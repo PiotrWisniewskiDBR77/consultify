@@ -431,9 +431,8 @@ export class ApiGateway {
       app.use('/api/pmo/initiatives', initiativesRoutes);
       app.use('/api/pmo/tasks', taskRoutes);
       app.use('/api/pmo-domains', pmoDomainsRoutes);
-      // The project-members router is currently a stub (returns 501). Mount it on a dedicated prefix
-      // so it doesn't interfere with the real /api/projects routes.
-      mountStub('/api/project-members', projectMembersRoutes, 'projectMembersRoutes');
+      // Compatibility mount for legacy clients.
+      app.use('/api/project-members', projectMembersRoutes);
       app.use('/api', workstreamsRoutes);
       mountStub('/api/org/work-mode', workModeRoutes, 'workModeRoutes');
       app.use('/api/pmo-roles', pmoRolesRoutes);

@@ -2,15 +2,14 @@
  * Mediaingestion Service
  * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * This feature is not implemented in this codebase yet.
+ *
+ * IMPORTANT: Do not use lazyServiceLoader-based stub proxies here; they can create circular imports
+ * and "fake success" behavior. Export an explicit marker so routes can return an honest 503.
  */
 
-import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
+const mediaIngestionService = {
+  __unavailable__: true,
+} as const;
 
-// Lazy load the JS service module - file is in the ai directory
-// The .js file is a re-export wrapper that exports from the .ts file
-// Path is relative to services/ directory: ./ai/mediaIngestionService.js
-const loadMediaingestion = createCachedLazyService('./ai/mediaIngestionService.js');
-
-// Export default instance (for backward compatibility)
-export default loadMediaingestion();
+export default mediaIngestionService;

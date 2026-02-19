@@ -24,6 +24,42 @@ if (!correlationId) {
   sessionStorage.setItem('correlationId', correlationId);
 }
 
+const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+
+async function isServerStartingResponse(res: Response): Promise<boolean> {
+  if (res.status !== 503) return false;
+  try {
+    const clone = res.clone();
+    const json = await clone.json();
+    return json?.code === 'SERVER_STARTING' || String(json?.error || '').includes('Server starting');
+  } catch {
+    return false;
+  }
+}
+
+async function waitForApiReady(timeoutMs = 15000): Promise<boolean> {
+  const start = Date.now();
+  let delayMs = 250;
+
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const res = await fetch(`${API_URL}/ready`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+      });
+      if (res.status === 200) return true;
+    } catch {
+      // ignore transient startup/network errors
+    }
+
+    await sleep(delayMs);
+    delayMs = Math.min(Math.floor(delayMs * 1.35), 1500);
+  }
+
+  return false;
+}
+
 // ---------------------------------------------------------------------------
 // Perf: avoid JSON.parse(localStorage) on every request.
 // localStorage access + JSON.parse are synchronous and can cause noticeable UI jank
@@ -309,6 +345,20 @@ export const Api = {
           `Check that the backend is running and that Vite proxy/VITE_API_URL is configured correctly.`
       );
     }
+
+    // Dev UX: during boot the backend may listen immediately but gate /api/* with 503 SERVER_STARTING
+    // until DB initialization finishes. Wait briefly for /api/ready then retry once.
+    if (await isServerStartingResponse(res)) {
+      const ready = await waitForApiReady(15000);
+      if (ready) {
+        res = await fetch(`${API_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+      }
+    }
+
     return handleResponse(res, 'Login failed').then((data) => {
       // Save both access token and refresh token
       tokenService.saveTokens(data.token, data.refreshToken);
@@ -331,6 +381,18 @@ export const Api = {
           `Check that the backend is running and that Vite proxy/VITE_API_URL is configured correctly.`
       );
     }
+
+    if (await isServerStartingResponse(res)) {
+      const ready = await waitForApiReady(15000);
+      if (ready) {
+        res = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(userData),
+        });
+      }
+    }
+
     const data = await handleResponse(res, 'Registration failed');
     if (data.status === 'pending') return data;
     tokenService.saveTokens(data.token, data.refreshToken);
@@ -356,6 +418,17 @@ export const Api = {
           `Check that the backend is running and that Vite proxy/VITE_API_URL is configured correctly.`
       );
     }
+
+    if (await isServerStartingResponse(res)) {
+      const ready = await waitForApiReady(15000);
+      if (ready) {
+        res = await fetch(`${API_URL}/auth/demo-login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     const data = await handleResponse(res, 'Demo login failed');
     tokenService.saveTokens(data.token, data.refreshToken);
     // Store demo flag in session

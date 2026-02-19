@@ -1,14 +1,8 @@
 /**
- * Speechtotext Service
- * Enterprise SaaS Architecture - TypeScript Backend
+ * Speech To Text Service
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * Not implemented in this codebase. Export an explicit marker instead of a self-loading wrapper.
  */
+const speechToTextService = { __unavailable__: true } as const;
 
-import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
-
-// Lazy load the JS service module
-const loadSpeechtotext = createCachedLazyService('../../ai/speechToTextService.js');
-
-// Export default instance (for backward compatibility)
-export default loadSpeechtotext();
+export default speechToTextService;

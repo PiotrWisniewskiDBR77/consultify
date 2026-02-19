@@ -6,8 +6,14 @@
  * Runs every 6 hours to prevent memory accumulation
  */
 
+import fs from 'fs/promises';
+import path from 'path';
+
 import { getMemoryMonitor } from '../services/MemoryMonitor.js';
 import logger from '../utils/Logger.js';
+import { benchmarkCache } from '../utils/BenchmarkCache.js';
+import { clearSchemaCache } from '../utils/dbSchema.js';
+import { clearOrgColumnCache } from '../utils/orgColumn.js';
 
 // ==========================================
 // MEMORY CLEANUP JOB
@@ -106,10 +112,46 @@ export async function runMemoryCleanup(): Promise<CleanupResult> {
  * Clean up cache entries
  */
 async function cleanupCache(): Promise<{ itemsCleaned: number; memoryFreed: number }> {
-  const itemsCleaned = 0;
-  const memoryFreed = 0;
+  let itemsCleaned = 0;
+  let memoryFreed = 0;
 
   try {
+    // In-memory cache cleanup
+    try {
+      const before = benchmarkCache.size();
+      const cleared = benchmarkCache.clearExpired();
+      const after = benchmarkCache.size();
+      itemsCleaned += cleared;
+      if (before !== after) {
+        logger.debug('[MemoryCleanup] Benchmark cache cleanup', { before, after, cleared });
+      }
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('[MemoryCleanup] Benchmark cache cleanup failed:', err.message);
+    }
+
+    try {
+      const cleared = clearSchemaCache();
+      itemsCleaned += cleared;
+      if (cleared > 0) {
+        logger.debug('[MemoryCleanup] Schema cache cleared', { cleared });
+      }
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('[MemoryCleanup] Schema cache cleanup failed:', err.message);
+    }
+
+    try {
+      const cleared = clearOrgColumnCache();
+      itemsCleaned += cleared;
+      if (cleared > 0) {
+        logger.debug('[MemoryCleanup] Org column cache cleared', { cleared });
+      }
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.warn('[MemoryCleanup] Org column cache cleanup failed:', err.message);
+    }
+
     // Clean up Redis cache if available
     const { getRedisClient, isRedisConnected } =
       await import('../services/ai/redisClient.js').catch(() => ({
@@ -121,14 +163,10 @@ async function cleanupCache(): Promise<{ itemsCleaned: number; memoryFreed: numb
       const client = (getRedisClient as any)();
       if (client) {
         // Clean up expired keys (Redis does this automatically, but we can force cleanup)
-        // This is a placeholder - actual implementation would depend on cache structure
+        // Keep this non-destructive: rely on Redis internal eviction + key expiry
         logger.debug('[MemoryCleanup] Redis cache cleanup (automatic expiration handled by Redis)');
       }
     }
-
-    // Clean up in-memory caches
-    // This would clean up any in-memory cache stores
-    // Placeholder for actual cache cleanup logic
 
     return { itemsCleaned, memoryFreed };
   } catch (error: unknown) {
@@ -142,13 +180,36 @@ async function cleanupCache(): Promise<{ itemsCleaned: number; memoryFreed: numb
  * Clean up temporary data
  */
 async function cleanupTemporaryData(): Promise<{ itemsCleaned: number; memoryFreed: number }> {
-  const itemsCleaned = 0;
-  const memoryFreed = 0;
+  let itemsCleaned = 0;
+  let memoryFreed = 0;
 
   try {
-    // Clean up old partial responses, temporary files, etc.
-    // This would clean up any temporary data structures
-    // Placeholder for actual cleanup logic
+    const tempRoot = path.resolve(process.cwd(), 'uploads/temp');
+    let entries: Array<string> = [];
+    try {
+      entries = await fs.readdir(tempRoot);
+    } catch (err: any) {
+      if (err?.code !== 'ENOENT') {
+        throw err;
+      }
+      return { itemsCleaned, memoryFreed };
+    }
+
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    for (const entry of entries) {
+      const fullPath = path.join(tempRoot, entry);
+      try {
+        const stat = await fs.stat(fullPath);
+        if (!stat.isFile()) continue;
+        if (stat.mtimeMs > cutoff) continue;
+        await fs.unlink(fullPath);
+        itemsCleaned += 1;
+        memoryFreed += stat.size;
+      } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.warn('[MemoryCleanup] Temp cleanup error:', err.message);
+      }
+    }
 
     return { itemsCleaned, memoryFreed };
   } catch (error: unknown) {

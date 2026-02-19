@@ -38,3 +38,9 @@ export async function hasColumn(table: string, column: string): Promise<boolean>
   const cols = await getTableColumns(table);
   return cols.has(column);
 }
+
+export function clearSchemaCache(): number {
+  const size = cache.size;
+  cache.clear();
+  return size;
+}

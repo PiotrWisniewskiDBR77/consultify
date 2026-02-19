@@ -298,14 +298,10 @@ router.post(
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // For now, return a placeholder - in production, this would handle file upload
-    // Using multer middleware and storing in S3/CloudStorage
-
-    // Placeholder response for logo upload
-    return res.json({
-      success: true,
-      logoUrl: `/uploads/logos/${orgId}.png`,
-      message: 'Logo upload endpoint ready - file upload middleware needed',
+    // No fake success: logo uploads require real storage + upload middleware.
+    return res.status(503).json({
+      error: 'Organization logo upload is not available',
+      code: 'FEATURE_UNAVAILABLE',
     });
   })
 );
@@ -329,53 +325,19 @@ router.post(
       return res.status(400).json({ error: 'Domain is required' });
     }
 
-    try {
-      // In production, this would:
-      // 1. Check DNS CNAME record
-      // 2. Validate SSL certificate
-      // 3. Update domain verification status
-
-      // For now, simulate verification (always succeeds for demo)
-      const isValidDomain = /^[a-z0-9]+([.-][a-z0-9]+)*\.[a-z]{2,}$/i.test(domain);
-
-      if (!isValidDomain) {
-        return res.json({
-          verified: false,
-          message: 'Invalid domain format',
-        });
-      }
-
-      // Update settings with verified domain
-      const existingSettings = await dbGet<{ setting_value: string }>(
-        `SELECT setting_value FROM organization_settings 
-                 WHERE organization_id = ? AND setting_key = 'branding'`,
-        [orgId]
-      );
-
-      const brandingData = existingSettings?.setting_value
-        ? JSON.parse(existingSettings.setting_value)
-        : {};
-
-      brandingData.customDomain = domain;
-      brandingData.customDomainVerified = true;
-
-      await dbRun(
-        `INSERT OR REPLACE INTO organization_settings 
-                    (organization_id, setting_key, setting_value, updated_at)
-                 VALUES (?, 'branding', ?, datetime('now'))`,
-        [orgId, JSON.stringify(brandingData)]
-      );
-
-      logger.info(`[organization-profiles] Domain ${domain} verified for org ${orgId}`);
-
+    const isValidDomain = /^[a-z0-9]+([.-][a-z0-9]+)*\.[a-z]{2,}$/i.test(domain);
+    if (!isValidDomain) {
       return res.json({
-        verified: true,
-        message: 'Domain verified successfully',
+        verified: false,
+        message: 'Invalid domain format',
       });
-    } catch (error: any) {
-      logger.error('[organization-profiles] Error verifying domain:', error);
-      return res.status(500).json({ error: 'Failed to verify domain' });
     }
+
+    // No simulated verification in runtime.
+    return res.status(503).json({
+      error: 'Custom domain verification is not available',
+      code: 'FEATURE_UNAVAILABLE',
+    });
   })
 );
 

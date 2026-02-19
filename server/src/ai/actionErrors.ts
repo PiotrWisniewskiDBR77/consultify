@@ -32,6 +32,7 @@ export const ACTION_ERROR_CODES = {
   CONFLICT_409: 'CONFLICT_409',
   TIMEOUT: 'TIMEOUT',
   INTEGRATION_ERROR: 'INTEGRATION_ERROR',
+  FEATURE_UNAVAILABLE: 'FEATURE_UNAVAILABLE',
 
   // Async Job Error Codes (from original, re-added)
   JOB_NOT_FOUND: 'JOB_NOT_FOUND',
@@ -48,6 +49,10 @@ export const ACTION_ERROR_CODES = {
  */
 function classifyError(error: any, defaultCode = ACTION_ERROR_CODES.EXECUTION_ERROR) {
   const message = (error?.message || String(error)).toLowerCase();
+
+  if (message.includes('feature unavailable') || message.includes('not implemented') || message.includes('unavailable')) {
+    return ACTION_ERROR_CODES.FEATURE_UNAVAILABLE;
+  }
 
   if (
     message.includes('forbidden') ||

@@ -8,39 +8,29 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+<<<<<<< Updated upstream
 import * as demoGuard from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+=======
+import {
+  DEMO_ORG_ID,
+  DEMO_ORG_NAME,
+  checkUserDemoPreference,
+  getDemoOrganization,
+  getDemoStats,
+  setUserDemoPreference,
+} from '../middleware/demoGuard.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+>>>>>>> Stashed changes
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
 
-const demoGuardAny = demoGuard as any;
-const demoModule =
-  demoGuardAny?.default && typeof demoGuardAny.default === 'object'
-    ? demoGuardAny.default
-    : demoGuardAny;
-const DEMO_ORG_ID = demoModule.DEMO_ORG_ID || 'demo-org';
-const DEMO_ORG_NAME = demoModule.DEMO_ORG_NAME || 'Demo Organization';
-const checkUserDemoPreference = demoModule.checkUserDemoPreference || (async () => false);
-const setUserDemoPreference = demoModule.setUserDemoPreference || (async () => {});
-const getDemoOrganization =
-  demoModule.getDemoOrganization ||
-  (async () => ({
-    id: DEMO_ORG_ID,
-    name: DEMO_ORG_NAME,
-    slug: 'demo-org',
-    description: 'Demo organization',
-    settings: {},
-  }));
-const getDemoStats =
-  demoModule.getDemoStats ||
-  (async () => ({
-    initiatives: 0,
-    tasks: 0,
-    decisions: 0,
-    users: 0,
-  }));
+function isUnavailableError(error: unknown): boolean {
+  const message = (error as any)?.message;
+  return typeof message === 'string' && message.toLowerCase().includes('unavailable');
+}
 
 // Apply rate limiting
 router.use(apiAuthRateLimiter);
@@ -74,11 +64,20 @@ router.post(
       await setUserDemoPreference(userId, isDemoEnabled);
 
       if (isDemoEnabled) {
-        // Get demo organization details and stats
-        const [demoOrganization, stats] = await Promise.all([
-          getDemoOrganization(),
-          getDemoStats(),
-        ]);
+        let demoOrganization: any;
+        let stats: any;
+        try {
+          [demoOrganization, stats] = await Promise.all([getDemoOrganization(), getDemoStats()]);
+        } catch (error: any) {
+          const message = String(error?.message || error);
+          logger.warn('[DemoMode] Demo enable failed:', message);
+          return res.status(503).json({
+            success: false,
+            error: 'Demo mode unavailable',
+            code: isUnavailableError(error) ? 'DEMO_UNAVAILABLE' : 'DEMO_NOT_CONFIGURED',
+            message,
+          });
+        }
 
         logger.info(`[DemoMode] User ${userId} enabled demo mode`);
 
@@ -87,21 +86,12 @@ router.post(
           isDemoMode: true,
           demoOrganization: {
             id: demoOrganization.id,
-            name: demoOrganization.name,
+            name: demoOrganization.name || DEMO_ORG_NAME,
             slug: demoOrganization.slug,
             description: demoOrganization.description,
-            branding: demoOrganization.settings?.branding || {
-              primaryColor: '#6366F1',
-              logo: '/assets/demo/acme-logo.png',
-            },
           },
           stats,
-          message: 'Tryb demo włączony. Przeglądasz dane firmy Acme Digital Corp.',
-          hints: [
-            'Wszystkie dane są przykładowe i służą celom szkoleniowym',
-            'Możesz eksplorować wszystkie funkcje systemu',
-            'Zmiany nie są zapisywane - tryb jest tylko do odczytu',
-          ],
+          message: 'Demo mode enabled',
         });
       } else {
         logger.info(`[DemoMode] User ${userId} disabled demo mode`);
@@ -109,14 +99,15 @@ router.post(
         return res.json({
           success: true,
           isDemoMode: false,
-          message: 'Tryb demo wyłączony. Wróciłeś do swoich danych.',
+          message: 'Demo mode disabled',
         });
       }
     } catch (error: any) {
       logger.error('[DemoMode] Error toggling demo mode:', error);
-      return res.status(500).json({
+      return res.status(503).json({
         success: false,
-        error: 'Failed to toggle demo mode',
+        error: 'Demo mode unavailable',
+        code: 'DEMO_UNAVAILABLE',
         message: error.message,
       });
     }
@@ -148,10 +139,19 @@ router.get(
       const isDemoEnabled = await checkUserDemoPreference(userId);
 
       if (isDemoEnabled) {
-        const [demoOrganization, stats] = await Promise.all([
-          getDemoOrganization(),
-          getDemoStats(),
-        ]);
+        let demoOrganization: any;
+        let stats: any;
+        try {
+          [demoOrganization, stats] = await Promise.all([getDemoOrganization(), getDemoStats()]);
+        } catch (error: any) {
+          const message = String(error?.message || error);
+          return res.status(503).json({
+            success: false,
+            error: 'Demo mode unavailable',
+            code: isUnavailableError(error) ? 'DEMO_UNAVAILABLE' : 'DEMO_NOT_CONFIGURED',
+            message,
+          });
+        }
 
         return res.json({
           success: true,
@@ -172,9 +172,10 @@ router.get(
       }
     } catch (error: any) {
       logger.error('[DemoMode] Error getting demo status:', error);
-      return res.status(500).json({
+      return res.status(503).json({
         success: false,
-        error: 'Failed to get demo status',
+        error: 'Demo mode unavailable',
+        code: 'DEMO_UNAVAILABLE',
         message: error.message,
       });
     }
@@ -195,48 +196,23 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const [demoOrganization, stats] = await Promise.all([getDemoOrganization(), getDemoStats()]);
-
       return res.json({
         success: true,
         organization: {
-          id: DEMO_ORG_ID,
-          name: DEMO_ORG_NAME,
-          slug: 'acme-demo',
-          industry: 'Manufacturing & Technology',
-          size: '500-1000 employees',
-          region: 'Europe',
-          description: 'Firma demonstracyjna pokazująca pełne możliwości systemu Consultinity',
-          branding: {
-            primaryColor: '#6366F1',
-            secondaryColor: '#8B5CF6',
-            logo: '/assets/demo/acme-logo.png',
-          },
+          id: demoOrganization.id,
+          name: demoOrganization.name || DEMO_ORG_NAME,
+          slug: demoOrganization.slug,
+          description: demoOrganization.description,
         },
         stats,
-        scenarios: [
-          {
-            name: 'Transformacja Cyfrowa',
-            description:
-              'Pełny cykl projektu transformacji z inicjatywami, zadaniami i korzyściami',
-            highlight: 'Jak planować i realizować transformację',
-          },
-          {
-            name: 'Ocena Dojrzałości',
-            description: 'Przykładowe wyniki DRD, SIRI i innych frameworków',
-            highlight: 'Jak interpretować wyniki assessment',
-          },
-          {
-            name: 'Śledzenie Korzyści',
-            description: 'Realizacja ROI i zarządzanie korzyściami',
-            highlight: 'Jak mierzyć wartość biznesową',
-          },
-        ],
+        scenarios: [],
       });
     } catch (error: any) {
       logger.error('[DemoMode] Error getting demo organization:', error);
-      return res.status(500).json({
+      return res.status(503).json({
         success: false,
-        error: 'Failed to get demo organization',
+        error: 'Demo organization unavailable',
+        code: 'DEMO_UNAVAILABLE',
         message: error.message,
       });
     }
@@ -255,66 +231,20 @@ router.get(
   '/tours',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const tours = [
-      {
-        id: 'onboarding',
-        name: 'Pierwsze Kroki',
-        description: 'Poznaj podstawy platformy Consultinity',
-        duration: '5 min',
-        steps: 8,
-        category: 'beginner',
-      },
-      {
-        id: 'project-management',
-        name: 'Zarządzanie Projektem',
-        description: 'Jak tworzyć i zarządzać projektami transformacji',
-        duration: '10 min',
-        steps: 12,
-        category: 'core',
-      },
-      {
-        id: 'assessment',
-        name: 'Ocena Dojrzałości',
-        description: 'Jak przeprowadzić i interpretować ocenę DRD',
-        duration: '8 min',
-        steps: 10,
-        category: 'core',
-      },
-      {
-        id: 'initiatives',
-        name: 'Inicjatywy i Roadmapa',
-        description: 'Planowanie i śledzenie inicjatyw transformacji',
-        duration: '7 min',
-        steps: 9,
-        category: 'core',
-      },
-      {
-        id: 'benefits',
-        name: 'Śledzenie Korzyści',
-        description: 'Jak mierzyć ROI i realizację korzyści',
-        duration: '6 min',
-        steps: 7,
-        category: 'advanced',
-      },
-      {
-        id: 'ai-assistant',
-        name: 'AI Konsultant',
-        description: 'Jak efektywnie korzystać z AI w konsultingu',
-        duration: '8 min',
-        steps: 10,
-        category: 'advanced',
-      },
-    ];
-
-    return res.json({
-      success: true,
-      tours,
-      categories: {
-        beginner: 'Początkujący',
-        core: 'Podstawowe',
-        advanced: 'Zaawansowane',
-      },
-    });
+    const raw = process.env.DEMO_TOURS_JSON;
+    if (!raw || !raw.trim()) {
+      return res.status(503).json({
+        success: false,
+        error: 'Demo tours unavailable',
+        code: 'DEMO_TOURS_UNAVAILABLE',
+      });
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      return res.json(parsed);
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: 'Invalid DEMO_TOURS_JSON' });
+    }
   })
 );
 

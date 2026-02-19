@@ -93,42 +93,23 @@ const ConnectorAdapter = {
       };
     }
 
-    // Execute real action
-    try {
-      const secrets = await deps.connectorService.getSecrets(orgId, connectorKey);
-      const result = await ConnectorAdapter._executeAction(connectorKey, action, payload, secrets);
+    // No mock “real execution” in runtime.
+    // If a connector is not in sandbox/dry-run mode, be explicit that the feature is unavailable.
+    deps.auditLogger.warn('CONNECTOR_EXECUTION_UNAVAILABLE', {
+      org_id: orgId,
+      connector_key: connectorKey,
+      action,
+      duration_ms: Date.now() - startTime,
+    });
 
-      deps.auditLogger.info('CONNECTOR_EXECUTED', {
-        org_id: orgId,
-        connector_key: connectorKey,
-        action,
-        success: result.success,
-        duration_ms: Date.now() - startTime,
-      });
-
-      return {
-        ...result,
-        connector_key: connectorKey,
-        action,
-        duration_ms: Date.now() - startTime,
-      };
-    } catch (error) {
-      deps.auditLogger.error('CONNECTOR_EXECUTION_ERROR', {
-        org_id: orgId,
-        connector_key: connectorKey,
-        action,
-        error: error.message,
-      });
-
-      return {
-        success: false,
-        error: error.message,
-        error_code: 'EXECUTION_ERROR',
-        connector_key: connectorKey,
-        action,
-        duration_ms: Date.now() - startTime,
-      };
-    }
+    return {
+      success: false,
+      error: 'Connector execution is not available (dry-run only)',
+      error_code: 'FEATURE_UNAVAILABLE',
+      connector_key: connectorKey,
+      action,
+      duration_ms: Date.now() - startTime,
+    };
   },
 
   /**
@@ -200,90 +181,8 @@ const ConnectorAdapter = {
     );
   },
 
-  /**
-   * Execute the actual API call (mock implementations).
-   * @private
-   */
-  _executeAction: async (connectorKey, action, payload, secrets) => {
-    // Mock implementations - in production these would call real APIs
-    switch (connectorKey) {
-      case 'jira':
-        return ConnectorAdapter._executeJira(action, payload, secrets);
-      case 'google_calendar':
-        return ConnectorAdapter._executeGoogleCalendar(action, payload, secrets);
-      case 'slack':
-        return ConnectorAdapter._executeSlack(action, payload, secrets);
-      case 'teams':
-        return ConnectorAdapter._executeTeams(action, payload, secrets);
-      case 'hubspot':
-        return ConnectorAdapter._executeHubSpot(action, payload, secrets);
-      default:
-        return { success: false, error: 'Connector not implemented' };
-    }
-  },
-
-  // Mock implementations
-  _executeJira: async (action, payload, secrets) => {
-    // Mock: would use Jira REST API
-    return {
-      success: true,
-      result: {
-        id: `JIRA-${Math.random().toString(36).substring(7).toUpperCase()}`,
-        key: `PROJ-${Math.floor(Math.random() * 1000)}`,
-        self: `https://${secrets.domain}/rest/api/3/issue/PROJ-123`,
-        mock: true,
-      },
-      message: `Jira ${action} completed successfully`,
-    };
-  },
-
-  _executeGoogleCalendar: async (action, payload, secrets) => {
-    return {
-      success: true,
-      result: {
-        id: `gcal-${Math.random().toString(36).substring(7)}`,
-        htmlLink: `https://calendar.google.com/calendar/event?eid=xxx`,
-        summary: payload.summary,
-        mock: true,
-      },
-      message: `Google Calendar ${action} completed successfully`,
-    };
-  },
-
-  _executeSlack: async (action, payload, secrets) => {
-    return {
-      success: true,
-      result: {
-        ok: true,
-        ts: `${Date.now()}.000000`,
-        channel: payload.channel,
-        mock: true,
-      },
-      message: `Slack ${action} completed successfully`,
-    };
-  },
-
-  _executeTeams: async (action, payload, secrets) => {
-    return {
-      success: true,
-      result: {
-        id: `teams-${Math.random().toString(36).substring(7)}`,
-        mock: true,
-      },
-      message: `Teams ${action} completed successfully`,
-    };
-  },
-
-  _executeHubSpot: async (action, payload, secrets) => {
-    return {
-      success: true,
-      result: {
-        id: `hubspot-${Math.random().toString(36).substring(7)}`,
-        mock: true,
-      },
-      message: `HubSpot ${action} completed successfully`,
-    };
-  },
+  // NOTE: No “real execution” implementation here. When adding it, ensure it is
+  // truly calling external APIs and is covered by integration tests.
 };
 
 export default ConnectorAdapter;

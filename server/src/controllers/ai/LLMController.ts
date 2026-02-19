@@ -38,7 +38,12 @@ export class LLMController {
         'SELECT * FROM llm_providers WHERE visibility = ? OR visibility = ?',
         ['public', 'free']
       );
-      return res.json(providers);
+      // SECURITY: never expose secrets (api_key) on public endpoints
+      const safe = (providers || []).map((p: any) => {
+        const { api_key, ...rest } = p || {};
+        return rest;
+      });
+      return res.json(safe);
     } catch (error: any) {
       console.error('[LLMController] Error listing public providers:', error);
       return res.status(500).json({ error: error.message });
@@ -734,10 +739,11 @@ export class LLMController {
       // - include circuit breaker states for debugging
 
       // Default must be fast: this endpoint is polled by UI and should not block rendering.
-      const timeoutMsRaw = Number((req.query.timeoutMs as string) || 1200);
+      // Default increased: 1200ms was too aggressive for OpenAI in many networks.
+      const timeoutMsRaw = Number((req.query.timeoutMs as string) || 4000);
       const timeoutMs = Number.isFinite(timeoutMsRaw)
         ? Math.min(8000, Math.max(300, timeoutMsRaw))
-        : 1200;
+        : 4000;
 
       const providers = (await llmConfigService.getAllProviders(true)) as any[];
 
@@ -792,6 +798,7 @@ export class LLMController {
                 api_key: provider.api_key,
                 endpoint: provider.endpoint,
                 id: provider.model_id,
+                timeoutMs: providerTimeoutMs,
               }),
               providerTimeoutMs
             );

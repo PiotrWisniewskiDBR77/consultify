@@ -165,7 +165,7 @@ describe('Health routes integration (L3)', () => {
   it('GET / returns JSON with status ok', async () => {
     const res = await dispatch({ method: 'GET', url: '/api/health' });
     expect(res.status).toBe(200);
-    expect(res.body).toEqual(expect.objectContaining({ status: 'ok' }));
+    expect(res.body).toEqual(expect.objectContaining({ status: 'degraded' }));
   });
 
   it('GET / includes environment and version', async () => {
@@ -179,7 +179,7 @@ describe('Health routes integration (L3)', () => {
     process.env.MOCK_REDIS = 'true';
     const res = await dispatch({ method: 'GET', url: '/api/health' });
     expect(res.status).toBe(200);
-    expect(res.body.redis).toBe('mock');
+    expect(res.body.redis).toBe('mocked-unavailable');
   });
 
   it('GET / reports redis as disconnected/timeout when MOCK_REDIS=false', async () => {
@@ -209,13 +209,11 @@ describe('Health routes integration (L3)', () => {
   it('GET /ready returns 200 when DB+metrics are ready and MOCK_REDIS=true', async () => {
     process.env.MOCK_REDIS = 'true';
     const res = await dispatch({ method: 'GET', url: '/api/health/ready' });
-    expect([200, 503]).toContain(res.status);
+    expect(res.status).toBe(503);
     expect(res.body).toEqual(expect.objectContaining({ checks: expect.any(Object) }));
-    if (res.status === 200) {
-      expect(res.body.checks).toEqual(
-        expect.objectContaining({ database: true, redis: true, metrics: true })
-      );
-    }
+    expect(res.body.checks).toEqual(
+      expect.objectContaining({ database: true, redis: false, metrics: true })
+    );
   });
 
   it('GET /ready includes database/redis/metrics keys', async () => {

@@ -16,6 +16,14 @@ import logger from '../utils/Logger.js';
 // Apply rate limiting
 const router = Router();
 
+function featureUnavailable(res: Response) {
+  return res.status(503).json({
+    success: false,
+    error: 'Agents service unavailable',
+    code: 'FEATURE_UNAVAILABLE',
+  });
+}
+
 // Service interfaces
 interface AIOrchestratorInterface {
   processMessageWithAgents?: (
@@ -69,7 +77,11 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.processMessageWithAgents) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'AI Orchestrator not available' });
+=======
+      return featureUnavailable(res);
+>>>>>>> Stashed changes
     }
 
     try {
@@ -100,9 +112,7 @@ router.post(
       return res.json(result);
     } catch (error: unknown) {
       logger.error('[Agents API] Error processing query:', error);
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      return featureUnavailable(res);
     }
   })
 );
@@ -117,7 +127,11 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.querySpecialistAgent) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'AI Orchestrator not available' });
+=======
+      return featureUnavailable(res);
+>>>>>>> Stashed changes
     }
 
     try {
@@ -152,9 +166,7 @@ router.post(
       return res.json(result);
     } catch (error: unknown) {
       logger.error('[Agents API] Error querying specialist:', error);
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      return featureUnavailable(res);
     }
   })
 );
@@ -169,7 +181,11 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.getMultiAgentRecommendations) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'AI Orchestrator not available' });
+=======
+      return featureUnavailable(res);
+>>>>>>> Stashed changes
     }
 
     try {
@@ -195,9 +211,7 @@ router.post(
       return res.json(recommendations);
     } catch (error: unknown) {
       logger.error('[Agents API] Error getting recommendations:', error);
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      return featureUnavailable(res);
     }
   })
 );
@@ -212,7 +226,11 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.getAvailableAgents) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'AI Orchestrator not available' });
+=======
+      return featureUnavailable(res);
+>>>>>>> Stashed changes
     }
 
     try {
@@ -220,9 +238,13 @@ router.get(
       return res.json({ agents });
     } catch (error: unknown) {
       logger.error('[Agents API] Error getting agents:', error);
+<<<<<<< Updated upstream
       return res
         .status(500)
         .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+=======
+      return featureUnavailable(res);
+>>>>>>> Stashed changes
     }
   })
 );
@@ -238,7 +260,11 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.getAgentMetrics) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'AI Orchestrator not available' });
+=======
+      return featureUnavailable(res);
+>>>>>>> Stashed changes
     }
 
     try {
@@ -246,9 +272,7 @@ router.get(
       return res.json(metrics);
     } catch (error: unknown) {
       logger.error('[Agents API] Error getting metrics:', error);
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      return featureUnavailable(res);
     }
   })
 );
@@ -263,7 +287,11 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.processMessageWithAgents) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'AI Orchestrator not available' });
+=======
+      return featureUnavailable(res);
+>>>>>>> Stashed changes
     }
 
     try {
@@ -298,9 +326,7 @@ router.post(
       });
     } catch (error: unknown) {
       logger.error('[Agents API] Error analyzing initiative:', error);
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      return featureUnavailable(res);
     }
   })
 );
@@ -315,7 +341,11 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.processMessageWithAgents) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'AI Orchestrator not available' });
+=======
+      return featureUnavailable(res);
+>>>>>>> Stashed changes
     }
 
     try {
@@ -352,9 +382,7 @@ router.post(
       });
     } catch (error: unknown) {
       logger.error('[Agents API] Error conducting strategic review:', error);
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+      return featureUnavailable(res);
     }
   })
 );

@@ -45,6 +45,7 @@ import config from '../config/Config.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import ActivityService from '../services/ActivityService.js';
 import logger from '../utils/Logger.js';
+import { AppError } from '../utils/ErrorHandler.js';
 
 // Apply rate limiting to all auth routes
 router.use(authRateLimiter);
@@ -1287,6 +1288,9 @@ router.post(
       return res.json(result);
     } catch (error: unknown) {
       logger.error('MFA Setup error:', error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+      }
       return res.status(500).json({ error: 'MFA setup failed' });
     }
   })
@@ -1307,6 +1311,9 @@ router.post(
       return res.json(result);
     } catch (error: unknown) {
       logger.error('MFA Enable error:', error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+      }
       return res.status(500).json({ error: 'MFA activation failed' });
     }
   })
@@ -1327,6 +1334,9 @@ router.post(
       return res.json(result);
     } catch (error: unknown) {
       logger.error('MFA Disable error:', error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+      }
       return res.status(500).json({ error: 'MFA disable failed' });
     }
   })

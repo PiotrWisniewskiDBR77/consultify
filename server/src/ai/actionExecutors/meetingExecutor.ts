@@ -1,6 +1,8 @@
 /**
- * Meeting Executor Stub
- * Placeholder for meeting scheduling functionality
+ * Meeting Executor
+ *
+ * This feature is not implemented in this codebase yet.
+ * Do not return fake-success payloads; callers must handle unavailability explicitly.
  */
 
 export interface ExecutionResult {
@@ -24,15 +26,7 @@ export const MeetingExecutor = {
     payload: MeetingPayload,
     metadata: Record<string, unknown> = {}
   ): Promise<ExecutionResult> {
-    // Stub implementation
-    return {
-      success: true,
-      result: {
-        meeting_id: payload.meeting_id || `meeting-${Date.now()}`,
-        status: 'scheduled',
-        message: 'Meeting execution completed (stub)',
-      },
-    };
+    throw new Error('Feature unavailable: MEETING_SCHEDULE execution is not implemented');
   },
 
   async dryRun(

@@ -24,6 +24,18 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+<<<<<<< Updated upstream
+=======
+function isSchemaMissingError(err: unknown): boolean {
+  const msg = String((err as any)?.message || '').toLowerCase();
+  return msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation');
+}
+
+const FEATURE_UNAVAILABLE_CODE = 'FEATURE_UNAVAILABLE';
+const featureUnavailable = (res: Response, message: string) =>
+  res.status(503).json({ success: false, error: message, code: FEATURE_UNAVAILABLE_CODE });
+
+>>>>>>> Stashed changes
 // Apply authentication to all routes
 router.use(verifyToken);
 
@@ -37,6 +49,7 @@ router.use(verifyToken);
  */
 router.get('/organization', async (req: Request, res: Response, next: NextFunction) => {
   try {
+<<<<<<< Updated upstream
     const userId = (req as any).user?.id;
 
     // Return demo data for now - will be replaced with DB query
@@ -60,6 +73,12 @@ router.get('/organization', async (req: Request, res: Response, next: NextFuncti
     };
 
     res.json({ success: true, data: organization });
+=======
+    return featureUnavailable(
+      res,
+      'Partner portal organization endpoint not available (no real implementation)'
+    );
+>>>>>>> Stashed changes
   } catch (error: any) {
     logger.error('Error fetching partner organization:', error);
     next(error);
@@ -72,6 +91,7 @@ router.get('/organization', async (req: Request, res: Response, next: NextFuncti
  */
 router.put('/organization', async (req: Request, res: Response, next: NextFunction) => {
   try {
+<<<<<<< Updated upstream
     const { name, taxId, contactEmail, contactPhone, website } = req.body;
 
     // TODO: Update in database
@@ -80,6 +100,12 @@ router.put('/organization', async (req: Request, res: Response, next: NextFuncti
       message: 'Organization updated successfully',
       data: req.body,
     });
+=======
+    return featureUnavailable(
+      res,
+      'Partner portal organization updates not available (no real implementation)'
+    );
+>>>>>>> Stashed changes
   } catch (error: any) {
     logger.error('Error updating partner organization:', error);
     next(error);
@@ -94,6 +120,7 @@ router.put(
   '/organization/specializations',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+<<<<<<< Updated upstream
       const { specializations } = req.body;
 
       res.json({
@@ -101,6 +128,12 @@ router.put(
         message: 'Specializations updated successfully',
         data: { specializations },
       });
+=======
+      return featureUnavailable(
+        res,
+        'Partner portal organization updates not available (no real implementation)'
+      );
+>>>>>>> Stashed changes
     } catch (error: any) {
       logger.error('Error updating specializations:', error);
       next(error);
@@ -114,6 +147,7 @@ router.put(
  */
 router.put('/organization/regions', async (req: Request, res: Response, next: NextFunction) => {
   try {
+<<<<<<< Updated upstream
     const { regions } = req.body;
 
     res.json({
@@ -121,6 +155,12 @@ router.put('/organization/regions', async (req: Request, res: Response, next: Ne
       message: 'Regions updated successfully',
       data: { regions },
     });
+=======
+    return featureUnavailable(
+      res,
+      'Partner portal organization updates not available (no real implementation)'
+    );
+>>>>>>> Stashed changes
   } catch (error: any) {
     logger.error('Error updating regions:', error);
     next(error);
@@ -133,13 +173,10 @@ router.put('/organization/regions', async (req: Request, res: Response, next: Ne
  */
 router.put('/organization/listing', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { publicListingEnabled, listingDescription } = req.body;
-
-    res.json({
-      success: true,
-      message: 'Listing settings updated successfully',
-      data: { publicListingEnabled, listingDescription },
-    });
+    return featureUnavailable(
+      res,
+      'Partner portal listing updates not available (no real implementation)'
+    );
   } catch (error: any) {
     logger.error('Error updating listing:', error);
     next(error);
@@ -411,24 +448,31 @@ router.post('/payouts/request', async (req: Request, res: Response, next: NextFu
  */
 router.get('/payouts', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
+    const partnerOrgId = (req as any).user?.partnerOrgId;
+    if (!partnerOrgId) {
+      return res.status(403).json({ success: false, error: 'Partner organization required' });
+    }
     const status = req.query.status as string | undefined;
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
 
-    let payouts;
     try {
-      payouts = await PartnerCommissionService.getPayouts(partnerOrgId, {
+      const payouts = await PartnerCommissionService.getPayouts(partnerOrgId, {
         status: status as any,
         limit,
         offset,
       });
+      return res.json({ success: true, data: payouts });
     } catch (dbError: any) {
-      logger.warn('Payouts: DB query failed, using fallback data:', dbError?.message);
-      payouts = [];
+      logger.warn('Payouts: DB query failed:', dbError?.message);
+      if (isSchemaMissingError(dbError)) {
+        return featureUnavailable(
+          res,
+          'Partner payouts unavailable (database schema missing or misconfigured)'
+        );
+      }
+      throw dbError;
     }
-
-    res.json({ success: true, data: payouts });
   } catch (error: any) {
     logger.error('Error fetching payouts:', error);
     next(error);
@@ -618,172 +662,7 @@ function parseTimeAgo(timeStr: string): number {
  */
 router.get('/metrics', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Default fallback metrics data
-    const fallbackMetrics = {
-      revenue: {
-        totalYTD: 0,
-        change: 0,
-        byMonth: new Array(12).fill(0),
-      },
-      clients: {
-        retention: 0,
-        newThisQuarter: 0,
-        churned: 0,
-        avgProjectDuration: 0,
-      },
-      performance: {
-        score: 0,
-        breakdown: {
-          clientAcquisition: 0,
-          projectDelivery: 0,
-          customerSatisfaction: 0,
-          certificationProgress: 0,
-        },
-        ranking: 'Growing',
-      },
-      satisfaction: {
-        score: 0,
-        responses: 0,
-        trend: 'stable' as string,
-      },
-    };
-
-    // Try to load from database, fallback to demo data
-    try {
-      const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
-      const { getDatabase } = await import('../database/Database.js');
-      const db = getDatabase();
-      const { get: dbGet, all: dbAll } = await import('../utils/DbPromise.js');
-
-      const ytdRevenue = await dbGet<{ total: number }>(
-        db,
-        `SELECT COALESCE(SUM(gross_amount), 0) as total 
-               FROM partner_commission_transactions 
-               WHERE partner_org_id = ? 
-               AND transaction_date >= date('now', 'start of year')`,
-        [partnerOrgId]
-      );
-
-      const monthlyRevenue = await dbAll<{ month: number; total: number }>(
-        db,
-        `SELECT 
-                  CAST(strftime('%m', transaction_date) AS INTEGER) as month,
-                  COALESCE(SUM(gross_amount), 0) as total
-               FROM partner_commission_transactions 
-               WHERE partner_org_id = ? 
-               AND transaction_date >= date('now', 'start of year')
-               GROUP BY strftime('%m', transaction_date)
-               ORDER BY month`,
-        [partnerOrgId]
-      );
-
-      const byMonth = new Array(12).fill(0);
-      for (const row of monthlyRevenue || []) {
-        if (row.month >= 1 && row.month <= 12) {
-          byMonth[row.month - 1] = Math.round(row.total);
-        }
-      }
-
-      const lastYearRevenue = await dbGet<{ total: number }>(
-        db,
-        `SELECT COALESCE(SUM(gross_amount), 0) as total 
-               FROM partner_commission_transactions 
-               WHERE partner_org_id = ? 
-               AND transaction_date >= date('now', '-1 year', 'start of year')
-               AND transaction_date < date('now', 'start of year')`,
-        [partnerOrgId]
-      );
-
-      const currentYTD = ytdRevenue?.total || 0;
-      const lastYTD = lastYearRevenue?.total || 1;
-      const revenueChange = lastYTD > 0 ? Math.round(((currentYTD - lastYTD) / lastYTD) * 100) : 0;
-
-      const totalAttributions = await dbGet<{ count: number }>(
-        db,
-        `SELECT COUNT(*) as count FROM partner_attributions WHERE partner_org_id = ?`,
-        [partnerOrgId]
-      );
-
-      const activeAttributions = await dbGet<{ count: number }>(
-        db,
-        `SELECT COUNT(*) as count FROM partner_attributions WHERE partner_org_id = ? AND status = 'ACTIVE'`,
-        [partnerOrgId]
-      );
-
-      const newThisQuarter = await dbGet<{ count: number }>(
-        db,
-        `SELECT COUNT(*) as count FROM partner_attributions 
-               WHERE partner_org_id = ? 
-               AND attributed_at >= date('now', 'start of month', '-2 months')`,
-        [partnerOrgId]
-      );
-
-      const churned = await dbGet<{ count: number }>(
-        db,
-        `SELECT COUNT(*) as count FROM partner_attributions 
-               WHERE partner_org_id = ? AND status = 'CHURNED'`,
-        [partnerOrgId]
-      );
-
-      const total = totalAttributions?.count || 1;
-      const active = activeAttributions?.count || 0;
-      const retention = Math.round((active / total) * 100);
-
-      const avgCommissionRate = await dbGet<{ avg: number }>(
-        db,
-        `SELECT COALESCE(AVG(commission_rate), 15) as avg 
-               FROM partner_commission_transactions 
-               WHERE partner_org_id = ?`,
-        [partnerOrgId]
-      );
-
-      const clickConversion = await dbGet<{ clicks: number; conversions: number }>(
-        db,
-        `SELECT 
-                  COUNT(*) as clicks,
-                  SUM(CASE WHEN converted_at IS NOT NULL THEN 1 ELSE 0 END) as conversions
-               FROM partner_referral_clicks
-               WHERE partner_org_id = ?`,
-        [partnerOrgId]
-      );
-
-      const convRate = clickConversion?.clicks
-        ? Math.round((clickConversion.conversions / clickConversion.clicks) * 100)
-        : 0;
-
-      const performanceScore = Math.min(
-        100,
-        Math.round(retention * 0.3 + convRate * 0.3 + (avgCommissionRate?.avg || 15) * 2)
-      );
-
-      fallbackMetrics.revenue = {
-        totalYTD: Math.round(currentYTD),
-        change: revenueChange,
-        byMonth,
-      };
-      fallbackMetrics.clients = {
-        retention,
-        newThisQuarter: newThisQuarter?.count || 0,
-        churned: churned?.count || 0,
-        avgProjectDuration: 4.2,
-      };
-      fallbackMetrics.performance = {
-        score: performanceScore,
-        breakdown: {
-          clientAcquisition: convRate,
-          projectDelivery: 85,
-          customerSatisfaction: 90,
-          certificationProgress: 70,
-        },
-        ranking:
-          performanceScore >= 80 ? 'Top 15%' : performanceScore >= 60 ? 'Top 30%' : 'Growing',
-      };
-      fallbackMetrics.satisfaction = { score: 4.5, responses: 0, trend: 'stable' };
-    } catch (dbError: any) {
-      logger.warn('Metrics: DB query failed, using fallback data:', dbError?.message);
-    }
-
-    res.json({ success: true, data: fallbackMetrics });
+    return featureUnavailable(res, 'Partner metrics unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error fetching metrics:', error);
     next(error);
@@ -800,49 +679,7 @@ router.get('/metrics', async (req: Request, res: Response, next: NextFunction) =
  */
 router.get('/clients', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status, search, page = 1, limit = 20 } = req.query;
-
-    const clients = [
-      {
-        id: 'client-001',
-        name: 'Nordic Manufacturing AB',
-        industry: 'Manufacturing',
-        users: 45,
-        projects: 3,
-        assessmentScore: 3.8,
-        status: 'active',
-        onboardedAt: '2024-06-15',
-        contractValue: 45000,
-      },
-      {
-        id: 'client-002',
-        name: 'Baltic Energy Group',
-        industry: 'Energy',
-        users: 120,
-        projects: 5,
-        assessmentScore: 4.2,
-        status: 'active',
-        onboardedAt: '2024-03-20',
-        contractValue: 85000,
-      },
-      {
-        id: 'client-003',
-        name: 'TechVentures Sp. z o.o.',
-        industry: 'Technology',
-        users: 28,
-        projects: 2,
-        assessmentScore: 3.5,
-        status: 'onboarding',
-        onboardedAt: '2025-12-01',
-        contractValue: 25000,
-      },
-    ];
-
-    res.json({
-      success: true,
-      data: clients,
-      pagination: { page: Number(page), limit: Number(limit), total: clients.length },
-    });
+    return featureUnavailable(res, 'Partner clients unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error fetching clients:', error);
     next(error);
@@ -855,20 +692,7 @@ router.get('/clients', async (req: Request, res: Response, next: NextFunction) =
  */
 router.post('/clients', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, industry, contactEmail, notes } = req.body;
-
-    const newClient = {
-      id: `client-${Date.now()}`,
-      name,
-      industry,
-      contactEmail,
-      users: 0,
-      projects: 0,
-      status: 'onboarding',
-      onboardedAt: new Date().toISOString(),
-    };
-
-    res.status(201).json({ success: true, data: newClient });
+    return featureUnavailable(res, 'Partner client creation unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error creating client:', error);
     next(error);
@@ -881,23 +705,7 @@ router.post('/clients', async (req: Request, res: Response, next: NextFunction) 
  */
 router.get('/clients/:clientId', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { clientId } = req.params;
-
-    // Return demo data
-    const client = {
-      id: clientId,
-      name: 'Nordic Manufacturing AB',
-      industry: 'Manufacturing',
-      users: 45,
-      projects: 3,
-      assessmentScore: 3.8,
-      status: 'active',
-      onboardedAt: '2024-06-15',
-      contractValue: 45000,
-      contacts: [{ name: 'Erik Johansson', role: 'CTO', email: 'erik@nordic-mfg.se' }],
-    };
-
-    res.json({ success: true, data: client });
+    return featureUnavailable(res, 'Partner client details unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error fetching client:', error);
     next(error);
@@ -914,44 +722,7 @@ router.get('/clients/:clientId', async (req: Request, res: Response, next: NextF
  */
 router.get('/employees', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Return demo data - in production would query from database
-    const employees = [
-      {
-        id: 'emp-001',
-        employeeName: 'Maria Schmidt',
-        email: 'maria.schmidt@acme-consulting.de',
-        accessType: 'FULL_ACCESS',
-        permissionSet: 'Senior Consultant',
-        clients: ['client-001', 'client-002'],
-        clientCount: 2,
-        status: 'ACTIVE',
-        lastActive: '2026-01-09',
-      },
-      {
-        id: 'emp-002',
-        employeeName: 'Thomas Müller',
-        email: 'thomas.mueller@acme-consulting.de',
-        accessType: 'READ_ONLY',
-        permissionSet: 'Junior Consultant',
-        clients: ['client-001'],
-        clientCount: 1,
-        status: 'ACTIVE',
-        lastActive: '2026-01-08',
-      },
-      {
-        id: 'emp-003',
-        employeeName: 'Anna Weber',
-        email: 'anna.weber@acme-consulting.de',
-        accessType: 'FULL_ACCESS',
-        permissionSet: 'Manager',
-        clients: [],
-        clientCount: 0,
-        status: 'DEACTIVATED',
-        lastActive: '2025-12-15',
-      },
-    ];
-
-    res.json({ success: true, data: employees });
+    return featureUnavailable(res, 'Partner employees unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error fetching employees:', error);
     next(error);
@@ -964,26 +735,7 @@ router.get('/employees', async (req: Request, res: Response, next: NextFunction)
  */
 router.post('/employees', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, email, permissionSet } = req.body;
-
-    if (!name || !email) {
-      return res.status(400).json({ success: false, error: 'Name and email are required' });
-    }
-
-    // In production, create employee in database
-    const newEmployee = {
-      id: `emp-${Date.now()}`,
-      employeeName: name,
-      email,
-      accessType: 'READ_ONLY',
-      permissionSet: permissionSet || 'Consultant',
-      clients: [],
-      clientCount: 0,
-      status: 'ACTIVE',
-      lastActive: null,
-    };
-
-    res.status(201).json({ success: true, data: newEmployee });
+    return featureUnavailable(res, 'Partner employee creation unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error creating employee:', error);
     next(error);
@@ -1000,22 +752,7 @@ router.post('/employees', async (req: Request, res: Response, next: NextFunction
  */
 router.get('/stats', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
-
-    // In production, aggregate from database
-    const stats = {
-      totalEarnings: 58400,
-      thisMonthEarnings: 4350,
-      activeClients: 12,
-      conversionRate: 23.5,
-      tier: 'GOLD',
-      tierProgress: 65,
-      nextTier: 'PLATINUM',
-      nextTierRevenue: 100000,
-      currentRevenue: 65000,
-    };
-
-    res.json({ success: true, data: stats });
+    return featureUnavailable(res, 'Partner stats unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error fetching partner stats:', error);
     next(error);
@@ -1032,23 +769,7 @@ router.get('/stats', async (req: Request, res: Response, next: NextFunction) => 
  */
 router.post('/access-links', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
-    const { type = 'client' } = req.body;
-
-    // Generate unique access link
-    const token = require('crypto').randomBytes(16).toString('hex');
-    const baseUrl = process.env.APP_URL || 'https://app.consultinity.com';
-    const link = `${baseUrl}/onboard/${type}/${token}`;
-
-    // In production, store the access link in database with expiry
-    res.json({
-      success: true,
-      data: {
-        link,
-        type,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-      },
-    });
+    return featureUnavailable(res, 'Partner access links unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error generating access link:', error);
     next(error);
@@ -1065,49 +786,7 @@ router.post('/access-links', async (req: Request, res: Response, next: NextFunct
  */
 router.get('/projects', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status, clientId, page = 1, limit = 20 } = req.query;
-
-    const projects = [
-      {
-        id: 'proj-001',
-        name: 'Digital Transformation Assessment',
-        clientId: 'client-001',
-        clientName: 'Nordic Manufacturing AB',
-        framework: 'DRD',
-        progress: 65,
-        status: 'active',
-        startDate: '2025-09-01',
-        targetEndDate: '2026-02-28',
-      },
-      {
-        id: 'proj-002',
-        name: 'Industry 4.0 Readiness',
-        clientId: 'client-002',
-        clientName: 'Baltic Energy Group',
-        framework: 'SIRI',
-        progress: 40,
-        status: 'active',
-        startDate: '2025-10-15',
-        targetEndDate: '2026-04-30',
-      },
-      {
-        id: 'proj-003',
-        name: 'Lean Manufacturing Implementation',
-        clientId: 'client-003',
-        clientName: 'TechVentures Sp. z o.o.',
-        framework: 'Lean4.0',
-        progress: 15,
-        status: 'planning',
-        startDate: '2026-01-15',
-        targetEndDate: '2026-06-30',
-      },
-    ];
-
-    res.json({
-      success: true,
-      data: projects,
-      pagination: { page: Number(page), limit: Number(limit), total: projects.length },
-    });
+    return featureUnavailable(res, 'Partner projects unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error fetching projects:', error);
     next(error);
@@ -1124,53 +803,7 @@ router.get('/projects', async (req: Request, res: Response, next: NextFunction) 
  */
 router.get('/certifications', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const certifications = [
-      {
-        id: 'cert-001',
-        name: 'Consultinity Foundations',
-        type: 'foundation',
-        status: 'completed',
-        progress: 100,
-        duration: '2 hours',
-        modules: 5,
-        completedAt: '2025-12-15',
-        certificateId: 'CF-2025-001',
-        certificateUrl: '/certificates/CF-2025-001.pdf',
-      },
-      {
-        id: 'cert-002',
-        name: 'PMO Standards (ISO/PMBOK/PRINCE2)',
-        type: 'pmo_standards',
-        status: 'completed',
-        progress: 100,
-        duration: '4 hours',
-        modules: 8,
-        completedAt: '2026-01-05',
-        certificateId: 'PMO-2026-001',
-        certificateUrl: '/certificates/PMO-2026-001.pdf',
-      },
-      {
-        id: 'cert-003',
-        name: 'AI Intelligence Modules',
-        type: 'ai_modules',
-        status: 'in_progress',
-        progress: 45,
-        duration: '3 hours',
-        modules: 6,
-        startedAt: '2026-01-06',
-      },
-      {
-        id: 'cert-004',
-        name: 'Assessment Specialist',
-        type: 'assessment_specialist',
-        status: 'locked',
-        progress: 0,
-        duration: '6 hours',
-        modules: 12,
-      },
-    ];
-
-    res.json({ success: true, data: certifications });
+    return featureUnavailable(res, 'Partner certifications unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error fetching certifications:', error);
     next(error);
@@ -1185,35 +818,7 @@ router.get(
   '/certifications/:certId/modules',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { certId } = req.params;
-
-      const modules = [
-        {
-          id: 'mod-001',
-          name: 'Platform Overview',
-          status: 'completed',
-          progress: 100,
-          duration: 30,
-        },
-        {
-          id: 'mod-002',
-          name: 'Navigation & UI',
-          status: 'completed',
-          progress: 100,
-          duration: 20,
-        },
-        { id: 'mod-003', name: 'Project Setup', status: 'in_progress', progress: 60, duration: 25 },
-        {
-          id: 'mod-004',
-          name: 'Assessment Basics',
-          status: 'not_started',
-          progress: 0,
-          duration: 35,
-        },
-        { id: 'mod-005', name: 'Partner Tools', status: 'not_started', progress: 0, duration: 30 },
-      ];
-
-      res.json({ success: true, data: modules });
+      return featureUnavailable(res, 'Partner certification modules unavailable (no real implementation)');
     } catch (error: any) {
       logger.error('Error fetching modules:', error);
       next(error);
@@ -1229,14 +834,10 @@ router.post(
   '/certifications/:certId/modules/:moduleId/progress',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { certId, moduleId } = req.params;
-      const { progress, status } = req.body;
-
-      res.json({
-        success: true,
-        message: 'Progress updated',
-        data: { certId, moduleId, progress, status },
-      });
+      return featureUnavailable(
+        res,
+        'Partner certification progress updates unavailable (no real implementation)'
+      );
     } catch (error: any) {
       logger.error('Error updating progress:', error);
       next(error);
@@ -1254,41 +855,7 @@ router.post(
  */
 router.get('/licenses', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const licenses = {
-      summary: {
-        total: 150,
-        active: 142,
-        available: 8,
-        utilizationPercent: 95,
-      },
-      allocations: [
-        {
-          clientId: 'client-001',
-          clientName: 'Nordic Manufacturing AB',
-          quantity: 45,
-          type: 'professional',
-        },
-        {
-          clientId: 'client-002',
-          clientName: 'Baltic Energy Group',
-          quantity: 85,
-          type: 'enterprise',
-        },
-        {
-          clientId: 'client-003',
-          clientName: 'TechVentures Sp. z o.o.',
-          quantity: 12,
-          type: 'standard',
-        },
-      ],
-      history: [
-        { date: '2026-01-01', action: 'added', quantity: 20, balance: 150 },
-        { date: '2025-12-15', action: 'allocated', quantity: 12, balance: 130 },
-        { date: '2025-12-01', action: 'added', quantity: 30, balance: 142 },
-      ],
-    };
-
-    res.json({ success: true, data: licenses });
+    return featureUnavailable(res, 'Partner licenses unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error fetching licenses:', error);
     next(error);
@@ -1301,13 +868,7 @@ router.get('/licenses', async (req: Request, res: Response, next: NextFunction) 
  */
 router.post('/licenses/order', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { quantity, type } = req.body;
-
-    res.json({
-      success: true,
-      message: 'License order submitted',
-      data: { orderId: `ORD-${Date.now()}`, quantity, type, status: 'pending' },
-    });
+    return featureUnavailable(res, 'Partner license ordering unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error ordering licenses:', error);
     next(error);
@@ -1324,52 +885,7 @@ router.post('/licenses/order', async (req: Request, res: Response, next: NextFun
  */
 router.get('/commissions', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status, period, page = 1, limit = 20 } = req.query;
-
-    const commissions = {
-      summary: {
-        totalYTD: 18450,
-        thisMonth: 2340,
-        pending: 1200,
-        nextPayout: '2026-01-15',
-      },
-      transactions: [
-        {
-          id: 'comm-001',
-          client: 'Nordic Manufacturing AB',
-          type: 'referral',
-          amount: 850,
-          status: 'paid',
-          date: '2026-01-05',
-        },
-        {
-          id: 'comm-002',
-          client: 'Baltic Energy Group',
-          type: 'renewal',
-          amount: 1200,
-          status: 'pending',
-          date: '2026-01-08',
-        },
-        {
-          id: 'comm-003',
-          client: 'TechVentures Sp. z o.o.',
-          type: 'new_license',
-          amount: 290,
-          status: 'pending',
-          date: '2026-01-07',
-        },
-      ],
-    };
-
-    res.json({
-      success: true,
-      data: commissions,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total: commissions.transactions.length,
-      },
-    });
+    return featureUnavailable(res, 'Partner commissions unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error fetching commissions:', error);
     next(error);
@@ -1386,37 +902,7 @@ router.get('/commissions', async (req: Request, res: Response, next: NextFunctio
  */
 router.get('/invoices', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status, page = 1, limit = 20 } = req.query;
-
-    const invoices = [
-      {
-        id: 'INV-2026-003',
-        date: '2026-01-01',
-        amount: 8500,
-        status: 'pending',
-        dueDate: '2026-01-31',
-      },
-      {
-        id: 'INV-2025-012',
-        date: '2025-12-01',
-        amount: 7200,
-        status: 'paid',
-        paidDate: '2025-12-15',
-      },
-      {
-        id: 'INV-2025-011',
-        date: '2025-11-01',
-        amount: 6800,
-        status: 'paid',
-        paidDate: '2025-11-18',
-      },
-    ];
-
-    res.json({
-      success: true,
-      data: invoices,
-      pagination: { page: Number(page), limit: Number(limit), total: invoices.length },
-    });
+    return featureUnavailable(res, 'Partner invoices unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error fetching invoices:', error);
     next(error);
@@ -1431,16 +917,7 @@ router.get(
   '/invoices/:invoiceId/download',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { invoiceId } = req.params;
-
-      // In production, this would stream the actual PDF
-      res.json({
-        success: true,
-        data: {
-          downloadUrl: `/api/partners/invoices/${invoiceId}/pdf`,
-          expiresAt: new Date(Date.now() + 3600000).toISOString(),
-        },
-      });
+      return featureUnavailable(res, 'Partner invoice downloads unavailable (no real implementation)');
     } catch (error: any) {
       logger.error('Error downloading invoice:', error);
       next(error);
@@ -1458,45 +935,7 @@ router.get(
  */
 router.get('/resources', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { category, search } = req.query;
-
-    const resources = {
-      documentation: [
-        { id: 'res-001', title: 'Partner Onboarding Guide', type: 'PDF', size: '2.4 MB' },
-        { id: 'res-002', title: 'Consultinity Platform Overview', type: 'PDF', size: '5.1 MB' },
-        { id: 'res-003', title: 'API Documentation', type: 'Web', size: 'Online' },
-        { id: 'res-004', title: 'Integration Guide', type: 'PDF', size: '1.8 MB' },
-      ],
-      marketing: [
-        { id: 'res-005', title: 'Partner Logo Kit', type: 'ZIP', size: '12 MB' },
-        { id: 'res-006', title: 'Sales Presentation Template', type: 'PPTX', size: '8.5 MB' },
-        { id: 'res-007', title: 'Product One-Pager', type: 'PDF', size: '1.2 MB' },
-        { id: 'res-008', title: 'Email Templates', type: 'ZIP', size: '500 KB' },
-      ],
-      caseStudies: [
-        {
-          id: 'res-009',
-          title: 'Nordic Manufacturing - Digital Transformation',
-          type: 'PDF',
-          size: '3.2 MB',
-        },
-        {
-          id: 'res-010',
-          title: 'Baltic Energy - Industry 4.0 Journey',
-          type: 'PDF',
-          size: '2.8 MB',
-        },
-        { id: 'res-011', title: 'TechVentures - Lean Implementation', type: 'PDF', size: '2.1 MB' },
-      ],
-      templates: [
-        { id: 'res-012', title: 'PMO Setup Checklist', type: 'XLSX', size: '450 KB' },
-        { id: 'res-013', title: 'Assessment Report Template', type: 'DOCX', size: '1.1 MB' },
-        { id: 'res-014', title: 'Roadmap Template', type: 'XLSX', size: '800 KB' },
-        { id: 'res-015', title: 'Governance Framework', type: 'PDF', size: '2.5 MB' },
-      ],
-    };
-
-    res.json({ success: true, data: resources });
+    return featureUnavailable(res, 'Partner resources unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error fetching resources:', error);
     next(error);
@@ -1511,15 +950,7 @@ router.get(
   '/resources/:resourceId/download',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { resourceId } = req.params;
-
-      res.json({
-        success: true,
-        data: {
-          downloadUrl: `/api/partners/resources/${resourceId}/file`,
-          expiresAt: new Date(Date.now() + 3600000).toISOString(),
-        },
-      });
+      return featureUnavailable(res, 'Partner resource downloads unavailable (no real implementation)');
     } catch (error: any) {
       logger.error('Error downloading resource:', error);
       next(error);
@@ -1537,31 +968,7 @@ router.get(
  */
 router.get('/tiers', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const tiers = {
-      current: {
-        name: 'Certified Partner',
-        licenseDiscount: 20,
-        supportLevel: 'priority',
-        benefits: ['20% license discount', 'Priority support', 'Co-marketing included'],
-      },
-      next: {
-        name: 'Premier Partner',
-        licenseDiscount: 30,
-        requirements: [
-          { name: '10+ active projects', current: 8, target: 10, met: false },
-          { name: 'Published case study', current: 1, target: 1, met: true },
-          { name: 'All certifications complete', current: 2, target: 4, met: false },
-        ],
-      },
-      all: [
-        { name: 'Registered', discount: 0, minRevenue: 0, minProjects: 0 },
-        { name: 'Certified', discount: 20, minRevenue: 50000, minProjects: 3 },
-        { name: 'Premier', discount: 30, minRevenue: 150000, minProjects: 10 },
-        { name: 'Elite', discount: 40, minRevenue: 500000, minProjects: 25 },
-      ],
-    };
-
-    res.json({ success: true, data: tiers });
+    return featureUnavailable(res, 'Partner tiers unavailable (no real implementation)');
   } catch (error: any) {
     logger.error('Error fetching tiers:', error);
     next(error);
@@ -1842,38 +1249,10 @@ superAdminPartnerRouter.get(
   '/attributions',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const limit = parseInt(req.query.limit as string) || 100;
-      const offset = parseInt(req.query.offset as string) || 0;
-      const status = req.query.status as string | undefined;
-
-      // In production, this would query the database
-      // For now, return demo data
-      const attributions = [
-        {
-          id: 'attr-001',
-          partnerOrgId: 'partner-001',
-          partnerName: 'Acme Consulting GmbH',
-          organizationId: 'org-001',
-          organizationName: 'Nordic Manufacturing AB',
-          attributionType: 'REFERRAL_LINK',
-          referralCodeUsed: 'ACME2026',
-          status: 'ACTIVE',
-          attributedAt: '2026-01-05',
-        },
-        {
-          id: 'attr-002',
-          partnerOrgId: 'partner-002',
-          partnerName: 'Digital Partners Ltd',
-          organizationId: 'org-002',
-          organizationName: 'Baltic Energy Group',
-          attributionType: 'PROMO_CODE',
-          referralCodeUsed: 'DIGI15',
-          status: 'ACTIVE',
-          attributedAt: '2026-01-03',
-        },
-      ];
-
-      res.json({ success: true, data: attributions });
+      return featureUnavailable(
+        res,
+        'Partner attributions listing unavailable (no real implementation)'
+      );
     } catch (error: any) {
       logger.error('Error fetching attributions:', error);
       next(error);
@@ -1889,12 +1268,10 @@ superAdminPartnerRouter.delete(
   '/attributions/:attributionId',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { attributionId } = req.params;
-
-      // In production, this would update the database
-      // await PartnerReferralService.updateAttributionStatus(attributionId, 'EXPIRED');
-
-      res.json({ success: true, message: 'Attribution removed' });
+      return featureUnavailable(
+        res,
+        'Partner attribution removal unavailable (no real implementation)'
+      );
     } catch (error: any) {
       logger.error('Error removing attribution:', error);
       next(error);

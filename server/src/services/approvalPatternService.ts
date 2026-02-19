@@ -1,13 +1,8 @@
-// @ts-nocheck
 /**
- * Approvalpattern Service
- * Enterprise SaaS Architecture - TypeScript Backend
+ * Approval Pattern Service
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * Not implemented in this codebase. Export an explicit marker instead of a self-loading wrapper.
  */
+const approvalPatternService = { __unavailable__: true } as const;
 
-// Lazy load the JS service module
-import service from './approvalPatternService.js';
-
-// Export default instance (for backward compatibility)
-export default service;
+export default approvalPatternService;

@@ -661,29 +661,10 @@ router.post(
         return res.status(404).json({ error: 'Payment failure not found' });
       }
 
-      // Increment retry count
-      const newRetryCount = (failure.retry_count || 0) + 1;
-
-      // Simulate retry success (in production: call Stripe)
-      const success = Math.random() > 0.3; // 70% success rate for demo
-      const newStatus = success ? 'recovered' : newRetryCount >= 3 ? 'failed' : 'pending';
-
-      await dbRun(
-        `UPDATE payment_failures SET 
-                    retry_count = ?,
-                    last_retry_at = datetime('now'),
-                    recovery_status = ?,
-                    recovered_at = CASE WHEN ? = 'recovered' THEN datetime('now') ELSE recovered_at END,
-                    updated_at = datetime('now')
-                 WHERE id = ?`,
-        [newRetryCount, newStatus, newStatus, id]
-      );
-
-      return res.json({
-        success: true,
-        retrySuccessful: success,
-        newStatus,
-        retryCount: newRetryCount,
+      return res.status(503).json({
+        success: false,
+        error: 'Payment retry processing is not available',
+        code: 'FEATURE_UNAVAILABLE',
       });
     } catch (error: any) {
       logger.error('[Revenue] Retry payment error:', error);

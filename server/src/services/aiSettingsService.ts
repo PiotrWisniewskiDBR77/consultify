@@ -12,11 +12,12 @@
  * - getAuditLog (settings changes)
  * - getUserCostHistory / getOrgCostAttribution (from ai_usage_logs)
  * - getOrgUserTiers / assignUserTier (lightweight store)
- * - generateComplianceReport (stubbed summary)
+ * - generateComplianceReport (DB-backed summary; no degraded PDF fallback)
  */
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { AppError } from '../utils/ErrorHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
 // Helper: safe JSON parse
@@ -480,7 +481,9 @@ class AISettingsService {
       return providers || [];
     } catch (err) {
       console.error('[AISettingsService] Error in getAvailableModels:', err);
-      return []; // Return empty instead of 503
+      throw new AppError('Available models are not available', 503, 'FEATURE_UNAVAILABLE', {
+        reason: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
@@ -577,7 +580,7 @@ class AISettingsService {
     return rows;
   }
 
-  // COMPLIANCE REPORT (stub)
+  // COMPLIANCE REPORT (DB-backed summary; no degraded PDF fallbacks)
   static async generateComplianceReport(orgId: string, standard: string, format: string = 'json') {
     const orgSettings = await this.getOrgSettings(orgId);
     const report = {
@@ -593,12 +596,12 @@ class AISettingsService {
     };
 
     if (format === 'pdf') {
-      // In a real system we would render a PDF; for now return JSON with a marker.
-      return {
-        ...report,
-        format: 'pdf',
-        note: 'PDF generation not implemented - returning JSON payload',
-      };
+      throw new AppError(
+        'Compliance report PDF export is not available',
+        503,
+        'FEATURE_UNAVAILABLE',
+        { orgId, standard }
+      );
     }
     return report;
   }

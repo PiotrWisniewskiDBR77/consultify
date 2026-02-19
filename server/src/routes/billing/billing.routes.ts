@@ -790,65 +790,6 @@ router.get(
         metadata: inv.metadata ? JSON.parse(inv.metadata) : {},
       }));
 
-      if (!mapped || mapped.length === 0) {
-        const now = new Date();
-        const mockInvoice = {
-          id: uuidv4(),
-          organization_id: req.user!.organizationId,
-          organization_name: 'Demo Org',
-          invoice_number: 'INV-MOCK-001',
-          status: 'paid',
-          subtotal: 7500,
-          tax_amount: 0,
-          total: 7500,
-          amount_paid: 7500,
-          amount_due: 0,
-          currency: 'USD',
-          due_date: now.toISOString(),
-          paid_at: now.toISOString(),
-          line_items: JSON.stringify([
-            { description: 'AI Tokens (45k)', amount: 4500 },
-            { description: 'Storage 1.5GB', amount: 1500 },
-            { description: 'Seats (5)', amount: 1500 },
-          ]),
-          metadata: JSON.stringify({ mock: true }),
-          created_at: now.toISOString(),
-          updated_at: now.toISOString(),
-        };
-
-        await dbRun(
-          `INSERT OR IGNORE INTO invoices (
-                        id, organization_id, invoice_number, status, currency,
-                        subtotal, tax_amount, total, amount_paid, amount_due,
-                        due_date, paid_at, line_items, metadata, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            mockInvoice.id,
-            mockInvoice.organization_id,
-            mockInvoice.invoice_number,
-            mockInvoice.status,
-            mockInvoice.currency,
-            mockInvoice.subtotal,
-            mockInvoice.tax_amount,
-            mockInvoice.total,
-            mockInvoice.amount_paid,
-            mockInvoice.amount_due,
-            mockInvoice.due_date,
-            mockInvoice.paid_at,
-            mockInvoice.line_items,
-            mockInvoice.metadata,
-            mockInvoice.created_at,
-            mockInvoice.updated_at,
-          ]
-        );
-
-        mapped.push({
-          ...mockInvoice,
-          line_items: JSON.parse(mockInvoice.line_items),
-          metadata: JSON.parse(mockInvoice.metadata),
-        });
-      }
-
       return res.json({
         invoices: mapped,
         total: total?.total || mapped.length,
@@ -2136,8 +2077,12 @@ router.post(
       process.env.STRIPE_KEY;
 
     if (!stripeKey) {
-      const id = `seti_${uuidv4().slice(0, 12)}`;
-      return res.json({ clientSecret: `${id}_secret_dev`, id, mode: 'stub' });
+      return res.status(503).json({
+        success: false,
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+        message: 'Stripe is not configured',
+      });
     }
 
     try {
@@ -2160,7 +2105,12 @@ router.post(
       });
     } catch (err: any) {
       logger.error('[Billing] SetupIntent creation failed:', err);
-      return res.status(500).json({ error: 'Failed to create setup intent' });
+      return res.status(503).json({
+        success: false,
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+        message: 'Failed to create setup intent',
+      });
     }
   })
 );

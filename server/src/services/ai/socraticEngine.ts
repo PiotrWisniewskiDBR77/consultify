@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadSocraticengine = createCachedLazyService('../../ai/socraticEngine.js');
+const loadSocraticengine = createCachedLazyService('ai/socraticEngine.js');
 
 // Export default instance (for backward compatibility)
 export default loadSocraticengine();

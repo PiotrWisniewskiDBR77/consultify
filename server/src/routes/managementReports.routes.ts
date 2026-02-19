@@ -12,6 +12,16 @@ import managementReportsService from '../services/managementReportsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
+const EXPORT_FEATURE = 'management-reports-export';
+
+const respondFeatureUnavailable = (res: Response, detail?: string) =>
+  res.status(503).json({
+    success: false,
+    error: 'Feature unavailable',
+    code: 'FEATURE_UNAVAILABLE',
+    feature: EXPORT_FEATURE,
+    detail,
+  });
 
 router.use(verifyToken);
 router.use(demoContextMiddleware);
@@ -326,16 +336,68 @@ router.post(
 router.get(
   '/:id/pdf',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+<<<<<<< Updated upstream
     const result = await managementReportsService.generateExport(req.params.id, 'pdf', req.userId);
     return res.json({ success: true, pdfUrl: result.filePath });
+=======
+    try {
+      const result = await managementReportsService.generateExport(req.params.id, 'pdf', req.userId);
+      return res.json({ success: true, pdfUrl: result.filePath });
+    } catch (error: any) {
+      const status = Number(error?.status) || 500;
+      if (status === 404) return res.status(404).json({ success: false, error: 'Report not found' });
+      if (error?.code === 'DEPENDENCY_MISSING') {
+        return respondFeatureUnavailable(
+          res,
+          `missing dependency: ${error.dependency || 'unknown'}`
+        );
+      }
+      const msg = String(error?.message || '').toLowerCase();
+      if (
+        msg.includes('no such table') ||
+        msg.includes('no such column') ||
+        msg.includes('does not exist') ||
+        msg.includes('relation')
+      ) {
+        return respondFeatureUnavailable(res, 'schema missing');
+      }
+      throw error;
+    }
+>>>>>>> Stashed changes
   })
 );
 
 router.get(
   '/:id/pptx',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+<<<<<<< Updated upstream
     const result = await managementReportsService.generateExport(req.params.id, 'pptx', req.userId);
     return res.json({ success: true, pptxUrl: result.filePath });
+=======
+    try {
+      const result = await managementReportsService.generateExport(req.params.id, 'pptx', req.userId);
+      return res.json({ success: true, pptxUrl: result.filePath });
+    } catch (error: any) {
+      const status = Number(error?.status) || 500;
+      if (status === 404) return res.status(404).json({ success: false, error: 'Report not found' });
+      if (error?.code === 'DEPENDENCY_MISSING') {
+        return respondFeatureUnavailable(
+          res,
+          `missing dependency: ${error.dependency || 'unknown'}`
+        );
+      }
+      const msg = String(error?.message || '').toLowerCase();
+      if (
+        msg.includes('no such table') ||
+        msg.includes('no such column') ||
+        msg.includes('does not exist') ||
+        msg.includes('relation')
+      ) {
+        return respondFeatureUnavailable(res, 'schema missing');
+      }
+      throw error;
+    }
+>>>>>>> Stashed changes
   })
 );
 

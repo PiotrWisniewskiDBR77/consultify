@@ -1,14 +1,8 @@
 /**
- * Ratelimiter Service
- * Enterprise SaaS Architecture - TypeScript Backend
+ * Rate Limiter (AI)
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * Not implemented in this codebase. Export an explicit marker instead of a self-loading wrapper.
  */
+const aiRateLimiter = { __unavailable__: true } as const;
 
-import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
-
-// Lazy load the JS service module
-const loadRatelimiter = createCachedLazyService('../../ai/rateLimiter.js');
-
-// Export default instance (for backward compatibility)
-export default loadRatelimiter();
+export default aiRateLimiter;

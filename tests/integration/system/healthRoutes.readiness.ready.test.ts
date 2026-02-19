@@ -11,6 +11,14 @@ vi.mock('../../../server/src/services/metricsService.js', () => ({
   getMetricsService: () => ({ getMetrics: vi.fn(async () => 'ok') }),
 }));
 
+vi.mock('../../../server/src/services/ai/redisClient.js', () => ({
+  isRedisConnected: () => true,
+}));
+
+vi.mock('../../../server/src/utils/RedisClient.js', () => ({
+  default: { isReady: false, isOpen: false },
+}));
+
 describe('HealthRoutes readiness: ready (REAL integration)', () => {
   const origNodeEnv = process.env.NODE_ENV;
   const origMockRedis = process.env.MOCK_REDIS;
@@ -19,7 +27,7 @@ describe('HealthRoutes readiness: ready (REAL integration)', () => {
 
   beforeAll(() => {
     process.env.NODE_ENV = 'test';
-    process.env.MOCK_REDIS = 'true';
+    process.env.MOCK_REDIS = 'false';
   });
 
   beforeAll(async () => {

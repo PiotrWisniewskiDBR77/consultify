@@ -4,15 +4,17 @@
  * Provides data export, stats, and retention settings for Data Management UI.
  */
 import { Response, Router } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
 router.use(verifyToken);
+
+const FEATURE_UNAVAILABLE_CODE = 'FEATURE_UNAVAILABLE';
+const featureUnavailable = (res: Response, message: string) =>
+  res.status(503).json({ success: false, error: message, code: FEATURE_UNAVAILABLE_CODE });
 
 // Retention table
 const ensureRetentionTable = async () => {
@@ -29,16 +31,6 @@ const ensureRetentionTable = async () => {
     `);
 };
 
-// Default stats for UI
-const DEFAULT_STATS = {
-  users: 45,
-  projects: 12,
-  tasks: 1283,
-  decisions: 87,
-  documents: 234,
-  audit: 15420,
-};
-
 /**
  * GET /api/organization-data/stats
  * Returns counts for data categories.
@@ -47,8 +39,7 @@ router.get(
   '/stats',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
-      // If in future we want live counts, query tables here.
-      return res.json({ success: true, stats: DEFAULT_STATS });
+      return featureUnavailable(res, 'Organization data stats unavailable (no real implementation)');
     } catch (err) {
       logger.error('[organization-data] stats error', err);
       return res.status(500).json({ success: false, error: 'Failed to fetch stats' });
@@ -65,20 +56,10 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { category } = req.params;
     try {
-      const payload = {
-        category,
-        organizationId: req.user?.organizationId,
-        exportedAt: new Date().toISOString(),
-        records: [], // demo empty payload
-      };
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${req.user?.organizationId || 'org'}-${category}-${
-          new Date().toISOString().split('T')[0]
-        }.json"`
+      return featureUnavailable(
+        res,
+        'Organization data export unavailable (no real implementation)'
       );
-      return res.send(JSON.stringify(payload, null, 2));
     } catch (err) {
       logger.error('[organization-data] export category error', err);
       return res.status(500).json({ error: 'Export failed' });
@@ -94,20 +75,10 @@ router.post(
   '/export/all',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const payload = {
-        organizationId: req.user?.organizationId,
-        exportedAt: new Date().toISOString(),
-        stats: DEFAULT_STATS,
-        data: {},
-      };
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${req.user?.organizationId || 'organization'}-full-export-${
-          new Date().toISOString().split('T')[0]
-        }.json"`
+      return featureUnavailable(
+        res,
+        'Organization data export unavailable (no real implementation)'
       );
-      return res.send(JSON.stringify(payload, null, 2));
     } catch (err) {
       logger.error('[organization-data] export all error', err);
       return res.status(500).json({ error: 'Export failed' });

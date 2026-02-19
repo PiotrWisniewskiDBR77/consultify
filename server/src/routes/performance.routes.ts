@@ -9,6 +9,7 @@
 import { type Request, type Response, Router } from 'express';
 
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { errorsTotal } from '../services/metricsService.js';
 import { getMetricsService } from '../services/metricsService.js';
 import {
   dbQueryDurationSeconds,
@@ -26,6 +27,73 @@ const router = Router();
 
 // Apply rate limiting
 router.use(defaultRateLimiter);
+
+type HistogramSummary = {
+  count: number;
+  sum: number;
+  buckets: Array<{ le: number; count: number }>;
+};
+
+async function summarizeHistogram(metric: any): Promise<HistogramSummary> {
+  const raw = await metric?.get?.();
+  const values: Array<{ labels?: Record<string, unknown>; value?: number; metricName?: string }> =
+    raw?.values || [];
+
+  let count = 0;
+  let sum = 0;
+  const bucketsByLe = new Map<number, number>();
+
+  for (const v of values) {
+    const metricName = String((v as any)?.metricName || '');
+    const val = Number((v as any)?.value || 0);
+
+    if (metricName.endsWith('_sum')) {
+      sum += val;
+      continue;
+    }
+
+    if (metricName.endsWith('_count')) {
+      count += val;
+      continue;
+    }
+
+    if (metricName.endsWith('_bucket')) {
+      const leRaw = (v as any)?.labels?.le;
+      const le =
+        leRaw === '+Inf'
+          ? Number.POSITIVE_INFINITY
+          : typeof leRaw === 'string' || typeof leRaw === 'number'
+            ? Number(leRaw)
+            : Number.NaN;
+      if (Number.isFinite(le) || le === Number.POSITIVE_INFINITY) {
+        bucketsByLe.set(le, (bucketsByLe.get(le) || 0) + val);
+      }
+    }
+  }
+
+  const buckets = Array.from(bucketsByLe.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([le, c]) => ({ le, count: c }));
+
+  return { count, sum, buckets };
+}
+
+function approxQuantileFromBuckets(summary: HistogramSummary, q: number): number {
+  if (!summary.count || summary.count <= 0) return 0;
+  const target = Math.ceil(summary.count * q);
+  for (const b of summary.buckets) {
+    if (b.count >= target) {
+      if (!Number.isFinite(b.le)) {
+        // If the quantile falls into +Inf, best-effort return the highest finite bucket if present.
+        const finite = summary.buckets.filter((x) => Number.isFinite(x.le));
+        return finite.length ? finite[finite.length - 1].le : 0;
+      }
+      return b.le;
+    }
+  }
+  const finite = summary.buckets.filter((x) => Number.isFinite(x.le));
+  return finite.length ? finite[finite.length - 1].le : 0;
+}
 
 // ==========================================
 // PERFORMANCE METRICS ENDPOINT
@@ -62,12 +130,9 @@ router.get('/metrics', async (_req: Request, res: Response) => {
     // Get all metrics in Prometheus format
     const prometheusMetrics = await register.metrics();
 
-    // Parse metrics to extract percentiles
-    // Note: Prometheus histograms expose percentiles via bucket metrics
-    // For now, we'll extract basic stats from the histogram
-    const latency = await extractLatencyMetrics(prometheusMetrics);
+    const latency = await extractLatencyMetrics();
     const throughput = await extractThroughputMetrics(register);
-    const errors = await extractErrorMetrics(prometheusMetrics);
+    const errors = await extractErrorMetrics();
 
     const response = {
       timestamp: new Date().toISOString(),
@@ -94,35 +159,25 @@ router.get('/metrics', async (_req: Request, res: Response) => {
  * Note: Actual percentile calculation requires Prometheus query
  * This is a simplified version that extracts available data
  */
-async function extractLatencyMetrics(prometheusMetrics: string): Promise<{
+async function extractLatencyMetrics(): Promise<{
   http: { p50: number; p95: number; p99: number; avg: number };
   db: { p50: number; p95: number; p99: number; avg: number };
   llm: { p50: number; p95: number; p99: number; avg: number };
 }> {
-  // Parse Prometheus metrics to extract histogram data
-  // In production, use Prometheus query: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
-  // For now, return placeholder values - actual calculation requires Prometheus server
+  const [http, db, llm] = await Promise.all([
+    summarizeHistogram(httpRequestDurationSeconds),
+    summarizeHistogram(dbQueryDurationSeconds),
+    summarizeHistogram(llmCallDurationSeconds),
+  ]);
 
-  return {
-    http: {
-      p50: 0,
-      p95: 0,
-      p99: 0,
-      avg: 0,
-    },
-    db: {
-      p50: 0,
-      p95: 0,
-      p99: 0,
-      avg: 0,
-    },
-    llm: {
-      p50: 0,
-      p95: 0,
-      p99: 0,
-      avg: 0,
-    },
-  };
+  const mk = (h: HistogramSummary) => ({
+    p50: approxQuantileFromBuckets(h, 0.5),
+    p95: approxQuantileFromBuckets(h, 0.95),
+    p99: approxQuantileFromBuckets(h, 0.99),
+    avg: h.count > 0 ? h.sum / h.count : 0,
+  });
+
+  return { http: mk(http), db: mk(db), llm: mk(llm) };
 }
 
 /**
@@ -139,10 +194,16 @@ async function extractThroughputMetrics(register: any): Promise<{
     const dbGauge = register.getSingleMetric('db_queries_per_second');
     const llmGauge = register.getSingleMetric('llm_requests_per_second');
 
+    const [httpVal, dbVal, llmVal] = await Promise.all([
+      httpGauge?.get?.(),
+      dbGauge?.get?.(),
+      llmGauge?.get?.(),
+    ]);
+
     return {
-      http: httpGauge ? httpGauge.get().values[0]?.value || 0 : 0,
-      db: dbGauge ? dbGauge.get().values[0]?.value || 0 : 0,
-      llm: llmGauge ? llmGauge.get().values[0]?.value || 0 : 0,
+      http: httpVal?.values?.[0]?.value || 0,
+      db: dbVal?.values?.[0]?.value || 0,
+      llm: llmVal?.values?.[0]?.value || 0,
     };
   } catch (error) {
     logger.warn('[PerformanceRoutes] Error extracting throughput metrics:', error);
@@ -157,20 +218,29 @@ async function extractThroughputMetrics(register: any): Promise<{
 /**
  * Extract error metrics from Prometheus format
  */
-async function extractErrorMetrics(prometheusMetrics: string): Promise<{
+async function extractErrorMetrics(): Promise<{
   rate: number;
   total: number;
 }> {
-  // Parse error rate from metrics
-  // In production, use Prometheus query: rate(errors_total[5m])
-  const errorMatch = prometheusMetrics.match(/errors_total\s+(\d+)/);
-  const totalErrors = errorMatch ? parseInt(errorMatch[1], 10) : 0;
+  const metric = await errorsTotal.get();
+  const values: Array<{ value?: number }> = (metric as any)?.values || [];
+  const total = values.reduce((acc, v) => acc + Number((v as any)?.value || 0), 0);
 
-  // Calculate error rate (simplified - actual calculation requires time window)
-  return {
-    rate: 0, // Would be calculated from rate(errors_total[5m])
-    total: totalErrors,
-  };
+  // Best-effort rate: delta since the last call to this endpoint.
+  // This avoids returning a fake constant like 0 while not pretending to be a Prometheus 5m window.
+  const now = Date.now();
+  const lastTotal = (extractErrorMetrics as any)._lastTotal as number | undefined;
+  const lastAt = (extractErrorMetrics as any)._lastAt as number | undefined;
+  (extractErrorMetrics as any)._lastTotal = total;
+  (extractErrorMetrics as any)._lastAt = now;
+
+  let rate = 0;
+  if (typeof lastTotal === 'number' && typeof lastAt === 'number' && now > lastAt) {
+    const dt = (now - lastAt) / 1000;
+    rate = dt > 0 ? Math.max(0, (total - lastTotal) / dt) : 0;
+  }
+
+  return { rate, total };
 }
 
 export default router;

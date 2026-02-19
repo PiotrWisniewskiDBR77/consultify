@@ -609,7 +609,10 @@ router.post(
         )) as any;
         value = users?.count || 0;
       } else {
-        value = Math.random() * 1000; // Demo fallback
+        return res.status(400).json({
+          error: 'Unsupported metric formula',
+          code: 'VALIDATION_ERROR',
+        });
       }
 
       // Record the value
@@ -759,30 +762,10 @@ router.post(
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { id } = req.params;
-
-      // Simulate model training (in production, use actual ML service)
-      const accuracyScore = 0.75 + Math.random() * 0.2; // 75-95% accuracy
-
-      // Log training run
-      const runId = uuidv4();
-      await dbRun(
-        `
-                INSERT INTO predictive_model_runs (id, model_id, accuracy_score, training_samples, run_at, status)
-                VALUES (?, ?, ?, ?, datetime('now'), 'completed')
-            `,
-        [runId, id, accuracyScore, Math.floor(Math.random() * 10000) + 1000]
-      );
-
-      // Update model status
-      await dbRun(
-        `
-                UPDATE predictive_models SET status = 'trained', last_trained_at = datetime('now'), updated_at = datetime('now') WHERE id = ?
-            `,
-        [id]
-      );
-
-      return res.json({ success: true, accuracyScore: Math.round(accuracyScore * 100) / 100 });
+      return res.status(503).json({
+        error: 'Model training is not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     } catch (error: any) {
       logger.error('[Analytics] Train model error:', error);
       return res.status(500).json({ error: 'Failed to train model' });

@@ -907,6 +907,18 @@ export async function initDb(): Promise<void> {
             FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
+    // Project AI settings (AI role + regulatory mode)
+    await query(`CREATE TABLE IF NOT EXISTS project_ai_settings(
+            project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+            ai_role TEXT NOT NULL DEFAULT 'ADVISOR',
+            regulatory_mode_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            regulatory_prompt TEXT DEFAULT '',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_project_ai_settings_role ON project_ai_settings(ai_role)`
+    );
+
     // Ensure projects table has current_phase column (migration for existing tables)
     await query(`
             DO $$

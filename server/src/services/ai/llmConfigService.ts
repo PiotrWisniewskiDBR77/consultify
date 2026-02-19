@@ -162,7 +162,8 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     id: 'openrouter',
     name: 'OpenRouter',
     envKey: 'OPENROUTER_API_KEY',
-    defaultEndpoint: 'https://openrouter.ai/api/v1/chat/completions',
+    // NOTE: provider SDK expects a base URL (not the full /chat/completions path)
+    defaultEndpoint: 'https://openrouter.ai/api/v1',
     defaultModel: 'anthropic/claude-3.5-sonnet',
     costPer1k: 0.008,
     supportsStreaming: true,

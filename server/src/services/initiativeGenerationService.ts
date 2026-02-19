@@ -9,6 +9,8 @@
 
 import { getDatabase } from '../database/Database.js';
 import DbPromise from '../utils/DbPromise.js';
+import { AppError } from '../utils/ErrorHandler.js';
+import logger from '../utils/Logger.js';
 import initiativeSectionTypeService from './initiativeSectionTypeService.js';
 
 // ==========================================
@@ -59,7 +61,7 @@ async function getLLMServiceInstance(): Promise<any> {
     _llmServiceInstance = mod.llmService || mod.default;
     return _llmServiceInstance;
   } catch (err) {
-    console.warn('[InitiativeGeneration] LLM Service not available');
+    logger.warn('[InitiativeGeneration] LLM Service not available');
     return null;
   }
 }
@@ -104,10 +106,25 @@ export class InitiativeGenerationService {
     organizationId?: string
   ): Promise<GenerationResult> {
     // 1. Get section type definition (with prompt template)
-    const sectionType = await initiativeSectionTypeService.getSectionTypeByKey(
-      sectionKey,
-      organizationId || undefined
-    );
+    let sectionType: any = null;
+    try {
+      sectionType = await initiativeSectionTypeService.getSectionTypeByKey(
+        sectionKey,
+        organizationId || undefined
+      );
+    } catch (err: unknown) {
+      const msg = (err as Error)?.message || String(err);
+      // If schema/migrations are missing, do not 500 — be explicit and honest.
+      if (msg.includes('no such table') || msg.includes('SQLITE_ERROR')) {
+        throw new AppError(
+          'Initiative section types are not available (schema missing)',
+          503,
+          'FEATURE_UNAVAILABLE',
+          { message: msg }
+        );
+      }
+      throw err;
+    }
 
     if (!sectionType) {
       throw new Error(`Section type "${sectionKey}" not found`);
@@ -115,7 +132,11 @@ export class InitiativeGenerationService {
 
     const promptTemplate = sectionType.aiPromptTemplate;
     if (!promptTemplate) {
-      throw new Error(`No AI prompt template defined for section "${sectionKey}"`);
+      throw new AppError(
+        `AI prompt template is not configured for section "${sectionKey}"`,
+        503,
+        'FEATURE_UNAVAILABLE'
+      );
     }
 
     // 2. Enrich context with initiative data from DB
@@ -132,8 +153,11 @@ When asked to write in Polish, use professional business Polish.`;
 
     const llm = await getLLMServiceInstance();
     if (!llm) {
-      // Fallback: return placeholder content
-      return this.generatePlaceholder(sectionKey, enrichedContext);
+      throw new AppError(
+        'AI initiative generation is not available (LLM not configured)',
+        503,
+        'FEATURE_UNAVAILABLE'
+      );
     }
 
     try {
@@ -177,9 +201,11 @@ When asked to write in Polish, use professional business Polish.`;
         model,
       };
     } catch (err: any) {
-      console.error('[InitiativeGeneration] LLM call failed:', err.message);
-      // Fallback
-      return this.generatePlaceholder(sectionKey, enrichedContext);
+      logger.error('[InitiativeGeneration] LLM call failed:', err?.message || err);
+      if (err instanceof AppError) throw err;
+      throw new AppError('AI initiative generation failed', 503, 'FEATURE_UNAVAILABLE', {
+        message: err?.message || String(err),
+      });
     }
   }
 
@@ -192,18 +218,29 @@ When asked to write in Polish, use professional business Polish.`;
   ): Promise<{ key: string; reason: string; priority: 'high' | 'medium' | 'low' }[]> {
     const llm = await getLLMServiceInstance();
     if (!llm) {
-      // Default suggestion: all core sections
-      return [
-        { key: 'overview', reason: 'Essential for any initiative', priority: 'high' },
-        { key: 'tasks', reason: 'Required for tracking progress', priority: 'high' },
-        { key: 'decisions', reason: 'Governance tracking', priority: 'medium' },
-      ];
+      throw new AppError(
+        'AI section suggestions are not available (LLM not configured)',
+        503,
+        'FEATURE_UNAVAILABLE'
+      );
     }
 
     // Get all available section types
-    const allSections = await initiativeSectionTypeService.getAllSectionTypes(
-      organizationId || undefined
-    );
+    let allSections: any[] = [];
+    try {
+      allSections = await initiativeSectionTypeService.getAllSectionTypes(organizationId || undefined);
+    } catch (err: unknown) {
+      const msg = (err as Error)?.message || String(err);
+      if (msg.includes('no such table') || msg.includes('SQLITE_ERROR')) {
+        throw new AppError(
+          'Initiative section types are not available (schema missing)',
+          503,
+          'FEATURE_UNAVAILABLE',
+          { message: msg }
+        );
+      }
+      throw err;
+    }
 
     const langName = context.language === 'pl' ? 'Polish' : 'English';
     const prompt = `Given this initiative context, suggest which sections should be enabled and their priority.
@@ -238,11 +275,11 @@ Return valid JSON array only.`;
       const content = String(result?.content || '[]');
       const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || [null, content];
       return JSON.parse(jsonMatch[1] || content);
-    } catch {
-      return [
-        { key: 'overview', reason: 'Essential for any initiative', priority: 'high' },
-        { key: 'tasks', reason: 'Required for tracking progress', priority: 'high' },
-      ];
+    } catch (err: unknown) {
+      const msg = (err as Error)?.message || String(err);
+      logger.error('[InitiativeGeneration] suggestSections failed:', msg);
+      if (err instanceof AppError) throw err;
+      throw new AppError('AI section suggestions failed', 503, 'FEATURE_UNAVAILABLE', { message: msg });
     }
   }
 
@@ -278,53 +315,6 @@ Return valid JSON array only.`;
     }
 
     return context;
-  }
-
-  /**
-   * Generate placeholder content when LLM is unavailable
-   */
-  private generatePlaceholder(sectionKey: string, context: GenerationContext): GenerationResult {
-    const isPolish = context.language === 'pl';
-
-    const placeholders: Record<string, string> = {
-      overview: isPolish
-        ? `Inicjatywa "${context.initiativeName}" wymaga dalszej analizy. Uzupełnij opis ręcznie lub spróbuj ponownie później.`
-        : `The "${context.initiativeName}" initiative requires further analysis. Please fill in manually or try again later.`,
-      problem_definition: JSON.stringify({
-        symptom: isPolish ? 'Do uzupełnienia' : 'To be defined',
-        rootCause: isPolish ? 'Do uzupełnienia' : 'To be defined',
-        costOfInaction: isPolish ? 'Do uzupełnienia' : 'To be defined',
-      }),
-      target_state: JSON.stringify({
-        targetDescription: isPolish ? 'Do uzupełnienia' : 'To be defined',
-        successCriteria: [],
-        deliverables: [],
-      }),
-    };
-
-    const content =
-      placeholders[sectionKey] ||
-      (isPolish
-        ? `Generowanie AI nie jest dostępne dla tej sekcji. Uzupełnij ręcznie.`
-        : `AI generation is not available for this section. Please fill in manually.`);
-
-    const isJson = content.startsWith('{') || content.startsWith('[');
-    let parsedContent: any;
-    if (isJson) {
-      try {
-        parsedContent = JSON.parse(content);
-      } catch {
-        /* ignore */
-      }
-    }
-
-    return {
-      content,
-      isJson,
-      parsedContent,
-      tokensUsed: 0,
-      model: 'placeholder',
-    };
   }
 
   /**

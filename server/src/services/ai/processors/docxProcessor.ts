@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadDocxprocessor = createCachedLazyService('../../../ai/processors/docxProcessor.js');
+const loadDocxprocessor = createCachedLazyService('ai/processors/docxProcessor.js');
 
 // Export default instance (for backward compatibility)
 export default loadDocxprocessor();

@@ -51,27 +51,27 @@ describe('Health Endpoints Integration (controller-level)', () => {
     expect(res.send).toHaveBeenCalledWith('pong');
   });
 
-  it('GET /api/health returns ok + timestamp + redis mock', async () => {
+  it('GET /api/health returns degraded + timestamp + redis mocked-unavailable', async () => {
     const res = createRes();
     await HealthCheckController.checkHealth({} as any, res as any);
     expect(res.json).toHaveBeenCalled();
     expect(res.body).toEqual(
       expect.objectContaining({
-        status: 'ok',
+        status: 'degraded',
         timestamp: expect.any(String),
-        redis: 'mock',
+        redis: 'mocked-unavailable',
       })
     );
   });
 
-  it('GET /api/health/ready returns ready when DB+metrics+redis are ok', async () => {
+  it('GET /api/health/ready returns 503 when Redis is mocked', async () => {
     const res = createRes();
     await HealthCheckController.checkReadiness({} as any, res as any);
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(503);
     expect(res.body).toEqual(
       expect.objectContaining({
-        status: 'ready',
-        checks: { database: true, redis: true, metrics: true },
+        status: 'not ready',
+        checks: { database: true, redis: false, metrics: true },
       })
     );
   });

@@ -14,6 +14,7 @@ import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireRole } from '../../middleware/rbac.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
 
 // Apply rate limiting
@@ -100,37 +101,24 @@ router.get(
   verifyToken,
   requireRole('superadmin'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    // Try service first, fall back to defaults if not available
-    if (AISettingsService?.getSuperAdminSettings) {
-      try {
-        const settings = await AISettingsService.getSuperAdminSettings();
-        // Transform snake_case to camelCase for frontend
-        return res.json(transformSettingsToCamelCase(settings));
-      } catch (error: any) {
-        logger.warn('[AI Settings] Service error, returning defaults:', error);
-      }
+    if (!AISettingsService?.getSuperAdminSettings) {
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
-    // Return default settings when service is not available (already camelCase)
-    return res.json({
-      id: 'global',
-      defaultProvider: null,
-      fallbackChain: [],
-      circuitBreakerConfig: {
-        failureThreshold: 5,
-        cooldownSeconds: 60,
-      },
-      globalTokenLimit: 10000000,
-      globalRateLimit: {
-        requestsPerMinute: 60,
-        requestsPerHour: 1000,
-      },
-      maxContextWindowSize: 128000,
-      maxTokensPerRequest: 8192,
-      piiDetectionSensitivity: 'medium',
-      requireEncryption: true,
-      dataResidency: null,
-    });
+    try {
+      const settings = await AISettingsService.getSuperAdminSettings();
+      // Transform snake_case to camelCase for frontend
+      return res.json(transformSettingsToCamelCase(settings));
+    } catch (error: any) {
+      logger.warn('[AI Settings] Service error:', error);
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
+    }
   })
 );
 
@@ -155,33 +143,34 @@ router.put(
     // Transform camelCase input to snake_case for backend service
     const settingsSnakeCase = transformSettingsToSnakeCase(settingsCamelCase);
 
-    // Try service first
-    if (AISettingsService?.updateSuperAdminSettings) {
-      try {
-        const ipAddress = (req as Request).ip || (req.headers['x-forwarded-for'] as string) || null;
-        const userAgent = req.headers['user-agent'] || null;
-
-        const updated = await AISettingsService.updateSuperAdminSettings(
-          settingsSnakeCase,
-          actorId,
-          actorRole,
-          ipAddress,
-          userAgent
-        );
-
-        // Transform response back to camelCase for frontend
-        return res.json(transformSettingsToCamelCase(updated));
-      } catch (error: any) {
-        logger.warn('[AI Settings] Service error on update:', error);
-      }
+    if (!AISettingsService?.updateSuperAdminSettings) {
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
-    // Return settings as-is when service not available (mock success)
-    logger.info(
-      '[AI Settings] Settings update received (service not available, returning as-is):',
-      settingsCamelCase
-    );
-    return res.json(settingsCamelCase);
+    try {
+      const ipAddress = (req as Request).ip || (req.headers['x-forwarded-for'] as string) || null;
+      const userAgent = req.headers['user-agent'] || null;
+
+      const updated = await AISettingsService.updateSuperAdminSettings(
+        settingsSnakeCase,
+        actorId,
+        actorRole,
+        ipAddress,
+        userAgent
+      );
+
+      // Transform response back to camelCase for frontend
+      return res.json(transformSettingsToCamelCase(updated));
+    } catch (error: any) {
+      logger.warn('[AI Settings] Service error on update:', error);
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
+    }
   })
 );
 
@@ -199,7 +188,10 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getOrgSettings) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -235,7 +227,10 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.updateOrgSettings) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -297,7 +292,10 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getUserSettings) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -328,7 +326,10 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.updateUserSettings || !AISettingsService?.getOrgSettings) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -383,7 +384,10 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getEffectiveSettings) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -421,7 +425,10 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getAvailableModels) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -436,6 +443,13 @@ router.get(
       return res.json(models);
     } catch (error: any) {
       logger.error('[AI Settings] Error getting available models:', error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+          code: error.code,
+          details: error.details,
+        });
+      }
       return res.status(500).json({
         error: 'Failed to get models',
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -458,7 +472,10 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AIProactivityEngine?.getEffectiveProactivity) {
-      return res.status(503).json({ error: 'AI Proactivity Engine not available' });
+      return res.status(503).json({
+        error: 'AI Proactivity Engine not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -491,7 +508,10 @@ router.get(
   verifyToken,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     if (!AIProactivityEngine?.getAllModes) {
-      return res.status(503).json({ error: 'AI Proactivity Engine not available' });
+      return res.status(503).json({
+        error: 'AI Proactivity Engine not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -522,7 +542,10 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getAuditLog) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -575,7 +598,10 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getAuditLog) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -621,7 +647,10 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getUserCostHistory) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -659,7 +688,10 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getOrgUserTiers) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -700,7 +732,10 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.assignUserTier) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -756,7 +791,10 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.getOrgCostAttribution) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -802,7 +840,10 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.generateComplianceReport) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -894,7 +935,10 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.generateComplianceReport) {
-      return res.status(503).json({ error: 'AI Settings service not available' });
+      return res.status(503).json({
+        error: 'AI Settings service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {

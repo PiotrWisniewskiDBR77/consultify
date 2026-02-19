@@ -88,31 +88,28 @@ class AIHealthMonitor {
     const checks: AIHealthCheckSnapshot['checks'] = [];
     const providers: Record<string, AIProviderHealth> = {};
 
-    const providerDefs: Array<{
-      key: string;
-      ok: boolean;
-      missingError: string;
-    }> = [
-      {
-        key: 'openai',
-        ok: !!process.env.OPENAI_API_KEY,
-        missingError: 'OPENAI_API_KEY is not set',
-      },
-      {
-        key: 'gemini',
-        ok: !!process.env.GEMINI_API_KEY || !!process.env.GOOGLE_AI_API_KEY,
-        missingError: 'GEMINI_API_KEY / GOOGLE_AI_API_KEY is not set',
-      },
-    ];
+    // Only report providers that are actually configured.
+    // If a key is missing, we treat that provider as "not configured" (not "unhealthy"),
+    // so optional providers (e.g. Gemini) don't degrade overall health when intentionally unused.
+    const configuredProviders: Array<{ key: string; ok: boolean }> = [
+      { key: 'openai', ok: !!process.env.OPENAI_API_KEY },
+      { key: 'openrouter', ok: !!process.env.OPENROUTER_API_KEY },
+      { key: 'anthropic', ok: !!process.env.ANTHROPIC_API_KEY },
+      { key: 'gemini', ok: !!process.env.GEMINI_API_KEY || !!process.env.GOOGLE_AI_API_KEY },
+      { key: 'ollama', ok: !!process.env.OLLAMA_BASE_URL },
+    ].filter((p) => p.ok);
 
-    for (const p of providerDefs) {
-      if (p.ok) {
-        providers[p.key] = { status: 'healthy', lastCheck: now };
-        checks.push({ name: `provider:${p.key}`, status: 'healthy' });
-      } else {
-        providers[p.key] = { status: 'unhealthy', lastCheck: now, error: p.missingError };
-        checks.push({ name: `provider:${p.key}`, status: 'unhealthy', error: p.missingError });
-      }
+    for (const p of configuredProviders) {
+      providers[p.key] = { status: 'healthy', lastCheck: now };
+      checks.push({ name: `provider:${p.key}`, status: 'healthy' });
+    }
+
+    if (configuredProviders.length === 0) {
+      checks.push({
+        name: 'providers:none-configured',
+        status: 'unhealthy',
+        error: 'No AI providers configured (set at least one provider API key)',
+      });
     }
 
     const healthyCount = Object.values(providers).filter((p) => p.status === 'healthy').length;

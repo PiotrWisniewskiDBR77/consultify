@@ -1,6 +1,8 @@
 /**
- * Task Executor Stub
- * Placeholder for task execution functionality
+ * Task Executor
+ *
+ * This feature is not implemented in this codebase yet.
+ * Do not return fake-success payloads; callers must handle unavailability explicitly.
  */
 
 export interface ExecutionResult {
@@ -24,15 +26,7 @@ export const TaskExecutor = {
     payload: TaskPayload,
     metadata: Record<string, unknown> = {}
   ): Promise<ExecutionResult> {
-    // Stub implementation
-    return {
-      success: true,
-      result: {
-        task_id: payload.task_id || `task-${Date.now()}`,
-        status: 'created',
-        message: 'Task execution completed (stub)',
-      },
-    };
+    throw new Error('Feature unavailable: TASK_CREATE execution is not implemented');
   },
 
   async dryRun(

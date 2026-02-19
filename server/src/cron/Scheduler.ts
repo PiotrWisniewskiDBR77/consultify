@@ -68,14 +68,18 @@ export const Scheduler = {
     // 3. Trial/Demo Daily Tasks - Run every day at 2:30 AM
     const job3 = cron.schedule('30 2 * * *', () => {
       logger.info('[Scheduler] Running Daily Trial/Demo Tasks');
-      trialCron.runDailyTrialTasks();
+      trialCron.runDailyTrialTasks().catch((err: any) => {
+        logger.error('[Scheduler] Daily Trial/Demo Tasks failed:', err?.message || err);
+      });
     });
     this.jobs.push(job3);
 
     // 4. Usage Counter Cleanup - Run weekly on Sunday at 2:00 AM
     const job4 = cron.schedule('0 2 * * 0', () => {
       logger.info('[Scheduler] Running Weekly Usage Counter Cleanup');
-      trialCron.cleanupOldUsageCounters();
+      trialCron.cleanupOldUsageCounters().catch((err: any) => {
+        logger.error('[Scheduler] Weekly Usage Counter Cleanup failed:', err?.message || err);
+      });
     });
     this.jobs.push(job4);
 

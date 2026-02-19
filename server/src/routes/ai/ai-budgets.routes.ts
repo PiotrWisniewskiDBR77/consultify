@@ -303,38 +303,7 @@ router.post(
  * GET /check
  * Check if current user can make AI request
  */
-// router.get(
-//     '/check',
-//     verifyToken,
-//     asyncHandler(async (req: AuthRequest, res: Response) => {
-//         return res.status(501).json({ error: 'Not implemented: aiBudgetService missing' });
-//         // if (!aiBudgetService?.checkBudget) {
-//         //     return res.status(503).json({ success: false, error: 'AI Budget service not available' });
-//         // }
-//         // try {
-//         //     const { tokens, cost } = req.query;
-//         //     const organizationId = req.user?.organizationId || req.user?.organization_id;
-//         //     const userId = req.user?.id;
-//         //     if (!organizationId || !userId) {
-//         //         return res.status(401).json({ success: false, error: 'Unauthorized' });
-//         //     }
-//         //     const result = await aiBudgetService.checkBudget(organizationId, userId, {
-//         //         tokens: parseInt(tokens as string) || 0,
-//         //         cost: parseFloat(cost as string) || 0,
-//         //     });
-//         //     return res.json({
-//         //         success: true,
-//         //         data: result,
-//         //     });
-//         // } catch (error: unknown) {
-//         //     logger.error('[AI Budgets] Check budget error:', error);
-//         //     return res.status(500).json({
-//         //         success: false,
-//         //         error: 'Failed to check budget',
-//         //     });
-//         // }
-//     }),
-// );
+// NOTE: `/check` endpoint intentionally not exposed yet.
 
 /**
  * POST /record

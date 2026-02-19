@@ -13,6 +13,7 @@ import { Request, Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { AppError } from '../utils/ErrorHandler.js';
 
 const router = Router();
 
@@ -402,6 +403,13 @@ router.get(
       res.json(models);
     } catch (error: unknown) {
       console.error('[AI Settings] Error getting available models:', error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+          code: error.code,
+          details: error.details,
+        });
+      }
       return res.status(500).json({
         error: 'Failed to get models',
         message: error instanceof Error ? error.message : 'Unknown error',

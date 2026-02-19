@@ -687,9 +687,24 @@ router.post('/generate-section', async (req: any, res: any) => {
 
     return res.json(result);
   } catch (err: any) {
-    return res.status(500).json({
+    const statusCodeRaw = Number(err?.statusCode ?? err?.status ?? 500);
+    const statusCode =
+      Number.isFinite(statusCodeRaw) && statusCodeRaw >= 100 && statusCodeRaw <= 599
+        ? statusCodeRaw
+        : 500;
+
+    if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
+      return res.status(503).json({
+        success: false,
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+        message: err?.message || 'AI generation is not available',
+      });
+    }
+
+    return res.status(statusCode).json({
       error: 'Failed to generate section content',
-      message: err.message,
+      message: err?.message,
     });
   }
 });
@@ -791,7 +806,22 @@ router.post('/readiness-analysis', async (req: any, res: any) => {
       model: result.model,
     });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to analyze readiness', message: err.message });
+    const statusCodeRaw = Number(err?.statusCode ?? err?.status ?? 500);
+    const statusCode =
+      Number.isFinite(statusCodeRaw) && statusCodeRaw >= 100 && statusCodeRaw <= 599
+        ? statusCodeRaw
+        : 500;
+
+    if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
+      return res.status(503).json({
+        success: false,
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+        message: err?.message || 'AI readiness analysis is not available',
+      });
+    }
+
+    return res.status(statusCode).json({ error: 'Failed to analyze readiness', message: err?.message });
   }
 });
 
@@ -812,9 +842,24 @@ router.post('/suggest-sections', async (req: any, res: any) => {
 
     return res.json({ suggestions });
   } catch (err: any) {
-    return res.status(500).json({
+    const statusCodeRaw = Number(err?.statusCode ?? err?.status ?? 500);
+    const statusCode =
+      Number.isFinite(statusCodeRaw) && statusCodeRaw >= 100 && statusCodeRaw <= 599
+        ? statusCodeRaw
+        : 500;
+
+    if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
+      return res.status(503).json({
+        success: false,
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+        message: err?.message || 'AI section suggestions are not available',
+      });
+    }
+
+    return res.status(statusCode).json({
       error: 'Failed to suggest sections',
-      message: err.message,
+      message: err?.message,
     });
   }
 });

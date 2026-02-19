@@ -51,11 +51,12 @@ let _aiRoleGuard: any = null;
 const getAIRoleGuard = async () => {
   if (!_aiRoleGuard) {
     try {
-      // const mod = (await import('./aiRoleGuard.js')) as any;
-      const mod = {} as any; // Stubbed missing service
-      _aiRoleGuard = mod.default || mod;
+      const mod = (await import('./aiRoleGuard.js')) as any;
+      const svc = mod.default || mod.AIRoleGuard || mod.aiRoleGuard || mod;
+      _aiRoleGuard = svc && svc.__unavailable__ !== true ? svc : null;
     } catch (e: unknown) {
       logger.warn('[AIActionExecutor] AIRoleGuard not available');
+      _aiRoleGuard = null;
     }
   }
   return _aiRoleGuard;
@@ -65,11 +66,12 @@ let _regulatoryModeGuard: any = null;
 const getRegulatoryModeGuard = async () => {
   if (!_regulatoryModeGuard) {
     try {
-      // const mod = (await import('./regulatoryModeGuard.js')) as any;
-      const mod = {} as any; // Stubbed missing service
-      _regulatoryModeGuard = mod.default || mod;
+      const mod = (await import('./regulatoryModeGuard.js')) as any;
+      const svc = mod.default || mod.RegulatoryModeGuard || mod.regulatoryModeGuard || mod;
+      _regulatoryModeGuard = svc && svc.__unavailable__ !== true ? svc : null;
     } catch (e: unknown) {
       logger.warn('[AIActionExecutor] RegulatoryModeGuard not available');
+      _regulatoryModeGuard = null;
     }
   }
   return _regulatoryModeGuard;
@@ -79,11 +81,12 @@ let _approvalPatternService: any = null;
 const getApprovalPatternService = async () => {
   if (!_approvalPatternService) {
     try {
-      // const mod = (await import('./approvalPatternService.js')) as any;
-      const mod = {} as any; // Stubbed missing service
-      _approvalPatternService = mod.default || mod;
+      const mod = (await import('./approvalPatternService.js')) as any;
+      const svc = mod.default || mod;
+      _approvalPatternService = svc && svc.__unavailable__ !== true ? svc : null;
     } catch (e: unknown) {
       logger.warn('[AIActionExecutor] ApprovalPatternService not available');
+      _approvalPatternService = null;
     }
   }
   return _approvalPatternService;

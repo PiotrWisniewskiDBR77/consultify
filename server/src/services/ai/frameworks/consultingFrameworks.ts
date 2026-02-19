@@ -8,9 +8,7 @@
 import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadConsultingframeworks = createCachedLazyService(
-  '../../../ai/frameworks/consultingFrameworks.js'
-);
+const loadConsultingframeworks = createCachedLazyService('ai/frameworks/consultingFrameworks.js');
 
 // Export default instance (for backward compatibility)
 export default loadConsultingframeworks();

@@ -38,6 +38,7 @@ interface DailyTrialTasksResult {
   demosCleanedUp: number;
   warningsSent: number;
   trialsLocked: number;
+  demoCleanupSkipped?: boolean;
 }
 
 // ==========================================
@@ -56,13 +57,19 @@ class TrialCron {
   }
 
   private async ensureDeps(): Promise<Dependencies> {
-    // if (!this.deps.demoService) {
-    //     this.deps.demoService = await import('../services/demoService.js').then((m) => m.default || m);
-    // }
+    if (!this.deps.demoService) {
+      try {
+        const loaded = await import('../services/demoService.js').then((m) => m.default || m);
+        this.deps.demoService = (await Promise.resolve(loaded)) as any;
+      } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.warn('[TrialCron] DemoService unavailable; demo cleanup disabled:', err.message);
+      }
+    }
     if (!this.deps.trialService) {
-      this.deps.trialService = (await import('../services/trialService.js').then(
-        (m) => m.default || m
-      )) as any;
+      const loaded = await import('../services/trialService.js').then((m) => m.default || m);
+      // Support both "service object" and historical "Promise of service" exports.
+      this.deps.trialService = (await Promise.resolve(loaded)) as any;
     }
     return this.deps as Dependencies;
   }
@@ -76,10 +83,30 @@ class TrialCron {
     logger.info('[TrialCron] Starting daily trial/demo tasks...');
 
     try {
-      // // 1. Cleanup expired demo organizations
-      // const demosCleanedUp = await deps.demoService.cleanupExpiredDemos();
-      // logger.info(`[TrialCron] Cleaned up ${demosCleanedUp} expired demo organization(s)`);
-      const demosCleanedUp = 0;
+      let demosCleanedUp = 0;
+      let demoCleanupSkipped = false;
+
+      if (deps.demoService && typeof deps.demoService.cleanupExpiredDemos === 'function') {
+        demosCleanedUp = await deps.demoService.cleanupExpiredDemos();
+        logger.info(`[TrialCron] Cleaned up ${demosCleanedUp} expired demo organization(s)`);
+      } else {
+        demoCleanupSkipped = true;
+        logger.warn('[TrialCron] DemoService unavailable; skipping demo cleanup');
+      }
+
+      if (
+        !deps.trialService ||
+        typeof deps.trialService.sendTrialWarnings !== 'function' ||
+        typeof deps.trialService.processExpiredTrials !== 'function'
+      ) {
+        logger.warn('[TrialCron] TrialService unavailable; skipping daily trial tasks');
+        return {
+          demosCleanedUp,
+          warningsSent: 0,
+          trialsLocked: 0,
+          demoCleanupSkipped,
+        };
+      }
 
       // 2. Send trial warning notifications (T-7 days)
       const warningsSent = await deps.trialService.sendTrialWarnings();
@@ -95,6 +122,7 @@ class TrialCron {
         demosCleanedUp,
         warningsSent,
         trialsLocked,
+        demoCleanupSkipped,
       };
     } catch (error: unknown) {
       logger.error('[TrialCron] Error running daily trial tasks:', error);

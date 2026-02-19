@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
+import { AppError } from '../utils/ErrorHandler.js';
 import ReportBuilderService, {
   ReportRecord,
   SectionLanguage,
@@ -839,7 +840,7 @@ async function getLLMServiceInstance(): Promise<any> {
     _llmServiceInstance = mod.llmService || mod.default;
     return _llmServiceInstance;
   } catch (err) {
-    logger.warn('[ReportGeneration] LLM Service not available, falling back to placeholder', err);
+    logger.warn('[ReportGeneration] LLM Service not available', err);
     return null;
   }
 }
@@ -857,405 +858,50 @@ async function callAI(
 
   const llm = await getLLMServiceInstance();
 
-  if (llm) {
-    try {
-      const result = await llm.call({
-        type: 'text',
-        modelConfig: { id: 'standard' },
-        systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
-        maxTokens: maxTokens || 4096,
-        temperature: 0.7,
-        cache: true,
-        cacheTtl: 7200,
-      });
+  if (!llm) {
+    throw new AppError(
+      'AI report generation is not available (LLM not configured)',
+      503,
+      'FEATURE_UNAVAILABLE'
+    );
+  }
 
-      const content = String(result?.content || '');
-      const usage = (result?.usage || {}) as Record<string, number>;
-      const tokensUsed =
-        usage.totalTokens || usage.completionTokens || Math.floor(content.length / 4);
-      const model = String(result?.model || result?.modelId || 'llm-standard');
+  try {
+    const result = await llm.call({
+      type: 'text',
+      modelConfig: { id: 'standard' },
+      systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+      maxTokens: maxTokens || 4096,
+      temperature: 0.7,
+      cache: true,
+      cacheTtl: 7200,
+    });
 
-      if (!content || content.length < 50) {
-        logger.warn(
-          '[ReportGeneration] LLM returned empty/short content, falling back to placeholder'
-        );
-        return {
-          content: generatePlaceholderContent(userPrompt),
-          tokensUsed: 0,
-          model: 'placeholder-fallback',
-        };
-      }
+    const content = String(result?.content || '');
+    const usage = (result?.usage || {}) as Record<string, number>;
+    const tokensUsed = usage.totalTokens || usage.completionTokens || Math.floor(content.length / 4);
+    const model = String(result?.model || result?.modelId || 'llm-standard');
 
-      logger.info('[ReportGeneration] AI generation successful', {
-        contentLength: content.length,
-        tokensUsed,
-        model,
-      });
-
-      return { content, tokensUsed, model };
-    } catch (err: any) {
-      logger.error(
-        '[ReportGeneration] LLM call failed, falling back to placeholder:',
-        err?.message || err
-      );
-      return {
-        content: generatePlaceholderContent(userPrompt),
-        tokensUsed: 0,
-        model: 'placeholder-fallback',
-      };
+    if (!content || content.length < 50) {
+      throw new AppError('AI report generation returned empty content', 503, 'FEATURE_UNAVAILABLE');
     }
-  }
 
-  // Fallback: generate placeholder content when LLM is not available
-  logger.info('[ReportGeneration] Using placeholder content (no LLM available)');
-  const content = generatePlaceholderContent(userPrompt);
-  return {
-    content,
-    tokensUsed: 0,
-    model: 'placeholder-v1',
-  };
+    logger.info('[ReportGeneration] AI generation successful', {
+      contentLength: content.length,
+      tokensUsed,
+      model,
+    });
+
+    return { content, tokensUsed, model };
+  } catch (err: unknown) {
+    const msg = (err as Error)?.message || String(err);
+    logger.error('[ReportGeneration] LLM call failed:', msg);
+    if (err instanceof AppError) throw err;
+    throw new AppError('AI report generation failed', 503, 'FEATURE_UNAVAILABLE', { message: msg });
+  }
 }
 
-function generatePlaceholderContent(prompt: string): string {
-  // Extract section type from prompt for context-aware placeholders
-  const isExecutiveSummary = prompt.toLowerCase().includes('executive summary');
-  const isMethodology = prompt.toLowerCase().includes('methodology');
-  const isStrengths = prompt.toLowerCase().includes('strengths');
-  const isWeaknesses =
-    prompt.toLowerCase().includes('improvement') || prompt.toLowerCase().includes('weaknesses');
-  const isRecommendations = prompt.toLowerCase().includes('recommendations');
-  const isActionPlan =
-    prompt.toLowerCase().includes('action plan') || prompt.toLowerCase().includes('next steps');
-  const isAxisAnalysis =
-    prompt.toLowerCase().includes('axis') && prompt.toLowerCase().includes('analyze');
-  const isMatrix = prompt.toLowerCase().includes('matrix');
-
-  if (isExecutiveSummary) {
-    return `## Executive Summary
-
-This assessment provides a comprehensive evaluation of the organization's digital maturity across key transformation dimensions.
-
-### Key Findings
-
-1. **Overall Maturity**: The organization demonstrates a developing level of digital maturity, with notable strengths in operational processes and clear opportunities in data analytics capabilities.
-
-2. **Strengths Identified**: Strong foundation in process standardization and emerging capabilities in automation provide a solid base for digital transformation.
-
-3. **Critical Gaps**: Data management and AI adoption represent the most significant gaps requiring strategic attention.
-
-### Strategic Priorities
-
-The assessment identifies three priority areas for immediate focus:
-- Strengthening data infrastructure and governance
-- Accelerating automation of key business processes
-- Building AI/ML capabilities starting with high-value use cases
-
-### Recommended Approach
-
-A phased transformation approach is recommended, beginning with quick wins in process automation while laying the groundwork for more advanced analytics and AI capabilities.
-
----
-*This content will be replaced with AI-generated analysis based on actual assessment data.*`;
-  }
-
-  if (isMethodology) {
-    return `## Assessment Methodology
-
-### Framework Overview
-
-The Digital Readiness Diagnosis (DRD) is a comprehensive framework designed to evaluate an organization's digital maturity across seven critical dimensions of transformation.
-
-### Evaluation Dimensions
-
-1. **Digital Processes** - Automation, standardization, and optimization of business processes
-2. **Digital Products** - Digital service offerings and product innovation capabilities
-3. **Digital Business Models** - Revenue models and market positioning in digital economy
-4. **Data & Analytics** - Data management, analytics maturity, and data-driven decision making
-5. **Organizational Culture** - Change readiness, digital skills, and innovation culture
-6. **Cybersecurity** - Security posture, risk management, and compliance
-7. **AI Maturity** - AI/ML adoption, capabilities, and strategic use
-
-### Scoring Approach
-
-Each dimension is evaluated on a 1-7 scale:
-- **Levels 1-2**: Initial - Manual, ad-hoc approaches
-- **Levels 3-4**: Developing - Standardization emerging
-- **Levels 5-6**: Advanced - Integrated, data-driven
-- **Level 7**: Optimized - Industry-leading practices
-
-### Gap Analysis
-
-The assessment identifies gaps between current state (Actual) and desired future state (Target), enabling prioritized transformation planning.
-
----
-*This methodology section will be customized based on the specific assessment framework used.*`;
-  }
-
-  if (isAxisAnalysis) {
-    return `## Detailed Analysis
-
-### Current State Assessment
-
-The organization demonstrates varying levels of maturity across the assessed areas within this dimension.
-
-### Area-by-Area Findings
-
-#### Area 1: Foundation Capabilities
-- **Current Level**: 3/7 (Developing)
-- **Finding**: Basic capabilities are in place with room for standardization
-- **Recommendation**: Implement standardized frameworks and governance
-
-#### Area 2: Advanced Capabilities  
-- **Current Level**: 2/7 (Initial)
-- **Finding**: Limited adoption of advanced capabilities
-- **Recommendation**: Develop pilot programs to build experience
-
-#### Area 3: Integration & Optimization
-- **Current Level**: 4/7 (Developing+)
-- **Finding**: Good progress on integration, optimization opportunities remain
-- **Recommendation**: Focus on end-to-end process optimization
-
-### Key Observations
-
-1. Strong foundation exists for further development
-2. Quick wins available in standardization
-3. Strategic investment needed for advanced capabilities
-
-### Recommended Actions
-
-1. Prioritize foundational improvements before advanced initiatives
-2. Build internal capabilities through training and hiring
-3. Consider strategic partnerships for accelerated transformation
-
----
-*This analysis will be generated based on actual axis data from the assessment.*`;
-  }
-
-  if (isStrengths) {
-    return `## Organizational Strengths
-
-Based on the assessment results, the following strengths have been identified:
-
-### 1. Process Foundation
-Strong foundation in core process documentation and standardization provides a solid base for digital transformation.
-
-### 2. Leadership Commitment
-Clear executive sponsorship and commitment to digital transformation initiatives.
-
-### 3. Technical Infrastructure
-Modern technical infrastructure capable of supporting digital initiatives.
-
-### 4. Operational Excellence
-Demonstrated capability in operational efficiency and continuous improvement.
-
-### 5. Customer Focus
-Strong customer-centric culture with established feedback mechanisms.
-
-### Leveraging Strengths
-
-These strengths should be leveraged as:
-- **Accelerators** for transformation initiatives
-- **Proof points** for building organizational confidence
-- **Foundations** for more advanced capabilities
-
----
-*This section will highlight actual strengths identified in the assessment data.*`;
-  }
-
-  if (isWeaknesses) {
-    return `## Areas for Improvement
-
-The assessment identified the following areas requiring attention:
-
-### 1. Data Management
-**Gap**: Limited data governance and quality management practices
-**Impact**: Constrains analytics capabilities and decision-making
-**Priority**: High
-
-### 2. Advanced Analytics
-**Gap**: Basic reporting without predictive capabilities
-**Impact**: Missed opportunities for proactive optimization
-**Priority**: High
-
-### 3. AI/ML Adoption
-**Gap**: Minimal AI/ML implementation across operations
-**Impact**: Competitive disadvantage in automation
-**Priority**: Medium
-
-### 4. Change Management
-**Gap**: Informal change management practices
-**Impact**: Slower adoption of new technologies
-**Priority**: Medium
-
-### 5. Integration Maturity
-**Gap**: Siloed systems with manual data transfers
-**Impact**: Inefficiency and data quality issues
-**Priority**: High
-
-### Addressing These Gaps
-
-A structured approach to addressing these gaps should include:
-1. Prioritization based on business impact
-2. Phased implementation with quick wins
-3. Capability building alongside technology investment
-
----
-*This section will detail actual improvement areas from the assessment.*`;
-  }
-
-  if (isRecommendations) {
-    return `## Strategic Recommendations
-
-### 1. Data Foundation Program
-**Priority**: High | **Timeline**: 0-6 months
-
-Establish enterprise data governance and quality management to enable advanced analytics.
-
-**Expected Outcome**: Trusted data foundation for decision-making
-**Dependencies**: Executive sponsorship, dedicated resources
-
-### 2. Process Automation Initiative
-**Priority**: High | **Timeline**: 3-9 months
-
-Implement RPA and workflow automation for high-volume, manual processes.
-
-**Expected Outcome**: 30-40% efficiency gains in targeted processes
-**Dependencies**: Process documentation, technology selection
-
-### 3. Analytics Capability Development
-**Priority**: Medium | **Timeline**: 6-12 months
-
-Build internal analytics capabilities with focus on business-relevant use cases.
-
-**Expected Outcome**: Data-driven decision making culture
-**Dependencies**: Data foundation, skill development
-
-### 4. AI/ML Pilot Program
-**Priority**: Medium | **Timeline**: 6-12 months
-
-Launch targeted AI pilots in high-value areas (e.g., predictive maintenance, demand forecasting).
-
-**Expected Outcome**: Validated AI use cases for scaling
-**Dependencies**: Data foundation, analytics capabilities
-
-### 5. Digital Culture Transformation
-**Priority**: Medium | **Timeline**: Ongoing
-
-Foster digital-first mindset through training, change management, and incentive alignment.
-
-**Expected Outcome**: Organization-wide digital adoption
-**Dependencies**: Leadership commitment, HR partnership
-
----
-*Recommendations will be tailored to actual assessment results and company context.*`;
-  }
-
-  if (isActionPlan) {
-    return `## Next Steps & Action Plan
-
-### Immediate Actions (Next 30 Days)
-
-1. **Form Transformation Steering Committee**
-   - Owner: CEO/CTO
-   - Success: Committee established with clear mandate
-
-2. **Quick Win: Process Documentation**
-   - Owner: Operations Lead
-   - Success: Top 10 processes documented
-
-3. **Stakeholder Communication**
-   - Owner: Change Management
-   - Success: All stakeholders informed of transformation vision
-
-### Short-Term Initiatives (1-3 Months)
-
-1. **Data Governance Framework**
-   - Define data ownership and quality standards
-   - Establish data stewardship roles
-
-2. **Automation Pilot Selection**
-   - Identify 3-5 high-impact automation candidates
-   - Develop business cases
-
-3. **Skills Assessment & Training Plan**
-   - Assess current digital skills
-   - Develop training roadmap
-
-### Long-Term Roadmap (3-12 Months)
-
-1. **Enterprise Data Platform** (Q2-Q3)
-   - Implement modern data infrastructure
-   - Migrate priority data sources
-
-2. **Automation Scaling** (Q3-Q4)
-   - Scale successful pilots
-   - Build automation CoE
-
-3. **AI/ML Foundation** (Q4+)
-   - Launch AI pilots
-   - Build ML capabilities
-
-### Success Metrics
-
-- Process automation coverage: 50% of target processes
-- Data quality score: >90%
-- Employee digital skills: 80% trained
-
----
-*Action plan will be customized based on assessment priorities and organizational context.*`;
-  }
-
-  if (isMatrix) {
-    return `## Maturity Matrix Analysis
-
-### Overall Assessment
-
-The organization's digital maturity assessment reveals a mixed picture across the evaluated dimensions, with overall maturity at a **Developing** level.
-
-### Dimension Scores Overview
-
-| Dimension | Current | Target | Gap |
-|-----------|---------|--------|-----|
-| Digital Processes | 3.5 | 5.0 | 1.5 |
-| Digital Products | 3.0 | 4.5 | 1.5 |
-| Business Models | 2.5 | 4.0 | 1.5 |
-| Data & Analytics | 2.0 | 5.0 | 3.0 |
-| Culture | 3.5 | 5.0 | 1.5 |
-| Cybersecurity | 4.0 | 5.0 | 1.0 |
-| AI Maturity | 1.5 | 4.0 | 2.5 |
-
-### Key Observations
-
-1. **Highest Maturity**: Cybersecurity (4.0) - Strong security foundation
-2. **Lowest Maturity**: AI Maturity (1.5) - Significant opportunity
-3. **Largest Gap**: Data & Analytics (3.0) - Critical priority
-
-### Strategic Implications
-
-The maturity profile suggests a **foundation-first** approach:
-1. Address data gaps before AI initiatives
-2. Leverage strong security posture
-3. Build on process strengths for automation
-
----
-*Matrix visualization and detailed scores will be generated from actual assessment data.*`;
-  }
-
-  // Default content
-  return `## ${prompt.includes('cover') ? 'Report Cover' : 'Section Content'}
-
-This section will contain professionally written content based on the assessment data and company context.
-
-### Key Points
-
-- Comprehensive analysis based on assessment results
-- Strategic insights tailored to organization
-- Actionable recommendations
-
----
-*This placeholder will be replaced with AI-generated content specific to this section.*`;
-}
 
 // ==========================================
 // GENERATION SERVICE

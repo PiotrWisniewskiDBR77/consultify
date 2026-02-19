@@ -27,7 +27,6 @@ import {
 const router = Router();
 import type { Stripe as StripeTypes } from 'stripe';
 import StripeLib from 'stripe';
-import Stripe from 'stripe';
 
 import type { DunningService as DunningServiceType } from '../services/dunningService.js';
 import type { InvoiceServiceClass } from '../services/InvoiceService.js';
@@ -74,6 +73,17 @@ interface InvoiceServiceInstance {
 // Dynamic imports for services that may still be wrappers
 let DunningService: DunningServiceInstance | null = null;
 let InvoiceService: InvoiceServiceInstance | null = null;
+let StripeClient: StripeLib | null = null;
+
+function getStripeClient(): StripeLib {
+  if (StripeClient) return StripeClient;
+  const secret = process.env.STRIPE_SECRET_KEY;
+  if (!secret) {
+    throw new Error('Stripe API key is not configured');
+  }
+  StripeClient = new StripeLib(secret, { apiVersion: '2024-11-20.acacia' as any });
+  return StripeClient;
+}
 
 // Lazy load services to avoid circular dependencies
 async function getDunningService(): Promise<DunningServiceInstance> {
@@ -297,9 +307,15 @@ router.post(
 
     console.log(`[Webhook] Received Stripe event: ${type}`);
 
+    if (!process.env.STRIPE_SECRET_KEY) {
+      res.status(503).json({ error: 'Stripe is not configured', code: 'FEATURE_UNAVAILABLE' });
+      return;
+    }
+
     try {
       const dunning = await getDunningService();
-      const invoice = await getInvoiceService();
+      const invoiceService = await getInvoiceService();
+      const stripe = getStripeClient();
 
       switch (type) {
         case 'invoice.payment_failed': {
@@ -315,21 +331,18 @@ router.post(
               // Get organization and start dunning if needed
               const org = await dunning.getDunningStatus(orgId);
               if (!org || (org as { inDunning: boolean }).inDunning === false) {
-                // Create a mock PaymentIntent structure for handlePaymentFailed
-                const mockPaymentIntent = {
-                  id: paymentIntentId,
-                  amount: invoice.amount_due || 0,
-                  currency: invoice.currency || 'usd',
-                  metadata: invoice.metadata || {},
-                  last_payment_error: {
-                    code: 'payment_failed',
-                    message: invoice.last_payment_error?.message || 'Payment failed',
-                  },
-                } as unknown as StripePaymentIntent;
-
-                await dunning.handlePaymentFailed(mockPaymentIntent);
+                const paymentIntent = (await stripe.paymentIntents.retrieve(
+                  paymentIntentId
+                )) as StripePaymentIntent;
+                await dunning.handlePaymentFailed(paymentIntent);
               }
             }
+          } else {
+            res.status(503).json({
+              error: 'Stripe payment intent missing for invoice.payment_failed',
+              code: 'FEATURE_UNAVAILABLE',
+            });
+            return;
           }
           break;
         }
@@ -339,17 +352,19 @@ router.post(
           const paymentIntentId = invoice.payment_intent as string | undefined;
 
           if (paymentIntentId) {
-            const mockPaymentIntent = {
-              id: paymentIntentId,
-              amount: invoice.amount_paid || 0,
-              currency: invoice.currency || 'usd',
-              metadata: invoice.metadata || {},
-            } as StripeTypes.PaymentIntent;
-
-            await dunning.handlePaymentSucceeded(mockPaymentIntent);
+            const paymentIntent = (await stripe.paymentIntents.retrieve(
+              paymentIntentId
+            )) as StripePaymentIntent;
+            await dunning.handlePaymentSucceeded(paymentIntent);
+          } else {
+            res.status(503).json({
+              error: 'Stripe payment intent missing for invoice.payment_succeeded',
+              code: 'FEATURE_UNAVAILABLE',
+            });
+            return;
           }
 
-          await invoice.createFromStripe(invoice);
+          await invoiceService.createFromStripe(invoice);
           break;
         }
 

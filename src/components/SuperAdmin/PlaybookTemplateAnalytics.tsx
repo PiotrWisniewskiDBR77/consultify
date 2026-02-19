@@ -265,7 +265,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
                   </div>
                   <div>
                     <div className="text-sm font-medium text-white">
-                      {event.eventType.replace('_', ' ')}
+                      {String(event.eventType ?? 'Unknown').replaceAll('_', ' ')}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
                       {event.userId ? `User ID: ${event.userId.slice(0, 8)}...` : 'System'}

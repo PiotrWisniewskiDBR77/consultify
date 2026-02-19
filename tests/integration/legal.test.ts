@@ -3,9 +3,10 @@ import request from 'supertest';
 
 import { makeTestApp } from './_helpers/testApp';
 
-const { dbGet } = vi.hoisted(() => ({ dbGet: vi.fn() }));
+const { dbAll, dbGet } = vi.hoisted(() => ({ dbAll: vi.fn(), dbGet: vi.fn() }));
 
 vi.mock('../../server/src/utils/DbPromise.js', () => ({
+  all: (...args: any[]) => dbAll(...args),
   get: (...args: any[]) => dbGet(...args),
 }));
 
@@ -17,9 +18,14 @@ describe('Legal routes - REAL integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     dbGet.mockResolvedValue(undefined);
+    dbAll.mockResolvedValue([]);
+    delete process.env.LEGAL_TOS_CONTENT;
+    delete process.env.LEGAL_PRIVACY_CONTENT;
+    delete process.env.LEGAL_COOKIES_CONTENT;
+    delete process.env.LEGAL_DPA_CONTENT;
   });
 
-  it('GET /documents lists default docs', async () => {
+  it('GET /documents lists supported docs (configured=false by default)', async () => {
     const router = await loadLegalRouter();
     const app = makeTestApp({ mountPath: '/api/legal', router });
     const res = await request(app).get('/api/legal/documents');
@@ -28,13 +34,12 @@ describe('Legal routes - REAL integration', () => {
     expect(res.body.data).toEqual(expect.any(Array));
   });
 
-  it('GET /document/:type returns default when DB row missing', async () => {
+  it('GET /document/:type returns 503 when not configured', async () => {
     const router = await loadLegalRouter();
     const app = makeTestApp({ mountPath: '/api/legal', router });
     const res = await request(app).get('/api/legal/document/tos');
-    expect(res.status).toBe(200);
-    expect(res.body.data.type).toBe('TOS');
-    expect(res.body.data.title).toContain('Terms');
+    expect(res.status).toBe(503);
+    expect(res.body.code).toMatch(/LEGAL_/);
   });
 
   it('GET /document/:type returns 404 for unknown type', async () => {

@@ -64,10 +64,6 @@ router.post(
   verifyToken,
   demoGuard,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!TrialService?.convertTrialToOrg) {
-      return res.status(503).json({ error: 'Trial service not available' });
-    }
-
     try {
       const { trialId } = req.params;
       const { newOrgName } = req.body;
@@ -81,7 +77,14 @@ router.post(
         return res.status(400).json({ error: 'New organization name is required' });
       }
 
+      if (!TrialService?.convertTrialToOrg) {
+        return res.status(503).json({ error: 'Trial service not available' });
+      }
+
       const result = await TrialService.convertTrialToOrg(trialId, userId, newOrgName);
+      if (!result || typeof (result as any).newOrganizationId !== 'string') {
+        return res.status(503).json({ error: 'Trial conversion unavailable' });
+      }
 
       return res.json({
         success: true,

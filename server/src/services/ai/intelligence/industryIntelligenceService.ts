@@ -9,7 +9,7 @@ import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
 const loadIndustryintelligence = createCachedLazyService(
-  '../../../ai/intelligence/industryIntelligenceService.js'
+  'ai/intelligence/industryIntelligenceService.js'
 );
 
 // Export default instance (for backward compatibility)

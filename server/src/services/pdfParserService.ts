@@ -1,0 +1,94 @@
+import fs from 'fs';
+
+import logger from '../utils/Logger.js';
+
+type ParsedScores = { scores: Record<string, number> };
+
+const normalizeScore = (value: number): number => {
+  if (!Number.isFinite(value)) return value;
+  return Math.round(value * 10) / 10;
+};
+
+const extractKeyValueScores = (text: string): Record<string, number> => {
+  const scores: Record<string, number> = {};
+  const lines = text.split(/\r?\n/);
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+
+    // Examples:
+    // "Process Digitalization: 3"
+    // "Cybersecurity - 4.5"
+    // "Smart Manufacturing 2"
+    const m = line.match(/^(.{3,80}?)[\s:–-]+\s*(\d(?:\.\d)?)\s*$/);
+    if (!m) continue;
+    const key = m[1].trim();
+    const value = Number(m[2]);
+    if (!key || !Number.isFinite(value)) continue;
+    // Ignore obviously wrong values
+    if (value < 0 || value > 10) continue;
+    scores[key] = normalizeScore(value);
+  }
+
+  return scores;
+};
+
+const PDFParserService = {
+  async extractText(filePath: string): Promise<string> {
+    try {
+      const pdfParse = (await import('pdf-parse')).default as any;
+      const buffer = fs.readFileSync(filePath);
+      const pdfData = await pdfParse(buffer);
+      return String(pdfData?.text || '');
+    } catch (err: unknown) {
+      logger.warn('[PDFParserService] pdf-parse failed:', (err as Error)?.message);
+      try {
+        return fs.readFileSync(filePath, 'utf-8');
+      } catch (readErr: unknown) {
+        throw new Error(
+          `Failed to extract text: ${(err as Error)?.message || String(err)}; read fallback failed: ${
+            (readErr as Error)?.message || String(readErr)
+          }`
+        );
+      }
+    }
+  },
+
+  async parseGenericReport(text: string): Promise<{ findings: string[] }> {
+    const lines = text
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    const findings: string[] = [];
+    for (const line of lines) {
+      // Prefer bullet-like findings
+      const bullet = line.match(/^[-*•]\s+(.*)$/);
+      if (bullet?.[1] && bullet[1].length >= 20) findings.push(bullet[1]);
+      if (findings.length >= 20) break;
+    }
+
+    // Fallback: extract a few "Finding:" lines
+    if (findings.length === 0) {
+      for (const line of lines) {
+        const m = line.match(/^(finding|issue|risk)\s*[:\-]\s*(.+)$/i);
+        if (m?.[2] && m[2].length >= 20) findings.push(m[2]);
+        if (findings.length >= 10) break;
+      }
+    }
+
+    return { findings };
+  },
+
+  async parseSIRI(text: string): Promise<ParsedScores> {
+    return { scores: extractKeyValueScores(text) };
+  },
+
+  async parseADMA(text: string): Promise<ParsedScores> {
+    return { scores: extractKeyValueScores(text) };
+  },
+};
+
+export default PDFParserService;
+

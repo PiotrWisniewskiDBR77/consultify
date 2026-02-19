@@ -130,7 +130,11 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.generateCode || !AccessCodeService?.CODE_TYPES) {
+<<<<<<< Updated upstream
       return res.status(503).json({ error: 'AccessCodeService not available' });
+=======
+      return res.status(503).json({ error: 'SERVICE_UNAVAILABLE', code: 'FEATURE_UNAVAILABLE' });
+>>>>>>> Stashed changes
     }
 
     try {
@@ -209,7 +213,15 @@ router.get(
   validateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.validatePublic) {
+<<<<<<< Updated upstream
       return res.status(503).json({ valid: false, error: 'AccessCodeService not available' });
+=======
+      return res.status(503).json({
+        valid: false,
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+      });
+>>>>>>> Stashed changes
     }
 
     try {
@@ -217,7 +229,11 @@ router.get(
       return res.json(result);
     } catch (err: any) {
       // Always return same shape for privacy
-      return res.json({ valid: false });
+      return res.status(503).json({
+        valid: false,
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
   })
 );
@@ -234,7 +250,11 @@ router.post(
   acceptLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.acceptCode) {
+<<<<<<< Updated upstream
       return res.status(503).json({ ok: false, error: 'AccessCodeService not available' });
+=======
+      return res.status(503).json({ ok: false, error: 'SERVICE_UNAVAILABLE', code: 'FEATURE_UNAVAILABLE' });
+>>>>>>> Stashed changes
     }
 
     try {

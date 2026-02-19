@@ -4262,6 +4262,17 @@ router.get(
     try {
       const AIMemoryMetricsService = (await import('../services/ai/aiMemoryMetricsService.js'))
         .default as any;
+      if (
+        !AIMemoryMetricsService ||
+        AIMemoryMetricsService.__unavailable__ === true ||
+        typeof AIMemoryMetricsService.getDashboardMetrics !== 'function'
+      ) {
+        return res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'AI memory metrics are not available',
+        });
+      }
       const { period } = req.query as any;
 
       const metrics = await AIMemoryMetricsService.getDashboardMetrics(req.organizationId!, period);
@@ -4269,7 +4280,11 @@ router.get(
       return res.json({ success: true, ...metrics });
     } catch (err: any) {
       logger.error('[AI] Memory metrics error:', err);
-      return res.status(500).json({ success: false, error: (err as Error).message });
+      return res.status(503).json({
+        success: false,
+        code: 'FEATURE_UNAVAILABLE',
+        error: 'AI memory metrics are not available',
+      });
     }
   })
 );
@@ -4282,6 +4297,17 @@ router.get(
     try {
       const AIMemoryMetricsService = (await import('../services/ai/aiMemoryMetricsService.js'))
         .default as any;
+      if (
+        !AIMemoryMetricsService ||
+        AIMemoryMetricsService.__unavailable__ === true ||
+        typeof AIMemoryMetricsService.getCurrentMemoryState !== 'function'
+      ) {
+        return res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'AI memory state is not available',
+        });
+      }
       const { projectId } = req.query as any;
 
       const state = await AIMemoryMetricsService.getCurrentMemoryState(
@@ -4292,7 +4318,11 @@ router.get(
       return res.json({ success: true, ...state });
     } catch (err: any) {
       logger.error('[AI] Current memory state error:', err);
-      return res.status(500).json({ success: false, error: (err as Error).message });
+      return res.status(503).json({
+        success: false,
+        code: 'FEATURE_UNAVAILABLE',
+        error: 'AI memory state is not available',
+      });
     }
   })
 );
@@ -4305,6 +4335,17 @@ router.get(
     try {
       const AIMemoryMetricsService = (await import('../services/ai/aiMemoryMetricsService.js'))
         .default as any;
+      if (
+        !AIMemoryMetricsService ||
+        AIMemoryMetricsService.__unavailable__ === true ||
+        typeof AIMemoryMetricsService.getLatencyPercentiles !== 'function'
+      ) {
+        return res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'AI memory latency metrics are not available',
+        });
+      }
       const { hours } = req.query as any;
 
       const latency = await AIMemoryMetricsService.getLatencyPercentiles(
@@ -4315,7 +4356,11 @@ router.get(
       return res.json({ success: true, ...latency });
     } catch (err: any) {
       logger.error('[AI] Latency metrics error:', err);
-      return res.status(500).json({ success: false, error: (err as Error).message });
+      return res.status(503).json({
+        success: false,
+        code: 'FEATURE_UNAVAILABLE',
+        error: 'AI memory latency metrics are not available',
+      });
     }
   })
 );

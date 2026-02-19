@@ -76,8 +76,7 @@ let NotificationOutboxService: any;
 
 async function initDeps(): Promise<void> {
   if (!NotificationOutboxService) {
-    // const module = await import('./notificationOutboxService.js');
-    const module = {} as any; // Stubbed missing service
+    const module = await import('./notificationOutboxService.js');
     NotificationOutboxService = module.default || module;
   }
 }

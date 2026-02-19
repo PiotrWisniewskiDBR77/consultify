@@ -69,12 +69,8 @@ try {
   adaptiveResponseService = (module.adaptiveResponseService ||
     module) as AdaptiveResponseServiceInterface;
 } catch {
-  logger.warn('[AI Feedback Routes] adaptiveResponseService not available - using mock');
-  adaptiveResponseService = {
-    processFeedback: async () => ({ feedbackId: uuidv4() }),
-    getUserFeedbackStats: async () => ({ total_feedback: 0 }),
-    getRecommendedMode: async () => 'BALANCED',
-  };
+  logger.warn('[AI Feedback Routes] adaptiveResponseService not available');
+  adaptiveResponseService = null;
 }
 
 // All routes require authentication
@@ -441,7 +437,10 @@ router.post(
   '/response',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!adaptiveResponseService?.processFeedback) {
-      return res.status(503).json({ error: 'Adaptive response service not available' });
+      return res.status(503).json({
+        error: 'Adaptive response service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -533,7 +532,10 @@ router.get(
       !adaptiveResponseService?.getUserFeedbackStats ||
       !adaptiveResponseService?.getRecommendedMode
     ) {
-      return res.status(503).json({ error: 'Adaptive response service not available' });
+      return res.status(503).json({
+        error: 'Adaptive response service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {

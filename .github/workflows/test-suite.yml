@@ -282,8 +282,17 @@ jobs:
         run: npm run build
 
       - name: Run E2E tests
-        # Deterministic spec-based L6 health suite (no web servers required)
+        # Deterministic spec-based health suite.
         run: npx playwright test tests/e2e/ai-system-health.spec.ts --reporter=junit
+        env:
+          CI: true
+          NODE_ENV: test
+          E2E_USE_WEB_SERVER: 'true'
+          E2E_BACKEND_RUNNER: build
+          E2E_MODE: 'false'
+          E2E_API_URL: http://127.0.0.1:3001
+          E2E_BASE_URL: http://127.0.0.1:3000
+          TEST_SUPPORT_KEY: local-test-support-key-change-me
 
       - name: Upload Playwright report
         if: always()
@@ -308,9 +317,10 @@ jobs:
   # Small, deterministic UI+API smoke suite for merge gating.
   # ═══════════════════════════════════════════════════════════════
   l4-smoke:
-    name: 🧨 L4 Smoke (WebServer)
+    name: 🧨 L4 Smoke (Remote-only)
     runs-on: ubuntu-latest
     needs: [unit-tests, component-tests]
+    if: ${{ secrets.E2E_API_URL != '' && secrets.E2E_BASE_URL != '' && secrets.TEST_SUPPORT_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -327,14 +337,14 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run L4 smoke
-        run: npm run test:l4
+        run: npm run test:l4:remote
         env:
           CI: true
           NODE_ENV: test
-          E2E_MODE: false
-          E2E_USE_WEB_SERVER: 'true'
-          E2E_API_URL: http://127.0.0.1:3001
-          E2E_BASE_URL: http://127.0.0.1:3000
+          E2E_USE_WEB_SERVER: 'false'
+          E2E_API_URL: ${{ secrets.E2E_API_URL }}
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
+          TEST_SUPPORT_KEY: ${{ secrets.TEST_SUPPORT_KEY }}
 
       - name: Upload L4 smoke artifacts
         if: always()
@@ -378,6 +388,7 @@ jobs:
           E2E_USE_WEB_SERVER: 'true'
           E2E_API_URL: http://127.0.0.1:3001
           E2E_BASE_URL: http://127.0.0.1:3000
+          TEST_SUPPORT_KEY: local-test-support-key-change-me
 
       - name: Upload Runtime Smoke report
         if: always()

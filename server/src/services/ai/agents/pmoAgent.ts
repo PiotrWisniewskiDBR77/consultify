@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadPmoagent = createCachedLazyService('../../../ai/agents/pmoAgent.js');
+const loadPmoagent = createCachedLazyService('ai/agents/pmoAgent.js');
 
 // Export default instance (for backward compatibility)
 export default loadPmoagent();

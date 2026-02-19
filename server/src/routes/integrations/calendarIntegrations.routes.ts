@@ -9,9 +9,11 @@ import { Router } from 'express';
 
 const router = Router();
 
-// Placeholder endpoints
 router.get('/', (_req, res) => {
-  res.json({ integrations: [], message: 'Calendar integrations are not configured' });
+  res.status(503).json({
+    error: 'Calendar integrations are not available',
+    code: 'FEATURE_UNAVAILABLE',
+  });
 });
 
 export default router;

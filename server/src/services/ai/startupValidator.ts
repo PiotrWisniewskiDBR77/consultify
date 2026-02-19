@@ -1,14 +1,9 @@
 /**
- * Startupvalidator Service
- * Enterprise SaaS Architecture - TypeScript Backend
+ * Startup Validator
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * The real implementation is not present in this repository. Export an explicit marker so the
+ * server startup can skip validation without relying on stub proxies or self-import wrappers.
  */
+const startupValidator = { __unavailable__: true } as const;
 
-import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
-
-// Lazy load the JS service module
-const loadStartupvalidator = createCachedLazyService('../../ai/startupValidator.js');
-
-// Export default instance (for backward compatibility)
-export default loadStartupvalidator();
+export default startupValidator;

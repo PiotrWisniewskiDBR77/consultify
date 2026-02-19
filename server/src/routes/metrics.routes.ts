@@ -50,23 +50,10 @@ router.get('/', async (_req, res) => {
  */
 router.get('/conversion-intelligence', async (_req, res) => {
   try {
-    // Mock data for conversion intelligence
-    const data = {
-      overallConversionRate: 12.5,
-      trialToPaid: 8.3,
-      leadToTrial: 45.2,
-      trends: {
-        last7Days: 11.8,
-        last30Days: 12.1,
-        last90Days: 13.2,
-      },
-      topPerformers: [
-        { channel: 'Direct', rate: 18.5 },
-        { channel: 'Referral', rate: 15.2 },
-        { channel: 'Organic', rate: 10.8 },
-      ],
-    };
-    return res.json(data);
+    return res.status(503).json({
+      error: 'Conversion intelligence metrics are not available',
+      code: 'FEATURE_UNAVAILABLE',
+    });
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error('[MetricsRoutes] Error fetching conversion intelligence:', err);
@@ -133,11 +120,11 @@ router.get('/funnels', async (req, res) => {
     );
 
     // Combine event-based and org-based counts
-    const totalTrials = Math.max(trialCount.count, orgTrials.count) || 8;
-    const totalPaid = Math.max(paidCount.count, orgPaid.count) || 1;
-    const totalLeads = leadCount.count || 20;
-    const totalDemos = demoCount.count || 5;
-    const totalVisits = visitCount.count || 100;
+    const totalTrials = Math.max(trialCount.count, orgTrials.count);
+    const totalPaid = Math.max(paidCount.count, orgPaid.count);
+    const totalLeads = leadCount.count;
+    const totalDemos = demoCount.count;
+    const totalVisits = visitCount.count;
 
     // Calculate conversion rates
     const calcRate = (from: number, to: number) =>

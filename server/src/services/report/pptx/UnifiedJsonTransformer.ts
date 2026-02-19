@@ -630,7 +630,7 @@ function buildRiskManagement(
       risk: b,
       likelihood: 'medium' as const,
       impact: 'medium' as const,
-      mitigation: 'To be defined',
+      mitigation: '',
     })),
   };
 }

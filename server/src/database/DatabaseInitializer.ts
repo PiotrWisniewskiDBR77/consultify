@@ -1104,6 +1104,261 @@ async function ensureImportedReportsTables(): Promise<void> {
   });
 }
 
+// ==========================================
+// TARGETED SELF-HEAL (PROJECT AI SETTINGS)
+// ==========================================
+
+async function ensureProjectAISettingsTables(): Promise<void> {
+  const db = await getDatabaseAsync();
+  const dbType = databaseConfig.type;
+
+  // Used by:
+  // - Project AI role endpoints (`/api/projects/:id/ai-role`)
+  // - Project regulatory mode endpoints (`/api/projects/:id/regulatory-mode`)
+  // - AI policy/orchestrator enforcement
+  if (dbType === 'postgres') {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS project_ai_settings (
+        project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+        ai_role TEXT NOT NULL DEFAULT 'ADVISOR',
+        regulatory_mode_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+        regulatory_prompt TEXT DEFAULT '',
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_project_ai_settings_role ON project_ai_settings(ai_role)`
+    );
+    return;
+  }
+
+  // SQLite branch
+  await new Promise<void>((resolve, reject) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS project_ai_settings (
+        project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+        ai_role TEXT NOT NULL DEFAULT 'ADVISOR',
+        regulatory_mode_enabled INTEGER NOT NULL DEFAULT 0,
+        regulatory_prompt TEXT DEFAULT '',
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+      (err: Error | null) => (err ? reject(err) : resolve())
+    );
+  });
+
+  // Best-effort indices
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_project_ai_settings_role ON project_ai_settings(ai_role)`,
+      () => resolve()
+    );
+  });
+}
+
+// ==========================================
+// TARGETED SELF-HEAL (BILLING CORE TABLES)
+// ==========================================
+
+async function ensureBillingCoreTables(): Promise<void> {
+  const db = await getDatabaseAsync();
+  const dbType = databaseConfig.type;
+
+  // L4 deploy-gate billing endpoints rely on subscriptions existing even in fresh SQLite DBs.
+  if (dbType === 'postgres') {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+        plan_id TEXT NOT NULL REFERENCES subscription_plans(id),
+        status TEXT NOT NULL DEFAULT 'active',
+        billing_cycle TEXT NOT NULL DEFAULT 'monthly',
+        current_period_start TIMESTAMP,
+        current_period_end TIMESTAMP,
+        trial_start TIMESTAMP,
+        trial_end TIMESTAMP,
+        cancel_at_period_end BOOLEAN DEFAULT FALSE,
+        canceled_at TIMESTAMP,
+        metadata TEXT DEFAULT '{}',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_subscriptions_org ON subscriptions(organization_id)`
+    );
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status)`);
+    return;
+  }
+
+  // SQLite branch
+  await new Promise<void>((resolve, reject) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS subscriptions (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+        plan_id TEXT NOT NULL REFERENCES subscription_plans(id),
+        status TEXT NOT NULL DEFAULT 'active',
+        billing_cycle TEXT NOT NULL DEFAULT 'monthly',
+        current_period_start TEXT,
+        current_period_end TEXT,
+        trial_start TEXT,
+        trial_end TEXT,
+        cancel_at_period_end INTEGER DEFAULT 0,
+        canceled_at TEXT,
+        metadata TEXT DEFAULT '{}',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+      (err: Error | null) => (err ? reject(err) : resolve())
+    );
+  });
+
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_subscriptions_org ON subscriptions(organization_id)`,
+      () => resolve()
+    );
+  });
+  await new Promise<void>((resolve) => {
+    db.run(`CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status)`, () =>
+      resolve()
+    );
+  });
+}
+
+// ==========================================
+// TARGETED SELF-HEAL (INITIATIVE SECTION TYPES)
+// ==========================================
+
+async function ensureInitiativeSectionTypesTables(): Promise<void> {
+  const db = await getDatabaseAsync();
+  const dbType = databaseConfig.type;
+
+  if (dbType === 'postgres') {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS initiative_section_types (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        key TEXT NOT NULL,
+        name TEXT NOT NULL,
+        name_pl TEXT,
+        description TEXT,
+        description_pl TEXT,
+        category TEXT NOT NULL DEFAULT 'content',
+        column_position TEXT NOT NULL DEFAULT 'left',
+        default_order INTEGER NOT NULL DEFAULT 100,
+        icon TEXT,
+        icon_color TEXT,
+        icon_bg TEXT,
+        component_key TEXT NOT NULL,
+        ai_prompt_template TEXT,
+        render_config TEXT,
+        default_config TEXT,
+        is_system BOOLEAN DEFAULT FALSE,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_by TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_ist_org ON initiative_section_types(organization_id)`
+    );
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_ist_key ON initiative_section_types(key)`);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_ist_active ON initiative_section_types(is_active)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_ist_column ON initiative_section_types(column_position)`
+    );
+    return;
+  }
+
+  // SQLite branch
+  await new Promise<void>((resolve, reject) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS initiative_section_types (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        key TEXT NOT NULL,
+        name TEXT NOT NULL,
+        name_pl TEXT,
+        description TEXT,
+        description_pl TEXT,
+        category TEXT NOT NULL DEFAULT 'content',
+        column_position TEXT NOT NULL DEFAULT 'left',
+        default_order INTEGER NOT NULL DEFAULT 100,
+        icon TEXT,
+        icon_color TEXT,
+        icon_bg TEXT,
+        component_key TEXT NOT NULL,
+        ai_prompt_template TEXT,
+        render_config TEXT,
+        default_config TEXT,
+        is_system INTEGER DEFAULT 0,
+        is_active INTEGER DEFAULT 1,
+        created_by TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+      )`,
+      (err: Error | null) => (err ? reject(err) : resolve())
+    );
+  });
+
+  // Indices (best-effort)
+  await new Promise<void>((resolve) => {
+    db.run(`CREATE INDEX IF NOT EXISTS idx_ist_org ON initiative_section_types(organization_id)`, () =>
+      resolve()
+    );
+  });
+  await new Promise<void>((resolve) => {
+    db.run(`CREATE INDEX IF NOT EXISTS idx_ist_key ON initiative_section_types(key)`, () => resolve());
+  });
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_ist_active ON initiative_section_types(is_active)`,
+      () => resolve()
+    );
+  });
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_ist_column ON initiative_section_types(column_position)`,
+      () => resolve()
+    );
+  });
+
+  // Seed a minimal system library so the Initiatives UI doesn't break on fresh SQLite.
+  const seeds: Array<[string, string, string, string, number, string]> = [
+    ['ist-overview', 'overview', 'Initiative Description', 'Opis inicjatywy', 10, 'overview'],
+    [
+      'ist-problem-definition',
+      'problemDefinition',
+      'Problem Definition',
+      'Definicja problemu',
+      20,
+      'problemDefinition',
+    ],
+    ['ist-target-state', 'targetState', 'Target State', 'Stan docelowy', 30, 'targetState'],
+    ['ist-scope', 'scope', 'Scope', 'Zakres', 40, 'scope'],
+    ['ist-tasks', 'tasks', 'Tasks', 'Zadania', 50, 'tasks'],
+    ['ist-decisions', 'decisions', 'Decisions', 'Decyzje', 60, 'decisions'],
+    ['ist-raid', 'raid', 'RAID Log', 'Rejestr RAID', 70, 'raid'],
+    ['ist-gates', 'gates', 'Gate Readiness', 'Bramki decyzyjne', 80, 'gates'],
+  ];
+
+  for (const [id, key, name, namePl, order, componentKey] of seeds) {
+    await new Promise<void>((resolve) => {
+      db.run(
+        `INSERT OR IGNORE INTO initiative_section_types
+          (id, organization_id, key, name, name_pl, category, column_position, default_order, component_key, is_system, is_active)
+         VALUES (?, NULL, ?, ?, ?, 'content', 'left', ?, ?, 1, 1)`,
+        [id, key, name, namePl, order, componentKey],
+        () => resolve()
+      );
+    });
+  }
+}
+
 /**
  * Initialize database schema
  * This ensures all tables are created if they don't exist
@@ -1478,6 +1733,36 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
     } catch (e: any) {
       logger.warn(
         '[DatabaseInitializer] ensureImportedReportsTables failed (continuing):',
+        e?.message || e
+      );
+    }
+
+    // Ensure project AI settings table exists (AI role + regulatory mode).
+    try {
+      await ensureProjectAISettingsTables();
+    } catch (e: any) {
+      logger.warn(
+        '[DatabaseInitializer] ensureProjectAISettingsTables failed (continuing):',
+        e?.message || e
+      );
+    }
+
+    // Ensure billing core tables exist (subscriptions is required by deploy-gate billing endpoints).
+    try {
+      await ensureBillingCoreTables();
+    } catch (e: any) {
+      logger.warn(
+        '[DatabaseInitializer] ensureBillingCoreTables failed (continuing):',
+        e?.message || e
+      );
+    }
+
+    // Ensure initiative section types exist (Initiatives UI; avoids SQLITE_ERROR logs on fresh SQLite).
+    try {
+      await ensureInitiativeSectionTypesTables();
+    } catch (e: any) {
+      logger.warn(
+        '[DatabaseInitializer] ensureInitiativeSectionTypesTables failed (continuing):',
         e?.message || e
       );
     }

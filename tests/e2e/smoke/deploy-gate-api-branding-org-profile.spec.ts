@@ -24,6 +24,10 @@ async function jsonOrText(res: any): Promise<any> {
 
 async function assertNo5xx(res: any, label: string) {
   if (res.status() < 500) return;
+  if (res.status() === 503) {
+    const body = await jsonOrText(res);
+    if (body?.code === 'FEATURE_UNAVAILABLE') return;
+  }
   const body = await jsonOrText(res);
   throw new Error(`${label} 5xx: ${res.status()} ${res.statusText()} body=${JSON.stringify(body)}`);
 }
@@ -193,15 +197,16 @@ test.describe('L4 Smoke — deploy gate API (branding + organization profile)', 
     }
   });
 
-  test('POST /api/organization-profiles/:orgId/logo returns placeholder logoUrl', async ({ request }) => {
+  test('POST /api/organization-profiles/:orgId/logo returns 503 FEATURE_UNAVAILABLE (no fake uploads)', async ({
+    request,
+  }) => {
     const res = await request.post(`${API_BASE_URL}/api/organization-profiles/${orgId}/logo`, {
       headers: authHeaders(token),
     });
     await assertNo5xx(res, 'POST /api/organization-profiles/:orgId/logo');
-    expect(res.status()).toBe(200);
+    expect(res.status()).toBe(503);
     const data = await res.json().catch(() => null);
-    expect(Boolean(data?.success)).toBe(true);
-    expect(String(data?.logoUrl || '')).toContain(`/uploads/logos/${orgId}`);
+    expect(String(data?.code || '')).toBe('FEATURE_UNAVAILABLE');
   });
 
   test('POST /api/organization-profiles/:orgId/verify-domain without domain returns 400', async ({ request }) => {
@@ -223,25 +228,28 @@ test.describe('L4 Smoke — deploy gate API (branding + organization profile)', 
     expect(Boolean(data?.verified)).toBe(false);
   });
 
-  test('POST /api/organization-profiles/:orgId/verify-domain valid domain returns verified=true', async ({ request }) => {
+  test('POST /api/organization-profiles/:orgId/verify-domain valid domain returns 503 FEATURE_UNAVAILABLE (no simulated verify)', async ({
+    request,
+  }) => {
     const res = await request.post(`${API_BASE_URL}/api/organization-profiles/${orgId}/verify-domain`, {
       headers: { ...authHeaders(token), 'content-type': 'application/json' },
       data: { domain: 'example.invalid' },
     });
     await assertNo5xx(res, 'POST /api/organization-profiles/:orgId/verify-domain (valid)');
-    expect(res.status()).toBe(200);
+    expect(res.status()).toBe(503);
     const data = await res.json().catch(() => null);
-    expect(Boolean(data?.verified)).toBe(true);
+    expect(String(data?.code || '')).toBe('FEATURE_UNAVAILABLE');
   });
 
-  test('GET /api/organization-profiles/:orgId reflects customDomainVerified', async ({ request }) => {
+  test('GET /api/organization-profiles/:orgId does not flip customDomainVerified from a simulated verify', async ({
+    request,
+  }) => {
     const res = await request.get(`${API_BASE_URL}/api/organization-profiles/${orgId}`, {
       headers: authHeaders(token),
     });
     await assertNo5xx(res, 'GET /api/organization-profiles/:orgId (after domain verify)');
     const data = await res.json().catch(() => null);
-    expect(Boolean(data?.profile?.customDomainVerified)).toBe(true);
-    expect(String(data?.profile?.customDomain || '')).toBe('example.invalid');
+    expect(Boolean(data?.profile?.customDomainVerified)).not.toBe(true);
   });
 
   test('GET /api/organization-profiles/:otherOrgId returns 403', async ({ request }) => {

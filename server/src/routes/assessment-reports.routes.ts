@@ -987,11 +987,17 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
       const mod = await import('../services/ai/llmService.js');
       llmService = mod.llmService || mod.default;
     } catch {
-      logger.warn('[AssessmentReports] LLM service not available, using draft content');
+      logger.warn('[AssessmentReports] LLM service not available for report generation');
     }
 
-    // Wipe and rebuild sections
-    await run(`DELETE FROM assessment_report_sections WHERE report_id = ?`, [reportId]);
+    if (!llmService) {
+      return res.status(503).json({
+        success: false,
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+        message: 'AI report generation is not available (LLM not configured)',
+      });
+    }
 
     const lang = language || 'pl';
     const langLabel = lang === 'pl' ? 'Polish' : 'English';
@@ -1005,6 +1011,17 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
         ? `\nAssessment answers summary: ${JSON.stringify(assessmentAnswers).slice(0, 3000)}`
         : '';
 
+    const pendingInserts: Array<{
+      sectionId: string;
+      sectionType: string;
+      axisId: string | null;
+      title: string;
+      content: string;
+      isAiGenerated: number;
+      orderIndex: number;
+      dataSnapshot: unknown;
+    }> = [];
+
     for (const spec of templateSections) {
       const sectionId = `sec-${uuidv4()}`;
       const sectionType = mapTemplateSectionType(spec.type, spec.key);
@@ -1012,17 +1029,11 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
       const orderIndex = Number(spec.order ?? 0);
       const axisId = spec.repeatFor === 'axis' ? String(spec.repeatKey || '') : null;
 
-      let content: string;
-      let isAiGenerated = 0;
-
-      // Generate content with LLM if available
-      if (llmService) {
-        try {
-          const systemPrompt = `You are a professional consulting report writer specializing in digital maturity assessments.
+      const systemPrompt = `You are a professional consulting report writer specializing in digital maturity assessments.
 Write in ${langLabel}. Use Markdown formatting. Be professional, insightful, and data-driven.
 Do NOT include placeholder text or "TBD" markers. Generate real, professional content.`;
 
-          const userPrompt = `Generate the "${title}" section (type: ${sectionType}) for a digital maturity assessment report.
+      const userPrompt = `Generate the "${title}" section (type: ${sectionType}) for a digital maturity assessment report.
 ${assessmentContext}${axisDataSummary}${answersSummary}
 ${axisId ? `\nThis section focuses on axis: ${axisId}` : ''}
 
@@ -1033,52 +1044,23 @@ Requirements:
 - Format: Professional Markdown with headers, bullet points, and structured content
 - Write real, actionable content based on the assessment data provided`;
 
-          const result = await llmService.call({
-            type: 'text',
-            modelConfig: { id: 'standard' },
-            systemPrompt,
-            messages: [{ role: 'user', content: userPrompt }],
-            maxTokens:
-              spec.defaultLength === 'short' ? 1024 : spec.defaultLength === 'long' ? 3072 : 2048,
-            temperature: 0.7,
-          });
+      const result = await llmService.call({
+        type: 'text',
+        modelConfig: { id: 'standard' },
+        systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+        maxTokens:
+          spec.defaultLength === 'short' ? 1024 : spec.defaultLength === 'long' ? 3072 : 2048,
+        temperature: 0.7,
+      });
 
-          const aiContent = String(result?.content || '');
-          if (aiContent.length >= 50) {
-            content = aiContent;
-            isAiGenerated = 1;
-          } else {
-            content = createDraftContent({
-              sectionType,
-              sectionTitle: title,
-              assessmentName: reportRow.assessmentName || 'Assessment',
-              assessmentType: String(reportRow.assessmentType || ''),
-              assessmentStatus: String(reportRow.assessmentStatus || ''),
-              axisId,
-            });
-          }
-        } catch (err: any) {
-          logger.error(
-            `[AssessmentReports] LLM generation failed for section ${title}:`,
-            err?.message
-          );
-          content = createDraftContent({
-            sectionType,
-            sectionTitle: title,
-            assessmentName: reportRow.assessmentName || 'Assessment',
-            assessmentType: String(reportRow.assessmentType || ''),
-            assessmentStatus: String(reportRow.assessmentStatus || ''),
-            axisId,
-          });
-        }
-      } else {
-        content = createDraftContent({
-          sectionType,
-          sectionTitle: title,
-          assessmentName: reportRow.assessmentName || 'Assessment',
-          assessmentType: String(reportRow.assessmentType || ''),
-          assessmentStatus: String(reportRow.assessmentStatus || ''),
-          axisId,
+      const aiContent = String(result?.content || '');
+      if (aiContent.length < 50) {
+        return res.status(503).json({
+          success: false,
+          error: 'SERVICE_UNAVAILABLE',
+          code: 'FEATURE_UNAVAILABLE',
+          message: 'AI report generation returned empty content',
         });
       }
 
@@ -1101,46 +1083,76 @@ Requirements:
         language: lang,
       };
 
-      await run(
-        `INSERT INTO assessment_report_sections (
-          id, report_id, section_type, axis_id, area_id, title, content, data_snapshot,
-          order_index, is_ai_generated, version, created_by, updated_by, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        [
-          sectionId,
-          reportId,
-          sectionType,
-          axisId,
-          null,
-          title,
-          content,
-          JSON.stringify(dataSnapshot),
-          orderIndex,
-          isAiGenerated,
-          1,
-          userId,
-          userId,
-        ]
-      );
+      pendingInserts.push({
+        sectionId,
+        sectionType,
+        axisId,
+        title,
+        content: aiContent,
+        isAiGenerated: 1,
+        orderIndex,
+        dataSnapshot,
+      });
     }
 
-    await run(
-      `UPDATE assessment_reports
-       SET template_id = ?, generation_params = ?, status = 'FINAL', updated_by = ?, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND organization_id = ?`,
-      [
-        resolvedTemplateId,
-        JSON.stringify({ templateId: resolvedTemplateId, language: lang }),
-        userId,
-        reportId,
-        organizationId,
-      ]
-    );
+    await run('BEGIN');
+    try {
+      // Wipe and rebuild sections
+      await run(`DELETE FROM assessment_report_sections WHERE report_id = ?`, [reportId]);
+
+      for (const row of pendingInserts) {
+        await run(
+          `INSERT INTO assessment_report_sections (
+            id, report_id, section_type, axis_id, area_id, title, content, data_snapshot,
+            order_index, is_ai_generated, version, created_by, updated_by, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          [
+            row.sectionId,
+            reportId,
+            row.sectionType,
+            row.axisId,
+            null,
+            row.title,
+            row.content,
+            JSON.stringify(row.dataSnapshot),
+            row.orderIndex,
+            row.isAiGenerated,
+            1,
+            userId,
+            userId,
+          ]
+        );
+      }
+
+      await run(
+        `UPDATE assessment_reports
+         SET template_id = ?, generation_params = ?, status = 'FINAL', updated_by = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND organization_id = ?`,
+        [
+          resolvedTemplateId,
+          JSON.stringify({ templateId: resolvedTemplateId, language: lang }),
+          userId,
+          reportId,
+          organizationId,
+        ]
+      );
+
+      await run('COMMIT');
+    } catch (txErr) {
+      await run('ROLLBACK');
+      throw txErr;
+    }
 
     return res.json({ success: true, reportId, templateId: resolvedTemplateId });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error generating report:', err);
-    return res.status(500).json({ error: 'Failed to generate report', message: err.message });
+    return res.status(503).json({
+      success: false,
+      error: 'SERVICE_UNAVAILABLE',
+      code: 'FEATURE_UNAVAILABLE',
+      message: 'AI report generation is unavailable',
+      details: { message: err?.message || String(err) },
+    });
   }
 });
 
@@ -1389,6 +1401,8 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     const current = String(sectionRow.content || '');
     const act = String(action || '').toLowerCase();
     let next = current;
+    let attempted = false;
+    let failedReason: string | null = null;
 
     // Try to use LLM service for AI actions
     let llmService: any = null;
@@ -1397,6 +1411,15 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
       llmService = mod.llmService || mod.default;
     } catch {
       logger.warn('[AssessmentReports] LLM service not available for AI action');
+    }
+
+    if (!llmService) {
+      return res.status(503).json({
+        success: false,
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+        message: 'AI report editing is not available (LLM not configured)',
+      });
     }
 
     const sectionContext = `Section: "${sectionRow.title}" (${sectionRow.section_type})\nAssessment: ${reportRow.assessmentName || 'Assessment'} (${reportRow.assessmentType || 'DRD'})`;
@@ -1439,6 +1462,7 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
 
       if (prompts) {
         try {
+          attempted = true;
           const result = await llmService.call({
             type: 'text',
             modelConfig: { id: 'standard' },
@@ -1448,52 +1472,29 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
             temperature: 0.7,
           });
           next = String(result?.content || current);
-          if (next.length < 20) next = current; // Safety fallback
+          if (next.length < 20) {
+            failedReason = 'AI returned empty content';
+            next = current;
+          }
         } catch (err: any) {
+          attempted = true;
+          failedReason = err?.message || 'AI action failed';
           logger.error('[AssessmentReports] LLM AI action failed:', err?.message);
-          // Fall through to stub fallbacks below
         }
       }
     }
 
-    // Fallbacks (only used if LLM is not available or failed)
-    if (next === current && !llmService) {
-      if (act === 'summarize') {
-        // Best-effort: truncate to first ~600 chars as a simple summary
-        next =
-          current.slice(0, 600) +
-          (current.length > 600
-            ? '\n\n_(AI summarization is currently unavailable. Showing truncated content.)_\n'
-            : '');
-      } else if (act === 'expand') {
-        // Return original content with a note – don't insert TODO markers
-        return res.status(503).json({
-          success: false,
-          error: 'AI service unavailable',
-          message: 'AI content expansion is temporarily unavailable. Please try again later.',
-        });
-      } else if (act === 'regenerate') {
-        next = createDraftContent({
-          sectionType: sectionRow.section_type as SectionType,
-          sectionTitle: sectionRow.title || 'Section',
-          assessmentName: reportRow.assessmentName || 'Assessment',
-          assessmentType: reportRow.assessmentType || '',
-          assessmentStatus: '',
-          axisId: sectionRow.axis_id || null,
-        });
-      } else if (act === 'improve') {
-        return res.status(503).json({
-          success: false,
-          error: 'AI service unavailable',
-          message: 'AI content improvement is temporarily unavailable. Please try again later.',
-        });
-      } else if (act === 'translate') {
-        return res.status(503).json({
-          success: false,
-          error: 'AI service unavailable',
-          message: 'AI translation is temporarily unavailable. Please try again later.',
-        });
-      }
+    if (!customPrompt && !['summarize', 'expand', 'regenerate', 'improve', 'translate'].includes(act)) {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
+
+    if (attempted && next === current) {
+      return res.status(503).json({
+        success: false,
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+        message: failedReason || 'AI action did not produce content',
+      });
     }
 
     const nextVersion = Number(sectionRow.version || 1) + 1;
@@ -1507,7 +1508,13 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
     return res.json({ success: true, content: next, version: nextVersion });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error AI action:', err);
-    return res.status(500).json({ error: 'Failed AI action', message: err.message });
+    return res.status(503).json({
+      success: false,
+      error: 'SERVICE_UNAVAILABLE',
+      code: 'FEATURE_UNAVAILABLE',
+      message: 'AI action failed',
+      details: { message: err?.message || String(err) },
+    });
   }
 });
 
@@ -1578,27 +1585,48 @@ router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
     if (!llmService) {
       return res.status(503).json({
         success: false,
-        error: 'AI service unavailable',
-        message: 'AI editing is temporarily unavailable. Please try again later.',
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+        message: 'AI editing is not available (LLM not configured)',
       });
     }
 
-    const result = await llmService.call({
-      type: 'text',
-      modelConfig: { id: 'standard' },
-      systemPrompt:
-        'You are a professional consulting report editor. Apply the user instruction to the provided content. Output only the edited content in Markdown format. Do not add explanations.',
-      messages: [
-        {
-          role: 'user',
-          content: `Section: "${sectionRow.title}"\n\nInstruction: ${instruction}\n\nContent:\n${currentContent}`,
-        },
-      ],
-      maxTokens: 4096,
-      temperature: 0.7,
-    });
+    let editedContent = currentContent;
+    try {
+      const result = await llmService.call({
+        type: 'text',
+        modelConfig: { id: 'standard' },
+        systemPrompt:
+          'You are a professional consulting report editor. Apply the user instruction to the provided content. Output only the edited content in Markdown format. Do not add explanations.',
+        messages: [
+          {
+            role: 'user',
+            content: `Section: "${sectionRow.title}"\n\nInstruction: ${instruction}\n\nContent:\n${currentContent}`,
+          },
+        ],
+        maxTokens: 4096,
+        temperature: 0.7,
+      });
 
-    const editedContent = String(result?.content || currentContent);
+      editedContent = String(result?.content || currentContent);
+      if (editedContent.length < 20) {
+        return res.status(503).json({
+          success: false,
+          error: 'SERVICE_UNAVAILABLE',
+          code: 'FEATURE_UNAVAILABLE',
+          message: 'AI editing returned empty content',
+        });
+      }
+    } catch (callErr: any) {
+      return res.status(503).json({
+        success: false,
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+        message: 'AI editing failed',
+        details: { message: callErr?.message || String(callErr) },
+      });
+    }
+
     const nextVersion = Number(sectionRow.version || 1) + 1;
 
     await run(
@@ -1611,7 +1639,13 @@ router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
     return res.json({ success: true, content: editedContent, version: nextVersion });
   } catch (err: any) {
     logger.error('[AssessmentReports] Error ai-edit:', err);
-    return res.status(500).json({ error: 'Failed AI edit', message: err.message });
+    return res.status(503).json({
+      success: false,
+      error: 'SERVICE_UNAVAILABLE',
+      code: 'FEATURE_UNAVAILABLE',
+      message: 'AI editing failed',
+      details: { message: err?.message || String(err) },
+    });
   }
 });
 

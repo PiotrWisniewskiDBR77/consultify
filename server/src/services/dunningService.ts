@@ -86,18 +86,63 @@ let auditService: AuditServiceInterface | null = null;
 
 async function getEmailService(): Promise<EmailServiceInterface | null> {
   if (!emailService) {
-    // const module = await import('../../services/emailService.js');
-    const module = {} as any; // Stubbed missing service
-    emailService = module.default || module;
+    try {
+      const module = await import('./emailService.js');
+      emailService = (module.default || module) as any;
+    } catch (err: unknown) {
+      logger.warn('[Dunning] EmailService unavailable:', (err as Error)?.message || String(err));
+      emailService = null;
+    }
   }
   return emailService;
 }
 
 async function getAuditService(): Promise<AuditServiceInterface | null> {
   if (!auditService) {
-    // const module = (await import('../../services/auditService.js')) as any;
-    const module = {} as any; // Stubbed missing service
-    auditService = module.logSystemEvent ? module : null;
+    try {
+      const module = await import('./auditService.js');
+      const base = (module.default || module) as any;
+
+      auditService = {
+        async logSystemEvent(
+          actionType: string,
+          entityType: string,
+          entityId: string,
+          orgId?: string | null,
+          metadata?: Record<string, unknown>
+        ): Promise<void> {
+          if (typeof base?.log === 'function') {
+            await base.log({
+              actorType: 'system',
+              action: `billing.${actionType}`,
+              actionCategory: 'billing',
+              resourceType: entityType,
+              resourceId: entityId,
+              organizationId: orgId ?? undefined,
+              metadata: metadata ?? {},
+              result: 'success',
+            });
+            return;
+          }
+
+          if (typeof module?.log === 'function') {
+            await module.log({
+              actorType: 'system',
+              action: `billing.${actionType}`,
+              actionCategory: 'billing',
+              resourceType: entityType,
+              resourceId: entityId,
+              organizationId: orgId ?? undefined,
+              metadata: metadata ?? {},
+              result: 'success',
+            });
+          }
+        },
+      };
+    } catch (err: unknown) {
+      logger.warn('[Dunning] AuditService unavailable:', (err as Error)?.message || String(err));
+      auditService = null;
+    }
   }
   return auditService;
 }

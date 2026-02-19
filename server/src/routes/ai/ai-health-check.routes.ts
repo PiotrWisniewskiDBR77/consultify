@@ -44,7 +44,7 @@ const router = Router();
 // ============================================================================
 
 interface SubsystemHealth {
-  status: 'healthy' | 'degraded' | 'unhealthy' | 'demo_mode' | 'not_implemented';
+  status: 'healthy' | 'degraded' | 'unhealthy';
   message?: string;
   details?: Record<string, unknown>;
   lastChecked: string;
@@ -84,14 +84,13 @@ interface AISystemHealthReport {
 // ============================================================================
 
 async function checkCloudIntegrations(): Promise<SubsystemHealth> {
-  // Cloud integrations are currently in demo mode
   return {
-    status: 'demo_mode',
-    message: 'Cloud integrations (Google Drive, OneDrive, Dropbox) are in demo mode',
+    status: 'unhealthy',
+    message: 'Cloud integrations (Google Drive, OneDrive, Dropbox) are not available',
     details: {
-      googleDrive: 'not_implemented',
-      oneDrive: 'not_implemented',
-      dropbox: 'not_implemented',
+      googleDrive: 'unavailable',
+      oneDrive: 'unavailable',
+      dropbox: 'unavailable',
       oauthConfigured: false,
     },
     lastChecked: new Date().toISOString(),
@@ -338,7 +337,7 @@ async function checkVectorDatabase(): Promise<SubsystemHealth> {
     }
 
     return {
-      status: hasEmbeddings ? 'degraded' : 'not_implemented',
+      status: hasEmbeddings ? 'degraded' : 'unhealthy',
       message: hasEmbeddings
         ? 'Vector database exists but OpenAI key not configured'
         : 'Embeddings table not found',
@@ -879,9 +878,9 @@ router.get(
       // Generate recommendations
       const recommendations: string[] = [];
 
-      if (cloudIntegrations.status === 'demo_mode') {
+      if (cloudIntegrations.status === 'unhealthy') {
         recommendations.push(
-          'Cloud integrations are in demo mode. Implement OAuth for Google Drive, OneDrive, and Dropbox.'
+          'Cloud integrations are unavailable. Implement OAuth for Google Drive, OneDrive, and Dropbox.'
         );
       }
 
@@ -952,7 +951,7 @@ router.get(
         quickChecks: {
           llmConfigured: hasOpenAI || hasGemini,
           voiceEnabled: hasOpenAI,
-          cloudIntegrations: 'demo_mode',
+          cloudIntegrations: 'unavailable',
           chatSystem: 'operational',
           historySystem: 'operational',
         },
@@ -1280,9 +1279,7 @@ router.get(
         llmManagement: llm,
       };
       const coreValues = Object.values(coreSubsystems);
-      const healthyCore = coreValues.filter(
-        (s) => s.status === 'healthy' || s.status === 'demo_mode'
-      ).length;
+      const healthyCore = coreValues.filter((s) => s.status === 'healthy').length;
 
       // 2. Circuit breaker status
       let circuitBreakers: Record<string, unknown> = {};

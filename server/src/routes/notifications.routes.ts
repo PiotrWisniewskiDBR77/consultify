@@ -157,18 +157,12 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const service = EscalationService;
 
-    // Check permissions - simple version for now
-    // In a real app we'd use a more robust policy engine
-    if (!(req as any).can || !(req as any).can('edit_project_settings')) {
-      // Fallback for when 'can' helper isn't available
-      if (
-        !req.user?.isSuperAdmin &&
-        req.user?.role !== 'administrator' &&
-        req.user?.role !== 'owner'
-      ) {
-        // Check if user is PM of this project
-        // This is just a placeholder logic
-      }
+    const role = (req as any).userRole || req.user?.role;
+    const canEditProject =
+      typeof (req as any).can === 'function' ? Boolean((req as any).can('edit_project_settings')) : false;
+    const isAdmin = role === 'ADMIN' || role === 'SUPERADMIN';
+    if (!isAdmin && !canEditProject) {
+      return res.status(403).json({ error: 'Forbidden' });
     }
 
     try {

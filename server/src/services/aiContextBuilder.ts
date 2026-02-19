@@ -79,11 +79,12 @@ async function getAISettingsService() {
   if (_aiSettingsServiceOverride) return _aiSettingsServiceOverride;
   if (!_aiSettingsService) {
     try {
-      // const mod = (await import('./aiSettingsService.js')) as any;
-      const mod = {} as any; // Stubbed missing service
-      _aiSettingsService = mod.default || mod.aiSettingsService || mod;
+      const mod = (await import('./aiSettingsService.js')) as any;
+      const svc = mod.default || mod.aiSettingsService || mod;
+      _aiSettingsService = svc && svc.__unavailable__ !== true ? svc : null;
     } catch (e: unknown) {
       logger.warn('[AIContextBuilder] AISettingsService not available');
+      _aiSettingsService = null;
     }
   }
   return _aiSettingsService;

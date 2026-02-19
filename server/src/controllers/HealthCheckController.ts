@@ -43,8 +43,7 @@ export class HealthCheckController {
     // For health reporting, treat Redis as connected if *either* is ready.
     try {
       if (process.env.MOCK_REDIS === 'true') {
-        // Local/dev mode: mocked Redis should be reported as available
-        health.redis = 'mock';
+        health.redis = 'mocked-unavailable';
       } else {
         const redisCheck = (async () => {
           let connected = false;
@@ -73,6 +72,10 @@ export class HealthCheckController {
       }
     } catch {
       health.redis = 'error';
+    }
+
+    if (health.redis !== 'connected') {
+      health.status = 'degraded';
     }
 
     res.json(health);
@@ -105,10 +108,8 @@ export class HealthCheckController {
 
     // Check Redis
     try {
-      // In local dev we often run without Redis (MOCK_REDIS=true).
-      // Treat mocked Redis as "ready" so the app can start cleanly.
       if (process.env.MOCK_REDIS === 'true') {
-        checks.redis = true;
+        checks.redis = false;
       } else {
         let connected = false;
 
