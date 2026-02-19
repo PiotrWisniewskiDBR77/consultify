@@ -5167,6 +5167,7 @@ export const Api = {
     id: string,
     updates: {
       title?: string;
+      titleSource?: 'auto' | 'user';
       starred?: boolean;
       archived?: boolean;
       tags?: string[];

@@ -121,6 +121,7 @@ const ConversationIdParamSchema = z.object({
 
 const UpdateConversationSchema = z.object({
   title: z.string().max(255).optional(),
+  titleSource: z.enum(['auto', 'user']).optional(),
   starred: z.boolean().optional(),
   archived: z.boolean().optional(),
   tags: z.array(z.string()).optional(),
@@ -447,7 +448,7 @@ router.patch(
       if (updates.title !== undefined) {
         setClauses.push('title = ?');
         setClauses.push('title_source = ?');
-        params.push(updates.title, 'user');
+        params.push(updates.title, updates.titleSource || 'user');
       }
 
       if (updates.starred !== undefined) {
