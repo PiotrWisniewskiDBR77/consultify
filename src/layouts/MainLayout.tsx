@@ -17,6 +17,7 @@ import { UserProfileMenu } from '../components/layout/UserProfileMenu';
 import { LLMSelector } from '../components/LLMSelector';
 import { BottomNavigation } from '../components/navigation/BottomNavigation';
 import { Sidebar } from '../components/navigation/Sidebar';
+import { OnboardingFirstLoginCTA } from '../components/Onboarding/OnboardingFirstLoginCTA';
 import { SystemHealth } from '../components/SystemHealth';
 import { TaskDropdown } from '../components/TaskDropdown';
 import { TrialExpiredGate } from '../components/Trial/TrialExpiredGate';
@@ -146,6 +147,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       {/* Demo Session Manager - Handles banner, tour, prompts, exit intent */}
       <DemoSessionManager />
+
+      {/* First-login onboarding CTA (dismissible) */}
+      <OnboardingFirstLoginCTA />
 
       {/* Impersonation Banner */}
       {currentUser?.impersonatorId && (

@@ -695,6 +695,7 @@
       "title": "Centrum Pomocy",
       "tabs": {
         "overview": "Przegląd",
+        "onboarding": "Onboarding",
         "faq": "FAQ",
         "knowledge": "Baza wiedzy"
       },
@@ -738,6 +739,137 @@
         },
         "notify": {
           "success": "Powiadomimy Cię, gdy będzie gotowe!"
+        }
+      }
+    },
+    "onboarding": {
+      "title": "Ścieżki onboardingu",
+      "subtitle": "Wybierz ścieżkę i działaj — każdy krok jest krótki, konkretny i prowadzi dokładnie tam, gdzie trzeba w aplikacji.",
+      "recommended": "Rekomendowane",
+      "morePaths": "Pozostałe ścieżki",
+      "completed": "Ukończone",
+      "empty": "Brak dostępnych ścieżek onboardingu.",
+      "back": "Wróć do listy ścieżek",
+      "whatYouGet": "Co zyskasz",
+      "expectedTime": "Szacowany czas",
+      "totalTime": "Szacowany czas",
+      "stepProgress": "Krok {{current}} z {{total}}",
+      "previous": "Wstecz",
+      "next": "Dalej",
+      "finish": "Zakończ",
+      "dismiss": "Ukryj",
+      "status": {
+        "available": "Dostępne",
+        "inProgress": "W trakcie",
+        "completed": "Ukończone"
+      },
+      "recommendation": {
+        "first30": "Najlepszy start do pierwszej wartości"
+      },
+      "cta": {
+        "tryItNow": "Wypróbuj teraz",
+        "openDashboard": "Otwórz dashboard",
+        "runAssessment": "Uruchom szybką ocenę",
+        "openInitiatives": "Otwórz inicjatywy",
+        "openRoadmap": "Otwórz roadmapę",
+        "openReports": "Otwórz raporty",
+        "startDiscovery": "Rozpocznij discovery",
+        "openAssessmentHub": "Otwórz moduł oceny",
+        "buildBacklog": "Zbuduj backlog inicjatyw",
+        "generateReport": "Wygeneruj snapshot dla interesariuszy",
+        "organizeRoadmap": "Ułóż roadmapę",
+        "trackExecution": "Śledź wykonanie",
+        "setupRoutines": "Ustaw rytuały PMO",
+        "toast": {
+          "title": "Zacznij onboarding",
+          "body": "Przejdź ścieżkę „Pierwsze 30 minut”, aby szybko dojść do pierwszej wartości — bez ścian tekstu, za to z konkretnymi krokami i linkami.",
+          "later": "Później",
+          "start": "Start"
+        }
+      },
+      "playbooks": {
+        "first30": {
+          "title": "Pierwsze 30 minut (Owner / Trial)",
+          "description": "Krótka ścieżka do pierwszej wartości: poznaj układ, zrób szybką ocenę i wyjdź z roadmapą, którą możesz pokazać zespołowi.",
+          "steps": {
+            "1": {
+              "title": "Orientacja w 2 minuty",
+              "content": "Szybko przejrzyj Dashboard, aby zrozumieć: co platforma śledzi, co jest priorytetem i „co dalej”.",
+              "whatYouGet": "Mentalny model platformy w jednym ekranie."
+            },
+            "2": {
+              "title": "Uruchom szybką ocenę",
+              "content": "Odpowiedz na krótki zestaw pytań — AI wskaże luki i podpowie inicjatywy o najwyższej dźwigni.",
+              "whatYouGet": "Bazę startową i pierwsze rekomendacje oparte o AI."
+            },
+            "3": {
+              "title": "Przejrzyj pierwsze inicjatywy",
+              "content": "Otwórz Inicjatywy i sprawdź, co wygenerowała platforma. Zostaw to, co pasuje, doprecyzuj ownerów i priorytety.",
+              "whatYouGet": "Backlog dopasowany do Twojego kontekstu."
+            },
+            "4": {
+              "title": "Zamień to w roadmapę",
+              "content": "Ułóż sekwencję inicjatyw w Roadmapie — realistycznie, z uwzględnieniem zależności i możliwości wykonawczych.",
+              "whatYouGet": "Plan, który da się dowieźć."
+            },
+            "5": {
+              "title": "Stwórz snapshot do udostępnienia",
+              "content": "Wygeneruj pierwszy raport dla interesariuszy — prosta narracja „gdzie jesteśmy / co robimy dalej”.",
+              "whatYouGet": "Snapshot gotowy do eksportu i udostępnienia."
+            }
+          }
+        },
+        "consultant": {
+          "title": "Szybki start konsultanta",
+          "description": "Ustrukturyzowany start discovery: zbierz kontekst, wygeneruj insighty i zbuduj wiarygodny backlog inicjatyw.",
+          "steps": {
+            "1": {
+              "title": "Zrób wywiad discovery",
+              "content": "Użyj trybu Interview, aby zebrać cele, ograniczenia i kryteria sukcesu w formie, do której łatwo wrócisz.",
+              "whatYouGet": "Czytelną bazę discovery do współdzielenia."
+            },
+            "2": {
+              "title": "Wybierz właściwą perspektywę oceny",
+              "content": "Dobierz widok oceny do engagementu. Zacznij lekko — możesz pogłębiać w kolejnych iteracjach.",
+              "whatYouGet": "Spójny framework do rozmów z klientem."
+            },
+            "3": {
+              "title": "Zbuduj backlog inicjatyw",
+              "content": "Przełóż luki na inicjatywy. Trzymaj je konkretne, z ownerem i miarą sukcesu — jakość ponad ilość.",
+              "whatYouGet": "Backlog gotowy do priorytetyzacji i budżetowania."
+            },
+            "4": {
+              "title": "Wygeneruj snapshot dla interesariuszy",
+              "content": "Stwórz raport, który opowiada historię: stan obecny → priorytety → kolejne 90 dni.",
+              "whatYouGet": "Deliverable, który można pokazać bez stresu."
+            }
+          }
+        },
+        "pmo": {
+          "title": "Szybki start PMO",
+          "description": "Szybko ustaw rytm governance: widoczność portfolio, sekwencjonowanie, tracking wykonania i tygodniowe rutyny.",
+          "steps": {
+            "1": {
+              "title": "Uzgodnij definicję sukcesu",
+              "content": "Skorzystaj z Dashboardu, aby ustalić kilka metryk i priorytetów, które mają znaczenie w tym kwartale.",
+              "whatYouGet": "Wspólne rozumienie „co jest ważne”."
+            },
+            "2": {
+              "title": "Ustrukturyzuj roadmapę",
+              "content": "Pogrupuj inicjatywy, ustaw zależności i trzymaj sekwencję uczciwą. Roadmapa ma być wykonalna, nie aspiracyjna.",
+              "whatYouGet": "Roadmapa portfolio z jasną sekwencją."
+            },
+            "3": {
+              "title": "Śledź wykonanie, nie aktywność",
+              "content": "W module Execution śledź wyniki i blokery — skup się na ograniczeniach, które spowalniają delivery.",
+              "whatYouGet": "Żywy obraz postępu i ograniczeń."
+            },
+            "4": {
+              "title": "Ustaw tygodniowe rutyny PMO",
+              "content": "Zbuduj rytm: tygodniowy przegląd, kolejka decyzji i jasny ownership kolejnych akcji.",
+              "whatYouGet": "Lekka kadencja governance, którą da się utrzymać."
+            }
+          }
         }
       }
     },
