@@ -82,14 +82,11 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
   const [importance, setImportance] = useState<'low' | 'normal' | 'high'>('normal');
   const [actionView, setActionView] = useState<AppView>(AppView.PORTFOLIO_ROADMAP);
 
-  const authHeaders = useMemo(() => {
+  const authHeaders = useMemo<Record<string, string>>(() => {
     const token = getAuthToken();
-    return token
-      ? {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      : { 'Content-Type': 'application/json' };
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
   }, [currentUser?.id]);
 
   const loadFeed = useCallback(async () => {
@@ -518,4 +515,3 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
 };
 
 export default FeatureUpdatesPanel;
-
