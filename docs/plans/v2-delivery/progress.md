@@ -57,7 +57,7 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 18 | T060–T061 | Cursor | planned |  | weekend/hard |
 | 19 | T062 | Codex | planned |  |  |
 | 20 | T063–T067 | Codex | planned |  |  |
-| 21 | T068–T069 | Codex | in_progress | bundle-21-onboarding-news | start: 2026-02-19 |
+| 21 | T068–T069 | Codex | in_review | bundle-21-onboarding-news | start: 2026-02-19; ready: 2026-02-19 |
 | 22 | T071–T073 (+T070 content) | Codex | planned |  |  |
 | 23 | T086 + T008 | Cursor | planned |  |  |
 | 24 | T087, T089, T090 | Codex | planned |  |  |
