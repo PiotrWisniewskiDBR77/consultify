@@ -295,6 +295,8 @@ interface ConversationState {
   isSidebarOpen: boolean;
   searchQuery: string;
   showArchived: boolean;
+  /** T002: Collapsed state for conversation list groups (today, yesterday, etc.). true = collapsed (hidden) */
+  collapsedConversationGroups: Record<string, boolean>;
 
   // Derived data (computed)
   groupedConversations: Record<ConversationGroup, Conversation[]>;
@@ -355,6 +357,7 @@ interface ConversationState {
   toggleSidebar: () => void;
   setSearchQuery: (query: string) => void;
   toggleShowArchived: () => void;
+  toggleConversationGroupCollapsed: (groupKey: string) => void;
   clearActiveChat: () => void;
 
   // Actions - Language
@@ -434,6 +437,7 @@ export const useConversationStore = create<ConversationState>()(
       isSidebarOpen: false,
       searchQuery: '',
       showArchived: false,
+      collapsedConversationGroups: {},
       groupedConversations: {
         pinned: [],
         today: [],
@@ -780,6 +784,18 @@ export const useConversationStore = create<ConversationState>()(
         set((state) => ({ showArchived: !state.showArchived }));
       },
 
+      toggleConversationGroupCollapsed: (groupKey) => {
+        set((state) => {
+          const current = state.collapsedConversationGroups[groupKey] ?? false;
+          return {
+            collapsedConversationGroups: {
+              ...state.collapsedConversationGroups,
+              [groupKey]: !current,
+            },
+          };
+        });
+      },
+
       clearActiveChat: () => {
         set({ activeConversationId: null, activeMessages: [] });
       },
@@ -1085,6 +1101,7 @@ export const useConversationStore = create<ConversationState>()(
       partialize: (state) => ({
         // Note: isSidebarOpen is NOT persisted - always start with sidebar closed to avoid blocking main content
         showArchived: state.showArchived,
+        collapsedConversationGroups: state.collapsedConversationGroups,
         displayMode: state.displayMode,
         activeConversationId: state.activeConversationId, // Persist active conversation across screens
         draftChatLanguage: state.draftChatLanguage,
