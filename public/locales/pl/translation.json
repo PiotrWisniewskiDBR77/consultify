@@ -2384,5 +2384,109 @@
       "timelineConstraintsHint": "Kluczowe terminy lub presja czasowa wpływająca na decyzje strategiczne — np. terminy regulacyjne, kamienie milowe zarządu, odnowienia umów.",
       "timelineConstraintsPlaceholder": "np. Zgodność z DORA do Q1 2027; migracja ERP przed odnowieniem licencji w paź. 2026"
     }
+  },
+  "access": {
+    "banner": {
+      "demo": "Przeglądasz środowisko demo (tylko odczyt)",
+      "pastDue": "Płatność nie powiodła się. Zaktualizuj metodę płatności, aby uniknąć przerwy w usłudze.",
+      "trialExpired": "Twój okres próbny wygasł. Przejdź na plan płatny, aby kontynuować.",
+      "trialCritical": "Okres próbny wygasa za {{days}} dni. Przejdź na plan płatny, aby zachować pełny dostęp.",
+      "trialWarning": "Pozostało {{days}} dni okresu próbnego",
+      "approachingLimits": "Zbliżasz się do limitów użycia. Rozważ upgrade, aby korzystać bez przerw."
+    },
+    "modal": {
+      "trialExpired": "Twój okres próbny się zakończył. Twoje dane są bezpieczne, ale organizacja jest teraz w trybie tylko do odczytu. Przejdź na plan płatny, aby przywrócić pełny dostęp.",
+      "title": "Wymagany dostęp",
+      "close": "Zamknij",
+      "bookCall": "Umów rozmowę"
+    },
+    "cta": {
+      "upgradePlan": "Zmień plan",
+      "upgradeNow": "Przejdź na płatny",
+      "fixPayment": "Napraw płatność",
+      "addPaymentMethod": "Dodaj metodę płatności",
+      "startTrial": "Rozpocznij okres próbny",
+      "completeSetup": "Dokończ konfigurację",
+      "goToBilling": "Przejdź do rozliczeń",
+      "contactSales": "Skontaktuj się ze sprzedażą"
+    },
+    "blocked": {
+      "ORG_NOT_FOUND": "Organizacja nie znaleziona. Zaloguj się ponownie, aby odświeżyć sesję.",
+      "ORG_INACTIVE": "Twoja organizacja jest nieaktywna. Skontaktuj się z pomocą lub zaloguj ponownie.",
+      "TRIAL_PROFILE_INCOMPLETE": "Dokończ konfigurację organizacji, aby rozpocząć korzystanie z AI.",
+      "AI_TOKEN_BUDGET_EXCEEDED": "Budżet AI w okresie próbnym został wykorzystany. Dodaj metodę płatności, aby kontynuować.",
+      "AI_LIMIT_REACHED": "Osiągnięto dzienny limit wywołań AI. Przejdź na wyższy plan.",
+      "TRIAL_EXPIRED": "Twój okres próbny wygasł. Przejdź na plan płatny, aby korzystać ze wszystkich funkcji.",
+      "DEMO_READ_ONLY": "Tryb demo jest tylko do odczytu. Rozpocznij okres próbny, aby tworzyć własne dane.",
+      "DEMO_TIME_EXPIRED": "Sesja demo wygasła. Rozpocznij okres próbny, aby kontynuować.",
+      "DEMO_AI_SESSION_LIMIT_REACHED": "Limit sesji AI w demo osiągnięty. Rozpocznij okres próbny.",
+      "PROJECT_LIMIT_REACHED": "Limit projektów osiągnięty. Przejdź na wyższy plan.",
+      "INITIATIVE_LIMIT_REACHED": "Limit inicjatyw osiągnięty. Przejdź na wyższy plan.",
+      "USER_LIMIT_REACHED": "Limit użytkowników osiągnięty. Przejdź na wyższy plan.",
+      "STORAGE_LIMIT_REACHED": "Limit przestrzeni osiągnięty. Przejdź na wyższy plan.",
+      "SUBSCRIPTION_PAST_DUE": "Płatność nie powiodła się. Zaktualizuj metodę płatności.",
+      "SUBSCRIPTION_CANCELLED": "Twoja subskrypcja została anulowana.",
+      "INSUFFICIENT_TOKENS": "Niewystarczająca liczba tokenów. Dodaj metodę płatności lub zmień plan.",
+      "default": "Ta akcja jest zablokowana na Twoim poziomie dostępu."
+    },
+    "upgrade": {
+      "title": "Zmień plan",
+      "subtitle": "Wybierz plan najlepszy dla Twojego zespołu",
+      "currentPlan": "Aktualny plan",
+      "selectPlan": "Wybierz plan",
+      "processing": "Przetwarzanie...",
+      "popular": "Najpopularniejszy",
+      "features": "Funkcje",
+      "perMonth": "/mies.",
+      "perUser": "/użytkownik",
+      "unlimited": "Bez limitu",
+      "included": "W zestawie",
+      "notIncluded": "Niedostępne",
+      "comparePlans": "Porównaj plany",
+      "whatChanges": "Co się zmieni po upgrade",
+      "instantUnlock": "Wszystkie limity usunięte natychmiast po upgrade",
+      "checkout": {
+        "title": "Dokończ upgrade",
+        "selectPayment": "Wybierz metodę płatności",
+        "addCard": "Dodaj kartę kredytową",
+        "confirm": "Potwierdź i przejdź na wyższy plan",
+        "processing": "Przetwarzanie płatności...",
+        "success": "Upgrade zakończony sukcesem! Wszystkie limity zostały usunięte.",
+        "failed": "Płatność nie powiodła się. Spróbuj ponownie lub użyj innej metody płatności.",
+        "cancel": "Anuluj"
+      },
+      "subscription": {
+        "trialing": "Okres próbny",
+        "active": "Aktywna",
+        "past_due": "Płatność nie powiodła się",
+        "cancelled": "Anulowana",
+        "fixPayment": "Napraw metodę płatności",
+        "reactivate": "Reaktywuj subskrypcję"
+      }
+    }
+  },
+  "legal": {
+    "modal": {
+      "title": "Wymagana aktualizacja dokumentów",
+      "subtitle": "Proszę przejrzeć i zaakceptować poniższe dokumenty, aby kontynuować.",
+      "accept": "Akceptuję i kontynuuję",
+      "disclaimer": "Klikając Akceptuję, zgadzasz się na warunki tych dokumentów."
+    },
+    "accepting": "Przetwarzanie...",
+    "orgAdmin": "Umowa organizacji",
+    "dpaPendingOrgAdmin": "Umowa powierzenia przetwarzania danych wymaga akceptacji przez administratora organizacji.",
+    "myAcceptances": {
+      "title": "Moje akceptacje",
+      "noAcceptances": "Brak zapisanych akceptacji.",
+      "acceptedAt": "Zaakceptowano",
+      "version": "Wersja"
+    },
+    "center": {
+      "title": "Centrum prawne",
+      "subtitle": "Wszystkie dokumenty prawne regulujące korzystanie z Consultinity.",
+      "coreAgreements": "Podstawowe umowy",
+      "businessBilling": "Biznes i rozliczenia",
+      "securityCompliance": "Bezpieczeństwo i zgodność"
+    }
   }
 }

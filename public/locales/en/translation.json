@@ -2366,5 +2366,109 @@
       "timelineConstraintsHint": "Key deadlines or time pressures affecting strategic decisions — e.g., regulatory deadlines, board milestones, contract renewals.",
       "timelineConstraintsPlaceholder": "e.g., DORA compliance by Q1 2027; ERP migration must finish before license renewal in Oct 2026"
     }
+  },
+  "access": {
+    "banner": {
+      "demo": "You are viewing a demo environment (read-only)",
+      "pastDue": "Payment failed. Please update your payment method to avoid service interruption.",
+      "trialExpired": "Your trial has expired. Upgrade to continue.",
+      "trialCritical": "Trial expires in {{days}} day(s). Upgrade now to keep full access.",
+      "trialWarning": "{{days}} day(s) left in your trial",
+      "approachingLimits": "You are approaching your usage limits. Consider upgrading for uninterrupted access."
+    },
+    "modal": {
+      "trialExpired": "Your trial period has ended. Your data is safe, but your organization is now in read-only mode. Upgrade to restore full access.",
+      "title": "Access required",
+      "close": "Close",
+      "bookCall": "Book a call"
+    },
+    "cta": {
+      "upgradePlan": "Upgrade Plan",
+      "upgradeNow": "Upgrade Now",
+      "fixPayment": "Fix Payment",
+      "addPaymentMethod": "Add Payment Method",
+      "startTrial": "Start Free Trial",
+      "completeSetup": "Complete Setup",
+      "goToBilling": "Go to Billing",
+      "contactSales": "Contact Sales"
+    },
+    "blocked": {
+      "ORG_NOT_FOUND": "Organization not found. Please log in again to refresh your session.",
+      "ORG_INACTIVE": "Your organization is inactive. Please contact support or log in again.",
+      "TRIAL_PROFILE_INCOMPLETE": "Complete organization setup to start your trial AI experience.",
+      "AI_TOKEN_BUDGET_EXCEEDED": "Your trial AI budget has been used. Add a payment method to continue using AI.",
+      "AI_LIMIT_REACHED": "You have reached your daily AI call limit. Upgrade to continue.",
+      "TRIAL_EXPIRED": "Your trial has expired. Upgrade to continue using all features.",
+      "DEMO_READ_ONLY": "Demo mode is read-only. Start a free trial to create your own data.",
+      "DEMO_TIME_EXPIRED": "Demo session has expired. Start a free trial to continue.",
+      "DEMO_AI_SESSION_LIMIT_REACHED": "Demo AI session limit reached. Start a free trial for more.",
+      "PROJECT_LIMIT_REACHED": "Project limit reached. Upgrade to create more projects.",
+      "INITIATIVE_LIMIT_REACHED": "Initiative limit reached. Upgrade to create more initiatives.",
+      "USER_LIMIT_REACHED": "User limit reached. Upgrade to invite more team members.",
+      "STORAGE_LIMIT_REACHED": "Storage limit reached. Upgrade for more storage.",
+      "SUBSCRIPTION_PAST_DUE": "Payment failed. Please update your payment method.",
+      "SUBSCRIPTION_CANCELLED": "Your subscription has been cancelled.",
+      "INSUFFICIENT_TOKENS": "Insufficient tokens. Add a payment method or upgrade your plan.",
+      "default": "This action is blocked in your current access level."
+    },
+    "upgrade": {
+      "title": "Upgrade Your Plan",
+      "subtitle": "Choose the plan that works best for your team",
+      "currentPlan": "Current Plan",
+      "selectPlan": "Select Plan",
+      "processing": "Processing...",
+      "popular": "Most Popular",
+      "features": "Features",
+      "perMonth": "/month",
+      "perUser": "/user",
+      "unlimited": "Unlimited",
+      "included": "Included",
+      "notIncluded": "Not included",
+      "comparePlans": "Compare Plans",
+      "whatChanges": "What changes after upgrade",
+      "instantUnlock": "All limits removed instantly after upgrade",
+      "checkout": {
+        "title": "Complete Your Upgrade",
+        "selectPayment": "Select payment method",
+        "addCard": "Add a credit card",
+        "confirm": "Confirm & Upgrade",
+        "processing": "Processing payment...",
+        "success": "Upgrade successful! All limits have been removed.",
+        "failed": "Payment failed. Please try again or use a different payment method.",
+        "cancel": "Cancel"
+      },
+      "subscription": {
+        "trialing": "Trial",
+        "active": "Active",
+        "past_due": "Payment Failed",
+        "cancelled": "Cancelled",
+        "fixPayment": "Fix Payment Method",
+        "reactivate": "Reactivate Subscription"
+      }
+    }
+  },
+  "legal": {
+    "modal": {
+      "title": "Legal Updates Required",
+      "subtitle": "Please review and accept the following documents to continue.",
+      "accept": "Accept and Continue",
+      "disclaimer": "By clicking Accept, you agree to be bound by these documents."
+    },
+    "accepting": "Processing...",
+    "orgAdmin": "Organization Agreement",
+    "dpaPendingOrgAdmin": "The Data Processing Addendum requires acceptance by an organization administrator.",
+    "myAcceptances": {
+      "title": "My Legal Acceptances",
+      "noAcceptances": "No acceptances recorded yet.",
+      "acceptedAt": "Accepted at",
+      "version": "Version"
+    },
+    "center": {
+      "title": "Legal Center",
+      "subtitle": "All legal documents governing the use of Consultinity.",
+      "coreAgreements": "Core Agreements",
+      "businessBilling": "Business & Billing",
+      "securityCompliance": "Security & Compliance"
+    }
   }
 }
