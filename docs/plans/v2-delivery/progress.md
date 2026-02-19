@@ -61,7 +61,7 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 22 | T071–T073 (+T070 content) | Codex | planned |  |  |
 | 23 | T086 + T008 | Cursor | planned |  |  |
 | 24 | T087, T089, T090 | Codex | planned |  |  |
-| 25 | T091–T092 | Cursor | planned |  |  |
+| 25 | T091–T092 | Cursor | in_progress | bundle-25-trial-upgrade | Started 2026-02-19 |
 | 26 | T093 | Cursor | planned |  |  |
 | 27 | T094–T095 | Codex | planned |  | content-heavy |
 | 28 | T096–T098 | Codex | planned |  |  |
