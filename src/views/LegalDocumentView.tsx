@@ -201,8 +201,26 @@ export const LegalDocumentView: React.FC = () => {
   const fetchDocument = async (type: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/legal/document/${type}`);
 
+      // Try new V2 endpoint first, fall back to legacy
+      let response = await fetch(`/api/legal/active/${type}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        setDocument({
+          id: data.id,
+          doc_type: data.docType,
+          version: data.version,
+          title: data.title,
+          content_md: data.contentMd || '',
+          effective_from: data.effectiveFrom || '',
+          created_at: data.createdAt || '',
+        });
+        return;
+      }
+
+      // Fallback to legacy endpoint
+      response = await fetch(`/api/legal/document/${type}`);
       if (!response.ok) {
         throw new Error('Failed to load document');
       }

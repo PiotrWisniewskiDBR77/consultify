@@ -163,6 +163,8 @@ export const ROUTES = {
     PRIVACY: '/privacy',
     COOKIES: '/cookies',
     SECURITY: '/security',
+    CENTER: '/legal',
+    DOCUMENT: '/legal/:docSlug',
   },
 
   // Status & Changelog
