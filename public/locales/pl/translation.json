@@ -696,6 +696,7 @@
       "tabs": {
         "overview": "Przegląd",
         "onboarding": "Onboarding",
+        "updates": "Co nowego",
         "faq": "FAQ",
         "knowledge": "Baza wiedzy"
       },
@@ -870,6 +871,55 @@
               "whatYouGet": "Lekka kadencja governance, którą da się utrzymać."
             }
           }
+        }
+      }
+    },
+    "updates": {
+      "title": "Co nowego",
+      "subtitle": "Aktualizacje produktu, ulepszenia i release notes.",
+      "unread": "{{count}} nieprzeczytane",
+      "back": "Wróć do listy aktualizacji",
+      "empty": "Na razie brak aktualizacji.",
+      "tryItNow": "Wypróbuj teraz",
+      "importance": {
+        "low": "Niska",
+        "normal": "Normalna",
+        "high": "Wysoka"
+      },
+      "errors": {
+        "load": "Nie udało się wczytać aktualizacji"
+      },
+      "admin": {
+        "hint": "Opublikuj aktualizację dla użytkowników.",
+        "new": "Nowa aktualizacja",
+        "composeTitle": "Publikuj aktualizację",
+        "publish": "Opublikuj",
+        "success": "Opublikowano aktualizację",
+        "recent": "Ostatnie (admin)",
+        "notice": "Publikacja tworzy powiadomienie w aplikacji. Email jest wysyłany tylko wtedy, gdy SMTP jest skonfigurowane i throttling na to pozwala.",
+        "errors": {
+          "required": "Tytuł i treść są wymagane",
+          "publish": "Nie udało się opublikować aktualizacji"
+        },
+        "fields": {
+          "title": "Tytuł",
+          "body": "Treść (Markdown)",
+          "tags": "Tagi (moduły)",
+          "importance": "Ważność",
+          "tryItNow": "Cel \"Wypróbuj teraz\""
+        },
+        "placeholders": {
+          "title": "Krótko i konkretnie",
+          "body": "Pisz krótkimi sekcjami, używaj bulletów i zakończ wskazówką „Wypróbuj teraz”.",
+          "tags": "np. roadmap, reports"
+        },
+        "views": {
+          "dashboard": "Dashboard",
+          "assessment": "Ocena",
+          "initiatives": "Inicjatywy",
+          "roadmap": "Roadmapa",
+          "reports": "Raporty",
+          "aiChat": "AI Chat"
         }
       }
     },

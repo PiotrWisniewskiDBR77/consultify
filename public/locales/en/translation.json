@@ -1207,6 +1207,7 @@
       "tabs": {
         "overview": "Overview",
         "onboarding": "Onboarding",
+        "updates": "What's new",
         "faq": "FAQ",
         "knowledge": "Knowledge Base"
       },
@@ -1381,6 +1382,55 @@
               "whatYouGet": "A lightweight governance cadence your team can sustain."
             }
           }
+        }
+      }
+    },
+    "updates": {
+      "title": "What's new",
+      "subtitle": "Product updates, improvements, and release notes.",
+      "unread": "{{count}} unread",
+      "back": "Back to updates",
+      "empty": "No updates yet.",
+      "tryItNow": "Try it now",
+      "importance": {
+        "low": "Low",
+        "normal": "Normal",
+        "high": "High"
+      },
+      "errors": {
+        "load": "Failed to load updates"
+      },
+      "admin": {
+        "hint": "Publish an update for your users.",
+        "new": "New update",
+        "composeTitle": "Publish update",
+        "publish": "Publish",
+        "success": "Update published",
+        "recent": "Recent (admin)",
+        "notice": "Publishing sends an in-app notification. Email is sent only if SMTP is configured and throttling allows it.",
+        "errors": {
+          "required": "Title and body are required",
+          "publish": "Failed to publish update"
+        },
+        "fields": {
+          "title": "Title",
+          "body": "Body (Markdown)",
+          "tags": "Tags (modules)",
+          "importance": "Importance",
+          "tryItNow": "\"Try it now\" target"
+        },
+        "placeholders": {
+          "title": "Short and specific",
+          "body": "Write short sections, include bullets, and end with a “Try it now” hint.",
+          "tags": "e.g. roadmap, reports"
+        },
+        "views": {
+          "dashboard": "Dashboard",
+          "assessment": "Assessment",
+          "initiatives": "Initiatives",
+          "roadmap": "Roadmap",
+          "reports": "Reports",
+          "aiChat": "AI Chat"
         }
       }
     },

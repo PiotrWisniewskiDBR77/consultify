@@ -76,6 +76,7 @@ import helpRoutes from './routes/help.routes.js';
 import helpAnalyticsRoutes from './routes/helpAnalytics.routes.js';
 import helpChatRoutes from './routes/helpChat.routes.js';
 import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
+import featureUpdatesRoutes from './routes/featureUpdates.routes.js';
 import initiativeGeneratorRoutes from './routes/initiative-generator.routes.js';
 import calendarIntegrationsRoutes from './routes/integrations/calendarIntegrations.routes.js';
 import connectorRoutes from './routes/integrations/connectors.routes.js';
@@ -486,6 +487,7 @@ export class ApiGateway {
       app.use('/api/help', helpRoutes);
       mountStub('/api/help', helpFeedbackRoutes, 'helpFeedbackRoutes');
       app.use('/api/help', helpChatRoutes);
+      app.use('/api/updates', featureUpdatesRoutes);
       mountStub('/api/help-analytics', helpAnalyticsRoutes, 'helpAnalyticsRoutes');
       mountStub('/api/videos', videoRoutes, 'videoRoutes');
       mountStub('/api/status', statusRoutes, 'statusRoutes');
