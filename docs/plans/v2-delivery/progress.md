@@ -90,26 +90,32 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 - **Bundle 10** (Cursor B): merged T039 Timeline (filters, warnings, drag-to-move, audit log) + T040 Risk signaling (RiskSignalsPanel, MitigationPanel, riskDetectionService).
 - **Bundle 05** (Codex): applied stashed WIP — flow steps (Impact/Results/Reasoning/Prepare/Report/Initiatives), Speed Tool wizard, migracja 562.
 
-## Wave 6 (2026-02-20) — IN PROGRESS
+## Wave 6 (2026-02-20) — CLOSED
 
 | Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
 |---|---|---|---|---|---|
-| 07 | T028, T030, T031 | bundle-07-licensed-tools-advanced | Cursor A | in_progress | Lean 4.0, PDF import, paid assessments |
-| 10.2 (slice) | T041–T042 | bundle-10-execution-t041-t042 | Cursor B | in_progress | Delay detection + Budget control |
-| 11 | T043–T045 | bundle-11-execution-people-change-comms | Codex | in_progress | Capability, sentiment, stakeholder comms |
+| 07 | T028, T030, T031 | bundle-07-licensed-tools-advanced | Cursor A | **merged** | Lean 4.0, PDF import, paid assessments (migracja 563) |
+| 10.2 (slice) | T041–T042 | bundle-10-execution-t041-t042 | Cursor B | **merged** | Delay detection + Budget control (migracja 564) |
+| 11 | T043–T045 | codex/bundle-11-execution-people-change-comms | Codex | in_progress | Branch zmergowany (tylko docs); kod T043–T045 — gdy Codex pushuje |
 
 **Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_6.md`
 
-## Wave 6.5 (2026-02-20) — Cursor-only (równolegle do Codex Bundle 11)
+### Wave 6 — merge wykonane (2026-02-20)
+- **Bundle 07** (Cursor A): merged T028 Lean 4.0, T030 PDF import, T031 Paid Assessments Integration.
+- **Bundle 10** (Cursor B): merged T041 Delay Detection + T042 Budget Planning (migracja 564).
 
-Codex jest z tyłu — odpalamy 2 bundley Cursor w obszarach **bez konfliktu** z Bundle 11. Merge: najpierw 6+6.5, potem Bundle 11.
+## Wave 6.5 (2026-02-20) — CLOSED
 
 | Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
 |---|---|---|---|---|---|
-| 12 | T046–T049 | bundle-12-benefits-kpi-finance | Cursor A | in_progress | Benefits/KPI/Finance mapping |
-| 23 | T086 + T008 | bundle-23-admin-sync-hub | Cursor B | in_progress | Admin Sync Hub + guardrails |
+| 12 | T046–T049 | bundle-12-benefits-kpi-finance | Cursor A | **merged** | Benefits/KPI/Finance mapping (migracja 565) |
+| 23 | T086 + T008 | bundle-23-admin-sync-hub | Cursor B | **merged** | Admin Sync Hub + guardrails (migracja 566) |
 
 **Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_6_5.md`
+
+### Wave 6.5 — merge wykonane (2026-02-20)
+- **Bundle 12** (Cursor A): merged T046–T049 ROI, KPI mapping, attribution, financial mapping.
+- **Bundle 23** (Cursor B): merged T086 Sync Hub + T008 guardrails (UnifiedSyncHub, syncGuardrailsService).
 
 ---
 
@@ -136,12 +142,12 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 04 | T018-T021 | Codex | **merged** | codex/bundle-04-tools-hub-v3 | Wave 4: Tools hub + library (migracja 559) |
 | 05 | T019, T022-T024 | Codex | **merged** | main | Wave 5: toolsets + Speed Tool (migracja 562) |
 | 06 | T025-T027 | Cursor | **merged** | bundle-06-licensed-tools-t026-t027 | Wave 3: T025; Wave 5: T026-T027 merged |
-| 07 | T028, T030, T031 | Cursor | in_progress | bundle-07-licensed-tools-advanced | Wave 6 |
+| 07 | T028, T030, T031 | Cursor | **merged** | bundle-07-licensed-tools-advanced | Wave 6 (migracja 563) |
 | 08 | T032-T033 | Cursor | **merged** | bundle-22-help-t071-t073 | Wave 4: AI authoring + gate readiness |
 | 09 | T034-T038 | Codex | planned | | |
-| 10 | T039-T042 | Cursor | in_progress | bundle-10-execution-t041-t042 | Wave 5: T039-T040 merged; Wave 6: T041-T042 |
+| 10 | T039-T042 | Cursor | **merged** | bundle-10-execution-t041-t042 | Wave 5: T039-T040; Wave 6: T041-T042 (migracja 564) |
 | 11 | T043-T045 | Codex | in_progress | bundle-11-execution-people-change-comms | Wave 6 |
-| 12 | T046-T049 | Cursor | in_progress | bundle-12-benefits-kpi-finance | Wave 6.5 |
+| 12 | T046-T049 | Cursor | **merged** | bundle-12-benefits-kpi-finance | Wave 6.5 (migracja 565) |
 | 13 | T050-T051 | Codex | planned | | |
 | 14 | T052-T053 | Codex | planned | | |
 | 15 | T054 | Cursor | planned | | weekend/hard |
@@ -152,7 +158,7 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 20 | T063-T067 | Codex | planned | | |
 | 21 | T068-T069 | Codex | **merged** | bundle-21-onboarding-news | Wave 1 |
 | 22 | T071-T073 (+T070 content) | Cursor | **merged** | bundle-22-help-t071-t073 | Wave 4: T071+T073 (T072 done in pilot) |
-| 23 | T086 + T008 | Cursor | in_progress | bundle-23-admin-sync-hub | Wave 6.5 |
+| 23 | T086 + T008 | Cursor | **merged** | bundle-23-admin-sync-hub | Wave 6.5 (migracja 566) |
 | 24 | T087, T089, T090 | Codex | planned | | |
 | 25 | T091-T092 | Cursor | **merged** | bundle-25-trial-upgrade | Wave 1 |
 | 26 | T093 | Cursor | **merged** | bundle-26-legal-acceptance | Wave 1 |
