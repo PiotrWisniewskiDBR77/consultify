@@ -27,6 +27,7 @@ import {
   Users,
   Wand2,
   X,
+  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -52,6 +53,7 @@ import {
 import { PortfolioHealthReport } from './PortfolioHealthReport';
 import { RaidReport } from './RaidReport';
 import { ReportGeneratorDrawer } from './ReportGeneratorDrawer';
+import { ReportingAutomationWorkspace } from './ReportingAutomationWorkspace';
 import { SteeringCommitteeReport } from './SteeringCommitteeReport';
 import { TeamMeetingReport } from './TeamMeetingReport';
 
@@ -263,6 +265,11 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         label: 'Schedules',
         icon: <CalendarClock size={16} />,
         count: schedules.filter((s) => s.isActive).length,
+      },
+      {
+        id: 'automation' as ModuleTab,
+        label: 'Automation',
+        icon: <Zap size={16} />,
       },
     ],
     [filteredReports.length, templates.length, schedules]
@@ -943,6 +950,11 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           emptyMessage="No schedules found."
         />
       );
+    }
+
+    // Tab: Automation (T062)
+    if (activeTab === ('automation' as ModuleTab)) {
+      return <ReportingAutomationWorkspace />;
     }
 
     return null;

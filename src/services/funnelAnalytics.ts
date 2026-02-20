@@ -175,7 +175,14 @@ export type FunnelEventName =
   | 'budget_created'
   | 'budget_scenario_updated'
   | 'budget_approved'
-  | 'budget_exported';
+  | 'budget_exported'
+  | 'report_schedule_created'
+  | 'report_schedule_updated'
+  | 'report_schedule_paused'
+  | 'report_schedule_trigger_fired'
+  | 'report_schedule_run_completed'
+  | 'report_schedule_delivery_sent'
+  | 'report_schedule_delivery_failed';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {
