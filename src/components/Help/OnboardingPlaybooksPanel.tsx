@@ -135,7 +135,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
     );
   }
 
-  if (selected && selected.steps?.length) {
+  if (selected && selected.steps?.length && currentStep) {
     const total = selected.steps.length;
     const pct = Math.round(((stepIndex + 1) / total) * 100);
 
@@ -190,7 +190,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
                     <Circle size={16} className="text-slate-300 dark:text-slate-600 flex-shrink-0" />
                   )}
                   <span className="text-xs text-slate-700 dark:text-slate-200 truncate">
-                    {t(s.title, s.id || String(idx + 1))}
+                    {String(t(s.title, s.id || String(idx + 1)))}
                   </span>
                 </button>
               );

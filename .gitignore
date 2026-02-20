@@ -183,3 +183,9 @@ _analysis/
 
 # Cursor IDE workspace
 .cursor/
+
+# Client data (never commit)
+Plast-met/
+
+# Duplicate lib artifacts
+lib/

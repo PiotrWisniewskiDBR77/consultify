@@ -10,6 +10,8 @@
 | Konflikty w `translation.json` (3 agenty dodają klucze) | Instrukcja: dodawaj klucze na KOŃCU pliku, w bloku oznaczonym komentarzem bundla |
 | Codex dał słabszy raport | Sztywny template raportu z wymaganymi sekcjami |
 | Hardcoded wartości w UI | Zasada: dane konfiguracyjne z DB/config, nie hardcode w komponentach |
+| Agent dodał nowe analytics events ale nie rozszerzył typu `FunnelEventName` | Instrukcja: jeśli dodajesz nowe eventy analytics, rozszerz `FunnelEventName` w `src/services/funnelAnalytics.ts` |
+| Codex nie obsłużył nullable w TypeScript (currentStep possibly null) | Instrukcja: zawsze obsługuj nullable — TypeScript strict mode |
 
 ---
 
@@ -64,6 +66,14 @@ Pliki do edycji (istniejące):
 - N-mode (page-first) jako domyślny. C-mode (action-first) jako opcja.
 - Shared components: `src/components/shared/NModeSections/`, `NModeBlocks/`, `NModeLayout/`
 - Ikony: `lucide-react` (canonical icon set).
+
+### Analytics events
+- Jeśli dodajesz nowe analytics events (np. `upgrade_cta_clicked`), MUSISZ rozszerzyć typ `FunnelEventName` w `src/services/funnelAnalytics.ts`.
+- Bez tego TypeScript zgłosi błąd.
+
+### TypeScript strict mode
+- Projekt używa strict TypeScript. Zawsze obsługuj nullable (np. `| null`, `| undefined`).
+- Jeśli zmienna może być null, dodaj guard (`if (!x) return;`) PRZED użyciem.
 
 ### Testy — pre-existing failures
 - W repo są pre-existing lint errors i test failures (np. backup files, LLM-related tests).
@@ -177,6 +187,12 @@ Pliki do edycji (istniejące):
 ### UI Standards
 - Przeczytaj `docs/ui-standards/README.md` PRZED edycją UI.
 - N-mode (page-first) domyślny. Ikony: `lucide-react`.
+
+### Analytics events
+- Jeśli dodajesz nowe analytics events, rozszerz typ `FunnelEventName` w `src/services/funnelAnalytics.ts`.
+
+### TypeScript strict mode
+- Zawsze obsługuj nullable (`| null`, `| undefined`). Dodaj guard przed użyciem.
 
 ### Testy — pre-existing failures
 - W repo są pre-existing lint/test failures. **Ignoruj je.**

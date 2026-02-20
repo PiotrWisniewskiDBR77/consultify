@@ -3,7 +3,14 @@ export type FunnelEventName =
   | 'demo_session_started'
   | 'trial_org_setup_completed'
   | 'billing_payment_method_added'
-  | 'ai_access_blocked';
+  | 'ai_access_blocked'
+  | 'upgrade_cta_clicked'
+  | 'upgrade_viewed'
+  | 'plan_selected'
+  | 'checkout_started'
+  | 'checkout_completed'
+  | 'checkout_failed'
+  | 'subscription_cancelled';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

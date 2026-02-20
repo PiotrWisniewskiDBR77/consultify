@@ -76,6 +76,7 @@ interface PaymentMethod {
   isDefault: boolean;
 }
 
+// TODO(T109): Replace with data from subscription_plans DB table / API
 const plans = [
   {
     id: 'free',
