@@ -1691,6 +1691,7 @@ router.get('/valuations/:id/export/pptx/download', verifyToken, asyncHandler(asy
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   return res.sendFile(exportPathFs);
 }));
+
 /* T053 Budgeting */
 router.post('/budgets', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; const userId = req.user?.id || (req.user as any)?.user_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); const budget = await budgetingSvc.createBudget(orgId, req.body, userId); return res.status(201).json({ success: true, budget }); }));
 router.get('/budgets', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); const budgets = await budgetingSvc.listBudgets(orgId); return res.json({ budgets }); }));

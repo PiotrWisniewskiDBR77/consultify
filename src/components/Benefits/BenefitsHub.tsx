@@ -254,7 +254,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
   }, [initiatives, searchQuery, activeFilters]);
 
   // Extended tab type with custom IDs
-  type BenefitsTab = ModuleTab | 'attribution' | 'financial';
+  type BenefitsTab = ModuleTab | 'attribution' | 'financial' | 'valuation';
   const [extendedTab, setExtendedTab] = useState<BenefitsTab>(initialTab);
 
   // Tab configuration
