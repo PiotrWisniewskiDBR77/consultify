@@ -399,7 +399,7 @@ export const WhitelabelStudioView: React.FC = () => {
               className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600"
             />
             <span className="text-sm text-slate-700 dark:text-slate-300">
-              Hide "Powered by TechnoLex" branding
+              Hide "Powered by Consultinity" branding
             </span>
           </label>
           <div className="grid grid-cols-2 gap-4">
@@ -766,7 +766,7 @@ export const WhitelabelStudioView: React.FC = () => {
                     </button>
                   </div>
                   <code className="text-slate-700 dark:text-slate-300">
-                    {branding.customDomain} → app.technolex.com
+                    {branding.customDomain} → app.consultinity.com
                   </code>
                 </div>
               </div>

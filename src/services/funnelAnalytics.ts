@@ -188,6 +188,13 @@ export type FunnelEventName =
   | 'report_schedule_run_completed'
   | 'report_schedule_delivery_sent'
   | 'report_schedule_delivery_failed'
+  | 'landing_docs_section_viewed'
+  | 'landing_docs_cta_clicked'
+  | 'landing_docs_search_used'
+  | 'landing_viewed'
+  | 'landing_primary_cta_clicked'
+  | 'pricing_viewed'
+  | 'pricing_cta_clicked'
   // T063 — Organization UX
   | 'org_workspace_opened'
   | 'org_admin_cta_clicked'

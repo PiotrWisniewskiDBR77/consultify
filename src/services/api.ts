@@ -6006,7 +6006,7 @@ export const Api = {
         action_type: 'CONFIG_CHANGE',
         resource_type: 'SETTING',
         resource_id: 'app_name',
-        before_data: { app_name: 'TechnoLex' },
+        before_data: { app_name: 'Consultinity' },
         after_data: { app_name: 'TechnoLex' },
         risk_level: 'LOW',
         compliance_tags: ['SOC2'],
@@ -7275,7 +7275,7 @@ export const Api = {
     items: [
       {
         org_id: 'org-1',
-        org_name: 'TechnoLex SA',
+        org_name: 'Consultinity SA',
         gdpr_compliant: true,
         dpa_signed: true,
         data_retention_policy: true,
