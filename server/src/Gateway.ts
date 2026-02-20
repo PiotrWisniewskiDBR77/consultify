@@ -50,6 +50,7 @@ import pricingRoutes from './routes/billing/pricing.routes.js';
 import promoRoutes from './routes/billing/promo.routes.js';
 import settlementRoutes from './routes/billing/settlements.routes.js';
 import tokenBillingRoutes from './routes/billing/tokenBilling.routes.js';
+import benefitsRoutes from './routes/benefits.routes.js';
 import budgetRoutes from './routes/budget.routes.js';
 import budgetsRoutes from './routes/budgets.routes.js';
 import chatProjectsRoutes from './routes/chat-projects.routes.js';
@@ -87,6 +88,7 @@ import ssoRoutes from './routes/integrations/sso.routes.js';
 import webhookRoutes from './routes/integrations/webhooks.routes.js';
 import webhookSubRoutes from './routes/integrations/webhookSubscriptions.routes.js';
 import intelligenceRoutes from './routes/intelligence.routes.js';
+import syncHubRoutes from './routes/syncHub.routes.js';
 import interviewRoutes from './routes/interview.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
@@ -508,6 +510,7 @@ export class ApiGateway {
       app.use('/api/preferences', preferencesRoutes);
       mountStub('/api/features', featureFlagRoutes, 'featureFlagRoutes');
       app.use('/api/webhooks/subscriptions', webhookSubRoutes);
+      app.use('/api/sync-hub', syncHubRoutes);
       app.use('/api/studio', studioRoutes);
       app.use('/api/intelligence', intelligenceRoutes);
       app.use('/api/interview', interviewRoutes);
@@ -519,6 +522,7 @@ export class ApiGateway {
       mountStub('/api/raid', raidRoutes, 'raidRoutes');
       app.use('/api/execution-control', executionControlRoutes);
       mountStub('/api/budget', budgetRoutes, 'budgetRoutes');
+      app.use('/api/benefits', benefitsRoutes);
       app.use('/api/content', contentRoutes);
 
       // Catch-all RBAC or 404 for /api
