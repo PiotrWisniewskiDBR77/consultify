@@ -616,6 +616,65 @@
       "emptyTitle": "No decisions yet",
       "emptySubtitle": "Create your first decision to get started",
       "createCta": "Create Decision"
+    },
+    "errors": {
+      "fetchFailed": "Failed to load",
+      "createFailed": "Failed to create",
+      "saveFailed": "Failed to save",
+      "deleteFailed": "Failed to delete",
+      "updateFailed": "Failed to update"
+    },
+    "personalTasks": {
+      "quickAddPlaceholder": "Quick add a task and hit Enter…",
+      "created": "Task created",
+      "create": "Create task",
+      "empty": {
+        "title": "No tasks yet",
+        "description": "Create your first task to get started"
+      },
+      "reopen": "Reopen",
+      "complete": "Complete",
+      "status": {
+        "todo": "To do",
+        "inProgress": "In progress",
+        "blocked": "Blocked"
+      },
+      "statusUpdated": "Status updated"
+    },
+    "ideas": {
+      "saveAsIdea": "Save as idea",
+      "savedToast": "Saved to My Ideas",
+      "deletedToast": "Deleted",
+      "insertedToast": "Inserted",
+      "tags": {
+        "all": "All"
+      },
+      "empty": {
+        "title": "No ideas yet",
+        "description": "Save a great insight from chat to build your private idea library."
+      },
+      "create": "New idea",
+      "private": "Private",
+      "fields": {
+        "title": "Title",
+        "body": "Body",
+        "tags": "Tags"
+      },
+      "placeholders": {
+        "title": "Idea title",
+        "body": "Write down your idea…",
+        "tag": "Add tag"
+      },
+      "removeTag": "Remove tag",
+      "validation": {
+        "titleRequired": "Title is required"
+      },
+      "suggestions": "Relevant ideas",
+      "suggestionsEmptyTitle": "No suggestions",
+      "suggestionsEmpty": "Save ideas from chat to build your private library.",
+      "idea": "Idea",
+      "insert": "Insert",
+      "open": "Open"
     }
   },
   "step1": {

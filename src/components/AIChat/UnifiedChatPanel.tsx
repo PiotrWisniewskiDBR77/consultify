@@ -30,10 +30,11 @@ import { useDemoSession } from '../../hooks/useDemoSession';
 // import { useOrgMemory } from '../../hooks/useOrgMemory'; // removed — panel disabled
 import { useUniversalVoice } from '../../hooks/useUniversalVoice';
 import { Api } from '../../services/api';
+import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { useConversationStore } from '../../store/useConversationStore';
-import { Artifact, ChatMessage, FocusMode, ResponseFeedback, ThinkingStep } from '../../types';
+import { AppView, Artifact, ChatMessage, FocusMode, ResponseFeedback, ThinkingStep } from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
@@ -390,7 +391,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               thinkingSteps: thinking as any,
               artifacts: artifactsForConversation,
               citations: Array.isArray(meta?.citations) ? meta?.citations : [],
-              ...((aiConfig?.deepResearch || (aiConfig as any)?.marketResearch)
+              ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
                 ? {
                     options: [
                       { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
@@ -420,7 +421,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         timestamp: new Date(),
         thinkingSteps: thinking,
         artifacts,
-        ...((aiConfig?.deepResearch || (aiConfig as any)?.marketResearch)
+        ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
           ? ({
               options: [
                 { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
@@ -1669,6 +1670,51 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     [activeConversationId]
   );
 
+  // T009: Save message output as My Idea (private)
+  const handleSaveAsIdea = useCallback(
+    async (messageId: string, content: string) => {
+      const trimmed = String(content || '').trim();
+      if (!trimmed) return;
+
+      const firstLine =
+        trimmed
+          .split('\n')
+          .map((l) => l.replace(/^#+\s*/, '').trim())
+          .find((l) => !!l) || '';
+      const title = firstLine.slice(0, 120) || (i18n.language === 'pl' ? 'Pomysł' : 'Idea');
+
+      try {
+        const created = await Api.createMyIdea({
+          title,
+          body: trimmed,
+          tags: [],
+          sourceType: 'chat',
+          sourceConversationId: activeConversationId,
+          sourceMessageId: messageId,
+        });
+
+        trackFunnelEvent('my_idea_saved', { source: 'chat', ideaId: created?.id, messageId });
+        toast.success(t('myWork.ideas.savedToast', 'Saved to My Ideas'));
+
+        // Deep link into My Work → Ideas and open the saved idea
+        try {
+          const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
+          setMyWorkIntent?.({
+            tab: 'ideas',
+            open: { type: 'idea', id: created?.id, name: created?.title || title, data: created },
+          });
+          setCurrentView?.(AppView.MY_WORK);
+        } catch {
+          // ignore
+        }
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to save idea:', err);
+        toast.error(t('myWork.errors.createFailed', 'Failed to create idea'));
+      }
+    },
+    [activeConversationId, i18n.language, t]
+  );
+
   // Deep Thinking: Enable DT mode from hint banner
   const handleEnableDeepThinking = useCallback(() => {
     setDtHintDismissed(true);
@@ -1997,6 +2043,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       handleDeepThinkingProceed={handleDeepThinkingProceed}
       handleDeepThinkingReconfirm={handleDeepThinkingReconfirm}
       handleSaveAsDecision={handleSaveAsDecision}
+      handleSaveAsIdea={handleSaveAsIdea}
       handleRunDirectedDeepening={handleRunDirectedDeepening}
       handleMultiSelectToggle={handleMultiSelectToggle}
       handleMultiSelectConfirm={handleMultiSelectConfirm}

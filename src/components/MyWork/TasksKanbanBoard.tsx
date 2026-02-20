@@ -548,7 +548,7 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await Api.getTasks();
+      const data = await Api.getPersonalTasks();
       setTasks(data || []);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
@@ -777,7 +777,7 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
 
         // Persist via API
         try {
-          await Api.updateTask(activeId, { status: newStatus });
+          await Api.updatePersonalTask(activeId, { status: newStatus });
           toast.success(`Moved to ${targetColDef.label}`, { duration: 2000, icon: '✓' });
         } catch (error) {
           console.error('Failed to update task status:', error);

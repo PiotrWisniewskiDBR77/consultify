@@ -58,7 +58,14 @@ export type FunnelEventName =
   | 'oauth_unlinked'
   | 'linkedin_connect_cta_shown'
   | 'linkedin_connect_cta_clicked'
-  | 'linkedin_connect_cta_dismissed';
+  | 'linkedin_connect_cta_dismissed'
+  | 'personal_task_created'
+  | 'personal_task_completed'
+  | 'personal_task_due_date_set'
+  | 'my_idea_saved'
+  | 'my_idea_edited'
+  | 'my_idea_suggested'
+  | 'my_idea_used';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

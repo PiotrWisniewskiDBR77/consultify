@@ -5,9 +5,11 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  AlertCircle,
   Calendar,
   CheckCircle2,
   CheckSquare,
+  Clock,
   Edit,
   Eye,
   Loader2,
@@ -34,6 +36,7 @@ import {
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { Task } from '@/types';
 
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -312,6 +315,7 @@ const TaskTableRow: React.FC<{
   isFocused: boolean;
   onSelect: (taskId: string) => void;
   onToggleComplete: (taskId: string, completed: boolean) => void;
+  onSetStatus: (taskId: string, status: 'todo' | 'in_progress' | 'blocked' | 'completed') => void;
   onDelete: (taskId: string) => void;
   onClick: (taskId: string, taskData?: Task) => void;
   columnWidths: ColumnWidths;
@@ -321,6 +325,7 @@ const TaskTableRow: React.FC<{
   isFocused,
   onSelect,
   onToggleComplete,
+  onSetStatus,
   onDelete,
   onClick,
   columnWidths,
@@ -478,10 +483,29 @@ const TaskTableRow: React.FC<{
               {
                 id: 'complete',
                 label: isCompleted
-                  ? t('myWork.tasks.reopen', 'Reopen')
-                  : t('myWork.tasks.complete', 'Complete'),
+                  ? t('myWork.personalTasks.reopen', 'Reopen')
+                  : t('myWork.personalTasks.complete', 'Complete'),
                 icon: CheckCircle2,
                 onClick: () => onToggleComplete(task.id, !isCompleted),
+              },
+              {
+                id: 'status_todo',
+                label: t('myWork.personalTasks.status.todo', 'To do'),
+                icon: CheckSquare,
+                onClick: () => onSetStatus(task.id, 'todo'),
+                divider: true,
+              },
+              {
+                id: 'status_in_progress',
+                label: t('myWork.personalTasks.status.inProgress', 'In progress'),
+                icon: Clock,
+                onClick: () => onSetStatus(task.id, 'in_progress'),
+              },
+              {
+                id: 'status_blocked',
+                label: t('myWork.personalTasks.status.blocked', 'Blocked'),
+                icon: AlertCircle,
+                onClick: () => onSetStatus(task.id, 'blocked'),
               },
               {
                 id: 'delete',
@@ -513,6 +537,8 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [quickAddTitle, setQuickAddTitle] = useState('');
+  const [quickAdding, setQuickAdding] = useState(false);
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -534,7 +560,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await Api.getTasks();
+      const data = await Api.getPersonalTasks();
       setTasks(data || []);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
@@ -628,21 +654,40 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   // Handlers
   const handleToggleComplete = async (taskId: string, completed: boolean) => {
     try {
-      await Api.updateTask(taskId, { status: completed ? 'completed' : 'todo' });
+      await Api.updatePersonalTask(taskId, { status: completed ? 'completed' : 'todo' });
       setTasks((prev) =>
         prev.map((t) =>
           t.id === taskId ? ({ ...t, status: completed ? 'completed' : 'todo' } as Task) : t
         )
       );
+      if (completed) {
+        trackFunnelEvent('personal_task_completed', { source: 'table', taskId });
+      }
       toast.success(completed ? 'Task completed' : 'Task reopened');
     } catch (error) {
       toast.error('Failed to update task');
     }
   };
 
+  const handleSetStatus = async (
+    taskId: string,
+    status: 'todo' | 'in_progress' | 'blocked' | 'completed'
+  ) => {
+    try {
+      await Api.updatePersonalTask(taskId, { status });
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? ({ ...t, status } as Task) : t)));
+      if (status === 'completed') {
+        trackFunnelEvent('personal_task_completed', { source: 'table_status', taskId });
+      }
+      toast.success(t('myWork.personalTasks.statusUpdated', 'Status updated'));
+    } catch {
+      toast.error(t('myWork.errors.updateFailed', 'Failed to update'));
+    }
+  };
+
   const handleDelete = async (taskId: string) => {
     try {
-      await Api.deleteTask(taskId);
+      await Api.deletePersonalTask(taskId);
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
       setSelectedIds((prev) => {
         const next = new Set(prev);
@@ -709,7 +754,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const handleBulkComplete = async () => {
     try {
       await Promise.all(
-        Array.from(selectedIds).map((id) => Api.updateTask(id, { status: 'completed' }))
+        Array.from(selectedIds).map((id) => Api.updatePersonalTask(id, { status: 'completed' }))
       );
       setTasks((prev) =>
         prev.map((t) => (selectedIds.has(t.id) ? ({ ...t, status: 'completed' } as Task) : t))
@@ -723,7 +768,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   const handleBulkDelete = async () => {
     try {
-      await Promise.all(Array.from(selectedIds).map((id) => Api.deleteTask(id)));
+      await Promise.all(Array.from(selectedIds).map((id) => Api.deletePersonalTask(id)));
       setTasks((prev) => prev.filter((t) => !selectedIds.has(t.id)));
       toast.success(`${selectedIds.size} tasks deleted`);
       setSelectedIds(new Set());
@@ -743,7 +788,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     try {
       await Promise.all(
         Array.from(selectedIds).map((id) =>
-          Api.updateTask(id, { priority: newPriority.toLowerCase() })
+          Api.updatePersonalTask(id, { priority: newPriority.toLowerCase() })
         )
       );
       setTasks((prev) =>
@@ -766,11 +811,12 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     }
     try {
       await Promise.all(
-        Array.from(selectedIds).map((id) => Api.updateTask(id, { dueDate: newDate }))
+        Array.from(selectedIds).map((id) => Api.updatePersonalTask(id, { dueDate: newDate }))
       );
       setTasks((prev) =>
         prev.map((t) => (selectedIds.has(t.id) ? ({ ...t, dueDate: newDate } as Task) : t))
       );
+      trackFunnelEvent('personal_task_due_date_set', { source: 'bulk', count: selectedIds.size });
       toast.success(`Due date updated for ${selectedIds.size} tasks`);
       setSelectedIds(new Set());
     } catch {
@@ -781,13 +827,13 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const handleBulkArchive = async () => {
     try {
       await Promise.all(
-        Array.from(selectedIds).map((id) => Api.updateTask(id, { status: 'archived' }))
+        Array.from(selectedIds).map((id) => Api.updatePersonalTask(id, { status: 'completed' }))
       );
       setTasks((prev) => prev.filter((t) => !selectedIds.has(t.id)));
-      toast.success(`${selectedIds.size} tasks archived`);
+      toast.success(`${selectedIds.size} tasks completed`);
       setSelectedIds(new Set());
     } catch {
-      toast.error(t('myWork.errors.updateFailed', 'Failed to archive tasks'));
+      toast.error(t('myWork.errors.updateFailed', 'Failed to complete tasks'));
     }
   };
 
@@ -852,7 +898,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     onSetPriority: async (priority) => {
       if (focusedTask) {
         try {
-          await Api.updateTask(focusedTask.id, { priority });
+          await Api.updatePersonalTask(focusedTask.id, { priority });
           setTasks((prev) =>
             prev.map((t) => (t.id === focusedTask.id ? ({ ...t, priority } as Task) : t))
           );
@@ -912,19 +958,58 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
       <div className="flex-1 overflow-y-auto p-4">
+        {/* Quick add */}
+        <div className="mb-3">
+          <input
+            value={quickAddTitle}
+            onChange={(e) => setQuickAddTitle(e.target.value)}
+            onKeyDown={async (e) => {
+              if (e.key !== 'Enter') return;
+              const title = quickAddTitle.trim();
+              if (!title || quickAdding) return;
+              try {
+                setQuickAdding(true);
+                const created = await Api.createPersonalTask({ title });
+                setTasks((prev) => [created as Task, ...prev]);
+                setQuickAddTitle('');
+                trackFunnelEvent('personal_task_created', {
+                  source: 'quick_add',
+                  taskId: (created as any)?.id,
+                });
+                toast.success(t('myWork.personalTasks.created', 'Task created'));
+              } catch (err) {
+                console.error('Quick add failed', err);
+                toast.error(t('myWork.errors.createFailed', 'Failed to create task'));
+              } finally {
+                setQuickAdding(false);
+              }
+            }}
+            placeholder={t(
+              'myWork.personalTasks.quickAddPlaceholder',
+              'Quick add a task and hit Enter…'
+            )}
+            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/40 disabled:opacity-60"
+            disabled={quickAdding}
+          />
+        </div>
         {tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
             <CheckCircle2 size={48} className="text-slate-600 mb-4" />
             <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
-              No tasks yet
+              {t('myWork.personalTasks.empty.title', 'No tasks yet')}
             </h3>
-            <p className="text-sm text-slate-500 mb-4">Create your first task to get started</p>
+            <p className="text-sm text-slate-500 mb-4">
+              {t(
+                'myWork.personalTasks.empty.description',
+                'Create your first task to get started'
+              )}
+            </p>
             <button
               onClick={onCreateTask}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-400 border border-blue-500/50 rounded-lg hover:bg-blue-500/10 transition-colors"
             >
               <Plus size={16} />
-              Create Task
+              {t('myWork.personalTasks.create', 'Create task')}
             </button>
           </div>
         ) : (
@@ -1071,6 +1156,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                       isFocused={focusedTask?.id === task.id}
                       onSelect={handleSelectTask}
                       onToggleComplete={handleToggleComplete}
+                      onSetStatus={handleSetStatus}
                       onDelete={handleDelete}
                       onClick={onTaskClick}
                       columnWidths={columnWidths}

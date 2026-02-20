@@ -138,6 +138,7 @@ export interface MessageRendererProps {
   handleDeepThinkingProceed: () => void;
   handleDeepThinkingReconfirm: () => void;
   handleSaveAsDecision: (messageId: string, content: string) => void;
+  handleSaveAsIdea: (messageId: string, content: string) => void;
   handleRunDirectedDeepening: (agentAuditPayload: any) => void;
   handleMultiSelectToggle: (value: string) => void;
   handleMultiSelectConfirm: () => void;
@@ -213,6 +214,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   handleDeepThinkingProceed,
   handleDeepThinkingReconfirm,
   handleSaveAsDecision,
+  handleSaveAsIdea,
   handleRunDirectedDeepening,
   handleMultiSelectToggle,
   handleMultiSelectConfirm,
@@ -1152,6 +1154,17 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     title={t('chat.actions.viewArtifacts', 'View Artifacts')}
                   >
                     <FileCode size={12} />
+                  </button>
+                )}
+
+                {/* Save as Idea (T009) */}
+                {msg.role === 'ai' && (
+                  <button
+                    onClick={() => handleSaveAsIdea(msg.id, msg.content)}
+                    className="p-1 rounded-md text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                    title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
+                  >
+                    <Lightbulb size={12} />
                   </button>
                 )}
 

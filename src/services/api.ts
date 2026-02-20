@@ -31,7 +31,9 @@ async function isServerStartingResponse(res: Response): Promise<boolean> {
   try {
     const clone = res.clone();
     const json = await clone.json();
-    return json?.code === 'SERVER_STARTING' || String(json?.error || '').includes('Server starting');
+    return (
+      json?.code === 'SERVER_STARTING' || String(json?.error || '').includes('Server starting')
+    );
   } catch {
     return false;
   }
@@ -2155,6 +2157,135 @@ export const Api = {
       headers: getHeaders(),
     });
     await handleResponse(res, 'Failed to delete task');
+  },
+
+  // ==========================================
+  // MY WORK (V2): PERSONAL TASKS (T007)
+  // ==========================================
+  getPersonalTasks: async (filters?: {
+    includeDone?: boolean;
+    status?: string;
+    q?: string;
+    limit?: number;
+  }): Promise<any[]> => {
+    let url = `${API_URL}/my-work/personal-tasks`;
+    if (filters) {
+      const params = new URLSearchParams();
+      if (filters.includeDone) params.append('includeDone', 'true');
+      if (filters.status) params.append('status', filters.status);
+      if (filters.q) params.append('q', filters.q);
+      if (filters.limit) params.append('limit', String(filters.limit));
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch personal tasks');
+    return res.json();
+  },
+
+  getPersonalTask: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/personal-tasks/${id}`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch personal task');
+    return res.json();
+  },
+
+  createPersonalTask: async (task: {
+    title: string;
+    description?: string;
+    status?: string;
+    priority?: string;
+    dueDate?: string | null;
+    tags?: string[];
+  }): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/personal-tasks`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(task),
+    });
+    return handleResponse(res, 'Failed to create personal task');
+  },
+
+  updatePersonalTask: async (id: string, updates: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/personal-tasks/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    return handleResponse(res, 'Failed to update personal task');
+  },
+
+  deletePersonalTask: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/my-work/personal-tasks/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    await handleResponse(res, 'Failed to delete personal task');
+  },
+
+  // ==========================================
+  // MY WORK (V2): MY IDEAS (T009)
+  // ==========================================
+  getMyIdeas: async (filters?: { q?: string; tag?: string; limit?: number }): Promise<any[]> => {
+    let url = `${API_URL}/my-work/my-ideas`;
+    if (filters) {
+      const params = new URLSearchParams();
+      if (filters.q) params.append('q', filters.q);
+      if (filters.tag) params.append('tag', filters.tag);
+      if (filters.limit) params.append('limit', String(filters.limit));
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch ideas');
+    return res.json();
+  },
+
+  suggestMyIdeas: async (q?: string, limit = 5): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (q) params.append('q', q);
+    if (limit) params.append('limit', String(limit));
+    const res = await fetch(`${API_URL}/my-work/my-ideas/suggest?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to suggest ideas');
+    return res.json();
+  },
+
+  getMyIdea: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${id}`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch idea');
+    return res.json();
+  },
+
+  createMyIdea: async (idea: {
+    title: string;
+    body?: string;
+    tags?: string[];
+    sourceType?: string | null;
+    sourceConversationId?: string | null;
+    sourceMessageId?: string | null;
+  }): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(idea),
+    });
+    return handleResponse(res, 'Failed to create idea');
+  },
+
+  updateMyIdea: async (id: string, updates: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    return handleResponse(res, 'Failed to update idea');
+  },
+
+  deleteMyIdea: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    await handleResponse(res, 'Failed to delete idea');
   },
 
   getTaskComments: async (taskId: string): Promise<any[]> => {

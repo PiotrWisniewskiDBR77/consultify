@@ -105,6 +105,65 @@
       "emptyTitle": "Brak decyzji",
       "emptySubtitle": "Utwórz pierwszą decyzję, aby zacząć",
       "createCta": "Utwórz decyzję"
+    },
+    "errors": {
+      "fetchFailed": "Nie udało się załadować",
+      "createFailed": "Nie udało się utworzyć",
+      "saveFailed": "Nie udało się zapisać",
+      "deleteFailed": "Nie udało się usunąć",
+      "updateFailed": "Nie udało się zaktualizować"
+    },
+    "personalTasks": {
+      "quickAddPlaceholder": "Szybko dodaj zadanie i naciśnij Enter…",
+      "created": "Utworzono zadanie",
+      "create": "Utwórz zadanie",
+      "empty": {
+        "title": "Brak zadań",
+        "description": "Utwórz pierwsze zadanie, aby zacząć"
+      },
+      "reopen": "Otwórz ponownie",
+      "complete": "Zakończ",
+      "status": {
+        "todo": "Do zrobienia",
+        "inProgress": "W toku",
+        "blocked": "Zablokowane"
+      },
+      "statusUpdated": "Zaktualizowano status"
+    },
+    "ideas": {
+      "saveAsIdea": "Zapisz jako pomysł",
+      "savedToast": "Zapisano w Moich pomysłach",
+      "deletedToast": "Usunięto",
+      "insertedToast": "Wstawiono",
+      "tags": {
+        "all": "Wszystkie"
+      },
+      "empty": {
+        "title": "Brak pomysłów",
+        "description": "Zapisz świetny insight z czatu, aby zbudować prywatną bazę pomysłów."
+      },
+      "create": "Nowy pomysł",
+      "private": "Prywatne",
+      "fields": {
+        "title": "Tytuł",
+        "body": "Treść",
+        "tags": "Tagi"
+      },
+      "placeholders": {
+        "title": "Tytuł pomysłu",
+        "body": "Zapisz pomysł…",
+        "tag": "Dodaj tag"
+      },
+      "removeTag": "Usuń tag",
+      "validation": {
+        "titleRequired": "Tytuł jest wymagany"
+      },
+      "suggestions": "Powiązane pomysły",
+      "suggestionsEmptyTitle": "Brak sugestii",
+      "suggestionsEmpty": "Zapisuj pomysły z czatu, aby zbudować prywatną bibliotekę.",
+      "idea": "Pomysł",
+      "insert": "Wstaw",
+      "open": "Otwórz"
     }
   },
   "step1": {
