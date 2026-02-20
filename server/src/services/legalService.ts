@@ -1,6 +1,7 @@
 /**
  * Legal Service
  * T093: Legal Agreements — versioning, acceptance tracking, publishing
+ * Database: PostgreSQL (pg Pool)
  */
 
 import { v4 as uuidv4 } from 'uuid';
@@ -158,7 +159,7 @@ class LegalService {
     try {
       const rows = await dbAll<LegalDocumentRow>(
         `SELECT * FROM legal_documents
-         WHERE (is_active = 1 OR is_active = 'true' OR status = 'active')
+         WHERE (is_active = TRUE OR status = 'active')
          ORDER BY COALESCE(doc_type, UPPER(type)), version DESC`,
         [],
         { fallback: false }
@@ -188,7 +189,7 @@ class LegalService {
       const row = await dbGet<LegalDocumentRow>(
         `SELECT * FROM legal_documents
          WHERE (COALESCE(doc_type, UPPER(type)) = ?)
-           AND (is_active = 1 OR is_active = 'true' OR status = 'active')
+           AND (is_active = TRUE OR status = 'active')
          ORDER BY version DESC
          LIMIT 1`,
         [upperType],
@@ -325,7 +326,7 @@ class LegalService {
         if (existingAcceptance) {
           await dbRun(
             `UPDATE legal_document_acceptances
-             SET document_version = ?, accepted_at = datetime('now'),
+             SET document_version = ?, accepted_at = NOW(),
                  ip_address = ?, user_agent = ?, scope = ?,
                  organization_id = ?, document_type = ?
              WHERE id = ?`,
@@ -345,7 +346,7 @@ class LegalService {
             `INSERT INTO legal_document_acceptances
              (id, user_id, document_id, document_type, document_version,
               accepted_at, ip_address, user_agent, scope, organization_id)
-             VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?)`,
             [
               id,
               userId,
@@ -419,9 +420,9 @@ class LegalService {
     // Deactivate previous active version of this docType
     await dbRun(
       `UPDATE legal_documents
-       SET is_active = 0, status = 'archived'
+       SET is_active = FALSE, status = 'archived'
        WHERE (COALESCE(doc_type, UPPER(type)) = ?)
-         AND (is_active = 1 OR is_active = 'true' OR status = 'active')`,
+         AND (is_active = TRUE OR status = 'active')`,
       [upperType]
     );
 
@@ -440,7 +441,11 @@ class LegalService {
         change_summary, scope_type, scope_value, previous_version_id,
         created_by, published_by, created_at, updated_at, published_at,
         requires_acceptance)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', 1, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'), datetime('now'), 1)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?,
+               'active', TRUE, ?, ?,
+               ?, ?, ?, ?,
+               ?, ?, NOW(), NOW(), NOW(),
+               TRUE)`,
       [
         id,
         upperType,
@@ -469,22 +474,22 @@ class LegalService {
     const doc = await this.getDocumentById(id);
     if (!doc) return null;
 
-    const newActive = isRowActive(doc) ? 0 : 1;
+    const newActive = !isRowActive(doc);
     const newStatus = newActive ? 'active' : 'archived';
 
     if (newActive) {
       const docType = normalizeDocType(doc);
       await dbRun(
         `UPDATE legal_documents
-         SET is_active = 0, status = 'archived'
+         SET is_active = FALSE, status = 'archived'
          WHERE COALESCE(doc_type, UPPER(type)) = ? AND id != ?
-           AND (is_active = 1 OR status = 'active')`,
+           AND (is_active = TRUE OR status = 'active')`,
         [docType, id]
       );
     }
 
     await dbRun(
-      `UPDATE legal_documents SET is_active = ?, status = ?, updated_at = datetime('now') WHERE id = ?`,
+      `UPDATE legal_documents SET is_active = ?, status = ?, updated_at = NOW() WHERE id = ?`,
       [newActive, newStatus, id]
     );
 
