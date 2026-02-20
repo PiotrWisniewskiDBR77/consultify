@@ -87,13 +87,30 @@ export type FunnelEventName =
   | 'licensed_tool_assessment_approved'
   | 'licensed_tools_report_generated'
   | 'licensed_tools_deck_exported'
+  | 'licensed_tool_roadmap_generated'
+  | 'licensed_tool_initiatives_created_from_roadmap'
+  | 'licensed_tool_locked_viewed'
+  | 'licensed_tool_unlock_cta_clicked'
+  | 'pdf_import_started'
+  | 'pdf_import_extracted'
+  | 'pdf_import_mapping_confirmed'
   | 'execution_timeline_viewed'
   | 'execution_timeline_initiative_updated'
   | 'execution_timeline_filtered'
   | 'execution_risk_signal_viewed'
   | 'execution_risk_signal_dismissed'
   | 'execution_risk_mitigation_updated'
-  | 'execution_warning_clicked';
+  | 'execution_warning_clicked'
+  | 'delay_detection_viewed'
+  | 'delay_signal_detected'
+  | 'delay_signal_dismissed'
+  | 'delay_alert_sent'
+  | 'delay_alert_clicked'
+  | 'budget_dashboard_viewed'
+  | 'budget_plan_updated'
+  | 'budget_actual_updated'
+  | 'budget_overspend_signal_detected'
+  | 'budget_recommendation_applied';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

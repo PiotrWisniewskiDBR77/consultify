@@ -656,6 +656,57 @@
       "to": "na",
       "reason": "Powód",
       "noEntries": "Brak wpisów"
+    },
+    "delay": {
+      "title": "Wykrywanie opóźnień",
+      "subtitle": "Odchylenia planu vs realizacji i ryzyka harmonogramu",
+      "critical": "Krytyczne",
+      "warning": "Ostrzeżenie",
+      "allSeverities": "Wszystkie poziomy",
+      "allTypes": "Wszystkie typy",
+      "initiatives": "Inicjatywy",
+      "tasks": "Zadania",
+      "noDelays": "Nie wykryto odchyleń harmonogramu",
+      "loading": "Skanowanie odchyleń…",
+      "planned": "Planowane",
+      "current": "Aktualny",
+      "remaining": "pozostało",
+      "whySlip": "Dlaczego opóźnienie",
+      "viewInitiative": "Zobacz inicjatywę",
+      "dismiss": "Odrzuć",
+      "type": {
+        "LATE_START": "Opóźniony start",
+        "LATE_FINISH_RISK": "Ryzyko opóźnienia zakończenia",
+        "DEADLINE_RISK": "Ryzyko terminu",
+        "OVERDUE": "Zaległe"
+      }
+    },
+    "budget": {
+      "title": "Kontrola budżetu",
+      "portfolioTitle": "Budżet portfela",
+      "planned": "Planowany",
+      "actual": "Rzeczywisty",
+      "variance": "Odchylenie",
+      "burnRate": "Tempo wydatkowania",
+      "forecast": "Prognoza",
+      "forecastOverspend": "Prognoza przekroczenia: {{amount}}",
+      "overspendRisks": "ryzyk przekroczenia",
+      "overspendSignals": "Sygnały przekroczenia",
+      "initiativeBreakdown": "Wg inicjatywy",
+      "viewDetails": "Zobacz szczegóły",
+      "addEntry": "Dodaj koszt rzeczywisty",
+      "newEntry": "Nowy wpis kosztowy",
+      "amountPlaceholder": "Kwota",
+      "categoryPlaceholder": "Kategoria (np. Konsulting, Licencje)",
+      "descriptionPlaceholder": "Opis (opcjonalny)",
+      "save": "Zapisz wpis",
+      "noData": "Brak danych budżetowych",
+      "loading": "Ładowanie danych budżetowych…",
+      "status": {
+        "green": "Na ścieżce",
+        "amber": "Ostrzeżenie",
+        "red": "Przekroczony budżet"
+      }
     }
   },
   "benefits": {
@@ -2962,7 +3013,25 @@
   "licensedTools": {
     "moduleName": "Narzędzia licencjonowane",
     "hubTitle": "Hub narzędzi licencjonowanych",
-    "backToHub": "Powrót do huba narzędzi licencjonowanych"
+    "backToHub": "Powrót do huba narzędzi licencjonowanych",
+    "locked": "Licencjonowane — wymagany dostęp",
+    "lockedReason": "Twoja organizacja nie ma dostępu do tego frameworka. Ulepsz swój plan lub skontaktuj się z administratorem, aby go odblokować.",
+    "requestAccess": "Poproś o dostęp / Ulepsz",
+    "proprietaryNote": "To jest autorski framework wymagający płatnej licencji.",
+    "educationalNote": "Ten framework jest dostępny w celach edukacyjnych z odpowiednim licencjonowaniem.",
+    "pdfImport": {
+      "title": "Importuj ocenę z PDF",
+      "upload": "Prześlij PDF",
+      "detectFramework": "Wykryj framework",
+      "extractScores": "Wyciągnij wyniki",
+      "reviewMapping": "Przejrzyj mapowanie",
+      "confirm": "Potwierdź import",
+      "detecting": "Wykrywanie frameworka...",
+      "extracting": "Wyciąganie wyników...",
+      "noFramework": "Nie udało się wykryć frameworka. Wybierz ręcznie.",
+      "lowConfidence": "Niska pewność — przejrzyj i popraw wyodrębnione wartości.",
+      "supportedFrameworks": "Obsługiwane frameworki"
+    }
   },
   "assessment": {
     "notes": "Notatki",
@@ -3027,6 +3096,31 @@
       "quickWins": "Szybkie wygrane",
       "strategicInitiatives": "Inicjatywy strategiczne",
       "longTermTransformation": "Transformacja długoterminowa"
+    },
+    "lean": {
+      "overallDashboard": "Dashboard ogólny oceny",
+      "leanMaturity": "Dojrzałość Lean",
+      "automationPotential": "Potencjał automatyzacji",
+      "estimatedSavings": "Szac. oszczędności (PLN/rok)",
+      "topWastes": "Główne marnotrawstwa (co boli najbardziej)",
+      "quickWins": "Szybkie wygrane (Lean-first)",
+      "noStdWork": "Brak standardowej pracy",
+      "automationOps": "Najlepsze możliwości automatyzacji",
+      "dataGaps": "Luki danych i elementy do uzupełnienia",
+      "moreItems": "więcej elementów",
+      "closure": "Podsumowanie oceny",
+      "processesAssessed": "Procesy ocenione",
+      "workstationsAssessed": "Stanowiska ocenione",
+      "totalHeadcount": "Łączna liczba pracowników",
+      "priorityItems": "Inicjatywy priorytetowe",
+      "closureNote": "Następne kroki: Wygeneruj raport, stwórz mapę drogową, zmaterializuj inicjatywy. Zatwierdź ocenę, aby odblokować generowanie raportu i inicjatyw.",
+      "coachQuestions": "Pytania trenera",
+      "evidenceGuidance": "Wskazówki dot. dowodów",
+      "microLesson": "Mikro-lekcja",
+      "commonMistakes": "Typowe błędy do uniknięcia",
+      "wasteKnowledge": "Przewodnik analizy marnotrawstwa",
+      "whatToLookFor": "Na co patrzeć",
+      "typicalEvidence": "Typowe dowody"
     }
   },
   "tools": {

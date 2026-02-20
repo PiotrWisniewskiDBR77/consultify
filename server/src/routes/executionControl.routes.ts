@@ -1,18 +1,33 @@
 /**
- * Execution Control Routes (T039 + T040)
+ * Execution Control Routes (T039–T042)
  *
  * API endpoints for:
- *  - Risk signal detection (heuristic)
- *  - Execution audit log (timeline changes)
- *  - Initiative timeline updates with audit trail
- *  - Risk alert dismissal
- *  - Mitigation management
+ *  - Risk signal detection (heuristic) — T040
+ *  - Execution audit log (timeline changes) — T039
+ *  - Initiative timeline updates with audit trail — T039
+ *  - Risk alert dismissal — T040
+ *  - Mitigation management — T040
+ *  - Delay detection & schedule control — T041
+ *  - Budget planning & financial control — T042
  */
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
+import {
+  detectDelaySignals,
+  getPersistedDelaySignals,
+  persistDelaySignals,
+} from '../services/delayDetectionService.js';
+import {
+  createBudgetEntry,
+  deleteBudgetEntry,
+  detectOverspendSignals,
+  getBudgetEntries,
+  getInitiativeBudgetSummary,
+  getPortfolioBudgetSummary,
+} from '../services/executionBudgetService.js';
 import { detectRiskSignals } from '../services/riskDetectionService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
@@ -296,6 +311,219 @@ router.patch(
       params
     );
     return res.json({ success: true });
+  })
+);
+
+// ================================================================
+// T041: Delay Detection — live detection
+// ================================================================
+
+router.get(
+  '/delay-signals',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { projectId, severity, entityType, persisted } = req.query;
+
+    if (persisted === 'true') {
+      const signals = await getPersistedDelaySignals(orgId, {
+        projectId: projectId as string | undefined,
+        severity: severity as 'WARNING' | 'CRITICAL' | undefined,
+        entityType: entityType as 'INITIATIVE' | 'TASK' | undefined,
+      });
+      return res.json({ signals, count: signals.length });
+    }
+
+    const signals = await detectDelaySignals(orgId, projectId as string | undefined);
+    const filtered = signals.filter((s) => {
+      if (severity && s.severity !== severity) return false;
+      if (entityType && s.entityType !== entityType) return false;
+      return true;
+    });
+    return res.json({ signals: filtered, count: filtered.length });
+  })
+);
+
+// ================================================================
+// T041: Delay Detection — dismiss signal
+// ================================================================
+
+const DismissDelaySchema = z.object({
+  signalId: z.string().min(1),
+  entityType: z.enum(['INITIATIVE', 'TASK']),
+  entityId: z.string().min(1),
+  deviationType: z.string().min(1),
+});
+
+router.post(
+  '/delay-signals/dismiss',
+  verifyToken,
+  isAuthenticated,
+  validateBody(DismissDelaySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { signalId } = req.body;
+    await dbRun(
+      `UPDATE delay_signals
+       SET is_dismissed = TRUE, dismissed_by = ?, dismissed_at = NOW()
+       WHERE id = ? AND organization_id = ?`,
+      [userId, signalId, orgId]
+    );
+    return res.json({ success: true });
+  })
+);
+
+// ================================================================
+// T041: Delay Detection — worker endpoint (cron trigger)
+// ================================================================
+
+router.post(
+  '/delay-signals/detect',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { projectId } = req.body;
+    const signals = await detectDelaySignals(orgId, projectId);
+    const result = await persistDelaySignals(orgId, signals);
+    return res.json({
+      success: true,
+      detected: signals.length,
+      persisted: result.persisted,
+      alertsSent: result.alertsSent,
+    });
+  })
+);
+
+// ================================================================
+// T042: Budget entries — list
+// ================================================================
+
+router.get(
+  '/budget/entries/:initiativeId',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const initId = String(req.params.initiativeId);
+    const entries = await getBudgetEntries(orgId, initId);
+    return res.json({ entries, count: entries.length });
+  })
+);
+
+// ================================================================
+// T042: Budget entries — create
+// ================================================================
+
+const CreateBudgetEntrySchema = z.object({
+  initiativeId: z.string().min(1),
+  entryType: z.enum(['ACTUAL', 'FORECAST', 'ADJUSTMENT']),
+  costType: z.enum(['CAPEX', 'OPEX']),
+  category: z.string().optional(),
+  amount: z.number(),
+  currency: z.string().optional(),
+  description: z.string().optional(),
+  periodMonth: z.number().min(1).max(12).optional(),
+  periodYear: z.number().optional(),
+  source: z.string().optional(),
+});
+
+router.post(
+  '/budget/entries',
+  verifyToken,
+  isAuthenticated,
+  validateBody(CreateBudgetEntrySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const userId = req.user?.id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const id = await createBudgetEntry(orgId, { ...req.body, createdBy: userId });
+    return res.json({ success: true, id });
+  })
+);
+
+// ================================================================
+// T042: Budget entries — delete
+// ================================================================
+
+router.delete(
+  '/budget/entries/:entryId',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { initiativeId } = req.query;
+    if (!initiativeId) return res.status(400).json({ error: 'initiativeId is required' });
+
+    await deleteBudgetEntry(orgId, String(req.params.entryId), String(initiativeId));
+    return res.json({ success: true });
+  })
+);
+
+// ================================================================
+// T042: Budget summary — initiative level
+// ================================================================
+
+router.get(
+  '/budget/initiative/:initiativeId',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const summary = await getInitiativeBudgetSummary(orgId, String(req.params.initiativeId));
+    if (!summary) return res.status(404).json({ error: 'Initiative not found' });
+    return res.json(summary);
+  })
+);
+
+// ================================================================
+// T042: Budget summary — portfolio level
+// ================================================================
+
+router.get(
+  '/budget/portfolio',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { projectId } = req.query;
+    const summary = await getPortfolioBudgetSummary(orgId, projectId as string | undefined);
+    return res.json(summary);
+  })
+);
+
+// ================================================================
+// T042: Overspend signals
+// ================================================================
+
+router.get(
+  '/budget/overspend-signals',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { projectId } = req.query;
+    const signals = await detectOverspendSignals(orgId, projectId as string | undefined);
+    return res.json({ signals, count: signals.length });
   })
 );
 
