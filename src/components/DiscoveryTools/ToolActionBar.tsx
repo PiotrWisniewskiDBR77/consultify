@@ -43,7 +43,14 @@ export const ToolActionBar: React.FC<ToolActionBarProps> = ({
   const isFirstStep = currentStep === 1;
   const isLastStep = currentStep === totalSteps;
   const isAIStep = stepDefinition?.aiAssisted;
-  const isAnalysisStep = stepDefinition?.id === 'correlations' || stepDefinition?.id === 'summary';
+  const isAnalysisStep = [
+    'correlations',
+    'summary',
+    'results',
+    'reasoning',
+    'prepare',
+    'initiatives',
+  ].includes(stepDefinition?.id || '');
 
   return (
     <div className="bg-white dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700 px-4 py-3">

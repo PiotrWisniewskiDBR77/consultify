@@ -78,6 +78,35 @@ export function computeToolReviewGaps(
   missingSections
     .slice(0, 8)
     .forEach((k) => gaps.push(`${isPolish ? 'Brak' : 'Missing'}: ${k.replace(/-/g, ' ')}`));
+
+  const flow = (data as any)?.flow;
+  if (flow?.impactHypothesis) {
+    const ih = flow.impactHypothesis;
+    if (!ih?.metricName || ih?.baseline == null || ih?.target == null || !ih?.unit) {
+      gaps.push(isPolish ? 'Brak hipotezy wpływu' : 'Missing impact hypothesis');
+    }
+  }
+  if (flow?.results) {
+    const r = flow.results;
+    if (!r?.executiveSummary && (r?.keyFindings?.length || 0) === 0) {
+      gaps.push(isPolish ? 'Brak wyników' : 'Missing results');
+    }
+  }
+  if (flow?.processAutomation) {
+    const pa = flow.processAutomation;
+    if (!pa?.processName || pa?.volumePerWeek == null || pa?.baselineMinutesPerCycle == null) {
+      gaps.push(isPolish ? 'Brak pomiaru baseline' : 'Missing baseline measurement');
+    }
+    if (pa?.targetMinutesPerCycle == null) {
+      gaps.push(isPolish ? 'Brak re-estymacji target' : 'Missing target re-estimation');
+    }
+  }
+  if (flow?.economics) {
+    const e = flow.economics;
+    if (e?.fullyLoadedCostPerHour == null) {
+      gaps.push(isPolish ? 'Brak założeń kosztu/h' : 'Missing cost/hour assumption');
+    }
+  }
   return gaps;
 }
 
@@ -214,5 +243,48 @@ export function computeToolCompletionItems(
       anchorId: 'tool-content',
     });
   });
+
+  const flow = (data as any)?.flow;
+  if (flow?.impactHypothesis) {
+    const ih = flow.impactHypothesis;
+    items.push({
+      label: isPolish ? 'Hipoteza wpływu' : 'Impact hypothesis',
+      done: !!ih?.metricName && ih?.baseline != null && ih?.target != null && !!ih?.unit,
+      anchorId: 'tool-content',
+    });
+  }
+  if (flow?.results) {
+    const r = flow.results;
+    items.push({
+      label: isPolish ? 'Wyniki' : 'Results',
+      done: !!r?.executiveSummary || (r?.keyFindings?.length || 0) > 0,
+      anchorId: 'tool-content',
+    });
+  }
+  if (flow?.processAutomation) {
+    const pa = flow.processAutomation;
+    items.push({
+      label: isPolish ? 'Pomiar baseline' : 'Baseline measurement',
+      done: !!pa?.processName && pa?.volumePerWeek != null && pa?.baselineMinutesPerCycle != null,
+      anchorId: 'tool-content',
+    });
+    items.push({
+      label: isPolish ? 'Re-estymacja target' : 'Target re-estimation',
+      done: pa?.targetMinutesPerCycle != null,
+      anchorId: 'tool-content',
+    });
+  }
+  if (flow?.economics) {
+    const e = flow.economics;
+    items.push({
+      label: isPolish ? 'Ekonomia' : 'Economics',
+      done:
+        e?.fullyLoadedCostPerHour != null &&
+        (e?.baselineHoursPerWeek != null ||
+          flow?.processAutomation?.baselineMinutesPerCycle != null) &&
+        (e?.targetHoursPerWeek != null || flow?.processAutomation?.targetMinutesPerCycle != null),
+      anchorId: 'tool-content',
+    });
+  }
   return items;
 }

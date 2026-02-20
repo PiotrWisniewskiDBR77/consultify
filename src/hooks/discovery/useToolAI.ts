@@ -148,6 +148,19 @@ Provide concise, actionable items for each operational section.
 When generating items, return JSON:
 {"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
 
+const PROCESS_AUTOMATION_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}
+
+You are guiding the user through a Process Automation (Speed Tool) wizard.
+
+Focus on:
+- identifying automation candidates
+- estimating baseline vs target time and error rates
+- building a fast business case (hours saved, savings, payback)
+- turning outcomes into execution-ready initiatives
+
+When generating items for mapping/redesign steps, return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
+
 // ==================== HOOK ====================
 
 export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
@@ -167,7 +180,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
   // Get the appropriate system prompt
   const getSystemPrompt = useCallback(() => {
-    const promptMap: Record<ToolType, string> = {
+    const promptMap: Partial<Record<ToolType, string>> = {
       'dynamic-swot': SWOT_SYSTEM_PROMPT,
       'market-forces': PORTER_SYSTEM_PROMPT,
       'growth-paths': GROWTH_PATHS_SYSTEM_PROMPT,
@@ -183,6 +196,22 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       'smed-planner': OPERATIONAL_SYSTEM_PROMPT,
       'dms-builder': OPERATIONAL_SYSTEM_PROMPT,
       'inventory-autopilot': OPERATIONAL_SYSTEM_PROMPT,
+      'vsm-builder': OPERATIONAL_SYSTEM_PROMPT,
+      'constraint-control': OPERATIONAL_SYSTEM_PROMPT,
+      'decision-engine': OPERATIONAL_SYSTEM_PROMPT,
+      'control-tower': OPERATIONAL_SYSTEM_PROMPT,
+      'automation-pipeline': OPERATIONAL_SYSTEM_PROMPT,
+      'robotics-feasibility': OPERATIONAL_SYSTEM_PROMPT,
+      'logistics-automation': OPERATIONAL_SYSTEM_PROMPT,
+      'rpa-scanner': OPERATIONAL_SYSTEM_PROMPT,
+      'ai-discovery': OPERATIONAL_SYSTEM_PROMPT,
+      'integration-diagnostic': OPERATIONAL_SYSTEM_PROMPT,
+      'digital-value-pool': OPERATIONAL_SYSTEM_PROMPT,
+      'legacy-analyzer': OPERATIONAL_SYSTEM_PROMPT,
+      'data-inventory': OPERATIONAL_SYSTEM_PROMPT,
+      'pain-to-solution': OPERATIONAL_SYSTEM_PROMPT,
+      'pain-explorer': OPERATIONAL_SYSTEM_PROMPT,
+      'process-automation': PROCESS_AUTOMATION_SYSTEM_PROMPT,
     };
     const basePrompt = promptMap[toolType] || PORTER_SYSTEM_PROMPT;
     const orgContext = formatForPrompt();
@@ -319,6 +348,22 @@ Return JSON:
         'smed-planner',
         'dms-builder',
         'inventory-autopilot',
+        'vsm-builder',
+        'constraint-control',
+        'decision-engine',
+        'control-tower',
+        'automation-pipeline',
+        'robotics-feasibility',
+        'logistics-automation',
+        'rpa-scanner',
+        'ai-discovery',
+        'integration-diagnostic',
+        'digital-value-pool',
+        'legacy-analyzer',
+        'data-inventory',
+        'pain-to-solution',
+        'pain-explorer',
+        'process-automation',
       ].includes(toolType)
     ) {
       if (currentStepDef.id !== 'context' && currentStepDef.id !== 'summary') {
@@ -445,6 +490,22 @@ Return JSON:
         'smed-planner',
         'dms-builder',
         'inventory-autopilot',
+        'vsm-builder',
+        'constraint-control',
+        'decision-engine',
+        'control-tower',
+        'automation-pipeline',
+        'robotics-feasibility',
+        'logistics-automation',
+        'rpa-scanner',
+        'ai-discovery',
+        'integration-diagnostic',
+        'digital-value-pool',
+        'legacy-analyzer',
+        'data-inventory',
+        'pain-to-solution',
+        'pain-explorer',
+        'process-automation',
       ].includes(toolType)
     ) {
       prompt = `Summarize the operational analysis:

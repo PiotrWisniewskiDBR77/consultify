@@ -838,6 +838,83 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     []
   );
 
+  const libraryColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: 'Tool',
+        render: (row) => (
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+              {row.name}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+              {row.description}
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: 'libraryCategory',
+        label: 'Category',
+        width: '140px',
+        filterable: true,
+        filterOptions: Object.entries(CATEGORY_META).map(([key, meta]) => ({
+          value: key,
+          label: meta.name,
+        })),
+        render: (row) => {
+          const category = (row.libraryCategory || '') as ToolCategory;
+          const meta = CATEGORY_META[category];
+          return (
+            <span className={`text-xs font-medium text-${meta?.color || 'slate'}-400`}>
+              {meta?.name || row.libraryCategory || '-'}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'tags',
+        label: 'Tags',
+        render: (row) => (
+          <div className="flex flex-wrap gap-1">
+            {(row.tags || []).slice(0, 4).map((tag: string) => (
+              <span
+                key={tag}
+                className="px-2 py-0.5 rounded-full text-[11px] bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700"
+              >
+                {tag}
+              </span>
+            ))}
+            {(row.tags || []).length > 4 ? (
+              <span className="text-[11px] text-slate-500">+{(row.tags || []).length - 4}</span>
+            ) : null}
+          </div>
+        ),
+      },
+      {
+        id: 'license',
+        label: 'License',
+        width: '110px',
+        filterable: true,
+        filterOptions: [
+          { value: 'licensed', label: 'Licensed' },
+          { value: 'free', label: 'Free' },
+        ],
+        render: (row) => (
+          <span
+            className={`text-xs font-medium ${
+              row.isLicensed ? 'text-amber-500' : 'text-emerald-500'
+            }`}
+          >
+            {row.isLicensed ? 'Licensed' : 'Free'}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
   // Columns for Initiatives tab
   const initiativeColumns: TableColumn[] = useMemo(
     () => [
@@ -1678,6 +1755,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
           'smed-planner',
           'dms-builder',
           'inventory-autopilot',
+          'constraint-control',
+          'decision-engine',
+          'control-tower',
+          'automation-pipeline',
+          'robotics-feasibility',
+          'logistics-automation',
+          'rpa-scanner',
+          'ai-discovery',
+          'integration-diagnostic',
+          'digital-value-pool',
+          'legacy-analyzer',
+          'data-inventory',
+          'pain-to-solution',
+          'pain-explorer',
+          'process-automation',
         ];
 
         const toolType = doc.subType as StoreToolType;

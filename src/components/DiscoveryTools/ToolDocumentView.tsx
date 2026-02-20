@@ -215,6 +215,118 @@ const TOOL_METADATA: Record<
     badge: 'INV',
     gradient: 'from-purple-500 to-violet-500',
   },
+  'vsm-builder': {
+    name: 'VSM Builder',
+    namePl: 'Kreator VSM',
+    color: 'blue',
+    badge: 'VSM',
+    gradient: 'from-blue-500 to-indigo-500',
+  },
+  'constraint-control': {
+    name: 'Constraint Control',
+    namePl: 'Kontrola Ograniczeń',
+    color: 'amber',
+    badge: 'CON',
+    gradient: 'from-amber-500 to-orange-500',
+  },
+  'decision-engine': {
+    name: 'Decision Engine',
+    namePl: 'Silnik Decyzji',
+    color: 'slate',
+    badge: 'DEC',
+    gradient: 'from-slate-500 to-zinc-500',
+  },
+  'control-tower': {
+    name: 'Control Tower',
+    namePl: 'Control Tower',
+    color: 'teal',
+    badge: 'CTW',
+    gradient: 'from-teal-500 to-cyan-500',
+  },
+  'automation-pipeline': {
+    name: 'Automation Pipeline',
+    namePl: 'Pipeline Automatyzacji',
+    color: 'purple',
+    badge: 'AUT',
+    gradient: 'from-purple-500 to-fuchsia-500',
+  },
+  'robotics-feasibility': {
+    name: 'Robotics Feasibility',
+    namePl: 'Wykonalność Robotyki',
+    color: 'purple',
+    badge: 'ROB',
+    gradient: 'from-purple-500 to-indigo-500',
+  },
+  'logistics-automation': {
+    name: 'Logistics Automation',
+    namePl: 'Automatyzacja Logistyki',
+    color: 'blue',
+    badge: 'LOG',
+    gradient: 'from-blue-500 to-cyan-500',
+  },
+  'rpa-scanner': {
+    name: 'RPA Scanner',
+    namePl: 'Skaner RPA',
+    color: 'emerald',
+    badge: 'RPA',
+    gradient: 'from-emerald-500 to-teal-500',
+  },
+  'ai-discovery': {
+    name: 'AI Discovery',
+    namePl: 'AI Discovery',
+    color: 'cyan',
+    badge: 'AID',
+    gradient: 'from-cyan-500 to-blue-500',
+  },
+  'integration-diagnostic': {
+    name: 'Integration Diagnostic',
+    namePl: 'Diagnostyka Integracji',
+    color: 'indigo',
+    badge: 'INT',
+    gradient: 'from-indigo-500 to-purple-500',
+  },
+  'digital-value-pool': {
+    name: 'Digital Value Pool',
+    namePl: 'Pula Wartości Digital',
+    color: 'pink',
+    badge: 'DVP',
+    gradient: 'from-pink-500 to-rose-500',
+  },
+  'legacy-analyzer': {
+    name: 'Legacy Analyzer',
+    namePl: 'Analizator Legacy',
+    color: 'orange',
+    badge: 'LEG',
+    gradient: 'from-orange-500 to-amber-500',
+  },
+  'data-inventory': {
+    name: 'Data Inventory',
+    namePl: 'Inwentaryzacja Danych',
+    color: 'teal',
+    badge: 'DAT',
+    gradient: 'from-teal-500 to-emerald-500',
+  },
+  'pain-to-solution': {
+    name: 'Pain to Solution',
+    namePl: 'Pain → Solution',
+    color: 'red',
+    badge: 'P2S',
+    gradient: 'from-red-500 to-orange-500',
+  },
+  'pain-explorer': {
+    name: 'Pain Explorer',
+    namePl: 'Eksplorator Pain',
+    color: 'amber',
+    badge: 'SPE',
+    gradient: 'from-amber-500 to-yellow-500',
+  },
+  'process-automation': {
+    name: 'Process Automation',
+    namePl: 'Automatyzacja Procesu',
+    color: 'amber',
+    badge: 'PAI',
+    gradient: 'from-amber-500 to-orange-500',
+  },
 };
 
 const STATUS_CONFIG = {
@@ -683,7 +795,20 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const handleGenerateAI = async (section: string) => {
     setIsGeneratingAI(true);
     try {
-      if (section === 'correlations') {
+      if (section === 'tool-content') {
+        const currentStepDef = stepDefs[currentStep - 1];
+        if (currentStepDef?.id === 'correlations') {
+          await generateCorrelations();
+        } else if (
+          ['summary', 'results', 'reasoning', 'prepare', 'initiatives'].includes(
+            currentStepDef?.id || ''
+          )
+        ) {
+          await generateSummary();
+        } else {
+          await requestSuggestions();
+        }
+      } else if (section === 'correlations') {
         await generateCorrelations();
       } else if (section === 'summary') {
         await generateSummary();

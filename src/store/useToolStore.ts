@@ -28,7 +28,23 @@ export type ToolType =
   | 'a3-problem-solving'
   | 'smed-planner'
   | 'dms-builder'
-  | 'inventory-autopilot';
+  | 'inventory-autopilot'
+  | 'vsm-builder'
+  | 'constraint-control'
+  | 'decision-engine'
+  | 'control-tower'
+  | 'automation-pipeline'
+  | 'robotics-feasibility'
+  | 'logistics-automation'
+  | 'rpa-scanner'
+  | 'ai-discovery'
+  | 'integration-diagnostic'
+  | 'digital-value-pool'
+  | 'legacy-analyzer'
+  | 'data-inventory'
+  | 'pain-to-solution'
+  | 'pain-explorer'
+  | 'process-automation';
 
 export type StepStatus = 'pending' | 'in_progress' | 'completed' | 'skipped';
 
@@ -227,6 +243,69 @@ export interface OperationalToolData {
   };
 }
 
+export interface ToolImpactHypothesis {
+  metricName: string;
+  baseline: number | null;
+  target: number | null;
+  unit: string;
+  timeframe: string;
+  assumptions: string[];
+}
+
+export interface ToolFlowResults {
+  executiveSummary: string;
+  keyFindings: string[];
+  quickWins: string[];
+  strategicBets: string[];
+  prerequisites: string[];
+  risks: string[];
+  dependencies: string[];
+}
+
+export interface ToolFlowReasoning {
+  narrative: string;
+  evidence: string[];
+  openQuestions: string[];
+}
+
+export interface ToolFlowPrepare {
+  nextSteps: string[];
+  stakeholders: string[];
+  dataNeeded: string[];
+  timeline: string;
+}
+
+export interface ToolFlowEconomics {
+  fullyLoadedCostPerHour: number | null;
+  baselineHoursPerWeek: number | null;
+  targetHoursPerWeek: number | null;
+  oneTimeCost: number | null;
+  monthlyCost: number | null;
+}
+
+export interface ProcessAutomationFlow {
+  processName: string;
+  owner: string;
+  volumePerWeek: number | null;
+  baselineMinutesPerCycle: number | null;
+  targetMinutesPerCycle: number | null;
+  errorRateBaselinePct: number | null;
+  errorRateTargetPct: number | null;
+}
+
+export interface ToolFlowExtras {
+  impactHypothesis?: ToolImpactHypothesis;
+  results?: ToolFlowResults;
+  reasoning?: ToolFlowReasoning;
+  prepare?: ToolFlowPrepare;
+  economics?: ToolFlowEconomics;
+  processAutomation?: ProcessAutomationFlow;
+}
+
+export type ToolsetFlowData = OperationalToolData & {
+  flow?: ToolFlowExtras;
+};
+
 // Initiative draft from tool analysis
 export interface InitiativeDraft {
   id: string;
@@ -265,6 +344,7 @@ export interface ToolSession {
     | PortfolioPriorityData
     | RiskUncertaintyData
     | OperationalToolData
+    | ToolsetFlowData
     | Record<string, unknown>;
   chatHistory: ToolChatMessage[];
   generatedInitiatives: InitiativeDraft[];
@@ -753,6 +833,178 @@ export const INVENTORY_STEPS: StepDefinition[] = [
   },
 ];
 
+export const TOOLSET_OPERATIONAL_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'Operational Context',
+    namePl: 'Kontekst Operacyjny',
+    description: 'Define goal, scope, and time horizon for the operational tool',
+    descriptionPl: 'Zdefiniuj cel, zakres i horyzont czasowy narzędzia operacyjnego',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'fill',
+    name: 'Fill',
+    namePl: 'Wypełnij',
+    description: 'Capture current-state signals and improvement ideas',
+    descriptionPl: 'Zbierz sygnały stanu obecnego i pomysły usprawnień',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'impact-hypothesis',
+    name: 'Impact Hypothesis',
+    namePl: 'Hipoteza wpływu',
+    description: 'Define baseline → target and assumptions (measurable)',
+    descriptionPl: 'Zdefiniuj baseline → target i założenia (mierzalne)',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'results',
+    name: 'Results',
+    namePl: 'Wyniki',
+    description: 'Summarize key findings and expected impact',
+    descriptionPl: 'Podsumuj kluczowe wnioski i oczekiwany wpływ',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'reasoning',
+    name: 'Reasoning',
+    namePl: 'Uzasadnienie',
+    description: 'Explain why these results follow from inputs and evidence',
+    descriptionPl: 'Wyjaśnij, dlaczego te wyniki wynikają z wejść i evidence',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'prepare',
+    name: 'Prepare',
+    namePl: 'Przygotuj',
+    description: 'Define next steps, owners, and what data is needed',
+    descriptionPl: 'Zdefiniuj kolejne kroki, ownerów i potrzebne dane',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'report',
+    name: 'Report / Deck',
+    namePl: 'Raport / Deck',
+    description: 'Export and package outcomes for stakeholders',
+    descriptionPl: 'Wyeksportuj i zapakuj wyniki dla stakeholderów',
+    required: false,
+    aiAssisted: false,
+  },
+  {
+    id: 'initiatives',
+    name: 'Initiatives',
+    namePl: 'Inicjatywy',
+    description: 'Turn findings into draft initiatives and execution plan',
+    descriptionPl: 'Przełóż wnioski na draft inicjatyw i plan realizacji',
+    required: false,
+    aiAssisted: true,
+  },
+];
+
+export const TOOLSET_DIGITAL_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'Digital Context',
+    namePl: 'Kontekst Cyfrowy',
+    description: 'Define the transformation scope and desired outcomes',
+    descriptionPl: 'Zdefiniuj zakres transformacji i pożądane outcomes',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'fill',
+    name: 'Fill',
+    namePl: 'Wypełnij',
+    description: 'Capture pains, opportunities, constraints, and candidate solutions',
+    descriptionPl: 'Zbierz bóle, szanse, ograniczenia i kandydatów rozwiązań',
+    required: true,
+    aiAssisted: true,
+  },
+  ...TOOLSET_OPERATIONAL_STEPS.filter((s) => !['context', 'fill'].includes(s.id)),
+];
+
+export const PROCESS_AUTOMATION_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'Identification',
+    namePl: 'Identyfikacja',
+    description: 'Identify the process and define the automation goal',
+    descriptionPl: 'Zidentyfikuj proces i zdefiniuj cel automatyzacji',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'process-mapping',
+    name: 'Process Mapping',
+    namePl: 'Mapowanie procesu',
+    description: 'Capture the key steps and handoffs',
+    descriptionPl: 'Zbierz kluczowe kroki i handoffy',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'measurement',
+    name: 'Measurement',
+    namePl: 'Pomiar',
+    description: 'Baseline volume, time, errors, and constraints',
+    descriptionPl: 'Baseline: wolumen, czas, błędy i ograniczenia',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'redesign',
+    name: 'Redesign',
+    namePl: 'Redesign',
+    description: 'Define the redesigned flow and automation candidates',
+    descriptionPl: 'Zdefiniuj nowy flow i kandydatów automatyzacji',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 're-estimation',
+    name: 'Re-estimation',
+    namePl: 'Re-estymacja',
+    description: 'Estimate target cycle times and error rates after redesign',
+    descriptionPl: 'Oszacuj target czasy i błędy po redesignie',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'economics',
+    name: 'Economics',
+    namePl: 'Ekonomia',
+    description: 'Calculate savings, payback, and ROI assumptions',
+    descriptionPl: 'Policz oszczędności, payback i założenia ROI',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'initiatives',
+    name: 'Initiatives',
+    namePl: 'Inicjatywy',
+    description: 'Translate the redesign into an execution-ready initiative set',
+    descriptionPl: 'Przełóż redesign na zestaw inicjatyw gotowych do realizacji',
+    required: false,
+    aiAssisted: true,
+  },
+  {
+    id: 'report',
+    name: 'Report / Deck',
+    namePl: 'Raport / Deck',
+    description: 'Export and share outcomes',
+    descriptionPl: 'Wyeksportuj i udostępnij wyniki',
+    required: false,
+    aiAssisted: false,
+  },
+];
+
 // ==================== STORE STATE ====================
 
 interface ToolStoreState {
@@ -796,6 +1048,7 @@ interface ToolStoreState {
       | PortfolioPriorityData
       | RiskUncertaintyData
       | OperationalToolData
+      | ToolsetFlowData
     >
   ) => void;
   addSWOTItem: (item: Omit<SWOTItem, 'id'>) => void;
@@ -906,6 +1159,68 @@ const createInitialOperationalData = (steps: StepDefinition[]): OperationalToolD
   };
 };
 
+const createInitialToolsetFlowData = (inputSectionIds: string[]): ToolsetFlowData => {
+  const sections = inputSectionIds.reduce<Record<string, OperationalItem[]>>((acc, id) => {
+    acc[id] = [];
+    return acc;
+  }, {});
+
+  return {
+    context: {
+      goal: '',
+      scope: '',
+      timeframe: 'medium',
+    },
+    sections,
+    flow: {
+      impactHypothesis: {
+        metricName: '',
+        baseline: null,
+        target: null,
+        unit: '',
+        timeframe: '',
+        assumptions: [],
+      },
+      results: {
+        executiveSummary: '',
+        keyFindings: [],
+        quickWins: [],
+        strategicBets: [],
+        prerequisites: [],
+        risks: [],
+        dependencies: [],
+      },
+      reasoning: {
+        narrative: '',
+        evidence: [],
+        openQuestions: [],
+      },
+      prepare: {
+        nextSteps: [],
+        stakeholders: [],
+        dataNeeded: [],
+        timeline: '',
+      },
+      economics: {
+        fullyLoadedCostPerHour: null,
+        baselineHoursPerWeek: null,
+        targetHoursPerWeek: null,
+        oneTimeCost: null,
+        monthlyCost: null,
+      },
+      processAutomation: {
+        processName: '',
+        owner: '',
+        volumePerWeek: null,
+        baselineMinutesPerCycle: null,
+        targetMinutesPerCycle: null,
+        errorRateBaselinePct: null,
+        errorRateTargetPct: null,
+      },
+    },
+  };
+};
+
 const TOOL_STEP_DEFINITIONS: Record<ToolType, StepDefinition[]> = {
   'dynamic-swot': SWOT_STEPS,
   'market-forces': PORTER_STEPS,
@@ -922,6 +1237,22 @@ const TOOL_STEP_DEFINITIONS: Record<ToolType, StepDefinition[]> = {
   'smed-planner': SMED_STEPS,
   'dms-builder': DMS_STEPS,
   'inventory-autopilot': INVENTORY_STEPS,
+  'vsm-builder': TOOLSET_OPERATIONAL_STEPS,
+  'constraint-control': TOOLSET_OPERATIONAL_STEPS,
+  'decision-engine': TOOLSET_OPERATIONAL_STEPS,
+  'control-tower': TOOLSET_OPERATIONAL_STEPS,
+  'automation-pipeline': TOOLSET_OPERATIONAL_STEPS,
+  'robotics-feasibility': TOOLSET_DIGITAL_STEPS,
+  'logistics-automation': TOOLSET_DIGITAL_STEPS,
+  'rpa-scanner': TOOLSET_DIGITAL_STEPS,
+  'ai-discovery': TOOLSET_DIGITAL_STEPS,
+  'integration-diagnostic': TOOLSET_DIGITAL_STEPS,
+  'digital-value-pool': TOOLSET_DIGITAL_STEPS,
+  'legacy-analyzer': TOOLSET_DIGITAL_STEPS,
+  'data-inventory': TOOLSET_DIGITAL_STEPS,
+  'pain-to-solution': TOOLSET_DIGITAL_STEPS,
+  'pain-explorer': TOOLSET_DIGITAL_STEPS,
+  'process-automation': PROCESS_AUTOMATION_STEPS,
 };
 
 const TOOL_INITIAL_DATA: Record<
@@ -949,6 +1280,22 @@ const TOOL_INITIAL_DATA: Record<
   'smed-planner': createInitialOperationalData(SMED_STEPS),
   'dms-builder': createInitialOperationalData(DMS_STEPS),
   'inventory-autopilot': createInitialOperationalData(INVENTORY_STEPS),
+  'vsm-builder': createInitialToolsetFlowData(['fill']),
+  'constraint-control': createInitialToolsetFlowData(['fill']),
+  'decision-engine': createInitialToolsetFlowData(['fill']),
+  'control-tower': createInitialToolsetFlowData(['fill']),
+  'automation-pipeline': createInitialToolsetFlowData(['fill']),
+  'robotics-feasibility': createInitialToolsetFlowData(['fill']),
+  'logistics-automation': createInitialToolsetFlowData(['fill']),
+  'rpa-scanner': createInitialToolsetFlowData(['fill']),
+  'ai-discovery': createInitialToolsetFlowData(['fill']),
+  'integration-diagnostic': createInitialToolsetFlowData(['fill']),
+  'digital-value-pool': createInitialToolsetFlowData(['fill']),
+  'legacy-analyzer': createInitialToolsetFlowData(['fill']),
+  'data-inventory': createInitialToolsetFlowData(['fill']),
+  'pain-to-solution': createInitialToolsetFlowData(['fill']),
+  'pain-explorer': createInitialToolsetFlowData(['fill']),
+  'process-automation': createInitialToolsetFlowData(['process-mapping', 'redesign']),
 };
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -1017,18 +1364,50 @@ const computeStepStatusFromAnswers = (
         return (answers?.scenarios?.length || 0) > 0 ? 'completed' : 'pending';
     }
 
-    // Operational tools: section arrays
-    if (
-      [
-        'sop-builder',
-        'a3-problem-solving',
-        'smed-planner',
-        'dms-builder',
-        'inventory-autopilot',
-      ].includes(toolType)
-    ) {
-      const len = answers?.sections?.[stepId]?.length || 0;
-      return len > 0 ? 'completed' : 'pending';
+    // Toolsets & operational: section arrays (generic)
+    const sectionLen = answers?.sections?.[stepId]?.length || 0;
+    if (sectionLen > 0) return 'completed';
+
+    // Toolsets: flow sections
+    if (stepId === 'impact-hypothesis') {
+      const ih = answers?.flow?.impactHypothesis;
+      return ih?.metricName &&
+        ih?.unit &&
+        ih?.timeframe &&
+        ih?.baseline != null &&
+        ih?.target != null
+        ? 'completed'
+        : 'pending';
+    }
+    if (stepId === 'results') {
+      const r = answers?.flow?.results;
+      return r?.executiveSummary || (r?.keyFindings?.length || 0) > 0 ? 'completed' : 'pending';
+    }
+    if (stepId === 'reasoning') {
+      const r = answers?.flow?.reasoning;
+      return r?.narrative || (r?.evidence?.length || 0) > 0 ? 'completed' : 'pending';
+    }
+    if (stepId === 'prepare') {
+      const p = answers?.flow?.prepare;
+      return p?.timeline || (p?.nextSteps?.length || 0) > 0 ? 'completed' : 'pending';
+    }
+    if (stepId === 'economics') {
+      const e = answers?.flow?.economics;
+      return e?.fullyLoadedCostPerHour != null &&
+        e?.baselineHoursPerWeek != null &&
+        e?.targetHoursPerWeek != null
+        ? 'completed'
+        : 'pending';
+    }
+    if (stepId === 'measurement') {
+      const p = answers?.flow?.processAutomation;
+      return p?.processName && p?.volumePerWeek != null && p?.baselineMinutesPerCycle != null
+        ? 'completed'
+        : 'pending';
+    }
+    if (stepId === 're-estimation') {
+      const p = answers?.flow?.processAutomation;
+      return p?.targetMinutesPerCycle != null ? 'completed' : 'pending';
     }
   } catch {
     // ignore
@@ -1224,6 +1603,48 @@ export const useToolStore = create<ToolStoreState>()(
         const operationalData = currentSession.inputData as OperationalToolData;
         if (operationalData.sections && stepDef.id in operationalData.sections) {
           return operationalData.sections[stepDef.id].length > 0;
+        }
+
+        const flow = (currentSession.inputData as any)?.flow;
+        if (stepDef.id === 'impact-hypothesis') {
+          const ih = flow?.impactHypothesis;
+          return Boolean(
+            ih?.metricName &&
+            ih?.unit &&
+            ih?.timeframe &&
+            ih?.baseline != null &&
+            ih?.target != null
+          );
+        }
+        if (stepDef.id === 'results') {
+          const r = flow?.results;
+          return Boolean(r?.executiveSummary || (r?.keyFindings?.length || 0) > 0);
+        }
+        if (stepDef.id === 'reasoning') {
+          const r = flow?.reasoning;
+          return Boolean(r?.narrative || (r?.evidence?.length || 0) > 0);
+        }
+        if (stepDef.id === 'prepare') {
+          const p = flow?.prepare;
+          return Boolean(p?.timeline || (p?.nextSteps?.length || 0) > 0);
+        }
+        if (stepDef.id === 'measurement') {
+          const p = flow?.processAutomation;
+          return Boolean(
+            p?.processName && p?.volumePerWeek != null && p?.baselineMinutesPerCycle != null
+          );
+        }
+        if (stepDef.id === 're-estimation') {
+          const p = flow?.processAutomation;
+          return Boolean(p?.targetMinutesPerCycle != null);
+        }
+        if (stepDef.id === 'economics') {
+          const e = flow?.economics;
+          return Boolean(
+            e?.fullyLoadedCostPerHour != null &&
+            e?.baselineHoursPerWeek != null &&
+            e?.targetHoursPerWeek != null
+          );
         }
 
         return true;

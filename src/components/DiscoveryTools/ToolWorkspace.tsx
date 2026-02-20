@@ -33,14 +33,16 @@ interface ToolWorkspaceProps {
 
 // ==================== TOOL METADATA ====================
 
-const TOOL_METADATA: Record<
-  ToolType,
-  {
-    name: string;
-    namePl: string;
-    color: string;
-    badge: string;
-  }
+const TOOL_METADATA: Partial<
+  Record<
+    ToolType,
+    {
+      name: string;
+      namePl: string;
+      color: string;
+      badge: string;
+    }
+  >
 > = {
   'dynamic-swot': {
     name: 'Dynamic SWOT',
@@ -136,6 +138,15 @@ const TOOL_METADATA: Record<
 
 // ==================== COMPONENT ====================
 
+const getFallbackMeta = (toolType: ToolType) => ({
+  name: toolType,
+  namePl: toolType,
+  color: 'slate',
+  badge: 'TLS',
+});
+
+// ==================== COMPONENT ====================
+
 export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   toolType,
   sessionId,
@@ -215,7 +226,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     abortStream,
   } = useToolAI({ toolType });
 
-  const toolMeta = TOOL_METADATA[toolType];
+  const toolMeta = TOOL_METADATA[toolType] || getFallbackMeta(toolType);
   const stepDefs = getStepDefinitions();
   const progress = calculateProgress();
 
@@ -393,7 +404,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     const currentStepDef = stepDefs[currentStep - 1];
     if (currentStepDef?.id === 'correlations') {
       await generateCorrelations();
-    } else if (currentStepDef?.id === 'summary') {
+    } else if (
+      ['summary', 'results', 'reasoning', 'prepare', 'initiatives'].includes(
+        currentStepDef?.id || ''
+      )
+    ) {
       await generateSummary();
     }
   };
