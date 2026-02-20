@@ -100,6 +100,17 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 
 **Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_6.md`
 
+## Wave 6.5 (2026-02-20) — Cursor-only (równolegle do Codex Bundle 11)
+
+Codex jest z tyłu — odpalamy 2 bundley Cursor w obszarach **bez konfliktu** z Bundle 11. Merge: najpierw 6+6.5, potem Bundle 11.
+
+| Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
+|---|---|---|---|---|---|
+| 12 | T046–T049 | bundle-12-benefits-kpi-finance | Cursor A | in_progress | Benefits/KPI/Finance mapping |
+| 23 | T086 + T008 | bundle-23-admin-sync-hub | Cursor B | in_progress | Admin Sync Hub + guardrails |
+
+**Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_6_5.md`
+
 ---
 
 ## Najwazniejszy wskaznik "czy jest syf"
@@ -130,7 +141,7 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 09 | T034-T038 | Codex | planned | | |
 | 10 | T039-T042 | Cursor | in_progress | bundle-10-execution-t041-t042 | Wave 5: T039-T040 merged; Wave 6: T041-T042 |
 | 11 | T043-T045 | Codex | in_progress | bundle-11-execution-people-change-comms | Wave 6 |
-| 12 | T046-T049 | Cursor | planned | | |
+| 12 | T046-T049 | Cursor | in_progress | bundle-12-benefits-kpi-finance | Wave 6.5 |
 | 13 | T050-T051 | Codex | planned | | |
 | 14 | T052-T053 | Codex | planned | | |
 | 15 | T054 | Cursor | planned | | weekend/hard |
@@ -141,7 +152,7 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 20 | T063-T067 | Codex | planned | | |
 | 21 | T068-T069 | Codex | **merged** | bundle-21-onboarding-news | Wave 1 |
 | 22 | T071-T073 (+T070 content) | Cursor | **merged** | bundle-22-help-t071-t073 | Wave 4: T071+T073 (T072 done in pilot) |
-| 23 | T086 + T008 | Cursor | planned | | |
+| 23 | T086 + T008 | Cursor | in_progress | bundle-23-admin-sync-hub | Wave 6.5 |
 | 24 | T087, T089, T090 | Codex | planned | | |
 | 25 | T091-T092 | Cursor | **merged** | bundle-25-trial-upgrade | Wave 1 |
 | 26 | T093 | Cursor | **merged** | bundle-26-legal-acceptance | Wave 1 |
