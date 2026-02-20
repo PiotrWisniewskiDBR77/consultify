@@ -9,6 +9,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -143,6 +144,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const {
+    setOpen: setHelpOpen,
+    setActiveTab: setHelpTab,
+    setKnowledgeModuleIdOverride,
+  } = useHelpSidePanel();
   const {
     currentOrganization,
     activeChatMessages,
@@ -508,7 +514,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           .map((s) => s.stepId)}
         onBack={onBack}
         onStepClick={setCurrentStep}
-        onHelp={() => console.log('Help clicked')}
+        onHelp={() => {
+          setKnowledgeModuleIdOverride(toolType);
+          setHelpTab('knowledge');
+          setHelpOpen(true);
+        }}
         onExport={() => console.log('Export clicked')}
         onCreateInitiative={onCreateInitiative}
         onRequestReview={handleRequestReview}

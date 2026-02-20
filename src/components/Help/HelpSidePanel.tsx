@@ -43,9 +43,9 @@ import {
 } from '../../config/helpContent';
 import { HelpTab, useHelpSidePanel } from '../../contexts/HelpContext';
 import { KeyboardShortcutsHelp } from '../MyWork/shared/KeyboardShortcutsHelp';
+import { FeatureUpdatesPanel } from './FeatureUpdatesPanel';
 import { KnowledgeArticleView } from './KnowledgeArticleView';
 import { KnowledgeLibrary } from './KnowledgeLibrary';
-import { FeatureUpdatesPanel } from './FeatureUpdatesPanel';
 import { OnboardingPlaybooksPanel } from './OnboardingPlaybooksPanel';
 
 // Tab configuration - 3 tabs: Overview, FAQ, Knowledge Base
@@ -235,7 +235,8 @@ export const HelpSidePanel: React.FC = () => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language === 'pl' ? 'pl' : 'en';
 
-  const { isOpen, setOpen, activeTab, setActiveTab, help } = useHelpSidePanel();
+  const { isOpen, setOpen, activeTab, setActiveTab, help, knowledgeModuleIdOverride } =
+    useHelpSidePanel();
   const [searchQuery, setSearchQuery] = useState('');
   const [notifyEmail, setNotifyEmail] = useState('');
   const [isSubscribing, setIsSubscribing] = useState(false);
@@ -509,7 +510,9 @@ export const HelpSidePanel: React.FC = () => {
           )}
 
           {/* Onboarding Tab */}
-          {activeTab === 'onboarding' && <OnboardingPlaybooksPanel onClose={() => setOpen(false)} />}
+          {activeTab === 'onboarding' && (
+            <OnboardingPlaybooksPanel onClose={() => setOpen(false)} />
+          )}
 
           {/* Updates Tab */}
           {activeTab === 'updates' && <FeatureUpdatesPanel onClose={() => setOpen(false)} />}
@@ -563,7 +566,7 @@ export const HelpSidePanel: React.FC = () => {
           {/* Knowledge Base Tab */}
           {activeTab === 'knowledge' && (
             <KnowledgeTabContent
-              moduleId={help.moduleId}
+              moduleId={knowledgeModuleIdOverride || help.moduleId}
               initialArticleSlug={selectedGuideArticle}
               onBack={() => setSelectedGuideArticle(null)}
             />

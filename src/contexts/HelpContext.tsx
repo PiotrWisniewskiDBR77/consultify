@@ -102,6 +102,10 @@ interface HelpContextValue {
   setActiveHelpTab: (tab: HelpTab) => void;
   contextualHelp: ContextualHelpState;
   getHelpForView: (view: AppView | string) => ContextualHelpState;
+
+  // Knowledge Base contextual override (e.g. per tool_type)
+  knowledgeModuleIdOverride: string | null;
+  setKnowledgeModuleIdOverride: (moduleId: string | null) => void;
 }
 
 const HelpContext = createContext<HelpContextValue | undefined>(undefined);
@@ -132,6 +136,7 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { activeSidePanel, toggleSidePanel } = useAppStore();
   const isHelpSidePanelOpen = activeSidePanel === 'HELP';
   const [activeHelpTab, setActiveHelpTab] = useState<HelpTab>('overview');
+  const [knowledgeModuleIdOverride, setKnowledgeModuleIdOverride] = useState<string | null>(null);
 
   // Toggle help side panel
   const toggleHelpSidePanel = useCallback(() => {
@@ -149,6 +154,13 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     [activeSidePanel, toggleSidePanel]
   );
+
+  // Clear KB override when panel closes
+  useEffect(() => {
+    if (!isHelpSidePanelOpen) {
+      setKnowledgeModuleIdOverride(null);
+    }
+  }, [isHelpSidePanelOpen]);
 
   // Get contextual help for a specific view
   const getHelpForView = useCallback((view: AppView | string): ContextualHelpState => {
@@ -322,6 +334,9 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setActiveHelpTab,
         contextualHelp,
         getHelpForView,
+
+        knowledgeModuleIdOverride,
+        setKnowledgeModuleIdOverride,
       }}
     >
       {children}
@@ -365,6 +380,8 @@ export const useHelpSidePanel = () => {
     setActiveHelpTab,
     contextualHelp,
     getHelpForView,
+    knowledgeModuleIdOverride,
+    setKnowledgeModuleIdOverride,
   } = useHelp();
 
   return {
@@ -375,6 +392,8 @@ export const useHelpSidePanel = () => {
     setActiveTab: setActiveHelpTab,
     help: contextualHelp,
     getHelpForView,
+    knowledgeModuleIdOverride,
+    setKnowledgeModuleIdOverride,
   };
 };
 

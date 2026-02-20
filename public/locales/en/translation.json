@@ -2943,5 +2943,23 @@
       "requiredApprovalsForStatus": "Required approvals for status",
       "notRequested": "Not requested"
     }
+  },
+  "tools": {
+    "hub": {
+      "tabs": {
+        "library": "Library",
+        "sessions": "Sessions",
+        "reports": "Reports",
+        "initiatives": "Initiatives"
+      },
+      "table": {
+        "name": "Name",
+        "category": "Category",
+        "whatYouGet": "What you get"
+      },
+      "empty": {
+        "library": "No tools available."
+      }
+    }
   }
 }

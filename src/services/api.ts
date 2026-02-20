@@ -2801,6 +2801,78 @@ export const Api = {
     return handleResponse(res, 'Failed to create tool session');
   },
 
+  // --- KNOWN TOOLS LIBRARY (T018/T021) ---
+  getKnownTools: async (params?: {
+    lang?: 'en' | 'pl';
+    category?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    items: Array<{
+      id: string;
+      toolType: string;
+      name: string;
+      libraryCategory: string | null;
+      description: string;
+      whatYouGet: string[];
+      tags: string[];
+      icon: string | null;
+      isLicensed: boolean;
+      isComingSoon: boolean;
+      sortOrder: number;
+      createdAt: string | null;
+    }>;
+    total: number;
+    limit: number;
+    offset: number;
+  }> => {
+    const sp = new URLSearchParams();
+    if (params?.lang) sp.append('lang', params.lang);
+    if (params?.category) sp.append('category', params.category);
+    if (params?.search) sp.append('search', params.search);
+    if (params?.limit) sp.append('limit', String(params.limit));
+    if (params?.offset) sp.append('offset', String(params.offset));
+
+    const url = `${API_URL}/known-tools${sp.toString() ? `?${sp.toString()}` : ''}`;
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch known tools');
+  },
+
+  getKnownTool: async (
+    toolType: string,
+    params?: { lang?: 'en' | 'pl' }
+  ): Promise<{
+    tool: {
+      id: string;
+      toolType: string;
+      name: string;
+      libraryCategory: string | null;
+      description: string;
+      whatYouGet: string[];
+      tags: string[];
+      icon: string | null;
+      isLicensed: boolean;
+      isComingSoon: boolean;
+      sortOrder: number;
+      createdAt: string | null;
+      whenToUse: string;
+      inputs: string[];
+      steps: string[];
+      outputs: string[];
+      commonMistakes: string[];
+      example: string;
+      nextSteps: string[];
+      kbArticleSlug: string;
+    };
+  }> => {
+    const sp = new URLSearchParams();
+    if (params?.lang) sp.append('lang', params.lang);
+    const url = `${API_URL}/known-tools/${encodeURIComponent(toolType)}${sp.toString() ? `?${sp.toString()}` : ''}`;
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch known tool');
+  },
+
   listToolSessions: async (params?: {
     projectId?: string;
     status?: string;

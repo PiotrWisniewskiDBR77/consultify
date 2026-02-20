@@ -2964,5 +2964,23 @@
       "requiredApprovalsForStatus": "Wymagane zatwierdzenia dla statusu",
       "notRequested": "Nie zgłoszono"
     }
+  },
+  "tools": {
+    "hub": {
+      "tabs": {
+        "library": "Biblioteka",
+        "sessions": "Sesje",
+        "reports": "Raporty",
+        "initiatives": "Inicjatywy"
+      },
+      "table": {
+        "name": "Nazwa",
+        "category": "Kategoria",
+        "whatYouGet": "Co otrzymasz"
+      },
+      "empty": {
+        "library": "Brak narzędzi."
+      }
+    }
   }
 }

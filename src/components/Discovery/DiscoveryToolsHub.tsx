@@ -20,6 +20,7 @@ import {
   FileText,
   Filter,
   Flag,
+  Library,
   Lightbulb,
   ListTodo,
   Loader2,
@@ -33,16 +34,19 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { ToolType as StoreToolType } from '@/store/useToolStore';
 import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 
 import { ToolDocumentView, ToolWorkspace } from '../DiscoveryTools';
 import { GenericToolDocumentView } from '../DiscoveryTools/GenericToolDocumentView';
+import { KnownToolDetailView } from '../DiscoveryTools/KnownToolDetailView';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {
   CategoryButton,
@@ -500,9 +504,11 @@ interface DiscoveryToolsHubProps {
   initialTab?: ModuleTab;
 }
 
-export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab = 'list' }) => {
+export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab = 'library' }) => {
   const navigate = useNavigate();
   const { currentProjectId } = useAppStore();
+  const { i18n, t } = useTranslation();
+  const lang = i18n.language === 'pl' ? 'pl' : 'en';
 
   // UI State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
@@ -529,6 +535,22 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const [discoveries, setDiscoveries] = useState<DisplayItem[]>([]);
   const [reports, setReports] = useState<DisplayItem[]>([]);
   const [initiatives, setInitiatives] = useState<DisplayItem[]>([]);
+  const [knownTools, setKnownTools] = useState<
+    Array<{
+      id: string;
+      toolType: string;
+      name: string;
+      libraryCategory: string | null;
+      description: string;
+      whatYouGet: string[];
+      tags: string[];
+      icon: string | null;
+      isLicensed: boolean;
+      isComingSoon: boolean;
+      sortOrder: number;
+      createdAt: string | null;
+    }>
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -639,6 +661,24 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     fetchData();
   }, [fetchData]);
 
+  const fetchKnownTools = useCallback(async () => {
+    try {
+      const res = await Api.getKnownTools({ lang, limit: 50, offset: 0 });
+      setKnownTools(res.items || []);
+    } catch (error: any) {
+      console.warn('[DiscoveryToolsHub] Failed to fetch known tools:', error);
+      setKnownTools([]);
+    }
+  }, [lang]);
+
+  useEffect(() => {
+    fetchKnownTools();
+  }, [fetchKnownTools]);
+
+  useEffect(() => {
+    trackFunnelEvent('tools_hub_opened', { module: 'tools' });
+  }, []);
+
   // Reset status filter when tab changes
   useEffect(() => {
     setStatusFilter('all');
@@ -678,25 +718,31 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const tabs = useMemo(
     () => [
       {
+        id: 'library' as ModuleTab,
+        label: t('tools.hub.tabs.library', 'Library'),
+        icon: <Library size={16} />,
+        count: knownTools.length,
+      },
+      {
         id: 'list' as ModuleTab,
-        label: 'Discovery',
+        label: t('tools.hub.tabs.sessions', 'Sessions'),
         icon: <Target size={16} />,
         count: discoveries.length,
       },
       {
         id: 'reports' as ModuleTab,
-        label: 'Reports',
+        label: t('tools.hub.tabs.reports', 'Reports'),
         icon: <FileText size={16} />,
         count: reports.length,
       },
       {
         id: 'initiatives' as ModuleTab,
-        label: 'Initiatives',
+        label: t('tools.hub.tabs.initiatives', 'Initiatives'),
         icon: <Lightbulb size={16} />,
         count: initiatives.length,
       },
     ],
-    [discoveries.length, reports.length, initiatives.length]
+    [discoveries.length, reports.length, initiatives.length, knownTools.length, t]
   );
 
   // Category buttons
@@ -708,7 +754,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
       count: meta.count,
       onClick: () => {
         console.log('Open category:', key);
-        setSelectedCategory(key as ToolCategory);
+        setSelectedCategory((prev) =>
+          prev === (key as ToolCategory) ? null : (key as ToolCategory)
+        );
       },
     }));
   }, []);
@@ -985,6 +1033,49 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     [fetchInitiativeDetails]
   );
 
+  const handleOpenKnownTool = useCallback(
+    (row: any) => {
+      const toolType = String(row?.toolType || '').trim();
+      if (!toolType) return;
+
+      const docId = `known:${toolType}`;
+      const doc: OpenDocument = {
+        id: docId,
+        type: 'tool',
+        subType: toolType,
+        name: row?.name || toolType,
+        status: 'DRAFT',
+      };
+
+      setOpenDocuments((prev) => {
+        if (prev.find((d) => d.id === doc.id)) return prev;
+        return [...prev, doc];
+      });
+      setActiveDocumentId(docId);
+      trackFunnelEvent('tool_preview_opened', { toolType });
+    },
+    [setOpenDocuments]
+  );
+
+  const handleKnownToolSessionCreated = useCallback(
+    (sessionId: string, toolType: string, name: string) => {
+      const doc: OpenDocument = {
+        id: sessionId,
+        type: 'tool',
+        subType: toolType,
+        name,
+        status: 'DRAFT',
+      };
+      setOpenDocuments((prev) => {
+        if (prev.find((d) => d.id === doc.id)) return prev;
+        return [...prev, doc];
+      });
+      setActiveDocumentId(sessionId);
+      fetchData(true);
+    },
+    [fetchData]
+  );
+
   const handleCloseDocument = useCallback(
     (id: string) => {
       setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
@@ -1025,6 +1116,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
   const currentData = useMemo(() => {
     let data: DisplayItem[] = [];
     switch (activeTab) {
+      case 'library':
+        data = [];
+        break;
       case 'list':
         data = discoveries;
         break;
@@ -1068,6 +1162,44 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
 
     return data;
   }, [activeTab, discoveries, reports, initiatives, searchQuery, statusFilter]);
+
+  const filteredKnownTools = useMemo(() => {
+    let data = knownTools.slice();
+    if (selectedCategory) {
+      data = data.filter((t) => t.libraryCategory === selectedCategory);
+    }
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      data = data.filter(
+        (t) =>
+          t.name.toLowerCase().includes(q) ||
+          t.toolType.toLowerCase().includes(q) ||
+          (t.libraryCategory || '').toLowerCase().includes(q) ||
+          t.description.toLowerCase().includes(q)
+      );
+    }
+    return data;
+  }, [knownTools, searchQuery, selectedCategory]);
+
+  const libraryGridItems: GridItem[] = useMemo(() => {
+    return filteredKnownTools.map((tool) => ({
+      ...tool,
+      id: tool.toolType,
+      name: tool.name,
+      type: tool.libraryCategory || 'tool',
+      typeColor:
+        tool.libraryCategory === 'strategic'
+          ? 'emerald'
+          : tool.libraryCategory === 'operational'
+            ? 'blue'
+            : tool.libraryCategory === 'digital'
+              ? 'purple'
+              : 'amber',
+      status: 'DRAFT',
+      progress: 0,
+      updatedAt: tool.createdAt || new Date(),
+    }));
+  }, [filteredKnownTools]);
 
   // Convert to grid items
   const gridItems: GridItem[] = useMemo(() => {
@@ -1506,6 +1638,17 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
     if (activeDocumentId) {
       const doc = openDocuments.find((d) => d.id === activeDocumentId);
 
+      // Known Tool Library detail (read-only N-mode)
+      if (doc && doc.type === 'tool' && String(doc.id || '').startsWith('known:')) {
+        return (
+          <KnownToolDetailView
+            toolType={String(doc.subType || '')}
+            onClose={handleShowList}
+            onSessionCreated={handleKnownToolSessionCreated}
+          />
+        );
+      }
+
       // Show Initiative Document View (canonical full lifecycle view)
       if (doc && doc.type === 'initiative') {
         return (
@@ -1525,10 +1668,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
           'dynamic-swot',
           'market-forces',
           'growth-paths',
+          'value-chain',
           'portfolio-priority',
           'risk-uncertainty',
+          'capability-mapper',
           'sop-builder',
           'a3-problem-solving',
+          'vsm-builder',
           'smed-planner',
           'dms-builder',
           'inventory-autopilot',
@@ -1577,6 +1723,31 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
           toolTypeLabel={toolMeta?.name || doc?.subType}
           statusLabel={doc?.status || undefined}
           onBack={handleShowList}
+        />
+      );
+    }
+
+    // Known Tools Library tab
+    if (activeTab === 'library') {
+      if (viewMode === 'grid') {
+        return (
+          <GridView
+            items={libraryGridItems}
+            onItemClick={(item) => handleOpenKnownTool(item)}
+            emptyMessage={t('tools.hub.empty.library', 'No tools available.')}
+          />
+        );
+      }
+
+      return (
+        <FilterableTable
+          columns={libraryColumns}
+          data={filteredKnownTools}
+          onRowClick={handleOpenKnownTool}
+          onRowAction={handleRowAction}
+          activeFilters={activeFilters}
+          onFilterChange={setActiveFilters}
+          emptyMessage={t('tools.hub.empty.library', 'No tools available.')}
         />
       );
     }
@@ -1702,13 +1873,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         categoryButtons={categoryButtons}
-        rightControls={StatusFilterDropdown}
+        rightControls={activeTab === 'library' ? null : StatusFilterDropdown}
       >
         {renderContent()}
       </ModuleHub>
 
       {/* Tool Selection Modal */}
-      {selectedCategory && (
+      {selectedCategory && activeTab !== 'library' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-lg max-h-[80vh] overflow-auto">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
