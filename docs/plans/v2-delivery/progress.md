@@ -32,12 +32,18 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 - Konflikty w translation.json -> instrukcja: klucze na koncu, prefix modulem
 - Hardcoded plans w Bundle 25 -> zasada: dane z DB/config
 
-## Wave 2 (2026-02-20) — IN PROGRESS
+## Wave 2 (2026-02-20) — CLOSED (Cursor scope)
 
 | Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
 |---|---|---|---|---|---|
 | 01 | T003–T006 (+ T001–T002 already) | bundle-01-chat-research | Cursor A | merged | migracja 553_cloud_data_sources |
 | 30.5 (slice) | T110–T112 | bundle-30-5-oauth | Cursor B | merged | migracja 554_oauth_v2_enhancements; i18n + connected accounts |
+| 03 | T013–T017 | bundle-03-interview-survey | Codex | parked | brak nowych commitów na branchu; wracamy gdy Codex dowiezie gotową paczkę |
+
+### Wave 2 — domknięcie techniczne (deploy blockers)
+- `npm run test:l4`: PASS
+- `npm run test:l5`: PASS (quality-check 0 placeholder + audit-gate allowlist + security + performance)
+- Decyzja audit gate (C / hybryda): allowlista zaktualizowana w `scripts/security/npm-audit-allowlist.json`
 
 ---
 
@@ -58,9 +64,9 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 
 | Bundle | Zakres (taski) | Owner (domyslny) | Status | Branch | Uwagi |
 |---:|---|---|---|---|---|
-| 01 | T001-T006 | Cursor | planned | | T001,T002 done in pilot |
+| 01 | T001-T006 | Cursor | **merged** | bundle-01-chat-research | T001,T002 done in pilot + T003-T006 merged (Wave 2) |
 | 02 | T007-T012 (+T008 guardrails) | Cursor | planned | | |
-| 03 | T013-T017 | Codex | planned | | |
+| 03 | T013-T017 | Codex | parked | bundle-03-interview-survey | czeka na dowiezienie przez Codex |
 | 04 | T018-T021 | Codex | planned | | |
 | 05 | T019, T022-T024 | Codex | planned | | |
 | 06 | T025-T027 | Cursor | planned | | |
@@ -99,7 +105,7 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
   - Bundle 25 (T091-T092) — trial architecture + conversion path
   - Bundle 26 (T093) — legal acceptance
 - **In progress:** none
-- **Next up:** Wave 2 (TBD)
+- **Next up:** Wave 3 (Cursor) + Bundle 28 (Codex)
 - **Top risks:**
   - Bundle 25 hardcoded plans (free/pro/business/enterprise) — needs sync with DB
   - Pre-existing test baseline noise
@@ -107,3 +113,4 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
   - Dodano PROMPT_TEMPLATE_V2.md z lekcjami z Wave 1
   - Zasada: agenty NIE edytuja progress.md
   - Zasada: migracje w natywnym PostgreSQL
+  - Audit gate: decyzja C (hybryda) + allowlista jako tymczasowa akceptacja ryzyka

@@ -1,13 +1,13 @@
 # Plan dojścia do 95% (L1–L5) i “GO deploy”
 
-Stan na: **2026-02-16**
+Stan na: **2026-02-20**
 
 ## Snapshot (prawda bez placebo)
 
-- `npm run test:quality-check`: **REAL 839 / PLACEHOLDER 0 / OTHER 0** (AUTHENTICITY 100%)
+- `npm run test:quality-check`: **REAL 903 / PLACEHOLDER 0 / OTHER 44** (AUTHENTICITY 100%)
 - L1/L2/L3: coverage gates **OK** (per-file 95% lines / 80% branches / 95% statements / 95% functions)
-- L4: smoke (Playwright, webServer) **OK** (deterministyczne demo-login w trybie test-gateway)
-- L5: quality + integrity + security + performance **OK**
+- L4: smoke (Playwright, webServer) **OK** (`npm run test:l4` PASS)
+- L5: quality + integrity + security + performance **OK** (`npm run test:l5` PASS)
 
 ## Zasady (żeby system nie “oszukiwał”)
 
@@ -41,7 +41,7 @@ Stan na: **2026-02-16**
 
 ## L5 (security + performance)
 
-- [x] `npm audit gate` + integrity + security tests + perf tests przechodzą.
+- [x] `npm audit gate` + integrity + security tests + perf tests przechodzą (gate = allowlistowany „hybrydowo”, patrz `scripts/security/npm-audit-allowlist.json` + `docs/security/npm-audit-remediation.md`).
 - [ ] Rozszerzyć security suite o “top 10” (XSS/CSRF/authz/SSRF/upload) w miarę zmian w kodzie.
 - [ ] Ustawić budżety wydajności (progi) pod CI (np. limit czasu/operacji) i trzymać regresje.
 
