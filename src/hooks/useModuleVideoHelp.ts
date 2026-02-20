@@ -70,7 +70,7 @@ export function useModuleVideoHelp(moduleId: string | null | undefined): UseModu
       setShouldShow(false);
       setVideo(null);
       setLoading(false);
-      return;
+      return undefined;
     }
 
     const videos = getVideosForModule(moduleId);
@@ -78,10 +78,10 @@ export function useModuleVideoHelp(moduleId: string | null | undefined): UseModu
       setShouldShow(false);
       setVideo(null);
       setLoading(false);
-      return;
+      return undefined;
     }
 
-    if (checkedRef.current) return;
+    if (checkedRef.current) return undefined;
     checkedRef.current = true;
 
     let cancelled = false;

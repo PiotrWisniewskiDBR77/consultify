@@ -43,6 +43,7 @@ export const MicroVideoHelpTrigger: React.FC = () => {
       return () => clearTimeout(timer);
     }
     setVisible(false);
+    return undefined;
   }, [loading, shouldShow, video]);
 
   const handleWatch = useCallback(async () => {
