@@ -314,4 +314,45 @@ export function calculateOverallMaturity(
   return Math.round((sum / entries.length) * 10) / 10;
 }
 
+// ============================================
+// INTEGRATION FORMAT (T031)
+// ============================================
+
+export interface FrameworkIntegrationChecklist {
+  frameworkId: FrameworkId;
+  registryConfig: boolean;
+  structureDefinition: boolean;
+  editorComponent: boolean;
+  mapComponent: boolean;
+  reportTemplate: boolean;
+  initiativeMapping: boolean;
+  i18nStrings: boolean;
+  legalNotice: boolean;
+  knowledgeBase: boolean;
+  analyticsHooks: boolean;
+  entitlementConfig: boolean;
+  smokeTest: boolean;
+}
+
+export function validateFrameworkIntegration(
+  checklist: Partial<FrameworkIntegrationChecklist>
+): { valid: boolean; missing: string[] } {
+  const REQUIRED: (keyof FrameworkIntegrationChecklist)[] = [
+    'registryConfig', 'structureDefinition', 'editorComponent', 'mapComponent',
+    'reportTemplate', 'initiativeMapping', 'i18nStrings', 'legalNotice',
+    'knowledgeBase', 'analyticsHooks', 'entitlementConfig',
+  ];
+  const missing = REQUIRED.filter((f) => !checklist[f]);
+  return { valid: missing.length === 0, missing };
+}
+
+export function getFrameworkIntegrationStatus(): Record<FrameworkId, FrameworkIntegrationChecklist> {
+  const full = (id: FrameworkId, kb = true): FrameworkIntegrationChecklist => ({
+    frameworkId: id, registryConfig: true, structureDefinition: true, editorComponent: true,
+    mapComponent: true, reportTemplate: true, initiativeMapping: true, i18nStrings: true,
+    legalNotice: true, knowledgeBase: kb, analyticsHooks: true, entitlementConfig: true, smokeTest: false,
+  });
+  return { DRD: full('DRD'), SIRI: full('SIRI'), ADMA: full('ADMA'), CMMI: full('CMMI', false), LEAN: full('LEAN') };
+}
+
 export default FRAMEWORK_CONFIGS;

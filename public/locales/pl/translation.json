@@ -2962,7 +2962,25 @@
   "licensedTools": {
     "moduleName": "Narzędzia licencjonowane",
     "hubTitle": "Hub narzędzi licencjonowanych",
-    "backToHub": "Powrót do huba narzędzi licencjonowanych"
+    "backToHub": "Powrót do huba narzędzi licencjonowanych",
+    "locked": "Licencjonowane — wymagany dostęp",
+    "lockedReason": "Twoja organizacja nie ma dostępu do tego frameworka. Ulepsz plan lub skontaktuj się z administratorem.",
+    "requestAccess": "Poproś o dostęp / Ulepsz",
+    "proprietaryNote": "Autorski framework wymagający płatnej licencji.",
+    "educationalNote": "Framework dostępny w celach edukacyjnych.",
+    "pdfImport": {
+      "title": "Importuj ocenę z PDF",
+      "upload": "Prześlij PDF",
+      "detectFramework": "Wykryj framework",
+      "extractScores": "Wyciągnij wyniki",
+      "reviewMapping": "Przejrzyj mapowanie",
+      "confirm": "Potwierdź import",
+      "detecting": "Wykrywanie frameworka...",
+      "extracting": "Wyciąganie wyników...",
+      "noFramework": "Nie wykryto frameworka. Wybierz ręcznie.",
+      "lowConfidence": "Niska pewność — przejrzyj i popraw wartości.",
+      "supportedFrameworks": "Obsługiwane frameworki"
+    }
   },
   "assessment": {
     "notes": "Notatki",
@@ -3027,6 +3045,28 @@
       "quickWins": "Szybkie wygrane",
       "strategicInitiatives": "Inicjatywy strategiczne",
       "longTermTransformation": "Transformacja długoterminowa"
+    },
+    "lean": {
+      "overallDashboard": "Dashboard ogólny oceny",
+      "leanMaturity": "Dojrzałość Lean",
+      "automationPotential": "Potencjał automatyzacji",
+      "estimatedSavings": "Szac. oszczędności (PLN/rok)",
+      "topWastes": "Główne marnotrawstwa",
+      "quickWins": "Szybkie wygrane (Lean-first)",
+      "noStdWork": "Brak standardowej pracy",
+      "automationOps": "Najlepsze możliwości automatyzacji",
+      "dataGaps": "Luki danych",
+      "moreItems": "więcej elementów",
+      "closure": "Podsumowanie oceny",
+      "processesAssessed": "Procesy ocenione",
+      "workstationsAssessed": "Stanowiska ocenione",
+      "totalHeadcount": "Łączna liczba pracowników",
+      "priorityItems": "Inicjatywy priorytetowe",
+      "closureNote": "Następne kroki: Wygeneruj raport, stwórz mapę drogową, zmaterializuj inicjatywy.",
+      "coachQuestions": "Pytania trenera",
+      "evidenceGuidance": "Wskazówki dot. dowodów",
+      "microLesson": "Mikro-lekcja",
+      "commonMistakes": "Typowe błędy do uniknięcia"
     }
   },
   "tools": {

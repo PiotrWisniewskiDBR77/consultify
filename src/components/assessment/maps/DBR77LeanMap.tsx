@@ -12,12 +12,15 @@
 
 import {
   AlertTriangle,
+  Award,
   BarChart3,
+  CheckCircle2,
   ChevronDown,
   ChevronRight,
   Clock,
   Cpu,
   Edit3,
+  Eye,
   Info,
   Move,
   Package,
@@ -25,6 +28,7 @@ import {
   PlusCircle,
   Ruler,
   Settings,
+  Star,
   Target,
   Trash2,
   TrendingUp,
@@ -1263,6 +1267,117 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
             </>
           )}
         </div>
+
+        {/* Summary Closure */}
+        {(data.processes.length > 0 || data.workstations.length > 0) && (
+          <div className="space-y-4 mt-6 border-t border-slate-200 dark:border-white/10 pt-6">
+            <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/20 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="text-cyan-500" size={20} />
+                <h3 className="font-bold text-slate-900 dark:text-white">{t('assessment.lean.overallDashboard', 'Overall Assessment Dashboard')}</h3>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white/80 dark:bg-navy-800/80 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-blue-600">{stats.leanMaturity.toFixed(1)}</div>
+                  <div className="text-xs text-slate-500 mt-1">{t('assessment.lean.leanMaturity', 'Lean Maturity')}</div>
+                  <div className="text-xs text-slate-400">/5.0</div>
+                </div>
+                <div className="bg-white/80 dark:bg-navy-800/80 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-purple-600">{stats.automationPotential.toFixed(0)}%</div>
+                  <div className="text-xs text-slate-500 mt-1">{t('assessment.lean.automationPotential', 'Automation Potential')}</div>
+                </div>
+                <div className="bg-white/80 dark:bg-navy-800/80 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-green-600">{stats.totalSavings > 0 ? `${(stats.totalSavings / 1000).toFixed(0)}k` : '—'}</div>
+                  <div className="text-xs text-slate-500 mt-1">{t('assessment.lean.estimatedSavings', 'Est. Savings (PLN/yr)')}</div>
+                </div>
+              </div>
+            </div>
+
+            {stats.topWastes.length > 0 && (
+              <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="text-orange-500" size={18} />
+                  <h3 className="font-bold text-slate-900 dark:text-white">{t('assessment.lean.topWastes', 'Top Wastes')}</h3>
+                </div>
+                <div className="space-y-2">
+                  {stats.topWastes.map((w, i) => {
+                    const wc = DBR77_WASTES.find((x) => x.id === w);
+                    if (!wc) return null;
+                    return (
+                      <div key={w} className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-navy-700/50 rounded-lg">
+                        <span className="text-sm font-bold text-slate-400 w-6">#{i + 1}</span>
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: wc.color }} />
+                        <span className="font-medium text-slate-700 dark:text-slate-200">{wc.name}</span>
+                        <span className="text-xs text-slate-500">{wc.nameEN}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {(() => {
+              const qw = data.processes.filter((p) => p.leanAssessment.fiveSLevel < 3 || !p.leanAssessment.standardWorkDefined).slice(0, 5);
+              if (!qw.length) return null;
+              return (
+                <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Star className="text-yellow-500" size={18} />
+                    <h3 className="font-bold text-slate-900 dark:text-white">{t('assessment.lean.quickWins', 'Quick Wins (Lean-first)')}</h3>
+                  </div>
+                  <div className="space-y-2">{qw.map((p) => (
+                    <div key={p.id} className="flex items-center justify-between p-2 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg">
+                      <span className="font-medium text-slate-700 dark:text-slate-200">{p.name}</span>
+                      {p.leanAssessment.fiveSLevel < 3 && <span className="text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 rounded">5S: {p.leanAssessment.fiveSLevel}/5</span>}
+                      {!p.leanAssessment.standardWorkDefined && <span className="text-xs px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 rounded">{t('assessment.lean.noStdWork', 'No Std Work')}</span>}
+                    </div>
+                  ))}</div>
+                </div>
+              );
+            })()}
+
+            {(() => {
+              const ao = data.processes.filter((p) => p.automationPotential.feasibility >= 3 && p.automationPotential.roi > 0).sort((a, b) => b.automationPotential.roi - a.automationPotential.roi).slice(0, 5);
+              if (!ao.length) return null;
+              return (
+                <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/10 p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Cpu className="text-purple-500" size={18} />
+                    <h3 className="font-bold text-slate-900 dark:text-white">{t('assessment.lean.automationOps', 'Top Automation Opportunities')}</h3>
+                  </div>
+                  <div className="space-y-2">{ao.map((p) => (
+                    <div key={p.id} className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/10 rounded-lg">
+                      <div>
+                        <span className="font-medium text-slate-700 dark:text-slate-200">{p.name}</span>
+                        <div className="text-xs text-slate-500 mt-0.5">{p.automationPotential.recommendedTechnologies.map((t) => { const tc = DBR77_AUTOMATION_TECHNOLOGIES.find((at) => at.id === t); return tc?.nameEN || t; }).join(', ')}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-bold text-purple-600">{p.automationPotential.roi}% ROI</div>
+                        <div className="text-xs text-slate-500">{p.automationPotential.complexity}</div>
+                      </div>
+                    </div>
+                  ))}</div>
+                </div>
+              );
+            })()}
+
+            <div className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-navy-800 dark:to-navy-700 rounded-xl p-5 border border-slate-200 dark:border-white/10">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle2 className="text-green-500" size={18} />
+                <h3 className="font-bold text-slate-900 dark:text-white">{t('assessment.lean.closure', 'Assessment Closure')}</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div><div className="text-slate-500 mb-1">{t('assessment.lean.processesAssessed', 'Processes')}</div><div className="font-bold text-slate-700 dark:text-slate-200">{data.processes.length}</div></div>
+                <div><div className="text-slate-500 mb-1">{t('assessment.lean.workstationsAssessed', 'Workstations')}</div><div className="font-bold text-slate-700 dark:text-slate-200">{data.workstations.length}</div></div>
+                <div><div className="text-slate-500 mb-1">{t('assessment.lean.totalHeadcount', 'Total Headcount')}</div><div className="font-bold text-slate-700 dark:text-slate-200">{data.workstations.reduce((s, w) => s + (w.headcount || 0), 0)}</div></div>
+                <div><div className="text-slate-500 mb-1">{t('assessment.lean.priorityItems', 'Priority Initiatives')}</div><div className="font-bold text-slate-700 dark:text-slate-200">{data.summary?.priorityInitiatives?.length || 0}</div></div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-200 dark:border-white/10 text-xs text-slate-500">
+                {t('assessment.lean.closureNote', 'Next steps: Generate report, create roadmap, materialize initiatives.')}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
