@@ -1098,6 +1098,16 @@ const CertificationSection: React.FC<{
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [examOpen, setExamOpen] = useState(false);
+  const [examCertId, setExamCertId] = useState<string | null>(null);
+  const [examAttemptId, setExamAttemptId] = useState<string | null>(null);
+  const [examDeadlineAt, setExamDeadlineAt] = useState<string | null>(null);
+  const [examQuestions, setExamQuestions] = useState<any[]>([]);
+  const [examAnswers, setExamAnswers] = useState<Record<string, string>>({});
+  const [examSubmitting, setExamSubmitting] = useState(false);
+  const [examResult, setExamResult] = useState<{ passed: boolean; scorePercent: number } | null>(
+    null
+  );
 
   const fetchCertifications = useCallback(async () => {
     try {
@@ -1121,6 +1131,69 @@ const CertificationSection: React.FC<{
   useEffect(() => {
     fetchCertifications();
   }, [fetchCertifications]);
+
+  const closeExam = () => {
+    setExamOpen(false);
+    setExamCertId(null);
+    setExamAttemptId(null);
+    setExamDeadlineAt(null);
+    setExamQuestions([]);
+    setExamAnswers({});
+    setExamResult(null);
+    setExamSubmitting(false);
+  };
+
+  const startExam = async (certId: string) => {
+    try {
+      setExamResult(null);
+      setExamAnswers({});
+      setExamSubmitting(false);
+      setExamCertId(certId);
+      setExamOpen(true);
+
+      const lang = navigator.language?.toLowerCase().includes('pl') ? 'pl' : 'en';
+      const resp = await Api.post(`/api/partners/certifications/${certId}/exam/start`, {
+        language: lang,
+      });
+      if (!resp?.success) throw new Error(resp?.error || 'Failed to start exam');
+
+      setExamAttemptId(resp.data?.attemptId || null);
+      setExamDeadlineAt(resp.data?.deadlineAt || null);
+      setExamQuestions(resp.data?.questions || []);
+    } catch (e: any) {
+      console.error('Error starting exam:', e);
+      toast.error(e?.message || 'Failed to start exam');
+      closeExam();
+    }
+  };
+
+  const submitExam = async () => {
+    try {
+      if (!examCertId || !examAttemptId) {
+        toast.error('Exam not started');
+        return;
+      }
+      setExamSubmitting(true);
+      const resp = await Api.post(`/api/partners/certifications/${examCertId}/exam/submit`, {
+        attemptId: examAttemptId,
+        answers: examAnswers,
+      });
+      if (!resp?.success) throw new Error(resp?.error || 'Submit failed');
+      const data = resp.data;
+      setExamResult({ passed: Boolean(data?.passed), scorePercent: data?.scorePercent || 0 });
+      if (data?.passed) {
+        toast.success('Exam passed');
+        await fetchCertifications();
+      } else {
+        toast.error('Exam failed');
+      }
+    } catch (e: any) {
+      console.error('Error submitting exam:', e);
+      toast.error(e?.message || 'Failed to submit exam');
+    } finally {
+      setExamSubmitting(false);
+    }
+  };
 
   // Loading skeleton
   const LoadingSkeleton = () => (
@@ -1353,7 +1426,10 @@ const CertificationSection: React.FC<{
                       Passed
                     </span>
                   ) : (
-                    <button className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors">
+                    <button
+                      onClick={() => startExam(course.id)}
+                      className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
                       Take Exam
                     </button>
                   )}
@@ -1367,6 +1443,91 @@ const CertificationSection: React.FC<{
             <p className="text-slate-400">
               {t('partner.certification.examsEmpty', 'Complete learning path to unlock exams')}
             </p>
+          </div>
+        )}
+
+        {examOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-3xl bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4 md:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    Sales Certification Exam
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {examDeadlineAt
+                      ? `Deadline: ${new Date(examDeadlineAt).toLocaleTimeString()}`
+                      : 'Loading...'}
+                  </p>
+                </div>
+                <button
+                  onClick={closeExam}
+                  className="px-3 py-2 rounded-lg text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                >
+                  {t('common.close', 'Close')}
+                </button>
+              </div>
+
+              {examQuestions.length === 0 ? (
+                <div className="mt-4 text-sm text-slate-500">Loading...</div>
+              ) : (
+                <div className="mt-4 space-y-4 max-h-[60vh] overflow-auto pr-1">
+                  {examQuestions.map((q: any, idx: number) => (
+                    <div
+                      key={q.id}
+                      className="rounded-lg border border-slate-200 dark:border-navy-700 p-3"
+                    >
+                      <div className="font-medium text-slate-900 dark:text-white">
+                        {idx + 1}. {q.text}
+                      </div>
+                      <div className="mt-2 space-y-2">
+                        {(q.options || []).map((opt: any) => (
+                          <label
+                            key={opt.id}
+                            className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer"
+                          >
+                            <input
+                              type="radio"
+                              name={`q-${q.id}`}
+                              value={opt.id}
+                              checked={examAnswers[q.id] === opt.id}
+                              onChange={() =>
+                                setExamAnswers((prev) => ({ ...prev, [q.id]: String(opt.id) }))
+                              }
+                              className="mt-1"
+                            />
+                            <span>{opt.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {examResult && (
+                <div
+                  className={cn(
+                    'mt-4 rounded-lg p-3 text-sm',
+                    examResult.passed
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                  )}
+                >
+                  {examResult.passed ? 'Passed' : 'Failed'} • Score: {examResult.scorePercent}%
+                </div>
+              )}
+
+              <div className="mt-4 flex items-center justify-end gap-2">
+                <button
+                  onClick={submitExam}
+                  disabled={examSubmitting || examQuestions.length === 0}
+                  className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium disabled:opacity-60"
+                >
+                  {examSubmitting ? 'Submitting...' : 'Submit'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -1430,11 +1591,16 @@ const CertificationSection: React.FC<{
                 </div>
                 <button
                   onClick={() => {
-                    if (cert.certificateUrl) {
-                      window.open(cert.certificateUrl, '_blank');
-                    } else {
-                      toast.success('Certificate download started');
+                    const url =
+                      cert.certificateUrl ||
+                      (cert.certificateId
+                        ? `/api/partners/certificates/${cert.certificateId}/download`
+                        : null);
+                    if (!url) {
+                      toast.error('Certificate not available');
+                      return;
                     }
+                    window.open(url, '_blank');
                   }}
                   className="p-2 text-slate-500 hover:text-violet-600 dark:hover:text-violet-400"
                 >
@@ -1503,13 +1669,9 @@ const ResourcesSection: React.FC<{
   const handleDownload = async (resourceId: string, title: string) => {
     try {
       setDownloading(resourceId);
-      const response = await Api.get(`/api/partners/resources/${resourceId}/download`);
-      if (response?.success && response?.data?.downloadUrl) {
-        window.open(response.data.downloadUrl, '_blank');
-        toast.success(`Downloading ${title}`);
-      } else {
-        toast.error('Download link not available');
-      }
+      // Backend streams the file directly (no JSON wrapper)
+      window.open(`/api/partners/resources/${resourceId}/download`, '_blank');
+      toast.success(`Downloading ${title}`);
     } catch (err: any) {
       console.error('Error downloading resource:', err);
       toast.error('Failed to download resource');

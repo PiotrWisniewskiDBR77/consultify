@@ -2789,5 +2789,42 @@
       "suggestions": "Sugestie",
       "achievements": "Osiągnięcia"
     }
+  },
+  "partners": {
+    "outreach": {
+      "title": "Outreach partnerski",
+      "subtitle": "Importuj leady, twórz kampanie i prowadź outreach zgodny z compliance.",
+      "importLeads": "Import leadów (CSV)",
+      "importCta": "Importuj",
+      "importHint": "Nagłówki: email, company, first_name, last_name, country, region, source, lawful_basis",
+      "importSuccess": "Leady zaimportowane",
+      "importFailed": "Import nie powiódł się",
+      "createCampaign": "Utwórz kampanię",
+      "createCta": "Utwórz",
+      "campaignName": "Nazwa kampanii",
+      "fromName": "Nazwa nadawcy (opcjonalnie)",
+      "fromEmail": "Email nadawcy (opcjonalnie)",
+      "replyTo": "Reply-to (opcjonalnie)",
+      "stepSubject": "Temat kroku 1",
+      "stepBody": "Treść kroku 1 (tekst). Użyj {FirstName}, {Company}.",
+      "nameRequired": "Wymagana nazwa kampanii",
+      "subjectRequired": "Wymagany temat kroku",
+      "campaignCreated": "Kampania utworzona",
+      "campaignCreateFailed": "Nie udało się utworzyć",
+      "campaignStarted": "Kampania uruchomiona",
+      "campaignStartFailed": "Nie udało się uruchomić",
+      "campaignPaused": "Kampania wstrzymana",
+      "campaignPauseFailed": "Nie udało się wstrzymać",
+      "campaignResumed": "Kampania wznowiona",
+      "campaignResumeFailed": "Nie udało się wznowić",
+      "campaigns": "Kampanie",
+      "noCampaigns": "Brak kampanii",
+      "status": "Status",
+      "enrollments": "Zapisy",
+      "sent": "Wysłane",
+      "start": "Start",
+      "pause": "Pauza",
+      "resume": "Wznów"
+    }
   }
 }

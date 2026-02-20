@@ -2768,5 +2768,42 @@
       "suggestions": "Suggestions",
       "achievements": "Achievements"
     }
+  },
+  "partners": {
+    "outreach": {
+      "title": "Partner Outreach",
+      "subtitle": "Import leads, create campaigns, and run compliance-friendly outreach.",
+      "importLeads": "Import leads (CSV)",
+      "importCta": "Import",
+      "importHint": "Headers: email, company, first_name, last_name, country, region, source, lawful_basis",
+      "importSuccess": "Leads imported",
+      "importFailed": "Import failed",
+      "createCampaign": "Create campaign",
+      "createCta": "Create",
+      "campaignName": "Campaign name",
+      "fromName": "From name (optional)",
+      "fromEmail": "From email (optional)",
+      "replyTo": "Reply-to (optional)",
+      "stepSubject": "Step 1 subject",
+      "stepBody": "Step 1 body (text). Use {FirstName}, {Company}.",
+      "nameRequired": "Campaign name required",
+      "subjectRequired": "Step subject required",
+      "campaignCreated": "Campaign created",
+      "campaignCreateFailed": "Create failed",
+      "campaignStarted": "Campaign started",
+      "campaignStartFailed": "Start failed",
+      "campaignPaused": "Campaign paused",
+      "campaignPauseFailed": "Pause failed",
+      "campaignResumed": "Campaign resumed",
+      "campaignResumeFailed": "Resume failed",
+      "campaigns": "Campaigns",
+      "noCampaigns": "No campaigns yet",
+      "status": "Status",
+      "enrollments": "Enrollments",
+      "sent": "Sent",
+      "start": "Start",
+      "pause": "Pause",
+      "resume": "Resume"
+    }
   }
 }
