@@ -133,17 +133,33 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 - Wszystkie 5 bundli zmergowane do main. Migracje 567–570.
 - Konflikty rozwiązane: funnelAnalytics, translation.json (en/pl).
 
-## Wave 8 (2026-02-20) — IN PROGRESS
+## Wave 8 (2026-02-20) — CLOSED
 
 | Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
 |---|---|---|---|---|---|
-| 15 | T054 | bundle-15-financial-modeling | Cursor A | in_progress | Financial Modeling (P&L+BS+CF, economic events) |
-| 19 | T062 | bundle-19-automated-reporting | Cursor B | in_progress | Automated Recurring + Event-Triggered Reporting |
-| 16 | T055–T057 | codex/bundle-16-valuation | Codex | in_progress | Enterprise Valuation (DCF + comps + advisory) |
-| 20 (slice) | T063–T064 | bundle-20-organization-megatrend | Cursor C | in_progress | Organization UX + Megatrend relocation |
-| 27 | T094–T095 | bundle-27-landing-docs-website | Cursor D | in_progress | Landing Docs section + Website content |
+| 15 | T054 | bundle-15-financial-modeling | Cursor A | **merged** | Financial Modeling (P&L+BS+CF, migracja 571) |
+| 19 | T062 | bundle-19-automated-reporting | Cursor B | **merged** | Automated Reporting (migracja 572) |
+| 20 (slice) | T063–T064 | bundle-20-organization-megatrend | Cursor C | **merged** | Organization UX + Megatrend relocation |
+| 27 | T094–T095 | bundle-27-landing-docs-website | Cursor D | **merged** | Landing Docs section + Website content |
+| 16 | T055–T057 | codex/bundle-16-valuation | Codex | **merged** | Enterprise Valuation (Wave 9) |
 
 **Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_8.md`
+
+### Wave 8 — merge wykonane (2026-02-20)
+- Bundly 15, 19, 20, 27 zmergowane do main. Migracje 571–572 (573 valuation w Wave 9).
+
+## Wave 9 (2026-02-20) — CLOSED
+
+| Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
+|---|---|---|---|---|---|
+| 16 | T055–T057 | codex/bundle-16-valuation | Cursor | **merged** | Enterprise Valuation (DCF + comps + advisory) |
+| 11 | T043–T045 | bundle-11-execution-people-change-comms | Cursor | **merged** | People, Change & Communication |
+| 24 | T087, T089, T090 | bundle-24-demo-archilex | Cursor | **merged** | Demo Archilex (story, seed, conversion) |
+
+**Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_9.md`
+
+### Wave 9 — merge wykonane (2026-02-20)
+- Wszystkie 3 bundle zmergowane do main. Migracja 573 (valuation exports).
 
 ---
 
@@ -174,23 +190,23 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 08 | T032-T033 | Cursor | **merged** | bundle-22-help-t071-t073 | Wave 4: AI authoring + gate readiness |
 | 09 | T034-T038 | Codex | in_progress | bundle-09-portfolio-optimization | Wave 7 |
 | 10 | T039-T042 | Cursor | **merged** | bundle-10-execution-t041-t042 | Wave 5: T039-T040; Wave 6: T041-T042 (migracja 564) |
-| 11 | T043-T045 | Codex | in_progress | bundle-11-execution-people-change-comms | Wave 6 |
+| 11 | T043-T045 | Cursor | **merged** | bundle-11-execution-people-change-comms | Wave 9 |
 | 12 | T046-T049 | Cursor | **merged** | bundle-12-benefits-kpi-finance | Wave 6.5 (migracja 565) |
 | 13 | T050-T051 | Cursor | in_progress | bundle-13-finance-a | Wave 7 (Cursor, równolegle do Codex) |
 | 14 | T052-T053 | Cursor | in_progress | bundle-14-finance-b | Wave 7 (Cursor, równolegle do Codex) |
-| 15 | T054 | Cursor | in_progress | bundle-15-financial-modeling | Wave 8 |
-| 16 | T055-T057 | Codex | in_progress | codex/bundle-16-valuation | Wave 8 |
+| 15 | T054 | Cursor | **merged** | bundle-15-financial-modeling | Wave 8 |
+| 16 | T055-T057 | Cursor | **merged** | codex/bundle-16-valuation | Wave 8+9 |
 | 17 | T058-T059 | Cursor | in_progress | bundle-17-presentations-generator | Wave 7 |
 | 18 | T060-T061 | Cursor | in_progress | bundle-18-reports-generator | Wave 7 |
-| 19 | T062 | Cursor | in_progress | bundle-19-automated-reporting | Wave 8 |
-| 20 | T063-T067 | Cursor/Codex | in_progress | bundle-20-organization-megatrend | Wave 8 slice T063-T064 |
+| 19 | T062 | Cursor | **merged** | bundle-19-automated-reporting | Wave 8 |
+| 20 | T063-T067 | Cursor | **merged** | bundle-20-organization-megatrend | Wave 8 slice T063-T064 |
 | 21 | T068-T069 | Codex | **merged** | bundle-21-onboarding-news | Wave 1 |
 | 22 | T071-T073 (+T070 content) | Cursor | **merged** | bundle-22-help-t071-t073 | Wave 4: T071+T073 (T072 done in pilot) |
 | 23 | T086 + T008 | Cursor | **merged** | bundle-23-admin-sync-hub | Wave 6.5 (migracja 566) |
-| 24 | T087, T089, T090 | Codex | planned | | |
+| 24 | T087, T089, T090 | Cursor | **merged** | bundle-24-demo-archilex | Wave 9 |
 | 25 | T091-T092 | Cursor | **merged** | bundle-25-trial-upgrade | Wave 1 |
 | 26 | T093 | Cursor | **merged** | bundle-26-legal-acceptance | Wave 1 |
-| 27 | T094-T095 | Cursor | in_progress | bundle-27-landing-docs-website | Wave 8 |
+| 27 | T094-T095 | Cursor | **merged** | bundle-27-landing-docs-website | Wave 8 |
 | 28 | T096-T098 | Codex | **merged** | codex/bundle-28-partners-program | Wave 3 |
 | 29 | T099-T105 + T101-T103 | Cursor | planned | | weekend/hard |
 | 30 | T106-T122 (slices) | Cursor | planned | | 30.5 (OAuth) merged as slice |
