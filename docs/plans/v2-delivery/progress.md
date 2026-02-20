@@ -49,16 +49,16 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 
 | Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
 |---|---|---|---|---|---|
-| 02.1 (slice) | T007, T009 | bundle-02-my-work-slice-02-1 | Cursor A | in_progress | My Work: tasks + ideas — WIP w stash, agent jeszcze pracuje |
-| 06.1 (slice) | T025 | bundle-06-licensed-tools-rename | Cursor B | pending | Branch bez commitów — Agent 2 musi wypchnąć zmiany |
+| 02.1 (slice) | T007, T009 | bundle-02-my-work-slice-02-1-clean | Cursor A | **merged** | T007 personal tasks + T009 my ideas (migracja 20260220) |
+| 06.1 (slice) | T025 | bundle-06-licensed-tools-rename | Cursor B | in_review | Agent 2 musi wypchnąć zmiany — branch lokalny bez commitów |
 | 28 | T096–T098 | codex/bundle-28-partners-program | Codex | **merged** | Migracje 555–557, Partner Portal, cleanup konflikt-markerów |
 
 **Start:** main wypchnięty na origin. Prompty: `docs/plans/v2-delivery/PROMPTS_WAVE_3.md`
 
 ### Wave 3 — merge wykonane (2026-02-20)
-- **Bundle 28** (Codex): merged do main. Usunięto pozostały konflikt-marker z tokenBilling.test.js.
-- **Bundle 06** (Cursor B): branch lokalny bez commitów — Agent 2 musi wypchnąć zmiany na origin.
-- **Bundle 02** (Cursor A): WIP w stash `"Agent 1 Bundle 02 WIP (MyWork)"` — przywrócić na branch `bundle-02-my-work-slice-02-1`.
+- **Bundle 28** (Codex): merged do main. Migracje 555–557, Partner Portal.
+- **Bundle 02** (Cursor A): merged z `bundle-02-my-work-slice-02-1-clean` (czysta gałąź, bez konflikt-markerów).
+- **Bundle 06** (Cursor B): branch `bundle-06-licensed-tools-rename` bez commitów — Agent 2 musi wypchnąć zmiany na origin.
 
 ---
 
@@ -80,7 +80,7 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | Bundle | Zakres (taski) | Owner (domyslny) | Status | Branch | Uwagi |
 |---:|---|---|---|---|---|
 | 01 | T001-T006 | Cursor | **merged** | bundle-01-chat-research | T001,T002 done in pilot + T003-T006 merged (Wave 2) |
-| 02 | T007-T012 (+T008 guardrails) | Cursor | planned | | |
+| 02 | T007-T012 (+T008 guardrails) | Cursor | **merged** | bundle-02-my-work-slice-02-1-clean | Wave 3: T007+T009 (slice 02.1) |
 | 03 | T013-T017 | Codex | parked | bundle-03-interview-survey | czeka na dowiezienie przez Codex |
 | 04 | T018-T021 | Codex | planned | | |
 | 05 | T019, T022-T024 | Codex | planned | | |
