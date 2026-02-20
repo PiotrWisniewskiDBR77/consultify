@@ -117,6 +117,16 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 - **Bundle 12** (Cursor A): merged T046–T049 ROI, KPI mapping, attribution, financial mapping.
 - **Bundle 23** (Cursor B): merged T086 Sync Hub + T008 guardrails (UnifiedSyncHub, syncGuardrailsService).
 
+## Wave 7 (2026-02-20) — IN PROGRESS
+
+| Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
+|---|---|---|---|---|---|
+| 17 | T058–T059 | bundle-17-presentations-generator | Cursor A | in_progress | Presentations generator + templates |
+| 18 | T060–T061 | bundle-18-reports-generator | Cursor B | in_progress | Reports generator + templates |
+| 09 | T034–T038 | bundle-09-portfolio-optimization | Codex | in_progress | Portfolio optimization engines |
+
+**Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_7.md`
+
 ---
 
 ## Najwazniejszy wskaznik "czy jest syf"
@@ -144,7 +154,7 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 06 | T025-T027 | Cursor | **merged** | bundle-06-licensed-tools-t026-t027 | Wave 3: T025; Wave 5: T026-T027 merged |
 | 07 | T028, T030, T031 | Cursor | **merged** | bundle-07-licensed-tools-advanced | Wave 6 (migracja 563) |
 | 08 | T032-T033 | Cursor | **merged** | bundle-22-help-t071-t073 | Wave 4: AI authoring + gate readiness |
-| 09 | T034-T038 | Codex | planned | | |
+| 09 | T034-T038 | Codex | in_progress | bundle-09-portfolio-optimization | Wave 7 |
 | 10 | T039-T042 | Cursor | **merged** | bundle-10-execution-t041-t042 | Wave 5: T039-T040; Wave 6: T041-T042 (migracja 564) |
 | 11 | T043-T045 | Codex | in_progress | bundle-11-execution-people-change-comms | Wave 6 |
 | 12 | T046-T049 | Cursor | **merged** | bundle-12-benefits-kpi-finance | Wave 6.5 (migracja 565) |
@@ -152,8 +162,8 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 14 | T052-T053 | Codex | planned | | |
 | 15 | T054 | Cursor | planned | | weekend/hard |
 | 16 | T055-T057 | Codex | planned | | merytoryka |
-| 17 | T058-T059 | Cursor | planned | | weekend/hard |
-| 18 | T060-T061 | Cursor | planned | | weekend/hard |
+| 17 | T058-T059 | Cursor | in_progress | bundle-17-presentations-generator | Wave 7 |
+| 18 | T060-T061 | Cursor | in_progress | bundle-18-reports-generator | Wave 7 |
 | 19 | T062 | Codex | planned | | |
 | 20 | T063-T067 | Codex | planned | | |
 | 21 | T068-T069 | Codex | **merged** | bundle-21-onboarding-news | Wave 1 |
