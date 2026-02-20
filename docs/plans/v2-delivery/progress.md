@@ -60,15 +60,20 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 - **Bundle 02** (Cursor A): merged z `bundle-02-my-work-slice-02-1-clean` (czysta gałąź, bez konflikt-markerów).
 - **Bundle 06** (Cursor): merged z `bundle-06-licensed-tools-t025` — T025 rename (szef procesu dopiął).
 
-## Wave 4 (2026-02-20) — IN PROGRESS
+## Wave 4 (2026-02-20) — CLOSED
 
 | Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
 |---|---|---|---|---|---|
-| 08 | T032–T033 | bundle-08-initiatives-ai | Cursor A | in_progress | Initiatives AI authoring + stage-gate |
-| 22 (slice) | T071, T073 | bundle-22-help-t071-t073 | Cursor B | in_progress | Help docs→AI context + micro-video |
-| 04 | T018–T021 | bundle-04-tools-hub | Codex | in_progress | Tools hub + library + KB |
+| 08 | T032–T033 | bundle-22-help-t071-t073 (incl.) | Cursor A | **merged** | Initiatives AI authoring + stage-gate (migracja 560) |
+| 22 (slice) | T071, T073 | bundle-22-help-t071-t073 | Cursor B | **merged** | Help docs→AI context + micro-video (migracja 558) |
+| 04 | T018–T021 | codex/bundle-04-tools-hub-v3 (stash) | Codex | **merged** | Tools hub + library + KB (migracja 559) |
 
 **Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_4.md`
+
+### Wave 4 — merge wykonane (2026-02-20)
+- **Bundle 22** (Cursor B): merged T071+T073 — helpDocsContext, micro-video modal, useModuleVideoHelp.
+- **Bundle 08** (Cursor A): merged via bundle-22 — T032 AI authoring (AICardDraftModal, AIFieldEnhancer), T033 gate readiness (GateReadinessSection, AI readiness).
+- **Bundle 04** (Codex): applied stashed WIP — KnownToolsService, Library tab, KnownToolDetailView, Help→Knowledge override.
 
 ---
 
@@ -92,11 +97,11 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 01 | T001-T006 | Cursor | **merged** | bundle-01-chat-research | T001,T002 done in pilot + T003-T006 merged (Wave 2) |
 | 02 | T007-T012 (+T008 guardrails) | Cursor | **merged** | bundle-02-my-work-slice-02-1-clean | Wave 3: T007+T009 (slice 02.1) |
 | 03 | T013-T017 | Codex | parked | bundle-03-interview-survey | czeka na dowiezienie przez Codex |
-| 04 | T018-T021 | Codex | planned | | |
+| 04 | T018-T021 | Codex | **merged** | codex/bundle-04-tools-hub-v3 | Wave 4: Tools hub + library (migracja 559) |
 | 05 | T019, T022-T024 | Codex | planned | | |
 | 06 | T025-T027 | Cursor | **merged** | bundle-06-licensed-tools-t025 | Wave 3: T025 (slice 06.1) |
 | 07 | T028, T030, T031 | Cursor | planned | | |
-| 08 | T032-T033 | Cursor | planned | | |
+| 08 | T032-T033 | Cursor | **merged** | bundle-22-help-t071-t073 | Wave 4: AI authoring + gate readiness |
 | 09 | T034-T038 | Codex | planned | | |
 | 10 | T039-T042 | Cursor | planned | | |
 | 11 | T043-T045 | Codex | planned | | |
@@ -110,7 +115,7 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 19 | T062 | Codex | planned | | |
 | 20 | T063-T067 | Codex | planned | | |
 | 21 | T068-T069 | Codex | **merged** | bundle-21-onboarding-news | Wave 1 |
-| 22 | T071-T073 (+T070 content) | Codex | planned | | T072 done in pilot |
+| 22 | T071-T073 (+T070 content) | Cursor | **merged** | bundle-22-help-t071-t073 | Wave 4: T071+T073 (T072 done in pilot) |
 | 23 | T086 + T008 | Cursor | planned | | |
 | 24 | T087, T089, T090 | Codex | planned | | |
 | 25 | T091-T092 | Cursor | **merged** | bundle-25-trial-upgrade | Wave 1 |
