@@ -1094,6 +1094,79 @@
       "taskMoved": "Task moved to {{column}}",
       "taskStatusError": "Failed to update task status",
       "initiativeNotFound": "Related initiative not found"
+    },
+    "timeline": {
+      "title": "Timeline",
+      "filterByStatus": "Filter by status",
+      "filterByPriority": "Filter by priority",
+      "filterByOwner": "Filter by owner",
+      "searchPlaceholder": "Search initiatives…",
+      "allStatuses": "All statuses",
+      "allPriorities": "All priorities",
+      "allOwners": "All owners",
+      "noResults": "No initiatives match your filters",
+      "today": "Today",
+      "criticalPath": "Critical Path",
+      "hideCriticalPath": "Hide critical path",
+      "showCriticalPath": "Show critical path",
+      "scheduleWarning": "Schedule Warning",
+      "warnings": "warnings",
+      "warning": "warning"
+    },
+    "warnings": {
+      "title": "Top Warnings",
+      "overdue": "Overdue",
+      "blocked": "Blocked",
+      "dependencyConflict": "Dependency Conflict",
+      "slaApproaching": "SLA Approaching",
+      "noWarnings": "No active warnings",
+      "daysOverdue": "{{count}} days overdue",
+      "blockedFor": "Blocked for {{count}} days",
+      "nextGate": "Next Gate",
+      "nextAction": "Next Action",
+      "viewAll": "View all warnings"
+    },
+    "riskSignals": {
+      "title": "Risk Signals",
+      "subtitle": "Heuristic-detected risks across your execution portfolio",
+      "noSignals": "No risk signals detected",
+      "dismiss": "Dismiss",
+      "suggestedAction": "Suggested action",
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "viewDetails": "View details"
+    },
+    "mitigation": {
+      "title": "Mitigation",
+      "plan": "Mitigation Plan",
+      "planPlaceholder": "Describe the mitigation approach…",
+      "owner": "Mitigation Owner",
+      "dueDate": "Due Date",
+      "status": "Status",
+      "strategy": "Response Strategy",
+      "avoid": "Avoid",
+      "transfer": "Transfer",
+      "mitigate": "Mitigate",
+      "accept": "Accept",
+      "escalate": "Escalate",
+      "statusOpen": "Open",
+      "statusInProgress": "In Progress",
+      "statusMitigated": "Mitigated",
+      "statusAccepted": "Accepted",
+      "statusClosed": "Closed",
+      "save": "Save Mitigation",
+      "saved": "Mitigation updated"
+    },
+    "auditLog": {
+      "title": "Audit Log",
+      "changedBy": "Changed by",
+      "changedField": "Changed",
+      "from": "from",
+      "to": "to",
+      "reason": "Reason",
+      "noEntries": "No audit entries yet"
     }
   },
   "benefits": {
@@ -2869,6 +2942,71 @@
     "moduleName": "Licensed Tools",
     "hubTitle": "Licensed Tools Hub",
     "backToHub": "Back to Licensed Tools Hub"
+  },
+  "assessment": {
+    "notes": "Notes",
+    "notesPlaceholder": "Key observations, context, rationale for the score...",
+    "evidence": "Evidence",
+    "evidencePlaceholder": "Systems, documents, metrics, processes that support this score...",
+    "confidence": "Assessment Confidence",
+    "confidenceLow": "Low",
+    "confidenceMedium": "Medium",
+    "confidenceHigh": "High",
+    "withEvidence": "With evidence",
+    "progress": "Assessment Progress",
+    "overallScore": "Overall Score",
+    "dimensions": "dimensions",
+    "currentLevel": "Current Level",
+    "targetLevel": "Target Level",
+    "gap": "Gap",
+    "strengths": {
+      "title": "Key Strengths",
+      "empty": "No strong dimensions identified yet. Continue the assessment to discover strengths."
+    },
+    "dataGaps": {
+      "title": "Data Gaps & Follow-up Items",
+      "notAssessed": "Not assessed",
+      "noTarget": "No target set",
+      "hint": "These areas require additional data collection before a complete assessment can be concluded."
+    },
+    "closure": {
+      "title": "Assessment Conclusions",
+      "dimensionsAssessed": "Dimensions Assessed",
+      "totalGap": "Total Gap",
+      "topPriorities": "Top Priorities",
+      "completeness": "Completeness",
+      "nextSteps": "Next Steps",
+      "step1": "Review findings with key stakeholders",
+      "step2": "Set targets for unassessed dimensions",
+      "step3": "Generate report for sponsor review",
+      "step4": "Create improvement initiatives from gaps",
+      "step5": "Schedule follow-up assessment"
+    },
+    "confidenceOverview": {
+      "title": "Confidence Overview",
+      "withEvidence": "With evidence",
+      "withoutEvidence": "Without evidence",
+      "alert": "Some scored dimensions lack evidence documentation."
+    },
+    "deck": {
+      "export": "Export Deck (PPTX)",
+      "generating": "Generating deck...",
+      "generated": "Deck generated successfully",
+      "failed": "Failed to generate deck",
+      "requiresApproval": "Assessment must be APPROVED to export deck"
+    },
+    "report": {
+      "strengths": "Key Strengths",
+      "dataGaps": "Data Gaps & Follow-up Items",
+      "roadmap": "Transformation Roadmap",
+      "conclusions": "Assessment Conclusions",
+      "shortTerm": "Short-term (0-6 months)",
+      "mediumTerm": "Medium-term (6-18 months)",
+      "longTerm": "Long-term (18-36 months)",
+      "quickWins": "Quick Wins",
+      "strategicInitiatives": "Strategic Initiatives",
+      "longTermTransformation": "Long-term Transformation"
+    }
   },
   "tools": {
     "hub": {

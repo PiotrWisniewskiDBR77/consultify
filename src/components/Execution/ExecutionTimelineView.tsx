@@ -4,8 +4,8 @@
  * Gantt-style timeline view for initiatives in execution phase.
  * Shows timeline bars based on planned/actual dates with status-based coloring.
  *
- * D4.1: Dependency validation — warns about illogical sequences
- * D5.1: Dependency lines (SVG arrows), critical path highlight, drag-to-move bars
+ * T039: Timeline Management — filters, warnings, dependency lines, audit-ready updates
+ * T040: Risk signals integration — risk badges on bars, warning strip
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
@@ -14,18 +14,48 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Filter,
   GripHorizontal,
   Route,
+  Search,
+  Shield,
+  X,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { FullInitiative, InitiativeStatus } from '../../types';
+
+// ============================================
+// TYPES
+// ============================================
 
 interface ExecutionTimelineViewProps {
   initiatives: FullInitiative[];
   onInitiativeClick: (initiative: FullInitiative) => void;
   onUpdateInitiative?: (initiative: FullInitiative) => void;
+  onTimelineUpdate?: (initiativeId: string, field: string, value: string, reason?: string) => void;
   projectId?: string;
+  riskSignals?: RiskSignalItem[];
+}
+
+export interface RiskSignalItem {
+  id: string;
+  initiativeId: string;
+  initiativeName: string;
+  signalType: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  title: string;
+  description: string;
+  suggestedAction: string;
+}
+
+interface TimelineFilters {
+  status: string;
+  priority: string;
+  owner: string;
+  search: string;
 }
 
 // ============================================
@@ -114,30 +144,6 @@ const STATUS_COLORS: Record<
     text: 'text-slate-500 dark:text-slate-400',
     progress: 'bg-slate-500',
   },
-  [InitiativeStatus.PENDING_REVIEW]: {
-    bg: 'bg-yellow-500/20',
-    border: 'border-yellow-500/50',
-    text: 'text-yellow-400',
-    progress: 'bg-yellow-500',
-  },
-  [InitiativeStatus.PROMOTED]: {
-    bg: 'bg-blue-500/20',
-    border: 'border-blue-500/50',
-    text: 'text-blue-400',
-    progress: 'bg-blue-500',
-  },
-  [InitiativeStatus.SCHEDULED]: {
-    bg: 'bg-purple-500/20',
-    border: 'border-purple-500/50',
-    text: 'text-purple-400',
-    progress: 'bg-purple-500',
-  },
-  [InitiativeStatus.TRACKING]: {
-    bg: 'bg-teal-500/20',
-    border: 'border-teal-500/50',
-    text: 'text-teal-400',
-    progress: 'bg-teal-500',
-  },
 };
 
 // ============================================
@@ -206,7 +212,7 @@ const getMonthsFromWeeks = (
 };
 
 // ============================================
-// D4.1: DEPENDENCY VALIDATION
+// DEPENDENCY VALIDATION
 // ============================================
 
 interface DepWarning {
@@ -245,31 +251,22 @@ function validateInitiativeDependencies(initiatives: FullInitiative[]): DepWarni
 }
 
 // ============================================
-// D5.1: CRITICAL PATH
+// CRITICAL PATH
 // ============================================
 
 function computeExecutionCriticalPath(initiatives: FullInitiative[]): Set<string> {
   const ids = new Set<string>();
   const today = new Date();
 
-  // Mark blocked and overdue as critical
   initiatives.forEach((i) => {
-    if (i.status === InitiativeStatus.BLOCKED) {
-      ids.add(i.id);
-    }
-    if (
-      i.plannedEndDate &&
-      new Date(i.plannedEndDate) < today &&
-      i.status !== InitiativeStatus.DONE
-    ) {
+    if (i.status === InitiativeStatus.BLOCKED) ids.add(i.id);
+    if (i.plannedEndDate && new Date(i.plannedEndDate) < today && i.status !== InitiativeStatus.DONE) {
       ids.add(i.id);
     }
   });
 
-  // Also compute longest dependency chain
   const initMap = new Map<string, FullInitiative>();
   initiatives.forEach((i) => initMap.set(i.id, i));
-
   const successors = new Map<string, string[]>();
   initiatives.forEach((i) => successors.set(i.id, []));
 
@@ -284,7 +281,6 @@ function computeExecutionCriticalPath(initiatives: FullInitiative[]): Set<string
     });
   });
 
-  // Simple longest path
   const longestTo = new Map<string, number>();
   const pathPrev = new Map<string, string | null>();
 
@@ -292,12 +288,7 @@ function computeExecutionCriticalPath(initiatives: FullInitiative[]): Set<string
     const start = init.startDate || init.plannedStartDate;
     const end = init.plannedEndDate || init.endDate;
     if (start && end) {
-      return Math.max(
-        1,
-        Math.round(
-          (new Date(end).getTime() - new Date(start).getTime()) / (7 * 24 * 60 * 60 * 1000)
-        )
-      );
+      return Math.max(1, Math.round((new Date(end).getTime() - new Date(start).getTime()) / (7 * 86400000)));
     }
     return 2;
   }
@@ -307,7 +298,6 @@ function computeExecutionCriticalPath(initiatives: FullInitiative[]): Set<string
     pathPrev.set(i.id, null);
   });
 
-  // Process (simplified — works for DAGs without explicit topo sort)
   for (let iter = 0; iter < initiatives.length; iter++) {
     initiatives.forEach((init) => {
       const currentLen = longestTo.get(init.id) || 0;
@@ -326,21 +316,59 @@ function computeExecutionCriticalPath(initiatives: FullInitiative[]): Set<string
   let maxLen = 0;
   let maxEnd = '';
   longestTo.forEach((len, id) => {
-    if (len > maxLen) {
-      maxLen = len;
-      maxEnd = id;
-    }
+    if (len > maxLen) { maxLen = len; maxEnd = id; }
   });
 
   if (maxEnd && maxLen > 0) {
     let current: string | null = maxEnd;
-    while (current) {
-      ids.add(current);
-      current = pathPrev.get(current) || null;
+    while (current) { ids.add(current); current = pathPrev.get(current) || null; }
+  }
+  return ids;
+}
+
+// ============================================
+// TIMELINE WARNING COMPUTATION
+// ============================================
+
+interface TimelineWarning {
+  initiativeId: string;
+  initiativeName: string;
+  type: 'overdue' | 'blocked' | 'dependency_conflict';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  message: string;
+  daysOverdue?: number;
+}
+
+function computeTimelineWarnings(initiatives: FullInitiative[]): TimelineWarning[] {
+  const warnings: TimelineWarning[] = [];
+  const now = new Date();
+
+  for (const init of initiatives) {
+    if (init.status === InitiativeStatus.DONE || init.status === InitiativeStatus.CANCELLED) continue;
+
+    const endDate = init.plannedEndDate || init.slaDeadline;
+    if (endDate && new Date(endDate) < now) {
+      const daysOverdue = Math.floor((now.getTime() - new Date(endDate).getTime()) / 86400000);
+      warnings.push({
+        initiativeId: init.id, initiativeName: init.name, type: 'overdue',
+        severity: daysOverdue > 14 ? 'critical' : daysOverdue > 7 ? 'high' : 'medium',
+        message: `${daysOverdue}d overdue`, daysOverdue,
+      });
+    }
+
+    if (init.status === InitiativeStatus.BLOCKED) {
+      warnings.push({
+        initiativeId: init.id, initiativeName: init.name, type: 'blocked',
+        severity: 'high', message: init.blockedReason || 'Blocked',
+      });
     }
   }
 
-  return ids;
+  warnings.sort((a, b) => {
+    const sev = { critical: 4, high: 3, medium: 2, low: 1 };
+    return (sev[b.severity] || 0) - (sev[a.severity] || 0);
+  });
+  return warnings.slice(0, 10);
 }
 
 // ============================================
@@ -356,19 +384,14 @@ interface TimelineBarProps {
   isOnCriticalPath?: boolean;
   hasWarning?: boolean;
   warningMessage?: string;
+  hasRiskSignal?: boolean;
+  riskSeverity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   onDragEnd?: (weeksDelta: number) => void;
 }
 
 const TimelineBar: React.FC<TimelineBarProps> = ({
-  initiative,
-  startIdx,
-  endIdx,
-  totalWeeks,
-  onClick,
-  isOnCriticalPath,
-  hasWarning,
-  warningMessage,
-  onDragEnd,
+  initiative, startIdx, endIdx, totalWeeks, onClick,
+  isOnCriticalPath, hasWarning, warningMessage, hasRiskSignal, riskSeverity, onDragEnd,
 }) => {
   const colors = STATUS_COLORS[initiative.status] || STATUS_COLORS[InitiativeStatus.EXECUTING];
   const span = Math.max(1, endIdx - startIdx + 1);
@@ -381,9 +404,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
     if (onDragEnd && dragOffset !== 0) {
       const weekWidth = 100 / totalWeeks;
       const weeksDelta = Math.round(dragOffset / weekWidth);
-      if (weeksDelta !== 0) {
-        onDragEnd(weeksDelta);
-      }
+      if (weeksDelta !== 0) onDragEnd(weeksDelta);
     }
     setDragOffset(0);
   }, [dragOffset, onDragEnd, totalWeeks]);
@@ -395,57 +416,152 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
       dragMomentum={false}
       dragElastic={0}
       onDrag={(_, info) => {
-        const containerWidth = 100; // percent
-        setDragOffset((info.offset.x / window.innerWidth) * containerWidth);
+        setDragOffset((info.offset.x / window.innerWidth) * 100);
       }}
       onDragEnd={handleDragEnd}
       className={`
-        absolute top-2 h-10 rounded-lg group
-        transition-shadow hover:shadow-lg hover:z-10
+        absolute top-2 h-10 rounded-lg group transition-shadow hover:shadow-lg hover:z-10
         ${colors.bg} border ${colors.border}
         ${isOnCriticalPath ? 'ring-2 ring-red-500/50' : ''}
         ${hasWarning ? 'ring-1 ring-amber-400/70' : ''}
         ${onDragEnd ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
       `}
-      style={{
-        left: `${leftPercent}%`,
-        width: `${widthPercent}%`,
-        minWidth: '60px',
-      }}
+      style={{ left: `${leftPercent}%`, width: `${widthPercent}%`, minWidth: '60px' }}
       whileHover={{ scale: 1.02 }}
       whileTap={onDragEnd ? { scale: 0.98 } : undefined}
     >
-      {/* D4.1: Warning badge */}
       {hasWarning && (
-        <div
-          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center z-20"
-          title={warningMessage}
-        >
+        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center z-20" title={warningMessage}>
           <AlertTriangle size={10} className="text-slate-900 dark:text-white" />
         </div>
       )}
-
-      <div
-        className={`absolute inset-y-0 left-0 ${colors.progress} opacity-30 rounded-l-lg`}
-        style={{ width: `${progress}%` }}
-      />
+      {hasRiskSignal && (
+        <div className={`absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center z-20 ${
+          riskSeverity === 'CRITICAL' ? 'bg-red-600' : riskSeverity === 'HIGH' ? 'bg-orange-500' : 'bg-yellow-500'
+        }`} title={`Risk: ${riskSeverity}`}>
+          <Shield size={9} className="text-white" />
+        </div>
+      )}
+      <div className={`absolute inset-y-0 left-0 ${colors.progress} opacity-30 rounded-l-lg`} style={{ width: `${progress}%` }} />
       <div className="relative h-full flex items-center gap-2 px-3 overflow-hidden">
-        {onDragEnd && (
-          <GripHorizontal
-            size={12}
-            className="opacity-30 shrink-0 group-hover:opacity-70 transition-opacity"
-          />
-        )}
+        {onDragEnd && <GripHorizontal size={12} className="opacity-30 shrink-0 group-hover:opacity-70 transition-opacity" />}
         <div className={`w-2 h-2 rounded-full ${colors.progress} shrink-0`} />
         <span className={`text-sm font-medium truncate ${colors.text}`}>{initiative.name}</span>
-        {initiative.priority === 'Critical' && (
-          <AlertTriangle size={14} className="shrink-0 text-red-500" />
-        )}
-        <span className="ml-auto text-xs text-slate-500 dark:text-slate-400 shrink-0">
-          {progress}%
-        </span>
+        {initiative.priority === 'Critical' && <AlertTriangle size={14} className="shrink-0 text-red-500" />}
+        <span className="ml-auto text-xs text-slate-500 dark:text-slate-400 shrink-0">{progress}%</span>
       </div>
     </motion.div>
+  );
+};
+
+// ============================================
+// WARNINGS STRIP
+// ============================================
+
+const WarningsStrip: React.FC<{
+  warnings: TimelineWarning[];
+  onWarningClick: (initiativeId: string) => void;
+}> = ({ warnings, onWarningClick }) => {
+  const { t } = useTranslation();
+  if (warnings.length === 0) return null;
+
+  const sevColors = {
+    critical: 'bg-red-500/20 text-red-400 border-red-500/30',
+    high: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    medium: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    low: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+  };
+
+  return (
+    <div className="shrink-0 px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-amber-50/50 dark:bg-amber-900/10">
+      <div className="flex items-center gap-2 mb-1.5">
+        <AlertTriangle size={14} className="text-amber-500" />
+        <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+          {t('execution.warnings.title')} ({warnings.length})
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {warnings.map((w) => (
+          <button
+            key={`${w.type}-${w.initiativeId}`}
+            onClick={() => {
+              onWarningClick(w.initiativeId);
+              trackFunnelEvent('execution_warning_clicked', { type: w.type, severity: w.severity });
+            }}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border transition-colors hover:opacity-80 ${sevColors[w.severity]}`}
+          >
+            <span className="font-medium truncate max-w-[200px]">{w.initiativeName}</span>
+            <span className="opacity-70">·</span>
+            <span>{w.message}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ============================================
+// FILTER BAR
+// ============================================
+
+const FilterBar: React.FC<{
+  filters: TimelineFilters;
+  onChange: (filters: TimelineFilters) => void;
+  initiatives: FullInitiative[];
+}> = ({ filters, onChange, initiatives }) => {
+  const { t } = useTranslation();
+
+  const statuses = useMemo(() => {
+    const set = new Set<string>();
+    initiatives.forEach((i) => set.add(i.status));
+    return Array.from(set).sort();
+  }, [initiatives]);
+
+  const owners = useMemo(() => {
+    const map = new Map<string, string>();
+    initiatives.forEach((i) => {
+      if (i.ownerBusiness) {
+        map.set(i.ownerBusinessId || i.ownerBusiness.id, `${i.ownerBusiness.firstName || ''} ${i.ownerBusiness.lastName || ''}`.trim());
+      }
+      if (i.ownerExecution) {
+        map.set(i.ownerExecutionId || i.ownerExecution.id, `${i.ownerExecution.firstName || ''} ${i.ownerExecution.lastName || ''}`.trim());
+      }
+    });
+    return Array.from(map.entries());
+  }, [initiatives]);
+
+  return (
+    <div className="shrink-0 flex items-center gap-2 px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+      <Filter size={14} className="text-slate-400 shrink-0" />
+      <select value={filters.status} onChange={(e) => onChange({ ...filters, status: e.target.value })}
+        className="text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300">
+        <option value="">{t('execution.timeline.allStatuses')}</option>
+        {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+      </select>
+      <select value={filters.priority} onChange={(e) => onChange({ ...filters, priority: e.target.value })}
+        className="text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300">
+        <option value="">{t('execution.timeline.allPriorities')}</option>
+        {['Critical', 'High', 'Medium', 'Low'].map((p) => <option key={p} value={p}>{p}</option>)}
+      </select>
+      {owners.length > 0 && (
+        <select value={filters.owner} onChange={(e) => onChange({ ...filters, owner: e.target.value })}
+          className="text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300">
+          <option value="">{t('execution.timeline.allOwners')}</option>
+          {owners.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+        </select>
+      )}
+      <div className="relative ml-auto">
+        <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input type="text" value={filters.search} onChange={(e) => onChange({ ...filters, search: e.target.value })}
+          placeholder={t('execution.timeline.searchPlaceholder')}
+          className="text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded pl-7 pr-7 py-1.5 w-48 text-slate-700 dark:text-slate-300 placeholder:text-slate-400" />
+        {filters.search && (
+          <button onClick={() => onChange({ ...filters, search: '' })} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <X size={12} />
+          </button>
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -454,95 +570,99 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
 // ============================================
 
 export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
-  initiatives,
-  onInitiativeClick,
-  onUpdateInitiative,
+  initiatives, onInitiativeClick, onUpdateInitiative, onTimelineUpdate, riskSignals,
 }) => {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewWeeks, setViewWeeks] = useState(12);
   const [showCriticalPath, setShowCriticalPath] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<TimelineFilters>({ status: '', priority: '', owner: '', search: '' });
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     today.setDate(today.getDate() - 14);
     return today;
   });
 
+  const trackedRef = useRef(false);
+  useEffect(() => {
+    if (!trackedRef.current) {
+      trackFunnelEvent('execution_timeline_viewed', {});
+      trackedRef.current = true;
+    }
+  }, []);
+
+  const filteredInitiatives = useMemo(() => {
+    let result = initiatives;
+    if (filters.status) result = result.filter((i) => i.status === filters.status);
+    if (filters.priority) result = result.filter((i) => i.priority === filters.priority);
+    if (filters.owner) result = result.filter((i) => i.ownerBusinessId === filters.owner || i.ownerExecutionId === filters.owner || i.ownerTechnicalId === filters.owner);
+    if (filters.search) { const q = filters.search.toLowerCase(); result = result.filter((i) => i.name.toLowerCase().includes(q)); }
+    return result;
+  }, [initiatives, filters]);
+
+  const riskSignalsByInit = useMemo(() => {
+    const map = new Map<string, RiskSignalItem[]>();
+    if (!riskSignals) return map;
+    for (const sig of riskSignals) {
+      const existing = map.get(sig.initiativeId) || [];
+      existing.push(sig);
+      map.set(sig.initiativeId, existing);
+    }
+    return map;
+  }, [riskSignals]);
+
   const weeks = useMemo(() => generateWeeks(startDate, viewWeeks), [startDate, viewWeeks]);
   const months = useMemo(() => getMonthsFromWeeks(weeks), [weeks]);
 
-  // D4.1: Dependency validation
-  const depWarnings = useMemo(() => validateInitiativeDependencies(initiatives), [initiatives]);
+  const depWarnings = useMemo(() => validateInitiativeDependencies(filteredInitiatives), [filteredInitiatives]);
   const warningsByInit = useMemo(() => {
     const map = new Map<string, DepWarning[]>();
-    depWarnings.forEach((w) => {
-      const existing = map.get(w.initiativeId) || [];
-      existing.push(w);
-      map.set(w.initiativeId, existing);
-    });
+    depWarnings.forEach((w) => { const existing = map.get(w.initiativeId) || []; existing.push(w); map.set(w.initiativeId, existing); });
     return map;
   }, [depWarnings]);
 
-  const getWeekIndex = useCallback(
-    (dateStr: string | undefined): number => {
-      if (!dateStr) return -1;
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return -1;
-      const firstWeekStart = weeks[0]?.date;
-      if (!firstWeekStart) return -1;
-      const diffTime = date.getTime() - firstWeekStart.getTime();
-      const diffWeeks = Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
-      return Math.max(0, Math.min(diffWeeks, weeks.length - 1));
-    },
-    [weeks]
-  );
+  const timelineWarnings = useMemo(() => computeTimelineWarnings(filteredInitiatives), [filteredInitiatives]);
+
+  const getWeekIndex = useCallback((dateStr: string | undefined): number => {
+    if (!dateStr) return -1;
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return -1;
+    const firstWeekStart = weeks[0]?.date;
+    if (!firstWeekStart) return -1;
+    const diffTime = date.getTime() - firstWeekStart.getTime();
+    return Math.max(0, Math.min(Math.floor(diffTime / (7 * 86400000)), weeks.length - 1));
+  }, [weeks]);
 
   const processedInitiatives = useMemo(() => {
-    return initiatives
+    return filteredInitiatives
       .filter((i) => i.startDate || i.plannedEndDate || i.endDate)
       .map((initiative) => {
-        const startIdx =
-          getWeekIndex(initiative.startDate) >= 0 ? getWeekIndex(initiative.startDate) : 0;
-        const endDateStr =
-          initiative.actualEndDate || initiative.plannedEndDate || initiative.endDate;
+        const startIdx = getWeekIndex(initiative.startDate) >= 0 ? getWeekIndex(initiative.startDate) : 0;
+        const endDateStr = initiative.actualEndDate || initiative.plannedEndDate || initiative.endDate;
         let endIdx = getWeekIndex(endDateStr);
-        if (endIdx < 0 || endIdx < startIdx) {
-          endIdx = Math.min(startIdx + 2, weeks.length - 1);
-        }
+        if (endIdx < 0 || endIdx < startIdx) endIdx = Math.min(startIdx + 2, weeks.length - 1);
         return { ...initiative, startIdx, endIdx };
       })
       .sort((a, b) => a.startIdx - b.startIdx);
-  }, [initiatives, getWeekIndex, weeks.length]);
+  }, [filteredInitiatives, getWeekIndex, weeks.length]);
 
   const initiativeRows = useMemo(() => {
     const rows: (typeof processedInitiatives)[] = [];
     processedInitiatives.forEach((initiative) => {
       let placed = false;
       for (const row of rows) {
-        const overlaps = row.some(
-          (existing) =>
-            !(initiative.endIdx < existing.startIdx || initiative.startIdx > existing.endIdx)
-        );
-        if (!overlaps) {
-          row.push(initiative);
-          placed = true;
-          break;
-        }
+        const overlaps = row.some((existing) => !(initiative.endIdx < existing.startIdx || initiative.startIdx > existing.endIdx));
+        if (!overlaps) { row.push(initiative); placed = true; break; }
       }
-      if (!placed) {
-        rows.push([initiative]);
-      }
+      if (!placed) rows.push([initiative]);
     });
     return rows;
   }, [processedInitiatives]);
 
-  // Flat map for SVG line drawing: initiative id -> { row, startIdx, endIdx }
   const initiativePositionMap = useMemo(() => {
     const map = new Map<string, { row: number; startIdx: number; endIdx: number }>();
-    initiativeRows.forEach((row, rowIdx) => {
-      row.forEach((init) => {
-        map.set(init.id, { row: rowIdx, startIdx: init.startIdx, endIdx: init.endIdx });
-      });
-    });
+    initiativeRows.forEach((row, rowIdx) => { row.forEach((init) => { map.set(init.id, { row: rowIdx, startIdx: init.startIdx, endIdx: init.endIdx }); }); });
     return map;
   }, [initiativeRows]);
 
@@ -550,181 +670,141 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
     const today = new Date();
     const firstWeekStart = weeks[0]?.date;
     if (!firstWeekStart) return null;
-    const diffTime = today.getTime() - firstWeekStart.getTime();
-    const diffDays = diffTime / (24 * 60 * 60 * 1000);
+    const diffDays = (today.getTime() - firstWeekStart.getTime()) / 86400000;
     const position = (diffDays / (viewWeeks * 7)) * 100;
-    if (position < 0 || position > 100) return null;
-    return position;
+    return (position < 0 || position > 100) ? null : position;
   }, [weeks, viewWeeks]);
 
-  // D5.1: Critical path
   const criticalPathIds = useMemo(
-    () => (showCriticalPath ? computeExecutionCriticalPath(initiatives) : new Set<string>()),
-    [initiatives, showCriticalPath]
+    () => (showCriticalPath ? computeExecutionCriticalPath(filteredInitiatives) : new Set<string>()),
+    [filteredInitiatives, showCriticalPath]
   );
 
-  // D5.1: Dependency lines for SVG
   const dependencyLines = useMemo(() => {
-    const lines: Array<{
-      fromId: string;
-      toId: string;
-      x1Pct: number;
-      y1Row: number;
-      x2Pct: number;
-      y2Row: number;
-      isCritical: boolean;
-      isConflict: boolean;
-    }> = [];
-
-    initiatives.forEach((init) => {
+    const lines: Array<{ fromId: string; toId: string; x1Pct: number; y1Row: number; x2Pct: number; y2Row: number; isCritical: boolean; isConflict: boolean }> = [];
+    filteredInitiatives.forEach((init) => {
       const deps = init.relatedInitiatives?.filter((r) => r.relationType === 'DEPENDS_ON') || [];
       const toPos = initiativePositionMap.get(init.id);
       if (!toPos) return;
-
       deps.forEach((dep) => {
         const fromPos = initiativePositionMap.get(dep.relatedInitiativeId);
         if (!fromPos) return;
-
-        const isCritical =
-          criticalPathIds.has(init.id) && criticalPathIds.has(dep.relatedInitiativeId);
-        const isConflict = warningsByInit.has(init.id);
-
         lines.push({
-          fromId: dep.relatedInitiativeId,
-          toId: init.id,
-          x1Pct: ((fromPos.endIdx + 1) / viewWeeks) * 100,
-          y1Row: fromPos.row,
-          x2Pct: (toPos.startIdx / viewWeeks) * 100,
-          y2Row: toPos.row,
-          isCritical,
-          isConflict,
+          fromId: dep.relatedInitiativeId, toId: init.id,
+          x1Pct: ((fromPos.endIdx + 1) / viewWeeks) * 100, y1Row: fromPos.row,
+          x2Pct: (toPos.startIdx / viewWeeks) * 100, y2Row: toPos.row,
+          isCritical: criticalPathIds.has(init.id) && criticalPathIds.has(dep.relatedInitiativeId),
+          isConflict: warningsByInit.has(init.id),
         });
       });
     });
-
     return lines;
-  }, [initiatives, initiativePositionMap, viewWeeks, criticalPathIds, warningsByInit]);
+  }, [filteredInitiatives, initiativePositionMap, viewWeeks, criticalPathIds, warningsByInit]);
 
   const navigateTimeline = (direction: 'prev' | 'next') => {
-    setStartDate((prev) => {
-      const newDate = new Date(prev);
-      newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
-      return newDate;
-    });
+    setStartDate((prev) => { const d = new Date(prev); d.setDate(d.getDate() + (direction === 'next' ? 7 : -7)); return d; });
   };
 
-  const goToToday = () => {
-    const today = new Date();
-    today.setDate(today.getDate() - 14);
-    setStartDate(today);
-  };
+  const goToToday = () => { const d = new Date(); d.setDate(d.getDate() - 14); setStartDate(d); };
 
-  // D5.1: Handle drag to move
-  const handleBarDragEnd = useCallback(
-    (initiative: FullInitiative, weeksDelta: number) => {
-      if (!onUpdateInitiative) return;
+  const handleBarDragEnd = useCallback((initiative: FullInitiative, weeksDelta: number) => {
+    if (!onUpdateInitiative && !onTimelineUpdate) return;
+    const startStr = initiative.startDate || initiative.plannedStartDate;
+    const endStr = initiative.plannedEndDate || initiative.endDate;
+    if (!startStr) return;
 
-      const startStr = initiative.startDate || initiative.plannedStartDate;
-      const endStr = initiative.plannedEndDate || initiative.endDate;
-
-      if (!startStr) return;
-
+    if (onTimelineUpdate) {
       const newStart = new Date(startStr);
       newStart.setDate(newStart.getDate() + weeksDelta * 7);
-
-      const updates: Partial<FullInitiative> = {
-        ...initiative,
-      };
-
-      if (initiative.startDate) {
-        updates.startDate = newStart.toISOString();
-      }
-      if (initiative.plannedStartDate) {
-        const newPStart = new Date(initiative.plannedStartDate);
-        newPStart.setDate(newPStart.getDate() + weeksDelta * 7);
-        updates.plannedStartDate = newPStart.toISOString();
-      }
-
+      onTimelineUpdate(initiative.id, 'planned_start_date', newStart.toISOString());
       if (endStr) {
         const newEnd = new Date(endStr);
         newEnd.setDate(newEnd.getDate() + weeksDelta * 7);
-        if (initiative.plannedEndDate) updates.plannedEndDate = newEnd.toISOString();
-        if (initiative.endDate) updates.endDate = newEnd.toISOString();
+        onTimelineUpdate(initiative.id, 'planned_end_date', newEnd.toISOString());
       }
+      trackFunnelEvent('execution_timeline_initiative_updated', { field: 'dates', weeksDelta });
+      return;
+    }
 
+    if (onUpdateInitiative) {
+      const newStart = new Date(startStr);
+      newStart.setDate(newStart.getDate() + weeksDelta * 7);
+      const updates: Partial<FullInitiative> = { ...initiative };
+      if (initiative.startDate) updates.startDate = newStart.toISOString();
+      if (initiative.plannedStartDate) {
+        const np = new Date(initiative.plannedStartDate); np.setDate(np.getDate() + weeksDelta * 7); updates.plannedStartDate = np.toISOString();
+      }
+      if (endStr) {
+        const ne = new Date(endStr); ne.setDate(ne.getDate() + weeksDelta * 7);
+        if (initiative.plannedEndDate) updates.plannedEndDate = ne.toISOString();
+        if (initiative.endDate) updates.endDate = ne.toISOString();
+      }
       onUpdateInitiative(updates as FullInitiative);
-    },
-    [onUpdateInitiative]
-  );
+      trackFunnelEvent('execution_timeline_initiative_updated', { field: 'dates', weeksDelta });
+    }
+  }, [onUpdateInitiative, onTimelineUpdate]);
 
-  const ROW_HEIGHT = 56; // h-14
+  const handleWarningClick = useCallback((initiativeId: string) => {
+    const init = initiatives.find((i) => i.id === initiativeId);
+    if (init) onInitiativeClick(init);
+  }, [initiatives, onInitiativeClick]);
+
+  const handleFilterChange = useCallback((newFilters: TimelineFilters) => {
+    setFilters(newFilters);
+    trackFunnelEvent('execution_timeline_filtered', { status: newFilters.status || 'all', priority: newFilters.priority || 'all', hasSearch: !!newFilters.search });
+  }, []);
+
+  const activeFilters = filters.status || filters.priority || filters.owner || filters.search;
+  const ROW_HEIGHT = 56;
 
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
-      {/* Timeline Controls */}
+      {/* Controls */}
       <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
-        {/* Left: Navigation */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigateTimeline('prev')}
-            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
-          >
+          <button onClick={() => navigateTimeline('prev')} className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors">
             <ChevronLeft size={18} />
           </button>
-          <button
-            onClick={goToToday}
-            className="px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/10 rounded transition-colors"
-          >
-            Today
+          <button onClick={goToToday} className="px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/10 rounded transition-colors">
+            {t('execution.timeline.today')}
           </button>
-          <button
-            onClick={() => navigateTimeline('next')}
-            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
-          >
+          <button onClick={() => navigateTimeline('next')} className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors">
             <ChevronRight size={18} />
           </button>
-
-          {/* D4.1: Warning count */}
           {depWarnings.length > 0 && (
             <>
               <div className="w-px h-4 bg-slate-200 dark:bg-navy-700 mx-1" />
               <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-900/30 text-amber-400">
                 <AlertTriangle size={11} />
-                {depWarnings.length} warning{depWarnings.length !== 1 ? 's' : ''}
+                {depWarnings.length} {depWarnings.length === 1 ? t('execution.timeline.warning') : t('execution.timeline.warnings')}
+              </span>
+            </>
+          )}
+          {riskSignals && riskSignals.length > 0 && (
+            <>
+              <div className="w-px h-4 bg-slate-200 dark:bg-navy-700 mx-1" />
+              <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-900/30 text-red-400">
+                <Shield size={11} /> {riskSignals.length} {t('execution.riskSignals.title').toLowerCase()}
               </span>
             </>
           )}
         </div>
-
-        {/* Right: View controls */}
         <div className="flex items-center gap-3">
-          {/* Critical path toggle */}
-          <button
-            onClick={() => setShowCriticalPath((v) => !v)}
-            className={`p-1.5 rounded-lg transition-colors ${
-              showCriticalPath
-                ? 'bg-red-900/30 text-red-400'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10'
-            }`}
-            title={showCriticalPath ? 'Hide critical path' : 'Show critical path'}
-          >
+          <button onClick={() => setShowFilters((v) => !v)}
+            className={`p-1.5 rounded-lg transition-colors ${showFilters || activeFilters ? 'bg-cyan-900/30 text-cyan-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10'}`}
+            title={showFilters ? 'Hide filters' : 'Show filters'}>
+            <Filter size={16} />
+          </button>
+          <button onClick={() => setShowCriticalPath((v) => !v)}
+            className={`p-1.5 rounded-lg transition-colors ${showCriticalPath ? 'bg-red-900/30 text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10'}`}
+            title={showCriticalPath ? t('execution.timeline.hideCriticalPath') : t('execution.timeline.showCriticalPath')}>
             <Route size={16} />
           </button>
-
           <div className="w-px h-4 bg-slate-200 dark:bg-navy-700" />
-
-          {/* Week range selector */}
           <div className="flex items-center gap-1 bg-slate-50 dark:bg-navy-800 rounded-lg p-1 border border-slate-200 dark:border-navy-700">
-            {[8, 12, 16].map((w) => (
-              <button
-                key={w}
-                onClick={() => setViewWeeks(w)}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  viewWeeks === w
-                    ? 'bg-cyan-500/20 text-cyan-400'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                }`}
-              >
+            {[8, 12, 16, 24].map((w) => (
+              <button key={w} onClick={() => setViewWeeks(w)}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${viewWeeks === w ? 'bg-cyan-500/20 text-cyan-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}>
                 {w}W
               </button>
             ))}
@@ -732,173 +812,83 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
         </div>
       </div>
 
+      {/* Filter Bar */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.15 }}>
+            <FilterBar filters={filters} onChange={handleFilterChange} initiatives={initiatives} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <WarningsStrip warnings={timelineWarnings} onWarningClick={handleWarningClick} />
+
       {/* Timeline Content */}
       <div ref={containerRef} className="flex-1 overflow-auto">
         <div className="min-w-[800px]">
-          {/* Month Headers */}
           <div className="sticky top-0 z-20 flex bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
             {months.map((m, idx) => (
-              <div
-                key={`${m.month}-${m.year}-${idx}`}
-                className="text-center py-2 border-r border-slate-200 dark:border-navy-700 last:border-r-0"
-                style={{ width: `${(m.span / viewWeeks) * 100}%` }}
-              >
-                <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {m.month} {m.year}
-                </span>
+              <div key={`${m.month}-${m.year}-${idx}`} className="text-center py-2 border-r border-slate-200 dark:border-navy-700 last:border-r-0" style={{ width: `${(m.span / viewWeeks) * 100}%` }}>
+                <span className="text-sm font-semibold text-slate-900 dark:text-white">{m.month} {m.year}</span>
               </div>
             ))}
           </div>
-
-          {/* Week Headers */}
           <div className="sticky top-[40px] z-10 flex bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700">
             {weeks.map((week, idx) => (
-              <div
-                key={`week-${idx}`}
-                className="flex-1 px-1 py-2 text-center border-r border-slate-200 dark:border-navy-700 last:border-r-0"
-              >
-                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {week.label}
-                </div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                  {week.date.toLocaleDateString('en-US', { day: 'numeric' })}
-                </div>
+              <div key={`week-${idx}`} className="flex-1 px-1 py-2 text-center border-r border-slate-200 dark:border-navy-700 last:border-r-0">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{week.label}</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">{week.date.toLocaleDateString('en-US', { day: 'numeric' })}</div>
               </div>
             ))}
           </div>
-
-          {/* Rows */}
           <div className="relative">
-            {/* Today marker */}
             {todayPosition !== null && (
-              <div
-                className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20"
-                style={{ left: `${todayPosition}%` }}
-              >
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-medium rounded shadow-lg">
-                  Today
-                </div>
+              <div className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20" style={{ left: `${todayPosition}%` }}>
+                <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-medium rounded shadow-lg">{t('execution.timeline.today')}</div>
               </div>
             )}
-
-            {/* Grid lines */}
             <div className="absolute inset-0 flex pointer-events-none">
-              {weeks.map((_, idx) => (
-                <div
-                  key={`grid-${idx}`}
-                  className="flex-1 border-r border-slate-200 dark:border-navy-800 last:border-r-0"
-                />
-              ))}
+              {weeks.map((_, idx) => <div key={`grid-${idx}`} className="flex-1 border-r border-slate-200 dark:border-navy-800 last:border-r-0" />)}
             </div>
-
-            {/* D5.1: SVG dependency lines */}
             {dependencyLines.length > 0 && (
-              <svg
-                className="absolute inset-0 pointer-events-none z-15"
-                style={{
-                  width: '100%',
-                  height: initiativeRows.length * ROW_HEIGHT,
-                }}
-              >
+              <svg className="absolute inset-0 pointer-events-none z-15" style={{ width: '100%', height: initiativeRows.length * ROW_HEIGHT }}>
                 <defs>
-                  <marker
-                    id="exec-arrow"
-                    markerWidth="8"
-                    markerHeight="6"
-                    refX="8"
-                    refY="3"
-                    orient="auto"
-                  >
-                    <polygon points="0 0, 8 3, 0 6" fill="#64748b" />
-                  </marker>
-                  <marker
-                    id="exec-arrow-crit"
-                    markerWidth="8"
-                    markerHeight="6"
-                    refX="8"
-                    refY="3"
-                    orient="auto"
-                  >
-                    <polygon points="0 0, 8 3, 0 6" fill="#ef4444" />
-                  </marker>
-                  <marker
-                    id="exec-arrow-warn"
-                    markerWidth="8"
-                    markerHeight="6"
-                    refX="8"
-                    refY="3"
-                    orient="auto"
-                  >
-                    <polygon points="0 0, 8 3, 0 6" fill="#f59e0b" />
-                  </marker>
+                  <marker id="exec-arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#64748b" /></marker>
+                  <marker id="exec-arrow-crit" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#ef4444" /></marker>
+                  <marker id="exec-arrow-warn" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f59e0b" /></marker>
                 </defs>
                 {dependencyLines.map((line, idx) => {
                   const y1 = line.y1Row * ROW_HEIGHT + ROW_HEIGHT / 2;
                   const y2 = line.y2Row * ROW_HEIGHT + ROW_HEIGHT / 2;
-                  const stroke = line.isCritical
-                    ? '#ef4444'
-                    : line.isConflict
-                      ? '#f59e0b'
-                      : '#64748b';
-                  const marker = line.isCritical
-                    ? 'url(#exec-arrow-crit)'
-                    : line.isConflict
-                      ? 'url(#exec-arrow-warn)'
-                      : 'url(#exec-arrow)';
-                  const sw = line.isCritical ? 2 : 1.5;
-                  const dash = line.isConflict ? '5 3' : 'none';
-
+                  const stroke = line.isCritical ? '#ef4444' : line.isConflict ? '#f59e0b' : '#64748b';
+                  const marker = line.isCritical ? 'url(#exec-arrow-crit)' : line.isConflict ? 'url(#exec-arrow-warn)' : 'url(#exec-arrow)';
                   return (
-                    <path
-                      key={idx}
-                      d={`M ${line.x1Pct}% ${y1} C ${(line.x1Pct + line.x2Pct) / 2}% ${y1}, ${(line.x1Pct + line.x2Pct) / 2}% ${y2}, ${line.x2Pct}% ${y2}`}
-                      fill="none"
-                      stroke={stroke}
-                      strokeWidth={sw}
-                      strokeDasharray={dash}
-                      markerEnd={marker}
-                      opacity={0.6}
-                    />
+                    <path key={idx} d={`M ${line.x1Pct}% ${y1} C ${(line.x1Pct + line.x2Pct) / 2}% ${y1}, ${(line.x1Pct + line.x2Pct) / 2}% ${y2}, ${line.x2Pct}% ${y2}`}
+                      fill="none" stroke={stroke} strokeWidth={line.isCritical ? 2 : 1.5} strokeDasharray={line.isConflict ? '5 3' : 'none'} markerEnd={marker} opacity={0.6} />
                   );
                 })}
               </svg>
             )}
-
-            {/* Initiative rows */}
             {initiativeRows.length === 0 ? (
               <div className="flex items-center justify-center h-48 text-slate-500 dark:text-slate-400">
                 <div className="text-center">
                   <Calendar className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No initiatives with timeline data</p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Add start/end dates to initiatives to see them here
-                  </p>
+                  <p className="text-sm">{activeFilters ? t('execution.timeline.noResults') : t('execution.empty.noInExecution')}</p>
                 </div>
               </div>
             ) : (
               initiativeRows.map((row, rowIdx) => (
-                <div
-                  key={rowIdx}
-                  className="relative h-14 border-b border-slate-200 dark:border-navy-800"
-                >
+                <div key={rowIdx} className="relative h-14 border-b border-slate-200 dark:border-navy-800">
                   {row.map((initiative) => {
                     const initWarnings = warningsByInit.get(initiative.id) || [];
+                    const initRisks = riskSignalsByInit.get(initiative.id) || [];
                     return (
-                      <TimelineBar
-                        key={initiative.id}
-                        initiative={initiative}
-                        startIdx={initiative.startIdx}
-                        endIdx={initiative.endIdx}
-                        totalWeeks={viewWeeks}
-                        onClick={() => onInitiativeClick(initiative)}
+                      <TimelineBar key={initiative.id} initiative={initiative} startIdx={initiative.startIdx} endIdx={initiative.endIdx}
+                        totalWeeks={viewWeeks} onClick={() => onInitiativeClick(initiative)}
                         isOnCriticalPath={criticalPathIds.has(initiative.id)}
-                        hasWarning={initWarnings.length > 0}
-                        warningMessage={initWarnings.map((w) => w.message).join('\n')}
-                        onDragEnd={
-                          onUpdateInitiative
-                            ? (weeksDelta) => handleBarDragEnd(initiative, weeksDelta)
-                            : undefined
-                        }
+                        hasWarning={initWarnings.length > 0} warningMessage={initWarnings.map((w) => w.message).join('\n')}
+                        hasRiskSignal={initRisks.length > 0} riskSeverity={initRisks.length > 0 ? initRisks[0].severity : undefined}
+                        onDragEnd={(onUpdateInitiative || onTimelineUpdate) ? (weeksDelta) => handleBarDragEnd(initiative, weeksDelta) : undefined}
                       />
                     );
                   })}
@@ -928,15 +918,21 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           <div className="w-3 h-3 rounded ring-2 ring-red-500/50 bg-red-500/20" />
           <span className="text-slate-500 dark:text-slate-400">Critical/Overdue</span>
         </div>
+        {riskSignals && riskSignals.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            <Shield size={12} className="text-red-500" />
+            <span className="text-slate-500 dark:text-slate-400">{t('execution.riskSignals.title')}</span>
+          </div>
+        )}
         {depWarnings.length > 0 && (
           <div className="flex items-center gap-1.5">
             <AlertTriangle size={12} className="text-amber-500" />
-            <span className="text-slate-500 dark:text-slate-400">Schedule Warning</span>
+            <span className="text-slate-500 dark:text-slate-400">{t('execution.timeline.scheduleWarning')}</span>
           </div>
         )}
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-0.5 bg-red-500" />
-          <span className="text-slate-500 dark:text-slate-400">Today</span>
+          <span className="text-slate-500 dark:text-slate-400">{t('execution.timeline.today')}</span>
         </div>
       </div>
     </div>

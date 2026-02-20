@@ -81,7 +81,19 @@ export type FunnelEventName =
   | 'ai_authoring_undone'
   | 'ai_card_generated'
   | 'initiative_gate_readiness_viewed'
-  | 'initiative_gate_readiness_ai_requested';
+  | 'initiative_gate_readiness_ai_requested'
+  | 'licensed_tool_framework_opened'
+  | 'licensed_tool_assessment_completed'
+  | 'licensed_tool_assessment_approved'
+  | 'licensed_tools_report_generated'
+  | 'licensed_tools_deck_exported'
+  | 'execution_timeline_viewed'
+  | 'execution_timeline_initiative_updated'
+  | 'execution_timeline_filtered'
+  | 'execution_risk_signal_viewed'
+  | 'execution_risk_signal_dismissed'
+  | 'execution_risk_mitigation_updated'
+  | 'execution_warning_clicked';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

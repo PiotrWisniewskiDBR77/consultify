@@ -4,3 +4,5 @@
  */
 export { BenefitsTracker } from './BenefitsTracker';
 export { ExecutionHub } from './ExecutionHub';
+export { RiskSignalsPanel } from './RiskSignalsPanel';
+export { MitigationPanel } from './MitigationPanel';

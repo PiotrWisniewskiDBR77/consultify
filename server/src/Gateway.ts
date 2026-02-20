@@ -148,6 +148,7 @@ import promptAssistantRoutes from './routes/prompt-assistant.routes.js';
 import publicMiniAssessmentRoutes from './routes/public-mini-assessment.routes.js';
 import publicOutreachRoutes from './routes/public-outreach.routes.js';
 import raidRoutes from './routes/raid.routes.js';
+import executionControlRoutes from './routes/executionControl.routes.js';
 import rapidleanRoutes from './routes/rapidlean.routes.js';
 import referralRoutes from './routes/referrals.routes.js';
 import reportBuilderRoutes from './routes/report-builder.routes.js';
@@ -516,6 +517,7 @@ export class ApiGateway {
       mountStub('/api/audit', auditRoutes, 'auditRoutes');
       app.use('/api/mfa', mfaRoutes);
       mountStub('/api/raid', raidRoutes, 'raidRoutes');
+      app.use('/api/execution-control', executionControlRoutes);
       mountStub('/api/budget', budgetRoutes, 'budgetRoutes');
       app.use('/api/content', contentRoutes);
 
