@@ -1,88 +1,102 @@
 # V2 Delivery — progress dashboard
 
-Cel: żebyś zawsze widział **czy idziemy zgodnie z planem** i czy nie narasta bałagan.
+Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta balagan.
 
-## Status “na teraz” (baseline)
-- **Specyfikacje T001–T122**: gotowe w `docs/plans/V2_TASK_SPECS.md`
-  - commit: `e0281760f` (restore full spec file)
-- **Manual QA checklist (T001–T122)**: gotowe w `docs/test-quality/V2_MANUAL_QA_CHECKLIST_122_TASKS.md`
+## Status "na teraz" (baseline)
+- **Specyfikacje T001-T122**: gotowe w `docs/plans/V2_TASK_SPECS.md`
+- **Manual QA checklist (T001-T122)**: gotowe w `docs/test-quality/V2_MANUAL_QA_CHECKLIST_122_TASKS.md`
 - **Eksport do ChatGPT**: `docs/plans/chatgpt-export/` (md + txt)
 - **Plan paczek + workflow**: `docs/plans/v2-delivery/*` (ten katalog)
+- **Szablon promptow V2**: `docs/plans/v2-delivery/PROMPT_TEMPLATE_V2.md`
 
 ## Pilot 3 paczek (2026-02-19)
 
 | Pilot | Task | Branch | Status |
 |-------|------|--------|--------|
-| A | T002 Sidebar Collapse | bundle-pilot-a-sidebar-collapse | done |
-| B | T001 Chat Title Fallback | bundle-pilot-b-chat-title | done |
-| C | T072 Help Context | bundle-pilot-c-help-context | Codex packet ready |
+| A | T002 Sidebar Collapse | bundle-pilot-a-sidebar-collapse | merged |
+| B | T001 Chat Title Fallback | bundle-pilot-b-chat-title | merged |
+| C | T072 Help Context | bundle-pilot-c-help-context | merged (Codex packet) |
 
-**Następny krok:** merge pilot A i B do main (po manual QA + verify:quick). Pilot C przekazać Codex.
+## Wave 1 (2026-02-19/20) — CLOSED
+
+| Bundle | Taski | Branch | Owner | Status | Uwagi |
+|--------|-------|--------|-------|--------|-------|
+| 21 | T068, T069 | bundle-21-onboarding-news | Codex | merged | migracje 551, 552 |
+| 25 | T091, T092 | bundle-25-trial-upgrade | Cursor A | merged | trial arch + conversion path |
+| 26 | T093 | bundle-26-legal-acceptance | Cursor B | merged | migracja 550, poprawiona na PG |
+
+### Wave 1 — lekcje wyciagniete
+- Agent B napisal migracje SQLite zamiast PostgreSQL -> poprawione, dodane do PROMPT_TEMPLATE_V2
+- Agenty edytowaly progress.md -> konflikty -> zasada: agenty NIE edytuja progress.md
+- Pre-existing test failures mylily agentow -> dodana instrukcja "ignoruj"
+- Konflikty w translation.json -> instrukcja: klucze na koncu, prefix modulem
+- Hardcoded plans w Bundle 25 -> zasada: dane z DB/config
 
 ---
 
-## Najważniejszy wskaźnik “czy jest syf”
-**Jeśli `git status` pokazuje zmiany z 4+ paczek naraz → STOP i porządkujemy.**
+## Najwazniejszy wskaznik "czy jest syf"
+**Jesli `git status` pokazuje zmiany z 4+ paczek naraz -> STOP i porzadkujemy.**
 
-## Reguły porządku (must)
+## Reguly porzadku (must)
 - WIP = 3 (1 Codex + 2 Cursor).
-- Każda paczka ma osobny branch.
-- Main nie przyjmuje “pół‑paczki”.
-- Jeśli paczka rośnie → tniemy na slice’y.
+- Kazda paczka ma osobny branch.
+- Main nie przyjmuje "pol-paczki".
+- Jesli paczka rosnie -> tniemy na slice'y.
+- **progress.md edytuje TYLKO owner** (nie agenty) — lekcja z Wave 1.
 
 ---
 
 ## Tabela paczek (30)
 Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 
-| Bundle | Zakres (taski) | Owner (domyślny) | Status | Link do branch/PR | Notatki / ryzyka |
+| Bundle | Zakres (taski) | Owner (domyslny) | Status | Branch | Uwagi |
 |---:|---|---|---|---|---|
-| 01 | T001–T006 | Cursor | planned |  |  |
-| 02 | T007–T012 (+T008 guardrails) | Cursor | planned |  |  |
-| 03 | T013–T017 | Codex | planned |  |  |
-| 04 | T018–T021 | Codex | planned |  |  |
-| 05 | T019, T022–T024 | Codex | planned |  |  |
-| 06 | T025–T027 | Cursor | planned |  |  |
-| 07 | T028, T030, T031 | Cursor | planned |  |  |
-| 08 | T032–T033 | Cursor | planned |  |  |
-| 09 | T034–T038 | Codex | planned |  |  |
-| 10 | T039–T042 | Cursor | planned |  |  |
-| 11 | T043–T045 | Codex | planned |  |  |
-| 12 | T046–T049 | Cursor | planned |  |  |
-| 13 | T050–T051 | Codex | planned |  |  |
-| 14 | T052–T053 | Codex | planned |  |  |
-| 15 | T054 | Cursor | planned |  | weekend/hard |
-| 16 | T055–T057 | Codex | planned |  | merytoryka |
-| 17 | T058–T059 | Cursor | planned |  | weekend/hard |
-| 18 | T060–T061 | Cursor | planned |  | weekend/hard |
-| 19 | T062 | Codex | planned |  |  |
-| 20 | T063–T067 | Codex | planned |  |  |
-| 21 | T068–T069 | Codex | in_review | bundle-21-onboarding-news | start: 2026-02-19; ready: 2026-02-19 |
-| 22 | T071–T073 (+T070 content) | Codex | planned |  |  |
-| 23 | T086 + T008 | Cursor | planned |  |  |
-| 24 | T087, T089, T090 | Codex | planned |  |  |
-| 25 | T091–T092 | Cursor | in_review | bundle-25-trial-upgrade | Completed 2026-02-19, ready for QA |
-| 26 | T093 | Cursor | planned |  |  |
-| 27 | T094–T095 | Codex | planned |  | content-heavy |
-| 28 | T096–T098 | Codex | planned |  |  |
-| 29 | T099–T105 + T101–T103 | Cursor | planned |  | weekend/hard |
-| 30 | T106–T122 (slices) | Cursor | planned |  | program |
+| 01 | T001-T006 | Cursor | planned | | T001,T002 done in pilot |
+| 02 | T007-T012 (+T008 guardrails) | Cursor | planned | | |
+| 03 | T013-T017 | Codex | planned | | |
+| 04 | T018-T021 | Codex | planned | | |
+| 05 | T019, T022-T024 | Codex | planned | | |
+| 06 | T025-T027 | Cursor | planned | | |
+| 07 | T028, T030, T031 | Cursor | planned | | |
+| 08 | T032-T033 | Cursor | planned | | |
+| 09 | T034-T038 | Codex | planned | | |
+| 10 | T039-T042 | Cursor | planned | | |
+| 11 | T043-T045 | Codex | planned | | |
+| 12 | T046-T049 | Cursor | planned | | |
+| 13 | T050-T051 | Codex | planned | | |
+| 14 | T052-T053 | Codex | planned | | |
+| 15 | T054 | Cursor | planned | | weekend/hard |
+| 16 | T055-T057 | Codex | planned | | merytoryka |
+| 17 | T058-T059 | Cursor | planned | | weekend/hard |
+| 18 | T060-T061 | Cursor | planned | | weekend/hard |
+| 19 | T062 | Codex | planned | | |
+| 20 | T063-T067 | Codex | planned | | |
+| 21 | T068-T069 | Codex | **merged** | bundle-21-onboarding-news | Wave 1 |
+| 22 | T071-T073 (+T070 content) | Codex | planned | | T072 done in pilot |
+| 23 | T086 + T008 | Cursor | planned | | |
+| 24 | T087, T089, T090 | Codex | planned | | |
+| 25 | T091-T092 | Cursor | **merged** | bundle-25-trial-upgrade | Wave 1 |
+| 26 | T093 | Cursor | **merged** | bundle-26-legal-acceptance | Wave 1 |
+| 27 | T094-T095 | Codex | planned | | content-heavy |
+| 28 | T096-T098 | Codex | planned | | |
+| 29 | T099-T105 + T101-T103 | Cursor | planned | | weekend/hard |
+| 30 | T106-T122 (slices) | Cursor | planned | | program |
 
 ---
 
-## Tygodniowy raport (template)
-Wklejaj raz na tydzień (albo co 2–3 dni).
-
-**Okres:** YYYY-MM-DD → YYYY-MM-DD  
-**Gate status:** Ship-safe / Can charge / AI trust / World-class surface (krótko)  
+## Tygodniowy raport #1 (2026-02-19 -> 2026-02-20)
 
 - **Done (merged):**
-  - bundle-XX … (1–5 punktów)
-- **In progress:**
-  - bundle-XX … (co blokuje, ETA)
-- **Next up:**
-  - bundle-XX … (dlaczego teraz)
-- **Top risks (max 5):**
-  - …
-- **Decision log (zmiany w planie):**
-  - …
+  - Pilot A (T002), Pilot B (T001), Pilot C (T072 packet)
+  - Bundle 21 (T068-T069) — onboarding + feature news
+  - Bundle 25 (T091-T092) — trial architecture + conversion path
+  - Bundle 26 (T093) — legal acceptance
+- **In progress:** none
+- **Next up:** Wave 2 (TBD)
+- **Top risks:**
+  - Bundle 25 hardcoded plans (free/pro/business/enterprise) — needs sync with DB
+  - Pre-existing test baseline noise
+- **Decision log:**
+  - Dodano PROMPT_TEMPLATE_V2.md z lekcjami z Wave 1
+  - Zasada: agenty NIE edytuja progress.md
+  - Zasada: migracje w natywnym PostgreSQL
