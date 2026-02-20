@@ -131,7 +131,23 @@ export type FunnelEventName =
   | 'integration_reauth_completed'
   | 'integration_sync_run_started'
   | 'integration_sync_run_completed'
-  | 'integration_error_resolved';
+  | 'integration_error_resolved'
+  | 'portfolio_ai_analysis_requested'
+  | 'portfolio_ai_suggestion_applied'
+  | 'portfolio_timeline_optimization_requested'
+  | 'portfolio_timeline_scenario_applied'
+  | 'portfolio_nonhuman_resources_viewed'
+  | 'portfolio_nonhuman_conflict_detected'
+  | 'portfolio_scenario_optimization_requested'
+  | 'portfolio_scenario_selected'
+  | 'portfolio_scenario_applied'
+  | 'financial_statement_import_started'
+  | 'financial_statement_import_completed'
+  | 'financial_statement_import_failed'
+  | 'financial_statement_mapping_corrected'
+  | 'financial_ratios_viewed'
+  | 'financial_benchmark_updated'
+  | 'financial_ratio_exported';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {
