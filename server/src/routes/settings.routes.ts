@@ -3975,6 +3975,75 @@ router.get(
   })
 );
 
+// ===========================================
+// CONNECTED ACCOUNTS (T112)
+// ===========================================
+
+/**
+ * GET /api/settings/connected-accounts
+ * Returns list of OAuth-connected providers for current user
+ */
+router.get(
+  '/connected-accounts',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+    try {
+      const { oauthService } = await import('../services/oauthService.js');
+      const accounts = await oauthService.getConnectedAccounts(userId);
+      return res.json({ accounts });
+    } catch (err: any) {
+      logger.error(`[settings] Failed to get connected accounts: ${err.message}`);
+      return res.json({ accounts: [] });
+    }
+  })
+);
+
+/**
+ * DELETE /api/settings/connected-accounts/:provider
+ * Disconnect a provider (e.g. linkedin, google)
+ */
+router.delete(
+  '/connected-accounts/:provider',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { provider } = req.params;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+    try {
+      const { oauthService } = await import('../services/oauthService.js');
+      const result = await oauthService.disconnectAccount(provider, userId);
+
+      if ('error' in result) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      // Log security event
+      try {
+        const { securityService } = await import('../services/securityService.js');
+        await securityService.logSecurityEvent({
+          userId,
+          eventType: 'oauth_unlinked',
+          severity: 'info',
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent'),
+          details: { provider },
+        });
+      } catch {
+        // non-fatal
+      }
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error(`[settings] Failed to disconnect ${provider}: ${err.message}`);
+      return res.status(500).json({ error: 'Failed to disconnect account' });
+    }
+  })
+);
+
 /**
  * Helper function to log settings changes to audit log
  */

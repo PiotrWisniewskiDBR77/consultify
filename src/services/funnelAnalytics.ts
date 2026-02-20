@@ -50,7 +50,15 @@ export type FunnelEventName =
   | 'market_research_report_generated'
   | 'market_research_exported'
   | 'cothinker_mode_selected'
-  | 'cothinker_response_generated';
+  | 'cothinker_response_generated'
+  | 'oauth_login_started'
+  | 'oauth_login_succeeded'
+  | 'oauth_login_failed'
+  | 'oauth_linked'
+  | 'oauth_unlinked'
+  | 'linkedin_connect_cta_shown'
+  | 'linkedin_connect_cta_clicked'
+  | 'linkedin_connect_cta_dismissed';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

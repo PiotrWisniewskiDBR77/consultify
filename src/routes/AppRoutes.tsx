@@ -266,6 +266,7 @@ const LegalIndexView = React.lazy(() =>
 const LegalDocumentView = React.lazy(() =>
   import('@/views/LegalDocumentView').then((m) => ({ default: m.LegalDocumentView }))
 );
+const OAuthCallbackView = React.lazy(() => import('@/views/OAuthCallback'));
 
 // Status & Changelog
 const StatusPageView = React.lazy(() =>
@@ -648,6 +649,16 @@ export const AppRoutes: React.FC = () => {
                 />
               </AuthLayout>
             )
+          }
+        />
+
+        {/* OAuth Callback - Public route for OAuth redirects */}
+        <Route
+          path="/oauth/callback"
+          element={
+            <Suspense fallback={<LoadingScreen message="Processing authentication..." />}>
+              <OAuthCallbackView />
+            </Suspense>
           }
         />
 
