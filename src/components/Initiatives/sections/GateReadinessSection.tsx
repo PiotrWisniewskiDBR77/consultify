@@ -307,6 +307,34 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
     [backendReadiness]
   );
 
+  useEffect(() => {
+    if (expanded && initiativeId) {
+      trackFunnelEvent('initiative_gate_readiness_viewed', { initiativeId });
+    }
+  }, [expanded, initiativeId]);
+
+  const requestAIReadiness = useCallback(async () => {
+    if (!initiativeId || !initiative) return;
+    setIsAIReadinessLoading(true);
+    trackFunnelEvent('initiative_gate_readiness_ai_requested', { initiativeId });
+    try {
+      const projectId = (initiative as any)?.project_id || (initiative as any)?.projectId || '';
+      const res = await Api.post('/ai/readiness-analysis', {
+        initiativeId,
+        projectId,
+        targetGate: status,
+        language: isPolish ? 'pl' : 'en',
+      });
+      setAiReadinessResult(res as any);
+    } catch (err: any) {
+      toast.error(
+        err?.message || (isPolish ? 'AI analiza nie powiodła się' : 'AI analysis failed')
+      );
+    } finally {
+      setIsAIReadinessLoading(false);
+    }
+  }, [initiativeId, initiative, status, isPolish]);
+
   const handleFix = useCallback(
     (key: string) => {
       const k = String(key || '').toLowerCase();
@@ -1818,12 +1846,23 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                                 : 'warning'}
                           </span>
                         </div>
+                        {!r.pass && r.suggestedAction && (
+                          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                            <span className="font-medium">{isPolish ? 'Sugerowana akcja' : 'Suggested action'}:</span>{' '}
+                            {r.suggestedAction}
+                            {r.suggestedActor && (
+                              <span className="ml-2 text-slate-400 dark:text-slate-500">
+                                ({r.suggestedActor})
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       {!r.pass && (
                         <button
                           type="button"
                           onClick={() => handleFix(r.key)}
-                          className="px-2 py-1 rounded-md text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 transition-colors"
+                          className="px-2 py-1 rounded-md text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 transition-colors shrink-0"
                           title={
                             !canEditCards
                               ? isPolish
@@ -1841,6 +1880,112 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
               </div>
             </div>
           )}
+
+          {/* AI Readiness Analysis */}
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                {isPolish ? 'Analiza gotowości AI' : 'AI Readiness Analysis'}
+              </span>
+              <button
+                onClick={requestAIReadiness}
+                disabled={isAIReadinessLoading}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium text-violet-600 dark:text-violet-400 border border-violet-400/40 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+              >
+                {isAIReadinessLoading ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Brain size={12} />
+                )}
+                {isPolish ? 'Zapytaj AI' : 'Ask AI'}
+              </button>
+            </div>
+
+            {isAIReadinessLoading && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-violet-500/5 border border-violet-500/20">
+                <Loader2 size={14} className="animate-spin text-violet-500" />
+                <span className="text-xs text-violet-600 dark:text-violet-400">
+                  {isPolish ? 'AI analizuje gotowość...' : 'AI is analyzing readiness...'}
+                </span>
+              </div>
+            )}
+
+            {aiReadinessResult && !isAIReadinessLoading && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-4 p-3 rounded-lg bg-violet-500/5 border border-violet-500/20">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+                      {aiReadinessResult.overallScore}%
+                    </div>
+                    <div className="text-[10px] text-violet-500">
+                      {isPolish ? 'Ocena' : 'Score'}
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                      {isPolish ? 'Podsumowanie' : 'Summary'}
+                    </div>
+                    <p className="text-xs text-slate-700 dark:text-slate-300">
+                      {aiReadinessResult.summary}
+                    </p>
+                  </div>
+                </div>
+
+                {aiReadinessResult.findings.length > 0 ? (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                      {isPolish ? 'Wnioski AI' : 'AI Findings'}
+                    </span>
+                    {aiReadinessResult.findings.map((f, idx) => (
+                      <div
+                        key={f.key || idx}
+                        className={`p-2.5 rounded-lg border ${
+                          f.severity === 'blocking' && !f.pass
+                            ? 'bg-red-500/5 border-red-500/20'
+                            : !f.pass
+                              ? 'bg-amber-500/5 border-amber-500/20'
+                              : 'bg-emerald-500/5 border-emerald-500/20'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div
+                            className={`w-4 h-4 rounded-full flex items-center justify-center mt-0.5 shrink-0 ${
+                              f.pass ? 'bg-emerald-500' : f.severity === 'blocking' ? 'bg-red-500' : 'bg-amber-500'
+                            }`}
+                          >
+                            {f.pass ? (
+                              <Check size={10} className="text-white" />
+                            ) : (
+                              <X size={10} className="text-white" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                              {f.message}
+                            </div>
+                            {f.suggestedAction && (
+                              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                <span className="font-medium">{isPolish ? 'Akcja' : 'Action'}:</span> {f.suggestedAction}
+                                {f.suggestedActor && (
+                                  <span className="ml-1.5 text-slate-400 dark:text-slate-500">
+                                    ({f.suggestedActor})
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-500 dark:text-slate-400 italic p-2">
+                    {isPolish ? 'AI nie znalazło dodatkowych problemów.' : 'AI found no additional issues.'}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Requirements Checklist */}
           <div className="space-y-2 mb-4">

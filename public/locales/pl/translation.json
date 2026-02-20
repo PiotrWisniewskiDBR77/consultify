@@ -2890,5 +2890,79 @@
     "moduleName": "Narzędzia licencjonowane",
     "hubTitle": "Hub narzędzi licencjonowanych",
     "backToHub": "Powrót do huba narzędzi licencjonowanych"
+  },
+  "tools": {
+    "hub": {
+      "tabs": {
+        "library": "Biblioteka",
+        "sessions": "Sesje",
+        "reports": "Raporty",
+        "initiatives": "Inicjatywy"
+      },
+      "table": {
+        "name": "Nazwa",
+        "category": "Kategoria",
+        "whatYouGet": "Co otrzymasz"
+      },
+      "empty": {
+        "library": "Brak narzędzi."
+      }
+    }
+  },
+  "help": {
+    "microVideo": {
+      "header": "Szybki samouczek",
+      "watch": "Obejrzyj",
+      "skip": "Pomiń",
+      "dontShow": "Nie pokazuj ponownie"
+    }
+  },
+  "aiAuthoring": {
+    "generateCardDraft": "Wygeneruj szkic karty",
+    "generateInitiative": "Wygeneruj szkic inicjatywy",
+    "generateTask": "Wygeneruj szkic zadania",
+    "generateDecision": "Wygeneruj szkic decyzji",
+    "briefPlaceholder": "Opisz inicjatywę/zadanie/decyzję w 3-8 punktach...",
+    "briefLabel": "Krótki opis",
+    "generating": "Generowanie szkicu...",
+    "previewTitle": "Podgląd szkicu AI",
+    "previewSubtitle": "Przejrzyj każdą sekcję i zastosuj selektywnie.",
+    "applyAll": "Zastosuj wszystko",
+    "applySelected": "Zastosuj zaznaczone",
+    "discardAll": "Odrzuć",
+    "sectionApplied": "Sekcja zastosowana",
+    "draftGenerated": "Szkic wygenerowany przez AI",
+    "draftFailed": "Nie udało się wygenerować szkicu",
+    "auditLogTitle": "Historia autorstwa AI",
+    "undoAi": "Cofnij AI"
+  },
+  "initiatives": {
+    "gateReadiness": {
+      "title": "Gotowość bramki i harmonogram",
+      "readinessSystem": "Gotowość (system)",
+      "readinessAi": "Analiza gotowości AI",
+      "blockingMissing": "Blokujące braki",
+      "cantProgress": "Nie możesz przejść dalej",
+      "fillMissing": "Uzupełnij brakujące elementy (blokujące), a następnie ponów akcję gate.",
+      "suggestedAction": "Sugerowana akcja",
+      "suggestedActor": "Kto powinien działać",
+      "askAi": "Zapytaj AI o analizę gotowości",
+      "aiAnalyzing": "AI analizuje gotowość...",
+      "aiScore": "Ocena gotowości",
+      "aiSummary": "Podsumowanie",
+      "aiFindings": "Wnioski AI",
+      "noFindings": "AI nie znalazło dodatkowych problemów.",
+      "blocking": "blokuje",
+      "warning": "ostrzeżenie",
+      "fix": "Napraw",
+      "currentGate": "Aktualna bramka",
+      "nextGate": "Następna",
+      "requirementsChecklist": "Lista kontrolna wymagań",
+      "readinessPercent": "Gotowość",
+      "requiredApproval": "Wymagana aprobata",
+      "allGatesPassed": "Wszystkie bramki przejdzone!",
+      "requiredApprovalsForStatus": "Wymagane zatwierdzenia dla statusu",
+      "notRequested": "Nie zgłoszono"
+    }
   }
 }

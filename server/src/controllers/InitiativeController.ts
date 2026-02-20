@@ -4992,16 +4992,32 @@ export class InitiativeController {
 
       // Readiness criteria for current stage
       const readiness: any[] = [];
-      const addCheck = (key: string, label: string, pass: boolean, severity: string) => {
-        readiness.push({ key, label, pass, severity });
+      const addCheck = (
+        key: string,
+        label: string,
+        pass: boolean,
+        severity: string,
+        suggestedAction?: string,
+        suggestedActor?: string
+      ) => {
+        readiness.push({ key, label, pass, severity, suggestedAction, suggestedActor });
       };
 
-      addCheck('title', 'Title defined', !!ini.name, 'blocking');
+      addCheck(
+        'title',
+        'Title defined',
+        !!ini.name,
+        'blocking',
+        'Add a concise initiative title that clearly describes the change.',
+        'Initiative Owner'
+      );
       addCheck(
         'owner',
         'Owner assigned',
         !!(ini.owner_business_id || ini.owner_execution_id),
-        'blocking'
+        'blocking',
+        'Assign a business or execution owner who will be accountable.',
+        'PMO / Project Manager'
       );
 
       if (['PENDING_REVIEW', 'REVIEW', 'PROMOTED', 'PLANNING'].includes(currentStatus)) {
@@ -5009,29 +5025,85 @@ export class InitiativeController {
           'summary',
           'Summary / problem statement',
           !!(ini.summary || ini.problem_statement),
-          'warning'
+          'warning',
+          'Write a 2-3 sentence summary explaining the business problem this initiative addresses.',
+          'Initiative Owner'
         );
       }
       if (['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED'].includes(currentStatus)) {
-        addCheck('sponsor', 'Sponsor assigned', !!ini.sponsor_id, 'warning');
+        addCheck(
+          'sponsor',
+          'Sponsor assigned',
+          !!ini.sponsor_id,
+          'warning',
+          'Nominate a senior leader who will champion and fund this initiative.',
+          'PMO / Portfolio Owner'
+        );
       }
-      // Timeline baseline is required from Scheduling onward (not for APPROVE/APPROVED).
       if (['SCHEDULED', 'EXECUTING', 'BLOCKED', 'DONE', 'TRACKING'].includes(currentStatus)) {
         addCheck(
           'timeline',
           'Timeline set',
           !!(ini.start_date || ini.planned_start_date),
-          'blocking'
+          'blocking',
+          'Set planned start and end dates for baseline scheduling.',
+          'Project Manager'
         );
       }
 
-      // Benefits readiness (DONE -> TRACKING)
+      if (['PLANNING', 'APPROVED'].includes(currentStatus)) {
+        addCheck(
+          'scope',
+          'Scope defined',
+          !!(ini.scope || ini.objectives),
+          'warning',
+          'Define the scope or objectives so reviewers understand boundaries.',
+          'Initiative Owner'
+        );
+
+        try {
+          const riskCount = await queryHelpers.queryOne(
+            `SELECT COUNT(*) as c FROM initiative_raids WHERE initiative_id = ? AND type = 'RISK'`,
+            [initiativeId]
+          );
+          addCheck(
+            'risks',
+            'Risks identified',
+            Number((riskCount as any)?.c || 0) > 0,
+            'warning',
+            'Identify at least one risk and its mitigation strategy.',
+            'Initiative Owner / Risk Manager'
+          );
+        } catch {
+          // best-effort
+        }
+
+        try {
+          const taskCount = await queryHelpers.queryOne(
+            `SELECT COUNT(*) as c FROM tasks WHERE initiative_id = ?`,
+            [initiativeId]
+          );
+          addCheck(
+            'tasks',
+            'Tasks created',
+            Number((taskCount as any)?.c || 0) > 0,
+            'warning',
+            'Break down the initiative into executable tasks.',
+            'Project Manager / Initiative Owner'
+          );
+        } catch {
+          // best-effort
+        }
+      }
+
       if (currentStatus === 'DONE') {
         addCheck(
           'benefits_owner',
           'Business Owner assigned (benefits owner)',
           !!ini.owner_business_id,
-          'blocking'
+          'blocking',
+          'Assign the business owner who will track realized benefits.',
+          'PMO / Sponsor'
         );
         try {
           const kpiCount = await queryHelpers.queryOne(
@@ -5039,7 +5111,14 @@ export class InitiativeController {
             [initiativeId]
           );
           const cAll = Number((kpiCount as any)?.c || 0);
-          addCheck('benefits_kpis', 'KPIs defined', cAll > 0, 'blocking');
+          addCheck(
+            'benefits_kpis',
+            'KPIs defined',
+            cAll > 0,
+            'blocking',
+            'Define measurable KPIs that will prove business value.',
+            'Business Owner'
+          );
 
           const readyCount = await queryHelpers.queryOne(
             `SELECT COUNT(*) as c
@@ -5050,9 +5129,15 @@ export class InitiativeController {
             [initiativeId]
           );
           const cReady = Number((readyCount as any)?.c || 0);
-          addCheck('benefits_kpi_targets', 'KPI targets + units defined', cReady > 0, 'warning');
+          addCheck(
+            'benefits_kpi_targets',
+            'KPI targets + units defined',
+            cReady > 0,
+            'warning',
+            'Set numeric targets and units for each KPI.',
+            'Business Owner'
+          );
         } catch (e: any) {
-          // If KPI schema is missing, treat as blocking (cannot start Benefits safely).
           addCheck('benefits_kpis', 'KPIs defined', false, 'blocking');
         }
       }
@@ -5069,7 +5154,9 @@ export class InitiativeController {
             `gate_role_${transition.gate}`,
             `Gate approver assigned for ${transition.gate}: ${missingRoles.join(', ')}`,
             false,
-            'warning'
+            'warning',
+            `Assign users to roles: ${missingRoles.join(', ')} so the gate can be approved.`,
+            'PMO / Project Manager'
           );
         }
       }
