@@ -4,7 +4,12 @@ import path from 'path';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
-import type { TableData, UnifiedReportJSON, UnifiedSlide } from './report/pptx/types.js';
+import type {
+  ChartDataSet,
+  TableData,
+  UnifiedReportJSON,
+  UnifiedSlide,
+} from './report/pptx/types.js';
 
 function safeJsonParse<T>(raw: any, fallback: T): T {
   if (raw == null) return fallback;
@@ -29,17 +34,50 @@ function formatMoney(n: number | null | undefined, currency: string): string {
 
 function toTableFromSensitivity(s: any, currency: string): TableData | null {
   if (!s || !s.kind) return null;
-  if (s.kind === 'wacc_vs_g') {
-    const headers = ['g \\\\ WACC', ...(s.waccGrid || []).map((w: number) => `${w.toFixed(1)}%`)];
-    const rows = (s.table || []).slice(0, 8).map((r: any) => [
+  if (s.kind !== 'wacc_vs_g') return null;
+  const headers = ['g \\\\ WACC', ...(s.waccGrid || []).map((w: number) => `${w.toFixed(1)}%`)];
+  const rows = (s.table || [])
+    .slice(0, 8)
+    .map((r: any) => [
       `${Number(r.g).toFixed(1)}%`,
       ...((r.values || []).map((v: any) =>
         Number.isFinite(Number(v)) ? formatMoney(Number(v), currency) : 'n/a'
       ) as string[]),
     ]);
-    return { headers, rows };
-  }
-  return null;
+  return { headers, rows };
+}
+
+function toCompsTable(comps: any, currency: string): TableData | null {
+  if (!comps) return null;
+  const implied = comps?.impliedEnterpriseValue;
+  if (!implied) return null;
+  const headers = [
+    'Metric',
+    'Multiple (min)',
+    'Multiple (median)',
+    'Multiple (max)',
+    'Implied EV (min/med/max)',
+  ];
+  const metric = String(comps.metric || '—');
+  const row = [
+    metric,
+    String(comps.min ?? '—'),
+    String(comps.median ?? '—'),
+    String(comps.max ?? '—'),
+    `${formatMoney(implied.min, currency)} / ${formatMoney(implied.median, currency)} / ${formatMoney(implied.max, currency)}`,
+  ];
+  return { headers, rows: [row] };
+}
+
+function toTornadoChartData(tornado: any): ChartDataSet | null {
+  if (!Array.isArray(tornado) || tornado.length < 1) return null;
+  const labels = tornado.slice(0, 8).map((d: any) => String(d?.driver || 'Driver').slice(0, 40));
+  const values = tornado.slice(0, 8).map((d: any) => Math.max(0, Number(d?.swing ?? 0)));
+  if (!values.some((v) => Number.isFinite(v) && v > 0)) return null;
+  return {
+    labels,
+    series: [{ name: 'EV swing', values: values.map((v) => (Number.isFinite(v) ? v : 0)) }],
+  };
 }
 
 export async function exportValuationPptx(params: {
@@ -57,14 +95,15 @@ export async function exportValuationPptx(params: {
     [params.valuationId, params.organizationId]
   );
   if (!row) throw new Error('Valuation not found');
-  if (String(row.status || '').toUpperCase() !== 'APPROVED') {
+  if (String(row.status || '').toUpperCase() !== 'APPROVED')
     throw new Error('Valuation must be APPROVED to export');
-  }
 
   const currency = row.currency || 'PLN';
   const results = safeJsonParse<any>(row.results, {});
   const dcf = results?.dcf || {};
   const sensitivity = results?.sensitivity || null;
+  const comps = results?.comps || null;
+  const tornado = results?.tornado || null;
   const lang = params.language === 'pl' ? 'pl' : 'en';
 
   const slides: UnifiedSlide[] = [
@@ -92,6 +131,10 @@ export async function exportValuationPptx(params: {
         key_findings: [
           `Equity value: ${formatMoney(dcf.equityValue, currency)}`,
           `WACC: ${dcf.discountRatePercent ?? '—'}%`,
+          dcf.terminalMethod === 'gordon'
+            ? `Terminal growth (g): ${dcf.terminalGrowthPercent ?? '—'}%`
+            : `Terminal: ${dcf.terminalMethod ?? '—'}`,
+          `PV split (explicit/terminal): ${formatMoney(dcf.pvExplicit, currency)} / ${formatMoney(dcf.pvTerminal, currency)}`,
         ],
         recommendation:
           lang === 'pl'
@@ -99,20 +142,84 @@ export async function exportValuationPptx(params: {
             : 'Informational only; not investment advice.',
       },
     },
+    {
+      intent: 'key_messages',
+      key_message: lang === 'pl' ? 'DCF — szczegóły' : 'DCF — Details',
+      content: {
+        type: 'key_messages',
+        messages: [
+          {
+            title: lang === 'pl' ? 'Okres jawny vs terminal' : 'Explicit period vs terminal',
+            description: `${formatMoney(dcf.pvExplicit, currency)} / ${formatMoney(dcf.pvTerminal, currency)}`,
+          },
+          {
+            title: lang === 'pl' ? 'Metoda terminalna' : 'Terminal method',
+            description:
+              dcf.terminalMethod === 'gordon'
+                ? `Gordon (g=${dcf.terminalGrowthPercent ?? '—'}%)`
+                : `Exit multiple (${dcf.exitMultipleMetric ?? '—'} × ${dcf.exitMultiple ?? '—'})`,
+          },
+          {
+            title: lang === 'pl' ? 'Kapitał własny' : 'Equity value bridge',
+            description: `${lang === 'pl' ? 'EV' : 'EV'} ${formatMoney(dcf.enterpriseValue, currency)} − net debt ${formatMoney(
+              safeJsonParse<any>(row.assumptions, {})?.netDebt ?? null,
+              currency
+            )} = ${formatMoney(dcf.equityValue, currency)}`,
+          },
+        ],
+      } as any,
+    },
   ];
+
+  const compsTable = toCompsTable(comps, currency);
+  if (compsTable) {
+    slides.push({
+      intent: 'appendix',
+      key_message: lang === 'pl' ? 'Comps (multiples)' : 'Comps (multiples)',
+      content: {
+        type: 'appendix',
+        title:
+          lang === 'pl' ? 'Porównania rynkowe (multiples)' : 'Comparable valuation (multiples)',
+        body:
+          lang === 'pl'
+            ? 'Zakres wyceny porównawczej na podstawie ręcznie wprowadzonych multiple (V2).'
+            : 'Comparable range based on manually provided multiples (V2).',
+        tables: [compsTable],
+        footnotes: ['Informational only; not investment advice.'],
+      } as any,
+    });
+  }
+
+  const tornadoChart = toTornadoChartData(tornado);
+  if (tornadoChart) {
+    slides.push({
+      intent: 'single_insight',
+      key_message: lang === 'pl' ? 'Sensitivity — top drivery' : 'Sensitivity — Top drivers',
+      content: {
+        type: 'single_insight',
+        chart_type: 'bar',
+        chart_data: tornadoChart,
+        insight_text:
+          lang === 'pl'
+            ? 'Wykres pokazuje, które założenia mają największy wpływ na EV (na bazie tornado).'
+            : 'This shows which assumptions have the largest impact on EV (tornado drivers).',
+        source: 'Valuation assumptions (computed)',
+      } as any,
+    });
+  }
 
   const sensTable = toTableFromSensitivity(sensitivity, currency);
   if (sensTable) {
     slides.push({
       intent: 'appendix',
-      key_message: 'Sensitivity',
+      key_message: 'Sensitivity table',
       content: {
         type: 'appendix',
-        title: lang === 'pl' ? 'Sensitivity (EV)' : 'Sensitivity (EV)',
+        title: lang === 'pl' ? 'Sensitivity: WACC vs g (EV)' : 'Sensitivity: WACC vs g (EV)',
         body:
           lang === 'pl'
-            ? 'Tabela sensitivity: jak zmienia się EV przy zmianach parametrów terminala i stopy dyskonta.'
-            : 'Sensitivity table: how EV changes with terminal assumptions and discount rate.',
+            ? 'Tabela sensitivity: EV przy różnych WACC i g (wartości n/a dla przypadków g ≥ WACC).'
+            : 'Sensitivity table: EV under varying WACC and g (n/a when g ≥ WACC).',
         tables: [sensTable],
         footnotes: ['Informational only; not investment advice.'],
       } as any,
@@ -154,17 +261,18 @@ export async function exportValuationPptx(params: {
     skipValidation: false,
   });
 
-  const exportDir = path.join(process.cwd(), 'exports', 'valuations');
-  if (!fs.existsSync(exportDir)) fs.mkdirSync(exportDir, { recursive: true });
-  const exportPath = path.join(exportDir, `${params.valuationId}.pptx`);
-  fs.writeFileSync(exportPath, result.buffer);
+  const exportDirFs = path.join(process.cwd(), 'exports', 'valuations');
+  if (!fs.existsSync(exportDirFs)) fs.mkdirSync(exportDirFs, { recursive: true });
+  const fileName = `${params.valuationId}.pptx`;
+  const exportPathFs = path.join(exportDirFs, fileName);
+  const exportPathPublic = `/exports/valuations/${fileName}`;
+  fs.writeFileSync(exportPathFs, result.buffer);
 
   await dbRun(
     `UPDATE valuations SET export_path = ?, exported_at = NOW(), updated_at = NOW() WHERE id = ? AND organization_id = ?`,
-    [exportPath, params.valuationId, params.organizationId]
+    [exportPathPublic, params.valuationId, params.organizationId]
   );
 
-  logger.info(`[ValuationExport] Exported valuation ${params.valuationId} to ${exportPath}`);
-  return { exportPath, slideCount: result.slideCount, warnings: result.warnings };
+  logger.info(`[ValuationExport] Exported valuation ${params.valuationId} to ${exportPathFs}`);
+  return { exportPath: exportPathPublic, slideCount: result.slideCount, warnings: result.warnings };
 }
-
