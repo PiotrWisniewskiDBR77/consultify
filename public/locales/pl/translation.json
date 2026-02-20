@@ -2890,5 +2890,31 @@
     "moduleName": "Narzędzia licencjonowane",
     "hubTitle": "Hub narzędzi licencjonowanych",
     "backToHub": "Powrót do huba narzędzi licencjonowanych"
+  },
+  "tools": {
+    "hub": {
+      "tabs": {
+        "library": "Biblioteka",
+        "sessions": "Sesje",
+        "reports": "Raporty",
+        "initiatives": "Inicjatywy"
+      },
+      "table": {
+        "name": "Nazwa",
+        "category": "Kategoria",
+        "whatYouGet": "Co otrzymasz"
+      },
+      "empty": {
+        "library": "Brak narzędzi."
+      }
+    }
+  },
+  "help": {
+    "microVideo": {
+      "header": "Szybki samouczek",
+      "watch": "Obejrzyj",
+      "skip": "Pomiń",
+      "dontShow": "Nie pokazuj ponownie"
+    }
   }
 }

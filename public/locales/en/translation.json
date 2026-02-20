@@ -2869,5 +2869,31 @@
     "moduleName": "Licensed Tools",
     "hubTitle": "Licensed Tools Hub",
     "backToHub": "Back to Licensed Tools Hub"
+  },
+  "tools": {
+    "hub": {
+      "tabs": {
+        "library": "Library",
+        "sessions": "Sessions",
+        "reports": "Reports",
+        "initiatives": "Initiatives"
+      },
+      "table": {
+        "name": "Name",
+        "category": "Category",
+        "whatYouGet": "What you get"
+      },
+      "empty": {
+        "library": "No tools available."
+      }
+    }
+  },
+  "help": {
+    "microVideo": {
+      "header": "Quick Tutorial",
+      "watch": "Watch",
+      "skip": "Skip",
+      "dontShow": "Don't show again"
+    }
   }
 }

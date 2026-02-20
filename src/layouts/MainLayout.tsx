@@ -12,6 +12,7 @@ import { FeedbackSidePanel } from '../components/Feedback/FeedbackSidePanel';
 import { FeedbackToggleButton } from '../components/Feedback/FeedbackToggleButton';
 import { HelpSidePanel } from '../components/Help/HelpSidePanel';
 import { HelpToggleButton } from '../components/Help/HelpToggleButton';
+import { MicroVideoHelpTrigger } from '../components/Help/MicroVideoHelpTrigger';
 import { NotificationDropdown } from '../components/layout/NotificationDropdown';
 import { UserProfileMenu } from '../components/layout/UserProfileMenu';
 import { LLMSelector } from '../components/LLMSelector';
@@ -150,6 +151,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       {/* First-login onboarding CTA (dismissible) */}
       <OnboardingFirstLoginCTA />
+
+      {/* Contextual micro-video help (T073) — shows once per module per user */}
+      <MicroVideoHelpTrigger />
 
       {/* Impersonation Banner */}
       {currentUser?.impersonatorId && (
