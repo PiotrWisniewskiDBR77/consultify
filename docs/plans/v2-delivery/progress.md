@@ -45,12 +45,12 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 - `npm run test:l5`: PASS (quality-check 0 placeholder + audit-gate allowlist + security + performance)
 - Decyzja audit gate (C / hybryda): allowlista zaktualizowana w `scripts/security/npm-audit-allowlist.json`
 
-## Wave 3 (2026-02-20) — IN PROGRESS
+## Wave 3 (2026-02-20) — CLOSED
 
 | Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
 |---|---|---|---|---|---|
 | 02.1 (slice) | T007, T009 | bundle-02-my-work-slice-02-1-clean | Cursor A | **merged** | T007 personal tasks + T009 my ideas (migracja 20260220) |
-| 06.1 (slice) | T025 | bundle-06-licensed-tools-rename | Cursor B | in_review | Agent 2 musi wypchnąć zmiany — branch lokalny bez commitów |
+| 06.1 (slice) | T025 | bundle-06-licensed-tools-t025 | Cursor | **merged** | Assessment → Licensed Tools (UI + i18n + /licensed-tools alias) |
 | 28 | T096–T098 | codex/bundle-28-partners-program | Codex | **merged** | Migracje 555–557, Partner Portal, cleanup konflikt-markerów |
 
 **Start:** main wypchnięty na origin. Prompty: `docs/plans/v2-delivery/PROMPTS_WAVE_3.md`
@@ -58,7 +58,7 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 ### Wave 3 — merge wykonane (2026-02-20)
 - **Bundle 28** (Codex): merged do main. Migracje 555–557, Partner Portal.
 - **Bundle 02** (Cursor A): merged z `bundle-02-my-work-slice-02-1-clean` (czysta gałąź, bez konflikt-markerów).
-- **Bundle 06** (Cursor B): branch `bundle-06-licensed-tools-rename` bez commitów — Agent 2 musi wypchnąć zmiany na origin.
+- **Bundle 06** (Cursor): merged z `bundle-06-licensed-tools-t025` — T025 rename (szef procesu dopiął).
 
 ---
 
@@ -84,7 +84,7 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 03 | T013-T017 | Codex | parked | bundle-03-interview-survey | czeka na dowiezienie przez Codex |
 | 04 | T018-T021 | Codex | planned | | |
 | 05 | T019, T022-T024 | Codex | planned | | |
-| 06 | T025-T027 | Cursor | planned | | |
+| 06 | T025-T027 | Cursor | **merged** | bundle-06-licensed-tools-t025 | Wave 3: T025 (slice 06.1) |
 | 07 | T028, T030, T031 | Cursor | planned | | |
 | 08 | T032-T033 | Cursor | planned | | |
 | 09 | T034-T038 | Codex | planned | | |
