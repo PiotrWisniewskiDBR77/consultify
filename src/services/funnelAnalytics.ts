@@ -131,7 +131,15 @@ export type FunnelEventName =
   | 'integration_reauth_completed'
   | 'integration_sync_run_started'
   | 'integration_sync_run_completed'
-  | 'integration_error_resolved';
+  | 'integration_error_resolved'
+  | 'presentation_generator_opened'
+  | 'presentation_outline_generated'
+  | 'presentation_exported'
+  | 'presentation_shared'
+  | 'template_selected'
+  | 'brand_kit_updated'
+  | 'template_cloned'
+  | 'template_published';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

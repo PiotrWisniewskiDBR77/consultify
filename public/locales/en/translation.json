@@ -3249,6 +3249,116 @@
       "disclaimer": "Financial mappings are approximations. Actual relationships may vary by industry and context. Always verify with finance team."
     }
   },
+  "presentations": {
+    "wizard": {
+      "title": "Presentation Generator",
+      "titleRequired": "Please enter a title",
+      "outlineFailed": "Failed to generate outline",
+      "generationFailed": "Generation failed",
+      "downloadFailed": "Download failed"
+    },
+    "steps": {
+      "sources": "Sources",
+      "setup": "Setup",
+      "outline": "Outline",
+      "result": "Result"
+    },
+    "sources": {
+      "title": "Select Data Sources",
+      "subtitle": "Choose which platform artifacts to include in your deck.",
+      "initiative_portfolio": "Initiative Portfolio",
+      "execution_status": "Execution Status",
+      "kpi_roi": "KPI & ROI",
+      "raid": "Risks & Issues",
+      "assessment": "Assessment Results",
+      "tool_session": "Tool Session"
+    },
+    "setup": {
+      "title": "Configure Your Deck",
+      "subtitle": "Set the tone, audience, and style.",
+      "deckTitle": "Deck Title",
+      "titlePlaceholder": "e.g., Steering Committee Update — Q1 2026",
+      "template": "Template (optional)",
+      "customDeck": "Custom Deck",
+      "customDeckDesc": "AI generates outline from sources",
+      "audience": "Audience",
+      "goal": "Goal",
+      "language": "Language",
+      "theme": "Theme",
+      "confidentiality": "Confidentiality",
+      "generateOutline": "Generate Outline"
+    },
+    "audiences": {
+      "sponsor": "Sponsor",
+      "executive": "Executive",
+      "investor": "Investor / VC",
+      "internal": "Internal Team"
+    },
+    "goals": {
+      "inform": "Inform",
+      "decide": "Decide",
+      "sell": "Sell",
+      "align": "Align"
+    },
+    "themes": {
+      "corporate": "Corporate",
+      "minimal": "Minimal",
+      "modern": "Modern"
+    },
+    "confidentialities": {
+      "confidential": "Confidential",
+      "internal": "Internal",
+      "public": "Public"
+    },
+    "outline": {
+      "title": "Deck Outline",
+      "slides": "slides",
+      "reorder": "Drag to reorder, toggle to include/exclude",
+      "addSlide": "+ Add slide...",
+      "generate": "Generate Deck"
+    },
+    "generating": {
+      "title": "Generating Your Deck",
+      "subtitle": "Creating BCG-grade slides with quality validation. This may take a moment..."
+    },
+    "result": {
+      "ready": "Your Deck is Ready!",
+      "slidesGenerated": "slides generated successfully",
+      "warnings": "Quality Warnings",
+      "downloadPptx": "Download PPTX",
+      "editOutline": "Edit & Regenerate"
+    },
+    "templates": {
+      "systemTemplates": "System Templates",
+      "orgTemplates": "Organization Templates",
+      "viewOutline": "View outline",
+      "use": "Use",
+      "clone": "Clone",
+      "cloned": "Template cloned to your organization",
+      "cloneFailed": "Failed to clone"
+    },
+    "brandKit": {
+      "title": "Brand Kit",
+      "subtitle": "Configure your organization branding for presentations and reports.",
+      "colors": "Colors",
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "accent": "Accent",
+      "fonts": "Fonts",
+      "titleFont": "Title Font",
+      "bodyFont": "Body Font",
+      "headerFooter": "Header & Footer",
+      "headerText": "Header text",
+      "footerText": "Footer text",
+      "pageNumbers": "Page numbers",
+      "confidentialityBanner": "Confidentiality banner",
+      "defaultConfidentiality": "Default Confidentiality",
+      "disclaimer": "Disclaimer text",
+      "disclaimerPlaceholder": "Optional legal disclaimer for financial/valuation decks",
+      "saved": "Brand kit saved",
+      "saveFailed": "Failed to save"
+    }
+  },
   "tools": {
     "hub": {
       "tabs": {
