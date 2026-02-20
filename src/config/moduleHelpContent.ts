@@ -699,7 +699,7 @@ Where you provide services:
   },
 
   // ============================================
-  // INDUSTRIAL IRIS MODULES (19 Modules)
+  // INDUSTRIAL MODULES (19 Modules)
   // Enterprise Manufacturing & Operations
   // ============================================
 
