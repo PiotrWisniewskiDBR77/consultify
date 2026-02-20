@@ -33,6 +33,7 @@ import { FinancialAnalysisWorkspace } from './FinancialAnalysisWorkspace';
 import { FinancialMappingPanel } from './FinancialMappingPanel';
 import { KPIAttributionPanel } from './KPIAttributionPanel';
 import { ROITrackingPanel } from './ROITrackingPanel';
+import { ValuationWorkspace } from './ValuationWorkspace';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {
   FilterableTable,
@@ -253,7 +254,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
   }, [initiatives, searchQuery, activeFilters]);
 
   // Extended tab type with custom IDs
-  type BenefitsTab = ModuleTab | 'attribution' | 'financial';
+  type BenefitsTab = ModuleTab | 'attribution' | 'financial' | 'valuation';
   const [extendedTab, setExtendedTab] = useState<BenefitsTab>(initialTab);
 
   // Tab configuration
@@ -299,6 +300,12 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
         id: 'budget' as ModuleTab,
         label: t('finance.budget.tabLabel', 'Budget'),
         icon: <Calculator size={16} />,
+        count: undefined,
+      },
+      {
+        id: 'valuation' as ModuleTab,
+        label: t('valuation.tabLabel', 'Valuation'),
+        icon: <DollarSign size={16} />,
         count: undefined,
       },
     ],
@@ -677,6 +684,9 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
     }
     if ((activeTab as string) === 'budget') {
       return <BudgetWorkspace />;
+    }
+    if ((activeTab as string) === 'valuation') {
+      return <ValuationWorkspace />;
     }
 
     return null;
