@@ -90,6 +90,16 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 - **Bundle 10** (Cursor B): merged T039 Timeline (filters, warnings, drag-to-move, audit log) + T040 Risk signaling (RiskSignalsPanel, MitigationPanel, riskDetectionService).
 - **Bundle 05** (Codex): applied stashed WIP — flow steps (Impact/Results/Reasoning/Prepare/Report/Initiatives), Speed Tool wizard, migracja 562.
 
+## Wave 6 (2026-02-20) — IN PROGRESS
+
+| Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
+|---|---|---|---|---|---|
+| 07 | T028, T030, T031 | bundle-07-licensed-tools-advanced | Cursor A | in_progress | Lean 4.0, PDF import, paid assessments |
+| 10.2 (slice) | T041–T042 | bundle-10-execution-t041-t042 | Cursor B | in_progress | Delay detection + Budget control |
+| 11 | T043–T045 | bundle-11-execution-people-change-comms | Codex | in_progress | Capability, sentiment, stakeholder comms |
+
+**Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_6.md`
+
 ---
 
 ## Najwazniejszy wskaznik "czy jest syf"
@@ -115,11 +125,11 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 04 | T018-T021 | Codex | **merged** | codex/bundle-04-tools-hub-v3 | Wave 4: Tools hub + library (migracja 559) |
 | 05 | T019, T022-T024 | Codex | **merged** | main | Wave 5: toolsets + Speed Tool (migracja 562) |
 | 06 | T025-T027 | Cursor | **merged** | bundle-06-licensed-tools-t026-t027 | Wave 3: T025; Wave 5: T026-T027 merged |
-| 07 | T028, T030, T031 | Cursor | planned | | |
+| 07 | T028, T030, T031 | Cursor | in_progress | bundle-07-licensed-tools-advanced | Wave 6 |
 | 08 | T032-T033 | Cursor | **merged** | bundle-22-help-t071-t073 | Wave 4: AI authoring + gate readiness |
 | 09 | T034-T038 | Codex | planned | | |
-| 10 | T039-T042 | Cursor | **merged** | bundle-10-execution-t039-t040 | Wave 5: T039-T040 merged (T041-T042 planned) |
-| 11 | T043-T045 | Codex | planned | | |
+| 10 | T039-T042 | Cursor | in_progress | bundle-10-execution-t041-t042 | Wave 5: T039-T040 merged; Wave 6: T041-T042 |
+| 11 | T043-T045 | Codex | in_progress | bundle-11-execution-people-change-comms | Wave 6 |
 | 12 | T046-T049 | Cursor | planned | | |
 | 13 | T050-T051 | Codex | planned | | |
 | 14 | T052-T053 | Codex | planned | | |
