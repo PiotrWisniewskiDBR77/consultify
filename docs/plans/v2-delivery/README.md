@@ -20,7 +20,9 @@ Ten katalog jest **jednym miejscem prawdy** dla dowiezienia V2: jak dzielimy pra
 - **Runbook dla Konrada (zewn. integracje OAuth/Drive)**: `konrad-external-integrations-runbook.md`
 - **Szablon promptów dla agentów (Cursor/Codex)**: `PROMPT_TEMPLATE_V2.md`
 - **Archiwum promptów Wave 1**: `PROMPTS_WAVE_1.md`
-- **Prompty Wave 2 (aktualne)**: `PROMPTS_WAVE_2.md`
+- **Prompty Wave 2**: `PROMPTS_WAVE_2.md`
+- **Prompty Wave 3**: `PROMPTS_WAVE_3.md`
+- **Prompty Wave 4 (aktualne)**: `PROMPTS_WAVE_4.md`
 
 ## Cel operacyjny
 - Maksymalna szybkość **bez syfu**:

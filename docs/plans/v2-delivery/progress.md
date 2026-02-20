@@ -60,6 +60,16 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 - **Bundle 02** (Cursor A): merged z `bundle-02-my-work-slice-02-1-clean` (czysta gałąź, bez konflikt-markerów).
 - **Bundle 06** (Cursor): merged z `bundle-06-licensed-tools-t025` — T025 rename (szef procesu dopiął).
 
+## Wave 4 (2026-02-20) — IN PROGRESS
+
+| Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
+|---|---|---|---|---|---|
+| 08 | T032–T033 | bundle-08-initiatives-ai | Cursor A | in_progress | Initiatives AI authoring + stage-gate |
+| 22 (slice) | T071, T073 | bundle-22-help-t071-t073 | Cursor B | in_progress | Help docs→AI context + micro-video |
+| 04 | T018–T021 | bundle-04-tools-hub | Codex | in_progress | Tools hub + library + KB |
+
+**Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_4.md`
+
 ---
 
 ## Najwazniejszy wskaznik "czy jest syf"
