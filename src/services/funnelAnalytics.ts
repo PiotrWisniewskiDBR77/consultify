@@ -201,7 +201,14 @@ export type FunnelEventName =
   | 'org_member_invite_sent'
   // T064 — Megatrend relocation
   | 'megatrends_opened'
-  | 'megatrends_redirect_used';
+  | 'megatrends_redirect_used'
+  // T090 — Demo-to-Trial Conversion
+  | 'demo_started'
+  | 'demo_value_moment_reached'
+  | 'demo_cta_clicked'
+  | 'signup_started'
+  | 'signup_completed'
+  | 'trial_activated';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

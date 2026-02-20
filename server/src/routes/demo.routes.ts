@@ -200,7 +200,29 @@ router.get(
           description: demoOrganization.description,
         },
         stats,
-        scenarios: [],
+        scenarios: [
+          {
+            id: 'executive-overview',
+            title: 'Executive Overview',
+            duration: '8 min',
+            audience: 'C-suite, board members',
+            persona: 'Katarzyna Nowak (Admin)',
+          },
+          {
+            id: 'initiatives-execution',
+            title: 'Deep Dive: Initiatives & Execution',
+            duration: '10 min',
+            audience: 'PMO, program managers',
+            persona: 'Tomasz Kowalski (PMO)',
+          },
+          {
+            id: 'finance-roi',
+            title: 'Deep Dive: Finance & ROI',
+            duration: '8 min',
+            audience: 'CFO, finance team',
+            persona: 'Aleksandra Wiśniewska (CFO)',
+          },
+        ],
       });
     } catch (error: any) {
       logger.error('[DemoMode] Error getting demo organization:', error);
