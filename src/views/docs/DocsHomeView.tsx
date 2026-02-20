@@ -96,8 +96,8 @@ export const DocsHomeView: React.FC = () => {
               Consultinity Documentation
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-8">
-              Comprehensive guides, tutorials, and best practices for the IRIS Industrial Excellence
-              Platform. Learn how to accelerate your digital transformation journey.
+              Comprehensive guides, tutorials, and best practices for the Consultinity Transformation
+              AI Platform. Learn how to accelerate your digital transformation journey.
             </p>
 
             {/* Search Box */}
@@ -372,7 +372,7 @@ export const DocsHomeView: React.FC = () => {
               Ready to Transform Your Organization?
             </h2>
             <p className="text-lg opacity-90 max-w-xl mx-auto mb-6">
-              Start your free trial today and access the complete IRIS Industrial Excellence
+              Start your free trial today and access the complete Consultinity Transformation AI
               Platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
