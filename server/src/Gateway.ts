@@ -53,6 +53,7 @@ import settlementRoutes from './routes/billing/settlements.routes.js';
 import tokenBillingRoutes from './routes/billing/tokenBilling.routes.js';
 import benefitsRoutes from './routes/benefits.routes.js';
 import financeStatementsRoutes from './routes/finance-statements.routes.js';
+import financialModelingRoutes from './routes/financial-modeling.routes.js';
 import budgetRoutes from './routes/budget.routes.js';
 import budgetsRoutes from './routes/budgets.routes.js';
 import chatProjectsRoutes from './routes/chat-projects.routes.js';
@@ -532,6 +533,7 @@ export class ApiGateway {
       mountStub('/api/budget', budgetRoutes, 'budgetRoutes');
       app.use('/api/benefits', benefitsRoutes);
       app.use('/api/finance-statements', financeStatementsRoutes);
+      app.use('/api/financial-modeling', financialModelingRoutes);
       app.use('/api/content', contentRoutes);
 
       // Catch-all RBAC or 404 for /api
