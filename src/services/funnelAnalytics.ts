@@ -10,7 +10,15 @@ export type FunnelEventName =
   | 'checkout_started'
   | 'checkout_completed'
   | 'checkout_failed'
-  | 'subscription_cancelled';
+  | 'subscription_cancelled'
+  | 'oauth_login_started'
+  | 'oauth_login_succeeded'
+  | 'oauth_login_failed'
+  | 'oauth_linked'
+  | 'oauth_unlinked'
+  | 'linkedin_connect_cta_shown'
+  | 'linkedin_connect_cta_clicked'
+  | 'linkedin_connect_cta_dismissed';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {
