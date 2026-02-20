@@ -117,17 +117,31 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 - **Bundle 12** (Cursor A): merged T046–T049 ROI, KPI mapping, attribution, financial mapping.
 - **Bundle 23** (Cursor B): merged T086 Sync Hub + T008 guardrails (UnifiedSyncHub, syncGuardrailsService).
 
-## Wave 7 (2026-02-20) — IN PROGRESS
+## Wave 7 (2026-02-20) — CLOSED
 
 | Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
 |---|---|---|---|---|---|
-| 17 | T058–T059 | bundle-17-presentations-generator | Cursor A | in_progress | Presentations generator + templates |
-| 18 | T060–T061 | bundle-18-reports-generator | Cursor B | in_progress | Reports generator + templates |
-| 09 | T034–T038 | bundle-09-portfolio-optimization | Codex | in_progress | Portfolio optimization engines |
-| 13 | T050–T051 | bundle-13-finance-a | Cursor C | in_progress | Finance A (ingestion + ratios) — równolegle do Codex |
-| 14 | T052–T053 | bundle-14-finance-b | Cursor D | in_progress | Finance B (analysis + budgeting) — równolegle do Codex |
+| 17 | T058–T059 | bundle-17-presentations-generator | Cursor A | **merged** | Presentations generator + templates (migracja 568) |
+| 18 | T060–T061 | bundle-18-reports-generator | Cursor B | **merged** | Reports generator + templates (migracja 569) |
+| 09 | T034–T038 | codex/bundle-09-portfolio-optimization | Codex | **merged** | Portfolio optimization engines |
+| 13 | T050–T051 | bundle-13-finance-a | Cursor C | **merged** | Finance A (ingestion + ratios, migracja 567) |
+| 14 | T052–T053 | bundle-14-finance-b | Cursor D | **merged** | Finance B (analysis + budgeting, migracja 570) |
 
 **Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_7.md`
+
+### Wave 7 — merge wykonane (2026-02-20)
+- Wszystkie 5 bundli zmergowane do main. Migracje 567–570.
+- Konflikty rozwiązane: funnelAnalytics, translation.json (en/pl).
+
+## Wave 8 (2026-02-20) — IN PROGRESS
+
+| Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
+|---|---|---|---|---|---|
+| 15 | T054 | bundle-15-financial-modeling | Cursor A | in_progress | Financial Modeling (P&L+BS+CF, economic events) |
+| 19 | T062 | bundle-19-automated-reporting | Cursor B | in_progress | Automated Recurring + Event-Triggered Reporting |
+| 16 | T055–T057 | codex/bundle-16-valuation | Codex | in_progress | Enterprise Valuation (DCF + comps + advisory) |
+
+**Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_8.md`
 
 ---
 
@@ -162,11 +176,11 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 12 | T046-T049 | Cursor | **merged** | bundle-12-benefits-kpi-finance | Wave 6.5 (migracja 565) |
 | 13 | T050-T051 | Cursor | in_progress | bundle-13-finance-a | Wave 7 (Cursor, równolegle do Codex) |
 | 14 | T052-T053 | Cursor | in_progress | bundle-14-finance-b | Wave 7 (Cursor, równolegle do Codex) |
-| 15 | T054 | Cursor | planned | | weekend/hard |
-| 16 | T055-T057 | Codex | planned | | merytoryka |
+| 15 | T054 | Cursor | in_progress | bundle-15-financial-modeling | Wave 8 |
+| 16 | T055-T057 | Codex | in_progress | codex/bundle-16-valuation | Wave 8 |
 | 17 | T058-T059 | Cursor | in_progress | bundle-17-presentations-generator | Wave 7 |
 | 18 | T060-T061 | Cursor | in_progress | bundle-18-reports-generator | Wave 7 |
-| 19 | T062 | Codex | planned | | |
+| 19 | T062 | Cursor | in_progress | bundle-19-automated-reporting | Wave 8 |
 | 20 | T063-T067 | Codex | planned | | |
 | 21 | T068-T069 | Codex | **merged** | bundle-21-onboarding-news | Wave 1 |
 | 22 | T071-T073 (+T070 content) | Cursor | **merged** | bundle-22-help-t071-t073 | Wave 4: T071+T073 (T072 done in pilot) |
