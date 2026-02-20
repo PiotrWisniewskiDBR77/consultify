@@ -3377,5 +3377,41 @@
     "overduePlans": "Overdue Communications",
     "overdueItem": "Communication overdue",
     "plan": "Communication Plan"
+  },
+  "demo": {
+    "conversion": {
+      "startTrial": "Start Free Trial",
+      "persistentCta": "Start Free Trial",
+      "reportGenerated": { "title": "Your report is ready!", "desc": "Imagine generating reports like this with your own company data. Start a free trial." },
+      "deckExported": { "title": "Deck exported successfully!", "desc": "Export board-ready decks from your own transformation data. Start a free trial." },
+      "initiativeCreated": { "title": "Initiative created!", "desc": "Track your real initiatives with full execution visibility. Start a free trial." },
+      "toolCompleted": { "title": "Assessment complete!", "desc": "Run assessments with your team and get AI-powered insights. Start a free trial." },
+      "aiInsight": { "title": "AI insight generated!", "desc": "Get AI recommendations based on your organization's context. Start a free trial." },
+      "kpiViewed": { "title": "Real-time KPI tracking", "desc": "Track your KPIs in real-time with automatic trend analysis. Start a free trial." }
+    },
+    "signup": {
+      "title": "Start Your Free Trial",
+      "subtitle": "Continue where you left off — with your own data",
+      "nameLabel": "Full Name",
+      "emailLabel": "Work Email",
+      "passwordLabel": "Password",
+      "cta": "Start Free Trial",
+      "creating": "Creating your workspace...",
+      "benefit1": "14-day free trial, no credit card",
+      "benefit2": "Your own workspace with AI capabilities",
+      "benefit3": "Import your data or start fresh",
+      "benefit4": "Cancel anytime, no commitment",
+      "privacy": "Your data is encrypted and secure",
+      "errorRequired": "Please fill in all fields",
+      "errorGeneric": "Something went wrong. Please try again.",
+      "successTitle": "Welcome aboard!",
+      "successDesc": "Your trial workspace is being set up. Redirecting..."
+    },
+    "archilex": {
+      "name": "Archilex Group",
+      "tagline": "Architecting Legal Excellence",
+      "industry": "Professional Services — Legal & Compliance",
+      "scenario": { "executive": "Executive Overview", "initiatives": "Deep Dive: Initiatives & Execution", "finance": "Deep Dive: Finance & ROI" }
+    }
   }
 }

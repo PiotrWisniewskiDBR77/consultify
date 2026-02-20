@@ -18,8 +18,12 @@ import { useTranslation } from 'react-i18next';
 
 import { useDemoSession } from '../../hooks/useDemoSession';
 import { trackTourCompleted, trackUpgradeClick } from '../../services/demoAnalyticsService';
+import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { useAppStore } from '../../store/useAppStore';
+import { DemoConversionCTA, type ValueMomentType } from './DemoConversionCTA';
 import { DemoLoadingOverlay } from './DemoLoadingOverlay';
+import { DemoSignupModal } from './DemoSignupModal';
+import { DemoTrialButton } from './DemoTrialButton';
 import { DemoUpgradePrompt } from './DemoUpgradePrompt';
 import { DemoWelcomeTour } from './DemoWelcomeTour';
 import { ExitIntentModal } from './ExitIntentModal';
@@ -79,6 +83,11 @@ export const DemoSessionManager: React.FC = () => {
   const [upgradePromptFeature, setUpgradePromptFeature] = useState<string>('');
   const [showSessionWarning, setShowSessionWarning] = useState(false);
   const [sessionWarningType, setSessionWarningType] = useState<'1h' | '5min' | 'expired'>('1h');
+
+  // T090: Conversion flow state
+  const [showSignupModal, setShowSignupModal] = useState(false);
+  const [showValueCTA, setShowValueCTA] = useState(false);
+  const [currentValueMoment, setCurrentValueMoment] = useState<ValueMomentType>('report_generated');
 
   // Exit intent detection
   const { showExitIntent, dismissExitIntent } = useExitIntent({
@@ -222,6 +231,32 @@ export const DemoSessionManager: React.FC = () => {
     setShowSessionWarning(false);
   }, [extendSession]);
 
+  // T090: Value moment CTA trigger (can be called externally via window event)
+  useEffect(() => {
+    if (!isDemo) return;
+
+    const handleValueMoment = (e: CustomEvent<{ type: ValueMomentType }>) => {
+      setCurrentValueMoment(e.detail.type);
+      setShowValueCTA(true);
+      trackFunnelEvent('demo_value_moment_reached', { type: e.detail.type });
+    };
+
+    window.addEventListener('demo:value_moment', handleValueMoment as EventListener);
+    return () => window.removeEventListener('demo:value_moment', handleValueMoment as EventListener);
+  }, [isDemo]);
+
+  const handleStartTrialFromCTA = useCallback(() => {
+    setShowValueCTA(false);
+    setShowSignupModal(true);
+    trackFunnelEvent('demo_cta_clicked', { location: 'value_moment_cta' });
+  }, []);
+
+  const handleSignupComplete = useCallback((email: string) => {
+    setShowSignupModal(false);
+    trackFunnelEvent('trial_activated', { source: 'demo_conversion', email });
+    window.location.href = '/auth?step=login&from=demo';
+  }, []);
+
   const handleContactSales = useCallback(
     (source: string = 'banner') => {
       // Track upgrade click
@@ -283,6 +318,24 @@ export const DemoSessionManager: React.FC = () => {
           onDismiss={() => setShowSessionWarning(false)}
         />
       )}
+
+      {/* T090: Persistent Trial Button */}
+      <DemoTrialButton onClick={() => setShowSignupModal(true)} />
+
+      {/* T090: Contextual Value Moment CTA */}
+      <DemoConversionCTA
+        isVisible={showValueCTA}
+        valueMoment={currentValueMoment}
+        onStartTrial={handleStartTrialFromCTA}
+        onDismiss={() => setShowValueCTA(false)}
+      />
+
+      {/* T090: Signup Modal */}
+      <DemoSignupModal
+        isOpen={showSignupModal}
+        onClose={() => setShowSignupModal(false)}
+        onSignupComplete={handleSignupComplete}
+      />
     </>
   );
 };

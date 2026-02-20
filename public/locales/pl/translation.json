@@ -3377,5 +3377,41 @@
     "overduePlans": "Zaległe komunikaty",
     "overdueItem": "Zaległy komunikat",
     "plan": "Plan komunikacji"
+  },
+  "demo": {
+    "conversion": {
+      "startTrial": "Rozpocznij darmowy okres próbny",
+      "persistentCta": "Rozpocznij darmowy okres próbny",
+      "reportGenerated": { "title": "Twój raport jest gotowy!", "desc": "Wyobraź sobie generowanie takich raportów z danymi Twojej firmy. Rozpocznij okres próbny." },
+      "deckExported": { "title": "Prezentacja wyeksportowana!", "desc": "Eksportuj gotowe prezentacje z danych transformacji Twojej firmy. Rozpocznij okres próbny." },
+      "initiativeCreated": { "title": "Inicjatywa utworzona!", "desc": "Śledź swoje inicjatywy z pełną widocznością realizacji. Rozpocznij okres próbny." },
+      "toolCompleted": { "title": "Ocena zakończona!", "desc": "Przeprowadzaj oceny ze swoim zespołem i uzyskaj wnioski AI. Rozpocznij okres próbny." },
+      "aiInsight": { "title": "Wygenerowano wniosek AI!", "desc": "Otrzymuj rekomendacje AI w kontekście Twojej organizacji. Rozpocznij okres próbny." },
+      "kpiViewed": { "title": "Śledzenie KPI w czasie rzeczywistym", "desc": "Śledź KPI w czasie rzeczywistym z automatyczną analizą trendów. Rozpocznij okres próbny." }
+    },
+    "signup": {
+      "title": "Rozpocznij darmowy okres próbny",
+      "subtitle": "Kontynuuj tam, gdzie skończyłeś — z własnymi danymi",
+      "nameLabel": "Imię i nazwisko",
+      "emailLabel": "Email służbowy",
+      "passwordLabel": "Hasło",
+      "cta": "Rozpocznij darmowy okres próbny",
+      "creating": "Tworzenie Twojego workspace...",
+      "benefit1": "14 dni za darmo, bez karty kredytowej",
+      "benefit2": "Własny workspace z możliwościami AI",
+      "benefit3": "Importuj dane lub zacznij od nowa",
+      "benefit4": "Anuluj w dowolnym momencie",
+      "privacy": "Twoje dane są szyfrowane i bezpieczne",
+      "errorRequired": "Proszę wypełnić wszystkie pola",
+      "errorGeneric": "Coś poszło nie tak. Spróbuj ponownie.",
+      "successTitle": "Witaj na pokładzie!",
+      "successDesc": "Twój workspace jest przygotowywany. Przekierowywanie..."
+    },
+    "archilex": {
+      "name": "Archilex Group",
+      "tagline": "Architecting Legal Excellence",
+      "industry": "Usługi profesjonalne — prawo i compliance",
+      "scenario": { "executive": "Przegląd dla zarządu", "initiatives": "Inicjatywy i realizacja — szczegóły", "finance": "Finanse i ROI — szczegóły" }
+    }
   }
 }
