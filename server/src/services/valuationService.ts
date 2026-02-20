@@ -30,7 +30,9 @@ export interface ValuationAssumptions {
   exitMultipleMetric?: ExitMultipleMetric;
   netDebt?: number;
   sharesOutstanding?: number;
-  manualForecast?: { years: Array<{ year: number; fcff: number; revenue?: number; ebitda?: number }> };
+  manualForecast?: {
+    years: Array<{ year: number; fcff: number; revenue?: number; ebitda?: number }>;
+  };
 }
 
 export interface MultiplesInput {
@@ -171,10 +173,10 @@ export async function getValuation(orgId: string, valuationId: string): Promise<
 }
 
 async function setBackToDraftIfApproved(orgId: string, valuationId: string): Promise<void> {
-  const row = await dbGet<any>(`SELECT status FROM valuations WHERE id = ? AND organization_id = ?`, [
-    valuationId,
-    orgId,
-  ]);
+  const row = await dbGet<any>(
+    `SELECT status FROM valuations WHERE id = ? AND organization_id = ?`,
+    [valuationId, orgId]
+  );
   if (!row) return;
   if (normalizeStatus(row.status) === 'APPROVED') {
     await dbRun(
@@ -208,11 +210,10 @@ export async function updateAssumptions(
       : prev.manualForecast,
   };
 
-  await dbRun(`UPDATE valuations SET assumptions = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`, [
-    JSON.stringify(next),
-    valuationId,
-    orgId,
-  ]);
+  await dbRun(
+    `UPDATE valuations SET assumptions = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+    [JSON.stringify(next), valuationId, orgId]
+  );
 
   try {
     await audit.log({
@@ -247,11 +248,10 @@ export async function updatePeers(
   await setBackToDraftIfApproved(orgId, valuationId);
 
   const prev = safeJsonParse<any>(current.peers, []);
-  await dbRun(`UPDATE valuations SET peers = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`, [
-    JSON.stringify(multiples),
-    valuationId,
-    orgId,
-  ]);
+  await dbRun(
+    `UPDATE valuations SET peers = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+    [JSON.stringify(multiples), valuationId, orgId]
+  );
 
   try {
     await audit.log({
@@ -282,11 +282,20 @@ export interface ForecastYear {
 
 export interface ForecastBundle {
   years: ForecastYear[];
+  scenarios?: Partial<Record<'base' | 'optimistic' | 'conservative', ForecastYear[]>>;
   companyMetric?: { revenueLastYear?: number; ebitdaLastYear?: number };
-  sourceQuality?: { sourceType: ValuationSourceType; sourceId?: string | null; sourceStatus?: string };
+  sourceQuality?: {
+    sourceType: ValuationSourceType;
+    sourceId?: string | null;
+    sourceStatus?: string;
+  };
 }
 
-async function loadForecastFromBudget(orgId: string, budgetId: string, horizonYears: number): Promise<ForecastBundle> {
+async function loadForecastFromBudget(
+  orgId: string,
+  budgetId: string,
+  horizonYears: number
+): Promise<ForecastBundle> {
   const budget = await dbGet<any>(
     `SELECT id, status, approved_at FROM budgets WHERE id = ? AND organization_id = ?`,
     [budgetId, orgId]
@@ -297,38 +306,50 @@ async function loadForecastFromBudget(orgId: string, budgetId: string, horizonYe
     `SELECT scenario_type, projections FROM budget_scenarios WHERE budget_id = ? ORDER BY scenario_type`,
     [budgetId]
   );
-  const base = (scenarios || []).find((s: any) => String(s.scenario_type) === 'base');
-  const projections = safeJsonParse<any>(base?.projections, {});
-  const periods: string[] = projections?.periods || [];
-  const lines: Record<string, Record<string, number>> = projections?.lines || {};
+  const buildYearsFromProjections = (projections: any): ForecastYear[] => {
+    const periods: string[] = projections?.periods || [];
+    const lines: Record<string, Record<string, number>> = projections?.lines || {};
+    if (!periods.length) return [];
 
-  if (!periods.length) throw new Error('Budget projections not found. Generate projections first.');
+    const yearBuckets: Record<string, string[]> = {};
+    for (const p of periods) {
+      const y = String(p).slice(0, 4);
+      if (!yearBuckets[y]) yearBuckets[y] = [];
+      yearBuckets[y].push(p);
+    }
+    const yearsSorted = Object.keys(yearBuckets)
+      .sort((a, b) => Number(a) - Number(b))
+      .slice(0, horizonYears);
 
-  const yearBuckets: Record<string, string[]> = {};
-  for (const p of periods) {
-    const y = String(p).slice(0, 4);
-    if (!yearBuckets[y]) yearBuckets[y] = [];
-    yearBuckets[y].push(p);
+    return yearsSorted.map((y, idx) => {
+      const ps = yearBuckets[y] || [];
+      const sumLine = (code: string) =>
+        ps.reduce((acc, period) => acc + Number(lines?.[code]?.[period] ?? 0), 0);
+      return {
+        year: idx + 1,
+        fcff: round(sumLine('FCF'), 2),
+        revenue: sumLine('REVENUE'),
+        ebitda: sumLine('EBITDA'),
+      };
+    });
+  };
+
+  const baseRow = (scenarios || []).find((s: any) => String(s.scenario_type) === 'base');
+  const baseYears = buildYearsFromProjections(safeJsonParse<any>(baseRow?.projections, {}));
+  if (!baseYears.length)
+    throw new Error('Budget projections not found. Generate projections first.');
+
+  const scenarioMap: ForecastBundle['scenarios'] = {};
+  for (const t of ['base', 'optimistic', 'conservative'] as const) {
+    const row = (scenarios || []).find((s: any) => String(s.scenario_type) === t);
+    const ys = buildYearsFromProjections(safeJsonParse<any>(row?.projections, {}));
+    if (ys.length) scenarioMap[t] = ys;
   }
-  const yearsSorted = Object.keys(yearBuckets)
-    .sort((a, b) => Number(a) - Number(b))
-    .slice(0, horizonYears);
 
-  const years: ForecastYear[] = yearsSorted.map((y, idx) => {
-    const ps = yearBuckets[y] || [];
-    const sumLine = (code: string) =>
-      ps.reduce((acc, period) => acc + Number(lines?.[code]?.[period] ?? 0), 0);
-    return {
-      year: idx + 1,
-      fcff: round(sumLine('FCF'), 2),
-      revenue: sumLine('REVENUE'),
-      ebitda: sumLine('EBITDA'),
-    };
-  });
-
-  const last = years[years.length - 1];
+  const last = baseYears[baseYears.length - 1];
   return {
-    years,
+    years: baseYears,
+    scenarios: scenarioMap,
     companyMetric: { revenueLastYear: last?.revenue, ebitdaLastYear: last?.ebitda },
     sourceQuality: {
       sourceType: 'budget',
@@ -338,7 +359,10 @@ async function loadForecastFromBudget(orgId: string, budgetId: string, horizonYe
   };
 }
 
-function loadForecastFromManual(manual: ValuationAssumptions['manualForecast'], horizonYears: number): ForecastBundle {
+function loadForecastFromManual(
+  manual: ValuationAssumptions['manualForecast'],
+  horizonYears: number
+): ForecastBundle {
   const yearsRaw = manual?.years || [];
   const yearsSorted = yearsRaw
     .map((y) => ({
@@ -370,7 +394,11 @@ export interface DcfResult {
   exitMultipleMetric?: ExitMultipleMetric;
 }
 
-function computeDcf(forecast: ForecastYear[], assumptions: ValuationAssumptions, companyMetric: ForecastBundle['companyMetric']): DcfResult {
+function computeDcf(
+  forecast: ForecastYear[],
+  assumptions: ValuationAssumptions,
+  companyMetric: ForecastBundle['companyMetric']
+): DcfResult {
   const wacc = clamp(Number(assumptions.waccPercent), 0.1, 80) / 100;
   const terminalMethod = assumptions.terminalMethod || 'gordon';
   const g = clamp(Number(assumptions.terminalGrowthPercent ?? 0), -10, 30) / 100;
@@ -401,7 +429,8 @@ function computeDcf(forecast: ForecastYear[], assumptions: ValuationAssumptions,
   const netDebt = Number(assumptions.netDebt ?? 0);
   const equityValue = enterpriseValue - netDebt;
   const shares = assumptions.sharesOutstanding;
-  const perShare = shares && Number.isFinite(shares) && shares > 0 ? equityValue / Number(shares) : undefined;
+  const perShare =
+    shares && Number.isFinite(shares) && shares > 0 ? equityValue / Number(shares) : undefined;
 
   return {
     enterpriseValue: round(enterpriseValue, 2),
@@ -414,11 +443,15 @@ function computeDcf(forecast: ForecastYear[], assumptions: ValuationAssumptions,
     discountRatePercent: round(wacc * 100, 2),
     terminalGrowthPercent: terminalMethod === 'gordon' ? round(g * 100, 2) : undefined,
     exitMultiple: terminalMethod === 'exit_multiple' ? assumptions.exitMultiple : undefined,
-    exitMultipleMetric: terminalMethod === 'exit_multiple' ? assumptions.exitMultipleMetric : undefined,
+    exitMultipleMetric:
+      terminalMethod === 'exit_multiple' ? assumptions.exitMultipleMetric : undefined,
   };
 }
 
-function computeComps(multiples: MultiplesInput | null, companyMetric: ForecastBundle['companyMetric']): any {
+function computeComps(
+  multiples: MultiplesInput | null,
+  companyMetric: ForecastBundle['companyMetric']
+): any {
   if (!multiples) return null;
   const metric = multiples.metric;
   const base =
@@ -438,17 +471,31 @@ function computeComps(multiples: MultiplesInput | null, companyMetric: ForecastB
   };
 }
 
-function computeSensitivityWaccVsG(forecast: ForecastYear[], assumptions: ValuationAssumptions, companyMetric: ForecastBundle['companyMetric']) {
+function computeSensitivityWaccVsG(
+  forecast: ForecastYear[],
+  assumptions: ValuationAssumptions,
+  companyMetric: ForecastBundle['companyMetric']
+) {
   const baseWacc = clamp(Number(assumptions.waccPercent), 0.1, 80);
   const baseG = clamp(Number(assumptions.terminalGrowthPercent ?? 0), -10, 30);
-  const waccGrid = [baseWacc - 2, baseWacc - 1, baseWacc, baseWacc + 1, baseWacc + 2].map((v) => round(clamp(v, 0.5, 40), 2));
-  const gGrid = [baseG - 1, baseG - 0.5, baseG, baseG + 0.5, baseG + 1].map((v) => round(clamp(v, -5, 15), 2));
+  const waccGrid = [baseWacc - 2, baseWacc - 1, baseWacc, baseWacc + 1, baseWacc + 2].map((v) =>
+    round(clamp(v, 0.5, 40), 2)
+  );
+  const gGrid = [baseG - 1, baseG - 0.5, baseG, baseG + 0.5, baseG + 1].map((v) =>
+    round(clamp(v, -5, 15), 2)
+  );
   const table: Array<{ g: number; values: number[] }> = [];
   for (const g of gGrid) {
     const row: number[] = [];
     for (const w of waccGrid) {
       try {
-        row.push(computeDcf(forecast, { ...assumptions, waccPercent: w, terminalGrowthPercent: g, terminalMethod: 'gordon' }, companyMetric).enterpriseValue);
+        row.push(
+          computeDcf(
+            forecast,
+            { ...assumptions, waccPercent: w, terminalGrowthPercent: g, terminalMethod: 'gordon' },
+            companyMetric
+          ).enterpriseValue
+        );
       } catch {
         row.push(NaN);
       }
@@ -492,14 +539,27 @@ function computeSensitivityWaccVsExitMultiple(
   return { waccGrid, multipleGrid, table };
 }
 
-function computeTornado(forecast: ForecastYear[], assumptions: ValuationAssumptions, companyMetric: ForecastBundle['companyMetric'], baseEv: number) {
+function computeTornado(
+  forecast: ForecastYear[],
+  assumptions: ValuationAssumptions,
+  companyMetric: ForecastBundle['companyMetric'],
+  baseEv: number
+) {
   const drivers: Array<{ driver: string; lowEv: number; highEv: number; swing: number }> = [];
-  const bump = (label: string, low: Partial<ValuationAssumptions>, high: Partial<ValuationAssumptions>) => {
+  const bump = (
+    label: string,
+    low: Partial<ValuationAssumptions>,
+    high: Partial<ValuationAssumptions>
+  ) => {
     const lowEv = computeDcf(forecast, { ...assumptions, ...low }, companyMetric).enterpriseValue;
     const highEv = computeDcf(forecast, { ...assumptions, ...high }, companyMetric).enterpriseValue;
     drivers.push({ driver: label, lowEv, highEv, swing: Math.abs(highEv - lowEv) });
   };
-  bump('WACC (±1%)', { waccPercent: assumptions.waccPercent - 1 }, { waccPercent: assumptions.waccPercent + 1 });
+  bump(
+    'WACC (±1%)',
+    { waccPercent: assumptions.waccPercent - 1 },
+    { waccPercent: assumptions.waccPercent + 1 }
+  );
   {
     const scale = (factor: number) => forecast.map((y) => ({ ...y, fcff: y.fcff * factor }));
     const lowEv = computeDcf(scale(0.95), assumptions, companyMetric).enterpriseValue;
@@ -507,7 +567,11 @@ function computeTornado(forecast: ForecastYear[], assumptions: ValuationAssumpti
     drivers.push({ driver: 'FCFF level (±5%)', lowEv, highEv, swing: Math.abs(highEv - lowEv) });
   }
   return drivers
-    .map((d) => ({ ...d, deltaLow: round(d.lowEv - baseEv, 2), deltaHigh: round(d.highEv - baseEv, 2) }))
+    .map((d) => ({
+      ...d,
+      deltaLow: round(d.lowEv - baseEv, 2),
+      deltaHigh: round(d.highEv - baseEv, 2),
+    }))
     .sort((a, b) => b.swing - a.swing)
     .slice(0, 8);
 }
@@ -516,7 +580,10 @@ export async function computeValuation(orgId: string, valuationId: string): Prom
   const val = await getValuation(orgId, valuationId);
   if (!val) throw new Error('Valuation not found');
 
-  const assumptions = safeJsonParse<ValuationAssumptions>(val.assumptions, defaultAssumptions(val.horizon_years));
+  const assumptions = safeJsonParse<ValuationAssumptions>(
+    val.assumptions,
+    defaultAssumptions(val.horizon_years)
+  );
   const horizonYears = clamp(Number(val.horizon_years || assumptions.horizonYears || 5), 1, 20);
 
   let forecast: ForecastBundle;
@@ -532,11 +599,42 @@ export async function computeValuation(orgId: string, valuationId: string): Prom
   const dcf = computeDcf(forecast.years, assumptions, forecast.companyMetric);
   const multiples = safeJsonParse<MultiplesInput | null>(val.peers, null);
   const comps = computeComps(multiples, forecast.companyMetric);
+  const scenarioComparison =
+    val.source_type === 'budget' && forecast.scenarios
+      ? (['base', 'optimistic', 'conservative'] as const)
+          .filter(
+            (k) =>
+              Array.isArray(forecast.scenarios?.[k]) && (forecast.scenarios?.[k]?.length || 0) > 0
+          )
+          .map((k) => ({
+            scenario: k,
+            dcf: computeDcf(
+              forecast.scenarios?.[k] as ForecastYear[],
+              assumptions,
+              forecast.companyMetric
+            ),
+          }))
+      : [];
   const sensitivity =
     assumptions.terminalMethod === 'exit_multiple'
-      ? { kind: 'wacc_vs_exit_multiple', ...computeSensitivityWaccVsExitMultiple(forecast.years, assumptions, forecast.companyMetric) }
-      : { kind: 'wacc_vs_g', ...computeSensitivityWaccVsG(forecast.years, assumptions, forecast.companyMetric) };
-  const tornado = computeTornado(forecast.years, assumptions, forecast.companyMetric, dcf.enterpriseValue);
+      ? {
+          kind: 'wacc_vs_exit_multiple',
+          ...computeSensitivityWaccVsExitMultiple(
+            forecast.years,
+            assumptions,
+            forecast.companyMetric
+          ),
+        }
+      : {
+          kind: 'wacc_vs_g',
+          ...computeSensitivityWaccVsG(forecast.years, assumptions, forecast.companyMetric),
+        };
+  const tornado = computeTornado(
+    forecast.years,
+    assumptions,
+    forecast.companyMetric,
+    dcf.enterpriseValue
+  );
 
   const results = {
     computedAt: new Date().toISOString(),
@@ -545,6 +643,7 @@ export async function computeValuation(orgId: string, valuationId: string): Prom
     forecast: { horizonYears, years: forecast.years },
     dcf,
     comps,
+    scenarioComparison,
     sensitivity,
     tornado,
     disclaimers: [
@@ -553,34 +652,50 @@ export async function computeValuation(orgId: string, valuationId: string): Prom
     ],
   };
 
-  await dbRun(`UPDATE valuations SET results = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`, [
-    JSON.stringify(results),
-    valuationId,
-    orgId,
-  ]);
+  await dbRun(
+    `UPDATE valuations SET results = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+    [JSON.stringify(results), valuationId, orgId]
+  );
 
   return results;
 }
 
-export async function approveValuation(orgId: string, valuationId: string, userId: string): Promise<void> {
+export async function approveValuation(
+  orgId: string,
+  valuationId: string,
+  userId: string
+): Promise<void> {
   const val = await getValuation(orgId, valuationId);
   if (!val) throw new Error('Valuation not found');
 
   const results = safeJsonParse<any>(val.results, {});
-  if (!results?.dcf || results?.dcf?.enterpriseValue == null) throw new Error('Compute valuation before approval');
+  if (!results?.dcf || results?.dcf?.enterpriseValue == null)
+    throw new Error('Compute valuation before approval');
 
-  const assumptions = safeJsonParse<ValuationAssumptions>(val.assumptions, defaultAssumptions(val.horizon_years));
+  const assumptions = safeJsonParse<ValuationAssumptions>(
+    val.assumptions,
+    defaultAssumptions(val.horizon_years)
+  );
   if ((assumptions.terminalMethod || 'gordon') === 'gordon') {
     const w = Number(assumptions.waccPercent || 0);
     const g = Number(assumptions.terminalGrowthPercent || 0);
-    if (!(g < w)) throw new Error('Validation failed: terminal growth must be lower than WACC (g < WACC)');
+    if (!(g < w))
+      throw new Error('Validation failed: terminal growth must be lower than WACC (g < WACC)');
   }
 
   const now = new Date().toISOString();
+  const version = Number.isFinite(Number(val.version)) ? Number(val.version) : 1;
   await dbRun(
     `INSERT INTO valuation_snapshots (id, valuation_id, version, snapshot_data, approved_by, created_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [uuidv4().replace(/-/g, ''), valuationId, val.version, JSON.stringify({ assumptions: val.assumptions, peers: val.peers, results: val.results }), userId, now]
+    [
+      uuidv4().replace(/-/g, ''),
+      valuationId,
+      version,
+      JSON.stringify({ assumptions: val.assumptions, peers: val.peers, results: val.results }),
+      userId,
+      now,
+    ]
   );
 
   await dbRun(
@@ -594,27 +709,252 @@ export async function approveValuation(orgId: string, valuationId: string, userI
 export async function generateAdvisory(orgId: string, valuationId: string): Promise<any> {
   const val = await getValuation(orgId, valuationId);
   if (!val) throw new Error('Valuation not found');
-  if (normalizeStatus(val.status) !== 'APPROVED') throw new Error('Valuation must be APPROVED to generate advisory');
+  if (normalizeStatus(val.status) !== 'APPROVED')
+    throw new Error('Valuation must be APPROVED to generate advisory');
+
+  const results = safeJsonParse<any>(val.results, {});
+  const dcf = results?.dcf || {};
+  const tornado: Array<any> = Array.isArray(results?.tornado) ? results.tornado : [];
+
+  const pvExplicit = Number(dcf.pvExplicit ?? NaN);
+  const pvTerminal = Number(dcf.pvTerminal ?? NaN);
+  const terminalShare =
+    Number.isFinite(pvExplicit) && Number.isFinite(pvTerminal) && pvExplicit + pvTerminal !== 0
+      ? pvTerminal / (pvExplicit + pvTerminal)
+      : null;
+
+  const evidenceLines: string[] = [];
+  if (dcf.enterpriseValue != null) evidenceLines.push(`EV: ${dcf.enterpriseValue}`);
+  if (dcf.discountRatePercent != null) evidenceLines.push(`WACC: ${dcf.discountRatePercent}%`);
+  if (dcf.terminalMethod === 'gordon' && dcf.terminalGrowthPercent != null)
+    evidenceLines.push(`g: ${dcf.terminalGrowthPercent}%`);
+  if (terminalShare != null)
+    evidenceLines.push(`PV terminal share: ${(terminalShare * 100).toFixed(0)}%`);
+  const topDrivers = tornado
+    .slice(0, 3)
+    .map((d: any) => String(d?.driver || ''))
+    .filter(Boolean);
+  if (topDrivers.length) evidenceLines.push(`Top drivers: ${topDrivers.join(', ')}`);
+
+  const mkId = () => `rec-${uuidv4().replace(/-/g, '').slice(0, 10)}`;
 
   const advisory = {
     generatedAt: new Date().toISOString(),
     valuationId,
     recommendations: [
       {
-        id: `rec-${uuidv4().replace(/-/g, '').slice(0, 10)}`,
+        id: mkId(),
+        category: 'risk_reduction',
+        title: 'Reduce perceived risk to improve discount rate discussion',
+        hypothesis:
+          'De-risk execution and strengthen reporting discipline to justify a lower WACC in negotiations.',
+        mechanism: 'Lower perceived risk can reduce the discount rate applied to cash flows.',
+        expectedDirection: '↓WACC / ↑EV',
+        evidence: evidenceLines.length
+          ? evidenceLines
+          : ['Grounded in valuation assumptions and computed results.'],
+        impactTier: Number(dcf.discountRatePercent ?? 0) >= 14 ? 'High' : 'Med',
+        confidence: 'Med',
+        effort: 'M',
+        timeToImpact: '2–4 months',
+        risks: ['Requires sustained operational cadence and transparent metrics.'],
+        nextSteps: [
+          'Define reporting cadence',
+          'Track key risks + mitigations',
+          'Publish monthly KPI pack',
+          'Tighten audit trail for assumptions',
+        ],
+      },
+      {
+        id: mkId(),
+        category: 'cash_conversion',
+        title: 'Improve cash conversion (working capital + billing discipline)',
+        hypothesis:
+          'Increase FCFF by reducing cash tied in receivables/inventory and accelerating collections.',
+        mechanism:
+          'Higher near-term FCFF increases PV of explicit period and reduces terminal reliance.',
+        expectedDirection: '↑FCFF / ↑EV',
+        evidence: evidenceLines,
+        impactTier: 'Med',
+        confidence: 'Med',
+        effort: 'M',
+        timeToImpact: '1–3 months',
+        risks: ['May impact customer experience if executed aggressively.'],
+        nextSteps: [
+          'Baseline DSO/DPO',
+          'Introduce collection playbook',
+          'Tighten billing SLAs',
+          'Implement aging dashboard',
+        ],
+      },
+      {
+        id: mkId(),
+        category: 'growth_acceleration',
+        title: 'Improve pipeline-to-revenue conversion narrative',
+        hypothesis:
+          'Increase confidence in growth assumptions by tying them to measurable pipeline and conversion metrics.',
+        mechanism: 'Higher credibility supports growth assumptions and comps confidence.',
+        expectedDirection: '↑confidence / ↑multiple',
+        evidence: evidenceLines,
+        impactTier: 'Med',
+        confidence: 'Med',
+        effort: 'M',
+        timeToImpact: '1–2 months',
+        risks: ['If pipeline quality is weak, visibility can surface issues.'],
+        nextSteps: [
+          'Define funnel stages',
+          'Track conversion rates',
+          'Set leading indicators',
+          'Align forecast with pipeline',
+        ],
+      },
+      {
+        id: mkId(),
+        category: 'margin_improvement',
+        title: 'Target margin expansion levers before fundraising/transaction',
+        hypothesis: 'Improve operating leverage and gross margin to support higher exit multiples.',
+        mechanism: 'Better margins can improve comps narrative and investor confidence.',
+        expectedDirection: '↑multiple / ↑EV',
+        evidence: evidenceLines,
+        impactTier: 'Med',
+        confidence: 'Low',
+        effort: 'L',
+        timeToImpact: '3–6 months',
+        risks: ['Cost cuts can harm growth if not sequenced.'],
+        nextSteps: [
+          'Margin bridge',
+          'Top cost drivers review',
+          'Pricing/packaging review',
+          'Operational efficiency initiatives',
+        ],
+      },
+      {
+        id: mkId(),
         category: 'governance_reporting',
-        title: 'Upgrade model governance and approval process',
-        hypothesis: 'Make assumptions explicit and versioned to increase stakeholder trust.',
-        mechanism: 'Higher trust reduces discount applied in negotiation.',
-        expectedDirection: '↑confidence / ↓discount',
-        evidence: ['Grounded in valuation assumptions and computed results.'],
+        title: 'Strengthen model governance and assumption evidence',
+        hypothesis:
+          'Make key assumptions auditable and tie them to operational metrics to increase trust.',
+        mechanism:
+          'Higher trust improves negotiation leverage and reduces discounting of the narrative.',
+        expectedDirection: '↑confidence',
+        evidence: evidenceLines,
+        impactTier: 'Low',
+        confidence: 'High',
+        effort: 'S',
+        timeToImpact: '2–4 weeks',
+        risks: ['Requires consistent owner and reviewer availability.'],
+        nextSteps: [
+          'Approval checklist',
+          'Assumption owner mapping',
+          'Version notes per change',
+          'Sensitivity review before approval',
+        ],
+      },
+      {
+        id: mkId(),
+        category: 'forecast_quality',
+        title: 'Stress-test assumptions with downside cases',
+        hypothesis: 'Prepare a credible downside narrative to handle objections.',
+        mechanism: 'A well-prepared downside increases trust and reduces surprise discounting.',
+        expectedDirection: '↑trust',
+        evidence: evidenceLines,
+        impactTier: 'Med',
+        confidence: 'Med',
+        effort: 'S',
+        timeToImpact: '1–2 weeks',
+        risks: ['Downside could look worse if assumptions are optimistic.'],
+        nextSteps: [
+          'Define downside triggers',
+          'Recompute sensitivity',
+          'Prepare mitigation plan',
+          'Align talk track',
+        ],
+      },
+      {
+        id: mkId(),
+        category: 'capital_structure',
+        title: 'Clarify net debt and cash policy assumptions',
+        hypothesis: 'Make the EV→equity bridge defensible with a clear cash/debt policy.',
+        mechanism: 'Reduces negotiation friction around equity value adjustments.',
+        expectedDirection: '↑clarity / ↓friction',
+        evidence: evidenceLines,
         impactTier: 'Low',
         confidence: 'Med',
         effort: 'S',
-        timeToImpact: '1–2 months',
-        risks: ['Requires consistent owner and review cadence.'],
-        nextSteps: ['Define approval checklist', 'Assign model owner and reviewer', 'Log key assumption changes'],
+        timeToImpact: '2–4 weeks',
+        risks: ['May require board alignment.'],
+        nextSteps: [
+          'Define cash buffer policy',
+          'Document debt terms',
+          'Align working capital policy',
+        ],
       },
+      {
+        id: mkId(),
+        category: 'risk_reduction',
+        title: 'Operationalize risk register and mitigations',
+        hypothesis: 'Proactively address top risks surfaced by sensitivity drivers.',
+        mechanism:
+          'Demonstrated risk mitigation reduces perceived risk and improves negotiation stance.',
+        expectedDirection: '↓risk premium',
+        evidence: evidenceLines,
+        impactTier: 'Med',
+        confidence: 'Med',
+        effort: 'M',
+        timeToImpact: '4–8 weeks',
+        risks: ['Requires cross-functional ownership.'],
+        nextSteps: [
+          'Assign risk owners',
+          'Define mitigations',
+          'Set review cadence',
+          'Track completion',
+        ],
+      },
+      {
+        id: mkId(),
+        category: 'governance_reporting',
+        title: 'Improve data quality and traceability for key metrics',
+        hypothesis:
+          'Reduce “model discount” by demonstrating traceable, consistent financial and operating data.',
+        mechanism: 'Better data quality reduces skepticism during diligence.',
+        expectedDirection: '↑trust',
+        evidence: evidenceLines,
+        impactTier: 'Low',
+        confidence: 'High',
+        effort: 'M',
+        timeToImpact: '1–2 months',
+        risks: ['Requires agreement on metric definitions.'],
+        nextSteps: [
+          'Define metric dictionary',
+          'Add source tags',
+          'Implement checks',
+          'Document assumptions',
+        ],
+      },
+      ...(terminalShare != null && terminalShare >= 0.65
+        ? [
+            {
+              id: mkId(),
+              category: 'forecast_quality',
+              title: 'Reduce terminal value dependence with higher-quality near-term plan',
+              hypothesis:
+                'Increase planning granularity and near-term milestones to improve explicit-period contribution.',
+              mechanism: 'More value in explicit period reduces reliance on terminal assumptions.',
+              expectedDirection: '↑PV explicit share / ↓terminal reliance',
+              evidence: evidenceLines,
+              impactTier: 'Med',
+              confidence: 'Med',
+              effort: 'M',
+              timeToImpact: '1–2 months',
+              risks: ['Planning overhead without clear ownership.'],
+              nextSteps: [
+                'Quarterly cash plan',
+                'Unit-economics drivers',
+                'Pipeline-to-revenue conversion tracking',
+              ],
+            },
+          ]
+        : []),
     ],
     guardrails: [
       'Informational only; not investment, legal, or tax advice.',
@@ -622,11 +962,10 @@ export async function generateAdvisory(orgId: string, valuationId: string): Prom
     ],
   };
 
-  await dbRun(`UPDATE valuations SET advisory = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`, [
-    JSON.stringify(advisory),
-    valuationId,
-    orgId,
-  ]);
+  await dbRun(
+    `UPDATE valuations SET advisory = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+    [JSON.stringify(advisory), valuationId, orgId]
+  );
 
   return advisory;
 }
@@ -634,10 +973,18 @@ export async function generateAdvisory(orgId: string, valuationId: string): Prom
 export async function generateNegotiationPack(orgId: string, valuationId: string): Promise<any> {
   const val = await getValuation(orgId, valuationId);
   if (!val) throw new Error('Valuation not found');
-  if (normalizeStatus(val.status) !== 'APPROVED') throw new Error('Valuation must be APPROVED to generate negotiation pack');
+  if (normalizeStatus(val.status) !== 'APPROVED')
+    throw new Error('Valuation must be APPROVED to generate negotiation pack');
 
   const results = safeJsonParse<any>(val.results, {});
   const dcf = results?.dcf || {};
+  const comps = results?.comps || null;
+  const sensitivity = results?.sensitivity || null;
+  const tornado: Array<any> = Array.isArray(results?.tornado) ? results.tornado : [];
+  const topDrivers = tornado
+    .slice(0, 5)
+    .map((d: any) => String(d?.driver || ''))
+    .filter(Boolean);
 
   const pack = {
     generatedAt: new Date().toISOString(),
@@ -646,8 +993,42 @@ export async function generateNegotiationPack(orgId: string, valuationId: string
       {
         title: 'DCF is grounded in explicit assumptions',
         oneLiner: 'We can show what drives value and how assumptions translate to EV.',
-        evidence: [`EV: ${dcf?.enterpriseValue ?? '—'}`, `WACC: ${dcf?.discountRatePercent ?? '—'}%`],
+        evidence: [
+          `EV: ${dcf?.enterpriseValue ?? '—'}`,
+          `WACC: ${dcf?.discountRatePercent ?? '—'}%`,
+        ],
       },
+      {
+        title: 'Sensitivity is transparent',
+        oneLiner: 'We can discuss ranges, not a single fragile number.',
+        evidence: [
+          `Terminal method: ${dcf?.terminalMethod ?? '—'}`,
+          sensitivity?.kind ? `Sensitivity: ${String(sensitivity.kind)}` : 'Sensitivity: —',
+        ],
+      },
+      ...(comps?.impliedEnterpriseValue
+        ? [
+            {
+              title: 'Comps provide an external cross-check (manual in V2)',
+              oneLiner:
+                'Multiples-based range is provided as triangulation, not a single source of truth.',
+              evidence: [
+                `Comps EV min: ${comps.impliedEnterpriseValue.min ?? '—'}`,
+                `median: ${comps.impliedEnterpriseValue.median ?? '—'}`,
+                `max: ${comps.impliedEnterpriseValue.max ?? '—'}`,
+              ],
+            },
+          ]
+        : []),
+      ...(topDrivers.length
+        ? [
+            {
+              title: 'Top value drivers are identified',
+              oneLiner: 'We focus the discussion on the few assumptions that matter most.',
+              evidence: topDrivers,
+            },
+          ]
+        : []),
     ],
     contraPoints: [
       {
@@ -655,11 +1036,90 @@ export async function generateNegotiationPack(orgId: string, valuationId: string
         objection: 'Terminal assumptions can dominate EV in a DCF.',
         rebuttal: 'Use sensitivity and assumptions transparency to address objections.',
       },
+      {
+        title: 'Assumptions are scenario-dependent',
+        objection: 'Projections may differ from realized performance.',
+        rebuttal:
+          'We explicitly state assumptions, show sensitivity, and update the model as evidence arrives.',
+      },
     ],
     qa: [
       {
         question: 'What would change your valuation view?',
-        suggestedAnswer: 'Key levers are WACC/risk, sustainable growth, and cash conversion; we show sensitivity ranges.',
+        suggestedAnswer:
+          'Key levers are WACC/risk, sustainable growth, and cash conversion; we show sensitivity ranges.',
+      },
+      {
+        question: 'Why this discount rate?',
+        suggestedAnswer:
+          'We disclose WACC assumptions (risk-free, ERP, beta, cost of debt, tax, capital structure) and can discuss an evidence-based range.',
+      },
+      {
+        question: 'How robust is the terminal assumption?',
+        suggestedAnswer:
+          'We use a transparent terminal method and provide sensitivity; we can also triangulate with multiples as a cross-check.',
+      },
+      {
+        question: 'Why did you choose these peers/multiples?',
+        suggestedAnswer:
+          'Peers are a manual V2 cross-check; we document “why peers” and treat comps as triangulation, not a single source of truth.',
+      },
+      {
+        question: 'How much of EV is driven by terminal value?',
+        suggestedAnswer:
+          'We explicitly show PV split between explicit period and terminal; we can improve explicit-period visibility with a near-term plan.',
+      },
+      {
+        question: 'What are the top drivers of the valuation?',
+        suggestedAnswer:
+          topDrivers.length > 0
+            ? `Top sensitivity drivers are: ${topDrivers.slice(0, 3).join(', ')}. We focus the discussion on these levers.`
+            : 'We use tornado/sensitivity to identify top drivers and focus on the few assumptions that matter most.',
+      },
+      {
+        question: 'How do you validate the forecast?',
+        suggestedAnswer:
+          'We tie key forecast assumptions to operational metrics and update the model as evidence evolves; all changes are versioned and audited.',
+      },
+      {
+        question: 'How does this compare to a budget/base plan?',
+        suggestedAnswer:
+          'We prefer approved finance sources when available; otherwise we use explicit manual inputs and disclose coverage and limitations.',
+      },
+      {
+        question: 'What are the biggest risks that could reduce value?',
+        suggestedAnswer:
+          'Execution risk, cash conversion, and market risk are typical. We prepare mitigations and can show how they affect sensitivity drivers.',
+      },
+      {
+        question: 'What is your plan to justify the multiple?',
+        suggestedAnswer:
+          'We outline concrete actions to improve growth, margins, governance, and risk posture — strengthening the “quality” side of the story.',
+      },
+      {
+        question: 'If growth is slower, what happens?',
+        suggestedAnswer:
+          'We show scenario/sensitivity ranges; we can re-run the model under conservative assumptions and discuss mitigation actions.',
+      },
+      {
+        question: 'If the discount rate is higher, what happens?',
+        suggestedAnswer:
+          'Sensitivity explicitly shows EV under different WACC values; we treat WACC as a discussion range supported by evidence.',
+      },
+      {
+        question: 'Do you provide investment advice?',
+        suggestedAnswer:
+          'No. This is an informational model to support internal planning and communication; it is not investment, legal, or tax advice.',
+      },
+      {
+        question: 'What assumptions are most uncertain?',
+        suggestedAnswer:
+          'We call out assumptions that materially move EV via tornado/sensitivity, and we avoid claiming certainty where evidence is missing.',
+      },
+      {
+        question: 'What would you concede without changing the strategy?',
+        suggestedAnswer:
+          'We can discuss structure and terms separately from the operating plan; we do not overcommit to single-point numbers without evidence.',
       },
     ],
     dontSay: [
@@ -672,11 +1132,10 @@ export async function generateNegotiationPack(orgId: string, valuationId: string
     ],
   };
 
-  await dbRun(`UPDATE valuations SET negotiation_pack = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`, [
-    JSON.stringify(pack),
-    valuationId,
-    orgId,
-  ]);
+  await dbRun(
+    `UPDATE valuations SET negotiation_pack = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+    [JSON.stringify(pack), valuationId, orgId]
+  );
 
   return pack;
 }

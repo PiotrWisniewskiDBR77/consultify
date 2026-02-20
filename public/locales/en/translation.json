@@ -3366,11 +3366,36 @@
       "ev": "Enterprise value (EV)",
       "equity": "Equity value",
       "wacc": "WACC",
+      "pvSplit": "PV split (explicit/terminal)",
       "comps": "Comparable range (if set)",
       "compsMin": "Min",
       "compsMedian": "Median",
       "compsMax": "Max",
       "compsEmpty": "Configure comps in Assumptions"
+    },
+    "advisory": {
+      "title": "Valuation advisory",
+      "generate": "Generate",
+      "ok": "Advisory generated",
+      "failed": "Failed to generate advisory",
+      "empty": "Generate advisory to see recommended actions.",
+      "approvalGate": "Generate advisory requires APPROVED valuation.",
+      "convert": "Create initiative",
+      "convertOk": "Initiative created",
+      "convertFailed": "Failed to create initiative"
+    },
+    "negotiation": {
+      "title": "Negotiation pack",
+      "generate": "Generate",
+      "ok": "Negotiation pack generated",
+      "failed": "Failed to generate negotiation pack",
+      "empty": "Generate a pack to get pro/contra points and Q&A.",
+      "approvalGate": "Generate pack requires APPROVED valuation.",
+      "pro": "Pro",
+      "qa": "Q&A"
+    },
+    "sensitivity": {
+      "tornadoTitle": "Tornado (top drivers)"
     },
     "export": {
       "pptx": "Export PPTX",

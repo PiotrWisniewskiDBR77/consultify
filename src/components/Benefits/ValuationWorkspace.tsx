@@ -79,7 +79,7 @@ const DEFAULT_MULTIPLES: MultiplesState = {
 };
 
 export const ValuationWorkspace: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -88,9 +88,9 @@ export const ValuationWorkspace: React.FC = () => {
   const [selected, setSelected] = useState<any | null>(null);
   const [sources, setSources] = useState<SourcesPayload>({ budgets: [], financialModels: [] });
 
-  const [activeStep, setActiveStep] = useState<'source' | 'assumptions' | 'results' | 'export'>(
-    'assumptions'
-  );
+  const [activeStep, setActiveStep] = useState<
+    'source' | 'assumptions' | 'results' | 'sensitivity' | 'export'
+  >('assumptions');
   const [assumptions, setAssumptions] = useState<AssumptionsState>(DEFAULT_ASSUMPTIONS);
   const [multiples, setMultiples] = useState<MultiplesState>(DEFAULT_MULTIPLES);
 
@@ -152,12 +152,18 @@ export const ValuationWorkspace: React.FC = () => {
 
   const computed = safeJson<any>(selected?.results, {});
   const dcf = computed?.dcf;
+  const advisory = safeJson<any>(selected?.advisory, null);
+  const negotiationPack = safeJson<any>(selected?.negotiation_pack, null);
 
   const validationError = useMemo(() => {
     if (assumptions.terminalMethod === 'gordon') {
       const w = safeNumber(assumptions.waccPercent, 0);
       const g = safeNumber(assumptions.terminalGrowthPercent, 0);
-      if (!(g < w)) return t('valuation.validation.gLessThanWacc', 'Terminal growth must be lower than WACC (g < WACC)');
+      if (!(g < w))
+        return t(
+          'valuation.validation.gLessThanWacc',
+          'Terminal growth must be lower than WACC (g < WACC)'
+        );
     }
     return null;
   }, [assumptions.terminalGrowthPercent, assumptions.terminalMethod, assumptions.waccPercent, t]);
@@ -212,7 +218,9 @@ export const ValuationWorkspace: React.FC = () => {
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) {
-        toast.error(d?.error || t('valuation.assumptions.saveFailed', 'Failed to save assumptions'));
+        toast.error(
+          d?.error || t('valuation.assumptions.saveFailed', 'Failed to save assumptions')
+        );
         return;
       }
       trackFunnelEvent('valuation_assumption_updated', { valuationId: selectedId });
@@ -292,7 +300,11 @@ export const ValuationWorkspace: React.FC = () => {
       const res = await fetch(`${API_URL}/economics/valuations/${selectedId}/export/pptx`, {
         method: 'POST',
         headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language: 'en', theme: 'corporate', confidentiality: 'confidential' }),
+        body: JSON.stringify({
+          language: i18n.language?.toLowerCase().startsWith('pl') ? 'pl' : 'en',
+          theme: 'corporate',
+          confidentiality: 'confidential',
+        }),
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -305,14 +317,90 @@ export const ValuationWorkspace: React.FC = () => {
     } finally {
       setBusy(false);
     }
-  }, [selectedId, t]);
+  }, [i18n.language, selectedId, t]);
+
+  const handleGenerateAdvisory = useCallback(async () => {
+    if (!selectedId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`${API_URL}/economics/valuations/${selectedId}/advisory`, {
+        method: 'POST',
+        headers: getHeaders(),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(d?.error || t('valuation.advisory.failed', 'Failed to generate advisory'));
+        return;
+      }
+      trackFunnelEvent('valuation_advisory_generated', { valuationId: selectedId });
+      toast.success(t('valuation.advisory.ok', 'Advisory generated'));
+      await fetchValuation(selectedId);
+    } finally {
+      setBusy(false);
+    }
+  }, [fetchValuation, selectedId, t]);
+
+  const handleGenerateNegotiationPack = useCallback(async () => {
+    if (!selectedId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`${API_URL}/economics/valuations/${selectedId}/negotiation-pack`, {
+        method: 'POST',
+        headers: getHeaders(),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(
+          d?.error || t('valuation.negotiation.failed', 'Failed to generate negotiation pack')
+        );
+        return;
+      }
+      trackFunnelEvent('valuation_negotiation_pack_generated', { valuationId: selectedId });
+      toast.success(t('valuation.negotiation.ok', 'Negotiation pack generated'));
+      await fetchValuation(selectedId);
+    } finally {
+      setBusy(false);
+    }
+  }, [fetchValuation, selectedId, t]);
+
+  const handleConvertRecommendation = useCallback(
+    async (recommendationId: string) => {
+      if (!selectedId) return;
+      setBusy(true);
+      try {
+        const res = await fetch(
+          `${API_URL}/economics/valuations/${selectedId}/advisory/${recommendationId}/convert-to-initiative`,
+          { method: 'POST', headers: getHeaders() }
+        );
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          toast.error(
+            d?.error || t('valuation.advisory.convertFailed', 'Failed to create initiative')
+          );
+          return;
+        }
+        trackFunnelEvent('valuation_advisory_recommendation_converted', {
+          valuationId: selectedId,
+          initiativeId: d?.initiativeId,
+        });
+        toast.success(t('valuation.advisory.convertOk', 'Initiative created'));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [selectedId, t]
+  );
 
   return (
     <div className="p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('valuation.title', 'Enterprise valuation')}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t('valuation.subtitle', 'DCF + comps + sensitivity, deck-ready export')}</p>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('valuation.title', 'Enterprise valuation')}
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('valuation.subtitle', 'DCF + comps + sensitivity, deck-ready export')}
+          </p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -325,12 +413,16 @@ export const ValuationWorkspace: React.FC = () => {
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">{t('valuation.list.title', 'Valuations')}</div>
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+              {t('valuation.list.title', 'Valuations')}
+            </div>
             {loading && <Loader2 className="w-4 h-4 animate-spin text-slate-400" />}
           </div>
           <div className="max-h-[520px] overflow-auto divide-y divide-slate-100 dark:divide-navy-800">
             {valuations.length === 0 ? (
-              <div className="p-4 text-sm text-slate-500 dark:text-slate-400">{t('valuation.list.empty', 'No valuations yet. Create one to start.')}</div>
+              <div className="p-4 text-sm text-slate-500 dark:text-slate-400">
+                {t('valuation.list.empty', 'No valuations yet. Create one to start.')}
+              </div>
             ) : (
               valuations.map((v) => (
                 <button
@@ -346,7 +438,9 @@ export const ValuationWorkspace: React.FC = () => {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white">{v.title}</div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {v.title}
+                      </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         {t('valuation.list.source', 'Source')}: {v.sourceType} • {v.status}
                       </div>
@@ -367,9 +461,12 @@ export const ValuationWorkspace: React.FC = () => {
             <>
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">{selected.title}</div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {selected.title}
+                  </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {t('valuation.detail.status', 'Status')}: {selected.status} • {t('valuation.detail.currency', 'Currency')}: {selected.currency}
+                    {t('valuation.detail.status', 'Status')}: {selected.status} •{' '}
+                    {t('valuation.detail.currency', 'Currency')}: {selected.currency}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -393,25 +490,30 @@ export const ValuationWorkspace: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2 border-b border-slate-200 dark:border-navy-700 pb-3 mb-4">
-                {(['source', 'assumptions', 'results', 'export'] as const).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setActiveStep(s)}
-                    className={[
-                      'px-3 py-1.5 rounded-lg text-sm border transition',
-                      activeStep === s
-                        ? 'bg-purple-600 text-white border-purple-600'
-                        : 'bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800',
-                    ].join(' ')}
-                  >
-                    {t(`valuation.steps.${s}` as any, s)}
-                  </button>
-                ))}
+                {(['source', 'assumptions', 'results', 'sensitivity', 'export'] as const).map(
+                  (s) => (
+                    <button
+                      key={s}
+                      onClick={() => setActiveStep(s)}
+                      className={[
+                        'px-3 py-1.5 rounded-lg text-sm border transition',
+                        activeStep === s
+                          ? 'bg-purple-600 text-white border-purple-600'
+                          : 'bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800',
+                      ].join(' ')}
+                    >
+                      {t(`valuation.steps.${s}` as any, s)}
+                    </button>
+                  )
+                )}
               </div>
 
               {activeStep === 'source' && (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {t('valuation.source.note', 'Source is set at creation (Budget or Manual for this branch).')}
+                  {t(
+                    'valuation.source.note',
+                    'Source is set at creation (Budget or Manual for this branch).'
+                  )}
                 </div>
               )}
 
@@ -430,19 +532,33 @@ export const ValuationWorkspace: React.FC = () => {
                       </div>
                       <div className="space-y-3">
                         <div>
-                          <label className="text-xs text-slate-500">{t('valuation.assumptions.wacc', 'WACC (%)')}</label>
+                          <label className="text-xs text-slate-500">
+                            {t('valuation.assumptions.wacc', 'WACC (%)')}
+                          </label>
                           <input
                             type="number"
                             value={assumptions.waccPercent}
-                            onChange={(e) => setAssumptions((p) => ({ ...p, waccPercent: safeNumber(e.target.value, p.waccPercent) }))}
+                            onChange={(e) =>
+                              setAssumptions((p) => ({
+                                ...p,
+                                waccPercent: safeNumber(e.target.value, p.waccPercent),
+                              }))
+                            }
                             className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
                           />
                         </div>
                         <div>
-                          <label className="text-xs text-slate-500">{t('valuation.assumptions.terminalMethod', 'Terminal method')}</label>
+                          <label className="text-xs text-slate-500">
+                            {t('valuation.assumptions.terminalMethod', 'Terminal method')}
+                          </label>
                           <select
                             value={assumptions.terminalMethod}
-                            onChange={(e) => setAssumptions((p) => ({ ...p, terminalMethod: e.target.value as TerminalMethod }))}
+                            onChange={(e) =>
+                              setAssumptions((p) => ({
+                                ...p,
+                                terminalMethod: e.target.value as TerminalMethod,
+                              }))
+                            }
                             className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
                           >
                             <option value="gordon">Gordon growth</option>
@@ -451,30 +567,54 @@ export const ValuationWorkspace: React.FC = () => {
                         </div>
                         {assumptions.terminalMethod === 'gordon' ? (
                           <div>
-                            <label className="text-xs text-slate-500">{t('valuation.assumptions.g', 'Terminal growth g (%)')}</label>
+                            <label className="text-xs text-slate-500">
+                              {t('valuation.assumptions.g', 'Terminal growth g (%)')}
+                            </label>
                             <input
                               type="number"
                               value={assumptions.terminalGrowthPercent ?? 0}
-                              onChange={(e) => setAssumptions((p) => ({ ...p, terminalGrowthPercent: safeNumber(e.target.value, p.terminalGrowthPercent ?? 0) }))}
+                              onChange={(e) =>
+                                setAssumptions((p) => ({
+                                  ...p,
+                                  terminalGrowthPercent: safeNumber(
+                                    e.target.value,
+                                    p.terminalGrowthPercent ?? 0
+                                  ),
+                                }))
+                              }
                               className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
                             />
                           </div>
                         ) : (
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label className="text-xs text-slate-500">{t('valuation.assumptions.exitMultiple', 'Exit multiple')}</label>
+                              <label className="text-xs text-slate-500">
+                                {t('valuation.assumptions.exitMultiple', 'Exit multiple')}
+                              </label>
                               <input
                                 type="number"
                                 value={assumptions.exitMultiple ?? 0}
-                                onChange={(e) => setAssumptions((p) => ({ ...p, exitMultiple: safeNumber(e.target.value, p.exitMultiple ?? 0) }))}
+                                onChange={(e) =>
+                                  setAssumptions((p) => ({
+                                    ...p,
+                                    exitMultiple: safeNumber(e.target.value, p.exitMultiple ?? 0),
+                                  }))
+                                }
                                 className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
                               />
                             </div>
                             <div>
-                              <label className="text-xs text-slate-500">{t('valuation.assumptions.exitMetric', 'Metric')}</label>
+                              <label className="text-xs text-slate-500">
+                                {t('valuation.assumptions.exitMetric', 'Metric')}
+                              </label>
                               <select
                                 value={assumptions.exitMultipleMetric || 'EV/EBITDA'}
-                                onChange={(e) => setAssumptions((p) => ({ ...p, exitMultipleMetric: e.target.value as ExitMultipleMetric }))}
+                                onChange={(e) =>
+                                  setAssumptions((p) => ({
+                                    ...p,
+                                    exitMultipleMetric: e.target.value as ExitMultipleMetric,
+                                  }))
+                                }
                                 className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
                               >
                                 <option value="EV/EBITDA">EV/EBITDA</option>
@@ -500,24 +640,75 @@ export const ValuationWorkspace: React.FC = () => {
                       <div className="space-y-3">
                         <div className="grid grid-cols-3 gap-3">
                           <div>
-                            <label className="text-xs text-slate-500">{t('valuation.comps.min', 'Min')}</label>
-                            <input type="number" value={multiples.min} onChange={(e) => setMultiples((p) => ({ ...p, min: safeNumber(e.target.value, p.min) }))} className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white" />
+                            <label className="text-xs text-slate-500">
+                              {t('valuation.comps.min', 'Min')}
+                            </label>
+                            <input
+                              type="number"
+                              value={multiples.min}
+                              onChange={(e) =>
+                                setMultiples((p) => ({
+                                  ...p,
+                                  min: safeNumber(e.target.value, p.min),
+                                }))
+                              }
+                              className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+                            />
                           </div>
                           <div>
-                            <label className="text-xs text-slate-500">{t('valuation.comps.median', 'Median')}</label>
-                            <input type="number" value={multiples.median} onChange={(e) => setMultiples((p) => ({ ...p, median: safeNumber(e.target.value, p.median) }))} className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white" />
+                            <label className="text-xs text-slate-500">
+                              {t('valuation.comps.median', 'Median')}
+                            </label>
+                            <input
+                              type="number"
+                              value={multiples.median}
+                              onChange={(e) =>
+                                setMultiples((p) => ({
+                                  ...p,
+                                  median: safeNumber(e.target.value, p.median),
+                                }))
+                              }
+                              className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+                            />
                           </div>
                           <div>
-                            <label className="text-xs text-slate-500">{t('valuation.comps.max', 'Max')}</label>
-                            <input type="number" value={multiples.max} onChange={(e) => setMultiples((p) => ({ ...p, max: safeNumber(e.target.value, p.max) }))} className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white" />
+                            <label className="text-xs text-slate-500">
+                              {t('valuation.comps.max', 'Max')}
+                            </label>
+                            <input
+                              type="number"
+                              value={multiples.max}
+                              onChange={(e) =>
+                                setMultiples((p) => ({
+                                  ...p,
+                                  max: safeNumber(e.target.value, p.max),
+                                }))
+                              }
+                              className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+                            />
                           </div>
                         </div>
                         <div>
-                          <label className="text-xs text-slate-500">{t('valuation.comps.peers', 'Peers (comma-separated)')}</label>
+                          <label className="text-xs text-slate-500">
+                            {t('valuation.comps.peers', 'Peers (comma-separated)')}
+                          </label>
                           <input
                             value={multiples.peerSet.map((p) => p.name).join(', ')}
-                            onChange={(e) => setMultiples((p) => ({ ...p, peerSet: e.target.value.split(',').map((x) => x.trim()).filter(Boolean).slice(0, 20).map((name) => ({ name })) }))}
-                            placeholder={t('valuation.comps.peersPlaceholder', 'e.g., Company A, Company B')}
+                            onChange={(e) =>
+                              setMultiples((p) => ({
+                                ...p,
+                                peerSet: e.target.value
+                                  .split(',')
+                                  .map((x) => x.trim())
+                                  .filter(Boolean)
+                                  .slice(0, 20)
+                                  .map((name) => ({ name })),
+                              }))
+                            }
+                            placeholder={t(
+                              'valuation.comps.peersPlaceholder',
+                              'e.g., Company A, Company B'
+                            )}
                             className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
                           />
                         </div>
@@ -537,27 +728,243 @@ export const ValuationWorkspace: React.FC = () => {
               {activeStep === 'results' && (
                 <div className="space-y-4">
                   {!dcf ? (
-                    <div className="text-sm text-slate-500 dark:text-slate-400">{t('valuation.results.empty', 'Compute the valuation to see results')}</div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                      {t('valuation.results.empty', 'Compute the valuation to see results')}
+                    </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-                        <div className="text-sm font-semibold text-slate-900 dark:text-white mb-2">{t('valuation.results.summary', 'Valuation summary')}</div>
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                          {t('valuation.results.summary', 'Valuation summary')}
+                        </div>
                         <div className="space-y-2 text-sm">
-                          <div className="flex justify-between"><span className="text-slate-500">{t('valuation.results.ev', 'Enterprise value (EV)')}</span><span className="font-mono text-slate-900 dark:text-white">{dcf.enterpriseValue}</span></div>
-                          <div className="flex justify-between"><span className="text-slate-500">{t('valuation.results.equity', 'Equity value')}</span><span className="font-mono text-slate-900 dark:text-white">{dcf.equityValue}</span></div>
-                          <div className="flex justify-between"><span className="text-slate-500">{t('valuation.results.wacc', 'WACC')}</span><span className="font-mono text-slate-900 dark:text-white">{dcf.discountRatePercent}%</span></div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">
+                              {t('valuation.results.ev', 'Enterprise value (EV)')}
+                            </span>
+                            <span className="font-mono text-slate-900 dark:text-white">
+                              {dcf.enterpriseValue}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">
+                              {t('valuation.results.equity', 'Equity value')}
+                            </span>
+                            <span className="font-mono text-slate-900 dark:text-white">
+                              {dcf.equityValue}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">
+                              {t('valuation.results.wacc', 'WACC')}
+                            </span>
+                            <span className="font-mono text-slate-900 dark:text-white">
+                              {dcf.discountRatePercent}%
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">
+                              {t('valuation.results.pvSplit', 'PV split (explicit/terminal)')}
+                            </span>
+                            <span className="font-mono text-slate-900 dark:text-white">
+                              {dcf.pvExplicit} / {dcf.pvTerminal}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-                        <div className="text-sm font-semibold text-slate-900 dark:text-white mb-2">{t('valuation.results.comps', 'Comparable range (if set)')}</div>
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                          {t('valuation.results.comps', 'Comparable range (if set)')}
+                        </div>
                         {computed?.comps?.impliedEnterpriseValue ? (
                           <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span className="text-slate-500">{t('valuation.results.compsMin', 'Min')}</span><span className="font-mono text-slate-900 dark:text-white">{computed.comps.impliedEnterpriseValue.min}</span></div>
-                            <div className="flex justify-between"><span className="text-slate-500">{t('valuation.results.compsMedian', 'Median')}</span><span className="font-mono text-slate-900 dark:text-white">{computed.comps.impliedEnterpriseValue.median}</span></div>
-                            <div className="flex justify-between"><span className="text-slate-500">{t('valuation.results.compsMax', 'Max')}</span><span className="font-mono text-slate-900 dark:text-white">{computed.comps.impliedEnterpriseValue.max}</span></div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">
+                                {t('valuation.results.compsMin', 'Min')}
+                              </span>
+                              <span className="font-mono text-slate-900 dark:text-white">
+                                {computed.comps.impliedEnterpriseValue.min}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">
+                                {t('valuation.results.compsMedian', 'Median')}
+                              </span>
+                              <span className="font-mono text-slate-900 dark:text-white">
+                                {computed.comps.impliedEnterpriseValue.median}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">
+                                {t('valuation.results.compsMax', 'Max')}
+                              </span>
+                              <span className="font-mono text-slate-900 dark:text-white">
+                                {computed.comps.impliedEnterpriseValue.max}
+                              </span>
+                            </div>
                           </div>
                         ) : (
-                          <div className="text-sm text-slate-500 dark:text-slate-400">{t('valuation.results.compsEmpty', 'Configure comps in Assumptions')}</div>
+                          <div className="text-sm text-slate-500 dark:text-slate-400">
+                            {t('valuation.results.compsEmpty', 'Configure comps in Assumptions')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                          {t('valuation.advisory.title', 'Valuation advisory')}
+                        </div>
+                        <button
+                          disabled={busy || selected?.status !== 'APPROVED'}
+                          onClick={handleGenerateAdvisory}
+                          className="px-3 py-1.5 rounded-lg text-xs bg-purple-600 text-white hover:bg-purple-500 disabled:opacity-60"
+                        >
+                          {t('valuation.advisory.generate', 'Generate')}
+                        </button>
+                      </div>
+                      {selected?.status !== 'APPROVED' ? (
+                        <div className="text-sm text-slate-500 dark:text-slate-400">
+                          {t(
+                            'valuation.advisory.approvalGate',
+                            'Generate advisory requires APPROVED valuation.'
+                          )}
+                        </div>
+                      ) : !advisory?.recommendations?.length ? (
+                        <div className="text-sm text-slate-500 dark:text-slate-400">
+                          {t(
+                            'valuation.advisory.empty',
+                            'Generate advisory to see recommended actions.'
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {advisory.recommendations.slice(0, 6).map((r: any) => (
+                            <div
+                              key={r.id}
+                              className="p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700"
+                            >
+                              <div className="text-sm font-medium text-slate-900 dark:text-white">
+                                {r.title}
+                              </div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                {r.category} • {r.impactTier} • {r.effort}
+                              </div>
+                              <div className="text-xs text-slate-600 dark:text-slate-300 mt-2 line-clamp-3">
+                                {r.mechanism || r.hypothesis}
+                              </div>
+                              <button
+                                disabled={busy}
+                                onClick={() => handleConvertRecommendation(String(r.id))}
+                                className="mt-2 inline-flex items-center gap-2 text-xs text-purple-700 dark:text-purple-300 hover:underline"
+                              >
+                                <CheckCircle2 size={14} />
+                                {t('valuation.advisory.convert', 'Create initiative')}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                          {t('valuation.negotiation.title', 'Negotiation pack')}
+                        </div>
+                        <button
+                          disabled={busy || selected?.status !== 'APPROVED'}
+                          onClick={handleGenerateNegotiationPack}
+                          className="px-3 py-1.5 rounded-lg text-xs bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60"
+                        >
+                          {t('valuation.negotiation.generate', 'Generate')}
+                        </button>
+                      </div>
+                      {selected?.status !== 'APPROVED' ? (
+                        <div className="text-sm text-slate-500 dark:text-slate-400">
+                          {t(
+                            'valuation.negotiation.approvalGate',
+                            'Generate pack requires APPROVED valuation.'
+                          )}
+                        </div>
+                      ) : !negotiationPack ? (
+                        <div className="text-sm text-slate-500 dark:text-slate-400">
+                          {t(
+                            'valuation.negotiation.empty',
+                            'Generate a pack to get pro/contra points and Q&A.'
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div>
+                            <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                              {t('valuation.negotiation.pro', 'Pro')}
+                            </div>
+                            <ul className="list-disc pl-5 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                              {(negotiationPack.proPoints || [])
+                                .slice(0, 4)
+                                .map((p: any, idx: number) => (
+                                  <li key={idx}>{p.oneLiner || p.title}</li>
+                                ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                              {t('valuation.negotiation.qa', 'Q&A')}
+                            </div>
+                            <ul className="list-disc pl-5 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                              {(negotiationPack.qa || []).slice(0, 3).map((q: any, idx: number) => (
+                                <li key={idx}>{q.question}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeStep === 'sensitivity' && (
+                <div className="space-y-4">
+                  {!computed?.sensitivity && !computed?.tornado ? (
+                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                      {t('valuation.results.empty', 'Compute the valuation to see results')}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                          {t('valuation.steps.sensitivity', 'Sensitivity')}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {computed?.sensitivity?.kind || '—'}
+                        </div>
+                        {Array.isArray(computed?.sensitivity?.waccGrid) && (
+                          <div className="mt-3 text-xs text-slate-600 dark:text-slate-300">
+                            WACC grid:{' '}
+                            {(computed.sensitivity.waccGrid as any[]).slice(0, 5).join(', ')}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                          {t('valuation.sensitivity.tornadoTitle', 'Tornado (top drivers)')}
+                        </div>
+                        {Array.isArray(computed?.tornado) && computed.tornado.length ? (
+                          <ul className="list-disc pl-5 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                            {computed.tornado.slice(0, 8).map((d: any, idx: number) => (
+                              <li key={idx}>
+                                {String(d?.driver || 'Driver')}: {String(d?.swing ?? '—')}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="text-sm text-slate-500 dark:text-slate-400">—</div>
                         )}
                       </div>
                     </div>
@@ -568,7 +975,10 @@ export const ValuationWorkspace: React.FC = () => {
               {activeStep === 'export' && (
                 <div className="space-y-3">
                   <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {t('valuation.export.approvalGate', 'Export requires APPROVED valuation and includes disclaimers.')}
+                    {t(
+                      'valuation.export.approvalGate',
+                      'Export requires APPROVED valuation and includes disclaimers.'
+                    )}
                   </div>
                   <button
                     disabled={busy}
@@ -589,42 +999,103 @@ export const ValuationWorkspace: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-lg">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('valuation.create.title', 'New valuation')}</h2>
-              <button onClick={() => setShowCreate(false)} className="text-slate-400 hover:text-slate-600">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {t('valuation.create.title', 'New valuation')}
+              </h2>
+              <button
+                onClick={() => setShowCreate(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X size={18} />
               </button>
             </div>
             <div className="space-y-3 mb-4">
-              <input value={createTitle} onChange={(e) => setCreateTitle(e.target.value)} placeholder={t('valuation.create.titlePlaceholder', 'e.g., Fundraising valuation — base case')} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm" />
+              <input
+                value={createTitle}
+                onChange={(e) => setCreateTitle(e.target.value)}
+                placeholder={t(
+                  'valuation.create.titlePlaceholder',
+                  'e.g., Fundraising valuation — base case'
+                )}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
+              />
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-500 mb-1 block">{t('valuation.create.sourceType', 'Source type')}</label>
-                  <select value={createSourceType} onChange={(e) => { setCreateSourceType(e.target.value as ValuationSourceType); setCreateSourceId(''); }} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm">
-                    <option value="budget">{t('valuation.create.source.budget', 'Approved budget (T053)')}</option>
-                    <option value="manual">{t('valuation.create.source.manual', 'Manual forecast')}</option>
-                    <option value="financial_model" disabled>{t('valuation.create.source.financialModel', 'Approved financial model (T054)')}</option>
+                  <label className="text-xs text-slate-500 mb-1 block">
+                    {t('valuation.create.sourceType', 'Source type')}
+                  </label>
+                  <select
+                    value={createSourceType}
+                    onChange={(e) => {
+                      setCreateSourceType(e.target.value as ValuationSourceType);
+                      setCreateSourceId('');
+                    }}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
+                  >
+                    <option value="budget">
+                      {t('valuation.create.source.budget', 'Approved budget (T053)')}
+                    </option>
+                    <option value="manual">
+                      {t('valuation.create.source.manual', 'Manual forecast')}
+                    </option>
+                    <option value="financial_model" disabled>
+                      {t(
+                        'valuation.create.source.financialModel',
+                        'Approved financial model (T054)'
+                      )}
+                    </option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500 mb-1 block">{t('valuation.create.horizon', 'Horizon (years)')}</label>
-                  <input type="number" value={createHorizonYears} onChange={(e) => setCreateHorizonYears(safeNumber(e.target.value, 5))} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm" />
+                  <label className="text-xs text-slate-500 mb-1 block">
+                    {t('valuation.create.horizon', 'Horizon (years)')}
+                  </label>
+                  <input
+                    type="number"
+                    value={createHorizonYears}
+                    onChange={(e) => setCreateHorizonYears(safeNumber(e.target.value, 5))}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
+                  />
                 </div>
               </div>
               {createSourceType === 'budget' && (
                 <div>
-                  <label className="text-xs text-slate-500 mb-1 block">{t('valuation.create.sourceLabel', 'Source')}</label>
-                  <select value={createSourceId} onChange={(e) => setCreateSourceId(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm">
+                  <label className="text-xs text-slate-500 mb-1 block">
+                    {t('valuation.create.sourceLabel', 'Source')}
+                  </label>
+                  <select
+                    value={createSourceId}
+                    onChange={(e) => setCreateSourceId(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
+                  >
                     <option value="">{t('valuation.create.selectSource', 'Select...')}</option>
                     {sources.budgets.map((b) => (
-                      <option key={b.id} value={b.id}>{b.title} — {b.status}</option>
+                      <option key={b.id} value={b.id}>
+                        {b.title} — {b.status}
+                      </option>
                     ))}
                   </select>
                 </div>
               )}
             </div>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowCreate(false)} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700">{t('valuation.create.cancel', 'Cancel')}</button>
-              <button disabled={busy} onClick={handleCreate} className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-500 disabled:opacity-60">{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : t('valuation.create.create', 'Create')}</button>
+              <button
+                onClick={() => setShowCreate(false)}
+                className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700"
+              >
+                {t('valuation.create.cancel', 'Cancel')}
+              </button>
+              <button
+                disabled={busy}
+                onClick={handleCreate}
+                className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-500 disabled:opacity-60"
+              >
+                {busy ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  t('valuation.create.create', 'Create')
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -634,4 +1105,3 @@ export const ValuationWorkspace: React.FC = () => {
 };
 
 export default ValuationWorkspace;
-

@@ -3196,11 +3196,36 @@
       "ev": "Wartość przedsiębiorstwa (EV)",
       "equity": "Wartość kapitału (Equity)",
       "wacc": "WACC",
+      "pvSplit": "Podział PV (jawny/terminal)",
       "comps": "Zakres porównawczy (jeśli ustawiono)",
       "compsMin": "Min",
       "compsMedian": "Mediana",
       "compsMax": "Max",
       "compsEmpty": "Skonfiguruj comps w Założeniach"
+    },
+    "advisory": {
+      "title": "Rekomendacje poprawy wyceny",
+      "generate": "Generuj",
+      "ok": "Wygenerowano rekomendacje",
+      "failed": "Nie udało się wygenerować rekomendacji",
+      "empty": "Wygeneruj rekomendacje, aby zobaczyć działania.",
+      "approvalGate": "Rekomendacje wymagają statusu APPROVED.",
+      "convert": "Utwórz inicjatywę",
+      "convertOk": "Utworzono inicjatywę",
+      "convertFailed": "Nie udało się utworzyć inicjatywy"
+    },
+    "negotiation": {
+      "title": "Pakiet negocjacyjny",
+      "generate": "Generuj",
+      "ok": "Wygenerowano pakiet",
+      "failed": "Nie udało się wygenerować pakietu",
+      "empty": "Wygeneruj pakiet, aby dostać pro/contra i Q&A.",
+      "approvalGate": "Pakiet wymaga statusu APPROVED.",
+      "pro": "Pro",
+      "qa": "Q&A"
+    },
+    "sensitivity": {
+      "tornadoTitle": "Tornado (główne drivery)"
     },
     "export": {
       "pptx": "Eksport PPTX",

@@ -1679,14 +1679,17 @@ router.get('/valuations/:id/export/pptx/download', verifyToken, asyncHandler(asy
   const row = await dbGet<any>(`SELECT title, export_path FROM valuations WHERE id = ? AND organization_id = ?`, [req.params.id, orgId]);
   if (!row?.export_path) return res.status(404).json({ error: 'Export not available' });
 
-  const exportPath = String(row.export_path);
-  if (!fs.existsSync(exportPath)) return res.status(404).json({ error: 'File not found' });
+  const exportPathRaw = String(row.export_path);
+  const exportPathFs = exportPathRaw.startsWith('/exports/')
+    ? path.resolve(process.cwd(), exportPathRaw.replace(/^\//, ''))
+    : path.resolve(exportPathRaw);
+  if (!fs.existsSync(exportPathFs)) return res.status(404).json({ error: 'File not found' });
 
   const safeName = String(row.title || 'valuation').replace(/[^a-zA-Z0-9-_ ]/g, '').trim() || 'valuation';
   const filename = `${safeName}.pptx`;
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-  return res.sendFile(path.resolve(exportPath));
+  return res.sendFile(exportPathFs);
 }));
 /* T053 Budgeting */
 router.post('/budgets', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; const userId = req.user?.id || (req.user as any)?.user_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); const budget = await budgetingSvc.createBudget(orgId, req.body, userId); return res.status(201).json({ success: true, budget }); }));
