@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Globe,
   GraduationCap,
+  LineChart,
   MessageSquare,
   Pen,
   Search,
@@ -188,11 +189,11 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   }, []);
 
   // Use global store values
-  const { deepResearch, webSearch, showReasoning, responseStyle, textToSpeech, ttsRate, ttsVoice } =
-    aiConfig;
+  const { deepResearch, webSearch, showReasoning, responseStyle, textToSpeech, ttsRate, ttsVoice, marketResearch, coThinkerMode } =
+    aiConfig as any;
 
   // Count active modes for badge
-  const activeModeCount = [deepResearch, webSearch, showReasoning, textToSpeech].filter(
+  const activeModeCount = [deepResearch, webSearch, showReasoning, textToSpeech, marketResearch].filter(
     Boolean
   ).length;
 
@@ -218,6 +219,13 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       labelKey: 'aiChat.menu.modes.showReasoning.label',
       descKey: 'aiChat.menu.modes.showReasoning.desc',
       enabled: showReasoning,
+    },
+    {
+      id: 'marketResearch',
+      icon: LineChart,
+      labelKey: 'aiChat.menu.modes.marketResearch.label',
+      descKey: 'aiChat.menu.modes.marketResearch.desc',
+      enabled: marketResearch ?? false,
     },
     {
       id: 'multiAgent',
@@ -363,6 +371,48 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
               </button>
             );
           })}
+
+          {/* Co-Thinker Section */}
+          <div className="my-2 border-t border-slate-200 dark:border-navy-700" />
+          <div className="px-3 py-2">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {t('chat.coThinker.title', 'Co-Thinker')}
+            </span>
+          </div>
+          <div className="px-3 pb-2 flex flex-wrap gap-1.5">
+            {[
+              { id: 'strategist', label: t('chat.coThinker.strategist', 'Strategist'), icon: '🎯' },
+              { id: 'devil_advocate', label: t('chat.coThinker.devilAdvocate', "Devil's Advocate"), icon: '😈' },
+              { id: 'coach', label: t('chat.coThinker.coach', 'Coach'), icon: '🏋️' },
+              { id: 'analyst', label: t('chat.coThinker.analyst', 'Analyst'), icon: '📊' },
+              { id: 'innovator', label: t('chat.coThinker.innovator', 'Innovator'), icon: '💡' },
+            ].map((mode) => {
+              const isActive = coThinkerMode === mode.id;
+              return (
+                <button
+                  key={mode.id}
+                  onClick={() => {
+                    const newMode = isActive ? null : mode.id;
+                    setAIConfig({ coThinkerMode: newMode } as any);
+                    if (newMode) {
+                      toast.success(t('chat.coThinker.activated', 'Co-Thinker: {{mode}}', { mode: mode.label }), { duration: 2000, icon: mode.icon });
+                    } else {
+                      toast.success(t('chat.coThinker.deactivated', 'Co-Thinker disabled'), { duration: 1500 });
+                    }
+                    onToolSelect(`cothinker:${newMode || 'off'}`);
+                  }}
+                  className={`px-2.5 py-1.5 text-xs rounded-lg border transition-colors flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400 font-medium'
+                      : 'bg-slate-50 dark:bg-navy-700 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-600'
+                  }`}
+                >
+                  <span>{mode.icon}</span>
+                  <span>{mode.label}</span>
+                </button>
+              );
+            })}
+          </div>
 
           {/* Divider */}
           <div className="my-2 border-t border-slate-200 dark:border-navy-700" />

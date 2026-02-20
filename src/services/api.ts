@@ -1167,6 +1167,8 @@ export const Api = {
       webSearch?: boolean;
       showReasoning?: boolean;
       multiAgent?: boolean;
+      marketResearch?: boolean;
+      coThinkerMode?: string | null;
       knowledgeSources?: {
         pmoDocuments?: boolean;
         projectData?: boolean;
@@ -1185,6 +1187,8 @@ export const Api = {
         webSearch: options?.webSearch ?? false,
         showReasoning: options?.showReasoning ?? false,
         multiAgent: options?.multiAgent ?? false,
+        marketResearch: options?.marketResearch ?? false,
+        coThinkerMode: options?.coThinkerMode ?? null,
       };
 
       const knowledgeSources = {

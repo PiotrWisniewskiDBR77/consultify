@@ -115,6 +115,7 @@ export { default as statusRoutes } from './status.routes.js';
 export { default as statusReportsRoutes } from './status-reports.routes.js';
 export { default as studioRoutes } from './studio.routes.js';
 export { default as superAdminRoutes } from './superadmin.routes.js';
+export { default as cloudRoutes } from './cloud.routes.js';
 export { default as systemConfigRoutes } from './systemConfig.routes.js';
 export { default as systemHealthRoutes } from './systemHealth.routes.js';
 export { default as taskAdvisorRoutes } from './task-advisor.routes.js';

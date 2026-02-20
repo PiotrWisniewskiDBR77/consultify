@@ -2160,6 +2160,46 @@
     "project": "Projekt",
     "focus": "Fokus"
   },
+  "cloud": {
+    "title": "Źródła danych w chmurze",
+    "description": "Połącz magazyn chmurowy, aby importować dokumenty do analizy AI.",
+    "addSource": "Dodaj źródło",
+    "provider": "Dostawca",
+    "sourceName": "Nazwa",
+    "sourceNamePlaceholder": "np. Dysk firmowy",
+    "connect": "Połącz",
+    "disconnect": "Odłącz",
+    "noSources": "Brak połączonych źródeł chmurowych.",
+    "sourceConnected": "Źródło chmurowe połączone",
+    "sourceDisconnected": "Źródło chmurowe odłączone",
+    "connectFailed": "Nie udało się połączyć źródła",
+    "disconnectFailed": "Nie udało się odłączyć",
+    "openInProvider": "Otwórz u dostawcy"
+  },
+  "chat": {
+    "coThinker": {
+      "title": "Co-Thinker",
+      "strategist": "Strateg",
+      "devilAdvocate": "Adwokat diabła",
+      "coach": "Coach",
+      "analyst": "Analityk",
+      "innovator": "Innowator",
+      "activated": "Co-Thinker: {{mode}}",
+      "deactivated": "Co-Thinker wyłączony"
+    },
+    "deepThinking": {
+      "title": "Głębokie myślenie",
+      "started": "Głębokie myślenie rozpoczęte",
+      "reportGenerated": "Raport wygenerowany",
+      "exported": "Raport wyeksportowany"
+    },
+    "marketResearch": {
+      "title": "Badanie rynku",
+      "started": "Badanie rynku rozpoczęte",
+      "reportGenerated": "Raport rynkowy wygenerowany",
+      "exported": "Raport rynkowy wyeksportowany"
+    }
+  },
   "aiChat": {
     "language": "Język rozmowy",
     "chatMenuTitle": "Menu",
@@ -2287,6 +2327,10 @@
         "textToSpeech": {
           "label": "Czytaj odpowiedzi",
           "desc": "Automatyczne czytanie na głos"
+        },
+        "marketResearch": {
+          "label": "Badanie rynku",
+          "desc": "Strukturalna analiza rynkowa z danymi"
         }
       },
       "sources": {
@@ -2669,6 +2713,44 @@
       "coreAgreements": "Podstawowe umowy",
       "businessBilling": "Biznes i rozliczenia",
       "securityCompliance": "Bezpieczeństwo i zgodność"
+    }
+  },
+  "externalAssessment": {
+    "mini": {
+      "title": "Mini ankieta",
+      "progress": "Postęp",
+      "submit": "Pokaż wynik",
+      "resultTitle": "Twoje podsumowanie",
+      "insights": "Wnioski",
+      "ctaDefault": "Kontynuuj",
+      "restart": "Zacznij od nowa",
+      "notFound": "Nie znaleziono linku",
+      "notFoundHint": "Sprawdź poprawność linku i spróbuj ponownie.",
+      "freeTextPlaceholder": "Wpisz odpowiedź...",
+      "q1": {
+        "text": "Która opcja najlepiej opisuje Twoją organizację?",
+        "o1": "Produkcja / przemysł",
+        "o2": "Usługi / back-office",
+        "o3": "Inne"
+      },
+      "q2": "Jak oceniasz jakość i dostępność danych dziś? (1-5)",
+      "q3": {
+        "text": "Które obszary są najwyższym priorytetem na najbliższe 6 miesięcy? (możesz wybrać kilka)",
+        "o1": "Dane i raportowanie",
+        "o2": "Wydajność procesów",
+        "o3": "Systemy IT i integracje",
+        "o4": "Ludzie i zmiana"
+      },
+      "q4": "Czy korzystacie obecnie z rozwiązań AI na produkcji?",
+      "q5": "Na ile jasne jest ownership i governance AI? (1-5)",
+      "q6": "Jaka jest największa blokada we wdrażaniu AI?",
+      "q7": {
+        "text": "Ile lokalizacji/zakładów jest w zakresie?",
+        "o1": "0–3",
+        "o2": "4–20",
+        "o3": "21+"
+      },
+      "q8": "Jaki rezultat oznaczałby sukces w ciągu najbliższych 90 dni?"
     }
   }
 }

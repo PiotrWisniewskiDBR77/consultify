@@ -147,6 +147,7 @@ import rapidleanRoutes from './routes/rapidlean.routes.js';
 import referralRoutes from './routes/referrals.routes.js';
 import reportBuilderRoutes from './routes/report-builder.routes.js';
 import reportBuilderPublicRoutes from './routes/report-builder-public.routes.js';
+import publicMiniAssessmentRoutes from './routes/public-mini-assessment.routes.js';
 import reportCommentsRoutes from './routes/report-comments.routes.js';
 import reportImportRoutes from './routes/report-import.routes.js';
 import reportInitiativesRoutes from './routes/report-initiatives.routes.js';
@@ -169,6 +170,7 @@ import systemHealthRoutes from './routes/systemHealth.routes.js';
 import taskAdvisorRoutes from './routes/task-advisor.routes.js';
 import toolsRoutes from './routes/tools.routes.js';
 import trialRoutes from './routes/trial.routes.js';
+import cloudRoutes from './routes/cloud.routes.js';
 import loginHistoryRoutes from './routes/user/loginHistory.routes.js';
 import preferencesRoutes from './routes/user/preferences.routes.js';
 import sessionsRoutes from './routes/user/sessions.routes.js';
@@ -382,6 +384,7 @@ export class ApiGateway {
       app.use('/api/gamification', gamificationRoutes);
       app.use('/api/analytics/advanced', advancedAnalyticsRoutes);
       app.use('/api/trial', trialRoutes);
+      app.use('/api/cloud', cloudRoutes);
       app.use('/api/rbac', rbacRoutes);
       app.use('/api/branding', brandingRoutes);
       mountStub('/api/workspace-defaults', workspaceDefaultsRoutes, 'workspaceDefaultsRoutes');
@@ -480,6 +483,7 @@ export class ApiGateway {
       app.use('/api/partners', partnerRoutes);
       app.use('/api/public/partner', publicPartnerRouter); // Public partner code validation
       app.use('/api/public/report', reportBuilderPublicRoutes); // Public shared reports
+      app.use('/api/public/mini-assessment', publicMiniAssessmentRoutes); // Public mini assessment links
       app.use('/api/superadmin/partner-settlements', superAdminPartnerRouter); // SuperAdmin partner settlements
       app.use('/api/superadmin/partner-config', partnerConfigRouter); // SuperAdmin partner configuration
       mountStub('/api/settlements', settlementRoutes, 'settlementRoutes');

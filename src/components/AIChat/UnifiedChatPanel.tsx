@@ -390,7 +390,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               thinkingSteps: thinking as any,
               artifacts: artifactsForConversation,
               citations: Array.isArray(meta?.citations) ? meta?.citations : [],
-              ...(aiConfig?.deepResearch
+              ...((aiConfig?.deepResearch || (aiConfig as any)?.marketResearch)
                 ? {
                     options: [
                       { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
@@ -420,7 +420,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         timestamp: new Date(),
         thinkingSteps: thinking,
         artifacts,
-        ...(aiConfig?.deepResearch
+        ...((aiConfig?.deepResearch || (aiConfig as any)?.marketResearch)
           ? ({
               options: [
                 { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
@@ -1006,7 +1006,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const isForceDepth = forceDepthTriggers.includes(normalized);
 
       // Deep Thinking: force-depth triggers bypass Confirm (they are a quality control action)
-      if (aiConfig?.deepResearch && isForceDepth) {
+      if ((aiConfig?.deepResearch || (aiConfig as any)?.marketResearch) && isForceDepth) {
         const base = (customMessages || messages).filter(
           (m) => !((m as any).metadata?.deepThinking?.kind === 'confirm')
         );
@@ -1042,7 +1042,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       // Deep Thinking: blocking Confirm step (no streaming until user confirms)
-      if (aiConfig?.deepResearch) {
+      if (aiConfig?.deepResearch || (aiConfig as any)?.marketResearch) {
         if (dtConfirmBusy) return;
         setDtConfirmBusy(true);
         try {

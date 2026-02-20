@@ -2159,6 +2159,46 @@
     "project": "Project",
     "focus": "Focus"
   },
+  "cloud": {
+    "title": "Cloud Data Sources",
+    "description": "Connect cloud storage to import documents for AI analysis.",
+    "addSource": "Add source",
+    "provider": "Provider",
+    "sourceName": "Name",
+    "sourceNamePlaceholder": "e.g. Company Drive",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "noSources": "No cloud sources connected yet.",
+    "sourceConnected": "Cloud source connected",
+    "sourceDisconnected": "Cloud source disconnected",
+    "connectFailed": "Failed to connect cloud source",
+    "disconnectFailed": "Failed to disconnect",
+    "openInProvider": "Open in provider"
+  },
+  "chat": {
+    "coThinker": {
+      "title": "Co-Thinker",
+      "strategist": "Strategist",
+      "devilAdvocate": "Devil's Advocate",
+      "coach": "Coach",
+      "analyst": "Analyst",
+      "innovator": "Innovator",
+      "activated": "Co-Thinker: {{mode}}",
+      "deactivated": "Co-Thinker disabled"
+    },
+    "deepThinking": {
+      "title": "Deep Thinking",
+      "started": "Deep Thinking started",
+      "reportGenerated": "Report generated",
+      "exported": "Report exported"
+    },
+    "marketResearch": {
+      "title": "Market Research",
+      "started": "Market Research started",
+      "reportGenerated": "Market report generated",
+      "exported": "Market report exported"
+    }
+  },
   "aiChat": {
     "language": "Conversation language",
     "chatMenuTitle": "Menu",
@@ -2271,7 +2311,8 @@
         "webSearch": { "label": "Web search", "desc": "Real-time information" },
         "showReasoning": { "label": "Show reasoning", "desc": "Expose the AI's chain of thought" },
         "multiAgent": { "label": "Multi-agent analysis", "desc": "CFO/CTO/CHRO/COO perspectives" },
-        "textToSpeech": { "label": "Read responses", "desc": "Automatically read responses aloud" }
+        "textToSpeech": { "label": "Read responses", "desc": "Automatically read responses aloud" },
+        "marketResearch": { "label": "Market Research", "desc": "Structured market analysis with data" }
       },
       "sources": {
         "pmoDocuments": { "label": "PMO documents", "desc": "ISO 21500, PMBOK, PRINCE2" },
@@ -2651,6 +2692,44 @@
       "coreAgreements": "Core Agreements",
       "businessBilling": "Business & Billing",
       "securityCompliance": "Security & Compliance"
+    }
+  },
+  "externalAssessment": {
+    "mini": {
+      "title": "Mini assessment",
+      "progress": "Progress",
+      "submit": "Get results",
+      "resultTitle": "Your snapshot",
+      "insights": "Insights",
+      "ctaDefault": "Continue",
+      "restart": "Restart",
+      "notFound": "Link not found",
+      "notFoundHint": "Please verify the link and try again.",
+      "freeTextPlaceholder": "Type your answer...",
+      "q1": {
+        "text": "Which best describes your organization?",
+        "o1": "Manufacturing / industrial",
+        "o2": "Services / back-office",
+        "o3": "Other"
+      },
+      "q2": "How would you rate your data quality and availability today? (1-5)",
+      "q3": {
+        "text": "Which areas are your highest priority for the next 6 months? (select all that apply)",
+        "o1": "Data & reporting",
+        "o2": "Process performance",
+        "o3": "IT systems & integrations",
+        "o4": "People & change"
+      },
+      "q4": "Do you currently use any AI solutions in production?",
+      "q5": "How clear is your AI ownership and governance? (1-5)",
+      "q6": "What is the single biggest blocker to AI adoption in your organization?",
+      "q7": {
+        "text": "How many sites/locations are in scope?",
+        "o1": "0–3",
+        "o2": "4–20",
+        "o3": "21+"
+      },
+      "q8": "What outcome would make this initiative a success in the next 90 days?"
     }
   }
 }

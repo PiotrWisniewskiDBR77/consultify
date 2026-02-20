@@ -103,6 +103,8 @@ export interface DeepResearchOptions {
   iterativeDeepening?: boolean;
   /** Max follow-up queries in 2nd round. Default: 5 */
   maxFollowUpQueries?: number;
+  /** Force a specific research type instead of auto-detecting */
+  forceResearchType?: ResearchType;
   /** Organization context for personalized research */
   orgContext?: {
     industry?: string;
@@ -121,7 +123,9 @@ export type ResearchType =
   | 'technology_comparison'
   | 'industry_analysis'
   | 'company_research'
-  | 'general_research';
+  | 'general_research'
+  | 'deep_thinking'
+  | 'market_research';
 
 // ==========================================
 // DEFAULT OPTIONS
@@ -930,6 +934,96 @@ RULES:
 
 SOURCE MATERIAL:
 ${sourceMaterial}`,
+
+    deep_thinking: `You are a senior strategy consultant performing deep thinking analysis.
+
+Based on the research data below about "${topic}", create a structured decision-grade report.
+${languageInstruction}
+${orgContextBlock}
+${tavilyBlock}
+
+REQUIRED SECTIONS:
+
+## 1. Executive Summary
+Decision-ready overview (5-7 sentences).
+
+## 2. Problem Framing
+What exactly is the decision/problem? What are the constraints?
+
+## 3. Options Analysis
+For each option (2-4):
+- **Option name**: Description
+- **Pros**: Key advantages
+- **Cons**: Key disadvantages
+- **Feasibility**: High/Medium/Low
+
+## 4. Recommendation
+Clear recommendation with boundary conditions and assumptions.
+
+## 5. Risks & Blind Spots
+What could go wrong? What assumptions are we making?
+
+## 6. Next Actions
+Concrete checklist of next steps with early signals to watch.
+
+RULES:
+- No fluff. Boardroom-grade output.
+- Separate facts vs assumptions explicitly.
+- Use citation markers [1], [2], etc.
+- Be opinionated — give clear recommendations.
+
+SOURCE MATERIAL:
+${sourceMaterial}`,
+
+    market_research: `You are a senior market research analyst preparing a comprehensive market report.
+
+Based on the research data below about "${topic}", create a structured market research report.
+${languageInstruction}
+${orgContextBlock}
+${tavilyBlock}
+
+REQUIRED SECTIONS:
+
+## 1. Executive Summary
+Market opportunity overview (3-5 sentences).
+
+## 2. Market Size & Growth
+- Total addressable market (TAM)
+- Serviceable addressable market (SAM)
+- Growth rate and projections
+
+## 3. Market Segmentation
+Key segments by geography, customer type, use case, etc.
+
+## 4. Competitive Landscape
+| Company | Market Share | Key Differentiator | Pricing |
+|---------|-------------|-------------------|---------|
+| ... | ... | ... | ... |
+
+## 5. Customer Analysis
+- Target customer profiles
+- Pain points and needs
+- Buying behavior and decision criteria
+
+## 6. Trends & Drivers
+Technology, regulatory, economic, and social trends shaping the market.
+
+## 7. Barriers to Entry
+What makes it hard to enter or compete in this market?
+
+## 8. Opportunities & Recommendations
+Where are the biggest opportunities? Actionable recommendations.
+
+## 9. Market Forecast (2026-2030)
+Projections with key assumptions.
+
+RULES:
+- Include specific data (market size in $, growth rates in %, etc.)
+- Use citation markers [1], [2], etc.
+- Be data-driven and analytical.
+
+SOURCE MATERIAL:
+${sourceMaterial}`,
   };
 
   return typePrompts[researchType];
@@ -1092,8 +1186,8 @@ export async function conductDeepResearch(
   const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
   const { webSearchService, llmClient, onProgress } = dependencies || {};
 
-  // Detect research type
-  const researchType = detectResearchType(topic);
+  // Detect research type (or use forced type)
+  const researchType = mergedOptions.forceResearchType || detectResearchType(topic);
   logger.info(`[DeepResearch] Starting research on: "${topic}" (type: ${researchType})`);
 
   // ---- ROUND 1: Initial queries ----

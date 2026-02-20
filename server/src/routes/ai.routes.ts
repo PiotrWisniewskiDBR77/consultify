@@ -382,6 +382,73 @@ router.post(
 );
 
 /**
+ * GET /api/ai/co-thinker/modes
+ * Returns available Co-Thinker modes for the UI.
+ */
+router.get(
+  '/co-thinker/modes',
+  verifyToken,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const { getAvailableCoThinkerModes } = await import('../services/ai/coThinkerService.js');
+      const modes = getAvailableCoThinkerModes();
+      return res.json({ modes });
+    } catch (err: any) {
+      logger.warn('[AI Routes] Co-Thinker modes fetch failed:', err?.message);
+      return res.json({ modes: [] });
+    }
+  })
+);
+
+/**
+ * POST /api/ai/deep-research/export
+ * Export a deep research report as a structured document.
+ */
+router.post(
+  '/deep-research/export',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { conversationId, format } = req.body as {
+      conversationId: string;
+      format?: 'markdown' | 'html' | 'pdf';
+    };
+
+    if (!conversationId) {
+      return res.status(400).json({ error: 'conversationId is required' });
+    }
+
+    try {
+      const dbMod = await import('../../utils/DbPromise.js');
+      const db = dbMod;
+
+      const messages = (await db.all(
+        `SELECT content, metadata, role FROM conversation_messages
+         WHERE conversation_id = ? AND role = 'ai'
+         ORDER BY created_at DESC LIMIT 1`,
+        [conversationId]
+      )) as any[];
+
+      if (!messages.length) {
+        return res.status(404).json({ error: 'No AI messages found in conversation' });
+      }
+
+      const content = messages[0].content || '';
+      const exportFormat = format || 'markdown';
+
+      return res.json({
+        success: true,
+        format: exportFormat,
+        content,
+        exportedAt: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      logger.error('[AI Routes] Deep research export failed:', error);
+      return res.status(500).json({ error: 'Failed to export research report' });
+    }
+  })
+);
+
+/**
  * Engagement Summary (R13)
  *
  * Generates periodic engagement reports (weekly/monthly) as downloadable artifacts.
@@ -487,6 +554,8 @@ router.post(
         webSearch?: boolean;
         showReasoning?: boolean;
         multiAgent?: boolean;
+        marketResearch?: boolean;
+        coThinkerMode?: string | null;
       };
       knowledgeSources?: {
         pmoDocuments?: boolean;
@@ -733,6 +802,8 @@ router.post(
         webSearch?: boolean;
         showReasoning?: boolean;
         multiAgent?: boolean;
+        marketResearch?: boolean;
+        coThinkerMode?: string | null;
       };
       knowledgeSources?: {
         pmoDocuments?: boolean;
@@ -760,6 +831,12 @@ router.post(
       knowledgeSources,
       responseStyle,
     } = body;
+
+    // Market Research → Deep Research conversion
+    if (aiModes?.marketResearch && !aiModes?.deepResearch) {
+      (aiModes as any).deepResearch = true;
+      (context as any).__forceResearchType = 'market_research';
+    }
 
     // Detect "force depth" triggers (user control). These must cause a real structure change.
     const rawMsg = String(message || '').trim();
@@ -811,7 +888,20 @@ router.post(
     const langName = languageMap[language || 'pl'] || languageMap['pl'];
     const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Always respond in ${langName}. This is critical - the user's interface is set to ${langName}, so ALL your responses MUST be in ${langName}.]\n`;
 
-    const enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
+    let enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
+
+    // Co-Thinker mode: inject persona-specific system prompt
+    if (aiModes?.coThinkerMode && typeof aiModes.coThinkerMode === 'string') {
+      try {
+        const { buildCoThinkerSystemPrompt } = await import('../services/ai/coThinkerService.js');
+        const coThinkerPrompt = buildCoThinkerSystemPrompt(aiModes.coThinkerMode as any, (language || 'en').split('-')[0]);
+        if (coThinkerPrompt) {
+          enhancedSystemInstruction = coThinkerPrompt + '\n\n' + enhancedSystemInstruction;
+        }
+      } catch (ctErr: any) {
+        logger.warn('[AI Routes] Co-Thinker prompt injection failed:', ctErr?.message);
+      }
+    }
 
     // Prevent Node.js / proxy / ALB socket timeouts for long-running SSE streams
     // (Deep Thinking can run 30–90 seconds; default 2min timeout gives safety margin)

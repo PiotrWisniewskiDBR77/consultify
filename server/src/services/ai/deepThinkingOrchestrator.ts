@@ -189,6 +189,8 @@ export class DeepThinkingOrchestrator {
   async runPrelude(input: DeepThinkingPreludeInput): Promise<DeepThinkingPreludeOutput> {
     const { message, language, context, aiModes, emit, clarificationAnswers } = input;
 
+    const forcedResearchType = (context as any)?.__forceResearchType as ResearchType | undefined;
+
     const enabled = aiModes?.deepResearch === true;
     if (!enabled) {
       return { systemInstructionAddon: '' };
@@ -293,6 +295,7 @@ export class DeepThinkingOrchestrator {
             language: (language || 'en').split('-')[0],
             iterativeDeepening,
             maxFollowUpQueries,
+            forceResearchType: forcedResearchType || undefined,
             orgContext: orgContext || undefined,
             clarificationAnswers: clarificationAnswers || undefined,
           },
@@ -443,7 +446,7 @@ export class DeepThinkingOrchestrator {
     // 5) Closure
     emit({ type: 'dt_state', state: 'closure' satisfies DtState, label: 'Closure' });
 
-    const researchType = researchOutput?.researchType;
+    const researchType = forcedResearchType || researchOutput?.researchType;
     const addon = [
       buildDeepThinkingFormatAddon(showHighlights, researchType),
       historicalContextAddon,
