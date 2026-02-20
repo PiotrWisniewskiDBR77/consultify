@@ -45,6 +45,16 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 - `npm run test:l5`: PASS (quality-check 0 placeholder + audit-gate allowlist + security + performance)
 - Decyzja audit gate (C / hybryda): allowlista zaktualizowana w `scripts/security/npm-audit-allowlist.json`
 
+## Wave 3 (2026-02-20) — IN PROGRESS
+
+| Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
+|---|---|---|---|---|---|
+| 02.1 (slice) | T007, T009 | bundle-02-my-work-slice-02-1 | Cursor A | in_progress | My Work: tasks + ideas |
+| 06.1 (slice) | T025 | bundle-06-licensed-tools-rename | Cursor B | in_progress | Assessment → Licensed Tools rename |
+| 28 | T096–T098 | bundle-28-partners-program | Codex | in_progress | Partners program toolkit + cert + outreach |
+
+**Start:** main wypchnięty na origin. Prompty: `docs/plans/v2-delivery/PROMPTS_WAVE_3.md`
+
 ---
 
 ## Najwazniejszy wskaznik "czy jest syf"
