@@ -61,8 +61,10 @@ import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import { FilterableTable, FilterChip, ModuleHub, ModuleTab, OpenDocument, TableColumn, ViewMode } from '../shared/ModuleHub';
 import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
+import { BudgetControlPanel } from './BudgetControlPanel';
+import { DelayDetectionPanel } from './DelayDetectionPanel';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
-import { ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
+import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { RiskSignalsPanel } from './RiskSignalsPanel';
 
@@ -393,6 +395,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [healthSnapshot, setHealthSnapshot] = useState<PMOHealthSnapshot | null>(null);
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
   const [riskSignals, setRiskSignals] = useState<RiskSignalItem[]>([]);
+  const [delaySignals, setDelaySignals] = useState<DelaySignalItem[]>([]);
 
   // Keep view mode consistent per tab (simple, iPhone-like)
   useEffect(() => {
@@ -452,7 +455,25 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         // risk signals are non-blocking
       }
     };
+    const loadDelaySignals = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const params = new URLSearchParams();
+        if (currentProjectId) params.set('projectId', currentProjectId);
+        const res = await fetch(`/api/execution-control/delay-signals?${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDelaySignals(data.signals || []);
+        }
+      } catch {
+        // delay signals are non-blocking
+      }
+    };
     loadRiskSignals();
+    loadDelaySignals();
   }, [currentProjectId, initiatives.length]);
 
   useEffect(() => {
@@ -2638,6 +2659,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             onInitiativeClick={handleOpenSidePanel}
             onUpdateInitiative={handleInitiativeUpdate}
             riskSignals={riskSignals}
+            delaySignals={delaySignals}
             projectId={currentProjectId || undefined}
           />
         </div>
@@ -2806,6 +2828,26 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             />
           </div>
         )}
+        {/* T041: Delay Detection Panel */}
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
+          <DelayDetectionPanel
+            projectId={currentProjectId || undefined}
+            onInitiativeClick={(id) => {
+              const init = initiatives.find((i) => i.id === id);
+              if (init) handleOpenSidePanel(init);
+            }}
+          />
+        </div>
+        {/* T042: Budget Control Panel */}
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
+          <BudgetControlPanel
+            projectId={currentProjectId || undefined}
+            onInitiativeClick={(id) => {
+              const init = initiatives.find((i) => i.id === id);
+              if (init) handleOpenSidePanel(init);
+            }}
+          />
+        </div>
         {renderWeeklyPackCard()}
         {renderActionCenter()}
         {renderAIInsights()}

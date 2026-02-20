@@ -1167,6 +1167,57 @@
       "to": "to",
       "reason": "Reason",
       "noEntries": "No audit entries yet"
+    },
+    "delay": {
+      "title": "Delay Detection",
+      "subtitle": "Plan vs actual deviations and schedule risks",
+      "critical": "Critical",
+      "warning": "Warning",
+      "allSeverities": "All severities",
+      "allTypes": "All types",
+      "initiatives": "Initiatives",
+      "tasks": "Tasks",
+      "noDelays": "No schedule deviations detected",
+      "loading": "Scanning for deviations…",
+      "planned": "Planned",
+      "current": "Current",
+      "remaining": "remaining",
+      "whySlip": "Why slip",
+      "viewInitiative": "View initiative",
+      "dismiss": "Dismiss",
+      "type": {
+        "LATE_START": "Late Start",
+        "LATE_FINISH_RISK": "Late Finish Risk",
+        "DEADLINE_RISK": "Deadline Risk",
+        "OVERDUE": "Overdue"
+      }
+    },
+    "budget": {
+      "title": "Budget Control",
+      "portfolioTitle": "Portfolio Budget",
+      "planned": "Planned",
+      "actual": "Actual",
+      "variance": "Variance",
+      "burnRate": "Burn Rate",
+      "forecast": "Forecast",
+      "forecastOverspend": "Forecast projects overspend: {{amount}}",
+      "overspendRisks": "overspend risks",
+      "overspendSignals": "Overspend Signals",
+      "initiativeBreakdown": "By Initiative",
+      "viewDetails": "View details",
+      "addEntry": "Add Actual Cost",
+      "newEntry": "New Cost Entry",
+      "amountPlaceholder": "Amount",
+      "categoryPlaceholder": "Category (e.g. Consulting, Licenses)",
+      "descriptionPlaceholder": "Description (optional)",
+      "save": "Save Entry",
+      "noData": "No budget data available",
+      "loading": "Loading budget data…",
+      "status": {
+        "green": "On Track",
+        "amber": "Warning",
+        "red": "Over Budget"
+      }
     }
   },
   "benefits": {
@@ -2943,10 +2994,10 @@
     "hubTitle": "Licensed Tools Hub",
     "backToHub": "Back to Licensed Tools Hub",
     "locked": "Licensed — Access Required",
-    "lockedReason": "Your organization does not have access to this framework. Upgrade your plan or contact your administrator.",
+    "lockedReason": "Your organization does not have access to this framework. Upgrade your plan or contact your administrator to unlock it.",
     "requestAccess": "Request Access / Upgrade",
     "proprietaryNote": "This is a proprietary framework requiring a paid license.",
-    "educationalNote": "This framework is available for educational purposes.",
+    "educationalNote": "This framework is available for educational purposes with appropriate licensing.",
     "pdfImport": {
       "title": "Import PDF Assessment",
       "upload": "Upload PDF",
@@ -2956,8 +3007,8 @@
       "confirm": "Confirm Import",
       "detecting": "Detecting framework...",
       "extracting": "Extracting scores...",
-      "noFramework": "Could not detect framework. Select manually.",
-      "lowConfidence": "Low confidence — review and correct extracted values.",
+      "noFramework": "Could not detect framework. Please select manually.",
+      "lowConfidence": "Low confidence — please review and correct extracted values.",
       "supportedFrameworks": "Supported Frameworks"
     }
   },
@@ -3045,7 +3096,10 @@
       "coachQuestions": "Coach Questions",
       "evidenceGuidance": "Evidence Guidance",
       "microLesson": "Micro-lesson",
-      "commonMistakes": "Common Mistakes to Avoid"
+      "commonMistakes": "Common Mistakes to Avoid",
+      "wasteKnowledge": "Waste Analysis Guide",
+      "whatToLookFor": "What to Look For",
+      "typicalEvidence": "Typical Evidence"
     }
   },
   "tools": {

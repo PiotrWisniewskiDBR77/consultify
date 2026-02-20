@@ -31,6 +31,17 @@ import { FullInitiative, InitiativeStatus } from '../../types';
 // TYPES
 // ============================================
 
+export interface DelaySignalItem {
+  id: string;
+  entityType: 'INITIATIVE' | 'TASK';
+  entityId: string;
+  entityName: string;
+  deviationType: 'LATE_START' | 'LATE_FINISH_RISK' | 'DEADLINE_RISK' | 'OVERDUE';
+  severity: 'WARNING' | 'CRITICAL';
+  daysDeviation: number;
+  whySlipReasons: Array<{ reason: string; detail: string }>;
+}
+
 interface ExecutionTimelineViewProps {
   initiatives: FullInitiative[];
   onInitiativeClick: (initiative: FullInitiative) => void;
@@ -38,6 +49,7 @@ interface ExecutionTimelineViewProps {
   onTimelineUpdate?: (initiativeId: string, field: string, value: string, reason?: string) => void;
   projectId?: string;
   riskSignals?: RiskSignalItem[];
+  delaySignals?: DelaySignalItem[];
 }
 
 export interface RiskSignalItem {
@@ -386,12 +398,13 @@ interface TimelineBarProps {
   warningMessage?: string;
   hasRiskSignal?: boolean;
   riskSeverity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  delaySignal?: DelaySignalItem;
   onDragEnd?: (weeksDelta: number) => void;
 }
 
 const TimelineBar: React.FC<TimelineBarProps> = ({
   initiative, startIdx, endIdx, totalWeeks, onClick,
-  isOnCriticalPath, hasWarning, warningMessage, hasRiskSignal, riskSeverity, onDragEnd,
+  isOnCriticalPath, hasWarning, warningMessage, hasRiskSignal, riskSeverity, delaySignal, onDragEnd,
 }) => {
   const colors = STATUS_COLORS[initiative.status] || STATUS_COLORS[InitiativeStatus.EXECUTING];
   const span = Math.max(1, endIdx - startIdx + 1);
@@ -440,6 +453,18 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
           riskSeverity === 'CRITICAL' ? 'bg-red-600' : riskSeverity === 'HIGH' ? 'bg-orange-500' : 'bg-yellow-500'
         }`} title={`Risk: ${riskSeverity}`}>
           <Shield size={9} className="text-white" />
+        </div>
+      )}
+      {delaySignal && (
+        <div
+          className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded text-[9px] font-bold z-20 whitespace-nowrap ${
+            delaySignal.severity === 'CRITICAL'
+              ? 'bg-red-600 text-white'
+              : 'bg-amber-500 text-slate-900'
+          }`}
+          title={`${delaySignal.deviationType}: ${delaySignal.daysDeviation}d${delaySignal.whySlipReasons.length > 0 ? ' — ' + delaySignal.whySlipReasons.map((r) => r.detail).join(', ') : ''}`}
+        >
+          {delaySignal.deviationType === 'OVERDUE' ? 'SLIP' : delaySignal.deviationType === 'LATE_START' ? 'LATE' : 'RISK'} {delaySignal.daysDeviation}d
         </div>
       )}
       <div className={`absolute inset-y-0 left-0 ${colors.progress} opacity-30 rounded-l-lg`} style={{ width: `${progress}%` }} />
@@ -570,7 +595,7 @@ const FilterBar: React.FC<{
 // ============================================
 
 export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
-  initiatives, onInitiativeClick, onUpdateInitiative, onTimelineUpdate, riskSignals,
+  initiatives, onInitiativeClick, onUpdateInitiative, onTimelineUpdate, riskSignals, delaySignals,
 }) => {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -611,6 +636,17 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
     }
     return map;
   }, [riskSignals]);
+
+  const delaySignalsByInit = useMemo(() => {
+    const map = new Map<string, DelaySignalItem>();
+    if (!delaySignals) return map;
+    for (const sig of delaySignals) {
+      if (sig.entityType === 'INITIATIVE' && !map.has(sig.entityId)) {
+        map.set(sig.entityId, sig);
+      }
+    }
+    return map;
+  }, [delaySignals]);
 
   const weeks = useMemo(() => generateWeeks(startDate, viewWeeks), [startDate, viewWeeks]);
   const months = useMemo(() => getMonthsFromWeeks(weeks), [weeks]);
@@ -882,12 +918,14 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                   {row.map((initiative) => {
                     const initWarnings = warningsByInit.get(initiative.id) || [];
                     const initRisks = riskSignalsByInit.get(initiative.id) || [];
+                    const initDelay = delaySignalsByInit.get(initiative.id);
                     return (
                       <TimelineBar key={initiative.id} initiative={initiative} startIdx={initiative.startIdx} endIdx={initiative.endIdx}
                         totalWeeks={viewWeeks} onClick={() => onInitiativeClick(initiative)}
                         isOnCriticalPath={criticalPathIds.has(initiative.id)}
                         hasWarning={initWarnings.length > 0} warningMessage={initWarnings.map((w) => w.message).join('\n')}
                         hasRiskSignal={initRisks.length > 0} riskSeverity={initRisks.length > 0 ? initRisks[0].severity : undefined}
+                        delaySignal={initDelay}
                         onDragEnd={(onUpdateInitiative || onTimelineUpdate) ? (weeksDelta) => handleBarDragEnd(initiative, weeksDelta) : undefined}
                       />
                     );

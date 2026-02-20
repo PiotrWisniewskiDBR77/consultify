@@ -100,7 +100,17 @@ export type FunnelEventName =
   | 'execution_risk_signal_viewed'
   | 'execution_risk_signal_dismissed'
   | 'execution_risk_mitigation_updated'
-  | 'execution_warning_clicked';
+  | 'execution_warning_clicked'
+  | 'delay_detection_viewed'
+  | 'delay_signal_detected'
+  | 'delay_signal_dismissed'
+  | 'delay_alert_sent'
+  | 'delay_alert_clicked'
+  | 'budget_dashboard_viewed'
+  | 'budget_plan_updated'
+  | 'budget_actual_updated'
+  | 'budget_overspend_signal_detected'
+  | 'budget_recommendation_applied';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {
