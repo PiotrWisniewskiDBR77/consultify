@@ -3454,5 +3454,122 @@
     "tabs": { "baseline": "Industry Baseline", "radar": "Trend Radar Map", "detail": "Trend Detail", "custom": "Custom Trends", "insights": "AI Insights" },
     "selectTrend": "Select a trend from the Baseline or Radar Map to see details.",
     "goToBaseline": "Go to Baseline"
+  },
+  "valuation": {
+    "tabLabel": "Valuation",
+    "title": "Enterprise valuation",
+    "subtitle": "DCF + comps + sensitivity, deck-ready export",
+    "steps": {
+      "source": "Source",
+      "assumptions": "Assumptions",
+      "results": "Results",
+      "export": "Export"
+    },
+    "list": {
+      "title": "Valuations",
+      "empty": "No valuations yet. Create one to start.",
+      "source": "Source"
+    },
+    "detail": {
+      "empty": "Select a valuation to continue",
+      "status": "Status",
+      "currency": "Currency"
+    },
+    "create": {
+      "cta": "New valuation",
+      "title": "New valuation",
+      "titlePlaceholder": "e.g., Fundraising valuation — base case",
+      "sourceType": "Source type",
+      "sourceLabel": "Source",
+      "selectSource": "Select...",
+      "horizon": "Horizon (years)",
+      "cancel": "Cancel",
+      "create": "Create",
+      "failed": "Failed to create valuation",
+      "sourceRequired": "Select a source first",
+      "source": {
+        "financialModel": "Approved financial model (T054)",
+        "budget": "Approved budget (T053)",
+        "manual": "Manual forecast"
+      }
+    },
+    "validation": {
+      "gLessThanWacc": "Terminal growth must be lower than WACC (g < WACC)"
+    },
+    "assumptions": {
+      "dcfTitle": "DCF assumptions",
+      "wacc": "WACC (%)",
+      "terminalMethod": "Terminal method",
+      "g": "Terminal growth g (%)",
+      "exitMultiple": "Exit multiple",
+      "exitMetric": "Metric",
+      "save": "Save assumptions",
+      "saved": "Assumptions saved",
+      "saveFailed": "Failed to save assumptions"
+    },
+    "comps": {
+      "title": "Comparable valuation (multiples)",
+      "min": "Min",
+      "median": "Median",
+      "max": "Max",
+      "peers": "Peers (comma-separated)",
+      "peersPlaceholder": "e.g., Company A, Company B",
+      "save": "Save comps",
+      "saved": "Comps saved",
+      "saveFailed": "Failed to save comps"
+    },
+    "compute": {
+      "cta": "Compute",
+      "ok": "Valuation computed",
+      "failed": "Compute failed"
+    },
+    "approve": {
+      "cta": "Approve",
+      "ok": "Approved",
+      "failed": "Approval failed"
+    },
+    "results": {
+      "empty": "Compute the valuation to see results",
+      "summary": "Valuation summary",
+      "ev": "Enterprise value (EV)",
+      "equity": "Equity value",
+      "wacc": "WACC",
+      "pvSplit": "PV split (explicit/terminal)",
+      "comps": "Comparable range (if set)",
+      "compsMin": "Min",
+      "compsMedian": "Median",
+      "compsMax": "Max",
+      "compsEmpty": "Configure comps in Assumptions"
+    },
+    "advisory": {
+      "title": "Valuation advisory",
+      "generate": "Generate",
+      "ok": "Advisory generated",
+      "failed": "Failed to generate advisory",
+      "empty": "Generate advisory to see recommended actions.",
+      "approvalGate": "Generate advisory requires APPROVED valuation.",
+      "convert": "Create initiative",
+      "convertOk": "Initiative created",
+      "convertFailed": "Failed to create initiative"
+    },
+    "negotiation": {
+      "title": "Negotiation pack",
+      "generate": "Generate",
+      "ok": "Negotiation pack generated",
+      "failed": "Failed to generate negotiation pack",
+      "empty": "Generate a pack to get pro/contra points and Q&A.",
+      "approvalGate": "Generate pack requires APPROVED valuation.",
+      "pro": "Pro",
+      "qa": "Q&A"
+    },
+    "sensitivity": {
+      "tornadoTitle": "Tornado (top drivers)"
+    },
+    "export": {
+      "pptx": "Export PPTX",
+      "ok": "PPTX generated",
+      "failed": "Export failed",
+      "approvalGate": "Export requires APPROVED valuation and includes disclaimers."
+    }
   }
 }

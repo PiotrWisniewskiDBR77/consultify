@@ -44,4 +44,3 @@ CREATE TABLE IF NOT EXISTS valuation_snapshots (
 );
 
 CREATE INDEX IF NOT EXISTS idx_valuation_snapshots_val ON valuation_snapshots(valuation_id, version);
-

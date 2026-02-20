@@ -3284,5 +3284,122 @@
     "tabs": { "baseline": "Baseline branżowy", "radar": "Mapa radaru trendów", "detail": "Szczegóły trendu", "custom": "Własne trendy", "insights": "Wnioski AI" },
     "selectTrend": "Wybierz trend z Baseline lub Mapy radaru, aby zobaczyć szczegóły.",
     "goToBaseline": "Przejdź do Baseline"
+  },
+  "valuation": {
+    "tabLabel": "Wycena",
+    "title": "Wycena przedsiębiorstwa",
+    "subtitle": "DCF + porównawcze + sensitivity, eksport do decka",
+    "steps": {
+      "source": "Źródło",
+      "assumptions": "Założenia",
+      "results": "Wyniki",
+      "export": "Eksport"
+    },
+    "list": {
+      "title": "Wyceny",
+      "empty": "Brak wycen. Utwórz pierwszą, aby zacząć.",
+      "source": "Źródło"
+    },
+    "detail": {
+      "empty": "Wybierz wycenę, aby kontynuować",
+      "status": "Status",
+      "currency": "Waluta"
+    },
+    "create": {
+      "cta": "Nowa wycena",
+      "title": "Nowa wycena",
+      "titlePlaceholder": "np. Wycena do rundy — base case",
+      "sourceType": "Typ źródła",
+      "sourceLabel": "Źródło",
+      "selectSource": "Wybierz...",
+      "horizon": "Horyzont (lata)",
+      "cancel": "Anuluj",
+      "create": "Utwórz",
+      "failed": "Nie udało się utworzyć wyceny",
+      "sourceRequired": "Najpierw wybierz źródło",
+      "source": {
+        "financialModel": "Zatwierdzony model finansowy (T054)",
+        "budget": "Zatwierdzony budżet (T053)",
+        "manual": "Ręczna prognoza"
+      }
+    },
+    "validation": {
+      "gLessThanWacc": "Wzrost terminalny musi być niższy niż WACC (g < WACC)"
+    },
+    "assumptions": {
+      "dcfTitle": "Założenia DCF",
+      "wacc": "WACC (%)",
+      "terminalMethod": "Metoda terminalna",
+      "g": "Wzrost terminalny g (%)",
+      "exitMultiple": "Multiple",
+      "exitMetric": "Metryka",
+      "save": "Zapisz założenia",
+      "saved": "Zapisano założenia",
+      "saveFailed": "Nie udało się zapisać założeń"
+    },
+    "comps": {
+      "title": "Wycena porównawcza (multiples)",
+      "min": "Min",
+      "median": "Mediana",
+      "max": "Max",
+      "peers": "Peery (po przecinku)",
+      "peersPlaceholder": "np. Firma A, Firma B",
+      "save": "Zapisz comps",
+      "saved": "Zapisano comps",
+      "saveFailed": "Nie udało się zapisać comps"
+    },
+    "compute": {
+      "cta": "Policz",
+      "ok": "Policzono wycenę",
+      "failed": "Nie udało się policzyć"
+    },
+    "approve": {
+      "cta": "Zatwierdź",
+      "ok": "Zatwierdzono",
+      "failed": "Nie udało się zatwierdzić"
+    },
+    "results": {
+      "empty": "Policz wycenę, aby zobaczyć wyniki",
+      "summary": "Podsumowanie",
+      "ev": "Wartość przedsiębiorstwa (EV)",
+      "equity": "Wartość kapitału (Equity)",
+      "wacc": "WACC",
+      "pvSplit": "Podział PV (jawny/terminal)",
+      "comps": "Zakres porównawczy (jeśli ustawiono)",
+      "compsMin": "Min",
+      "compsMedian": "Mediana",
+      "compsMax": "Max",
+      "compsEmpty": "Skonfiguruj comps w Założeniach"
+    },
+    "advisory": {
+      "title": "Rekomendacje poprawy wyceny",
+      "generate": "Generuj",
+      "ok": "Wygenerowano rekomendacje",
+      "failed": "Nie udało się wygenerować rekomendacji",
+      "empty": "Wygeneruj rekomendacje, aby zobaczyć działania.",
+      "approvalGate": "Rekomendacje wymagają statusu APPROVED.",
+      "convert": "Utwórz inicjatywę",
+      "convertOk": "Utworzono inicjatywę",
+      "convertFailed": "Nie udało się utworzyć inicjatywy"
+    },
+    "negotiation": {
+      "title": "Pakiet negocjacyjny",
+      "generate": "Generuj",
+      "ok": "Wygenerowano pakiet",
+      "failed": "Nie udało się wygenerować pakietu",
+      "empty": "Wygeneruj pakiet, aby dostać pro/contra i Q&A.",
+      "approvalGate": "Pakiet wymaga statusu APPROVED.",
+      "pro": "Pro",
+      "qa": "Q&A"
+    },
+    "sensitivity": {
+      "tornadoTitle": "Tornado (główne drivery)"
+    },
+    "export": {
+      "pptx": "Eksport PPTX",
+      "ok": "Wygenerowano PPTX",
+      "failed": "Eksport nie powiódł się",
+      "approvalGate": "Eksport wymaga statusu APPROVED i zawiera disclaimers."
+    }
   }
 }
