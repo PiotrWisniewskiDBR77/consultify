@@ -831,7 +831,42 @@
   "reports": {
     "title": "Raporty",
     "management": "Raporty Zarządcze",
-    "assessment": "Raporty z Ocen"
+    "assessment": "Raporty z Ocen",
+    "agent": {
+      "title": "Asystent Raportu",
+      "subtitle": "Edytuj strukturę przez czat",
+      "welcome": "Jestem Twoim asystentem raportów",
+      "welcomeDesc": "Poproś mnie o zmianę struktury raportu, dodanie sekcji lub sprawdzenie jakości.",
+      "placeholder": "Poproś o modyfikację raportu…",
+      "proposedChanges": "Proponowane zmiany:",
+      "applyChanges": "Zastosuj zmiany",
+      "applying": "Stosowanie…",
+      "applied": "Zastosowano",
+      "changesApplied": "Zmiany zostały zastosowane",
+      "suggestStructure": "Zaproponuj strukturę",
+      "qualityCheck": "Sprawdzenie jakości",
+      "addKpi": "Dodaj sekcję KPI",
+      "addNextSteps": "Dodaj kolejne kroki"
+    },
+    "qualityGates": {
+      "title": "Kontrola Jakości",
+      "readinessScore": "Wynik gotowości",
+      "exportReady": "Gotowy do eksportu",
+      "notExportReady": "Nie gotowy do eksportu",
+      "allPassed": "Wszystkie kontrole jakości zaliczone!",
+      "recheck": "Sprawdź ponownie"
+    },
+    "templates": {
+      "selectTitle": "Wybierz szablon raportu",
+      "selectDesc": "Wybierz szablon, aby utworzyć raport",
+      "previewOutline": "Podgląd struktury",
+      "allCategories": "Wszystkie",
+      "audience": "Odbiorcy",
+      "expectedLength": "Przewidywana długość",
+      "requiredSection": "Wymagane",
+      "systemTemplate": "Systemowy",
+      "orgTemplate": "Organizacji"
+    }
   },
   "auth": {
     "logIn": "Zaloguj się",
@@ -3520,6 +3555,44 @@
       "disclaimerPlaceholder": "Opcjonalne zastrzeżenie prawne dla decków finansowych/wycenowych",
       "saved": "Kit marki zapisany",
       "saveFailed": "Nie udało się zapisać"
+    }
+  },
+  "portfolio": {
+    "ai": {
+      "selectedCount": "Zaznaczone",
+      "analyzeSelection": "AI: Analizuj zaznaczenie",
+      "analyzing": "Analiza…",
+      "openPanel": "Otwórz panel",
+      "closePanel": "Zamknij panel",
+      "panelTitle": "Analiza AI portfela",
+      "panelSubtitle": "Konflikty, priorytety, overlap oraz hotspoty zasobów nieludzkich.",
+      "loading": "Ładowanie…",
+      "analysisFailed": "Nie udało się wykonać analizy AI",
+      "applyFailed": "Nie udało się zastosować",
+      "applyNotFound": "Nie znaleziono inicjatywy dla sugestii",
+      "applyInvalid": "Nieprawidłowa rekomendacja",
+      "applied": "Zastosowano",
+      "apply": "Zastosuj",
+      "conflicts": "Konflikty",
+      "noConflicts": "Nie wykryto konfliktów.",
+      "recommendation": "Rekomendacja",
+      "prioritySuggestions": "Sugestie priorytetów",
+      "noSuggestions": "Brak sugestii.",
+      "recommendedPriority": "Rekomendowany",
+      "overlap": "Overlap / duplikacja",
+      "noOverlap": "Nie wykryto overlapu.",
+      "similarity": "Podobieństwo",
+      "nonHuman": "Zasoby nieludzkie",
+      "budgetByQuarter": "Budżet per kwartał",
+      "duplicateTools": "Duplikaty narzędzi/licencji",
+      "usedBy": "Używane w",
+      "scenarios": "Scenariusze",
+      "generate": "Generuj",
+      "generating": "Generowanie…",
+      "scenariosFailed": "Nie udało się wygenerować scenariuszy",
+      "applyScenario": "Zastosuj scenariusz",
+      "allocations": "Przypisania",
+      "noProject": "Do zastosowania scenariusza wymagany jest projekt"
     }
   }
 }

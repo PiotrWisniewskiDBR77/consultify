@@ -146,7 +146,24 @@ export type FunnelEventName =
   | 'template_selected'
   | 'brand_kit_updated'
   | 'template_cloned'
-  | 'template_published';
+  | 'template_published'
+  | 'report_builder_opened'
+  | 'report_section_added'
+  | 'report_section_reordered'
+  | 'report_section_generated'
+  | 'report_section_regenerated'
+  | 'report_exported'
+  | 'report_shared'
+  | 'report_agent_message_sent'
+  | 'report_quality_check_run'
+  | 'report_template_selected'
+  | 'report_template_applied'
+  | 'portfolio_ai_analysis_requested'
+  | 'portfolio_ai_analysis_succeeded'
+  | 'portfolio_ai_analysis_failed'
+  | 'portfolio_ai_suggestion_applied'
+  | 'portfolio_timeline_optimization_requested'
+  | 'portfolio_timeline_scenario_applied';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {
