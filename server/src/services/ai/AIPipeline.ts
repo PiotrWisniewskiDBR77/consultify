@@ -921,6 +921,32 @@ export class AIPipeline {
       }
     }
 
+    // 7.10 Help docs context (T071) — auto-inject KB docs for product/how-to questions
+    if (request.prompt && !ctx?.external?.helpDocs) {
+      try {
+        const { isProductOrHowToQuery } = await import('./helpDocsContext.js');
+        const userLang =
+          ctx?.conversationLanguage || ctx?.userMemory?.preferences?.language || null;
+        if (isProductOrHowToQuery(request.prompt, userLang === 'pl' ? 'pl' : 'en')) {
+          const { buildHelpDocsContext } = await import('./helpDocsContext.js');
+          const kbModuleId =
+            String(ctx?.currentScreen || ctx?.screenContext?.screenId || '').trim() || null;
+          const kb = await buildHelpDocsContext({
+            query: request.prompt,
+            language: userLang || undefined,
+            moduleId: kbModuleId,
+            maxArticles: 3,
+            maxCharsPerArticle: 1200,
+          });
+          if (kb?.systemInstructionAddon?.trim()) {
+            parts.push(kb.systemInstructionAddon);
+          }
+        }
+      } catch {
+        // Help docs context not available — continue
+      }
+    }
+
     // 8. Behavioral instructions
     parts.push(this.buildBehavioralInstructions(capability, ctx, request));
 
