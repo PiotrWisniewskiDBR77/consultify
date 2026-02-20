@@ -583,6 +583,79 @@
       "taskMoved": "Zadanie przeniesione do {{column}}",
       "taskStatusError": "Nie udało się zaktualizować statusu zadania",
       "initiativeNotFound": "Nie znaleziono powiązanej inicjatywy"
+    },
+    "timeline": {
+      "title": "Oś czasu",
+      "filterByStatus": "Filtruj wg statusu",
+      "filterByPriority": "Filtruj wg priorytetu",
+      "filterByOwner": "Filtruj wg właściciela",
+      "searchPlaceholder": "Szukaj inicjatyw…",
+      "allStatuses": "Wszystkie statusy",
+      "allPriorities": "Wszystkie priorytety",
+      "allOwners": "Wszyscy właściciele",
+      "noResults": "Brak inicjatyw pasujących do filtrów",
+      "today": "Dziś",
+      "criticalPath": "Ścieżka krytyczna",
+      "hideCriticalPath": "Ukryj ścieżkę krytyczną",
+      "showCriticalPath": "Pokaż ścieżkę krytyczną",
+      "scheduleWarning": "Ostrzeżenie harmonogramu",
+      "warnings": "ostrzeżeń",
+      "warning": "ostrzeżenie"
+    },
+    "warnings": {
+      "title": "Najważniejsze ostrzeżenia",
+      "overdue": "Zaległe",
+      "blocked": "Zablokowane",
+      "dependencyConflict": "Konflikt zależności",
+      "slaApproaching": "Zbliżający się SLA",
+      "noWarnings": "Brak aktywnych ostrzeżeń",
+      "daysOverdue": "{{count}} dni zaległości",
+      "blockedFor": "Zablokowane od {{count}} dni",
+      "nextGate": "Następna brama",
+      "nextAction": "Następne działanie",
+      "viewAll": "Pokaż wszystkie ostrzeżenia"
+    },
+    "riskSignals": {
+      "title": "Sygnały ryzyka",
+      "subtitle": "Heurystycznie wykryte ryzyka w portfelu wykonawczym",
+      "noSignals": "Nie wykryto sygnałów ryzyka",
+      "dismiss": "Odrzuć",
+      "suggestedAction": "Sugerowane działanie",
+      "critical": "Krytyczne",
+      "high": "Wysokie",
+      "medium": "Średnie",
+      "low": "Niskie",
+      "viewDetails": "Zobacz szczegóły"
+    },
+    "mitigation": {
+      "title": "Łagodzenie",
+      "plan": "Plan łagodzenia",
+      "planPlaceholder": "Opisz podejście do łagodzenia…",
+      "owner": "Właściciel łagodzenia",
+      "dueDate": "Termin",
+      "status": "Status",
+      "strategy": "Strategia reakcji",
+      "avoid": "Unikaj",
+      "transfer": "Przenieś",
+      "mitigate": "Łagodź",
+      "accept": "Akceptuj",
+      "escalate": "Eskaluj",
+      "statusOpen": "Otwarte",
+      "statusInProgress": "W toku",
+      "statusMitigated": "Złagodzone",
+      "statusAccepted": "Zaakceptowane",
+      "statusClosed": "Zamknięte",
+      "save": "Zapisz łagodzenie",
+      "saved": "Łagodzenie zaktualizowane"
+    },
+    "auditLog": {
+      "title": "Dziennik zmian",
+      "changedBy": "Zmienione przez",
+      "changedField": "Zmieniono",
+      "from": "z",
+      "to": "na",
+      "reason": "Powód",
+      "noEntries": "Brak wpisów"
     }
   },
   "benefits": {
@@ -2890,6 +2963,71 @@
     "moduleName": "Narzędzia licencjonowane",
     "hubTitle": "Hub narzędzi licencjonowanych",
     "backToHub": "Powrót do huba narzędzi licencjonowanych"
+  },
+  "assessment": {
+    "notes": "Notatki",
+    "notesPlaceholder": "Kluczowe obserwacje, kontekst, uzasadnienie oceny...",
+    "evidence": "Dowody (evidence)",
+    "evidencePlaceholder": "Systemy, dokumenty, metryki, procesy potwierdzające ocenę...",
+    "confidence": "Pewność oceny",
+    "confidenceLow": "Niska",
+    "confidenceMedium": "Średnia",
+    "confidenceHigh": "Wysoka",
+    "withEvidence": "Z dowodami",
+    "progress": "Postęp oceny",
+    "overallScore": "Wynik ogólny",
+    "dimensions": "wymiarów",
+    "currentLevel": "Aktualny poziom",
+    "targetLevel": "Docelowy poziom",
+    "gap": "Luka",
+    "strengths": {
+      "title": "Kluczowe mocne strony",
+      "empty": "Nie zidentyfikowano jeszcze mocnych wymiarów. Kontynuuj ocenę, aby odkryć mocne strony."
+    },
+    "dataGaps": {
+      "title": "Luki danych i elementy do uzupełnienia",
+      "notAssessed": "Nie oceniono",
+      "noTarget": "Nie ustawiono celu",
+      "hint": "Te obszary wymagają dodatkowego zbierania danych przed zakończeniem pełnej oceny."
+    },
+    "closure": {
+      "title": "Wnioski z oceny",
+      "dimensionsAssessed": "Wymiary ocenione",
+      "totalGap": "Łączna luka",
+      "topPriorities": "Najwyższe priorytety",
+      "completeness": "Kompletność",
+      "nextSteps": "Następne kroki",
+      "step1": "Omów wyniki z kluczowymi interesariuszami",
+      "step2": "Ustaw cele dla nieocenionych wymiarów",
+      "step3": "Wygeneruj raport do przeglądu sponsora",
+      "step4": "Stwórz inicjatywy poprawy z luk",
+      "step5": "Zaplanuj ocenę kontrolną"
+    },
+    "confidenceOverview": {
+      "title": "Przegląd pewności oceny",
+      "withEvidence": "Z dowodami",
+      "withoutEvidence": "Bez dowodów",
+      "alert": "Niektóre ocenione wymiary nie mają udokumentowanych dowodów."
+    },
+    "deck": {
+      "export": "Eksportuj prezentację (PPTX)",
+      "generating": "Generowanie prezentacji...",
+      "generated": "Prezentacja wygenerowana pomyślnie",
+      "failed": "Nie udało się wygenerować prezentacji",
+      "requiresApproval": "Ocena musi być ZATWIERDZONA, aby eksportować prezentację"
+    },
+    "report": {
+      "strengths": "Kluczowe mocne strony",
+      "dataGaps": "Luki danych i elementy do uzupełnienia",
+      "roadmap": "Mapa drogowa transformacji",
+      "conclusions": "Wnioski z oceny",
+      "shortTerm": "Krótkoterminowe (0-6 miesięcy)",
+      "mediumTerm": "Średnioterminowe (6-18 miesięcy)",
+      "longTerm": "Długoterminowe (18-36 miesięcy)",
+      "quickWins": "Szybkie wygrane",
+      "strategicInitiatives": "Inicjatywy strategiczne",
+      "longTermTransformation": "Transformacja długoterminowa"
+    }
   },
   "tools": {
     "hub": {

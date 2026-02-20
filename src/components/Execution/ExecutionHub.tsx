@@ -62,8 +62,9 @@ import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import { FilterableTable, FilterChip, ModuleHub, ModuleTab, OpenDocument, TableColumn, ViewMode } from '../shared/ModuleHub';
 import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
-import { ExecutionTimelineView } from './ExecutionTimelineView';
+import { ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
+import { RiskSignalsPanel } from './RiskSignalsPanel';
 
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
@@ -391,6 +392,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [isLoadingDecisions, setIsLoadingDecisions] = useState(false);
   const [healthSnapshot, setHealthSnapshot] = useState<PMOHealthSnapshot | null>(null);
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
+  const [riskSignals, setRiskSignals] = useState<RiskSignalItem[]>([]);
 
   // Keep view mode consistent per tab (simple, iPhone-like)
   useEffect(() => {
@@ -431,6 +433,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     };
     loadInitiatives();
   }, [currentProjectId, fullSessionData?.initiatives]);
+
+  useEffect(() => {
+    const loadRiskSignals = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const params = new URLSearchParams();
+        if (currentProjectId) params.set('projectId', currentProjectId);
+        const res = await fetch(`/api/execution-control/risk-signals?${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setRiskSignals(data.signals || []);
+        }
+      } catch {
+        // risk signals are non-blocking
+      }
+    };
+    loadRiskSignals();
+  }, [currentProjectId, initiatives.length]);
 
   useEffect(() => {
     if (!currentProjectId) return;
@@ -2613,6 +2636,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           <ExecutionTimelineView
             initiatives={filteredInitiatives as FullInitiative[]}
             onInitiativeClick={handleOpenSidePanel}
+            onUpdateInitiative={handleInitiativeUpdate}
+            riskSignals={riskSignals}
+            projectId={currentProjectId || undefined}
           />
         </div>
       );
@@ -2769,6 +2795,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return (
       <div className="p-4 space-y-6">
         {renderPortfolioHealth()}
+        {riskSignals.length > 0 && (
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+            <RiskSignalsPanel
+              projectId={currentProjectId || undefined}
+              onInitiativeClick={(id) => {
+                const init = initiatives.find((i) => i.id === id);
+                if (init) handleOpenSidePanel(init);
+              }}
+            />
+          </div>
+        )}
         {renderWeeklyPackCard()}
         {renderActionCenter()}
         {renderAIInsights()}
