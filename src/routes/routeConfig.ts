@@ -31,6 +31,7 @@ export const ROUTES = {
   DISCOVERY_TOOLS: {
     ROOT: '/discovery-tools',
     STRATEGIC: '/discovery-tools/strategic',
+    STRATEGIC_MEGATRENDS: '/discovery-tools/strategic/megatrends',
     OPERATIONAL: '/discovery-tools/operational',
     DIGITAL: '/discovery-tools/digital',
     PROCESS_AUTOMATION: '/discovery-tools/process-automation',
@@ -62,14 +63,19 @@ export const ROUTES = {
     STRATEGY: '/context/strategy',
   },
 
-  // Organization (Settings-like module)
+  // Organization (unified workspace: Context + Administration)
   ORGANIZATION: {
     ROOT: '/organization',
     PROFILE: '/organization/profile',
     GOALS: '/organization/goals',
     CHALLENGES: '/organization/challenges',
-    MEGATRENDS: '/organization/megatrends',
+    MEGATRENDS: '/organization/megatrends', // DEPRECATED — redirects to canonical
     STRATEGY: '/organization/strategy',
+    MEMBERS: '/organization/members',
+    BILLING: '/organization/billing',
+    LIMITS: '/organization/limits',
+    DOMAINS: '/organization/domains',
+    BRANDING: '/organization/branding',
   },
 
   // Transformation Modules

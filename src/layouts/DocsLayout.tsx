@@ -85,7 +85,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
                 <Book size={16} className="text-white" />
               </div>
-              <span className="hidden sm:inline">IRIS Docs</span>
+              <span className="hidden sm:inline">Consultinity Docs</span>
             </Link>
           </div>
 

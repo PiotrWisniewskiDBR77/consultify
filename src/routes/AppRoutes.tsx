@@ -73,6 +73,13 @@ const ProcessAutomationView = React.lazy(() =>
   }))
 );
 
+// T064 — Megatrends canonical workspace
+const MegatrendsWorkspace = React.lazy(() =>
+  import('@/components/Megatrend/MegatrendsWorkspace').then((m) => ({
+    default: m.MegatrendsWorkspace,
+  }))
+);
+
 // Assessment Module - New Hub
 const AssessmentHub = React.lazy(() =>
   import('@/components/assessment/AssessmentHub').then((m) => ({ default: m.AssessmentHub }))
@@ -791,6 +798,26 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        {/* T064 — Canonical Megatrend Analysis route */}
+        <Route
+          path={ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS}
+          element={
+            <MainLayout
+              breadcrumbs={breadcrumbs || ['Discovery Tools', 'Strategic Analysis', 'Megatrends']}
+              noPadding
+            >
+              <RouteErrorBoundary>
+                <div className="p-4 lg:p-6">
+                  <MegatrendsWorkspace
+                    source="tools"
+                    showHeader
+                    onBack={() => window.history.back()}
+                  />
+                </div>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
         <Route
           path={ROUTES.DISCOVERY_TOOLS.OPERATIONAL}
           element={
@@ -857,7 +884,13 @@ export const AppRoutes: React.FC = () => {
                     <Route path="profile" element={<ContextBuilderView initialTab={1} />} />
                     <Route path="goals" element={<ContextBuilderView initialTab={2} />} />
                     <Route path="challenges" element={<ContextBuilderView initialTab={3} />} />
-                    <Route path="megatrends" element={<ContextBuilderView initialTab={4} />} />
+                    {/* T064 — Redirect to canonical */}
+                    <Route
+                      path="megatrends"
+                      element={
+                        <Navigate to={ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS} replace />
+                      }
+                    />
                     <Route path="strategy" element={<ContextBuilderView initialTab={5} />} />
                   </Routes>
                 </AnimationWrapper>

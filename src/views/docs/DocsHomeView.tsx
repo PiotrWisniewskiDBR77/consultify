@@ -93,7 +93,7 @@ export const DocsHomeView: React.FC = () => {
             transition={{ duration: 0.5 }}
           >
             <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-4">
-              IRIS Documentation
+              Consultinity Documentation
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-8">
               Comprehensive guides, tutorials, and best practices for the IRIS Industrial Excellence

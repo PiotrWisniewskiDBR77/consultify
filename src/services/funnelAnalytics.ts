@@ -187,7 +187,14 @@ export type FunnelEventName =
   | 'report_schedule_trigger_fired'
   | 'report_schedule_run_completed'
   | 'report_schedule_delivery_sent'
-  | 'report_schedule_delivery_failed';
+  | 'report_schedule_delivery_failed'
+  // T063 — Organization UX
+  | 'org_workspace_opened'
+  | 'org_admin_cta_clicked'
+  | 'org_member_invite_sent'
+  // T064 — Megatrend relocation
+  | 'megatrends_opened'
+  | 'megatrends_redirect_used';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

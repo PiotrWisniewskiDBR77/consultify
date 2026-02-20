@@ -293,6 +293,29 @@
         "security": "Security",
         "allDocuments": "All Documents"
       }
+    },
+    "docs": {
+      "badge": "Documentation",
+      "title": "Built for transparency",
+      "subtitle": "Everything you need to evaluate, integrate, and trust our platform.",
+      "searchPlaceholder": "Search documentation...",
+      "searchBtn": "Search",
+      "gettingStarted": "Getting Started",
+      "gettingStartedDesc": "Quick guides to set up your workspace, run your first assessment, and build transformation roadmaps.",
+      "security": "Security & Compliance",
+      "securityDesc": "Enterprise-grade security architecture, certifications, data handling policies, and compliance frameworks.",
+      "apiReference": "API Reference",
+      "apiReferenceDesc": "RESTful API documentation for integrations, webhooks, and programmatic access to platform data.",
+      "changelog": "Changelog",
+      "changelogDesc": "Release notes, feature updates, and improvements. Stay current with the latest platform changes.",
+      "legalCenter": "Legal Center",
+      "legalCenterDesc": "Terms of service, privacy policy, data processing agreements, and regulatory compliance documents.",
+      "integrations": "Integrations",
+      "integrationsDesc": "Connect with Jira, Azure DevOps, SAP, and other enterprise systems. Import and sync data seamlessly.",
+      "explore": "Explore",
+      "lastUpdated": "Last updated",
+      "lastUpdatedDate": "February 2026",
+      "whatsNew": "See what's new"
     }
   },
   "partner": {
@@ -3405,5 +3428,31 @@
       "error": "Operation failed",
       "loadError": "Failed to load automation data"
     }
+  },
+  "organization": {
+    "sidebar": { "title": "Organization", "subtitle": "Context & Administration", "back": "Back to Dashboard", "contextGroup": "CONTEXT", "adminGroup": "ADMINISTRATION", "profile": "Company Profile", "goals": "Goals & Expectations", "challenges": "Challenges", "strategy": "Strategic Synthesis", "members": "Members & Roles", "billing": "Billing & Tokens", "limits": "Limits & Usage", "domains": "Domains", "branding": "Branding & Regional" },
+    "sections": {
+      "profile": { "title": "Company Profile", "subtitle": "Company snapshot, operating model, and key facts" },
+      "goals": { "title": "Goals & Expectations", "subtitle": "Strategic intent, target metrics, scope and expectations" },
+      "challenges": { "title": "Challenges", "subtitle": "Challenge map, evidence and root causes" },
+      "strategy": { "title": "Strategic Synthesis", "subtitle": "Synthesis, scenarios and executive summary" },
+      "members": { "title": "Members & Roles", "subtitle": "Manage team members, invitations and access roles" },
+      "billing": { "title": "Billing & Tokens", "subtitle": "Subscription status, token balance and usage" },
+      "limits": { "title": "Limits & Usage", "subtitle": "Plan limits, quotas and current usage" },
+      "domains": { "title": "Domains", "subtitle": "Custom domain setup and verification" },
+      "branding": { "title": "Branding & Regional", "subtitle": "Logo, colors, timezone, language and currency" }
+    },
+    "members": { "title": "Team Members", "desc": "{{count}} members in this organization", "invite": "Invite", "email": "Email", "role": "Role", "sendInvite": "Send", "inviteSent": "Invitation sent", "inviteFailed": "Failed to send invitation", "name": "Name", "emailCol": "Email", "roleCol": "Role", "status": "Status", "empty": "No members yet. Invite your first team member." },
+    "billing": { "planTitle": "Current Plan", "trialDesc": "You are on a free trial. Upgrade to unlock full features.", "activeDesc": "Your subscription is active.", "upgrade": "Upgrade", "tokensTitle": "Token Balance", "tokensUnit": "tokens", "used": "used" },
+    "limits": { "title": "Plan Limits & Current Usage", "members": "Team Members", "projects": "Projects", "storage": "Storage (GB)", "aiCalls": "AI Calls / month", "upgradeHint": "Need more? Upgrade your plan to increase limits.", "viewPlans": "View Plans" },
+    "domains": { "title": "Custom Domain", "verified": "Verified", "pending": "Pending verification", "noDomain": "No custom domain configured.", "approvedTitle": "Approved Email Domains", "approvedDesc": "Users with these email domains can auto-join your organization.", "noApproved": "No approved domains set." },
+    "branding": { "visualTitle": "Visual Identity", "logo": "Logo", "primaryColor": "Primary Color", "regionalTitle": "Regional Settings", "timezone": "Timezone", "language": "Language", "dateFormat": "Date Format", "currency": "Currency" }
+  },
+  "megatrends": {
+    "title": "Megatrend Analysis",
+    "subtitle": "Explore industry megatrends, build a radar, and surface strategic insights",
+    "tabs": { "baseline": "Industry Baseline", "radar": "Trend Radar Map", "detail": "Trend Detail", "custom": "Custom Trends", "insights": "AI Insights" },
+    "selectTrend": "Select a trend from the Baseline or Radar Map to see details.",
+    "goToBaseline": "Go to Baseline"
   }
 }

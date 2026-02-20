@@ -1687,6 +1687,29 @@
         "security": "Bezpieczeństwo",
         "allDocuments": "Wszystkie dokumenty"
       }
+    },
+    "docs": {
+      "badge": "Dokumentacja",
+      "title": "Stworzona z myślą o transparentności",
+      "subtitle": "Wszystko, czego potrzebujesz, aby ocenić, zintegrować i zaufać naszej platformie.",
+      "searchPlaceholder": "Szukaj w dokumentacji...",
+      "searchBtn": "Szukaj",
+      "gettingStarted": "Pierwsze kroki",
+      "gettingStartedDesc": "Szybkie poradniki: konfiguracja workspace, pierwszy assessment i budowanie roadmapy transformacji.",
+      "security": "Bezpieczeństwo i zgodność",
+      "securityDesc": "Architektura bezpieczeństwa, certyfikaty, polityki przetwarzania danych i ramy zgodności.",
+      "apiReference": "Dokumentacja API",
+      "apiReferenceDesc": "Dokumentacja RESTful API: integracje, webhooki i programistyczny dostęp do danych platformy.",
+      "changelog": "Historia zmian",
+      "changelogDesc": "Informacje o wersjach, aktualizacjach i ulepszeniach. Bądź na bieżąco z najnowszymi zmianami.",
+      "legalCenter": "Centrum prawne",
+      "legalCenterDesc": "Regulamin, polityka prywatności, umowy o przetwarzanie danych i dokumenty regulacyjne.",
+      "integrations": "Integracje",
+      "integrationsDesc": "Łącz się z Jira, Azure DevOps, SAP i innymi systemami. Importuj i synchronizuj dane.",
+      "explore": "Poznaj",
+      "lastUpdated": "Ostatnia aktualizacja",
+      "lastUpdatedDate": "Luty 2026",
+      "whatsNew": "Zobacz co nowego"
     }
   },
   "partner": {
@@ -3235,5 +3258,31 @@
       "error": "Operacja nie powiodła się",
       "loadError": "Nie udało się załadować danych automatyzacji"
     }
+  },
+  "organization": {
+    "sidebar": { "title": "Organizacja", "subtitle": "Kontekst i administracja", "back": "Powrót do pulpitu", "contextGroup": "KONTEKST", "adminGroup": "ADMINISTRACJA", "profile": "Profil firmy", "goals": "Cele i oczekiwania", "challenges": "Wyzwania", "strategy": "Synteza strategiczna", "members": "Członkowie i role", "billing": "Płatności i tokeny", "limits": "Limity i użycie", "domains": "Domeny", "branding": "Branding i ustawienia regionalne" },
+    "sections": {
+      "profile": { "title": "Profil firmy", "subtitle": "Przegląd firmy, model operacyjny i kluczowe fakty" },
+      "goals": { "title": "Cele i oczekiwania", "subtitle": "Zamierzenia strategiczne, metryki docelowe, zakres" },
+      "challenges": { "title": "Wyzwania", "subtitle": "Mapa wyzwań, dowody i przyczyny źródłowe" },
+      "strategy": { "title": "Synteza strategiczna", "subtitle": "Synteza, scenariusze i podsumowanie executive" },
+      "members": { "title": "Członkowie i role", "subtitle": "Zarządzanie członkami zespołu, zaproszeniami i rolami" },
+      "billing": { "title": "Płatności i tokeny", "subtitle": "Status subskrypcji, saldo tokenów i użycie" },
+      "limits": { "title": "Limity i użycie", "subtitle": "Limity planu, kwoty i bieżące użycie" },
+      "domains": { "title": "Domeny", "subtitle": "Konfiguracja i weryfikacja domeny własnej" },
+      "branding": { "title": "Branding i ustawienia regionalne", "subtitle": "Logo, kolory, strefa czasowa, język i waluta" }
+    },
+    "members": { "title": "Członkowie zespołu", "desc": "{{count}} członków w tej organizacji", "invite": "Zaproś", "email": "Email", "role": "Rola", "sendInvite": "Wyślij", "inviteSent": "Zaproszenie wysłane", "inviteFailed": "Nie udało się wysłać zaproszenia", "name": "Imię", "emailCol": "Email", "roleCol": "Rola", "status": "Status", "empty": "Brak członków. Zaproś pierwszego członka zespołu." },
+    "billing": { "planTitle": "Obecny plan", "trialDesc": "Korzystasz z wersji próbnej. Uaktualnij, aby odblokować pełne funkcje.", "activeDesc": "Twoja subskrypcja jest aktywna.", "upgrade": "Uaktualnij", "tokensTitle": "Saldo tokenów", "tokensUnit": "tokenów", "used": "wykorzystano" },
+    "limits": { "title": "Limity planu i bieżące użycie", "members": "Członkowie zespołu", "projects": "Projekty", "storage": "Miejsce (GB)", "aiCalls": "Wywołania AI / miesiąc", "upgradeHint": "Potrzebujesz więcej? Uaktualnij plan, aby zwiększyć limity.", "viewPlans": "Zobacz plany" },
+    "domains": { "title": "Domena własna", "verified": "Zweryfikowana", "pending": "Oczekuje na weryfikację", "noDomain": "Brak skonfigurowanej domeny własnej.", "approvedTitle": "Zatwierdzone domeny email", "approvedDesc": "Użytkownicy z tych domen email mogą automatycznie dołączyć do organizacji.", "noApproved": "Brak zatwierdzonych domen." },
+    "branding": { "visualTitle": "Tożsamość wizualna", "logo": "Logo", "primaryColor": "Kolor główny", "regionalTitle": "Ustawienia regionalne", "timezone": "Strefa czasowa", "language": "Język", "dateFormat": "Format daty", "currency": "Waluta" }
+  },
+  "megatrends": {
+    "title": "Analiza megatrendów",
+    "subtitle": "Eksploruj megatrendy branżowe, buduj radar i odkrywaj wnioski strategiczne",
+    "tabs": { "baseline": "Baseline branżowy", "radar": "Mapa radaru trendów", "detail": "Szczegóły trendu", "custom": "Własne trendy", "insights": "Wnioski AI" },
+    "selectTrend": "Wybierz trend z Baseline lub Mapy radaru, aby zobaczyć szczegóły.",
+    "goToBaseline": "Przejdź do Baseline"
   }
 }
