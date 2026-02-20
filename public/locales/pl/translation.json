@@ -1687,6 +1687,29 @@
         "security": "Bezpieczeństwo",
         "allDocuments": "Wszystkie dokumenty"
       }
+    },
+    "docs": {
+      "badge": "Dokumentacja",
+      "title": "Stworzona z myślą o transparentności",
+      "subtitle": "Wszystko, czego potrzebujesz, aby ocenić, zintegrować i zaufać naszej platformie.",
+      "searchPlaceholder": "Szukaj w dokumentacji...",
+      "searchBtn": "Szukaj",
+      "gettingStarted": "Pierwsze kroki",
+      "gettingStartedDesc": "Szybkie poradniki: konfiguracja workspace, pierwszy assessment i budowanie roadmapy transformacji.",
+      "security": "Bezpieczeństwo i zgodność",
+      "securityDesc": "Architektura bezpieczeństwa, certyfikaty, polityki przetwarzania danych i ramy zgodności.",
+      "apiReference": "Dokumentacja API",
+      "apiReferenceDesc": "Dokumentacja RESTful API: integracje, webhooki i programistyczny dostęp do danych platformy.",
+      "changelog": "Historia zmian",
+      "changelogDesc": "Informacje o wersjach, aktualizacjach i ulepszeniach. Bądź na bieżąco z najnowszymi zmianami.",
+      "legalCenter": "Centrum prawne",
+      "legalCenterDesc": "Regulamin, polityka prywatności, umowy o przetwarzanie danych i dokumenty regulacyjne.",
+      "integrations": "Integracje",
+      "integrationsDesc": "Łącz się z Jira, Azure DevOps, SAP i innymi systemami. Importuj i synchronizuj dane.",
+      "explore": "Poznaj",
+      "lastUpdated": "Ostatnia aktualizacja",
+      "lastUpdatedDate": "Luty 2026",
+      "whatsNew": "Zobacz co nowego"
     }
   },
   "partner": {

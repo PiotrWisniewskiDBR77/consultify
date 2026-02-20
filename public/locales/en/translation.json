@@ -293,6 +293,29 @@
         "security": "Security",
         "allDocuments": "All Documents"
       }
+    },
+    "docs": {
+      "badge": "Documentation",
+      "title": "Built for transparency",
+      "subtitle": "Everything you need to evaluate, integrate, and trust our platform.",
+      "searchPlaceholder": "Search documentation...",
+      "searchBtn": "Search",
+      "gettingStarted": "Getting Started",
+      "gettingStartedDesc": "Quick guides to set up your workspace, run your first assessment, and build transformation roadmaps.",
+      "security": "Security & Compliance",
+      "securityDesc": "Enterprise-grade security architecture, certifications, data handling policies, and compliance frameworks.",
+      "apiReference": "API Reference",
+      "apiReferenceDesc": "RESTful API documentation for integrations, webhooks, and programmatic access to platform data.",
+      "changelog": "Changelog",
+      "changelogDesc": "Release notes, feature updates, and improvements. Stay current with the latest platform changes.",
+      "legalCenter": "Legal Center",
+      "legalCenterDesc": "Terms of service, privacy policy, data processing agreements, and regulatory compliance documents.",
+      "integrations": "Integrations",
+      "integrationsDesc": "Connect with Jira, Azure DevOps, SAP, and other enterprise systems. Import and sync data seamlessly.",
+      "explore": "Explore",
+      "lastUpdated": "Last updated",
+      "lastUpdatedDate": "February 2026",
+      "whatsNew": "See what's new"
     }
   },
   "partner": {

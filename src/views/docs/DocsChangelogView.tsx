@@ -186,8 +186,8 @@ const RELEASES: Release[] = [
   {
     version: '6.0.0',
     date: '2026-01-15',
-    title: 'IRIS 6.0 - Industrial Excellence Platform',
-    description: 'Major platform rebrand from Consultify to IRIS 6.0 with 19 industrial modules.',
+    title: 'Consultinity 6.0 - Transformation AI Platform',
+    description: 'Major platform evolution to Consultinity 6.0 with 19 transformation modules.',
     isMajor: true,
     changes: [
       {
@@ -422,7 +422,7 @@ export function DocsChangelogView() {
             </div>
             <h1 className="text-4xl font-bold text-white mb-4">Changelog</h1>
             <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
-              Track all updates, new features, and improvements to the IRIS platform.
+              Track all updates, new features, and improvements to the Consultinity platform.
             </p>
 
             {/* Subscribe Button */}
