@@ -75,15 +75,20 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 - **Bundle 08** (Cursor A): merged via bundle-22 — T032 AI authoring (AICardDraftModal, AIFieldEnhancer), T033 gate readiness (GateReadinessSection, AI readiness).
 - **Bundle 04** (Codex): applied stashed WIP — KnownToolsService, Library tab, KnownToolDetailView, Help→Knowledge override.
 
-## Wave 5 (2026-02-20) — IN PROGRESS
+## Wave 5 (2026-02-20) — CLOSED
 
 | Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
 |---|---|---|---|---|---|
-| 06.2 (slice) | T026–T027 | bundle-06-licensed-tools-t026-t027 | Cursor A | in_progress | SIRI/ADMA finalize + Report/deck templates |
-| 10 (slice) | T039–T040 | bundle-10-execution-t039-t040 | Cursor B | in_progress | Timeline + Risk signaling |
-| 05 | T019, T022–T024 | bundle-05-tools-toolsets-speed | Codex | in_progress | Toolsets + Speed Tool |
+| 06.2 (slice) | T026–T027 | bundle-06-licensed-tools-t026-t027 | Cursor A | **merged** | SIRI/ADMA finalize + Report/deck templates |
+| 10 (slice) | T039–T040 | bundle-10-execution-t039-t040 | Cursor B | **merged** | Timeline + Risk signaling (migracja 561) |
+| 05 | T019, T022–T024 | bundle-05 (stash) | Codex | **merged** | Toolsets + Speed Tool (migracja 562) |
 
 **Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_5.md`
+
+### Wave 5 — merge wykonane (2026-02-20)
+- **Bundle 06** (Cursor A): merged T026 SIRI/ADMA finalize (evidence, level meanings, workflow parity) + T027 Report & Deck templates (PPTX export).
+- **Bundle 10** (Cursor B): merged T039 Timeline (filters, warnings, drag-to-move, audit log) + T040 Risk signaling (RiskSignalsPanel, MitigationPanel, riskDetectionService).
+- **Bundle 05** (Codex): applied stashed WIP — flow steps (Impact/Results/Reasoning/Prepare/Report/Initiatives), Speed Tool wizard, migracja 562.
 
 ---
 
@@ -108,12 +113,12 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 02 | T007-T012 (+T008 guardrails) | Cursor | **merged** | bundle-02-my-work-slice-02-1-clean | Wave 3: T007+T009 (slice 02.1) |
 | 03 | T013-T017 | Codex | parked | bundle-03-interview-survey | czeka na dowiezienie przez Codex |
 | 04 | T018-T021 | Codex | **merged** | codex/bundle-04-tools-hub-v3 | Wave 4: Tools hub + library (migracja 559) |
-| 05 | T019, T022-T024 | Codex | in_progress | bundle-05-tools-toolsets-speed | Wave 5 |
-| 06 | T025-T027 | Cursor | in_progress | bundle-06-licensed-tools-t026-t027 | Wave 3: T025 merged; Wave 5: T026-T027 (slice 06.2) |
+| 05 | T019, T022-T024 | Codex | **merged** | main | Wave 5: toolsets + Speed Tool (migracja 562) |
+| 06 | T025-T027 | Cursor | **merged** | bundle-06-licensed-tools-t026-t027 | Wave 3: T025; Wave 5: T026-T027 merged |
 | 07 | T028, T030, T031 | Cursor | planned | | |
 | 08 | T032-T033 | Cursor | **merged** | bundle-22-help-t071-t073 | Wave 4: AI authoring + gate readiness |
 | 09 | T034-T038 | Codex | planned | | |
-| 10 | T039-T042 | Cursor | in_progress | bundle-10-execution-t039-t040 | Wave 5: T039-T040 (slice) |
+| 10 | T039-T042 | Cursor | **merged** | bundle-10-execution-t039-t040 | Wave 5: T039-T040 merged (T041-T042 planned) |
 | 11 | T043-T045 | Codex | planned | | |
 | 12 | T046-T049 | Cursor | planned | | |
 | 13 | T050-T051 | Codex | planned | | |
