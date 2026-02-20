@@ -3,7 +3,7 @@
 Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta balagan.
 
 ## Status "na teraz" (baseline)
-- **Specyfikacje T001-T122**: gotowe w `docs/plans/V2_TASK_SPECS.md`
+- **Specyfikacje T001-T122 (SSOT)**: `docs/plans/chatgpt-export/V2_TASK_SPECS_FULL.md` (+ `.txt`)
 - **Manual QA checklist (T001-T122)**: gotowe w `docs/test-quality/V2_MANUAL_QA_CHECKLIST_122_TASKS.md`
 - **Eksport do ChatGPT**: `docs/plans/chatgpt-export/` (md + txt)
 - **Plan paczek + workflow**: `docs/plans/v2-delivery/*` (ten katalog)
@@ -31,6 +31,13 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 - Pre-existing test failures mylily agentow -> dodana instrukcja "ignoruj"
 - Konflikty w translation.json -> instrukcja: klucze na koncu, prefix modulem
 - Hardcoded plans w Bundle 25 -> zasada: dane z DB/config
+
+## Wave 2 (2026-02-20) — IN PROGRESS
+
+| Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
+|---|---|---|---|---|---|
+| 01 | T003–T006 (+ T001–T002 already) | bundle-01-chat-research | Cursor A | merged | migracja 553_cloud_data_sources |
+| 30.5 (slice) | T110–T112 | bundle-30-5-oauth | Cursor B | merged | migracja 554_oauth_v2_enhancements; i18n + connected accounts |
 
 ---
 
@@ -80,7 +87,7 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 27 | T094-T095 | Codex | planned | | content-heavy |
 | 28 | T096-T098 | Codex | planned | | |
 | 29 | T099-T105 + T101-T103 | Cursor | planned | | weekend/hard |
-| 30 | T106-T122 (slices) | Cursor | planned | | program |
+| 30 | T106-T122 (slices) | Cursor | planned | | 30.5 (OAuth) merged as slice |
 
 ---
 

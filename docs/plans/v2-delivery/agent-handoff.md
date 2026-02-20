@@ -10,7 +10,9 @@ Consultify (repo: `consultify/`) to B2B SaaS wspierające transformację (assess
 **Priorytet V2:** monetization / trial→paid conversion (kategoria B) > “demo wow”.
 
 ## 2) Kanoniczne dokumenty (SSOT)
-- Specy tasków T001–T122: `docs/plans/V2_TASK_SPECS.md`
+- Specy tasków T001–T122 (SSOT):
+  - `docs/plans/chatgpt-export/V2_TASK_SPECS_FULL.md`
+  - `docs/plans/chatgpt-export/V2_TASK_SPECS_FULL.txt`
 - Manual QA checklist: `docs/test-quality/V2_MANUAL_QA_CHECKLIST_122_TASKS.md`
 - UI/UX standards (MUST): `docs/ui-standards/README.md`
 - Delivery plan (bundles/workflow/progress): `docs/plans/v2-delivery/*`
@@ -38,7 +40,7 @@ Consultify (repo: `consultify/`) to B2B SaaS wspierające transformację (assess
 ## 7) Codex packet (template do delegowania)
 Wklej do Codex zawsze to:
 - **Bundle ID + taski Txxx**
-- **Scope (V2) — IN/OUT + DoD** (z `V2_TASK_SPECS.md`)
+- **Scope (V2) — IN/OUT + DoD** (z `docs/plans/chatgpt-export/V2_TASK_SPECS_FULL.md`)
 - **Manual QA** (4–6 punktów per Txxx)
 - **Pliki/obszary do edycji** (lista ścieżek)
 - **Testy do przejścia** (np. `npm run verify:quick`, `npm run test:e2e:smoke`)
