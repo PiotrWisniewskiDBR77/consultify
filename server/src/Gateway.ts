@@ -182,6 +182,7 @@ import superAdminRoutes from './routes/superadmin.routes.js';
 import systemConfigRoutes from './routes/systemConfig.routes.js';
 import systemHealthRoutes from './routes/systemHealth.routes.js';
 import taskAdvisorRoutes from './routes/task-advisor.routes.js';
+import testSupportRoutes from './routes/testSupport.routes.js';
 import toolsRoutes from './routes/tools.routes.js';
 import trialRoutes from './routes/trial.routes.js';
 import portfolioOptimizationRoutes from './routes/portfolioOptimization.routes.js';
@@ -334,6 +335,9 @@ export class ApiGateway {
       // Admin routes
       app.use('/api/superadmin', superAdminRoutes);
       app.use('/api/superadmin', resourceManagementRoutes);
+
+      // Test support (hard-gated: NODE_ENV=test + ENABLE_TEST_SUPPORT=true + secret key)
+      app.use('/api/test-support', testSupportRoutes);
       app.use('/api/admin', resourceManagementRoutes);
       mountStub('/api/audit-logs', auditLogRoutes, 'auditLogRoutes');
       mountStub('/api/feature-flags', featureFlagsRoutes, 'featureFlagsRoutes');

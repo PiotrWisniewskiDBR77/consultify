@@ -128,7 +128,8 @@
     "i18n:validate": "npx ts-node scripts/i18n/translate-help.ts --validate",
     "branding:generate": "npx tsx scripts/branding/generate-consultinity-assets.ts",
     "doctor": "npx tsx scripts/dev/doctor.ts",
-    "cleanup:quarantine-duplicates": "npx tsx scripts/dev/quarantine-icloud-duplicates.ts"
+    "cleanup:quarantine-duplicates": "npx tsx scripts/dev/quarantine-icloud-duplicates.ts",
+    "deploy:gate": "bash scripts/deploy-gate.sh"
   },
   "overrides": {
     "react-is": "^19.0.0"

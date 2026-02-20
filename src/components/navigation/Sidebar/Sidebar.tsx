@@ -249,8 +249,6 @@ export const Sidebar: React.FC = () => {
 
   const handleFlyoutNavigate = React.useCallback(
     (viewId: AppView) => {
-      console.log('[Sidebar FloatingMenu] Navigating:', viewId);
-
       navigateToView(viewId);
       setActiveFloating(null);
       if (window.innerWidth < 1024) setIsSidebarOpen(false);

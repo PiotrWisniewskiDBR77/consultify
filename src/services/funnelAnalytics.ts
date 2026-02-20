@@ -232,7 +232,13 @@ export type FunnelEventName =
   | 'demo_cta_clicked'
   | 'signup_started'
   | 'signup_completed'
-  | 'trial_activated';
+  | 'trial_activated'
+  // T108 — SuperAdmin Control & System Testing
+  | 'superadmin_action_executed'
+  | 'superadmin_impersonation_started'
+  | 'superadmin_impersonation_ended'
+  | 'test_support_bootstrap_called'
+  | 'test_support_cleanup_called';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

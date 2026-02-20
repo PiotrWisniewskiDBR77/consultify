@@ -24,4 +24,7 @@ router.get('/ready', HealthCheckController.checkReadiness);
 // /api/health/live
 router.get('/live', HealthCheckController.checkLiveness);
 
+// /api/health/aggregated (T107)
+router.get('/aggregated', HealthCheckController.aggregatedHealth);
+
 export default router;
