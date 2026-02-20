@@ -45,10 +45,19 @@ import { HelpTab, useHelpSidePanel } from '../../contexts/HelpContext';
 import { KeyboardShortcutsHelp } from '../MyWork/shared/KeyboardShortcutsHelp';
 import { KnowledgeArticleView } from './KnowledgeArticleView';
 import { KnowledgeLibrary } from './KnowledgeLibrary';
+import { FeatureUpdatesPanel } from './FeatureUpdatesPanel';
+import { OnboardingPlaybooksPanel } from './OnboardingPlaybooksPanel';
 
 // Tab configuration - 3 tabs: Overview, FAQ, Knowledge Base
 const TABS: { id: HelpTab; icon: typeof BookOpen; label: string; labelKey: string }[] = [
   { id: 'overview', icon: BookOpen, label: 'Overview', labelKey: 'help.sidePanel.tabs.overview' },
+  {
+    id: 'onboarding',
+    icon: Rocket,
+    label: 'Onboarding',
+    labelKey: 'help.sidePanel.tabs.onboarding',
+  },
+  { id: 'updates', icon: Bell, label: "What's new", labelKey: 'help.sidePanel.tabs.updates' },
   { id: 'faq', icon: HelpCircle, label: 'FAQ', labelKey: 'help.sidePanel.tabs.faq' },
   {
     id: 'knowledge',
@@ -498,6 +507,12 @@ export const HelpSidePanel: React.FC = () => {
               </button>
             </div>
           )}
+
+          {/* Onboarding Tab */}
+          {activeTab === 'onboarding' && <OnboardingPlaybooksPanel onClose={() => setOpen(false)} />}
+
+          {/* Updates Tab */}
+          {activeTab === 'updates' && <FeatureUpdatesPanel onClose={() => setOpen(false)} />}
 
           {/* FAQ Tab */}
           {activeTab === 'faq' && (

@@ -28,6 +28,9 @@ export interface PlaybookStep {
   uiTarget: string | null;
   actionType: 'INFO' | 'CTA' | 'LINK';
   actionPayload: Record<string, any>;
+  whatYouGet?: string | null;
+  expectedTimeMinutes?: number | null;
+  status?: 'NOT_STARTED' | 'IN_PROGRESS' | 'DONE';
 }
 
 export interface Playbook {
@@ -41,9 +44,11 @@ export interface Playbook {
   isActive: boolean;
   isCompleted: boolean;
   isDismissed: boolean;
-  status: 'AVAILABLE' | 'COMPLETED' | 'DISMISSED';
+  status: 'AVAILABLE' | 'IN_PROGRESS' | 'COMPLETED' | 'DISMISSED';
   isRecommended?: boolean;
   recommendationReason?: string;
+  lastEventAt?: string | null;
+  resumeStepIndex?: number;
   steps?: PlaybookStep[];
 }
 
@@ -61,7 +66,7 @@ export interface HelpHint {
 }
 
 // New types for contextual help system - 3 tabs: Overview, FAQ, Knowledge Base
-export type HelpTab = 'overview' | 'faq' | 'knowledge';
+export type HelpTab = 'overview' | 'onboarding' | 'updates' | 'faq' | 'knowledge';
 
 export interface ContextualHelpState {
   moduleId: HelpModuleId;
@@ -234,8 +239,9 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }),
         });
 
-        // Refresh playbooks to update completion status
-        if (eventType === 'COMPLETED' || eventType === 'DISMISSED') {
+        // Refresh playbooks to update progress/completion status
+        const et = String(eventType || '').toLowerCase();
+        if (et.includes('completed') || et.includes('dismiss')) {
           await fetchPlaybooks();
         }
       } catch (err) {
