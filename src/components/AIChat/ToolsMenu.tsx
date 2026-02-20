@@ -381,11 +381,11 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           </div>
           <div className="px-3 pb-2 flex flex-wrap gap-1.5">
             {[
-              { id: 'strategist', label: t('chat.coThinker.strategist', 'Strategist'), icon: '🎯' },
-              { id: 'devil_advocate', label: t('chat.coThinker.devilAdvocate', "Devil's Advocate"), icon: '😈' },
-              { id: 'coach', label: t('chat.coThinker.coach', 'Coach'), icon: '🏋️' },
-              { id: 'analyst', label: t('chat.coThinker.analyst', 'Analyst'), icon: '📊' },
-              { id: 'innovator', label: t('chat.coThinker.innovator', 'Innovator'), icon: '💡' },
+              { id: 'multi_consultant', label: t('chat.coThinker.multiConsultant', 'Multi-Consultant Panel'), icon: '👥' },
+              { id: 'idea_maker', label: t('chat.coThinker.ideaMaker', 'Idea Maker'), icon: '💡' },
+              { id: 'competitive_analyst', label: t('chat.coThinker.competitiveAnalyst', 'Competitive Analyst'), icon: '🎯' },
+              { id: 'risk_challenger', label: t('chat.coThinker.riskChallenger', 'Risk Challenger'), icon: '⚠️' },
+              { id: 'executive_editor', label: t('chat.coThinker.executiveEditor', 'Executive Editor'), icon: '📋' },
             ].map((mode) => {
               const isActive = coThinkerMode === mode.id;
               return (
