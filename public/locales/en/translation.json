@@ -134,25 +134,45 @@
           "title": "My Tasks",
           "badge": "{{count}} Active",
           "items": {
-            "0": { "title": "Complete DRD Assessment" },
-            "1": { "title": "Review ROI Projections" },
-            "2": { "title": "Prepare Stage-Gate Report" }
+            "0": {
+              "title": "Complete DRD Assessment"
+            },
+            "1": {
+              "title": "Review ROI Projections"
+            },
+            "2": {
+              "title": "Prepare Stage-Gate Report"
+            }
           }
         },
         "initiatives": {
           "badge": "{{count}} Active",
           "items": {
-            "0": { "name": "Industry 4.0 Roadmap" },
-            "1": { "name": "Digital Twin Implementation" },
-            "2": { "name": "Supply Chain Optimization" }
+            "0": {
+              "name": "Industry 4.0 Roadmap"
+            },
+            "1": {
+              "name": "Digital Twin Implementation"
+            },
+            "2": {
+              "name": "Supply Chain Optimization"
+            }
           }
         },
         "decisions": {
           "badge": "{{count}} Pending",
           "items": {
-            "0": { "title": "Approve Q2 Budget Allocation", "deadline": "2 days" },
-            "1": { "title": "Select Technology Partner", "deadline": "5 days" },
-            "2": { "title": "Phase 2 Go/No-Go" }
+            "0": {
+              "title": "Approve Q2 Budget Allocation",
+              "deadline": "2 days"
+            },
+            "1": {
+              "title": "Select Technology Partner",
+              "deadline": "5 days"
+            },
+            "2": {
+              "title": "Phase 2 Go/No-Go"
+            }
           }
         }
       }
@@ -324,7 +344,11 @@
           "type": "Software Development Company",
           "location": "Stockholm, Sweden",
           "quote": "During the beta program, we integrated Consultinity into our client onboarding process. The AI-powered assessments helped us identify upsell opportunities we were missing before.",
-          "results": ["40% faster proposal creation", "3 new enterprise clients acquired", "2x improvement in client engagement"],
+          "results": [
+            "40% faster proposal creation",
+            "3 new enterprise clients acquired",
+            "2x improvement in client engagement"
+          ],
           "since": "October 2025"
         },
         "1": {
@@ -332,7 +356,11 @@
           "type": "Digital Transformation Consultancy",
           "location": "Munich, Germany",
           "quote": "Consultinity gave us a structured framework we were missing. Our consultants now deliver assessments in days, not weeks. The beta program shaped how we think about client success.",
-          "results": ["60% reduction in delivery time", "Client satisfaction: 4.2 → 4.8", "Deal closing cycle shortened by 35%"],
+          "results": [
+            "60% reduction in delivery time",
+            "Client satisfaction: 4.2 → 4.8",
+            "Deal closing cycle shortened by 35%"
+          ],
           "since": "September 2025"
         }
       }
@@ -343,27 +371,42 @@
       "registered": {
         "name": "Registered",
         "requirement": "Start here",
-        "benefits": ["Basic tools", "Directory listing"]
+        "benefits": [
+          "Basic tools",
+          "Directory listing"
+        ]
       },
       "bronze": {
         "name": "Bronze",
         "requirement": "3+ clients, €5K ARR",
-        "benefits": ["Priority support", "Training materials"]
+        "benefits": [
+          "Priority support",
+          "Training materials"
+        ]
       },
       "silver": {
         "name": "Silver",
         "requirement": "10+ clients, €25K ARR",
-        "benefits": ["Dedicated manager", "Beta feature access"]
+        "benefits": [
+          "Dedicated manager",
+          "Beta feature access"
+        ]
       },
       "gold": {
         "name": "Gold",
         "requirement": "25+ clients, €75K ARR",
-        "benefits": ["Co-marketing", "Conference speaking"]
+        "benefits": [
+          "Co-marketing",
+          "Conference speaking"
+        ]
       },
       "platinum": {
         "name": "Platinum",
         "requirement": "50+ clients, €200K+",
-        "benefits": ["Revenue share boost", "Executive partnership"]
+        "benefits": [
+          "Revenue share boost",
+          "Executive partnership"
+        ]
       }
     },
     "onboarding": {
@@ -716,226 +759,122 @@
     }
   },
   "assessment": {
-    "title": "Assessment",
-    "overview": "Overview",
-    "drd": "DRD Assessment",
-    "siri": "SIRI Framework",
-    "adma": "ADMA Framework",
-    "cmmi": "CMMI Framework",
-    "lean": "Lean 4.0"
+    "notes": "Notes",
+    "notesPlaceholder": "Key observations, context, rationale for the score...",
+    "evidence": "Evidence",
+    "evidencePlaceholder": "Systems, documents, metrics, processes that support this score...",
+    "confidence": "Assessment Confidence",
+    "confidenceLow": "Low",
+    "confidenceMedium": "Medium",
+    "confidenceHigh": "High",
+    "withEvidence": "With evidence",
+    "progress": "Assessment Progress",
+    "overallScore": "Overall Score",
+    "dimensions": "dimensions",
+    "currentLevel": "Current Level",
+    "targetLevel": "Target Level",
+    "gap": "Gap",
+    "strengths": {
+      "title": "Key Strengths",
+      "empty": "No strong dimensions identified yet. Continue the assessment to discover strengths."
+    },
+    "dataGaps": {
+      "title": "Data Gaps & Follow-up Items",
+      "notAssessed": "Not assessed",
+      "noTarget": "No target set",
+      "hint": "These areas require additional data collection before a complete assessment can be concluded."
+    },
+    "closure": {
+      "title": "Assessment Conclusions",
+      "dimensionsAssessed": "Dimensions Assessed",
+      "totalGap": "Total Gap",
+      "topPriorities": "Top Priorities",
+      "completeness": "Completeness",
+      "nextSteps": "Next Steps",
+      "step1": "Review findings with key stakeholders",
+      "step2": "Set targets for unassessed dimensions",
+      "step3": "Generate report for sponsor review",
+      "step4": "Create improvement initiatives from gaps",
+      "step5": "Schedule follow-up assessment"
+    },
+    "confidenceOverview": {
+      "title": "Confidence Overview",
+      "withEvidence": "With evidence",
+      "withoutEvidence": "Without evidence",
+      "alert": "Some scored dimensions lack evidence documentation."
+    },
+    "deck": {
+      "export": "Export Deck (PPTX)",
+      "generating": "Generating deck...",
+      "generated": "Deck generated successfully",
+      "failed": "Failed to generate deck",
+      "requiresApproval": "Assessment must be APPROVED to export deck"
+    },
+    "report": {
+      "strengths": "Key Strengths",
+      "dataGaps": "Data Gaps & Follow-up Items",
+      "roadmap": "Transformation Roadmap",
+      "conclusions": "Assessment Conclusions",
+      "shortTerm": "Short-term (0-6 months)",
+      "mediumTerm": "Medium-term (6-18 months)",
+      "longTerm": "Long-term (18-36 months)",
+      "quickWins": "Quick Wins",
+      "strategicInitiatives": "Strategic Initiatives",
+      "longTermTransformation": "Long-term Transformation"
+    },
+    "lean": {
+      "overallDashboard": "Overall Assessment Dashboard",
+      "leanMaturity": "Lean Maturity",
+      "automationPotential": "Automation Potential",
+      "estimatedSavings": "Est. Savings (PLN/yr)",
+      "topWastes": "Top Wastes (Where It Hurts Most)",
+      "quickWins": "Quick Wins (Lean-first)",
+      "noStdWork": "No Std Work",
+      "automationOps": "Top Automation Opportunities",
+      "dataGaps": "Data Gaps & Follow-up Items",
+      "moreItems": "more items",
+      "closure": "Assessment Closure",
+      "processesAssessed": "Processes Assessed",
+      "workstationsAssessed": "Workstations Assessed",
+      "totalHeadcount": "Total Headcount",
+      "priorityItems": "Priority Initiatives",
+      "closureNote": "Next steps: Generate report, create roadmap, materialize initiatives. Approve assessment to unlock report and initiative generation.",
+      "coachQuestions": "Coach Questions",
+      "evidenceGuidance": "Evidence Guidance",
+      "microLesson": "Micro-lesson",
+      "commonMistakes": "Common Mistakes to Avoid",
+      "wasteKnowledge": "Waste Analysis Guide",
+      "whatToLookFor": "What to Look For",
+      "typicalEvidence": "Typical Evidence"
+    }
   },
   "initiatives": {
-    "title": "Initiatives",
-    "roadmap": "Roadmap",
-    "portfolio": "Portfolio",
-    "form": {
-      "createNew": "Create New Initiative",
-      "edit": "Edit Initiative",
-      "newInitiative": "New Initiative",
-      "title": "Title",
-      "titleRequired": "Title *",
-      "titlePlaceholder": "e.g. Submit compliance documentation",
-      "axis": "Axis",
-      "summary": "Summary",
-      "summaryPlaceholder": "Short problem/goal statement…",
-      "description": "Description",
-      "descriptionOptional": "Description (optional)",
-      "descriptionPlaceholder": "Describe the initiative...",
-      "category": "Category",
-      "categoryOptional": "Category (optional)",
-      "categoryPlaceholder": "e.g. Cybersecurity",
-      "priority": "Priority",
-      "risk": "Risk",
-      "riskLevel": "Risk Level",
-      "sourceAxis": "Source Axis",
-      "budget": "Budget (PLN)",
-      "expectedROI": "Expected ROI",
-      "timeline": "Timeline",
-      "objectives": "Objectives",
-      "addObjective": "Add new objective...",
-      "create": "Create",
-      "creating": "Creating…",
-      "save": "Save Changes",
-      "cancel": "Cancel",
-      "nameRequired": "Initiative Name *",
-      "namePlaceholder": "Enter initiative name",
-      "nameMinLength": "Name must be at least 5 characters",
-      "descriptionMinLength": "Description must be at least 20 characters",
-      "budgetRequired": "Budget must be greater than 0",
-      "roiRequired": "ROI must be greater than 0",
-      "highRiskHighBudget": "High-Risk, High-Budget Initiative",
-      "highRiskHighBudgetDesc": "Consider breaking this into smaller phases or implementing additional governance controls.",
-      "titleTooShort": "Title is too short",
-      "titleRequiredError": "Title is required",
-      "initiativeCreated": "Initiative created",
-      "initiativeUpdated": "Initiative updated",
-      "createFailed": "Failed to create initiative",
-      "updateFailed": "Failed to update initiative",
-      "duplicateWarning": "A similar initiative already exists: {{name}}",
-      "duplicateWarningDesc": "This initiative title is very similar to an existing one. Please verify this is not a duplicate."
-    },
-    "bulkEdit": {
-      "title": "Bulk edit initiatives",
-      "selectedCount": "{{count}} initiatives selected",
-      "status": "Status",
-      "priority": "Priority",
-      "businessOwner": "Business Owner",
-      "executionOwner": "Execution Owner",
-      "noChange": "No change",
-      "applyChanges": "Apply changes",
-      "updatesFailed": "{{count}} updates failed",
-      "bulkUpdateApplied": "Bulk update applied"
-    },
-    "empty": {
-      "title": "No Initiatives Yet",
-      "description": "Create your first initiative to get started"
-    },
-    "axis": {
-      "operational": "Operational",
-      "strategic": "Strategic",
-      "transformational": "Transformational",
-      "compliance": "Compliance"
-    },
-    "priority": {
-      "low": "Low",
-      "medium": "Medium",
-      "high": "High",
-      "critical": "Critical"
-    },
-    "risk": {
-      "low": "Low Risk",
-      "medium": "Medium Risk",
-      "high": "High Risk"
-    },
-    "level": {
-      "label": "Initiative Type / Level",
-      "quick_win": "Quick Win",
-      "standard": "Standard Project",
-      "strategic": "Strategic Program",
-      "transformation": "Transformation",
-      "cannotDowngrade": "Initiative level cannot be downgraded",
-      "upgradeNote": "Level can be upgraded later but not downgraded"
-    },
-    "status": {
-      "draft": "Draft",
-      "pending_review": "Pending Review",
-      "review": "In Review",
-      "promoted": "Promoted",
-      "planning": "Planning",
-      "approved": "Approved",
-      "scheduled": "Scheduled",
-      "executing": "Executing",
-      "blocked": "Blocked",
-      "done": "Done",
-      "tracking": "Tracking",
-      "cancelled": "Cancelled",
-      "archived": "Archived"
-    },
-    "approval": {
-      "cannotApprove": "Cannot approve initiative",
-      "missingFields": "Missing required fields",
-      "needsTasks": "At least 1 task is required before approval",
-      "needsDeadline": "A deadline (end date) is required before approval",
-      "needsOwner": "A business owner must be assigned before approval"
-    },
-    "toast": {
-      "saveError": "Failed to save",
-      "watchError": "Failed to change watch status",
-      "createTaskError": "Failed to create task",
-      "createDecisionError": "Failed to create decision",
-      "createRaidError": "Failed to add RAID item"
-    },
-    "drawer": {
-      "overview": "Overview",
-      "timeline": "Timeline",
-      "resources": "Resources",
-      "decisions": "Decisions",
-      "goNoGo": "Go/No-Go",
-      "resourcesCommit": "Resources Commit",
-      "scheduleLock": "Schedule Lock",
-      "quickReview": "Quick review",
-      "gateReadiness": "Gate readiness",
-      "viewDecisions": "View decisions",
-      "notRequested": "Not requested",
-      "summary": "Summary",
-      "noSummary": "No summary provided.",
-      "progress": "Progress",
-      "roi": "ROI",
-      "budget": "Budget",
-      "priority": "Priority",
-      "start": "Start:",
-      "end": "End:",
-      "nextMilestone": "Next milestone",
-      "topRisks": "Top risks / issues",
-      "noRaidItems": "No RAID items yet.",
-      "milestones": "Milestones",
-      "manageInFullView": "Manage in full view",
-      "noMilestones": "No milestones defined yet",
-      "gate": "Gate",
-      "ownership": "Ownership",
-      "businessOwner": "Business Owner",
-      "noBusinessOwner": "No business owner assigned",
-      "executionOwner": "Execution Owner",
-      "noExecutionOwner": "No execution owner assigned",
-      "resourceCapacity": "Resource Capacity",
-      "requiredFte": "Required FTE",
-      "allocatedFte": "Allocated FTE",
-      "manageTeam": "Manage team members in full view",
-      "openFullCard": "Open full card",
-      "gateDecisions": "Gate Decisions",
-      "requestDecision": "+ Request Decision",
-      "noDecisions": "No decisions linked to this initiative",
-      "gateRequirements": "Gate Requirements",
-      "initiative": "Initiative"
-    },
-    "compact": {
-      "summary": "Summary",
-      "tasks": "Tasks",
-      "decisions": "Decisions",
-      "raid": "RAID",
-      "finance": "Finance",
-      "noGoal": "No goal / summary defined yet — add one in the full view.",
-      "team": "Team",
-      "timeline": "Timeline",
-      "budget": "Budget",
-      "risks": "Risks",
-      "openFullCard": "Open Full Initiative Card",
-      "description": "Description",
-      "owner": "Owner",
-      "sponsor": "Sponsor",
-      "targetDate": "Target Date",
-      "created": "Created",
-      "strategicAxis": "Strategic Axis",
-      "tags": "Tags",
-      "killCriteria": "Kill Criteria",
-      "progress": "Progress",
-      "milestones": "Milestones",
-      "blocked": "Blocked ({{count}})",
-      "showLess": "Show less",
-      "showMore": "Show {{count}} more…",
-      "active": "Active ({{count}})",
-      "done": "Done ({{count}})",
-      "noTasks": "No tasks yet",
-      "noDecisions": "No decisions yet",
-      "noRaid": "No RAID items yet",
-      "spent": "Spent",
-      "impact": "Impact",
-      "budgetUtilization": "Budget utilization",
-      "noFinancialData": "No financial data",
-      "pending": "Pending ({{count}})",
-      "resolved": "Resolved ({{count}})"
-    },
-    "hub": {
-      "failedToLoad": "Failed to load initiatives",
-      "retry": "Retry",
-      "dismiss": "Dismiss",
-      "noInitiativesFound": "No initiatives found"
-    },
-    "levelDesc": {
-      "quick_win": "Minimal governance. Can be self-approved.",
-      "standard": "Standard approval flow. Requires owner + deadline + tasks.",
-      "strategic": "Executive approval required. Full charter + RAID analysis.",
-      "transformation": "Board-level governance. Full charter, steering committee, gate reviews."
+    "gateReadiness": {
+      "title": "Gate Readiness & Timeline",
+      "readinessSystem": "Readiness (system)",
+      "readinessAi": "AI Readiness Analysis",
+      "blockingMissing": "Blocking missing",
+      "cantProgress": "You can't progress yet",
+      "fillMissing": "Fill missing blocking items, then retry the gate action.",
+      "suggestedAction": "Suggested action",
+      "suggestedActor": "Who should act",
+      "askAi": "Ask AI for readiness analysis",
+      "aiAnalyzing": "AI is analyzing readiness...",
+      "aiScore": "Readiness Score",
+      "aiSummary": "Summary",
+      "aiFindings": "AI Findings",
+      "noFindings": "AI found no additional issues.",
+      "blocking": "blocking",
+      "warning": "warning",
+      "fix": "Fix",
+      "currentGate": "Current Gate",
+      "nextGate": "Next",
+      "requirementsChecklist": "Requirements Checklist",
+      "readinessPercent": "Readiness",
+      "requiredApproval": "Required approval",
+      "allGatesPassed": "All gates passed!",
+      "requiredApprovalsForStatus": "Required approvals for status",
+      "notRequested": "Not requested"
     }
   },
   "execution": {
@@ -1221,77 +1160,28 @@
     }
   },
   "benefits": {
-    "title": "Benefits Realization",
-    "kpis": "KPIs",
-    "lessons": "Lessons Learned",
     "tabs": {
       "completed": "Completed",
       "kpis": "KPIs",
-      "roi": "ROI Analysis"
+      "roi": "ROI Tracking",
+      "attribution": "Attribution",
+      "financial": "Financial Mapping"
     },
-    "columns": {
-      "type": "Type",
-      "name": "Name",
-      "status": "Status",
-      "roi": "ROI",
-      "budget": "Budget",
-      "completed": "Completed",
-      "actions": "Actions"
-    },
-    "empty": {
-      "noCompleted": "No completed initiatives yet."
-    },
-    "kpiCards": {
-      "totalKpis": "Total KPIs",
-      "onTarget": "On Target",
-      "belowTarget": "Below Target"
-    },
-    "kpiEmpty": {
-      "noKpis": "No KPIs defined yet",
-      "completeToTrack": "Complete initiatives and add KPIs to track benefits",
-      "noKpisForInitiative": "No KPIs defined for this initiative"
-    },
-    "kpiActions": {
-      "addKpi": "Add KPI",
-      "createKpi": "Create KPI",
-      "cancel": "Cancel"
-    },
-    "kpiLabels": {
-      "current": "Current",
-      "target": "Target"
-    },
-    "roiAnalysis": {
-      "title": "ROI Analysis",
-      "subtitle": "Return on investment calculations"
-    },
-    "tracker": {
-      "financialBenefits": "Financial Benefits",
-      "of": "of",
-      "target": "target",
-      "avgRealization": "Avg. Realization",
-      "benefitsAchieved": "Benefits Achieved",
-      "inProgress": "In Progress",
-      "allTypes": "All Types",
-      "targetLabel": "Target:",
-      "measurement": "Measurement:",
-      "initiative": "Initiative:",
-      "fetchError": "Failed to load benefits data",
-      "retry": "Retry"
-    },
-    "kpiDashboard": {
-      "title": "KPI Dashboard",
-      "totalKpis": "Total KPIs",
-      "onTarget": "On Target",
-      "atRisk": "At Risk",
-      "offTarget": "Off Target",
-      "achieved": "Achieved",
-      "allCategories": "All Categories",
-      "target": "Target:",
-      "updated": "Updated",
-      "createAction": "Create Action",
-      "linked": "Linked:",
-      "fetchError": "Failed to load KPI data",
-      "retry": "Retry"
+    "roi": {
+      "noData": "No ROI Assumptions Yet",
+      "noDataHint": "Set ROI assumptions on initiatives to track projected vs realized returns.",
+      "projected": "Projected Benefit",
+      "realized": "Realized Benefit",
+      "totalCapex": "Total CAPEX",
+      "coverage": "Data Coverage",
+      "initiatives": "initiatives",
+      "variance": "Portfolio Variance",
+      "abovePlan": "Realized benefits exceed projections",
+      "belowPlan": "Realized benefits below projections — review assumptions",
+      "byInitiative": "ROI by Initiative",
+      "initiative": "Initiative",
+      "confidence": "Conf.",
+      "disclaimer": "ROI figures are based on stated assumptions. Realized values may differ from projections due to external factors."
     }
   },
   "economics": {
@@ -1384,352 +1274,11 @@
     "back": "Back"
   },
   "help": {
-    "title": "Help Center",
-    "sidePanel": {
-      "title": "Help Center",
-      "tabs": {
-        "overview": "Overview",
-        "onboarding": "Onboarding",
-        "updates": "What's new",
-        "faq": "FAQ",
-        "knowledge": "Knowledge Base"
-      },
-      "fullDocs": "Full documentation",
-      "overview": {
-        "title": "Welcome to Consultinity",
-        "intro": "Your complete PMO platform for digital transformation. Assess, plan, and track your organization's journey to digital excellence with AI-powered insights and proven methodologies.",
-        "watchVideo": "Watch introduction video",
-        "videoDuration": "3 min overview",
-        "guides": "Quick guides",
-        "guidesList": {
-          "gettingStarted": "Getting started",
-          "assessment": "Assessment",
-          "initiatives": "Initiatives & roadmap",
-          "reports": "Reports & exports",
-          "aiFeatures": "AI features"
-        },
-        "whatToKnow": "Key things to know",
-        "tip1": "Start with Quick Assessment (5 min) for instant AI recommendations",
-        "tip2": "AI generates initiatives from assessment gaps — review in Roadmap",
-        "tip3": "Track implementation in Execution module with real-time dashboards",
-        "tip4": "Use AI Chat anytime to ask questions or get recommendations",
-        "tip5": "Export reports in PDF/PowerPoint for stakeholder presentations",
-        "keyboardShortcuts": "Keyboard shortcuts",
-        "keyboardShortcutsHint": "Press ? anytime to view"
-      },
-      "faq": {
-        "searchPlaceholder": "Search questions...",
-        "noResults": "No matching questions found.",
-        "noFAQ": "No FAQ available."
-      },
-      "knowledge": {
-        "title": "Knowledge Base",
-        "description": "Explore articles, tutorials, and best practices.",
-        "comingSoon": "In development",
-        "categories": {
-          "tools": "Tools",
-          "methodologies": "Methodologies",
-          "caseStudies": "Case studies",
-          "bestPractices": "Best practices"
-        },
-        "notify": {
-          "success": "You'll be notified when it's ready!"
-        }
-      }
-    },
-    "onboarding": {
-      "title": "Onboarding playbooks",
-      "subtitle": "Choose a path and move fast — each step is short, concrete, and linked to the right place in the app.",
-      "recommended": "Recommended",
-      "morePaths": "More paths",
-      "completed": "Completed",
-      "empty": "No onboarding playbooks available yet.",
-      "back": "Back to playbooks",
-      "whatYouGet": "What you'll get",
-      "expectedTime": "Expected time",
-      "totalTime": "Expected time",
-      "stepProgress": "Step {{current}} of {{total}}",
-      "previous": "Previous",
-      "next": "Next",
-      "finish": "Finish",
-      "dismiss": "Dismiss",
-      "status": {
-        "available": "Available",
-        "inProgress": "In progress",
-        "completed": "Completed"
-      },
-      "recommendation": {
-        "first30": "Best starting point for your first value"
-      },
-      "cta": {
-        "tryItNow": "Try it now",
-        "openDashboard": "Open dashboard",
-        "runAssessment": "Run quick assessment",
-        "openInitiatives": "Open initiatives",
-        "openRoadmap": "Open roadmap",
-        "openReports": "Open reports",
-        "startDiscovery": "Start discovery",
-        "openAssessmentHub": "Open assessment hub",
-        "buildBacklog": "Build your initiative backlog",
-        "generateReport": "Generate a stakeholder snapshot",
-        "organizeRoadmap": "Organize the roadmap",
-        "trackExecution": "Track execution",
-        "setupRoutines": "Set up PMO routines",
-        "toast": {
-          "title": "Start onboarding",
-          "body": "Take the “First 30 minutes” path to reach your first value fast — no walls of text, just steps and deep links.",
-          "later": "Later",
-          "start": "Start"
-        }
-      },
-      "playbooks": {
-        "first30": {
-          "title": "First 30 minutes (Owner / Trial)",
-          "description": "A crisp path to your first value: learn the layout, run a quick assessment, and leave with a roadmap you can share.",
-          "steps": {
-            "1": {
-              "title": "Get oriented in 2 minutes",
-              "content": "Scan the Dashboard to understand what the platform tracks: current state, priorities, and “what to do next”.",
-              "whatYouGet": "A mental model of the platform in one screen."
-            },
-            "2": {
-              "title": "Run a quick assessment",
-              "content": "Answer a short set of questions — the AI highlights gaps and recommends high‑leverage initiatives.",
-              "whatYouGet": "A clear baseline and a first set of AI-backed recommendations."
-            },
-            "3": {
-              "title": "Review your first initiatives",
-              "content": "Open Initiatives and review what the platform generated. Keep what fits, adjust owners and priorities.",
-              "whatYouGet": "A focused backlog that makes sense for your context."
-            },
-            "4": {
-              "title": "Turn it into a roadmap",
-              "content": "Sequence initiatives in the Roadmap — keep it realistic, then align execution with capacity and dependencies.",
-              "whatYouGet": "A plan your team can actually execute."
-            },
-            "5": {
-              "title": "Create a shareable snapshot",
-              "content": "Generate a first report to share with stakeholders — a simple “where we are / what we do next” narrative.",
-              "whatYouGet": "A stakeholder-ready snapshot you can export and circulate."
-            }
-          }
-        },
-        "consultant": {
-          "title": "Consultant quickstart",
-          "description": "A structured start for discovery: capture context, generate insights, and build a credible initiative backlog.",
-          "steps": {
-            "1": {
-              "title": "Run a discovery interview",
-              "content": "Use the Interview flow to capture goals, constraints, and success criteria in a format you can reuse.",
-              "whatYouGet": "A clean, shareable discovery baseline."
-            },
-            "2": {
-              "title": "Pick the right assessment lens",
-              "content": "Choose the assessment view that fits the engagement. Keep it light at first — you can deepen later.",
-              "whatYouGet": "A consistent framework to anchor the conversation."
-            },
-            "3": {
-              "title": "Build an initiative backlog",
-              "content": "Translate gaps into initiatives. Keep them specific, owned, and measurable — quality beats quantity.",
-              "whatYouGet": "A backlog that can be prioritized and funded."
-            },
-            "4": {
-              "title": "Produce a stakeholder snapshot",
-              "content": "Generate a report that explains the narrative: current state → priorities → next 90 days.",
-              "whatYouGet": "A deliverable you can present with confidence."
-            }
-          }
-        },
-        "pmo": {
-          "title": "PMO quickstart",
-          "description": "Set governance rhythm fast: portfolio visibility, sequencing, execution tracking, and weekly routines.",
-          "steps": {
-            "1": {
-              "title": "Align on what “good” looks like",
-              "content": "Use the Dashboard to align on the few metrics and priorities that matter this quarter.",
-              "whatYouGet": "A shared definition of success."
-            },
-            "2": {
-              "title": "Structure the roadmap",
-              "content": "Group initiatives, set dependencies, and keep sequencing honest. Your roadmap should be executable, not aspirational.",
-              "whatYouGet": "A portfolio roadmap with clear sequencing."
-            },
-            "3": {
-              "title": "Track execution, not activity",
-              "content": "Use the Execution module to track outcomes and blockers — focus on the constraints that slow delivery.",
-              "whatYouGet": "A live view of progress and constraints."
-            },
-            "4": {
-              "title": "Set weekly PMO routines",
-              "content": "Create a rhythm: weekly review, decision queue, and clear ownership for next actions.",
-              "whatYouGet": "A lightweight governance cadence your team can sustain."
-            }
-          }
-        }
-      }
-    },
-    "updates": {
-      "title": "What's new",
-      "subtitle": "Product updates, improvements, and release notes.",
-      "unread": "{{count}} unread",
-      "back": "Back to updates",
-      "empty": "No updates yet.",
-      "tryItNow": "Try it now",
-      "importance": {
-        "low": "Low",
-        "normal": "Normal",
-        "high": "High"
-      },
-      "errors": {
-        "load": "Failed to load updates"
-      },
-      "admin": {
-        "hint": "Publish an update for your users.",
-        "new": "New update",
-        "composeTitle": "Publish update",
-        "publish": "Publish",
-        "success": "Update published",
-        "recent": "Recent (admin)",
-        "notice": "Publishing sends an in-app notification. Email is sent only if SMTP is configured and throttling allows it.",
-        "errors": {
-          "required": "Title and body are required",
-          "publish": "Failed to publish update"
-        },
-        "fields": {
-          "title": "Title",
-          "body": "Body (Markdown)",
-          "tags": "Tags (modules)",
-          "importance": "Importance",
-          "tryItNow": "\"Try it now\" target"
-        },
-        "placeholders": {
-          "title": "Short and specific",
-          "body": "Write short sections, include bullets, and end with a “Try it now” hint.",
-          "tags": "e.g. roadmap, reports"
-        },
-        "views": {
-          "dashboard": "Dashboard",
-          "assessment": "Assessment",
-          "initiatives": "Initiatives",
-          "roadmap": "Roadmap",
-          "reports": "Reports",
-          "aiChat": "AI Chat"
-        }
-      }
-    },
-    "search": {
-      "placeholder": "Search help articles, tutorials...",
-      "searching": "Searching...",
-      "results": "Results",
-      "found": "found",
-      "viewAll": "View all results",
-      "noResults": "No results found for \"{{query}}\"",
-      "tryDifferent": "Try different keywords or browse categories",
-      "recent": "Recent searches",
-      "clearRecent": "Clear",
-      "suggested": "Suggested articles",
-      "startTyping": "Start typing to search",
-      "navigate": "Navigate",
-      "select": "Select",
-      "close": "Close",
-      "buttonText": "Search help..."
-    },
-    "article": {
-      "tableOfContents": "Table of Contents",
-      "showMeHow": "Show me how",
-      "completed": "completed",
-      "thanksFeedback": "Thanks for your feedback!",
-      "loading": "Loading article...",
-      "notFound": "Article not found",
-      "minRead": "min read"
-    },
-    "contact": {
-      "title": "Contact Support",
-      "selectCategory": "Select a category to get started",
-      "describeIssue": "Describe your issue or request",
-      "requestSubmitted": "Request submitted successfully",
-      "categoryIntro": "What can we help you with today?",
-      "quickLinks": "Quick Links",
-      "documentation": "Documentation",
-      "systemStatus": "System Status",
-      "changeCategory": "Change category",
-      "priority": "Priority",
-      "subject": "Subject",
-      "description": "Description",
-      "email": "Email",
-      "emailPlaceholder": "Your email for follow-up",
-      "attachments": "Attachments",
-      "dropFiles": "Click to attach files",
-      "fileLimit": "Max {{max}} files, 10MB each",
-      "includeSystemInfo": "Include system information",
-      "thankYou": "Thank you!",
-      "submitAnother": "Submit another",
-      "responseTime": "Typical response time: 24 hours",
-      "submitting": "Submitting...",
-      "submit": "Submit Request",
-      "success": "Support request submitted successfully!",
-      "error": "Failed to submit request. Please try again.",
-      "fileTooLarge": "File {{name}} is too large (max 10MB)",
-      "tooManyFiles": "Maximum {{max}} files allowed",
-      "errors": {
-        "subjectRequired": "Subject is required",
-        "invalidEmail": "Invalid email address"
-      }
-    },
-    "dashboard": {
-      "overview": "Dashboard overview",
-      "overviewContent": "Use the Dashboard to monitor progress, key metrics, and the overall health of your transformation program.",
-      "navigation": "Navigation tips",
-      "navigationContent": "Use the left sidebar to move between modules. The Help panel adapts to the screen you're on."
-    },
-    "initiatives": {
-      "create": "Creating initiatives",
-      "createContent": "Create initiatives from assessment gaps or add them manually. Define owners, milestones, and expected benefits.",
-      "manage": "Managing initiatives",
-      "manageContent": "Prioritize initiatives, track progress, and keep stakeholders aligned using execution boards and reports."
-    },
-    "assessment": {
-      "start": "Starting an assessment",
-      "startContent": "Choose a framework, complete the questionnaire, and review gaps and recommendations generated from your inputs.",
-      "methodology": "Methodology",
-      "methodologyContent": "Assessments benchmark your current maturity and translate results into a prioritized roadmap of initiatives."
-    },
-    "general": {
-      "gettingStarted": "Getting started",
-      "gettingStartedContent": "Open the Help Center for quick guides, then run an assessment to generate a first roadmap.",
-      "support": "Support",
-      "supportContent": "If you get stuck, contact support and attach screenshots/logs. The AI Chat can also explain features and workflows."
-    },
-    "knowledge": {
-      "title": "Knowledge Base",
-      "searchPlaceholder": "Search articles...",
-      "allCategories": "All",
-      "noSearchResults": "No articles found for your search.",
-      "noArticles": "No articles available in this category.",
-      "articleNotFound": "Article not found.",
-      "minRead": "min read",
-      "views": "views",
-      "relatedModules": "Related Modules",
-      "shareArticle": "Share Article",
-      "featured": "Featured",
-      "popular": "Popular",
-      "recent": "Recent",
-      "readMore": "Read more",
-      "backToLibrary": "Back to Library",
-      "categories": "Categories",
-      "articles": "Articles",
-      "searchResults": "Search Results",
-      "tableOfContents": "Table of Contents",
-      "wasHelpful": "Was this article helpful?",
-      "yes": "Yes",
-      "no": "No",
-      "feedbackThanks": "Thank you for your feedback!",
-      "relatedArticles": "Related Articles",
-      "gettingStarted": "Getting Started",
-      "tutorials": "Tutorials",
-      "bestPractices": "Best Practices",
-      "faq": "FAQ",
-      "troubleshooting": "Troubleshooting"
+    "microVideo": {
+      "header": "Quick Tutorial",
+      "watch": "Watch",
+      "skip": "Skip",
+      "dontShow": "Don't show again"
     }
   },
   "settings": {
@@ -2348,10 +1897,11 @@
     }
   },
   "thinking": {
-    "processing": "Thinking…",
-    "analyzing": "Analyzing your question…",
-    "context": "Gathering context…",
-    "drafting": "Drafting the answer…"
+    "processing": "Thinking...",
+    "analyzing": "Analyzing...",
+    "structuring": "Structuring...",
+    "synthesizing": "Synthesizing...",
+    "finalizing": "Finalizing..."
   },
   "contextBadge": {
     "aiSees": "AI sees",
@@ -2506,17 +2056,44 @@
       "cloudStorage": "Cloud",
       "connectInSettings": "Connect more in Settings → Integrations",
       "modes": {
-        "deepResearch": { "label": "Deep analysis", "desc": "In-depth exploration of a topic" },
-        "webSearch": { "label": "Web search", "desc": "Real-time information" },
-        "showReasoning": { "label": "Show reasoning", "desc": "Expose the AI's chain of thought" },
-        "multiAgent": { "label": "Multi-agent analysis", "desc": "CFO/CTO/CHRO/COO perspectives" },
-        "textToSpeech": { "label": "Read responses", "desc": "Automatically read responses aloud" },
-        "marketResearch": { "label": "Market Research", "desc": "Structured market analysis with data" }
+        "deepResearch": {
+          "label": "Deep analysis",
+          "desc": "In-depth exploration of a topic"
+        },
+        "webSearch": {
+          "label": "Web search",
+          "desc": "Real-time information"
+        },
+        "showReasoning": {
+          "label": "Show reasoning",
+          "desc": "Expose the AI's chain of thought"
+        },
+        "multiAgent": {
+          "label": "Multi-agent analysis",
+          "desc": "CFO/CTO/CHRO/COO perspectives"
+        },
+        "textToSpeech": {
+          "label": "Read responses",
+          "desc": "Automatically read responses aloud"
+        },
+        "marketResearch": {
+          "label": "Market Research",
+          "desc": "Structured market analysis with data"
+        }
       },
       "sources": {
-        "pmoDocuments": { "label": "PMO documents", "desc": "ISO 21500, PMBOK, PRINCE2" },
-        "projectData": { "label": "Project data", "desc": "Initiatives, tasks, decisions" },
-        "organizationData": { "label": "Organization data", "desc": "Teams, roles, processes" }
+        "pmoDocuments": {
+          "label": "PMO documents",
+          "desc": "ISO 21500, PMBOK, PRINCE2"
+        },
+        "projectData": {
+          "label": "Project data",
+          "desc": "Initiatives, tasks, decisions"
+        },
+        "organizationData": {
+          "label": "Organization data",
+          "desc": "Teams, roles, processes"
+        }
       },
       "styles": {
         "normal": "Normal",
@@ -2768,13 +2345,6 @@
     "topSources": "Top Sources",
     "researching": "Researching"
   },
-  "thinking": {
-    "processing": "Thinking...",
-    "analyzing": "Analyzing...",
-    "structuring": "Structuring...",
-    "synthesizing": "Synthesizing...",
-    "finalizing": "Finalizing..."
-  },
   "admin": {
     "strategicProfile": {
       "industryCode": "Industry Code ({{system}})",
@@ -3012,243 +2582,6 @@
       "supportedFrameworks": "Supported Frameworks"
     }
   },
-  "assessment": {
-    "notes": "Notes",
-    "notesPlaceholder": "Key observations, context, rationale for the score...",
-    "evidence": "Evidence",
-    "evidencePlaceholder": "Systems, documents, metrics, processes that support this score...",
-    "confidence": "Assessment Confidence",
-    "confidenceLow": "Low",
-    "confidenceMedium": "Medium",
-    "confidenceHigh": "High",
-    "withEvidence": "With evidence",
-    "progress": "Assessment Progress",
-    "overallScore": "Overall Score",
-    "dimensions": "dimensions",
-    "currentLevel": "Current Level",
-    "targetLevel": "Target Level",
-    "gap": "Gap",
-    "strengths": {
-      "title": "Key Strengths",
-      "empty": "No strong dimensions identified yet. Continue the assessment to discover strengths."
-    },
-    "dataGaps": {
-      "title": "Data Gaps & Follow-up Items",
-      "notAssessed": "Not assessed",
-      "noTarget": "No target set",
-      "hint": "These areas require additional data collection before a complete assessment can be concluded."
-    },
-    "closure": {
-      "title": "Assessment Conclusions",
-      "dimensionsAssessed": "Dimensions Assessed",
-      "totalGap": "Total Gap",
-      "topPriorities": "Top Priorities",
-      "completeness": "Completeness",
-      "nextSteps": "Next Steps",
-      "step1": "Review findings with key stakeholders",
-      "step2": "Set targets for unassessed dimensions",
-      "step3": "Generate report for sponsor review",
-      "step4": "Create improvement initiatives from gaps",
-      "step5": "Schedule follow-up assessment"
-    },
-    "confidenceOverview": {
-      "title": "Confidence Overview",
-      "withEvidence": "With evidence",
-      "withoutEvidence": "Without evidence",
-      "alert": "Some scored dimensions lack evidence documentation."
-    },
-    "deck": {
-      "export": "Export Deck (PPTX)",
-      "generating": "Generating deck...",
-      "generated": "Deck generated successfully",
-      "failed": "Failed to generate deck",
-      "requiresApproval": "Assessment must be APPROVED to export deck"
-    },
-    "report": {
-      "strengths": "Key Strengths",
-      "dataGaps": "Data Gaps & Follow-up Items",
-      "roadmap": "Transformation Roadmap",
-      "conclusions": "Assessment Conclusions",
-      "shortTerm": "Short-term (0-6 months)",
-      "mediumTerm": "Medium-term (6-18 months)",
-      "longTerm": "Long-term (18-36 months)",
-      "quickWins": "Quick Wins",
-      "strategicInitiatives": "Strategic Initiatives",
-      "longTermTransformation": "Long-term Transformation"
-    },
-    "lean": {
-      "overallDashboard": "Overall Assessment Dashboard",
-      "leanMaturity": "Lean Maturity",
-      "automationPotential": "Automation Potential",
-      "estimatedSavings": "Est. Savings (PLN/yr)",
-      "topWastes": "Top Wastes (Where It Hurts Most)",
-      "quickWins": "Quick Wins (Lean-first)",
-      "noStdWork": "No Std Work",
-      "automationOps": "Top Automation Opportunities",
-      "dataGaps": "Data Gaps & Follow-up Items",
-      "moreItems": "more items",
-      "closure": "Assessment Closure",
-      "processesAssessed": "Processes Assessed",
-      "workstationsAssessed": "Workstations Assessed",
-      "totalHeadcount": "Total Headcount",
-      "priorityItems": "Priority Initiatives",
-      "closureNote": "Next steps: Generate report, create roadmap, materialize initiatives. Approve assessment to unlock report and initiative generation.",
-      "coachQuestions": "Coach Questions",
-      "evidenceGuidance": "Evidence Guidance",
-      "microLesson": "Micro-lesson",
-      "commonMistakes": "Common Mistakes to Avoid",
-      "wasteKnowledge": "Waste Analysis Guide",
-      "whatToLookFor": "What to Look For",
-      "typicalEvidence": "Typical Evidence"
-    }
-  },
-  "tools": {
-    "hub": {
-      "tabs": {
-        "library": "Library",
-        "sessions": "Sessions",
-        "reports": "Reports",
-        "initiatives": "Initiatives"
-      },
-      "table": {
-        "name": "Name",
-        "category": "Category",
-        "whatYouGet": "What you get"
-      },
-      "empty": {
-        "library": "No tools available."
-      }
-    }
-  },
-  "help": {
-    "microVideo": {
-      "header": "Quick Tutorial",
-      "watch": "Watch",
-      "skip": "Skip",
-      "dontShow": "Don't show again"
-    }
-  },
-  "aiAuthoring": {
-    "generateCardDraft": "Generate Card Draft",
-    "generateInitiative": "Generate Initiative Draft",
-    "generateTask": "Generate Task Draft",
-    "generateDecision": "Generate Decision Draft",
-    "briefPlaceholder": "Describe the initiative/task/decision in 3-8 bullet points...",
-    "briefLabel": "Brief description",
-    "generating": "Generating draft...",
-    "previewTitle": "AI Draft Preview",
-    "previewSubtitle": "Review each section and apply selectively.",
-    "applyAll": "Apply All",
-    "applySelected": "Apply Selected",
-    "discardAll": "Discard",
-    "sectionApplied": "Section applied",
-    "draftGenerated": "Draft generated by AI",
-    "draftFailed": "Failed to generate draft",
-    "auditLogTitle": "AI Authoring History",
-    "undoAi": "Undo AI"
-  },
-  "initiatives": {
-    "gateReadiness": {
-      "title": "Gate Readiness & Timeline",
-      "readinessSystem": "Readiness (system)",
-      "readinessAi": "AI Readiness Analysis",
-      "blockingMissing": "Blocking missing",
-      "cantProgress": "You can't progress yet",
-      "fillMissing": "Fill missing blocking items, then retry the gate action.",
-      "suggestedAction": "Suggested action",
-      "suggestedActor": "Who should act",
-      "askAi": "Ask AI for readiness analysis",
-      "aiAnalyzing": "AI is analyzing readiness...",
-      "aiScore": "Readiness Score",
-      "aiSummary": "Summary",
-      "aiFindings": "AI Findings",
-      "noFindings": "AI found no additional issues.",
-      "blocking": "blocking",
-      "warning": "warning",
-      "fix": "Fix",
-      "currentGate": "Current Gate",
-      "nextGate": "Next",
-      "requirementsChecklist": "Requirements Checklist",
-      "readinessPercent": "Readiness",
-      "requiredApproval": "Required approval",
-      "allGatesPassed": "All gates passed!",
-      "requiredApprovalsForStatus": "Required approvals for status",
-      "notRequested": "Not requested"
-    }
-  },
-  "benefits": {
-    "tabs": {
-      "completed": "Completed",
-      "kpis": "KPIs",
-      "roi": "ROI Tracking",
-      "attribution": "Attribution",
-      "financial": "Financial Mapping"
-    },
-    "roi": {
-      "noData": "No ROI Assumptions Yet",
-      "noDataHint": "Set ROI assumptions on initiatives to track projected vs realized returns.",
-      "projected": "Projected Benefit",
-      "realized": "Realized Benefit",
-      "totalCapex": "Total CAPEX",
-      "coverage": "Data Coverage",
-      "initiatives": "initiatives",
-      "variance": "Portfolio Variance",
-      "abovePlan": "Realized benefits exceed projections",
-      "belowPlan": "Realized benefits below projections — review assumptions",
-      "byInitiative": "ROI by Initiative",
-      "initiative": "Initiative",
-      "confidence": "Conf.",
-      "disclaimer": "ROI figures are based on stated assumptions. Realized values may differ from projections due to external factors."
-    }
-  },
-  "kpi": {
-    "attribution": {
-      "noMappings": "No KPI Mappings Found",
-      "noMappingsHint": "Map KPIs to initiatives first to see attribution analysis.",
-      "selectKpi": "Select KPI",
-      "choose": "— Choose a KPI —",
-      "kpiDelta": "KPI Change",
-      "contributors": "Contributors",
-      "unexplained": "Unexplained",
-      "confidence": "Confidence",
-      "breakdown": "Attribution Breakdown",
-      "unexplainedLabel": "Unexplained / External",
-      "qualitySignals": "Quality Signals"
-    },
-    "financial": {
-      "title": "KPI → Financial Statement Mapping",
-      "subtitle": "Link KPIs to P&L, Balance Sheet, and Cash Flow items",
-      "addMapping": "Add Mapping",
-      "lines": "lines",
-      "mappings": "mappings",
-      "selectKpi": "Select KPI...",
-      "statementLine": "Statement Line",
-      "selectLine": "Select line...",
-      "direction": "Direction",
-      "positive": "Positive (improves)",
-      "negative": "Negative (worsens)",
-      "neutral": "Neutral",
-      "multiplier": "Multiplier",
-      "relType": "Relationship",
-      "linear": "Linear",
-      "percentage": "Percentage",
-      "step": "Step function",
-      "confidence": "Confidence",
-      "confHigh": "High",
-      "confMedium": "Medium",
-      "confLow": "Low",
-      "assumptions": "Assumptions",
-      "assumptionsPlaceholder": "Describe the relationship and any assumptions...",
-      "saved": "Mapping saved",
-      "saveFailed": "Failed to save mapping",
-      "deleted": "Mapping removed",
-      "deleteFailed": "Failed",
-      "selectBoth": "Select both KPI and statement line",
-      "impactPreview": "Financial Impact Preview",
-      "impactDisclaimer": "Impact estimates are based on stated multipliers and assumptions.",
-      "disclaimer": "Financial mappings are approximations. Actual relationships may vary by industry and context. Always verify with finance team."
-    }
-  },
   "tools": {
     "hub": {
       "tabs": {
@@ -3321,80 +2654,77 @@
       }
     }
   },
-  "finance": {
-    "importWizard": {
-      "title": "Import Financial Statement",
-      "subtitle": "Upload a PDF to extract and standardize financial data",
-      "stepUpload": "Upload",
-      "stepDetect": "Detect",
-      "stepMap": "Map & Correct",
-      "stepConfirm": "Confirm",
-      "pdfOnly": "Only PDF files are supported",
-      "dropOrClick": "Drop PDF here or click to browse",
-      "supportedFormats": "Supported: PDF financial statements (Balance Sheet, P&L, Cash Flow)",
-      "uploadAndDetect": "Upload & Detect",
-      "detectionResults": "Detection Results",
-      "statementType": "Statement Type",
+  "aiAuthoring": {
+    "generateCardDraft": "Generate Card Draft",
+    "generateInitiative": "Generate Initiative Draft",
+    "generateTask": "Generate Task Draft",
+    "generateDecision": "Generate Decision Draft",
+    "briefPlaceholder": "Describe the initiative/task/decision in 3-8 bullet points...",
+    "briefLabel": "Brief description",
+    "generating": "Generating draft...",
+    "previewTitle": "AI Draft Preview",
+    "previewSubtitle": "Review each section and apply selectively.",
+    "applyAll": "Apply All",
+    "applySelected": "Apply Selected",
+    "discardAll": "Discard",
+    "sectionApplied": "Section applied",
+    "draftGenerated": "Draft generated by AI",
+    "draftFailed": "Failed to generate draft",
+    "auditLogTitle": "AI Authoring History",
+    "undoAi": "Undo AI"
+  },
+  "kpi": {
+    "attribution": {
+      "noMappings": "No KPI Mappings Found",
+      "noMappingsHint": "Map KPIs to initiatives first to see attribution analysis.",
+      "selectKpi": "Select KPI",
+      "choose": "— Choose a KPI —",
+      "kpiDelta": "KPI Change",
+      "contributors": "Contributors",
+      "unexplained": "Unexplained",
       "confidence": "Confidence",
-      "period": "Period",
-      "currency": "Currency",
-      "scaleDetected": "Scale detected",
-      "extractLines": "Extract Financial Lines",
-      "mappingTitle": "Map Extracted Lines",
-      "mapped": "mapped",
-      "originalLabel": "Original Label",
-      "value": "Value",
-      "conf": "Conf.",
-      "mappedTo": "Mapped To",
-      "selectLine": "— Select canonical line —",
-      "otherTypes": "Other types",
-      "noLinesExtracted": "No financial lines were extracted. The PDF may need OCR or manual entry.",
-      "saveAndValidate": "Save & Validate",
-      "validationPass": "All validations passed",
-      "validationWarnings": "Imported with warnings",
-      "validationErrors": "Review required",
-      "linesMapped": "lines mapped",
-      "type": "Type",
-      "file": "Source",
-      "backToMapping": "Back to Mapping",
-      "confirmAndSave": "Confirm & Save"
+      "breakdown": "Attribution Breakdown",
+      "unexplainedLabel": "Unexplained / External",
+      "qualitySignals": "Quality Signals"
     },
-    "ratios": {
-      "title": "Financial Ratio Analysis",
-      "subtitle": "Key ratios computed from imported financial statements",
-      "selectStatement": "Select statement…",
-      "comparePeriod": "Compare with…",
-      "totalRatios": "Total Ratios",
-      "computed": "Computed",
-      "notAvailable": "N/A (missing data)",
-      "coverage": "Data Coverage",
-      "dataCoverage": "data coverage",
-      "missing": "Missing",
-      "days": "days",
-      "ratios": "ratios",
-      "noData": "No confirmed financial statements yet",
-      "importFirst": "Import a statement first to see ratio analysis",
-      "benchmarks": "Benchmarks",
-      "addBenchmark": "Add Benchmark",
-      "industry": "Industry",
-      "source": "Source",
-      "targetRange": "Target Range"
-    },
-    "statements": {
-      "title": "Financial Statements",
-      "import": "Import Statement",
-      "list": "Statements List",
-      "noStatements": "No financial statements imported yet",
-      "uploadFirst": "Upload a PDF to get started",
-      "confirmed": "Confirmed",
-      "draft": "Draft",
-      "needsReview": "Needs Review"
+    "financial": {
+      "title": "KPI → Financial Statement Mapping",
+      "subtitle": "Link KPIs to P&L, Balance Sheet, and Cash Flow items",
+      "addMapping": "Add Mapping",
+      "lines": "lines",
+      "mappings": "mappings",
+      "selectKpi": "Select KPI...",
+      "statementLine": "Statement Line",
+      "selectLine": "Select line...",
+      "direction": "Direction",
+      "positive": "Positive (improves)",
+      "negative": "Negative (worsens)",
+      "neutral": "Neutral",
+      "multiplier": "Multiplier",
+      "relType": "Relationship",
+      "linear": "Linear",
+      "percentage": "Percentage",
+      "step": "Step function",
+      "confidence": "Confidence",
+      "confHigh": "High",
+      "confMedium": "Medium",
+      "confLow": "Low",
+      "assumptions": "Assumptions",
+      "assumptionsPlaceholder": "Describe the relationship and any assumptions...",
+      "saved": "Mapping saved",
+      "saveFailed": "Failed to save mapping",
+      "deleted": "Mapping removed",
+      "deleteFailed": "Failed",
+      "selectBoth": "Select both KPI and statement line",
+      "impactPreview": "Financial Impact Preview",
+      "impactDisclaimer": "Impact estimates are based on stated multipliers and assumptions.",
+      "disclaimer": "Financial mappings are approximations. Actual relationships may vary by industry and context. Always verify with finance team."
     }
   },
   "finance": {
     "analysis": {
       "title": "Financial Analysis",
-      "subtitle": "Vertical, horizontal, ratios & AI insights",
+      "subtitle": "Vertical, horizontal, ratios & AI-powered insights",
       "tabLabel": "Analysis",
       "new": "New Analysis",
       "run": "Run Analysis",

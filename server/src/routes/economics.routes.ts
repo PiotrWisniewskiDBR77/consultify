@@ -18,6 +18,8 @@ import {
   normalizeFinancialData,
   validateFinancialData,
 } from '../services/economicsFinancials.js';
+import * as budgetingSvc from '../services/budgetingService.js';
+import * as finAnalysisSvc from '../services/financialAnalysisService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -1492,5 +1494,24 @@ router.get(
     }
   })
 );
+
+
+/* T052 Financial Analysis */
+router.post('/financial-analyses', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; const userId = req.user?.id || (req.user as any)?.user_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); const analysis = await finAnalysisSvc.createAnalysis(orgId, req.body, userId); return res.status(201).json({ success: true, analysis }); }));
+router.get('/financial-analyses', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); const analyses = await finAnalysisSvc.listAnalyses(orgId, { status: req.query.status as string|undefined, projectId: req.query.projectId as string|undefined }); return res.json({ analyses }); }));
+router.get('/financial-analyses/:id', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); const a = await finAnalysisSvc.getAnalysis(orgId, req.params.id); if (!a) return res.status(404).json({ error: 'Not found' }); return res.json(a); }));
+router.put('/financial-analyses/:id', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); await finAnalysisSvc.updateAnalysis(orgId, req.params.id, req.body); return res.json({ success: true }); }));
+router.post('/financial-analyses/:id/run', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); const result = await finAnalysisSvc.runFullAnalysis(orgId, req.params.id); return res.json({ success: true, result }); }));
+router.post('/financial-analyses/:id/approve', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; const userId = req.user?.id || (req.user as any)?.user_id; if (!orgId||!userId) return res.status(401).json({ error: 'Unauthorized' }); await finAnalysisSvc.approveAnalysis(orgId, req.params.id, userId); return res.json({ success: true }); }));
+router.get('/financial-analyses/:id/ratios', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const ratios = await finAnalysisSvc.getAnalysisRatios(req.params.id); return res.json({ ratios }); }));
+router.get('/financial-analyses/:id/insights', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const insights = await finAnalysisSvc.getAnalysisInsights(req.params.id); return res.json({ insights }); }));
+/* T053 Budgeting */
+router.post('/budgets', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; const userId = req.user?.id || (req.user as any)?.user_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); const budget = await budgetingSvc.createBudget(orgId, req.body, userId); return res.status(201).json({ success: true, budget }); }));
+router.get('/budgets', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); const budgets = await budgetingSvc.listBudgets(orgId); return res.json({ budgets }); }));
+router.get('/budgets/:id', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); const budget = await budgetingSvc.getBudget(orgId, req.params.id); if (!budget) return res.status(404).json({ error: 'Not found' }); const lines = await budgetingSvc.getBudgetLines(req.params.id); const scenarios = await budgetingSvc.getScenarios(req.params.id); return res.json({ ...budget, lines, scenarios }); }));
+router.put('/budgets/:budgetId/lines/:lineId', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { await budgetingSvc.updateBudgetLine(req.params.budgetId, req.params.lineId, req.body); return res.json({ success: true }); }));
+router.post('/budgets/:budgetId/scenarios/:scenarioId/project', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); const scenario = await budgetingSvc.generateScenarioProjections(orgId, req.params.budgetId, req.params.scenarioId); return res.json({ success: true, scenario }); }));
+router.put('/budgets/:budgetId/scenarios/:scenarioId/adjustments', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { await budgetingSvc.updateScenarioAdjustments(req.params.budgetId, req.params.scenarioId, req.body); return res.json({ success: true }); }));
+router.post('/budgets/:id/approve', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; const userId = req.user?.id || (req.user as any)?.user_id; if (!orgId||!userId) return res.status(401).json({ error: 'Unauthorized' }); await budgetingSvc.approveBudget(orgId, req.params.id, userId); return res.json({ success: true }); }));
 
 export default router;

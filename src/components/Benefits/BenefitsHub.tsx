@@ -10,6 +10,7 @@ import {
   Ban,
   BarChart3,
   CheckCircle2,
+  Calculator,
   DollarSign,
   FileText,
   Loader2,
@@ -27,6 +28,8 @@ import { Api } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 
 import { InitiativeKPI, InitiativeStatus } from '../../types';
+import { BudgetWorkspace } from './BudgetWorkspace';
+import { FinancialAnalysisWorkspace } from './FinancialAnalysisWorkspace';
 import { FinancialMappingPanel } from './FinancialMappingPanel';
 import { KPIAttributionPanel } from './KPIAttributionPanel';
 import { ROITrackingPanel } from './ROITrackingPanel';
@@ -284,6 +287,18 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
         id: 'financial' as ModuleTab,
         label: t('benefits.tabs.financial', 'Financial Mapping'),
         icon: <DollarSign size={16} />,
+        count: undefined,
+      },
+      {
+        id: 'analysis' as ModuleTab,
+        label: t('finance.analysis.tabLabel', 'Analysis'),
+        icon: <BarChart3 size={16} />,
+        count: undefined,
+      },
+      {
+        id: 'budget' as ModuleTab,
+        label: t('finance.budget.tabLabel', 'Budget'),
+        icon: <Calculator size={16} />,
         count: undefined,
       },
     ],
@@ -656,6 +671,12 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
     // Tab: Financial Mapping (T049)
     if ((activeTab as string) === 'financial') {
       return <FinancialMappingPanel />;
+    }
+    if ((activeTab as string) === 'analysis') {
+      return <FinancialAnalysisWorkspace />;
+    }
+    if ((activeTab as string) === 'budget') {
+      return <BudgetWorkspace />;
     }
 
     return null;
