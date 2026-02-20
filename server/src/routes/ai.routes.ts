@@ -68,6 +68,9 @@ import {
   ToggleAutoApplyRequestSchema,
   UpdatePolicyRequestSchema,
   UpdateUserPreferencesRequestSchema,
+  GenerateCardDraftRequestSchema,
+  AIReadinessAnalysisRequestSchema,
+  AIAuthoringAuditRequestSchema,
 } from '../validators/ai.validators.js';
 
 const router = Router();
@@ -5095,6 +5098,252 @@ router.post(
       logger.error('[AI Routes] Failed to trigger AI notification:', err);
       return res.status(500).json({ error: err.message });
     }
+  })
+);
+
+// ── T032: Generate Card Draft (whole-card AI authoring) ──────────────
+
+router.post(
+  '/generate-card-draft',
+  verifyToken,
+  validateBody(GenerateCardDraftRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { artifactType, brief, projectId, language } = req.body;
+    const orgId = req.organizationId;
+    const userId = req.userId;
+
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+    const aiAccessCheck = await AccessPolicyService.checkAccess(orgId, 'ai_call');
+    if (!aiAccessCheck.allowed) {
+      return res.status(403).json({
+        error: aiAccessCheck.reason || 'Access blocked',
+        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
+      });
+    }
+
+    AccessPolicyService.incrementUsage(orgId, 'ai_calls', 1).catch((err: any) => {
+      logger.warn('[AI CardDraft] Failed to increment ai_calls usage:', err?.message || err);
+    });
+
+    const langCode = (language || 'pl').split('-')[0];
+    const langMap: Record<string, string> = { pl: 'Polish', en: 'English', de: 'German', es: 'Spanish' };
+    const langName = langMap[langCode] || 'Polish';
+
+    const fieldsByType: Record<string, string[]> = {
+      initiative: ['name', 'summary', 'problem_statement', 'objectives', 'scope', 'expected_benefits', 'success_criteria', 'risks_overview'],
+      task: ['title', 'description', 'acceptance_criteria', 'definition_of_done'],
+      decision: ['title', 'context', 'options_considered', 'recommendation', 'rationale'],
+    };
+    const fields = fieldsByType[artifactType] || fieldsByType.initiative;
+
+    const sys = [
+      `You are a PMO content generator for a Consultify enterprise platform.`,
+      `Generate a structured draft for a new ${artifactType} card based on the user's brief.`,
+      `Return ONLY valid JSON with these fields: ${fields.join(', ')}.`,
+      `Each field value must be plain text (no markdown, no bullets with -, use numbered lists or sentences).`,
+      `Be professional, concise, and actionable. Follow enterprise PMO standards.`,
+      `\n[LANGUAGE INSTRUCTION: Always respond in ${langName}.]`,
+    ].join('\n');
+
+    const userPrompt = `Brief:\n${brief}`;
+
+    const { modelRouter } = await import('../services/ai/modelRouter.js');
+    const { llmService } = await import('../services/ai/llmService.js');
+
+    const modelCfg = await modelRouter.select({
+      capability: 'chat_confirm',
+      organizationId: orgId,
+      tier: 'BUDGET',
+    } as any);
+
+    const result = (await llmService.callText({
+      type: 'chat',
+      modelConfig: {
+        provider: modelCfg.provider,
+        id: modelCfg.id,
+        endpoint: (modelCfg as any).endpoint,
+        apiKey: (modelCfg as any).apiKey,
+      },
+      systemPrompt: sys,
+      messages: [{ role: 'user', content: userPrompt }],
+      timeoutMs: 30000,
+      breakerOptions: { retryAttempts: 1, retryBaseDelay: 500, retryMaxDelay: 2000 },
+    } as any)) as any;
+
+    const rawText = String(result?.content || result?.text || '').trim();
+
+    let draft: Record<string, string> = {};
+    try {
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) draft = JSON.parse(jsonMatch[0]);
+    } catch {
+      return res.status(502).json({ error: 'LLM returned invalid JSON', code: 'INVALID_LLM_JSON', raw: rawText });
+    }
+
+    try {
+      await dbRun(
+        `INSERT INTO ai_authoring_audit (organization_id, project_id, user_id, artifact_type, action_type, input_text, output_text, was_applied, metadata)
+         VALUES (?, ?, ?, ?, 'card_generate', ?, ?, 0, ?)`,
+        [orgId, projectId, userId, artifactType, brief, JSON.stringify(draft), JSON.stringify({ fields: Object.keys(draft) })]
+      );
+    } catch (err: any) {
+      logger.warn('[AI CardDraft] Audit insert failed:', err?.message);
+    }
+
+    return res.json({ draft, artifactType, fields: Object.keys(draft) });
+  })
+);
+
+// ── T033: AI Readiness Analysis ──────────────────────────────────────
+
+router.post(
+  '/readiness-analysis',
+  verifyToken,
+  validateBody(AIReadinessAnalysisRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { initiativeId, projectId, targetGate, language } = req.body;
+    const orgId = req.organizationId;
+
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+    const aiAccessCheck = await AccessPolicyService.checkAccess(orgId, 'ai_call');
+    if (!aiAccessCheck.allowed) {
+      return res.status(403).json({
+        error: aiAccessCheck.reason || 'Access blocked',
+        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
+      });
+    }
+
+    AccessPolicyService.incrementUsage(orgId, 'ai_calls', 1).catch((err: any) => {
+      logger.warn('[AI Readiness] Failed to increment ai_calls usage:', err?.message || err);
+    });
+
+    const initiative = await dbGet(
+      `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, orgId]
+    );
+    if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
+
+    const ini = initiative as any;
+
+    let tasks: any[] = [];
+    let risks: any[] = [];
+    let decisions: any[] = [];
+    try {
+      tasks = (await dbAll(`SELECT id, title, status, priority FROM tasks WHERE initiative_id = ? LIMIT 50`, [initiativeId])) || [];
+      risks = (await dbAll(`SELECT id, title, type, severity, status FROM initiative_raids WHERE initiative_id = ? AND type = 'RISK' LIMIT 30`, [initiativeId])) || [];
+      decisions = (await dbAll(`SELECT id, title, status FROM decisions WHERE initiative_id = ? LIMIT 20`, [initiativeId])) || [];
+    } catch { /* best-effort */ }
+
+    const langCode = (language || 'pl').split('-')[0];
+    const langMap: Record<string, string> = { pl: 'Polish', en: 'English', de: 'German', es: 'Spanish' };
+    const langName = langMap[langCode] || 'Polish';
+
+    const currentStatus = String(ini.status || 'DRAFT').toUpperCase();
+    const gate = targetGate || currentStatus;
+
+    const sys = [
+      `You are a PMO readiness analyst for Consultify. Analyze the initiative data and produce a readiness assessment.`,
+      `Return ONLY valid JSON with this structure:`,
+      `{ "overallScore": number (0-100), "summary": "string", "findings": [{"key": "string", "severity": "blocking"|"warning", "pass": boolean, "message": "string", "suggestedAction": "string", "suggestedActor": "string"}] }`,
+      `Focus on completeness, risk coverage, stakeholder alignment, and timeline feasibility.`,
+      `Be specific and actionable in your findings.`,
+      `\n[LANGUAGE INSTRUCTION: Always respond in ${langName}.]`,
+    ].join('\n');
+
+    const contextData = {
+      name: ini.name,
+      status: currentStatus,
+      targetGate: gate,
+      summary: ini.summary || ini.problem_statement || '',
+      objectives: ini.objectives || '',
+      scope: ini.scope || '',
+      sponsor: ini.sponsor_id ? 'assigned' : 'not assigned',
+      ownerBusiness: ini.owner_business_id ? 'assigned' : 'not assigned',
+      ownerExecution: ini.owner_execution_id ? 'assigned' : 'not assigned',
+      startDate: ini.start_date || ini.planned_start_date || 'not set',
+      endDate: ini.end_date || ini.planned_end_date || 'not set',
+      priority: ini.priority || 'not set',
+      tasksCount: tasks.length,
+      tasksSummary: tasks.slice(0, 10).map((t: any) => `${t.title} [${t.status}]`).join('; '),
+      risksCount: risks.length,
+      risksSummary: risks.slice(0, 10).map((r: any) => `${r.title} [${r.severity}/${r.status}]`).join('; '),
+      decisionsCount: decisions.length,
+    };
+
+    const userPrompt = `Analyze readiness for gate "${gate}":\n${JSON.stringify(contextData, null, 2)}`;
+
+    const { modelRouter } = await import('../services/ai/modelRouter.js');
+    const { llmService } = await import('../services/ai/llmService.js');
+
+    const modelCfg = await modelRouter.select({
+      capability: 'chat_confirm',
+      organizationId: orgId,
+      tier: 'BUDGET',
+    } as any);
+
+    const result = (await llmService.callText({
+      type: 'chat',
+      modelConfig: {
+        provider: modelCfg.provider,
+        id: modelCfg.id,
+        endpoint: (modelCfg as any).endpoint,
+        apiKey: (modelCfg as any).apiKey,
+      },
+      systemPrompt: sys,
+      messages: [{ role: 'user', content: userPrompt }],
+      timeoutMs: 30000,
+      breakerOptions: { retryAttempts: 1, retryBaseDelay: 500, retryMaxDelay: 2000 },
+    } as any)) as any;
+
+    const rawText = String(result?.content || result?.text || '').trim();
+
+    let analysis: any = {};
+    try {
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) analysis = JSON.parse(jsonMatch[0]);
+    } catch {
+      return res.status(502).json({ error: 'LLM returned invalid JSON', code: 'INVALID_LLM_JSON' });
+    }
+
+    return res.json({
+      overallScore: Number(analysis.overallScore || 0),
+      summary: String(analysis.summary || ''),
+      findings: Array.isArray(analysis.findings) ? analysis.findings : [],
+      gate,
+      initiativeId,
+    });
+  })
+);
+
+// ── T032: AI Authoring Audit Log ─────────────────────────────────────
+
+router.post(
+  '/authoring-audit',
+  verifyToken,
+  validateBody(AIAuthoringAuditRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { artifactType, artifactId, actionType, fieldKey, inputText, outputText, wasApplied, wasUndone, metadata } = req.body;
+
+    try {
+      await dbRun(
+        `INSERT INTO ai_authoring_audit (organization_id, user_id, artifact_type, artifact_id, action_type, field_key, input_text, output_text, was_applied, was_undone, metadata)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [orgId, userId, artifactType, artifactId || null, actionType, fieldKey || null, inputText || null, outputText || null, wasApplied ? 1 : 0, wasUndone ? 1 : 0, metadata ? JSON.stringify(metadata) : null]
+      );
+    } catch (err: any) {
+      logger.warn('[AI Authoring Audit] Insert failed:', err?.message);
+      return res.status(500).json({ error: 'Failed to log audit event' });
+    }
+
+    return res.json({ success: true });
   })
 );
 

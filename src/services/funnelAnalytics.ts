@@ -75,7 +75,13 @@ export type FunnelEventName =
   | 'tool_kb_opened'
   | 'help_video_watched'
   | 'help_video_skipped'
-  | 'help_video_dont_show';
+  | 'help_video_dont_show'
+  | 'ai_authoring_used'
+  | 'ai_authoring_applied'
+  | 'ai_authoring_undone'
+  | 'ai_card_generated'
+  | 'initiative_gate_readiness_viewed'
+  | 'initiative_gate_readiness_ai_requested';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {
