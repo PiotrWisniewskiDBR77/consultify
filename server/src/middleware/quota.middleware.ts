@@ -2,7 +2,8 @@
  * Quota Middleware
  * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Enforces token and storage quotas before allowing API requests
+ * Enforces token and storage quotas before allowing API requests.
+ * Integrates with AccessPolicyService for trial-aware enforcement.
  */
 
 import { NextFunction, Request, Response } from 'express';
@@ -62,12 +63,25 @@ interface Dependencies {
 
 let deps: Dependencies = { usageService };
 
+let accessPolicyService: any = null;
+async function getAccessPolicyService() {
+  if (accessPolicyService) return accessPolicyService;
+  try {
+    const mod = await import('../services/accessPolicyService.js');
+    accessPolicyService = mod.default || mod;
+    return accessPolicyService;
+  } catch {
+    return null;
+  }
+}
+
 // ==========================================
 // MIDDLEWARE
 // ==========================================
 
 /**
- * Middleware to enforce token quota on AI endpoints
+ * Middleware to enforce token quota on AI endpoints.
+ * Checks both subscription-level quota (usageService) and trial-level budget (AccessPolicyService).
  */
 export async function enforceTokenQuota(
   req: QuotaRequest,
@@ -76,7 +90,6 @@ export async function enforceTokenQuota(
 ): Promise<void> {
   try {
     const { usageService } = deps;
-
     const orgId = req.user?.organizationId;
 
     if (!orgId) {
@@ -84,14 +97,36 @@ export async function enforceTokenQuota(
       return;
     }
 
-    const quota = await usageService.checkQuota(orgId, 'token');
+    const aps = await getAccessPolicyService();
+    if (aps) {
+      try {
+        const accessResult = await aps.checkAccess(orgId, 'ai_call');
+        if (!accessResult.allowed) {
+          res.status(429).json({
+            error: accessResult.reason,
+            errorCode: accessResult.errorCode,
+            code: accessResult.errorCode,
+            message: accessResult.reason,
+            upgradeUrl: '/settings?tab=billing',
+            upgradeCta:
+              accessResult.errorCode === 'AI_TOKEN_BUDGET_EXCEEDED'
+                ? 'Add payment method'
+                : 'Upgrade plan',
+          });
+          return;
+        }
+      } catch (policyErr) {
+        logger.warn('[QuotaMiddleware] Access policy check failed, falling through:', policyErr);
+      }
+    }
 
-    // Attach quota info to request for later use
+    const quota = await usageService.checkQuota(orgId, 'token');
     req.quotaInfo = quota;
 
     if (!quota.allowed) {
       res.status(429).json({
         error: 'Token quota exceeded',
+        errorCode: 'QUOTA_EXCEEDED',
         code: 'QUOTA_EXCEEDED',
         usage: {
           used: quota.used,
@@ -105,7 +140,6 @@ export async function enforceTokenQuota(
       return;
     }
 
-    // Warn if approaching limit (>80%)
     if (quota.percentage >= 80 && quota.percentage < 100) {
       res.set('X-Quota-Warning', 'true');
       res.set('X-Quota-Percentage', quota.percentage.toString());
@@ -114,13 +148,13 @@ export async function enforceTokenQuota(
     next();
   } catch (error: unknown) {
     logger.error('Quota check error:', error);
-    // Allow request to proceed on quota check failure (fail open)
     next();
   }
 }
 
 /**
- * Middleware to enforce storage quota on upload endpoints
+ * Middleware to enforce storage quota on upload endpoints.
+ * Checks both subscription-level quota and trial-level limits.
  */
 export async function enforceStorageQuota(
   req: QuotaRequest,
@@ -129,7 +163,6 @@ export async function enforceStorageQuota(
 ): Promise<void> {
   try {
     const { usageService } = deps;
-
     const orgId = req.user?.organizationId;
 
     if (!orgId) {
@@ -137,13 +170,32 @@ export async function enforceStorageQuota(
       return;
     }
 
-    const quota = await usageService.checkQuota(orgId, 'storage');
+    const aps = await getAccessPolicyService();
+    if (aps) {
+      try {
+        const accessResult = await aps.checkAccess(orgId, 'upload');
+        if (!accessResult.allowed) {
+          res.status(429).json({
+            error: accessResult.reason,
+            errorCode: accessResult.errorCode,
+            code: accessResult.errorCode,
+            message: accessResult.reason,
+            upgradeUrl: '/settings?tab=billing',
+          });
+          return;
+        }
+      } catch {
+        // fall through to usageService check
+      }
+    }
 
+    const quota = await usageService.checkQuota(orgId, 'storage');
     req.storageQuotaInfo = quota;
 
     if (!quota.allowed) {
       res.status(429).json({
         error: 'Storage quota exceeded',
+        errorCode: 'STORAGE_QUOTA_EXCEEDED',
         code: 'STORAGE_QUOTA_EXCEEDED',
         usage: {
           usedGB: (quota.used / (1024 * 1024 * 1024)).toFixed(2),

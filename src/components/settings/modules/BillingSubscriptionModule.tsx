@@ -2,18 +2,17 @@
  * BillingSubscriptionModule - Billing & Subscription Management
  *
  * Features:
- * - Subscription details
- * - Usage statistics
+ * - Subscription details with lifecycle status (trialing/active/past_due/cancelled)
+ * - Usage statistics with approaching-limit warnings
  * - Billing history
  * - Payment methods management
- * - Invoice downloads
- * - Upgrade/downgrade options
- * - Usage limits display
+ * - Plan comparison with upgrade/downgrade
+ * - Checkout flow integration
+ * - Upgrade triggers from policy context
  */
 
 import {
   AlertCircle,
-  ArrowDownCircle,
   ArrowUpCircle,
   BarChart3,
   Calendar,
@@ -25,13 +24,17 @@ import {
   Loader2,
   Plus,
   Trash2,
-  Users,
   Zap,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  usePolicySnapshot,
+  useSubscriptionStatus,
+} from '../../../contexts/AccessPolicyContext';
+import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
@@ -79,12 +82,14 @@ const plans = [
     name: 'Free',
     price: 0,
     features: ['5 users', '3 projects', '1GB storage', '10K AI tokens'],
+    popular: false,
   },
   {
     id: 'pro',
     name: 'Professional',
     price: 29,
     features: ['25 users', 'Unlimited projects', '50GB storage', '500K AI tokens'],
+    popular: true,
   },
   {
     id: 'business',
@@ -97,6 +102,7 @@ const plans = [
       '2M AI tokens',
       'Priority support',
     ],
+    popular: false,
   },
   {
     id: 'enterprise',
@@ -109,14 +115,24 @@ const plans = [
       'Dedicated support',
       'SLA',
     ],
+    popular: false,
   },
 ];
+
+const STATUS_COLORS: Record<string, string> = {
+  active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
+  trialing: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
+  past_due: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+  cancelled: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400',
+};
 
 export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps> = ({
   currentUser,
   onUpdateUser,
 }) => {
   const { t } = useTranslation();
+  const { snapshot, refresh: refreshPolicy } = usePolicySnapshot();
+  const subscriptionStatus = useSubscriptionStatus();
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [usage, setUsage] = useState<UsageStats | null>(null);
@@ -125,6 +141,16 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
   const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'payment' | 'usage'>(
     'overview'
   );
+  const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  useEffect(() => {
+    try {
+      trackFunnelEvent('upgrade_viewed', { location: 'settings_billing' });
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -140,30 +166,17 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
         Api.get('/api/billing/payment-methods').catch(() => ({ data: [] })),
       ]);
 
-      // Use real API data
-      if (subRes.data) {
-        setSubscription(subRes.data);
-      } else {
-        setSubscription(null);
-      }
+      if (subRes.data) setSubscription(subRes.data);
+      else setSubscription(null);
 
-      if (usageRes.data) {
-        setUsage(usageRes.data);
-      } else {
-        setUsage(null);
-      }
+      if (usageRes.data) setUsage(usageRes.data);
+      else setUsage(null);
 
-      if (invoicesRes.data) {
-        setInvoices(invoicesRes.data);
-      } else {
-        setInvoices([]);
-      }
+      if (invoicesRes.data) setInvoices(invoicesRes.data);
+      else setInvoices([]);
 
-      if (paymentRes.data) {
-        setPaymentMethods(paymentRes.data);
-      } else {
-        setPaymentMethods([]);
-      }
+      if (paymentRes.data) setPaymentMethods(paymentRes.data);
+      else setPaymentMethods([]);
     } catch (error) {
       console.error('Error loading billing data:', error);
     } finally {
@@ -171,33 +184,124 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
     }
   };
 
-  const UsageBar: React.FC<{ used: number; limit: number; label: string; unit?: string }> = ({
-    used,
-    limit,
-    label,
-    unit = '',
-  }) => {
-    const percentage = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+  const handleSelectPlan = (planId: string) => {
+    try {
+      trackFunnelEvent('plan_selected', { planId });
+    } catch {
+      // ignore
+    }
+    setCheckoutPlanId(planId);
+  };
+
+  const handleCheckoutConfirm = async () => {
+    if (!checkoutPlanId) return;
+    setCheckoutLoading(true);
+    try {
+      trackFunnelEvent('checkout_started', { planId: checkoutPlanId });
+    } catch {
+      // ignore
+    }
+    try {
+      if (subscription?.plan) {
+        await Api.changePlan(checkoutPlanId);
+      } else {
+        await Api.subscribeToPlan(checkoutPlanId);
+      }
+      try {
+        trackFunnelEvent('checkout_completed', { planId: checkoutPlanId });
+      } catch {
+        // ignore
+      }
+      toast.success(t('access.upgrade.checkout.success'));
+      setCheckoutPlanId(null);
+      await loadData();
+      await refreshPolicy();
+    } catch (err: any) {
+      try {
+        trackFunnelEvent('checkout_failed', { planId: checkoutPlanId, error: err.message });
+      } catch {
+        // ignore
+      }
+      toast.error(err.message || t('access.upgrade.checkout.failed'));
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (
+      !confirm(
+        'Are you sure you want to cancel your subscription? You will lose access at the end of the billing period.'
+      )
+    )
+      return;
+    try {
+      await Api.cancelSubscription();
+      try {
+        trackFunnelEvent('subscription_cancelled', {});
+      } catch {
+        // ignore
+      }
+      toast.success('Subscription cancelled.');
+      await loadData();
+      await refreshPolicy();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to cancel subscription');
+    }
+  };
+
+  const UsageBar: React.FC<{
+    used: number;
+    limit: number;
+    label: string;
+    unit?: string;
+    policyPercent?: number;
+  }> = ({ used, limit, label, unit = '', policyPercent }) => {
+    const percentage = policyPercent ?? (limit > 0 ? Math.min((used / limit) * 100, 100) : 0);
     const isUnlimited = limit < 0;
+    const isApproaching = percentage >= 70 && percentage < 90;
+    const isHigh = percentage >= 90 && percentage < 100;
+    const isExceeded = percentage >= 100;
 
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-slate-600 dark:text-slate-400">{label}</span>
-          <span className="font-medium text-slate-900 dark:text-white">
-            {used.toLocaleString()}
-            {unit} {isUnlimited ? '(unlimited)' : `/ ${limit.toLocaleString()}${unit}`}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-slate-900 dark:text-white">
+              {used.toLocaleString()}
+              {unit} {isUnlimited ? `(${t('access.upgrade.unlimited')})` : `/ ${limit.toLocaleString()}${unit}`}
+            </span>
+            {isApproaching && (
+              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                {Math.round(percentage)}%
+              </span>
+            )}
+            {(isHigh || isExceeded) && (
+              <AlertCircle size={14} className="text-red-500" />
+            )}
+          </div>
         </div>
         {!isUnlimited && (
           <div className="h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
-                percentage > 90 ? 'bg-red-500' : percentage > 70 ? 'bg-amber-500' : 'bg-emerald-500'
+                isExceeded
+                  ? 'bg-red-500'
+                  : isHigh
+                    ? 'bg-orange-500'
+                    : isApproaching
+                      ? 'bg-amber-500'
+                      : 'bg-emerald-500'
               }`}
-              style={{ width: `${percentage}%` }}
+              style={{ width: `${Math.min(100, percentage)}%` }}
             />
           </div>
+        )}
+        {isApproaching && (
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            {t('access.banner.approachingLimits')}
+          </p>
         )}
       </div>
     );
@@ -212,22 +316,88 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
   }
 
   const currentPlan = plans.find((p) => p.id === subscription?.plan);
+  const effectiveStatus = subscriptionStatus || subscription?.status || 'trialing';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
       <InfoButton cardId="settings-billing" position="top-right" />
+
+      {/* Past Due Banner */}
+      {effectiveStatus === 'past_due' && (
+        <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-4 flex items-center gap-3">
+          <AlertCircle size={20} className="text-red-500 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-red-800 dark:text-red-300">
+              {t('access.banner.pastDue')}
+            </p>
+          </div>
+          <button
+            onClick={() => setActiveTab('payment')}
+            className="px-3 py-1.5 text-sm font-medium bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
+          >
+            {t('access.cta.fixPayment')}
+          </button>
+        </div>
+      )}
+
+      {/* Trial Warning Banner */}
+      {snapshot?.isTrial && !snapshot.isTrialExpired && snapshot.warningLevel !== 'none' && (
+        <div
+          className={`rounded-xl p-4 flex items-center gap-3 ${
+            snapshot.warningLevel === 'critical'
+              ? 'bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/30'
+              : 'bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30'
+          }`}
+        >
+          <Zap
+            size={20}
+            className={
+              snapshot.warningLevel === 'critical'
+                ? 'text-orange-500 flex-shrink-0'
+                : 'text-blue-500 flex-shrink-0'
+            }
+          />
+          <p
+            className={`text-sm flex-1 ${
+              snapshot.warningLevel === 'critical'
+                ? 'text-orange-800 dark:text-orange-300'
+                : 'text-blue-800 dark:text-blue-300'
+            }`}
+          >
+            {t(
+              snapshot.warningLevel === 'critical'
+                ? 'access.banner.trialCritical'
+                : 'access.banner.trialWarning',
+              { days: snapshot.trialDaysLeft }
+            )}
+          </p>
+          <button
+            onClick={() => setActiveTab('overview')}
+            className="px-3 py-1.5 text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+          >
+            {t('access.cta.upgradePlan')}
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
             <CreditCard size={28} className="text-emerald-500" />
-            Billing & Subscription
+            {t('settings.billing', 'Billing & Subscription')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Manage your subscription and billing
+            {t('access.upgrade.subtitle')}
           </p>
         </div>
+        {effectiveStatus && (
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[effectiveStatus] || STATUS_COLORS.trialing}`}
+          >
+            {t(`access.upgrade.subscription.${effectiveStatus}`, effectiveStatus)}
+          </span>
+        )}
       </div>
 
       {/* Tabs */}
@@ -256,6 +426,48 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
         })}
       </div>
 
+      {/* Checkout Overlay */}
+      {checkoutPlanId && (
+        <div className="bg-white dark:bg-navy-900 border-2 border-purple-500 rounded-xl p-6 space-y-4">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <ArrowUpCircle size={20} className="text-purple-500" />
+            {t('access.upgrade.checkout.title')}
+          </h3>
+          <div className="p-4 bg-purple-50 dark:bg-purple-500/10 rounded-lg">
+            <p className="text-sm text-purple-700 dark:text-purple-300">
+              {t('access.upgrade.whatChanges')}: {plans.find((p) => p.id === checkoutPlanId)?.name}
+            </p>
+            <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+              {t('access.upgrade.instantUnlock')}
+            </p>
+          </div>
+          {paymentMethods.length === 0 && (
+            <div className="p-4 bg-amber-50 dark:bg-amber-500/10 rounded-lg border border-amber-200 dark:border-amber-500/30">
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                {t('access.upgrade.checkout.selectPayment')}
+              </p>
+            </div>
+          )}
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={() => setCheckoutPlanId(null)}
+              className="px-4 py-2 text-sm font-medium border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+            >
+              {t('access.upgrade.checkout.cancel')}
+            </button>
+            <button
+              onClick={handleCheckoutConfirm}
+              disabled={checkoutLoading}
+              className="px-4 py-2 text-sm font-semibold bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
+            >
+              {checkoutLoading
+                ? t('access.upgrade.checkout.processing')
+                : t('access.upgrade.checkout.confirm')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Overview Tab */}
       {activeTab === 'overview' && (
         <>
@@ -263,15 +475,27 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-emerald-100">Current Plan</p>
-                <h3 className="text-3xl font-bold mt-1">{currentPlan?.name}</h3>
-                <p className="text-emerald-100 mt-2">
-                  Renews on {new Date(subscription?.currentPeriodEnd || '').toLocaleDateString()}
-                </p>
+                <p className="text-emerald-100">{t('access.upgrade.currentPlan')}</p>
+                <h3 className="text-3xl font-bold mt-1">
+                  {currentPlan?.name || (snapshot?.isTrial ? 'Trial' : 'Free')}
+                </h3>
+                {subscription?.currentPeriodEnd && (
+                  <p className="text-emerald-100 mt-2">
+                    Renews on{' '}
+                    {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                  </p>
+                )}
+                {snapshot?.isTrial && snapshot.trialExpiresAt && (
+                  <p className="text-emerald-100 mt-2">
+                    Trial expires{' '}
+                    {new Date(snapshot.trialExpiresAt).toLocaleDateString()}
+                    {snapshot.trialDaysLeft > 0 && ` (${snapshot.trialDaysLeft} days left)`}
+                  </p>
+                )}
               </div>
               <div className="text-right">
                 <p className="text-4xl font-bold">${currentPlan?.price || 0}</p>
-                <p className="text-emerald-100">/month</p>
+                <p className="text-emerald-100">{t('access.upgrade.perMonth')}</p>
               </div>
             </div>
           </div>
@@ -281,22 +505,27 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className={`p-4 rounded-xl border-2 ${
+                className={`p-4 rounded-xl border-2 relative ${
                   plan.id === subscription?.plan
                     ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
                     : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
                 }`}
               >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-purple-600 text-white text-xs font-bold rounded-full">
+                    {t('access.upgrade.popular')}
+                  </div>
+                )}
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-semibold text-slate-900 dark:text-white">{plan.name}</h4>
                   {plan.id === subscription?.plan && (
                     <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">
-                      Current
+                      {t('access.upgrade.currentPlan')}
                     </span>
                   )}
                 </div>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-                  {plan.price !== null ? `$${plan.price}/mo` : 'Custom'}
+                  {plan.price !== null ? `$${plan.price}${t('access.upgrade.perMonth')}` : 'Custom'}
                 </p>
                 <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
                   {plan.features.map((f, i) => (
@@ -306,42 +535,121 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                     </li>
                   ))}
                 </ul>
-                {plan.id !== subscription?.plan && (
-                  <button className="w-full mt-4 py-2 px-4 border border-emerald-500 text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-sm font-medium transition-colors">
+                {plan.id !== subscription?.plan && plan.price !== null && (
+                  <button
+                    onClick={() => handleSelectPlan(plan.id)}
+                    className="w-full mt-4 py-2 px-4 border border-emerald-500 text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-sm font-medium transition-colors"
+                  >
                     {plans.indexOf(plan) > plans.findIndex((p) => p.id === subscription?.plan)
                       ? 'Upgrade'
                       : 'Downgrade'}
                   </button>
                 )}
+                {plan.price === null && (
+                  <button className="w-full mt-4 py-2 px-4 border border-slate-300 dark:border-navy-600 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 text-sm font-medium transition-colors">
+                    {t('access.cta.contactSales')}
+                  </button>
+                )}
               </div>
             ))}
           </div>
+
+          {/* Cancel */}
+          {subscription?.status === 'active' && (
+            <div className="text-center">
+              <button
+                onClick={handleCancelSubscription}
+                className="text-sm text-slate-400 dark:text-slate-500 hover:text-red-400 transition-colors"
+              >
+                Cancel Subscription
+              </button>
+            </div>
+          )}
         </>
       )}
 
       {/* Usage Tab */}
-      {activeTab === 'usage' && usage && (
+      {activeTab === 'usage' && (
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Current Usage</h3>
 
           <div className="space-y-6">
-            <UsageBar used={usage.users.used} limit={usage.users.limit} label="Team Members" />
-            <UsageBar used={usage.projects.used} limit={usage.projects.limit} label="Projects" />
-            <UsageBar
-              used={usage.storage.used}
-              limit={usage.storage.limit}
-              label="Storage"
-              unit={` ${usage.storage.unit}`}
-            />
-            <UsageBar used={usage.aiTokens.used} limit={usage.aiTokens.limit} label="AI Tokens" />
+            {usage ? (
+              <>
+                <UsageBar
+                  used={usage.users.used}
+                  limit={usage.users.limit}
+                  label="Team Members"
+                  policyPercent={snapshot?.usagePercent?.users}
+                />
+                <UsageBar
+                  used={usage.projects.used}
+                  limit={usage.projects.limit}
+                  label="Projects"
+                  policyPercent={snapshot?.usagePercent?.projects}
+                />
+                <UsageBar
+                  used={usage.storage.used}
+                  limit={usage.storage.limit}
+                  label="Storage"
+                  unit={` ${usage.storage.unit}`}
+                  policyPercent={snapshot?.usagePercent?.storage}
+                />
+                <UsageBar
+                  used={usage.aiTokens.used}
+                  limit={usage.aiTokens.limit}
+                  label="AI Tokens"
+                  policyPercent={snapshot?.usagePercent?.tokens}
+                />
+              </>
+            ) : snapshot?.usageToday ? (
+              <>
+                <UsageBar
+                  used={snapshot.usageToday.users}
+                  limit={snapshot.limits?.maxUsers ?? -1}
+                  label="Team Members"
+                  policyPercent={snapshot.usagePercent?.users}
+                />
+                <UsageBar
+                  used={snapshot.usageToday.projects}
+                  limit={snapshot.limits?.maxProjects ?? -1}
+                  label="Projects"
+                  policyPercent={snapshot.usagePercent?.projects}
+                />
+                <UsageBar
+                  used={snapshot.usageToday.storageMb}
+                  limit={snapshot.limits?.maxStorageMb ?? -1}
+                  label="Storage"
+                  unit=" MB"
+                  policyPercent={snapshot.usagePercent?.storage}
+                />
+                <UsageBar
+                  used={snapshot.usageToday.tokensUsed}
+                  limit={snapshot.limits?.maxTotalTokens ?? -1}
+                  label="AI Tokens"
+                  policyPercent={snapshot.usagePercent?.tokens}
+                />
+              </>
+            ) : (
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                No usage data available.
+              </p>
+            )}
           </div>
 
-          <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-lg">
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              Need more resources?{' '}
-              <button className="underline font-medium">Upgrade your plan</button>
-            </p>
-          </div>
+          {snapshot?.isTrial && (
+            <div className="p-4 bg-purple-50 dark:bg-purple-500/10 rounded-lg border border-purple-200 dark:border-purple-500/20">
+              <p className="text-sm text-purple-700 dark:text-purple-300">
+                {t('access.upgrade.instantUnlock')}{' '}
+                <button
+                  onClick={() => setActiveTab('overview')}
+                  className="underline font-medium"
+                >
+                  {t('access.cta.upgradePlan')}
+                </button>
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -351,46 +659,66 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">
             <h3 className="font-semibold text-slate-900 dark:text-white">Billing History</h3>
           </div>
-          <div className="divide-y divide-slate-100 dark:divide-white/5">
-            {invoices.map((invoice) => (
-              <div key={invoice.id} className="px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <FileText size={20} className="text-slate-400 dark:text-slate-500" />
-                  <div>
-                    <p className="font-medium text-slate-900 dark:text-white">
-                      Invoice {invoice.id}
-                    </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {new Date(invoice.date).toLocaleDateString()}
-                    </p>
+          {invoices.length === 0 ? (
+            <div className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+              No invoices yet.
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 dark:divide-white/5">
+              {invoices.map((invoice) => (
+                <div key={invoice.id} className="px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <FileText size={20} className="text-slate-400 dark:text-slate-500" />
+                    <div>
+                      <p className="font-medium text-slate-900 dark:text-white">
+                        Invoice {invoice.id}
+                      </p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {new Date(invoice.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-slate-900 dark:text-white font-medium">
+                      ${invoice.amount}
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 text-xs rounded-full ${
+                        invoice.status === 'paid'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400'
+                          : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
+                      }`}
+                    >
+                      {invoice.status}
+                    </span>
+                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg">
+                      <Download size={16} className="text-slate-500 dark:text-slate-400" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-slate-900 dark:text-white font-medium">
-                    ${invoice.amount}
-                  </span>
-                  <span
-                    className={`px-2 py-0.5 text-xs rounded-full ${
-                      invoice.status === 'paid'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-amber-100 text-amber-700'
-                    }`}
-                  >
-                    {invoice.status}
-                  </span>
-                  <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg">
-                    <Download size={16} className="text-slate-500 dark:text-slate-400" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* Payment Tab */}
       {activeTab === 'payment' && (
         <div className="space-y-4">
+          {effectiveStatus === 'past_due' && (
+            <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle size={16} className="text-red-500" />
+                <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                  {t('access.upgrade.subscription.past_due')}
+                </p>
+              </div>
+              <p className="text-xs text-red-600 dark:text-red-400">
+                {t('access.banner.pastDue')}
+              </p>
+            </div>
+          )}
+
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-slate-900 dark:text-white">Payment Methods</h3>
@@ -400,42 +728,54 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
               </button>
             </div>
 
-            <div className="space-y-3">
-              {paymentMethods.map((method) => (
-                <div
-                  key={method.id}
-                  className={`p-4 rounded-lg border-2 ${
-                    method.isDefault
-                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
-                      : 'border-slate-200 dark:border-navy-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <CreditCard size={24} className="text-slate-400 dark:text-slate-500" />
-                      <div>
-                        <p className="font-medium text-slate-900 dark:text-white">
-                          {method.brand} •••• {method.last4}
-                        </p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                          Expires {method.expiryMonth}/{method.expiryYear}
-                        </p>
+            {paymentMethods.length === 0 ? (
+              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                <CreditCard size={32} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No payment methods on file.</p>
+                <p className="text-xs mt-1">
+                  {snapshot?.isTrial
+                    ? 'Add a payment method to unlock AI beyond your free budget.'
+                    : 'Add a payment method to subscribe to a plan.'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {paymentMethods.map((method) => (
+                  <div
+                    key={method.id}
+                    className={`p-4 rounded-lg border-2 ${
+                      method.isDefault
+                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
+                        : 'border-slate-200 dark:border-navy-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <CreditCard size={24} className="text-slate-400 dark:text-slate-500" />
+                        <div>
+                          <p className="font-medium text-slate-900 dark:text-white">
+                            {method.brand} &bull;&bull;&bull;&bull; {method.last4}
+                          </p>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">
+                            Expires {method.expiryMonth}/{method.expiryYear}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {method.isDefault && (
+                          <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">
+                            Default
+                          </span>
+                        )}
+                        <button className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg">
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {method.isDefault && (
-                        <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">
-                          Default
-                        </span>
-                      )}
-                      <button className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

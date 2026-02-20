@@ -1053,6 +1053,111 @@ router.post(
 );
 
 // ==========================================
+// CURRENT USER SUBSCRIPTION (convenience endpoint)
+// ==========================================
+
+/**
+ * GET /billing/subscription
+ * Get current subscription for the authenticated user's organization
+ */
+router.get(
+  '/subscription',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        return res.json({ data: null });
+      }
+
+      const sub = await dbGet(
+        `SELECT s.*, sp.name as plan_name, sp.price_monthly, sp.price_yearly
+         FROM subscriptions s
+         JOIN subscription_plans sp ON s.plan_id = sp.id
+         WHERE s.organization_id = ?
+         ORDER BY s.created_at DESC LIMIT 1`,
+        [orgId]
+      );
+
+      if (!sub) {
+        return res.json({ data: null });
+      }
+
+      return res.json({
+        data: {
+          plan: (sub as any).plan_id,
+          planName: (sub as any).plan_name,
+          status: (sub as any).status || 'trialing',
+          currentPeriodEnd: (sub as any).current_period_end,
+          cancelAtPeriodEnd: (sub as any).cancel_at_period_end === 1,
+          priceMonthly: (sub as any).price_monthly,
+        },
+      });
+    } catch (error: any) {
+      logger.error('[Billing] Subscription fetch error:', error);
+      return res.json({ data: null });
+    }
+  })
+);
+
+/**
+ * GET /billing/usage
+ * Get current usage for the authenticated user's organization
+ */
+router.get(
+  '/usage',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        return res.json({ data: null });
+      }
+
+      let accessPolicyService: any = null;
+      try {
+        const mod = await import('../../services/accessPolicyService.js');
+        accessPolicyService = mod.default || mod;
+      } catch {
+        // not available
+      }
+
+      if (accessPolicyService?.buildPolicySnapshot) {
+        const snapshot = await accessPolicyService.buildPolicySnapshot(orgId);
+        if (snapshot) {
+          return res.json({
+            data: {
+              users: {
+                used: snapshot.usageToday.users,
+                limit: snapshot.limits?.maxUsers ?? -1,
+              },
+              projects: {
+                used: snapshot.usageToday.projects,
+                limit: snapshot.limits?.maxProjects ?? -1,
+              },
+              storage: {
+                used: snapshot.usageToday.storageMb,
+                limit: snapshot.limits?.maxStorageMb ?? -1,
+                unit: 'MB',
+              },
+              aiTokens: {
+                used: snapshot.usageToday.tokensUsed,
+                limit: snapshot.limits?.maxTotalTokens ?? -1,
+              },
+            },
+          });
+        }
+      }
+
+      return res.json({ data: null });
+    } catch (error: any) {
+      logger.error('[Billing] Usage fetch error:', error);
+      return res.json({ data: null });
+    }
+  })
+);
+
+// ==========================================
 // SUBSCRIPTIONS
 // ==========================================
 

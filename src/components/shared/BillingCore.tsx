@@ -1,7 +1,10 @@
-import { Cpu, CreditCard, DollarSign, Globe, Package, TrendingUp, UserCircle } from 'lucide-react';
+import { AlertCircle, Cpu, CreditCard, DollarSign, Globe, Package, TrendingUp, UserCircle, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { usePolicySnapshot } from '../../contexts/AccessPolicyContext';
 import { Api } from '../../services/api';
+import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { Invoice, User } from '../../types';
 
 export interface BillingCoreProps {
@@ -234,7 +237,17 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState(false);
 
+  const { t } = useTranslation();
+  const { snapshot } = usePolicySnapshot();
   const canManagePlans = mode === 'org-admin' || mode === 'platform';
+
+  useEffect(() => {
+    try {
+      trackFunnelEvent('upgrade_viewed', { location: 'billing_core', mode });
+    } catch {
+      // ignore
+    }
+  }, [mode]);
 
   useEffect(() => {
     const fetchBillingData = async () => {
@@ -268,8 +281,18 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
       alert('Only admins can change the subscription plan.');
       return;
     }
+    try {
+      trackFunnelEvent('plan_selected', { planId });
+    } catch {
+      // ignore
+    }
     setSubscribing(true);
     try {
+      try {
+        trackFunnelEvent('checkout_started', { planId });
+      } catch {
+        // ignore
+      }
       if (billingData?.billing?.subscription_plan_id) {
         await Api.changePlan(planId);
       } else {
@@ -277,9 +300,19 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
       }
       const current = await Api.getCurrentBilling();
       setBillingData(current);
-      alert('Plan updated successfully!');
+      try {
+        trackFunnelEvent('checkout_completed', { planId });
+      } catch {
+        // ignore
+      }
+      alert(t('access.upgrade.checkout.success', 'Plan updated successfully!'));
     } catch (err: any) {
-      alert(err.message || 'Failed to update plan');
+      try {
+        trackFunnelEvent('checkout_failed', { planId, error: err.message });
+      } catch {
+        // ignore
+      }
+      alert(err.message || t('access.upgrade.checkout.failed', 'Failed to update plan'));
     } finally {
       setSubscribing(false);
     }
@@ -322,6 +355,49 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
 
   return (
     <div className={`space-y-8 ${className}`}>
+      {/* Upgrade Trigger Banner */}
+      {snapshot?.isTrial && !snapshot.isTrialExpired && snapshot.warningLevel !== 'none' && (
+        <div
+          className={`rounded-xl p-4 flex items-center gap-3 ${
+            snapshot.warningLevel === 'critical'
+              ? 'bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/30'
+              : 'bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30'
+          }`}
+        >
+          <Zap
+            size={20}
+            className={
+              snapshot.warningLevel === 'critical'
+                ? 'text-orange-500'
+                : 'text-blue-500'
+            }
+          />
+          <p
+            className={`text-sm flex-1 ${
+              snapshot.warningLevel === 'critical'
+                ? 'text-orange-800 dark:text-orange-300'
+                : 'text-blue-800 dark:text-blue-300'
+            }`}
+          >
+            {t(
+              snapshot.warningLevel === 'critical'
+                ? 'access.banner.trialCritical'
+                : 'access.banner.trialWarning',
+              { days: snapshot.trialDaysLeft }
+            )}
+          </p>
+        </div>
+      )}
+
+      {snapshot?.isTrialExpired && (
+        <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-4 flex items-center gap-3">
+          <AlertCircle size={20} className="text-red-500" />
+          <p className="text-sm text-red-800 dark:text-red-300 flex-1">
+            {t('access.banner.trialExpired')}
+          </p>
+        </div>
+      )}
+
       {/* User License Card */}
       {showUserLicense && currentUser && (
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
