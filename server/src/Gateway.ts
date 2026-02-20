@@ -74,6 +74,8 @@ import featureFlagsRoutes from './routes/featureFlags.routes.js';
 import featureFlagRoutes from './routes/featureFlags.routes.js';
 import featureUpdatesRoutes from './routes/featureUpdates.routes.js';
 import feedbackRoutes from './routes/feedback.routes.js';
+import capabilityRoutes from './routes/capability.routes.js';
+import changeSentimentRoutes from './routes/change-sentiment.routes.js';
 import gamificationRoutes from './routes/gamification.routes.js';
 import gdprRoutes from './routes/gdpr.routes.js';
 import genericReportsRoutes from './routes/generic-reports.routes.js';
@@ -167,6 +169,7 @@ import resourceManagementRoutes from './routes/resourceManagement.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import scenariosRoutes from './routes/scenarios.routes.js';
 import scheduledReportsRoutes from './routes/scheduled-reports.routes.js';
+import stakeholderCommRoutes from './routes/stakeholder-comm.routes.js';
 import securityRoutes from './routes/security.routes.js';
 import securityPoliciesRoutes from './routes/securityPolicies.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
@@ -350,6 +353,9 @@ export class ApiGateway {
       app.use('/api/notifications', notificationRoutes);
       app.use('/api/analytics', analyticsRoutes);
       app.use('/api/feedback', feedbackRoutes);
+      app.use('/api/capabilities', capabilityRoutes);
+      app.use('/api/change-sentiment', changeSentimentRoutes);
+      app.use('/api/stakeholder-comm', stakeholderCommRoutes);
       app.use('/api/access-control', accessControlRoutes);
       mountStub('/api/permission-requests', permissionRequestsRoutes, 'permissionRequestsRoutes');
 

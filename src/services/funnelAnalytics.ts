@@ -210,7 +210,29 @@ export type FunnelEventName =
   | 'org_member_invite_sent'
   // T064 — Megatrend relocation
   | 'megatrends_opened'
-  | 'megatrends_redirect_used';
+  | 'megatrends_redirect_used'
+  // T043 — Capability Management
+  | 'capability_profile_updated'
+  | 'capability_match_viewed'
+  | 'capability_assignment_suggestion_generated'
+  | 'capability_assignment_applied'
+  // T044 — Change Sentiment
+  | 'change_pulse_submitted'
+  | 'change_sentiment_trend_changed'
+  | 'change_resistance_alert_sent'
+  | 'change_resistance_alert_clicked'
+  // T045 — Stakeholder Communication
+  | 'change_comm_plan_created'
+  | 'change_comm_plan_updated'
+  | 'change_comm_sent'
+  | 'change_comm_overdue_detected'
+  // T090 — Demo-to-Trial Conversion
+  | 'demo_started'
+  | 'demo_value_moment_reached'
+  | 'demo_cta_clicked'
+  | 'signup_started'
+  | 'signup_completed'
+  | 'trial_activated';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

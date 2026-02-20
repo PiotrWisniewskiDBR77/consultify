@@ -32,6 +32,7 @@ import {
   Clock,
   FileText,
   GripVertical,
+  Heart,
   LayoutDashboard,
   LayoutGrid,
   Loader2,
@@ -66,6 +67,7 @@ import { DelayDetectionPanel } from './DelayDetectionPanel';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
 import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
+import { PeopleChangeWorkspace } from './PeopleChangeWorkspace';
 import { RiskSignalsPanel } from './RiskSignalsPanel';
 
 // Kanban column status mapping
@@ -689,6 +691,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         id: 'reports' as ModuleTab,
         label: t('execution.tabs.reports', 'Reports'),
         icon: <FileText size={16} />,
+      },
+      {
+        id: 'people_change' as ModuleTab,
+        label: t('execution.tabs.peopleChange', 'People & Change'),
+        icon: <Heart size={16} />,
       },
     ],
     [
@@ -2782,6 +2789,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             />
           </div>
         </div>
+      );
+    }
+
+    if (activeTab === ('people_change' as ModuleTab)) {
+      return (
+        <PeopleChangeWorkspace
+          initiativeId={undefined}
+          projectId={currentProjectId || undefined}
+          organizationId={currentProjectId || ''}
+        />
       );
     }
 
