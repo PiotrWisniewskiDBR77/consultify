@@ -124,6 +124,8 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 | 17 | T058–T059 | bundle-17-presentations-generator | Cursor A | in_progress | Presentations generator + templates |
 | 18 | T060–T061 | bundle-18-reports-generator | Cursor B | in_progress | Reports generator + templates |
 | 09 | T034–T038 | bundle-09-portfolio-optimization | Codex | in_progress | Portfolio optimization engines |
+| 13 | T050–T051 | bundle-13-finance-a | Cursor C | in_progress | Finance A (ingestion + ratios) — równolegle do Codex |
+| 14 | T052–T053 | bundle-14-finance-b | Cursor D | in_progress | Finance B (analysis + budgeting) — równolegle do Codex |
 
 **Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_7.md`
 
@@ -158,8 +160,8 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 10 | T039-T042 | Cursor | **merged** | bundle-10-execution-t041-t042 | Wave 5: T039-T040; Wave 6: T041-T042 (migracja 564) |
 | 11 | T043-T045 | Codex | in_progress | bundle-11-execution-people-change-comms | Wave 6 |
 | 12 | T046-T049 | Cursor | **merged** | bundle-12-benefits-kpi-finance | Wave 6.5 (migracja 565) |
-| 13 | T050-T051 | Codex | planned | | |
-| 14 | T052-T053 | Codex | planned | | |
+| 13 | T050-T051 | Cursor | in_progress | bundle-13-finance-a | Wave 7 (Cursor, równolegle do Codex) |
+| 14 | T052-T053 | Cursor | in_progress | bundle-14-finance-b | Wave 7 (Cursor, równolegle do Codex) |
 | 15 | T054 | Cursor | planned | | weekend/hard |
 | 16 | T055-T057 | Codex | planned | | merytoryka |
 | 17 | T058-T059 | Cursor | in_progress | bundle-17-presentations-generator | Wave 7 |
