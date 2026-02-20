@@ -1,17 +1,41 @@
-/**
- * API Service Unit Tests - Simplified
- */
-import { describe, it, expect } from 'vitest';
+// @vitest-environment jsdom
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-describe('API Service Tests', () => {
-  it('should handle API requests', () => {
-    const response = { success: true, data: [] };
-    expect(response.success).toBe(true);
+import { api, API_URL } from '../../src/services/api';
+
+describe('src/services/api', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
-  it('should handle API errors', () => {
-    const errorResponse = { success: false, error: 'Network error' };
-    expect(errorResponse.success).toBe(false);
-    expect(errorResponse.error).toBeDefined();
+  it('adds Authorization header when token exists (downloadReportImportFile)', async () => {
+    localStorage.setItem('token', 'test-token');
+
+    const blobMock = vi.fn().mockResolvedValue(new Blob(['x']));
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, blob: blobMock });
+    vi.stubGlobal('fetch', fetchMock as any);
+
+    await api.downloadReportImportFile('imp-1');
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/report-import/imp-1/download`, {
+      headers: { Authorization: 'Bearer test-token' },
+    });
+    expect(blobMock).toHaveBeenCalled();
+  });
+
+  it('omits Authorization header when token does not exist (downloadReportImportFile)', async () => {
+    const blobMock = vi.fn().mockResolvedValue(new Blob(['x']));
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, blob: blobMock });
+    vi.stubGlobal('fetch', fetchMock as any);
+
+    await api.downloadReportImportFile('imp-2');
+
+    expect(fetchMock).toHaveBeenCalledWith(`${API_URL}/report-import/imp-2/download`, {
+      headers: {},
+    });
   });
 });

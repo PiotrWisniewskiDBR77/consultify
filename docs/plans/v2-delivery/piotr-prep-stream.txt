@@ -1,0 +1,85 @@
+V2 — Stream pracy: „Piotr prep” dla tematów trudnych (przed kodem)
+
+Cel: wskazać taski, które wymagają Twojego przygotowania (materiały/decisions) zanim agent zacznie kod — żeby nie zgadywać, nie hardcodować i nie robić „symbolicznych formułek”.
+
+Ten stream działa równolegle do WIP=3 (2×Cursor + 1×Codex).
+
+Proces między nami (prosty i powtarzalny)
+- 2× tygodniowo: 45–60 min Decision & Prep sync
+- Każdy sync kończy się artefaktami w repo (tabele/template/polityki), które potem wklejamy do promptów agentów.
+
+„No‑guessing gate”
+Paczka trudna nie startuje, dopóki nie mamy mini‑pakietu przygotowawczego:
+
+Prep Packet — [TEMAT]
+- Dotyczy: (Txxx / Bundle XX)
+- Twoje materiały: (co przygotować)
+- Decyzje: (co ustalamy razem)
+- Artefakty do repo: (co zapisujemy)
+
+---
+
+Tematy trudne do przygotowania (lista do przegadania)
+
+1) Pricing / plany / limity / trial→paid
+- Dotyczy: T091–T092 (już wdrożone) + T109 (Billing SSOT) + częściowo T115
+- Potrzebne od Ciebie:
+  - tabela planów V2 (planId, nazwa, cena, limity: seats/projekty/storage/tokens)
+  - definicja „value moments” (co trial ma umożliwić)
+
+2) Finance end‑to‑end (statement → ratios → budgeting → modeling → valuation)
+- Dotyczy: Bundle 12–16 (T046–T057) + T054
+- Potrzebne od Ciebie:
+  - kanoniczny model (aktywa = pasywa) + założenia + przykładowy dataset demo
+  - TOP wskaźniki, które muszą być w V2
+
+3) Presentation / Reports generator (Gamma-level jakość)
+- Dotyczy: T058–T062 + T017
+- Potrzebne od Ciebie:
+  - 2–3 referencyjne decki/raporty (co jest „docelową jakością”)
+  - lista sekcji sponsor-ready + zasady narracji
+
+4) Demo story + dataset (Archilex) + conversion
+- Dotyczy: T087–T090
+- Potrzebne od Ciebie:
+  - storyline 10‑min (kroki)
+  - 3–4 persony users + role
+  - „must show” screens
+
+5) UI/UX final direction (N/C, sidebar, typography)
+- Dotyczy: T099–T105
+- Potrzebne od Ciebie:
+  - referencje (ClickUp/Notion/Outlook) i decyzje „co kopiujemy”
+  - gdzie ma być C‑mode toggle, a gdzie nie
+
+6) AI governance / prompt SSOT / internet policy / memory
+- Dotyczy: T116–T121 + T118
+- Potrzebne od Ciebie:
+  - lista core docs (co AI zawsze zna)
+  - allowlist domen do web research + zasady memory/retencji
+
+7) Partners program (tiers, prowizje, certyfikacja)
+- Dotyczy: T096–T098
+- Potrzebne od Ciebie:
+  - tier names + progi + prowizje + payout rules
+
+8) Ops / SLO / SuperAdmin guardrails
+- Dotyczy: T107–T108
+- Potrzebne od Ciebie:
+  - progi SLO (co komunikujemy) + lista high‑risk akcji superadmin
+
+9) Readiness scoring + Sellix
+- Dotyczy: T113–T115
+- Potrzebne od Ciebie:
+  - wagi scoringu + progi do automatyzacji sellix pathway
+
+---
+
+Proponowana kolejność (żeby nie blokować)
+1. Pricing/limits
+2. Demo story + value moments
+3. Deck/report templates
+4. Finance model + dataset
+5. UI direction
+6. AI governance
+

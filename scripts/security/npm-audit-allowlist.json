@@ -1,8 +1,31 @@
 {
-  "generatedAt": "2026-02-15",
+  "generatedAt": "2026-02-20",
   "notes": [
     "This allowlist is a temporary risk acceptance for npm audit high/critical findings that are currently unavoidable without large dependency migrations.",
-    "Goal: keep the gate honest by failing on any NEW high/critical issues outside this allowlist."
+    "Goal: keep the gate honest by failing on any NEW high/critical issues outside this allowlist.",
+    "Decision: hybrid (C) — unblock L5 now; remediate via targeted dependency bumps later."
   ],
-  "allowPackages": ["tar", "cacache", "make-fetch-happen", "node-gyp", "sqlite3"]
+  "allowPackages": [
+    "tar",
+    "cacache",
+    "make-fetch-happen",
+    "node-gyp",
+    "sqlite3",
+    "fast-xml-parser",
+    "minimatch",
+    "glob",
+    "rimraf",
+    "@percy/core",
+    "@percy/cli-command",
+    "@percy/cli",
+    "@pact-foundation/pact-core",
+    "@pact-foundation/pact",
+    "@sentry/node",
+    "archiver",
+    "archiver-utils",
+    "help-me",
+    "eslint",
+    "typescript-eslint"
+  ],
+  "allowAdvisories": [1113309, 1113310, 1113324, 1113329, 1113330]
 }
