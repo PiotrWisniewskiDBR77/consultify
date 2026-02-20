@@ -3090,5 +3090,123 @@
       "scenarioBalancedSummary": "Balansuje quick wins i dystrybucję obciążenia.",
       "budgetHighlights": "Highlighty budżetu"
     }
+  },
+  "organization": {
+    "sidebar": { "title": "Organizacja", "subtitle": "Kontekst i administracja", "back": "Powrót do pulpitu", "contextGroup": "KONTEKST", "adminGroup": "ADMINISTRACJA", "profile": "Profil firmy", "goals": "Cele i oczekiwania", "challenges": "Wyzwania", "strategy": "Synteza strategiczna", "members": "Członkowie i role", "billing": "Płatności i tokeny", "limits": "Limity i użycie", "domains": "Domeny", "branding": "Branding i ustawienia regionalne" },
+    "sections": {
+      "profile": { "title": "Profil firmy", "subtitle": "Przegląd firmy, model operacyjny i kluczowe fakty" },
+      "goals": { "title": "Cele i oczekiwania", "subtitle": "Zamierzenia strategiczne, metryki docelowe, zakres" },
+      "challenges": { "title": "Wyzwania", "subtitle": "Mapa wyzwań, dowody i przyczyny źródłowe" },
+      "strategy": { "title": "Synteza strategiczna", "subtitle": "Synteza, scenariusze i podsumowanie executive" },
+      "members": { "title": "Członkowie i role", "subtitle": "Zarządzanie członkami zespołu, zaproszeniami i rolami" },
+      "billing": { "title": "Płatności i tokeny", "subtitle": "Status subskrypcji, saldo tokenów i użycie" },
+      "limits": { "title": "Limity i użycie", "subtitle": "Limity planu, kwoty i bieżące użycie" },
+      "domains": { "title": "Domeny", "subtitle": "Konfiguracja i weryfikacja domeny własnej" },
+      "branding": { "title": "Branding i ustawienia regionalne", "subtitle": "Logo, kolory, strefa czasowa, język i waluta" }
+    },
+    "members": { "title": "Członkowie zespołu", "desc": "{{count}} członków w tej organizacji", "invite": "Zaproś", "email": "Email", "role": "Rola", "sendInvite": "Wyślij", "inviteSent": "Zaproszenie wysłane", "inviteFailed": "Nie udało się wysłać zaproszenia", "name": "Imię", "emailCol": "Email", "roleCol": "Rola", "status": "Status", "empty": "Brak członków. Zaproś pierwszego członka zespołu." },
+    "billing": { "planTitle": "Obecny plan", "trialDesc": "Korzystasz z wersji próbnej. Uaktualnij, aby odblokować pełne funkcje.", "activeDesc": "Twoja subskrypcja jest aktywna.", "upgrade": "Uaktualnij", "tokensTitle": "Saldo tokenów", "tokensUnit": "tokenów", "used": "wykorzystano" },
+    "limits": { "title": "Limity planu i bieżące użycie", "members": "Członkowie zespołu", "projects": "Projekty", "storage": "Miejsce (GB)", "aiCalls": "Wywołania AI / miesiąc", "upgradeHint": "Potrzebujesz więcej? Uaktualnij plan, aby zwiększyć limity.", "viewPlans": "Zobacz plany" },
+    "domains": { "title": "Domena własna", "verified": "Zweryfikowana", "pending": "Oczekuje na weryfikację", "noDomain": "Brak skonfigurowanej domeny własnej.", "approvedTitle": "Zatwierdzone domeny email", "approvedDesc": "Użytkownicy z tych domen email mogą automatycznie dołączyć do organizacji.", "noApproved": "Brak zatwierdzonych domen." },
+    "branding": { "visualTitle": "Tożsamość wizualna", "logo": "Logo", "primaryColor": "Kolor główny", "regionalTitle": "Ustawienia regionalne", "timezone": "Strefa czasowa", "language": "Język", "dateFormat": "Format daty", "currency": "Waluta" }
+  },
+  "megatrends": {
+    "title": "Analiza megatrendów",
+    "subtitle": "Eksploruj megatrendy branżowe, buduj radar i odkrywaj wnioski strategiczne",
+    "tabs": { "baseline": "Baseline branżowy", "radar": "Mapa radaru trendów", "detail": "Szczegóły trendu", "custom": "Własne trendy", "insights": "Wnioski AI" },
+    "selectTrend": "Wybierz trend z Baseline lub Mapy radaru, aby zobaczyć szczegóły.",
+    "goToBaseline": "Przejdź do Baseline"
+  },
+  "valuation": {
+    "tabLabel": "Wycena",
+    "title": "Wycena przedsiębiorstwa",
+    "subtitle": "DCF + porównawcze + sensitivity, eksport do decka",
+    "steps": {
+      "source": "Źródło",
+      "assumptions": "Założenia",
+      "results": "Wyniki",
+      "export": "Eksport"
+    },
+    "list": {
+      "title": "Wyceny",
+      "empty": "Brak wycen. Utwórz pierwszą, aby zacząć.",
+      "source": "Źródło"
+    },
+    "detail": {
+      "empty": "Wybierz wycenę, aby kontynuować",
+      "status": "Status",
+      "currency": "Waluta"
+    },
+    "create": {
+      "cta": "Nowa wycena",
+      "title": "Nowa wycena",
+      "titlePlaceholder": "np. Wycena do rundy — base case",
+      "sourceType": "Typ źródła",
+      "sourceLabel": "Źródło",
+      "selectSource": "Wybierz...",
+      "horizon": "Horyzont (lata)",
+      "cancel": "Anuluj",
+      "create": "Utwórz",
+      "failed": "Nie udało się utworzyć wyceny",
+      "sourceRequired": "Najpierw wybierz źródło",
+      "source": {
+        "financialModel": "Zatwierdzony model finansowy (T054)",
+        "budget": "Zatwierdzony budżet (T053)",
+        "manual": "Ręczna prognoza"
+      }
+    },
+    "validation": {
+      "gLessThanWacc": "Wzrost terminalny musi być niższy niż WACC (g < WACC)"
+    },
+    "assumptions": {
+      "dcfTitle": "Założenia DCF",
+      "wacc": "WACC (%)",
+      "terminalMethod": "Metoda terminalna",
+      "g": "Wzrost terminalny g (%)",
+      "exitMultiple": "Multiple",
+      "exitMetric": "Metryka",
+      "save": "Zapisz założenia",
+      "saved": "Zapisano założenia",
+      "saveFailed": "Nie udało się zapisać założeń"
+    },
+    "comps": {
+      "title": "Wycena porównawcza (multiples)",
+      "min": "Min",
+      "median": "Mediana",
+      "max": "Max",
+      "peers": "Peery (po przecinku)",
+      "peersPlaceholder": "np. Firma A, Firma B",
+      "save": "Zapisz comps",
+      "saved": "Zapisano comps",
+      "saveFailed": "Nie udało się zapisać comps"
+    },
+    "compute": {
+      "cta": "Policz",
+      "ok": "Policzono wycenę",
+      "failed": "Nie udało się policzyć"
+    },
+    "approve": {
+      "cta": "Zatwierdź",
+      "ok": "Zatwierdzono",
+      "failed": "Nie udało się zatwierdzić"
+    },
+    "results": {
+      "empty": "Policz wycenę, aby zobaczyć wyniki",
+      "summary": "Podsumowanie",
+      "ev": "Wartość przedsiębiorstwa (EV)",
+      "equity": "Wartość kapitału (Equity)",
+      "wacc": "WACC",
+      "comps": "Zakres porównawczy (jeśli ustawiono)",
+      "compsMin": "Min",
+      "compsMedian": "Mediana",
+      "compsMax": "Max",
+      "compsEmpty": "Skonfiguruj comps w Założeniach"
+    },
+    "export": {
+      "pptx": "Eksport PPTX",
+      "ok": "Wygenerowano PPTX",
+      "failed": "Eksport nie powiódł się",
+      "approvalGate": "Eksport wymaga statusu APPROVED i zawiera disclaimers."
+    }
   }
 }

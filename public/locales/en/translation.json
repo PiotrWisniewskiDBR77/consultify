@@ -3260,5 +3260,123 @@
       "scenarioBalancedSummary": "Balances quick wins and workload distribution.",
       "budgetHighlights": "Budget highlights"
     }
+  },
+  "organization": {
+    "sidebar": { "title": "Organization", "subtitle": "Context & Administration", "back": "Back to Dashboard", "contextGroup": "CONTEXT", "adminGroup": "ADMINISTRATION", "profile": "Company Profile", "goals": "Goals & Expectations", "challenges": "Challenges", "strategy": "Strategic Synthesis", "members": "Members & Roles", "billing": "Billing & Tokens", "limits": "Limits & Usage", "domains": "Domains", "branding": "Branding & Regional" },
+    "sections": {
+      "profile": { "title": "Company Profile", "subtitle": "Company snapshot, operating model, and key facts" },
+      "goals": { "title": "Goals & Expectations", "subtitle": "Strategic intent, target metrics, scope and expectations" },
+      "challenges": { "title": "Challenges", "subtitle": "Challenge map, evidence and root causes" },
+      "strategy": { "title": "Strategic Synthesis", "subtitle": "Synthesis, scenarios and executive summary" },
+      "members": { "title": "Members & Roles", "subtitle": "Manage team members, invitations and access roles" },
+      "billing": { "title": "Billing & Tokens", "subtitle": "Subscription status, token balance and usage" },
+      "limits": { "title": "Limits & Usage", "subtitle": "Plan limits, quotas and current usage" },
+      "domains": { "title": "Domains", "subtitle": "Custom domain setup and verification" },
+      "branding": { "title": "Branding & Regional", "subtitle": "Logo, colors, timezone, language and currency" }
+    },
+    "members": { "title": "Team Members", "desc": "{{count}} members in this organization", "invite": "Invite", "email": "Email", "role": "Role", "sendInvite": "Send", "inviteSent": "Invitation sent", "inviteFailed": "Failed to send invitation", "name": "Name", "emailCol": "Email", "roleCol": "Role", "status": "Status", "empty": "No members yet. Invite your first team member." },
+    "billing": { "planTitle": "Current Plan", "trialDesc": "You are on a free trial. Upgrade to unlock full features.", "activeDesc": "Your subscription is active.", "upgrade": "Upgrade", "tokensTitle": "Token Balance", "tokensUnit": "tokens", "used": "used" },
+    "limits": { "title": "Plan Limits & Current Usage", "members": "Team Members", "projects": "Projects", "storage": "Storage (GB)", "aiCalls": "AI Calls / month", "upgradeHint": "Need more? Upgrade your plan to increase limits.", "viewPlans": "View Plans" },
+    "domains": { "title": "Custom Domain", "verified": "Verified", "pending": "Pending verification", "noDomain": "No custom domain configured.", "approvedTitle": "Approved Email Domains", "approvedDesc": "Users with these email domains can auto-join your organization.", "noApproved": "No approved domains set." },
+    "branding": { "visualTitle": "Visual Identity", "logo": "Logo", "primaryColor": "Primary Color", "regionalTitle": "Regional Settings", "timezone": "Timezone", "language": "Language", "dateFormat": "Date Format", "currency": "Currency" }
+  },
+  "megatrends": {
+    "title": "Megatrend Analysis",
+    "subtitle": "Explore industry megatrends, build a radar, and surface strategic insights",
+    "tabs": { "baseline": "Industry Baseline", "radar": "Trend Radar Map", "detail": "Trend Detail", "custom": "Custom Trends", "insights": "AI Insights" },
+    "selectTrend": "Select a trend from the Baseline or Radar Map to see details.",
+    "goToBaseline": "Go to Baseline"
+  },
+  "valuation": {
+    "tabLabel": "Valuation",
+    "title": "Enterprise valuation",
+    "subtitle": "DCF + comps + sensitivity, deck-ready export",
+    "steps": {
+      "source": "Source",
+      "assumptions": "Assumptions",
+      "results": "Results",
+      "export": "Export"
+    },
+    "list": {
+      "title": "Valuations",
+      "empty": "No valuations yet. Create one to start.",
+      "source": "Source"
+    },
+    "detail": {
+      "empty": "Select a valuation to continue",
+      "status": "Status",
+      "currency": "Currency"
+    },
+    "create": {
+      "cta": "New valuation",
+      "title": "New valuation",
+      "titlePlaceholder": "e.g., Fundraising valuation — base case",
+      "sourceType": "Source type",
+      "sourceLabel": "Source",
+      "selectSource": "Select...",
+      "horizon": "Horizon (years)",
+      "cancel": "Cancel",
+      "create": "Create",
+      "failed": "Failed to create valuation",
+      "sourceRequired": "Select a source first",
+      "source": {
+        "financialModel": "Approved financial model (T054)",
+        "budget": "Approved budget (T053)",
+        "manual": "Manual forecast"
+      }
+    },
+    "validation": {
+      "gLessThanWacc": "Terminal growth must be lower than WACC (g < WACC)"
+    },
+    "assumptions": {
+      "dcfTitle": "DCF assumptions",
+      "wacc": "WACC (%)",
+      "terminalMethod": "Terminal method",
+      "g": "Terminal growth g (%)",
+      "exitMultiple": "Exit multiple",
+      "exitMetric": "Metric",
+      "save": "Save assumptions",
+      "saved": "Assumptions saved",
+      "saveFailed": "Failed to save assumptions"
+    },
+    "comps": {
+      "title": "Comparable valuation (multiples)",
+      "min": "Min",
+      "median": "Median",
+      "max": "Max",
+      "peers": "Peers (comma-separated)",
+      "peersPlaceholder": "e.g., Company A, Company B",
+      "save": "Save comps",
+      "saved": "Comps saved",
+      "saveFailed": "Failed to save comps"
+    },
+    "compute": {
+      "cta": "Compute",
+      "ok": "Valuation computed",
+      "failed": "Compute failed"
+    },
+    "approve": {
+      "cta": "Approve",
+      "ok": "Approved",
+      "failed": "Approval failed"
+    },
+    "results": {
+      "empty": "Compute the valuation to see results",
+      "summary": "Valuation summary",
+      "ev": "Enterprise value (EV)",
+      "equity": "Equity value",
+      "wacc": "WACC",
+      "comps": "Comparable range (if set)",
+      "compsMin": "Min",
+      "compsMedian": "Median",
+      "compsMax": "Max",
+      "compsEmpty": "Configure comps in Assumptions"
+    },
+    "export": {
+      "pptx": "Export PPTX",
+      "ok": "PPTX generated",
+      "failed": "Export failed",
+      "approvalGate": "Export requires APPROVED valuation and includes disclaimers."
+    }
   }
 }

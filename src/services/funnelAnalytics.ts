@@ -175,7 +175,23 @@ export type FunnelEventName =
   | 'budget_created'
   | 'budget_scenario_updated'
   | 'budget_approved'
-  | 'budget_exported';
+  | 'budget_exported'
+  | 'valuation_created'
+  | 'valuation_assumption_updated'
+  | 'valuation_approved'
+  | 'valuation_exported'
+  | 'valuation_advisory_generated'
+  | 'valuation_advisory_recommendation_converted'
+  | 'valuation_advisory_exported'
+  | 'valuation_negotiation_pack_generated'
+  | 'valuation_negotiation_pack_exported'
+  // T063 — Organization UX
+  | 'org_workspace_opened'
+  | 'org_admin_cta_clicked'
+  | 'org_member_invite_sent'
+  // T064 — Megatrend relocation
+  | 'megatrends_opened'
+  | 'megatrends_redirect_used';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

@@ -7,6 +7,8 @@
 
 import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
+import path from 'path';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import decisionService from '../services/decisionService.js';
@@ -20,6 +22,8 @@ import {
 } from '../services/economicsFinancials.js';
 import * as budgetingSvc from '../services/budgetingService.js';
 import * as finAnalysisSvc from '../services/financialAnalysisService.js';
+import * as valuationSvc from '../services/valuationService.js';
+import { exportValuationPptx } from '../services/valuationExportService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -1505,6 +1509,185 @@ router.post('/financial-analyses/:id/run', verifyToken, asyncHandler(async (req:
 router.post('/financial-analyses/:id/approve', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; const userId = req.user?.id || (req.user as any)?.user_id; if (!orgId||!userId) return res.status(401).json({ error: 'Unauthorized' }); await finAnalysisSvc.approveAnalysis(orgId, req.params.id, userId); return res.json({ success: true }); }));
 router.get('/financial-analyses/:id/ratios', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const ratios = await finAnalysisSvc.getAnalysisRatios(req.params.id); return res.json({ ratios }); }));
 router.get('/financial-analyses/:id/insights', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const insights = await finAnalysisSvc.getAnalysisInsights(req.params.id); return res.json({ insights }); }));
+
+/* T055–T057 Enterprise Valuation */
+router.get('/valuations/sources', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+  const budgets = await dbAll<any>(
+    `SELECT id, title, status, approved_at, updated_at
+     FROM budgets
+     WHERE organization_id = ?
+     ORDER BY CASE WHEN status = 'APPROVED' THEN 0 ELSE 1 END, updated_at DESC
+     LIMIT 50`,
+    [orgId]
+  );
+
+  let financialModels: any[] = [];
+  try {
+    financialModels = await dbAll<any>(
+      `SELECT id, name, status, approved_at, updated_at
+       FROM financial_models
+       WHERE organization_id = ?
+       ORDER BY CASE WHEN status = 'approved' THEN 0 ELSE 1 END, updated_at DESC
+       LIMIT 50`,
+      [orgId]
+    );
+  } catch {
+    financialModels = [];
+  }
+
+  return res.json({
+    success: true,
+    sources: {
+      budgets: (budgets || []).map((b: any) => ({
+        id: b.id,
+        title: b.title,
+        status: b.status,
+        approvedAt: b.approved_at,
+        updatedAt: b.updated_at,
+      })),
+      financialModels: (financialModels || []).map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        status: m.status,
+        approvedAt: m.approved_at,
+        updatedAt: m.updated_at,
+      })),
+    },
+  });
+}));
+
+router.get('/valuations', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const valuations = await valuationSvc.listValuations(orgId);
+  return res.json({ success: true, valuations });
+}));
+
+router.post('/valuations', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+  const userId = req.user?.id || (req.user as any)?.user_id;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+  const { title, description, projectId, initiativeId, sourceType, sourceId, horizonYears, currency } = req.body || {};
+  if (!title || !sourceType) return res.status(400).json({ error: 'title and sourceType required' });
+
+  const created = await valuationSvc.createValuation(
+    orgId,
+    { title, description, projectId, initiativeId, sourceType, sourceId, horizonYears, currency },
+    userId
+  );
+  return res.status(201).json({ success: true, id: created.id });
+}));
+
+router.get('/valuations/:id', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const valuation = await valuationSvc.getValuation(orgId, req.params.id);
+  if (!valuation) return res.status(404).json({ error: 'Not found' });
+  return res.json({ success: true, valuation });
+}));
+
+router.put('/valuations/:id/assumptions', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const userId = req.user?.id || (req.user as any)?.user_id;
+  await valuationSvc.updateAssumptions(orgId, req.params.id, req.body || {}, {
+    userId,
+    userEmail: (req.user as any)?.email,
+    ip: req.ip,
+    userAgent: req.get('user-agent') || undefined,
+  });
+  return res.json({ success: true });
+}));
+
+router.put('/valuations/:id/peers', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const userId = req.user?.id || (req.user as any)?.user_id;
+  await valuationSvc.updatePeers(orgId, req.params.id, req.body || {}, {
+    userId,
+    userEmail: (req.user as any)?.email,
+    ip: req.ip,
+    userAgent: req.get('user-agent') || undefined,
+  });
+  return res.json({ success: true });
+}));
+
+router.post('/valuations/:id/compute', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const results = await valuationSvc.computeValuation(orgId, req.params.id);
+  return res.json({ success: true, results });
+}));
+
+router.post('/valuations/:id/approve', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+  const userId = req.user?.id || (req.user as any)?.user_id;
+  if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+  await valuationSvc.approveValuation(orgId, req.params.id, userId);
+  return res.json({ success: true, status: 'APPROVED' });
+}));
+
+router.post('/valuations/:id/advisory', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const advisory = await valuationSvc.generateAdvisory(orgId, req.params.id);
+  return res.json({ success: true, advisory });
+}));
+
+router.post('/valuations/:id/negotiation-pack', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const pack = await valuationSvc.generateNegotiationPack(orgId, req.params.id);
+  return res.json({ success: true, pack });
+}));
+
+router.post('/valuations/:id/advisory/:recommendationId/convert-to-initiative', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+  const userId = req.user?.id || (req.user as any)?.user_id;
+  if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+  const { initiativeId } = await valuationSvc.convertAdvisoryRecommendationToInitiative(orgId, req.params.id, req.params.recommendationId, userId);
+  return res.status(201).json({ success: true, initiativeId });
+}));
+
+router.post('/valuations/:id/export/pptx', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const { language, theme, confidentiality } = req.body || {};
+  const result = await exportValuationPptx({
+    organizationId: orgId,
+    valuationId: req.params.id,
+    language: language === 'pl' ? 'pl' : 'en',
+    theme: theme === 'minimal' || theme === 'modern' ? theme : 'corporate',
+    confidentiality: confidentiality === 'public' || confidentiality === 'internal' ? confidentiality : 'confidential',
+  });
+  return res.json({
+    success: true,
+    slideCount: result.slideCount,
+    warnings: result.warnings,
+    downloadUrl: `/api/economics/valuations/${req.params.id}/export/pptx/download`,
+  });
+}));
+
+router.get('/valuations/:id/export/pptx/download', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+  const row = await dbGet<any>(`SELECT title, export_path FROM valuations WHERE id = ? AND organization_id = ?`, [req.params.id, orgId]);
+  if (!row?.export_path) return res.status(404).json({ error: 'Export not available' });
+
+  const exportPath = String(row.export_path);
+  if (!fs.existsSync(exportPath)) return res.status(404).json({ error: 'File not found' });
+
+  const safeName = String(row.title || 'valuation').replace(/[^a-zA-Z0-9-_ ]/g, '').trim() || 'valuation';
+  const filename = `${safeName}.pptx`;
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  return res.sendFile(path.resolve(exportPath));
+}));
 /* T053 Budgeting */
 router.post('/budgets', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; const userId = req.user?.id || (req.user as any)?.user_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); const budget = await budgetingSvc.createBudget(orgId, req.body, userId); return res.status(201).json({ success: true, budget }); }));
 router.get('/budgets', verifyToken, asyncHandler(async (req: AuthRequest, res: Response) => { const orgId = req.user?.organizationId || (req.user as any)?.organization_id; if (!orgId) return res.status(401).json({ error: 'Unauthorized' }); const budgets = await budgetingSvc.listBudgets(orgId); return res.json({ budgets }); }));
