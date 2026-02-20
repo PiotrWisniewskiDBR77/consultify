@@ -140,6 +140,8 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 | 15 | T054 | bundle-15-financial-modeling | Cursor A | in_progress | Financial Modeling (P&L+BS+CF, economic events) |
 | 19 | T062 | bundle-19-automated-reporting | Cursor B | in_progress | Automated Recurring + Event-Triggered Reporting |
 | 16 | T055–T057 | codex/bundle-16-valuation | Codex | in_progress | Enterprise Valuation (DCF + comps + advisory) |
+| 20 (slice) | T063–T064 | bundle-20-organization-megatrend | Cursor C | in_progress | Organization UX + Megatrend relocation |
+| 27 | T094–T095 | bundle-27-landing-docs-website | Cursor D | in_progress | Landing Docs section + Website content |
 
 **Prompty:** `docs/plans/v2-delivery/PROMPTS_WAVE_8.md`
 
@@ -181,14 +183,14 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 17 | T058-T059 | Cursor | in_progress | bundle-17-presentations-generator | Wave 7 |
 | 18 | T060-T061 | Cursor | in_progress | bundle-18-reports-generator | Wave 7 |
 | 19 | T062 | Cursor | in_progress | bundle-19-automated-reporting | Wave 8 |
-| 20 | T063-T067 | Codex | planned | | |
+| 20 | T063-T067 | Cursor/Codex | in_progress | bundle-20-organization-megatrend | Wave 8 slice T063-T064 |
 | 21 | T068-T069 | Codex | **merged** | bundle-21-onboarding-news | Wave 1 |
 | 22 | T071-T073 (+T070 content) | Cursor | **merged** | bundle-22-help-t071-t073 | Wave 4: T071+T073 (T072 done in pilot) |
 | 23 | T086 + T008 | Cursor | **merged** | bundle-23-admin-sync-hub | Wave 6.5 (migracja 566) |
 | 24 | T087, T089, T090 | Codex | planned | | |
 | 25 | T091-T092 | Cursor | **merged** | bundle-25-trial-upgrade | Wave 1 |
 | 26 | T093 | Cursor | **merged** | bundle-26-legal-acceptance | Wave 1 |
-| 27 | T094-T095 | Codex | planned | | content-heavy |
+| 27 | T094-T095 | Cursor | in_progress | bundle-27-landing-docs-website | Wave 8 |
 | 28 | T096-T098 | Codex | **merged** | codex/bundle-28-partners-program | Wave 3 |
 | 29 | T099-T105 + T101-T103 | Cursor | planned | | weekend/hard |
 | 30 | T106-T122 (slices) | Cursor | planned | | 30.5 (OAuth) merged as slice |
