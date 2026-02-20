@@ -19,6 +19,7 @@ import { AuditExportPanel } from '../../components/Admin/AuditExportPanel';
 import { BrandingSettingsPanel } from '../../components/Admin/BrandingSettingsPanel';
 import { DataGovernancePanel } from '../../components/Admin/DataGovernancePanel';
 import { IntegrationsManagementPanel } from '../../components/Admin/IntegrationsManagementPanel';
+import { UnifiedSyncHub } from '../../components/Admin/UnifiedSyncHub';
 import { PaymentMethodsPanel } from '../../components/billing/PaymentMethodsPanel';
 import { SubscriptionManager } from '../../components/billing/SubscriptionManager';
 import { TaxSettingsForm } from '../../components/billing/TaxSettingsForm';
@@ -265,7 +266,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
       case 'initiative-sections':
         return <AdminInitiativeSectionTypesPanel />;
       case 'integrations':
-        return <IntegrationsManagementPanel />;
+        return <UnifiedSyncHub />;
       case 'api':
         return <ApiKeysManagementView />;
       case 'feedback':

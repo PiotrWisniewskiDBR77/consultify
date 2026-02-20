@@ -10,8 +10,10 @@ import {
   Ban,
   BarChart3,
   CheckCircle2,
+  DollarSign,
   FileText,
   Loader2,
+  PieChart,
   Plus,
   Target,
   TrendingDown,
@@ -25,6 +27,9 @@ import { Api } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 
 import { InitiativeKPI, InitiativeStatus } from '../../types';
+import { FinancialMappingPanel } from './FinancialMappingPanel';
+import { KPIAttributionPanel } from './KPIAttributionPanel';
+import { ROITrackingPanel } from './ROITrackingPanel';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {
   FilterableTable,
@@ -244,6 +249,10 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
     return result;
   }, [initiatives, searchQuery, activeFilters]);
 
+  // Extended tab type with custom IDs
+  type BenefitsTab = ModuleTab | 'attribution' | 'financial';
+  const [extendedTab, setExtendedTab] = useState<BenefitsTab>(initialTab);
+
   // Tab configuration
   const tabs = useMemo(
     () => [
@@ -261,8 +270,20 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       },
       {
         id: 'initiatives' as ModuleTab,
-        label: t('benefits.tabs.roi', 'ROI Analysis'),
+        label: t('benefits.tabs.roi', 'ROI Tracking'),
         icon: <TrendingUp size={16} />,
+        count: undefined,
+      },
+      {
+        id: 'attribution' as ModuleTab,
+        label: t('benefits.tabs.attribution', 'Attribution'),
+        icon: <PieChart size={16} />,
+        count: undefined,
+      },
+      {
+        id: 'financial' as ModuleTab,
+        label: t('benefits.tabs.financial', 'Financial Mapping'),
+        icon: <DollarSign size={16} />,
         count: undefined,
       },
     ],
@@ -622,19 +643,19 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       return renderKPIsDashboard();
     }
 
-    // Tab: ROI Analysis
+    // Tab: ROI Tracking (T046)
     if (activeTab === 'initiatives') {
-      return (
-        <div className="flex items-center justify-center h-full text-slate-500">
-          <div className="text-center">
-            <TrendingUp className="w-12 h-12 mx-auto mb-4 text-emerald-400/50" />
-            <p className="text-lg text-slate-900 dark:text-white">{t('benefits.roiAnalysis.title', 'ROI Analysis')}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {t('benefits.roiAnalysis.subtitle', 'Return on investment calculations')}
-            </p>
-          </div>
-        </div>
-      );
+      return <ROITrackingPanel />;
+    }
+
+    // Tab: Attribution (T048)
+    if ((activeTab as string) === 'attribution') {
+      return <KPIAttributionPanel />;
+    }
+
+    // Tab: Financial Mapping (T049)
+    if ((activeTab as string) === 'financial') {
+      return <FinancialMappingPanel />;
     }
 
     return null;
@@ -661,7 +682,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       <ModuleHub
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tab) => { setActiveTab(tab); setExtendedTab(tab as BenefitsTab); }}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}

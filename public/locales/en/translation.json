@@ -3176,6 +3176,79 @@
       "notRequested": "Not requested"
     }
   },
+  "benefits": {
+    "tabs": {
+      "completed": "Completed",
+      "kpis": "KPIs",
+      "roi": "ROI Tracking",
+      "attribution": "Attribution",
+      "financial": "Financial Mapping"
+    },
+    "roi": {
+      "noData": "No ROI Assumptions Yet",
+      "noDataHint": "Set ROI assumptions on initiatives to track projected vs realized returns.",
+      "projected": "Projected Benefit",
+      "realized": "Realized Benefit",
+      "totalCapex": "Total CAPEX",
+      "coverage": "Data Coverage",
+      "initiatives": "initiatives",
+      "variance": "Portfolio Variance",
+      "abovePlan": "Realized benefits exceed projections",
+      "belowPlan": "Realized benefits below projections — review assumptions",
+      "byInitiative": "ROI by Initiative",
+      "initiative": "Initiative",
+      "confidence": "Conf.",
+      "disclaimer": "ROI figures are based on stated assumptions. Realized values may differ from projections due to external factors."
+    }
+  },
+  "kpi": {
+    "attribution": {
+      "noMappings": "No KPI Mappings Found",
+      "noMappingsHint": "Map KPIs to initiatives first to see attribution analysis.",
+      "selectKpi": "Select KPI",
+      "choose": "— Choose a KPI —",
+      "kpiDelta": "KPI Change",
+      "contributors": "Contributors",
+      "unexplained": "Unexplained",
+      "confidence": "Confidence",
+      "breakdown": "Attribution Breakdown",
+      "unexplainedLabel": "Unexplained / External",
+      "qualitySignals": "Quality Signals"
+    },
+    "financial": {
+      "title": "KPI → Financial Statement Mapping",
+      "subtitle": "Link KPIs to P&L, Balance Sheet, and Cash Flow items",
+      "addMapping": "Add Mapping",
+      "lines": "lines",
+      "mappings": "mappings",
+      "selectKpi": "Select KPI...",
+      "statementLine": "Statement Line",
+      "selectLine": "Select line...",
+      "direction": "Direction",
+      "positive": "Positive (improves)",
+      "negative": "Negative (worsens)",
+      "neutral": "Neutral",
+      "multiplier": "Multiplier",
+      "relType": "Relationship",
+      "linear": "Linear",
+      "percentage": "Percentage",
+      "step": "Step function",
+      "confidence": "Confidence",
+      "confHigh": "High",
+      "confMedium": "Medium",
+      "confLow": "Low",
+      "assumptions": "Assumptions",
+      "assumptionsPlaceholder": "Describe the relationship and any assumptions...",
+      "saved": "Mapping saved",
+      "saveFailed": "Failed to save mapping",
+      "deleted": "Mapping removed",
+      "deleteFailed": "Failed",
+      "selectBoth": "Select both KPI and statement line",
+      "impactPreview": "Financial Impact Preview",
+      "impactDisclaimer": "Impact estimates are based on stated multipliers and assumptions.",
+      "disclaimer": "Financial mappings are approximations. Actual relationships may vary by industry and context. Always verify with finance team."
+    }
+  },
   "tools": {
     "hub": {
       "tabs": {
@@ -3191,6 +3264,60 @@
       },
       "empty": {
         "library": "No tools available."
+      }
+    },
+    "integrations": {
+      "syncHub": {
+        "title": "Integrations Hub",
+        "subtitle": "Connect, monitor, and manage all your external integrations",
+        "tabs": {
+          "apps": "Connected Apps",
+          "health": "Sync Health",
+          "webhooks": "Permissions & Scopes",
+          "audit": "Audit Log"
+        },
+        "search": "Search integrations…",
+        "connectNew": "Connect",
+        "connect": "Connect",
+        "disconnect": "Disconnect",
+        "reauth": "Re-authorize",
+        "runNow": "Run now",
+        "pause": "Pause",
+        "resume": "Resume",
+        "loading": "Loading integrations…",
+        "noIntegrations": "No integrations connected",
+        "connectFirst": "Connect your first integration",
+        "connected": "Integration connected",
+        "disconnected": "Integration disconnected",
+        "connectFailed": "Connection failed",
+        "reauthStarted": "Re-authorization started",
+        "reauthRequired": "Re-authorization required",
+        "reauthDesc": "Your access token has expired. Re-authorize to resume syncing.",
+        "paused": "Sync paused",
+        "resumed": "Sync resumed",
+        "syncComplete": "Sync completed",
+        "lastSync": "Last sync",
+        "lastResult": "Last result",
+        "scopes": "Permissions & Scopes",
+        "scopesDesc": "Review what each integration can read and write in your workspace.",
+        "noScopesData": "No integrations connected yet.",
+        "itemsProcessed": "Items processed",
+        "duration": "Duration",
+        "errorRateLabel": "Error rate",
+        "errorOccurred": "Error occurred",
+        "total": "Total",
+        "healthy": "Healthy",
+        "degraded": "Degraded",
+        "unhealthy": "Unhealthy",
+        "unresolvedErrors": "Unresolved Errors",
+        "noErrors": "All systems operational",
+        "resolve": "Resolve",
+        "noAuditData": "No audit events yet",
+        "auditAction": "Action",
+        "auditActor": "Actor",
+        "auditTime": "Time",
+        "alreadyConnected": "Connected",
+        "comingSoon": "Coming soon"
       }
     }
   }

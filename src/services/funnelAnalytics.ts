@@ -110,7 +110,28 @@ export type FunnelEventName =
   | 'budget_plan_updated'
   | 'budget_actual_updated'
   | 'budget_overspend_signal_detected'
-  | 'budget_recommendation_applied';
+  | 'budget_recommendation_applied'
+  | 'roi_assumptions_updated'
+  | 'roi_realized_value_updated'
+  | 'roi_variance_viewed'
+  | 'kpi_created'
+  | 'kpi_value_updated'
+  | 'kpi_mapping_updated'
+  | 'kpi_viewed'
+  | 'kpi_attribution_viewed'
+  | 'kpi_attribution_parameters_updated'
+  | 'kpi_attribution_exported'
+  | 'kpi_financial_mapping_created'
+  | 'kpi_financial_mapping_updated'
+  | 'kpi_financial_impact_viewed'
+  | 'integration_sync_hub_viewed'
+  | 'integration_connected'
+  | 'integration_disconnected'
+  | 'integration_reauth_required'
+  | 'integration_reauth_completed'
+  | 'integration_sync_run_started'
+  | 'integration_sync_run_completed'
+  | 'integration_error_resolved';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {
