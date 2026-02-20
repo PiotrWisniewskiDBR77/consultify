@@ -1342,7 +1342,42 @@
   "reports": {
     "title": "Reports",
     "management": "Management Reports",
-    "assessment": "Assessment Reports"
+    "assessment": "Assessment Reports",
+    "agent": {
+      "title": "Report Agent",
+      "subtitle": "Edit structure via chat",
+      "welcome": "I'm your report assistant",
+      "welcomeDesc": "Ask me to modify your report structure, add sections, or check quality.",
+      "placeholder": "Ask me to modify the report…",
+      "proposedChanges": "Proposed changes:",
+      "applyChanges": "Apply Changes",
+      "applying": "Applying…",
+      "applied": "Applied",
+      "changesApplied": "Changes applied successfully",
+      "suggestStructure": "Suggest structure",
+      "qualityCheck": "Quality check",
+      "addKpi": "Add KPI section",
+      "addNextSteps": "Add Next Steps"
+    },
+    "qualityGates": {
+      "title": "Quality Check",
+      "readinessScore": "Readiness Score",
+      "exportReady": "Export ready",
+      "notExportReady": "Not export ready",
+      "allPassed": "All quality checks passed!",
+      "recheck": "Recheck"
+    },
+    "templates": {
+      "selectTitle": "Select Report Template",
+      "selectDesc": "Choose a template to create your report",
+      "previewOutline": "Preview outline",
+      "allCategories": "All",
+      "audience": "Audience",
+      "expectedLength": "Expected length",
+      "requiredSection": "Required",
+      "systemTemplate": "System",
+      "orgTemplate": "Organization"
+    }
   },
   "auth": {
     "logIn": "Log in",
@@ -3319,6 +3354,44 @@
         "alreadyConnected": "Connected",
         "comingSoon": "Coming soon"
       }
+    }
+  },
+  "portfolio": {
+    "ai": {
+      "selectedCount": "Selected",
+      "analyzeSelection": "AI: Analyze selection",
+      "analyzing": "Analyzing…",
+      "openPanel": "Open panel",
+      "closePanel": "Close panel",
+      "panelTitle": "Portfolio AI Analysis",
+      "panelSubtitle": "Conflicts, priorities, overlap, and non-human resource hotspots.",
+      "loading": "Loading…",
+      "analysisFailed": "AI analysis failed",
+      "applyFailed": "Apply failed",
+      "applyNotFound": "Initiative not found for suggestion",
+      "applyInvalid": "Invalid recommendation",
+      "applied": "Applied",
+      "apply": "Apply",
+      "conflicts": "Conflicts",
+      "noConflicts": "No conflicts found.",
+      "recommendation": "Recommendation",
+      "prioritySuggestions": "Priority suggestions",
+      "noSuggestions": "No suggestions yet.",
+      "recommendedPriority": "Recommended",
+      "overlap": "Overlap / duplication",
+      "noOverlap": "No overlap detected.",
+      "similarity": "Similarity",
+      "nonHuman": "Non-human resources",
+      "budgetByQuarter": "Budget by quarter",
+      "duplicateTools": "Duplicate tools/licensing",
+      "usedBy": "Used by",
+      "scenarios": "Scenarios",
+      "generate": "Generate",
+      "generating": "Generating…",
+      "scenariosFailed": "Failed to generate scenarios",
+      "applyScenario": "Apply scenario",
+      "allocations": "Allocations",
+      "noProject": "Project is required to apply a scenario"
     }
   }
 }

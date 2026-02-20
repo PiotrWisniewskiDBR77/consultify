@@ -43,6 +43,7 @@ import {
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { QualityGatesPanel } from '../QualityGatesPanel';
 import type { ReportSourceType } from '../useReportBuilder';
 import type { ReportIntent, ReportStyling } from './ReportEditor';
 
@@ -152,6 +153,8 @@ interface SettingsPanelProps {
   onLoadVersions?: () => void;
   /** Report status for context in versions */
   reportStatus?: string;
+  /** Report ID for quality gates */
+  reportId?: string;
   /** Last saved timestamp */
   lastSavedAt?: string | null;
 }
@@ -583,6 +586,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onRollbackVersion,
   onLoadVersions,
   reportStatus,
+  reportId,
   lastSavedAt,
 }) => {
   const { i18n } = useTranslation();
@@ -1437,7 +1441,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
         {/* ========== REVIEW TAB ========== */}
         {activeSection === 'review' && !isTemplateMode && (
-          <div className="p-4">{reviewPanel || null}</div>
+          <div className="p-4 space-y-4">
+            {reportId && <QualityGatesPanel reportId={reportId} />}
+            {reviewPanel || null}
+          </div>
         )}
 
         {/* ========== VERSIONS TAB — Professional Version Management ========== */}

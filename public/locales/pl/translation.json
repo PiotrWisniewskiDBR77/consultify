@@ -831,7 +831,42 @@
   "reports": {
     "title": "Raporty",
     "management": "Raporty Zarządcze",
-    "assessment": "Raporty z Ocen"
+    "assessment": "Raporty z Ocen",
+    "agent": {
+      "title": "Asystent Raportu",
+      "subtitle": "Edytuj strukturę przez czat",
+      "welcome": "Jestem Twoim asystentem raportów",
+      "welcomeDesc": "Poproś mnie o zmianę struktury raportu, dodanie sekcji lub sprawdzenie jakości.",
+      "placeholder": "Poproś o modyfikację raportu…",
+      "proposedChanges": "Proponowane zmiany:",
+      "applyChanges": "Zastosuj zmiany",
+      "applying": "Stosowanie…",
+      "applied": "Zastosowano",
+      "changesApplied": "Zmiany zostały zastosowane",
+      "suggestStructure": "Zaproponuj strukturę",
+      "qualityCheck": "Sprawdzenie jakości",
+      "addKpi": "Dodaj sekcję KPI",
+      "addNextSteps": "Dodaj kolejne kroki"
+    },
+    "qualityGates": {
+      "title": "Kontrola Jakości",
+      "readinessScore": "Wynik gotowości",
+      "exportReady": "Gotowy do eksportu",
+      "notExportReady": "Nie gotowy do eksportu",
+      "allPassed": "Wszystkie kontrole jakości zaliczone!",
+      "recheck": "Sprawdź ponownie"
+    },
+    "templates": {
+      "selectTitle": "Wybierz szablon raportu",
+      "selectDesc": "Wybierz szablon, aby utworzyć raport",
+      "previewOutline": "Podgląd struktury",
+      "allCategories": "Wszystkie",
+      "audience": "Odbiorcy",
+      "expectedLength": "Przewidywana długość",
+      "requiredSection": "Wymagane",
+      "systemTemplate": "Systemowy",
+      "orgTemplate": "Organizacji"
+    }
   },
   "auth": {
     "logIn": "Zaloguj się",
@@ -3340,6 +3375,154 @@
       "impactPreview": "Podgląd wpływu finansowego",
       "impactDisclaimer": "Estymacje wpływu oparte na zadeklarowanych mnożnikach i założeniach.",
       "disclaimer": "Mapowania finansowe to przybliżenia. Rzeczywiste relacje mogą się różnić w zależności od branży i kontekstu. Zawsze weryfikuj z zespołem finansów."
+    }
+  },
+  "presentations": {
+    "wizard": {
+      "title": "Generator prezentacji",
+      "titleRequired": "Podaj tytuł",
+      "outlineFailed": "Nie udało się wygenerować konspektu",
+      "generationFailed": "Generowanie nie powiodło się",
+      "downloadFailed": "Pobieranie nie powiodło się"
+    },
+    "steps": {
+      "sources": "Źródła",
+      "setup": "Konfiguracja",
+      "outline": "Konspekt",
+      "result": "Wynik"
+    },
+    "sources": {
+      "title": "Wybierz źródła danych",
+      "subtitle": "Wybierz artefakty z platformy do uwzględnienia w decku.",
+      "initiative_portfolio": "Portfel inicjatyw",
+      "execution_status": "Status realizacji",
+      "kpi_roi": "KPI i ROI",
+      "raid": "Ryzyka i problemy",
+      "assessment": "Wyniki oceny",
+      "tool_session": "Sesja narzędzia"
+    },
+    "setup": {
+      "title": "Skonfiguruj swój deck",
+      "subtitle": "Ustaw ton, odbiorców i styl.",
+      "deckTitle": "Tytuł decka",
+      "titlePlaceholder": "np. Steering Committee Update — Q1 2026",
+      "template": "Szablon (opcjonalnie)",
+      "customDeck": "Własny deck",
+      "customDeckDesc": "AI generuje konspekt ze źródeł",
+      "audience": "Odbiorcy",
+      "goal": "Cel",
+      "language": "Język",
+      "theme": "Motyw",
+      "confidentiality": "Poufność",
+      "generateOutline": "Generuj konspekt"
+    },
+    "audiences": {
+      "sponsor": "Sponsor",
+      "executive": "Zarząd",
+      "investor": "Inwestor / VC",
+      "internal": "Zespół wewnętrzny"
+    },
+    "goals": {
+      "inform": "Informuj",
+      "decide": "Decyduj",
+      "sell": "Sprzedaj",
+      "align": "Alignuj"
+    },
+    "themes": {
+      "corporate": "Korporacyjny",
+      "minimal": "Minimalistyczny",
+      "modern": "Nowoczesny"
+    },
+    "confidentialities": {
+      "confidential": "Poufny",
+      "internal": "Wewnętrzny",
+      "public": "Publiczny"
+    },
+    "outline": {
+      "title": "Konspekt decka",
+      "slides": "slajdów",
+      "reorder": "Przeciągnij by zmienić kolejność, przełącz by włączyć/wyłączyć",
+      "addSlide": "+ Dodaj slajd...",
+      "generate": "Generuj deck"
+    },
+    "generating": {
+      "title": "Generowanie decka",
+      "subtitle": "Tworzenie slajdów klasy BCG z walidacją jakości. To może chwilę potrwać..."
+    },
+    "result": {
+      "ready": "Twój deck jest gotowy!",
+      "slidesGenerated": "slajdów wygenerowanych pomyślnie",
+      "warnings": "Ostrzeżenia jakości",
+      "downloadPptx": "Pobierz PPTX",
+      "editOutline": "Edytuj i regeneruj"
+    },
+    "templates": {
+      "systemTemplates": "Szablony systemowe",
+      "orgTemplates": "Szablony organizacji",
+      "viewOutline": "Zobacz konspekt",
+      "use": "Użyj",
+      "clone": "Sklonuj",
+      "cloned": "Szablon sklonowany do Twojej organizacji",
+      "cloneFailed": "Nie udało się sklonować"
+    },
+    "brandKit": {
+      "title": "Kit marki",
+      "subtitle": "Skonfiguruj branding organizacji dla prezentacji i raportów.",
+      "colors": "Kolory",
+      "primary": "Główny",
+      "secondary": "Drugorzędny",
+      "accent": "Akcent",
+      "fonts": "Czcionki",
+      "titleFont": "Czcionka tytułu",
+      "bodyFont": "Czcionka tekstu",
+      "headerFooter": "Nagłówek i stopka",
+      "headerText": "Tekst nagłówka",
+      "footerText": "Tekst stopki",
+      "pageNumbers": "Numeracja stron",
+      "confidentialityBanner": "Baner poufności",
+      "defaultConfidentiality": "Domyślna poufność",
+      "disclaimer": "Tekst zastrzeżeń",
+      "disclaimerPlaceholder": "Opcjonalne zastrzeżenie prawne dla decków finansowych/wycenowych",
+      "saved": "Kit marki zapisany",
+      "saveFailed": "Nie udało się zapisać"
+    }
+  },
+  "portfolio": {
+    "ai": {
+      "selectedCount": "Zaznaczone",
+      "analyzeSelection": "AI: Analizuj zaznaczenie",
+      "analyzing": "Analiza…",
+      "openPanel": "Otwórz panel",
+      "closePanel": "Zamknij panel",
+      "panelTitle": "Analiza AI portfela",
+      "panelSubtitle": "Konflikty, priorytety, overlap oraz hotspoty zasobów nieludzkich.",
+      "loading": "Ładowanie…",
+      "analysisFailed": "Nie udało się wykonać analizy AI",
+      "applyFailed": "Nie udało się zastosować",
+      "applyNotFound": "Nie znaleziono inicjatywy dla sugestii",
+      "applyInvalid": "Nieprawidłowa rekomendacja",
+      "applied": "Zastosowano",
+      "apply": "Zastosuj",
+      "conflicts": "Konflikty",
+      "noConflicts": "Nie wykryto konfliktów.",
+      "recommendation": "Rekomendacja",
+      "prioritySuggestions": "Sugestie priorytetów",
+      "noSuggestions": "Brak sugestii.",
+      "recommendedPriority": "Rekomendowany",
+      "overlap": "Overlap / duplikacja",
+      "noOverlap": "Nie wykryto overlapu.",
+      "similarity": "Podobieństwo",
+      "nonHuman": "Zasoby nieludzkie",
+      "budgetByQuarter": "Budżet per kwartał",
+      "duplicateTools": "Duplikaty narzędzi/licencji",
+      "usedBy": "Używane w",
+      "scenarios": "Scenariusze",
+      "generate": "Generuj",
+      "generating": "Generowanie…",
+      "scenariosFailed": "Nie udało się wygenerować scenariuszy",
+      "applyScenario": "Zastosuj scenariusz",
+      "allocations": "Przypisania",
+      "noProject": "Do zastosowania scenariusza wymagany jest projekt"
     }
   }
 }

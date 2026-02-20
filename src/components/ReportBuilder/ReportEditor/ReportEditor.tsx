@@ -9,6 +9,7 @@
 
 import {
   BookTemplate,
+  Bot,
   Check,
   ChevronDown,
   ChevronRight,
@@ -28,6 +29,7 @@ import {
   RefreshCw,
   Save,
   Settings,
+  Shield,
   Share2,
   Sparkles,
   Trash2,
@@ -41,6 +43,8 @@ import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 
 import { Api } from '../../../services/api';
+import { QualityGatesPanel } from '../QualityGatesPanel';
+import { ReportAgentChat } from '../ReportAgentChat';
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { ExportSharePanel } from '../ExportSharePanel';
 import type {
@@ -532,6 +536,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [showPreview, setShowPreview] = useState(false);
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [showChapterNav, setShowChapterNav] = useState(true);
+  const [showAgentChat, setShowAgentChat] = useState(false);
   // Version history is now rendered inline inside SettingsPanel
   const [versions, setVersions] = useState<any[]>([]);
   const [isLoadingVersions, setIsLoadingVersions] = useState(false);
@@ -2203,6 +2208,22 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             </div>
           )}
 
+          {/* Agent Chat toggle */}
+          {!isTemplateMode && reportIdForActions && (
+            <button
+              onClick={() => setShowAgentChat((p) => !p)}
+              className={`inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border transition-all ${
+                showAgentChat
+                  ? 'border-violet-500/60 bg-violet-500/20 text-violet-300'
+                  : 'border-slate-600/40 bg-slate-800/40 text-slate-400 hover:bg-slate-700/60 hover:text-slate-300'
+              }`}
+              title={isPl ? 'Asystent raportu' : 'Report Agent'}
+            >
+              <Bot className="w-3.5 h-3.5" />
+              {isPl ? 'Agent' : 'Agent'}
+            </button>
+          )}
+
           {/* 3. View / Export (dropdown: Web, PDF, PPTX, Word) */}
           {!isTemplateMode && (
             <div className="relative group">
@@ -2486,6 +2507,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           onRollbackVersion={rollbackToVersion}
           onLoadVersions={loadVersions}
           reportStatus={reportStatus}
+          reportId={reportIdForActions || undefined}
           lastSavedAt={lastSavedAt}
         />
       </div>
@@ -2514,6 +2536,20 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       )}
 
       {/* Version History slide-over removed — now integrated into SettingsPanel tabs */}
+
+      {/* T060: Agent Chat Sidebar */}
+      {showAgentChat && reportIdForActions && (
+        <ReportAgentChat
+          reportId={reportIdForActions}
+          isOpen={showAgentChat}
+          onClose={() => setShowAgentChat(false)}
+          onStructureChanged={() => {
+            if (report?.id) {
+              void loadReport(report.id);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
