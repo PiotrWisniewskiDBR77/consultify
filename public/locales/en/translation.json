@@ -2941,7 +2941,25 @@
   "licensedTools": {
     "moduleName": "Licensed Tools",
     "hubTitle": "Licensed Tools Hub",
-    "backToHub": "Back to Licensed Tools Hub"
+    "backToHub": "Back to Licensed Tools Hub",
+    "locked": "Licensed — Access Required",
+    "lockedReason": "Your organization does not have access to this framework. Upgrade your plan or contact your administrator.",
+    "requestAccess": "Request Access / Upgrade",
+    "proprietaryNote": "This is a proprietary framework requiring a paid license.",
+    "educationalNote": "This framework is available for educational purposes.",
+    "pdfImport": {
+      "title": "Import PDF Assessment",
+      "upload": "Upload PDF",
+      "detectFramework": "Detect Framework",
+      "extractScores": "Extract Scores",
+      "reviewMapping": "Review Mapping",
+      "confirm": "Confirm Import",
+      "detecting": "Detecting framework...",
+      "extracting": "Extracting scores...",
+      "noFramework": "Could not detect framework. Select manually.",
+      "lowConfidence": "Low confidence — review and correct extracted values.",
+      "supportedFrameworks": "Supported Frameworks"
+    }
   },
   "assessment": {
     "notes": "Notes",
@@ -3006,6 +3024,28 @@
       "quickWins": "Quick Wins",
       "strategicInitiatives": "Strategic Initiatives",
       "longTermTransformation": "Long-term Transformation"
+    },
+    "lean": {
+      "overallDashboard": "Overall Assessment Dashboard",
+      "leanMaturity": "Lean Maturity",
+      "automationPotential": "Automation Potential",
+      "estimatedSavings": "Est. Savings (PLN/yr)",
+      "topWastes": "Top Wastes (Where It Hurts Most)",
+      "quickWins": "Quick Wins (Lean-first)",
+      "noStdWork": "No Std Work",
+      "automationOps": "Top Automation Opportunities",
+      "dataGaps": "Data Gaps & Follow-up Items",
+      "moreItems": "more items",
+      "closure": "Assessment Closure",
+      "processesAssessed": "Processes Assessed",
+      "workstationsAssessed": "Workstations Assessed",
+      "totalHeadcount": "Total Headcount",
+      "priorityItems": "Priority Initiatives",
+      "closureNote": "Next steps: Generate report, create roadmap, materialize initiatives. Approve assessment to unlock report and initiative generation.",
+      "coachQuestions": "Coach Questions",
+      "evidenceGuidance": "Evidence Guidance",
+      "microLesson": "Micro-lesson",
+      "commonMistakes": "Common Mistakes to Avoid"
     }
   },
   "tools": {
