@@ -2864,5 +2864,10 @@
       "pause": "Pause",
       "resume": "Resume"
     }
+  },
+  "licensedTools": {
+    "moduleName": "Licensed Tools",
+    "hubTitle": "Licensed Tools Hub",
+    "backToHub": "Back to Licensed Tools Hub"
   }
 }

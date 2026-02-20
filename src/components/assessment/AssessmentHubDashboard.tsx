@@ -73,7 +73,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
 
   if (loading) {
     return (
-      <SplitLayout title="Assessment Hub" currentView={AppView.ASSESSMENT}>
+      <SplitLayout title={t('licensedTools.hubTitle', 'Licensed Tools Hub')} currentView={AppView.ASSESSMENT}>
         <div className="flex items-center justify-center h-64">
           <div className="text-gray-500 dark:text-gray-400">Loading assessment overview...</div>
         </div>
@@ -92,7 +92,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
               className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Assessment Hub
+              {t('licensedTools.backToHub', 'Back to Licensed Tools Hub')}
             </button>
           </div>
           <RapidLeanWorkspace projectId={projectId} organizationId={organizationId} />
@@ -103,7 +103,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
 
   if (!overview) {
     return (
-      <SplitLayout title="Assessment Hub" currentView={AppView.ASSESSMENT}>
+      <SplitLayout title={t('licensedTools.hubTitle', 'Licensed Tools Hub')} currentView={AppView.ASSESSMENT}>
         <div className="flex items-center justify-center h-64">
           <div className="text-gray-500 dark:text-gray-400">No assessment data available</div>
         </div>
@@ -115,13 +115,13 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
   const readinessPercentage = (consolidated.overallReadiness / 7) * 100;
 
   return (
-    <SplitLayout title="Assessment Hub" currentView={AppView.ASSESSMENT}>
+    <SplitLayout title={t('licensedTools.hubTitle', 'Licensed Tools Hub')} currentView={AppView.ASSESSMENT}>
       <div className="p-6 max-w-7xl mx-auto overflow-y-auto h-full">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold flex items-center gap-3 mb-2">
             <Award className="w-10 h-10 text-yellow-500" />
-            Assessment Hub
+            {t('licensedTools.hubTitle', 'Licensed Tools Hub')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Unified view of all organizational assessments

@@ -2885,5 +2885,10 @@
       "pause": "Pauza",
       "resume": "Wznów"
     }
+  },
+  "licensedTools": {
+    "moduleName": "Narzędzia licencjonowane",
+    "hubTitle": "Hub narzędzi licencjonowanych",
+    "backToHub": "Powrót do huba narzędzi licencjonowanych"
   }
 }

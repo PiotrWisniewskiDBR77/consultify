@@ -18,6 +18,7 @@ import { AuthView } from '@/views/AuthView';
 import { ProductEntryPage } from '@/views/ProductEntryPage';
 
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
+import { LicensedToolsRedirect } from './LicensedToolsRedirect';
 import { ROUTES } from './routeConfig';
 
 // Lazy load views for new routes
@@ -865,12 +866,15 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
+        {/* Licensed Tools alias - redirect to /assessment (T025) */}
+        <Route path="/licensed-tools/*" element={<LicensedToolsRedirect />} />
+
         {/* Assessment Module - New Hub */}
         <Route
           path={`${ROUTES.ASSESSMENT.ROOT}/*`}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Assessment']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || ['Licensed Tools']} noPadding>
                 <RouteErrorBoundary>
                   <Routes>
                     {/* Assessment Session Editor (Workflow v2) */}

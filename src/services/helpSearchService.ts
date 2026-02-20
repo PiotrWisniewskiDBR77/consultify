@@ -13,7 +13,7 @@ import { VIDEO_TUTORIALS, VideoTutorial } from '../config/videoTutorialsContent'
 // Static module names for search indexing (fallback when translations not available)
 const MODULE_NAMES: Record<string, { en: string; pl: string }> = {
   dashboard: { en: 'Dashboard', pl: 'Panel główny' },
-  assessment: { en: 'Assessment', pl: 'Ocena' },
+  assessment: { en: 'Licensed Tools', pl: 'Narzędzia licencjonowane' },
   initiatives: { en: 'Initiatives', pl: 'Inicjatywy' },
   roadmap: { en: 'Roadmap', pl: 'Mapa drogowa' },
   implementation: { en: 'Implementation', pl: 'Wdrożenie' },
@@ -33,8 +33,8 @@ const MODULE_DESCRIPTIONS: Record<string, { en: string; pl: string }> = {
     pl: 'Przegląd podróży transformacji cyfrowej z kluczowymi metrykami i szybkimi akcjami',
   },
   assessment: {
-    en: 'Assess your organization digital maturity across 7 key dimensions',
-    pl: 'Oceń dojrzałość cyfrową organizacji w 7 kluczowych wymiarach',
+    en: 'Licensed frameworks (DRD, SIRI, ADMA, Lean) for digital maturity assessment',
+    pl: 'Licencjonowane frameworki (DRD, SIRI, ADMA, Lean) do oceny dojrzałości cyfrowej',
   },
   initiatives: {
     en: 'AI-powered initiative recommendations and management',

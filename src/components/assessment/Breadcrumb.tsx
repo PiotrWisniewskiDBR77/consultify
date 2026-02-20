@@ -5,6 +5,7 @@
 
 import { ChevronRight, Home } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
@@ -15,18 +16,20 @@ interface BreadcrumbItem {
 }
 
 export const Breadcrumb: React.FC = () => {
+  const { t } = useTranslation();
   const { currentView, setCurrentView } = useAppStore();
+  const hubLabel = t('licensedTools.hubTitle', 'Licensed Tools Hub');
 
   const getBreadcrumbs = (): BreadcrumbItem[] => {
     const crumbs: BreadcrumbItem[] = [{ label: 'Home', viewId: AppView.MY_WORK }];
 
-    // Assessment Module breadcrumbs
+    // Licensed Tools Module breadcrumbs
     if (
       currentView === AppView.ASSESSMENT_SUMMARY ||
       currentView === AppView.ASSESSMENT_DRD ||
       currentView === AppView.ASSESSMENT_AUDITS
     ) {
-      crumbs.push({ label: 'Assessment Hub', viewId: AppView.ASSESSMENT_SUMMARY });
+      crumbs.push({ label: hubLabel, viewId: AppView.ASSESSMENT_SUMMARY });
 
       if (currentView === AppView.ASSESSMENT_DRD) {
         crumbs.push({ label: 'DRD Assessment' });
@@ -37,25 +40,25 @@ export const Breadcrumb: React.FC = () => {
 
     // RapidLean
     if (currentView.toString().includes('RAPIDLEAN')) {
-      crumbs.push({ label: 'Assessment Hub', viewId: AppView.ASSESSMENT_SUMMARY });
+      crumbs.push({ label: hubLabel, viewId: AppView.ASSESSMENT_SUMMARY });
       crumbs.push({ label: 'RapidLean' });
     }
 
     // External Digital
     if (currentView.toString().includes('EXTERNAL')) {
-      crumbs.push({ label: 'Assessment Hub', viewId: AppView.ASSESSMENT_SUMMARY });
+      crumbs.push({ label: hubLabel, viewId: AppView.ASSESSMENT_SUMMARY });
       crumbs.push({ label: 'External Digital (SIRI/ADMA)' });
     }
 
     // Generic Reports
     if (currentView.toString().includes('GENERIC_REPORTS')) {
-      crumbs.push({ label: 'Assessment Hub', viewId: AppView.ASSESSMENT_SUMMARY });
+      crumbs.push({ label: hubLabel, viewId: AppView.ASSESSMENT_SUMMARY });
       crumbs.push({ label: 'Generic Reports' });
     }
 
     // Gap Analysis
     if (currentView.toString().includes('GAP_ANALYSIS')) {
-      crumbs.push({ label: 'Assessment Hub', viewId: AppView.ASSESSMENT_SUMMARY });
+      crumbs.push({ label: hubLabel, viewId: AppView.ASSESSMENT_SUMMARY });
       crumbs.push({ label: 'Gap Analysis' });
     }
 

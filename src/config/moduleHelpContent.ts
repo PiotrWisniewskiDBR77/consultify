@@ -41,8 +41,8 @@ export const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp> = {
   },
   assessment: {
     id: 'assessment',
-    title: 'Assessment Hub',
-    description: 'AI-powered digital maturity assessments using industry frameworks.',
+    title: 'Licensed Tools Hub',
+    description: 'AI-powered digital maturity assessments using industry frameworks (DRD, SIRI, ADMA, Lean).',
     content:
       'Run comprehensive assessments using CMMI, LEAN 4.0, and other frameworks to understand your digital readiness.',
     icon: 'ClipboardCheck',

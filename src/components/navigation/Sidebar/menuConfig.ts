@@ -66,10 +66,10 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       viewId: AppView.DISCOVERY_TOOLS,
       badge: 'new',
     },
-    // 4. Ocena - bezpośrednie otwarcie tablicy zarządzania assessmentami
+    // 4. Licensed Tools (Assessment module) - DRD/SIRI/ADMA/Lean
     {
       id: 'MODULE_ASSESSMENT',
-      label: t('sidebar.assessment', 'Assessment'),
+      label: t('licensedTools.moduleName', 'Licensed Tools'),
       icon: React.createElement(CheckCircle2, { size: 20 }),
       viewId: AppView.ASSESSMENT_OVERVIEW,
     },
@@ -204,6 +204,7 @@ export function getSuperAdminMenuItem(t: TranslationFn): MenuItem {
 export function getViewName(view: AppView, t: TranslationFn): string {
   const viewNames: Record<string, string> = {
     [AppView.FULL_STEP1_ASSESSMENT]: t('sidebar.assessmentDRD'),
+    [AppView.ASSESSMENT_OVERVIEW]: t('licensedTools.moduleName', 'Licensed Tools'),
     [AppView.FULL_STEP2_INITIATIVES]: t('sidebar.module3_1'),
     [AppView.PORTFOLIO_ROADMAP]: t('sidebar.portfolioRoadmap', 'Portfolio & Roadmap'),
     [AppView.FULL_STEP5_EXECUTION]: t('sidebar.realization'),

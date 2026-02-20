@@ -97,31 +97,31 @@ export const useBreadcrumbs = () => {
   // ASSESSMENT MODULE
   // =====================================================
   else if (currentView === AppView.ASSESSMENT_DRD) {
-    section = t('sidebar.assessment', 'Assessment');
+    section = t('licensedTools.moduleName', 'Licensed Tools');
     sub = t('assessment.drd', 'DRD');
   } else if (currentView === AppView.ASSESSMENT_SIRI) {
-    section = t('sidebar.assessment', 'Assessment');
+    section = t('licensedTools.moduleName', 'Licensed Tools');
     sub = t('assessment.siri', 'SIRI');
   } else if (currentView === AppView.ASSESSMENT_ADMA) {
-    section = t('sidebar.assessment', 'Assessment');
+    section = t('licensedTools.moduleName', 'Licensed Tools');
     sub = t('assessment.adma', 'ADMA');
   } else if (currentView === AppView.ASSESSMENT_CMMI) {
-    section = t('sidebar.assessment', 'Assessment');
+    section = t('licensedTools.moduleName', 'Licensed Tools');
     sub = t('assessment.cmmi', 'CMMI');
   } else if (
     currentView === AppView.ASSESSMENT_LEAN ||
     currentView === AppView.ASSESSMENT_LEAN_EXTERNAL
   ) {
-    section = t('sidebar.assessment', 'Assessment');
+    section = t('licensedTools.moduleName', 'Licensed Tools');
     sub = t('assessment.lean', 'Lean 4.0');
   } else if (
     currentView === AppView.ASSESSMENT_SUMMARY ||
     currentView === AppView.ASSESSMENT_OVERVIEW
   ) {
-    section = t('sidebar.assessment', 'Assessment');
+    section = t('licensedTools.moduleName', 'Licensed Tools');
     sub = t('assessment.overview', 'Overview');
   } else if (currentView === AppView.ASSESSMENT_AUDITS) {
-    section = t('sidebar.assessment', 'Assessment');
+    section = t('licensedTools.moduleName', 'Licensed Tools');
     sub = t('sidebar.myAssessments', 'My Assessments');
   }
   // =====================================================
