@@ -808,7 +808,11 @@ export const AppRoutes: React.FC = () => {
             >
               <RouteErrorBoundary>
                 <div className="p-4 lg:p-6">
-                  <MegatrendsWorkspace source="tools" showHeader onBack={() => window.history.back()} />
+                  <MegatrendsWorkspace
+                    source="tools"
+                    showHeader
+                    onBack={() => window.history.back()}
+                  />
                 </div>
               </RouteErrorBoundary>
             </MainLayout>
@@ -881,7 +885,12 @@ export const AppRoutes: React.FC = () => {
                     <Route path="goals" element={<ContextBuilderView initialTab={2} />} />
                     <Route path="challenges" element={<ContextBuilderView initialTab={3} />} />
                     {/* T064 — Redirect to canonical */}
-                    <Route path="megatrends" element={<Navigate to={ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS} replace />} />
+                    <Route
+                      path="megatrends"
+                      element={
+                        <Navigate to={ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS} replace />
+                      }
+                    />
                     <Route path="strategy" element={<ContextBuilderView initialTab={5} />} />
                   </Routes>
                 </AnimationWrapper>
