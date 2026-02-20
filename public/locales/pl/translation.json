@@ -205,226 +205,122 @@
     }
   },
   "assessment": {
-    "title": "Ocena",
-    "overview": "Przegląd",
-    "drd": "Ocena DRD",
-    "siri": "Framework SIRI",
-    "adma": "Framework ADMA",
-    "cmmi": "Framework CMMI",
-    "lean": "Lean 4.0"
+    "notes": "Notatki",
+    "notesPlaceholder": "Kluczowe obserwacje, kontekst, uzasadnienie oceny...",
+    "evidence": "Dowody (evidence)",
+    "evidencePlaceholder": "Systemy, dokumenty, metryki, procesy potwierdzające ocenę...",
+    "confidence": "Pewność oceny",
+    "confidenceLow": "Niska",
+    "confidenceMedium": "Średnia",
+    "confidenceHigh": "Wysoka",
+    "withEvidence": "Z dowodami",
+    "progress": "Postęp oceny",
+    "overallScore": "Wynik ogólny",
+    "dimensions": "wymiarów",
+    "currentLevel": "Aktualny poziom",
+    "targetLevel": "Docelowy poziom",
+    "gap": "Luka",
+    "strengths": {
+      "title": "Kluczowe mocne strony",
+      "empty": "Nie zidentyfikowano jeszcze mocnych wymiarów. Kontynuuj ocenę, aby odkryć mocne strony."
+    },
+    "dataGaps": {
+      "title": "Luki danych i elementy do uzupełnienia",
+      "notAssessed": "Nie oceniono",
+      "noTarget": "Nie ustawiono celu",
+      "hint": "Te obszary wymagają dodatkowego zbierania danych przed zakończeniem pełnej oceny."
+    },
+    "closure": {
+      "title": "Wnioski z oceny",
+      "dimensionsAssessed": "Wymiary ocenione",
+      "totalGap": "Łączna luka",
+      "topPriorities": "Najwyższe priorytety",
+      "completeness": "Kompletność",
+      "nextSteps": "Następne kroki",
+      "step1": "Omów wyniki z kluczowymi interesariuszami",
+      "step2": "Ustaw cele dla nieocenionych wymiarów",
+      "step3": "Wygeneruj raport do przeglądu sponsora",
+      "step4": "Stwórz inicjatywy poprawy z luk",
+      "step5": "Zaplanuj ocenę kontrolną"
+    },
+    "confidenceOverview": {
+      "title": "Przegląd pewności oceny",
+      "withEvidence": "Z dowodami",
+      "withoutEvidence": "Bez dowodów",
+      "alert": "Niektóre ocenione wymiary nie mają udokumentowanych dowodów."
+    },
+    "deck": {
+      "export": "Eksportuj prezentację (PPTX)",
+      "generating": "Generowanie prezentacji...",
+      "generated": "Prezentacja wygenerowana pomyślnie",
+      "failed": "Nie udało się wygenerować prezentacji",
+      "requiresApproval": "Ocena musi być ZATWIERDZONA, aby eksportować prezentację"
+    },
+    "report": {
+      "strengths": "Kluczowe mocne strony",
+      "dataGaps": "Luki danych i elementy do uzupełnienia",
+      "roadmap": "Mapa drogowa transformacji",
+      "conclusions": "Wnioski z oceny",
+      "shortTerm": "Krótkoterminowe (0-6 miesięcy)",
+      "mediumTerm": "Średnioterminowe (6-18 miesięcy)",
+      "longTerm": "Długoterminowe (18-36 miesięcy)",
+      "quickWins": "Szybkie wygrane",
+      "strategicInitiatives": "Inicjatywy strategiczne",
+      "longTermTransformation": "Transformacja długoterminowa"
+    },
+    "lean": {
+      "overallDashboard": "Dashboard ogólny oceny",
+      "leanMaturity": "Dojrzałość Lean",
+      "automationPotential": "Potencjał automatyzacji",
+      "estimatedSavings": "Szac. oszczędności (PLN/rok)",
+      "topWastes": "Główne marnotrawstwa (co boli najbardziej)",
+      "quickWins": "Szybkie wygrane (Lean-first)",
+      "noStdWork": "Brak standardowej pracy",
+      "automationOps": "Najlepsze możliwości automatyzacji",
+      "dataGaps": "Luki danych i elementy do uzupełnienia",
+      "moreItems": "więcej elementów",
+      "closure": "Podsumowanie oceny",
+      "processesAssessed": "Procesy ocenione",
+      "workstationsAssessed": "Stanowiska ocenione",
+      "totalHeadcount": "Łączna liczba pracowników",
+      "priorityItems": "Inicjatywy priorytetowe",
+      "closureNote": "Następne kroki: Wygeneruj raport, stwórz mapę drogową, zmaterializuj inicjatywy. Zatwierdź ocenę, aby odblokować generowanie raportu i inicjatyw.",
+      "coachQuestions": "Pytania trenera",
+      "evidenceGuidance": "Wskazówki dot. dowodów",
+      "microLesson": "Mikro-lekcja",
+      "commonMistakes": "Typowe błędy do uniknięcia",
+      "wasteKnowledge": "Przewodnik analizy marnotrawstwa",
+      "whatToLookFor": "Na co patrzeć",
+      "typicalEvidence": "Typowe dowody"
+    }
   },
   "initiatives": {
-    "title": "Inicjatywy",
-    "roadmap": "Mapa Drogowa",
-    "portfolio": "Portfolio",
-    "form": {
-      "createNew": "Utwórz nową inicjatywę",
-      "edit": "Edytuj inicjatywę",
-      "newInitiative": "Nowa inicjatywa",
-      "title": "Tytuł",
-      "titleRequired": "Tytuł *",
-      "titlePlaceholder": "np. Złożenie dokumentacji zgodności",
-      "axis": "Oś",
-      "summary": "Podsumowanie",
-      "summaryPlaceholder": "Krótkie sformułowanie problemu/celu…",
-      "description": "Opis",
-      "descriptionOptional": "Opis (opcjonalnie)",
-      "descriptionPlaceholder": "Opisz inicjatywę...",
-      "category": "Kategoria",
-      "categoryOptional": "Kategoria (opcjonalnie)",
-      "categoryPlaceholder": "np. Cyberbezpieczeństwo",
-      "priority": "Priorytet",
-      "risk": "Ryzyko",
-      "riskLevel": "Poziom ryzyka",
-      "sourceAxis": "Oś źródłowa",
-      "budget": "Budżet (PLN)",
-      "expectedROI": "Oczekiwany zwrot z inwestycji",
-      "timeline": "Harmonogram",
-      "objectives": "Cele",
-      "addObjective": "Dodaj nowy cel...",
-      "create": "Utwórz",
-      "creating": "Tworzenie…",
-      "save": "Zapisz zmiany",
-      "cancel": "Anuluj",
-      "nameRequired": "Nazwa inicjatywy *",
-      "namePlaceholder": "Wprowadź nazwę inicjatywy",
-      "nameMinLength": "Nazwa musi mieć co najmniej 5 znaków",
-      "descriptionMinLength": "Opis musi mieć co najmniej 20 znaków",
-      "budgetRequired": "Budżet musi być większy niż 0",
-      "roiRequired": "Zwrot z inwestycji musi być większy niż 0",
-      "highRiskHighBudget": "Inicjatywa wysokiego ryzyka i wysokiego budżetu",
-      "highRiskHighBudgetDesc": "Rozważ podział na mniejsze fazy lub wprowadzenie dodatkowych kontroli zarządczych.",
-      "titleTooShort": "Tytuł jest za krótki",
-      "titleRequiredError": "Tytuł jest wymagany",
-      "initiativeCreated": "Inicjatywa utworzona",
-      "initiativeUpdated": "Inicjatywa zaktualizowana",
-      "createFailed": "Nie udało się utworzyć inicjatywy",
-      "updateFailed": "Nie udało się zaktualizować inicjatywy",
-      "duplicateWarning": "Podobna inicjatywa już istnieje: {{name}}",
-      "duplicateWarningDesc": "Ten tytuł inicjatywy jest bardzo podobny do istniejącego. Sprawdź, czy to nie duplikat."
-    },
-    "bulkEdit": {
-      "title": "Masowa edycja inicjatyw",
-      "selectedCount": "Wybrano {{count}} inicjatyw",
-      "status": "Status",
-      "priority": "Priorytet",
-      "businessOwner": "Właściciel biznesowy",
-      "executionOwner": "Właściciel realizacji",
-      "noChange": "Bez zmian",
-      "applyChanges": "Zastosuj zmiany",
-      "updatesFailed": "{{count}} aktualizacji nie powiodło się",
-      "bulkUpdateApplied": "Masowa aktualizacja zastosowana"
-    },
-    "empty": {
-      "title": "Brak inicjatyw",
-      "description": "Utwórz swoją pierwszą inicjatywę, aby rozpocząć"
-    },
-    "axis": {
-      "operational": "Operacyjna",
-      "strategic": "Strategiczna",
-      "transformational": "Transformacyjna",
-      "compliance": "Zgodność"
-    },
-    "priority": {
-      "low": "Niski",
-      "medium": "Średni",
-      "high": "Wysoki",
-      "critical": "Krytyczny"
-    },
-    "risk": {
-      "low": "Niskie ryzyko",
-      "medium": "Średnie ryzyko",
-      "high": "Wysokie ryzyko"
-    },
-    "level": {
-      "label": "Typ / Poziom inicjatywy",
-      "quick_win": "Quick Win",
-      "standard": "Projekt standardowy",
-      "strategic": "Program strategiczny",
-      "transformation": "Transformacja",
-      "cannotDowngrade": "Poziom inicjatywy nie może być obniżony",
-      "upgradeNote": "Poziom może być podniesiony, ale nie obniżony"
-    },
-    "status": {
-      "draft": "Szkic",
-      "pending_review": "Oczekuje na przegląd",
-      "review": "W przeglądzie",
-      "promoted": "Promowana",
-      "planning": "Planowanie",
-      "approved": "Zatwierdzona",
-      "scheduled": "Zaplanowana",
-      "executing": "W realizacji",
-      "blocked": "Zablokowana",
-      "done": "Ukończona",
-      "tracking": "Śledzenie",
-      "cancelled": "Anulowana",
-      "archived": "Zarchiwizowana"
-    },
-    "approval": {
-      "cannotApprove": "Nie można zatwierdzić inicjatywy",
-      "missingFields": "Brakujące wymagane pola",
-      "needsTasks": "Wymagane jest co najmniej 1 zadanie przed zatwierdzeniem",
-      "needsDeadline": "Wymagany jest termin końcowy przed zatwierdzeniem",
-      "needsOwner": "Wymagany jest właściciel biznesowy przed zatwierdzeniem"
-    },
-    "toast": {
-      "saveError": "Nie udało się zapisać",
-      "watchError": "Nie udało się zmienić obserwowania",
-      "createTaskError": "Nie udało się utworzyć zadania",
-      "createDecisionError": "Nie udało się utworzyć decyzji",
-      "createRaidError": "Nie udało się dodać elementu RAID"
-    },
-    "drawer": {
-      "overview": "Przegląd",
-      "timeline": "Harmonogram",
-      "resources": "Zasoby",
-      "decisions": "Decyzje",
-      "goNoGo": "Go/No-Go",
-      "resourcesCommit": "Zatwierdzenie zasobów",
-      "scheduleLock": "Blokada harmonogramu",
-      "quickReview": "Szybki przegląd",
-      "gateReadiness": "Gotowość bramki",
-      "viewDecisions": "Zobacz decyzje",
-      "notRequested": "Nie żądano",
-      "summary": "Podsumowanie",
-      "noSummary": "Brak podsumowania.",
-      "progress": "Postęp",
-      "roi": "ROI",
-      "budget": "Budżet",
-      "priority": "Priorytet",
-      "start": "Start:",
-      "end": "Koniec:",
-      "nextMilestone": "Następny kamień milowy",
-      "topRisks": "Główne ryzyka / problemy",
-      "noRaidItems": "Brak elementów RAID.",
-      "milestones": "Kamienie milowe",
-      "manageInFullView": "Zarządzaj w pełnym widoku",
-      "noMilestones": "Brak zdefiniowanych kamieni milowych",
-      "gate": "Bramka",
-      "ownership": "Właścicielstwo",
-      "businessOwner": "Właściciel biznesowy",
-      "noBusinessOwner": "Nie przypisano właściciela biznesowego",
-      "executionOwner": "Właściciel realizacji",
-      "noExecutionOwner": "Nie przypisano właściciela realizacji",
-      "resourceCapacity": "Pojemność zasobów",
-      "requiredFte": "Wymagane FTE",
-      "allocatedFte": "Przydzielone FTE",
-      "manageTeam": "Zarządzaj zespołem w pełnym widoku",
-      "openFullCard": "Otwórz pełną kartę",
-      "gateDecisions": "Decyzje bramkowe",
-      "requestDecision": "+ Zażądaj decyzji",
-      "noDecisions": "Brak decyzji powiązanych z tą inicjatywą",
-      "gateRequirements": "Wymagania bramki",
-      "initiative": "Inicjatywa"
-    },
-    "compact": {
-      "summary": "Podsumowanie",
-      "tasks": "Zadania",
-      "decisions": "Decyzje",
-      "raid": "RAID",
-      "finance": "Finanse",
-      "noGoal": "Brak celu / podsumowania — dodaj w pełnym widoku.",
-      "team": "Zespół",
-      "timeline": "Harmonogram",
-      "budget": "Budżet",
-      "risks": "Ryzyka",
-      "openFullCard": "Otwórz pełną kartę inicjatywy",
-      "description": "Opis",
-      "owner": "Właściciel",
-      "sponsor": "Sponsor",
-      "targetDate": "Data docelowa",
-      "created": "Utworzono",
-      "strategicAxis": "Oś strategiczna",
-      "tags": "Tagi",
-      "killCriteria": "Kryteria zakończenia",
-      "progress": "Postęp",
-      "milestones": "Kamienie milowe",
-      "blocked": "Zablokowane ({{count}})",
-      "showLess": "Pokaż mniej",
-      "showMore": "Pokaż {{count}} więcej…",
-      "active": "Aktywne ({{count}})",
-      "done": "Ukończone ({{count}})",
-      "noTasks": "Brak zadań",
-      "noDecisions": "Brak decyzji",
-      "noRaid": "Brak elementów RAID",
-      "spent": "Wydano",
-      "impact": "Wpływ",
-      "budgetUtilization": "Wykorzystanie budżetu",
-      "noFinancialData": "Brak danych finansowych",
-      "pending": "Oczekujące ({{count}})",
-      "resolved": "Rozwiązane ({{count}})"
-    },
-    "hub": {
-      "failedToLoad": "Nie udało się załadować inicjatyw",
-      "retry": "Ponów",
-      "dismiss": "Zamknij",
-      "noInitiativesFound": "Nie znaleziono inicjatyw"
-    },
-    "levelDesc": {
-      "quick_win": "Minimalna kontrola. Może być samo-zatwierdzone.",
-      "standard": "Standardowy proces zatwierdzania. Wymaga właściciela + terminu + zadań.",
-      "strategic": "Wymagane zatwierdzenie wykonawcze. Pełny charter + analiza RAID.",
-      "transformation": "Kontrola na poziomie zarządu. Pełny charter, komitet sterujący, przeglądy bramek."
+    "gateReadiness": {
+      "title": "Gotowość bramki i harmonogram",
+      "readinessSystem": "Gotowość (system)",
+      "readinessAi": "Analiza gotowości AI",
+      "blockingMissing": "Blokujące braki",
+      "cantProgress": "Nie możesz przejść dalej",
+      "fillMissing": "Uzupełnij brakujące elementy (blokujące), a następnie ponów akcję gate.",
+      "suggestedAction": "Sugerowana akcja",
+      "suggestedActor": "Kto powinien działać",
+      "askAi": "Zapytaj AI o analizę gotowości",
+      "aiAnalyzing": "AI analizuje gotowość...",
+      "aiScore": "Ocena gotowości",
+      "aiSummary": "Podsumowanie",
+      "aiFindings": "Wnioski AI",
+      "noFindings": "AI nie znalazło dodatkowych problemów.",
+      "blocking": "blokuje",
+      "warning": "ostrzeżenie",
+      "fix": "Napraw",
+      "currentGate": "Aktualna bramka",
+      "nextGate": "Następna",
+      "requirementsChecklist": "Lista kontrolna wymagań",
+      "readinessPercent": "Gotowość",
+      "requiredApproval": "Wymagana aprobata",
+      "allGatesPassed": "Wszystkie bramki przejdzone!",
+      "requiredApprovalsForStatus": "Wymagane zatwierdzenia dla statusu",
+      "notRequested": "Nie zgłoszono"
     }
   },
   "execution": {
@@ -710,77 +606,28 @@
     }
   },
   "benefits": {
-    "title": "Realizacja Korzyści",
-    "kpis": "KPI",
-    "lessons": "Wnioski",
     "tabs": {
       "completed": "Ukończone",
       "kpis": "KPI",
-      "roi": "Analiza ROI"
+      "roi": "Śledzenie ROI",
+      "attribution": "Atrybucja",
+      "financial": "Mapowanie finansowe"
     },
-    "columns": {
-      "type": "Typ",
-      "name": "Nazwa",
-      "status": "Status",
-      "roi": "ROI",
-      "budget": "Budżet",
-      "completed": "Ukończone",
-      "actions": "Akcje"
-    },
-    "empty": {
-      "noCompleted": "Brak ukończonych inicjatyw."
-    },
-    "kpiCards": {
-      "totalKpis": "Wszystkie KPI",
-      "onTarget": "Na celu",
-      "belowTarget": "Poniżej celu"
-    },
-    "kpiEmpty": {
-      "noKpis": "Brak zdefiniowanych KPI",
-      "completeToTrack": "Ukończ inicjatywy i dodaj KPI, aby śledzić korzyści",
-      "noKpisForInitiative": "Brak KPI zdefiniowanych dla tej inicjatywy"
-    },
-    "kpiActions": {
-      "addKpi": "Dodaj KPI",
-      "createKpi": "Utwórz KPI",
-      "cancel": "Anuluj"
-    },
-    "kpiLabels": {
-      "current": "Aktualny",
-      "target": "Cel"
-    },
-    "roiAnalysis": {
-      "title": "Analiza ROI",
-      "subtitle": "Obliczenia zwrotu z inwestycji"
-    },
-    "tracker": {
-      "financialBenefits": "Korzyści finansowe",
-      "of": "z",
-      "target": "celu",
-      "avgRealization": "Śr. realizacja",
-      "benefitsAchieved": "Korzyści osiągnięte",
-      "inProgress": "W toku",
-      "allTypes": "Wszystkie typy",
-      "targetLabel": "Cel:",
-      "measurement": "Pomiar:",
-      "initiative": "Inicjatywa:",
-      "fetchError": "Nie udało się załadować danych korzyści",
-      "retry": "Ponów"
-    },
-    "kpiDashboard": {
-      "title": "Panel KPI",
-      "totalKpis": "Wszystkie KPI",
-      "onTarget": "Na celu",
-      "atRisk": "Zagrożone",
-      "offTarget": "Poza celem",
-      "achieved": "Osiągnięte",
-      "allCategories": "Wszystkie kategorie",
-      "target": "Cel:",
-      "updated": "Zaktualizowano",
-      "createAction": "Utwórz akcję",
-      "linked": "Powiązane:",
-      "fetchError": "Nie udało się załadować danych KPI",
-      "retry": "Ponów"
+    "roi": {
+      "noData": "Brak założeń ROI",
+      "noDataHint": "Ustaw założenia ROI na inicjatywach, aby śledzić prognozowane vs zrealizowane zwroty.",
+      "projected": "Prognozowana korzyść",
+      "realized": "Zrealizowana korzyść",
+      "totalCapex": "Łączny CAPEX",
+      "coverage": "Pokrycie danych",
+      "initiatives": "inicjatyw",
+      "variance": "Odchylenie portfela",
+      "abovePlan": "Zrealizowane korzyści przekraczają prognozy",
+      "belowPlan": "Zrealizowane korzyści poniżej prognoz — sprawdź założenia",
+      "byInitiative": "ROI wg inicjatyw",
+      "initiative": "Inicjatywa",
+      "confidence": "Pewność",
+      "disclaimer": "Dane ROI oparte na deklarowanych założeniach. Wartości zrealizowane mogą odbiegać od prognoz z powodu czynników zewnętrznych."
     }
   },
   "economics": {
@@ -908,352 +755,11 @@
     "back": "Wstecz"
   },
   "help": {
-    "title": "Centrum Pomocy",
-    "sidePanel": {
-      "title": "Centrum Pomocy",
-      "tabs": {
-        "overview": "Przegląd",
-        "onboarding": "Onboarding",
-        "updates": "Co nowego",
-        "faq": "FAQ",
-        "knowledge": "Baza wiedzy"
-      },
-      "fullDocs": "Pełna dokumentacja",
-      "overview": {
-        "title": "Witamy w Consultinity",
-        "intro": "Kompletna platforma PMO do transformacji cyfrowej. Oceniaj, planuj i śledź drogę organizacji do doskonałości cyfrowej dzięki wsparciu AI i sprawdzonym metodologiom.",
-        "watchVideo": "Obejrzyj wideo wprowadzające",
-        "videoDuration": "3 min — przegląd",
-        "guides": "Szybkie przewodniki",
-        "guidesList": {
-          "gettingStarted": "Pierwsze kroki",
-          "assessment": "Ocena (Assessment)",
-          "initiatives": "Inicjatywy i roadmapa",
-          "reports": "Raporty i eksport",
-          "aiFeatures": "Funkcje AI"
-        },
-        "whatToKnow": "Warto wiedzieć",
-        "tip1": "Zacznij od szybkiej oceny (ok. 5 min), aby dostać natychmiastowe rekomendacje AI",
-        "tip2": "AI generuje inicjatywy na bazie luk z oceny — zweryfikuj je w Roadmapie",
-        "tip3": "Śledź wdrożenie w module Execution dzięki dashboardom w czasie rzeczywistym",
-        "tip4": "Korzystaj z AI Chat w dowolnym momencie, aby zadawać pytania i prosić o rekomendacje",
-        "tip5": "Eksportuj raporty do PDF/PowerPoint na potrzeby prezentacji dla interesariuszy",
-        "keyboardShortcuts": "Skróty klawiszowe",
-        "keyboardShortcutsHint": "Naciśnij ? w dowolnym momencie, aby zobaczyć listę"
-      },
-      "faq": {
-        "searchPlaceholder": "Szukaj pytań...",
-        "noResults": "Nie znaleziono pasujących pytań.",
-        "noFAQ": "Brak FAQ."
-      },
-      "knowledge": {
-        "title": "Baza wiedzy",
-        "description": "Przeglądaj artykuły, samouczki i najlepsze praktyki.",
-        "comingSoon": "Wkrótce",
-        "categories": {
-          "tools": "Narzędzia",
-          "methodologies": "Metodologie",
-          "caseStudies": "Studia przypadku",
-          "bestPractices": "Najlepsze praktyki"
-        },
-        "notify": {
-          "success": "Powiadomimy Cię, gdy będzie gotowe!"
-        }
-      }
-    },
-    "onboarding": {
-      "title": "Ścieżki onboardingu",
-      "subtitle": "Wybierz ścieżkę i działaj — każdy krok jest krótki, konkretny i prowadzi dokładnie tam, gdzie trzeba w aplikacji.",
-      "recommended": "Rekomendowane",
-      "morePaths": "Pozostałe ścieżki",
-      "completed": "Ukończone",
-      "empty": "Brak dostępnych ścieżek onboardingu.",
-      "back": "Wróć do listy ścieżek",
-      "whatYouGet": "Co zyskasz",
-      "expectedTime": "Szacowany czas",
-      "totalTime": "Szacowany czas",
-      "stepProgress": "Krok {{current}} z {{total}}",
-      "previous": "Wstecz",
-      "next": "Dalej",
-      "finish": "Zakończ",
-      "dismiss": "Ukryj",
-      "status": {
-        "available": "Dostępne",
-        "inProgress": "W trakcie",
-        "completed": "Ukończone"
-      },
-      "recommendation": {
-        "first30": "Najlepszy start do pierwszej wartości"
-      },
-      "cta": {
-        "tryItNow": "Wypróbuj teraz",
-        "openDashboard": "Otwórz dashboard",
-        "runAssessment": "Uruchom szybką ocenę",
-        "openInitiatives": "Otwórz inicjatywy",
-        "openRoadmap": "Otwórz roadmapę",
-        "openReports": "Otwórz raporty",
-        "startDiscovery": "Rozpocznij discovery",
-        "openAssessmentHub": "Otwórz moduł oceny",
-        "buildBacklog": "Zbuduj backlog inicjatyw",
-        "generateReport": "Wygeneruj snapshot dla interesariuszy",
-        "organizeRoadmap": "Ułóż roadmapę",
-        "trackExecution": "Śledź wykonanie",
-        "setupRoutines": "Ustaw rytuały PMO",
-        "toast": {
-          "title": "Zacznij onboarding",
-          "body": "Przejdź ścieżkę „Pierwsze 30 minut”, aby szybko dojść do pierwszej wartości — bez ścian tekstu, za to z konkretnymi krokami i linkami.",
-          "later": "Później",
-          "start": "Start"
-        }
-      },
-      "playbooks": {
-        "first30": {
-          "title": "Pierwsze 30 minut (Owner / Trial)",
-          "description": "Krótka ścieżka do pierwszej wartości: poznaj układ, zrób szybką ocenę i wyjdź z roadmapą, którą możesz pokazać zespołowi.",
-          "steps": {
-            "1": {
-              "title": "Orientacja w 2 minuty",
-              "content": "Szybko przejrzyj Dashboard, aby zrozumieć: co platforma śledzi, co jest priorytetem i „co dalej”.",
-              "whatYouGet": "Mentalny model platformy w jednym ekranie."
-            },
-            "2": {
-              "title": "Uruchom szybką ocenę",
-              "content": "Odpowiedz na krótki zestaw pytań — AI wskaże luki i podpowie inicjatywy o najwyższej dźwigni.",
-              "whatYouGet": "Bazę startową i pierwsze rekomendacje oparte o AI."
-            },
-            "3": {
-              "title": "Przejrzyj pierwsze inicjatywy",
-              "content": "Otwórz Inicjatywy i sprawdź, co wygenerowała platforma. Zostaw to, co pasuje, doprecyzuj ownerów i priorytety.",
-              "whatYouGet": "Backlog dopasowany do Twojego kontekstu."
-            },
-            "4": {
-              "title": "Zamień to w roadmapę",
-              "content": "Ułóż sekwencję inicjatyw w Roadmapie — realistycznie, z uwzględnieniem zależności i możliwości wykonawczych.",
-              "whatYouGet": "Plan, który da się dowieźć."
-            },
-            "5": {
-              "title": "Stwórz snapshot do udostępnienia",
-              "content": "Wygeneruj pierwszy raport dla interesariuszy — prosta narracja „gdzie jesteśmy / co robimy dalej”.",
-              "whatYouGet": "Snapshot gotowy do eksportu i udostępnienia."
-            }
-          }
-        },
-        "consultant": {
-          "title": "Szybki start konsultanta",
-          "description": "Ustrukturyzowany start discovery: zbierz kontekst, wygeneruj insighty i zbuduj wiarygodny backlog inicjatyw.",
-          "steps": {
-            "1": {
-              "title": "Zrób wywiad discovery",
-              "content": "Użyj trybu Interview, aby zebrać cele, ograniczenia i kryteria sukcesu w formie, do której łatwo wrócisz.",
-              "whatYouGet": "Czytelną bazę discovery do współdzielenia."
-            },
-            "2": {
-              "title": "Wybierz właściwą perspektywę oceny",
-              "content": "Dobierz widok oceny do engagementu. Zacznij lekko — możesz pogłębiać w kolejnych iteracjach.",
-              "whatYouGet": "Spójny framework do rozmów z klientem."
-            },
-            "3": {
-              "title": "Zbuduj backlog inicjatyw",
-              "content": "Przełóż luki na inicjatywy. Trzymaj je konkretne, z ownerem i miarą sukcesu — jakość ponad ilość.",
-              "whatYouGet": "Backlog gotowy do priorytetyzacji i budżetowania."
-            },
-            "4": {
-              "title": "Wygeneruj snapshot dla interesariuszy",
-              "content": "Stwórz raport, który opowiada historię: stan obecny → priorytety → kolejne 90 dni.",
-              "whatYouGet": "Deliverable, który można pokazać bez stresu."
-            }
-          }
-        },
-        "pmo": {
-          "title": "Szybki start PMO",
-          "description": "Szybko ustaw rytm governance: widoczność portfolio, sekwencjonowanie, tracking wykonania i tygodniowe rutyny.",
-          "steps": {
-            "1": {
-              "title": "Uzgodnij definicję sukcesu",
-              "content": "Skorzystaj z Dashboardu, aby ustalić kilka metryk i priorytetów, które mają znaczenie w tym kwartale.",
-              "whatYouGet": "Wspólne rozumienie „co jest ważne”."
-            },
-            "2": {
-              "title": "Ustrukturyzuj roadmapę",
-              "content": "Pogrupuj inicjatywy, ustaw zależności i trzymaj sekwencję uczciwą. Roadmapa ma być wykonalna, nie aspiracyjna.",
-              "whatYouGet": "Roadmapa portfolio z jasną sekwencją."
-            },
-            "3": {
-              "title": "Śledź wykonanie, nie aktywność",
-              "content": "W module Execution śledź wyniki i blokery — skup się na ograniczeniach, które spowalniają delivery.",
-              "whatYouGet": "Żywy obraz postępu i ograniczeń."
-            },
-            "4": {
-              "title": "Ustaw tygodniowe rutyny PMO",
-              "content": "Zbuduj rytm: tygodniowy przegląd, kolejka decyzji i jasny ownership kolejnych akcji.",
-              "whatYouGet": "Lekka kadencja governance, którą da się utrzymać."
-            }
-          }
-        }
-      }
-    },
-    "updates": {
-      "title": "Co nowego",
-      "subtitle": "Aktualizacje produktu, ulepszenia i release notes.",
-      "unread": "{{count}} nieprzeczytane",
-      "back": "Wróć do listy aktualizacji",
-      "empty": "Na razie brak aktualizacji.",
-      "tryItNow": "Wypróbuj teraz",
-      "importance": {
-        "low": "Niska",
-        "normal": "Normalna",
-        "high": "Wysoka"
-      },
-      "errors": {
-        "load": "Nie udało się wczytać aktualizacji"
-      },
-      "admin": {
-        "hint": "Opublikuj aktualizację dla użytkowników.",
-        "new": "Nowa aktualizacja",
-        "composeTitle": "Publikuj aktualizację",
-        "publish": "Opublikuj",
-        "success": "Opublikowano aktualizację",
-        "recent": "Ostatnie (admin)",
-        "notice": "Publikacja tworzy powiadomienie w aplikacji. Email jest wysyłany tylko wtedy, gdy SMTP jest skonfigurowane i throttling na to pozwala.",
-        "errors": {
-          "required": "Tytuł i treść są wymagane",
-          "publish": "Nie udało się opublikować aktualizacji"
-        },
-        "fields": {
-          "title": "Tytuł",
-          "body": "Treść (Markdown)",
-          "tags": "Tagi (moduły)",
-          "importance": "Ważność",
-          "tryItNow": "Cel \"Wypróbuj teraz\""
-        },
-        "placeholders": {
-          "title": "Krótko i konkretnie",
-          "body": "Pisz krótkimi sekcjami, używaj bulletów i zakończ wskazówką „Wypróbuj teraz”.",
-          "tags": "np. roadmap, reports"
-        },
-        "views": {
-          "dashboard": "Dashboard",
-          "assessment": "Ocena",
-          "initiatives": "Inicjatywy",
-          "roadmap": "Roadmapa",
-          "reports": "Raporty",
-          "aiChat": "AI Chat"
-        }
-      }
-    },
-    "search": {
-      "placeholder": "Szukaj w pomocy (artykuły, poradniki...)",
-      "searching": "Wyszukiwanie...",
-      "results": "Wyniki",
-      "found": "znaleziono",
-      "viewAll": "Zobacz wszystkie wyniki",
-      "noResults": "Brak wyników dla \"{{query}}\"",
-      "tryDifferent": "Spróbuj innych słów kluczowych lub przejrzyj kategorie",
-      "recent": "Ostatnie wyszukiwania",
-      "clearRecent": "Wyczyść",
-      "suggested": "Sugerowane artykuły",
-      "startTyping": "Zacznij pisać, aby wyszukać",
-      "navigate": "Nawiguj",
-      "select": "Wybierz",
-      "close": "Zamknij",
-      "buttonText": "Szukaj w pomocy..."
-    },
-    "article": {
-      "tableOfContents": "Spis treści",
-      "showMeHow": "Pokaż jak",
-      "completed": "ukończone",
-      "thanksFeedback": "Dziękujemy za opinię!",
-      "loading": "Wczytywanie artykułu...",
-      "notFound": "Nie znaleziono artykułu",
-      "minRead": "min czytania"
-    },
-    "contact": {
-      "title": "Kontakt z supportem",
-      "selectCategory": "Wybierz kategorię, aby rozpocząć",
-      "describeIssue": "Opisz problem lub prośbę",
-      "requestSubmitted": "Zgłoszenie zostało wysłane",
-      "categoryIntro": "W czym możemy dziś pomóc?",
-      "quickLinks": "Szybkie linki",
-      "documentation": "Dokumentacja",
-      "systemStatus": "Status systemu",
-      "changeCategory": "Zmień kategorię",
-      "priority": "Priorytet",
-      "subject": "Temat",
-      "description": "Opis",
-      "email": "Email",
-      "emailPlaceholder": "Twój email do kontaktu zwrotnego",
-      "attachments": "Załączniki",
-      "dropFiles": "Kliknij, aby dodać pliki",
-      "fileLimit": "Maks. {{max}} plików, 10MB każdy",
-      "includeSystemInfo": "Dołącz informacje systemowe",
-      "thankYou": "Dziękujemy!",
-      "submitAnother": "Wyślij kolejne",
-      "responseTime": "Typowy czas odpowiedzi: 24 godziny",
-      "submitting": "Wysyłanie...",
-      "submit": "Wyślij zgłoszenie",
-      "success": "Zgłoszenie do supportu zostało wysłane!",
-      "error": "Nie udało się wysłać zgłoszenia. Spróbuj ponownie.",
-      "fileTooLarge": "Plik {{name}} jest zbyt duży (maks. 10MB)",
-      "tooManyFiles": "Maksymalnie {{max}} plików",
-      "errors": {
-        "subjectRequired": "Temat jest wymagany",
-        "invalidEmail": "Nieprawidłowy adres email"
-      }
-    },
-    "dashboard": {
-      "overview": "Przegląd Dashboardu",
-      "overviewContent": "Używaj Dashboardu do monitorowania postępów, kluczowych metryk i ogólnej kondycji programu transformacji.",
-      "navigation": "Wskazówki nawigacji",
-      "navigationContent": "Korzystaj z lewego menu, aby przechodzić między modułami. Panel Pomocy dopasowuje się do aktualnego ekranu."
-    },
-    "initiatives": {
-      "create": "Tworzenie inicjatyw",
-      "createContent": "Twórz inicjatywy na bazie luk z oceny lub dodawaj je ręcznie. Ustal właścicieli, kamienie milowe i oczekiwane korzyści.",
-      "manage": "Zarządzanie inicjatywami",
-      "manageContent": "Priorytetyzuj inicjatywy, śledź postęp i utrzymuj spójność komunikacji dzięki tablicom wykonawczym i raportom."
-    },
-    "assessment": {
-      "start": "Rozpoczęcie oceny",
-      "startContent": "Wybierz framework, uzupełnij ankietę, a następnie przejrzyj luki i rekomendacje wygenerowane na podstawie odpowiedzi.",
-      "methodology": "Metodologia",
-      "methodologyContent": "Oceny porównują aktualną dojrzałość i przekładają wyniki na priorytetyzowaną roadmapę inicjatyw."
-    },
-    "general": {
-      "gettingStarted": "Pierwsze kroki",
-      "gettingStartedContent": "Otwórz Centrum Pomocy, skorzystaj z szybkich przewodników, a następnie uruchom ocenę, aby wygenerować pierwszą roadmapę.",
-      "support": "Wsparcie",
-      "supportContent": "Jeśli utkniesz, skontaktuj się z supportem i dołącz zrzuty ekranu/logi. AI Chat może też wyjaśniać funkcje i przepływy pracy."
-    },
-    "knowledge": {
-      "title": "Baza Wiedzy",
-      "searchPlaceholder": "Szukaj artykułów...",
-      "allCategories": "Wszystkie",
-      "noSearchResults": "Nie znaleziono artykułów dla Twojego zapytania.",
-      "noArticles": "Brak artykułów w tej kategorii.",
-      "articleNotFound": "Artykuł nie został znaleziony.",
-      "minRead": "min czytania",
-      "views": "wyświetleń",
-      "relatedModules": "Powiązane moduły",
-      "shareArticle": "Udostępnij artykuł",
-      "featured": "Wyróżnione",
-      "popular": "Popularne",
-      "recent": "Ostatnio dodane",
-      "readMore": "Czytaj więcej",
-      "backToLibrary": "Powrót do biblioteki",
-      "categories": "Kategorie",
-      "articles": "Artykuły",
-      "searchResults": "Wyniki wyszukiwania",
-      "tableOfContents": "Spis treści",
-      "wasHelpful": "Czy ten artykuł był pomocny?",
-      "yes": "Tak",
-      "no": "Nie",
-      "feedbackThanks": "Dziękujemy za opinię!",
-      "relatedArticles": "Powiązane artykuły",
-      "gettingStarted": "Pierwsze kroki",
-      "tutorials": "Samouczki",
-      "bestPractices": "Najlepsze praktyki",
-      "faq": "Często zadawane pytania",
-      "troubleshooting": "Rozwiązywanie problemów"
+    "microVideo": {
+      "header": "Szybki samouczek",
+      "watch": "Obejrzyj",
+      "skip": "Pomiń",
+      "dontShow": "Nie pokazuj ponownie"
     }
   },
   "settings": {
@@ -2006,25 +1512,45 @@
           "title": "Moje zadania",
           "badge": "{{count}} aktywnych",
           "items": {
-            "0": { "title": "Ukończ ocenę DRD" },
-            "1": { "title": "Przejrzyj prognozy ROI" },
-            "2": { "title": "Przygotuj raport Stage-Gate" }
+            "0": {
+              "title": "Ukończ ocenę DRD"
+            },
+            "1": {
+              "title": "Przejrzyj prognozy ROI"
+            },
+            "2": {
+              "title": "Przygotuj raport Stage-Gate"
+            }
           }
         },
         "initiatives": {
           "badge": "{{count}} aktywne",
           "items": {
-            "0": { "name": "Roadmapa Industry 4.0" },
-            "1": { "name": "Wdrożenie cyfrowego bliźniaka" },
-            "2": { "name": "Optymalizacja łańcucha dostaw" }
+            "0": {
+              "name": "Roadmapa Industry 4.0"
+            },
+            "1": {
+              "name": "Wdrożenie cyfrowego bliźniaka"
+            },
+            "2": {
+              "name": "Optymalizacja łańcucha dostaw"
+            }
           }
         },
         "decisions": {
           "badge": "{{count}} oczekujące",
           "items": {
-            "0": { "title": "Zatwierdź alokację budżetu na Q2", "deadline": "2 dni" },
-            "1": { "title": "Wybierz partnera technologicznego", "deadline": "5 dni" },
-            "2": { "title": "Bramka Go/No-Go – faza 2" }
+            "0": {
+              "title": "Zatwierdź alokację budżetu na Q2",
+              "deadline": "2 dni"
+            },
+            "1": {
+              "title": "Wybierz partnera technologicznego",
+              "deadline": "5 dni"
+            },
+            "2": {
+              "title": "Bramka Go/No-Go – faza 2"
+            }
           }
         }
       }
@@ -2196,7 +1722,11 @@
           "type": "Firma zajmująca się tworzeniem oprogramowania",
           "location": "Sztokholm, Szwecja",
           "quote": "W trakcie programu beta zintegrowaliśmy Consultinity z naszym procesem onboardingu klientów. Oceny oparte na AI pomogły nam zidentyfikować możliwości upsellu, które wcześniej umykały.",
-          "results": ["40% szybsze tworzenie propozycji", "3 nowych klientów enterprise", "2x poprawa zaangażowania klientów"],
+          "results": [
+            "40% szybsze tworzenie propozycji",
+            "3 nowych klientów enterprise",
+            "2x poprawa zaangażowania klientów"
+          ],
           "since": "Październik 2025"
         },
         "1": {
@@ -2204,7 +1734,11 @@
           "type": "Doradztwo w zakresie transformacji cyfrowej",
           "location": "Monachium, Niemcy",
           "quote": "Consultinity dało nam ustrukturyzowany framework, którego brakowało. Nasi konsultanci dostarczają teraz oceny w dniach, nie tygodniach. Program beta ukształtował nasze podejście do sukcesu klienta.",
-          "results": ["60% redukcja czasu realizacji", "Satysfakcja klientów: 4.2 → 4.8", "Cykl zamykania transakcji skrócony o 35%"],
+          "results": [
+            "60% redukcja czasu realizacji",
+            "Satysfakcja klientów: 4.2 → 4.8",
+            "Cykl zamykania transakcji skrócony o 35%"
+          ],
           "since": "Wrzesień 2025"
         }
       }
@@ -2215,27 +1749,42 @@
       "registered": {
         "name": "Zarejestrowany",
         "requirement": "Zacznij tutaj",
-        "benefits": ["Podstawowe narzędzia", "Wpis w katalogu"]
+        "benefits": [
+          "Podstawowe narzędzia",
+          "Wpis w katalogu"
+        ]
       },
       "bronze": {
         "name": "Brązowy",
         "requirement": "3+ klientów, €5K ARR",
-        "benefits": ["Priorytetowe wsparcie", "Materiały szkoleniowe"]
+        "benefits": [
+          "Priorytetowe wsparcie",
+          "Materiały szkoleniowe"
+        ]
       },
       "silver": {
         "name": "Srebrny",
         "requirement": "10+ klientów, €25K ARR",
-        "benefits": ["Dedykowany manager", "Dostęp do beta funkcji"]
+        "benefits": [
+          "Dedykowany manager",
+          "Dostęp do beta funkcji"
+        ]
       },
       "gold": {
         "name": "Złoty",
         "requirement": "25+ klientów, €75K ARR",
-        "benefits": ["Co-marketing", "Wystąpienia na konferencjach"]
+        "benefits": [
+          "Co-marketing",
+          "Wystąpienia na konferencjach"
+        ]
       },
       "platinum": {
         "name": "Platynowy",
         "requirement": "50+ klientów, €200K+",
-        "benefits": ["Zwiększony udział w przychodach", "Partnerstwo na poziomie zarządu"]
+        "benefits": [
+          "Zwiększony udział w przychodach",
+          "Partnerstwo na poziomie zarządu"
+        ]
       }
     },
     "onboarding": {
@@ -3068,170 +2617,6 @@
       "supportedFrameworks": "Obsługiwane frameworki"
     }
   },
-  "assessment": {
-    "notes": "Notatki",
-    "notesPlaceholder": "Kluczowe obserwacje, kontekst, uzasadnienie oceny...",
-    "evidence": "Dowody (evidence)",
-    "evidencePlaceholder": "Systemy, dokumenty, metryki, procesy potwierdzające ocenę...",
-    "confidence": "Pewność oceny",
-    "confidenceLow": "Niska",
-    "confidenceMedium": "Średnia",
-    "confidenceHigh": "Wysoka",
-    "withEvidence": "Z dowodami",
-    "progress": "Postęp oceny",
-    "overallScore": "Wynik ogólny",
-    "dimensions": "wymiarów",
-    "currentLevel": "Aktualny poziom",
-    "targetLevel": "Docelowy poziom",
-    "gap": "Luka",
-    "strengths": {
-      "title": "Kluczowe mocne strony",
-      "empty": "Nie zidentyfikowano jeszcze mocnych wymiarów. Kontynuuj ocenę, aby odkryć mocne strony."
-    },
-    "dataGaps": {
-      "title": "Luki danych i elementy do uzupełnienia",
-      "notAssessed": "Nie oceniono",
-      "noTarget": "Nie ustawiono celu",
-      "hint": "Te obszary wymagają dodatkowego zbierania danych przed zakończeniem pełnej oceny."
-    },
-    "closure": {
-      "title": "Wnioski z oceny",
-      "dimensionsAssessed": "Wymiary ocenione",
-      "totalGap": "Łączna luka",
-      "topPriorities": "Najwyższe priorytety",
-      "completeness": "Kompletność",
-      "nextSteps": "Następne kroki",
-      "step1": "Omów wyniki z kluczowymi interesariuszami",
-      "step2": "Ustaw cele dla nieocenionych wymiarów",
-      "step3": "Wygeneruj raport do przeglądu sponsora",
-      "step4": "Stwórz inicjatywy poprawy z luk",
-      "step5": "Zaplanuj ocenę kontrolną"
-    },
-    "confidenceOverview": {
-      "title": "Przegląd pewności oceny",
-      "withEvidence": "Z dowodami",
-      "withoutEvidence": "Bez dowodów",
-      "alert": "Niektóre ocenione wymiary nie mają udokumentowanych dowodów."
-    },
-    "deck": {
-      "export": "Eksportuj prezentację (PPTX)",
-      "generating": "Generowanie prezentacji...",
-      "generated": "Prezentacja wygenerowana pomyślnie",
-      "failed": "Nie udało się wygenerować prezentacji",
-      "requiresApproval": "Ocena musi być ZATWIERDZONA, aby eksportować prezentację"
-    },
-    "report": {
-      "strengths": "Kluczowe mocne strony",
-      "dataGaps": "Luki danych i elementy do uzupełnienia",
-      "roadmap": "Mapa drogowa transformacji",
-      "conclusions": "Wnioski z oceny",
-      "shortTerm": "Krótkoterminowe (0-6 miesięcy)",
-      "mediumTerm": "Średnioterminowe (6-18 miesięcy)",
-      "longTerm": "Długoterminowe (18-36 miesięcy)",
-      "quickWins": "Szybkie wygrane",
-      "strategicInitiatives": "Inicjatywy strategiczne",
-      "longTermTransformation": "Transformacja długoterminowa"
-    },
-    "lean": {
-      "overallDashboard": "Dashboard ogólny oceny",
-      "leanMaturity": "Dojrzałość Lean",
-      "automationPotential": "Potencjał automatyzacji",
-      "estimatedSavings": "Szac. oszczędności (PLN/rok)",
-      "topWastes": "Główne marnotrawstwa (co boli najbardziej)",
-      "quickWins": "Szybkie wygrane (Lean-first)",
-      "noStdWork": "Brak standardowej pracy",
-      "automationOps": "Najlepsze możliwości automatyzacji",
-      "dataGaps": "Luki danych i elementy do uzupełnienia",
-      "moreItems": "więcej elementów",
-      "closure": "Podsumowanie oceny",
-      "processesAssessed": "Procesy ocenione",
-      "workstationsAssessed": "Stanowiska ocenione",
-      "totalHeadcount": "Łączna liczba pracowników",
-      "priorityItems": "Inicjatywy priorytetowe",
-      "closureNote": "Następne kroki: Wygeneruj raport, stwórz mapę drogową, zmaterializuj inicjatywy. Zatwierdź ocenę, aby odblokować generowanie raportu i inicjatyw.",
-      "coachQuestions": "Pytania trenera",
-      "evidenceGuidance": "Wskazówki dot. dowodów",
-      "microLesson": "Mikro-lekcja",
-      "commonMistakes": "Typowe błędy do uniknięcia",
-      "wasteKnowledge": "Przewodnik analizy marnotrawstwa",
-      "whatToLookFor": "Na co patrzeć",
-      "typicalEvidence": "Typowe dowody"
-    }
-  },
-  "tools": {
-    "hub": {
-      "tabs": {
-        "library": "Biblioteka",
-        "sessions": "Sesje",
-        "reports": "Raporty",
-        "initiatives": "Inicjatywy"
-      },
-      "table": {
-        "name": "Nazwa",
-        "category": "Kategoria",
-        "whatYouGet": "Co otrzymasz"
-      },
-      "empty": {
-        "library": "Brak narzędzi."
-      }
-    }
-  },
-  "help": {
-    "microVideo": {
-      "header": "Szybki samouczek",
-      "watch": "Obejrzyj",
-      "skip": "Pomiń",
-      "dontShow": "Nie pokazuj ponownie"
-    }
-  },
-  "aiAuthoring": {
-    "generateCardDraft": "Wygeneruj szkic karty",
-    "generateInitiative": "Wygeneruj szkic inicjatywy",
-    "generateTask": "Wygeneruj szkic zadania",
-    "generateDecision": "Wygeneruj szkic decyzji",
-    "briefPlaceholder": "Opisz inicjatywę/zadanie/decyzję w 3-8 punktach...",
-    "briefLabel": "Krótki opis",
-    "generating": "Generowanie szkicu...",
-    "previewTitle": "Podgląd szkicu AI",
-    "previewSubtitle": "Przejrzyj każdą sekcję i zastosuj selektywnie.",
-    "applyAll": "Zastosuj wszystko",
-    "applySelected": "Zastosuj zaznaczone",
-    "discardAll": "Odrzuć",
-    "sectionApplied": "Sekcja zastosowana",
-    "draftGenerated": "Szkic wygenerowany przez AI",
-    "draftFailed": "Nie udało się wygenerować szkicu",
-    "auditLogTitle": "Historia autorstwa AI",
-    "undoAi": "Cofnij AI"
-  },
-  "initiatives": {
-    "gateReadiness": {
-      "title": "Gotowość bramki i harmonogram",
-      "readinessSystem": "Gotowość (system)",
-      "readinessAi": "Analiza gotowości AI",
-      "blockingMissing": "Blokujące braki",
-      "cantProgress": "Nie możesz przejść dalej",
-      "fillMissing": "Uzupełnij brakujące elementy (blokujące), a następnie ponów akcję gate.",
-      "suggestedAction": "Sugerowana akcja",
-      "suggestedActor": "Kto powinien działać",
-      "askAi": "Zapytaj AI o analizę gotowości",
-      "aiAnalyzing": "AI analizuje gotowość...",
-      "aiScore": "Ocena gotowości",
-      "aiSummary": "Podsumowanie",
-      "aiFindings": "Wnioski AI",
-      "noFindings": "AI nie znalazło dodatkowych problemów.",
-      "blocking": "blokuje",
-      "warning": "ostrzeżenie",
-      "fix": "Napraw",
-      "currentGate": "Aktualna bramka",
-      "nextGate": "Następna",
-      "requirementsChecklist": "Lista kontrolna wymagań",
-      "readinessPercent": "Gotowość",
-      "requiredApproval": "Wymagana aprobata",
-      "allGatesPassed": "Wszystkie bramki przejdzone!",
-      "requiredApprovalsForStatus": "Wymagane zatwierdzenia dla statusu",
-      "notRequested": "Nie zgłoszono"
-    }
-  },
   "tools": {
     "hub": {
       "tabs": {
@@ -3304,30 +2689,24 @@
       }
     }
   },
-  "benefits": {
-    "tabs": {
-      "completed": "Ukończone",
-      "kpis": "KPI",
-      "roi": "Śledzenie ROI",
-      "attribution": "Atrybucja",
-      "financial": "Mapowanie finansowe"
-    },
-    "roi": {
-      "noData": "Brak założeń ROI",
-      "noDataHint": "Ustaw założenia ROI na inicjatywach, aby śledzić prognozowane vs zrealizowane zwroty.",
-      "projected": "Prognozowana korzyść",
-      "realized": "Zrealizowana korzyść",
-      "totalCapex": "Łączny CAPEX",
-      "coverage": "Pokrycie danych",
-      "initiatives": "inicjatyw",
-      "variance": "Odchylenie portfela",
-      "abovePlan": "Zrealizowane korzyści przekraczają prognozy",
-      "belowPlan": "Zrealizowane korzyści poniżej prognoz — sprawdź założenia",
-      "byInitiative": "ROI wg inicjatyw",
-      "initiative": "Inicjatywa",
-      "confidence": "Pewność",
-      "disclaimer": "Dane ROI oparte na deklarowanych założeniach. Wartości zrealizowane mogą odbiegać od prognoz z powodu czynników zewnętrznych."
-    }
+  "aiAuthoring": {
+    "generateCardDraft": "Wygeneruj szkic karty",
+    "generateInitiative": "Wygeneruj szkic inicjatywy",
+    "generateTask": "Wygeneruj szkic zadania",
+    "generateDecision": "Wygeneruj szkic decyzji",
+    "briefPlaceholder": "Opisz inicjatywę/zadanie/decyzję w 3-8 punktach...",
+    "briefLabel": "Krótki opis",
+    "generating": "Generowanie szkicu...",
+    "previewTitle": "Podgląd szkicu AI",
+    "previewSubtitle": "Przejrzyj każdą sekcję i zastosuj selektywnie.",
+    "applyAll": "Zastosuj wszystko",
+    "applySelected": "Zastosuj zaznaczone",
+    "discardAll": "Odrzuć",
+    "sectionApplied": "Sekcja zastosowana",
+    "draftGenerated": "Szkic wygenerowany przez AI",
+    "draftFailed": "Nie udało się wygenerować szkicu",
+    "auditLogTitle": "Historia autorstwa AI",
+    "undoAi": "Cofnij AI"
   },
   "kpi": {
     "attribution": {
@@ -3445,6 +2824,70 @@
       "confirmed": "Potwierdzone",
       "draft": "Robocze",
       "needsReview": "Wymaga przeglądu"
+    },
+    "analysis": {
+      "title": "Analiza finansowa",
+      "subtitle": "Pionowa, pozioma, wskaźniki i wnioski AI",
+      "tabLabel": "Analiza",
+      "new": "Nowa analiza",
+      "run": "Uruchom analizę",
+      "approve": "Zatwierdź",
+      "runSuccess": "Analiza zakończona",
+      "approved": "Analiza zatwierdzona",
+      "selectOrCreate": "Wybierz analizę lub utwórz nową",
+      "noAnalyses": "Brak analiz",
+      "createTitle": "Nowa analiza finansowa",
+      "titlePlaceholder": "np. Przegląd finansowy Q4 2025",
+      "topDrivers": "Kluczowe czynniki",
+      "keyRisks": "Kluczowe ryzyka",
+      "actions": "Działania",
+      "dataQuality": "Jakość danych",
+      "noRatios": "Uruchom analizę, aby obliczyć wskaźniki",
+      "noInsights": "Uruchom analizę, aby wygenerować wnioski",
+      "noHorizontal": "Uruchom analizę, aby zobaczyć porównanie okresów",
+      "period": "Okres",
+      "value": "Wartość",
+      "change": "Zmiana",
+      "tabs": {
+        "overview": "Przegląd",
+        "ratios": "Wskaźniki",
+        "insights": "Wnioski",
+        "horizontal": "Porównanie okresów"
+      }
+    },
+    "budget": {
+      "title": "Planowanie budżetu",
+      "subtitle": "Projekcje oparte na driverach i scenariusze",
+      "tabLabel": "Budżet",
+      "new": "Nowy budżet",
+      "project": "Generuj projekcje",
+      "approve": "Zatwierdź",
+      "projected": "Projekcje wygenerowane",
+      "approved": "Budżet zatwierdzony",
+      "selectOrCreate": "Wybierz budżet lub utwórz nowy",
+      "noBudgets": "Brak budżetów",
+      "createTitle": "Nowy budżet",
+      "titlePlaceholder": "np. Budżet operacyjny 2026",
+      "startPeriod": "Początek",
+      "endPeriod": "Koniec",
+      "period": "Okres",
+      "granularity": "Granulacja",
+      "currency": "Waluta",
+      "version": "Wersja",
+      "baselines": "Wartości bazowe",
+      "cashFlow": "Przepływy pieniężne",
+      "line": "Pozycja",
+      "totalRevenue": "Przychody",
+      "netIncome": "Zysk netto",
+      "noProjections": "Kliknij \"Generuj projekcje\", aby obliczyć",
+      "recalculate": "Przelicz",
+      "scenarioDiff": "Porównanie scenariuszy",
+      "metric": "Metryka",
+      "tabs": {
+        "inputs": "Dane wejściowe",
+        "projections": "Projekcje",
+        "scenarios": "Porównanie scenariuszy"
+      }
     }
   },
   "presentations": {

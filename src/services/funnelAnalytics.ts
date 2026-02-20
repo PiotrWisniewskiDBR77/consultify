@@ -163,7 +163,14 @@ export type FunnelEventName =
   | 'portfolio_ai_analysis_failed'
   | 'portfolio_ai_suggestion_applied'
   | 'portfolio_timeline_optimization_requested'
-  | 'portfolio_timeline_scenario_applied';
+  | 'portfolio_timeline_scenario_applied'
+  | 'finance_analysis_generated'
+  | 'finance_analysis_approved'
+  | 'finance_insight_converted_to_initiative'
+  | 'budget_created'
+  | 'budget_scenario_updated'
+  | 'budget_approved'
+  | 'budget_exported';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {
