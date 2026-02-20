@@ -62,7 +62,7 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 23 | T086 + T008 | Cursor | planned |  |  |
 | 24 | T087, T089, T090 | Codex | planned |  |  |
 | 25 | T091–T092 | Cursor | planned |  |  |
-| 26 | T093 | Cursor | planned |  |  |
+| 26 | T093 | Cursor | in_review | bundle-26-legal-acceptance | done: 2026-02-19 |
 | 27 | T094–T095 | Codex | planned |  | content-heavy |
 | 28 | T096–T098 | Codex | planned |  |  |
 | 29 | T099–T105 + T101–T103 | Cursor | planned |  | weekend/hard |

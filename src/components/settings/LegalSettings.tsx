@@ -16,13 +16,16 @@ interface AcceptanceInfo {
   acceptedAt: string;
 }
 
-const DOC_TYPE_INFO: Record<LegalDocType, { icon: React.ReactNode; color: string }> = {
+const DOC_TYPE_INFO: Record<string, { icon: React.ReactNode; color: string }> = {
   TOS: { icon: <FileText size={18} />, color: 'text-blue-500' },
   PRIVACY: { icon: <Shield size={18} />, color: 'text-green-500' },
   COOKIES: { icon: <FileText size={18} />, color: 'text-amber-500' },
   AUP: { icon: <FileText size={18} />, color: 'text-purple-500' },
   AI_POLICY: { icon: <FileText size={18} />, color: 'text-indigo-500' },
   DPA: { icon: <Shield size={18} />, color: 'text-red-500' },
+  SUBSCRIPTION: { icon: <FileText size={18} />, color: 'text-emerald-500' },
+  SLA: { icon: <FileText size={18} />, color: 'text-yellow-500' },
+  REFUNDS: { icon: <FileText size={18} />, color: 'text-lime-500' },
 };
 
 export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => {
@@ -41,24 +44,37 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
   const fetchLegalData = async () => {
     try {
       const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+
       const [docsRes, acceptRes] = await Promise.all([
-        fetch('/api/legal/active', {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch('/api/legal/my-acceptances', {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        fetch('/api/legal/active', { headers }),
+        fetch('/api/legal/my-acceptances', { headers }),
       ]);
 
-      if (docsRes.ok && acceptRes.ok) {
-        const docs = await docsRes.json();
-        const accepts = await acceptRes.json();
-        setDocuments(docs);
+      if (docsRes.ok) {
+        const docsData = await docsRes.json();
+        const docsList = docsData.data || docsData || [];
+        setDocuments(
+          docsList.map((d: any) => ({
+            id: d.id,
+            docType: d.docType || d.doc_type || d.type,
+            version: d.version,
+            title: d.title,
+            effectiveFrom: d.effectiveFrom || d.effective_from || '',
+            isActive: true,
+          }))
+        );
+      }
+
+      if (acceptRes.ok) {
+        const acceptsData = await acceptRes.json();
+        const acceptsList = acceptsData.data || acceptsData || [];
         setAcceptances(
-          accepts.map((a: any) => ({
-            docType: a.doc_type,
+          acceptsList.map((a: any) => ({
+            docType: a.docType || a.doc_type,
             version: a.version,
-            acceptedAt: a.accepted_at,
+            acceptedAt: a.acceptedAt || a.accepted_at,
           }))
         );
       }
@@ -74,12 +90,13 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
     setLoadingContent(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/legal/active/${doc.docType}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const res = await fetch(`/api/legal/active/${doc.docType}`, { headers });
       if (res.ok) {
         const fullDoc = await res.json();
-        setDocContent(fullDoc.content_md || '');
+        setDocContent(fullDoc.contentMd || fullDoc.content_md || '');
       }
     } catch (err) {
       console.error('Failed to fetch document content:', err);

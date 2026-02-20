@@ -25,6 +25,9 @@ const DOC_TYPE_LABELS: Record<LegalDocType, string> = {
   AUP: 'Acceptable Use Policy',
   AI_POLICY: 'AI Usage Policy',
   DPA: 'Data Processing Addendum',
+  SUBSCRIPTION: 'Subscription Agreement',
+  SLA: 'Service Level Agreement',
+  REFUNDS: 'Refund & Cancellation Policy',
 };
 
 export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({
@@ -57,10 +60,23 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({
 
       if (res.ok) {
         const data = await res.json();
-        setPendingDocs(data.required || []);
+        const mapDoc = (d: any): LegalDocument => ({
+          id: d.id,
+          docType: d.docType as LegalDocType,
+          version: d.version,
+          title: d.title || DOC_TYPE_LABELS[d.docType as LegalDocType] || d.docType,
+          effectiveFrom: d.effectiveFrom || '',
+          isActive: true,
+          changeSummary: d.changeSummary,
+        });
+        setPendingDocs((data.required || []).map(mapDoc));
         setDpaPending(data.dpaPending);
-        setDpaDoc(data.dpaDoc);
+        setDpaDoc(data.dpaDoc ? mapDoc(data.dpaDoc) : null);
         setIsOrgAdmin(data.isOrgAdmin);
+
+        if (!data.hasAnyPending) {
+          onAccepted();
+        }
       }
     } catch (err) {
       console.error('Failed to fetch pending docs:', err);
@@ -76,12 +92,15 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`/api/legal/active/${docType}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       if (res.ok) {
-        const doc = await res.json();
-        setDocContents((prev) => ({ ...prev, [docType]: doc.content_md || '' }));
+        const data = await res.json();
+        setDocContents((prev) => ({
+          ...prev,
+          [docType]: data.contentMd || data.content_md || '',
+        }));
       }
     } catch (err) {
       console.error('Failed to fetch document content:', err);
@@ -248,6 +267,15 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({
                   </div>
                   {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                 </div>
+
+                {/* Change summary (always visible) */}
+                {doc.changeSummary && (
+                  <div className="px-4 pb-3 pt-1">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 italic leading-relaxed">
+                      {doc.changeSummary}
+                    </p>
+                  </div>
+                )}
 
                 {isExpanded && (
                   <div className="p-4 bg-slate-50 dark:bg-navy-800 border-t border-slate-200 dark:border-slate-700">

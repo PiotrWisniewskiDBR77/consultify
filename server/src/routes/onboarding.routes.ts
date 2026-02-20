@@ -2,12 +2,14 @@
 /**
  * Onboarding Routes
  * Enterprise onboarding flow: Terms → Pricing → Payment
+ * T093: accept-terms now also records in legal_document_acceptances (single source of truth)
  */
 
 import { Response, Router } from 'express';
 
 import { getDatabase } from '../database/index.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import legalService from '../services/legalService.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -61,7 +63,7 @@ router.post('/accept-terms', async (req: AuthRequest, res: Response) => {
 
     const { termsVersion = 'v1.0', privacyVersion = 'v1.0' } = req.body;
 
-    // Upsert onboarding status
+    // Upsert onboarding status (legacy table)
     await db.query(
       `INSERT INTO user_onboarding_status (
                 user_id, terms_accepted, terms_accepted_at, terms_version,
@@ -77,6 +79,26 @@ router.post('/accept-terms', async (req: AuthRequest, res: Response) => {
                 updated_at = NOW()`,
       [userId, termsVersion, privacyVersion]
     );
+
+    // T093: Also record in legal_document_acceptances (single source of truth)
+    const ipAddress =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.socket?.remoteAddress || '';
+    const userAgent = (req.headers['user-agent'] as string) || '';
+    const organizationId = req.organizationId || req.user?.organizationId;
+
+    try {
+      await legalService.acceptDocuments(
+        userId,
+        ['TOS', 'PRIVACY'],
+        'USER',
+        ipAddress,
+        userAgent,
+        organizationId
+      );
+    } catch (legalErr) {
+      logger.warn('[Onboarding] Legal acceptance sync failed (non-blocking):', legalErr);
+    }
 
     res.json({ success: true, message: 'Terms accepted' });
   } catch (error) {

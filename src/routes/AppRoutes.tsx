@@ -260,6 +260,12 @@ const CookiePolicyView = React.lazy(() =>
 const SecurityView = React.lazy(() =>
   import('@/views/legal/SecurityView').then((m) => ({ default: m.SecurityView }))
 );
+const LegalIndexView = React.lazy(() =>
+  import('@/views/LegalIndexView').then((m) => ({ default: m.LegalIndexView }))
+);
+const LegalDocumentView = React.lazy(() =>
+  import('@/views/LegalDocumentView').then((m) => ({ default: m.LegalDocumentView }))
+);
 
 // Status & Changelog
 const StatusPageView = React.lazy(() =>
@@ -1231,6 +1237,24 @@ export const AppRoutes: React.FC = () => {
           element={
             <AnimationWrapper variant="fade">
               <SecurityView />
+            </AnimationWrapper>
+          }
+        />
+
+        {/* Legal Center - Public (T093) */}
+        <Route
+          path="/legal"
+          element={
+            <AnimationWrapper variant="fade">
+              <LegalIndexView />
+            </AnimationWrapper>
+          }
+        />
+        <Route
+          path="/legal/:docSlug"
+          element={
+            <AnimationWrapper variant="fade">
+              <LegalDocumentView />
             </AnimationWrapper>
           }
         />
