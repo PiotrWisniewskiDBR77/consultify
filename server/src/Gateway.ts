@@ -121,6 +121,8 @@ import partnerRoutes, {
   publicPartnerRouter,
   superAdminPartnerRouter,
 } from './routes/partners.routes.js';
+import partnerOutreachRoutes from './routes/partnerOutreach.routes.js';
+import publicOutreachRoutes from './routes/public-outreach.routes.js';
 import performanceRoutes from './routes/performance.routes.js';
 import performanceMetricsRoutes from './routes/performance-metrics.routes.js';
 import permissionRequestsRoutes from './routes/permissionRequests.routes.js';
@@ -482,10 +484,12 @@ export class ApiGateway {
       mountStub('/api/promo', promoRoutes, 'promoRoutes');
       app.use('/api/partners', partnerRoutes);
       app.use('/api/public/partner', publicPartnerRouter); // Public partner code validation
+      app.use('/api/public/outreach', publicOutreachRoutes); // Public one-click unsubscribe + tracking
       app.use('/api/public/report', reportBuilderPublicRoutes); // Public shared reports
       app.use('/api/public/mini-assessment', publicMiniAssessmentRoutes); // Public mini assessment links
       app.use('/api/superadmin/partner-settlements', superAdminPartnerRouter); // SuperAdmin partner settlements
       app.use('/api/superadmin/partner-config', partnerConfigRouter); // SuperAdmin partner configuration
+      app.use('/api/superadmin/partner-outreach', partnerOutreachRoutes); // SuperAdmin partner outreach campaigns
       mountStub('/api/settlements', settlementRoutes, 'settlementRoutes');
       app.use('/api/access-codes', accessCodeRoutes);
       app.use('/api/help', helpRoutes);

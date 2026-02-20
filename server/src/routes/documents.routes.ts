@@ -62,15 +62,11 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getProjectDocuments) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'Document service not available' });
-=======
       return res.status(503).json({
         error: 'Feature unavailable',
         code: 'FEATURE_UNAVAILABLE',
         feature: 'documents',
       });
->>>>>>> Stashed changes
     }
 
     try {
@@ -93,15 +89,11 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getUserDocuments) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'Document service not available' });
-=======
       return res.status(503).json({
         error: 'Feature unavailable',
         code: 'FEATURE_UNAVAILABLE',
         feature: 'documents',
       });
->>>>>>> Stashed changes
     }
 
     try {
@@ -129,15 +121,11 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getAccessibleDocuments) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'Document service not available' });
-=======
       return res.status(503).json({
         error: 'Feature unavailable',
         code: 'FEATURE_UNAVAILABLE',
         feature: 'documents',
       });
->>>>>>> Stashed changes
     }
 
     try {
@@ -171,15 +159,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     // Return empty array if service not available (for tests)
     if (!DocumentService?.getAccessibleDocuments) {
-<<<<<<< Updated upstream
       return res.json([]);
-=======
-      return res.status(503).json({
-        error: 'Feature unavailable',
-        code: 'FEATURE_UNAVAILABLE',
-        feature: 'documents',
-      });
->>>>>>> Stashed changes
     }
 
     try {
@@ -212,15 +192,11 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'Document service not available' });
-=======
       return res.status(503).json({
         error: 'Feature unavailable',
         code: 'FEATURE_UNAVAILABLE',
         feature: 'documents',
       });
->>>>>>> Stashed changes
     }
 
     try {
@@ -245,15 +221,11 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'Document service not available' });
-=======
       return res.status(503).json({
         error: 'Feature unavailable',
         code: 'FEATURE_UNAVAILABLE',
         feature: 'documents',
       });
->>>>>>> Stashed changes
     }
 
     try {
@@ -289,17 +261,11 @@ router.post(
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
-<<<<<<< Updated upstream
-      return res
-        .status(201)
-        .json({ message: 'Document uploaded (stub)', document: { id: 'stub-doc-id' } });
-=======
       return res.status(503).json({
         error: 'Feature unavailable',
         code: 'FEATURE_UNAVAILABLE',
         feature: 'documents',
       });
->>>>>>> Stashed changes
     }
 
     try {
@@ -353,15 +319,11 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.moveToProject) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'Document service not available' });
-=======
       return res.status(503).json({
         error: 'Feature unavailable',
         code: 'FEATURE_UNAVAILABLE',
         feature: 'documents',
       });
->>>>>>> Stashed changes
     }
 
     try {
@@ -397,15 +359,11 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.deleteDocument) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'Document service not available' });
-=======
       return res.status(503).json({
         error: 'Feature unavailable',
         code: 'FEATURE_UNAVAILABLE',
         feature: 'documents',
       });
->>>>>>> Stashed changes
     }
 
     try {

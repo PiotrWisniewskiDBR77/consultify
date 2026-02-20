@@ -11,17 +11,12 @@ const router = Router();
 
 // Stub for missing JS routes
 router.use((req, res) => {
-<<<<<<< Updated upstream
-  logger.warn(`[report-comments] Route not implemented (stubbed)`);
-  res.status(501).json({ error: 'Not implemented: Route handler missing' });
-=======
   logger.warn(`[report-comments] Feature unavailable`);
   res.status(503).json({
     error: 'Feature unavailable',
     code: 'FEATURE_UNAVAILABLE',
     feature: 'report-comments',
   });
->>>>>>> Stashed changes
 });
 
 export default router;

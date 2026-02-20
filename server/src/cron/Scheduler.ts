@@ -184,10 +184,15 @@ export const Scheduler = {
     this.jobs.push(job9b);
 
     // 10. Scheduled Emails - Run every 15 minutes
-    const job10 = cron.schedule('*/15 * * * *', () => {
-      // reportEmailService.processScheduledEmails().catch((err: Error) => {
-      //     logger.error('[Scheduler] Scheduled Emails processing failed:', err.message);
-      // });
+    const job10 = cron.schedule('*/15 * * * *', async () => {
+      try {
+        const { processPartnerOutreachDueMessages } = await import(
+          '../services/partnerOutreachService.js'
+        );
+        await processPartnerOutreachDueMessages({ limit: 100 });
+      } catch (err: any) {
+        logger.error('[Scheduler] Partner outreach processing failed:', err?.message || err);
+      }
     });
     this.jobs.push(job10);
 

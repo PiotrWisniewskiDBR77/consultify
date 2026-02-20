@@ -336,10 +336,6 @@ router.post(
 router.get(
   '/:id/pdf',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-<<<<<<< Updated upstream
-    const result = await managementReportsService.generateExport(req.params.id, 'pdf', req.userId);
-    return res.json({ success: true, pdfUrl: result.filePath });
-=======
     try {
       const result = await managementReportsService.generateExport(req.params.id, 'pdf', req.userId);
       return res.json({ success: true, pdfUrl: result.filePath });
@@ -363,17 +359,12 @@ router.get(
       }
       throw error;
     }
->>>>>>> Stashed changes
   })
 );
 
 router.get(
   '/:id/pptx',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-<<<<<<< Updated upstream
-    const result = await managementReportsService.generateExport(req.params.id, 'pptx', req.userId);
-    return res.json({ success: true, pptxUrl: result.filePath });
-=======
     try {
       const result = await managementReportsService.generateExport(req.params.id, 'pptx', req.userId);
       return res.json({ success: true, pptxUrl: result.filePath });
@@ -397,7 +388,6 @@ router.get(
       }
       throw error;
     }
->>>>>>> Stashed changes
   })
 );
 

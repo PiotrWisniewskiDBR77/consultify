@@ -77,11 +77,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.processMessageWithAgents) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
-=======
       return featureUnavailable(res);
->>>>>>> Stashed changes
     }
 
     try {
@@ -127,11 +123,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.querySpecialistAgent) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
-=======
       return featureUnavailable(res);
->>>>>>> Stashed changes
     }
 
     try {
@@ -181,11 +173,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.getMultiAgentRecommendations) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
-=======
       return featureUnavailable(res);
->>>>>>> Stashed changes
     }
 
     try {
@@ -226,11 +214,7 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.getAvailableAgents) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
-=======
       return featureUnavailable(res);
->>>>>>> Stashed changes
     }
 
     try {
@@ -238,13 +222,7 @@ router.get(
       return res.json({ agents });
     } catch (error: unknown) {
       logger.error('[Agents API] Error getting agents:', error);
-<<<<<<< Updated upstream
-      return res
-        .status(500)
-        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
-=======
       return featureUnavailable(res);
->>>>>>> Stashed changes
     }
   })
 );
@@ -260,11 +238,7 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.getAgentMetrics) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
-=======
       return featureUnavailable(res);
->>>>>>> Stashed changes
     }
 
     try {
@@ -287,11 +261,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.processMessageWithAgents) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
-=======
       return featureUnavailable(res);
->>>>>>> Stashed changes
     }
 
     try {
@@ -341,11 +311,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orchestrator = await getAIOrchestrator();
     if (!orchestrator?.processMessageWithAgents) {
-<<<<<<< Updated upstream
-      return res.status(503).json({ error: 'AI Orchestrator not available' });
-=======
       return featureUnavailable(res);
->>>>>>> Stashed changes
     }
 
     try {

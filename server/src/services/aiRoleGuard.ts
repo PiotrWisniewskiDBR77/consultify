@@ -5,23 +5,6 @@
  * This avoids "fake success" role/capability payloads and makes behavior deterministic.
  */
 
-<<<<<<< Updated upstream
-const AiRoleGuard = {
-  getRoleConfig: async (projectId: string) => {
-    const role = 'ADVISOR';
-    return {
-      role,
-      activeRole: role,
-      capabilities: {
-        canAnalyze: true,
-        canSuggest: true,
-        canCreateDrafts: true,
-        canExecuteActions: false,
-      },
-      roleDescription: 'Provides expert analysis and recommendations but does not take action.',
-      roleHierarchy: ['ADVISOR', 'MANAGER', 'OPERATOR'],
-    };
-=======
 import { getDatabaseAsync } from '../database/Database.js';
 
 type AIRole = 'ADVISOR' | 'MANAGER' | 'OPERATOR';
@@ -67,7 +50,6 @@ async function getStoredRole(projectId: string): Promise<AIRole> {
 const AIRoleGuard = {
   async getProjectRole(projectId: string): Promise<AIRole> {
     return await getStoredRole(projectId);
->>>>>>> Stashed changes
   },
 
   getRoleCapabilities(role: string) {

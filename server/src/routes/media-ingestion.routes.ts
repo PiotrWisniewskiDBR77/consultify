@@ -29,8 +29,6 @@ async function getMediaIngestionService(): Promise<any | null> {
  */
 router.get('/supported-types', async (req, res) => {
   try {
-<<<<<<< Updated upstream
-=======
     const mediaIngestionService = await getMediaIngestionService();
     if (!mediaIngestionService?.getSupportedTypes) {
       return res.status(503).json({
@@ -39,7 +37,6 @@ router.get('/supported-types', async (req, res) => {
         code: 'FEATURE_UNAVAILABLE',
       });
     }
->>>>>>> Stashed changes
     const supportedTypes = await mediaIngestionService.getSupportedTypes();
     res.json({
       success: true,
@@ -60,8 +57,6 @@ router.get('/supported-types', async (req, res) => {
  */
 router.get('/capabilities', async (req, res) => {
   try {
-<<<<<<< Updated upstream
-=======
     const mediaIngestionService = await getMediaIngestionService();
     if (!mediaIngestionService?.getCapabilities) {
       return res.status(503).json({
@@ -70,7 +65,6 @@ router.get('/capabilities', async (req, res) => {
         code: 'FEATURE_UNAVAILABLE',
       });
     }
->>>>>>> Stashed changes
     const capabilities = await mediaIngestionService.getCapabilities();
     res.json({
       success: true,
@@ -92,8 +86,6 @@ router.get('/capabilities', async (req, res) => {
 router.post('/validate', async (req, res) => {
   try {
     const { filename, mimeType } = req.body;
-<<<<<<< Updated upstream
-=======
     if (!filename || !mimeType) {
       return res.status(400).json({ error: 'filename and mimeType are required' });
     }
@@ -105,7 +97,6 @@ router.post('/validate', async (req, res) => {
         code: 'FEATURE_UNAVAILABLE',
       });
     }
->>>>>>> Stashed changes
     const result = await mediaIngestionService.validateMedia(filename, mimeType);
     res.json(result);
   } catch (error) {

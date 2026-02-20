@@ -8,10 +8,6 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-<<<<<<< Updated upstream
-import * as demoGuard from '../middleware/demoGuard.middleware.js';
-import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
-=======
 import {
   DEMO_ORG_ID,
   DEMO_ORG_NAME,
@@ -21,7 +17,6 @@ import {
   setUserDemoPreference,
 } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
->>>>>>> Stashed changes
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -33,7 +28,7 @@ function isUnavailableError(error: unknown): boolean {
 }
 
 // Apply rate limiting
-router.use(apiAuthRateLimiter);
+router.use(authRateLimiter);
 
 // ==========================================
 // DEMO MODE TOGGLE

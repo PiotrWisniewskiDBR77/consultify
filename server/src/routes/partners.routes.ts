@@ -17,15 +17,28 @@
 
 import { NextFunction, Request, Response, Router } from 'express';
 
+import crypto from 'crypto';
+
+import { getDatabase } from '../database/Database.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import {
+  ensureLearningProgressRows,
+  ensureSalesCertification,
+  getEffectivePartnerTier,
+  getSalesModules,
+  recalcCertificationProgress,
+  startSalesExam,
+  submitSalesExam,
+} from '../services/partnerCertificationService.js';
+import { generatePartnerCertificatePdf } from '../services/partnerCertificatePdf.js';
 import PartnerCommissionService from '../services/partnerCommissionService.js';
 import PartnerReferralService from '../services/partnerReferralService.js';
+import { generatePartnerToolkitResourceFile } from '../services/partnerToolkitResources.js';
+import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
 
-<<<<<<< Updated upstream
-=======
 function isSchemaMissingError(err: unknown): boolean {
   const msg = String((err as any)?.message || '').toLowerCase();
   return msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation');
@@ -35,7 +48,74 @@ const FEATURE_UNAVAILABLE_CODE = 'FEATURE_UNAVAILABLE';
 const featureUnavailable = (res: Response, message: string) =>
   res.status(503).json({ success: false, error: message, code: FEATURE_UNAVAILABLE_CODE });
 
->>>>>>> Stashed changes
+type CanonicalTier = 'REGISTERED' | 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+const TIER_ORDER: CanonicalTier[] = ['REGISTERED', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM'];
+function tierRank(tier: string | null | undefined): number {
+  if (!tier) return 0;
+  const upper = String(tier).trim().toUpperCase();
+  const idx = TIER_ORDER.indexOf(upper as CanonicalTier);
+  if (idx >= 0) return idx;
+  const legacy = String(tier).trim().toLowerCase();
+  if (legacy === 'elite') return tierRank('PLATINUM');
+  if (legacy === 'premier') return tierRank('GOLD');
+  if (legacy === 'certified') return tierRank('SILVER');
+  return tierRank('REGISTERED');
+}
+
+function looksPolish(req: Request): boolean {
+  const al = String(req.headers['accept-language'] || '').toLowerCase();
+  return al.includes('pl');
+}
+
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes <= 0) return '—';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0;
+  let b = bytes;
+  while (b >= 1024 && i < units.length - 1) {
+    b /= 1024;
+    i++;
+  }
+  const value = i === 0 ? Math.round(b) : Math.round(b * 10) / 10;
+  return `${value} ${units[i]}`;
+}
+
+function resourceTypeLabel(mimeType?: string | null, fileType?: string | null): string {
+  const v = String(mimeType || fileType || '').toLowerCase();
+  if (v.includes('pdf')) return 'PDF';
+  if (v.includes('presentation') || v.includes('pptx')) return 'PPTX';
+  if (v.includes('zip')) return 'ZIP';
+  if (v.includes('text')) return 'TXT';
+  return 'FILE';
+}
+
+async function getActivePartnerOrgIdForUser(userId: string): Promise<string | null> {
+  const db = getDatabase();
+  const row = await DbPromise.get<{ partner_org_id: string }>(
+    db,
+    `SELECT partner_org_id
+     FROM partner_users
+     WHERE user_id = ? AND status = 'active'
+     LIMIT 1`,
+    [userId]
+  );
+  return row?.partner_org_id || null;
+}
+
+async function requirePartnerOrgId(req: Request, res: Response): Promise<string | null> {
+  const userId = (req as any).user?.id || (req as any).userId;
+  if (!userId) {
+    res.status(401).json({ success: false, error: 'Unauthorized' });
+    return null;
+  }
+  const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+  if (!partnerOrgId) {
+    res.status(403).json({ success: false, error: 'Partner organization required' });
+    return null;
+  }
+  return partnerOrgId;
+}
+
 // Apply authentication to all routes
 router.use(verifyToken);
 
@@ -49,36 +129,60 @@ router.use(verifyToken);
  */
 router.get('/organization', async (req: Request, res: Response, next: NextFunction) => {
   try {
-<<<<<<< Updated upstream
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.id || (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
 
-    // Return demo data for now - will be replaced with DB query
-    const organization = {
-      id: 'partner-org-001',
-      name: 'Acme Consulting GmbH',
-      legalName: 'Acme Consulting GmbH',
-      taxId: 'DE123456789',
-      contactEmail: 'partner@acme-consulting.de',
-      contactPhone: '+49 30 12345678',
-      website: 'https://acme-consulting.de',
-      tier: 'certified',
-      status: 'active',
-      partnerSince: '2024-01-15',
-      licenseDiscountPercent: 20,
-      commissionRatePercent: 15,
-      performanceScore: 85,
-      publicListingEnabled: true,
-      specializations: ['DRD', 'SIRI', 'Lean4.0'],
-      regions: ['DACH', 'CEE', 'Baltics'],
-    };
-
-    res.json({ success: true, data: organization });
-=======
-    return featureUnavailable(
-      res,
-      'Partner portal organization endpoint not available (no real implementation)'
+    const db = getDatabase();
+    const org = await DbPromise.get<any>(
+      db,
+      `SELECT po.*
+       FROM partner_users pu
+       JOIN partner_organizations po ON po.id = pu.partner_org_id
+       WHERE pu.user_id = ? AND pu.status = 'active'
+       LIMIT 1`,
+      [userId]
     );
->>>>>>> Stashed changes
+
+    if (!org) {
+      return res.status(403).json({ success: false, error: 'Partner organization required' });
+    }
+
+    const [specializations, regions] = await Promise.all([
+      DbPromise.all<{ framework: string }>(
+        db,
+        `SELECT framework FROM partner_specializations WHERE partner_org_id = ? ORDER BY framework ASC`,
+        [org.id]
+      ),
+      DbPromise.all<{ region: string }>(
+        db,
+        `SELECT region FROM partner_regions WHERE partner_org_id = ? ORDER BY region ASC`,
+        [org.id]
+      ),
+    ]);
+
+    return res.json({
+      success: true,
+      data: {
+        id: org.id,
+        name: org.name,
+        legalName: org.legal_name || undefined,
+        taxId: org.tax_id || undefined,
+        contactEmail: org.contact_email,
+        contactPhone: org.contact_phone || undefined,
+        website: org.website || undefined,
+        tier: org.tier,
+        status: org.status,
+        partnerSince: org.partner_since || undefined,
+        licenseDiscountPercent: org.license_discount_percent ?? undefined,
+        commissionRatePercent: org.commission_rate_percent ?? undefined,
+        performanceScore: org.performance_score ?? undefined,
+        publicListingEnabled: Boolean(org.public_listing_enabled),
+        specializations: specializations.map((s) => s.framework),
+        regions: regions.map((r) => r.region),
+      },
+    });
   } catch (error: any) {
     logger.error('Error fetching partner organization:', error);
     next(error);
@@ -91,21 +195,34 @@ router.get('/organization', async (req: Request, res: Response, next: NextFuncti
  */
 router.put('/organization', async (req: Request, res: Response, next: NextFunction) => {
   try {
-<<<<<<< Updated upstream
-    const { name, taxId, contactEmail, contactPhone, website } = req.body;
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
 
-    // TODO: Update in database
-    res.json({
-      success: true,
-      message: 'Organization updated successfully',
-      data: req.body,
-    });
-=======
-    return featureUnavailable(
-      res,
-      'Partner portal organization updates not available (no real implementation)'
+    const { name, taxId, contactEmail, contactPhone, website } = req.body || {};
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ success: false, error: 'name is required' });
+    }
+    if (!contactEmail || typeof contactEmail !== 'string') {
+      return res.status(400).json({ success: false, error: 'contactEmail is required' });
+    }
+
+    const db = getDatabase();
+    await DbPromise.run(
+      db,
+      `UPDATE partner_organizations
+       SET name = ?, tax_id = ?, contact_email = ?, contact_phone = ?, website = ?, updated_at = NOW()
+       WHERE id = ?`,
+      [
+        name,
+        taxId || null,
+        contactEmail,
+        contactPhone || null,
+        website || null,
+        partnerOrgId,
+      ]
     );
->>>>>>> Stashed changes
+
+    return res.json({ success: true, message: 'Organization updated successfully' });
   } catch (error: any) {
     logger.error('Error updating partner organization:', error);
     next(error);
@@ -120,20 +237,38 @@ router.put(
   '/organization/specializations',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-<<<<<<< Updated upstream
-      const { specializations } = req.body;
+      const partnerOrgId = await requirePartnerOrgId(req, res);
+      if (!partnerOrgId) return;
 
-      res.json({
-        success: true,
-        message: 'Specializations updated successfully',
-        data: { specializations },
-      });
-=======
-      return featureUnavailable(
-        res,
-        'Partner portal organization updates not available (no real implementation)'
+      const { specializations } = req.body || {};
+      if (!Array.isArray(specializations)) {
+        return res.status(400).json({ success: false, error: 'specializations must be an array' });
+      }
+
+      const uniqueFrameworks = Array.from(
+        new Set(
+          specializations
+            .filter((s: unknown) => typeof s === 'string' && s.trim().length > 0)
+            .map((s: string) => s.trim())
+        )
       );
->>>>>>> Stashed changes
+
+      const statements = [
+        { sql: `DELETE FROM partner_specializations WHERE partner_org_id = ?`, params: [partnerOrgId] },
+        ...uniqueFrameworks.map((fw) => ({
+          sql: `INSERT INTO partner_specializations (id, partner_org_id, framework, certified, created_at)
+                VALUES (?, ?, ?, FALSE, NOW())
+                ON CONFLICT (partner_org_id, framework) DO NOTHING`,
+          params: [crypto.randomUUID(), partnerOrgId, fw],
+        })),
+      ];
+
+      const result = await DbPromise.transaction(statements);
+      if (!result.success) {
+        return res.status(500).json({ success: false, error: result.error || 'Failed to update' });
+      }
+
+      return res.json({ success: true, message: 'Specializations updated successfully' });
     } catch (error: any) {
       logger.error('Error updating specializations:', error);
       next(error);
@@ -147,20 +282,38 @@ router.put(
  */
 router.put('/organization/regions', async (req: Request, res: Response, next: NextFunction) => {
   try {
-<<<<<<< Updated upstream
-    const { regions } = req.body;
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
 
-    res.json({
-      success: true,
-      message: 'Regions updated successfully',
-      data: { regions },
-    });
-=======
-    return featureUnavailable(
-      res,
-      'Partner portal organization updates not available (no real implementation)'
+    const { regions } = req.body || {};
+    if (!Array.isArray(regions)) {
+      return res.status(400).json({ success: false, error: 'regions must be an array' });
+    }
+
+    const uniqueRegions = Array.from(
+      new Set(
+        regions
+          .filter((r: unknown) => typeof r === 'string' && r.trim().length > 0)
+          .map((r: string) => r.trim())
+      )
     );
->>>>>>> Stashed changes
+
+    const statements = [
+      { sql: `DELETE FROM partner_regions WHERE partner_org_id = ?`, params: [partnerOrgId] },
+      ...uniqueRegions.map((region) => ({
+        sql: `INSERT INTO partner_regions (id, partner_org_id, region, is_primary, created_at)
+              VALUES (?, ?, ?, FALSE, NOW())
+              ON CONFLICT (partner_org_id, region) DO NOTHING`,
+        params: [crypto.randomUUID(), partnerOrgId, region],
+      })),
+    ];
+
+    const result = await DbPromise.transaction(statements);
+    if (!result.success) {
+      return res.status(500).json({ success: false, error: result.error || 'Failed to update' });
+    }
+
+    return res.json({ success: true, message: 'Regions updated successfully' });
   } catch (error: any) {
     logger.error('Error updating regions:', error);
     next(error);
@@ -173,10 +326,26 @@ router.put('/organization/regions', async (req: Request, res: Response, next: Ne
  */
 router.put('/organization/listing', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(
-      res,
-      'Partner portal listing updates not available (no real implementation)'
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
+
+    const { publicListingEnabled } = req.body || {};
+    if (typeof publicListingEnabled !== 'boolean') {
+      return res
+        .status(400)
+        .json({ success: false, error: 'publicListingEnabled must be boolean' });
+    }
+
+    const db = getDatabase();
+    await DbPromise.run(
+      db,
+      `UPDATE partner_organizations
+       SET public_listing_enabled = ?, updated_at = NOW()
+       WHERE id = ?`,
+      [publicListingEnabled, partnerOrgId]
     );
+
+    return res.json({ success: true, message: 'Listing updated successfully' });
   } catch (error: any) {
     logger.error('Error updating listing:', error);
     next(error);
@@ -803,7 +972,53 @@ router.get('/projects', async (req: Request, res: Response, next: NextFunction) 
  */
 router.get('/certifications', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(res, 'Partner certifications unavailable (no real implementation)');
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
+    const userId = (req as any).user?.id || (req as any).userId;
+    if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const language = looksPolish(req) ? 'pl' : 'en';
+    const certification = await ensureSalesCertification({ partnerOrgId, userId });
+    const modules = await getSalesModules(language);
+    await ensureLearningProgressRows({
+      certificationId: certification.id,
+      moduleIds: modules.map((m) => m.id),
+    });
+    await recalcCertificationProgress(certification.id);
+
+    const db = getDatabase();
+    const updated = await DbPromise.get<any>(
+      db,
+      `SELECT * FROM partner_certifications WHERE id = ?`,
+      [certification.id]
+    );
+
+    const totalMinutes = modules.reduce((sum, m) => {
+      const v = Number(m.minutes ?? m.duration_minutes ?? 0);
+      return sum + (Number.isFinite(v) ? v : 0);
+    }, 0);
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    const duration = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+
+    return res.json({
+      success: true,
+      data: [
+        {
+          id: updated.id,
+          name: updated.certification_name || 'Sales Certification',
+          type: updated.certification_type || 'sales',
+          status: updated.status || 'not_started',
+          progress: updated.progress_percent || 0,
+          duration,
+          modules: modules.length,
+          startedAt: updated.started_at || undefined,
+          completedAt: updated.completed_at || undefined,
+          certificateId: updated.certificate_id || undefined,
+          certificateUrl: updated.certificate_url || undefined,
+        },
+      ],
+    });
   } catch (error: any) {
     logger.error('Error fetching certifications:', error);
     next(error);
@@ -818,7 +1033,53 @@ router.get(
   '/certifications/:certId/modules',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      return featureUnavailable(res, 'Partner certification modules unavailable (no real implementation)');
+      const partnerOrgId = await requirePartnerOrgId(req, res);
+      if (!partnerOrgId) return;
+      const userId = (req as any).user?.id || (req as any).userId;
+      if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+      const { certId } = req.params;
+      const db = getDatabase();
+      const cert = await DbPromise.get<any>(
+        db,
+        `SELECT * FROM partner_certifications WHERE id = ? AND partner_org_id = ? AND user_id = ?`,
+        [certId, partnerOrgId, userId]
+      );
+      if (!cert) return res.status(404).json({ success: false, error: 'Certification not found' });
+
+      const language = looksPolish(req) ? 'pl' : 'en';
+      const modules = await getSalesModules(language);
+      await ensureLearningProgressRows({
+        certificationId: certId,
+        moduleIds: modules.map((m) => m.id),
+      });
+
+      const progressRows = await DbPromise.all<any>(
+        db,
+        `SELECT module_id, status, progress_percent, started_at, completed_at
+         FROM partner_learning_progress
+         WHERE certification_id = ?`,
+        [certId]
+      );
+      const progressByModule = new Map(progressRows.map((r: any) => [r.module_id, r]));
+
+      return res.json({
+        success: true,
+        data: modules.map((m) => {
+          const p = progressByModule.get(m.id);
+          return {
+            id: m.id,
+            name: m.name,
+            description: m.description || null,
+            order: m.module_order,
+            minutes: m.minutes ?? m.duration_minutes ?? null,
+            status: p?.status || 'not_started',
+            progress: p?.progress_percent || 0,
+            startedAt: p?.started_at || null,
+            completedAt: p?.completed_at || null,
+          };
+        }),
+      });
     } catch (error: any) {
       logger.error('Error fetching modules:', error);
       next(error);
@@ -834,12 +1095,179 @@ router.post(
   '/certifications/:certId/modules/:moduleId/progress',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      return featureUnavailable(
-        res,
-        'Partner certification progress updates unavailable (no real implementation)'
+      const partnerOrgId = await requirePartnerOrgId(req, res);
+      if (!partnerOrgId) return;
+      const userId = (req as any).user?.id || (req as any).userId;
+      if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+      const { certId, moduleId } = req.params;
+      const { status, progress } = req.body || {};
+
+      const allowedStatus = new Set(['not_started', 'in_progress', 'completed']);
+      const nextStatus = allowedStatus.has(status) ? status : null;
+      const nextProgress = Number.isFinite(Number(progress))
+        ? Math.max(0, Math.min(100, Number(progress)))
+        : null;
+      if (!nextStatus && nextProgress === null) {
+        return res.status(400).json({ success: false, error: 'status or progress required' });
+      }
+
+      const db = getDatabase();
+      const cert = await DbPromise.get<any>(
+        db,
+        `SELECT id FROM partner_certifications WHERE id = ? AND partner_org_id = ? AND user_id = ?`,
+        [certId, partnerOrgId, userId]
       );
+      if (!cert) return res.status(404).json({ success: false, error: 'Certification not found' });
+
+      await DbPromise.run(
+        db,
+        `INSERT INTO partner_learning_progress (id, certification_id, module_id, status, progress_percent, started_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+         ON CONFLICT (certification_id, module_id)
+         DO UPDATE SET status = COALESCE(?, partner_learning_progress.status),
+                       progress_percent = COALESCE(?, partner_learning_progress.progress_percent),
+                       started_at = COALESCE(partner_learning_progress.started_at, NOW()),
+                       completed_at = CASE WHEN COALESCE(?, partner_learning_progress.status) = 'completed'
+                                           THEN COALESCE(partner_learning_progress.completed_at, NOW())
+                                           ELSE partner_learning_progress.completed_at END,
+                       updated_at = NOW()`,
+        [
+          crypto.randomUUID(),
+          certId,
+          moduleId,
+          nextStatus || 'in_progress',
+          nextProgress ?? 0,
+          nextStatus,
+          nextProgress,
+          nextStatus,
+        ]
+      );
+
+      await recalcCertificationProgress(certId);
+      return res.json({ success: true });
     } catch (error: any) {
       logger.error('Error updating progress:', error);
+      next(error);
+    }
+  }
+);
+
+/**
+ * POST /api/partners/certifications/:certId/exam/start
+ */
+router.post(
+  '/certifications/:certId/exam/start',
+  async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const partnerOrgId = await requirePartnerOrgId(req, res);
+      if (!partnerOrgId) return;
+      const userId = (req as any).user?.id || (req as any).userId;
+      if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+      const { certId } = req.params;
+      const language = req.body?.language === 'pl' || looksPolish(req) ? 'pl' : 'en';
+      const ip = String((req.headers['x-forwarded-for'] as any) || req.socket.remoteAddress || '');
+      const userAgent = String(req.headers['user-agent'] || '');
+
+      const attempt = await startSalesExam({
+        certificationId: certId,
+        partnerOrgId,
+        userId,
+        language,
+        ip,
+        userAgent,
+      });
+
+      return res.json({ success: true, data: attempt });
+    } catch (error: any) {
+      logger.error('Error starting exam:', error);
+      return res
+        .status(400)
+        .json({ success: false, error: error?.message || 'Failed to start exam' });
+    }
+  }
+);
+
+/**
+ * POST /api/partners/certifications/:certId/exam/submit
+ */
+router.post(
+  '/certifications/:certId/exam/submit',
+  async (req: Request, res: Response, _next: NextFunction) => {
+    try {
+      const partnerOrgId = await requirePartnerOrgId(req, res);
+      if (!partnerOrgId) return;
+      const userId = (req as any).user?.id || (req as any).userId;
+      if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+      const { certId } = req.params;
+      const { attemptId, answers } = req.body || {};
+      if (!attemptId || typeof attemptId !== 'string') {
+        return res.status(400).json({ success: false, error: 'attemptId is required' });
+      }
+      if (!answers || typeof answers !== 'object') {
+        return res.status(400).json({ success: false, error: 'answers is required' });
+      }
+
+      const result = await submitSalesExam({
+        attemptId,
+        certificationId: certId,
+        partnerOrgId,
+        userId,
+        answers,
+      });
+      return res.json({ success: true, data: result });
+    } catch (error: any) {
+      logger.error('Error submitting exam:', error);
+      return res
+        .status(400)
+        .json({ success: false, error: error?.message || 'Failed to submit exam' });
+    }
+  }
+);
+
+/**
+ * GET /api/partners/certificates/:certificateId/download
+ */
+router.get(
+  '/certificates/:certificateId/download',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const partnerOrgId = await requirePartnerOrgId(req, res);
+      if (!partnerOrgId) return;
+      const userId = (req as any).user?.id || (req as any).userId;
+      if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+      const { certificateId } = req.params;
+      const db = getDatabase();
+      const cert = await DbPromise.get<any>(
+        db,
+        `SELECT pc.id, pc.certificate_type, pc.earned_at, po.name as partner_org_name
+         FROM partner_certificates pc
+         JOIN partner_organizations po ON po.id = pc.partner_org_id
+         WHERE pc.id = ? AND pc.partner_org_id = ? AND pc.user_id = ?`,
+        [certificateId, partnerOrgId, userId]
+      );
+      if (!cert) return res.status(404).json({ success: false, error: 'Certificate not found' });
+
+      const pdf = await generatePartnerCertificatePdf({
+        certificateId: cert.id,
+        partnerOrgName: cert.partner_org_name || 'Partner',
+        userName: (req as any).user?.name || 'User',
+        certificateType: cert.certificate_type || 'sales',
+        earnedAt: cert.earned_at || new Date().toISOString(),
+        language: looksPolish(req) ? 'pl' : 'en',
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename=\"partner-certificate-${certificateId}.pdf\"`
+      );
+      return res.status(200).send(pdf);
+    } catch (error: any) {
+      logger.error('Error downloading certificate:', error);
       next(error);
     }
   }
@@ -935,7 +1363,48 @@ router.get(
  */
 router.get('/resources', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(res, 'Partner resources unavailable (no real implementation)');
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
+
+    const db = getDatabase();
+    const partnerTier = await getEffectivePartnerTier(partnerOrgId);
+
+    const rows = await DbPromise.all<any>(
+      db,
+      `SELECT id, title, category, file_type, file_size_bytes, min_partner_tier,
+              file_key, file_name, mime_type, size_bytes
+       FROM partner_resources
+       WHERE is_active = TRUE
+       ORDER BY category ASC, title ASC`,
+      []
+    );
+
+    const grouped = {
+      documentation: [] as any[],
+      marketing: [] as any[],
+      caseStudies: [] as any[],
+      templates: [] as any[],
+    };
+
+    for (const r of rows) {
+      if (tierRank(partnerTier) < tierRank(r.min_partner_tier)) continue;
+      const bytes = Number(r.size_bytes ?? r.file_size_bytes ?? 0);
+      const item = {
+        id: r.id,
+        title: r.title,
+        type: resourceTypeLabel(r.mime_type, r.file_type),
+        size: formatBytes(Number.isFinite(bytes) ? bytes : 0),
+        category: r.category,
+      };
+
+      if (r.category === 'marketing') grouped.marketing.push(item);
+      else if (r.category === 'documentation') grouped.documentation.push(item);
+      else if (r.category === 'case_study') grouped.caseStudies.push(item);
+      else if (r.category === 'template') grouped.templates.push(item);
+      else grouped.documentation.push(item);
+    }
+
+    return res.json({ success: true, data: grouped });
   } catch (error: any) {
     logger.error('Error fetching resources:', error);
     next(error);
@@ -950,7 +1419,74 @@ router.get(
   '/resources/:resourceId/download',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      return featureUnavailable(res, 'Partner resource downloads unavailable (no real implementation)');
+      const partnerOrgId = await requirePartnerOrgId(req, res);
+      if (!partnerOrgId) return;
+      const userId = (req as any).user?.id || (req as any).userId;
+      if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+      const { resourceId } = req.params;
+      const db = getDatabase();
+      const resource = await DbPromise.get<any>(
+        db,
+        `SELECT id, title, category, min_partner_tier, file_key, file_name, mime_type, language,
+                size_bytes, file_size_bytes, file_type
+         FROM partner_resources
+         WHERE id = ? AND is_active = TRUE
+         LIMIT 1`,
+        [resourceId]
+      );
+      if (!resource) return res.status(404).json({ success: false, error: 'Resource not found' });
+
+      const partnerTier = await getEffectivePartnerTier(partnerOrgId);
+      if (tierRank(partnerTier) < tierRank(resource.min_partner_tier)) {
+        return res.status(403).json({ success: false, error: 'Insufficient partner tier' });
+      }
+
+      if (!resource.file_key) {
+        return res.status(500).json({ success: false, error: 'Resource not configured' });
+      }
+
+      const generated = await generatePartnerToolkitResourceFile({
+        fileKey: resource.file_key,
+        language: resource.language === 'pl' ? 'pl' : 'en',
+        fileNameHint: resource.file_name || null,
+      });
+
+      // Audit download (best-effort)
+      const ip = String((req.headers['x-forwarded-for'] as any) || req.socket.remoteAddress || '');
+      const ipHash = ip
+        ? crypto.createHash('sha256').update(String(ip)).digest('hex')
+        : null;
+      const userAgent = String(req.headers['user-agent'] || '');
+
+      try {
+        await DbPromise.run(
+          db,
+          `INSERT INTO partner_resource_downloads
+            (id, resource_id, partner_org_id, user_id, downloaded_at, ip_hash, user_agent)
+           VALUES (?, ?, ?, ?, NOW(), ?, ?)`,
+          [crypto.randomUUID(), resourceId, partnerOrgId, userId, ipHash, userAgent || null]
+        );
+      } catch {
+        await DbPromise.run(
+          db,
+          `INSERT INTO partner_resource_downloads (id, resource_id, partner_org_id, user_id, downloaded_at)
+           VALUES (?, ?, ?, ?, NOW())`,
+          [crypto.randomUUID(), resourceId, partnerOrgId, userId]
+        );
+      }
+
+      await DbPromise.run(
+        db,
+        `UPDATE partner_resources
+         SET download_count = COALESCE(download_count, 0) + 1, updated_at = NOW()
+         WHERE id = ?`,
+        [resourceId]
+      );
+
+      res.setHeader('Content-Type', generated.mimeType);
+      res.setHeader('Content-Disposition', `attachment; filename="${generated.fileName}"`);
+      return res.status(200).send(generated.buffer);
     } catch (error: any) {
       logger.error('Error downloading resource:', error);
       next(error);

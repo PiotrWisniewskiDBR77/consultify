@@ -506,13 +506,18 @@ export class ProjectController {
       const { id } = req.params;
 
       const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
-<<<<<<< Updated upstream
-=======
-      if (!AIRoleGuard || AIRoleGuard.__unavailable__ === true || typeof AIRoleGuard.getRoleConfig !== 'function') {
-        res.status(503).json({ success: false, code: 'FEATURE_UNAVAILABLE', error: 'AI role management is not available' });
+      if (
+        !AIRoleGuard ||
+        AIRoleGuard.__unavailable__ === true ||
+        typeof AIRoleGuard.getRoleConfig !== 'function'
+      ) {
+        res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'AI role management is not available',
+        });
         return;
       }
->>>>>>> Stashed changes
       const roleConfig = await AIRoleGuard.getRoleConfig(id);
 
       res.json({
@@ -559,18 +564,19 @@ export class ProjectController {
       }
 
       const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
-<<<<<<< Updated upstream
-=======
       if (
         !AIRoleGuard ||
         AIRoleGuard.__unavailable__ === true ||
         typeof AIRoleGuard.getProjectRole !== 'function' ||
         typeof AIRoleGuard.setProjectRole !== 'function'
       ) {
-        res.status(503).json({ success: false, code: 'FEATURE_UNAVAILABLE', error: 'AI role management is not available' });
+        res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'AI role management is not available',
+        });
         return;
       }
->>>>>>> Stashed changes
 
       const AIAuditLogger = await import('../services/aiAuditLogger.js').then(
         (m) => m.default || m
@@ -579,9 +585,8 @@ export class ProjectController {
       // Get current role for audit
       const currentRole = await AIRoleGuard.getProjectRole(projectId);
 
-      // Update the role - note: aiRoleGuard.ts stub doesn't have setProjectRole, so we'll handle it differently
-      // For now, just log the change since the stub doesn't persist changes
-      await AIRoleGuard.updateProjectRole(projectId, aiRole);
+      // Update role in `project_ai_settings`
+      await AIRoleGuard.setProjectRole(projectId, aiRole, userId);
 
       // Audit the change
       await AIAuditLogger.logInteraction({
