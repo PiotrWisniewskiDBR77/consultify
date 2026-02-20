@@ -883,6 +883,22 @@
     "calendar": "Calendar",
     "decisions": "Decisions",
     "heatmap": "Workload Heatmap",
+    "workloadAi": {
+      "button": "AI suggestions",
+      "title": "AI workload suggestions",
+      "subtitle": "7-day forecast · reassignment proposals",
+      "loading": "Loading…",
+      "noProject": "Project context required for AI workload suggestions.",
+      "loadError": "Failed to load AI workload suggestions.",
+      "peopleTitle": "Forecast",
+      "suggestionsTitle": "Suggestions",
+      "noSuggestions": "No reassignment suggestions found.",
+      "noneSelected": "Select at least one suggestion to apply.",
+      "applied": "Reassignments applied.",
+      "applyError": "Failed to apply suggestions.",
+      "moveFromTo": "Move",
+      "disclaimer": "Suggestions are conservative heuristics; always review priority and context before applying."
+    },
     "tabs": {
       "execution": "Control",
       "initiatives": "Initiatives",
@@ -3171,6 +3187,9 @@
     }
   },
   "portfolio": {
+    "toast": {
+      "cannotDowngrade": "Cannot downgrade status. Use Cancel or Archive."
+    },
     "ai": {
       "selectedCount": "Selected",
       "analyzeSelection": "AI: Analyze selection",
@@ -3205,7 +3224,41 @@
       "scenariosFailed": "Failed to generate scenarios",
       "applyScenario": "Apply scenario",
       "allocations": "Allocations",
-      "noProject": "Project is required to apply a scenario"
+      "noProject": "Project is required to apply a scenario",
+      "selectionCount": "{{count}} selected",
+      "noSelection": "Select at least one initiative.",
+      "conflictsTitle": "Conflicts",
+      "conflictsError": "Failed to analyze conflicts.",
+      "prioritiesTitle": "Priority suggestions",
+      "noPriorities": "No priority suggestions.",
+      "prioritiesError": "Failed to generate priority suggestions.",
+      "currentPriority": "Current",
+      "priorityApplied": "Priority updated.",
+      "overlapTitle": "Overlap / duplication",
+      "overlapNeedTwo": "Select at least two initiatives for overlap detection.",
+      "overlapError": "Failed to detect overlap suggestions.",
+      "overlapScore": "Score",
+      "nonhumanError": "Failed to analyze non-human resources.",
+      "nonhumanTitle": "Non-human resources",
+      "nonhumanEmpty": "No non-human resource data available for this selection.",
+      "budgetUnknown": "No budget line items found (showing unknowns).",
+      "duplicatePurchases": "Duplicate purchases",
+      "noDuplicates": "No duplicate purchases detected.",
+      "vendor": "Vendor",
+      "scenariosTitle": "Scenarios",
+      "generateScenarios": "Generate scenarios",
+      "scenariosHint": "Generate 2–3 options to compare time vs budget trade-offs, then apply a selected plan.",
+      "scenarioError": "Failed to generate scenarios.",
+      "scenarioApplied": "Scenario applied.",
+      "scenarioApplyError": "Failed to apply scenario.",
+      "scenarioTimeBoxed": "Time-boxed",
+      "scenarioBudgetBoxed": "Budget-boxed",
+      "scenarioBalanced": "Balanced (AI baseline)",
+      "scenarioBalancedAiSummary": "Uses AI scheduling baseline to balance quick wins and workload.",
+      "scenarioTimeSummary": "Prioritizes earlier delivery by pulling key items forward.",
+      "scenarioBudgetSummary": "Spreads work to reduce quarterly budget spikes (conservative capacity).",
+      "scenarioBalancedSummary": "Balances quick wins and workload distribution.",
+      "budgetHighlights": "Budget highlights"
     }
   }
 }
