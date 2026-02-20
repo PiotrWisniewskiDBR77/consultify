@@ -2652,5 +2652,44 @@
       "businessBilling": "Business & Billing",
       "securityCompliance": "Security & Compliance"
     }
+  },
+  "oauth": {
+    "loginStarted": "Redirecting to {{provider}}...",
+    "loginSucceeded": "Successfully logged in with {{provider}}",
+    "loginFailed": "{{provider}} login failed. Please try again.",
+    "notConfigured": "{{provider}} login is not configured.",
+    "noEmail": "Could not retrieve email from {{provider}}. Please try another method.",
+    "emailNotVerified": "Your {{provider}} email is not verified. Please verify it first.",
+    "invalidState": "Authentication session expired. Please try again.",
+    "providerIdentityAlreadyLinked": "This {{provider}} account is already linked to another user."
+  },
+  "settings": {
+    "connectedAccounts": {
+      "title": "Connected Accounts",
+      "subtitle": "Connect external accounts for easier sign-in and enhanced features",
+      "googleDesc": "Sign in faster with your Google account",
+      "linkedinDesc": "Connect your professional network",
+      "connected": "Connected",
+      "connectedOn": "Connected",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "disconnected": "Account disconnected",
+      "disconnectError": "Failed to disconnect account",
+      "connectSuccess": "{{provider}} connected successfully!",
+      "connectFailed": "Failed to connect account",
+      "securityTitle": "Your data is secure",
+      "securityText": "We only request minimal permissions. Your credentials are never stored. You can disconnect at any time."
+    }
+  },
+  "profile": {
+    "completeness": {
+      "title": "Profile Completeness",
+      "connectLinkedin": "Connect your LinkedIn account for faster login and professional credibility.",
+      "addPhoto": "Add a profile photo to personalize your account.",
+      "enableMfa": "Enable two-factor authentication for better security.",
+      "complete": "Your profile is complete!",
+      "suggestions": "Suggestions",
+      "achievements": "Achievements"
+    }
   }
 }

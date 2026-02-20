@@ -2670,5 +2670,44 @@
       "businessBilling": "Biznes i rozliczenia",
       "securityCompliance": "Bezpieczeństwo i zgodność"
     }
+  },
+  "oauth": {
+    "loginStarted": "Przekierowywanie do {{provider}}...",
+    "loginSucceeded": "Zalogowano pomyślnie przez {{provider}}",
+    "loginFailed": "Logowanie przez {{provider}} nie powiodło się. Spróbuj ponownie.",
+    "notConfigured": "Logowanie przez {{provider}} nie jest skonfigurowane.",
+    "noEmail": "Nie udało się pobrać adresu email z {{provider}}. Spróbuj innej metody.",
+    "emailNotVerified": "Twój email w {{provider}} nie jest zweryfikowany. Zweryfikuj go najpierw.",
+    "invalidState": "Sesja uwierzytelniania wygasła. Spróbuj ponownie.",
+    "providerIdentityAlreadyLinked": "To konto {{provider}} jest już połączone z innym użytkownikiem."
+  },
+  "settings": {
+    "connectedAccounts": {
+      "title": "Połączone konta",
+      "subtitle": "Połącz konta zewnętrzne, aby ułatwić logowanie i korzystać z dodatkowych funkcji",
+      "googleDesc": "Loguj się szybciej kontem Google",
+      "linkedinDesc": "Połącz swoją sieć profesjonalną",
+      "connected": "Połączono",
+      "connectedOn": "Połączono",
+      "connect": "Połącz",
+      "disconnect": "Odłącz",
+      "disconnected": "Konto odłączone",
+      "disconnectError": "Nie udało się odłączyć konta",
+      "connectSuccess": "{{provider}} połączono pomyślnie!",
+      "connectFailed": "Nie udało się połączyć konta",
+      "securityTitle": "Twoje dane są bezpieczne",
+      "securityText": "Prosimy tylko o minimalne uprawnienia. Twoje dane logowania nigdy nie są przechowywane. Możesz odłączyć konto w każdej chwili."
+    }
+  },
+  "profile": {
+    "completeness": {
+      "title": "Kompletność profilu",
+      "connectLinkedin": "Połącz konto LinkedIn, aby szybciej się logować i zwiększyć wiarygodność.",
+      "addPhoto": "Dodaj zdjęcie profilowe, aby spersonalizować swoje konto.",
+      "enableMfa": "Włącz uwierzytelnianie dwuskładnikowe dla lepszego bezpieczeństwa.",
+      "complete": "Twój profil jest kompletny!",
+      "suggestions": "Sugestie",
+      "achievements": "Osiągnięcia"
+    }
   }
 }
