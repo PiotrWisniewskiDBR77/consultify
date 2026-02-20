@@ -3411,5 +3411,115 @@
       "draft": "Robocze",
       "needsReview": "Wymaga przeglądu"
     }
+  },
+  "presentations": {
+    "wizard": {
+      "title": "Generator prezentacji",
+      "titleRequired": "Podaj tytuł",
+      "outlineFailed": "Nie udało się wygenerować konspektu",
+      "generationFailed": "Generowanie nie powiodło się",
+      "downloadFailed": "Pobieranie nie powiodło się"
+    },
+    "steps": {
+      "sources": "Źródła",
+      "setup": "Konfiguracja",
+      "outline": "Konspekt",
+      "result": "Wynik"
+    },
+    "sources": {
+      "title": "Wybierz źródła danych",
+      "subtitle": "Wybierz artefakty z platformy do uwzględnienia w decku.",
+      "initiative_portfolio": "Portfel inicjatyw",
+      "execution_status": "Status realizacji",
+      "kpi_roi": "KPI i ROI",
+      "raid": "Ryzyka i problemy",
+      "assessment": "Wyniki oceny",
+      "tool_session": "Sesja narzędzia"
+    },
+    "setup": {
+      "title": "Skonfiguruj swój deck",
+      "subtitle": "Ustaw ton, odbiorców i styl.",
+      "deckTitle": "Tytuł decka",
+      "titlePlaceholder": "np. Steering Committee Update — Q1 2026",
+      "template": "Szablon (opcjonalnie)",
+      "customDeck": "Własny deck",
+      "customDeckDesc": "AI generuje konspekt ze źródeł",
+      "audience": "Odbiorcy",
+      "goal": "Cel",
+      "language": "Język",
+      "theme": "Motyw",
+      "confidentiality": "Poufność",
+      "generateOutline": "Generuj konspekt"
+    },
+    "audiences": {
+      "sponsor": "Sponsor",
+      "executive": "Zarząd",
+      "investor": "Inwestor / VC",
+      "internal": "Zespół wewnętrzny"
+    },
+    "goals": {
+      "inform": "Informuj",
+      "decide": "Decyduj",
+      "sell": "Sprzedaj",
+      "align": "Alignuj"
+    },
+    "themes": {
+      "corporate": "Korporacyjny",
+      "minimal": "Minimalistyczny",
+      "modern": "Nowoczesny"
+    },
+    "confidentialities": {
+      "confidential": "Poufny",
+      "internal": "Wewnętrzny",
+      "public": "Publiczny"
+    },
+    "outline": {
+      "title": "Konspekt decka",
+      "slides": "slajdów",
+      "reorder": "Przeciągnij by zmienić kolejność, przełącz by włączyć/wyłączyć",
+      "addSlide": "+ Dodaj slajd...",
+      "generate": "Generuj deck"
+    },
+    "generating": {
+      "title": "Generowanie decka",
+      "subtitle": "Tworzenie slajdów klasy BCG z walidacją jakości. To może chwilę potrwać..."
+    },
+    "result": {
+      "ready": "Twój deck jest gotowy!",
+      "slidesGenerated": "slajdów wygenerowanych pomyślnie",
+      "warnings": "Ostrzeżenia jakości",
+      "downloadPptx": "Pobierz PPTX",
+      "editOutline": "Edytuj i regeneruj"
+    },
+    "templates": {
+      "systemTemplates": "Szablony systemowe",
+      "orgTemplates": "Szablony organizacji",
+      "viewOutline": "Zobacz konspekt",
+      "use": "Użyj",
+      "clone": "Sklonuj",
+      "cloned": "Szablon sklonowany do Twojej organizacji",
+      "cloneFailed": "Nie udało się sklonować"
+    },
+    "brandKit": {
+      "title": "Kit marki",
+      "subtitle": "Skonfiguruj branding organizacji dla prezentacji i raportów.",
+      "colors": "Kolory",
+      "primary": "Główny",
+      "secondary": "Drugorzędny",
+      "accent": "Akcent",
+      "fonts": "Czcionki",
+      "titleFont": "Czcionka tytułu",
+      "bodyFont": "Czcionka tekstu",
+      "headerFooter": "Nagłówek i stopka",
+      "headerText": "Tekst nagłówka",
+      "footerText": "Tekst stopki",
+      "pageNumbers": "Numeracja stron",
+      "confidentialityBanner": "Baner poufności",
+      "defaultConfidentiality": "Domyślna poufność",
+      "disclaimer": "Tekst zastrzeżeń",
+      "disclaimerPlaceholder": "Opcjonalne zastrzeżenie prawne dla decków finansowych/wycenowych",
+      "saved": "Kit marki zapisany",
+      "saveFailed": "Nie udało się zapisać"
+    }
   }
 }

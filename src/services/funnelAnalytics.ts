@@ -138,7 +138,15 @@ export type FunnelEventName =
   | 'financial_statement_mapping_corrected'
   | 'financial_ratios_viewed'
   | 'financial_benchmark_updated'
-  | 'financial_ratio_exported';
+  | 'financial_ratio_exported'
+  | 'presentation_generator_opened'
+  | 'presentation_outline_generated'
+  | 'presentation_exported'
+  | 'presentation_shared'
+  | 'template_selected'
+  | 'brand_kit_updated'
+  | 'template_cloned'
+  | 'template_published';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

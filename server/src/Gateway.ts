@@ -11,6 +11,7 @@ import adminDataRoutes from './routes/admin-data.routes.js';
 import adminAlertsRoutes from './routes/adminAlerts.routes.js';
 import agentsRoutes from './routes/agents.routes.js';
 import aiRoutes from './routes/ai.routes.js';
+import portfolioOptimizationRoutes from './routes/portfolioOptimization.routes.js';
 import aiAnalyticsRoutes from './routes/ai/ai-analytics.routes.js';
 import aiBudgetsRoutes from './routes/ai/ai-budgets.routes.js';
 import aiDevelopmentRoutes from './routes/ai/ai-development.routes.js';
@@ -129,6 +130,7 @@ import partnerRoutes, {
 } from './routes/partners.routes.js';
 import performanceRoutes from './routes/performance.routes.js';
 import performanceMetricsRoutes from './routes/performance-metrics.routes.js';
+import presentationsRoutes from './routes/presentations.routes.js';
 import permissionRequestsRoutes from './routes/permissionRequests.routes.js';
 import pinnedPromptsRoutes from './routes/pinned-prompts.routes.js';
 import capacityRoutes from './routes/pmo/capacity.routes.js';
@@ -247,6 +249,8 @@ export class ApiGateway {
       app.use('/api/tools', toolsRoutes);
       console.log('[ApiGateway] Mounting /api/known-tools');
       app.use('/api/known-tools', knownToolsRoutes);
+      console.log('[ApiGateway] Mounting /api/portfolio-optimization');
+      app.use('/api/portfolio-optimization', portfolioOptimizationRoutes);
       console.log('[ApiGateway] Mounting /api/assessment-workflow');
       app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
       console.log('[ApiGateway] Mounting /api/assessment-workflow-v2');
@@ -475,6 +479,7 @@ export class ApiGateway {
         economicsRoutes?.stack?.length
       );
       app.use('/api/economics', economicsRoutes);
+      app.use('/api/presentations', presentationsRoutes);
       mountStub('/api/locations', locationsRoutes, 'locationsRoutes');
       mountStub(
         '/api/notification-settings',
