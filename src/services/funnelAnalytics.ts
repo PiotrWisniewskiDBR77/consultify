@@ -232,7 +232,23 @@ export type FunnelEventName =
   | 'demo_cta_clicked'
   | 'signup_started'
   | 'signup_completed'
-  | 'trial_activated';
+  | 'trial_activated'
+  // T099 — C-Type Table View
+  | 'table_view_mode_changed'
+  | 'table_row_quick_action_used'
+  // T102 — Sidebar Design System
+  | 'sidebar_item_clicked'
+  | 'sidebar_collapsed_toggled'
+  | 'sidebar_flyout_opened'
+  // T104/T105 — Chat UI Polish
+  | 'chat_business_button_clicked'
+  | 'ai_actions_view_opened'
+  // T108 — SuperAdmin Control & System Testing
+  | 'superadmin_action_executed'
+  | 'superadmin_impersonation_started'
+  | 'superadmin_impersonation_ended'
+  | 'test_support_bootstrap_called'
+  | 'test_support_cleanup_called';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

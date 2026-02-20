@@ -3413,5 +3413,53 @@
       "industry": "Usługi profesjonalne — prawo i compliance",
       "scenario": { "executive": "Przegląd dla zarządu", "initiatives": "Inicjatywy i realizacja — szczegóły", "finance": "Finanse i ROI — szczegóły" }
     }
+  },
+  "ui": {
+    "tableToggle": {
+      "label": "Tryb prezentacji tabeli",
+      "nMode": "Widok strony",
+      "cMode": "Widok tabeli"
+    }
+  },
+  "navigation": {
+    "sidebar": {
+      "collapse": "Zwiń sidebar",
+      "expand": "Rozwiń sidebar",
+      "groupModules": "MODUŁY",
+      "groupAdmin": "ADMINISTRACJA"
+    }
+  },
+  "chat": {
+    "business": "Akcje biznesowe",
+    "businessTooltip": "Przejrzyj oczekujące akcje biznesowe i zatwierdzenia",
+    "newChat": "Nowa rozmowa",
+    "history": "Historia rozmów",
+    "autoReadOn": "Włącz czytanie na głos",
+    "autoReadOff": "Wyłącz czytanie na głos"
+  },
+  "superadmin": {
+    "confirm": {
+      "title": "Potwierdź akcję",
+      "description": "Ta akcja zostanie zarejestrowana w dzienniku audytu.",
+      "reasonLabel": "Powód wykonania tej akcji",
+      "reasonPlaceholder": "np. Zgłoszenie klienta, incydent bezpieczeństwa, zgodność...",
+      "reasonRequired": "Podaj powód (min. 3 znaki).",
+      "cancel": "Anuluj",
+      "proceed": "Potwierdź i wykonaj",
+      "auditNotice": "Ta akcja zostanie zapisana w dzienniku audytu wraz z Twoją tożsamością i znacznikiem czasu."
+    },
+    "impersonation": {
+      "banner": "Tryb podszywania",
+      "exit": "Zakończ podszywanie",
+      "title": "Podszyj się pod użytkownika",
+      "description": "Zostaniesz zalogowany jako ten użytkownik. Wszystkie Twoje działania będą rejestrowane w dzienniku audytu.",
+      "started": "Podszywanie rozpoczęte",
+      "ended": "Podszywanie zakończone"
+    },
+    "testSupport": {
+      "bootstrapLabel": "Utwórz tenant testowy",
+      "cleanupLabel": "Wyczyść dane testowe",
+      "gatingNotice": "Dostępne tylko w środowisku testowym z odpowiednimi poświadczeniami."
+    }
   }
 }

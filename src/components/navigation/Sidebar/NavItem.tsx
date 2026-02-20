@@ -1,7 +1,8 @@
 /**
- * NavItem Component - Apple HIG Design System
+ * NavItem Component — Tech Sexy Design System (T102)
  *
- * A single navigation item in the sidebar with hover states and icons.
+ * Sidebar nav item with monochromatic chrome, invisible borders,
+ * bg-only hover, and outline mono-weight icons.
  */
 
 import { motion } from 'framer-motion';
@@ -47,13 +48,11 @@ export const NavItem: React.FC<NavItemProps> = ({
   const isCompleted = item.viewId && completedViews.includes(item.viewId);
   const badgeLabel = item.badge === 'soon' ? 'In development' : item.badge;
 
-  // Check if locked
   const isLocked =
     item.requiresView &&
     !completedViews.includes(item.requiresView) &&
     !(currentUserRole === UserRole.ADMIN || currentUserRole === 'SUPERADMIN');
 
-  // Check if any child is active
   const isChildActive = (i: MenuItem): boolean => {
     if (i.viewId === currentView) return true;
     if (i.subItems) return i.subItems.some((sub) => isChildActive(sub));
@@ -61,7 +60,6 @@ export const NavItem: React.FC<NavItemProps> = ({
   };
   const isParentActive = hasSubItems && isChildActive(item);
 
-  // Tooltip
   const getTooltip = () => {
     if (isLocked && item.requiresView) {
       return `${t('common.locked')}: ${t('common.complete')} ${getViewName(item.requiresView)} ${t('common.first')}`;
@@ -92,81 +90,85 @@ export const NavItem: React.FC<NavItemProps> = ({
         onClick={() => onClick(item)}
         disabled={isLocked}
         whileTap={!isLocked ? { scale: 0.98 } : undefined}
-        className={`
-          w-full flex items-center text-sm transition-all duration-150 ease-out relative group
-          ${isTouchDevice ? 'py-3 min-h-[44px]' : 'py-2.5'}
-          ${showFull ? 'px-3' : 'px-0 justify-center'}
-          rounded-xl
-          ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-          ${
-            isHighlighted
-              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-              : isParentActive
-                ? 'text-slate-800 dark:text-slate-100 font-medium bg-slate-200/60 dark:bg-white/5'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-white/[0.06]'
-          }
-        `}
+        className={[
+          'w-full flex items-center text-sm transition-all duration-150 ease-out relative group rounded-lg',
+          isTouchDevice ? 'py-2.5 min-h-[44px]' : 'py-[7px]',
+          showFull ? 'px-2.5 gap-2.5' : 'px-0 justify-center',
+          isLocked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
+          isHighlighted
+            ? 'bg-white/[0.08] text-slate-100 dark:text-slate-100 font-medium'
+            : isParentActive
+              ? 'text-slate-200 dark:text-slate-200 bg-white/[0.04]'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-white/[0.05] hover:text-slate-300 dark:hover:text-slate-300',
+        ].join(' ')}
         title={getTooltip()}
+        aria-current={isHighlighted ? 'page' : undefined}
       >
-        {/* Left side: Icon and Label */}
-        <div
-          className={`flex items-center gap-3 min-w-0 ${!showFull ? 'justify-center w-full' : 'flex-1'}`}
-        >
-          {item.icon && (
-            <span
-              className={`
-                transition-colors
-                ${
-                  isHighlighted || isParentActive
-                    ? 'text-primary-600 dark:text-primary-400'
-                    : 'text-slate-400 dark:text-slate-500'
-                }
-              `}
-            >
-              {React.cloneElement(item.icon as React.ReactElement<{ size: number }>, { size: 20 })}
-            </span>
-          )}
+        {/* Icon */}
+        {item.icon && (
+          <span
+            className={[
+              'shrink-0 transition-colors',
+              isHighlighted
+                ? 'text-primary-400'
+                : isParentActive
+                  ? 'text-slate-400'
+                  : 'text-slate-500 dark:text-slate-500 group-hover:text-slate-400',
+            ].join(' ')}
+          >
+            {React.cloneElement(
+              item.icon as React.ReactElement<{ size: number; strokeWidth: number }>,
+              {
+                size: 18,
+                strokeWidth: 1.75,
+              }
+            )}
+          </span>
+        )}
 
-          {showFull && (
-            <span className="truncate tracking-wide flex-1 text-left">{item.label}</span>
-          )}
-        </div>
+        {/* Label */}
+        {showFull && (
+          <span className="truncate flex-1 text-left text-[13px] leading-5">{item.label}</span>
+        )}
 
-        {/* Right side: Status icons */}
+        {/* Right side */}
         {showRightSide && (
-          <div className="flex items-center gap-2 ml-auto">
-            {/* Badge */}
+          <div className="flex items-center gap-1.5 ml-auto shrink-0">
             {item.badge && (
               <span
-                className={`
-                  px-2 py-0.5 text-[10px] font-semibold rounded-full tracking-wide shrink-0
-                  ${item.badge === 'beta' ? 'bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300' : ''}
-                  ${item.badge === 'new' ? 'bg-green-500/10 text-green-700 dark:bg-green-400/10 dark:text-green-300' : ''}
-                  ${item.badge === 'soon' ? 'bg-amber-400/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300' : ''}
-                `}
+                className={[
+                  'px-1.5 py-px text-[10px] font-medium rounded tracking-wide',
+                  item.badge === 'beta'
+                    ? 'bg-amber-500/10 text-amber-400'
+                    : item.badge === 'new'
+                      ? 'bg-emerald-500/10 text-emerald-400'
+                      : 'bg-amber-400/10 text-amber-400',
+                ].join(' ')}
               >
                 {badgeLabel}
               </span>
             )}
-            {isCompleted && !isActive && <CheckCircle2 size={14} className="text-success-500/80" />}
-            {isLocked && <Lock size={12} className="text-slate-400 dark:text-slate-500" />}
+            {isCompleted && !isActive && (
+              <CheckCircle2 size={13} strokeWidth={1.75} className="text-emerald-500/70" />
+            )}
+            {isLocked && <Lock size={12} strokeWidth={1.75} className="text-slate-600" />}
             {hasSubItems && (
               <motion.span
-                className="text-slate-400 dark:text-slate-600"
+                className="text-slate-600"
                 animate={{ x: isFloatingActive ? 2 : 0 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               >
-                <ChevronRight size={14} />
+                <ChevronRight size={13} strokeWidth={1.75} />
               </motion.span>
             )}
           </div>
         )}
 
-        {/* Active indicator */}
+        {/* Active accent bar */}
         {isHighlighted && (
           <motion.div
             layoutId="activeIndicator"
-            className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-primary-500 rounded-full"
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-primary-500 rounded-r-full"
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           />
         )}

@@ -408,25 +408,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               >
                 {/* Avatar */}
                 <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 border ${
-                    msg.role === 'ai'
-                      ? 'bg-primary-50 dark:bg-primary-900/50 border-primary-200 dark:border-primary-700'
-                      : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600'
+                  className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                    msg.role === 'ai' ? 'bg-primary-500/10' : 'bg-slate-200/60 dark:bg-white/[0.06]'
                   }`}
                 >
                   {msg.role === 'ai' ? (
-                    <Bot size={14} className="text-primary-600 dark:text-primary-400" />
+                    <Bot size={14} strokeWidth={1.75} className="text-primary-500" />
                   ) : (
-                    <User size={14} className="text-slate-400 dark:text-slate-300" />
+                    <User size={14} strokeWidth={1.75} className="text-slate-400" />
                   )}
                 </div>
 
                 {/* Bubble */}
                 <div
-                  className={`relative max-w-[85%] rounded-xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
+                  className={`relative max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-primary-600 text-white rounded-tr-none'
-                      : 'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
+                      ? 'bg-primary-600 text-white rounded-tr-sm'
+                      : 'bg-slate-50 dark:bg-navy-800/60 text-slate-700 dark:text-slate-200 rounded-tl-sm'
                   }`}
                 >
                   {/* AI Message Header */}
@@ -506,10 +504,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     </span>
                   )}
 
-                  {/* Hover Actions - World-Class Chat 2025 */}
+                  {/* Hover Actions */}
                   {enableEnhancedMessages && isHovered && !msg.isStreaming && (
                     <div
-                      className={`absolute ${msg.role === 'user' ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'} top-0 flex items-center gap-0.5 bg-slate-50 dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 p-1`}
+                      className={`absolute ${msg.role === 'user' ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'} top-0 flex items-center gap-0.5 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200/60 dark:border-white/[0.08] p-0.5`}
                     >
                       {/* Copy */}
                       <button

@@ -3413,5 +3413,53 @@
       "industry": "Professional Services — Legal & Compliance",
       "scenario": { "executive": "Executive Overview", "initiatives": "Deep Dive: Initiatives & Execution", "finance": "Deep Dive: Finance & ROI" }
     }
+  },
+  "ui": {
+    "tableToggle": {
+      "label": "Table presentation mode",
+      "nMode": "Page view",
+      "cMode": "Table view"
+    }
+  },
+  "navigation": {
+    "sidebar": {
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar",
+      "groupModules": "MODULES",
+      "groupAdmin": "ADMIN"
+    }
+  },
+  "chat": {
+    "business": "Business actions",
+    "businessTooltip": "View pending business actions and approvals",
+    "newChat": "New chat",
+    "history": "Chat history",
+    "autoReadOn": "Turn on auto-read",
+    "autoReadOff": "Turn off auto-read"
+  },
+  "superadmin": {
+    "confirm": {
+      "title": "Confirm Action",
+      "description": "This action will be logged in the audit trail.",
+      "reasonLabel": "Reason for this action",
+      "reasonPlaceholder": "e.g., Customer request, security incident, compliance...",
+      "reasonRequired": "Please provide a reason (min 3 characters).",
+      "cancel": "Cancel",
+      "proceed": "Confirm & Proceed",
+      "auditNotice": "This action will be recorded in the audit log with your identity and timestamp."
+    },
+    "impersonation": {
+      "banner": "Impersonating Mode",
+      "exit": "Exit Impersonation",
+      "title": "Impersonate User",
+      "description": "You will be logged in as this user. All your actions will be recorded in the audit log.",
+      "started": "Impersonation started",
+      "ended": "Impersonation ended"
+    },
+    "testSupport": {
+      "bootstrapLabel": "Bootstrap Test Tenant",
+      "cleanupLabel": "Cleanup Test Data",
+      "gatingNotice": "Available only in test environment with proper credentials."
+    }
   }
 }
