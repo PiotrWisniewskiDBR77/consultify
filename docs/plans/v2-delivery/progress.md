@@ -49,11 +49,16 @@ Cel: zebys zawsze widzial **czy idziemy zgodnie z planem** i czy nie narasta bal
 
 | Bundle / slice | Taski | Branch | Owner | Status | Uwagi |
 |---|---|---|---|---|---|
-| 02.1 (slice) | T007, T009 | bundle-02-my-work-slice-02-1 | Cursor A | in_progress | My Work: tasks + ideas |
-| 06.1 (slice) | T025 | bundle-06-licensed-tools-rename | Cursor B | in_progress | Assessment → Licensed Tools rename |
-| 28 | T096–T098 | bundle-28-partners-program | Codex | in_progress | Partners program toolkit + cert + outreach |
+| 02.1 (slice) | T007, T009 | bundle-02-my-work-slice-02-1 | Cursor A | in_progress | My Work: tasks + ideas — WIP w stash, agent jeszcze pracuje |
+| 06.1 (slice) | T025 | bundle-06-licensed-tools-rename | Cursor B | pending | Branch bez commitów — Agent 2 musi wypchnąć zmiany |
+| 28 | T096–T098 | codex/bundle-28-partners-program | Codex | **merged** | Migracje 555–557, Partner Portal, cleanup konflikt-markerów |
 
 **Start:** main wypchnięty na origin. Prompty: `docs/plans/v2-delivery/PROMPTS_WAVE_3.md`
+
+### Wave 3 — merge wykonane (2026-02-20)
+- **Bundle 28** (Codex): merged do main. Usunięto pozostały konflikt-marker z tokenBilling.test.js.
+- **Bundle 06** (Cursor B): branch lokalny bez commitów — Agent 2 musi wypchnąć zmiany na origin.
+- **Bundle 02** (Cursor A): WIP w stash `"Agent 1 Bundle 02 WIP (MyWork)"` — przywrócić na branch `bundle-02-my-work-slice-02-1`.
 
 ---
 
@@ -101,7 +106,7 @@ Statusy: `planned | in_progress | in_review | merged | blocked | parked`
 | 25 | T091-T092 | Cursor | **merged** | bundle-25-trial-upgrade | Wave 1 |
 | 26 | T093 | Cursor | **merged** | bundle-26-legal-acceptance | Wave 1 |
 | 27 | T094-T095 | Codex | planned | | content-heavy |
-| 28 | T096-T098 | Codex | planned | | |
+| 28 | T096-T098 | Codex | **merged** | codex/bundle-28-partners-program | Wave 3 |
 | 29 | T099-T105 + T101-T103 | Cursor | planned | | weekend/hard |
 | 30 | T106-T122 (slices) | Cursor | planned | | 30.5 (OAuth) merged as slice |
 
