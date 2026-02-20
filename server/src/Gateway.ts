@@ -177,6 +177,7 @@ import systemHealthRoutes from './routes/systemHealth.routes.js';
 import taskAdvisorRoutes from './routes/task-advisor.routes.js';
 import toolsRoutes from './routes/tools.routes.js';
 import trialRoutes from './routes/trial.routes.js';
+import portfolioOptimizationRoutes from './routes/portfolioOptimization.routes.js';
 import loginHistoryRoutes from './routes/user/loginHistory.routes.js';
 import preferencesRoutes from './routes/user/preferences.routes.js';
 import sessionsRoutes from './routes/user/sessions.routes.js';
@@ -521,6 +522,7 @@ export class ApiGateway {
       app.use('/api/mfa', mfaRoutes);
       mountStub('/api/raid', raidRoutes, 'raidRoutes');
       app.use('/api/execution-control', executionControlRoutes);
+      app.use('/api/portfolio-optimization', portfolioOptimizationRoutes);
       mountStub('/api/budget', budgetRoutes, 'budgetRoutes');
       app.use('/api/benefits', benefitsRoutes);
       app.use('/api/content', contentRoutes);
