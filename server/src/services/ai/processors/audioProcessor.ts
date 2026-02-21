@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadAudioprocessor = createCachedLazyService('../../../ai/processors/audioProcessor.js');
+const loadAudioprocessor = createCachedLazyService('ai/processors/audioProcessor.js');
 
 // Export default instance (for backward compatibility)
 export default loadAudioprocessor();

@@ -57,6 +57,7 @@ import { Callout } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { InitiativeService } from '@/services/initiativeService';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -196,7 +197,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   onSaved,
   onOpenDecision,
 }) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const { isChatCollapsed, toggleChatCollapse } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
@@ -243,6 +244,12 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // Tags
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+
+  // T009: Suggested ideas (private) while editing task
+  const [suggestedIdeas, setSuggestedIdeas] = useState<
+    { id: string; title: string; body?: string; tags?: string[]; createdAt?: string }[]
+  >([]);
+  const [suggestedIdeasLoading, setSuggestedIdeasLoading] = useState(false);
 
   // Escalation & Reminders
   const [reminders, setReminders] = useState<ReminderRule[]>([]);
@@ -554,6 +561,32 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     }
   }, [taskId]);
 
+  useEffect(() => {
+    const q = `${title || ''} ${description || ''}`.trim();
+    if (!q) {
+      setSuggestedIdeas([]);
+      return;
+    }
+
+    const handle = window.setTimeout(async () => {
+      try {
+        setSuggestedIdeasLoading(true);
+        const ideas = await Api.suggestMyIdeas(q.slice(0, 300), 5);
+        const arr = Array.isArray(ideas) ? ideas : [];
+        setSuggestedIdeas(arr);
+        if (arr.length > 0) {
+          trackFunnelEvent('my_idea_suggested', { surface: 'task', count: arr.length });
+        }
+      } catch {
+        setSuggestedIdeas([]);
+      } finally {
+        setSuggestedIdeasLoading(false);
+      }
+    }, 450);
+
+    return () => window.clearTimeout(handle);
+  }, [title, description]);
+
   const loadUsers = async () => {
     try {
       const response = await Api.get('/users');
@@ -590,7 +623,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const loadTask = async (id: string) => {
     try {
       setLoading(true);
-      const task = await Api.get(`/tasks/${id}`);
+      const task = await Api.getPersonalTask(id);
       setTitle(task.title || '');
       setDescription(task.description || '');
       setStatus(task.status || 'todo');
@@ -696,6 +729,15 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         ownerId: ownerId || null,
       };
 
+      const personalPayload = {
+        title,
+        description,
+        status,
+        priority,
+        dueDate: dueDate || null,
+        tags,
+      };
+
       // Always persist a local draft before attempting network save (offline safety net)
       try {
         const draftKey = `consultinity-task-draft:${taskId || 'new'}`;
@@ -733,13 +775,35 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       }
 
       if (taskId) {
-        await Api.put(`/tasks/${taskId}`, payload);
+        await Api.updatePersonalTask(taskId, personalPayload);
         if (!silent) toast.success(isPolish ? 'Zadanie zaktualizowane' : 'Task updated');
-        onSaved?.({ ...payload, id: taskId });
+        if (personalPayload?.dueDate) {
+          trackFunnelEvent('personal_task_due_date_set', { source: 'detail', taskId });
+        }
+        if (personalPayload?.status === 'done') {
+          trackFunnelEvent('personal_task_completed', { source: 'detail', taskId });
+        }
+        onSaved?.({ ...personalPayload, id: taskId });
       } else {
-        const created = await Api.post('/tasks', { ...payload, projectId: projectId || null });
+        const created = await Api.createPersonalTask(personalPayload);
         if (!silent) toast.success(isPolish ? 'Zadanie utworzone' : 'Task created');
-        onSaved?.({ ...payload, id: created?.id || null });
+        trackFunnelEvent('personal_task_created', {
+          source: 'detail',
+          taskId: created?.id || null,
+        });
+        if (personalPayload?.dueDate) {
+          trackFunnelEvent('personal_task_due_date_set', {
+            source: 'detail',
+            taskId: created?.id || null,
+          });
+        }
+        if (personalPayload?.status === 'done') {
+          trackFunnelEvent('personal_task_completed', {
+            source: 'detail',
+            taskId: created?.id || null,
+          });
+        }
+        onSaved?.({ ...personalPayload, id: created?.id || null });
       }
 
       // Update dirty baseline after a successful save
@@ -965,7 +1029,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         toolsRes,
         insightsRes,
       ] = await Promise.allSettled([
-        Api.get('/tasks?limit=50'),
+        Api.getPersonalTasks({ includeDone: true, limit: 50 }),
         Api.get('/initiatives'),
         Api.getDecisions(),
         Api.getProjects(),
@@ -979,7 +1043,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         tasksRes.status === 'fulfilled'
           ? Array.isArray(tasksRes.value)
             ? tasksRes.value
-            : tasksRes.value?.tasks || []
+            : (tasksRes.value as any)?.tasks || []
           : [];
       const initiatives =
         initiativesRes.status === 'fulfilled'
@@ -2028,6 +2092,100 @@ Return ONLY the final comment text.`;
                         : 'Describe what needs to be done, why it matters, any constraints or dependencies...'
                     }
                   />
+                </div>
+
+                {/* 2.1) Relevant ideas (T009) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
+                      {t('myWork.ideas.suggestions', 'Relevant ideas')}
+                    </label>
+                    {suggestedIdeasLoading ? (
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {t('common.loading', 'Loading…')}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {suggestedIdeas.length === 0 ? (
+                    <Callout
+                      variant="info"
+                      title={t('myWork.ideas.suggestionsEmptyTitle', 'No suggestions')}
+                    >
+                      {t(
+                        'myWork.ideas.suggestionsEmpty',
+                        'Save ideas from chat to build your private library.'
+                      )}
+                    </Callout>
+                  ) : (
+                    <div className="space-y-2">
+                      {suggestedIdeas.map((idea) => (
+                        <div
+                          key={idea.id}
+                          className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/60 px-4 py-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                                {idea.title}
+                              </div>
+                              {idea.body ? (
+                                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                                  {idea.body}
+                                </div>
+                              ) : null}
+                            </div>
+                            <div className="flex flex-col gap-2 shrink-0">
+                              <button
+                                onClick={() => {
+                                  const insert = [
+                                    '',
+                                    '---',
+                                    `${t('myWork.ideas.idea', 'Idea')}: ${idea.title}`,
+                                    idea.body || '',
+                                  ]
+                                    .filter(Boolean)
+                                    .join('\n');
+                                  setDescription((prev) => `${prev || ''}${insert}`.trim());
+                                  trackFunnelEvent('my_idea_used', {
+                                    surface: 'task',
+                                    ideaId: idea.id,
+                                  });
+                                  toast.success(
+                                    t('myWork.ideas.insertedToast', 'Inserted into description')
+                                  );
+                                }}
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/15 border border-primary-500 text-primary-600 dark:text-primary-300 hover:bg-primary-500/20 transition-colors"
+                              >
+                                {t('myWork.ideas.insert', 'Insert')}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  try {
+                                    const { setMyWorkIntent } = useAppStore.getState() as any;
+                                    setMyWorkIntent?.({
+                                      tab: 'ideas',
+                                      open: {
+                                        type: 'idea',
+                                        id: idea.id,
+                                        name: idea.title,
+                                        data: idea,
+                                      },
+                                    });
+                                  } catch {
+                                    /* ignore */
+                                  }
+                                }}
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                              >
+                                {t('myWork.ideas.open', 'Open')}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* 3) Expected Outcome */}

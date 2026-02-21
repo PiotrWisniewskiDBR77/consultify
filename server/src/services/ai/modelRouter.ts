@@ -443,18 +443,15 @@ export class ModelRouter {
   }
 
   async getLastUsedProvider(tier: Tier, organizationId?: string): Promise<string | null> {
-    const query = `
-            SELECT last_provider_id 
-            FROM tier_round_robin_state 
-            WHERE tier = ? AND (organization_id = ? OR (organization_id IS NULL AND ? IS NULL))
-        `;
-    const row = await DbPromise.get<{ last_provider_id?: string }>(
-      query,
-      [tier, organizationId, organizationId],
-      {
-        fallback: true,
-      }
-    );
+    // Split queries: Postgres can't infer type of "$3 IS NULL" when $3 is null
+    const query =
+      organizationId == null
+        ? `SELECT last_provider_id FROM tier_round_robin_state WHERE tier = ? AND organization_id IS NULL`
+        : `SELECT last_provider_id FROM tier_round_robin_state WHERE tier = ? AND organization_id = ?`;
+    const params = organizationId == null ? [tier] : [tier, organizationId];
+    const row = await DbPromise.get<{ last_provider_id?: string }>(query, params, {
+      fallback: true,
+    });
     return row?.last_provider_id || null;
   }
 
@@ -588,7 +585,7 @@ export class ModelRouter {
             INSERT OR REPLACE INTO llm_tier_assignments (id, provider_id, tier, priority, is_active, updated_at)
             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         `;
-    await DbPromise.run(query, [id, providerId, tier, priority, true], { fallback: false });
+    await DbPromise.run(query, [id, providerId, tier, priority, 1], { fallback: false });
     aiLogger.info(
       'ModelRouter',
       `Assigned provider ${providerId} to tier ${tier} with priority ${priority}`

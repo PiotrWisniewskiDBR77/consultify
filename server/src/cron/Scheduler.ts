@@ -68,14 +68,18 @@ export const Scheduler = {
     // 3. Trial/Demo Daily Tasks - Run every day at 2:30 AM
     const job3 = cron.schedule('30 2 * * *', () => {
       logger.info('[Scheduler] Running Daily Trial/Demo Tasks');
-      trialCron.runDailyTrialTasks();
+      trialCron.runDailyTrialTasks().catch((err: any) => {
+        logger.error('[Scheduler] Daily Trial/Demo Tasks failed:', err?.message || err);
+      });
     });
     this.jobs.push(job3);
 
     // 4. Usage Counter Cleanup - Run weekly on Sunday at 2:00 AM
     const job4 = cron.schedule('0 2 * * 0', () => {
       logger.info('[Scheduler] Running Weekly Usage Counter Cleanup');
-      trialCron.cleanupOldUsageCounters();
+      trialCron.cleanupOldUsageCounters().catch((err: any) => {
+        logger.error('[Scheduler] Weekly Usage Counter Cleanup failed:', err?.message || err);
+      });
     });
     this.jobs.push(job4);
 
@@ -180,10 +184,14 @@ export const Scheduler = {
     this.jobs.push(job9b);
 
     // 10. Scheduled Emails - Run every 15 minutes
-    const job10 = cron.schedule('*/15 * * * *', () => {
-      // reportEmailService.processScheduledEmails().catch((err: Error) => {
-      //     logger.error('[Scheduler] Scheduled Emails processing failed:', err.message);
-      // });
+    const job10 = cron.schedule('*/15 * * * *', async () => {
+      try {
+        const { processPartnerOutreachDueMessages } =
+          await import('../services/partnerOutreachService.js');
+        await processPartnerOutreachDueMessages({ limit: 100 });
+      } catch (err: any) {
+        logger.error('[Scheduler] Partner outreach processing failed:', err?.message || err);
+      }
     });
     this.jobs.push(job10);
 
@@ -432,6 +440,25 @@ export const Scheduler = {
       }
     });
     this.jobs.push(job26);
+
+    const job27 = cron.schedule('30 5 * * *', async () => {
+      logger.info('[Scheduler] Job 27: Core Docs drift check + reindex');
+      try {
+        const { coreDocsService } = await import('../services/ai/coreDocsService.js');
+        const drift = await coreDocsService.detectDrift();
+        if (drift.stale > 0 || drift.missing > 0) {
+          logger.info(
+            `[Scheduler] Core docs drift: ${drift.stale} stale, ${drift.missing} missing — reindexing`
+          );
+          await coreDocsService.ingestAll();
+        } else {
+          logger.info(`[Scheduler] Core docs up to date (${drift.upToDate}/${drift.totalDocs})`);
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Core docs reindex failed:', err?.message);
+      }
+    });
+    this.jobs.push(job27);
 
     logger.info(
       '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM)'

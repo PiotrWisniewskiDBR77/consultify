@@ -43,12 +43,21 @@ import {
 } from '../../config/helpContent';
 import { HelpTab, useHelpSidePanel } from '../../contexts/HelpContext';
 import { KeyboardShortcutsHelp } from '../MyWork/shared/KeyboardShortcutsHelp';
+import { FeatureUpdatesPanel } from './FeatureUpdatesPanel';
 import { KnowledgeArticleView } from './KnowledgeArticleView';
 import { KnowledgeLibrary } from './KnowledgeLibrary';
+import { OnboardingPlaybooksPanel } from './OnboardingPlaybooksPanel';
 
 // Tab configuration - 3 tabs: Overview, FAQ, Knowledge Base
 const TABS: { id: HelpTab; icon: typeof BookOpen; label: string; labelKey: string }[] = [
   { id: 'overview', icon: BookOpen, label: 'Overview', labelKey: 'help.sidePanel.tabs.overview' },
+  {
+    id: 'onboarding',
+    icon: Rocket,
+    label: 'Onboarding',
+    labelKey: 'help.sidePanel.tabs.onboarding',
+  },
+  { id: 'updates', icon: Bell, label: "What's new", labelKey: 'help.sidePanel.tabs.updates' },
   { id: 'faq', icon: HelpCircle, label: 'FAQ', labelKey: 'help.sidePanel.tabs.faq' },
   {
     id: 'knowledge',
@@ -226,7 +235,8 @@ export const HelpSidePanel: React.FC = () => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language === 'pl' ? 'pl' : 'en';
 
-  const { isOpen, setOpen, activeTab, setActiveTab, help } = useHelpSidePanel();
+  const { isOpen, setOpen, activeTab, setActiveTab, help, knowledgeModuleIdOverride } =
+    useHelpSidePanel();
   const [searchQuery, setSearchQuery] = useState('');
   const [notifyEmail, setNotifyEmail] = useState('');
   const [isSubscribing, setIsSubscribing] = useState(false);
@@ -499,6 +509,14 @@ export const HelpSidePanel: React.FC = () => {
             </div>
           )}
 
+          {/* Onboarding Tab */}
+          {activeTab === 'onboarding' && (
+            <OnboardingPlaybooksPanel onClose={() => setOpen(false)} />
+          )}
+
+          {/* Updates Tab */}
+          {activeTab === 'updates' && <FeatureUpdatesPanel onClose={() => setOpen(false)} />}
+
           {/* FAQ Tab */}
           {activeTab === 'faq' && (
             <div className="space-y-4">
@@ -548,7 +566,7 @@ export const HelpSidePanel: React.FC = () => {
           {/* Knowledge Base Tab */}
           {activeTab === 'knowledge' && (
             <KnowledgeTabContent
-              moduleId={help.moduleId}
+              moduleId={knowledgeModuleIdOverride || help.moduleId}
               initialArticleSlug={selectedGuideArticle}
               onBack={() => setSelectedGuideArticle(null)}
             />

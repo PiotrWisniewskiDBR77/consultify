@@ -25,6 +25,7 @@ import {
   Kanban,
   LayoutGrid,
   LayoutList,
+  Lightbulb,
   List,
   Loader2,
   Plus,
@@ -48,7 +49,9 @@ import { DecisionsKanbanBoard } from './DecisionsKanbanBoard';
 import { DecisionsPanelContent } from './DecisionsPanelContent';
 import { ExecutiveDashboard } from './Executive/ExecutiveDashboard';
 import { type FocusItem, FocusView } from './Focus/FocusView';
+import { IdeaDetailView } from './IdeaDetailView';
 import { InboxContent } from './InboxContent';
+import { type MyIdea, MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
 import { NotificationDetailView } from './NotificationDetailView';
 import { NotificationsContent } from './NotificationsContent';
@@ -57,7 +60,14 @@ import { TaskDetailView } from './TaskDetailView';
 import { TasksKanbanBoard } from './TasksKanbanBoard';
 
 // Types
-type ModuleTab = 'executive' | 'inbox' | 'focus' | 'tasks' | 'decisions' | 'notifications';
+type ModuleTab =
+  | 'executive'
+  | 'inbox'
+  | 'focus'
+  | 'tasks'
+  | 'ideas'
+  | 'decisions'
+  | 'notifications';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban';
 type DecisionsViewMode = 'list' | 'kanban';
@@ -69,6 +79,7 @@ type ItemStatus =
   | 'in_progress'
   | 'completed'
   | 'blocked'
+  | 'idea'
   | 'pending'
   | 'approved'
   | 'rejected'
@@ -80,6 +91,7 @@ interface TabCounts {
   inbox: number;
   focus: number;
   tasks: number;
+  ideas: number;
   decisions: number;
   notifications: number;
 }
@@ -105,7 +117,7 @@ interface NotificationFilterCounts {
 // Open Document interface for dynamic tabs
 interface OpenDocument {
   id: string;
-  type: 'task' | 'decision' | 'notification';
+  type: 'task' | 'idea' | 'decision' | 'notification';
   name: string;
   status: ItemStatus;
   data?: any;
@@ -158,6 +170,7 @@ const TAB_ACTIVE = `
 // Type colors for dynamic tabs
 const TYPE_COLORS = {
   task: 'border-l-blue-500',
+  idea: 'border-l-amber-500',
   decision: 'border-l-purple-500',
   notification: 'border-l-amber-500',
 };
@@ -167,6 +180,7 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
   in_progress: 'bg-blue-400',
   completed: 'bg-emerald-400',
   blocked: 'bg-red-400',
+  idea: 'bg-amber-400',
   pending: 'bg-amber-400',
   approved: 'bg-emerald-400',
   rejected: 'bg-red-400',
@@ -207,6 +221,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     inbox: 0,
     focus: 0,
     tasks: 0,
+    ideas: 0,
     decisions: 0,
     notifications: 0,
   });
@@ -272,13 +287,17 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             ? 'Notification'
             : o.type === 'decision'
               ? 'Decision'
-              : 'Task'),
+              : o.type === 'idea'
+                ? 'Idea'
+                : 'Task'),
         status:
           o.type === 'notification'
             ? ('unread' as const)
             : o.type === 'decision'
               ? ('pending' as const)
-              : ('todo' as const),
+              : o.type === 'idea'
+                ? ('idea' as const)
+                : ('todo' as const),
         data: o.data,
       });
     }
@@ -351,6 +370,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <CheckSquare size={16} />,
         count: tabCounts.tasks,
         color: 'bg-blue-500',
+        requiresExecutiveAccess: false,
+      },
+      {
+        id: 'ideas' as ModuleTab,
+        label: isPolish ? 'Pomysły' : 'Ideas',
+        icon: <Lightbulb size={16} />,
+        count: tabCounts.ideas,
+        color: 'bg-amber-500',
         requiresExecutiveAccess: false,
       },
       {
@@ -521,6 +548,31 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     [handleOpenDocument]
   );
 
+  // Idea handlers
+  const handleCreateIdea = useCallback(() => {
+    const newId = `new-idea-${Date.now()}`;
+    handleOpenDocument({
+      id: newId,
+      type: 'idea',
+      name: isPolish ? 'Nowy pomysł' : 'New Idea',
+      status: 'idea',
+      data: { isNew: true },
+    });
+  }, [handleOpenDocument, isPolish]);
+
+  const handleIdeaClick = useCallback(
+    (ideaId: string, ideaData?: MyIdea) => {
+      handleOpenDocument({
+        id: ideaId,
+        type: 'idea',
+        name: ideaData?.title || (isPolish ? 'Pomysł' : 'Idea'),
+        status: 'idea',
+        data: ideaData,
+      });
+    },
+    [handleOpenDocument, isPolish]
+  );
+
   // Decision handlers
   const handleCreateDecision = useCallback(() => {
     const newId = `new-decision-${Date.now()}`;
@@ -563,13 +615,37 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Handle document saved/updated
   const handleDocumentSaved = useCallback((docId: string, updatedData?: any) => {
     if (updatedData) {
-      setOpenDocuments((prev) =>
-        prev.map((doc) =>
-          doc.id === docId
-            ? { ...doc, name: updatedData.title || doc.name, data: updatedData }
-            : doc
-        )
-      );
+      const nextId =
+        typeof updatedData?.id === 'string' && updatedData.id && docId.startsWith('new-')
+          ? updatedData.id
+          : null;
+
+      if (nextId && nextId !== docId) {
+        setOpenDocuments((prev) => {
+          const existing = prev.find((d) => d.id === docId);
+          if (!existing) return prev;
+          const without = prev.filter((d) => d.id !== docId);
+          if (without.some((d) => d.id === nextId)) return without;
+          return [
+            ...without,
+            {
+              ...existing,
+              id: nextId,
+              name: updatedData.title || existing.name,
+              data: updatedData,
+            },
+          ];
+        });
+        setActiveDocumentId((cur) => (cur === docId ? nextId : cur));
+      } else {
+        setOpenDocuments((prev) =>
+          prev.map((doc) =>
+            doc.id === docId
+              ? { ...doc, name: updatedData.title || doc.name, data: updatedData }
+              : doc
+          )
+        );
+      }
     }
     // Optionally close after save
     // handleCloseDocument(docId);
@@ -635,6 +711,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           color: 'from-blue-500 to-blue-600',
           variant: 'primary' as const,
         };
+      case 'ideas':
+        return {
+          label: isPolish ? 'Nowy pomysł' : 'New Idea',
+          icon: <Plus size={16} />,
+          onClick: handleCreateIdea,
+          color: 'from-amber-500 to-amber-600',
+          variant: 'primary' as const,
+        };
       case 'decisions':
         return {
           label: isPolish ? 'Nowa decyzja' : 'New Decision',
@@ -663,7 +747,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       default:
         return null;
     }
-  }, [activeTab, isPolish, handleCreateTask, handleCreateDecision, activeDocumentId]);
+  }, [
+    activeTab,
+    isPolish,
+    handleCreateTask,
+    handleCreateIdea,
+    handleCreateDecision,
+    activeDocumentId,
+  ]);
 
   // Get current filters based on active tab
   const currentFilters = useMemo(() => {
@@ -753,6 +844,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             >
               {/* Type Icon */}
               {doc.type === 'task' && <CheckSquare size={14} />}
+              {doc.type === 'idea' && <Lightbulb size={14} />}
               {doc.type === 'decision' && <Scale size={14} />}
               {doc.type === 'notification' && <Bell size={14} />}
 
@@ -792,6 +884,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onClose={() => handleCloseDocument(activeDoc.id)}
             onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
             onOpenDecision={(decisionId) => handleDecisionClick(decisionId)}
+          />
+        );
+      case 'idea':
+        return (
+          <IdeaDetailView
+            ideaId={activeDoc.id}
+            onClose={() => handleCloseDocument(activeDoc.id)}
+            onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
           />
         );
       case 'decision':
@@ -890,6 +990,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onTaskClick={handleTaskClick}
             onCreateTask={handleCreateTask}
             onCountsChange={handleTaskCountsChange}
+          />
+        );
+      case 'ideas':
+        return (
+          <MyIdeasListContent
+            searchQuery={searchQuery}
+            onIdeaClick={handleIdeaClick}
+            onCreateIdea={handleCreateIdea}
+            onCountsChange={(counts) => setTabCounts((prev) => ({ ...prev, ideas: counts.total }))}
           />
         );
       case 'decisions':
@@ -1172,13 +1281,17 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     ? isPolish
                       ? 'Szukaj zadań...'
                       : 'Search tasks...'
-                    : activeTab === 'decisions'
+                    : activeTab === 'ideas'
                       ? isPolish
-                        ? 'Szukaj decyzji...'
-                        : 'Search decisions...'
-                      : isPolish
-                        ? 'Szukaj powiadomień...'
-                        : 'Search notifications...'
+                        ? 'Szukaj pomysłów...'
+                        : 'Search ideas...'
+                      : activeTab === 'decisions'
+                        ? isPolish
+                          ? 'Szukaj decyzji...'
+                          : 'Search decisions...'
+                        : isPolish
+                          ? 'Szukaj powiadomień...'
+                          : 'Search notifications...'
                 }
                 autoFocus
                 className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:text-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"

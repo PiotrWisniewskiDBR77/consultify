@@ -14,7 +14,7 @@ import { AuthorizationError, NotFoundError } from '../types/index.js';
 // ==========================================
 
 const CreateTaskSchema = z.object({
-  projectId: z.string().uuid(),
+  projectId: z.string().uuid().optional().nullable(),
   title: z.string().min(1).max(255),
   description: z.string().max(5000).optional(),
   status: z.enum(['todo', 'in_progress', 'review', 'done', 'blocked']).default('todo'),
@@ -108,8 +108,10 @@ export class TaskService {
     // Validate input
     const validated = CreateTaskSchema.parse(input);
 
-    // Check project access
-    await this.verifyProjectAccess(validated.projectId, userId);
+    // Check project access only if projectId is provided
+    if (validated.projectId) {
+      await this.verifyProjectAccess(validated.projectId, userId);
+    }
 
     const result = await this.db.query<TaskRow>(
       `INSERT INTO tasks (
@@ -119,7 +121,7 @@ export class TaskService {
              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
              RETURNING *`,
       [
-        validated.projectId,
+        validated.projectId || null, // projectId is optional
         validated.title,
         validated.description || null,
         validated.status,

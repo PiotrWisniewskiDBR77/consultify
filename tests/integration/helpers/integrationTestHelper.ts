@@ -84,7 +84,7 @@ async function createTestApp(): Promise<Express> {
 
     // Fallback: load individual route files
     try {
-      const authRoutes = (await import('../../../server/src/routes/auth/auth.routes.js')).default;
+      const authRoutes = (await import('../../../server/src/routes/auth.routes.js')).default;
       const billingRoutes = (await import('../../../server/src/routes/billing/billing.routes.js'))
         .default;
 
@@ -113,6 +113,7 @@ async function createTestApp(): Promise<Express> {
  */
 export async function setupIntegrationTest(): Promise<void> {
   await initializeTestDatabase();
+  await createTestApp();
 }
 
 /**

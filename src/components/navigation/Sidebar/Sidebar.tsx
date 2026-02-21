@@ -249,8 +249,6 @@ export const Sidebar: React.FC = () => {
 
   const handleFlyoutNavigate = React.useCallback(
     (viewId: AppView) => {
-      console.log('[Sidebar FloatingMenu] Navigating:', viewId);
-
       navigateToView(viewId);
       setActiveFloating(null);
       if (window.innerWidth < 1024) setIsSidebarOpen(false);
@@ -309,7 +307,7 @@ export const Sidebar: React.FC = () => {
         data-tour="sidebar-nav"
         className={`
           fixed inset-y-0 left-0 z-[60]
-          bg-slate-100/95 dark:bg-navy-950/95 backdrop-blur-hig
+          bg-slate-50 dark:bg-navy-950 backdrop-blur-xl
           flex flex-col
           ${sidebarWidthClass}
           ${

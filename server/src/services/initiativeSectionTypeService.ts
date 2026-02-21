@@ -100,7 +100,7 @@ export class InitiativeSectionTypeService {
 
     sql += ` ORDER BY column_position, default_order, name`;
 
-    const rows = await DbPromise.all<any>(this.db, sql, params);
+    const rows = await DbPromise.all<any>(this.db, sql, params, { fallback: false });
     return rows.map((row) => this.parseRow(row));
   }
 
@@ -109,7 +109,7 @@ export class InitiativeSectionTypeService {
    */
   async getSectionTypeById(id: string): Promise<InitiativeSectionType | null> {
     const sql = `SELECT * FROM initiative_section_types WHERE id = ?`;
-    const row = await DbPromise.get<any>(this.db, sql, [id]);
+    const row = await DbPromise.get<any>(this.db, sql, [id], { fallback: false });
     return row ? this.parseRow(row) : null;
   }
 
@@ -129,7 +129,7 @@ export class InitiativeSectionTypeService {
     }
 
     sql += ` ORDER BY organization_id DESC LIMIT 1`; // Prefer org-specific over system
-    const row = await DbPromise.get<any>(this.db, sql, params);
+    const row = await DbPromise.get<any>(this.db, sql, params, { fallback: false });
     return row ? this.parseRow(row) : null;
   }
 

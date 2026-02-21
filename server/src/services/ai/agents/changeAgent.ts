@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadChangeagent = createCachedLazyService('../../../ai/agents/changeAgent.js');
+const loadChangeagent = createCachedLazyService('ai/agents/changeAgent.js');
 
 // Export default instance (for backward compatibility)
 export default loadChangeagent();

@@ -1,7 +1,7 @@
 {
   "assessmentModule": {
     "hub": {
-      "title": "Assessment Hub",
+      "title": "Licensed Tools Hub",
       "subtitle": "Unified Multi-Framework Assessment Overview",
       "overallReadiness": "Overall Digital Readiness",
       "basedOn": "Based on {{count}} assessment(s) across {{modules}} module(s)",

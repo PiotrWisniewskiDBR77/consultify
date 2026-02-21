@@ -105,6 +105,65 @@
       "emptyTitle": "Brak decyzji",
       "emptySubtitle": "Utwórz pierwszą decyzję, aby zacząć",
       "createCta": "Utwórz decyzję"
+    },
+    "errors": {
+      "fetchFailed": "Nie udało się załadować",
+      "createFailed": "Nie udało się utworzyć",
+      "saveFailed": "Nie udało się zapisać",
+      "deleteFailed": "Nie udało się usunąć",
+      "updateFailed": "Nie udało się zaktualizować"
+    },
+    "personalTasks": {
+      "quickAddPlaceholder": "Szybko dodaj zadanie i naciśnij Enter…",
+      "created": "Utworzono zadanie",
+      "create": "Utwórz zadanie",
+      "empty": {
+        "title": "Brak zadań",
+        "description": "Utwórz pierwsze zadanie, aby zacząć"
+      },
+      "reopen": "Otwórz ponownie",
+      "complete": "Zakończ",
+      "status": {
+        "todo": "Do zrobienia",
+        "inProgress": "W toku",
+        "blocked": "Zablokowane"
+      },
+      "statusUpdated": "Zaktualizowano status"
+    },
+    "ideas": {
+      "saveAsIdea": "Zapisz jako pomysł",
+      "savedToast": "Zapisano w Moich pomysłach",
+      "deletedToast": "Usunięto",
+      "insertedToast": "Wstawiono",
+      "tags": {
+        "all": "Wszystkie"
+      },
+      "empty": {
+        "title": "Brak pomysłów",
+        "description": "Zapisz świetny insight z czatu, aby zbudować prywatną bazę pomysłów."
+      },
+      "create": "Nowy pomysł",
+      "private": "Prywatne",
+      "fields": {
+        "title": "Tytuł",
+        "body": "Treść",
+        "tags": "Tagi"
+      },
+      "placeholders": {
+        "title": "Tytuł pomysłu",
+        "body": "Zapisz pomysł…",
+        "tag": "Dodaj tag"
+      },
+      "removeTag": "Usuń tag",
+      "validation": {
+        "titleRequired": "Tytuł jest wymagany"
+      },
+      "suggestions": "Powiązane pomysły",
+      "suggestionsEmptyTitle": "Brak sugestii",
+      "suggestionsEmpty": "Zapisuj pomysły z czatu, aby zbudować prywatną bibliotekę.",
+      "idea": "Pomysł",
+      "insert": "Wstaw",
+      "open": "Otwórz"
     }
   },
   "step1": {
@@ -143,229 +202,167 @@
       "metrics": "Kluczowe Metryki",
       "stakeholders": "Interesariusze",
       "gaps": "Luki Informacyjne"
+    },
+    "conversational": {
+      "title": "Tryb konwersacyjny",
+      "inputPlaceholder": "Wpisz swoją odpowiedź...",
+      "parseToAnswers": "Parsuj na odpowiedzi",
+      "reviewing": "Przegląd propozycji odpowiedzi",
+      "acceptAll": "Akceptuj wszystkie",
+      "acceptAnswer": "Akceptuj",
+      "rejectAnswer": "Odrzuć",
+      "noMappings": "Nie udało się zmapować odpowiedzi z transkryptu.",
+      "progress": "Postęp",
+      "startConversation": "Rozpocznij rozmowę"
+    },
+    "inference": {
+      "title": "Pakiet Insightów",
+      "runInference": "Uruchom analizę",
+      "running": "Generowanie insightów...",
+      "completed": "Analiza zakończona",
+      "failed": "Analiza nie powiodła się",
+      "categories": {
+        "risk": "Ryzyko",
+        "opportunity": "Szansa",
+        "constraint": "Ograniczenie",
+        "priority": "Priorytet",
+        "trend": "Trend",
+        "gap": "Luka"
+      },
+      "whyItMatters": "Dlaczego to ważne",
+      "recommendation": "Rekomendacja",
+      "evidence": "Dowody",
+      "unknowns": "Niewiadome",
+      "counterpoints": "Kontrargumenty",
+      "assumptions": "Założenia",
+      "confidence": "Pewność",
+      "approve": "Zatwierdź",
+      "needsReview": "Wymaga przeglądu",
+      "regenerate": "Wygeneruj ponownie",
+      "export": "Eksportuj",
+      "noInsights": "Brak wygenerowanych insightów. Uruchom analizę, aby przeanalizować dane z wywiadów.",
+      "draft": "Szkic",
+      "reviewed": "Przejrzany",
+      "approved": "Zatwierdzony"
     }
   },
   "assessment": {
-    "title": "Ocena",
-    "overview": "Przegląd",
-    "drd": "Ocena DRD",
-    "siri": "Framework SIRI",
-    "adma": "Framework ADMA",
-    "cmmi": "Framework CMMI",
-    "lean": "Lean 4.0"
+    "notes": "Notatki",
+    "notesPlaceholder": "Kluczowe obserwacje, kontekst, uzasadnienie oceny...",
+    "evidence": "Dowody (evidence)",
+    "evidencePlaceholder": "Systemy, dokumenty, metryki, procesy potwierdzające ocenę...",
+    "confidence": "Pewność oceny",
+    "confidenceLow": "Niska",
+    "confidenceMedium": "Średnia",
+    "confidenceHigh": "Wysoka",
+    "withEvidence": "Z dowodami",
+    "progress": "Postęp oceny",
+    "overallScore": "Wynik ogólny",
+    "dimensions": "wymiarów",
+    "currentLevel": "Aktualny poziom",
+    "targetLevel": "Docelowy poziom",
+    "gap": "Luka",
+    "strengths": {
+      "title": "Kluczowe mocne strony",
+      "empty": "Nie zidentyfikowano jeszcze mocnych wymiarów. Kontynuuj ocenę, aby odkryć mocne strony."
+    },
+    "dataGaps": {
+      "title": "Luki danych i elementy do uzupełnienia",
+      "notAssessed": "Nie oceniono",
+      "noTarget": "Nie ustawiono celu",
+      "hint": "Te obszary wymagają dodatkowego zbierania danych przed zakończeniem pełnej oceny."
+    },
+    "closure": {
+      "title": "Wnioski z oceny",
+      "dimensionsAssessed": "Wymiary ocenione",
+      "totalGap": "Łączna luka",
+      "topPriorities": "Najwyższe priorytety",
+      "completeness": "Kompletność",
+      "nextSteps": "Następne kroki",
+      "step1": "Omów wyniki z kluczowymi interesariuszami",
+      "step2": "Ustaw cele dla nieocenionych wymiarów",
+      "step3": "Wygeneruj raport do przeglądu sponsora",
+      "step4": "Stwórz inicjatywy poprawy z luk",
+      "step5": "Zaplanuj ocenę kontrolną"
+    },
+    "confidenceOverview": {
+      "title": "Przegląd pewności oceny",
+      "withEvidence": "Z dowodami",
+      "withoutEvidence": "Bez dowodów",
+      "alert": "Niektóre ocenione wymiary nie mają udokumentowanych dowodów."
+    },
+    "deck": {
+      "export": "Eksportuj prezentację (PPTX)",
+      "generating": "Generowanie prezentacji...",
+      "generated": "Prezentacja wygenerowana pomyślnie",
+      "failed": "Nie udało się wygenerować prezentacji",
+      "requiresApproval": "Ocena musi być ZATWIERDZONA, aby eksportować prezentację"
+    },
+    "report": {
+      "strengths": "Kluczowe mocne strony",
+      "dataGaps": "Luki danych i elementy do uzupełnienia",
+      "roadmap": "Mapa drogowa transformacji",
+      "conclusions": "Wnioski z oceny",
+      "shortTerm": "Krótkoterminowe (0-6 miesięcy)",
+      "mediumTerm": "Średnioterminowe (6-18 miesięcy)",
+      "longTerm": "Długoterminowe (18-36 miesięcy)",
+      "quickWins": "Szybkie wygrane",
+      "strategicInitiatives": "Inicjatywy strategiczne",
+      "longTermTransformation": "Transformacja długoterminowa"
+    },
+    "lean": {
+      "overallDashboard": "Dashboard ogólny oceny",
+      "leanMaturity": "Dojrzałość Lean",
+      "automationPotential": "Potencjał automatyzacji",
+      "estimatedSavings": "Szac. oszczędności (PLN/rok)",
+      "topWastes": "Główne marnotrawstwa (co boli najbardziej)",
+      "quickWins": "Szybkie wygrane (Lean-first)",
+      "noStdWork": "Brak standardowej pracy",
+      "automationOps": "Najlepsze możliwości automatyzacji",
+      "dataGaps": "Luki danych i elementy do uzupełnienia",
+      "moreItems": "więcej elementów",
+      "closure": "Podsumowanie oceny",
+      "processesAssessed": "Procesy ocenione",
+      "workstationsAssessed": "Stanowiska ocenione",
+      "totalHeadcount": "Łączna liczba pracowników",
+      "priorityItems": "Inicjatywy priorytetowe",
+      "closureNote": "Następne kroki: Wygeneruj raport, stwórz mapę drogową, zmaterializuj inicjatywy. Zatwierdź ocenę, aby odblokować generowanie raportu i inicjatyw.",
+      "coachQuestions": "Pytania trenera",
+      "evidenceGuidance": "Wskazówki dot. dowodów",
+      "microLesson": "Mikro-lekcja",
+      "commonMistakes": "Typowe błędy do uniknięcia",
+      "wasteKnowledge": "Przewodnik analizy marnotrawstwa",
+      "whatToLookFor": "Na co patrzeć",
+      "typicalEvidence": "Typowe dowody"
+    }
   },
   "initiatives": {
-    "title": "Inicjatywy",
-    "roadmap": "Mapa Drogowa",
-    "portfolio": "Portfolio",
-    "form": {
-      "createNew": "Utwórz nową inicjatywę",
-      "edit": "Edytuj inicjatywę",
-      "newInitiative": "Nowa inicjatywa",
-      "title": "Tytuł",
-      "titleRequired": "Tytuł *",
-      "titlePlaceholder": "np. Złożenie dokumentacji zgodności",
-      "axis": "Oś",
-      "summary": "Podsumowanie",
-      "summaryPlaceholder": "Krótkie sformułowanie problemu/celu…",
-      "description": "Opis",
-      "descriptionOptional": "Opis (opcjonalnie)",
-      "descriptionPlaceholder": "Opisz inicjatywę...",
-      "category": "Kategoria",
-      "categoryOptional": "Kategoria (opcjonalnie)",
-      "categoryPlaceholder": "np. Cyberbezpieczeństwo",
-      "priority": "Priorytet",
-      "risk": "Ryzyko",
-      "riskLevel": "Poziom ryzyka",
-      "sourceAxis": "Oś źródłowa",
-      "budget": "Budżet (PLN)",
-      "expectedROI": "Oczekiwany zwrot z inwestycji",
-      "timeline": "Harmonogram",
-      "objectives": "Cele",
-      "addObjective": "Dodaj nowy cel...",
-      "create": "Utwórz",
-      "creating": "Tworzenie…",
-      "save": "Zapisz zmiany",
-      "cancel": "Anuluj",
-      "nameRequired": "Nazwa inicjatywy *",
-      "namePlaceholder": "Wprowadź nazwę inicjatywy",
-      "nameMinLength": "Nazwa musi mieć co najmniej 5 znaków",
-      "descriptionMinLength": "Opis musi mieć co najmniej 20 znaków",
-      "budgetRequired": "Budżet musi być większy niż 0",
-      "roiRequired": "Zwrot z inwestycji musi być większy niż 0",
-      "highRiskHighBudget": "Inicjatywa wysokiego ryzyka i wysokiego budżetu",
-      "highRiskHighBudgetDesc": "Rozważ podział na mniejsze fazy lub wprowadzenie dodatkowych kontroli zarządczych.",
-      "titleTooShort": "Tytuł jest za krótki",
-      "titleRequiredError": "Tytuł jest wymagany",
-      "initiativeCreated": "Inicjatywa utworzona",
-      "initiativeUpdated": "Inicjatywa zaktualizowana",
-      "createFailed": "Nie udało się utworzyć inicjatywy",
-      "updateFailed": "Nie udało się zaktualizować inicjatywy",
-      "duplicateWarning": "Podobna inicjatywa już istnieje: {{name}}",
-      "duplicateWarningDesc": "Ten tytuł inicjatywy jest bardzo podobny do istniejącego. Sprawdź, czy to nie duplikat."
-    },
-    "bulkEdit": {
-      "title": "Masowa edycja inicjatyw",
-      "selectedCount": "Wybrano {{count}} inicjatyw",
-      "status": "Status",
-      "priority": "Priorytet",
-      "businessOwner": "Właściciel biznesowy",
-      "executionOwner": "Właściciel realizacji",
-      "noChange": "Bez zmian",
-      "applyChanges": "Zastosuj zmiany",
-      "updatesFailed": "{{count}} aktualizacji nie powiodło się",
-      "bulkUpdateApplied": "Masowa aktualizacja zastosowana"
-    },
-    "empty": {
-      "title": "Brak inicjatyw",
-      "description": "Utwórz swoją pierwszą inicjatywę, aby rozpocząć"
-    },
-    "axis": {
-      "operational": "Operacyjna",
-      "strategic": "Strategiczna",
-      "transformational": "Transformacyjna",
-      "compliance": "Zgodność"
-    },
-    "priority": {
-      "low": "Niski",
-      "medium": "Średni",
-      "high": "Wysoki",
-      "critical": "Krytyczny"
-    },
-    "risk": {
-      "low": "Niskie ryzyko",
-      "medium": "Średnie ryzyko",
-      "high": "Wysokie ryzyko"
-    },
-    "level": {
-      "label": "Typ / Poziom inicjatywy",
-      "quick_win": "Quick Win",
-      "standard": "Projekt standardowy",
-      "strategic": "Program strategiczny",
-      "transformation": "Transformacja",
-      "cannotDowngrade": "Poziom inicjatywy nie może być obniżony",
-      "upgradeNote": "Poziom może być podniesiony, ale nie obniżony"
-    },
-    "status": {
-      "draft": "Szkic",
-      "pending_review": "Oczekuje na przegląd",
-      "review": "W przeglądzie",
-      "promoted": "Promowana",
-      "planning": "Planowanie",
-      "approved": "Zatwierdzona",
-      "scheduled": "Zaplanowana",
-      "executing": "W realizacji",
-      "blocked": "Zablokowana",
-      "done": "Ukończona",
-      "tracking": "Śledzenie",
-      "cancelled": "Anulowana",
-      "archived": "Zarchiwizowana"
-    },
-    "approval": {
-      "cannotApprove": "Nie można zatwierdzić inicjatywy",
-      "missingFields": "Brakujące wymagane pola",
-      "needsTasks": "Wymagane jest co najmniej 1 zadanie przed zatwierdzeniem",
-      "needsDeadline": "Wymagany jest termin końcowy przed zatwierdzeniem",
-      "needsOwner": "Wymagany jest właściciel biznesowy przed zatwierdzeniem"
-    },
-    "toast": {
-      "saveError": "Nie udało się zapisać",
-      "watchError": "Nie udało się zmienić obserwowania",
-      "createTaskError": "Nie udało się utworzyć zadania",
-      "createDecisionError": "Nie udało się utworzyć decyzji",
-      "createRaidError": "Nie udało się dodać elementu RAID"
-    },
-    "drawer": {
-      "overview": "Przegląd",
-      "timeline": "Harmonogram",
-      "resources": "Zasoby",
-      "decisions": "Decyzje",
-      "goNoGo": "Go/No-Go",
-      "resourcesCommit": "Zatwierdzenie zasobów",
-      "scheduleLock": "Blokada harmonogramu",
-      "quickReview": "Szybki przegląd",
-      "gateReadiness": "Gotowość bramki",
-      "viewDecisions": "Zobacz decyzje",
-      "notRequested": "Nie żądano",
-      "summary": "Podsumowanie",
-      "noSummary": "Brak podsumowania.",
-      "progress": "Postęp",
-      "roi": "ROI",
-      "budget": "Budżet",
-      "priority": "Priorytet",
-      "start": "Start:",
-      "end": "Koniec:",
-      "nextMilestone": "Następny kamień milowy",
-      "topRisks": "Główne ryzyka / problemy",
-      "noRaidItems": "Brak elementów RAID.",
-      "milestones": "Kamienie milowe",
-      "manageInFullView": "Zarządzaj w pełnym widoku",
-      "noMilestones": "Brak zdefiniowanych kamieni milowych",
-      "gate": "Bramka",
-      "ownership": "Właścicielstwo",
-      "businessOwner": "Właściciel biznesowy",
-      "noBusinessOwner": "Nie przypisano właściciela biznesowego",
-      "executionOwner": "Właściciel realizacji",
-      "noExecutionOwner": "Nie przypisano właściciela realizacji",
-      "resourceCapacity": "Pojemność zasobów",
-      "requiredFte": "Wymagane FTE",
-      "allocatedFte": "Przydzielone FTE",
-      "manageTeam": "Zarządzaj zespołem w pełnym widoku",
-      "openFullCard": "Otwórz pełną kartę",
-      "gateDecisions": "Decyzje bramkowe",
-      "requestDecision": "+ Zażądaj decyzji",
-      "noDecisions": "Brak decyzji powiązanych z tą inicjatywą",
-      "gateRequirements": "Wymagania bramki",
-      "initiative": "Inicjatywa"
-    },
-    "compact": {
-      "summary": "Podsumowanie",
-      "tasks": "Zadania",
-      "decisions": "Decyzje",
-      "raid": "RAID",
-      "finance": "Finanse",
-      "noGoal": "Brak celu / podsumowania — dodaj w pełnym widoku.",
-      "team": "Zespół",
-      "timeline": "Harmonogram",
-      "budget": "Budżet",
-      "risks": "Ryzyka",
-      "openFullCard": "Otwórz pełną kartę inicjatywy",
-      "description": "Opis",
-      "owner": "Właściciel",
-      "sponsor": "Sponsor",
-      "targetDate": "Data docelowa",
-      "created": "Utworzono",
-      "strategicAxis": "Oś strategiczna",
-      "tags": "Tagi",
-      "killCriteria": "Kryteria zakończenia",
-      "progress": "Postęp",
-      "milestones": "Kamienie milowe",
-      "blocked": "Zablokowane ({{count}})",
-      "showLess": "Pokaż mniej",
-      "showMore": "Pokaż {{count}} więcej…",
-      "active": "Aktywne ({{count}})",
-      "done": "Ukończone ({{count}})",
-      "noTasks": "Brak zadań",
-      "noDecisions": "Brak decyzji",
-      "noRaid": "Brak elementów RAID",
-      "spent": "Wydano",
-      "impact": "Wpływ",
-      "budgetUtilization": "Wykorzystanie budżetu",
-      "noFinancialData": "Brak danych finansowych",
-      "pending": "Oczekujące ({{count}})",
-      "resolved": "Rozwiązane ({{count}})"
-    },
-    "hub": {
-      "failedToLoad": "Nie udało się załadować inicjatyw",
-      "retry": "Ponów",
-      "dismiss": "Zamknij",
-      "noInitiativesFound": "Nie znaleziono inicjatyw"
-    },
-    "levelDesc": {
-      "quick_win": "Minimalna kontrola. Może być samo-zatwierdzone.",
-      "standard": "Standardowy proces zatwierdzania. Wymaga właściciela + terminu + zadań.",
-      "strategic": "Wymagane zatwierdzenie wykonawcze. Pełny charter + analiza RAID.",
-      "transformation": "Kontrola na poziomie zarządu. Pełny charter, komitet sterujący, przeglądy bramek."
+    "gateReadiness": {
+      "title": "Gotowość bramki i harmonogram",
+      "readinessSystem": "Gotowość (system)",
+      "readinessAi": "Analiza gotowości AI",
+      "blockingMissing": "Blokujące braki",
+      "cantProgress": "Nie możesz przejść dalej",
+      "fillMissing": "Uzupełnij brakujące elementy (blokujące), a następnie ponów akcję gate.",
+      "suggestedAction": "Sugerowana akcja",
+      "suggestedActor": "Kto powinien działać",
+      "askAi": "Zapytaj AI o analizę gotowości",
+      "aiAnalyzing": "AI analizuje gotowość...",
+      "aiScore": "Ocena gotowości",
+      "aiSummary": "Podsumowanie",
+      "aiFindings": "Wnioski AI",
+      "noFindings": "AI nie znalazło dodatkowych problemów.",
+      "blocking": "blokuje",
+      "warning": "ostrzeżenie",
+      "fix": "Napraw",
+      "currentGate": "Aktualna bramka",
+      "nextGate": "Następna",
+      "requirementsChecklist": "Lista kontrolna wymagań",
+      "readinessPercent": "Gotowość",
+      "requiredApproval": "Wymagana aprobata",
+      "allGatesPassed": "Wszystkie bramki przejdzone!",
+      "requiredApprovalsForStatus": "Wymagane zatwierdzenia dla statusu",
+      "notRequested": "Nie zgłoszono"
     }
   },
   "execution": {
@@ -374,13 +371,30 @@
     "calendar": "Kalendarz",
     "decisions": "Decyzje",
     "heatmap": "Mapa obciążenia",
+    "workloadAi": {
+      "button": "Sugestie AI",
+      "title": "Sugestie AI obciążenia",
+      "subtitle": "Horyzont 7 dni · propozycje przypisań",
+      "loading": "Ładowanie…",
+      "noProject": "Wymagany kontekst projektu dla sugestii obciążenia AI.",
+      "loadError": "Nie udało się wczytać sugestii obciążenia AI.",
+      "peopleTitle": "Prognoza",
+      "suggestionsTitle": "Sugestie",
+      "noSuggestions": "Brak sugestii przepięcia zadań.",
+      "noneSelected": "Wybierz co najmniej jedną sugestię do zastosowania.",
+      "applied": "Przypisania zastosowane.",
+      "applyError": "Nie udało się zastosować sugestii.",
+      "moveFromTo": "Przenieś",
+      "disclaimer": "Sugestie to konserwatywne heurystyki — zawsze sprawdź priorytet i kontekst przed zastosowaniem."
+    },
     "tabs": {
       "execution": "Kontrola",
       "initiatives": "Inicjatywy",
       "tasks": "Zadania",
       "decisions": "Decyzje",
       "team": "Zespół",
-      "reports": "Raporty"
+      "reports": "Raporty",
+      "peopleChange": "Ludzie i zmiana"
     },
     "reports": {
       "title": "Raporty realizacji",
@@ -524,80 +538,155 @@
       "taskMoved": "Zadanie przeniesione do {{column}}",
       "taskStatusError": "Nie udało się zaktualizować statusu zadania",
       "initiativeNotFound": "Nie znaleziono powiązanej inicjatywy"
+    },
+    "timeline": {
+      "title": "Oś czasu",
+      "filterByStatus": "Filtruj wg statusu",
+      "filterByPriority": "Filtruj wg priorytetu",
+      "filterByOwner": "Filtruj wg właściciela",
+      "searchPlaceholder": "Szukaj inicjatyw…",
+      "allStatuses": "Wszystkie statusy",
+      "allPriorities": "Wszystkie priorytety",
+      "allOwners": "Wszyscy właściciele",
+      "noResults": "Brak inicjatyw pasujących do filtrów",
+      "today": "Dziś",
+      "criticalPath": "Ścieżka krytyczna",
+      "hideCriticalPath": "Ukryj ścieżkę krytyczną",
+      "showCriticalPath": "Pokaż ścieżkę krytyczną",
+      "scheduleWarning": "Ostrzeżenie harmonogramu",
+      "warnings": "ostrzeżeń",
+      "warning": "ostrzeżenie"
+    },
+    "warnings": {
+      "title": "Najważniejsze ostrzeżenia",
+      "overdue": "Zaległe",
+      "blocked": "Zablokowane",
+      "dependencyConflict": "Konflikt zależności",
+      "slaApproaching": "Zbliżający się SLA",
+      "noWarnings": "Brak aktywnych ostrzeżeń",
+      "daysOverdue": "{{count}} dni zaległości",
+      "blockedFor": "Zablokowane od {{count}} dni",
+      "nextGate": "Następna brama",
+      "nextAction": "Następne działanie",
+      "viewAll": "Pokaż wszystkie ostrzeżenia"
+    },
+    "riskSignals": {
+      "title": "Sygnały ryzyka",
+      "subtitle": "Heurystycznie wykryte ryzyka w portfelu wykonawczym",
+      "noSignals": "Nie wykryto sygnałów ryzyka",
+      "dismiss": "Odrzuć",
+      "suggestedAction": "Sugerowane działanie",
+      "critical": "Krytyczne",
+      "high": "Wysokie",
+      "medium": "Średnie",
+      "low": "Niskie",
+      "viewDetails": "Zobacz szczegóły"
+    },
+    "mitigation": {
+      "title": "Łagodzenie",
+      "plan": "Plan łagodzenia",
+      "planPlaceholder": "Opisz podejście do łagodzenia…",
+      "owner": "Właściciel łagodzenia",
+      "dueDate": "Termin",
+      "status": "Status",
+      "strategy": "Strategia reakcji",
+      "avoid": "Unikaj",
+      "transfer": "Przenieś",
+      "mitigate": "Łagodź",
+      "accept": "Akceptuj",
+      "escalate": "Eskaluj",
+      "statusOpen": "Otwarte",
+      "statusInProgress": "W toku",
+      "statusMitigated": "Złagodzone",
+      "statusAccepted": "Zaakceptowane",
+      "statusClosed": "Zamknięte",
+      "save": "Zapisz łagodzenie",
+      "saved": "Łagodzenie zaktualizowane"
+    },
+    "auditLog": {
+      "title": "Dziennik zmian",
+      "changedBy": "Zmienione przez",
+      "changedField": "Zmieniono",
+      "from": "z",
+      "to": "na",
+      "reason": "Powód",
+      "noEntries": "Brak wpisów"
+    },
+    "delay": {
+      "title": "Wykrywanie opóźnień",
+      "subtitle": "Odchylenia planu vs realizacji i ryzyka harmonogramu",
+      "critical": "Krytyczne",
+      "warning": "Ostrzeżenie",
+      "allSeverities": "Wszystkie poziomy",
+      "allTypes": "Wszystkie typy",
+      "initiatives": "Inicjatywy",
+      "tasks": "Zadania",
+      "noDelays": "Nie wykryto odchyleń harmonogramu",
+      "loading": "Skanowanie odchyleń…",
+      "planned": "Planowane",
+      "current": "Aktualny",
+      "remaining": "pozostało",
+      "whySlip": "Dlaczego opóźnienie",
+      "viewInitiative": "Zobacz inicjatywę",
+      "dismiss": "Odrzuć",
+      "type": {
+        "LATE_START": "Opóźniony start",
+        "LATE_FINISH_RISK": "Ryzyko opóźnienia zakończenia",
+        "DEADLINE_RISK": "Ryzyko terminu",
+        "OVERDUE": "Zaległe"
+      }
+    },
+    "budget": {
+      "title": "Kontrola budżetu",
+      "portfolioTitle": "Budżet portfela",
+      "planned": "Planowany",
+      "actual": "Rzeczywisty",
+      "variance": "Odchylenie",
+      "burnRate": "Tempo wydatkowania",
+      "forecast": "Prognoza",
+      "forecastOverspend": "Prognoza przekroczenia: {{amount}}",
+      "overspendRisks": "ryzyk przekroczenia",
+      "overspendSignals": "Sygnały przekroczenia",
+      "initiativeBreakdown": "Wg inicjatywy",
+      "viewDetails": "Zobacz szczegóły",
+      "addEntry": "Dodaj koszt rzeczywisty",
+      "newEntry": "Nowy wpis kosztowy",
+      "amountPlaceholder": "Kwota",
+      "categoryPlaceholder": "Kategoria (np. Konsulting, Licencje)",
+      "descriptionPlaceholder": "Opis (opcjonalny)",
+      "save": "Zapisz wpis",
+      "noData": "Brak danych budżetowych",
+      "loading": "Ładowanie danych budżetowych…",
+      "status": {
+        "green": "Na ścieżce",
+        "amber": "Ostrzeżenie",
+        "red": "Przekroczony budżet"
+      }
     }
   },
   "benefits": {
-    "title": "Realizacja Korzyści",
-    "kpis": "KPI",
-    "lessons": "Wnioski",
     "tabs": {
       "completed": "Ukończone",
       "kpis": "KPI",
-      "roi": "Analiza ROI"
+      "roi": "Śledzenie ROI",
+      "attribution": "Atrybucja",
+      "financial": "Mapowanie finansowe"
     },
-    "columns": {
-      "type": "Typ",
-      "name": "Nazwa",
-      "status": "Status",
-      "roi": "ROI",
-      "budget": "Budżet",
-      "completed": "Ukończone",
-      "actions": "Akcje"
-    },
-    "empty": {
-      "noCompleted": "Brak ukończonych inicjatyw."
-    },
-    "kpiCards": {
-      "totalKpis": "Wszystkie KPI",
-      "onTarget": "Na celu",
-      "belowTarget": "Poniżej celu"
-    },
-    "kpiEmpty": {
-      "noKpis": "Brak zdefiniowanych KPI",
-      "completeToTrack": "Ukończ inicjatywy i dodaj KPI, aby śledzić korzyści",
-      "noKpisForInitiative": "Brak KPI zdefiniowanych dla tej inicjatywy"
-    },
-    "kpiActions": {
-      "addKpi": "Dodaj KPI",
-      "createKpi": "Utwórz KPI",
-      "cancel": "Anuluj"
-    },
-    "kpiLabels": {
-      "current": "Aktualny",
-      "target": "Cel"
-    },
-    "roiAnalysis": {
-      "title": "Analiza ROI",
-      "subtitle": "Obliczenia zwrotu z inwestycji"
-    },
-    "tracker": {
-      "financialBenefits": "Korzyści finansowe",
-      "of": "z",
-      "target": "celu",
-      "avgRealization": "Śr. realizacja",
-      "benefitsAchieved": "Korzyści osiągnięte",
-      "inProgress": "W toku",
-      "allTypes": "Wszystkie typy",
-      "targetLabel": "Cel:",
-      "measurement": "Pomiar:",
-      "initiative": "Inicjatywa:",
-      "fetchError": "Nie udało się załadować danych korzyści",
-      "retry": "Ponów"
-    },
-    "kpiDashboard": {
-      "title": "Panel KPI",
-      "totalKpis": "Wszystkie KPI",
-      "onTarget": "Na celu",
-      "atRisk": "Zagrożone",
-      "offTarget": "Poza celem",
-      "achieved": "Osiągnięte",
-      "allCategories": "Wszystkie kategorie",
-      "target": "Cel:",
-      "updated": "Zaktualizowano",
-      "createAction": "Utwórz akcję",
-      "linked": "Powiązane:",
-      "fetchError": "Nie udało się załadować danych KPI",
-      "retry": "Ponów"
+    "roi": {
+      "noData": "Brak założeń ROI",
+      "noDataHint": "Ustaw założenia ROI na inicjatywach, aby śledzić prognozowane vs zrealizowane zwroty.",
+      "projected": "Prognozowana korzyść",
+      "realized": "Zrealizowana korzyść",
+      "totalCapex": "Łączny CAPEX",
+      "coverage": "Pokrycie danych",
+      "initiatives": "inicjatyw",
+      "variance": "Odchylenie portfela",
+      "abovePlan": "Zrealizowane korzyści przekraczają prognozy",
+      "belowPlan": "Zrealizowane korzyści poniżej prognoz — sprawdź założenia",
+      "byInitiative": "ROI wg inicjatyw",
+      "initiative": "Inicjatywa",
+      "confidence": "Pewność",
+      "disclaimer": "Dane ROI oparte na deklarowanych założeniach. Wartości zrealizowane mogą odbiegać od prognoz z powodu czynników zewnętrznych."
     }
   },
   "economics": {
@@ -646,9 +735,94 @@
     }
   },
   "reports": {
-    "title": "Raporty",
-    "management": "Raporty Zarządcze",
-    "assessment": "Raporty z Ocen"
+    "automation": {
+      "title": "Automatyzacja raportów",
+      "subtitle": "Automatyczne cykliczne i wyzwalane zdarzeniami generowanie raportów",
+      "schedules": "Harmonogramy",
+      "triggers": "Wyzwalacze",
+      "history": "Historia wykonań",
+      "newSchedule": "Nowy harmonogram",
+      "editSchedule": "Edytuj harmonogram",
+      "scheduleName": "Nazwa harmonogramu",
+      "scheduleNamePlaceholder": "np. Tygodniowy raport sterujący",
+      "scheduleType": "Typ harmonogramu",
+      "timeBased": "Czasowy",
+      "eventTriggered": "Wyzwalany zdarzeniem",
+      "hybrid": "Hybrydowy (czas + zdarzenia)",
+      "deliverableType": "Typ produktu",
+      "report": "Raport (PDF/DOCX)",
+      "presentation": "Prezentacja (PPTX)",
+      "both": "Oba (Raport + Prezentacja)",
+      "frequency": "Częstotliwość",
+      "daily": "Codziennie",
+      "weekly": "Co tydzień",
+      "biweekly": "Co dwa tygodnie",
+      "monthly": "Co miesiąc",
+      "quarterly": "Co kwartał",
+      "custom": "Własny (cron)",
+      "cronExpression": "Wyrażenie cron",
+      "timezone": "Strefa czasowa",
+      "scope": "Zakres",
+      "scopeOrganization": "Organizacja",
+      "scopePortfolio": "Portfolio",
+      "scopeProject": "Projekt",
+      "scopeInitiative": "Inicjatywa",
+      "recipients": "Odbiorcy",
+      "recipientsPlaceholder": "użytkownik@example.com, user-id",
+      "delivery": "Kanały dostarczenia",
+      "deliveryEmail": "E-mail",
+      "deliveryDashboard": "Panel w aplikacji",
+      "deliveryWebhook": "Webhook",
+      "triggerType": "Typ wyzwalacza",
+      "triggerDelayThreshold": "Przekroczenie progu opóźnienia",
+      "triggerRiskHigh": "Wykryto ryzyko wysokie/krytyczne",
+      "triggerBudgetThreshold": "Osiągnięto próg budżetu",
+      "triggerMilestone": "Osiągnięto kamień milowy",
+      "triggerArtifactApproved": "Zatwierdzono artefakt",
+      "triggerConditions": "Warunki",
+      "delayDays": "Minimalna liczba dni opóźnienia",
+      "riskSeverity": "Minimalna dotkliwość",
+      "budgetPercent": "Próg budżetu (%)",
+      "throttleHours": "Ograniczenie (godziny między wyzwoleniami)",
+      "addTrigger": "Dodaj wyzwalacz",
+      "removeTrigger": "Usuń",
+      "active": "Aktywny",
+      "paused": "Wstrzymany",
+      "nextRun": "Następne uruchomienie",
+      "lastRun": "Ostatnie uruchomienie",
+      "runCount": "Uruchomienia",
+      "status": "Status",
+      "runNow": "Uruchom teraz",
+      "pause": "Wstrzymaj",
+      "resume": "Wznów",
+      "delete": "Usuń",
+      "confirmDelete": "Czy na pewno chcesz usunąć ten harmonogram?",
+      "noSchedules": "Brak harmonogramów automatyzacji",
+      "noSchedulesHint": "Skonfiguruj automatyczne generowanie raportów z harmonogramami czasowymi lub wyzwalaczy zdarzeń.",
+      "noHistory": "Brak wykonań",
+      "noHistoryHint": "Historia wykonań pojawi się tutaj po pierwszym uruchomieniu.",
+      "executionSuccess": "Sukces",
+      "executionFailed": "Błąd",
+      "executionRunning": "W toku",
+      "executionPending": "Oczekuje",
+      "triggerReason": "Powód wyzwolenia",
+      "throttled": "Ograniczono",
+      "evaluateTriggers": "Ewaluuj wyzwalacze",
+      "evaluateTriggersHint": "Skanuj sygnały zdarzeń i odpal pasujące wyzwalacze",
+      "evaluated": "Oceniono",
+      "fired": "Odpalono",
+      "created": "Harmonogram utworzony",
+      "updated": "Harmonogram zaktualizowany",
+      "deleted": "Harmonogram usunięty",
+      "pausing": "Harmonogram wstrzymany",
+      "resuming": "Harmonogram wznowiony",
+      "runStarted": "Uruchomiono ręcznie",
+      "triggerAdded": "Dodano regułę wyzwalacza",
+      "triggerUpdated": "Zaktualizowano regułę wyzwalacza",
+      "triggerRemoved": "Usunięto regułę wyzwalacza",
+      "error": "Operacja nie powiodła się",
+      "loadError": "Nie udało się załadować danych automatyzacji"
+    }
   },
   "auth": {
     "logIn": "Zaloguj się",
@@ -690,174 +864,31 @@
     "back": "Wstecz"
   },
   "help": {
-    "title": "Centrum Pomocy",
-    "sidePanel": {
-      "title": "Centrum Pomocy",
-      "tabs": {
-        "overview": "Przegląd",
-        "faq": "FAQ",
-        "knowledge": "Baza wiedzy"
-      },
-      "fullDocs": "Pełna dokumentacja",
-      "overview": {
-        "title": "Witamy w Consultinity",
-        "intro": "Kompletna platforma PMO do transformacji cyfrowej. Oceniaj, planuj i śledź drogę organizacji do doskonałości cyfrowej dzięki wsparciu AI i sprawdzonym metodologiom.",
-        "watchVideo": "Obejrzyj wideo wprowadzające",
-        "videoDuration": "3 min — przegląd",
-        "guides": "Szybkie przewodniki",
-        "guidesList": {
-          "gettingStarted": "Pierwsze kroki",
-          "assessment": "Ocena (Assessment)",
-          "initiatives": "Inicjatywy i roadmapa",
-          "reports": "Raporty i eksport",
-          "aiFeatures": "Funkcje AI"
-        },
-        "whatToKnow": "Warto wiedzieć",
-        "tip1": "Zacznij od szybkiej oceny (ok. 5 min), aby dostać natychmiastowe rekomendacje AI",
-        "tip2": "AI generuje inicjatywy na bazie luk z oceny — zweryfikuj je w Roadmapie",
-        "tip3": "Śledź wdrożenie w module Execution dzięki dashboardom w czasie rzeczywistym",
-        "tip4": "Korzystaj z AI Chat w dowolnym momencie, aby zadawać pytania i prosić o rekomendacje",
-        "tip5": "Eksportuj raporty do PDF/PowerPoint na potrzeby prezentacji dla interesariuszy",
-        "keyboardShortcuts": "Skróty klawiszowe",
-        "keyboardShortcutsHint": "Naciśnij ? w dowolnym momencie, aby zobaczyć listę"
-      },
-      "faq": {
-        "searchPlaceholder": "Szukaj pytań...",
-        "noResults": "Nie znaleziono pasujących pytań.",
-        "noFAQ": "Brak FAQ."
-      },
-      "knowledge": {
-        "title": "Baza wiedzy",
-        "description": "Przeglądaj artykuły, samouczki i najlepsze praktyki.",
-        "comingSoon": "Wkrótce",
-        "categories": {
-          "tools": "Narzędzia",
-          "methodologies": "Metodologie",
-          "caseStudies": "Studia przypadku",
-          "bestPractices": "Najlepsze praktyki"
-        },
-        "notify": {
-          "success": "Powiadomimy Cię, gdy będzie gotowe!"
-        }
-      }
-    },
-    "search": {
-      "placeholder": "Szukaj w pomocy (artykuły, poradniki...)",
-      "searching": "Wyszukiwanie...",
-      "results": "Wyniki",
-      "found": "znaleziono",
-      "viewAll": "Zobacz wszystkie wyniki",
-      "noResults": "Brak wyników dla \"{{query}}\"",
-      "tryDifferent": "Spróbuj innych słów kluczowych lub przejrzyj kategorie",
-      "recent": "Ostatnie wyszukiwania",
-      "clearRecent": "Wyczyść",
-      "suggested": "Sugerowane artykuły",
-      "startTyping": "Zacznij pisać, aby wyszukać",
-      "navigate": "Nawiguj",
-      "select": "Wybierz",
-      "close": "Zamknij",
-      "buttonText": "Szukaj w pomocy..."
-    },
-    "article": {
-      "tableOfContents": "Spis treści",
-      "showMeHow": "Pokaż jak",
-      "completed": "ukończone",
-      "thanksFeedback": "Dziękujemy za opinię!",
-      "loading": "Wczytywanie artykułu...",
-      "notFound": "Nie znaleziono artykułu",
-      "minRead": "min czytania"
-    },
-    "contact": {
-      "title": "Kontakt z supportem",
-      "selectCategory": "Wybierz kategorię, aby rozpocząć",
-      "describeIssue": "Opisz problem lub prośbę",
-      "requestSubmitted": "Zgłoszenie zostało wysłane",
-      "categoryIntro": "W czym możemy dziś pomóc?",
-      "quickLinks": "Szybkie linki",
-      "documentation": "Dokumentacja",
-      "systemStatus": "Status systemu",
-      "changeCategory": "Zmień kategorię",
-      "priority": "Priorytet",
-      "subject": "Temat",
-      "description": "Opis",
-      "email": "Email",
-      "emailPlaceholder": "Twój email do kontaktu zwrotnego",
-      "attachments": "Załączniki",
-      "dropFiles": "Kliknij, aby dodać pliki",
-      "fileLimit": "Maks. {{max}} plików, 10MB każdy",
-      "includeSystemInfo": "Dołącz informacje systemowe",
-      "thankYou": "Dziękujemy!",
-      "submitAnother": "Wyślij kolejne",
-      "responseTime": "Typowy czas odpowiedzi: 24 godziny",
-      "submitting": "Wysyłanie...",
-      "submit": "Wyślij zgłoszenie",
-      "success": "Zgłoszenie do supportu zostało wysłane!",
-      "error": "Nie udało się wysłać zgłoszenia. Spróbuj ponownie.",
-      "fileTooLarge": "Plik {{name}} jest zbyt duży (maks. 10MB)",
-      "tooManyFiles": "Maksymalnie {{max}} plików",
-      "errors": {
-        "subjectRequired": "Temat jest wymagany",
-        "invalidEmail": "Nieprawidłowy adres email"
-      }
-    },
-    "dashboard": {
-      "overview": "Przegląd Dashboardu",
-      "overviewContent": "Używaj Dashboardu do monitorowania postępów, kluczowych metryk i ogólnej kondycji programu transformacji.",
-      "navigation": "Wskazówki nawigacji",
-      "navigationContent": "Korzystaj z lewego menu, aby przechodzić między modułami. Panel Pomocy dopasowuje się do aktualnego ekranu."
-    },
-    "initiatives": {
-      "create": "Tworzenie inicjatyw",
-      "createContent": "Twórz inicjatywy na bazie luk z oceny lub dodawaj je ręcznie. Ustal właścicieli, kamienie milowe i oczekiwane korzyści.",
-      "manage": "Zarządzanie inicjatywami",
-      "manageContent": "Priorytetyzuj inicjatywy, śledź postęp i utrzymuj spójność komunikacji dzięki tablicom wykonawczym i raportom."
-    },
-    "assessment": {
-      "start": "Rozpoczęcie oceny",
-      "startContent": "Wybierz framework, uzupełnij ankietę, a następnie przejrzyj luki i rekomendacje wygenerowane na podstawie odpowiedzi.",
-      "methodology": "Metodologia",
-      "methodologyContent": "Oceny porównują aktualną dojrzałość i przekładają wyniki na priorytetyzowaną roadmapę inicjatyw."
-    },
-    "general": {
-      "gettingStarted": "Pierwsze kroki",
-      "gettingStartedContent": "Otwórz Centrum Pomocy, skorzystaj z szybkich przewodników, a następnie uruchom ocenę, aby wygenerować pierwszą roadmapę.",
-      "support": "Wsparcie",
-      "supportContent": "Jeśli utkniesz, skontaktuj się z supportem i dołącz zrzuty ekranu/logi. AI Chat może też wyjaśniać funkcje i przepływy pracy."
-    },
-    "knowledge": {
-      "title": "Baza Wiedzy",
-      "searchPlaceholder": "Szukaj artykułów...",
-      "allCategories": "Wszystkie",
-      "noSearchResults": "Nie znaleziono artykułów dla Twojego zapytania.",
-      "noArticles": "Brak artykułów w tej kategorii.",
-      "articleNotFound": "Artykuł nie został znaleziony.",
-      "minRead": "min czytania",
-      "views": "wyświetleń",
-      "relatedModules": "Powiązane moduły",
-      "shareArticle": "Udostępnij artykuł",
-      "featured": "Wyróżnione",
-      "popular": "Popularne",
-      "recent": "Ostatnio dodane",
-      "readMore": "Czytaj więcej",
-      "backToLibrary": "Powrót do biblioteki",
-      "categories": "Kategorie",
-      "articles": "Artykuły",
-      "searchResults": "Wyniki wyszukiwania",
-      "tableOfContents": "Spis treści",
-      "wasHelpful": "Czy ten artykuł był pomocny?",
-      "yes": "Tak",
-      "no": "Nie",
-      "feedbackThanks": "Dziękujemy za opinię!",
-      "relatedArticles": "Powiązane artykuły",
-      "gettingStarted": "Pierwsze kroki",
-      "tutorials": "Samouczki",
-      "bestPractices": "Najlepsze praktyki",
-      "faq": "Często zadawane pytania",
-      "troubleshooting": "Rozwiązywanie problemów"
+    "microVideo": {
+      "header": "Szybki samouczek",
+      "watch": "Obejrzyj",
+      "skip": "Pomiń",
+      "dontShow": "Nie pokazuj ponownie"
     }
   },
   "settings": {
     "title": "Ustawienia",
+    "connectedAccounts": {
+      "title": "Połączone konta",
+      "subtitle": "Połącz konta zewnętrzne, aby ułatwić logowanie i korzystać z dodatkowych funkcji",
+      "googleDesc": "Loguj się szybciej kontem Google",
+      "linkedinDesc": "Połącz swoją sieć profesjonalną",
+      "connected": "Połączono",
+      "connectedOn": "Połączono",
+      "connect": "Połącz",
+      "disconnect": "Odłącz",
+      "disconnected": "Konto odłączone",
+      "disconnectError": "Nie udało się odłączyć konta",
+      "connectSuccess": "{{provider}} połączono pomyślnie!",
+      "connectFailed": "Nie udało się połączyć konta",
+      "securityTitle": "Twoje dane są bezpieczne",
+      "securityText": "Prosimy tylko o minimalne uprawnienia. Twoje dane logowania nigdy nie są przechowywane. Możesz odłączyć konto w każdej chwili."
+    },
     "profile": {
       "label": "Profil",
       "header": "Dane osobowe",
@@ -1169,7 +1200,7 @@
         "title": "Historia ustawień",
         "subtitle": "Wyświetl i przywróć poprzednie ustawienia"
       }
-    },
+    }
   },
   "showcase": {
     "common": {
@@ -1590,25 +1621,45 @@
           "title": "Moje zadania",
           "badge": "{{count}} aktywnych",
           "items": {
-            "0": { "title": "Ukończ ocenę DRD" },
-            "1": { "title": "Przejrzyj prognozy ROI" },
-            "2": { "title": "Przygotuj raport Stage-Gate" }
+            "0": {
+              "title": "Ukończ ocenę DRD"
+            },
+            "1": {
+              "title": "Przejrzyj prognozy ROI"
+            },
+            "2": {
+              "title": "Przygotuj raport Stage-Gate"
+            }
           }
         },
         "initiatives": {
           "badge": "{{count}} aktywne",
           "items": {
-            "0": { "name": "Roadmapa Industry 4.0" },
-            "1": { "name": "Wdrożenie cyfrowego bliźniaka" },
-            "2": { "name": "Optymalizacja łańcucha dostaw" }
+            "0": {
+              "name": "Roadmapa Industry 4.0"
+            },
+            "1": {
+              "name": "Wdrożenie cyfrowego bliźniaka"
+            },
+            "2": {
+              "name": "Optymalizacja łańcucha dostaw"
+            }
           }
         },
         "decisions": {
           "badge": "{{count}} oczekujące",
           "items": {
-            "0": { "title": "Zatwierdź alokację budżetu na Q2", "deadline": "2 dni" },
-            "1": { "title": "Wybierz partnera technologicznego", "deadline": "5 dni" },
-            "2": { "title": "Bramka Go/No-Go – faza 2" }
+            "0": {
+              "title": "Zatwierdź alokację budżetu na Q2",
+              "deadline": "2 dni"
+            },
+            "1": {
+              "title": "Wybierz partnera technologicznego",
+              "deadline": "5 dni"
+            },
+            "2": {
+              "title": "Bramka Go/No-Go – faza 2"
+            }
           }
         }
       }
@@ -1729,6 +1780,29 @@
         "security": "Bezpieczeństwo",
         "allDocuments": "Wszystkie dokumenty"
       }
+    },
+    "docs": {
+      "badge": "Dokumentacja",
+      "title": "Stworzona z myślą o transparentności",
+      "subtitle": "Wszystko, czego potrzebujesz, aby ocenić, zintegrować i zaufać naszej platformie.",
+      "searchPlaceholder": "Szukaj w dokumentacji...",
+      "searchBtn": "Szukaj",
+      "gettingStarted": "Pierwsze kroki",
+      "gettingStartedDesc": "Szybkie poradniki: konfiguracja workspace, pierwszy assessment i budowanie roadmapy transformacji.",
+      "security": "Bezpieczeństwo i zgodność",
+      "securityDesc": "Architektura bezpieczeństwa, certyfikaty, polityki przetwarzania danych i ramy zgodności.",
+      "apiReference": "Dokumentacja API",
+      "apiReferenceDesc": "Dokumentacja RESTful API: integracje, webhooki i programistyczny dostęp do danych platformy.",
+      "changelog": "Historia zmian",
+      "changelogDesc": "Informacje o wersjach, aktualizacjach i ulepszeniach. Bądź na bieżąco z najnowszymi zmianami.",
+      "legalCenter": "Centrum prawne",
+      "legalCenterDesc": "Regulamin, polityka prywatności, umowy o przetwarzanie danych i dokumenty regulacyjne.",
+      "integrations": "Integracje",
+      "integrationsDesc": "Łącz się z Jira, Azure DevOps, SAP i innymi systemami. Importuj i synchronizuj dane.",
+      "explore": "Poznaj",
+      "lastUpdated": "Ostatnia aktualizacja",
+      "lastUpdatedDate": "Luty 2026",
+      "whatsNew": "Zobacz co nowego"
     }
   },
   "partner": {
@@ -1780,7 +1854,11 @@
           "type": "Firma zajmująca się tworzeniem oprogramowania",
           "location": "Sztokholm, Szwecja",
           "quote": "W trakcie programu beta zintegrowaliśmy Consultinity z naszym procesem onboardingu klientów. Oceny oparte na AI pomogły nam zidentyfikować możliwości upsellu, które wcześniej umykały.",
-          "results": ["40% szybsze tworzenie propozycji", "3 nowych klientów enterprise", "2x poprawa zaangażowania klientów"],
+          "results": [
+            "40% szybsze tworzenie propozycji",
+            "3 nowych klientów enterprise",
+            "2x poprawa zaangażowania klientów"
+          ],
           "since": "Październik 2025"
         },
         "1": {
@@ -1788,7 +1866,11 @@
           "type": "Doradztwo w zakresie transformacji cyfrowej",
           "location": "Monachium, Niemcy",
           "quote": "Consultinity dało nam ustrukturyzowany framework, którego brakowało. Nasi konsultanci dostarczają teraz oceny w dniach, nie tygodniach. Program beta ukształtował nasze podejście do sukcesu klienta.",
-          "results": ["60% redukcja czasu realizacji", "Satysfakcja klientów: 4.2 → 4.8", "Cykl zamykania transakcji skrócony o 35%"],
+          "results": [
+            "60% redukcja czasu realizacji",
+            "Satysfakcja klientów: 4.2 → 4.8",
+            "Cykl zamykania transakcji skrócony o 35%"
+          ],
           "since": "Wrzesień 2025"
         }
       }
@@ -1799,27 +1881,42 @@
       "registered": {
         "name": "Zarejestrowany",
         "requirement": "Zacznij tutaj",
-        "benefits": ["Podstawowe narzędzia", "Wpis w katalogu"]
+        "benefits": [
+          "Podstawowe narzędzia",
+          "Wpis w katalogu"
+        ]
       },
       "bronze": {
         "name": "Brązowy",
         "requirement": "3+ klientów, €5K ARR",
-        "benefits": ["Priorytetowe wsparcie", "Materiały szkoleniowe"]
+        "benefits": [
+          "Priorytetowe wsparcie",
+          "Materiały szkoleniowe"
+        ]
       },
       "silver": {
         "name": "Srebrny",
         "requirement": "10+ klientów, €25K ARR",
-        "benefits": ["Dedykowany manager", "Dostęp do beta funkcji"]
+        "benefits": [
+          "Dedykowany manager",
+          "Dostęp do beta funkcji"
+        ]
       },
       "gold": {
         "name": "Złoty",
         "requirement": "25+ klientów, €75K ARR",
-        "benefits": ["Co-marketing", "Wystąpienia na konferencjach"]
+        "benefits": [
+          "Co-marketing",
+          "Wystąpienia na konferencjach"
+        ]
       },
       "platinum": {
         "name": "Platynowy",
         "requirement": "50+ klientów, €200K+",
-        "benefits": ["Zwiększony udział w przychodach", "Partnerstwo na poziomie zarządu"]
+        "benefits": [
+          "Zwiększony udział w przychodach",
+          "Partnerstwo na poziomie zarządu"
+        ]
       }
     },
     "onboarding": {
@@ -1978,6 +2075,30 @@
     "project": "Projekt",
     "focus": "Fokus"
   },
+  "cloud": {
+    "title": "Źródła danych w chmurze",
+    "description": "Połącz magazyn chmurowy, aby importować dokumenty do analizy AI.",
+    "addSource": "Dodaj źródło",
+    "provider": "Dostawca",
+    "sourceName": "Nazwa",
+    "sourceNamePlaceholder": "np. Dysk firmowy",
+    "connect": "Połącz",
+    "disconnect": "Odłącz",
+    "noSources": "Brak połączonych źródeł chmurowych.",
+    "sourceConnected": "Źródło chmurowe połączone",
+    "sourceDisconnected": "Źródło chmurowe odłączone",
+    "connectFailed": "Nie udało się połączyć źródła",
+    "disconnectFailed": "Nie udało się odłączyć",
+    "openInProvider": "Otwórz u dostawcy"
+  },
+  "chat": {
+    "business": "Akcje biznesowe",
+    "businessTooltip": "Przejrzyj oczekujące akcje biznesowe i zatwierdzenia",
+    "newChat": "Nowa rozmowa",
+    "history": "Historia rozmów",
+    "autoReadOn": "Włącz czytanie na głos",
+    "autoReadOff": "Wyłącz czytanie na głos"
+  },
   "aiChat": {
     "language": "Język rozmowy",
     "chatMenuTitle": "Menu",
@@ -2105,6 +2226,10 @@
         "textToSpeech": {
           "label": "Czytaj odpowiedzi",
           "desc": "Automatyczne czytanie na głos"
+        },
+        "marketResearch": {
+          "label": "Badanie rynku",
+          "desc": "Strukturalna analiza rynkowa z danymi"
         }
       },
       "sources": {
@@ -2384,5 +2509,1403 @@
       "timelineConstraintsHint": "Kluczowe terminy lub presja czasowa wpływająca na decyzje strategiczne — np. terminy regulacyjne, kamienie milowe zarządu, odnowienia umów.",
       "timelineConstraintsPlaceholder": "np. Zgodność z DORA do Q1 2027; migracja ERP przed odnowieniem licencji w paź. 2026"
     }
+  },
+  "access": {
+    "banner": {
+      "demo": "Przeglądasz środowisko demo (tylko odczyt)",
+      "pastDue": "Płatność nie powiodła się. Zaktualizuj metodę płatności, aby uniknąć przerwy w usłudze.",
+      "trialExpired": "Twój okres próbny wygasł. Przejdź na plan płatny, aby kontynuować.",
+      "trialCritical": "Okres próbny wygasa za {{days}} dni. Przejdź na plan płatny, aby zachować pełny dostęp.",
+      "trialWarning": "Pozostało {{days}} dni okresu próbnego",
+      "approachingLimits": "Zbliżasz się do limitów użycia. Rozważ upgrade, aby korzystać bez przerw."
+    },
+    "modal": {
+      "trialExpired": "Twój okres próbny się zakończył. Twoje dane są bezpieczne, ale organizacja jest teraz w trybie tylko do odczytu. Przejdź na plan płatny, aby przywrócić pełny dostęp.",
+      "title": "Wymagany dostęp",
+      "close": "Zamknij",
+      "bookCall": "Umów rozmowę"
+    },
+    "cta": {
+      "upgradePlan": "Zmień plan",
+      "upgradeNow": "Przejdź na płatny",
+      "fixPayment": "Napraw płatność",
+      "addPaymentMethod": "Dodaj metodę płatności",
+      "startTrial": "Rozpocznij okres próbny",
+      "completeSetup": "Dokończ konfigurację",
+      "goToBilling": "Przejdź do rozliczeń",
+      "contactSales": "Skontaktuj się ze sprzedażą"
+    },
+    "blocked": {
+      "ORG_NOT_FOUND": "Organizacja nie znaleziona. Zaloguj się ponownie, aby odświeżyć sesję.",
+      "ORG_INACTIVE": "Twoja organizacja jest nieaktywna. Skontaktuj się z pomocą lub zaloguj ponownie.",
+      "TRIAL_PROFILE_INCOMPLETE": "Dokończ konfigurację organizacji, aby rozpocząć korzystanie z AI.",
+      "AI_TOKEN_BUDGET_EXCEEDED": "Budżet AI w okresie próbnym został wykorzystany. Dodaj metodę płatności, aby kontynuować.",
+      "AI_LIMIT_REACHED": "Osiągnięto dzienny limit wywołań AI. Przejdź na wyższy plan.",
+      "TRIAL_EXPIRED": "Twój okres próbny wygasł. Przejdź na plan płatny, aby korzystać ze wszystkich funkcji.",
+      "DEMO_READ_ONLY": "Tryb demo jest tylko do odczytu. Rozpocznij okres próbny, aby tworzyć własne dane.",
+      "DEMO_TIME_EXPIRED": "Sesja demo wygasła. Rozpocznij okres próbny, aby kontynuować.",
+      "DEMO_AI_SESSION_LIMIT_REACHED": "Limit sesji AI w demo osiągnięty. Rozpocznij okres próbny.",
+      "PROJECT_LIMIT_REACHED": "Limit projektów osiągnięty. Przejdź na wyższy plan.",
+      "INITIATIVE_LIMIT_REACHED": "Limit inicjatyw osiągnięty. Przejdź na wyższy plan.",
+      "USER_LIMIT_REACHED": "Limit użytkowników osiągnięty. Przejdź na wyższy plan.",
+      "STORAGE_LIMIT_REACHED": "Limit przestrzeni osiągnięty. Przejdź na wyższy plan.",
+      "SUBSCRIPTION_PAST_DUE": "Płatność nie powiodła się. Zaktualizuj metodę płatności.",
+      "SUBSCRIPTION_CANCELLED": "Twoja subskrypcja została anulowana.",
+      "INSUFFICIENT_TOKENS": "Niewystarczająca liczba tokenów. Dodaj metodę płatności lub zmień plan.",
+      "default": "Ta akcja jest zablokowana na Twoim poziomie dostępu."
+    },
+    "upgrade": {
+      "title": "Zmień plan",
+      "subtitle": "Wybierz plan najlepszy dla Twojego zespołu",
+      "currentPlan": "Aktualny plan",
+      "selectPlan": "Wybierz plan",
+      "processing": "Przetwarzanie...",
+      "popular": "Najpopularniejszy",
+      "features": "Funkcje",
+      "perMonth": "/mies.",
+      "perUser": "/użytkownik",
+      "unlimited": "Bez limitu",
+      "included": "W zestawie",
+      "notIncluded": "Niedostępne",
+      "comparePlans": "Porównaj plany",
+      "whatChanges": "Co się zmieni po upgrade",
+      "instantUnlock": "Wszystkie limity usunięte natychmiast po upgrade",
+      "checkout": {
+        "title": "Dokończ upgrade",
+        "selectPayment": "Wybierz metodę płatności",
+        "addCard": "Dodaj kartę kredytową",
+        "confirm": "Potwierdź i przejdź na wyższy plan",
+        "processing": "Przetwarzanie płatności...",
+        "success": "Upgrade zakończony sukcesem! Wszystkie limity zostały usunięte.",
+        "failed": "Płatność nie powiodła się. Spróbuj ponownie lub użyj innej metody płatności.",
+        "cancel": "Anuluj"
+      },
+      "subscription": {
+        "trialing": "Okres próbny",
+        "active": "Aktywna",
+        "past_due": "Płatność nie powiodła się",
+        "cancelled": "Anulowana",
+        "fixPayment": "Napraw metodę płatności",
+        "reactivate": "Reaktywuj subskrypcję"
+      }
+    }
+  },
+  "legal": {
+    "modal": {
+      "title": "Wymagana aktualizacja dokumentów",
+      "subtitle": "Proszę przejrzeć i zaakceptować poniższe dokumenty, aby kontynuować.",
+      "accept": "Akceptuję i kontynuuję",
+      "disclaimer": "Klikając Akceptuję, zgadzasz się na warunki tych dokumentów."
+    },
+    "accepting": "Przetwarzanie...",
+    "orgAdmin": "Umowa organizacji",
+    "dpaPendingOrgAdmin": "Umowa powierzenia przetwarzania danych wymaga akceptacji przez administratora organizacji.",
+    "myAcceptances": {
+      "title": "Moje akceptacje",
+      "noAcceptances": "Brak zapisanych akceptacji.",
+      "acceptedAt": "Zaakceptowano",
+      "version": "Wersja"
+    },
+    "center": {
+      "title": "Centrum prawne",
+      "subtitle": "Wszystkie dokumenty prawne regulujące korzystanie z Consultinity.",
+      "coreAgreements": "Podstawowe umowy",
+      "businessBilling": "Biznes i rozliczenia",
+      "securityCompliance": "Bezpieczeństwo i zgodność"
+    }
+  },
+  "externalAssessment": {
+    "mini": {
+      "title": "Mini ankieta",
+      "progress": "Postęp",
+      "submit": "Pokaż wynik",
+      "resultTitle": "Twoje podsumowanie",
+      "insights": "Wnioski",
+      "ctaDefault": "Kontynuuj",
+      "restart": "Zacznij od nowa",
+      "notFound": "Nie znaleziono linku",
+      "notFoundHint": "Sprawdź poprawność linku i spróbuj ponownie.",
+      "freeTextPlaceholder": "Wpisz odpowiedź...",
+      "q1": {
+        "text": "Która opcja najlepiej opisuje Twoją organizację?",
+        "o1": "Produkcja / przemysł",
+        "o2": "Usługi / back-office",
+        "o3": "Inne"
+      },
+      "q2": "Jak oceniasz jakość i dostępność danych dziś? (1-5)",
+      "q3": {
+        "text": "Które obszary są najwyższym priorytetem na najbliższe 6 miesięcy? (możesz wybrać kilka)",
+        "o1": "Dane i raportowanie",
+        "o2": "Wydajność procesów",
+        "o3": "Systemy IT i integracje",
+        "o4": "Ludzie i zmiana"
+      },
+      "q4": "Czy korzystacie obecnie z rozwiązań AI na produkcji?",
+      "q5": "Na ile jasne jest ownership i governance AI? (1-5)",
+      "q6": "Jaka jest największa blokada we wdrażaniu AI?",
+      "q7": {
+        "text": "Ile lokalizacji/zakładów jest w zakresie?",
+        "o1": "0–3",
+        "o2": "4–20",
+        "o3": "21+"
+      },
+      "q8": "Jaki rezultat oznaczałby sukces w ciągu najbliższych 90 dni?"
+    }
+  },
+  "oauth": {
+    "loginStarted": "Przekierowywanie do {{provider}}...",
+    "loginSucceeded": "Zalogowano pomyślnie przez {{provider}}",
+    "loginFailed": "Logowanie przez {{provider}} nie powiodło się. Spróbuj ponownie.",
+    "notConfigured": "Logowanie przez {{provider}} nie jest skonfigurowane.",
+    "noEmail": "Nie udało się pobrać adresu email z {{provider}}. Spróbuj innej metody.",
+    "emailNotVerified": "Twój email w {{provider}} nie jest zweryfikowany. Zweryfikuj go najpierw.",
+    "invalidState": "Sesja uwierzytelniania wygasła. Spróbuj ponownie.",
+    "providerIdentityAlreadyLinked": "To konto {{provider}} jest już połączone z innym użytkownikiem."
+  },
+  "profile": {
+    "completeness": {
+      "title": "Kompletność profilu",
+      "connectLinkedin": "Połącz konto LinkedIn, aby szybciej się logować i zwiększyć wiarygodność.",
+      "addPhoto": "Dodaj zdjęcie profilowe, aby spersonalizować swoje konto.",
+      "enableMfa": "Włącz uwierzytelnianie dwuskładnikowe dla lepszego bezpieczeństwa.",
+      "complete": "Twój profil jest kompletny!",
+      "suggestions": "Sugestie",
+      "achievements": "Osiągnięcia"
+    }
+  },
+  "partners": {
+    "outreach": {
+      "title": "Outreach partnerski",
+      "subtitle": "Importuj leady, twórz kampanie i prowadź outreach zgodny z compliance.",
+      "importLeads": "Import leadów (CSV)",
+      "importCta": "Importuj",
+      "importHint": "Nagłówki: email, company, first_name, last_name, country, region, source, lawful_basis",
+      "importSuccess": "Leady zaimportowane",
+      "importFailed": "Import nie powiódł się",
+      "createCampaign": "Utwórz kampanię",
+      "createCta": "Utwórz",
+      "campaignName": "Nazwa kampanii",
+      "fromName": "Nazwa nadawcy (opcjonalnie)",
+      "fromEmail": "Email nadawcy (opcjonalnie)",
+      "replyTo": "Reply-to (opcjonalnie)",
+      "stepSubject": "Temat kroku 1",
+      "stepBody": "Treść kroku 1 (tekst). Użyj {FirstName}, {Company}.",
+      "nameRequired": "Wymagana nazwa kampanii",
+      "subjectRequired": "Wymagany temat kroku",
+      "campaignCreated": "Kampania utworzona",
+      "campaignCreateFailed": "Nie udało się utworzyć",
+      "campaignStarted": "Kampania uruchomiona",
+      "campaignStartFailed": "Nie udało się uruchomić",
+      "campaignPaused": "Kampania wstrzymana",
+      "campaignPauseFailed": "Nie udało się wstrzymać",
+      "campaignResumed": "Kampania wznowiona",
+      "campaignResumeFailed": "Nie udało się wznowić",
+      "campaigns": "Kampanie",
+      "noCampaigns": "Brak kampanii",
+      "status": "Status",
+      "enrollments": "Zapisy",
+      "sent": "Wysłane",
+      "start": "Start",
+      "pause": "Pauza",
+      "resume": "Wznów"
+    }
+  },
+  "licensedTools": {
+    "moduleName": "Narzędzia licencjonowane",
+    "hubTitle": "Hub narzędzi licencjonowanych",
+    "backToHub": "Powrót do huba narzędzi licencjonowanych",
+    "locked": "Licencjonowane — wymagany dostęp",
+    "lockedReason": "Twoja organizacja nie ma dostępu do tego frameworka. Ulepsz swój plan lub skontaktuj się z administratorem, aby go odblokować.",
+    "requestAccess": "Poproś o dostęp / Ulepsz",
+    "proprietaryNote": "To jest autorski framework wymagający płatnej licencji.",
+    "educationalNote": "Ten framework jest dostępny w celach edukacyjnych z odpowiednim licencjonowaniem.",
+    "pdfImport": {
+      "title": "Importuj ocenę z PDF",
+      "upload": "Prześlij PDF",
+      "detectFramework": "Wykryj framework",
+      "extractScores": "Wyciągnij wyniki",
+      "reviewMapping": "Przejrzyj mapowanie",
+      "confirm": "Potwierdź import",
+      "detecting": "Wykrywanie frameworka...",
+      "extracting": "Wyciąganie wyników...",
+      "noFramework": "Nie udało się wykryć frameworka. Wybierz ręcznie.",
+      "lowConfidence": "Niska pewność — przejrzyj i popraw wyodrębnione wartości.",
+      "supportedFrameworks": "Obsługiwane frameworki"
+    }
+  },
+  "tools": {
+    "hub": {
+      "tabs": {
+        "library": "Biblioteka",
+        "sessions": "Sesje",
+        "reports": "Raporty",
+        "initiatives": "Inicjatywy"
+      },
+      "table": {
+        "name": "Nazwa",
+        "category": "Kategoria",
+        "whatYouGet": "Co otrzymasz"
+      },
+      "empty": {
+        "library": "Brak narzędzi."
+      }
+    },
+    "integrations": {
+      "syncHub": {
+        "title": "Centrum integracji",
+        "subtitle": "Połącz, monitoruj i zarządzaj wszystkimi integracjami zewnętrznymi",
+        "tabs": {
+          "apps": "Połączone aplikacje",
+          "health": "Zdrowie synchronizacji",
+          "webhooks": "Uprawnienia i zakresy",
+          "audit": "Dziennik audytu"
+        },
+        "search": "Szukaj integracji…",
+        "connectNew": "Połącz",
+        "connect": "Połącz",
+        "disconnect": "Odłącz",
+        "reauth": "Ponowna autoryzacja",
+        "runNow": "Uruchom teraz",
+        "pause": "Wstrzymaj",
+        "resume": "Wznów",
+        "loading": "Ładowanie integracji…",
+        "noIntegrations": "Brak połączonych integracji",
+        "connectFirst": "Połącz swoją pierwszą integrację",
+        "connected": "Integracja połączona",
+        "disconnected": "Integracja odłączona",
+        "connectFailed": "Połączenie nie powiodło się",
+        "reauthStarted": "Ponowna autoryzacja rozpoczęta",
+        "reauthRequired": "Wymagana ponowna autoryzacja",
+        "reauthDesc": "Token dostępu wygasł. Autoryzuj ponownie, aby wznowić synchronizację.",
+        "paused": "Synchronizacja wstrzymana",
+        "resumed": "Synchronizacja wznowiona",
+        "syncComplete": "Synchronizacja zakończona",
+        "lastSync": "Ostatnia sync",
+        "lastResult": "Ostatni wynik",
+        "scopes": "Uprawnienia i zakresy",
+        "scopesDesc": "Sprawdź co każda integracja może czytać i zapisywać w Twojej przestrzeni.",
+        "noScopesData": "Brak połączonych integracji.",
+        "itemsProcessed": "Elementy przetworzone",
+        "duration": "Czas trwania",
+        "errorRateLabel": "Wskaźnik błędów",
+        "errorOccurred": "Wystąpił błąd",
+        "total": "Łącznie",
+        "healthy": "Zdrowe",
+        "degraded": "Pogorszone",
+        "unhealthy": "Niesprawne",
+        "unresolvedErrors": "Nierozwiązane błędy",
+        "noErrors": "Wszystkie systemy działają poprawnie",
+        "resolve": "Rozwiąż",
+        "noAuditData": "Brak zdarzeń audytu",
+        "auditAction": "Akcja",
+        "auditActor": "Aktor",
+        "auditTime": "Czas",
+        "alreadyConnected": "Połączony",
+        "comingSoon": "Wkrótce"
+      }
+    }
+  },
+  "aiAuthoring": {
+    "generateCardDraft": "Wygeneruj szkic karty",
+    "generateInitiative": "Wygeneruj szkic inicjatywy",
+    "generateTask": "Wygeneruj szkic zadania",
+    "generateDecision": "Wygeneruj szkic decyzji",
+    "briefPlaceholder": "Opisz inicjatywę/zadanie/decyzję w 3-8 punktach...",
+    "briefLabel": "Krótki opis",
+    "generating": "Generowanie szkicu...",
+    "previewTitle": "Podgląd szkicu AI",
+    "previewSubtitle": "Przejrzyj każdą sekcję i zastosuj selektywnie.",
+    "applyAll": "Zastosuj wszystko",
+    "applySelected": "Zastosuj zaznaczone",
+    "discardAll": "Odrzuć",
+    "sectionApplied": "Sekcja zastosowana",
+    "draftGenerated": "Szkic wygenerowany przez AI",
+    "draftFailed": "Nie udało się wygenerować szkicu",
+    "auditLogTitle": "Historia autorstwa AI",
+    "undoAi": "Cofnij AI"
+  },
+  "kpi": {
+    "attribution": {
+      "noMappings": "Brak mapowań KPI",
+      "noMappingsHint": "Najpierw zmapuj KPI do inicjatyw, aby zobaczyć analizę atrybucji.",
+      "selectKpi": "Wybierz KPI",
+      "choose": "— Wybierz KPI —",
+      "kpiDelta": "Zmiana KPI",
+      "contributors": "Kontrybucja",
+      "unexplained": "Niewyjaśnione",
+      "confidence": "Pewność",
+      "breakdown": "Rozkład atrybucji",
+      "unexplainedLabel": "Niewyjaśnione / Czynniki zewn.",
+      "qualitySignals": "Sygnały jakości"
+    },
+    "financial": {
+      "title": "KPI → Mapowanie na sprawozdania finansowe",
+      "subtitle": "Powiąż KPI z pozycjami RZiS, bilansu i przepływów pieniężnych",
+      "addMapping": "Dodaj mapowanie",
+      "lines": "pozycji",
+      "mappings": "mapowań",
+      "selectKpi": "Wybierz KPI...",
+      "statementLine": "Pozycja sprawozdania",
+      "selectLine": "Wybierz pozycję...",
+      "direction": "Kierunek",
+      "positive": "Pozytywny (poprawia)",
+      "negative": "Negatywny (pogarsza)",
+      "neutral": "Neutralny",
+      "multiplier": "Mnożnik",
+      "relType": "Relacja",
+      "linear": "Liniowa",
+      "percentage": "Procentowa",
+      "step": "Funkcja skokowa",
+      "confidence": "Pewność",
+      "confHigh": "Wysoka",
+      "confMedium": "Średnia",
+      "confLow": "Niska",
+      "assumptions": "Założenia",
+      "assumptionsPlaceholder": "Opisz relację i wszelkie założenia...",
+      "saved": "Mapowanie zapisane",
+      "saveFailed": "Nie udało się zapisać mapowania",
+      "deleted": "Mapowanie usunięte",
+      "deleteFailed": "Nie udało się",
+      "selectBoth": "Wybierz zarówno KPI jak i pozycję sprawozdania",
+      "impactPreview": "Podgląd wpływu finansowego",
+      "impactDisclaimer": "Estymacje wpływu oparte na zadeklarowanych mnożnikach i założeniach.",
+      "disclaimer": "Mapowania finansowe to przybliżenia. Rzeczywiste relacje mogą się różnić w zależności od branży i kontekstu. Zawsze weryfikuj z zespołem finansów."
+    }
+  },
+  "finance": {
+    "model": {
+      "title": "Modele finansowe",
+      "createModel": "Utwórz model finansowy",
+      "modelName": "Nazwa modelu",
+      "modelNamePlaceholder": "np. Inicjatywa Alpha — prognoza 5-letnia",
+      "inputs": "Dane wejściowe i założenia",
+      "events": "Oś czasu zdarzeń",
+      "outputs": "Wyniki (RZiS / Bilans / CF)",
+      "validation": "Walidacja",
+      "initialBalances": "Bilans otwarcia",
+      "economicEvents": "Zdarzenia gospodarcze",
+      "addEvent": "Dodaj zdarzenie",
+      "noEvents": "Brak zdarzeń. Dodaj zdarzenia gospodarcze, aby uruchomić model.",
+      "eventType": "Typ zdarzenia",
+      "eventName": "Nazwa",
+      "amount": "Kwota",
+      "recurrence": "Powtarzalność",
+      "startDate": "Data początkowa",
+      "endDate": "Data końcowa",
+      "growthRate": "Tempo wzrostu (%/rok)",
+      "cfClass": "Klasyfikacja CF",
+      "oneTime": "Jednorazowo",
+      "monthly": "Miesięcznie",
+      "quarterly": "Kwartalnie",
+      "annual": "Rocznie",
+      "compute": "Oblicz",
+      "approve": "Zatwierdź",
+      "approved": "Zatwierdzony",
+      "noModels": "Brak modeli. Utwórz pierwszy, aby rozpocząć.",
+      "selectOrCreate": "Wybierz lub utwórz model",
+      "months": "miesięcy",
+      "pl": "RZiS",
+      "bs": "Bilans",
+      "cf": "Przepływy pieniężne",
+      "line": "Pozycja",
+      "noOutputs": "Kliknij \"Oblicz\", aby wygenerować wyniki",
+      "totalChecks": "Łącznie sprawdzeń",
+      "passed": "Przeszło",
+      "failed": "Nie przeszło",
+      "warnings": "Ostrzeżenia",
+      "modelHealth": "Stan modelu",
+      "needsReview": "WYMAGA PRZEGLĄDU",
+      "healthy": "ZDROWY",
+      "notComputed": "Jeszcze nie obliczono",
+      "check": "Sprawdzenie",
+      "period": "Okres",
+      "status": "Status",
+      "message": "Komunikat",
+      "diff": "Różnica",
+      "horizon": "Horyzont (miesiące)",
+      "granularity": "Granulacja",
+      "currency": "Waluta"
+    }
+  },
+  "presentations": {
+    "wizard": {
+      "title": "Generator prezentacji",
+      "titleRequired": "Podaj tytuł",
+      "outlineFailed": "Nie udało się wygenerować konspektu",
+      "generationFailed": "Generowanie nie powiodło się",
+      "downloadFailed": "Pobieranie nie powiodło się"
+    },
+    "steps": {
+      "sources": "Źródła",
+      "setup": "Konfiguracja",
+      "outline": "Konspekt",
+      "result": "Wynik"
+    },
+    "sources": {
+      "title": "Wybierz źródła danych",
+      "subtitle": "Wybierz artefakty z platformy do uwzględnienia w decku.",
+      "initiative_portfolio": "Portfel inicjatyw",
+      "execution_status": "Status realizacji",
+      "kpi_roi": "KPI i ROI",
+      "raid": "Ryzyka i problemy",
+      "assessment": "Wyniki oceny",
+      "tool_session": "Sesja narzędzia"
+    },
+    "setup": {
+      "title": "Skonfiguruj swój deck",
+      "subtitle": "Ustaw ton, odbiorców i styl.",
+      "deckTitle": "Tytuł decka",
+      "titlePlaceholder": "np. Steering Committee Update — Q1 2026",
+      "template": "Szablon (opcjonalnie)",
+      "customDeck": "Własny deck",
+      "customDeckDesc": "AI generuje konspekt ze źródeł",
+      "audience": "Odbiorcy",
+      "goal": "Cel",
+      "language": "Język",
+      "theme": "Motyw",
+      "confidentiality": "Poufność",
+      "generateOutline": "Generuj konspekt"
+    },
+    "audiences": {
+      "sponsor": "Sponsor",
+      "executive": "Zarząd",
+      "investor": "Inwestor / VC",
+      "internal": "Zespół wewnętrzny"
+    },
+    "goals": {
+      "inform": "Informuj",
+      "decide": "Decyduj",
+      "sell": "Sprzedaj",
+      "align": "Alignuj"
+    },
+    "themes": {
+      "corporate": "Korporacyjny",
+      "minimal": "Minimalistyczny",
+      "modern": "Nowoczesny"
+    },
+    "confidentialities": {
+      "confidential": "Poufny",
+      "internal": "Wewnętrzny",
+      "public": "Publiczny"
+    },
+    "outline": {
+      "title": "Konspekt decka",
+      "slides": "slajdów",
+      "reorder": "Przeciągnij by zmienić kolejność, przełącz by włączyć/wyłączyć",
+      "addSlide": "+ Dodaj slajd...",
+      "generate": "Generuj deck"
+    },
+    "generating": {
+      "title": "Generowanie decka",
+      "subtitle": "Tworzenie slajdów klasy BCG z walidacją jakości. To może chwilę potrwać..."
+    },
+    "result": {
+      "ready": "Twój deck jest gotowy!",
+      "slidesGenerated": "slajdów wygenerowanych pomyślnie",
+      "warnings": "Ostrzeżenia jakości",
+      "downloadPptx": "Pobierz PPTX",
+      "editOutline": "Edytuj i regeneruj"
+    },
+    "templates": {
+      "systemTemplates": "Szablony systemowe",
+      "orgTemplates": "Szablony organizacji",
+      "viewOutline": "Zobacz konspekt",
+      "use": "Użyj",
+      "clone": "Sklonuj",
+      "cloned": "Szablon sklonowany do Twojej organizacji",
+      "cloneFailed": "Nie udało się sklonować"
+    },
+    "brandKit": {
+      "title": "Kit marki",
+      "subtitle": "Skonfiguruj branding organizacji dla prezentacji i raportów.",
+      "colors": "Kolory",
+      "primary": "Główny",
+      "secondary": "Drugorzędny",
+      "accent": "Akcent",
+      "fonts": "Czcionki",
+      "titleFont": "Czcionka tytułu",
+      "bodyFont": "Czcionka tekstu",
+      "headerFooter": "Nagłówek i stopka",
+      "headerText": "Tekst nagłówka",
+      "footerText": "Tekst stopki",
+      "pageNumbers": "Numeracja stron",
+      "confidentialityBanner": "Baner poufności",
+      "defaultConfidentiality": "Domyślna poufność",
+      "disclaimer": "Tekst zastrzeżeń",
+      "disclaimerPlaceholder": "Opcjonalne zastrzeżenie prawne dla decków finansowych/wycenowych",
+      "saved": "Kit marki zapisany",
+      "saveFailed": "Nie udało się zapisać"
+    }
+  },
+  "portfolio": {
+    "toast": {
+      "cannotDowngrade": "Nie można obniżyć statusu. Użyj „Anuluj” lub „Archiwizuj”."
+    },
+    "ai": {
+      "selectedCount": "Zaznaczone",
+      "analyzeSelection": "AI: Analizuj zaznaczenie",
+      "analyzing": "Analiza…",
+      "openPanel": "Otwórz panel",
+      "closePanel": "Zamknij panel",
+      "panelTitle": "Analiza AI portfela",
+      "panelSubtitle": "Konflikty, priorytety, overlap oraz hotspoty zasobów nieludzkich.",
+      "loading": "Ładowanie…",
+      "analysisFailed": "Nie udało się wykonać analizy AI",
+      "applyFailed": "Nie udało się zastosować",
+      "applyNotFound": "Nie znaleziono inicjatywy dla sugestii",
+      "applyInvalid": "Nieprawidłowa rekomendacja",
+      "applied": "Zastosowano",
+      "apply": "Zastosuj",
+      "conflicts": "Konflikty",
+      "noConflicts": "Nie wykryto konfliktów.",
+      "recommendation": "Rekomendacja",
+      "prioritySuggestions": "Sugestie priorytetów",
+      "noSuggestions": "Brak sugestii.",
+      "recommendedPriority": "Rekomendowany",
+      "overlap": "Overlap / duplikacja",
+      "noOverlap": "Nie wykryto overlapu.",
+      "similarity": "Podobieństwo",
+      "nonHuman": "Zasoby nieludzkie",
+      "budgetByQuarter": "Budżet per kwartał",
+      "duplicateTools": "Duplikaty narzędzi/licencji",
+      "usedBy": "Używane w",
+      "scenarios": "Scenariusze",
+      "generate": "Generuj",
+      "generating": "Generowanie…",
+      "scenariosFailed": "Nie udało się wygenerować scenariuszy",
+      "applyScenario": "Zastosuj scenariusz",
+      "allocations": "Przypisania",
+      "noProject": "Do zastosowania scenariusza wymagany jest projekt",
+      "selectionCount": "{{count}} zaznaczone",
+      "noSelection": "Zaznacz co najmniej jedną inicjatywę.",
+      "conflictsTitle": "Konflikty",
+      "conflictsError": "Nie udało się przeanalizować konfliktów.",
+      "prioritiesTitle": "Sugestie priorytetów",
+      "noPriorities": "Brak sugestii priorytetów.",
+      "prioritiesError": "Nie udało się wygenerować sugestii priorytetów.",
+      "currentPriority": "Aktualny",
+      "priorityApplied": "Priorytet zaktualizowany.",
+      "overlapTitle": "Overlap / duplikacja",
+      "overlapNeedTwo": "Zaznacz co najmniej dwie inicjatywy do analizy overlap.",
+      "overlapError": "Nie udało się wykryć overlap.",
+      "overlapScore": "Wynik",
+      "nonhumanError": "Nie udało się przeanalizować zasobów nieludzkich.",
+      "nonhumanTitle": "Zasoby nieludzkie",
+      "nonhumanEmpty": "Brak danych o zasobach nieludzkich dla tego zaznaczenia.",
+      "budgetUnknown": "Brak pozycji budżetowych (unknown).",
+      "duplicatePurchases": "Duplikaty zakupów",
+      "noDuplicates": "Nie wykryto duplikatów zakupów.",
+      "vendor": "Dostawca",
+      "scenariosTitle": "Scenariusze",
+      "generateScenarios": "Generuj scenariusze",
+      "scenariosHint": "Wygeneruj 2–3 warianty, porównaj trade-off czas vs budżet i zastosuj wybrany plan.",
+      "scenarioError": "Nie udało się wygenerować scenariuszy.",
+      "scenarioApplied": "Scenariusz zastosowany.",
+      "scenarioApplyError": "Nie udało się zastosować scenariusza.",
+      "scenarioTimeBoxed": "Time-boxed",
+      "scenarioBudgetBoxed": "Budget-boxed",
+      "scenarioBalanced": "Balanced (baseline AI)",
+      "scenarioBalancedAiSummary": "Używa baseline harmonogramu AI, aby zbalansować quick wins i obciążenie.",
+      "scenarioTimeSummary": "Priorytetyzuje szybsze dowiezienie, przesuwając kluczowe elementy do przodu.",
+      "scenarioBudgetSummary": "Rozkłada pracę, aby ograniczyć piki budżetu kwartalnego (konserwatywna pojemność).",
+      "scenarioBalancedSummary": "Balansuje quick wins i dystrybucję obciążenia.",
+      "budgetHighlights": "Highlighty budżetu"
+    }
+  },
+  "organization": {
+    "sidebar": {
+      "title": "Organizacja",
+      "subtitle": "Kontekst i administracja",
+      "back": "Powrót do pulpitu",
+      "contextGroup": "KONTEKST",
+      "adminGroup": "ADMINISTRACJA",
+      "profile": "Profil firmy",
+      "goals": "Cele i oczekiwania",
+      "challenges": "Wyzwania",
+      "strategy": "Synteza strategiczna",
+      "members": "Członkowie i role",
+      "billing": "Płatności i tokeny",
+      "limits": "Limity i użycie",
+      "domains": "Domeny",
+      "branding": "Branding i ustawienia regionalne"
+    },
+    "sections": {
+      "profile": {
+        "title": "Profil firmy",
+        "subtitle": "Przegląd firmy, model operacyjny i kluczowe fakty"
+      },
+      "goals": {
+        "title": "Cele i oczekiwania",
+        "subtitle": "Zamierzenia strategiczne, metryki docelowe, zakres"
+      },
+      "challenges": {
+        "title": "Wyzwania",
+        "subtitle": "Mapa wyzwań, dowody i przyczyny źródłowe"
+      },
+      "strategy": {
+        "title": "Synteza strategiczna",
+        "subtitle": "Synteza, scenariusze i podsumowanie executive"
+      },
+      "members": {
+        "title": "Członkowie i role",
+        "subtitle": "Zarządzanie członkami zespołu, zaproszeniami i rolami"
+      },
+      "billing": {
+        "title": "Płatności i tokeny",
+        "subtitle": "Status subskrypcji, saldo tokenów i użycie"
+      },
+      "limits": {
+        "title": "Limity i użycie",
+        "subtitle": "Limity planu, kwoty i bieżące użycie"
+      },
+      "domains": {
+        "title": "Domeny",
+        "subtitle": "Konfiguracja i weryfikacja domeny własnej"
+      },
+      "branding": {
+        "title": "Branding i ustawienia regionalne",
+        "subtitle": "Logo, kolory, strefa czasowa, język i waluta"
+      }
+    },
+    "members": {
+      "title": "Członkowie zespołu",
+      "desc": "{{count}} członków w tej organizacji",
+      "invite": "Zaproś",
+      "email": "Email",
+      "role": "Rola",
+      "sendInvite": "Wyślij",
+      "inviteSent": "Zaproszenie wysłane",
+      "inviteFailed": "Nie udało się wysłać zaproszenia",
+      "name": "Imię",
+      "emailCol": "Email",
+      "roleCol": "Rola",
+      "status": "Status",
+      "empty": "Brak członków. Zaproś pierwszego członka zespołu."
+    },
+    "billing": {
+      "planTitle": "Obecny plan",
+      "trialDesc": "Korzystasz z wersji próbnej. Uaktualnij, aby odblokować pełne funkcje.",
+      "activeDesc": "Twoja subskrypcja jest aktywna.",
+      "upgrade": "Uaktualnij",
+      "tokensTitle": "Saldo tokenów",
+      "tokensUnit": "tokenów",
+      "used": "wykorzystano"
+    },
+    "limits": {
+      "title": "Limity planu i bieżące użycie",
+      "members": "Członkowie zespołu",
+      "projects": "Projekty",
+      "storage": "Miejsce (GB)",
+      "aiCalls": "Wywołania AI / miesiąc",
+      "upgradeHint": "Potrzebujesz więcej? Uaktualnij plan, aby zwiększyć limity.",
+      "viewPlans": "Zobacz plany"
+    },
+    "domains": {
+      "title": "Domena własna",
+      "verified": "Zweryfikowana",
+      "pending": "Oczekuje na weryfikację",
+      "noDomain": "Brak skonfigurowanej domeny własnej.",
+      "approvedTitle": "Zatwierdzone domeny email",
+      "approvedDesc": "Użytkownicy z tych domen email mogą automatycznie dołączyć do organizacji.",
+      "noApproved": "Brak zatwierdzonych domen."
+    },
+    "branding": {
+      "visualTitle": "Tożsamość wizualna",
+      "logo": "Logo",
+      "primaryColor": "Kolor główny",
+      "regionalTitle": "Ustawienia regionalne",
+      "timezone": "Strefa czasowa",
+      "language": "Język",
+      "dateFormat": "Format daty",
+      "currency": "Waluta"
+    }
+  },
+  "megatrends": {
+    "title": "Analiza megatrendów",
+    "subtitle": "Eksploruj megatrendy branżowe, buduj radar i odkrywaj wnioski strategiczne",
+    "tabs": {
+      "baseline": "Baseline branżowy",
+      "radar": "Mapa radaru trendów",
+      "detail": "Szczegóły trendu",
+      "custom": "Własne trendy",
+      "insights": "Wnioski AI"
+    },
+    "selectTrend": "Wybierz trend z Baseline lub Mapy radaru, aby zobaczyć szczegóły.",
+    "goToBaseline": "Przejdź do Baseline"
+  },
+  "valuation": {
+    "tabLabel": "Wycena",
+    "title": "Wycena przedsiębiorstwa",
+    "subtitle": "DCF + porównawcze + sensitivity, eksport do decka",
+    "steps": {
+      "source": "Źródło",
+      "assumptions": "Założenia",
+      "results": "Wyniki",
+      "export": "Eksport"
+    },
+    "list": {
+      "title": "Wyceny",
+      "empty": "Brak wycen. Utwórz pierwszą, aby zacząć.",
+      "source": "Źródło"
+    },
+    "detail": {
+      "empty": "Wybierz wycenę, aby kontynuować",
+      "status": "Status",
+      "currency": "Waluta"
+    },
+    "create": {
+      "cta": "Nowa wycena",
+      "title": "Nowa wycena",
+      "titlePlaceholder": "np. Wycena do rundy — base case",
+      "sourceType": "Typ źródła",
+      "sourceLabel": "Źródło",
+      "selectSource": "Wybierz...",
+      "horizon": "Horyzont (lata)",
+      "cancel": "Anuluj",
+      "create": "Utwórz",
+      "failed": "Nie udało się utworzyć wyceny",
+      "sourceRequired": "Najpierw wybierz źródło",
+      "source": {
+        "financialModel": "Zatwierdzony model finansowy (T054)",
+        "budget": "Zatwierdzony budżet (T053)",
+        "manual": "Ręczna prognoza"
+      }
+    },
+    "validation": {
+      "gLessThanWacc": "Wzrost terminalny musi być niższy niż WACC (g < WACC)"
+    },
+    "assumptions": {
+      "dcfTitle": "Założenia DCF",
+      "wacc": "WACC (%)",
+      "terminalMethod": "Metoda terminalna",
+      "g": "Wzrost terminalny g (%)",
+      "exitMultiple": "Multiple",
+      "exitMetric": "Metryka",
+      "save": "Zapisz założenia",
+      "saved": "Zapisano założenia",
+      "saveFailed": "Nie udało się zapisać założeń"
+    },
+    "comps": {
+      "title": "Wycena porównawcza (multiples)",
+      "min": "Min",
+      "median": "Mediana",
+      "max": "Max",
+      "peers": "Peery (po przecinku)",
+      "peersPlaceholder": "np. Firma A, Firma B",
+      "save": "Zapisz comps",
+      "saved": "Zapisano comps",
+      "saveFailed": "Nie udało się zapisać comps"
+    },
+    "compute": {
+      "cta": "Policz",
+      "ok": "Policzono wycenę",
+      "failed": "Nie udało się policzyć"
+    },
+    "approve": {
+      "cta": "Zatwierdź",
+      "ok": "Zatwierdzono",
+      "failed": "Nie udało się zatwierdzić"
+    },
+    "results": {
+      "empty": "Policz wycenę, aby zobaczyć wyniki",
+      "summary": "Podsumowanie",
+      "ev": "Wartość przedsiębiorstwa (EV)",
+      "equity": "Wartość kapitału (Equity)",
+      "wacc": "WACC",
+      "pvSplit": "Podział PV (jawny/terminal)",
+      "comps": "Zakres porównawczy (jeśli ustawiono)",
+      "compsMin": "Min",
+      "compsMedian": "Mediana",
+      "compsMax": "Max",
+      "compsEmpty": "Skonfiguruj comps w Założeniach"
+    },
+    "advisory": {
+      "title": "Rekomendacje poprawy wyceny",
+      "generate": "Generuj",
+      "ok": "Wygenerowano rekomendacje",
+      "failed": "Nie udało się wygenerować rekomendacji",
+      "empty": "Wygeneruj rekomendacje, aby zobaczyć działania.",
+      "approvalGate": "Rekomendacje wymagają statusu APPROVED.",
+      "convert": "Utwórz inicjatywę",
+      "convertOk": "Utworzono inicjatywę",
+      "convertFailed": "Nie udało się utworzyć inicjatywy"
+    },
+    "negotiation": {
+      "title": "Pakiet negocjacyjny",
+      "generate": "Generuj",
+      "ok": "Wygenerowano pakiet",
+      "failed": "Nie udało się wygenerować pakietu",
+      "empty": "Wygeneruj pakiet, aby dostać pro/contra i Q&A.",
+      "approvalGate": "Pakiet wymaga statusu APPROVED.",
+      "pro": "Pro",
+      "qa": "Q&A"
+    },
+    "sensitivity": {
+      "tornadoTitle": "Tornado (główne drivery)"
+    },
+    "export": {
+      "pptx": "Eksport PPTX",
+      "ok": "Wygenerowano PPTX",
+      "failed": "Eksport nie powiódł się",
+      "approvalGate": "Eksport wymaga statusu APPROVED i zawiera disclaimers."
+    }
+  },
+  "capability": {
+    "tabTitle": "Dopasowanie kompetencji",
+    "catalog": "Katalog kompetencji",
+    "add": "Dodaj kompetencję",
+    "namePlaceholder": "Nazwa kompetencji...",
+    "empty": "Brak zdefiniowanych kompetencji. Dodaj pierwszą, aby rozpocząć.",
+    "requirements": "Wymagania",
+    "noRequirements": "Brak wymagań dla tej inicjatywy.",
+    "minLevel": "Min. poziom",
+    "required": "Wymagane",
+    "niceToHave": "Mile widziane",
+    "candidates": "Kandydaci",
+    "noCandidates": "Nie znaleziono kandydatów z pasującymi kompetencjami.",
+    "gaps": "Luki",
+    "recommendations": "Rekomendacje",
+    "matchScore": "Dopasowanie",
+    "unknownCoverage": "Nieznane pokrycie — brak danych o kompetencjach"
+  },
+  "change": {
+    "tabTitle": "Nastrój zmian",
+    "avgRating": "Średnia ocena",
+    "responses": "Odpowiedzi",
+    "trend": "Trend",
+    "trend_improving": "Poprawiający się",
+    "trend_stable": "Stabilny",
+    "trend_declining": "Spadkowy",
+    "belowThreshold": "Poniżej progu anonimowości (wymagane 5+)",
+    "activeAlerts": "Aktywne alerty",
+    "pulseCheckin": "Pulse check-in",
+    "submitPulse": "Wyślij pulse",
+    "howDoYouFeel": "Jak się czujesz z bieżącą zmianą?",
+    "commentPlaceholder": "Opcjonalny komentarz...",
+    "anonymous": "Wyślij anonimowo",
+    "submit": "Wyślij",
+    "pulseSubmitted": "Pulse wysłany"
+  },
+  "stakeholder": {
+    "tabTitle": "Komunikacja",
+    "segments": "Segmenty",
+    "noSegments": "Brak segmentów. Utwórz segmenty, aby zorganizować komunikację.",
+    "members": "członków",
+    "plans": "Plany komunikacji",
+    "noPlans": "Brak planów komunikacji.",
+    "cadence": "Kadencja",
+    "active": "Aktywny",
+    "paused": "Wstrzymany",
+    "nextDue": "Następny",
+    "sendLog": "Log komunikacji",
+    "noLog": "Brak wysłanych komunikatów.",
+    "recipients": "odbiorców",
+    "overduePlans": "Zaległe komunikaty",
+    "overdueItem": "Zaległy komunikat",
+    "plan": "Plan komunikacji"
+  },
+  "demo": {
+    "conversion": {
+      "startTrial": "Rozpocznij darmowy okres próbny",
+      "persistentCta": "Rozpocznij darmowy okres próbny",
+      "reportGenerated": {
+        "title": "Twój raport jest gotowy!",
+        "desc": "Wyobraź sobie generowanie takich raportów z danymi Twojej firmy. Rozpocznij okres próbny."
+      },
+      "deckExported": {
+        "title": "Prezentacja wyeksportowana!",
+        "desc": "Eksportuj gotowe prezentacje z danych transformacji Twojej firmy. Rozpocznij okres próbny."
+      },
+      "initiativeCreated": {
+        "title": "Inicjatywa utworzona!",
+        "desc": "Śledź swoje inicjatywy z pełną widocznością realizacji. Rozpocznij okres próbny."
+      },
+      "toolCompleted": {
+        "title": "Ocena zakończona!",
+        "desc": "Przeprowadzaj oceny ze swoim zespołem i uzyskaj wnioski AI. Rozpocznij okres próbny."
+      },
+      "aiInsight": {
+        "title": "Wygenerowano wniosek AI!",
+        "desc": "Otrzymuj rekomendacje AI w kontekście Twojej organizacji. Rozpocznij okres próbny."
+      },
+      "kpiViewed": {
+        "title": "Śledzenie KPI w czasie rzeczywistym",
+        "desc": "Śledź KPI w czasie rzeczywistym z automatyczną analizą trendów. Rozpocznij okres próbny."
+      }
+    },
+    "signup": {
+      "title": "Rozpocznij darmowy okres próbny",
+      "subtitle": "Kontynuuj tam, gdzie skończyłeś — z własnymi danymi",
+      "nameLabel": "Imię i nazwisko",
+      "emailLabel": "Email służbowy",
+      "passwordLabel": "Hasło",
+      "cta": "Rozpocznij darmowy okres próbny",
+      "creating": "Tworzenie Twojego workspace...",
+      "benefit1": "14 dni za darmo, bez karty kredytowej",
+      "benefit2": "Własny workspace z możliwościami AI",
+      "benefit3": "Importuj dane lub zacznij od nowa",
+      "benefit4": "Anuluj w dowolnym momencie",
+      "privacy": "Twoje dane są szyfrowane i bezpieczne",
+      "errorRequired": "Proszę wypełnić wszystkie pola",
+      "errorGeneric": "Coś poszło nie tak. Spróbuj ponownie.",
+      "successTitle": "Witaj na pokładzie!",
+      "successDesc": "Twój workspace jest przygotowywany. Przekierowywanie..."
+    },
+    "archilex": {
+      "name": "Archilex Group",
+      "tagline": "Architecting Legal Excellence",
+      "industry": "Usługi profesjonalne — prawo i compliance",
+      "scenario": {
+        "executive": "Przegląd dla zarządu",
+        "initiatives": "Inicjatywy i realizacja — szczegóły",
+        "finance": "Finanse i ROI — szczegóły"
+      }
+    }
+  },
+  "ui": {
+    "tableToggle": {
+      "label": "Tryb prezentacji tabeli",
+      "nMode": "Widok strony",
+      "cMode": "Widok tabeli"
+    }
+  },
+  "navigation": {
+    "sidebar": {
+      "collapse": "Zwiń sidebar",
+      "expand": "Rozwiń sidebar",
+      "groupModules": "MODUŁY",
+      "groupAdmin": "ADMINISTRACJA"
+    }
+  },
+  "superadmin": {
+    "confirm": {
+      "title": "Potwierdź akcję",
+      "description": "Ta akcja zostanie zarejestrowana w dzienniku audytu.",
+      "reasonLabel": "Powód wykonania tej akcji",
+      "reasonPlaceholder": "np. Zgłoszenie klienta, incydent bezpieczeństwa, zgodność...",
+      "reasonRequired": "Podaj powód (min. 3 znaki).",
+      "cancel": "Anuluj",
+      "proceed": "Potwierdź i wykonaj",
+      "auditNotice": "Ta akcja zostanie zapisana w dzienniku audytu wraz z Twoją tożsamością i znacznikiem czasu."
+    },
+    "impersonation": {
+      "banner": "Tryb podszywania",
+      "exit": "Zakończ podszywanie",
+      "title": "Podszyj się pod użytkownika",
+      "description": "Zostaniesz zalogowany jako ten użytkownik. Wszystkie Twoje działania będą rejestrowane w dzienniku audytu.",
+      "started": "Podszywanie rozpoczęte",
+      "ended": "Podszywanie zakończone"
+    },
+    "testSupport": {
+      "bootstrapLabel": "Utwórz tenant testowy",
+      "cleanupLabel": "Wyczyść dane testowe",
+      "gatingNotice": "Dostępne tylko w środowisku testowym z odpowiednimi poświadczeniami."
+    }
+  },
+  "aiPrompts": {
+    "title": "Zarządzanie promptami AI",
+    "registry": "Rejestr promptów",
+    "assembler": "Kompilator promptów",
+    "blocks": "Bloki promptów",
+    "testBench": "Bench testowy",
+    "learning": "System uczenia",
+    "experiments": "Eksperymenty A/B",
+    "version": "Wersja",
+    "rollback": "Przywróć wersję",
+    "rollbackReason": "Powód przywrócenia wersji",
+    "rollbackConfirm": "Czy na pewno chcesz przywrócić tę wersję?",
+    "createPrompt": "Utwórz prompt",
+    "editPrompt": "Edytuj prompt",
+    "promptKey": "Klucz promptu",
+    "category": "Kategoria",
+    "variables": "Zmienne",
+    "preview": "Podgląd",
+    "compile": "Kompiluj",
+    "suggestions": "Sugestie instrukcji",
+    "approve": "Zatwierdź",
+    "reject": "Odrzuć",
+    "apply": "Zastosuj",
+    "pending": "Oczekujące",
+    "applied": "Zastosowane",
+    "experiment": {
+      "create": "Utwórz eksperyment",
+      "start": "Uruchom",
+      "stop": "Zatrzymaj",
+      "promoteWinner": "Promuj zwycięzcę",
+      "status": "Status",
+      "variants": "Warianty",
+      "sampleSize": "Min. wielkość próby",
+      "confidence": "Poziom ufności"
+    }
+  },
+  "competency": {
+    "catalog": {
+      "title": "Katalog kompetencji",
+      "subtitle": "Definiuj taksonomię kompetencji, kategorie i poziomy umiejętności"
+    },
+    "categories": {
+      "title": "Kategorie",
+      "add": "Dodaj",
+      "all": "Wszystkie",
+      "namePlaceholder": "Nazwa kategorii (EN)",
+      "namePlaceholderPl": "Nazwa (PL)"
+    },
+    "levels": {
+      "title": "Poziomy biegłości"
+    },
+    "search": "Szukaj kompetencji...",
+    "add": "Dodaj kompetencję",
+    "form": {
+      "name": "Nazwa kompetencji",
+      "description": "Opis (opcjonalny)",
+      "noCategory": "— Brak kategorii —"
+    },
+    "table": {
+      "name": "Kompetencja",
+      "category": "Kategoria",
+      "initiatives": "Inicjatywy",
+      "users": "Użytkownicy",
+      "empty": "Nie znaleziono kompetencji"
+    },
+    "empty": {
+      "title": "Brak katalogu kompetencji",
+      "description": "Zacznij od utworzenia domyślnej taksonomii z kategoriami i poziomami umiejętności, a następnie dostosuj ją do swojej organizacji.",
+      "seedDefaults": "Utwórz domyślną taksonomię"
+    },
+    "defaults": {
+      "seeded": "Utworzono domyślną taksonomię"
+    },
+    "error": {
+      "loadFailed": "Nie udało się załadować danych kompetencji"
+    },
+    "requirements": {
+      "title": "Wymagania kompetencyjne",
+      "add": "Dodaj wymaganie",
+      "addBtn": "Dodaj",
+      "empty": "Brak zdefiniowanych wymagań kompetencyjnych",
+      "emptyHint": "Określ, jakie kompetencje potrzebuje ta inicjatywa, aby zespół mógł być odpowiednio zasobowany.",
+      "competency": "Kompetencja",
+      "select": "— Wybierz —",
+      "selectCompetency": "Wybierz kompetencję",
+      "minLevel": "Min. poziom",
+      "priority": "Priorytet",
+      "mustHave": "Wymagane",
+      "niceToHave": "Mile widziane",
+      "headcount": "Etat / FTE",
+      "justification": "Uzasadnienie",
+      "justificationPlaceholder": "Dlaczego potrzebne?",
+      "addFailed": "Nie udało się dodać wymagania",
+      "deleteFailed": "Nie udało się usunąć wymagania"
+    }
+  },
+  "skillsGap": {
+    "title": "Analiza luk kompetencyjnych",
+    "empty": "Dodaj wymagania kompetencyjne, aby zobaczyć analizę luk",
+    "tabs": {
+      "requirements": "Wg wymagania",
+      "persons": "Wg osoby",
+      "summary": "Podsumowanie"
+    },
+    "status": {
+      "covered": "Pokryte",
+      "partial": "Częściowo",
+      "missing": "Brak",
+      "unknown": "Nieznane"
+    },
+    "unknownCoverage": {
+      "title": "Nieznane pokrycie",
+      "description": "{{count}} z {{total}} członków zespołu nie ma profilu kompetencji. Analiza luk może być niepełna."
+    },
+    "mustHave": "Wymagane",
+    "levelRequired": "P{{level}}",
+    "best": "najlepszy",
+    "noProfile": "Brak profilu",
+    "noGaps": "Brak luk",
+    "gapCount": "{{count}} luka/luki",
+    "noTeam": "Brak członków zespołu przypisanych do tej inicjatywy",
+    "summary": {
+      "readiness": "Gotowość",
+      "teamSize": "Wielkość zespołu",
+      "withProfiles": "z profilami",
+      "mustHaveGaps": "Luki wymagane",
+      "ofMustHave": "z {{total}} wymaganych",
+      "actions": "Zalecane działania"
+    }
+  },
+  "coreDocs": {
+    "title": "Dokumentacja systemowa",
+    "systemBrain": "Mózg systemu",
+    "status": "Status",
+    "indexed": "Zaindeksowane",
+    "stale": "Nieaktualne",
+    "notIndexed": "Niezaindeksowane",
+    "missingFile": "Brak pliku",
+    "upToDate": "Aktualne",
+    "version": "Wersja",
+    "lastIndexed": "Ostatnia indeksacja",
+    "fileHash": "Hash pliku",
+    "chunks": "Fragmenty",
+    "reindex": "Indeksuj teraz",
+    "reindexAll": "Reindeksuj całą dokumentację",
+    "reindexReason": "Powód reindeksacji",
+    "reindexSuccess": "Reindeksacja zakończona pomyślnie",
+    "drift": "Wykrywanie zmian",
+    "driftAlert": "Niektóre dokumenty zmieniły się od ostatniej indeksacji",
+    "noDrift": "Wszystkie dokumenty są aktualne",
+    "previewSnippets": "Podgląd fragmentów",
+    "totalDocs": "Łączna liczba dokumentów",
+    "citation": "Cytowanie",
+    "citations": "Cytowania",
+    "governanceWarning": "Odpowiedź dotycząca governance wymaga min. 1 cytowania z dokumentacji systemowej"
+  },
+  "survey": {
+    "scaleLow": "Nisko",
+    "scaleHigh": "Wysoko",
+    "freeTextPlaceholder": "Wpisz swoją odpowiedź...",
+    "minutes": "min",
+    "back": "Wstecz",
+    "next": "Dalej",
+    "submit": "Wyślij",
+    "prevSection": "Poprzednia",
+    "nextSection": "Następna sekcja",
+    "properties": "Właściwości",
+    "progress": "Postęp",
+    "answered": "Odpowiedziano",
+    "required": "Wymagane",
+    "estimatedTime": "Szac. czas",
+    "language": "Język"
+  },
+  "publicAssessment": {
+    "title": "Sprawdź gotowość do transformacji cyfrowej",
+    "subtitle": "Odpowiedz na kilka pytań i otrzymaj raport oparty na AI.",
+    "questions": "pytań",
+    "aiResult": "Wynik AI",
+    "emailOptional": "Email (opcjonalnie — aby otrzymać wyniki)",
+    "startButton": "Rozpocznij ocenę",
+    "disclaimer": "Twoje odpowiedzi służą wyłącznie do wygenerowania wyniku. Konto nie jest wymagane.",
+    "tryAgain": "Spróbuj ponownie",
+    "analyzing": "Analizujemy Twoje odpowiedzi...",
+    "resultTitle": "Twój wynik gotowości",
+    "dimensions": "Rozkład wg wymiarów",
+    "keyInsights": "Kluczowe wnioski",
+    "nextSteps": "Gotowy na następny krok?",
+    "startTrial": "Rozpocznij bezpłatny okres próbny",
+    "bookDemo": "Umów demo",
+    "contactUs": "Skontaktuj się"
+  },
+  "sponsorReport": {
+    "empty": "Brak raportów sponsorskich",
+    "emptyHint": "Wygeneruj raport analizy dla sponsora na podstawie zatwierdzonych wniosków i danych z oceny.",
+    "generate": "Generuj raport",
+    "generateNew": "Nowy raport",
+    "edit": "Edytuj",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "properties": "Właściwości",
+    "status": "Status",
+    "created": "Utworzono",
+    "sections": "Sekcje",
+    "languageProp": "Język",
+    "submitForApproval": "Wyślij do zatwierdzenia",
+    "approve": "Zatwierdź",
+    "reject": "Odrzuć",
+    "markUtilized": "Oznacz jako wykorzystany",
+    "backToDraft": "Wróć do roboczego",
+    "exportPptx": "Eksportuj PPTX",
+    "rejectReason": "Powód odrzucenia",
+    "rejectPlaceholder": "Dlaczego ten raport jest odrzucany?",
+    "confirmReject": "Odrzuć",
+    "utilizeNotes": "Notatki z wykorzystania",
+    "utilizePlaceholder": "Jak został wykorzystany ten raport? Wynik spotkania?",
+    "confirmUtilize": "Oznacz jako wykorzystany",
+    "evidenceNote": "Ustalenia poparte zatwierdzonymi wnioskami z wywiadów i danych z oceny.",
+    "assumptions": "Założenia",
+    "unknowns": "Niewiadome",
+    "counterpoints": "Kontrargumenty"
+  },
+  "aiGovernance": {
+    "title": "Zarządzanie AI",
+    "contextPolicy": "Polityka kontekstu",
+    "categories": "Kategorie",
+    "orgProfile": "Profil organizacji",
+    "orgTerminology": "Terminologia organizacji",
+    "orgPatterns": "Wzorce organizacji",
+    "orgStrategy": "Strategia organizacji",
+    "orgDocuments": "Dokumenty organizacji",
+    "piiRedaction": "Redakcja PII",
+    "retention": "Retencja danych",
+    "standard": "Standardowa",
+    "strict": "Ścisła",
+    "webSearch": "Wyszukiwanie web",
+    "internetEnabled": "Dostęp do internetu",
+    "internetDisabled": "Dostęp do internetu wyłączony przez politykę",
+    "domainPolicy": "Polityka domen",
+    "privacy": "Ustawienia prywatności",
+    "privateMode": "Tryb prywatny",
+    "privateModeDesc": "Brak aktualizacji pamięci i utrwalania w tej sesji",
+    "memoryEnabled": "Pamięć AI",
+    "memoryWriteEnabled": "Zezwól na aktualizacje pamięci",
+    "retentionMode": "Tryb retencji",
+    "previewMemory": "Podgląd pamięci",
+    "exportMemory": "Eksportuj pamięć",
+    "deleteMemory": "Usuń pamięć",
+    "deleteMemoryConfirm": "Czy na pewno? To trwale usunie Twoją pamięć AI.",
+    "documentVisibility": "Widoczność AI",
+    "allowed": "Dozwolone",
+    "blocked": "Zablokowane",
+    "requiresApproval": "Wymaga zatwierdzenia",
+    "sensitivity": "Wrażliwość",
+    "public": "Publiczne",
+    "internal": "Wewnętrzne",
+    "confidential": "Poufne",
+    "healthCheck": "Zdrowie systemu",
+    "duplicateMounts": "Zduplikowane trasy"
+  },
+  "cv": {
+    "searchCandidates": "Szukaj kandydatów...",
+    "addCandidate": "Dodaj kandydata",
+    "docs": "dok.",
+    "skills": "komp.",
+    "noCandidates": "Brak kandydatów",
+    "selectCandidate": "Wybierz kandydata",
+    "selectHint": "Wybierz kandydata z listy lub dodaj nowego, aby rozpocząć analizę CV.",
+    "disclaimer": "Ranking pomocniczy — nie decyzja rekrutacyjna. Wszystkie mapowania wymagają zatwierdzenia.",
+    "tabProfile": "Profil i dokumenty",
+    "tabCompetencies": "Kompetencje",
+    "tabMatches": "Dopasowanie",
+    "documents": "Dokumenty CV",
+    "uploadCV": "Prześlij CV",
+    "noDocuments": "Nie przesłano jeszcze dokumentów.",
+    "mapCompetencies": "Mapuj",
+    "deleteCV": "Usuń (prawo do bycia zapomnianym)",
+    "mappedCompetencies": "Zmapowane kompetencje",
+    "noSignals": "Brak zmapowanych kompetencji. Prześlij CV i uruchom mapowanie.",
+    "approve": "Zatwierdź",
+    "reject": "Odrzuć",
+    "approved": "Zatwierdzone",
+    "initiativeIdPlaceholder": "ID inicjatywy",
+    "runMatching": "Dopasuj",
+    "missingEvidence": "Brak dowodów",
+    "properties": "Właściwości",
+    "type": "Typ",
+    "documentsCount": "Dokumenty",
+    "approvedSkills": "Zatwierdzone kompetencje",
+    "applyToProfile": "Zastosuj do profilu użytkownika",
+    "privacyNote": "PII jest usuwane z przetwarzania AI. Dane CV podlegają polityce retencji.",
+    "namePlaceholder": "Imię i nazwisko",
+    "emailPlaceholder": "Email (opcjonalnie)",
+    "typeInternal": "Wewnętrzny",
+    "typeExternal": "Zewnętrzny",
+    "typeVendor": "Dostawca",
+    "cancel": "Anuluj",
+    "create": "Utwórz"
+  },
+  "impersonation": {
+    "banner": "Przeglądasz jako inny użytkownik",
+    "exit": "Zakończ impersonację",
+    "reverting": "Powrót...",
+    "exitFailed": "Nie udało się zakończyć impersonacji"
+  },
+  "superadminGuardrails": {
+    "confirmRequired": "Ta akcja wymaga wyraźnego potwierdzenia",
+    "reasonRequired": "Podaj powód wykonania tej akcji",
+    "confirm": "Potwierdź akcję",
+    "cancel": "Anuluj",
+    "auditLogged": "Ta akcja zostanie zapisana w dzienniku audytu"
+  },
+  "transactionReadiness": {
+    "title": "Gotowość transakcyjna",
+    "score": "Wynik gotowości",
+    "tier": "Poziom",
+    "ranking": "Ranking organizacji",
+    "recompute": "Przelicz wynik",
+    "recomputeConfirm": "Czy na pewno chcesz przeliczyć wynik gotowości?",
+    "history": "Historia wyników",
+    "breakdown": "Rozbicie czynników",
+    "blockers": "Blokery",
+    "noData": "Brak danych o gotowości",
+    "dimensions": {
+      "D1": "Tożsamość i bezpieczeństwo",
+      "D2": "Aktywacja produktu",
+      "D3": "Zarządzanie i realizacja",
+      "D4": "Gotowość rozliczeniowa",
+      "D5": "Zgodność"
+    },
+    "tiers": {
+      "LOW": "Niski",
+      "MEDIUM": "Średni",
+      "HIGH": "Wysoki",
+      "READY": "Gotowy"
+    },
+    "penalties": "Kary"
+  },
+  "sellixIntegration": {
+    "title": "Integracja Sellix",
+    "enabled": "Integracja włączona",
+    "disabled": "Integracja wyłączona",
+    "threshold": "Próg gotowości",
+    "cooldown": "Cooldown (godziny)",
+    "endpoint": "Endpoint Sellix",
+    "pathway": "Domyślna ścieżka",
+    "secret": "Klucz webhook",
+    "testEvent": "Wyślij zdarzenie testowe",
+    "testEventConfirm": "Wysłać testowy sygnał gotowości do Sellix?",
+    "status": "Status dostarczenia",
+    "deliveries": "Ostatnie dostarczenia",
+    "inboundEvents": "Zdarzenia przychodzące",
+    "configSaved": "Konfiguracja zapisana",
+    "noDeliveries": "Brak dostarczeń"
+  },
+  "feedback": {
+    "title": "Opinie użytkowników i triage",
+    "subtitle": "Zarządzaj zgłoszeniami, pomysłami i prośbami o funkcje.",
+    "search": "Szukaj...",
+    "allStatuses": "Wszystkie statusy",
+    "allTypes": "Wszystkie typy",
+    "allSeverities": "Wszystkie priorytety",
+    "noResults": "Nie znaleziono opinii spełniających kryteria.",
+    "backToList": "Wróć do listy",
+    "context": "Kontekst i metadane",
+    "statusHistory": "Historia statusów",
+    "adminResponse": "Odpowiedź admina",
+    "noResponse": "Brak odpowiedzi",
+    "responsePlaceholder": "Wpisz swoją odpowiedź...",
+    "send": "Wyślij",
+    "confirmationId": "Numer zgłoszenia",
+    "feedbackSent": "Dziękujemy! Twoja opinia została przesłana.",
+    "feedbackError": "Nie udało się wysłać opinii. Spróbuj ponownie."
+  },
+  "behaviorIntelligence": {
+    "journeyTracked": "Zdarzenie ścieżki zarejestrowane",
+    "activationChanged": "Faza aktywacji zmieniona",
+    "churnWarning": "Wykryto sygnał rezygnacji",
+    "adoptionMetrics": "Metryki adopcji",
+    "engagementScore": "Wskaźnik zaangażowania",
+    "activationPhase": "Faza aktywacji",
+    "loginActivity": "Aktywność logowań",
+    "topFeatures": "Najczęściej używane funkcje",
+    "churnRisk": "Ryzyko rezygnacji",
+    "healthScore": "Wskaźnik zdrowia",
+    "optOutLabel": "Analityka zachowań",
+    "optOutEnabled": "Włączona",
+    "optOutDisabled": "Wyłączona"
+  },
+  "billingAdmin": {
+    "title": "Administracja płatności",
+    "overview": "Przegląd płatności",
+    "changePlan": "Zmień plan",
+    "changePlanConfirm": "Czy na pewno chcesz zmienić plan tej organizacji?",
+    "reasonRequired": "Powód jest wymagany dla zmian płatności",
+    "gracePeriod": "Okres karencji",
+    "grantGracePeriod": "Przyznaj okres karencji",
+    "dunningStatus": "Status windykacji",
+    "paymentFailed": "Płatność nieudana",
+    "paymentRecovered": "Płatność odzyskana",
+    "webhookDelivery": "Dziennik dostarczeń webhook",
+    "idempotencyCheck": "Kontrola idempotentności",
+    "signatureVerified": "Podpis zweryfikowany",
+    "tokenPurchase": "Zakup tokenów",
+    "tokenCredited": "Tokeny zaksięgowane",
+    "auditTrail": "Ślad audytu"
   }
 }

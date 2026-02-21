@@ -8,12 +8,25 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
+const respondIfUnavailable = (res: Response, err: unknown) => {
+  if (err instanceof AppError && err.code === 'FEATURE_UNAVAILABLE') {
+    return res.status(503).json({ error: err.message, code: 'FEATURE_UNAVAILABLE' });
+  }
+  if ((err as any)?.code === 'FEATURE_UNAVAILABLE' || (err as any)?.statusCode === 503) {
+    return res.status(503).json({
+      error: err instanceof Error ? err.message : 'Megatrend data is not available',
+      code: 'FEATURE_UNAVAILABLE',
+    });
+  }
+  return null;
+};
 
 // Megatrend Service interface
 interface MegatrendServiceInterface {
@@ -55,6 +68,8 @@ router.get(
       return res.json(data);
     } catch (err: any) {
       logger.error('[Megatrend] baseline error', err);
+      const unavailable = respondIfUnavailable(res, err);
+      if (unavailable) return unavailable;
       return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
     }
   })
@@ -77,6 +92,8 @@ router.get(
       return res.json(data);
     } catch (err: any) {
       logger.error('[Megatrend] radar error', err);
+      const unavailable = respondIfUnavailable(res, err);
+      if (unavailable) return unavailable;
       return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
     }
   })
@@ -101,6 +118,8 @@ router.get(
       return res.json(detail);
     } catch (err: any) {
       logger.error('[Megatrend] detail error', err);
+      const unavailable = respondIfUnavailable(res, err);
+      if (unavailable) return unavailable;
       return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
     }
   })

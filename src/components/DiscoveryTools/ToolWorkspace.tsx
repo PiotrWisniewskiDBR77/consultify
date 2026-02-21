@@ -9,6 +9,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -32,14 +33,16 @@ interface ToolWorkspaceProps {
 
 // ==================== TOOL METADATA ====================
 
-const TOOL_METADATA: Record<
-  ToolType,
-  {
-    name: string;
-    namePl: string;
-    color: string;
-    badge: string;
-  }
+const TOOL_METADATA: Partial<
+  Record<
+    ToolType,
+    {
+      name: string;
+      namePl: string;
+      color: string;
+      badge: string;
+    }
+  >
 > = {
   'dynamic-swot': {
     name: 'Dynamic SWOT',
@@ -135,6 +138,15 @@ const TOOL_METADATA: Record<
 
 // ==================== COMPONENT ====================
 
+const getFallbackMeta = (toolType: ToolType) => ({
+  name: toolType,
+  namePl: toolType,
+  color: 'slate',
+  badge: 'TLS',
+});
+
+// ==================== COMPONENT ====================
+
 export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   toolType,
   sessionId,
@@ -143,6 +155,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const {
+    setOpen: setHelpOpen,
+    setActiveTab: setHelpTab,
+    setKnowledgeModuleIdOverride,
+  } = useHelpSidePanel();
   const {
     currentOrganization,
     activeChatMessages,
@@ -209,7 +226,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     abortStream,
   } = useToolAI({ toolType });
 
-  const toolMeta = TOOL_METADATA[toolType];
+  const toolMeta = TOOL_METADATA[toolType] || getFallbackMeta(toolType);
   const stepDefs = getStepDefinitions();
   const progress = calculateProgress();
 
@@ -387,7 +404,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     const currentStepDef = stepDefs[currentStep - 1];
     if (currentStepDef?.id === 'correlations') {
       await generateCorrelations();
-    } else if (currentStepDef?.id === 'summary') {
+    } else if (
+      ['summary', 'results', 'reasoning', 'prepare', 'initiatives'].includes(
+        currentStepDef?.id || ''
+      )
+    ) {
       await generateSummary();
     }
   };
@@ -508,7 +529,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           .map((s) => s.stepId)}
         onBack={onBack}
         onStepClick={setCurrentStep}
-        onHelp={() => console.log('Help clicked')}
+        onHelp={() => {
+          setKnowledgeModuleIdOverride(toolType);
+          setHelpTab('knowledge');
+          setHelpOpen(true);
+        }}
         onExport={() => console.log('Export clicked')}
         onCreateInitiative={onCreateInitiative}
         onRequestReview={handleRequestReview}

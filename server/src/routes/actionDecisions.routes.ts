@@ -9,12 +9,24 @@ import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
+const respondIfUnavailable = (res: Response, err: unknown, fallbackMessage: string) => {
+  const code = (err as any)?.code;
+  const statusCode = (err as any)?.statusCode;
+
+  if (code === 'FEATURE_UNAVAILABLE' || statusCode === 503) {
+    return res.status(503).json({
+      error: err instanceof Error ? err.message : fallbackMessage,
+      code: 'FEATURE_UNAVAILABLE',
+    });
+  }
+  return null;
+};
 
 // Service interfaces
 interface ActionDecisionServiceInterface {
@@ -343,6 +355,9 @@ router.post(
       const executionResult = await ActionExecutionAdapter.executeDecision(id, userId);
 
       if (!executionResult.success) {
+        if ((executionResult as any)?.error_code === 'FEATURE_UNAVAILABLE') {
+          return res.status(503).json(executionResult);
+        }
         return res.status(400).json(executionResult);
       }
 
@@ -907,6 +922,8 @@ router.post(
       return res.status(202).json(result);
     } catch (err: any) {
       logger.error('[AsyncExecuteRoute] Error:', err);
+      const unavailable = respondIfUnavailable(res, err, 'Async execution unavailable');
+      if (unavailable) return unavailable;
       return res.status(500).json({
         error: err instanceof Error ? err.message : 'Unknown error',
       });
@@ -1010,6 +1027,8 @@ router.post(
       if (error.code === 'JOB_INVALID_STATE') {
         return res.status(400).json({ error: error.message });
       }
+      const unavailable = respondIfUnavailable(res, err, 'Async retry unavailable');
+      if (unavailable) return unavailable;
       logger.error('[AsyncJobRetryRoute] Error:', err);
       return res.status(500).json({
         error: err instanceof Error ? err.message : 'Unknown error',

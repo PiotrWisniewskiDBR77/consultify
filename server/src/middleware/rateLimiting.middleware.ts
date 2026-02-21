@@ -52,7 +52,7 @@ function extractKey(req: Request): string {
 function createLimiter(opts: { windowMs: number; max: number; prefix: string; message?: string }) {
   const { windowMs, max, prefix, message = 'Too many requests, please try again later.' } = opts;
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (process.env.NODE_ENV === 'test') return next();
+    if (process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === 'true') return next();
     if (req.method === 'OPTIONS') return next();
     const key = `rl:${prefix}:${extractKey(req)}`;
     const { count, resetAt } = increment(key, windowMs);
@@ -76,12 +76,23 @@ function createLimiter(opts: { windowMs: number; max: number; prefix: string; me
 // ---------------------------------------------------------------------------
 const isProd = process.env.NODE_ENV === 'production';
 
-/** Auth: 15 req / 15 min (prod), 5000 in dev (shared across many routes) */
+/** Auth (login/register only): 15 req / 15 min - brute force protection */
 export const authRateLimiter = createLimiter({
   windowMs: 15 * 60_000,
   max: isProd ? 15 : 5000,
   prefix: 'auth',
   message: 'Too many authentication attempts.',
+});
+
+/**
+ * API routes (initiatives, tasks, tools, etc.): 1000 req / 15 min.
+ * Keys by userId when authenticated, else IP. Use this for general authenticated API routes.
+ */
+export const apiAuthRateLimiter = createLimiter({
+  windowMs: 15 * 60_000,
+  max: isProd ? 1000 : 2000,
+  prefix: 'api-auth',
+  message: 'Too many requests, please try again later.',
 });
 
 /** Default API: 300 req / 15 min (prod) */

@@ -227,21 +227,20 @@ async function createSessionFromTemplate(params: {
   }
 
   // Create session from template (snapshot)
+  // Note: Schema uses owner_id (not user_id) and doesn't have topic column
   await queryHelpers.queryRun(
     `INSERT INTO interview_sessions
-     (id, organization_id, project_id, user_id, topic, name, owner_id, status, progress_json,
+     (id, organization_id, project_id, name, owner_id, status, progress_json,
       template_id, template_version,
       assignment_id,
       started_at, last_activity_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       user.organizationId,
       resolvedProjectId,
-      user.id,
       name || `Interview ${new Date().toLocaleDateString()}`,
-      name || `Interview ${new Date().toLocaleDateString()}`,
-      user.id,
+      user.id, // owner_id
       'active',
       JSON.stringify({ strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 }),
       template.id,
@@ -467,19 +466,18 @@ export const InterviewController = {
     const now = new Date().toISOString();
 
     // Create session
+    // Note: Schema uses owner_id (not user_id) and doesn't have topic column
     await queryHelpers.queryRun(
       `INSERT INTO interview_sessions
-       (id, organization_id, project_id, user_id, topic, name, owner_id, status, progress_json,
+       (id, organization_id, project_id, name, owner_id, status, progress_json,
         started_at, last_activity_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         user.organizationId,
         resolvedProjectId,
-        user.id,
         name || 'Discovery Interview',
-        name || 'Discovery Interview',
-        user.id,
+        user.id, // owner_id
         'active',
         JSON.stringify({ strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 }),
         now,
@@ -1001,7 +999,12 @@ export const InterviewController = {
       context: { assignment },
     });
     if (!submitGate.allow) {
-      res.status(submitGate.code === 'INVALID_STATE' ? 409 : 400).json({ error: submitGate.error });
+      const gateError = submitGate as {
+        allow: false;
+        error: string;
+        code?: 'FORBIDDEN' | 'INVALID_STATE' | 'MISSING_DATA';
+      };
+      res.status(gateError.code === 'INVALID_STATE' ? 409 : 400).json({ error: gateError.error });
       return;
     }
 
@@ -1108,9 +1111,12 @@ export const InterviewController = {
       context: { assignment },
     });
     if (!sendBackGate.allow) {
-      res
-        .status(sendBackGate.code === 'INVALID_STATE' ? 409 : 400)
-        .json({ error: sendBackGate.error });
+      const gateError = sendBackGate as {
+        allow: false;
+        error: string;
+        code?: 'FORBIDDEN' | 'INVALID_STATE' | 'MISSING_DATA';
+      };
+      res.status(gateError.code === 'INVALID_STATE' ? 409 : 400).json({ error: gateError.error });
       return;
     }
 
@@ -1202,9 +1208,12 @@ export const InterviewController = {
       context: { assignment },
     });
     if (!approveGate.allow) {
-      res
-        .status(approveGate.code === 'INVALID_STATE' ? 409 : 400)
-        .json({ error: approveGate.error });
+      const gateError = approveGate as {
+        allow: false;
+        error: string;
+        code?: 'FORBIDDEN' | 'INVALID_STATE' | 'MISSING_DATA';
+      };
+      res.status(gateError.code === 'INVALID_STATE' ? 409 : 400).json({ error: gateError.error });
       return;
     }
 
@@ -3930,6 +3939,82 @@ ${JSON.stringify(questions || [], null, 2)}
     }
 
     res.json({ success: true, target: 'assessment', targetId: assessmentId, assessmentType });
+  }),
+
+  // ==========================================
+  // TRANSCRIPT (T013)
+  // ==========================================
+
+  getTranscript: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 200;
+    const transcriptService = await import('../services/interviewTranscriptService.js');
+    const messages = await transcriptService.getMessages(user.organizationId, sessionId, limit);
+    res.json({ messages });
+  }),
+
+  addTranscriptMessage: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+    const { role, content, metadata } = req.body;
+    if (!content || !role) {
+      res.status(400).json({ error: 'role and content are required' });
+      return;
+    }
+    const transcriptService = await import('../services/interviewTranscriptService.js');
+    const msg = await transcriptService.addMessage(
+      user.organizationId,
+      sessionId,
+      role,
+      content,
+      metadata
+    );
+    res.status(201).json(msg);
+  }),
+
+  // ==========================================
+  // INFERENCE (T016)
+  // ==========================================
+
+  startInferenceRun: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { projectId, sessionIds } = req.body;
+    if (!sessionIds || !Array.isArray(sessionIds) || sessionIds.length === 0) {
+      res.status(400).json({ error: 'sessionIds array is required' });
+      return;
+    }
+    const inferenceService = await import('../services/interviewInferenceService.js');
+    const runId = await inferenceService.startInferenceRun(
+      user.organizationId,
+      projectId,
+      sessionIds,
+      user.id
+    );
+    inferenceService.executeInference(user.organizationId, runId).catch((err: any) => {
+      logger.error(`[Inference] Run ${runId} failed:`, err.message);
+    });
+    res.status(201).json({ runId, status: 'running' });
+  }),
+
+  getInferenceRuns: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { projectId } = req.query;
+    const inferenceService = await import('../services/interviewInferenceService.js');
+    const runs = await inferenceService.getInferenceRuns(user.organizationId, projectId as string);
+    res.json({ runs });
+  }),
+
+  getInferenceRun: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { runId } = req.params;
+    const inferenceService = await import('../services/interviewInferenceService.js');
+    const run = await inferenceService.getInferenceRun(user.organizationId, runId);
+    if (!run) {
+      res.status(404).json({ error: 'Inference run not found' });
+      return;
+    }
+    res.json(run);
   }),
 };
 

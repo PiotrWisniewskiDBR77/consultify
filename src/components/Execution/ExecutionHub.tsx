@@ -30,7 +30,9 @@ import {
   ChevronRight,
   ClipboardList,
   Clock,
+  FileText,
   GripVertical,
+  Heart,
   LayoutDashboard,
   LayoutGrid,
   Loader2,
@@ -68,9 +70,13 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { BudgetControlPanel } from './BudgetControlPanel';
+import { DelayDetectionPanel } from './DelayDetectionPanel';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
-import { ExecutionTimelineView } from './ExecutionTimelineView';
+import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
+import { PeopleChangeWorkspace } from './PeopleChangeWorkspace';
+import { RiskSignalsPanel } from './RiskSignalsPanel';
 
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
@@ -398,6 +404,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [isLoadingDecisions, setIsLoadingDecisions] = useState(false);
   const [healthSnapshot, setHealthSnapshot] = useState<PMOHealthSnapshot | null>(null);
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
+  const [riskSignals, setRiskSignals] = useState<RiskSignalItem[]>([]);
+  const [delaySignals, setDelaySignals] = useState<DelaySignalItem[]>([]);
 
   // Keep view mode consistent per tab (simple, iPhone-like)
   useEffect(() => {
@@ -440,10 +448,50 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [currentProjectId, fullSessionData?.initiatives]);
 
   useEffect(() => {
+    const loadRiskSignals = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const params = new URLSearchParams();
+        if (currentProjectId) params.set('projectId', currentProjectId);
+        const res = await fetch(`/api/execution-control/risk-signals?${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setRiskSignals(data.signals || []);
+        }
+      } catch {
+        // risk signals are non-blocking
+      }
+    };
+    const loadDelaySignals = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const params = new URLSearchParams();
+        if (currentProjectId) params.set('projectId', currentProjectId);
+        const res = await fetch(`/api/execution-control/delay-signals?${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDelaySignals(data.signals || []);
+        }
+      } catch {
+        // delay signals are non-blocking
+      }
+    };
+    loadRiskSignals();
+    loadDelaySignals();
+  }, [currentProjectId, initiatives.length]);
+
+  useEffect(() => {
+    if (!currentProjectId) return;
     const loadTasks = async () => {
       setIsLoadingTasks(true);
       try {
-        const data = await Api.getTasks({ projectId: currentProjectId || undefined });
+        const data = await Api.getTasks({ projectId: currentProjectId });
         setTasks(Array.isArray(data) ? (data as Task[]) : []);
       } catch (err) {
         console.error('[ExecutionHub] Failed to load tasks:', err);
@@ -456,11 +504,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [currentProjectId]);
 
   useEffect(() => {
+    if (!currentProjectId) return;
     const loadDecisions = async () => {
       setIsLoadingDecisions(true);
       try {
-        const data = await Api.getDecisions(currentProjectId || undefined);
-        setDecisions(Array.isArray(data) ? (data as ExecutionDecision[]) : []);
+        const response = await Api.get(`/decisions?projectId=${currentProjectId}`);
+        const data = Array.isArray(response) ? response : response?.decisions || [];
+        setDecisions(data);
       } catch (err) {
         console.error('[ExecutionHub] Failed to load decisions:', err);
         setDecisions([]);
@@ -644,6 +694,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         id: 'team' as ModuleTab,
         label: t('execution.tabs.team', 'Team'),
         icon: <Users size={16} />,
+      },
+      {
+        id: 'reports' as ModuleTab,
+        label: t('execution.tabs.reports', 'Reports'),
+        icon: <FileText size={16} />,
+      },
+      {
+        id: 'people_change' as ModuleTab,
+        label: t('execution.tabs.peopleChange', 'People & Change'),
+        icon: <Heart size={16} />,
       },
     ],
     [t, filteredInitiatives.length, stats.blocked, tasks.length, decisions]
@@ -2593,6 +2653,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           <ExecutionTimelineView
             initiatives={filteredInitiatives as FullInitiative[]}
             onInitiativeClick={handleOpenSidePanel}
+            onUpdateInitiative={handleInitiativeUpdate}
+            riskSignals={riskSignals}
+            delaySignals={delaySignals}
+            projectId={currentProjectId || undefined}
           />
         </div>
       );
@@ -2717,9 +2781,79 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       );
     }
 
+    if (activeTab === ('people_change' as ModuleTab)) {
+      return (
+        <PeopleChangeWorkspace
+          initiativeId={undefined}
+          projectId={currentProjectId || undefined}
+          organizationId={currentProjectId || ''}
+        />
+      );
+    }
+
+    if (activeTab === 'reports') {
+      return (
+        <div className="p-4">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {t('execution.reports.title', 'Execution reports')}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {t(
+                    'execution.reports.subtitle',
+                    'Generate a simple weekly pack and deep-dive reports without adding process overhead.'
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/reports')}
+                className="h-9 px-4 rounded-xl text-sm font-medium bg-hig-primary text-white hover:bg-hig-primary-hover transition-colors"
+              >
+                {t('execution.reports.open', 'Open Reports')}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="p-4 space-y-6">
         {renderPortfolioHealth()}
+        {riskSignals.length > 0 && (
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+            <RiskSignalsPanel
+              projectId={currentProjectId || undefined}
+              onInitiativeClick={(id) => {
+                const init = initiatives.find((i) => i.id === id);
+                if (init) handleOpenSidePanel(init);
+              }}
+            />
+          </div>
+        )}
+        {/* T041: Delay Detection Panel */}
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
+          <DelayDetectionPanel
+            projectId={currentProjectId || undefined}
+            onInitiativeClick={(id) => {
+              const init = initiatives.find((i) => i.id === id);
+              if (init) handleOpenSidePanel(init);
+            }}
+          />
+        </div>
+        {/* T042: Budget Control Panel */}
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 overflow-hidden">
+          <BudgetControlPanel
+            projectId={currentProjectId || undefined}
+            onInitiativeClick={(id) => {
+              const init = initiatives.find((i) => i.id === id);
+              if (init) handleOpenSidePanel(init);
+            }}
+          />
+        </div>
         {renderWeeklyPackCard()}
         {renderActionCenter()}
         {renderAIInsights()}

@@ -5290,11 +5290,21 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           // API returns: eventType, actorId, createdAt, oldValue, newValue, notes
           const raw = e as any;
           const notes = raw.notes as string | undefined;
-          const description =
-            notes || e.eventType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+          const eventType =
+            typeof (raw.eventType ?? (e as any).eventType) === 'string' &&
+            String(raw.eventType ?? (e as any).eventType).trim().length > 0
+              ? String(raw.eventType ?? (e as any).eventType)
+              : 'unknown_event';
+          const eventTypeLabel =
+            eventType === 'unknown_event'
+              ? isPolish
+                ? 'Nieznane zdarzenie'
+                : 'Unknown event'
+              : eventType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+          const description = notes || eventTypeLabel;
           return {
             id: e.id,
-            type: e.eventType,
+            type: eventType,
             description,
             timestamp: e.createdAt,
             userName: e.actorName || raw.actorId || undefined,

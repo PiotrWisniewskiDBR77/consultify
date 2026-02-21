@@ -61,6 +61,17 @@ These choices are **mandatory** for implementation. No alternative paths unless 
 - L4 smoke suite exists under `tests/e2e/smoke/**` with API “deploy gate” checks and minimal UI render checks.
 - Honesty tooling exists: `npm run test:quality-check` and documented L1–L5 readiness in `docs/test-quality/levels-readiness.md`.
 
+## Progress counters (updated 2026-02-19)
+
+- Tickets total: **15**
+- Status totals: **DONE 7**, **IN PROGRESS 1**, **TODO 7**
+- By epic:
+  - **EPIC A (QA-001..QA-004)**: DONE **4/4**
+  - **EPIC B (QA-010..QA-013)**: DONE **3/4**, IN PROGRESS **1/4**
+  - **EPIC D (QA-030..QA-033)**: TODO **4/4**
+  - **EPIC E (QA-040..QA-041)**: TODO **2/2**
+  - **EPIC F (QA-050)**: TODO **1/1**
+
 ---
 
 ## EPIC A — L4 runtime on external DB + environment contracts (P0)
@@ -68,10 +79,10 @@ These choices are **mandatory** for implementation. No alternative paths unless 
 ### QA-001 (P0) — Define and lock “Test Deployment” contract
 **Goal**: L4 runs against a dedicated deployment + external DB, never local file DB.
 
-- **Status**: TODO (needs CI wiring + target env)
-- **Acceptance criteria**:
-  - One canonical doc section that defines required env vars and guarantees (DB is external, data isolation, reset policy).
-  - CI job(s) can run L4 with `E2E_USE_WEB_SERVER=false` against that target.
+- **Status**: ✅ DONE (contract doc + CI remote-only job wiring)
+- **Evidence**:
+  - Contract doc: `docs/test-quality/l4-test-deployment-contract.md`
+  - CI remote-only job: `.github/workflows/test-suite.yml` (`l4-smoke` uses `E2E_USE_WEB_SERVER=false` + `secrets.E2E_API_URL/E2E_BASE_URL/TEST_SUPPORT_KEY`)
 
 ### QA-002 (P0) — Make Playwright configs support “remote-only” L4
 **Goal**: deterministic, repeatable L4 against `E2E_API_URL`/`E2E_BASE_URL`.
@@ -87,6 +98,7 @@ These choices are **mandatory** for implementation. No alternative paths unless 
 - **Status**: ✅ DONE (bootstrap/cleanup + per-run tenant token)
 - **Evidence**:
   - `server/src/routes/testSupport.routes.ts`
+    - bootstrap returns a **signed JWT** (no `E2E_MODE` auth bypass required)
   - `tests/e2e/smoke/global-setup.ts` + `tests/e2e/smoke/global-teardown.ts`
 
 ### QA-004 (P0) — Add a secure test-only cleanup/reset mechanism
@@ -138,6 +150,9 @@ These choices are **mandatory** for implementation. No alternative paths unless 
   - `tests/integration/ai/aiPlaybooks.runs.no-demo.test.ts`
   - `server/src/routes/billing/billing.routes.ts` (removed demo analytics + removed ASC606 demo endpoints; revenue-forecasts no longer random demo)
   - `tests/integration/routes/billing.no-demo.analytics-and-revenue.test.ts`
+  - `server/src/routes/legal.routes.ts` (removed hardcoded placeholder legal text; now 503 unless configured via DB or env)
+  - `tests/integration/legal.test.ts`
+  - `tests/integration/routes/legal.test.js`
   - `server/src/routes/user/user-profile-extended.routes.ts` (stub 501 → honest 503)
   - `server/src/routes/user/user-profile-completeness.routes.ts` (stub 501 → honest 503)
   - `server/src/routes/user/user-professional-profile.routes.ts` (stub 501 → honest 503)
@@ -148,13 +163,178 @@ These choices are **mandatory** for implementation. No alternative paths unless 
   - `tests/integration/routes/backups.no-stub.test.ts`
   - `server/src/routes/oauthRoutes.routes.ts` (adds real `/oauth/status` for UI; removes 501 catch-all)
   - `tests/integration/auth/oauthRoutes.status.test.ts`
+  - Stub routers standardized to honest `503` (no `501`, no “Not implemented”):
+    - `server/src/routes/task-advisor.routes.ts`
+    - `server/src/routes/featureFlags.routes.ts`
+    - `server/src/routes/workspace-defaults.routes.ts`
+    - `server/src/routes/systemConfig.routes.ts`
+    - `server/src/routes/governanceAdmin.routes.ts`
+    - `server/src/routes/helpAnalytics.routes.ts`
+    - `server/src/routes/benchmark.routes.ts`
+    - `server/src/routes/locations.routes.ts`
+    - `server/src/routes/referrals.routes.ts`
+    - `server/src/routes/assessment/assessment.routes.ts`
+  - `tests/integration/routes/stubbed-legacy-routes.no-501.test.ts`
+  - `server/src/routes/documents.routes.ts` (removed fake `[]` degraded mode; consistent 503 for unavailable service; avoids runtime FS writes via multer memory storage)
+  - `tests/integration/routes/documentsRoutes.no-stubs.test.ts`
+  - `server/src/routes/settings.routes.ts` (fixes `user_preferences` schema drift; removes `preferences_type/preferences_data` usage and persists preferences via `user_id/key/value`)
+  - `tests/integration/settings/settings-regional-preferences.test.ts`
+  - `server/src/routes/notifications/notifications.routes.ts` (removes placeholder permission block; enforces real authz for escalation runs; broadcast uses strict DB reads)
+  - `tests/integration/routes/notifications.escalations.authz.test.ts`
+  - `server/src/middleware/demoGuard.middleware.ts` (demo mode uses real org context + DB-backed counts; write protection is enforced)
+  - `server/src/routes/demo.routes.ts` (no hardcoded demo org/tours; honest 503 when unavailable or not configured)
+  - `tests/integration/routes/demoRoutes.no-stubs.test.ts`
+  - `tests/integration/middleware/demoWriteProtection.test.ts`
+  - `server/src/services/trialService.ts` (removed lazy stub proxy; callers must treat missing methods as unavailable)
+  - `server/src/routes/trial.routes.ts` (validates request first; honest 503 when TrialService missing)
+  - `server/src/cron/TrialCron.ts` (skips daily tasks when TrialService missing; logs explicitly)
+  - `server/src/cron/Scheduler.ts` (trial/usage cron jobs always `.catch` to avoid unhandled rejections)
+  - `tests/integration/trialDemoIntegration.test.ts` (no mocks; real JWT auth + audit_log insert)
+  - `server/src/utils/lazyServiceLoader.ts` (removed stub proxy fallback + removed test-mode mock loading; missing/circular lazy loads become explicit “unavailable” proxies instead of fake-null behavior)
+  - `server/src/routes/media-ingestion.routes.ts` (removed degraded fake success; adds honest 503 for UI ingest endpoints)
+  - `server/src/services/ai/mediaIngestionService.ts` (removes self-loading wrapper; explicit unavailable marker for honest 503)
+  - `tests/integration/routes/mediaIngestion.no-stubs.test.ts`
+  - `server/src/routes/agents.routes.ts` (removes degraded/fake success; consistent honest 503 when AIOrchestrator unavailable)
+  - `server/src/routes/accessCodes.routes.ts` (removes “degraded mode” 400/false; honest 503 contracts for public endpoints when service missing)
+  - `server/src/services/ai/startupValidator.ts` (removes self-loading lazy wrapper; explicit unavailable marker)
+  - `server/src/services/ai/promptAssembler.ts` (removes self-loading lazy wrapper; explicit unavailable marker)
+  - `server/src/services/ai/performanceOptimizer.ts` (removes self-loading lazy wrapper; explicit unavailable marker)
+  - `server/src/services/ai/pipeline/index.ts` (removes self-loading lazy wrapper; explicit unavailable marker)
+  - `server/src/services/ai/pipeline/reportAgents.ts` (removes self-loading lazy wrapper; explicit unavailable marker)
+  - `server/src/services/ai/pipeline/reportPipeline.ts` (removes self-loading lazy wrapper; explicit unavailable marker)
+  - `server/src/services/frameworkScoreCalculators.ts` (removes self-loading lazy wrapper; explicit unavailable marker)
+  - `server/src/services/integrations/teamsUserIntegration.ts` (removes self-loading lazy wrapper; explicit unavailable marker)
+  - `server/src/services/integrations/slackUserIntegration.ts` (removes self-loading lazy wrapper; explicit unavailable marker)
+  - `server/src/services/integrations/clickupUserIntegration.ts` (removes self-loading lazy wrapper; explicit unavailable marker)
+  - `server/src/services/integrations/jiraUserIntegration.ts` (removes self-loading lazy wrapper; explicit unavailable marker)
+  - `server/src/services/ai/**` wrappers now load real modules via absolute `ai/**` paths (fixes “self-loading” wrapper recursion/unavailable proxies)
+  - `server/src/database/DatabaseInitializer.ts` (adds `ensureBillingCoreTables()` so L4 deploy-gate `/api/billing/usage` doesn’t 503 on fresh SQLite)
+  - `server/src/routes/ai.routes.ts` (AI memory metrics endpoints now return honest 503 instead of 500 when service is unavailable)
+  - Eliminated remaining `{} as any` runtime stubs:
+    - `server/src/services/dunningService.ts` (real `emailService` + audit adapter)
+    - `server/src/services/slaService.ts` (real `NotificationOutboxService` import)
+    - `server/src/services/genericReportService.ts` + `server/src/services/externalAssessmentService.ts` (real `PDFParserService`)
+  - Added missing canonical service files (kept “ 2.ts” duplicates intact):
+    - `server/src/services/notificationOutboxService.ts`
+    - `server/src/services/pdfParserService.ts`
+  - Removed AI “placeholder content” fallbacks (no fake success payloads):
+    - `server/src/services/reportGenerationService.ts` now throws `503 FEATURE_UNAVAILABLE` when LLM missing/fails (no placeholder report sections)
+    - `server/src/services/initiativeGenerationService.ts` now throws `503 FEATURE_UNAVAILABLE` when LLM missing/fails (no placeholder sections/suggestions)
+    - `server/src/routes/pmo/initiatives.routes.ts` maps AI-generation failures to honest `503 FEATURE_UNAVAILABLE` (no generic 500)
+    - `server/src/services/initiativeSectionTypeService.ts` uses `DbPromise` with `fallback:false` (missing schema no longer gets silently treated as “not found”)
+    - `tests/integration/initiatives/initiatives.ai-generation.unavailable.no-placeholders.test.ts` (guards 503 contract; no fake AI payloads)
+  - Removed dead placeholder generators from codebase (no “fake content” blocks left behind):
+    - `server/src/services/reportGenerationService.ts` (removed `generatePlaceholderContent`)
+    - `server/src/services/initiativeGenerationService.ts` (removed `generatePlaceholder`)
+  - Self-heal for fresh SQLite (deploy gate / local smoke must not spam SQLITE_ERROR):
+    - `server/src/database/DatabaseInitializer.ts` ensures `initiative_section_types` exists + seeds minimal system rows
+    - `server/src/services/initiativeGenerationService.ts` returns `503 FEATURE_UNAVAILABLE` if a section lacks an AI prompt template
+  - PPTX pipeline cleanup (no placeholder strings):
+    - `server/src/services/report/pptx/UnifiedJsonTransformer.ts` no longer injects `"To be defined"` into risk mitigation
+  - Removed remaining “stub success” responses:
+    - `server/src/routes/billing/billing.routes.ts` `/setup-intent` returns honest `503 FEATURE_UNAVAILABLE` when Stripe is not configured (no `mode: 'stub'`)
+    - `server/src/services/aiSettingsService.ts` compliance report PDF export returns `503 FEATURE_UNAVAILABLE` (no “return JSON with a marker”)
+    - `server/src/services/ai/summarizationService.ts` no longer returns `"Summary stub"`/`"Summary unavailable"` strings; throws `503 FEATURE_UNAVAILABLE`
+  - Removed “draft content” placeholders in assessment report generation:
+  - `server/src/routes/assessment-reports.routes.ts` report generation now requires real LLM; otherwise returns `503 FEATURE_UNAVAILABLE` (no `createDraftContent` fallbacks)
+  - `server/src/routes/assessment-reports.routes.ts` section AI actions no longer truncate/regenerate with fake drafts; failures return `503 FEATURE_UNAVAILABLE` and do not silently update content
+  - `server/src/routes/partners.routes.ts` partner portal demo endpoints now return honest `503 FEATURE_UNAVAILABLE` (no fake clients/projects/certifications/licenses/invoices/resources/tiers/metrics/commissions)
+  - `server/src/routes/partners.routes.ts` payouts now require a real partner org and return honest `503 FEATURE_UNAVAILABLE` on schema errors (no empty fallback)
+  - `tests/integration/routes/partners.no-stubs.test.ts`
+  - `server/src/routes/organization/organization-data.routes.ts` stats + export endpoints now return honest `503 FEATURE_UNAVAILABLE` (no default/demo payloads)
+  - `tests/integration/routes/organizationData.no-stubs.test.ts`
+  - `server/src/routes/billing/billing.routes.ts` removed mock invoice insertion in `/invoices` list (no demo invoice seeding)
+  - `server/src/routes/project-members.routes.ts` now aliases the real PMO implementation (no missing JS stub import)
+  - `server/src/routes/pmo/project-members.routes.ts` uses strict DB reads and returns `503 FEATURE_UNAVAILABLE` on schema drift
+  - `server/src/Gateway.ts` mounts `/api/project-members` as a real compat route (no stub wrapper)
+  - `server/src/routes/generic-reports.routes.ts` no longer returns fake success; missing schema/LLM yields `503 FEATURE_UNAVAILABLE`
+  - `server/src/routes/premiumReports.routes.ts` + `server/src/routes/managementReports.routes.ts` standardize `503 FEATURE_UNAVAILABLE` payloads
+  - `tests/integration/routes/projectMembers.compat.no-stubs.test.ts`
+  - `tests/integration/routes/genericReports.no-stubs.test.ts`
+  - AI async queue honesty (no mock jobs):
+    - `server/src/queues/aiQueue.ts` mock queue removed; `MOCK_REDIS=true` now yields explicit `503 FEATURE_UNAVAILABLE`
+    - `server/src/ai/asyncJobService.ts` marks enqueue failures as `FAILED` and surfaces `FEATURE_UNAVAILABLE`
+    - `server/src/routes/actionDecisions.routes.ts` maps queue unavailability to `503 FEATURE_UNAVAILABLE`
+  - Megatrends no longer use static fallback data:
+    - `server/src/models/megatrend.ts` removes default datasets + placeholder insights; returns `503 FEATURE_UNAVAILABLE` when DB empty/unavailable
+    - `server/src/routes/megatrend.routes.ts` surfaces `FEATURE_UNAVAILABLE` instead of 500
+    - `tests/integration/megatrend.test.js` verifies 503 on empty table and real DB-backed responses
+  - Removed AI nudges/feedback/settings mock fallbacks (honest 503 FEATURE_UNAVAILABLE):
+    - `server/src/routes/ai/ai-nudges.routes.ts`
+    - `server/src/routes/ai/ai-feedback.routes.ts`
+    - `server/src/routes/ai/ai-settings.routes.ts`
+    - `tests/integration/routes/aiNudges.unavailable.no-placeholders.test.ts`
+    - `tests/integration/routes/aiFeedback.unavailable.no-placeholders.test.ts`
+    - `tests/integration/routes/aiSettings.superadmin.unavailable.no-placeholders.test.ts`
+  - AI health checks no longer report demo/not-implemented modes (unavailable now reported as unhealthy):
+    - `server/src/routes/ai/ai-health-check.routes.ts`
+  - Revenue payment failure retry no longer simulates success (honest 503 FEATURE_UNAVAILABLE):
+    - `server/src/routes/revenue.routes.ts`
+  - Health checks no longer report mocked Redis as “ready”:
+    - `server/src/controllers/HealthCheckController.ts` (MOCK_REDIS now reports `mocked-unavailable`; readiness returns 503)
+    - `tests/integration/health/health-endpoints.test.ts`
+    - `tests/integration/routes/health.l3.test.ts`
+    - `tests/integration/system/healthRoutes.readiness.ready.test.ts`
+  - SuperAdmin IAM/compliance placeholders removed:
+    - `server/src/controllers/SuperAdminController.ts` (permissions matrix uses real service; compliance status/summary return 503 when unavailable)
+  - Memory cleanup jobs now do real cache/temp cleanup (no placeholder no-ops):
+    - `server/src/cron/MemoryCleanupJob.ts`
+    - `server/src/utils/BenchmarkCache.ts` (clearExpired counts, size exposed)
+    - `server/src/utils/dbSchema.ts` (clear cache export)
+    - `server/src/utils/orgColumn.ts` (clear cache export)
+  - Trial cron demo cleanup no longer fakes success:
+    - `server/src/cron/TrialCron.ts` (demo cleanup runs when service available; logs skip otherwise)
+  - Local runs:
+    - `cd server && npm run build`
+    - `npm run test:quality-check`
+    - `npm run test:l4:local:isolated`
+  - Removed fallback stubs in AI policy core:
+    - `server/src/services/aiPolicyEngine.ts` no longer installs minimal stub guards on import failure; project-scoped policy now fails honestly with `503 FEATURE_UNAVAILABLE`
+  - Removed runtime “success stubs” (honest contracts instead of fake payloads):
+    - `server/src/routes/performance.routes.ts` computes latency percentiles from in-process histograms (no placeholder zeros)
+    - `tests/integration/routes/performanceRoutes.metrics.test.ts`
+    - `server/src/ai/actionExecutors/taskExecutor.ts` + `server/src/ai/actionExecutors/meetingExecutor.ts` no longer return stub-success results (feature unavailable instead)
+    - `server/src/ai/actionErrors.ts` includes `FEATURE_UNAVAILABLE` classification; `server/src/routes/actionDecisions.routes.ts` maps it to `503`
+    - `server/src/services/aiSettingsService.ts` available-models errors are `503 FEATURE_UNAVAILABLE` (not silent `[]`), mapped in:
+      - `server/src/routes/ai-settings.routes.ts`
+      - `server/src/routes/ai/ai-settings.routes.ts`
+    - `server/src/controllers/SuperAdminController.ts` invoice PDF + branding logo upload return honest `503 FEATURE_UNAVAILABLE`
+    - `server/src/routes/organization/organization-profiles.routes.ts` logo upload + custom-domain verification no longer return placeholder success (503 FEATURE_UNAVAILABLE)
+    - `tests/e2e/smoke/deploy-gate-api-branding-org-profile.spec.ts` updated to enforce “no fake uploads / no simulated DNS verify” and allow explicit 503 FEATURE_UNAVAILABLE
+    - `server/src/controllers/SuperAdminController.ts` compliance audits placeholder now returns honest `503 FEATURE_UNAVAILABLE`
+    - `server/src/controllers/SuperAdminController.ts` proration calculation no longer uses randomness (503 FEATURE_UNAVAILABLE)
+    - `server/src/routes/integrations/calendarIntegrations.routes.ts` no longer returns placeholder `200` payload (503 FEATURE_UNAVAILABLE)
+    - `server/src/routes/organization/branding.routes.ts` superadmin domain verification no longer simulates DNS verify (503 FEATURE_UNAVAILABLE)
+    - `server/src/cron/ReportGenerationCron.js` legacy scheduled reports no longer generate fake IDs (disabled/unavailable)
+    - `server/src/ai/simulationEngine.ts` removed test-stub/dummy outputs for advanced simulations (explicit feature unavailable unless a real `SimulationService` is provided)
+    - `server/src/ai/connectorAdapter.ts` no longer returns mock “real execution” success for external connectors (dry-run only; otherwise FEATURE_UNAVAILABLE)
+    - `server/src/services/aiService.ts` now routes chat generation through the real `llmService` (no empty-string placeholder)
+    - `server/src/services/assessmentInitiativeService.ts` no longer returns silent `[]` when AI is missing/fails (503 FEATURE_UNAVAILABLE)
+    - `server/src/routes/prompt-assistant.routes.ts` no longer returns simulated chat/test-bench outputs; uses real AI or returns honest 503
+    - `server/src/routes/analytics-superadmin.routes.ts` removed demo/random fallbacks (unsupported formulas -> 400; model training -> 503)
+    - `server/src/services/MFAService.ts` removed stub fake-success responses; MFA setup/enable/disable are honest 503 FEATURE_UNAVAILABLE
+  - `tests/integration/routes/aiMemoryMetrics.no-stubs.test.ts`
+  - `server/src/services/aiRoleGuard.ts` + `server/src/services/regulatoryModeGuard.ts` (removed placeholders; now DB-backed via `project_ai_settings`)
+  - `server/src/controllers/ProjectController.ts` (removes `{ } as any` stubs; consistent availability + role normalization)
+  - `server/src/database/DatabaseInitializer.ts` + `server/src/database/PostgresDatabase.ts` (creates `project_ai_settings` in SQLite + Postgres)
+  - `tests/integration/routes/pmo/projects.aiRole-and-regulatory.real.test.ts`
+  - `server/src/services/aiContextBuilder.ts` (removes `AISettingsService` `{ } as any` stub; imports real service)
+  - AI explainability endpoints no longer return mock payloads:
+    - `server/src/controllers/ai/AIExplainabilityController.ts` returns honest `503 FEATURE_UNAVAILABLE`
+    - `tests/integration/routes/aiExplainability.no-stubs.test.js`
+  - Metrics conversion intelligence and funnels no longer ship fake defaults:
+    - `server/src/routes/metrics.routes.ts` `/conversion-intelligence` returns honest `503 FEATURE_UNAVAILABLE`
+    - `server/src/routes/metrics.routes.ts` funnels use real counts (no fallback defaults)
+    - `tests/integration/routes/metrics.conversion-intelligence.no-stub.test.js`
+  - Token billing purchase requires Stripe (no demo credit path):
+    - `server/src/routes/tokenBilling.routes.ts` now returns honest `503 FEATURE_UNAVAILABLE`
+    - `tests/integration/routes/tokenBilling.test.js`
+  - Stripe webhook dunning uses real PaymentIntent fetch (no mock payloads):
+    - `server/src/routes/webhooks.routes.ts`
+  - SMS delivery no longer returns mock success when Twilio is missing:
+    - `server/src/services/smsService.ts`
 - **Next targets (examples found via scan)**:
-  - `server/src/routes/systemConfig.routes.ts` (stub router)
-  - `server/src/routes/task-advisor.routes.ts` (stub router)
-  - `server/src/routes/report-comments.routes.ts` (stub router)
-  - `server/src/routes/documents.routes.ts` (contains stub response)
-  - `server/src/routes/settings.routes.ts` (stub endpoints)
-  - `server/src/routes/notifications/notifications.routes.ts` (permission check comment mentions placeholder logic)
+  - Remove/replace self-loading wrappers under `server/src/services/**` that lazy-load themselves (convert to real implementations or explicit 503 contracts)
 
 ---
 
@@ -165,6 +345,7 @@ These choices are **mandatory** for implementation. No alternative paths unless 
 ### QA-030 (P0) — Define the coverage scope and exclusions
 **Goal**: stop ambiguity and prevent disputes.
 
+- **Status**: TODO
 - **Acceptance criteria**:
   - Document exact include/exclude globs (frontend/backend/tests/scripts).
   - CI enforces the same scope locally and in GitHub Actions.
@@ -172,6 +353,7 @@ These choices are **mandatory** for implementation. No alternative paths unless 
 ### QA-031 (P0) — Add a global 98% coverage gate (scoped)
 **Goal**: hard CI failure when coverage drops below target.
 
+- **Status**: TODO
 - **Acceptance criteria**:
   - CI job fails if scoped totals < 98%.
   - Per-file thresholds remain for “critical path” (keep existing approach).
@@ -180,6 +362,7 @@ These choices are **mandatory** for implementation. No alternative paths unless 
 ### QA-032 (P1) — Expand L1/L2/L3 per-file threshold profiles (progressive hardening)
 **Goal**: systematically raise coverage where it matters.
 
+- **Status**: TODO
 - **Acceptance criteria**:
   - Add N new files per week into `scripts/testing/coverage-thresholds.ts` (or equivalent), each at ≥95% per-file.
   - Each addition comes with tests that exercise real code paths.
@@ -187,6 +370,7 @@ These choices are **mandatory** for implementation. No alternative paths unless 
 ### QA-033 (P1) — Remove dead/unreachable code that blocks coverage
 **Goal**: don’t “test the impossible”; delete it.
 
+- **Status**: TODO
 - **Acceptance criteria**:
   - Dead code paths removed, or made reachable by product logic.
   - Coverage rises without artificial tests.
@@ -198,6 +382,7 @@ These choices are **mandatory** for implementation. No alternative paths unless 
 ### QA-040 (P0) — Flake budget & quarantine rules
 **Goal**: 100% pass is meaningless without flake control.
 
+- **Status**: TODO
 - **Acceptance criteria**:
   - Define “flake = any non-deterministic failure in 10 consecutive runs”.
   - Any flaky test must be fixed within 24–48h or removed from PR gate (but kept visible).
@@ -205,6 +390,7 @@ These choices are **mandatory** for implementation. No alternative paths unless 
 ### QA-041 (P1) — Add test-run correlation IDs across backend logs
 **Goal**: debug fails fast.
 
+- **Status**: TODO
 - **Acceptance criteria**:
   - L4 injects `x-test-run-id` header.
   - Backend logs include it; failures can be traced per run.
@@ -216,6 +402,7 @@ These choices are **mandatory** for implementation. No alternative paths unless 
 ### QA-050 (P1) — Ensure E2E auth modes do not weaken production security
 **Goal**: E2E convenience must not become prod backdoor.
 
+- **Status**: TODO
 - **Acceptance criteria**:
   - Any E2E-only auth path is hard-guarded by environment + secret.
   - Security tests verify the guard (cannot be enabled in prod).

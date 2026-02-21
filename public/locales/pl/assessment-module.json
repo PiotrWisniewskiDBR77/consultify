@@ -1,7 +1,7 @@
 {
   "assessmentModule": {
     "hub": {
-      "title": "Hub Oceny",
+      "title": "Hub narzędzi licencjonowanych",
       "subtitle": "Zunifikowany Przegląd Multi-Framework",
       "overallReadiness": "Ogólna Gotowość Cyfrowa",
       "basedOn": "Na podstawie {{count}} ocen(y) w {{modules}} module(ach)",

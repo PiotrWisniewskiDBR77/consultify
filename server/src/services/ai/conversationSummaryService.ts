@@ -24,7 +24,7 @@ async function get(conversationId: string): Promise<string> {
     const row = (await dbGet(
       `SELECT summary FROM conversation_summaries WHERE conversation_id = ? ORDER BY updated_at DESC LIMIT 1`,
       [conversationId]
-    )) as { summary?: string } | null;
+    ).catch(() => null)) as { summary?: string } | null;
 
     return row?.summary || '';
   } catch {

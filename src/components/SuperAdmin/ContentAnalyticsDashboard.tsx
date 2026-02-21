@@ -391,9 +391,11 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
                     )}
                   </div>
                   <div>
-                    <span className="text-sm text-white">{event.eventType.replace('_', ' ')}</span>
+                    <span className="text-sm text-white">
+                      {String(event.eventType ?? 'Unknown').replaceAll('_', ' ')}
+                    </span>
                     <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">
-                      {event.contentType.replace('_', ' ')}
+                      {String(event.contentType ?? 'Unknown').replaceAll('_', ' ')}
                     </span>
                   </div>
                 </div>

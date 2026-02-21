@@ -20,6 +20,7 @@ let _pmoHealthService: any = null;
 let _aiActionExecutor: any = null;
 let _aiSettingsService: any = null;
 let _knowledgeService: any = null;
+let _coreDocsService: any = null;
 
 // Interfaces
 export interface ContextOptions {
@@ -79,11 +80,12 @@ async function getAISettingsService() {
   if (_aiSettingsServiceOverride) return _aiSettingsServiceOverride;
   if (!_aiSettingsService) {
     try {
-      // const mod = (await import('./aiSettingsService.js')) as any;
-      const mod = {} as any; // Stubbed missing service
-      _aiSettingsService = mod.default || mod.aiSettingsService || mod;
+      const mod = (await import('./aiSettingsService.js')) as any;
+      const svc = mod.default || mod.aiSettingsService || mod;
+      _aiSettingsService = svc && svc.__unavailable__ !== true ? svc : null;
     } catch (e: unknown) {
       logger.warn('[AIContextBuilder] AISettingsService not available');
+      _aiSettingsService = null;
     }
   }
   return _aiSettingsService;
@@ -100,6 +102,49 @@ async function getKnowledgeService() {
     }
   }
   return _knowledgeService;
+}
+
+async function getCoreDocsService() {
+  if (!_coreDocsService) {
+    try {
+      const mod = (await import('./ai/coreDocsService.js')) as any;
+      _coreDocsService = mod.coreDocsService || mod.default || mod;
+    } catch (e: unknown) {
+      logger.warn('[AIContextBuilder] CoreDocsService not available:', (e as Error).message);
+    }
+  }
+  return _coreDocsService;
+}
+
+const GOVERNANCE_KEYWORDS = [
+  'governance',
+  'policy',
+  'role',
+  'permission',
+  'gate',
+  'approval',
+  'dod',
+  'definition of done',
+  'economics',
+  'reporting',
+  'compliance',
+  'audit',
+  'artefact',
+  'artifact',
+  'traceability',
+  'pmo',
+  'standard',
+  'unblock',
+  'change request',
+  'escalation',
+  'steering',
+  'consultant',
+];
+
+function isGovernanceQuery(query?: string | null): boolean {
+  if (!query) return false;
+  const lower = query.toLowerCase();
+  return GOVERNANCE_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
 export const AIContextBuilder = {
@@ -183,6 +228,36 @@ export const AIContextBuilder = {
       AIContextBuilder._buildHistoricalPatternsContext(projectId, organizationId),
     ]);
 
+    let systemDocs: any = null;
+    try {
+      const CoreDocsService = await getCoreDocsService();
+      if (CoreDocsService) {
+        const queryHint = options.currentScreen || '';
+        const isGov = isGovernanceQuery(queryHint);
+        const maxSnippets = isGov ? 7 : 3;
+        const maxChars = isGov ? 4000 : 2000;
+        const snippets = await CoreDocsService.getSystemSnippets(
+          queryHint || undefined,
+          maxSnippets,
+          maxChars
+        );
+        if (snippets?.length) {
+          systemDocs = {
+            snippets: snippets.map((s: any) => ({
+              docTitle: s.docTitle,
+              docSlug: s.docSlug,
+              section: s.sectionTitle,
+              content: s.content,
+            })),
+            count: snippets.length,
+            isGovernanceEnhanced: isGov,
+          };
+        }
+      }
+    } catch (err: any) {
+      logger.warn('[AIContextBuilder] System docs layer failed:', (err as Error).message);
+    }
+
     const fullContext = {
       platform,
       organization,
@@ -197,6 +272,7 @@ export const AIContextBuilder = {
       assessmentData,
       financialData,
       historicalPatterns,
+      systemDocs,
     };
 
     const filteredContext = AIContextBuilder._applyFocusModeFilter(fullContext, focusMode);
@@ -246,6 +322,7 @@ export const AIContextBuilder = {
    * Apply focus mode filtering
    */
   _applyFocusModeFilter: (fullContext: any, focusMode: string) => {
+    const systemDocs = fullContext.systemDocs || null;
     switch (focusMode) {
       case 'pmo-docs':
         return {
@@ -263,6 +340,7 @@ export const AIContextBuilder = {
           external: null,
           pmo: fullContext.pmo,
           pendingApprovals: [],
+          systemDocs,
         };
 
       case 'project-data':
@@ -279,6 +357,7 @@ export const AIContextBuilder = {
           external: null,
           pmo: fullContext.pmo,
           pendingApprovals: fullContext.pendingApprovals,
+          systemDocs,
         };
 
       case 'research':
@@ -291,6 +370,7 @@ export const AIContextBuilder = {
           external: null,
           pmo: fullContext.pmo,
           pendingApprovals: fullContext.pendingApprovals,
+          systemDocs,
         };
 
       case 'web':
@@ -310,6 +390,7 @@ export const AIContextBuilder = {
           },
           pmo: null,
           pendingApprovals: [],
+          systemDocs,
         };
 
       case 'all':
@@ -363,7 +444,7 @@ export const AIContextBuilder = {
     try {
       const patternRows = (await all(
         `SELECT memory_type, title, content FROM organization_memory
-         WHERE organization_id = ? AND active = 1
+         WHERE organization_id = ? AND is_active = 1
          ORDER BY usage_count DESC LIMIT 5`,
         [organizationId]
       )) as any[];
@@ -1001,9 +1082,9 @@ export const AIContextBuilder = {
         const stats: any = await get(
           `SELECT 
              COUNT(*) as total,
-             SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
-             SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled,
-             AVG(CASE WHEN estimated_duration_weeks > 0 THEN estimated_duration_weeks ELSE NULL END) as avg_duration_weeks
+             SUM(CASE WHEN i.status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
+             SUM(CASE WHEN i.status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled,
+             AVG(CASE WHEN i.estimated_duration_weeks > 0 THEN i.estimated_duration_weeks ELSE NULL END) as avg_duration_weeks
            FROM initiatives i
            JOIN projects p ON i.project_id = p.id
            WHERE p.organization_id = ?`,
@@ -1046,22 +1127,22 @@ export const AIContextBuilder = {
         }
       }
 
-      // Decision outcomes (org-wide learning)
+      // Decision outcomes (org-wide learning) – use outcome_notes (actual_outcome may not exist)
       if (organizationId) {
         const decisionOutcomes = await all(
-          `SELECT problem_framing, chosen_option, confidence_score, actual_outcome
+          `SELECT problem_framing, chosen_option, confidence_score, outcome_notes
            FROM ai_decision_outcomes
-           WHERE organization_id = ? AND actual_outcome IS NOT NULL
+           WHERE organization_id = ? AND outcome_notes IS NOT NULL
            ORDER BY created_at DESC LIMIT 5`,
           [organizationId]
-        );
+        ).catch(() => [] as any[]);
 
-        if (decisionOutcomes.length > 0) {
+        if (decisionOutcomes?.length > 0) {
           result.decisionMemory = decisionOutcomes.map((d: any) => ({
             problem: (d.problem_framing || '').slice(0, 100),
             chosen: (d.chosen_option || '').slice(0, 80),
             confidence: d.confidence_score,
-            outcome: d.actual_outcome,
+            outcome: d.outcome_notes,
           }));
         }
       }

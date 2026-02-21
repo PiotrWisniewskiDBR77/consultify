@@ -6,8 +6,10 @@
  */
 
 import { Response, Router } from 'express';
+import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { validateBody } from '../middleware/validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -244,6 +246,158 @@ router.post(
       eventId,
       stored,
     });
+  })
+);
+
+// ==================== MICRO-VIDEO HELP (T073) ====================
+
+const MicroVideoDismissSchema = z.object({
+  moduleId: z.string().min(1).max(100),
+  action: z.enum(['watched', 'skipped', 'dont_show_again']),
+});
+
+const MicroVideoEventSchema = z.object({
+  moduleId: z.string().min(1).max(100),
+  videoId: z.string().min(1).max(200),
+  eventType: z.enum(['view_started', 'view_completed', 'view_skipped', 'dont_show_again']),
+  watchTimeSeconds: z.number().optional(),
+  progressPercent: z.number().min(0).max(100).optional(),
+});
+
+/**
+ * GET /api/help/micro-video/dismissed
+ */
+router.get(
+  '/micro-video/dismissed',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const rows = await dbAll<{ module_id: string; action: string }>(
+        'SELECT module_id, action FROM help_micro_video_dismissals WHERE user_id = ?',
+        [userId]
+      );
+
+      const dismissed: Record<string, string> = {};
+      for (const row of rows || []) {
+        dismissed[row.module_id] = row.action;
+      }
+
+      return res.json({ success: true, dismissed });
+    } catch (err: any) {
+      logger.error('[Help MicroVideo] Error fetching dismissals:', err);
+      return res.json({ success: true, dismissed: {} });
+    }
+  })
+);
+
+/**
+ * POST /api/help/micro-video/dismiss
+ */
+router.post(
+  '/micro-video/dismiss',
+  verifyToken,
+  validateBody(MicroVideoDismissSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { moduleId, action } = req.body;
+
+    try {
+      await dbRun(
+        `INSERT INTO help_micro_video_dismissals (id, user_id, module_id, action, created_at, updated_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, ?, NOW(), NOW())
+         ON CONFLICT (user_id, module_id)
+         DO UPDATE SET action = EXCLUDED.action, updated_at = NOW()`,
+        [userId, moduleId, action]
+      );
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[Help MicroVideo] Error saving dismissal:', err);
+      return res.status(500).json({ error: 'Failed to save preference' });
+    }
+  })
+);
+
+/**
+ * POST /api/help/micro-video/event
+ */
+router.post(
+  '/micro-video/event',
+  verifyToken,
+  validateBody(MicroVideoEventSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    const orgId = req.organizationId || null;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { moduleId, videoId, eventType, watchTimeSeconds, progressPercent } = req.body;
+
+    try {
+      await dbRun(
+        `INSERT INTO help_analytics (id, user_id, organization_id, event_type, content_type, content_id, metadata, duration_ms, created_at)
+         VALUES (gen_random_uuid()::TEXT, ?, ?, ?, 'video', ?, ?, ?, NOW())`,
+        [
+          userId,
+          orgId,
+          eventType,
+          videoId,
+          JSON.stringify({ moduleId, progressPercent: progressPercent || 0 }),
+          watchTimeSeconds ? watchTimeSeconds * 1000 : null,
+        ]
+      );
+
+      if (eventType === 'view_completed' || eventType === 'dont_show_again') {
+        const action = eventType === 'view_completed' ? 'watched' : 'dont_show_again';
+        await dbRun(
+          `INSERT INTO help_micro_video_dismissals (id, user_id, module_id, action, created_at, updated_at)
+           VALUES (gen_random_uuid()::TEXT, ?, ?, ?, NOW(), NOW())
+           ON CONFLICT (user_id, module_id)
+           DO UPDATE SET action = EXCLUDED.action, updated_at = NOW()`,
+          [userId, moduleId, action]
+        );
+      }
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[Help MicroVideo] Error tracking event:', err);
+      return res.status(500).json({ error: 'Failed to track event' });
+    }
+  })
+);
+
+/**
+ * GET /api/help/micro-video/status/:moduleId
+ */
+router.get(
+  '/micro-video/status/:moduleId',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId || req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { moduleId } = req.params;
+
+    try {
+      const row = await dbGet<{ action: string } | null>(
+        'SELECT action FROM help_micro_video_dismissals WHERE user_id = ? AND module_id = ?',
+        [userId, moduleId]
+      );
+
+      return res.json({
+        success: true,
+        moduleId,
+        shouldShow: !row,
+        dismissedAction: row?.action || null,
+      });
+    } catch (err: any) {
+      logger.error('[Help MicroVideo] Error checking status:', err);
+      return res.json({ success: true, moduleId, shouldShow: false, dismissedAction: null });
+    }
   })
 );
 

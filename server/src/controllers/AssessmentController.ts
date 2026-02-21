@@ -95,9 +95,7 @@ let decisionColumnsCache: Set<string> | null = null;
 const getDecisionColumns = async (): Promise<Set<string>> => {
   if (decisionColumnsCache) return decisionColumnsCache;
   try {
-    const rows = (await queryHelpers.queryAll(`PRAGMA table_info(decisions)`)) as Array<{
-      name?: string;
-    }>;
+    const rows = await queryHelpers.getTableColumns('decisions');
     const cols = new Set((rows || []).map((row) => row.name).filter(Boolean) as string[]);
     if (cols.size > 0) {
       decisionColumnsCache = cols;
@@ -315,17 +313,13 @@ const ensureAssessmentSchema = async (): Promise<void> => {
       const cached = tableColumnsCache.get(table);
       if (cached) return cached;
       const cols = new Set<string>();
-      if (isSQLite) {
-        try {
-          const rows = (await queryHelpers.queryAll(`PRAGMA table_info(${table})`)) as Array<{
-            name?: string;
-          }>;
-          for (const r of rows || []) {
-            if (r?.name) cols.add(String(r.name));
-          }
-        } catch {
-          // ignore
+      try {
+        const rows = await queryHelpers.getTableColumns(table);
+        for (const r of rows || []) {
+          if (r?.name) cols.add(String(r.name));
         }
+      } catch {
+        // ignore
       }
       tableColumnsCache.set(table, cols);
       return cols;
@@ -336,23 +330,22 @@ const ensureAssessmentSchema = async (): Promise<void> => {
       columnName: string,
       columnDefSql: string
     ): Promise<void> => {
-      // Prefer a schema check in SQLite to avoid noisy "duplicate column" errors.
-      if (isSQLite) {
-        const cols = await getTableColumns(table);
-        if (cols.has(columnName)) return;
+      // PostgreSQL: use IF NOT EXISTS to avoid errors and log spam when column exists
+      if (!isSQLite) {
+        await queryHelpers.queryRun(
+          `ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${columnDefSql}`
+        );
+        return;
       }
+      // SQLite: check first (SQLite lacks ADD COLUMN IF NOT EXISTS in older versions)
+      const cols = await getTableColumns(table);
+      if (cols.has(columnName)) return;
       try {
         await queryHelpers.queryRun(`ALTER TABLE ${table} ADD COLUMN ${columnDefSql}`);
-        if (isSQLite) {
-          const cols = await getTableColumns(table);
-          cols.add(columnName);
-        }
+        cols.add(columnName);
       } catch (e: any) {
         const msg = String(e?.message || e || '');
-        // SQLite: "duplicate column name: foo"
-        // Postgres: 'column "foo" of relation "table" already exists'
-        if (msg.includes('duplicate column name') || msg.includes('already exists')) return;
-        // If table doesn't exist (shouldn't happen after CREATE TABLE), ignore to keep init resilient
+        if (msg.includes('duplicate column name')) return;
         if (msg.includes('no such table') || msg.includes('does not exist')) return;
         throw e;
       }
@@ -532,22 +525,23 @@ const ensureAssessmentSchema = async (): Promise<void> => {
     );
 
     // Permissions
-    const permissionInsertSql = `INSERT OR IGNORE INTO permissions (key, name, description, category, icon) VALUES
-      ('ASSESSMENT_REQUEST_REVIEW', 'Assessment: Request Review', 'Request review for assessment', 'ASSESSMENT', 'fact_check'),
-      ('ASSESSMENT_APPROVE_REPORT', 'Assessment: Approve Report', 'Approve assessment report', 'ASSESSMENT', 'description'),
-      ('ASSESSMENT_APPROVE', 'Assessment: Approve Assessment', 'Approve assessment', 'ASSESSMENT', 'check_circle'),
-      ('ASSESSMENT_GENERATE_INITIATIVES', 'Assessment: Generate Initiatives', 'Generate initiatives from assessment', 'ASSESSMENT', 'lightbulb')`;
+    // Note: permissions table may not have 'name' and 'icon' columns in PostgreSQL
+    const permissionInsertSql = `INSERT OR IGNORE INTO permissions (key, description, category) VALUES
+      ('ASSESSMENT_REQUEST_REVIEW', 'Request review for assessment', 'ASSESSMENT'),
+      ('ASSESSMENT_APPROVE_REPORT', 'Approve assessment report', 'ASSESSMENT'),
+      ('ASSESSMENT_APPROVE', 'Approve assessment', 'ASSESSMENT'),
+      ('ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessment', 'ASSESSMENT')`;
     try {
       await queryHelpers.queryRun(permissionInsertSql);
     } catch {
       // Try with ON CONFLICT
       try {
         await queryHelpers.queryRun(
-          `INSERT INTO permissions (key, name, description, category, icon) VALUES
-            ('ASSESSMENT_REQUEST_REVIEW', 'Assessment: Request Review', 'Request review for assessment', 'ASSESSMENT', 'fact_check'),
-            ('ASSESSMENT_APPROVE_REPORT', 'Assessment: Approve Report', 'Approve assessment report', 'ASSESSMENT', 'description'),
-            ('ASSESSMENT_APPROVE', 'Assessment: Approve Assessment', 'Approve assessment', 'ASSESSMENT', 'check_circle'),
-            ('ASSESSMENT_GENERATE_INITIATIVES', 'Assessment: Generate Initiatives', 'Generate initiatives from assessment', 'ASSESSMENT', 'lightbulb')
+          `INSERT INTO permissions (key, description, category) VALUES
+            ('ASSESSMENT_REQUEST_REVIEW', 'Request review for assessment', 'ASSESSMENT'),
+            ('ASSESSMENT_APPROVE_REPORT', 'Approve assessment report', 'ASSESSMENT'),
+            ('ASSESSMENT_APPROVE', 'Approve assessment', 'ASSESSMENT'),
+            ('ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessment', 'ASSESSMENT')
           ON CONFLICT (key) DO NOTHING`
         );
       } catch {
@@ -555,35 +549,35 @@ const ensureAssessmentSchema = async (): Promise<void> => {
       }
     }
 
-    // Role permissions
-    const roleInsertSql = `INSERT OR IGNORE INTO role_permissions (id, role, permission_key, description) VALUES
-      ('rp_assessment_request_review_admin', 'ADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-      ('rp_assessment_request_review_pm', 'PROJECT_MANAGER', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-      ('rp_assessment_request_review_super', 'SUPERADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-      ('rp_assessment_approve_report_admin', 'ADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
-      ('rp_assessment_approve_report_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
-      ('rp_assessment_approve_admin', 'ADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
-      ('rp_assessment_approve_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
-      ('rp_assessment_generate_admin', 'ADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
-      ('rp_assessment_generate_pm', 'PROJECT_MANAGER', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
-      ('rp_assessment_generate_super', 'SUPERADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments')`;
+    // role_permissions may have (id, role, permission_key) only in Postgres; description optional
+    const roleInsertSql = `INSERT OR IGNORE INTO role_permissions (id, role, permission_key) VALUES
+      ('rp_assessment_request_review_admin', 'ADMIN', 'ASSESSMENT_REQUEST_REVIEW'),
+      ('rp_assessment_request_review_pm', 'PROJECT_MANAGER', 'ASSESSMENT_REQUEST_REVIEW'),
+      ('rp_assessment_request_review_super', 'SUPERADMIN', 'ASSESSMENT_REQUEST_REVIEW'),
+      ('rp_assessment_approve_report_admin', 'ADMIN', 'ASSESSMENT_APPROVE_REPORT'),
+      ('rp_assessment_approve_report_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE_REPORT'),
+      ('rp_assessment_approve_admin', 'ADMIN', 'ASSESSMENT_APPROVE'),
+      ('rp_assessment_approve_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE'),
+      ('rp_assessment_generate_admin', 'ADMIN', 'ASSESSMENT_GENERATE_INITIATIVES'),
+      ('rp_assessment_generate_pm', 'PROJECT_MANAGER', 'ASSESSMENT_GENERATE_INITIATIVES'),
+      ('rp_assessment_generate_super', 'SUPERADMIN', 'ASSESSMENT_GENERATE_INITIATIVES')`;
     try {
       await queryHelpers.queryRun(roleInsertSql);
     } catch {
-      // Try with ON CONFLICT
+      // Try with ON CONFLICT (Postgres)
       try {
         await queryHelpers.queryRun(
-          `INSERT INTO role_permissions (id, role, permission_key, description) VALUES
-            ('rp_assessment_request_review_admin', 'ADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-            ('rp_assessment_request_review_pm', 'PROJECT_MANAGER', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-            ('rp_assessment_request_review_super', 'SUPERADMIN', 'ASSESSMENT_REQUEST_REVIEW', 'Request review for assessments'),
-            ('rp_assessment_approve_report_admin', 'ADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
-            ('rp_assessment_approve_report_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE_REPORT', 'Approve assessment reports'),
-            ('rp_assessment_approve_admin', 'ADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
-            ('rp_assessment_approve_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE', 'Approve assessments'),
-            ('rp_assessment_generate_admin', 'ADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
-            ('rp_assessment_generate_pm', 'PROJECT_MANAGER', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments'),
-            ('rp_assessment_generate_super', 'SUPERADMIN', 'ASSESSMENT_GENERATE_INITIATIVES', 'Generate initiatives from assessments')
+          `INSERT INTO role_permissions (id, role, permission_key) VALUES
+            ('rp_assessment_request_review_admin', 'ADMIN', 'ASSESSMENT_REQUEST_REVIEW'),
+            ('rp_assessment_request_review_pm', 'PROJECT_MANAGER', 'ASSESSMENT_REQUEST_REVIEW'),
+            ('rp_assessment_request_review_super', 'SUPERADMIN', 'ASSESSMENT_REQUEST_REVIEW'),
+            ('rp_assessment_approve_report_admin', 'ADMIN', 'ASSESSMENT_APPROVE_REPORT'),
+            ('rp_assessment_approve_report_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE_REPORT'),
+            ('rp_assessment_approve_admin', 'ADMIN', 'ASSESSMENT_APPROVE'),
+            ('rp_assessment_approve_super', 'SUPERADMIN', 'ASSESSMENT_APPROVE'),
+            ('rp_assessment_generate_admin', 'ADMIN', 'ASSESSMENT_GENERATE_INITIATIVES'),
+            ('rp_assessment_generate_pm', 'PROJECT_MANAGER', 'ASSESSMENT_GENERATE_INITIATIVES'),
+            ('rp_assessment_generate_super', 'SUPERADMIN', 'ASSESSMENT_GENERATE_INITIATIVES')
           ON CONFLICT (id) DO NOTHING`
         );
       } catch {
@@ -1484,11 +1478,7 @@ export class AssessmentController {
       // Detect columns to keep compatibility.
       const batchCols = await (async (): Promise<Set<string> | null> => {
         try {
-          const rows = (await queryHelpers.queryAll(
-            `PRAGMA table_info(assessment_initiative_batches)`
-          )) as Array<{
-            name?: string;
-          }>;
+          const rows = await queryHelpers.getTableColumns('assessment_initiative_batches');
           return new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
         } catch {
           // Unknown schema: avoid inserting optional columns like report_id.
@@ -1559,11 +1549,7 @@ export class AssessmentController {
       // - else fallback to latest report by updated/created
       const reportColumns = await (async () => {
         try {
-          const rows = (await queryHelpers.queryAll(
-            `PRAGMA table_info(assessment_reports)`
-          )) as Array<{
-            name?: string;
-          }>;
+          const rows = await queryHelpers.getTableColumns('assessment_reports');
           return new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
         } catch {
           return new Set<string>();

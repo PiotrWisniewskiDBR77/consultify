@@ -240,10 +240,10 @@ class EngagementSummaryService {
       const stats = (await db.get(
         `SELECT
            COUNT(*) as total,
-           SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-           SUM(CASE WHEN status IN ('active', 'in_progress') THEN 1 ELSE 0 END) as in_progress,
-           SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END) as blocked,
-           SUM(CASE WHEN created_at > ? THEN 1 ELSE 0 END) as newly_created
+           SUM(CASE WHEN i.status = 'completed' THEN 1 ELSE 0 END) as completed,
+           SUM(CASE WHEN i.status IN ('active', 'in_progress') THEN 1 ELSE 0 END) as in_progress,
+           SUM(CASE WHEN i.status = 'blocked' THEN 1 ELSE 0 END) as blocked,
+           SUM(CASE WHEN i.created_at > ? THEN 1 ELSE 0 END) as newly_created
          FROM initiatives i
          JOIN projects p ON i.project_id = p.id
          WHERE p.organization_id = ? ${projectFilter}`,
@@ -292,9 +292,9 @@ class EngagementSummaryService {
     try {
       const stats = (await db.get(
         `SELECT
-           SUM(CASE WHEN status = 'completed' AND updated_at > ? THEN 1 ELSE 0 END) as completed,
-           SUM(CASE WHEN due_date < datetime('now') AND status NOT IN ('completed', 'cancelled') THEN 1 ELSE 0 END) as overdue,
-           SUM(CASE WHEN created_at > ? THEN 1 ELSE 0 END) as created
+           SUM(CASE WHEN t.status = 'completed' AND t.updated_at > ? THEN 1 ELSE 0 END) as completed,
+           SUM(CASE WHEN t.due_date < datetime('now') AND t.status NOT IN ('completed', 'cancelled') THEN 1 ELSE 0 END) as overdue,
+           SUM(CASE WHEN t.created_at > ? THEN 1 ELSE 0 END) as created
          FROM tasks t
          JOIN projects p ON t.project_id = p.id
          WHERE p.organization_id = ?`,

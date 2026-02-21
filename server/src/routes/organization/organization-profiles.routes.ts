@@ -6,7 +6,7 @@ import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
-import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -14,7 +14,7 @@ import logger from '../../utils/Logger.js';
 const router = Router();
 
 // Apply rate limiting and auth
-router.use(authRateLimiter);
+router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 
 /**
@@ -38,15 +38,22 @@ router.get(
       const org = await dbGet<{
         id: string;
         name: string;
-        logo_url: string;
-        branding_primary_color: string;
-        branding_accent_color: string;
         default_timezone: string;
         default_language: string;
       }>(
-        `SELECT id, name, logo_url, branding_primary_color, branding_accent_color, 
-                        default_timezone, default_language 
+        `SELECT id, name, default_timezone, default_language 
                  FROM organizations WHERE id = ?`,
+        [orgId]
+      );
+
+      // Get branding info from organization_branding table (if it exists)
+      const branding = await dbGet<{
+        logo_light_url: string | null;
+        primary_color: string | null;
+        accent_color: string | null;
+      }>(
+        `SELECT logo_light_url, primary_color, accent_color 
+                 FROM organization_branding WHERE organization_id = ?`,
         [orgId]
       );
 
@@ -86,7 +93,7 @@ router.get(
       // Calculate profile completeness
       const fields = [
         org.name,
-        org.logo_url,
+        branding?.logo_light_url,
         profile?.industry,
         profile?.company_size,
         brandingSettings.description,
@@ -99,7 +106,7 @@ router.get(
         profile: {
           // Basic info
           name: org.name,
-          logoUrl: org.logo_url || brandingSettings.logoUrl,
+          logoUrl: branding?.logo_light_url || brandingSettings.logoUrl || '',
           description: brandingSettings.description || '',
 
           // Company details
@@ -108,8 +115,8 @@ router.get(
           website: brandingSettings.website || '',
 
           // Branding
-          brandColor: org.branding_primary_color || brandingSettings.brandColor || '#8B5CF6',
-          accentColor: org.branding_accent_color || brandingSettings.accentColor || '#10B981',
+          brandColor: branding?.primary_color || brandingSettings.brandColor || '#8B5CF6',
+          accentColor: branding?.accent_color || brandingSettings.accentColor || '#10B981',
           faviconUrl: brandingSettings.faviconUrl || '',
 
           // Regional
@@ -182,18 +189,39 @@ router.put(
     } = req.body;
 
     try {
-      // Update organizations table directly for core fields
+      // Update organizations table directly for core fields (timezone and language only)
       await dbRun(
         `UPDATE organizations SET 
-                    logo_url = COALESCE(?, logo_url),
-                    branding_primary_color = COALESCE(?, branding_primary_color),
-                    branding_accent_color = COALESCE(?, branding_accent_color),
                     default_timezone = COALESCE(?, default_timezone),
                     default_language = COALESCE(?, default_language),
                     updated_at = datetime('now')
                  WHERE id = ?`,
-        [logoUrl, brandColor, accentColor, defaultTimezone, defaultLanguage, orgId]
+        [defaultTimezone, defaultLanguage, orgId]
       );
+
+      // Update or insert branding in organization_branding table
+      const existingBranding = await dbGet(
+        `SELECT id FROM organization_branding WHERE organization_id = ?`,
+        [orgId]
+      );
+
+      if (existingBranding) {
+        await dbRun(
+          `UPDATE organization_branding SET 
+                        logo_light_url = COALESCE(?, logo_light_url),
+                        primary_color = COALESCE(?, primary_color),
+                        accent_color = COALESCE(?, accent_color),
+                        updated_at = datetime('now')
+                     WHERE organization_id = ?`,
+          [logoUrl, brandColor, accentColor, orgId]
+        );
+      } else {
+        await dbRun(
+          `INSERT INTO organization_branding (id, organization_id, logo_light_url, primary_color, accent_color, created_at, updated_at)
+                     VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+          [uuidv4(), orgId, logoUrl || null, brandColor || '#8B5CF6', accentColor || '#10B981']
+        );
+      }
 
       // Upsert organization_profiles for extended data
       const existingProfile = await dbGet(
@@ -272,14 +300,10 @@ router.post(
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // For now, return a placeholder - in production, this would handle file upload
-    // Using multer middleware and storing in S3/CloudStorage
-
-    // Placeholder response for logo upload
-    return res.json({
-      success: true,
-      logoUrl: `/uploads/logos/${orgId}.png`,
-      message: 'Logo upload endpoint ready - file upload middleware needed',
+    // No fake success: logo uploads require real storage + upload middleware.
+    return res.status(503).json({
+      error: 'Organization logo upload is not available',
+      code: 'FEATURE_UNAVAILABLE',
     });
   })
 );
@@ -303,53 +327,19 @@ router.post(
       return res.status(400).json({ error: 'Domain is required' });
     }
 
-    try {
-      // In production, this would:
-      // 1. Check DNS CNAME record
-      // 2. Validate SSL certificate
-      // 3. Update domain verification status
-
-      // For now, simulate verification (always succeeds for demo)
-      const isValidDomain = /^[a-z0-9]+([.-][a-z0-9]+)*\.[a-z]{2,}$/i.test(domain);
-
-      if (!isValidDomain) {
-        return res.json({
-          verified: false,
-          message: 'Invalid domain format',
-        });
-      }
-
-      // Update settings with verified domain
-      const existingSettings = await dbGet<{ setting_value: string }>(
-        `SELECT setting_value FROM organization_settings 
-                 WHERE organization_id = ? AND setting_key = 'branding'`,
-        [orgId]
-      );
-
-      const brandingData = existingSettings?.setting_value
-        ? JSON.parse(existingSettings.setting_value)
-        : {};
-
-      brandingData.customDomain = domain;
-      brandingData.customDomainVerified = true;
-
-      await dbRun(
-        `INSERT OR REPLACE INTO organization_settings 
-                    (organization_id, setting_key, setting_value, updated_at)
-                 VALUES (?, 'branding', ?, datetime('now'))`,
-        [orgId, JSON.stringify(brandingData)]
-      );
-
-      logger.info(`[organization-profiles] Domain ${domain} verified for org ${orgId}`);
-
+    const isValidDomain = /^[a-z0-9]+([.-][a-z0-9]+)*\.[a-z]{2,}$/i.test(domain);
+    if (!isValidDomain) {
       return res.json({
-        verified: true,
-        message: 'Domain verified successfully',
+        verified: false,
+        message: 'Invalid domain format',
       });
-    } catch (error: any) {
-      logger.error('[organization-profiles] Error verifying domain:', error);
-      return res.status(500).json({ error: 'Failed to verify domain' });
     }
+
+    // No simulated verification in runtime.
+    return res.status(503).json({
+      error: 'Custom domain verification is not available',
+      code: 'FEATURE_UNAVAILABLE',
+    });
   })
 );
 

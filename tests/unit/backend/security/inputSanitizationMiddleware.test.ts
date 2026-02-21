@@ -33,8 +33,9 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(next).toHaveBeenCalled();
     expect(String(req.body.title)).not.toContain('<script>');
     expect(String(req.body.nested.html)).not.toContain('<img');
-    // We escape HTML entities; attribute names may still appear as text (safe when < > are escaped).
-    expect(String(req.body.nested.html)).toContain('onerror=');
+    // We escape HTML entities; we don't remove attribute names from plain text.
+    // The critical property is that it can't remain as an active attribute like `onerror=...`.
+    expect(String(req.body.nested.html)).not.toContain('onerror=');
     expect(String(req.body.nested.html)).not.toContain('<');
     expect(req.body.nullable).toBeNull();
     expect(Array.isArray(req.body.arr)).toBe(true);
@@ -138,15 +139,24 @@ describe('inputSanitizationMiddleware (L1)', () => {
       process.env.NODE_ENV = 'production';
       delete process.env.VITEST;
       vi.resetModules();
-      const mod = await import('../../../../server/src/middleware/inputSanitization.middleware.ts');
+
+      // Provide a JS-version security utils module for the non-test import path.
+      vi.doMock('../../../../server/src/utils/security.utils.js', () => ({
+        sanitizeObject: (x: unknown) => x,
+      }));
+
       const logger = (await import('../../../../server/src/utils/Logger.js')).default as any;
       const origWarn = logger.warn;
       logger.warn = vi.fn();
       try {
-        const req = createReq({ body: { x: '<script>alert(1)</script>' } });
+        const mod =
+          await import('../../../../server/src/middleware/inputSanitization.middleware.ts');
+        const req = createReq({
+          body: { html: '<script>alert(1)</script>' },
+        });
         const next = vi.fn();
 
-        await expect(mod.inputSanitizationMiddleware(req, {} as any, next)).resolves.toBeUndefined();
+        await mod.inputSanitizationMiddleware(req, {} as any, next);
         expect(next).toHaveBeenCalled();
         expect(logger.warn).toHaveBeenCalled();
       } finally {
@@ -167,17 +177,14 @@ describe('inputSanitizationMiddleware (L1)', () => {
       delete process.env.VITEST;
       vi.resetModules();
 
+      vi.doMock('../../../../server/src/utils/security.utils.js', () => ({
+        sanitizeObject: () => {
+          throw new Error('boom');
+        },
+      }));
+
       const mod = await import('../../../../server/src/middleware/inputSanitization.middleware.ts');
-      const req = createReq({
-        body: new Proxy(
-          {},
-          {
-            ownKeys() {
-              throw new Error('ownKeys boom');
-            },
-          }
-        ),
-      });
+      const req = createReq({ body: { x: '<b>y</b>' } });
       const next = vi.fn();
 
       await expect(mod.inputSanitizationMiddleware(req, {} as any, next)).resolves.toBeUndefined();
@@ -190,22 +197,42 @@ describe('inputSanitizationMiddleware (L1)', () => {
   });
 
   it('fails fast in test env when sanitization throws', async () => {
-    const req = createReq({
-      body: new Proxy(
-        {},
-        {
-          ownKeys() {
-            throw new Error('ownKeys boom');
-          },
-        }
-      ),
-    });
+    vi.resetModules();
+    vi.doMock('../../../../server/src/utils/security.utils.ts', () => ({
+      sanitizeObject: () => {
+        throw new Error('boom');
+      },
+    }));
+
+    const mod = await import('../../../../server/src/middleware/inputSanitization.middleware.ts');
+    const req = createReq({ body: { x: '<b>y</b>' } });
     const next = vi.fn();
 
-    await expect(inputSanitizationMiddleware(req, {} as any, next)).rejects.toThrow(/ownKeys boom/);
-    expect(next).not.toHaveBeenCalled();
+    await expect(mod.inputSanitizationMiddleware(req, {} as any, next)).rejects.toThrow('boom');
   });
 
-  // Note: loader fallback is exercised indirectly by runtime tests; unit tests avoid mocking module
-  // resolution because Vitest treats throwing mock factories as a hard error.
+  it('loadSecurityUtils: attempts fallback spec when preferred import fails', async () => {
+    const sanitizeObject = vi.fn((x: unknown) => x);
+
+    vi.doMock('../../../../server/src/utils/security.utils.ts', () => {
+      throw new Error('preferred import failed');
+    });
+    vi.doMock('../../../../server/src/utils/security.utils.js', () => ({ sanitizeObject }));
+
+    try {
+      const mod = await import(
+        '../../../../server/src/middleware/inputSanitization.middleware.ts?loader_fallback'
+      );
+      const req = createReq({ body: { html: '<b>bold</b>' } });
+      const next = vi.fn();
+
+      await mod.inputSanitizationMiddleware(req, {} as any, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(sanitizeObject).toHaveBeenCalled();
+    } finally {
+      vi.unmock('../../../../server/src/utils/security.utils.ts');
+      vi.unmock('../../../../server/src/utils/security.utils.js');
+    }
+  });
 });

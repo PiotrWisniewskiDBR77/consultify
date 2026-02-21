@@ -614,6 +614,56 @@ export async function createAttribution(params: CreateAttributionParams): Promis
   const now = new Date().toISOString();
 
   try {
+    // Resolve commission rate (supports incentive tier floor from partner certifications)
+    let resolvedCommissionRatePercent = Number(commissionRatePercent);
+    if (!Number.isFinite(resolvedCommissionRatePercent) || resolvedCommissionRatePercent <= 0) {
+      const tierOrder = ['REGISTERED', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM'] as const;
+      const rank = (t: unknown): number => {
+        const upper = String(t || '')
+          .trim()
+          .toUpperCase();
+        const idx = tierOrder.indexOf(upper as any);
+        return idx >= 0 ? idx : 0;
+      };
+      const legacyToCanonical = (legacy: unknown): string => {
+        const v = String(legacy || '').toLowerCase();
+        if (v === 'elite') return 'PLATINUM';
+        if (v === 'premier') return 'GOLD';
+        if (v === 'certified') return 'SILVER';
+        return 'REGISTERED';
+      };
+      const maxTier = (a: unknown, b: unknown): string =>
+        rank(a) >= rank(b)
+          ? String(a || 'REGISTERED').toUpperCase()
+          : String(b || 'REGISTERED').toUpperCase();
+
+      const org = await DbPromise.get<any>(
+        db,
+        `SELECT tier, tier_override, certification_tier_floor, commission_rate_percent
+         FROM partner_organizations
+         WHERE id = ?`,
+        [partnerOrgId]
+      );
+      const legacy = legacyToCanonical(org?.tier);
+      const effectiveTier = maxTier(
+        maxTier(legacy, org?.tier_override),
+        org?.certification_tier_floor
+      );
+
+      const rateRow = await DbPromise.get<{ rate: number }>(
+        db,
+        `SELECT rate FROM partner_commission_rates WHERE tier = ?`,
+        [effectiveTier]
+      );
+
+      const fallback = Number(org?.commission_rate_percent);
+      resolvedCommissionRatePercent = Number.isFinite(rateRow?.rate)
+        ? Number(rateRow?.rate)
+        : Number.isFinite(fallback) && fallback > 0
+          ? fallback
+          : 10;
+    }
+
     // Check if attribution already exists
     const existing = await DbPromise.get<{ id: string }>(
       db,
@@ -640,7 +690,7 @@ export async function createAttribution(params: CreateAttributionParams): Promis
         organizationId,
         attributionType,
         referralCodeUsed || null,
-        commissionRatePercent,
+        resolvedCommissionRatePercent,
         commissionDurationMonths,
         utmSource || null,
         utmMedium || null,
@@ -666,7 +716,7 @@ export async function createAttribution(params: CreateAttributionParams): Promis
       signupCompletedAt: now,
       lifetimeValue: 0,
       totalCommissionEarned: 0,
-      commissionRatePercent,
+      commissionRatePercent: resolvedCommissionRatePercent,
       commissionDurationMonths,
       status: 'PENDING',
       attributedAt: now,

@@ -82,11 +82,7 @@ let batchColsCache: Set<string> | null | undefined = undefined;
 async function getBatchColumns(): Promise<Set<string> | null> {
   if (batchColsCache !== undefined) return batchColsCache;
   try {
-    const rows = (await queryHelpers.queryAll(
-      `PRAGMA table_info(assessment_initiative_batches)`
-    )) as Array<{
-      name?: string;
-    }>;
+    const rows = await queryHelpers.getTableColumns('assessment_initiative_batches');
     const cols = new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
     batchColsCache = cols.size ? cols : null;
     return batchColsCache;

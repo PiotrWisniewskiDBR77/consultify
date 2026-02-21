@@ -447,6 +447,43 @@ export const RefineTextRequestSchema = z.object({
   language: z.string().optional(),
 });
 
+// ── T032: AI Authoring ──────────────────────────────────────────────
+
+export const GenerateCardDraftRequestSchema = z.object({
+  artifactType: z.enum(['initiative', 'task', 'decision']),
+  brief: z.string().min(10).max(4000),
+  projectId: z.string().uuid(),
+  language: z.string().optional(),
+});
+
+export const AIAuthoringAuditRequestSchema = z.object({
+  artifactType: z.enum(['initiative', 'task', 'decision']),
+  artifactId: z.string().uuid().optional(),
+  actionType: z.enum([
+    'field_generate',
+    'field_improve',
+    'field_shorten',
+    'field_expand',
+    'field_formal',
+    'card_generate',
+  ]),
+  fieldKey: z.string().optional(),
+  inputText: z.string().optional(),
+  outputText: z.string().optional(),
+  wasApplied: z.boolean(),
+  wasUndone: z.boolean().optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
+// ── T033: AI Readiness Analysis ────────────────────────────────────
+
+export const AIReadinessAnalysisRequestSchema = z.object({
+  initiativeId: z.string().uuid(),
+  projectId: z.string().uuid(),
+  targetGate: z.string().optional(),
+  language: z.string().optional(),
+});
+
 // Type exports
 export type RefineTextRequest = z.infer<typeof RefineTextRequestSchema>;
 export type ChatRequest = z.infer<typeof ChatRequestSchema>;
@@ -474,3 +511,6 @@ export type PatternIdParam = z.infer<typeof PatternIdParamSchema>;
 export type AuditIdParam = z.infer<typeof AuditIdParamSchema>;
 export type SessionIdParam = z.infer<typeof SessionIdParamSchema>;
 export type ActionTypeParam = z.infer<typeof ActionTypeParamSchema>;
+export type GenerateCardDraftRequest = z.infer<typeof GenerateCardDraftRequestSchema>;
+export type AIReadinessAnalysisRequest = z.infer<typeof AIReadinessAnalysisRequestSchema>;
+export type AIAuthoringAuditRequest = z.infer<typeof AIAuthoringAuditRequestSchema>;

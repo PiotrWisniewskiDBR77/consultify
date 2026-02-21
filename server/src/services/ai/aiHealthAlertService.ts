@@ -1,14 +1,8 @@
 /**
- * Aihealthalert Service
- * Enterprise SaaS Architecture - TypeScript Backend
+ * AI Health Alert Service
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * Not implemented in this codebase. Export an explicit marker instead of a self-loading wrapper.
  */
+const aiHealthAlertService = { __unavailable__: true } as const;
 
-import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
-
-// Lazy load the JS service module
-const loadAihealthalert = createCachedLazyService('../../ai/aiHealthAlertService.js');
-
-// Export default instance (for backward compatibility)
-export default loadAihealthalert();
+export default aiHealthAlertService;

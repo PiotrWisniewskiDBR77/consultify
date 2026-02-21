@@ -8,6 +8,8 @@ export type { ADMADimensionLevelKey, ADMALevelKnowledge } from './admaKnowledge'
 export { getADMAKnowledge, getADMAPillarInfo } from './admaKnowledge';
 export type { DRDAreaLevelKey, DRDLevelKnowledge } from './drdKnowledge';
 export { getDRDKnowledge } from './drdKnowledge';
+export type { LeanLevelKnowledge, LeanWasteKnowledge } from './leanKnowledge';
+export { getLeanKnowledge, getLeanLevelMeaning, getLeanWasteKnowledge } from './leanKnowledge';
 export type { SIRIDimensionLevelKey, SIRILevelKnowledge } from './siriKnowledge';
 export { getSIRIBuildingBlockInfo, getSIRIKnowledge } from './siriKnowledge';
 
@@ -37,6 +39,16 @@ export function getFrameworkKnowledge(
     case 'adma': {
       const { getADMAKnowledge: get } = require('./admaKnowledge');
       return get(dimensionId, levelNumber);
+    }
+    case 'lean': {
+      const { getLeanKnowledge: get } = require('./leanKnowledge');
+      const parts = dimensionId.split('#');
+      const knowledge = get(parts[0] || 'MEASURE', parts[1] || 'PROCESSES', levelNumber);
+      return {
+        questions: knowledge.coachQuestions,
+        example: knowledge.evidenceGuidance,
+        suggestedTechnologies: [],
+      };
     }
     default:
       return {

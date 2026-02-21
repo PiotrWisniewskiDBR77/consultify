@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import NotificationService from '../services/notificationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
@@ -25,7 +25,7 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
 
-router.use(authRateLimiter);
+router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(demoContextMiddleware);
 
@@ -77,6 +77,26 @@ const isTaskDone = (status?: string | null) => {
   return s === 'done' || s === 'completed' || s === 'validated';
 };
 
+const parseTagsArray = (input: unknown): string[] => {
+  if (Array.isArray(input)) return input.map((x) => String(x).trim()).filter(Boolean);
+  if (typeof input === 'string') {
+    const s = input.trim();
+    if (!s) return [];
+    try {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) return parsed.map((x) => String(x).trim()).filter(Boolean);
+    } catch {
+      // ignore
+    }
+    if (s.includes(','))
+      return s
+        .split(',')
+        .map((x) => x.trim())
+        .filter(Boolean);
+  }
+  return [];
+};
+
 const normalizeDecisionStatus = (status?: string | null) => String(status || '').toLowerCase();
 const isDecisionPending = (status?: string | null) => {
   const s = normalizeDecisionStatus(status);
@@ -125,6 +145,33 @@ const ensureMyWorkTables = async () => {
       updated_at TEXT NOT NULL,
       PRIMARY KEY (user_id, focus_date, item_key)
     )`
+  );
+};
+
+const ensureMyIdeasTable = async () => {
+  await queryHelpers.queryRun(
+    `CREATE TABLE IF NOT EXISTS my_ideas (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT,
+      tags TEXT DEFAULT '[]',
+      source_type TEXT,
+      source_conversation_id TEXT,
+      source_message_id TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
+  );
+  await queryHelpers.queryRun(
+    `CREATE INDEX IF NOT EXISTS idx_my_ideas_user_id ON my_ideas(user_id)`
+  );
+  await queryHelpers.queryRun(
+    `CREATE INDEX IF NOT EXISTS idx_my_ideas_org_id ON my_ideas(organization_id)`
+  );
+  await queryHelpers.queryRun(
+    `CREATE INDEX IF NOT EXISTS idx_my_ideas_created_at ON my_ideas(created_at)`
   );
 };
 
@@ -186,6 +233,316 @@ router.get(
       )) || [];
 
     res.json(rows);
+  })
+);
+
+/**
+ * T007 (V2) — Personal Tasks (private per-user)
+ *
+ * NOTE: stored in `tasks` with `task_type='personal'` and filtered by assignee + org.
+ */
+router.get(
+  '/personal-tasks',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const includeDone = String(req.query.includeDone || 'false') === 'true';
+    const status = req.query.status ? String(req.query.status).trim().toLowerCase() : '';
+    const q = req.query.q ? String(req.query.q).trim().toLowerCase() : '';
+    const limitRaw = Number(req.query.limit);
+    const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 500) : 200;
+
+    const params: any[] = [orgId, userId];
+    let whereExtra = '';
+
+    if (!includeDone) {
+      whereExtra += " AND lower(coalesce(t.status,'')) NOT IN ('done','completed','validated')";
+    }
+    if (status) {
+      whereExtra += " AND lower(coalesce(t.status,'')) = ?";
+      params.push(status);
+    }
+    if (q) {
+      whereExtra +=
+        " AND (lower(coalesce(t.title,'')) LIKE ? OR lower(coalesce(t.description,'')) LIKE ?)";
+      params.push(`%${q}%`, `%${q}%`);
+    }
+
+    params.push(limit);
+
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `
+        SELECT
+          t.id,
+          t.title,
+          t.description,
+          t.status,
+          t.priority,
+          t.due_date as "dueDate",
+          t.tags,
+          t.created_at as "createdAt",
+          t.updated_at as "updatedAt",
+          t.completed_at as "completedAt"
+        FROM tasks t
+        WHERE t.organization_id = ?
+          AND t.assignee_id = ?
+          AND lower(coalesce(t.task_type,'')) = 'personal'
+          ${whereExtra}
+        ORDER BY
+          CASE lower(coalesce(t.priority,'')) WHEN 'urgent' THEN 0 WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 2 END,
+          COALESCE(t.due_date, '9999-12-31') ASC,
+          t.updated_at DESC
+        LIMIT ?
+      `,
+        params
+      )) || [];
+
+    res.json(rows.map((r: any) => ({ ...r, tags: parseTagsArray(r?.tags) })));
+  })
+);
+
+router.post(
+  '/personal-tasks',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const title = String(req.body?.title || '').trim();
+    if (!title) {
+      res.status(400).json({ error: 'title is required' });
+      return;
+    }
+
+    const description =
+      typeof req.body?.description === 'string' ? req.body.description : undefined;
+    const status = String(req.body?.status || 'todo').trim() || 'todo';
+    const priority = String(req.body?.priority || 'medium').trim() || 'medium';
+    const dueDate = req.body?.dueDate ? String(req.body.dueDate).trim() : undefined;
+    const tags = parseTagsArray(req.body?.tags);
+
+    const id = uuidv4();
+    const cols = await getTableColumns('tasks');
+
+    const insertCols: string[] = ['id'];
+    const insertVals: string[] = ['?'];
+    const insertParams: any[] = [id];
+
+    const add = (col: string, val: any) => {
+      if (!cols.has(col)) return;
+      insertCols.push(col);
+      insertVals.push('?');
+      insertParams.push(val);
+    };
+
+    add('organization_id', orgId);
+    add('title', title);
+    add('description', description ?? null);
+    add('status', status);
+    add('priority', priority);
+    add('assignee_id', userId);
+    add('reporter_id', userId);
+    if (dueDate) add('due_date', dueDate);
+    add('tags', JSON.stringify(tags));
+    add('task_type', 'personal');
+
+    await queryHelpers.queryRun(
+      `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+      insertParams
+    );
+
+    const row = await queryHelpers.queryOne<any>(
+      `
+      SELECT
+        t.id,
+        t.title,
+        t.description,
+        t.status,
+        t.priority,
+        t.due_date as "dueDate",
+        t.tags,
+        t.created_at as "createdAt",
+        t.updated_at as "updatedAt",
+        t.completed_at as "completedAt"
+      FROM tasks t
+      WHERE t.id = ? AND t.organization_id = ? AND t.assignee_id = ?
+        AND lower(coalesce(t.task_type,'')) = 'personal'
+      LIMIT 1
+    `,
+      [id, orgId, userId]
+    );
+
+    res.status(201).json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+  })
+);
+
+router.get(
+  '/personal-tasks/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const id = String(req.params.id || '').trim();
+    const row = await queryHelpers.queryOne<any>(
+      `
+      SELECT
+        t.id,
+        t.title,
+        t.description,
+        t.status,
+        t.priority,
+        t.due_date as "dueDate",
+        t.tags,
+        t.created_at as "createdAt",
+        t.updated_at as "updatedAt",
+        t.completed_at as "completedAt"
+      FROM tasks t
+      WHERE t.id = ? AND t.organization_id = ? AND t.assignee_id = ?
+        AND lower(coalesce(t.task_type,'')) = 'personal'
+      LIMIT 1
+    `,
+      [id, orgId, userId]
+    );
+
+    if (!row) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+
+    res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+  })
+);
+
+router.put(
+  '/personal-tasks/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const id = String(req.params.id || '').trim();
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id, status FROM tasks WHERE id = ? AND organization_id = ? AND assignee_id = ? AND lower(coalesce(task_type,''))='personal' LIMIT 1`,
+      [id, orgId, userId]
+    );
+    if (!existing) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+
+    const cols = await getTableColumns('tasks');
+    const setParts: string[] = [];
+    const params: any[] = [];
+
+    const setIf = (col: string, val: any) => {
+      if (!cols.has(col)) return;
+      setParts.push(`${col} = ?`);
+      params.push(val);
+    };
+
+    if (typeof req.body?.title === 'string') setIf('title', String(req.body.title).trim());
+    if (typeof req.body?.description === 'string') setIf('description', req.body.description);
+    if (typeof req.body?.priority === 'string') setIf('priority', String(req.body.priority).trim());
+    if (req.body?.dueDate !== undefined) {
+      const d = req.body.dueDate ? String(req.body.dueDate).trim() : null;
+      setIf('due_date', d);
+    }
+    if (req.body?.tags !== undefined) setIf('tags', JSON.stringify(parseTagsArray(req.body.tags)));
+
+    let nextStatus: string | null = null;
+    if (typeof req.body?.status === 'string') {
+      nextStatus = String(req.body.status).trim();
+      setIf('status', nextStatus);
+    }
+
+    // completed_at bookkeeping
+    const wasDone = isTaskDone(existing?.status);
+    const isDoneNow = nextStatus ? isTaskDone(nextStatus) : wasDone;
+    if (nextStatus) {
+      if (!wasDone && isDoneNow) {
+        setIf('completed_at', new Date().toISOString());
+      } else if (wasDone && !isDoneNow) {
+        setIf('completed_at', null);
+      }
+    }
+
+    if (cols.has('updated_at')) {
+      setParts.push(`updated_at = CURRENT_TIMESTAMP`);
+    }
+
+    if (setParts.length === 0) {
+      const row = await queryHelpers.queryOne<any>(
+        `
+        SELECT
+          t.id,
+          t.title,
+          t.description,
+          t.status,
+          t.priority,
+          t.due_date as "dueDate",
+          t.tags,
+          t.created_at as "createdAt",
+          t.updated_at as "updatedAt",
+          t.completed_at as "completedAt"
+        FROM tasks t
+        WHERE t.id = ? AND t.organization_id = ? AND t.assignee_id = ?
+          AND lower(coalesce(t.task_type,'')) = 'personal'
+        LIMIT 1
+      `,
+        [id, orgId, userId]
+      );
+      res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+      return;
+    }
+
+    params.push(id, orgId, userId);
+    await queryHelpers.queryRun(
+      `UPDATE tasks SET ${setParts.join(', ')} WHERE id = ? AND organization_id = ? AND assignee_id = ? AND lower(coalesce(task_type,''))='personal'`,
+      params
+    );
+
+    const row = await queryHelpers.queryOne<any>(
+      `
+      SELECT
+        t.id,
+        t.title,
+        t.description,
+        t.status,
+        t.priority,
+        t.due_date as "dueDate",
+        t.tags,
+        t.created_at as "createdAt",
+        t.updated_at as "updatedAt",
+        t.completed_at as "completedAt"
+      FROM tasks t
+      WHERE t.id = ? AND t.organization_id = ? AND t.assignee_id = ?
+        AND lower(coalesce(t.task_type,'')) = 'personal'
+      LIMIT 1
+    `,
+      [id, orgId, userId]
+    );
+
+    res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+  })
+);
+
+router.delete(
+  '/personal-tasks/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const id = String(req.params.id || '').trim();
+    await queryHelpers.queryRun(
+      `DELETE FROM tasks WHERE id = ? AND organization_id = ? AND assignee_id = ? AND lower(coalesce(task_type,''))='personal'`,
+      [id, orgId, userId]
+    );
+    res.status(204).send();
   })
 );
 
@@ -711,9 +1068,11 @@ router.get(
          AND lower(coalesce(status,'')) NOT IN ('done','completed','validated')`,
       [orgId, userId, today]
     );
+    // Note: PostgreSQL doesn't support datetime() function - columns are already timestamps
+    // Compare timestamps directly without function calls
     const onTime = await queryHelpers.queryOne<{ onTime: number; totalDone: number }>(
       `SELECT
-         SUM(CASE WHEN due_date IS NOT NULL AND completed_at IS NOT NULL AND datetime(completed_at) <= datetime(due_date) THEN 1 ELSE 0 END) as onTime,
+         SUM(CASE WHEN due_date IS NOT NULL AND completed_at IS NOT NULL AND completed_at <= due_date THEN 1 ELSE 0 END) as onTime,
          SUM(CASE WHEN completed_at IS NOT NULL THEN 1 ELSE 0 END) as totalDone
        FROM tasks
        WHERE organization_id = ? AND assignee_id = ? AND completed_at IS NOT NULL AND completed_at >= ?`,
@@ -786,6 +1145,310 @@ router.get(
     }
 
     res.json(rows);
+  })
+);
+
+/**
+ * T009 (V2) — My Ideas (private per-user repository)
+ */
+router.get(
+  '/my-ideas',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    await ensureMyIdeasTable();
+
+    const limitRaw = Number(req.query.limit);
+    const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 500) : 200;
+    const q = req.query.q ? String(req.query.q).trim().toLowerCase() : '';
+    const tag = req.query.tag ? String(req.query.tag).trim().toLowerCase() : '';
+
+    const params: any[] = [userId, orgId];
+    let whereExtra = '';
+    if (q) {
+      whereExtra += " AND (lower(coalesce(title,'')) LIKE ? OR lower(coalesce(body,'')) LIKE ?)";
+      params.push(`%${q}%`, `%${q}%`);
+    }
+    if (tag) {
+      whereExtra += " AND lower(coalesce(tags,'')) LIKE ?";
+      params.push(`%${tag}%`);
+    }
+    params.push(limit);
+
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `
+        SELECT
+          id,
+          title,
+          body,
+          tags,
+          source_type as "sourceType",
+          source_conversation_id as "sourceConversationId",
+          source_message_id as "sourceMessageId",
+          created_at as "createdAt",
+          updated_at as "updatedAt"
+        FROM my_ideas
+        WHERE user_id = ? AND organization_id = ?
+          ${whereExtra}
+        ORDER BY created_at DESC
+        LIMIT ?
+      `,
+        params
+      )) || [];
+
+    res.json(rows.map((r: any) => ({ ...r, tags: parseTagsArray(r?.tags) })));
+  })
+);
+
+router.get(
+  '/my-ideas/suggest',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    await ensureMyIdeasTable();
+
+    const q = req.query.q ? String(req.query.q).trim().toLowerCase() : '';
+    const limitRaw = Number(req.query.limit);
+    const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 50) : 5;
+
+    const params: any[] = [userId, orgId];
+    let whereExtra = '';
+    if (q) {
+      whereExtra += " AND (lower(coalesce(title,'')) LIKE ? OR lower(coalesce(body,'')) LIKE ?)";
+      params.push(`%${q}%`, `%${q}%`);
+    }
+    params.push(limit);
+
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `
+        SELECT
+          id,
+          title,
+          body,
+          tags,
+          created_at as "createdAt"
+        FROM my_ideas
+        WHERE user_id = ? AND organization_id = ?
+          ${whereExtra}
+        ORDER BY created_at DESC
+        LIMIT ?
+      `,
+        params
+      )) || [];
+
+    res.json(rows.map((r: any) => ({ ...r, tags: parseTagsArray(r?.tags) })));
+  })
+);
+
+router.post(
+  '/my-ideas',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    await ensureMyIdeasTable();
+
+    const title = String(req.body?.title || '').trim();
+    if (!title) {
+      res.status(400).json({ error: 'title is required' });
+      return;
+    }
+
+    const body = typeof req.body?.body === 'string' ? req.body.body : null;
+    const tags = parseTagsArray(req.body?.tags);
+    const sourceType = req.body?.sourceType ? String(req.body.sourceType) : null;
+    const sourceConversationId = req.body?.sourceConversationId
+      ? String(req.body.sourceConversationId)
+      : null;
+    const sourceMessageId = req.body?.sourceMessageId ? String(req.body.sourceMessageId) : null;
+
+    const id = uuidv4();
+    await queryHelpers.queryRun(
+      `
+      INSERT INTO my_ideas (
+        id, user_id, organization_id, title, body, tags, source_type, source_conversation_id, source_message_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+      [
+        id,
+        userId,
+        orgId,
+        title,
+        body,
+        JSON.stringify(tags),
+        sourceType,
+        sourceConversationId,
+        sourceMessageId,
+      ]
+    );
+
+    const row = await queryHelpers.queryOne<any>(
+      `
+      SELECT
+        id,
+        title,
+        body,
+        tags,
+        source_type as "sourceType",
+        source_conversation_id as "sourceConversationId",
+        source_message_id as "sourceMessageId",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM my_ideas
+      WHERE id = ? AND user_id = ? AND organization_id = ?
+      LIMIT 1
+    `,
+      [id, userId, orgId]
+    );
+
+    res.status(201).json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+  })
+);
+
+router.get(
+  '/my-ideas/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    await ensureMyIdeasTable();
+
+    const id = String(req.params.id || '').trim();
+    const row = await queryHelpers.queryOne<any>(
+      `
+      SELECT
+        id,
+        title,
+        body,
+        tags,
+        source_type as "sourceType",
+        source_conversation_id as "sourceConversationId",
+        source_message_id as "sourceMessageId",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM my_ideas
+      WHERE id = ? AND user_id = ? AND organization_id = ?
+      LIMIT 1
+    `,
+      [id, userId, orgId]
+    );
+
+    if (!row) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+
+    res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+  })
+);
+
+router.put(
+  '/my-ideas/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    await ensureMyIdeasTable();
+
+    const id = String(req.params.id || '').trim();
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [id, userId, orgId]
+    );
+    if (!existing) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+
+    const setParts: string[] = [];
+    const params: any[] = [];
+
+    const set = (col: string, val: any) => {
+      setParts.push(`${col} = ?`);
+      params.push(val);
+    };
+
+    if (typeof req.body?.title === 'string') set('title', String(req.body.title).trim());
+    if (typeof req.body?.body === 'string') set('body', req.body.body);
+    if (req.body?.tags !== undefined) set('tags', JSON.stringify(parseTagsArray(req.body.tags)));
+
+    if (setParts.length === 0) {
+      const row = await queryHelpers.queryOne<any>(
+        `
+        SELECT
+          id,
+          title,
+          body,
+          tags,
+          source_type as "sourceType",
+          source_conversation_id as "sourceConversationId",
+          source_message_id as "sourceMessageId",
+          created_at as "createdAt",
+          updated_at as "updatedAt"
+        FROM my_ideas
+        WHERE id = ? AND user_id = ? AND organization_id = ?
+        LIMIT 1
+      `,
+        [id, userId, orgId]
+      );
+      res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+      return;
+    }
+
+    setParts.push(`updated_at = CURRENT_TIMESTAMP`);
+    params.push(id, userId, orgId);
+    await queryHelpers.queryRun(
+      `UPDATE my_ideas SET ${setParts.join(', ')} WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      params
+    );
+
+    const row = await queryHelpers.queryOne<any>(
+      `
+      SELECT
+        id,
+        title,
+        body,
+        tags,
+        source_type as "sourceType",
+        source_conversation_id as "sourceConversationId",
+        source_message_id as "sourceMessageId",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM my_ideas
+      WHERE id = ? AND user_id = ? AND organization_id = ?
+      LIMIT 1
+    `,
+      [id, userId, orgId]
+    );
+
+    res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+  })
+);
+
+router.delete(
+  '/my-ideas/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    await ensureMyIdeasTable();
+
+    const id = String(req.params.id || '').trim();
+    await queryHelpers.queryRun(
+      `DELETE FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      [id, userId, orgId]
+    );
+    res.status(204).send();
   })
 );
 

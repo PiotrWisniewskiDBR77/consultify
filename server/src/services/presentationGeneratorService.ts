@@ -1,0 +1,618 @@
+/**
+ * Presentation Generator Service (T058)
+ *
+ * Transforms platform artifacts into sponsor-ready UnifiedReportJSON decks.
+ * Pipeline: source selection → guided setup → outline → UnifiedJSON → PPTX via PptxPipelineService.
+ */
+
+import { v4 as uuidv4 } from 'uuid';
+
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
+import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
+import type {
+  SlideIntent,
+  UnifiedReportJSON,
+  UnifiedReportMeta,
+  UnifiedSlide,
+} from './report/pptx/types.js';
+
+// ============================================================
+// TYPES
+// ============================================================
+
+export interface DeckSetup {
+  title: string;
+  templateId?: string;
+  audience: 'sponsor' | 'executive' | 'investor' | 'internal';
+  goal: 'inform' | 'decide' | 'sell' | 'align';
+  language: 'en' | 'pl';
+  theme: 'corporate' | 'minimal' | 'modern';
+  confidentiality: 'confidential' | 'internal' | 'public';
+  brandColor?: string;
+  sourceArtifacts: SourceArtifact[];
+}
+
+export interface SourceArtifact {
+  type:
+    | 'initiative_portfolio'
+    | 'execution_status'
+    | 'raid'
+    | 'kpi_roi'
+    | 'assessment'
+    | 'tool_session'
+    | 'report'
+    | 'custom';
+  id?: string;
+  label: string;
+  data?: any;
+}
+
+export interface OutlineItem {
+  intent: SlideIntent;
+  title: string;
+  keyMessage?: string;
+  enabled: boolean;
+  sourceRef?: string;
+}
+
+export interface GenerationResult {
+  deckId: string;
+  slideCount: number;
+  warnings: string[];
+  exportPath?: string;
+}
+
+// ============================================================
+// OUTLINE GENERATORS (per deck type / template)
+// ============================================================
+
+function generateOutlineFromTemplate(
+  templateOutline: OutlineItem[],
+  sources: SourceArtifact[]
+): OutlineItem[] {
+  const outline = templateOutline.map((item) => ({ ...item, enabled: true }));
+
+  const hasKpi = sources.some((s) => s.type === 'kpi_roi');
+  const hasRaid = sources.some((s) => s.type === 'raid');
+  const hasAssessment = sources.some((s) => s.type === 'assessment');
+
+  if (!hasKpi) {
+    outline.forEach((o) => {
+      if (o.intent === 'performance_overview' && !o.sourceRef) o.enabled = false;
+    });
+  }
+  if (!hasRaid) {
+    outline.forEach((o) => {
+      if (o.intent === 'risk_management' && !o.sourceRef) o.enabled = false;
+    });
+  }
+  if (!hasAssessment) {
+    outline.forEach((o) => {
+      if (o.intent === 'assessment' && !o.sourceRef) o.enabled = false;
+    });
+  }
+
+  return outline;
+}
+
+function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
+  const items: OutlineItem[] = [
+    { intent: 'cover', title: setup.title, enabled: true },
+    {
+      intent: 'executive_summary',
+      title: setup.language === 'pl' ? 'Podsumowanie' : 'Executive Summary',
+      enabled: true,
+    },
+    {
+      intent: 'key_messages',
+      title: setup.language === 'pl' ? 'Kluczowe wnioski' : 'Key Messages',
+      enabled: true,
+    },
+  ];
+
+  for (const source of setup.sourceArtifacts) {
+    switch (source.type) {
+      case 'initiative_portfolio':
+        items.push({
+          intent: 'initiative_portfolio',
+          title: setup.language === 'pl' ? 'Portfel inicjatyw' : 'Initiative Portfolio',
+          enabled: true,
+          sourceRef: source.id,
+        });
+        break;
+      case 'execution_status':
+        items.push({
+          intent: 'roadmap',
+          title: setup.language === 'pl' ? 'Plan realizacji' : 'Execution Roadmap',
+          enabled: true,
+          sourceRef: source.id,
+        });
+        break;
+      case 'kpi_roi':
+        items.push({
+          intent: 'performance_overview',
+          title: setup.language === 'pl' ? 'KPI i ROI' : 'KPI & ROI Overview',
+          enabled: true,
+          sourceRef: source.id,
+        });
+        break;
+      case 'raid':
+        items.push({
+          intent: 'risk_management',
+          title: setup.language === 'pl' ? 'Ryzyka i mitygacje' : 'Risks & Mitigations',
+          enabled: true,
+          sourceRef: source.id,
+        });
+        break;
+      case 'assessment':
+        items.push({
+          intent: 'assessment',
+          title: setup.language === 'pl' ? 'Wyniki oceny' : 'Assessment Results',
+          enabled: true,
+          sourceRef: source.id,
+        });
+        items.push({
+          intent: 'comparison',
+          title: setup.language === 'pl' ? 'Analiza luk' : 'Gap Analysis',
+          enabled: true,
+          sourceRef: source.id,
+        });
+        break;
+      case 'tool_session':
+        items.push({
+          intent: 'single_insight',
+          title: source.label || 'Tool Insight',
+          enabled: true,
+          sourceRef: source.id,
+        });
+        break;
+    }
+  }
+
+  items.push({
+    intent: 'next_steps',
+    title: setup.language === 'pl' ? 'Kolejne kroki' : 'Next Steps',
+    enabled: true,
+  });
+
+  if (setup.confidentiality === 'confidential' || setup.goal === 'sell') {
+    items.push({
+      intent: 'appendix',
+      title: setup.language === 'pl' ? 'Zastrzeżenia' : 'Disclaimers & Methodology',
+      enabled: true,
+    });
+  }
+
+  return items;
+}
+
+// ============================================================
+// SLIDE CONTENT GENERATORS
+// ============================================================
+
+function buildSlideContent(
+  item: OutlineItem,
+  setup: DeckSetup,
+  artifactData: Record<string, any>
+): UnifiedSlide {
+  const isPl = setup.language === 'pl';
+
+  switch (item.intent) {
+    case 'cover':
+      return {
+        intent: 'cover',
+        key_message: item.title,
+        content: {
+          type: 'cover',
+          title: item.title,
+          subtitle: item.keyMessage || (isPl ? 'Przegląd strategiczny' : 'Strategic Review'),
+          organization: artifactData._orgName || 'Organization',
+          date: new Date().toLocaleDateString(isPl ? 'pl-PL' : 'en-US', {
+            year: 'numeric',
+            month: 'long',
+          }),
+          confidentiality: setup.confidentiality,
+        },
+      };
+
+    case 'executive_summary':
+      return {
+        intent: 'executive_summary',
+        key_message:
+          item.keyMessage || (isPl ? 'Podsumowanie kluczowych ustaleń' : 'Summary of key findings'),
+        content: {
+          type: 'executive_summary',
+          headline: item.keyMessage || (isPl ? 'Podsumowanie' : 'Executive Summary'),
+          key_findings: artifactData._keyFindings || [
+            isPl
+              ? 'Dane zostaną uzupełnione na podstawie wybranych źródeł'
+              : 'Data will be populated from selected sources',
+          ],
+          kpis: artifactData._kpis || [],
+          recommendation: artifactData._recommendation,
+        },
+      };
+
+    case 'key_messages':
+      return {
+        intent: 'key_messages',
+        key_message: item.keyMessage || (isPl ? 'Kluczowe wnioski' : 'Key Messages'),
+        content: {
+          type: 'key_messages',
+          messages: artifactData._keyMessages || [
+            {
+              title: isPl ? 'Wniosek 1' : 'Finding 1',
+              body: isPl ? 'Do uzupełnienia' : 'To be populated from source data',
+            },
+            {
+              title: isPl ? 'Wniosek 2' : 'Finding 2',
+              body: isPl ? 'Do uzupełnienia' : 'To be populated from source data',
+            },
+            {
+              title: isPl ? 'Wniosek 3' : 'Finding 3',
+              body: isPl ? 'Do uzupełnienia' : 'To be populated from source data',
+            },
+          ],
+        },
+      };
+
+    case 'initiative_portfolio':
+      return {
+        intent: 'initiative_portfolio',
+        key_message:
+          item.keyMessage || (isPl ? 'Status portfela inicjatyw' : 'Initiative portfolio status'),
+        content: {
+          type: 'initiative_portfolio',
+          initiatives: artifactData._initiatives || [],
+          summary: artifactData._portfolioSummary,
+        },
+      };
+
+    case 'performance_overview':
+      return {
+        intent: 'performance_overview',
+        key_message:
+          item.keyMessage ||
+          (isPl ? 'Przegląd kluczowych wskaźników' : 'Key performance indicators overview'),
+        content: {
+          type: 'performance_overview',
+          kpis: artifactData._performanceKpis || [],
+          period: artifactData._period || 'Current',
+        },
+      };
+
+    case 'roadmap':
+      return {
+        intent: 'roadmap',
+        key_message: item.keyMessage || (isPl ? 'Plan transformacji' : 'Transformation roadmap'),
+        content: {
+          type: 'roadmap',
+          phases: artifactData._phases || [
+            {
+              name: isPl ? 'Faza 1: Quick Wins' : 'Phase 1: Quick Wins',
+              timeframe: '0-3m',
+              items: [],
+            },
+            {
+              name: isPl ? 'Faza 2: Optymalizacja' : 'Phase 2: Optimization',
+              timeframe: '3-6m',
+              items: [],
+            },
+            { name: isPl ? 'Faza 3: Skalowanie' : 'Phase 3: Scale', timeframe: '6-12m', items: [] },
+          ],
+        },
+      };
+
+    case 'risk_management':
+      return {
+        intent: 'risk_management',
+        key_message:
+          item.keyMessage || (isPl ? 'Kluczowe ryzyka i mitygacje' : 'Key risks and mitigations'),
+        content: {
+          type: 'risk_management',
+          risks: artifactData._risks || [],
+        },
+      };
+
+    case 'assessment':
+      return {
+        intent: 'assessment',
+        key_message:
+          item.keyMessage || (isPl ? 'Wyniki oceny dojrzałości' : 'Maturity assessment results'),
+        content: {
+          type: 'assessment',
+          framework: artifactData._framework || 'DRD',
+          overall_score: artifactData._overallScore || 0,
+          max_score: artifactData._maxScore || 5,
+          categories: artifactData._categories || [],
+        },
+      };
+
+    case 'comparison':
+      return {
+        intent: 'comparison',
+        key_message: item.keyMessage || (isPl ? 'Analiza porównawcza' : 'Comparative analysis'),
+        content: {
+          type: 'comparison',
+          items: artifactData._comparisonItems || [],
+          chart_type: 'bar',
+        },
+      };
+
+    case 'next_steps':
+      return {
+        intent: 'next_steps',
+        key_message:
+          item.keyMessage ||
+          (isPl ? 'Kolejne kroki i decyzje' : 'Next steps and decisions required'),
+        content: {
+          type: 'next_steps',
+          actions: artifactData._actions || [
+            {
+              action: isPl ? 'Zdefiniować priorytety' : 'Define priorities',
+              owner: 'TBD',
+              deadline: 'TBD',
+            },
+            {
+              action: isPl ? 'Zatwierdzić roadmapę' : 'Approve roadmap',
+              owner: 'TBD',
+              deadline: 'TBD',
+            },
+          ],
+          decisions: artifactData._decisions || [],
+        },
+      };
+
+    case 'appendix':
+      return {
+        intent: 'appendix',
+        key_message: 'Disclaimers & Methodology',
+        content: {
+          type: 'appendix',
+          sections: [
+            {
+              title: isPl ? 'Zastrzeżenia' : 'Disclaimers',
+              body: isPl
+                ? 'Niniejsza prezentacja została wygenerowana automatycznie na bazie danych z platformy. Wszystkie liczby oparte na zadeklarowanych założeniach.'
+                : 'This presentation was auto-generated from platform data. All figures are based on stated assumptions.',
+            },
+          ],
+        },
+      };
+
+    default:
+      return {
+        intent: item.intent,
+        key_message: item.keyMessage || item.title,
+        content: {
+          type: 'section_intro',
+          section_name: item.title,
+          section_number: 0,
+        } as any,
+      };
+  }
+}
+
+// ============================================================
+// ARTIFACT DATA LOADER
+// ============================================================
+
+async function loadArtifactData(
+  sources: SourceArtifact[],
+  orgId: string
+): Promise<Record<string, any>> {
+  const data: Record<string, any> = {};
+
+  try {
+    const org = await dbGet(`SELECT name FROM organizations WHERE id = ?`, [orgId]);
+    data._orgName = (org as any)?.name || 'Organization';
+  } catch {
+    data._orgName = 'Organization';
+  }
+
+  for (const source of sources) {
+    try {
+      switch (source.type) {
+        case 'initiative_portfolio': {
+          const initiatives = await dbAll(
+            `SELECT id, name, status, priority, axis, progress, expected_roi FROM initiatives WHERE organization_id = ? AND status NOT IN ('CANCELLED', 'ARCHIVED') ORDER BY priority DESC LIMIT 20`,
+            [orgId]
+          );
+          data._initiatives = ((initiatives || []) as any[]).map((i: any) => ({
+            name: i.name,
+            status: i.status,
+            priority: i.priority,
+            progress: i.progress || 0,
+            roi: i.expected_roi,
+          }));
+          data._portfolioSummary = `${(initiatives as any[])?.length || 0} active initiatives`;
+          break;
+        }
+        case 'kpi_roi': {
+          const kpis = await dbAll(
+            `SELECT name, unit, baseline_value, target_value, current_value, is_on_target FROM initiative_kpis WHERE organization_id = ? LIMIT 6`,
+            [orgId]
+          );
+          data._performanceKpis = ((kpis || []) as any[]).map((k: any) => ({
+            label: k.name,
+            value: k.current_value ?? k.target_value ?? 0,
+            target: k.target_value,
+            unit: k.unit,
+            trend: k.is_on_target ? 'up' : 'down',
+          }));
+          data._kpis = data._performanceKpis?.slice(0, 4);
+          break;
+        }
+        case 'assessment': {
+          if (source.data?.reportId) {
+            data._framework = source.data.framework || 'DRD';
+            data._overallScore = source.data.overallScore || 0;
+            data._maxScore = source.data.maxScore || 5;
+            data._categories = source.data.categories || [];
+          }
+          break;
+        }
+        default:
+          if (source.data) {
+            Object.assign(data, source.data);
+          }
+      }
+    } catch (err) {
+      logger.warn(`[PresentationGen] Failed to load artifact ${source.type}: ${err}`);
+    }
+  }
+
+  return data;
+}
+
+// ============================================================
+// MAIN SERVICE
+// ============================================================
+
+export async function generateOutline(
+  setup: DeckSetup,
+  organizationId: string
+): Promise<{ outline: OutlineItem[]; deckId: string }> {
+  let outline: OutlineItem[];
+
+  if (setup.templateId) {
+    const template = await dbGet(`SELECT outline_json FROM presentation_templates WHERE id = ?`, [
+      setup.templateId,
+    ]);
+    if (template) {
+      const templateOutline = JSON.parse((template as any).outline_json).map((o: any) => ({
+        intent: o.intent as SlideIntent,
+        title: o.title,
+        keyMessage: o.keyMessage,
+        enabled: true,
+      }));
+      outline = generateOutlineFromTemplate(templateOutline, setup.sourceArtifacts);
+    } else {
+      outline = generateDefaultOutline(setup);
+    }
+  } else {
+    outline = generateDefaultOutline(setup);
+  }
+
+  const deckId = uuidv4().replace(/-/g, '');
+  await dbRun(
+    `INSERT INTO presentation_decks (id, organization_id, title, template_id, deck_type, audience, goal, language, confidentiality, theme, brand_kit_id, source_artifacts, outline_json, status, generated_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?)`,
+    [
+      deckId,
+      organizationId,
+      setup.title,
+      setup.templateId || null,
+      'custom',
+      setup.audience,
+      setup.goal,
+      setup.language,
+      setup.confidentiality,
+      setup.theme,
+      null,
+      JSON.stringify(setup.sourceArtifacts),
+      JSON.stringify(outline),
+      null,
+    ]
+  );
+
+  return { outline, deckId };
+}
+
+export async function generateDeck(
+  deckId: string,
+  outline: OutlineItem[],
+  setup: DeckSetup,
+  organizationId: string
+): Promise<GenerationResult> {
+  await dbRun(
+    `UPDATE presentation_decks SET status = 'generating', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    [deckId]
+  );
+
+  try {
+    const artifactData = await loadArtifactData(setup.sourceArtifacts, organizationId);
+    const enabledSlides = outline.filter((o) => o.enabled);
+
+    const slides: UnifiedSlide[] = enabledSlides.map((item) =>
+      buildSlideContent(item, setup, artifactData)
+    );
+
+    let brandColor = setup.brandColor;
+    if (!brandColor) {
+      const brandKit = await dbGet(
+        `SELECT primary_color FROM brand_kits WHERE organization_id = ?`,
+        [organizationId]
+      );
+      if (brandKit) brandColor = (brandKit as any).primary_color;
+    }
+
+    const meta: UnifiedReportMeta = {
+      client: artifactData._orgName || 'Organization',
+      project: setup.title,
+      date: new Date().toISOString().slice(0, 10),
+      author: 'Consultify',
+      confidentiality: setup.confidentiality,
+      language: setup.language,
+      brandColor,
+      template: setup.theme,
+    };
+
+    const unifiedJson: UnifiedReportJSON = { meta, slides };
+    const pipeline = new PptxPipelineService();
+    const result = await pipeline.generateFromUnifiedJson(unifiedJson, {
+      template: setup.theme,
+      language: setup.language,
+      brandColor,
+      confidentiality: setup.confidentiality,
+      skipValidation: false,
+    });
+
+    const fs = await import('fs');
+    const path = await import('path');
+    const exportDir = path.default.join(process.cwd(), 'exports', 'presentations');
+    if (!fs.default.existsSync(exportDir)) fs.default.mkdirSync(exportDir, { recursive: true });
+    const exportPath = path.default.join(exportDir, `${deckId}.pptx`);
+    fs.default.writeFileSync(exportPath, result.buffer);
+
+    await dbRun(
+      `UPDATE presentation_decks SET status = 'ready', unified_json = ?, slide_count = ?, export_path = ?, export_format = 'pptx', exported_at = CURRENT_TIMESTAMP, validation_warnings = ?, outline_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [
+        JSON.stringify(unifiedJson),
+        result.slideCount,
+        exportPath,
+        JSON.stringify(result.warnings),
+        JSON.stringify(outline),
+        deckId,
+      ]
+    );
+
+    return { deckId, slideCount: result.slideCount, warnings: result.warnings, exportPath };
+  } catch (err: any) {
+    logger.error(`[PresentationGen] Generation failed for ${deckId}: ${err.message}`);
+    await dbRun(
+      `UPDATE presentation_decks SET status = 'failed', validation_warnings = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [JSON.stringify([err.message]), deckId]
+    );
+    throw err;
+  }
+}
+
+export async function regenerateSlide(
+  deckId: string,
+  slideIndex: number,
+  organizationId: string
+): Promise<{ slide: UnifiedSlide }> {
+  const deck = (await dbGet(
+    `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+    [deckId, organizationId]
+  )) as any;
+  if (!deck) throw new Error('Deck not found');
+
+  const unifiedJson: UnifiedReportJSON = JSON.parse(deck.unified_json);
+  if (slideIndex < 0 || slideIndex >= unifiedJson.slides.length)
+    throw new Error('Invalid slide index');
+
+  return { slide: unifiedJson.slides[slideIndex] };
+}

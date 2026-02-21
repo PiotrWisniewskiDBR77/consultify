@@ -362,9 +362,21 @@ export class CircuitBreaker {
     try {
       if (circuitBreakerHasServiceColumn === null) {
         try {
-          const cols = await DbPromise.all(`PRAGMA table_info(circuit_breaker_state)`, [], {
-            fallback: true,
-          });
+          const { default: databaseConfig } = await import('../config/DatabaseConfig.js');
+          const isPostgres = databaseConfig.type === 'postgres';
+          let cols: Array<{ name?: string }> = [];
+          if (isPostgres) {
+            const rows = await DbPromise.all<{ column_name: string }>(
+              `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1`,
+              ['circuit_breaker_state'],
+              { fallback: true }
+            );
+            cols = (rows || []).map((r) => ({ name: r.column_name }));
+          } else {
+            cols = (await DbPromise.all(`PRAGMA table_info(circuit_breaker_state)`, [], {
+              fallback: true,
+            })) as Array<{ name?: string }>;
+          }
           circuitBreakerHasServiceColumn =
             Array.isArray(cols) &&
             cols.some((c: any) => String(c?.name || '').toLowerCase() === 'service');

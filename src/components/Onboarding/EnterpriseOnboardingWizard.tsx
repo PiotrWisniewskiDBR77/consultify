@@ -36,6 +36,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
   const [step, setStep] = useState<OnboardingStep>(1);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<OnboardingStatus | null>(null);
+  const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
 
   // Step 1: Terms
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -47,6 +48,13 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
   useEffect(() => {
     loadStatus();
   }, []);
+
+  useEffect(() => {
+    if (step !== 2) return;
+    Api.getSubscriptionPlans()
+      .then((plans: any[]) => setSubscriptionPlans(Array.isArray(plans) ? plans : []))
+      .catch(() => setSubscriptionPlans([]));
+  }, [step]);
 
   const loadStatus = async () => {
     try {
@@ -229,21 +237,48 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
   // Step 2: Pricing Selection
   if (step === 2) {
+    const formatMonthlyPrice = (raw: any): string => {
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n <= 0) return 'Custom';
+      // Heuristic: most seeded plan prices are stored in cents (e.g. 4900 = $49.00).
+      const dollars = n >= 1000 ? n / 100 : n;
+      return `$${dollars.toFixed(dollars % 1 === 0 ? 0 : 2)}`;
+    };
+
+    const findPlan = (tier: PricingTier) => {
+      const byId = subscriptionPlans.find((p) => String(p.id).toLowerCase() === tier);
+      if (byId) return byId;
+      const name = subscriptionPlans.find((p) => String(p.name).toLowerCase().includes(tier));
+      if (name) return name;
+      if (tier === 'professional') {
+        const pro = subscriptionPlans.find((p) => String(p.name).toLowerCase().includes('pro'));
+        if (pro) return pro;
+      }
+      return null;
+    };
+
     const tiers = [
       {
         id: 'starter' as PricingTier,
-        name: 'Starter',
-        price: '$49',
+        name: findPlan('starter')?.name || 'Starter',
+        price: formatMonthlyPrice(findPlan('starter')?.price_monthly),
         period: '/month',
-        features: ['5 users', 'Basic reports', 'Email support', '5 GB storage'],
+        features: (Array.isArray(findPlan('starter')?.features) &&
+          findPlan('starter')?.features) || [
+          '5 users',
+          'Basic reports',
+          'Email support',
+          '5 GB storage',
+        ],
         popular: false,
       },
       {
         id: 'professional' as PricingTier,
-        name: 'Professional',
-        price: '$149',
+        name: findPlan('professional')?.name || 'Professional',
+        price: formatMonthlyPrice(findPlan('professional')?.price_monthly),
         period: '/month',
-        features: [
+        features: (Array.isArray(findPlan('professional')?.features) &&
+          findPlan('professional')?.features) || [
           '20 users',
           'Advanced AI features',
           'Priority support',
@@ -254,10 +289,11 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
       },
       {
         id: 'enterprise' as PricingTier,
-        name: 'Enterprise',
-        price: 'Custom',
+        name: findPlan('enterprise')?.name || 'Enterprise',
+        price: formatMonthlyPrice(findPlan('enterprise')?.price_monthly),
         period: '',
-        features: [
+        features: (Array.isArray(findPlan('enterprise')?.features) &&
+          findPlan('enterprise')?.features) || [
           'Unlimited users',
           'White-label',
           'Dedicated support',
@@ -322,7 +358,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
                 </div>
 
                 <ul className="space-y-3 mb-6">
-                  {tier.features.map((feature, idx) => (
+                  {tier.features.map((feature: string, idx: number) => (
                     <li key={idx} className="flex items-start gap-2 text-sm">
                       <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                       <span className="text-slate-700 dark:text-slate-300">{feature}</span>

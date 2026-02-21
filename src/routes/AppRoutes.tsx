@@ -18,6 +18,7 @@ import { AuthView } from '@/views/AuthView';
 import { ProductEntryPage } from '@/views/ProductEntryPage';
 
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
+import { LicensedToolsRedirect } from './LicensedToolsRedirect';
 import { ROUTES } from './routeConfig';
 
 // Lazy load views for new routes
@@ -69,6 +70,13 @@ const DigitalToolsView = React.lazy(() =>
 const ProcessAutomationView = React.lazy(() =>
   import('@/views/discovery-tools/ProcessAutomationView').then((m) => ({
     default: m.ProcessAutomationView,
+  }))
+);
+
+// T064 — Megatrends canonical workspace
+const MegatrendsWorkspace = React.lazy(() =>
+  import('@/components/Megatrend/MegatrendsWorkspace').then((m) => ({
+    default: m.MegatrendsWorkspace,
   }))
 );
 
@@ -260,6 +268,13 @@ const CookiePolicyView = React.lazy(() =>
 const SecurityView = React.lazy(() =>
   import('@/views/legal/SecurityView').then((m) => ({ default: m.SecurityView }))
 );
+const LegalIndexView = React.lazy(() =>
+  import('@/views/LegalIndexView').then((m) => ({ default: m.LegalIndexView }))
+);
+const LegalDocumentView = React.lazy(() =>
+  import('@/views/LegalDocumentView').then((m) => ({ default: m.LegalDocumentView }))
+);
+const OAuthCallbackView = React.lazy(() => import('@/views/OAuthCallback'));
 
 // Status & Changelog
 const StatusPageView = React.lazy(() =>
@@ -304,6 +319,11 @@ const DocsChangelogView = React.lazy(() =>
 );
 const DocsSecurityView = React.lazy(() =>
   import('@/views/docs/DocsSecurityView').then((m) => ({ default: m.DocsSecurityView }))
+);
+
+// Public Mini Assessment (T015)
+const PublicMiniAssessmentView = React.lazy(() =>
+  import('@/views/PublicMiniAssessmentView').then((m) => ({ default: m.PublicMiniAssessmentView }))
 );
 
 // Education Hub (Public)
@@ -522,6 +542,16 @@ export const AppRoutes: React.FC = () => {
           <Route path=":categorySlug/:articleSlug" element={<DocsArticleView />} />
         </Route>
 
+        {/* Public Mini Assessment (T015) */}
+        <Route
+          path="/assess/:token?"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading assessment..." />}>
+              <PublicMiniAssessmentView />
+            </Suspense>
+          }
+        />
+
         {/* Tools Showcase - Education Hub (Public) */}
         <Route
           path="/tools"
@@ -642,6 +672,16 @@ export const AppRoutes: React.FC = () => {
                 />
               </AuthLayout>
             )
+          }
+        />
+
+        {/* OAuth Callback - Public route for OAuth redirects */}
+        <Route
+          path="/oauth/callback"
+          element={
+            <Suspense fallback={<LoadingScreen message="Processing authentication..." />}>
+              <OAuthCallbackView />
+            </Suspense>
           }
         />
 
@@ -773,6 +813,26 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        {/* T064 — Canonical Megatrend Analysis route */}
+        <Route
+          path={ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS}
+          element={
+            <MainLayout
+              breadcrumbs={breadcrumbs || ['Discovery Tools', 'Strategic Analysis', 'Megatrends']}
+              noPadding
+            >
+              <RouteErrorBoundary>
+                <div className="p-4 lg:p-6">
+                  <MegatrendsWorkspace
+                    source="tools"
+                    showHeader
+                    onBack={() => window.history.back()}
+                  />
+                </div>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
         <Route
           path={ROUTES.DISCOVERY_TOOLS.OPERATIONAL}
           element={
@@ -839,7 +899,13 @@ export const AppRoutes: React.FC = () => {
                     <Route path="profile" element={<ContextBuilderView initialTab={1} />} />
                     <Route path="goals" element={<ContextBuilderView initialTab={2} />} />
                     <Route path="challenges" element={<ContextBuilderView initialTab={3} />} />
-                    <Route path="megatrends" element={<ContextBuilderView initialTab={4} />} />
+                    {/* T064 — Redirect to canonical */}
+                    <Route
+                      path="megatrends"
+                      element={
+                        <Navigate to={ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS} replace />
+                      }
+                    />
                     <Route path="strategy" element={<ContextBuilderView initialTab={5} />} />
                   </Routes>
                 </AnimationWrapper>
@@ -848,12 +914,15 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
+        {/* Licensed Tools alias - redirect to /assessment (T025) */}
+        <Route path="/licensed-tools/*" element={<LicensedToolsRedirect />} />
+
         {/* Assessment Module - New Hub */}
         <Route
           path={`${ROUTES.ASSESSMENT.ROOT}/*`}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Assessment']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || ['Licensed Tools']} noPadding>
                 <RouteErrorBoundary>
                   <Routes>
                     {/* Assessment Session Editor (Workflow v2) */}
@@ -1231,6 +1300,24 @@ export const AppRoutes: React.FC = () => {
           element={
             <AnimationWrapper variant="fade">
               <SecurityView />
+            </AnimationWrapper>
+          }
+        />
+
+        {/* Legal Center - Public (T093) */}
+        <Route
+          path="/legal"
+          element={
+            <AnimationWrapper variant="fade">
+              <LegalIndexView />
+            </AnimationWrapper>
+          }
+        />
+        <Route
+          path="/legal/:docSlug"
+          element={
+            <AnimationWrapper variant="fade">
+              <LegalDocumentView />
             </AnimationWrapper>
           }
         />

@@ -18,7 +18,7 @@
  * @version 1.0.0
  */
 
-import { Bot, History, MessageSquare, Plus, Volume2, VolumeX } from 'lucide-react';
+import { Bot, Briefcase, History, MessageSquare, Plus, Volume2, VolumeX } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -30,10 +30,19 @@ import { useDemoSession } from '../../hooks/useDemoSession';
 // import { useOrgMemory } from '../../hooks/useOrgMemory'; // removed — panel disabled
 import { useUniversalVoice } from '../../hooks/useUniversalVoice';
 import { Api } from '../../services/api';
+import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import { useAIActionsStore } from '../../store/useAIActionsStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { useConversationStore } from '../../store/useConversationStore';
-import { Artifact, ChatMessage, FocusMode, ResponseFeedback, ThinkingStep } from '../../types';
+import {
+  AppView,
+  Artifact,
+  ChatMessage,
+  FocusMode,
+  ResponseFeedback,
+  ThinkingStep,
+} from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
@@ -164,6 +173,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   } = useConversationStore();
 
   const { addArtifact, togglePanel: toggleArtifactsPanel, exportArtifact } = useArtifactsStore();
+
+  const pendingActionsCount = useAIActionsStore((s) => s.pendingCount);
 
   // ========================================================================
   // Local state (must be declared before hooks that depend on them)
@@ -390,7 +401,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               thinkingSteps: thinking as any,
               artifacts: artifactsForConversation,
               citations: Array.isArray(meta?.citations) ? meta?.citations : [],
-              ...(aiConfig?.deepResearch
+              ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
                 ? {
                     options: [
                       { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
@@ -420,7 +431,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         timestamp: new Date(),
         thinkingSteps: thinking,
         artifacts,
-        ...(aiConfig?.deepResearch
+        ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
           ? ({
               options: [
                 { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
@@ -1006,7 +1017,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const isForceDepth = forceDepthTriggers.includes(normalized);
 
       // Deep Thinking: force-depth triggers bypass Confirm (they are a quality control action)
-      if (aiConfig?.deepResearch && isForceDepth) {
+      if ((aiConfig?.deepResearch || (aiConfig as any)?.marketResearch) && isForceDepth) {
         const base = (customMessages || messages).filter(
           (m) => !((m as any).metadata?.deepThinking?.kind === 'confirm')
         );
@@ -1042,7 +1053,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       // Deep Thinking: blocking Confirm step (no streaming until user confirms)
-      if (aiConfig?.deepResearch) {
+      if (aiConfig?.deepResearch || (aiConfig as any)?.marketResearch) {
         if (dtConfirmBusy) return;
         setDtConfirmBusy(true);
         try {
@@ -1669,6 +1680,51 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     [activeConversationId]
   );
 
+  // T009: Save message output as My Idea (private)
+  const handleSaveAsIdea = useCallback(
+    async (messageId: string, content: string) => {
+      const trimmed = String(content || '').trim();
+      if (!trimmed) return;
+
+      const firstLine =
+        trimmed
+          .split('\n')
+          .map((l) => l.replace(/^#+\s*/, '').trim())
+          .find((l) => !!l) || '';
+      const title = firstLine.slice(0, 120) || (i18n.language === 'pl' ? 'Pomysł' : 'Idea');
+
+      try {
+        const created = await Api.createMyIdea({
+          title,
+          body: trimmed,
+          tags: [],
+          sourceType: 'chat',
+          sourceConversationId: activeConversationId,
+          sourceMessageId: messageId,
+        });
+
+        trackFunnelEvent('my_idea_saved', { source: 'chat', ideaId: created?.id, messageId });
+        toast.success(t('myWork.ideas.savedToast', 'Saved to My Ideas'));
+
+        // Deep link into My Work → Ideas and open the saved idea
+        try {
+          const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
+          setMyWorkIntent?.({
+            tab: 'ideas',
+            open: { type: 'idea', id: created?.id, name: created?.title || title, data: created },
+          });
+          setCurrentView?.(AppView.MY_WORK);
+        } catch {
+          // ignore
+        }
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to save idea:', err);
+        toast.error(t('myWork.errors.createFailed', 'Failed to create idea'));
+      }
+    },
+    [activeConversationId, i18n.language, t]
+  );
+
   // Deep Thinking: Enable DT mode from hint banner
   const handleEnableDeepThinking = useCallback(() => {
     setDtHintDismissed(true);
@@ -1997,6 +2053,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       handleDeepThinkingProceed={handleDeepThinkingProceed}
       handleDeepThinkingReconfirm={handleDeepThinkingReconfirm}
       handleSaveAsDecision={handleSaveAsDecision}
+      handleSaveAsIdea={handleSaveAsIdea}
       handleRunDirectedDeepening={handleRunDirectedDeepening}
       handleMultiSelectToggle={handleMultiSelectToggle}
       handleMultiSelectConfirm={handleMultiSelectConfirm}
@@ -2029,41 +2086,62 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {t('wcag.skipToInput', 'Skip to chat input')}
       </a>
 
-      {/* Header - Simplified */}
+      {/* Header — Tech Sexy (T104/T105) */}
       <div
-        className={`flex items-center justify-between ${isCompact ? 'px-3 py-2' : 'px-4 py-3'} border-b border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-950/50 backdrop-blur-sm`}
+        className={`flex items-center justify-between ${isCompact ? 'px-3 py-1.5' : 'px-4 py-2'} border-b border-slate-200/60 dark:border-white/[0.06] bg-white/50 dark:bg-navy-950/60 backdrop-blur-sm`}
       >
-        <div className="flex items-center gap-1">
-          {/* New Chat button - first from left */}
+        <div className="flex items-center gap-0.5">
           <button
             onClick={handleNewChat}
             data-testid="chat-new-button"
-            className="p-1.5 text-slate-400 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
-            title={t('aiChat.newChat', 'Nowa rozmowa')}
+            className="p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
+            title={t('aiChat.newChat', 'New chat')}
+            aria-label={t('aiChat.newChat', 'New chat')}
           >
-            <Plus size={18} />
+            <Plus size={18} strokeWidth={1.75} />
           </button>
 
-          {/* History toggle - second from left */}
           {showHistoryTrigger && (
             <button
               onClick={() => toggleSidebar()}
               data-testid="chat-history-button"
               data-chat-toggle
-              className={`p-1.5 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors ${
+              className={`p-1.5 rounded-lg transition-colors ${
                 isSidebarOpen
-                  ? 'text-primary-600 dark:text-primary-400'
-                  : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/20'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
               }`}
-              title={t('aiChat.history', 'Historia')}
+              title={t('aiChat.history', 'History')}
+              aria-label={t('aiChat.history', 'Chat history')}
             >
-              <History size={18} />
+              <History size={18} strokeWidth={1.75} />
             </button>
           )}
+
+          {/* T105: 3rd "Business/Actions" button */}
+          <button
+            onClick={() => {
+              trackFunnelEvent('chat_business_button_clicked', {
+                mode: isSplitMode ? 'split' : 'full',
+                pendingCount: pendingActionsCount,
+              });
+              onNavigateToActions?.();
+            }}
+            data-testid="chat-business-button"
+            className="relative p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
+            title={t('aiChat.business', 'Business actions')}
+            aria-label={t('aiChat.business', 'Business actions')}
+          >
+            <Briefcase size={18} strokeWidth={1.75} />
+            {pendingActionsCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary-500 text-[10px] font-medium text-white px-1 leading-none">
+                {pendingActionsCount > 9 ? '9+' : pendingActionsCount}
+              </span>
+            )}
+          </button>
         </div>
 
-        <div className="flex items-center gap-1">
-          {/* Auto-read toggle (speaker) - right side */}
+        <div className="flex items-center gap-0.5">
           {ttsSupported && (
             <button
               onClick={() => {
@@ -2077,16 +2155,25 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               data-testid="chat-autoread-button"
               className={`p-1.5 rounded-lg transition-colors ${
                 autoReadEnabled
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30'
-                  : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/20'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
               }`}
               title={
                 autoReadEnabled
-                  ? t('aiChat.autoReadOff', 'Wyłącz czytanie na głos')
-                  : t('aiChat.autoReadOn', 'Włącz czytanie na głos')
+                  ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                  : t('aiChat.autoReadOn', 'Turn on auto-read')
+              }
+              aria-label={
+                autoReadEnabled
+                  ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                  : t('aiChat.autoReadOn', 'Turn on auto-read')
               }
             >
-              {autoReadEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+              {autoReadEnabled ? (
+                <Volume2 size={18} strokeWidth={1.75} />
+              ) : (
+                <VolumeX size={18} strokeWidth={1.75} />
+              )}
             </button>
           )}
         </div>
@@ -2098,9 +2185,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           projectId={workspaceContext?.projectId}
           compact={isCompact}
           onViewAll={onNavigateToActions}
-          onActionDecided={(actionId, decision) => {
-            console.log(`[UnifiedChatPanel] Action ${actionId} ${decision}`);
-          }}
+          onActionDecided={() => {}}
           maxPreview={isCompact ? 2 : 3}
         />
       </div>

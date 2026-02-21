@@ -35,6 +35,7 @@ import {
   initializeConnectionPool,
   shutdownConnectionPool,
 } from './database/index.js';
+import { rateLimitUserIdMiddleware } from './middleware/rateLimitUserId.middleware.js';
 // TypeScript routes (migrated)
 import { get as dbGet } from './utils/DbPromise.js';
 import logger from './utils/Logger.js';
@@ -48,6 +49,7 @@ const app: Express = express();
 const PORT = Number(process.env.PORT) || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
+const skipRateLimit = process.env.DISABLE_RATE_LIMIT === 'true';
 
 // Validate environment variables on startup (skip in test mode)
 if (!isTest && !process.env.SKIP_ENV_VALIDATION) {
@@ -430,6 +432,8 @@ app.use(
               'https://api.mistral.ai',
               'https://api.stripe.com',
               'https://*.sentry.io',
+              'https://fonts.googleapis.com',
+              'https://fonts.gstatic.com',
             ],
             fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
             objectSrc: ["'none'"],
@@ -503,32 +507,28 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: redisStore,
-  skip: (req) => isTest || req.originalUrl.includes('/api/auth/'),
+  skip: (req) => skipRateLimit || isTest || req.originalUrl.includes('/api/auth/'),
   message: { error: 'Too many requests, please try again later.' },
   keyGenerator: (req) => {
     try {
-      // Intelligent Rate Limiting: Key by User ID if auth, else IP
+      // Key by User ID when authenticated (rateLimitUserIdMiddleware sets req._rateLimitUserId)
       // This solves the "Office IP" problem where all users share one IP
-      // Using ipKeyGenerator for IPv6 compatibility (masks IPv6 to /56 subnet)
+      const userId = (req as any)._rateLimitUserId;
+      if (userId) {
+        return `api:user:${userId}`;
+      }
+
+      // Fall back to IP for unauthenticated requests
       const ip =
         req.ip ||
         req.socket?.remoteAddress ||
         req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
         req.headers['x-real-ip']?.toString() ||
         'unknown';
-
-      // Use ipKeyGenerator helper to properly handle IPv6 addresses
-      // This prevents IPv6 users from bypassing limits by rotating addresses
       const safeIpKey = ip !== 'unknown' ? ipKeyGenerator(ip, 56) : 'unknown';
-
-      // Ensure we return a valid string (express-rate-limit requires this)
       const key = `api:ip:${safeIpKey}`;
-      if (!key || key === 'api:ip:') {
-        return 'api:ip:unknown';
-      }
-      return key;
+      return key && key !== 'api:ip:' ? key : 'api:ip:unknown';
     } catch (error) {
-      // Fallback if keyGenerator throws an error
       logger.warn('[RateLimit] keyGenerator error, using fallback:', error);
       return 'api:ip:unknown';
     }
@@ -540,7 +540,7 @@ const authLimiter = rateLimit({
   max: isProduction ? 15 : 1000,
   store: authRedisStore,
   skip: (req) => {
-    if (isTest) return true;
+    if (skipRateLimit || isTest) return true;
     if (req.method === 'OPTIONS') return true;
     return false;
   },
@@ -603,12 +603,15 @@ app.use(sentryHandlers.requestHandler);
 app.use(sentryHandlers.tracingHandler);
 
 // Body Parsing, Cookies & Static Files
-// IMPORTANT: external webhooks must verify signatures against the raw request body.
-// Use a dedicated parser for Sellix before JSON parsing and skip JSON parsing on that path.
-app.use('/api/webhooks/sellix', express.text({ type: '*/*', limit: '2mb' }));
+// Stripe webhooks require the *raw* request body for signature verification.
+// Since `express.json()` consumes the stream, we conditionally route body parsing.
 const jsonParser = express.json({ limit: '10mb' });
+const stripeRawParser = express.raw({ type: 'application/json' });
 app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.originalUrl?.startsWith('/api/webhooks/sellix')) return next();
+  const path = req.path;
+  if (path === '/api/webhooks/stripe' || path === '/api/token-billing/webhook') {
+    return stripeRawParser(req, res, next);
+  }
   return jsonParser(req, res, next);
 });
 app.use(cookieParser()); // Required for CSRF protection
@@ -649,6 +652,9 @@ app.use('/api/', metricsMiddleware);
 
 // Performance metrics middleware - collect detailed performance data
 app.use('/api/', performanceMetricsMiddleware);
+
+// Optional JWT parse for rate-limit keying by user (avoids shared IP quota in offices)
+app.use('/api/', rateLimitUserIdMiddleware);
 
 // Apply rate limiting and security logging to API routes
 app.use('/api/', apiLimiter);
@@ -706,41 +712,36 @@ logger.info(`[Server] NODE_ENV: ${process.env.NODE_ENV}`);
 logger.info(`[Server] __dirname: ${__dirname}`);
 
 // Determine frontend dist path
-// In production Docker: frontend is at /app/dist (confirmed by test route)
+// 1. FRONTEND_DIST_PATH env var - explicit override for any deployment
+// 2. Production (NODE_ENV=production): frontend is at /app/dist in Docker
+// 3. Docker context (__dirname under /app/server): use /app/dist - avoids wrong path
+//    when NODE_ENV isn't set but we're in Docker.api (path.join gives /app/server/dist)
+// 4. Development: frontend is at project root /dist (path.join(__dirname, '../../dist'))
 let frontendDistPath: string;
-if (process.env.NODE_ENV === 'production') {
-  // Production (Docker): frontend is at /app/dist
+if (process.env.FRONTEND_DIST_PATH) {
+  frontendDistPath = path.resolve(process.env.FRONTEND_DIST_PATH);
+  logger.info(`[Server] Using FRONTEND_DIST_PATH: ${frontendDistPath}`);
+} else if (process.env.NODE_ENV === 'production') {
   frontendDistPath = '/app/dist';
-
   logger.info(`[Server] Production mode - using frontend path: ${frontendDistPath}`);
-  logger.info(`[Server] Production mode - using frontend path: ${frontendDistPath}`);
-
-  // Verify it exists
-  if (fs.existsSync(frontendDistPath)) {
-    const indexPath = path.join(frontendDistPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      logger.info(`[Server] ✓ Frontend index.html confirmed at: ${indexPath}`);
-    } else {
-      logger.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
-      logger.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
-    }
-  } else {
-    logger.error(`[Server] ✗ Frontend dist directory NOT found at: ${frontendDistPath}`);
-    logger.error(`[Server] ✗ Frontend dist directory NOT found at: ${frontendDistPath}`);
-  }
+} else if (__dirname.includes('/app/server')) {
+  // Docker.api combined deployment when NODE_ENV isn't 'production'
+  // path.join(__dirname, '../../dist') would wrongly resolve to /app/server/dist
+  frontendDistPath = '/app/dist';
+  logger.info(`[Server] Docker context detected - using frontend path: ${frontendDistPath}`);
 } else {
-  // Development: frontend is at project root /dist
   frontendDistPath = path.join(__dirname, '../../dist');
   logger.info(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
-  logger.info(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
-  const indexPath = path.join(frontendDistPath, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
-    logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
-  } else {
-    logger.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
-    logger.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
-  }
+}
+
+// Verify it exists
+const indexPath = path.join(frontendDistPath, 'index.html');
+if (fs.existsSync(frontendDistPath) && fs.existsSync(indexPath)) {
+  logger.info(`[Server] ✓ Frontend index.html confirmed at: ${indexPath}`);
+} else if (fs.existsSync(indexPath)) {
+  logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
+} else {
+  logger.error(`[Server] Frontend index.html not found at: ${indexPath}`);
 }
 
 // Store globally for test route and ensure it's set

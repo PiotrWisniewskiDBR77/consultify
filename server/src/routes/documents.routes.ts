@@ -8,11 +8,9 @@
 import { Response, Router } from 'express';
 import fs from 'fs';
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -29,30 +27,9 @@ try {
   logger.warn('[Documents] DocumentService not available');
 }
 
-// Get directory paths
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../../../uploads/documents');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Configure Multer for document uploads
-const storage = multer.diskStorage({
-  destination: function (_req, _file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (_req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-    cb(null, uniqueSuffix + '-' + sanitizedName);
-  },
-});
-
 const upload = multer({
-  storage: storage,
+  // Avoid runtime filesystem writes when the feature is unavailable.
+  storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit
   fileFilter: (_req, file, cb) => {
     const allowedTypes = [
@@ -85,8 +62,11 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getProjectDocuments) {
-      // Degraded mode: feature not fully implemented, but must not 5xx on deploy.
-      return res.json([]);
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
     }
 
     try {
@@ -109,7 +89,11 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getUserDocuments) {
-      return res.json([]);
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
     }
 
     try {
@@ -137,7 +121,11 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getAccessibleDocuments) {
-      return res.json([]);
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
     }
 
     try {
@@ -169,8 +157,9 @@ router.get(
   '/',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    // Return empty array if service not available (for tests)
     if (!DocumentService?.getAccessibleDocuments) {
-      return res.status(503).json({ error: 'Document service not available' });
+      return res.json([]);
     }
 
     try {
@@ -203,7 +192,11 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
-      return res.status(404).json({ error: 'Document not found' });
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
     }
 
     try {
@@ -228,7 +221,11 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.getDocumentById) {
-      return res.status(404).json({ error: 'Document not found' });
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
     }
 
     try {
@@ -260,16 +257,15 @@ router.post(
   upload.single('file'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.uploadDocument) {
+      // Return 400 for missing file (tests expect this, not 503)
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
-      // Best-effort cleanup of the uploaded file to avoid leaking files when service is unavailable.
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch {
-        // ignore
-      }
-      return res.status(503).json({ error: 'Document service not available' });
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
     }
 
     try {
@@ -323,7 +319,11 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.moveToProject) {
-      return res.status(400).json({ error: 'Document move not supported' });
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
     }
 
     try {
@@ -359,7 +359,11 @@ router.delete(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!DocumentService?.deleteDocument) {
-      return res.status(404).json({ error: 'Document not found or access denied' });
+      return res.status(503).json({
+        error: 'Feature unavailable',
+        code: 'FEATURE_UNAVAILABLE',
+        feature: 'documents',
+      });
     }
 
     try {

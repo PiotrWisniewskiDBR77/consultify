@@ -74,6 +74,11 @@ const auditLogMiddleware = async (
           return;
         }
 
+        // Skip when org unknown – Postgres FK requires organization_id to exist in organizations
+        if (!organizationId || organizationId === 'unknown') {
+          return;
+        }
+
         // Determine Entity & Action
         // URL: /api/projects/:id -> Entity: project, ID: :id
         const parts = req.originalUrl.split('/').filter((p) => p);

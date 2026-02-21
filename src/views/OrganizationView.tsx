@@ -1,33 +1,107 @@
 /**
- * OrganizationView - Settings-like two-column Organization module
- *
- * Single Sidebar entry → this view → internal left navigation with URL sections.
- * Reuses ContextBuilder modules for content.
+ * T063 — OrganizationView — Unified Organization workspace
+ * Context (business): Profile / Goals / Challenges / Strategy
+ * Administration (operational): Members / Billing / Limits / Domains / Branding
+ * T064: Megatrends redirected to canonical Tools → Strategy route.
  */
 
 import { Menu, X } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { OrganizationAdminPanel } from '../components/Organization/OrganizationAdminPanel';
 import OrganizationSidebar, {
   type OrganizationSection,
 } from '../components/Organization/OrganizationSidebar';
 import { ROUTES } from '../routes/routeConfig';
+import { trackFunnelEvent } from '../services/funnelAnalytics';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 import { ChallengeMapModule } from './ContextBuilder/modules/ChallengeMapModule';
 import { CompanyProfileModule } from './ContextBuilder/modules/CompanyProfileModule';
 import { GoalsExpectationsModule } from './ContextBuilder/modules/GoalsExpectationsModule';
-import { MegatrendScannerModule } from './ContextBuilder/modules/MegatrendScannerModule';
 import { StrategicSynthesisModule } from './ContextBuilder/modules/StrategicSynthesisModule';
 
-const sectionMeta: Record<OrganizationSection, { title: string; subtitle: string }> = {
-  profile: { title: 'Profile', subtitle: 'Company snapshot and operating model' },
-  goals: { title: 'Goals', subtitle: 'Strategic intent, metrics, scope and expectations' },
-  challenges: { title: 'Challenges', subtitle: 'Challenge map, evidence and root causes' },
-  megatrends: { title: 'Megatrends', subtitle: 'Industry baseline and trend radar' },
-  strategy: { title: 'Strategy', subtitle: 'Synthesis, scenarios and executive summary' },
+const ADMIN_SECTIONS: OrganizationSection[] = [
+  'members',
+  'competencies',
+  'billing',
+  'limits',
+  'domains',
+  'branding',
+];
+
+const sectionMeta: Record<
+  OrganizationSection,
+  { titleKey: string; title: string; subtitleKey: string; subtitle: string }
+> = {
+  profile: {
+    titleKey: 'organization.sections.profile.title',
+    title: 'Company Profile',
+    subtitleKey: 'organization.sections.profile.subtitle',
+    subtitle: 'Company snapshot, operating model, and key facts',
+  },
+  goals: {
+    titleKey: 'organization.sections.goals.title',
+    title: 'Goals & Expectations',
+    subtitleKey: 'organization.sections.goals.subtitle',
+    subtitle: 'Strategic intent, target metrics, scope and expectations',
+  },
+  challenges: {
+    titleKey: 'organization.sections.challenges.title',
+    title: 'Challenges',
+    subtitleKey: 'organization.sections.challenges.subtitle',
+    subtitle: 'Challenge map, evidence and root causes',
+  },
+  megatrends: {
+    titleKey: 'organization.sections.megatrends.title',
+    title: 'Megatrends',
+    subtitleKey: 'organization.sections.megatrends.subtitle',
+    subtitle: 'Redirected to Discovery Tools → Strategic Megatrends',
+  },
+  strategy: {
+    titleKey: 'organization.sections.strategy.title',
+    title: 'Strategic Synthesis',
+    subtitleKey: 'organization.sections.strategy.subtitle',
+    subtitle: 'Synthesis, scenarios and executive summary',
+  },
+  members: {
+    titleKey: 'organization.sections.members.title',
+    title: 'Members & Roles',
+    subtitleKey: 'organization.sections.members.subtitle',
+    subtitle: 'Manage team members, invitations and access roles',
+  },
+  competencies: {
+    titleKey: 'competency.catalog.title',
+    title: 'Competency Catalog',
+    subtitleKey: 'competency.catalog.subtitle',
+    subtitle: 'Define competency taxonomy, categories and skill levels',
+  },
+  billing: {
+    titleKey: 'organization.sections.billing.title',
+    title: 'Billing & Tokens',
+    subtitleKey: 'organization.sections.billing.subtitle',
+    subtitle: 'Subscription status, token balance and usage',
+  },
+  limits: {
+    titleKey: 'organization.sections.limits.title',
+    title: 'Limits & Usage',
+    subtitleKey: 'organization.sections.limits.subtitle',
+    subtitle: 'Plan limits, quotas and current usage',
+  },
+  domains: {
+    titleKey: 'organization.sections.domains.title',
+    title: 'Domains',
+    subtitleKey: 'organization.sections.domains.subtitle',
+    subtitle: 'Custom domain setup and verification',
+  },
+  branding: {
+    titleKey: 'organization.sections.branding.title',
+    title: 'Branding & Regional',
+    subtitleKey: 'organization.sections.branding.subtitle',
+    subtitle: 'Logo, colors, timezone, language and currency',
+  },
 };
 
 export const OrganizationView: React.FC = () => {
@@ -36,6 +110,14 @@ export const OrganizationView: React.FC = () => {
   const navigate = useNavigate();
   const { setCurrentView } = useAppStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const path = location.pathname.replace(/\/+$/, '');
+    if (path === `${ROUTES.ORGANIZATION.ROOT}/megatrends`) {
+      trackFunnelEvent('megatrends_redirect_used', { fromRoute: '/organization/megatrends' });
+      navigate(ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS, { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   const activeSection = useMemo(() => {
     const pathSection =
@@ -51,6 +133,7 @@ export const OrganizationView: React.FC = () => {
     (section: OrganizationSection) => {
       navigate(`${ROUTES.ORGANIZATION.ROOT}/${section}`);
       setSidebarOpen(false);
+      trackFunnelEvent('org_workspace_opened', { section });
     },
     [navigate]
   );
@@ -62,34 +145,34 @@ export const OrganizationView: React.FC = () => {
 
   const currentMeta = useMemo(() => {
     const meta = sectionMeta[activeSection];
-    return {
-      title: t(`organization.sections.${activeSection}.title`, meta.title),
-      subtitle: t(`organization.sections.${activeSection}.subtitle`, meta.subtitle),
-    };
+    return { title: t(meta.titleKey, meta.title), subtitle: t(meta.subtitleKey, meta.subtitle) };
   }, [activeSection, t]);
 
   const renderContent = useCallback(() => {
-    if (activeSection === 'goals') return <GoalsExpectationsModule />;
-    if (activeSection === 'challenges') return <ChallengeMapModule />;
-    if (activeSection === 'megatrends') return <MegatrendScannerModule />;
-    if (activeSection === 'strategy') return <StrategicSynthesisModule />;
-    return <CompanyProfileModule />;
+    if (ADMIN_SECTIONS.includes(activeSection))
+      return <OrganizationAdminPanel section={activeSection} />;
+    switch (activeSection) {
+      case 'goals':
+        return <GoalsExpectationsModule />;
+      case 'challenges':
+        return <ChallengeMapModule />;
+      case 'strategy':
+        return <StrategicSynthesisModule />;
+      default:
+        return <CompanyProfileModule />;
+    }
   }, [activeSection]);
 
   return (
     <div className="flex h-[calc(100vh-64px)] bg-slate-50 dark:bg-navy-950">
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <button
           type="button"
           aria-label="Close organization navigation"
-          data-testid="organization-mobile-overlay"
           className="fixed inset-0 bg-black/40 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
-
-      {/* Sidebar (desktop) */}
       <div className="hidden lg:block">
         <OrganizationSidebar
           activeSection={activeSection}
@@ -97,13 +180,8 @@ export const OrganizationView: React.FC = () => {
           onBack={handleBackToDashboard}
         />
       </div>
-
-      {/* Sidebar (mobile drawer) */}
       <div
-        data-testid="organization-mobile-drawer"
-        className={`fixed inset-y-0 left-0 z-50 w-72 transform transition-transform lg:hidden ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-72 transform transition-transform lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <OrganizationSidebar
           activeSection={activeSection}
@@ -112,36 +190,30 @@ export const OrganizationView: React.FC = () => {
           className="h-full bg-white dark:bg-navy-900"
         />
       </div>
-
-      {/* Content */}
       <div className="flex-1 overflow-auto">
-        <div className="sticky top-0 z-10 bg-slate-50/90 dark:bg-navy-950/80 backdrop-blur border-b border-slate-200 dark:border-navy-700">
-          <div className="flex items-center gap-3 px-4 py-4">
+        <div className="sticky top-0 z-10 bg-slate-50/90 dark:bg-navy-950/90 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/60">
+          <div className="flex items-center gap-3 px-4 lg:px-6 py-4">
             <button
               type="button"
-              className="lg:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300"
-              aria-label="Open organization navigation"
-              data-testid="organization-mobile-open"
+              className="lg:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500"
+              aria-label="Open navigation"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu size={18} />
             </button>
-
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-bold text-navy-900 dark:text-white truncate">
+              <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
                 {currentMeta.title}
               </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+              <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">
                 {currentMeta.subtitle}
               </p>
             </div>
-
             {sidebarOpen && (
               <button
                 type="button"
-                className="lg:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300"
-                aria-label="Close organization navigation"
-                data-testid="organization-mobile-close"
+                className="lg:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500"
+                aria-label="Close navigation"
                 onClick={() => setSidebarOpen(false)}
               >
                 <X size={18} />
@@ -149,7 +221,6 @@ export const OrganizationView: React.FC = () => {
             )}
           </div>
         </div>
-
         <div className="p-4 lg:p-6">{renderContent()}</div>
       </div>
     </div>

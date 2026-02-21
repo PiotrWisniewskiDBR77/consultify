@@ -53,14 +53,30 @@ COPY server/package.json ./server-package.json
 # Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
 # Ignore scripts (like husky) as they're not needed in Docker builds
 RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --ignore-scripts)
-# Install server-specific dependencies that aren't in root package.json (e.g., cookie-parser)
-# Install them at root level so TypeScript can find them during compilation
-RUN npm install --save --ignore-scripts cookie-parser@^1.4.7 @types/cookie-parser@^1.4.10 || true
+# Install server-specific dependencies from server/package.json
+# Copy server/package.json to current directory and install its dependencies
+RUN cp server-package.json ./server-package-temp.json && \
+    npm install --save --ignore-scripts --package-lock-only=false $(node -p "Object.keys(require('./server-package-temp.json').dependencies || {}).join(' ')") || true && \
+    rm -f server-package-temp.json
+# Explicitly install known server dependencies that might be missing
+RUN npm install --save --ignore-scripts cookie-parser@^1.4.7 @types/cookie-parser@^1.4.10 pptxgenjs@^4.0.1 || true
 
 # Copy TypeScript config files explicitly (needed for build)
 COPY server/tsconfig.json ./
 # Copy all server files first (tsconfig.build.json should be included)
 COPY server/ .
+# Create aiPipeline.js for case-sensitive filesystems (macOS git can't track both)
+# Note: We don't create AIPipeline.js re-export as it would overwrite the compiled output
+RUN if [ ! -f src/services/ai/aiPipeline.js ]; then \
+      echo "Creating aiPipeline.js re-export file..." && \
+      printf '// Re-export from AIPipeline.js (compiled) for case-sensitive file systems\n// This file allows imports using lowercase '\''aiPipeline'\'' to work on case-sensitive filesystems\nexport * from '\''./AIPipeline.js'\'';\nexport { AIPipeline } from '\''./AIPipeline.js'\'';\nexport { default } from '\''./AIPipeline.js'\'';\n' > src/services/ai/aiPipeline.js; \
+    fi
+# Create aiSchemaValidator.js for case-sensitive filesystems (macOS git can't track both)
+# Note: We don't create AISchemaValidator.js re-export as it would overwrite the compiled output
+RUN if [ ! -f src/utils/aiSchemaValidator.js ]; then \
+      echo "Creating aiSchemaValidator.js re-export file..." && \
+      printf '// Re-export from AISchemaValidator.js (compiled) for case-sensitive file systems\n// This file allows imports using lowercase '\''aiSchemaValidator'\'' to work on case-sensitive filesystems\nexport * from '\''./AISchemaValidator.js'\'';\n' > src/utils/aiSchemaValidator.js; \
+    fi
 # Create tsconfig.build.json if it doesn't exist (fallback for git-untracked files)
 RUN if [ ! -f tsconfig.build.json ]; then \
       echo '{"extends":"./tsconfig.json","compilerOptions":{"noUnusedLocals":false,"noUnusedParameters":false,"noImplicitReturns":false,"noImplicitAny":false,"strictNullChecks":false,"strictFunctionTypes":false,"strictBindCallApply":false,"strictPropertyInitialization":false,"noImplicitThis":false,"skipLibCheck":true}}' > tsconfig.build.json; \
@@ -70,6 +86,24 @@ RUN test -f tsconfig.build.json || (echo "ERROR: tsconfig.build.json not found!"
 # Build TypeScript - use --build flag with tsconfig.build.json to ensure proper compilation
 # Use node_modules/.bin/tsc to ensure we use the locally installed TypeScript
 RUN ./node_modules/.bin/tsc --build tsconfig.build.json || (echo "TypeScript build failed!" && exit 1)
+# Copy .js re-export files to dist (TypeScript excludes .js files but we need them at runtime)
+# Note: Only copy lowercase re-export files - uppercase files are compiled outputs from TypeScript
+RUN mkdir -p dist/src/utils dist/src/services/ai && \
+    if [ -f src/utils/aiSchemaValidator.js ]; then \
+      cp src/utils/aiSchemaValidator.js dist/src/utils/aiSchemaValidator.js && \
+      echo "✓ Copied aiSchemaValidator.js"; \
+    else \
+      echo "⚠️  aiSchemaValidator.js not found in src"; \
+    fi && \
+    if [ -f src/services/ai/aiPipeline.js ]; then \
+      cp src/services/ai/aiPipeline.js dist/src/services/ai/aiPipeline.js && \
+      echo "✓ Copied aiPipeline.js"; \
+    else \
+      echo "⚠️  aiPipeline.js not found in src"; \
+    fi && \
+    echo "Verifying copied files:" && \
+    ls -la dist/src/utils/*.js 2>/dev/null | grep -i schema || echo "No schema files in dist/src/utils" && \
+    ls -la dist/src/services/ai/*.js 2>/dev/null | grep -i pipeline || echo "No pipeline files in dist/src/services/ai"
 # Verify dist directory was created
 RUN test -d dist || (echo "ERROR: dist directory not created after build!" && ls -la && exit 1)
 # Verify critical modules exist in dist
@@ -157,6 +191,7 @@ COPY --from=backend-builder --chown=nodejs:nodejs /app/node_modules /app/server/
 RUN test -d /app/server/node_modules/cookie-parser || (echo "ERROR: cookie-parser not found!" && ls -la /app/server/node_modules/ | head -20 && exit 1)
 RUN test -d /app/server/node_modules/express || (echo "ERROR: express not found!" && exit 1)
 RUN test -d /app/server/node_modules/zod || (echo "ERROR: zod not found!" && exit 1)
+RUN test -d /app/server/node_modules/pptxgenjs || (echo "ERROR: pptxgenjs not found!" && ls -la /app/server/node_modules/ | grep -i pptx || echo "pptxgenjs not in node_modules" && exit 1)
 
 WORKDIR /app/server
 

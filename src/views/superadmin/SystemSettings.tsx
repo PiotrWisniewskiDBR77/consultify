@@ -254,7 +254,7 @@ export const SystemSettings: React.FC = () => {
                 value={settings['app_name'] || ''}
                 onChange={(e) => setSettings((prev) => ({ ...prev, app_name: e.target.value }))}
                 className="flex-1 px-3.5 py-2.5 bg-slate-800/50 border border-white/[0.06] rounded-lg text-slate-200 text-sm focus:border-blue-500/50 focus:outline-none"
-                placeholder="TechnoLex"
+                placeholder="Consultinity"
               />
               <button
                 onClick={() => handleSaveSetting('app_name', settings['app_name'])}
@@ -443,7 +443,7 @@ export const SystemSettings: React.FC = () => {
                   value={settings['smtp_from'] || ''}
                   onChange={(e) => setSettings((prev) => ({ ...prev, smtp_from: e.target.value }))}
                   className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 outline-none"
-                  placeholder="noreply@technolex.com"
+                  placeholder="noreply@consultinity.com"
                 />
                 <button
                   onClick={() => handleSaveSetting('smtp_from', settings['smtp_from'])}

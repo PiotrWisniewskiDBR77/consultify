@@ -1,353 +1,269 @@
-/**
- * Sellix integration (T115)
- * - Outbound: readiness signals (idempotent + cooldown)
- * - Inbound: Sellix conversion events webhook (handled in routes/webhooks/sellix.routes.ts)
- *
- * This implementation is env-driven (minimal V2) and logs deliveries to DB.
- * If not configured, it is a no-op with an explicit reason.
- */
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
-import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import type { TransactionReadinessSnapshot } from './transactionReadinessService.js';
 
-type OutboundStatus = 'success' | 'failed' | 'skipped';
-
-let ensured = false;
-async function ensureSellixTables(): Promise<void> {
-  if (ensured) return;
-  await dbRun(`
-    CREATE TABLE IF NOT EXISTS sellix_events (
-      id TEXT PRIMARY KEY,
-      event_id TEXT UNIQUE NOT NULL,
-      event_type TEXT NOT NULL,
-      organization_id TEXT,
-      payload_json JSON,
-      received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      processed_at TIMESTAMP,
-      status TEXT DEFAULT 'received',
-      error_message TEXT
-    )
-  `);
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_sellix_events_type ON sellix_events(event_type)`);
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_sellix_events_org ON sellix_events(organization_id)`);
-
-  await dbRun(`
-    CREATE TABLE IF NOT EXISTS sellix_outbound_deliveries (
-      id TEXT PRIMARY KEY,
-      organization_id TEXT NOT NULL,
-      event_type TEXT NOT NULL,
-      dedupe_key TEXT UNIQUE NOT NULL,
-      payload_json JSON,
-      status TEXT DEFAULT 'pending',
-      attempts INTEGER DEFAULT 0,
-      response_code INTEGER,
-      response_body TEXT,
-      last_error TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      delivered_at TIMESTAMP
-    )
-  `);
-  await dbRun(
-    `CREATE INDEX IF NOT EXISTS idx_sellix_outbound_org_created ON sellix_outbound_deliveries(organization_id, created_at)`
-  );
-  ensured = true;
+export interface SellixConfig {
+  id: string;
+  enabled: boolean;
+  thresholdScore: number;
+  cooldownHours: number;
+  webhookSecret: string | null;
+  sellixEndpoint: string | null;
+  defaultPathway: string;
+  updatedAt: string;
 }
 
-function isEnabled(): { enabled: boolean; reason?: string } {
-  const enabled = String(process.env.SELLIX_ENABLED || '').toLowerCase() === 'true';
-  const url = (process.env.SELLIX_OUTBOUND_URL || '').trim();
-  const secret = (process.env.SELLIX_OUTBOUND_SECRET || '').trim();
-  if (!enabled) return { enabled: false, reason: 'SELLIX_ENABLED is not true' };
-  if (!url) return { enabled: false, reason: 'SELLIX_OUTBOUND_URL not configured' };
-  if (!secret) return { enabled: false, reason: 'SELLIX_OUTBOUND_SECRET not configured' };
-  return { enabled: true };
-}
-
-function getCooldownDays(): number {
-  const v = Number(process.env.SELLIX_COOLDOWN_DAYS || 7);
-  return Number.isFinite(v) ? Math.max(1, Math.min(60, v)) : 7;
-}
-
-function sign(timestamp: string, body: string, secret: string): string {
-  // Consultinity-style signature: sha256 HMAC over `${ts}.${body}`
-  return crypto.createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
-}
-
-function buildDedupeKey(snapshot: TransactionReadinessSnapshot): string {
-  // "exactly once per crossing" (v2 minimal): daily key per org+tier+version
-  const day = snapshot.computedAt.slice(0, 10);
-  return `${snapshot.organizationId}:${snapshot.tier}:${snapshot.algorithmVersion}:${day}`;
-}
-
-async function lastSuccessfulDeliveryAt(
-  organizationId: string,
-  eventType: string
-): Promise<string | null> {
-  await ensureSellixTables();
-  try {
-    const row = await dbGet<{ delivered_at?: string | null }>(
-      `SELECT delivered_at FROM sellix_outbound_deliveries
-       WHERE organization_id = ? AND event_type = ? AND status = 'success'
-       ORDER BY delivered_at DESC
-       LIMIT 1`,
-      [organizationId, eventType]
-    );
-    return row?.delivered_at || null;
-  } catch {
-    return null;
-  }
-}
-
-async function shouldCooldownBlock(organizationId: string, eventType: string): Promise<boolean> {
-  const last = await lastSuccessfulDeliveryAt(organizationId, eventType);
-  if (!last) return false;
-  const ms = Date.now() - new Date(last).getTime();
-  const days = ms / (24 * 60 * 60 * 1000);
-  return days < getCooldownDays();
-}
-
-async function recordOutboundDelivery(opts: {
+export interface OutboundPayload {
   organizationId: string;
-  eventType: string;
-  dedupeKey: string;
-  payload: Record<string, unknown>;
-}): Promise<string> {
-  await ensureSellixTables();
-  const id = uuidv4();
-  try {
-    await dbRun(
-      `INSERT INTO sellix_outbound_deliveries (id, organization_id, event_type, dedupe_key, payload_json, status, created_at)
-       VALUES (?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)`,
-      [id, opts.organizationId, opts.eventType, opts.dedupeKey, JSON.stringify(opts.payload)]
-    );
-  } catch (err: any) {
-    // If dedupe key already exists, treat as already delivered/skipped.
-    const msg = err?.message || String(err);
-    logger.debug('[Sellix] delivery record insert failed:', msg);
-  }
-  return id;
-}
-
-async function updateDelivery(
-  id: string,
-  patch: {
-    status: OutboundStatus;
-    responseCode?: number | null;
-    responseBody?: string | null;
-    lastError?: string | null;
-  }
-): Promise<void> {
-  await ensureSellixTables();
-  try {
-    await dbRun(
-      `UPDATE sellix_outbound_deliveries
-       SET status = ?,
-           attempts = attempts + 1,
-           response_code = COALESCE(?, response_code),
-           response_body = COALESCE(?, response_body),
-           last_error = COALESCE(?, last_error),
-           delivered_at = CASE WHEN ? = 'success' THEN CURRENT_TIMESTAMP ELSE delivered_at END
-       WHERE id = ?`,
-      [
-        patch.status,
-        patch.responseCode ?? null,
-        patch.responseBody ?? null,
-        patch.lastError ?? null,
-        patch.status,
-        id,
-      ]
-    );
-  } catch {
-    // ignore
-  }
-}
-
-async function postJson(
-  url: string,
-  headers: Record<string, string>,
-  body: Record<string, unknown>
-) {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...headers },
-    body: JSON.stringify(body),
-  });
-  const text = await res.text().catch(() => '');
-  return {
-    ok: res.ok,
-    status: res.status,
-    statusText: res.statusText,
-    bodyText: text.slice(0, 2000),
-  };
-}
-
-export async function emitReadinessSignal(snapshot: TransactionReadinessSnapshot): Promise<{
-  attempted: boolean;
-  status: OutboundStatus;
-  reason?: string;
-}> {
-  await ensureSellixTables();
-  const cfg = isEnabled();
-  if (!cfg.enabled) return { attempted: false, status: 'skipped', reason: cfg.reason };
-
-  // Block rules
-  if (
-    snapshot.flags.includes('BLOCKED_BY_BILLING') ||
-    snapshot.flags.includes('BLOCKED_BY_COMPLIANCE')
-  ) {
-    return { attempted: false, status: 'skipped', reason: 'blocked' };
-  }
-
-  const eventType =
-    snapshot.tier === 'READY'
-      ? 'transaction_readiness.ready'
-      : 'transaction_readiness.tier_changed';
-  if (await shouldCooldownBlock(snapshot.organizationId, eventType)) {
-    return { attempted: false, status: 'skipped', reason: 'cooldown' };
-  }
-
-  const url = String(process.env.SELLIX_OUTBOUND_URL || '').trim();
-  const secret = String(process.env.SELLIX_OUTBOUND_SECRET || '').trim();
-
-  const payload = {
-    organizationId: snapshot.organizationId,
-    readinessScore: snapshot.score,
-    readinessTier: snapshot.tier,
-    algorithmVersion: snapshot.algorithmVersion,
-    topBlockers: snapshot.blockers.slice(0, 3),
-    recommendedNextSteps: snapshot.blockers.slice(0, 3),
-    flags: snapshot.flags,
-    computedAt: snapshot.computedAt,
-  };
-
-  const dedupeKey = buildDedupeKey(snapshot);
-  const deliveryId = await recordOutboundDelivery({
-    organizationId: snapshot.organizationId,
-    eventType,
-    dedupeKey,
-    payload,
-  });
-
-  const ts = String(Date.now());
-  const bodyStr = JSON.stringify({ event: eventType, timestamp: ts, data: payload });
-  const signature = sign(ts, bodyStr, secret);
-
-  try {
-    const result = await postJson(
-      url,
-      {
-        'X-Consultinity-Event': eventType,
-        'X-Consultinity-Timestamp': ts,
-        'X-Consultinity-Signature': signature,
-        'User-Agent': 'Consultinity-Sellix/1.0',
-      },
-      { event: eventType, timestamp: ts, data: payload }
-    );
-
-    if (!result.ok) {
-      await updateDelivery(deliveryId, {
-        status: 'failed',
-        responseCode: result.status,
-        responseBody: result.bodyText,
-        lastError: `${result.status} ${result.statusText}`,
-      });
-      return { attempted: true, status: 'failed', reason: `http_${result.status}` };
-    }
-
-    await updateDelivery(deliveryId, {
-      status: 'success',
-      responseCode: result.status,
-      responseBody: result.bodyText,
-    });
-    return { attempted: true, status: 'success' };
-  } catch (err: any) {
-    await updateDelivery(deliveryId, { status: 'failed', lastError: err?.message || String(err) });
-    return { attempted: true, status: 'failed', reason: 'network' };
-  }
-}
-
-export async function maybeEmitSellixSignalsForSnapshot(
-  snapshot: TransactionReadinessSnapshot
-): Promise<void> {
-  // V2 minimal: only trigger on READY (no spam).
-  if (snapshot.tier !== 'READY') return;
-  const res = await emitReadinessSignal(snapshot);
-  if (res.attempted) {
-    logger.info(`[Sellix] readiness signal: ${res.status} (org=${snapshot.organizationId})`);
-  } else {
-    logger.debug(`[Sellix] readiness signal skipped: ${res.reason}`);
-  }
-}
-
-export async function getSellixStatus(): Promise<Record<string, unknown>> {
-  await ensureSellixTables();
-  const cfg = isEnabled();
-  const last = await dbGet<Record<string, unknown>>(
-    `SELECT * FROM sellix_outbound_deliveries ORDER BY created_at DESC LIMIT 1`,
-    []
-  );
-  return {
-    enabled: cfg.enabled,
-    reason: cfg.reason,
-    cooldownDays: getCooldownDays(),
-    lastDelivery: last || null,
-  };
-}
-
-export function verifySellixInboundSignature(opts: {
+  readinessScore: number;
+  readinessTier: string;
+  algorithmVersion: string;
+  topBlockers: string[];
+  recommendedNextSteps: string[];
+  organizationType: string;
+  billingStatus: string;
+  pathway: string;
   timestamp: string;
-  rawBody: string;
-  signature: string;
-}): boolean {
-  const secret = String(
-    process.env.SELLIX_INBOUND_SECRET || process.env.SELLIX_OUTBOUND_SECRET || ''
-  ).trim();
-  if (!secret) return false;
-  const expected = sign(opts.timestamp, opts.rawBody, secret);
-  // Constant-time comparison
-  try {
-    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(opts.signature));
-  } catch {
-    return false;
-  }
 }
 
-export async function recordSellixInboundEvent(opts: {
+export interface InboundSellixEvent {
   eventId: string;
   eventType: string;
-  organizationId?: string | null;
-  payload: Record<string, unknown>;
-}): Promise<{ deduped: boolean }> {
-  await ensureSellixTables();
-  try {
+  organizationId?: string;
+  data?: Record<string, unknown>;
+}
+
+export async function getConfig(): Promise<SellixConfig | null> {
+  const row: any = await dbGet(`SELECT * FROM sellix_config LIMIT 1`, []);
+  if (!row) return null;
+  return {
+    id: row.id,
+    enabled: row.enabled,
+    thresholdScore: row.threshold_score,
+    cooldownHours: row.cooldown_hours,
+    webhookSecret: row.webhook_secret,
+    sellixEndpoint: row.sellix_endpoint,
+    defaultPathway: row.default_pathway,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function upsertConfig(
+  patch: Partial<Omit<SellixConfig, 'id' | 'updatedAt'>>,
+  adminId: string
+): Promise<SellixConfig> {
+  const existing = await getConfig();
+  if (existing) {
+    const fields: string[] = [];
+    const values: any[] = [];
+    let i = 1;
+    if (patch.enabled !== undefined) {
+      fields.push(`enabled = $${i++}`);
+      values.push(patch.enabled);
+    }
+    if (patch.thresholdScore !== undefined) {
+      fields.push(`threshold_score = $${i++}`);
+      values.push(patch.thresholdScore);
+    }
+    if (patch.cooldownHours !== undefined) {
+      fields.push(`cooldown_hours = $${i++}`);
+      values.push(patch.cooldownHours);
+    }
+    if (patch.webhookSecret !== undefined) {
+      fields.push(`webhook_secret = $${i++}`);
+      values.push(patch.webhookSecret);
+    }
+    if (patch.sellixEndpoint !== undefined) {
+      fields.push(`sellix_endpoint = $${i++}`);
+      values.push(patch.sellixEndpoint);
+    }
+    if (patch.defaultPathway !== undefined) {
+      fields.push(`default_pathway = $${i++}`);
+      values.push(patch.defaultPathway);
+    }
+    fields.push(`updated_by = $${i++}`);
+    values.push(adminId);
+    fields.push(`updated_at = NOW()`);
+    values.push(existing.id);
+    await dbRun(`UPDATE sellix_config SET ${fields.join(', ')} WHERE id = $${i}`, values);
+  } else {
     await dbRun(
-      `INSERT INTO sellix_events (id, event_id, event_type, organization_id, payload_json, received_at, status)
-       VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 'received')`,
+      `INSERT INTO sellix_config (id, enabled, threshold_score, cooldown_hours, webhook_secret, sellix_endpoint, default_pathway, updated_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [
         uuidv4(),
-        opts.eventId,
-        opts.eventType,
-        opts.organizationId || null,
-        JSON.stringify(opts.payload),
+        patch.enabled ?? false,
+        patch.thresholdScore ?? 80,
+        patch.cooldownHours ?? 24,
+        patch.webhookSecret ?? null,
+        patch.sellixEndpoint ?? null,
+        patch.defaultPathway ?? 'TRIAL_UPGRADE_EMAIL_1',
+        adminId,
       ]
     );
-    return { deduped: false };
-  } catch {
-    return { deduped: true };
+  }
+  return (await getConfig())!;
+}
+
+export function signPayload(payload: string, secret: string): string {
+  return crypto.createHmac('sha256', secret).update(payload).digest('hex');
+}
+
+export function verifySignature(payload: string, signature: string, secret: string): boolean {
+  const expected = signPayload(payload, secret);
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+}
+
+export async function sendReadinessSignal(
+  orgId: string,
+  score: number,
+  tier: string,
+  blockers: string[],
+  algoVersion: string
+): Promise<{ sent: boolean; reason?: string }> {
+  const config = await getConfig();
+  if (!config?.enabled) return { sent: false, reason: 'Sellix integration disabled' };
+  if (!config.sellixEndpoint) return { sent: false, reason: 'No Sellix endpoint configured' };
+  if (score < config.thresholdScore)
+    return { sent: false, reason: `Score ${score} below threshold ${config.thresholdScore}` };
+  const cooldownOk = await checkCooldown(orgId, config.cooldownHours);
+  if (!cooldownOk) return { sent: false, reason: 'Cooldown active' };
+  const org: any = await dbGet(`SELECT plan, status FROM organizations WHERE id = $1`, [orgId]);
+  const payload: OutboundPayload = {
+    organizationId: orgId,
+    readinessScore: score,
+    readinessTier: tier,
+    algorithmVersion: algoVersion,
+    topBlockers: blockers.slice(0, 3),
+    recommendedNextSteps: deriveNextSteps(tier, blockers),
+    organizationType: org?.plan === 'trial' ? 'TRIAL' : 'PAID',
+    billingStatus: org?.status || 'unknown',
+    pathway: config.defaultPathway,
+    timestamp: new Date().toISOString(),
+  };
+  const body = JSON.stringify(payload);
+  const signature = config.webhookSecret ? signPayload(body, config.webhookSecret) : '';
+  const deliveryId = uuidv4();
+  try {
+    const resp = await fetch(config.sellixEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Consultify-Signature': signature,
+        'X-Consultify-Event': 'transaction_readiness.ready',
+        'X-Consultify-Timestamp': new Date().toISOString(),
+        'X-Consultify-Delivery-Id': deliveryId,
+      },
+      body,
+      signal: AbortSignal.timeout(10000),
+    });
+    await logDelivery(
+      orgId,
+      'transaction_readiness.ready',
+      body,
+      resp.status,
+      resp.ok,
+      await resp.text().catch(() => '')
+    );
+    return { sent: resp.ok };
+  } catch (err: any) {
+    await logDelivery(orgId, 'transaction_readiness.ready', body, 0, false, err.message);
+    logger.error('[Sellix] Outbound delivery failed', { orgId, err: err.message });
+    return { sent: false, reason: err.message };
   }
 }
 
-export async function markSellixInboundProcessed(opts: { eventId: string }): Promise<void> {
-  await ensureSellixTables();
+async function checkCooldown(orgId: string, cooldownHours: number): Promise<boolean> {
+  const last: any = await dbGet(
+    `SELECT created_at FROM sellix_delivery_log WHERE organization_id = $1 AND success = TRUE ORDER BY created_at DESC LIMIT 1`,
+    [orgId]
+  );
+  if (!last) return true;
+  const hoursAgo = (Date.now() - new Date(last.created_at).getTime()) / 3600000;
+  return hoursAgo >= cooldownHours;
+}
+
+async function logDelivery(
+  orgId: string,
+  eventType: string,
+  body: string,
+  status: number,
+  success: boolean,
+  responseBody: string
+): Promise<void> {
   try {
     await dbRun(
-      `UPDATE sellix_events SET status = 'processed', processed_at = CURRENT_TIMESTAMP WHERE event_id = ?`,
-      [opts.eventId]
+      `INSERT INTO sellix_delivery_log (id, organization_id, event_type, payload_hash, response_status, response_body, success) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        uuidv4(),
+        orgId,
+        eventType,
+        crypto.createHash('sha256').update(body).digest('hex').substring(0, 16),
+        status,
+        (responseBody || '').substring(0, 500),
+        success,
+      ]
     );
-  } catch {
-    // ignore
+  } catch (err) {
+    logger.error('[Sellix] Failed to log delivery', { err });
   }
+}
+
+function deriveNextSteps(tier: string, blockers: string[]): string[] {
+  const steps: string[] = [];
+  if (blockers.includes('BLOCKED_BY_BILLING')) steps.push('Add payment method');
+  if (blockers.includes('BLOCKED_BY_COMPLIANCE')) steps.push('Accept terms of service');
+  if (tier === 'HIGH') steps.push('Schedule onboarding call');
+  if (tier === 'READY') steps.push('Activate upgrade pathway');
+  return steps;
+}
+
+export async function processInboundEvent(
+  event: InboundSellixEvent
+): Promise<{ ok: boolean; duplicate?: boolean }> {
+  const existing: any = await dbGet(`SELECT id FROM sellix_events WHERE event_id = $1`, [
+    event.eventId,
+  ]);
+  if (existing) return { ok: true, duplicate: true };
+  await dbRun(
+    `INSERT INTO sellix_events (id, event_id, event_type, organization_id, payload, signature_valid, processing_status, processed_at) VALUES ($1, $2, $3, $4, $5, TRUE, 'processed', NOW())`,
+    [
+      uuidv4(),
+      event.eventId,
+      event.eventType,
+      event.organizationId || null,
+      JSON.stringify(event.data || {}),
+    ]
+  );
+  if (event.organizationId && event.eventType) {
+    try {
+      await dbRun(
+        `INSERT INTO journey_events (id, organization_id, event_name, stage, metadata, created_at) VALUES ($1, $2, $3, 'conversion', $4, NOW())`,
+        [
+          uuidv4(),
+          event.organizationId,
+          `sellix.${event.eventType}`,
+          JSON.stringify({ source: 'sellix', eventId: event.eventId }),
+        ]
+      );
+    } catch (err) {
+      logger.warn('[Sellix] Failed to write journey event', { err });
+    }
+  }
+  return { ok: true, duplicate: false };
+}
+
+export async function getDeliveryStatus(limit = 20): Promise<any[]> {
+  return dbAll(
+    `SELECT id, organization_id, event_type, response_status, success, error_message, created_at FROM sellix_delivery_log ORDER BY created_at DESC LIMIT $1`,
+    [limit]
+  );
+}
+
+export async function getRecentInboundEvents(limit = 20): Promise<any[]> {
+  return dbAll(
+    `SELECT id, event_id, event_type, organization_id, processing_status, created_at FROM sellix_events ORDER BY created_at DESC LIMIT $1`,
+    [limit]
+  );
 }

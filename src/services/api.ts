@@ -24,6 +24,44 @@ if (!correlationId) {
   sessionStorage.setItem('correlationId', correlationId);
 }
 
+const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+
+async function isServerStartingResponse(res: Response): Promise<boolean> {
+  if (res.status !== 503) return false;
+  try {
+    const clone = res.clone();
+    const json = await clone.json();
+    return (
+      json?.code === 'SERVER_STARTING' || String(json?.error || '').includes('Server starting')
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function waitForApiReady(timeoutMs = 15000): Promise<boolean> {
+  const start = Date.now();
+  let delayMs = 250;
+
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const res = await fetch(`${API_URL}/ready`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+      });
+      if (res.status === 200) return true;
+    } catch {
+      // ignore transient startup/network errors
+    }
+
+    await sleep(delayMs);
+    delayMs = Math.min(Math.floor(delayMs * 1.35), 1500);
+  }
+
+  return false;
+}
+
 // ---------------------------------------------------------------------------
 // Perf: avoid JSON.parse(localStorage) on every request.
 // localStorage access + JSON.parse are synchronous and can cause noticeable UI jank
@@ -115,9 +153,19 @@ export const getHeaders = () => {
 };
 
 // Wrapper for fetch that handles 401 with automatic token refresh
-const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<Response> => {
-  const headers = { ...getHeaders(), ...((options.headers as Record<string, string>) || {}) };
-  const hasExternalSignal = !!options.signal;
+type FetchWithRetryOptions = RequestInit & { skipDefaultHeaders?: boolean };
+
+const fetchWithRetry = async (
+  url: string,
+  options: FetchWithRetryOptions = {}
+): Promise<Response> => {
+  const { skipDefaultHeaders, ...fetchOptions } = options;
+  const baseHeaders = skipDefaultHeaders ? {} : getHeaders();
+  const headers = {
+    ...baseHeaders,
+    ...((fetchOptions.headers as Record<string, string>) || {}),
+  };
+  const hasExternalSignal = !!fetchOptions.signal;
   const shouldApplyTimeout =
     !hasExternalSignal && typeof url === 'string' && url.includes('/api/ai/refine-text');
   const timeoutMs = shouldApplyTimeout ? 25000 : null;
@@ -134,7 +182,11 @@ const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<R
 
   let res: Response;
   try {
-    res = await fetch(url, { ...options, headers, signal: options.signal || controller?.signal });
+    res = await fetch(url, {
+      ...fetchOptions,
+      headers,
+      signal: fetchOptions.signal || controller?.signal,
+    });
   } catch (err: any) {
     if (controller && err?.name === 'AbortError') {
       const e: any = new Error('AI request timed out');
@@ -153,7 +205,11 @@ const fetchWithRetry = async (url: string, options: RequestInit = {}): Promise<R
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
       // Note: keep the same abort signal (if any) for the retry.
-      res = await fetch(url, { ...options, headers, signal: options.signal || controller?.signal });
+      res = await fetch(url, {
+        ...fetchOptions,
+        headers,
+        signal: fetchOptions.signal || controller?.signal,
+      });
     } else {
       // Token refresh failed, notify app
       window.dispatchEvent(new CustomEvent('auth:token-expired'));
@@ -309,6 +365,20 @@ export const Api = {
           `Check that the backend is running and that Vite proxy/VITE_API_URL is configured correctly.`
       );
     }
+
+    // Dev UX: during boot the backend may listen immediately but gate /api/* with 503 SERVER_STARTING
+    // until DB initialization finishes. Wait briefly for /api/ready then retry once.
+    if (await isServerStartingResponse(res)) {
+      const ready = await waitForApiReady(15000);
+      if (ready) {
+        res = await fetch(`${API_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+      }
+    }
+
     return handleResponse(res, 'Login failed').then((data) => {
       // Save both access token and refresh token
       tokenService.saveTokens(data.token, data.refreshToken);
@@ -331,6 +401,18 @@ export const Api = {
           `Check that the backend is running and that Vite proxy/VITE_API_URL is configured correctly.`
       );
     }
+
+    if (await isServerStartingResponse(res)) {
+      const ready = await waitForApiReady(15000);
+      if (ready) {
+        res = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(userData),
+        });
+      }
+    }
+
     const data = await handleResponse(res, 'Registration failed');
     if (data.status === 'pending') return data;
     tokenService.saveTokens(data.token, data.refreshToken);
@@ -356,6 +438,17 @@ export const Api = {
           `Check that the backend is running and that Vite proxy/VITE_API_URL is configured correctly.`
       );
     }
+
+    if (await isServerStartingResponse(res)) {
+      const ready = await waitForApiReady(15000);
+      if (ready) {
+        res = await fetch(`${API_URL}/auth/demo-login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     const data = await handleResponse(res, 'Demo login failed');
     tokenService.saveTokens(data.token, data.refreshToken);
     // Store demo flag in session
@@ -1094,6 +1187,8 @@ export const Api = {
       webSearch?: boolean;
       showReasoning?: boolean;
       multiAgent?: boolean;
+      marketResearch?: boolean;
+      coThinkerMode?: string | null;
       knowledgeSources?: {
         pmoDocuments?: boolean;
         projectData?: boolean;
@@ -1112,6 +1207,8 @@ export const Api = {
         webSearch: options?.webSearch ?? false,
         showReasoning: options?.showReasoning ?? false,
         multiAgent: options?.multiAgent ?? false,
+        marketResearch: options?.marketResearch ?? false,
+        coThinkerMode: options?.coThinkerMode ?? null,
       };
 
       const knowledgeSources = {
@@ -2080,6 +2177,135 @@ export const Api = {
     await handleResponse(res, 'Failed to delete task');
   },
 
+  // ==========================================
+  // MY WORK (V2): PERSONAL TASKS (T007)
+  // ==========================================
+  getPersonalTasks: async (filters?: {
+    includeDone?: boolean;
+    status?: string;
+    q?: string;
+    limit?: number;
+  }): Promise<any[]> => {
+    let url = `${API_URL}/my-work/personal-tasks`;
+    if (filters) {
+      const params = new URLSearchParams();
+      if (filters.includeDone) params.append('includeDone', 'true');
+      if (filters.status) params.append('status', filters.status);
+      if (filters.q) params.append('q', filters.q);
+      if (filters.limit) params.append('limit', String(filters.limit));
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch personal tasks');
+    return res.json();
+  },
+
+  getPersonalTask: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/personal-tasks/${id}`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch personal task');
+    return res.json();
+  },
+
+  createPersonalTask: async (task: {
+    title: string;
+    description?: string;
+    status?: string;
+    priority?: string;
+    dueDate?: string | null;
+    tags?: string[];
+  }): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/personal-tasks`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(task),
+    });
+    return handleResponse(res, 'Failed to create personal task');
+  },
+
+  updatePersonalTask: async (id: string, updates: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/personal-tasks/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    return handleResponse(res, 'Failed to update personal task');
+  },
+
+  deletePersonalTask: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/my-work/personal-tasks/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    await handleResponse(res, 'Failed to delete personal task');
+  },
+
+  // ==========================================
+  // MY WORK (V2): MY IDEAS (T009)
+  // ==========================================
+  getMyIdeas: async (filters?: { q?: string; tag?: string; limit?: number }): Promise<any[]> => {
+    let url = `${API_URL}/my-work/my-ideas`;
+    if (filters) {
+      const params = new URLSearchParams();
+      if (filters.q) params.append('q', filters.q);
+      if (filters.tag) params.append('tag', filters.tag);
+      if (filters.limit) params.append('limit', String(filters.limit));
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch ideas');
+    return res.json();
+  },
+
+  suggestMyIdeas: async (q?: string, limit = 5): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (q) params.append('q', q);
+    if (limit) params.append('limit', String(limit));
+    const res = await fetch(`${API_URL}/my-work/my-ideas/suggest?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to suggest ideas');
+    return res.json();
+  },
+
+  getMyIdea: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${id}`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch idea');
+    return res.json();
+  },
+
+  createMyIdea: async (idea: {
+    title: string;
+    body?: string;
+    tags?: string[];
+    sourceType?: string | null;
+    sourceConversationId?: string | null;
+    sourceMessageId?: string | null;
+  }): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(idea),
+    });
+    return handleResponse(res, 'Failed to create idea');
+  },
+
+  updateMyIdea: async (id: string, updates: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    return handleResponse(res, 'Failed to update idea');
+  },
+
+  deleteMyIdea: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    await handleResponse(res, 'Failed to delete idea');
+  },
+
   getTaskComments: async (taskId: string): Promise<any[]> => {
     const res = await fetch(`${API_URL}/tasks/${taskId}/comments`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch comments');
@@ -2591,6 +2817,78 @@ export const Api = {
       body: JSON.stringify(payload),
     });
     return handleResponse(res, 'Failed to create tool session');
+  },
+
+  // --- KNOWN TOOLS LIBRARY (T018/T021) ---
+  getKnownTools: async (params?: {
+    lang?: 'en' | 'pl';
+    category?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    items: Array<{
+      id: string;
+      toolType: string;
+      name: string;
+      libraryCategory: string | null;
+      description: string;
+      whatYouGet: string[];
+      tags: string[];
+      icon: string | null;
+      isLicensed: boolean;
+      isComingSoon: boolean;
+      sortOrder: number;
+      createdAt: string | null;
+    }>;
+    total: number;
+    limit: number;
+    offset: number;
+  }> => {
+    const sp = new URLSearchParams();
+    if (params?.lang) sp.append('lang', params.lang);
+    if (params?.category) sp.append('category', params.category);
+    if (params?.search) sp.append('search', params.search);
+    if (params?.limit) sp.append('limit', String(params.limit));
+    if (params?.offset) sp.append('offset', String(params.offset));
+
+    const url = `${API_URL}/known-tools${sp.toString() ? `?${sp.toString()}` : ''}`;
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch known tools');
+  },
+
+  getKnownTool: async (
+    toolType: string,
+    params?: { lang?: 'en' | 'pl' }
+  ): Promise<{
+    tool: {
+      id: string;
+      toolType: string;
+      name: string;
+      libraryCategory: string | null;
+      description: string;
+      whatYouGet: string[];
+      tags: string[];
+      icon: string | null;
+      isLicensed: boolean;
+      isComingSoon: boolean;
+      sortOrder: number;
+      createdAt: string | null;
+      whenToUse: string;
+      inputs: string[];
+      steps: string[];
+      outputs: string[];
+      commonMistakes: string[];
+      example: string;
+      nextSteps: string[];
+      kbArticleSlug: string;
+    };
+  }> => {
+    const sp = new URLSearchParams();
+    if (params?.lang) sp.append('lang', params.lang);
+    const url = `${API_URL}/known-tools/${encodeURIComponent(toolType)}${sp.toString() ? `?${sp.toString()}` : ''}`;
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch known tool');
   },
 
   listToolSessions: async (params?: {
@@ -3492,7 +3790,7 @@ export const Api = {
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Failed to fetch plans');
-    return json;
+    return Array.isArray(json) ? json : json.plans || [];
   },
 
   // Subscription changes - connected to real API
@@ -5167,6 +5465,7 @@ export const Api = {
     id: string,
     updates: {
       title?: string;
+      titleSource?: 'auto' | 'user';
       starred?: boolean;
       archived?: boolean;
       tags?: string[];
@@ -5628,6 +5927,21 @@ export const Api = {
     return handleResponse(res, 'Request failed');
   },
 
+  postMultipart: async (url: string, formData: FormData) => {
+    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const headers = getHeaders();
+    // Browser must set multipart boundary; do not send Content-Type.
+    delete headers['Content-Type'];
+
+    const res = await fetchWithRetry(fullUrl, {
+      method: 'POST',
+      headers,
+      body: formData,
+      skipDefaultHeaders: true,
+    });
+    return handleResponse(res, 'Request failed');
+  },
+
   put: async (url: string, data: any) => {
     const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
     const res = await fetchWithRetry(fullUrl, {
@@ -5725,7 +6039,7 @@ export const Api = {
         action_type: 'CONFIG_CHANGE',
         resource_type: 'SETTING',
         resource_id: 'app_name',
-        before_data: { app_name: 'TechnoLex' },
+        before_data: { app_name: 'Consultinity' },
         after_data: { app_name: 'TechnoLex' },
         risk_level: 'LOW',
         compliance_tags: ['SOC2'],
@@ -6994,7 +7308,7 @@ export const Api = {
     items: [
       {
         org_id: 'org-1',
-        org_name: 'TechnoLex SA',
+        org_name: 'Consultinity SA',
         gdpr_compliant: true,
         dpa_signed: true,
         data_retention_policy: true,

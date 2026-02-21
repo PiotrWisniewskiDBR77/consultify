@@ -24,6 +24,10 @@ If it is not enabled, the tests assume an already-running environment:
 - Frontend: `E2E_BASE_URL` (default: `http://localhost:3000`)
 - Backend: `E2E_API_URL` (default: `http://127.0.0.1:3001`)
 
+## Canonical CI contract
+
+- See `docs/test-quality/l4-test-deployment-contract.md` for the locked “remote-only + external DB + tenant-per-run” contract.
+
 ## Current risks / honesty gaps
 
 - Some tests are conditionally skipped when the environment is missing seed data (e.g. no projects). These are now skipped with an explicit reason so the report is honest.

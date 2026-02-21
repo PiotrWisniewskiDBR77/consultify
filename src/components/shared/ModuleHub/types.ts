@@ -7,6 +7,7 @@
  */
 
 export type ModuleTab =
+  | 'library'
   | 'list'
   | 'reports'
   | 'initiatives'

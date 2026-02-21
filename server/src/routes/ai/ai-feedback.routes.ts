@@ -9,7 +9,7 @@ import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
-import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -69,12 +69,8 @@ try {
   adaptiveResponseService = (module.adaptiveResponseService ||
     module) as AdaptiveResponseServiceInterface;
 } catch {
-  logger.warn('[AI Feedback Routes] adaptiveResponseService not available - using mock');
-  adaptiveResponseService = {
-    processFeedback: async () => ({ feedbackId: uuidv4() }),
-    getUserFeedbackStats: async () => ({ total_feedback: 0 }),
-    getRecommendedMode: async () => 'BALANCED',
-  };
+  logger.warn('[AI Feedback Routes] adaptiveResponseService not available');
+  adaptiveResponseService = null;
 }
 
 // All routes require authentication
@@ -441,7 +437,10 @@ router.post(
   '/response',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!adaptiveResponseService?.processFeedback) {
-      return res.status(503).json({ error: 'Adaptive response service not available' });
+      return res.status(503).json({
+        error: 'Adaptive response service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -533,7 +532,10 @@ router.get(
       !adaptiveResponseService?.getUserFeedbackStats ||
       !adaptiveResponseService?.getRecommendedMode
     ) {
-      return res.status(503).json({ error: 'Adaptive response service not available' });
+      return res.status(503).json({
+        error: 'Adaptive response service not available',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {

@@ -19,6 +19,79 @@ import logger from '../../utils/Logger.js';
 
 const router = Router();
 
+let stripeEventsTableEnsured = false;
+async function ensureStripeEventsTable(): Promise<void> {
+  if (stripeEventsTableEnsured) return;
+  // Keep this compatible with both SQLite and Postgres. SQLite treats JSON as TEXT affinity.
+  await dbRun(`
+    CREATE TABLE IF NOT EXISTS stripe_events (
+      id TEXT PRIMARY KEY,
+      event_id TEXT UNIQUE NOT NULL,
+      event_type TEXT NOT NULL,
+      organization_id TEXT,
+      processed_at TIMESTAMP,
+      payload JSON,
+      status TEXT DEFAULT 'processed',
+      error_message TEXT,
+      retry_count INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_stripe_events_event_id ON stripe_events(event_id)`);
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_stripe_events_org ON stripe_events(organization_id)`);
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_stripe_events_type ON stripe_events(event_type)`);
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_stripe_events_status ON stripe_events(status)`);
+  stripeEventsTableEnsured = true;
+}
+
+async function tryBeginStripeEvent(event: StripeTypes.Event): Promise<boolean> {
+  await ensureStripeEventsTable();
+  const existing = await dbGet<{ event_id: string }>(
+    `SELECT event_id FROM stripe_events WHERE event_id = ? LIMIT 1`,
+    [event.id]
+  );
+  if (existing?.event_id) return false;
+  await dbRun(
+    `INSERT INTO stripe_events (id, event_id, event_type, payload, status, created_at)
+     VALUES (?, ?, ?, ?, 'processing', CURRENT_TIMESTAMP)`,
+    [event.id, event.id, event.type, JSON.stringify(event)]
+  );
+  return true;
+}
+
+async function markStripeEventProcessed(
+  event: StripeTypes.Event,
+  opts: { organizationId?: string | null } = {}
+): Promise<void> {
+  await ensureStripeEventsTable();
+  await dbRun(
+    `UPDATE stripe_events
+       SET status = 'processed',
+           processed_at = CURRENT_TIMESTAMP,
+           organization_id = COALESCE(organization_id, ?),
+           payload = ?
+     WHERE event_id = ?`,
+    [opts.organizationId || null, JSON.stringify(event), event.id]
+  );
+}
+
+async function markStripeEventFailed(
+  event: StripeTypes.Event,
+  errorMessage: string,
+  opts: { organizationId?: string | null } = {}
+): Promise<void> {
+  await ensureStripeEventsTable();
+  await dbRun(
+    `UPDATE stripe_events
+       SET status = 'failed',
+           processed_at = CURRENT_TIMESTAMP,
+           organization_id = COALESCE(organization_id, ?),
+           error_message = ?
+     WHERE event_id = ?`,
+    [opts.organizationId || null, errorMessage, event.id]
+  );
+}
+
 // Helper function for async handler
 function asyncHandler(fn: (req: Request, res: Response) => Promise<any> | any) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -38,6 +111,7 @@ try {
 
 // Stripe webhook secret for signature verification
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const isProduction = process.env.NODE_ENV === 'production';
 const shouldVerifySignature =
   Boolean(endpointSecret) && process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true';
 
@@ -49,19 +123,28 @@ router.post(
   '/stripe',
   express.raw({ type: 'application/json' }),
   asyncHandler(async (req: Request, res: Response) => {
+    if (isProduction && !endpointSecret) {
+      logger.error('[Stripe Webhook] Missing STRIPE_WEBHOOK_SECRET in production.');
+      return res.status(503).json({ error: 'Stripe webhook is not configured' });
+    }
+
     let event: StripeTypes.Event;
 
     // Verify webhook signature if secret is configured (skip in test to keep integration deterministic)
     if (shouldVerifySignature) {
       const sig = req.headers['stripe-signature'] as string;
       try {
-        const stripe = ((await import('stripe')) as any).default(
-          process.env.STRIPE_SECRET_KEY || ''
-        );
-        const rawBody = Buffer.isBuffer(req.body)
-          ? req.body
-          : Buffer.from(JSON.stringify(req.body));
-        event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
+        if (!process.env.STRIPE_SECRET_KEY) {
+          throw new Error('Stripe API key is not configured');
+        }
+        if (!sig) {
+          throw new Error('Missing stripe-signature header');
+        }
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+          apiVersion: '2024-11-20.acacia' as any,
+        });
+        const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(String(req.body || ''));
+        event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret!);
       } catch (err: any) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         logger.error('Webhook signature verification failed:', errorMessage);
@@ -94,43 +177,61 @@ router.post(
     logger.info('Stripe webhook received:', event.type);
 
     try {
+      const isNew = await tryBeginStripeEvent(event);
+      if (!isNew) {
+        logger.info(`[Stripe Webhook] Deduped event: ${event.type} (${event.id})`);
+        return res.json({ received: true, deduped: true });
+      }
+
+      let organizationIdForEvent: string | null = null;
       switch (event.type) {
         case 'customer.subscription.created':
-          await handleSubscriptionCreated(event.data.object as any);
+          organizationIdForEvent = await handleSubscriptionCreated(event.data.object as any);
           break;
 
         case 'customer.subscription.updated':
-          await handleSubscriptionUpdated(event.data.object as any);
+          organizationIdForEvent = await handleSubscriptionUpdated(event.data.object as any);
           break;
 
         case 'customer.subscription.deleted':
-          await handleSubscriptionDeleted(event.data.object as any);
+          organizationIdForEvent = await handleSubscriptionDeleted(event.data.object as any);
           break;
 
         case 'invoice.paid':
-          await handleInvoicePaid(event.data.object as any);
+          organizationIdForEvent = await handleInvoicePaid(event.data.object as any);
           break;
 
         case 'invoice.payment_failed':
-          await handleInvoicePaymentFailed(event.data.object as any);
+          organizationIdForEvent = await handleInvoicePaymentFailed(event.data.object as any);
           break;
 
         case 'invoice.created':
-          await handleInvoiceCreated(event.data.object as any);
+          organizationIdForEvent = await handleInvoiceCreated(event.data.object as any);
           break;
 
         // GAP-INVOICE-003: Handle invoice finalized
         case 'invoice.finalized':
-          await handleInvoiceFinalized(event.data.object as any);
+          organizationIdForEvent = await handleInvoiceFinalized(event.data.object as any);
+          break;
+
+        // T109: Token billing — idempotent credit on checkout completion
+        case 'checkout.session.completed':
+          await handleCheckoutSessionCompleted(event.data.object as any);
           break;
 
         default:
           logger.info(`Unhandled event type: ${event.type}`);
       }
 
+      await markStripeEventProcessed(event, { organizationId: organizationIdForEvent });
       return res.json({ received: true });
     } catch (error: unknown) {
       logger.error('Webhook processing error:', error);
+      try {
+        await markStripeEventFailed(event, error instanceof Error ? error.message : String(error));
+      } catch (markErr) {
+        logger.warn('[Stripe Webhook] Failed to persist stripe_events failure state:', markErr);
+      }
 
       // GAP-BILLING-002: Queue for retry on failure
       try {
@@ -155,25 +256,54 @@ router.post(
   })
 );
 
+async function getPlanIdFromStripePriceId(stripePriceId: string | null | undefined) {
+  if (!stripePriceId) return null;
+  const row = await dbGet<{ id: string }>(
+    `SELECT id FROM subscription_plans
+     WHERE stripe_price_id = ?
+        OR stripe_price_id_monthly = ?
+        OR stripe_price_id_yearly = ?
+     LIMIT 1`,
+    [stripePriceId, stripePriceId, stripePriceId]
+  );
+  return row?.id || null;
+}
+
 /**
  * Handle subscription created event
  */
-async function handleSubscriptionCreated(subscription: StripeTypes.Subscription): Promise<void> {
+async function handleSubscriptionCreated(
+  subscription: StripeTypes.Subscription
+): Promise<string | null> {
   const customerId = subscription.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 
   if (!orgId) {
     logger.warn('No organization found for customer:', customerId);
-    return;
+    return null;
   }
+
+  const stripePriceId = subscription.items?.data?.[0]?.price?.id || null;
+  const planId = await getPlanIdFromStripePriceId(stripePriceId);
 
   if (billingService?.upsertOrganizationBilling) {
     await billingService.upsertOrganizationBilling(orgId, {
+      ...(planId ? { subscription_plan_id: planId } : {}),
       stripe_subscription_id: subscription.id,
       status: subscription.status,
       current_period_start: new Date((subscription as any).current_period_start * 1000),
       current_period_end: new Date((subscription as any).current_period_end * 1000),
     });
+  }
+
+  // Keep org type aligned with billing (Stripe is SSOT).
+  try {
+    await dbRun(
+      `UPDATE organizations SET organization_type = 'PAID', updated_at = datetime('now') WHERE id = ?`,
+      [orgId]
+    );
+  } catch {
+    // ignore schema drift
   }
 
   logger.info(`Subscription created for org ${orgId}`);
@@ -185,42 +315,72 @@ async function handleSubscriptionCreated(subscription: StripeTypes.Subscription)
     'Subscription Activated',
     'Your subscription has been activated successfully.'
   );
+  return orgId;
 }
 
 /**
  * Handle subscription updated event
  */
-async function handleSubscriptionUpdated(subscription: StripeTypes.Subscription): Promise<void> {
+async function handleSubscriptionUpdated(
+  subscription: StripeTypes.Subscription
+): Promise<string | null> {
   const customerId = subscription.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 
-  if (!orgId) return;
+  if (!orgId) return null;
+
+  const stripePriceId = subscription.items?.data?.[0]?.price?.id || null;
+  const planId = await getPlanIdFromStripePriceId(stripePriceId);
 
   if (billingService?.upsertOrganizationBilling) {
     await billingService.upsertOrganizationBilling(orgId, {
+      ...(planId ? { subscription_plan_id: planId } : {}),
       status: subscription.status,
       current_period_start: new Date((subscription as any).current_period_start * 1000),
       current_period_end: new Date((subscription as any).current_period_end * 1000),
     });
   }
 
+  if (subscription.status === 'active' || subscription.status === 'trialing') {
+    try {
+      await dbRun(
+        `UPDATE organizations SET organization_type = 'PAID', updated_at = datetime('now') WHERE id = ?`,
+        [orgId]
+      );
+    } catch {
+      // ignore
+    }
+  }
+
   logger.info(`Subscription updated for org ${orgId}: ${subscription.status}`);
+  return orgId;
 }
 
 /**
  * Handle subscription deleted event
  */
-async function handleSubscriptionDeleted(subscription: StripeTypes.Subscription): Promise<void> {
+async function handleSubscriptionDeleted(
+  subscription: StripeTypes.Subscription
+): Promise<string | null> {
   const customerId = subscription.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 
-  if (!orgId) return;
+  if (!orgId) return null;
 
   if (billingService?.upsertOrganizationBilling) {
     await billingService.upsertOrganizationBilling(orgId, {
       status: 'canceled',
       stripe_subscription_id: null,
     });
+  }
+
+  try {
+    await dbRun(
+      `UPDATE organizations SET organization_type = 'TRIAL', updated_at = datetime('now') WHERE id = ?`,
+      [orgId]
+    );
+  } catch {
+    // ignore
   }
 
   logger.info(`Subscription canceled for org ${orgId}`);
@@ -231,16 +391,17 @@ async function handleSubscriptionDeleted(subscription: StripeTypes.Subscription)
     'Subscription Canceled',
     'Your subscription has been canceled. You will lose access to premium features at the end of your billing period.'
   );
+  return orgId;
 }
 
 /**
  * Handle invoice paid event
  */
-async function handleInvoicePaid(invoice: StripeTypes.Invoice): Promise<void> {
+async function handleInvoicePaid(invoice: StripeTypes.Invoice): Promise<string | null> {
   const customerId = invoice.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 
-  if (!orgId) return;
+  if (!orgId) return null;
 
   // Record invoice
   if (billingService?.recordInvoice) {
@@ -252,6 +413,24 @@ async function handleInvoicePaid(invoice: StripeTypes.Invoice): Promise<void> {
     await billingService.upsertOrganizationBilling(orgId, {
       status: 'active',
     });
+  }
+
+  // T109: Exit dunning on successful payment
+  try {
+    const dunningModule = await import('../../services/dunningService.js');
+    const dunningService = dunningModule.default || dunningModule;
+    if (dunningService?.handlePaymentSucceeded) {
+      const paymentIntentId = invoice.payment_intent as string | undefined;
+      if (paymentIntentId && process.env.STRIPE_SECRET_KEY) {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+          apiVersion: '2024-11-20.acacia' as StripeTypes.LatestApiVersion,
+        });
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        await dunningService.handlePaymentSucceeded(paymentIntent);
+      }
+    }
+  } catch (dunningErr) {
+    logger.error('[Stripe Webhook] Dunning recovery error:', dunningErr);
   }
 
   logger.info(`Invoice paid for org ${orgId}: ${invoice.id}`);
@@ -367,16 +546,18 @@ async function handleInvoicePaid(invoice: StripeTypes.Invoice): Promise<void> {
     'Payment Successful',
     `Your payment of $${(invoice.amount_paid / 100).toFixed(2)} has been processed.`
   );
+  return orgId;
 }
 
 /**
  * Handle invoice payment failed event
+ * T109: Integrates with DunningService for staged recovery flow.
  */
-async function handleInvoicePaymentFailed(invoice: StripeTypes.Invoice): Promise<void> {
+async function handleInvoicePaymentFailed(invoice: StripeTypes.Invoice): Promise<string | null> {
   const customerId = invoice.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 
-  if (!orgId) return;
+  if (!orgId) return null;
 
   // Update billing status
   if (billingService?.upsertOrganizationBilling) {
@@ -387,6 +568,32 @@ async function handleInvoicePaymentFailed(invoice: StripeTypes.Invoice): Promise
 
   logger.info(`Invoice payment failed for org ${orgId}: ${invoice.id}`);
 
+  // T109: Trigger dunning flow
+  try {
+    const dunningModule = await import('../../services/dunningService.js');
+    const dunningService = dunningModule.default || dunningModule;
+    if (dunningService?.handlePaymentFailed) {
+      const paymentIntentId = invoice.payment_intent as string | undefined;
+      if (paymentIntentId && process.env.STRIPE_SECRET_KEY) {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+          apiVersion: '2024-11-20.acacia' as StripeTypes.LatestApiVersion,
+        });
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        await dunningService.handlePaymentFailed(paymentIntent);
+      } else {
+        await dunningService.handlePaymentFailed({
+          id: invoice.id,
+          customer: customerId,
+          metadata: { organization_id: orgId },
+          status: 'requires_payment_method',
+        } as unknown as StripeTypes.PaymentIntent);
+      }
+      logger.info(`[Stripe Webhook] Dunning started for org ${orgId}`);
+    }
+  } catch (dunningErr) {
+    logger.error('[Stripe Webhook] Dunning service error:', dunningErr);
+  }
+
   await createNotification(
     orgId,
     'payment_failed',
@@ -394,16 +601,17 @@ async function handleInvoicePaymentFailed(invoice: StripeTypes.Invoice): Promise
     'Your payment could not be processed. Please update your payment method to avoid service interruption.',
     'high'
   );
+  return orgId;
 }
 
 /**
  * Handle invoice created event
  */
-async function handleInvoiceCreated(invoice: StripeTypes.Invoice): Promise<void> {
+async function handleInvoiceCreated(invoice: StripeTypes.Invoice): Promise<string | null> {
   const customerId = invoice.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 
-  if (!orgId) return;
+  if (!orgId) return null;
 
   // Record draft invoice
   if (billingService?.recordInvoice) {
@@ -411,17 +619,18 @@ async function handleInvoiceCreated(invoice: StripeTypes.Invoice): Promise<void>
   }
 
   logger.info(`Invoice created for org ${orgId}: ${invoice.id}`);
+  return orgId;
 }
 
 /**
  * Handle invoice finalized event
  * GAP-INVOICE-003: Handle when invoice is finalized and ready for payment
  */
-async function handleInvoiceFinalized(invoice: StripeTypes.Invoice): Promise<void> {
+async function handleInvoiceFinalized(invoice: StripeTypes.Invoice): Promise<string | null> {
   const customerId = invoice.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 
-  if (!orgId) return;
+  if (!orgId) return null;
 
   // Update invoice status in database
   if (billingService?.recordInvoice) {
@@ -446,6 +655,53 @@ async function handleInvoiceFinalized(invoice: StripeTypes.Invoice): Promise<voi
       'Invoice Ready',
       `A new invoice for $${(invoice.amount_due / 100).toFixed(2)} has been generated and will be charged soon.`
     );
+  }
+  return orgId;
+}
+
+/**
+ * T109: Handle checkout.session.completed for token billing (idempotent).
+ * Uses stripe_events dedup — if event was already processed, creditTokens is skipped.
+ */
+async function handleCheckoutSessionCompleted(session: Record<string, unknown>): Promise<void> {
+  const metadata = session.metadata as Record<string, string> | undefined;
+  if (!metadata?.userId || !metadata?.tokens) {
+    logger.info('[Stripe Webhook] checkout.session.completed without token metadata — skipping');
+    return;
+  }
+
+  const { userId, packageId, tokens, bonusPercent } = metadata;
+  const tokenCount = parseInt(tokens, 10);
+  const bonus = Math.floor(tokenCount * (parseInt(bonusPercent || '0', 10) / 100));
+  const stripePaymentId = session.payment_intent as string | undefined;
+
+  // Idempotency guard: check if this payment was already credited
+  if (stripePaymentId) {
+    const existing = await dbGet<{ id: string }>(
+      `SELECT id FROM token_transactions WHERE stripe_payment_id = ? LIMIT 1`,
+      [stripePaymentId]
+    );
+    if (existing) {
+      logger.info(`[Stripe Webhook] Token credit already applied for payment ${stripePaymentId}`);
+      return;
+    }
+  }
+
+  try {
+    const tokenBillingModule = await import('../../services/tokenBillingService.js');
+    const tokenBillingService = tokenBillingModule.default || tokenBillingModule;
+    if (tokenBillingService?.creditTokens) {
+      await tokenBillingService.creditTokens(userId, tokenCount, bonus, {
+        packageId,
+        stripePaymentId,
+      });
+      logger.info(
+        `[Stripe Webhook] Credited ${tokenCount}+${bonus} tokens to user ${userId} (payment: ${stripePaymentId})`
+      );
+    }
+  } catch (err) {
+    logger.error('[Stripe Webhook] Failed to credit tokens:', err);
+    throw err;
   }
 }
 

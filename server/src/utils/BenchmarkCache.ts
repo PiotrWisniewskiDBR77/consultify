@@ -68,13 +68,23 @@ class BenchmarkCache {
   /**
    * Clear expired entries
    */
-  clearExpired(): void {
+  clearExpired(): number {
     const now = Date.now();
+    let cleared = 0;
     for (const [key, value] of this.cache.entries()) {
       if (now - value.timestamp > this.TTL) {
         this.cache.delete(key);
+        cleared += 1;
       }
     }
+    return cleared;
+  }
+
+  /**
+   * Get cache size
+   */
+  size(): number {
+    return this.cache.size;
   }
 }
 

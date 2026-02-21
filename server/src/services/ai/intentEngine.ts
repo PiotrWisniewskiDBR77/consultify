@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadIntentengine = createCachedLazyService('../../ai/intentEngine.js');
+const loadIntentengine = createCachedLazyService('ai/intentEngine.js');
 
 // Export default instance (for backward compatibility)
 export default loadIntentengine();

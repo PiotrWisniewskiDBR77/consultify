@@ -11,7 +11,7 @@ import AdminDataControllerRaw from '../controllers/AdminDataController.js';
 const AdminDataController = AdminDataControllerRaw as any;
 import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import { UpdateUserTierSchema } from '../validators/admin.validators.js';
 

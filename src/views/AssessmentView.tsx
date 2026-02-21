@@ -166,7 +166,7 @@ export const AssessmentView: React.FC<AssessmentViewProps> = ({
             </div>
             <div>
               <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
-                {isPolish ? 'Moduł Assessment' : 'Assessment Module'}
+                {t('licensedTools.moduleName', 'Licensed Tools')}
               </h1>
               <p className="text-slate-500 dark:text-slate-400">
                 {isPolish

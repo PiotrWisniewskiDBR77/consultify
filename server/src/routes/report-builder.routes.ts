@@ -33,9 +33,15 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { default as defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
 import notificationService from '../services/notificationService.js';
+import {
+  applyAgentAction,
+  getAgentMessages,
+  processAgentMessage,
+} from '../services/reportAgentService.js';
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportGenerationService from '../services/reportGenerationService.js';
+import { checkQualityGates } from '../services/reportQualityGatesService.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -2544,7 +2550,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
       const allBlockTypes = await ReportBuilderService.listBlockTypes(organizationId).catch(
         () => []
       );
-      const btMap = new Map(allBlockTypes.map((bt: any) => [bt.id, bt]));
+      const btMap = new Map(allBlockTypes.map((bt) => [bt.id, bt] as [string, typeof bt]));
 
       const v2Sections = (reportData.sections || []).map((s: any) => {
         const btId = s.blockTypeId || s.block_type_id;
@@ -2565,7 +2571,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
           repeatKey: s.repeatKey || s.repeat_key,
           repeatName: s.repeatName || s.repeat_name,
           repeatData: s.repeatData || s.repeat_data,
-          slideIntent: bt?.slideIntent || undefined,
+          slideIntent: bt?.slideIntent ?? undefined,
         };
       });
 
@@ -3286,6 +3292,86 @@ router.post(
       res.json({ resolvedCount, summary });
     } catch (err) {
       logger.error('[ReportBuilder] Error bulk resolving comments:', err);
+      next(err);
+    }
+  }
+);
+
+// ==========================================
+// T060: Report Agent (Gamma-style chat)
+// ==========================================
+
+router.get(
+  '/:id/agent/messages',
+  verifyToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const orgId = (req as any).user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+      const messages = await getAgentMessages(orgId, String(id));
+      res.json({ messages });
+    } catch (err) {
+      logger.error('[ReportBuilder] Error getting agent messages:', err);
+      next(err);
+    }
+  }
+);
+
+router.post(
+  '/:id/agent/message',
+  verifyToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const orgId = (req as any).user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+      const { message } = req.body;
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ error: 'message is required' });
+      }
+      const result = await processAgentMessage(orgId, String(id), message);
+      res.json(result);
+    } catch (err) {
+      logger.error('[ReportBuilder] Error processing agent message:', err);
+      next(err);
+    }
+  }
+);
+
+router.post(
+  '/:id/agent/apply/:messageId',
+  verifyToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id, messageId } = req.params;
+      const orgId = (req as any).user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+      const result = await applyAgentAction(orgId, String(id), String(messageId));
+      res.json(result);
+    } catch (err) {
+      logger.error('[ReportBuilder] Error applying agent action:', err);
+      next(err);
+    }
+  }
+);
+
+// ==========================================
+// T060: Quality Gates
+// ==========================================
+
+router.get(
+  '/:id/quality-gates',
+  verifyToken,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const orgId = (req as any).user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+      const report = await checkQualityGates(orgId, String(id));
+      res.json(report);
+    } catch (err) {
+      logger.error('[ReportBuilder] Error checking quality gates:', err);
       next(err);
     }
   }

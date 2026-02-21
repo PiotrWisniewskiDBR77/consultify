@@ -226,9 +226,9 @@ router.get(
     let query = `
       SELECT id, organization_id, memory_type, title, content,
              applicability_score, usage_count, source_project_id,
-             active, created_at, updated_at
+             is_active, created_at, updated_at
       FROM organization_memory
-      WHERE organization_id = ? AND active = 1
+      WHERE organization_id = ? AND is_active = 1
     `;
     const params: any[] = [orgId];
 

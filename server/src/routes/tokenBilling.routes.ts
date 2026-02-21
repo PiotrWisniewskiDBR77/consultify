@@ -259,22 +259,10 @@ router.post(
         });
         res.json({ success: true, checkoutUrl: session.url, sessionId: session.id });
       } else {
-        // Demo mode: directly credit tokens
-        if (!TokenBillingService?.creditTokens) {
-          return res
-            .status(503)
-            .json({ success: false, error: 'Token credit service not available' });
-        }
-
-        const bonusTokens = Math.floor(pkg.tokens * (pkg.bonus_percent / 100));
-        await TokenBillingService.creditTokens(userId, pkg.tokens, bonusTokens, {
-          packageId,
-          organizationId: req.user?.organizationId,
-        });
-        res.json({
-          success: true,
-          message: 'Tokens credited (demo mode)',
-          tokens: pkg.tokens + bonusTokens,
+        return res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'Stripe checkout is required to purchase tokens',
         });
       }
     } catch (error: any) {

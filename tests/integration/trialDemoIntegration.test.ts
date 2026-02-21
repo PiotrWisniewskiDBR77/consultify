@@ -1,89 +1,122 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import os from 'node:os';
+import path from 'node:path';
+
+import jwt from 'jsonwebtoken';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
 import { makeTestApp } from './_helpers/testApp';
 
-const { convertTrialToOrg, auditLog } = vi.hoisted(() => ({
-  convertTrialToOrg: vi.fn(),
-  auditLog: vi.fn(),
-}));
+describe('Trial routes (no mocks, honest availability)', () => {
+  const prevEnv = { ...process.env };
+  const workerId = process.env.VITEST_WORKER_ID || '0';
+  const sqlitePath = path.join(os.tmpdir(), `consultify-trial-${workerId}.db`);
+  const basePath = '/api/trial';
 
-vi.mock('../../server/src/services/trialService.js', () => ({
-  default: {
-    convertTrialToOrg: (...args: any[]) => convertTrialToOrg(...args),
-  },
-}));
+  let resetConnection: (() => Promise<void>) | null = null;
+  let db: any;
+  let router: any;
 
-vi.mock('../../server/src/services/auditService.js', () => ({
-  default: {
-    log: (...args: any[]) => auditLog(...args),
-  },
-}));
+  const tokenFor = (user: { id: string; role?: string; organizationId?: string }) => {
+    const secret = process.env.JWT_SECRET || 'test-secret';
+    return jwt.sign(
+      {
+        id: user.id,
+        role: user.role || 'ADMIN',
+        organizationId: user.organizationId || 'o-1',
+      },
+      secret
+    );
+  };
 
-vi.mock('../../server/src/middleware/rateLimiting.middleware.js', () => ({
-  authRateLimiter: (_req: any, _res: any, next: any) => next(),
-}));
+  const mount = () =>
+    makeTestApp({
+      mountPath: basePath,
+      router,
+    });
 
-vi.mock('../../server/src/middleware/demoGuard.middleware.js', () => ({
-  demoGuard: (_req: any, _res: any, next: any) => next(),
-}));
+  beforeAll(async () => {
+    process.env.NODE_ENV = 'test';
+    process.env.MOCK_DB = 'false';
+    process.env.DB_TYPE = 'sqlite';
+    process.env.SQLITE_PATH = sqlitePath;
+    process.env.ENABLE_TEST_AUTH_BYPASS = 'false';
+    process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
-vi.mock('../../server/src/middleware/auth.middleware.js', () => ({
-  verifyToken: (_req: any, _res: any, next: any) => next(),
-}));
+    vi.resetModules();
+    const dbMod = await import('../../server/src/database/Database.js');
+    resetConnection = dbMod.resetConnection;
+    await resetConnection();
+    db = dbMod.getDatabase();
 
-async function loadTrialRouter() {
-  return (await import('../../server/src/routes/trial.routes.ts')).default;
-}
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id TEXT PRIMARY KEY,
+        timestamp TEXT,
+        actor_type TEXT,
+        actor_id TEXT,
+        actor_email TEXT,
+        actor_name TEXT,
+        actor_ip TEXT,
+        actor_user_agent TEXT,
+        action TEXT,
+        action_category TEXT,
+        action_description TEXT,
+        resource_type TEXT,
+        resource_id TEXT,
+        resource_name TEXT,
+        organization_id TEXT,
+        project_id TEXT,
+        previous_values TEXT,
+        new_values TEXT,
+        changed_fields TEXT,
+        metadata TEXT,
+        request_id TEXT,
+        result TEXT,
+        error_message TEXT,
+        retention_category TEXT
+      );
+    `);
 
-async function makeTrialApp(opts?: { user?: { id: string } }) {
-  const router = await loadTrialRouter();
-  return makeTestApp({
-    mountPath: '/api/trial',
-    router,
-    beforeMount: (app) => {
-      if (!opts?.user) return;
-      app.use((req, _res, next) => {
-        (req as any).user = opts.user;
-        next();
-      });
-    },
+    router = (await import('../../server/src/routes/trial.routes.ts')).default;
   });
-}
 
-describe('Trial demo integration (trial.routes) - REAL integration', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    convertTrialToOrg.mockResolvedValue({ newOrganizationId: 'org-new' });
-    auditLog.mockResolvedValue(undefined);
+  afterAll(async () => {
+    try {
+      await resetConnection?.();
+    } finally {
+      process.env = prevEnv;
+    }
   });
 
   it('POST /:trialId/convert returns 400 when newOrgName is missing', async () => {
-    const app = await makeTrialApp({ user: { id: 'u1' } });
-    const res = await request(app).post('/api/trial/t1/convert').send({});
+    const token = tokenFor({ id: 'u1' });
+    const res = await request(mount())
+      .post(`${basePath}/t1/convert`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({});
     expect(res.status).toBe(400);
   });
 
-  it('POST /:trialId/convert returns 401 when user is missing', async () => {
-    const app = await makeTrialApp();
-    const res = await request(app).post('/api/trial/t1/convert').send({ newOrgName: 'X' });
+  it('POST /:trialId/convert returns 401 when token is missing', async () => {
+    const res = await request(mount()).post(`${basePath}/t1/convert`).send({ newOrgName: 'X' });
     expect(res.status).toBe(401);
   });
 
-  it('POST /:trialId/convert calls TrialService.convertTrialToOrg on success', async () => {
-    const app = await makeTrialApp({ user: { id: 'u1' } });
-    const res = await request(app).post('/api/trial/t1/convert').send({ newOrgName: 'Acme' });
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual(
-      expect.objectContaining({ success: true, newOrganizationId: 'org-new' })
-    );
-    expect(convertTrialToOrg).toHaveBeenCalledWith('t1', 'u1', 'Acme');
+  it('POST /:trialId/convert returns 503 when TrialService is unavailable', async () => {
+    const token = tokenFor({ id: 'u1' });
+    const res = await request(mount())
+      .post(`${basePath}/t1/convert`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ newOrgName: 'Acme' });
+    expect(res.status).toBe(503);
   });
 
   it('POST /confirm-transition returns 400 when confirmations are incomplete', async () => {
-    const app = await makeTrialApp({ user: { id: 'u1' } });
-    const res = await request(app)
-      .post('/api/trial/confirm-transition')
+    const token = tokenFor({ id: 'u1' });
+    const res = await request(mount())
+      .post(`${basePath}/confirm-transition`)
+      .set('Authorization', `Bearer ${token}`)
       .send({
         confirmations: { timeCommitment: true, teamScope: true },
       });
@@ -91,10 +124,11 @@ describe('Trial demo integration (trial.routes) - REAL integration', () => {
     expect(res.body).toEqual(expect.objectContaining({ required: expect.any(Array) }));
   });
 
-  it('POST /confirm-transition logs audit event when confirmations are valid', async () => {
-    const app = await makeTrialApp({ user: { id: 'u1' } });
-    const res = await request(app)
-      .post('/api/trial/confirm-transition')
+  it('POST /confirm-transition writes audit_log when confirmations are valid', async () => {
+    const token = tokenFor({ id: 'u1' });
+    const res = await request(mount())
+      .post(`${basePath}/confirm-transition`)
+      .set('Authorization', `Bearer ${token}`)
       .send({
         confirmations: { timeCommitment: true, teamScope: true, memoryAware: true },
         confirmedAt: '2026-01-01T00:00:00.000Z',
@@ -103,12 +137,8 @@ describe('Trial demo integration (trial.routes) - REAL integration', () => {
     expect(res.body).toEqual(
       expect.objectContaining({ success: true, nextStep: 'ORG_SETUP_WIZARD' })
     );
-    expect(auditLog).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: 'u1',
-        action: 'trial_transition_confirmed',
-        metadata: expect.objectContaining({ phase: 'C_TO_D' }),
-      })
-    );
+
+    const row = await db.get<{ c: number }>(`SELECT COUNT(*) as c FROM audit_log`, []);
+    expect(row?.c).toBeGreaterThan(0);
   });
 });

@@ -11,13 +11,25 @@ const router = Router();
 interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
+const FEATURE_NAME = 'premium-reports';
 
 function isSchemaMissingError(err: unknown): boolean {
   const msg = String((err as any)?.message || '').toLowerCase();
   return (
-    msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')
+    msg.includes('no such table') ||
+    msg.includes('no such column') ||
+    msg.includes('does not exist') ||
+    msg.includes('relation')
   );
 }
+
+const respondFeatureUnavailable = (res: Response, detail?: string) =>
+  res.status(503).json({
+    error: 'Feature unavailable',
+    code: 'FEATURE_UNAVAILABLE',
+    feature: FEATURE_NAME,
+    detail,
+  });
 
 router.get(
   '/',
@@ -37,9 +49,7 @@ router.get(
       res.json(reports || []);
     } catch (error: unknown) {
       if (isSchemaMissingError(error)) {
-        return res
-          .status(503)
-          .json({ error: 'Premium reports storage not available (schema missing)' });
+        return respondFeatureUnavailable(res, 'schema missing');
       }
       throw error;
     }
@@ -59,9 +69,7 @@ router.get(
       res.json(report);
     } catch (error: unknown) {
       if (isSchemaMissingError(error)) {
-        return res
-          .status(503)
-          .json({ error: 'Premium reports storage not available (schema missing)' });
+        return respondFeatureUnavailable(res, 'schema missing');
       }
       throw error;
     }
@@ -86,9 +94,7 @@ router.get(
       res.json({ hasAccess: !!access });
     } catch (error: unknown) {
       if (isSchemaMissingError(error)) {
-        return res
-          .status(503)
-          .json({ error: 'Premium reports storage not available (schema missing)' });
+        return respondFeatureUnavailable(res, 'schema missing');
       }
       throw error;
     }

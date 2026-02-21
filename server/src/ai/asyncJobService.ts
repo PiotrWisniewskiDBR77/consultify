@@ -6,7 +6,9 @@ import { getDatabase } from '../database/index.js';
 const db: IDatabase = getDatabase() as IDatabase;
 import { v4 as uuidv4 } from 'uuid';
 
-// Type for aiQueue (BullMQ Queue or mock)
+import { AppError } from '../utils/ErrorHandler.js';
+
+// Type for aiQueue (BullMQ Queue or unavailable)
 type QueueType = {
   add: (name: string, data?: unknown, options?: unknown) => Promise<{ id: string; name: string }>;
   getJob: (jobId: string) => Promise<{ remove?: () => Promise<void> } | null>;
@@ -21,7 +23,8 @@ const aiQueueModule: any = require('../queues/aiQueue.js');
 const aiQueue: QueueType = aiQueueModule.default || aiQueueModule;
 
 import * as auditLogger from '../utils/auditLogger.js';
-import { ACTION_ERROR_CODES } from './actionErrors.js';
+import actionErrors from './actionErrors.js';
+const { ACTION_ERROR_CODES, classifyError } = actionErrors;
 
 /**
  * AsyncJob interface for type safety
@@ -78,6 +81,37 @@ const JOB_PRIORITIES = {
 
 const DEFAULT_MAX_ATTEMPTS = 3;
 const BASE_BACKOFF_MS = 1000;
+const QUEUE_UNAVAILABLE_MESSAGE = 'AI async queue is unavailable';
+
+const assertQueueAvailable = () => {
+  if ((aiQueue as any)?.isUnavailable) {
+    throw new AppError(QUEUE_UNAVAILABLE_MESSAGE, 503, ACTION_ERROR_CODES.FEATURE_UNAVAILABLE);
+  }
+};
+
+const markEnqueueFailure = async (jobId: string, err: unknown) => {
+  const errorMessage =
+    err instanceof Error ? err.message : typeof err === 'string' ? err : QUEUE_UNAVAILABLE_MESSAGE;
+  const errorCode =
+    (err as any)?.code || classifyError(err, ACTION_ERROR_CODES.FEATURE_UNAVAILABLE);
+
+  await new Promise<void>((resolve, reject) => {
+    db.run(
+      `UPDATE async_jobs SET status = ?, error_code = ?, error_message = ?, finished_at = ? WHERE id = ?`,
+      [JOB_STATUSES.FAILED, errorCode, errorMessage, new Date().toISOString(), jobId],
+      (updateErr) => {
+        if (updateErr) reject(updateErr);
+        else resolve();
+      }
+    );
+  });
+
+  auditLogger.error('ASYNC_JOB_ENQUEUE_FAILED', {
+    job_id: jobId,
+    error_code: errorCode,
+    error_message: errorMessage,
+  });
+};
 
 /**
  * Step 11.1 - Retry Classification
@@ -184,6 +218,8 @@ const AsyncJobService = {
       };
     }
 
+    assertQueueAvailable();
+
     const jobId = `job-${uuidv4()}`;
     const now = new Date().toISOString();
 
@@ -214,20 +250,25 @@ const AsyncJobService = {
 
     // Enqueue to BullMQ (execution mechanism)
     const bullPriority = (JOB_PRIORITIES as any)[priority] || JOB_PRIORITIES.normal;
-    await aiQueue.add(
-      JOB_TYPES.EXECUTE_DECISION,
-      {
-        jobId,
-        taskType: JOB_TYPES.EXECUTE_DECISION,
-        payload: { decisionId, organizationId, correlationId },
-      },
-      {
-        jobId,
-        ...bullPriority,
-        attempts: DEFAULT_MAX_ATTEMPTS,
-        backoff: { type: 'exponential', delay: BASE_BACKOFF_MS },
-      }
-    );
+    try {
+      await aiQueue.add(
+        JOB_TYPES.EXECUTE_DECISION,
+        {
+          jobId,
+          taskType: JOB_TYPES.EXECUTE_DECISION,
+          payload: { decisionId, organizationId, correlationId },
+        },
+        {
+          jobId,
+          ...bullPriority,
+          attempts: DEFAULT_MAX_ATTEMPTS,
+          backoff: { type: 'exponential', delay: BASE_BACKOFF_MS },
+        }
+      );
+    } catch (err) {
+      await markEnqueueFailure(jobId, err);
+      throw err;
+    }
 
     auditLogger.info('ASYNC_JOB_ENQUEUED', {
       job_id: jobId,
@@ -282,6 +323,8 @@ const AsyncJobService = {
       };
     }
 
+    assertQueueAvailable();
+
     const jobId = `job-${uuidv4()}`;
     const now = new Date().toISOString();
 
@@ -310,20 +353,25 @@ const AsyncJobService = {
     });
 
     const bullPriority = (JOB_PRIORITIES as any)[priority] || JOB_PRIORITIES.normal;
-    await aiQueue.add(
-      JOB_TYPES.ADVANCE_PLAYBOOK_STEP,
-      {
-        jobId,
-        taskType: JOB_TYPES.ADVANCE_PLAYBOOK_STEP,
-        payload: { runId, stepId, organizationId, correlationId },
-      },
-      {
-        jobId,
-        ...bullPriority,
-        attempts: DEFAULT_MAX_ATTEMPTS,
-        backoff: { type: 'exponential', delay: BASE_BACKOFF_MS },
-      }
-    );
+    try {
+      await aiQueue.add(
+        JOB_TYPES.ADVANCE_PLAYBOOK_STEP,
+        {
+          jobId,
+          taskType: JOB_TYPES.ADVANCE_PLAYBOOK_STEP,
+          payload: { runId, stepId, organizationId, correlationId },
+        },
+        {
+          jobId,
+          ...bullPriority,
+          attempts: DEFAULT_MAX_ATTEMPTS,
+          backoff: { type: 'exponential', delay: BASE_BACKOFF_MS },
+        }
+      );
+    } catch (err) {
+      await markEnqueueFailure(jobId, err);
+      throw err;
+    }
 
     auditLogger.info('ASYNC_JOB_ENQUEUED', {
       job_id: jobId,
@@ -495,6 +543,8 @@ const AsyncJobService = {
       throw error;
     }
 
+    assertQueueAvailable();
+
     // Reset job status to QUEUED
     await new Promise<void>((resolve, reject) => {
       db.run(
@@ -522,20 +572,25 @@ const AsyncJobService = {
             correlationId: job.correlation_id,
           };
 
-    await aiQueue.add(
-      job.type,
-      {
-        jobId,
-        taskType: job.type,
-        payload,
-      },
-      {
-        jobId,
-        ...bullPriority,
-        attempts: DEFAULT_MAX_ATTEMPTS,
-        backoff: { type: 'exponential', delay: BASE_BACKOFF_MS },
-      }
-    );
+    try {
+      await aiQueue.add(
+        job.type,
+        {
+          jobId,
+          taskType: job.type,
+          payload,
+        },
+        {
+          jobId,
+          ...bullPriority,
+          attempts: DEFAULT_MAX_ATTEMPTS,
+          backoff: { type: 'exponential', delay: BASE_BACKOFF_MS },
+        }
+      );
+    } catch (err) {
+      await markEnqueueFailure(jobId, err);
+      throw err;
+    }
 
     auditLogger.info('ASYNC_JOB_RETRIED', {
       job_id: jobId,

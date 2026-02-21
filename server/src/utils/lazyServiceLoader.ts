@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const SRC_ROOT = path.resolve(__dirname, '..');
+const IN_FLIGHT_IMPORTS = new Set<string>();
 
 // Debug: Log SRC_ROOT in development to verify it's correct
 if (process.env.NODE_ENV !== 'production') {
@@ -12,19 +13,6 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 export async function createLazyService<T = unknown>(servicePath: string): Promise<T> {
-  // In test mode, try to use mocks first
-  if (process.env.NODE_ENV === 'test') {
-    try {
-      const mockModule = await tryLoadMock<T>(servicePath);
-      if (mockModule) {
-        console.log(`[LazyServiceLoader] Using mock for: ${servicePath}`);
-        return mockModule;
-      }
-    } catch (error) {
-      // Continue to normal loading if mock not found
-    }
-  }
-
   // Try to find the file
   let absolutePath: string;
   if (servicePath.startsWith('./') || servicePath.startsWith('../')) {
@@ -98,10 +86,10 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
   // Check if we are trying to load the same file that is currently executing
   // This prevents infinite recursion/hangs in wrappers
   if (absolutePath === fileURLToPath(import.meta.url)) {
-    console.warn(
-      `[LazyServiceLoader] Circular load detected for: ${absolutePath}. Returning stub.`
+    console.error(
+      `[LazyServiceLoader] Circular load detected for: ${absolutePath} (from ${servicePath}).`
     );
-    return createStubProxy(servicePath);
+    return createUnavailableProxy(servicePath, absolutePath) as T;
   }
 
   // Final verification: ensure path is correct before attempting import
@@ -126,6 +114,13 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
 
   console.log(`[LazyServiceLoader] Loading: ${servicePath} -> ${absolutePath}`);
   try {
+    if (IN_FLIGHT_IMPORTS.has(absolutePath)) {
+      console.error(
+        `[LazyServiceLoader] Re-entrant import detected (possible self-loading wrapper): ${absolutePath}`
+      );
+      return createUnavailableProxy(servicePath, absolutePath) as T;
+    }
+    IN_FLIGHT_IMPORTS.add(absolutePath);
     const module = await import(absolutePath);
     return (module.default || module) as T;
   } catch (error) {
@@ -142,105 +137,39 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
       }
     }
 
-    // Only log error if it's not a "module not found" error for expected missing files
     const err = error as Error & { code?: string };
     const isModuleNotFound =
       err.code === 'ERR_MODULE_NOT_FOUND' || err.message.includes('Cannot find module');
-    const isExpectedMissingFile =
-      servicePath.includes('.legacy.js') ||
-      servicePath.includes('trialService') ||
-      absolutePath.includes('.legacy.js');
+    console.error(`[LazyServiceLoader] Failed to load: ${absolutePath}`);
+    console.error(`[LazyServiceLoader] Error:`, error);
 
-    if (!isExpectedMissingFile || !isModuleNotFound) {
-      console.error(`[LazyServiceLoader] Failed to load: ${absolutePath}`);
-      console.error(`[LazyServiceLoader] Error:`, error);
-    } else {
-      // For expected missing files, just log at debug level
-      console.debug(`[LazyServiceLoader] Expected missing file (returning stub): ${servicePath}`);
+    if (isModuleNotFound) {
+      return createUnavailableProxy(servicePath, absolutePath) as T;
     }
-
-    return createStubProxy(servicePath, absolutePath, isExpectedMissingFile && isModuleNotFound);
+    return createUnavailableProxy(servicePath, absolutePath, error) as T;
+  } finally {
+    IN_FLIGHT_IMPORTS.delete(absolutePath);
   }
 }
 
-/**
- * Try to load a mock service in test mode
- */
-async function tryLoadMock<T>(servicePath: string): Promise<T | null> {
-  // Extract service name from path
-  const serviceName = path.basename(servicePath, path.extname(servicePath));
+function createUnavailableProxy<T>(servicePath: string, absolutePath?: string, cause?: unknown): T {
+  // Fail loudly on usage, but avoid unhandled promise rejections at import-time.
+  // This prevents "fake success" (e.g. returning []/null) while keeping optional modules non-fatal.
+  const err = new Error(
+    `[LazyServiceLoader] Service unavailable: ${servicePath}${absolutePath ? ` -> ${absolutePath}` : ''}`
+  );
+  (err as any).cause = cause;
 
-  // Try to load from serviceMocks helper
-  try {
-    // Use path.resolve to get absolute path to tests directory
-    const testsDir = path.resolve(SRC_ROOT, '../../tests');
-    const mockPath = path.join(testsDir, 'helpers/serviceMocks.js');
-    const { serviceMocks } = await import(mockPath);
-
-    // Map common service names to mocks
-    const mockMap: Record<string, any> = {
-      enhancedContextBuilder: serviceMocks.EnhancedContextBuilder,
-      regulatoryModeGuard: serviceMocks.RegulatoryModeGuard,
-      pmoDomainRegistry: serviceMocks.PMODomainRegistry,
-      integrationService: serviceMocks.IntegrationService,
-      workqueueService: serviceMocks.WorkqueueService,
-      organizationService: serviceMocks.OrganizationService,
-      aiActionExecutor: serviceMocks.AIActionExecutor,
-      persistentSessionStore: serviceMocks.PersistentSessionStore,
-      summarizationService: serviceMocks.SummarizationService,
-      aiExplainabilityService: serviceMocks.AIExplainabilityService,
-      docIndexer: serviceMocks.DocIndexer,
-    };
-
-    const mockKey = serviceName.replace(/Service$/, '').toLowerCase();
-    if (mockMap[mockKey]) {
-      return mockMap[mockKey] as T;
-    }
-  } catch (error) {
-    // Mock file not available, continue to normal loading
-  }
-
-  return null;
-}
-
-function createStubProxy<T>(
-  servicePath: string,
-  absolutePath?: string,
-  isExpectedMissingFile = false
-): T {
-  // Only log warnings/errors for unexpected missing files
-  if (!isExpectedMissingFile) {
-    if (absolutePath) {
-      // Error already logged in createLazyService, just log the stub creation
-      console.warn(`[LazyServiceLoader] Returning stub proxy for: ${servicePath}`);
-    } else {
-      console.warn(`[LazyServiceLoader] Returning stub proxy for: ${servicePath}`);
-    }
-  }
-  // For expected missing files, no logging needed (already logged at debug level in createLazyService)
-
-  // Return a Proxy that provides stub methods for any property access
-  const stubTarget = {} as Record<string | symbol, any>;
-  return new Proxy(stubTarget, {
+  const target = {} as Record<string | symbol, any>;
+  return new Proxy(target, {
     get(_target, prop) {
-      if (prop === 'then') return undefined; // Prevent it from looking like a promise
+      if (prop === 'then') return undefined; // Don't look like a Promise.
+      if (prop === '__unavailable__') return true;
+      if (prop === '__error__') return err;
       if (typeof prop === 'string' || typeof prop === 'symbol') {
-        return (..._args: any[]) => {
-          const propName = typeof prop === 'symbol' ? prop.toString() : prop;
-          console.debug(`[LazyServiceLoader] Stub method called: ${servicePath}.${propName}()`);
-          return Promise.resolve(null);
-        };
+        return (..._args: any[]) => Promise.reject(err);
       }
       return undefined;
-    },
-    set(_target, prop, _value) {
-      const propName = typeof prop === 'symbol' ? prop.toString() : String(prop);
-      console.debug(`[LazyServiceLoader] Stub property set: ${servicePath}.${propName}`);
-      return true;
-    },
-    construct(_target, _args) {
-      console.debug(`[LazyServiceLoader] Stub constructor called: new ${servicePath}()`);
-      return createStubProxy(servicePath);
     },
   }) as T;
 }

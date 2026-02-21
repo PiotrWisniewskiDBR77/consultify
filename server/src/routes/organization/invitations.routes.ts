@@ -10,7 +10,7 @@ import { Router } from 'express';
 import InvitationControllerRaw from '../../controllers/InvitationController.js';
 const InvitationController = InvitationControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
-import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
   AcceptInvitationSchema,
@@ -21,7 +21,7 @@ import {
 const router = Router();
 
 // Apply rate limiting
-router.use(authRateLimiter);
+router.use(apiAuthRateLimiter);
 
 // Apply auth middleware to all routes (except accept)
 // Note: accept endpoint doesn't require auth - uses token validation

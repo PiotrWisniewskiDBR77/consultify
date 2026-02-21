@@ -5,24 +5,29 @@ import { fileURLToPath } from 'url';
 
 import redisConfig from '../config/QueueConfig.js';
 import { aiLogger } from '../services/ai/logger.js';
+import { AppError } from '../utils/ErrorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let aiQueue;
 
-// Create mock queue
-const createMockQueue = () => ({
-  add: async () => ({ id: 'mock-job-id', name: 'mock-job' }),
-  getJob: async () => null,
+const createUnavailableQueue = (reason) => ({
+  isUnavailable: true,
+  add: async () => {
+    throw new AppError(`AI queue unavailable: ${reason}`, 503, 'FEATURE_UNAVAILABLE', { reason });
+  },
+  getJob: async () => {
+    throw new AppError(`AI queue unavailable: ${reason}`, 503, 'FEATURE_UNAVAILABLE', { reason });
+  },
   defaultJobOptions: {},
   on: () => {},
   close: async () => {},
 });
 
 if (process.env.MOCK_REDIS === 'true') {
-  aiLogger.info('[Queue] Using Mock Queue for ai-tasks');
-  aiQueue = createMockQueue();
+  aiLogger.warn('[Queue] Mock queue disabled; AI tasks will be unavailable');
+  aiQueue = createUnavailableQueue('MOCK_REDIS=true');
 } else {
   // Add default job options to redisConfig
   const queueConfig = {

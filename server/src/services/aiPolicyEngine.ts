@@ -4,6 +4,7 @@
  */
 
 import { get as dbGetOrig, run as dbRunOrig } from '../utils/DbPromise.js';
+import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 
 // Mutable dependency references for injection
@@ -72,25 +73,24 @@ export interface EffectivePolicy {
 
 // Lazy-load dependencies to avoid circular dependencies
 let _aiRoleGuard: any = null;
+let _aiRoleGuardLoadError: string | null = null;
 async function getAIRoleGuard() {
   if (!_aiRoleGuard) {
     try {
       const mod = (await import('./aiRoleGuard.js')) as any;
       _aiRoleGuard = mod.default || mod.AIRoleGuard || mod.aiRoleGuard || mod;
     } catch (e: unknown) {
-      logger.error('[AIPolicyEngine] aiRoleGuard not available');
-      // Fallback to minimal stub if import fails completely
-      _aiRoleGuard = {
-        getRoleCapabilities: (role: string) => ({}),
-        getProjectRole: (projectId: string) => Promise.resolve('ADVISOR'),
-        getRoleDescription: (role: string) => '',
-      };
+      const msg = (e as Error)?.message || String(e);
+      _aiRoleGuardLoadError = msg;
+      logger.warn('[AIPolicyEngine] aiRoleGuard not available:', msg);
+      _aiRoleGuard = null;
     }
   }
   return _aiRoleGuard;
 }
 
 let _regulatoryModeGuard: any = null;
+let _regulatoryModeGuardLoadError: string | null = null;
 async function getRegulatoryModeGuard() {
   if (!_regulatoryModeGuard) {
     try {
@@ -98,11 +98,10 @@ async function getRegulatoryModeGuard() {
       _regulatoryModeGuard =
         mod.default || mod.RegulatoryModeGuard || mod.regulatoryModeGuard || mod;
     } catch (e: unknown) {
-      logger.error('[AIPolicyEngine] regulatoryModeGuard not available');
-      _regulatoryModeGuard = {
-        isEnabled: (projectId: string) => Promise.resolve(false),
-        getRegulatoryPrompt: () => Promise.resolve(''),
-      };
+      const msg = (e as Error)?.message || String(e);
+      _regulatoryModeGuardLoadError = msg;
+      logger.warn('[AIPolicyEngine] regulatoryModeGuard not available:', msg);
+      _regulatoryModeGuard = null;
     }
   }
   return _regulatoryModeGuard;
@@ -134,6 +133,17 @@ const AIPolicyEngine = {
   ): Promise<EffectivePolicy> => {
     const RegulatoryModeGuard = await getRegulatoryModeGuard();
     const AIRoleGuard = await getAIRoleGuard();
+
+    if (projectId && (!RegulatoryModeGuard || !AIRoleGuard)) {
+      throw new AppError('AI policy guards are unavailable', 503, 'FEATURE_UNAVAILABLE', {
+        organizationId,
+        projectId,
+        aiRoleGuard: AIRoleGuard ? 'ok' : 'missing',
+        regulatoryModeGuard: RegulatoryModeGuard ? 'ok' : 'missing',
+        aiRoleGuardError: _aiRoleGuardLoadError || undefined,
+        regulatoryModeGuardError: _regulatoryModeGuardLoadError || undefined,
+      });
+    }
 
     // 0. REGULATORY MODE CHECK - Highest priority override
     if (projectId && RegulatoryModeGuard) {

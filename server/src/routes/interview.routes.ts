@@ -12,12 +12,12 @@ import { InterviewController } from '../controllers/InterviewController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { requireAnyPermission, requirePermission } from '../middleware/permission.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 
 const router = Router();
 
 // Middleware
-router.use(authRateLimiter);
+router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(demoContextMiddleware);
 
@@ -170,6 +170,13 @@ router.post(
   InterviewController.createTemplate
 );
 
+/** POST /interview/templates - Create new template */
+router.post(
+  '/templates',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.createTemplate
+);
+
 /** GET /interview/templates/:id - Get template metadata */
 router.get(
   '/templates/:id',
@@ -189,6 +196,13 @@ router.post(
   '/templates/:id/use',
   requirePermission('INTERVIEW_TEMPLATE_USE'),
   InterviewController.useTemplate
+);
+
+/** POST /interview/templates/:id/clone - Clone template */
+router.post(
+  '/templates/:id/clone',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.cloneTemplate
 );
 
 /** POST /interview/templates/:id/clone - Clone template */
@@ -255,6 +269,29 @@ router.post('/questions/:questionId/ai-suggest', InterviewController.aiSuggestQu
 
 /** POST /interview/sessions/:sessionId/ai-parse - Map chat transcript to answers */
 router.post('/sessions/:sessionId/ai-parse', InterviewController.aiParseSessionAnswers);
+
+// ==========================================
+// TRANSCRIPT ROUTES (T013 Conversational)
+// ==========================================
+
+/** GET /interview/sessions/:sessionId/transcript - Get transcript messages */
+router.get('/sessions/:sessionId/transcript', InterviewController.getTranscript);
+
+/** POST /interview/sessions/:sessionId/transcript - Add transcript message */
+router.post('/sessions/:sessionId/transcript', InterviewController.addTranscriptMessage);
+
+// ==========================================
+// INFERENCE ROUTES (T016 Structured Insights)
+// ==========================================
+
+/** POST /interview/inference/run - Start new inference run */
+router.post('/inference/run', InterviewController.startInferenceRun);
+
+/** GET /interview/inference/runs - List inference runs */
+router.get('/inference/runs', InterviewController.getInferenceRuns);
+
+/** GET /interview/inference/runs/:runId - Get inference run status */
+router.get('/inference/runs/:runId', InterviewController.getInferenceRun);
 
 // ==========================================
 // NOTES ROUTES

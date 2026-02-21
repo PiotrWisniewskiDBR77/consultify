@@ -17,9 +17,11 @@ export interface ChatSlice {
     selectedTier: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING' | null;
     // AI Modes (Tryby AI)
     deepResearch: boolean; // Głęboka analiza - dogłębne badanie tematu
+    marketResearch: boolean; // Badanie rynku - analiza rynkowa z danymi
     webSearch: boolean; // Wyszukiwanie web - dane w czasie rzeczywistym
     showReasoning: boolean; // Pokaż rozumowanie - widoczny tok myślenia AI
     multiAgent: boolean; // Analiza wieloagentowa - perspektywy CFO/CTO/CHRO/COO
+    coThinkerMode: string | null; // Tryb Co-Thinker - persona doradcza
     // Knowledge Sources (Źródła wiedzy)
     knowledgeSources: {
       pmoDocuments: boolean; // Dokumenty PMO - ISO 21500, PMBOK, PRINCE2
@@ -82,11 +84,13 @@ export const createChatSlice: StateCreator<AppState, [], [], ChatSlice> = (set) 
     selectedTier: 'STANDARD',
     // AI Modes
     deepResearch: false,
+    marketResearch: false,
     // Enable by default for Chat-like behavior on external queries.
     // Backend will gracefully degrade if web search is unavailable.
     webSearch: true,
     showReasoning: false,
     multiAgent: false,
+    coThinkerMode: null,
     // Knowledge Sources (default: use internal context where safe/useful)
     knowledgeSources: {
       pmoDocuments: true,

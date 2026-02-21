@@ -13,6 +13,8 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+const preferencesKey = (prefType: string) => `settings:${prefType}`;
+
 /**
  * GET /api/settings
  * Get system/user settings
@@ -23,7 +25,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const sql = `SELECT * FROM settings`;
-      const rows = await dbAll(sql, []);
+      const rows = await dbAll(sql, [], { fallback: false });
 
       // Convert to key-value object
       const settings: Record<string, any> = {};
@@ -54,10 +56,11 @@ router.post(
 
     try {
       const sql = `INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`;
-      const result = await dbRun(sql, [
-        key,
-        typeof value === 'object' ? JSON.stringify(value) : String(value),
-      ]);
+      const result = await dbRun(
+        sql,
+        [key, typeof value === 'object' ? JSON.stringify(value) : String(value)],
+        { fallback: false }
+      );
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to save setting');
@@ -78,21 +81,24 @@ router.post(
  * Ensure user_preferences table exists
  */
 const ensureUserPreferencesTable = async () => {
-  await dbRun(`
-        CREATE TABLE IF NOT EXISTS user_preferences (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL UNIQUE,
-            preferences_type TEXT NOT NULL,
-            preferences_data TEXT NOT NULL,
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now')),
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    `);
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_user_prefs_user ON user_preferences(user_id)`);
+  // Keep schema compatible with DatabaseInitializer (`user_id`, `key`, `value`, `updated_at`).
   await dbRun(
-    `CREATE INDEX IF NOT EXISTS idx_user_prefs_type ON user_preferences(preferences_type)`
+    `
+      CREATE TABLE IF NOT EXISTS user_preferences (
+        user_id TEXT NOT NULL,
+        key TEXT NOT NULL,
+        value TEXT NOT NULL,
+        updated_at TEXT DEFAULT (datetime('now')),
+        PRIMARY KEY (user_id, key),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `,
+    [],
+    { fallback: false }
   );
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_user_prefs_user ON user_preferences(user_id)`, [], {
+    fallback: false,
+  });
 };
 
 /**
@@ -113,9 +119,9 @@ router.get(
       await ensureUserPreferencesTable();
 
       const prefs = await dbGet<{ preferences_data: string }>(
-        `SELECT preferences_data FROM user_preferences 
-                 WHERE user_id = ? AND preferences_type = 'regional'`,
-        [userId]
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('regional')],
+        { fallback: false }
       );
 
       if (prefs?.preferences_data) {
@@ -163,28 +169,13 @@ router.put(
     try {
       await ensureUserPreferencesTable();
 
-      // Upsert preferences
-      const existing = await dbGet(
-        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'regional'`,
-        [userId]
+      const result = await dbRun(
+        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+         VALUES (?, ?, ?, datetime('now'))`,
+        [userId, preferencesKey('regional'), JSON.stringify(preferences)],
+        { fallback: false }
       );
-
-      if (existing) {
-        await dbRun(
-          `UPDATE user_preferences SET 
-                        preferences_data = ?,
-                        updated_at = datetime('now')
-                     WHERE user_id = ? AND preferences_type = 'regional'`,
-          [JSON.stringify(preferences), userId]
-        );
-      } else {
-        const { v4: uuidv4 } = await import('uuid');
-        await dbRun(
-          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
-                     VALUES (?, ?, 'regional', ?)`,
-          [uuidv4(), userId, JSON.stringify(preferences)]
-        );
-      }
+      if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] Regional preferences updated for user ${userId}`);
 
@@ -214,9 +205,9 @@ router.get(
       await ensureUserPreferencesTable();
 
       const prefs = await dbGet<{ preferences_data: string }>(
-        `SELECT preferences_data FROM user_preferences 
-                 WHERE user_id = ? AND preferences_type = 'notifications'`,
-        [userId]
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('notifications')],
+        { fallback: false }
       );
 
       if (prefs?.preferences_data) {
@@ -261,27 +252,13 @@ router.put(
     try {
       await ensureUserPreferencesTable();
 
-      const existing = await dbGet(
-        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'notifications'`,
-        [userId]
+      const result = await dbRun(
+        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+         VALUES (?, ?, ?, datetime('now'))`,
+        [userId, preferencesKey('notifications'), JSON.stringify(preferences)],
+        { fallback: false }
       );
-
-      if (existing) {
-        await dbRun(
-          `UPDATE user_preferences SET 
-                        preferences_data = ?,
-                        updated_at = datetime('now')
-                     WHERE user_id = ? AND preferences_type = 'notifications'`,
-          [JSON.stringify(preferences), userId]
-        );
-      } else {
-        const { v4: uuidv4 } = await import('uuid');
-        await dbRun(
-          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
-                     VALUES (?, ?, 'notifications', ?)`,
-          [uuidv4(), userId, JSON.stringify(preferences)]
-        );
-      }
+      if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] Notification preferences updated for user ${userId}`);
 
@@ -315,9 +292,9 @@ router.get(
       await ensureUserPreferencesTable();
 
       const prefs = await dbGet<{ preferences_data: string }>(
-        `SELECT preferences_data FROM user_preferences 
-                 WHERE user_id = ? AND preferences_type = 'quietHours'`,
-        [userId]
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('quietHours')],
+        { fallback: false }
       );
 
       if (prefs?.preferences_data) {
@@ -362,28 +339,13 @@ router.put(
 
     try {
       await ensureUserPreferencesTable();
-
-      const existing = await dbGet(
-        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'quietHours'`,
-        [userId]
+      const result = await dbRun(
+        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+         VALUES (?, ?, ?, datetime('now'))`,
+        [userId, preferencesKey('quietHours'), JSON.stringify(preferences)],
+        { fallback: false }
       );
-
-      if (existing) {
-        await dbRun(
-          `UPDATE user_preferences SET 
-                        preferences_data = ?,
-                        updated_at = datetime('now')
-                     WHERE user_id = ? AND preferences_type = 'quietHours'`,
-          [JSON.stringify(preferences), userId]
-        );
-      } else {
-        const { v4: uuidv4 } = await import('uuid');
-        await dbRun(
-          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
-                     VALUES (?, ?, 'quietHours', ?)`,
-          [uuidv4(), userId, JSON.stringify(preferences)]
-        );
-      }
+      if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] Quiet hours updated for user ${userId}`);
 
@@ -417,9 +379,9 @@ router.get(
       await ensureUserPreferencesTable();
 
       const prefs = await dbGet<{ preferences_data: string }>(
-        `SELECT preferences_data FROM user_preferences 
-                 WHERE user_id = ? AND preferences_type = 'dnd'`,
-        [userId]
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('dnd')],
+        { fallback: false }
       );
 
       if (prefs?.preferences_data) {
@@ -457,28 +419,13 @@ router.put(
       await ensureUserPreferencesTable();
 
       const data = JSON.stringify({ enabled, until });
-
-      const existing = await dbGet(
-        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'dnd'`,
-        [userId]
+      const result = await dbRun(
+        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+         VALUES (?, ?, ?, datetime('now'))`,
+        [userId, preferencesKey('dnd'), data],
+        { fallback: false }
       );
-
-      if (existing) {
-        await dbRun(
-          `UPDATE user_preferences SET 
-                        preferences_data = ?,
-                        updated_at = datetime('now')
-                     WHERE user_id = ? AND preferences_type = 'dnd'`,
-          [data, userId]
-        );
-      } else {
-        const { v4: uuidv4 } = await import('uuid');
-        await dbRun(
-          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
-                     VALUES (?, ?, 'dnd', ?)`,
-          [uuidv4(), userId, data]
-        );
-      }
+      if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] DND settings updated for user ${userId}`);
 
@@ -519,9 +466,9 @@ router.get(
       await ensureUserPreferencesTable();
 
       const prefs = await dbGet<{ preferences_data: string }>(
-        `SELECT preferences_data FROM user_preferences 
-                 WHERE user_id = ? AND preferences_type = 'notifications'`,
-        [userId]
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('notifications')],
+        { fallback: false }
       );
 
       if (prefs?.preferences_data) {
@@ -559,29 +506,14 @@ router.post(
     try {
       await ensureUserPreferencesTable();
 
-      const existing = await dbGet(
-        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'notifications'`,
-        [userId]
-      );
-
       const data = JSON.stringify(preferences);
-
-      if (existing) {
-        await dbRun(
-          `UPDATE user_preferences SET 
-                        preferences_data = ?, 
-                        updated_at = datetime('now')
-                     WHERE user_id = ? AND preferences_type = 'notifications'`,
-          [data, userId]
-        );
-      } else {
-        const { v4: uuidv4 } = await import('uuid');
-        await dbRun(
-          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
-                     VALUES (?, ?, 'notifications', ?)`,
-          [uuidv4(), userId, data]
-        );
-      }
+      const result = await dbRun(
+        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+         VALUES (?, ?, ?, datetime('now'))`,
+        [userId, preferencesKey('notifications'), data],
+        { fallback: false }
+      );
+      if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] Notification preferences updated for user ${userId}`);
       return res.json({ success: true });
@@ -621,9 +553,9 @@ router.get(
       await ensureUserPreferencesTable();
 
       const prefs = await dbGet<{ preferences_data: string }>(
-        `SELECT preferences_data FROM user_preferences 
-                 WHERE user_id = ? AND preferences_type = 'notification-sounds'`,
-        [userId]
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('notification-sounds')],
+        { fallback: false }
       );
 
       if (prefs?.preferences_data) {
@@ -656,29 +588,14 @@ router.put(
     try {
       await ensureUserPreferencesTable();
 
-      const existing = await dbGet(
-        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'notification-sounds'`,
-        [userId]
-      );
-
       const data = JSON.stringify(preferences || defaultSoundPreferences);
-
-      if (existing) {
-        await dbRun(
-          `UPDATE user_preferences SET 
-                        preferences_data = ?, 
-                        updated_at = datetime('now')
-                     WHERE user_id = ? AND preferences_type = 'notification-sounds'`,
-          [data, userId]
-        );
-      } else {
-        const { v4: uuidv4 } = await import('uuid');
-        await dbRun(
-          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
-                     VALUES (?, ?, 'notification-sounds', ?)`,
-          [uuidv4(), userId, data]
-        );
-      }
+      const result = await dbRun(
+        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+         VALUES (?, ?, ?, datetime('now'))`,
+        [userId, preferencesKey('notification-sounds'), data],
+        { fallback: false }
+      );
+      if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] Notification sounds updated for user ${userId}`);
       return res.json({ success: true });
@@ -717,9 +634,9 @@ router.get(
       await ensureUserPreferencesTable();
 
       const prefs = await dbGet<{ preferences_data: string }>(
-        `SELECT preferences_data FROM user_preferences 
-                 WHERE user_id = ? AND preferences_type = 'notification-digest'`,
-        [userId]
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('notification-digest')],
+        { fallback: false }
       );
 
       if (prefs?.preferences_data) {
@@ -752,29 +669,14 @@ router.put(
     try {
       await ensureUserPreferencesTable();
 
-      const existing = await dbGet(
-        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'notification-digest'`,
-        [userId]
-      );
-
       const data = JSON.stringify(preferences || defaultDigestPreferences);
-
-      if (existing) {
-        await dbRun(
-          `UPDATE user_preferences SET 
-                        preferences_data = ?, 
-                        updated_at = datetime('now')
-                     WHERE user_id = ? AND preferences_type = 'notification-digest'`,
-          [data, userId]
-        );
-      } else {
-        const { v4: uuidv4 } = await import('uuid');
-        await dbRun(
-          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
-                     VALUES (?, ?, 'notification-digest', ?)`,
-          [uuidv4(), userId, data]
-        );
-      }
+      const result = await dbRun(
+        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+         VALUES (?, ?, ?, datetime('now'))`,
+        [userId, preferencesKey('notification-digest'), data],
+        { fallback: false }
+      );
+      if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] Notification digest updated for user ${userId}`);
       return res.json({ success: true });
@@ -814,8 +716,9 @@ type IntegrationEntry = {
 const loadIntegrations = async (userId: string): Promise<IntegrationEntry[]> => {
   await ensureUserPreferencesTable();
   const row = await dbGet<{ preferences_data: string }>(
-    `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'integrations'`,
-    [userId]
+    `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+    [userId, preferencesKey('integrations')],
+    { fallback: false }
   );
   if (row?.preferences_data) {
     try {
@@ -829,23 +732,14 @@ const loadIntegrations = async (userId: string): Promise<IntegrationEntry[]> => 
 
 const saveIntegrations = async (userId: string, data: IntegrationEntry[]) => {
   await ensureUserPreferencesTable();
-  const existing = await dbGet(
-    `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'integrations'`,
-    [userId]
-  );
   const payload = JSON.stringify(data);
-  if (existing) {
-    await dbRun(
-      `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'integrations'`,
-      [payload, userId]
-    );
-  } else {
-    const { v4: uuidv4 } = await import('uuid');
-    await dbRun(
-      `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'integrations', ?)`,
-      [uuidv4(), userId, payload]
-    );
-  }
+  const result = await dbRun(
+    `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+     VALUES (?, ?, ?, datetime('now'))`,
+    [userId, preferencesKey('integrations'), payload],
+    { fallback: false }
+  );
+  if (!result.success) throw new Error(result.error || 'Failed to save integrations');
 };
 
 /**
@@ -1018,8 +912,9 @@ type CalendarConnection = {
 const loadCalendarConnections = async (userId: string): Promise<CalendarConnection[]> => {
   await ensureUserPreferencesTable();
   const row = await dbGet<{ preferences_data: string }>(
-    `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'calendar-connections'`,
-    [userId]
+    `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+    [userId, preferencesKey('calendar-connections')],
+    { fallback: false }
   );
   if (row?.preferences_data) {
     try {
@@ -1033,23 +928,14 @@ const loadCalendarConnections = async (userId: string): Promise<CalendarConnecti
 
 const saveCalendarConnections = async (userId: string, data: CalendarConnection[]) => {
   await ensureUserPreferencesTable();
-  const existing = await dbGet(
-    `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'calendar-connections'`,
-    [userId]
-  );
   const payload = JSON.stringify(data);
-  if (existing) {
-    await dbRun(
-      `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'calendar-connections'`,
-      [payload, userId]
-    );
-  } else {
-    const { v4: uuidv4 } = await import('uuid');
-    await dbRun(
-      `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'calendar-connections', ?)`,
-      [uuidv4(), userId, payload]
-    );
-  }
+  const result = await dbRun(
+    `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+     VALUES (?, ?, ?, datetime('now'))`,
+    [userId, preferencesKey('calendar-connections'), payload],
+    { fallback: false }
+  );
+  if (!result.success) throw new Error(result.error || 'Failed to save calendar connections');
 };
 
 /**
@@ -1140,8 +1026,9 @@ router.get(
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'calendar-settings'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('calendar-settings')],
+      { fallback: false }
     );
     if (row?.preferences_data) {
       try {
@@ -1167,23 +1054,14 @@ router.put(
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
     await ensureUserPreferencesTable();
-    const existing = await dbGet(
-      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'calendar-settings'`,
-      [userId]
-    );
     const payload = JSON.stringify(preferences);
-    if (existing) {
-      await dbRun(
-        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'calendar-settings'`,
-        [payload, userId]
-      );
-    } else {
-      const { v4: uuidv4 } = await import('uuid');
-      await dbRun(
-        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'calendar-settings', ?)`,
-        [uuidv4(), userId, payload]
-      );
-    }
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('calendar-settings'), payload],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     return res.json({ success: true });
   })
@@ -1214,8 +1092,9 @@ router.get(
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'privacy'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('privacy')],
+      { fallback: false }
     );
     if (row?.preferences_data) {
       try {
@@ -1244,23 +1123,14 @@ router.put(
     }
 
     await ensureUserPreferencesTable();
-    const existing = await dbGet(
-      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'privacy'`,
-      [userId]
-    );
     const payload = JSON.stringify(preferences);
-    if (existing) {
-      await dbRun(
-        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'privacy'`,
-        [payload, userId]
-      );
-    } else {
-      const { v4: uuidv4 } = await import('uuid');
-      await dbRun(
-        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'privacy', ?)`,
-        [uuidv4(), userId, payload]
-      );
-    }
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('privacy'), payload],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] Privacy preferences updated for user ${userId}`);
     return res.json({ success: true });
@@ -1300,8 +1170,9 @@ router.get(
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'accessibility'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('accessibility')],
+      { fallback: false }
     );
     if (row?.preferences_data) {
       try {
@@ -1326,23 +1197,14 @@ router.put(
     }
 
     await ensureUserPreferencesTable();
-    const existing = await dbGet(
-      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'accessibility'`,
-      [userId]
-    );
     const payload = JSON.stringify(preferences);
-    if (existing) {
-      await dbRun(
-        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'accessibility'`,
-        [payload, userId]
-      );
-    } else {
-      const { v4: uuidv4 } = await import('uuid');
-      await dbRun(
-        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'accessibility', ?)`,
-        [uuidv4(), userId, payload]
-      );
-    }
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('accessibility'), payload],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] Accessibility preferences updated for user ${userId}`);
     return res.json({ success: true });
@@ -1370,8 +1232,9 @@ router.get(
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'shortcuts'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('shortcuts')],
+      { fallback: false }
     );
     if (row?.preferences_data) {
       try {
@@ -1396,23 +1259,14 @@ router.put(
     }
 
     await ensureUserPreferencesTable();
-    const existing = await dbGet(
-      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'shortcuts'`,
-      [userId]
-    );
     const payload = JSON.stringify(shortcuts);
-    if (existing) {
-      await dbRun(
-        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'shortcuts'`,
-        [payload, userId]
-      );
-    } else {
-      const { v4: uuidv4 } = await import('uuid');
-      await dbRun(
-        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'shortcuts', ?)`,
-        [uuidv4(), userId, payload]
-      );
-    }
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('shortcuts'), payload],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] Shortcuts updated for user ${userId}`);
     return res.json({ success: true });
@@ -1494,8 +1348,9 @@ router.get(
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'gdpr-consents'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('gdpr-consents')],
+      { fallback: false }
     );
     if (row?.preferences_data) {
       try {
@@ -1519,23 +1374,14 @@ router.put(
       return res.status(400).json({ error: 'Invalid consents payload' });
 
     await ensureUserPreferencesTable();
-    const existing = await dbGet(
-      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'gdpr-consents'`,
-      [userId]
-    );
     const payload = JSON.stringify(consents);
-    if (existing) {
-      await dbRun(
-        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'gdpr-consents'`,
-        [payload, userId]
-      );
-    } else {
-      const { v4: uuidv4 } = await import('uuid');
-      await dbRun(
-        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'gdpr-consents', ?)`,
-        [uuidv4(), userId, payload]
-      );
-    }
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('gdpr-consents'), payload],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     return res.json({ success: true });
   })
@@ -1550,8 +1396,9 @@ router.get(
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'gdpr-retention'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('gdpr-retention')],
+      { fallback: false }
     );
     if (row?.preferences_data) {
       try {
@@ -1576,23 +1423,14 @@ router.put(
     }
 
     await ensureUserPreferencesTable();
-    const existing = await dbGet(
-      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'gdpr-retention'`,
-      [userId]
-    );
     const payload = JSON.stringify(retention);
-    if (existing) {
-      await dbRun(
-        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'gdpr-retention'`,
-        [payload, userId]
-      );
-    } else {
-      const { v4: uuidv4 } = await import('uuid');
-      await dbRun(
-        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'gdpr-retention', ?)`,
-        [uuidv4(), userId, payload]
-      );
-    }
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('gdpr-retention'), payload],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     return res.json({ success: true });
   })
@@ -1712,8 +1550,9 @@ router.post(
 
       // Get user preferences
       const preferences = await dbAll(
-        `SELECT preferences_type, preferences_data, created_at, updated_at FROM user_preferences WHERE user_id = ?`,
-        [userId]
+        `SELECT key, value, updated_at FROM user_preferences WHERE user_id = ?`,
+        [userId],
+        { fallback: false }
       );
 
       // Get email signatures
@@ -1735,10 +1574,15 @@ router.post(
         requestId,
         user,
         preferences: (preferences as any[]).map((p) => ({
-          type: p.preferences_type,
-          data: JSON.parse(p.preferences_data || '{}'),
-          createdAt: p.created_at,
-          updatedAt: p.updated_at,
+          key: p.key,
+          data: (() => {
+            try {
+              return JSON.parse(p.value || '{}');
+            } catch {
+              return p.value;
+            }
+          })(),
+          updatedAt: p.updated_at || null,
         })),
         emailSignatures: signatures,
         settingsTemplates: (templates as any[]).map((t) => ({
@@ -1972,9 +1816,9 @@ router.get(
       await ensureUserPreferencesTable();
 
       const prefs = await dbGet<{ preferences_data: string }>(
-        `SELECT preferences_data FROM user_preferences 
-                 WHERE user_id = ? AND preferences_type = 'dashboard'`,
-        [userId]
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('dashboard')],
+        { fallback: false }
       );
 
       if (prefs?.preferences_data) {
@@ -2027,28 +1871,13 @@ router.put(
 
     try {
       await ensureUserPreferencesTable();
-
-      const existing = await dbGet(
-        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'dashboard'`,
-        [userId]
+      const result = await dbRun(
+        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+         VALUES (?, ?, ?, datetime('now'))`,
+        [userId, preferencesKey('dashboard'), JSON.stringify(preferences)],
+        { fallback: false }
       );
-
-      if (existing) {
-        await dbRun(
-          `UPDATE user_preferences SET 
-                        preferences_data = ?,
-                        updated_at = datetime('now')
-                     WHERE user_id = ? AND preferences_type = 'dashboard'`,
-          [JSON.stringify(preferences), userId]
-        );
-      } else {
-        const { v4: uuidv4 } = await import('uuid');
-        await dbRun(
-          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
-                     VALUES (?, ?, 'dashboard', ?)`,
-          [uuidv4(), userId, JSON.stringify(preferences)]
-        );
-      }
+      if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] Dashboard preferences updated for user ${userId}`);
 
@@ -2082,9 +1911,9 @@ router.get(
       await ensureUserPreferencesTable();
 
       const prefs = await dbGet<{ preferences_data: string }>(
-        `SELECT preferences_data FROM user_preferences 
-                 WHERE user_id = ? AND preferences_type = 'work'`,
-        [userId]
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('work')],
+        { fallback: false }
       );
 
       if (prefs?.preferences_data) {
@@ -2139,28 +1968,13 @@ router.put(
 
     try {
       await ensureUserPreferencesTable();
-
-      const existing = await dbGet(
-        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'work'`,
-        [userId]
+      const result = await dbRun(
+        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+         VALUES (?, ?, ?, datetime('now'))`,
+        [userId, preferencesKey('work'), JSON.stringify(preferences)],
+        { fallback: false }
       );
-
-      if (existing) {
-        await dbRun(
-          `UPDATE user_preferences SET 
-                        preferences_data = ?,
-                        updated_at = datetime('now')
-                     WHERE user_id = ? AND preferences_type = 'work'`,
-          [JSON.stringify(preferences), userId]
-        );
-      } else {
-        const { v4: uuidv4 } = await import('uuid');
-        await dbRun(
-          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
-                     VALUES (?, ?, 'work', ?)`,
-          [uuidv4(), userId, JSON.stringify(preferences)]
-        );
-      }
+      if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] Work preferences updated for user ${userId}`);
 
@@ -2194,9 +2008,9 @@ router.get(
       await ensureUserPreferencesTable();
 
       const prefs = await dbGet<{ preferences_data: string }>(
-        `SELECT preferences_data FROM user_preferences 
-                 WHERE user_id = ? AND preferences_type = 'working-hours'`,
-        [userId]
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('working-hours')],
+        { fallback: false }
       );
 
       if (prefs?.preferences_data) {
@@ -2247,28 +2061,13 @@ router.put(
       await ensureUserPreferencesTable();
 
       const data = JSON.stringify({ timezone, schedule });
-
-      const existing = await dbGet(
-        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'working-hours'`,
-        [userId]
+      const result = await dbRun(
+        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+         VALUES (?, ?, ?, datetime('now'))`,
+        [userId, preferencesKey('working-hours'), data],
+        { fallback: false }
       );
-
-      if (existing) {
-        await dbRun(
-          `UPDATE user_preferences SET 
-                        preferences_data = ?,
-                        updated_at = datetime('now')
-                     WHERE user_id = ? AND preferences_type = 'working-hours'`,
-          [data, userId]
-        );
-      } else {
-        const { v4: uuidv4 } = await import('uuid');
-        await dbRun(
-          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data)
-                     VALUES (?, ?, 'working-hours', ?)`,
-          [uuidv4(), userId, data]
-        );
-      }
+      if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] Working hours updated for user ${userId}`);
 
@@ -2577,8 +2376,9 @@ router.get(
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-instructions'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('ai-instructions')],
+      { fallback: false }
     );
     if (row?.preferences_data) {
       try {
@@ -2606,23 +2406,14 @@ router.put(
     }
 
     await ensureUserPreferencesTable();
-    const existing = await dbGet(
-      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-instructions'`,
-      [userId]
-    );
     const payload = JSON.stringify(preferences);
-    if (existing) {
-      await dbRun(
-        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-instructions'`,
-        [payload, userId]
-      );
-    } else {
-      const { v4: uuidv4 } = await import('uuid');
-      await dbRun(
-        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-instructions', ?)`,
-        [uuidv4(), userId, payload]
-      );
-    }
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('ai-instructions'), payload],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] AI instructions updated for user ${userId}`);
     return res.json({ success: true });
@@ -2641,8 +2432,9 @@ router.get(
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-model'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('ai-model')],
+      { fallback: false }
     );
     if (row?.preferences_data) {
       try {
@@ -2670,23 +2462,14 @@ router.put(
     }
 
     await ensureUserPreferencesTable();
-    const existing = await dbGet(
-      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-model'`,
-      [userId]
-    );
     const payload = JSON.stringify(preferences);
-    if (existing) {
-      await dbRun(
-        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-model'`,
-        [payload, userId]
-      );
-    } else {
-      const { v4: uuidv4 } = await import('uuid');
-      await dbRun(
-        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-model', ?)`,
-        [uuidv4(), userId, payload]
-      );
-    }
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('ai-model'), payload],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] AI model preferences updated for user ${userId}`);
     return res.json({ success: true });
@@ -2705,8 +2488,9 @@ router.get(
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-parameters'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('ai-parameters')],
+      { fallback: false }
     );
     if (row?.preferences_data) {
       try {
@@ -2734,23 +2518,14 @@ router.put(
     }
 
     await ensureUserPreferencesTable();
-    const existing = await dbGet(
-      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-parameters'`,
-      [userId]
-    );
     const payload = JSON.stringify(preferences);
-    if (existing) {
-      await dbRun(
-        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-parameters'`,
-        [payload, userId]
-      );
-    } else {
-      const { v4: uuidv4 } = await import('uuid');
-      await dbRun(
-        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-parameters', ?)`,
-        [uuidv4(), userId, payload]
-      );
-    }
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('ai-parameters'), payload],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] AI parameters updated for user ${userId}`);
     return res.json({ success: true });
@@ -2769,8 +2544,9 @@ router.get(
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-personality'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('ai-personality')],
+      { fallback: false }
     );
     if (row?.preferences_data) {
       try {
@@ -2798,23 +2574,14 @@ router.put(
     }
 
     await ensureUserPreferencesTable();
-    const existing = await dbGet(
-      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-personality'`,
-      [userId]
-    );
     const payload = JSON.stringify(preferences);
-    if (existing) {
-      await dbRun(
-        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-personality'`,
-        [payload, userId]
-      );
-    } else {
-      const { v4: uuidv4 } = await import('uuid');
-      await dbRun(
-        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-personality', ?)`,
-        [uuidv4(), userId, payload]
-      );
-    }
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('ai-personality'), payload],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] AI personality updated for user ${userId}`);
     return res.json({ success: true });
@@ -2833,8 +2600,9 @@ router.get(
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-autocomplete'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('ai-autocomplete')],
+      { fallback: false }
     );
     if (row?.preferences_data) {
       try {
@@ -2862,23 +2630,14 @@ router.put(
     }
 
     await ensureUserPreferencesTable();
-    const existing = await dbGet(
-      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-autocomplete'`,
-      [userId]
-    );
     const payload = JSON.stringify(preferences);
-    if (existing) {
-      await dbRun(
-        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-autocomplete'`,
-        [payload, userId]
-      );
-    } else {
-      const { v4: uuidv4 } = await import('uuid');
-      await dbRun(
-        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-autocomplete', ?)`,
-        [uuidv4(), userId, payload]
-      );
-    }
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('ai-autocomplete'), payload],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] AI autocomplete updated for user ${userId}`);
     return res.json({ success: true });
@@ -2897,8 +2656,9 @@ router.get(
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-memory'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('ai-memory')],
+      { fallback: false }
     );
     if (row?.preferences_data) {
       try {
@@ -2926,23 +2686,14 @@ router.put(
     }
 
     await ensureUserPreferencesTable();
-    const existing = await dbGet(
-      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-memory'`,
-      [userId]
-    );
     const payload = JSON.stringify(preferences);
-    if (existing) {
-      await dbRun(
-        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-memory'`,
-        [payload, userId]
-      );
-    } else {
-      const { v4: uuidv4 } = await import('uuid');
-      await dbRun(
-        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-memory', ?)`,
-        [uuidv4(), userId, payload]
-      );
-    }
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('ai-memory'), payload],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] AI memory preferences updated for user ${userId}`);
     return res.json({ success: true });
@@ -2984,8 +2735,9 @@ router.get(
 
     await ensureUserPreferencesTable();
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-voice'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('ai-voice')],
+      { fallback: false }
     );
     if (row?.preferences_data) {
       try {
@@ -3013,23 +2765,14 @@ router.put(
     }
 
     await ensureUserPreferencesTable();
-    const existing = await dbGet(
-      `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = 'ai-voice'`,
-      [userId]
-    );
     const payload = JSON.stringify(preferences);
-    if (existing) {
-      await dbRun(
-        `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') WHERE user_id = ? AND preferences_type = 'ai-voice'`,
-        [payload, userId]
-      );
-    } else {
-      const { v4: uuidv4 } = await import('uuid');
-      await dbRun(
-        `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, 'ai-voice', ?)`,
-        [uuidv4(), userId, payload]
-      );
-    }
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('ai-voice'), payload],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] AI voice preferences updated for user ${userId}`);
     return res.json({ success: true });
@@ -3455,18 +3198,20 @@ router.post(
 
     // Get all user preferences
     const preferences = await dbAll(
-      `SELECT preferences_type, preferences_data FROM user_preferences WHERE user_id = ?`,
-      [userId]
+      `SELECT key, value FROM user_preferences WHERE user_id = ?`,
+      [userId],
+      { fallback: false }
     );
 
     const exportData: Record<string, any> = {};
-    for (const pref of preferences as { preferences_type: string; preferences_data: string }[]) {
+    for (const pref of preferences as { key: string; value: string }[]) {
+      const type = pref.key.startsWith('settings:') ? pref.key.slice('settings:'.length) : pref.key;
       // Filter by categories if specified
-      if (categories && !categories.includes(pref.preferences_type)) continue;
+      if (categories && !categories.includes(type)) continue;
       try {
-        exportData[pref.preferences_type] = JSON.parse(pref.preferences_data);
+        exportData[type] = JSON.parse(pref.value);
       } catch {
-        exportData[pref.preferences_type] = pref.preferences_data;
+        exportData[type] = pref.value;
       }
     }
 
@@ -3501,8 +3246,9 @@ router.post(
 
     for (const [type, value] of Object.entries(data.settings)) {
       const existing = await dbGet(
-        `SELECT id FROM user_preferences WHERE user_id = ? AND preferences_type = ?`,
-        [userId, type]
+        `SELECT 1 AS ok FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey(type)],
+        { fallback: false }
       );
 
       if (existing && !overwrite) {
@@ -3511,20 +3257,13 @@ router.post(
       }
 
       const payload = JSON.stringify(value);
-
-      if (existing) {
-        await dbRun(
-          `UPDATE user_preferences SET preferences_data = ?, updated_at = datetime('now') 
-                     WHERE user_id = ? AND preferences_type = ?`,
-          [payload, userId, type]
-        );
-      } else {
-        const { v4: uuidv4 } = await import('uuid');
-        await dbRun(
-          `INSERT INTO user_preferences (id, user_id, preferences_type, preferences_data) VALUES (?, ?, ?, ?)`,
-          [uuidv4(), userId, type, payload]
-        );
-      }
+      const result = await dbRun(
+        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+         VALUES (?, ?, ?, datetime('now'))`,
+        [userId, preferencesKey(type), payload],
+        { fallback: false }
+      );
+      if (!result.success) throw new Error(result.error || 'Failed to import preference');
       imported.push(type);
     }
 
@@ -3927,8 +3666,9 @@ router.get(
     await ensureUserPreferencesTable();
 
     const row = await dbGet<{ preferences_data: string }>(
-      `SELECT preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'appearance'`,
-      [userId]
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('appearance')],
+      { fallback: false }
     );
 
     const defaultPreferences = {
@@ -3970,9 +3710,10 @@ router.put(
     await ensureUserPreferencesTable();
 
     // Get existing preferences
-    const existing = await dbGet<{ preferences_data: string; id: string }>(
-      `SELECT id, preferences_data FROM user_preferences WHERE user_id = ? AND preferences_type = 'appearance'`,
-      [userId]
+    const existing = await dbGet<{ preferences_data: string }>(
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('appearance')],
+      { fallback: false }
     );
 
     let merged = preferences;
@@ -3985,14 +3726,13 @@ router.put(
       }
     }
 
-    const { v4: uuidv4 } = await import('uuid');
-    const id = existing?.id || uuidv4();
-
-    await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (id, user_id, preferences_type, preferences_data, updated_at)
-             VALUES (?, ?, 'appearance', ?, datetime('now'))`,
-      [id, userId, JSON.stringify(merged)]
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('appearance'), JSON.stringify(merged)],
+      { fallback: false }
     );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     // Log to audit
     await logSettingsChange(userId, 'appearance', 'preferences', 'updated', null, merged);
@@ -4232,6 +3972,75 @@ router.get(
     } catch {
       // Tables might not exist
       return res.json({ history: [] });
+    }
+  })
+);
+
+// ===========================================
+// CONNECTED ACCOUNTS (T112)
+// ===========================================
+
+/**
+ * GET /api/settings/connected-accounts
+ * Returns list of OAuth-connected providers for current user
+ */
+router.get(
+  '/connected-accounts',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+    try {
+      const { oauthService } = await import('../services/oauthService.js');
+      const accounts = await oauthService.getConnectedAccounts(userId);
+      return res.json({ accounts });
+    } catch (err: any) {
+      logger.error(`[settings] Failed to get connected accounts: ${err.message}`);
+      return res.json({ accounts: [] });
+    }
+  })
+);
+
+/**
+ * DELETE /api/settings/connected-accounts/:provider
+ * Disconnect a provider (e.g. linkedin, google)
+ */
+router.delete(
+  '/connected-accounts/:provider',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { provider } = req.params;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+    try {
+      const { oauthService } = await import('../services/oauthService.js');
+      const result = await oauthService.disconnectAccount(provider, userId);
+
+      if ('error' in result) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      // Log security event
+      try {
+        const { securityService } = await import('../services/securityService.js');
+        await securityService.logSecurityEvent({
+          userId,
+          eventType: 'oauth_unlinked',
+          severity: 'info',
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent'),
+          details: { provider },
+        });
+      } catch {
+        // non-fatal
+      }
+
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error(`[settings] Failed to disconnect ${provider}: ${err.message}`);
+      return res.status(500).json({ error: 'Failed to disconnect account' });
     }
   })
 );

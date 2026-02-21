@@ -1,5 +1,6 @@
 import type { Express } from 'express';
 
+import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
@@ -20,13 +21,14 @@ import aiInfrastructureRoutes from './routes/ai/ai-infrastructure.routes.js';
 import aiMemoryRoutes from './routes/ai/ai-memory.routes.js';
 import aiOperationsRoutes from './routes/ai/ai-operations.routes.js';
 import aiPreferencesExtendedRoutes from './routes/ai/ai-preferences-extended.routes.js';
-import aiPromptsRoutes from './routes/ai/ai-prompts.routes.js';
 import aiSecurityRoutes from './routes/ai/ai-security.routes.js';
 import aiSettingsRoutes from './routes/ai/ai-settings.routes.js';
 import aiTrainingRoutes from './routes/ai/ai-training.routes.js';
 import aiAnalyticsRoutesV2 from './routes/ai/aiAnalytics.routes.js';
 import aiAsyncRoutes from './routes/ai/aiAsync.routes.js';
 import aiDomainRoutes from './routes/ai/index.js';
+import aiGovernanceRoutes from './routes/ai-governance.routes.js';
+import aiPromptsRoutes from './routes/ai-prompts.routes.js';
 import aiSuggestionsRoutes from './routes/ai-suggestions.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import analyticsSuperadminRoutes from './routes/analytics-superadmin.routes.js';
@@ -45,29 +47,41 @@ import auditLogRoutes from './routes/auditLog.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import backupRoutes from './routes/backup.routes.js';
 import baselinesRoutes from './routes/baselines.routes.js';
+import benefitsRoutes from './routes/benefits.routes.js';
 import billingRoutes from './routes/billing/billing.routes.js';
+import billingAdminRoutes from './routes/billing/billingAdmin.routes.js';
 import pricingRoutes from './routes/billing/pricing.routes.js';
 import promoRoutes from './routes/billing/promo.routes.js';
 import settlementRoutes from './routes/billing/settlements.routes.js';
 import tokenBillingRoutes from './routes/billing/tokenBilling.routes.js';
 import budgetRoutes from './routes/budget.routes.js';
 import budgetsRoutes from './routes/budgets.routes.js';
+import capabilityRoutes from './routes/capability.routes.js';
+import changeSentimentRoutes from './routes/change-sentiment.routes.js';
 import chatProjectsRoutes from './routes/chat-projects.routes.js';
+import cloudRoutes from './routes/cloud.routes.js';
+import competencyRoutes from './routes/competency.routes.js';
 import complianceRoutes from './routes/compliance.routes.js';
 import consultantProjectAccessRoutes from './routes/consultant-project-access.routes.js';
 import consultantRoutes from './routes/consultants.routes.js';
 import contentRoutes from './routes/content.routes.js';
 import contextRoutes from './routes/context.routes.js';
 import conversationsRoutes from './routes/conversations.routes.js';
+import coreDocsRoutes from './routes/core-docs.routes.js';
+import cvMatchingRoutes from './routes/cv-matching.routes.js';
 import dailyBriefRoutes from './routes/daily-brief.routes.js';
 import dataExportRoutes from './routes/dataExport.routes.js';
 import demoRoutes from './routes/demo.routes.js';
 import documentRoutes from './routes/documents.routes.js';
 import economicsRoutes from './routes/economics.routes.js';
+import executionControlRoutes from './routes/executionControl.routes.js';
 import externalAssessmentsRoutes from './routes/external-assessments.routes.js';
 import featureFlagsRoutes from './routes/featureFlags.routes.js';
 import featureFlagRoutes from './routes/featureFlags.routes.js';
+import featureUpdatesRoutes from './routes/featureUpdates.routes.js';
 import feedbackRoutes from './routes/feedback.routes.js';
+import financeStatementsRoutes from './routes/finance-statements.routes.js';
+import financialModelingRoutes from './routes/financial-modeling.routes.js';
 import gamificationRoutes from './routes/gamification.routes.js';
 import gdprRoutes from './routes/gdpr.routes.js';
 import genericReportsRoutes from './routes/generic-reports.routes.js';
@@ -89,6 +103,7 @@ import interviewRoutes from './routes/interview.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
 import knowledgeBaseRoutes from './routes/knowledgeBase.routes.js';
+import knownToolsRoutes from './routes/knownTools.routes.js';
 import legalRoutes from './routes/legal.routes.js';
 import llmRoutes from './routes/llm.routes.js';
 import locationsRoutes from './routes/locations.routes.js';
@@ -115,6 +130,7 @@ import organizationProfilesRoutes from './routes/organization/organization-profi
 import organizationRoutes from './routes/organization/organizations.routes.js';
 import rbacRoutes from './routes/organization/rbac.routes.js';
 import teamsRoutes from './routes/organization/teams.routes.js';
+import partnerOutreachRoutes from './routes/partnerOutreach.routes.js';
 import partnerRoutes, {
   partnerConfigRouter,
   publicPartnerRouter,
@@ -139,8 +155,12 @@ import projectRoutes from './routes/pmo/projects.routes.js';
 import roadmapRoutes from './routes/pmo/roadmap.routes.js';
 import taskRoutes from './routes/pmo/tasks.routes.js';
 import workstreamsRoutes from './routes/pmo/workstreams.routes.js';
+import portfolioOptimizationRoutes from './routes/portfolioOptimization.routes.js';
 import premiumReportsRoutes from './routes/premiumReports.routes.js';
+import presentationsRoutes from './routes/presentations.routes.js';
 import promptAssistantRoutes from './routes/prompt-assistant.routes.js';
+import publicMiniAssessmentRoutes from './routes/public-mini-assessment.routes.js';
+import publicOutreachRoutes from './routes/public-outreach.routes.js';
 import raidRoutes from './routes/raid.routes.js';
 import rapidleanRoutes from './routes/rapidlean.routes.js';
 import referralRoutes from './routes/referrals.routes.js';
@@ -157,12 +177,16 @@ import scheduledReportsRoutes from './routes/scheduled-reports.routes.js';
 import securityRoutes from './routes/security.routes.js';
 import securityPoliciesRoutes from './routes/securityPolicies.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
+import skillsGapRoutes from './routes/skills-gap.routes.js';
+import sponsorReportsRoutes from './routes/sponsor-reports.routes.js';
 import stabilizationRoutes from './routes/stabilization.routes.js';
 import stageGatesRoutes from './routes/stageGates.routes.js';
+import stakeholderCommRoutes from './routes/stakeholder-comm.routes.js';
 import statusRoutes from './routes/status.routes.js';
 import statusReportsRoutes from './routes/status-reports.routes.js';
 import studioRoutes from './routes/studio.routes.js';
 import superAdminRoutes from './routes/superadmin.routes.js';
+import syncHubRoutes from './routes/syncHub.routes.js';
 import systemConfigRoutes from './routes/systemConfig.routes.js';
 import systemHealthRoutes from './routes/systemHealth.routes.js';
 import taskAdvisorRoutes from './routes/task-advisor.routes.js';
@@ -233,6 +257,7 @@ export class ApiGateway {
       app.use('/api/auth', authRoutes);
       console.log('[ApiGateway] Mounting /api/billing');
       app.use('/api/billing', billingRoutes);
+      app.use('/api/superadmin/billing', billingAdminRoutes);
       app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
       console.log('[ApiGateway] Mounting /api/ai');
       app.use('/api/ai', aiRoutes);
@@ -241,6 +266,10 @@ export class ApiGateway {
       app.use('/api/ai/performance', performanceRoutes);
       console.log('[ApiGateway] Mounting /api/tools');
       app.use('/api/tools', toolsRoutes);
+      console.log('[ApiGateway] Mounting /api/known-tools');
+      app.use('/api/known-tools', knownToolsRoutes);
+      console.log('[ApiGateway] Mounting /api/portfolio-optimization');
+      app.use('/api/portfolio-optimization', portfolioOptimizationRoutes);
       console.log('[ApiGateway] Mounting /api/assessment-workflow');
       app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
       console.log('[ApiGateway] Mounting /api/assessment-workflow-v2');
@@ -250,6 +279,9 @@ export class ApiGateway {
       console.log('[ApiGateway] Mounting /api/admin-data');
       app.use('/api/admin-data', adminDataRoutes);
       app.use('/api/admin', adminBulkRoutes);
+
+      // T113: API request logging (no PII)
+      app.use(apiLoggingMiddleware);
 
       // Demo Mode middleware - switches context and protects against writes
       app.use(demoContextMiddleware);
@@ -297,6 +329,10 @@ export class ApiGateway {
       app.use('/api/ai-memory', aiMemoryRoutes);
       app.use('/api/ai-drafts', aiDraftsRoutes);
       app.use('/api/ai-prompts', aiPromptsRoutes);
+      app.use('/api/ai/prompts', aiPromptsRoutes);
+      app.use('/api/ai-governance', aiGovernanceRoutes);
+      app.use('/api/admin/ai/governance', aiGovernanceRoutes);
+      app.use('/api/settings/ai', aiGovernanceRoutes);
       app.use('/api/ai-security', aiSecurityRoutes);
       app.use('/api/ai-settings', aiSettingsRoutes);
       app.use('/api/ai-budgets', aiBudgetsRoutes);
@@ -320,6 +356,9 @@ export class ApiGateway {
       // Admin routes
       app.use('/api/superadmin', superAdminRoutes);
       app.use('/api/superadmin', resourceManagementRoutes);
+
+      // Test support (hard-gated: NODE_ENV=test + ENABLE_TEST_SUPPORT=true + secret key)
+      app.use('/api/test-support', testSupportRoutes);
       app.use('/api/admin', resourceManagementRoutes);
       mountStub('/api/audit-logs', auditLogRoutes, 'auditLogRoutes');
       mountStub('/api/feature-flags', featureFlagsRoutes, 'featureFlagsRoutes');
@@ -339,6 +378,12 @@ export class ApiGateway {
       app.use('/api/notifications', notificationRoutes);
       app.use('/api/analytics', analyticsRoutes);
       app.use('/api/feedback', feedbackRoutes);
+      app.use('/api/capabilities', capabilityRoutes);
+      app.use('/api/competency', competencyRoutes);
+      app.use('/api/cv-matching', cvMatchingRoutes);
+      app.use('/api/skills-gap', skillsGapRoutes);
+      app.use('/api/change-sentiment', changeSentimentRoutes);
+      app.use('/api/stakeholder-comm', stakeholderCommRoutes);
       app.use('/api/access-control', accessControlRoutes);
       mountStub('/api/permission-requests', permissionRequestsRoutes, 'permissionRequestsRoutes');
 
@@ -350,6 +395,7 @@ export class ApiGateway {
       app.use('/api/revenue', revenueRoutes);
       console.log('[ApiGateway] Mounting /api/revenue');
       app.use('/api/superadmin/analytics', analyticsSuperadminRoutes);
+      app.use('/api/superadmin/ai/core-docs', coreDocsRoutes);
       console.log('[ApiGateway] Mounting /api/superadmin/analytics');
       app.use('/api/token-billing', tokenBillingRoutes);
       app.use('/api/budgets', budgetsRoutes);
@@ -377,7 +423,7 @@ export class ApiGateway {
 
       // User management routes
       app.use('/api/onboarding', onboardingRoutes);
-      mountStub('/api/analytics/journey', journeyAnalyticsRoutes, 'journeyAnalyticsRoutes');
+      app.use('/api/analytics/journey', journeyAnalyticsRoutes);
       mountStub('/api/referrals', referralRoutes, 'referralRoutes');
       mountStub('/api/consultants', consultantRoutes, 'consultantRoutes');
       app.use('/api/consultant-project-access', consultantProjectAccessRoutes);
@@ -389,6 +435,7 @@ export class ApiGateway {
       app.use('/api/gamification', gamificationRoutes);
       app.use('/api/analytics/advanced', advancedAnalyticsRoutes);
       app.use('/api/trial', trialRoutes);
+      app.use('/api/cloud', cloudRoutes);
       app.use('/api/rbac', rbacRoutes);
       app.use('/api/branding', brandingRoutes);
       mountStub('/api/workspace-defaults', workspaceDefaultsRoutes, 'workspaceDefaultsRoutes');
@@ -439,9 +486,8 @@ export class ApiGateway {
       app.use('/api/pmo/initiatives', initiativesRoutes);
       app.use('/api/pmo/tasks', taskRoutes);
       app.use('/api/pmo-domains', pmoDomainsRoutes);
-      // The project-members router is currently a stub (returns 501). Mount it on a dedicated prefix
-      // so it doesn't interfere with the real /api/projects routes.
-      mountStub('/api/project-members', projectMembersRoutes, 'projectMembersRoutes');
+      // Compatibility mount for legacy clients.
+      app.use('/api/project-members', projectMembersRoutes);
       app.use('/api', workstreamsRoutes);
       mountStub('/api/org/work-mode', workModeRoutes, 'workModeRoutes');
       app.use('/api/pmo-roles', pmoRolesRoutes);
@@ -470,6 +516,7 @@ export class ApiGateway {
         economicsRoutes?.stack?.length
       );
       app.use('/api/economics', economicsRoutes);
+      app.use('/api/presentations', presentationsRoutes);
       mountStub('/api/locations', locationsRoutes, 'locationsRoutes');
       mountStub(
         '/api/notification-settings',
@@ -487,14 +534,18 @@ export class ApiGateway {
       mountStub('/api/promo', promoRoutes, 'promoRoutes');
       app.use('/api/partners', partnerRoutes);
       app.use('/api/public/partner', publicPartnerRouter); // Public partner code validation
+      app.use('/api/public/outreach', publicOutreachRoutes); // Public one-click unsubscribe + tracking
       app.use('/api/public/report', reportBuilderPublicRoutes); // Public shared reports
+      app.use('/api/public/mini-assessment', publicMiniAssessmentRoutes); // Public mini assessment links
       app.use('/api/superadmin/partner-settlements', superAdminPartnerRouter); // SuperAdmin partner settlements
       app.use('/api/superadmin/partner-config', partnerConfigRouter); // SuperAdmin partner configuration
+      app.use('/api/superadmin/partner-outreach', partnerOutreachRoutes); // SuperAdmin partner outreach campaigns
       mountStub('/api/settlements', settlementRoutes, 'settlementRoutes');
       app.use('/api/access-codes', accessCodeRoutes);
       app.use('/api/help', helpRoutes);
       mountStub('/api/help', helpFeedbackRoutes, 'helpFeedbackRoutes');
       app.use('/api/help', helpChatRoutes);
+      app.use('/api/updates', featureUpdatesRoutes);
       mountStub('/api/help-analytics', helpAnalyticsRoutes, 'helpAnalyticsRoutes');
       mountStub('/api/videos', videoRoutes, 'videoRoutes');
       mountStub('/api/status', statusRoutes, 'statusRoutes');
@@ -503,8 +554,10 @@ export class ApiGateway {
       app.use('/api/preferences', preferencesRoutes);
       mountStub('/api/features', featureFlagRoutes, 'featureFlagRoutes');
       app.use('/api/webhooks/subscriptions', webhookSubRoutes);
+      app.use('/api/sync-hub', syncHubRoutes);
       app.use('/api/studio', studioRoutes);
       app.use('/api/intelligence', intelligenceRoutes);
+      app.use('/api/sponsor-reports', sponsorReportsRoutes);
       app.use('/api/interview', interviewRoutes);
       app.use('/api/agents', agentsRoutes);
       mountStub('/api/workqueue', workqueueRoutes, 'workqueueRoutes');
@@ -512,7 +565,12 @@ export class ApiGateway {
       mountStub('/api/audit', auditRoutes, 'auditRoutes');
       app.use('/api/mfa', mfaRoutes);
       mountStub('/api/raid', raidRoutes, 'raidRoutes');
+      app.use('/api/execution-control', executionControlRoutes);
+      app.use('/api/portfolio-optimization', portfolioOptimizationRoutes);
       mountStub('/api/budget', budgetRoutes, 'budgetRoutes');
+      app.use('/api/benefits', benefitsRoutes);
+      app.use('/api/finance-statements', financeStatementsRoutes);
+      app.use('/api/financial-modeling', financialModelingRoutes);
       app.use('/api/content', contentRoutes);
 
       // Catch-all RBAC or 404 for /api

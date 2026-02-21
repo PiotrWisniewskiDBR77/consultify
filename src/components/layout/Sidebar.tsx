@@ -323,10 +323,10 @@ export const Sidebar: React.FC = () => {
       viewId: AppView.DISCOVERY_TOOLS,
       badge: 'new',
     },
-    // 4. Assessment - sformalizowane procesy oceny (wybór frameworka wewnątrz modułu)
+    // 4. Licensed Tools (Assessment module) - DRD/SIRI/ADMA/Lean
     {
       id: 'MODULE_ASSESSMENT',
-      label: t('sidebar.assessment', 'Assessment'),
+      label: t('licensedTools.moduleName', 'Licensed Tools'),
       icon: <CheckCircle2 size={20} />,
       viewId: AppView.ASSESSMENT_OVERVIEW,
     },
@@ -571,6 +571,7 @@ export const Sidebar: React.FC = () => {
     const getViewName = (view: AppView): string => {
       const viewNames: Record<string, string> = {
         [AppView.FULL_STEP1_ASSESSMENT]: t('sidebar.assessmentDRD'),
+        [AppView.ASSESSMENT_OVERVIEW]: t('licensedTools.moduleName', 'Licensed Tools'),
         [AppView.FULL_STEP2_INITIATIVES]: t('sidebar.module3_1'),
         [AppView.PORTFOLIO_ROADMAP]: t('sidebar.portfolioRoadmap', 'Portfolio & Roadmap'),
         [AppView.FULL_STEP5_EXECUTION]: t('sidebar.realization'),

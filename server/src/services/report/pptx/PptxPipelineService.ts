@@ -8,8 +8,7 @@
  * The old service remains as v1 fallback.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const PptxGenJS: any = require('pptxgenjs');
+import { createRequire } from 'module';
 
 import logger from '../../../utils/Logger.js';
 import { getDesignTokens } from './designTokens.js';
@@ -23,6 +22,9 @@ import type {
   ValidationResult,
 } from './types.js';
 import { type TransformOptions, transformToUnifiedJson } from './UnifiedJsonTransformer.js';
+
+const require = createRequire(import.meta.url);
+const PptxGenJS: any = require('pptxgenjs');
 
 // ============================================================
 // MASTER SLIDE DEFINITIONS

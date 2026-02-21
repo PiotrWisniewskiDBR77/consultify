@@ -1,6 +1,11 @@
 /**
- * Report Generation Cron - Stub
- * Placeholder for scheduled report generation functionality
+ * Report Generation Cron (legacy scheduler)
+ *
+ * This legacy scheduler is intentionally disabled in this codebase.
+ * Do not return fake scheduled reports or fake IDs.
+ *
+ * If/when re-enabled, it must be backed by real persistence (DB) and
+ * have integration tests.
  */
 
 export async function processScheduledReports() {
@@ -8,6 +13,7 @@ export async function processScheduledReports() {
     processed: 0,
     scheduled: [],
     errors: [],
+    unavailable: true,
   };
 }
 
@@ -16,12 +22,7 @@ export async function getScheduledReports() {
 }
 
 export async function scheduleReport(reportConfig) {
-  return {
-    id: `scheduled-${Date.now()}`,
-    ...reportConfig,
-    status: 'scheduled',
-    createdAt: new Date().toISOString(),
-  };
+  throw new Error('Feature unavailable: legacy scheduled report creation is not implemented');
 }
 
 export default {

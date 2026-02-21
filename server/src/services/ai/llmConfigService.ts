@@ -162,7 +162,8 @@ const PROVIDER_DEFINITIONS: Record<string, ProviderDefinition> = {
     id: 'openrouter',
     name: 'OpenRouter',
     envKey: 'OPENROUTER_API_KEY',
-    defaultEndpoint: 'https://openrouter.ai/api/v1/chat/completions',
+    // NOTE: provider SDK expects a base URL (not the full /chat/completions path)
+    defaultEndpoint: 'https://openrouter.ai/api/v1',
     defaultModel: 'anthropic/claude-3.5-sonnet',
     costPer1k: 0.008,
     supportsStreaming: true,
@@ -517,9 +518,10 @@ export class LLMConfigService {
       const assignmentId = `${p.id}-${tier}`;
       try {
         await this.runAsync(
-          `INSERT OR IGNORE INTO llm_tier_assignments (id, provider_id, tier, priority, is_active)
-           VALUES (?, ?, ?, ?, ?)`,
-          [assignmentId, p.id, tier, TIER_PRIORITY[tier] || 1, true]
+          `INSERT INTO llm_tier_assignments (id, provider_id, tier, priority, is_active)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT (provider_id, tier) DO NOTHING`,
+          [assignmentId, p.id, tier, TIER_PRIORITY[tier] || 1, 1]
         );
       } catch (err: unknown) {
         const error = err as Error;

@@ -11,7 +11,9 @@
 
 import {
   AlertTriangle,
+  ArrowRight,
   BarChart3,
+  CheckCircle,
   ChevronRight,
   Cpu,
   Settings,
@@ -364,6 +366,161 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                 </div>
               </div>
             ))}
+        </div>
+      </section>
+
+      {/* Key Strengths */}
+      {(() => {
+        const strengths = dimensionsWithGaps.filter((d) => d.current >= 3);
+        return strengths.length > 0 ? (
+          <section className="mb-8">
+            <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+              <TrendingUp size={20} className="text-green-600" />
+              Key Strengths
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              {strengths.map((dim) => (
+                <div
+                  key={dim.id}
+                  className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-500/30 rounded-lg p-3 flex items-center justify-between"
+                >
+                  <div>
+                    <span className="font-medium text-navy-900 dark:text-white">{dim.name}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 block">
+                      {dim.buildingBlock}
+                    </span>
+                  </div>
+                  <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                    {dim.current}/5
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null;
+      })()}
+
+      {/* Data Gaps */}
+      {(() => {
+        const gaps = dimensionsWithGaps.filter((d) => d.current === 0);
+        return gaps.length > 0 ? (
+          <section className="mb-8">
+            <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+              <AlertTriangle size={20} className="text-amber-600" />
+              Data Gaps & Follow-up Items
+            </h2>
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4">
+              <div className="space-y-2">
+                {gaps.map((dim) => (
+                  <div key={dim.id} className="flex items-center gap-2 text-sm">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                    <span className="text-navy-900 dark:text-white">{dim.name}</span>
+                    <span className="text-amber-600 dark:text-amber-400 text-xs">
+                      (Not assessed)
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-3">
+                These areas require additional data collection before a complete assessment can be
+                concluded.
+              </p>
+            </div>
+          </section>
+        ) : null;
+      })()}
+
+      {/* Roadmap Outline */}
+      {(() => {
+        const shortTerm = dimensionsWithGaps.filter((d) => d.gap === 1);
+        const mediumTerm = dimensionsWithGaps.filter((d) => d.gap === 2);
+        const longTerm = dimensionsWithGaps.filter((d) => d.gap >= 3);
+        if (shortTerm.length + mediumTerm.length + longTerm.length === 0) return null;
+        return (
+          <section className="mb-8">
+            <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+              <ArrowRight size={20} />
+              Transformation Roadmap Outline
+            </h2>
+            <div className="grid grid-cols-3 gap-4">
+              {shortTerm.length > 0 && (
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
+                  <h4 className="font-semibold text-green-700 dark:text-green-400 mb-2 text-sm">
+                    Short-term (0-6m)
+                  </h4>
+                  {shortTerm.map((d) => (
+                    <p key={d.id} className="text-xs text-navy-900 dark:text-white">
+                      {d.name}: {d.current} → {d.target}
+                    </p>
+                  ))}
+                </div>
+              )}
+              {mediumTerm.length > 0 && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+                  <h4 className="font-semibold text-blue-700 dark:text-blue-400 mb-2 text-sm">
+                    Medium-term (6-18m)
+                  </h4>
+                  {mediumTerm.map((d) => (
+                    <p key={d.id} className="text-xs text-navy-900 dark:text-white">
+                      {d.name}: {d.current} → {d.target}
+                    </p>
+                  ))}
+                </div>
+              )}
+              {longTerm.length > 0 && (
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4">
+                  <h4 className="font-semibold text-purple-700 dark:text-purple-400 mb-2 text-sm">
+                    Long-term (18-36m)
+                  </h4>
+                  {longTerm.map((d) => (
+                    <p key={d.id} className="text-xs text-navy-900 dark:text-white">
+                      {d.name}: {d.current} → {d.target}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* Assessment Conclusions */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+          <CheckCircle size={20} className="text-blue-600" />
+          Assessment Conclusions
+        </h2>
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-xl p-6">
+          <div className="grid grid-cols-4 gap-4 mb-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {data.overallScore?.toFixed(1) || '0.0'}/5
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Overall Score</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-navy-900 dark:text-white">
+                {SIRI_MATURITY_LEVELS[Math.round(data.overallScore || 0)]?.title || 'N/A'}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Maturity Level</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-navy-900 dark:text-white">
+                {dimensionsWithGaps.filter((d) => d.current > 0).length}/{SIRI_DIMENSIONS.length}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Dimensions Assessed</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                {dimensionsWithGaps.filter((d) => d.gap > 0).length}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Gaps Identified</div>
+            </div>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            <strong>Next steps:</strong> Review findings with stakeholders, prioritize initiatives,
+            create detailed implementation plans, schedule follow-up assessment.
+          </p>
         </div>
       </section>
 

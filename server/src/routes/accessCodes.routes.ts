@@ -14,7 +14,7 @@ import { Request, Response, Router } from 'express';
 import rateLimit from 'express-rate-limit';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -97,25 +97,23 @@ try {
  * (Prevents enumeration attacks)
  */
 const validateLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000,
   max: 60,
   message: { valid: false, error: 'RATE_LIMIT_EXCEEDED' },
   standardHeaders: true,
   legacyHeaders: false,
   validate: { xForwardedForHeader: false, default: true },
+  skip: () => process.env.DISABLE_RATE_LIMIT === 'true',
 });
 
-/**
- * Accept endpoint: 20 requests/min per IP
- * (Prevents trial spam)
- */
 const acceptLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000,
   max: 20,
   message: { ok: false, error: 'RATE_LIMIT_EXCEEDED' },
   standardHeaders: true,
   legacyHeaders: false,
   validate: { xForwardedForHeader: false, default: true },
+  skip: () => process.env.DISABLE_RATE_LIMIT === 'true',
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -132,8 +130,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.generateCode || !AccessCodeService?.CODE_TYPES) {
-      // Degraded mode: avoid 5xx on public deploy.
-      return res.status(400).json({ error: 'SERVICE_UNAVAILABLE' });
+      return res.status(503).json({ error: 'SERVICE_UNAVAILABLE', code: 'FEATURE_UNAVAILABLE' });
     }
 
     try {
@@ -222,8 +219,11 @@ router.get(
   validateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.validatePublic) {
-      // Degraded mode: if service is missing, treat codes as invalid.
-      return res.json({ valid: false });
+      return res.status(503).json({
+        valid: false,
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
 
     try {
@@ -231,7 +231,11 @@ router.get(
       return res.json(result);
     } catch (err: any) {
       // Always return same shape for privacy
-      return res.json({ valid: false });
+      return res.status(503).json({
+        valid: false,
+        error: 'SERVICE_UNAVAILABLE',
+        code: 'FEATURE_UNAVAILABLE',
+      });
     }
   })
 );
@@ -248,8 +252,9 @@ router.post(
   acceptLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.acceptCode) {
-      // Degraded mode: avoid 5xx on public deploy.
-      return res.status(400).json({ ok: false, error: 'SERVICE_UNAVAILABLE' });
+      return res
+        .status(503)
+        .json({ ok: false, error: 'SERVICE_UNAVAILABLE', code: 'FEATURE_UNAVAILABLE' });
     }
 
     try {
@@ -304,7 +309,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.listCodes) {
-      return res.json([]);
+      return res.status(503).json({ error: 'AccessCodeService not available' });
     }
 
     try {
@@ -351,7 +356,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AccessCodeService?.revokeCode) {
-      return res.status(404).json({ error: 'Not available' });
+      return res.status(503).json({ error: 'AccessCodeService not available' });
     }
 
     try {

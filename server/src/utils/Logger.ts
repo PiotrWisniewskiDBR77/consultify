@@ -48,12 +48,38 @@ const colors = {
 
 winston.addColors(colors);
 
+// Safe JSON stringify that handles circular references and errors
+const safeStringify = (obj: unknown): string => {
+  try {
+    const seen = new WeakSet();
+    return JSON.stringify(obj, (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) {
+          return '[Circular]';
+        }
+        seen.add(value);
+      }
+      // Handle Error objects specially
+      if (value instanceof Error) {
+        return {
+          name: value.name,
+          message: value.message,
+          stack: value.stack,
+        };
+      }
+      return value;
+    });
+  } catch (err) {
+    return String(obj);
+  }
+};
+
 const format = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
   winston.format.colorize({ all: true }),
   winston.format.printf((info) => {
     const { timestamp, level, message, ...meta } = info;
-    const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+    const metaStr = Object.keys(meta).length ? ` ${safeStringify(meta)}` : '';
     return `${timestamp} ${level}: ${message}${metaStr}`;
   })
 );

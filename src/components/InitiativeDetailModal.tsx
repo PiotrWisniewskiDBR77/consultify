@@ -14,6 +14,7 @@ import {
   GitBranch,
   Globe,
   History,
+  Lightbulb,
   Link2,
   MessageSquare,
   Save,
@@ -28,9 +29,12 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '../services/api';
+import { trackFunnelEvent } from '../services/funnelAnalytics';
 import {
   FullInitiative,
   InitiativeComment,
@@ -84,8 +88,55 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
       | 'history'
       | 'intelligence'
     >('overview');
+
+    // T009: Suggested ideas (private) while editing initiative
+    const [suggestedIdeas, setSuggestedIdeas] = useState<
+      { id: string; title: string; body?: string; tags?: string[]; createdAt?: string }[]
+    >([]);
+    const [suggestedIdeasLoading, setSuggestedIdeasLoading] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [newComment, setNewComment] = useState('');
+
+    useEffect(() => {
+      const q = [
+        initiative?.name,
+        initiative?.decisionToMake,
+        initiative?.applicantOneLiner,
+        initiative?.problemStructured?.symptom,
+        initiative?.problemStructured?.rootCause,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      if (!q) {
+        setSuggestedIdeas([]);
+        return;
+      }
+
+      const handle = window.setTimeout(async () => {
+        try {
+          setSuggestedIdeasLoading(true);
+          const ideas = await Api.suggestMyIdeas(String(q).slice(0, 400), 5);
+          const arr = Array.isArray(ideas) ? ideas : [];
+          setSuggestedIdeas(arr);
+          if (arr.length > 0) {
+            trackFunnelEvent('my_idea_suggested', { surface: 'initiative', count: arr.length });
+          }
+        } catch {
+          setSuggestedIdeas([]);
+        } finally {
+          setSuggestedIdeasLoading(false);
+        }
+      }, 450);
+
+      return () => window.clearTimeout(handle);
+    }, [
+      initiative?.name,
+      initiative?.decisionToMake,
+      initiative?.applicantOneLiner,
+      initiative?.problemStructured?.symptom,
+      initiative?.problemStructured?.rootCause,
+    ]);
 
     // OPTIMIZED: Enhanced Readiness Score Calculation (v2)
     const calculateReadiness = useCallback(() => {
@@ -531,6 +582,75 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
             {/* OVERVIEW TAB */}
             {activeTab === 'overview' && (
               <div className="space-y-8 pb-10">
+                {/* Relevant ideas (T009) */}
+                <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-4 border border-slate-200 dark:border-navy-700 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
+                      <Lightbulb size={16} className="text-amber-500 dark:text-amber-400" />{' '}
+                      {t('myWork.ideas.suggestions', 'Relevant ideas')}
+                    </h3>
+                    {suggestedIdeasLoading ? (
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {t('common.loading', 'Loading…')}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {suggestedIdeas.length === 0 ? (
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {t(
+                        'myWork.ideas.suggestionsEmpty',
+                        'No suggestions yet. Save ideas from chat to build your private library.'
+                      )}
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {suggestedIdeas.map((idea) => (
+                        <div
+                          key={idea.id}
+                          className="bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 p-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-navy-900 dark:text-white truncate">
+                                {idea.title}
+                              </div>
+                              {idea.body ? (
+                                <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                                  {idea.body}
+                                </div>
+                              ) : null}
+                            </div>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => {
+                                const insert = [
+                                  initiative.applicantOneLiner || '',
+                                  '',
+                                  `---`,
+                                  `${t('myWork.ideas.idea', 'Idea')}: ${idea.title}`,
+                                  idea.body || '',
+                                ]
+                                  .filter(Boolean)
+                                  .join('\n');
+                                setInitiative({ ...initiative, applicantOneLiner: insert });
+                                trackFunnelEvent('my_idea_used', {
+                                  surface: 'initiative',
+                                  ideaId: idea.id,
+                                });
+                                toast.success(t('myWork.ideas.insertedToast', 'Inserted'));
+                              }}
+                            >
+                              {t('myWork.ideas.insert', 'Insert')}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* 1. Decision Framing */}
                 <div className="bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-200 dark:border-blue-500/30 shadow-sm dark:shadow-blue-900/10 flex items-start gap-6">
                   <div className="flex-1 space-y-2">

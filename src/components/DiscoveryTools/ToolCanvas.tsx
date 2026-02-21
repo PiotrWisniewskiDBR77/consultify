@@ -9,6 +9,14 @@ import React from 'react';
 import { StepDefinition, ToolSession, ToolType } from '@/store/useToolStore';
 
 import { ContextStep } from './steps/ContextStep';
+import { ImpactHypothesisStep } from './steps/ImpactHypothesisStep';
+import { InitiativesStep } from './steps/InitiativesStep';
+import { PrepareStep } from './steps/PrepareStep';
+import { ProcessAutomationEconomicsStep } from './steps/ProcessAutomationEconomicsStep';
+import { ProcessAutomationMeasurementStep } from './steps/ProcessAutomationMeasurementStep';
+import { ReasoningStep } from './steps/ReasoningStep';
+import { ReportStep } from './steps/ReportStep';
+import { ResultsStep } from './steps/ResultsStep';
 import { SummaryStep } from './steps/SummaryStep';
 import { ToolContextPanel } from './ToolContextPanel';
 import { SWOTCorrelationsStep } from './tools/DynamicSWOT/SWOTCorrelationsStep';
@@ -62,7 +70,7 @@ interface ToolCanvasProps {
 
 export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   toolType,
-  currentStep,
+  currentStep: _currentStep,
   stepDefinition,
   session,
   isStreaming,
@@ -93,7 +101,76 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
 
     // Summary step (last step for all tools)
     if (stepDefinition.id === 'summary') {
-      return <SummaryStep toolType={toolType} session={session} isPolish={isPolish} />;
+      return (
+        <div className="space-y-6">
+          <SummaryStep toolType={toolType} session={session} isPolish={isPolish} />
+          <InitiativesStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            generatedInitiatives={generatedInitiatives}
+            onOpenInitiatives={onOpenInitiatives}
+            onOpenChat={onOpenChat}
+          />
+        </div>
+      );
+    }
+
+    if (stepDefinition.id === 'impact-hypothesis') {
+      return <ImpactHypothesisStep session={session} isPolish={isPolish} />;
+    }
+
+    if (stepDefinition.id === 'results') {
+      return <ResultsStep session={session} isPolish={isPolish} />;
+    }
+
+    if (stepDefinition.id === 'reasoning') {
+      return <ReasoningStep session={session} isPolish={isPolish} />;
+    }
+
+    if (stepDefinition.id === 'prepare') {
+      return <PrepareStep session={session} isPolish={isPolish} />;
+    }
+
+    if (stepDefinition.id === 'initiatives') {
+      return (
+        <InitiativesStep
+          toolType={toolType}
+          session={session}
+          isPolish={isPolish}
+          generatedInitiatives={generatedInitiatives}
+          onOpenInitiatives={onOpenInitiatives}
+          onOpenChat={onOpenChat}
+        />
+      );
+    }
+
+    if (stepDefinition.id === 'report') {
+      return <ReportStep toolType={toolType} session={session} isPolish={isPolish} />;
+    }
+
+    if (toolType === 'process-automation') {
+      if (stepDefinition.id === 'measurement') {
+        return (
+          <ProcessAutomationMeasurementStep
+            session={session}
+            isPolish={isPolish}
+            mode="measurement"
+          />
+        );
+      }
+      if (stepDefinition.id === 're-estimation') {
+        return (
+          <ProcessAutomationMeasurementStep
+            session={session}
+            isPolish={isPolish}
+            mode="re-estimation"
+          />
+        );
+      }
+      if (stepDefinition.id === 'economics') {
+        return <ProcessAutomationEconomicsStep session={session} isPolish={isPolish} />;
+      }
     }
 
     // Tool-specific steps
@@ -240,9 +317,39 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
         'smed-planner',
         'dms-builder',
         'inventory-autopilot',
+        'vsm-builder',
+        'constraint-control',
+        'decision-engine',
+        'control-tower',
+        'automation-pipeline',
+        'robotics-feasibility',
+        'logistics-automation',
+        'rpa-scanner',
+        'ai-discovery',
+        'integration-diagnostic',
+        'digital-value-pool',
+        'legacy-analyzer',
+        'data-inventory',
+        'pain-to-solution',
+        'pain-explorer',
+        'process-automation',
       ].includes(toolType)
     ) {
-      if (stepDefinition.id !== 'context' && stepDefinition.id !== 'summary') {
+      if (
+        stepDefinition.id !== 'context' &&
+        stepDefinition.id !== 'summary' &&
+        ![
+          'impact-hypothesis',
+          'results',
+          'reasoning',
+          'prepare',
+          'initiatives',
+          'report',
+          'measurement',
+          're-estimation',
+          'economics',
+        ].includes(stepDefinition.id)
+      ) {
         return (
           <OperationalSectionStep
             sectionId={stepDefinition.id}

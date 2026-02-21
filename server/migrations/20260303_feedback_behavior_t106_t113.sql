@@ -1,0 +1,41 @@
+-- Migration: 20260303_feedback_behavior_t106_t113
+-- T106: Advanced User Feedback System + T113: Behavioral Intelligence Tracking
+
+-- T106: Enhance system_feedback with context metadata
+ALTER TABLE system_feedback ADD COLUMN route_path TEXT;
+ALTER TABLE system_feedback ADD COLUMN device_type TEXT;
+ALTER TABLE system_feedback ADD COLUMN screen_size TEXT;
+ALTER TABLE system_feedback ADD COLUMN user_agent_hash TEXT;
+ALTER TABLE system_feedback ADD COLUMN ui_language TEXT;
+ALTER TABLE system_feedback ADD COLUMN ui_theme TEXT;
+ALTER TABLE system_feedback ADD COLUMN workspace_context_json TEXT;
+ALTER TABLE system_feedback ADD COLUMN severity TEXT DEFAULT 'NORMAL';
+ALTER TABLE system_feedback ADD COLUMN duplicate_of TEXT;
+ALTER TABLE system_feedback ADD COLUMN notification_sent INTEGER DEFAULT 0;
+
+-- Feedback status history for full traceability
+CREATE TABLE IF NOT EXISTS feedback_status_history (
+    id TEXT PRIMARY KEY,
+    feedback_id TEXT NOT NULL,
+    from_status TEXT,
+    to_status TEXT NOT NULL,
+    changed_by TEXT,
+    note TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (feedback_id) REFERENCES system_feedback(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_feedback_status_history_feedback ON feedback_status_history(feedback_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_status_history_created ON feedback_status_history(created_at);
+
+-- T113: Behavior opt-out
+ALTER TABLE users ADD COLUMN behavior_analytics_enabled INTEGER DEFAULT 1;
+
+-- Add correlation_id to api_logs if missing
+ALTER TABLE api_logs ADD COLUMN correlation_id TEXT;
+ALTER TABLE api_logs ADD COLUMN user_id TEXT;
+ALTER TABLE api_logs ADD COLUMN organization_id TEXT;
+ALTER TABLE api_logs ADD COLUMN error_message TEXT;
+
+-- Add index for user-level journey queries
+CREATE INDEX IF NOT EXISTS idx_journey_user_created ON journey_events(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_activation_phase ON user_activation_status(current_phase);

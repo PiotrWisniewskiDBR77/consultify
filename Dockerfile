@@ -47,7 +47,37 @@ RUN npm ci
 
 # Copy source and build
 COPY server/ .
+# Create aiPipeline.js for case-sensitive filesystems (macOS git can't track both)
+# Note: We don't create AIPipeline.js re-export as it would overwrite the compiled output
+RUN if [ ! -f src/services/ai/aiPipeline.js ]; then \
+      echo "Creating aiPipeline.js re-export file..." && \
+      printf '// Re-export from AIPipeline.js (compiled) for case-sensitive file systems\n// This file allows imports using lowercase '\''aiPipeline'\'' to work on case-sensitive filesystems\nexport * from '\''./AIPipeline.js'\'';\nexport { AIPipeline } from '\''./AIPipeline.js'\'';\nexport { default } from '\''./AIPipeline.js'\'';\n' > src/services/ai/aiPipeline.js; \
+    fi
+# Create aiSchemaValidator.js for case-sensitive filesystems (macOS git can't track both)
+# Note: We don't create AISchemaValidator.js re-export as it would overwrite the compiled output
+RUN if [ ! -f src/utils/aiSchemaValidator.js ]; then \
+      echo "Creating aiSchemaValidator.js re-export file..." && \
+      printf '// Re-export from AISchemaValidator.js (compiled) for case-sensitive file systems\n// This file allows imports using lowercase '\''aiSchemaValidator'\'' to work on case-sensitive filesystems\nexport * from '\''./AISchemaValidator.js'\'';\n' > src/utils/aiSchemaValidator.js; \
+    fi
 RUN npm run build
+# Copy .js re-export files to dist (TypeScript excludes .js files but we need them at runtime)
+# Note: Only copy lowercase re-export files - uppercase files are compiled outputs from TypeScript
+RUN mkdir -p dist/src/utils dist/src/services/ai && \
+    if [ -f src/utils/aiSchemaValidator.js ]; then \
+      cp src/utils/aiSchemaValidator.js dist/src/utils/aiSchemaValidator.js && \
+      echo "✓ Copied aiSchemaValidator.js"; \
+    else \
+      echo "⚠️  aiSchemaValidator.js not found in src"; \
+    fi && \
+    if [ -f src/services/ai/aiPipeline.js ]; then \
+      cp src/services/ai/aiPipeline.js dist/src/services/ai/aiPipeline.js && \
+      echo "✓ Copied aiPipeline.js"; \
+    else \
+      echo "⚠️  aiPipeline.js not found in src"; \
+    fi && \
+    echo "Verifying copied files:" && \
+    ls -la dist/src/utils/*.js 2>/dev/null | grep -i schema || echo "No schema files in dist/src/utils" && \
+    ls -la dist/src/services/ai/*.js 2>/dev/null | grep -i pipeline || echo "No pipeline files in dist/src/services/ai"
 
 # ==========================================
 # STAGE 4: Production API

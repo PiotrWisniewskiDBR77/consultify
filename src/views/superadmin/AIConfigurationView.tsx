@@ -258,7 +258,7 @@ export const AIConfigurationView: React.FC = () => {
 
   const getDefaultPrompt = (capabilityId: string): string => {
     const defaults: Record<string, string> = {
-      chat: `You are a professional AI consultant for the TechnoLex platform.
+      chat: `You are a professional AI consultant for the Consultinity platform.
 Your role: Help users manage digital transformation projects.
 
 RULES:

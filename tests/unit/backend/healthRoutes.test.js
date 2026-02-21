@@ -11,6 +11,8 @@ vi.mock('../../../server/src/controllers/HealthCheckController', () => ({
     checkReadiness: (req, res) =>
       res.status(200).json({ status: 'ready', checks: { database: true } }),
     checkLiveness: (req, res) => res.status(200).json({ status: 'alive' }),
+    aggregatedHealth: (req, res) =>
+      res.status(200).json({ status: 'healthy', components: { database: { status: 'healthy' } } }),
   },
 }));
 

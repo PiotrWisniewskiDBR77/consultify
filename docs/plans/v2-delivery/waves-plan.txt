@@ -1,0 +1,243 @@
+================================================================================
+V2 DELIVERY — PLAN FAL (WAVES) I PACZEK (BUNDLES)
+================================================================================
+Katalog: docs/plans/v2-delivery/
+Zasada WIP: max 1 Codex + 2 Cursor jednoczesnie.
+
+================================================================================
+PILOT (3 paczki — test workflow)
+================================================================================
+
+Pilot A (Cursor)  | T002 Sidebar Collapse           | bundle-pilot-a-sidebar-collapse  | merged
+Pilot B (Cursor)  | T001 Chat Title Fallback        | bundle-pilot-b-chat-title        | merged
+Pilot C (Codex)  | T072 Help Context Navigation    | bundle-pilot-c-help-context      | merged
+
+================================================================================
+WAVE 1 — ZAMKNIETA
+================================================================================
+
+Bundle 21 (Codex)   | T068, T069 Onboarding + Feature News   | bundle-21-onboarding-news      | merged
+Bundle 25 (Cursor)  | T091, T092 Trial + Upgrade             | bundle-25-trial-upgrade       | merged
+Bundle 26 (Cursor) | T093 Legal Acceptance                 | bundle-26-legal-acceptance    | merged
+
+================================================================================
+WAVE 2 — ZAMKNIETA (Cursor A + B) / W TOKU (Codex C)
+================================================================================
+
+Bundle 01 (Cursor A) | T003-T006 Chat & Research (reszta) | bundle-01-chat-research | merged
+Bundle 30.5 (Cursor B) | T110-T112 OAuth (Google, LinkedIn) | bundle-30-5-oauth | merged
+Bundle 03 (Codex C) | T013-T017 Interview / Survey        | bundle-03-interview-survey   | in_progress
+
+================================================================================
+PLAN — 30 WAVES (1 WAVE = 1 BUNDLE / PACZKA)
+================================================================================
+Cel tej sekcji: miec jeden, kompletny “roadmap” 30 paczek w kolejnosci.
+Statusy: planned | in_progress | in_review | merged | blocked | parked
+
+WAVE 01 — BUNDLE 01 — Chat & Research (T001–T006)
+Owner: Cursor
+Branch: bundle-01-chat-research
+Status: merged
+
+WAVE 02 — BUNDLE 02 — My Work (T007–T012)
+Owner: Cursor
+Branch: (do utworzenia) bundle-02-my-work
+Status: planned
+
+WAVE 03 — BUNDLE 03 — Interview / Survey / Acquisition (T013–T017)
+Owner: Codex (Cursor robi review + merge)
+Branch: bundle-03-interview-survey
+Status: in_progress
+
+WAVE 04 — BUNDLE 04 — Tools: hub + library UI + knowledge linking (T018–T021)
+Owner: Codex
+Branch: (do utworzenia) bundle-04-tools-hub
+Status: planned
+
+WAVE 05 — BUNDLE 05 — Tools: toolsets + Speed Tool (T019, T022–T024)
+Owner: Codex
+Branch: (do utworzenia) bundle-05-tools-toolsets
+Status: planned
+
+WAVE 06 — BUNDLE 06 — Licensed tools (core) (T025–T027)
+Owner: Cursor
+Branch: (do utworzenia) bundle-06-licensed-tools-core
+Status: planned
+
+WAVE 07 — BUNDLE 07 — Licensed tools (advanced) (T028, T030, T031)
+Owner: Cursor
+Branch: (do utworzenia) bundle-07-licensed-tools-advanced
+Status: planned
+
+WAVE 08 — BUNDLE 08 — Initiatives: AI authoring + gate readiness (T032–T033)
+Owner: Cursor
+Branch: (do utworzenia) bundle-08-initiatives-ai
+Status: planned
+
+WAVE 09 — BUNDLE 09 — Portfolio optimization engines (T034–T038)
+Owner: Codex
+Branch: (do utworzenia) bundle-09-portfolio-optimization
+Status: planned
+
+WAVE 10 — BUNDLE 10 — Execution control (plan vs actual) (T039–T042)
+Owner: Cursor
+Branch: (do utworzenia) bundle-10-execution-control
+Status: planned
+
+WAVE 11 — BUNDLE 11 — Execution: people/change/comms (T043–T045)
+Owner: Codex
+Branch: (do utworzenia) bundle-11-execution-people-change
+Status: planned
+
+WAVE 12 — BUNDLE 12 — Benefits / KPI / Finance mapping (T046–T049)
+Owner: Cursor
+Branch: (do utworzenia) bundle-12-benefits-kpi-finance
+Status: planned
+
+WAVE 13 — BUNDLE 13 — Finance A (ingestion + ratios) (T050–T051)
+Owner: Codex
+Branch: (do utworzenia) bundle-13-finance-a
+Status: planned
+
+WAVE 14 — BUNDLE 14 — Finance B (analysis + budgeting) (T052–T053)
+Owner: Codex
+Branch: (do utworzenia) bundle-14-finance-b
+Status: planned
+
+WAVE 15 — BUNDLE 15 — Finance C (initiative modeling) (T054)
+Owner: Cursor (hard)
+Branch: (do utworzenia) bundle-15-finance-c
+Status: planned
+
+WAVE 16 — BUNDLE 16 — Finance D (valuation suite) (T055–T057)
+Owner: Codex (z Twoim review merytorycznym)
+Branch: (do utworzenia) bundle-16-valuation-suite
+Status: planned
+
+WAVE 17 — BUNDLE 17 — Presentations generator + templates (T058–T059)
+Owner: Cursor (weekend / duzy temat)
+Branch: (do utworzenia) bundle-17-presentations-generator
+Status: planned
+
+WAVE 18 — BUNDLE 18 — Reports generator + templates (T060–T061)
+Owner: Cursor (weekend / duzy temat)
+Branch: (do utworzenia) bundle-18-reports-generator
+Status: planned
+
+WAVE 19 — BUNDLE 19 — Automated recurring/event reporting (T062)
+Owner: Codex
+Branch: (do utworzenia) bundle-19-automated-reporting
+Status: planned
+
+WAVE 20 — BUNDLE 20 — Organization + Megatrends + Team (T063–T067)
+Owner: Codex
+Branch: (do utworzenia) bundle-20-org-megatrends-team
+Status: planned
+
+WAVE 21 — BUNDLE 21 — Onboarding + Feature news (T068–T069)
+Owner: Codex
+Branch: bundle-21-onboarding-news
+Status: merged
+
+WAVE 22 — BUNDLE 22 — Help plumbing (AI docs + nav + micro-video) (T071–T073)
+Owner: Codex
+Branch: (do utworzenia) bundle-22-help-plumbing
+Status: planned
+Note: T072 wykonane w pilocie (Help Context Navigation).
+
+WAVE 23 — BUNDLE 23 — Admin Sync Hub + External system sync guardrails (T086 + T008)
+Owner: Cursor
+Branch: (do utworzenia) bundle-23-admin-sync-hub
+Status: planned
+
+WAVE 24 — BUNDLE 24 — Demo engine (data + conversion) (T087, T089, T090)
+Owner: Codex
+Branch: (do utworzenia) bundle-24-demo-engine
+Status: planned
+
+WAVE 25 — BUNDLE 25 — Trial + upgrade mechanics (T091–T092)
+Owner: Cursor
+Branch: bundle-25-trial-upgrade
+Status: merged
+
+WAVE 26 — BUNDLE 26 — Legal acceptance (versioning + UX) (T093)
+Owner: Cursor
+Branch: bundle-26-legal-acceptance
+Status: merged
+
+WAVE 27 — BUNDLE 27 — Website / Docs / Visual update (T094–T095)
+Owner: Codex (content-heavy), Cursor review
+Branch: (do utworzenia) bundle-27-website-docs-visual
+Status: planned
+
+WAVE 28 — BUNDLE 28 — Partners program (toolkit + certification + outreach) (T096–T098)
+Owner: Codex
+Branch: (do utworzenia) bundle-28-partners-program
+Status: planned
+
+WAVE 29 — BUNDLE 29 — UI/UX final pack (N/C, sidebar, typography, chat polish) (T099–T105 + T101–T103)
+Owner: Cursor (duzy temat)
+Branch: (do utworzenia) bundle-29-uiux-final-pack
+Status: planned
+
+WAVE 30 — BUNDLE 30 — Platform P0 pack (T106–T122) + SLICES
+Owner: Cursor (program), realizowane jako slice’y
+Branch: (do utworzenia) bundle-30-platform-p0 (lub osobne branche per slice)
+Status: planned
+
+  30.1 Feedback: T106                             Status: planned
+  30.2 Stability + deploy gates: T107              Status: planned
+  30.3 SuperAdmin + system testing: T108           Status: planned
+  30.4 Billing SSOT (Stripe): T109                 Status: planned
+  30.5 OAuth bundle: T110–T112                     Status: merged (branch: bundle-30-5-oauth)
+  30.6 Behavior + readiness + Sellix: T113–T115    Status: planned
+  30.7 AI prompts + learning: T116                 Status: planned
+  30.8 Core docs governance: T117                  Status: planned
+  30.9 Internet context governance: T118           Status: planned
+  30.10 Org AI governance: T119–T121               Status: planned
+  30.11 Architecture consolidation: T122           Status: planned
+
+================================================================================
+MAPA WSZYSTKICH 30 PACZEK (referencja)
+================================================================================
+
+01  | T001-T006   | Chat & Research              | Cursor
+02  | T007-T012   | My Work                     | Cursor
+03  | T013-T017   | Interview / Survey           | Codex
+04  | T018-T021   | Tools: hub + library         | Codex
+05  | T019,T022-24| Tools: toolsets + Speed     | Codex
+06  | T025-T027   | Licensed tools (core)        | Cursor
+07  | T028,T030-31| Licensed tools (advanced)   | Cursor
+08  | T032-T033   | Initiatives AI + gate       | Cursor
+09  | T034-T038   | Portfolio optimization      | Codex
+10  | T039-T042   | Execution control            | Cursor
+11  | T043-T045   | Execution: people/change     | Codex
+12  | T046-T049   | Benefits / KPI / Finance     | Cursor
+13  | T050-T051   | Finance A                   | Codex
+14  | T052-T053   | Finance B                   | Codex
+15  | T054        | Finance C (hard)             | Cursor
+16  | T055-T057   | Finance D (valuation)       | Codex
+17  | T058-T059   | Presentations generator     | Cursor
+18  | T060-T061   | Reports generator            | Cursor
+19  | T062        | Automated reporting          | Codex
+20  | T063-T067   | Org + Megatrends + Team      | Codex
+21  | T068-T069   | Onboarding + Feature news   | Codex   [merged]
+22  | T071-T073   | Help plumbing               | Codex
+23  | T086 + T008 | Admin Sync Hub              | Cursor
+24  | T087,T089-90| Demo engine                 | Codex
+25  | T091-T092   | Trial + upgrade             | Cursor  [merged]
+26  | T093        | Legal acceptance            | Cursor  [merged]
+27  | T094-T095   | Website / Docs              | Codex
+28  | T096-T098   | Partners program            | Codex
+29  | T099-T105   | UI/UX final pack            | Cursor
+30  | T106-T122   | Platform P0 (slices)       | Cursor
+
+================================================================================
+POZA PLANEM KODOWYM (extras-non-coding.md)
+================================================================================
+
+- T074-T085: Materialy edukacyjne (content)
+- T088: Demo company website (content)
+- T029: Mobile app Lean data collection (osobny tor)
+
+================================================================================

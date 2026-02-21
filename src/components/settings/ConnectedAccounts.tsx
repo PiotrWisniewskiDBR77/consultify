@@ -1,28 +1,29 @@
 /**
  * ConnectedAccounts - Social/OAuth account connections
- *
- * Features:
- * - Connect with Google
- * - Connect with LinkedIn
- * - View connection status
- * - Disconnect accounts
- *
- * Note: Full OAuth implementation is Phase 2 - this is UI + placeholders
+ * Bundle 30.5 (T112) — Real OAuth connect/disconnect
  */
 
-import { AlertTriangle, Check, ExternalLink, Link2, Loader2, Shield, Unlink } from 'lucide-react';
-import React, { useState } from 'react';
+import { Check, ExternalLink, Link2, Loader2, Shield, Unlink } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { LinkedAccounts as LinkedAccountsType, User } from '../../types';
+import { Api, API_URL } from '../../services/api';
+import { User } from '../../types';
 
 interface ConnectedAccountsProps {
   currentUser: User;
   onUpdateUser: (updates: Partial<User>) => void;
 }
 
-// Provider configurations
+interface ConnectedAccount {
+  provider: string;
+  email: string | null;
+  displayName: string | null;
+  connectedAt: string;
+  status: string;
+}
+
 const PROVIDERS = [
   {
     id: 'google',
@@ -50,7 +51,7 @@ const PROVIDERS = [
     color:
       'bg-white border border-slate-200 dark:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10',
     textColor: 'text-slate-700 dark:text-white',
-    description: 'Sign in faster with your Google account',
+    description: 'settings.connectedAccounts.googleDesc',
     benefits: ['Quick sign-in', 'Sync calendar', 'Import contacts'],
   },
   {
@@ -63,7 +64,7 @@ const PROVIDERS = [
     ),
     color: 'bg-[#0A66C2] hover:bg-[#004182]',
     textColor: 'text-white',
-    description: 'Connect your professional network',
+    description: 'settings.connectedAccounts.linkedinDesc',
     benefits: ['Import work history', 'Professional profile', 'Network insights'],
   },
 ];
@@ -75,46 +76,64 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
   const { t } = useTranslation();
   const [connecting, setConnecting] = useState<string | null>(null);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const linkedAccounts: LinkedAccountsType = currentUser.linkedAccounts || {};
+  useEffect(() => {
+    loadAccounts();
 
-  // Handle connect (placeholder - would redirect to OAuth flow)
-  const handleConnect = async (providerId: string) => {
-    setConnecting(providerId);
+    // Check URL params for connect result
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get('connected');
+    const connectError = params.get('connect_error');
 
-    // Simulate OAuth redirect
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (connected) {
+      toast.success(
+        t('settings.connectedAccounts.connectSuccess', {
+          provider: connected.charAt(0).toUpperCase() + connected.slice(1),
+          defaultValue: `${connected.charAt(0).toUpperCase() + connected.slice(1)} connected successfully!`,
+        })
+      );
+      window.history.replaceState({}, '', window.location.pathname);
+      loadAccounts();
+    } else if (connectError) {
+      toast.error(
+        t('settings.connectedAccounts.connectFailed', {
+          defaultValue: `Failed to connect: ${connectError}`,
+        })
+      );
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [currentUser.id]);
 
-    // For now, show beta message
-    toast.success(
-      t(
-        'settings.connectedAccounts.betaInfo',
-        `${PROVIDERS.find((p) => p.id === providerId)?.name} integration is in beta – stay tuned!`
-      ),
-      { duration: 3000 }
-    );
-
-    setConnecting(null);
-
-    // In real implementation:
-    // window.location.href = `/api/auth/${providerId}/connect`;
+  const loadAccounts = async () => {
+    try {
+      setLoading(true);
+      const data = await (Api as any).get('/settings/connected-accounts');
+      setAccounts(data?.accounts || []);
+    } catch {
+      setAccounts([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Handle disconnect
+  const handleConnect = (providerId: string) => {
+    setConnecting(providerId);
+    if (providerId === 'linkedin') {
+      window.location.href = `${API_URL}/auth/linkedin/connect`;
+    } else if (providerId === 'google') {
+      window.location.href = `${API_URL}/auth/google`;
+    }
+  };
+
   const handleDisconnect = async (providerId: string) => {
     setDisconnecting(providerId);
-
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Update local state (in real implementation, call API)
-      const newLinkedAccounts = { ...linkedAccounts };
-      delete newLinkedAccounts[providerId as keyof LinkedAccountsType];
-
-      onUpdateUser({ linkedAccounts: newLinkedAccounts });
+      await (Api as any).delete(`/settings/connected-accounts/${providerId}`);
       toast.success(t('settings.connectedAccounts.disconnected', 'Account disconnected'));
-    } catch (error) {
+      await loadAccounts();
+    } catch {
       toast.error(t('settings.connectedAccounts.disconnectError', 'Failed to disconnect account'));
     } finally {
       setDisconnecting(null);
@@ -122,16 +141,15 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
   };
 
   const isConnected = (providerId: string): boolean => {
-    return !!(linkedAccounts as any)[providerId];
+    return accounts.some((a) => a.provider === providerId);
   };
 
-  const getConnectionInfo = (providerId: string) => {
-    return (linkedAccounts as any)[providerId];
+  const getConnectionInfo = (providerId: string): ConnectedAccount | undefined => {
+    return accounts.find((a) => a.provider === providerId);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
           {t('settings.connectedAccounts.title', 'Connected Accounts')}
@@ -144,7 +162,6 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
         </p>
       </div>
 
-      {/* Account Cards */}
       <div className="space-y-4">
         {PROVIDERS.map((provider) => {
           const connected = isConnected(provider.id);
@@ -159,12 +176,10 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">
-                  {/* Provider Icon */}
                   <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center">
                     <provider.icon className="w-6 h-6" />
                   </div>
 
-                  {/* Provider Info */}
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="font-semibold text-slate-900 dark:text-white">
@@ -173,7 +188,7 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
                       {connected && (
                         <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
                           <Check size={12} />
-                          Connected
+                          {t('settings.connectedAccounts.connected', 'Connected')}
                         </span>
                       )}
                     </div>
@@ -181,19 +196,19 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
                     {connected && connectionInfo ? (
                       <div className="mt-1">
                         <p className="text-sm text-slate-600 dark:text-slate-300">
-                          {connectionInfo.email || connectionInfo.name}
+                          {connectionInfo.email || connectionInfo.displayName}
                         </p>
                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                          Connected {new Date(connectionInfo.linkedAt).toLocaleDateString()}
+                          {t('settings.connectedAccounts.connectedOn', 'Connected')}{' '}
+                          {new Date(connectionInfo.connectedAt).toLocaleDateString()}
                         </p>
                       </div>
                     ) : (
                       <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {provider.description}
+                        {t(provider.description, provider.description)}
                       </p>
                     )}
 
-                    {/* Benefits (when not connected) */}
                     {!connected && (
                       <div className="flex items-center gap-3 mt-3">
                         {provider.benefits.map((benefit, idx) => (
@@ -209,7 +224,6 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
                   </div>
                 </div>
 
-                {/* Action Button */}
                 <div>
                   {connected ? (
                     <button
@@ -222,12 +236,12 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
                       ) : (
                         <Unlink size={14} />
                       )}
-                      Disconnect
+                      {t('settings.connectedAccounts.disconnect', 'Disconnect')}
                     </button>
                   ) : (
                     <button
                       onClick={() => handleConnect(provider.id)}
-                      disabled={isConnecting}
+                      disabled={isConnecting || loading}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${provider.color} ${provider.textColor} disabled:opacity-50`}
                     >
                       {isConnecting ? (
@@ -235,7 +249,7 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
                       ) : (
                         <Link2 size={16} />
                       )}
-                      Connect
+                      {t('settings.connectedAccounts.connect', 'Connect')}
                     </button>
                   )}
                 </div>
@@ -245,7 +259,6 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
         })}
       </div>
 
-      {/* Security Notice */}
       <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-navy-700">
         <div className="flex items-start gap-3">
           <Shield size={18} className="text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0" />
@@ -257,24 +270,6 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
               {t(
                 'settings.connectedAccounts.securityText',
                 'We only request minimal permissions. Your credentials are never stored. You can disconnect at any time.'
-              )}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Beta Notice */}
-      <div className="p-4 bg-amber-50 dark:bg-amber-500/10 rounded-lg border border-amber-100 dark:border-amber-500/20">
-        <div className="flex items-start gap-3">
-          <AlertTriangle size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-              {t('settings.connectedAccounts.betaTitle', 'Beta Feature')}
-            </p>
-            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-              {t(
-                'settings.connectedAccounts.betaText',
-                'Social account connections are currently in development. Full OAuth integration will be available soon.'
               )}
             </p>
           </div>

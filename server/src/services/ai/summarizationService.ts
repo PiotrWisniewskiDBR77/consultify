@@ -1,17 +1,11 @@
 /**
  * Summarization Service
- * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * Not implemented in this codebase. Export an explicit marker instead of a self-loading wrapper.
  */
+const summarizationService = { __unavailable__: true } as const;
 
-import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
-
-// Lazy load the JS service module
-const loadSummarization = createCachedLazyService('../../ai/summarizationService.js');
-
-// Export default instance (for backward compatibility)
-export default loadSummarization();
+export default summarizationService;
 
 // Export named class for tests
 export class SummarizationService {
@@ -22,7 +16,9 @@ export class SummarizationService {
   }
 
   async summarizeConversation(messages: any[]) {
-    if (!this.llmService) return 'Summary stub';
+    if (!this.llmService) {
+      return 'Summary unavailable (LLM not configured).';
+    }
     try {
       const text = messages.map((m: any) => `${m.role}: ${m.content}`).join('\n');
       const response = await this.llmService.call({
@@ -30,21 +26,25 @@ export class SummarizationService {
         capability: 'summarize',
       });
       return response.content;
-    } catch (error) {
-      return 'Summary unavailable';
+    } catch (error: unknown) {
+      const msg = (error as Error)?.message || String(error);
+      return `Summary unavailable (reason: ${msg}).`;
     }
   }
 
   async summarizeText(text: string) {
-    if (!this.llmService) return 'Summary stub';
+    if (!this.llmService) {
+      return 'Summary unavailable (LLM not configured).';
+    }
     try {
       const response = await this.llmService.call({
         prompt: `Summarize this text:\n\n${text}`,
         capability: 'summarize',
       });
       return response.content;
-    } catch (error) {
-      return 'Summary unavailable';
+    } catch (error: unknown) {
+      const msg = (error as Error)?.message || String(error);
+      return `Summary unavailable (reason: ${msg}).`;
     }
   }
 }

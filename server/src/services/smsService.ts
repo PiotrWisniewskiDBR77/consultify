@@ -9,14 +9,13 @@
  * - SMS delivery via Twilio
  * - Rate limiting (5 SMS per phone per hour)
  * - Delivery status tracking
- * - Fallback to mock mode for development
  * - OTP code generation and verification
  *
  * Environment Variables Required:
  * - TWILIO_ACCOUNT_SID
  * - TWILIO_AUTH_TOKEN
  * - TWILIO_PHONE_NUMBER (sender number in E.164 format)
- * - SMS_MOCK_MODE (optional, for development)
+ * - SMS_MOCK_MODE (optional, for local development flags; still returns unavailable)
  */
 
 import bcrypt from 'bcryptjs';
@@ -136,7 +135,7 @@ class SMSServiceClass {
         this.twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!);
       } catch (error: unknown) {
         logger.warn(
-          '[SMS] Twilio not configured, using mock mode:',
+          '[SMS] Twilio not configured:',
           error instanceof Error ? error.message : String(error)
         );
         return null;
@@ -203,10 +202,8 @@ class SMSServiceClass {
       await this._logDelivery(logId, userId, phoneNumber, messageType, 'pending');
 
       if (CONFIG.MOCK_MODE) {
-        // Mock mode for development
-        logger.info(`[SMS MOCK] To: ${phoneNumber}, Message: ${message.substring(0, 50)}...`);
-        await this._logDelivery(logId, userId, phoneNumber, messageType, 'sent', 'MOCK_SID');
-        return { success: true, messageSid: 'MOCK_SID', mock: true };
+        await this._logDelivery(logId, userId, phoneNumber, messageType, 'failed');
+        return { success: false, error: 'SMS delivery is not available', mock: true };
       }
 
       // Send via Twilio
@@ -300,11 +297,6 @@ class SMSServiceClass {
 
       if (!result.success) {
         return result;
-      }
-
-      // In mock mode, log the code for testing
-      if (CONFIG.MOCK_MODE) {
-        logger.info(`[SMS MOCK] OTP Code: ${code}`);
       }
 
       return { success: true, expiresAt };

@@ -13,6 +13,7 @@ import { Archive, ChevronDown, ChevronRight, Clock, Pin, Star } from 'lucide-rea
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useConversationStore } from '../../store/useConversationStore';
 import { ConversationItem } from './ConversationItem';
 
 /** Max conversations visible per time-group before "Show more" */
@@ -37,6 +38,10 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 }) => {
   const { t } = useTranslation();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const collapsedConversationGroups = useConversationStore((s) => s.collapsedConversationGroups);
+  const toggleConversationGroupCollapsed = useConversationStore(
+    (s) => s.toggleConversationGroupCollapsed
+  );
 
   const toggleGroup = (key: string) => {
     setExpandedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -84,6 +89,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
         const config = groupConfig[groupKey] || { label: groupKey };
         const Icon = config.icon;
+        const isGroupCollapsed = collapsedConversationGroups[groupKey] ?? false;
         const isExpanded = expandedGroups[groupKey] ?? false;
         const hasMore = conversations.length > MAX_VISIBLE_PER_GROUP;
         const visibleConversations = isExpanded
@@ -92,53 +98,75 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
         return (
           <div key={groupKey} className="space-y-1">
-            {/* Group Header */}
-            <div className="flex items-center gap-1.5 px-3 py-1">
+            {/* Group Header — T002: clickable to collapse/expand, chevron indicates state */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => toggleConversationGroupCollapsed(groupKey)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleConversationGroupCollapsed(groupKey);
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-lg transition-colors group/header"
+              aria-expanded={!isGroupCollapsed}
+              aria-label={t('aiChat.toggleGroup', 'Toggle {{label}}', { label: config.label })}
+            >
+              <span className="shrink-0 text-slate-400 dark:text-slate-500 group-hover/header:text-slate-600 dark:group-hover/header:text-slate-300">
+                {isGroupCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+              </span>
               {Icon && (
                 <Icon
                   size={10}
                   className={config.iconColor || 'text-slate-400 dark:text-slate-500'}
                 />
               )}
-              <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex-1">
                 {config.label}
               </h5>
-              <span className="text-[9px] text-slate-300 dark:text-slate-600 ml-auto">
+              <span className="text-[9px] text-slate-300 dark:text-slate-600">
                 {conversations.length}
               </span>
             </div>
 
-            {/* Conversations */}
-            <div className="space-y-0.5">
-              {visibleConversations.map((conv) => (
-                <ConversationItem
-                  key={conv.id}
-                  conversation={conv}
-                  isActive={activeId === conv.id}
-                  onSelect={onSelect}
-                />
-              ))}
-            </div>
-
-            {/* Show more / Show less toggle */}
-            {hasMore && (
-              <button
-                onClick={() => toggleGroup(groupKey)}
-                className="w-full flex items-center justify-center gap-1.5 px-2 py-1 text-[11px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-lg transition-colors"
-              >
-                {isExpanded ? (
-                  <>
-                    <ChevronRight size={12} className="rotate-[-90deg]" />
-                    {t('aiChat.showLess', 'Show less')}
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown size={12} />
-                    {t('aiChat.showMore', 'Show more')} (
-                    {conversations.length - MAX_VISIBLE_PER_GROUP})
-                  </>
+            {/* Conversations — hidden when group collapsed */}
+            {!isGroupCollapsed && (
+              <>
+                <div className="space-y-0.5">
+                  {visibleConversations.map((conv) => (
+                    <ConversationItem
+                      key={conv.id}
+                      conversation={conv}
+                      isActive={activeId === conv.id}
+                      onSelect={onSelect}
+                    />
+                  ))}
+                </div>
+                {/* Show more / Show less toggle */}
+                {hasMore && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleGroup(groupKey);
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 px-2 py-1 text-[11px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-lg transition-colors"
+                  >
+                    {isExpanded ? (
+                      <>
+                        <ChevronRight size={12} className="rotate-[-90deg]" />
+                        {t('aiChat.showLess', 'Show less')}
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown size={12} />
+                        {t('aiChat.showMore', 'Show more')} (
+                        {conversations.length - MAX_VISIBLE_PER_GROUP})
+                      </>
+                    )}
+                  </button>
                 )}
-              </button>
+              </>
             )}
           </div>
         );

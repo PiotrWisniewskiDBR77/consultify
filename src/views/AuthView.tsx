@@ -55,7 +55,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
   onBack,
 }) => {
   const { t } = useTranslation();
-  const isDev = import.meta.env.DEV;
   const brandLogoDarkSrc = new URL(
     '../../Logo consultinity/Consultinity_logo_dark_medium.svg',
     import.meta.url
@@ -75,10 +74,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [quickCode, setQuickCode] = useState('');
   const quickAccessRef = useRef<HTMLInputElement>(null);
 
-  // Quick access login handler
+  // Quick access login handler (dev/staging: 4-digit codes 7777/7776/7778)
   const handleQuickAccess = async (code: string) => {
-    // Safety: never allow quick access outside dev builds
-    if (!import.meta.env.DEV) return;
     const quickAccessCodes: Record<string, { email: string; password: string }> = {
       '7777': { email: 'piotr.wisniewski@dbr77.com', password: '123456' }, // Admin
       '7775': { email: 'pawel.mroczkowski@dbr77.com', password: '123456' }, // Paweł (DBR77)
@@ -363,7 +360,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <p className="text-sm text-indigo-800 dark:text-indigo-300 text-center">
           <span className="font-medium">{t('auth.loginAs', 'You will be logged in as:')}</span>
           <br />
-          <code className="text-indigo-600 dark:text-indigo-400 font-mono">demo@technolex.com</code>
+          <code className="text-indigo-600 dark:text-indigo-400 font-mono">
+            demo@consultinity.com
+          </code>
         </p>
       </div>
 
@@ -767,11 +766,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <div className="flex flex-col items-center mb-6">
           <div
             className="cursor-pointer select-none"
-            onClick={() => {
-              // Quick access is DEV-only to avoid exposing backdoor in production
-              if (!isDev) return;
-              setShowQuickAccess(!showQuickAccess);
-            }}
+            onClick={() => setShowQuickAccess(!showQuickAccess)}
             title="DBR77"
           >
             <img

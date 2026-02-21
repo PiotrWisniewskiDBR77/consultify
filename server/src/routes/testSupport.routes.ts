@@ -1,25 +1,17 @@
 import express, { type Request, type Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
+import config from '../config/Config.js';
+import adminAuditService from '../services/adminAuditService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const router = express.Router();
 
-function base64Url(obj: unknown) {
-  return Buffer.from(JSON.stringify(obj), 'utf8')
-    .toString('base64')
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
-}
-
-function makeE2eToken(payload: Record<string, unknown>) {
-  const now = Math.floor(Date.now() / 1000);
-  const header = base64Url({ alg: 'none', typ: 'JWT' });
-  const body = base64Url({ ...payload, iat: now, exp: now + 60 * 60 * 24 * 7 });
-  return `${header}.${body}.e2e`;
+function makeSignedToken(payload: Record<string, unknown>) {
+  return jwt.sign(payload, config.JWT_SECRET, { expiresIn: '7d' });
 }
 
 function deny(res: Response) {
@@ -188,17 +180,25 @@ router.post(
       );
     }
 
-    const token = makeE2eToken({
-      e2e: true,
+    const token = makeSignedToken({
       id: userId,
       email: `e2e+${runId}@local.test`,
       name: 'E2E Admin',
       role: 'ADMIN',
-      userRole: 'ADMIN',
       organizationId,
-      isSuperAdmin: true,
       runId,
+      jti: uuidv4(),
     });
+
+    try {
+      await adminAuditService.logAction({
+        adminId: 'test-support',
+        actionType: 'test_support_bootstrap',
+        details: { runId, organizationId, env: process.env.NODE_ENV },
+      });
+    } catch {
+      /* audit best-effort */
+    }
 
     return res.status(200).json({
       runId,
@@ -243,6 +243,16 @@ router.post(
     await DbPromise.run(`DELETE FROM test_support_runs WHERE run_id = ?`, [runId], {
       fallback: false,
     });
+
+    try {
+      await adminAuditService.logAction({
+        adminId: 'test-support',
+        actionType: 'test_support_cleanup',
+        details: { runId, organizationId: existing.organization_id, env: process.env.NODE_ENV },
+      });
+    } catch {
+      /* audit best-effort */
+    }
 
     return res.status(200).json({ ok: true, runId, deleted: true });
   })

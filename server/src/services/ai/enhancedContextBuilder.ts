@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadEnhancedcontextbuilder = createCachedLazyService('../../ai/enhancedContextBuilder.js');
+const loadEnhancedcontextbuilder = createCachedLazyService('ai/enhancedContextBuilder.js');
 
 // Export default instance (for backward compatibility)
 export default loadEnhancedcontextbuilder();

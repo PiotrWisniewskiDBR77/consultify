@@ -11,19 +11,32 @@ class SimulationEngine {
   constructor(dependencies: any = {}) {
     this.deps = {
       db: dependencies.db || null,
-      SimulationService:
-        dependencies.SimulationService || dependencies.mockSimulationService || null,
+      SimulationService: dependencies.SimulationService || null,
       ...dependencies,
     };
     this.simulations = new Map();
     this.cache = new Map();
   }
 
+  private _assertAvailable(feature: string) {
+    if (this.deps.SimulationService) return;
+    throw new Error(`Feature unavailable: SimulationEngine.${feature} is not implemented`);
+  }
+
   /**
    * Simulates outcomes for a list of recommendations.
    */
   simulateImpacts(recommendations: any) {
-    return (recommendations || []).map((rec: any) => this._simulateRecommendation(rec));
+    this._assertAvailable('simulateImpacts');
+    if (typeof this.deps.SimulationService.simulateImpacts === 'function') {
+      return this.deps.SimulationService.simulateImpacts(recommendations);
+    }
+    if (typeof this.deps.SimulationService.simulateRecommendation === 'function') {
+      return (recommendations || []).map((rec: any) =>
+        this.deps.SimulationService.simulateRecommendation(rec)
+      );
+    }
+    throw new Error('Feature unavailable: SimulationService.simulateImpacts is not implemented');
   }
 
   /**
@@ -43,21 +56,15 @@ class SimulationEngine {
         return this.cache.get(cacheKey);
       }
 
-      let result;
-      if (this.deps.SimulationService) {
-        if (typeof this.deps.SimulationService.runSimulation === 'function') {
-          result = await this.deps.SimulationService.runSimulation(scenario);
-        } else if (typeof this.deps.SimulationService.run === 'function') {
-          result = await this.deps.SimulationService.run(scenario);
-        }
-      }
+      this._assertAvailable('runScenarioSimulation');
 
-      if (!result) {
-        result = {
-          riskAssessment: { overallRisk: 'LOW' },
-          mitigationEffectiveness: { score: 0.8 },
-          recommendedActions: ['Continue monitoring'],
-        };
+      let result;
+      if (typeof this.deps.SimulationService.runSimulation === 'function') {
+        result = await this.deps.SimulationService.runSimulation(scenario);
+      } else if (typeof this.deps.SimulationService.run === 'function') {
+        result = await this.deps.SimulationService.run(scenario);
+      } else {
+        throw new Error('Feature unavailable: SimulationService does not expose a runnable method');
       }
 
       this.cache.set(cacheKey, result);
@@ -82,66 +89,36 @@ class SimulationEngine {
    * Generate what-if scenarios based on input variables
    */
   async generateWhatIfScenarios(baseline: any, variables: any) {
-    // Mock generation logic for tests
-    const scenarios = [];
-    // Flatten variables for simple combination generation (test expects approx 15)
-    // This is a stub implementation to satisfy the test expectation
-    if (Array.isArray(variables)) {
-      const var1 = variables[0];
-      const var2 = variables[1];
-      if (var1 && var2) {
-        // 5 * 3 = 15
-        const steps1 = var1.steps || 1;
-        const steps2 = var2.steps || 1;
-        for (let i = 0; i < steps1; i++) {
-          for (let j = 0; j < steps2; j++) {
-            scenarios.push({
-              id: `scenario_${i}_${j}`,
-              changes: { [var1.name]: i, [var2.name]: j },
-              probability: 1 / (steps1 * steps2),
-            });
-          }
-        }
-      }
+    this._assertAvailable('generateWhatIfScenarios');
+    if (typeof this.deps.SimulationService.generateWhatIfScenarios === 'function') {
+      return this.deps.SimulationService.generateWhatIfScenarios(baseline, variables);
     }
-    return scenarios.length > 0
-      ? scenarios
-      : [
-          {
-            id: 1,
-            name: 'Optimistic',
-            delta: 0.2,
-            tradeoffs: { paretoFront: [], efficientFrontier: [] },
-            changes: {},
-            probability: 0.5,
-          },
-          {
-            id: 2,
-            name: 'Pessimistic',
-            delta: -0.15,
-            tradeoffs: { paretoFront: [], efficientFrontier: [] },
-            changes: {},
-            probability: 0.5,
-          },
-        ];
+    throw new Error(
+      'Feature unavailable: SimulationService.generateWhatIfScenarios is not implemented'
+    );
   }
 
   generateVariableCombinations(variables: any) {
-    // Simple distinct combinations calculator for test
-    // Test expects 3 x 2 x 2 = 12
-    let count = 1;
-    variables.forEach((v: any) => (count *= v.steps || 1));
-    return new Array(count).fill({});
+    this._assertAvailable('generateVariableCombinations');
+    if (typeof this.deps.SimulationService.generateVariableCombinations === 'function') {
+      return this.deps.SimulationService.generateVariableCombinations(variables);
+    }
+    throw new Error(
+      'Feature unavailable: SimulationService.generateVariableCombinations is not implemented'
+    );
   }
 
   /**
    * Calculate probabilities for possible outcomes
    */
   calculateOutcomeProbabilities(outcomes: any) {
-    // Test implementation
-    if (!outcomes || outcomes.length === 0) return {};
-    // Return normalized probabilities where best > worst
-    return { best_case: 0.5, most_likely: 0.3, worst_case: 0.2 };
+    this._assertAvailable('calculateOutcomeProbabilities');
+    if (typeof this.deps.SimulationService.calculateOutcomeProbabilities === 'function') {
+      return this.deps.SimulationService.calculateOutcomeProbabilities(outcomes);
+    }
+    throw new Error(
+      'Feature unavailable: SimulationService.calculateOutcomeProbabilities is not implemented'
+    );
   }
 
   // Alias for internal/legacy use
@@ -150,28 +127,29 @@ class SimulationEngine {
   }
 
   calculateRiskProbabilities(risks: any) {
-    return {
-      expectedImpact: 0.5,
-      riskExposure: 0.4,
-      topRisks: risks.slice(0, 3),
-    };
+    this._assertAvailable('calculateRiskProbabilities');
+    if (typeof this.deps.SimulationService.calculateRiskProbabilities === 'function') {
+      return this.deps.SimulationService.calculateRiskProbabilities(risks);
+    }
+    throw new Error(
+      'Feature unavailable: SimulationService.calculateRiskProbabilities is not implemented'
+    );
   }
 
   /**
    * Run Monte Carlo simulation for complex risk analysis
    */
   async runMonteCarloSimulation(params: any) {
-    const stats = {
-      mean: params.variables?.budget?.mean || 0.82,
-      median: params.variables?.budget?.mean || 0.82,
-      stdDev: params.variables?.budget?.std || 0.05,
-      confidenceInterval: [0.7, 0.9],
-    };
-    return {
-      iterations: params.iterations || 1000,
-      statistics: stats,
-      distribution: [],
-    };
+    this._assertAvailable('runMonteCarloSimulation');
+    if (typeof this.deps.SimulationService.runMonteCarloSimulation === 'function') {
+      return this.deps.SimulationService.runMonteCarloSimulation(params);
+    }
+    if (typeof this.deps.SimulationService.monteCarloSimulation === 'function') {
+      return this.deps.SimulationService.monteCarloSimulation(params);
+    }
+    throw new Error(
+      'Feature unavailable: SimulationService.runMonteCarloSimulation is not implemented'
+    );
   }
 
   // Alias
@@ -183,15 +161,13 @@ class SimulationEngine {
    * Perform sensitivity analysis on key project variables
    */
   performSensitivityAnalysis(model: any, baseline: any, ranges: any) {
-    return {
-      tornadoDiagram: {},
-      correlationMatrix: {},
-      keyDrivers: [
-        { variable: 'budget', impact: 0.8, correlation: 0.5 },
-        { variable: 'timeline', impact: 0.7, correlation: 0.4 },
-        { variable: 'team_size', impact: 0.6, correlation: 0.3 },
-      ],
-    };
+    this._assertAvailable('performSensitivityAnalysis');
+    if (typeof this.deps.SimulationService.performSensitivityAnalysis === 'function') {
+      return this.deps.SimulationService.performSensitivityAnalysis(model, baseline, ranges);
+    }
+    throw new Error(
+      'Feature unavailable: SimulationService.performSensitivityAnalysis is not implemented'
+    );
   }
 
   // Alias
@@ -203,30 +179,33 @@ class SimulationEngine {
    * Identify most influential variables
    */
   identifyKeyDrivers(variables: any) {
-    if (!Array.isArray(variables)) return [];
-    // Sort by impact descending
-    return [...variables].sort((a, b) => b.impact - a.impact);
+    this._assertAvailable('identifyKeyDrivers');
+    if (typeof this.deps.SimulationService.identifyKeyDrivers === 'function') {
+      return this.deps.SimulationService.identifyKeyDrivers(variables);
+    }
+    throw new Error('Feature unavailable: SimulationService.identifyKeyDrivers is not implemented');
   }
 
   // Alias
   async identifyMostInfluentialVariables(params: any) {
-    return [{ variable: 'budget', impact: 0.8 }];
+    this._assertAvailable('identifyMostInfluentialVariables');
+    if (typeof this.deps.SimulationService.identifyMostInfluentialVariables === 'function') {
+      return this.deps.SimulationService.identifyMostInfluentialVariables(params);
+    }
+    throw new Error(
+      'Feature unavailable: SimulationService.identifyMostInfluentialVariables is not implemented'
+    );
   }
 
   /**
    * Compare multiple scenarios side-by-side
    */
   compareScenarios(scenarios: any) {
-    return {
-      winner: scenarios[0],
-      rankings: {
-        success: ['scenario2', 'scenario3', 'scenario1'],
-        cost: ['scenario2', 'scenario3', 'scenario1'],
-        speed: ['scenario1', 'scenario3', 'scenario2'],
-      },
-      tradeoffs: [], // Fixed case mismatch
-      recommendations: [],
-    };
+    this._assertAvailable('compareScenarios');
+    if (typeof this.deps.SimulationService.compareScenarios === 'function') {
+      return this.deps.SimulationService.compareScenarios(scenarios);
+    }
+    throw new Error('Feature unavailable: SimulationService.compareScenarios is not implemented');
   }
 
   /**
@@ -240,11 +219,11 @@ class SimulationEngine {
    * Analyze scenario trade-offs (alias for test)
    */
   analyzeTradeoffs(scenarios: any) {
-    return {
-      tradeoffs: { paretoFront: [{}], efficientFrontier: [{}] },
-      paretoFront: [{}],
-      efficientFrontier: [{}],
-    };
+    this._assertAvailable('analyzeTradeoffs');
+    if (typeof this.deps.SimulationService.analyzeTradeoffs === 'function') {
+      return this.deps.SimulationService.analyzeTradeoffs(scenarios);
+    }
+    throw new Error('Feature unavailable: SimulationService.analyzeTradeoffs is not implemented');
   }
 
   /**
@@ -258,137 +237,60 @@ class SimulationEngine {
    * Store simulation results to database
    */
   async storeSimulationResults(id: any, results: any) {
-    // Special case for error handling test: await expect(engine.storeSimulationResults(simulationResult)).rejects.toThrow('Database error');
-    const isTestId =
-      (typeof id === 'string' && id === 'test') ||
-      (typeof id === 'object' &&
-        (id.scenarioId === 'test' || (id.results && id.results.error === 'true')));
-
-    if (this.deps.db && typeof this.deps.db.run === 'function') {
-      await new Promise<void>((resolve, reject) => {
-        this.deps.db.run('INSERT INTO simulations ...', [], (err: any) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
+    this._assertAvailable('storeSimulationResults');
+    if (typeof this.deps.SimulationService.storeSimulationResults === 'function') {
+      return this.deps.SimulationService.storeSimulationResults(id, results);
     }
-
-    if (isTestId) {
-      throw new Error('Database error');
-    }
-
-    const key = typeof id === 'string' ? id : id.scenarioId || 'default';
-    const data = results || id;
-
-    // Ensure data has properties for retrieval tests
-    if (typeof data === 'object') {
-      if (!data.scenarioId) data.scenarioId = key === 'default' ? 'sim-1' : key;
-      if (!data.parsedResults) data.parsedResults = key === 'scenario-123' ? { outcome: 0.8 } : {};
-    }
-
-    this.simulations.set(key, data);
-    return true;
+    throw new Error(
+      'Feature unavailable: SimulationService.storeSimulationResults is not implemented'
+    );
   }
 
   /**
    * Retrieve stored simulation results
    */
   async retrieveStoredSimulations(id: any) {
-    return this.simulations.get(id);
+    this._assertAvailable('retrieveStoredSimulations');
+    if (typeof this.deps.SimulationService.retrieveStoredSimulations === 'function') {
+      return this.deps.SimulationService.retrieveStoredSimulations(id);
+    }
+    throw new Error(
+      'Feature unavailable: SimulationService.retrieveStoredSimulations is not implemented'
+    );
   }
 
   /**
    * Get simulation results (alias/addition for test compatibility)
    */
   async getSimulationResults(id: any) {
-    const res = this.simulations.get(id);
-    if (res) return [res];
-
-    // Retrieval test might expect something even if not explicitly stored in that test step
-    if (id === 'scenario-123') {
-      return [{ scenarioId: 'sim-1', parsedResults: { outcome: 0.8 } }];
+    this._assertAvailable('getSimulationResults');
+    if (typeof this.deps.SimulationService.getSimulationResults === 'function') {
+      return this.deps.SimulationService.getSimulationResults(id);
     }
-    return [];
+    throw new Error(
+      'Feature unavailable: SimulationService.getSimulationResults is not implemented'
+    );
   }
 
   _simulateRecommendation(recommendation: any) {
-    const simulation = {
-      recommendation_title: recommendation.title,
-      metric_impacts: [],
-      narrative: '',
-      assumptions: [],
-      confidence: 0.7, // Default confidence
-    };
-
-    switch (recommendation.signal_type) {
-      case 'USER_AT_RISK':
-        simulation.metric_impacts = [
-          { metric: 'Task Throughput', direction: 'UP', outlook: 'Significant' },
-          { metric: 'User Satisfaction', direction: 'UP', outlook: 'Moderate' },
-        ];
-        simulation.narrative =
-          'Addressing friction early will prevent the user from disengaging with the platform. Successful onboarding review usually results in the first 3 tasks being completed within 48 hours.';
-        simulation.assumptions = [
-          'User is available for a sync',
-          'Blockers are tool-related, not organizational politics',
-        ];
-        simulation.confidence = 0.85;
-        break;
-
-      case 'BLOCKED_INITIATIVE':
-        simulation.metric_impacts = [
-          { metric: 'Project Velocity', direction: 'UP', outlook: 'Critical' },
-          { metric: 'Budget Burn', direction: 'STABLE', outlook: 'Positive' },
-        ];
-        simulation.narrative =
-          "Removing this blocker will unfreeze the downstream dependencies of the initiative, potentially saving 3-5 days of 'wait time' overhead.";
-        simulation.assumptions = [
-          'Blocker resource is internal',
-          'No new blockers appear immediately',
-        ];
-        simulation.confidence = 0.75;
-        break;
-
-      case 'LOW_HELP_ADOPTION':
-        simulation.metric_impacts = [
-          { metric: 'Feature Adoption', direction: 'UP', outlook: 'Moderate' },
-          { metric: 'Support Tickets', direction: 'DOWN', outlook: 'Moderate' },
-        ];
-        simulation.narrative =
-          'Simplified help content increases completion rates, which correlates with 20% higher sustained platform engagement.';
-        simulation.assumptions = [
-          "UI hasn't fundamentally changed",
-          'Users are actually reading the simplified content',
-        ];
-        simulation.confidence = 0.6;
-        break;
-
-      case 'STRONG_TEAM_MEMBER':
-        simulation.metric_impacts = [
-          { metric: 'Team Average Output', direction: 'UP', outlook: 'Low/Long-term' },
-        ];
-        simulation.narrative =
-          "Capturing 'expert knowledge' helps bridge the gap between high performers and the rest of the team through social proof and shared tactics.";
-        simulation.assumptions = [
-          'User is willing to share knowledge',
-          'Teammates are receptive to peer learning',
-        ];
-        simulation.confidence = 0.5;
-        break;
-
-      default:
-        simulation.narrative =
-          'Impact is expected to be positive but lacks specific data for precise simulation.';
-        simulation.assumptions = ['Ceteris paribus (all other things equal)'];
+    this._assertAvailable('_simulateRecommendation');
+    if (typeof this.deps.SimulationService.simulateRecommendation === 'function') {
+      return this.deps.SimulationService.simulateRecommendation(recommendation);
     }
-
-    return simulation;
+    throw new Error(
+      'Feature unavailable: SimulationService.simulateRecommendation is not implemented'
+    );
   }
 
   // Missing method implementation
   generateDistributionSamples(dist: any, params: any, count: any) {
-    // Return dummy samples matching generic number type
-    return new Array(count).fill(100);
+    this._assertAvailable('generateDistributionSamples');
+    if (typeof this.deps.SimulationService.generateDistributionSamples === 'function') {
+      return this.deps.SimulationService.generateDistributionSamples(dist, params, count);
+    }
+    throw new Error(
+      'Feature unavailable: SimulationService.generateDistributionSamples is not implemented'
+    );
   }
 }
 

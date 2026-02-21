@@ -59,6 +59,8 @@ export interface ReportRecord {
   companyContext?: Record<string, unknown>;
   status: ReportStatus;
   createdBy: string;
+  /** @deprecated DB column name - use createdBy */
+  created_by?: string;
   createdAt: string;
   updatedAt: string;
   generatedAt?: string;

@@ -11,7 +11,7 @@ import TaskControllerRaw from '../../controllers/TaskController.js';
 const TaskController = TaskControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
-import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import logger from '../../utils/Logger.js';
 import {
@@ -27,7 +27,7 @@ import {
 const router = Router();
 
 // Apply rate limiting
-router.use(authRateLimiter);
+router.use(apiAuthRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);

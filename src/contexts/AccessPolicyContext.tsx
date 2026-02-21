@@ -3,8 +3,6 @@
  *
  * React Context for consuming policy snapshot (single source of truth)
  * UI should ONLY use this context for gating - no local calculations
- *
- * Step 2 Finalization: Enterprise+ Ready
  */
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -17,6 +15,7 @@ interface PolicyLimits {
   maxAICallsPerDay: number;
   maxInitiatives: number;
   maxStorageMb: number;
+  maxTotalTokens: number;
   aiRolesEnabled: string[];
 }
 
@@ -24,23 +23,42 @@ interface UsageToday {
   aiCalls: number;
   projects: number;
   users: number;
+  initiatives: number;
+  storageMb: number;
+  tokensUsed: number;
+}
+
+interface UsagePercent {
+  aiCalls: number;
+  projects: number;
+  users: number;
+  initiatives: number;
+  storage: number;
+  tokens: number;
 }
 
 interface UpgradeCtas {
   primaryAction: string;
+  primaryActionKey: string;
   urlOrRoute: string;
+  reason?: string;
 }
 
 interface PolicyMessages {
   bannerText: string | null;
+  bannerTextKey: string | null;
   modalText: string | null;
+  modalTextKey: string | null;
 }
+
+export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceling' | 'canceled';
 
 export interface PolicySnapshot {
   orgType: 'DEMO' | 'TRIAL' | 'PAID';
   isDemo: boolean;
   isTrial: boolean;
   isPaid: boolean;
+  subscriptionStatus: SubscriptionStatus | null;
   trialStartedAt: string | null;
   trialExpiresAt: string | null;
   trialDaysLeft: number;
@@ -48,10 +66,12 @@ export interface PolicySnapshot {
   warningLevel: 'none' | 'warning' | 'critical' | 'expired';
   limits: PolicyLimits | null;
   usageToday: UsageToday;
+  usagePercent: UsagePercent;
   blockedFeatures: string[];
   blockedActions: string[];
   upgradeCtas: UpgradeCtas;
   messages: PolicyMessages;
+  hasPaymentMethod: boolean;
 }
 
 interface AccessPolicyContextValue {
@@ -61,17 +81,17 @@ interface AccessPolicyContextValue {
   refresh: () => Promise<void>;
   isActionBlocked: (action: string) => boolean;
   isFeatureBlocked: (feature: string) => boolean;
+  isApproachingLimit: (resource: keyof UsagePercent) => boolean;
+  isAtLimit: (resource: keyof UsagePercent) => boolean;
 }
 
 const AccessPolicyContext = createContext<AccessPolicyContextValue | undefined>(undefined);
 
-// Helper to get auth token from localStorage
 const getAuthToken = (): string | null => {
   try {
     const stored = localStorage.getItem('consultinity-storage');
     if (stored) {
       const parsed = JSON.parse(stored);
-      // Token may be stored in user object or separately
       return parsed.state?.currentUser?.token || localStorage.getItem('auth_token') || null;
     }
     return localStorage.getItem('auth_token');
@@ -81,9 +101,6 @@ const getAuthToken = (): string | null => {
 };
 
 export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // NOTE (React 19 + useSyncExternalStore):
-  // Avoid selectors that return a new object each call (even with shallow),
-  // because it can trigger "getSnapshot should be cached" and update loops.
   const currentUser = useAppStore((s) => s.currentUser);
   const [snapshot, setSnapshot] = useState<PolicySnapshot | null>(null);
   const [loading, setLoading] = useState(false);
@@ -98,7 +115,6 @@ export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const token = getAuthToken();
 
     if (!currentUser?.isAuthenticated || !token) {
-      // Don't spam state updates if we're already cleared.
       setSnapshot((prev) => (prev === null ? prev : null));
       return;
     }
@@ -115,7 +131,6 @@ export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ 
       });
 
       if (response.status === 404) {
-        // Backend may not have this endpoint in some dev/stub setups.
         setSnapshot(null);
         return;
       }
@@ -134,9 +149,7 @@ export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [currentUser?.isAuthenticated]);
 
-  // Fetch on mount and auth change
   useEffect(() => {
-    // Only fetch when an authenticated user is present.
     if (authKey) {
       fetchSnapshot();
     } else {
@@ -160,6 +173,23 @@ export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ 
     [snapshot]
   );
 
+  const isApproachingLimit = useCallback(
+    (resource: keyof UsagePercent): boolean => {
+      if (!snapshot?.usagePercent) return false;
+      const pct = snapshot.usagePercent[resource];
+      return pct >= 70 && pct < 100;
+    },
+    [snapshot]
+  );
+
+  const isAtLimit = useCallback(
+    (resource: keyof UsagePercent): boolean => {
+      if (!snapshot?.usagePercent) return false;
+      return snapshot.usagePercent[resource] >= 100;
+    },
+    [snapshot]
+  );
+
   return (
     <AccessPolicyContext.Provider
       value={{
@@ -169,6 +199,8 @@ export const AccessPolicyProvider: React.FC<{ children: React.ReactNode }> = ({ 
         refresh: fetchSnapshot,
         isActionBlocked,
         isFeatureBlocked,
+        isApproachingLimit,
+        isAtLimit,
       }}
     >
       {children}
@@ -184,7 +216,6 @@ export const usePolicySnapshot = (): AccessPolicyContextValue => {
   return context;
 };
 
-// Convenience hooks
 export const useIsDemo = (): boolean => {
   const { snapshot } = usePolicySnapshot();
   return snapshot?.isDemo ?? false;
@@ -208,4 +239,29 @@ export const useTrialDaysLeft = (): number => {
 export const useIsTrialExpired = (): boolean => {
   const { snapshot } = usePolicySnapshot();
   return snapshot?.isTrialExpired ?? false;
+};
+
+export const useSubscriptionStatus = (): SubscriptionStatus | null => {
+  const { snapshot } = usePolicySnapshot();
+  return snapshot?.subscriptionStatus ?? null;
+};
+
+export const useWarningLevel = (): string => {
+  const { snapshot } = usePolicySnapshot();
+  return snapshot?.warningLevel ?? 'none';
+};
+
+export const useHasPaymentMethod = (): boolean => {
+  const { snapshot } = usePolicySnapshot();
+  return snapshot?.hasPaymentMethod ?? false;
+};
+
+export const useUpgradeCtas = (): PolicySnapshot['upgradeCtas'] | null => {
+  const { snapshot } = usePolicySnapshot();
+  return snapshot?.upgradeCtas ?? null;
+};
+
+export const useUsagePercent = (): UsagePercent | null => {
+  const { snapshot } = usePolicySnapshot();
+  return snapshot?.usagePercent ?? null;
 };

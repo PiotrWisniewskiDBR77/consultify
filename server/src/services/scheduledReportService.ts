@@ -8,8 +8,6 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { getDatabase } from '../database/index.js';
-
 // ============================================
 // TYPES
 // ============================================
@@ -23,6 +21,9 @@ export type ScheduleFrequency =
   | 'custom';
 export type ScheduleStatus = 'active' | 'paused' | 'completed' | 'failed';
 export type DeliveryMethod = 'email' | 'dashboard' | 'webhook' | 'storage';
+export type ScheduleType = 'time_based' | 'event_triggered' | 'hybrid';
+export type DeliverableType = 'report' | 'presentation' | 'both';
+export type ScopeType = 'organization' | 'portfolio' | 'project' | 'initiative';
 
 export interface ReportSchedule {
   id: string;
@@ -35,6 +36,11 @@ export interface ReportSchedule {
   // Source data
   sourceAssessmentId?: string;
   sourceProjectId?: string;
+  // Schedule type (T062)
+  scheduleType: ScheduleType;
+  deliverableType: DeliverableType;
+  scopeType: ScopeType;
+  scopeId?: string;
   // Schedule configuration
   frequency: ScheduleFrequency;
   cronExpression: string;
@@ -81,6 +87,10 @@ export interface ScheduleCreateRequest {
   reportType: string;
   sourceAssessmentId?: string;
   sourceProjectId?: string;
+  scheduleType?: ScheduleType;
+  deliverableType?: DeliverableType;
+  scopeType?: ScopeType;
+  scopeId?: string;
   frequency: ScheduleFrequency;
   cronExpression?: string;
   timezone?: string;
@@ -92,6 +102,10 @@ export interface ScheduleCreateRequest {
 export interface ScheduleUpdateRequest {
   name?: string;
   description?: string;
+  scheduleType?: ScheduleType;
+  deliverableType?: DeliverableType;
+  scopeType?: ScopeType;
+  scopeId?: string;
   frequency?: ScheduleFrequency;
   cronExpression?: string;
   timezone?: string;
@@ -107,6 +121,10 @@ export interface ScheduleExecution {
   startedAt: string;
   completedAt?: string;
   generatedReportId?: string;
+  generatedPresentationId?: string;
+  triggerType?: string;
+  triggerReason?: string;
+  deliverableType?: string;
   error?: string;
   deliveryResults: DeliveryResult[];
 }
@@ -141,24 +159,13 @@ class ScheduledReportService {
   private emailService: any;
 
   constructor() {
-    // Dependencies can be injected, but routes may call the service without doing so.
-    // Default to the app database connection to avoid 500s in production.
-    try {
-      this.db = getDatabase();
-    } catch {
-      // ignore; can be injected later
-    }
+    // Dependencies will be injected
   }
 
   setDependencies(deps: { db: any; reportBuilderService?: any; emailService?: any }) {
     this.db = deps.db;
     this.reportBuilderService = deps.reportBuilderService;
     this.emailService = deps.emailService;
-  }
-
-  private ensureDb() {
-    if (this.db) return;
-    this.db = getDatabase();
   }
 
   // ============================================
@@ -173,7 +180,6 @@ class ScheduledReportService {
     organizationId: string,
     userId: string
   ): Promise<ReportSchedule> {
-    this.ensureDb();
     const id = uuidv4();
     const now = new Date().toISOString();
 
@@ -184,6 +190,10 @@ class ScheduledReportService {
     // Calculate next run
     const nextRunAt = this.calculateNextRun(cronExpression, timezone, request.startDate);
 
+    const scheduleType = request.scheduleType || 'time_based';
+    const deliverableType = request.deliverableType || 'report';
+    const scopeType = request.scopeType || 'organization';
+
     const schedule: ReportSchedule = {
       id,
       organizationId,
@@ -193,10 +203,14 @@ class ScheduledReportService {
       reportType: request.reportType,
       sourceAssessmentId: request.sourceAssessmentId,
       sourceProjectId: request.sourceProjectId,
+      scheduleType,
+      deliverableType,
+      scopeType,
+      scopeId: request.scopeId,
       frequency: request.frequency,
       cronExpression,
       timezone,
-      nextRunAt,
+      nextRunAt: scheduleType === 'event_triggered' ? null : nextRunAt,
       lastRunAt: null,
       lastRunStatus: null,
       lastRunReportId: null,
@@ -213,8 +227,9 @@ class ScheduledReportService {
       `INSERT INTO report_schedules (
         id, organization_id, schedule_name, cron_expression, timezone,
         next_run_at, last_run_at, last_run_status, last_run_report_id,
-        run_count, is_active, config_json, created_by, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        run_count, is_active, config_json, created_by, created_at, updated_at,
+        schedule_type, deliverable_type, scope_type, scope_id, description
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         schedule.id,
         schedule.organizationId,
@@ -240,6 +255,11 @@ class ScheduledReportService {
         schedule.createdBy,
         schedule.createdAt,
         schedule.updatedAt,
+        schedule.scheduleType,
+        schedule.deliverableType,
+        schedule.scopeType,
+        schedule.scopeId || null,
+        schedule.description || null,
       ]
     );
 
@@ -254,17 +274,19 @@ class ScheduledReportService {
     organizationId: string,
     updates: ScheduleUpdateRequest
   ): Promise<ReportSchedule | null> {
-    this.ensureDb();
     const existing = await this.getSchedule(scheduleId, organizationId);
     if (!existing) return null;
 
     const now = new Date().toISOString();
 
-    // Merge updates
     const updated: ReportSchedule = {
       ...existing,
       name: updates.name ?? existing.name,
       description: updates.description ?? existing.description,
+      scheduleType: updates.scheduleType ?? existing.scheduleType,
+      deliverableType: updates.deliverableType ?? existing.deliverableType,
+      scopeType: updates.scopeType ?? existing.scopeType,
+      scopeId: updates.scopeId ?? existing.scopeId,
       frequency: updates.frequency ?? existing.frequency,
       cronExpression: updates.cronExpression ?? existing.cronExpression,
       timezone: updates.timezone ?? existing.timezone,
@@ -274,15 +296,19 @@ class ScheduledReportService {
       updatedAt: now,
     };
 
-    // Recalculate next run if schedule changed
     if (updates.cronExpression || updates.timezone) {
       updated.nextRunAt = this.calculateNextRun(updated.cronExpression, updated.timezone);
+    }
+
+    if (updated.scheduleType === 'event_triggered') {
+      updated.nextRunAt = null;
     }
 
     await this.db.run(
       `UPDATE report_schedules SET
         schedule_name = ?, cron_expression = ?, timezone = ?,
-        next_run_at = ?, is_active = ?, config_json = ?, updated_at = ?
+        next_run_at = ?, is_active = ?, config_json = ?, updated_at = ?,
+        schedule_type = ?, deliverable_type = ?, scope_type = ?, scope_id = ?, description = ?
        WHERE id = ? AND organization_id = ?`,
       [
         updated.name,
@@ -301,6 +327,11 @@ class ScheduledReportService {
           deliveryConfig: updated.deliveryConfig,
         }),
         updated.updatedAt,
+        updated.scheduleType,
+        updated.deliverableType,
+        updated.scopeType,
+        updated.scopeId || null,
+        updated.description || null,
         scheduleId,
         organizationId,
       ]
@@ -313,7 +344,6 @@ class ScheduledReportService {
    * Get a schedule by ID
    */
   async getSchedule(scheduleId: string, organizationId: string): Promise<ReportSchedule | null> {
-    this.ensureDb();
     const row = await this.db.get(
       `SELECT * FROM report_schedules WHERE id = ? AND organization_id = ?`,
       [scheduleId, organizationId]
@@ -334,7 +364,6 @@ class ScheduledReportService {
       offset?: number;
     }
   ): Promise<ReportSchedule[]> {
-    this.ensureDb();
     let query = `SELECT * FROM report_schedules WHERE organization_id = ?`;
     const params: any[] = [organizationId];
 
@@ -363,7 +392,6 @@ class ScheduledReportService {
    * Delete a schedule
    */
   async deleteSchedule(scheduleId: string, organizationId: string): Promise<boolean> {
-    this.ensureDb();
     const result = await this.db.run(
       `DELETE FROM report_schedules WHERE id = ? AND organization_id = ?`,
       [scheduleId, organizationId]
@@ -376,7 +404,6 @@ class ScheduledReportService {
    * Pause a schedule
    */
   async pauseSchedule(scheduleId: string, organizationId: string): Promise<ReportSchedule | null> {
-    this.ensureDb();
     return this.updateSchedule(scheduleId, organizationId, { isActive: false });
   }
 
@@ -384,7 +411,6 @@ class ScheduledReportService {
    * Resume a schedule
    */
   async resumeSchedule(scheduleId: string, organizationId: string): Promise<ReportSchedule | null> {
-    this.ensureDb();
     const schedule = await this.getSchedule(scheduleId, organizationId);
     if (!schedule) return null;
 
@@ -408,7 +434,6 @@ class ScheduledReportService {
    * Get schedules due for execution
    */
   async getDueSchedules(): Promise<ReportSchedule[]> {
-    this.ensureDb();
     const now = new Date().toISOString();
 
     const rows = await this.db.all(
@@ -424,8 +449,10 @@ class ScheduledReportService {
   /**
    * Execute a scheduled report generation
    */
-  async executeSchedule(scheduleId: string): Promise<ScheduleExecution> {
-    this.ensureDb();
+  async executeSchedule(
+    scheduleId: string,
+    triggerContext?: { triggerType: string; triggerReason: string }
+  ): Promise<ScheduleExecution> {
     const executionId = uuidv4();
     const startedAt = new Date().toISOString();
 
@@ -434,6 +461,8 @@ class ScheduledReportService {
       scheduleId,
       status: 'running',
       startedAt,
+      triggerType: triggerContext?.triggerType || 'cron',
+      triggerReason: triggerContext?.triggerReason,
       deliveryResults: [],
     };
 
@@ -623,8 +652,9 @@ class ScheduledReportService {
       await this.db.run(
         `INSERT INTO schedule_executions (
           id, schedule_id, status, started_at, completed_at,
-          generated_report_id, error, delivery_results_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          generated_report_id, error, delivery_results_json,
+          trigger_type, trigger_reason, deliverable_type, generated_presentation_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           execution.id,
           execution.scheduleId,
@@ -634,6 +664,10 @@ class ScheduledReportService {
           execution.generatedReportId,
           execution.error,
           JSON.stringify(execution.deliveryResults),
+          execution.triggerType || null,
+          execution.triggerReason || null,
+          execution.deliverableType || null,
+          execution.generatedPresentationId || null,
         ]
       );
     } catch (error) {
@@ -687,11 +721,15 @@ class ScheduledReportService {
       id: row.id,
       organizationId: row.organization_id,
       name: row.schedule_name,
-      description: config.description,
+      description: row.description || config.description,
       templateId: config.templateId || row.report_template_id,
       reportType: config.reportType || 'assessment',
       sourceAssessmentId: config.sourceAssessmentId || row.source_assessment_id,
       sourceProjectId: config.sourceProjectId,
+      scheduleType: row.schedule_type || 'time_based',
+      deliverableType: row.deliverable_type || 'report',
+      scopeType: row.scope_type || 'organization',
+      scopeId: row.scope_id,
       frequency: config.frequency || 'monthly',
       cronExpression: row.cron_expression,
       timezone: row.timezone || 'UTC',
@@ -717,7 +755,6 @@ class ScheduledReportService {
     organizationId: string,
     limit: number = 10
   ): Promise<ScheduleExecution[]> {
-    this.ensureDb();
     const rows = await this.db.all(
       `SELECT e.* FROM schedule_executions e
        JOIN report_schedules s ON e.schedule_id = s.id
@@ -734,6 +771,10 @@ class ScheduledReportService {
       startedAt: row.started_at,
       completedAt: row.completed_at,
       generatedReportId: row.generated_report_id,
+      generatedPresentationId: row.generated_presentation_id,
+      triggerType: row.trigger_type,
+      triggerReason: row.trigger_reason,
+      deliverableType: row.deliverable_type,
       error: row.error,
       deliveryResults: JSON.parse(row.delivery_results_json || '[]'),
     }));
@@ -750,6 +791,39 @@ class ScheduledReportService {
       { frequency: 'monthly', label: 'Monthly on 1st', cron: FREQUENCY_CRON_MAP.monthly },
       { frequency: 'quarterly', label: 'Quarterly', cron: FREQUENCY_CRON_MAP.quarterly },
     ];
+  }
+
+  /**
+   * Process all due time-based schedules (called periodically).
+   * For each due schedule, executes report generation.
+   */
+  async processScheduledReports(): Promise<{
+    processed: number;
+    succeeded: number;
+    failed: number;
+  }> {
+    const dueSchedules = await this.getDueSchedules();
+    let succeeded = 0;
+    let failed = 0;
+
+    for (const schedule of dueSchedules) {
+      try {
+        const execution = await this.executeSchedule(schedule.id, {
+          triggerType: 'cron',
+          triggerReason: `Scheduled run (${schedule.frequency})`,
+        });
+        if (execution.status === 'success') {
+          succeeded++;
+        } else {
+          failed++;
+        }
+      } catch (error) {
+        console.error(`[ScheduledReportService] Failed to process schedule ${schedule.id}:`, error);
+        failed++;
+      }
+    }
+
+    return { processed: dueSchedules.length, succeeded, failed };
   }
 }
 

@@ -66,6 +66,14 @@ export async function getOrgColumnCached(tableName: string): Promise<string> {
   return columnCache[tableName];
 }
 
+export function clearOrgColumnCache(): number {
+  const keys = Object.keys(columnCache);
+  for (const key of keys) {
+    delete columnCache[key];
+  }
+  return keys.length;
+}
+
 export interface OrgWhereClause {
   clause: string;
   value: string;

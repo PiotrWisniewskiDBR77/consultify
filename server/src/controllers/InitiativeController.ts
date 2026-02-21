@@ -156,7 +156,7 @@ const hasPendingExecutionGateDecisions = async (
   orgId: string,
   initiativeId: string
 ): Promise<boolean> => {
-  const columns = await queryHelpers.queryAll<{ name: string }>('PRAGMA table_info(decisions)');
+  const columns = await queryHelpers.getTableColumns('decisions');
   const hasColumn = (column: string) => columns.some((col) => col.name === column);
   const hasInitiativeId = hasColumn('initiative_id');
   const hasTaskId = hasColumn('task_id');
@@ -792,7 +792,9 @@ export class InitiativeController {
       const now = new Date().toISOString();
       updates.push('updated_at = ?');
       params.push(now);
-      if (userId) {
+      // Include updated_by only when column exists (skip on Postgres until migration runs)
+      const isPostgres = (process.env.DB_TYPE || '').toLowerCase() === 'postgres';
+      if (userId && !isPostgres) {
         updates.push('updated_by = ?');
         params.push(userId);
       }
@@ -1304,7 +1306,7 @@ export class InitiativeController {
         lifecycleUpdates.push('archived_at = ?');
         lifecycleParams.push(now);
       }
-      if (actorId) {
+      if (actorId && (process.env.DB_TYPE || '').toLowerCase() !== 'postgres') {
         lifecycleUpdates.push('updated_by = ?');
         lifecycleParams.push(actorId);
       }
@@ -1626,7 +1628,7 @@ export class InitiativeController {
         );
       } catch (err: any) {
         const msg = String(err?.message || '').toLowerCase();
-        if (!msg.includes('no such column')) throw err;
+        if (!msg.includes('no such column') && !msg.includes('does not exist')) throw err;
         // Legacy fallback: from_task_id / to_task_id
         rows = await queryHelpers.queryAll(
           `SELECT
@@ -2999,10 +3001,10 @@ export class InitiativeController {
         );
       } catch (err: any) {
         const msg = String(err?.message || '').toLowerCase();
-        if (!msg.includes('no such column')) {
+        if (!msg.includes('no such column') && !msg.includes('does not exist')) {
           throw err;
         }
-        // Backward-compatible fallback for legacy SQLite schema
+        // Backward-compatible fallback for legacy initiative_kpis schema (061)
         kpis = await queryHelpers.queryAll(
           `SELECT
             ik.id,
@@ -4990,16 +4992,32 @@ export class InitiativeController {
 
       // Readiness criteria for current stage
       const readiness: any[] = [];
-      const addCheck = (key: string, label: string, pass: boolean, severity: string) => {
-        readiness.push({ key, label, pass, severity });
+      const addCheck = (
+        key: string,
+        label: string,
+        pass: boolean,
+        severity: string,
+        suggestedAction?: string,
+        suggestedActor?: string
+      ) => {
+        readiness.push({ key, label, pass, severity, suggestedAction, suggestedActor });
       };
 
-      addCheck('title', 'Title defined', !!ini.name, 'blocking');
+      addCheck(
+        'title',
+        'Title defined',
+        !!ini.name,
+        'blocking',
+        'Add a concise initiative title that clearly describes the change.',
+        'Initiative Owner'
+      );
       addCheck(
         'owner',
         'Owner assigned',
         !!(ini.owner_business_id || ini.owner_execution_id),
-        'blocking'
+        'blocking',
+        'Assign a business or execution owner who will be accountable.',
+        'PMO / Project Manager'
       );
 
       if (['PENDING_REVIEW', 'REVIEW', 'PROMOTED', 'PLANNING'].includes(currentStatus)) {
@@ -5007,29 +5025,85 @@ export class InitiativeController {
           'summary',
           'Summary / problem statement',
           !!(ini.summary || ini.problem_statement),
-          'warning'
+          'warning',
+          'Write a 2-3 sentence summary explaining the business problem this initiative addresses.',
+          'Initiative Owner'
         );
       }
       if (['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED'].includes(currentStatus)) {
-        addCheck('sponsor', 'Sponsor assigned', !!ini.sponsor_id, 'warning');
+        addCheck(
+          'sponsor',
+          'Sponsor assigned',
+          !!ini.sponsor_id,
+          'warning',
+          'Nominate a senior leader who will champion and fund this initiative.',
+          'PMO / Portfolio Owner'
+        );
       }
-      // Timeline baseline is required from Scheduling onward (not for APPROVE/APPROVED).
       if (['SCHEDULED', 'EXECUTING', 'BLOCKED', 'DONE', 'TRACKING'].includes(currentStatus)) {
         addCheck(
           'timeline',
           'Timeline set',
           !!(ini.start_date || ini.planned_start_date),
-          'blocking'
+          'blocking',
+          'Set planned start and end dates for baseline scheduling.',
+          'Project Manager'
         );
       }
 
-      // Benefits readiness (DONE -> TRACKING)
+      if (['PLANNING', 'APPROVED'].includes(currentStatus)) {
+        addCheck(
+          'scope',
+          'Scope defined',
+          !!(ini.scope || ini.objectives),
+          'warning',
+          'Define the scope or objectives so reviewers understand boundaries.',
+          'Initiative Owner'
+        );
+
+        try {
+          const riskCount = await queryHelpers.queryOne(
+            `SELECT COUNT(*) as c FROM initiative_raids WHERE initiative_id = ? AND type = 'RISK'`,
+            [initiativeId]
+          );
+          addCheck(
+            'risks',
+            'Risks identified',
+            Number((riskCount as any)?.c || 0) > 0,
+            'warning',
+            'Identify at least one risk and its mitigation strategy.',
+            'Initiative Owner / Risk Manager'
+          );
+        } catch {
+          // best-effort
+        }
+
+        try {
+          const taskCount = await queryHelpers.queryOne(
+            `SELECT COUNT(*) as c FROM tasks WHERE initiative_id = ?`,
+            [initiativeId]
+          );
+          addCheck(
+            'tasks',
+            'Tasks created',
+            Number((taskCount as any)?.c || 0) > 0,
+            'warning',
+            'Break down the initiative into executable tasks.',
+            'Project Manager / Initiative Owner'
+          );
+        } catch {
+          // best-effort
+        }
+      }
+
       if (currentStatus === 'DONE') {
         addCheck(
           'benefits_owner',
           'Business Owner assigned (benefits owner)',
           !!ini.owner_business_id,
-          'blocking'
+          'blocking',
+          'Assign the business owner who will track realized benefits.',
+          'PMO / Sponsor'
         );
         try {
           const kpiCount = await queryHelpers.queryOne(
@@ -5037,7 +5111,14 @@ export class InitiativeController {
             [initiativeId]
           );
           const cAll = Number((kpiCount as any)?.c || 0);
-          addCheck('benefits_kpis', 'KPIs defined', cAll > 0, 'blocking');
+          addCheck(
+            'benefits_kpis',
+            'KPIs defined',
+            cAll > 0,
+            'blocking',
+            'Define measurable KPIs that will prove business value.',
+            'Business Owner'
+          );
 
           const readyCount = await queryHelpers.queryOne(
             `SELECT COUNT(*) as c
@@ -5048,9 +5129,15 @@ export class InitiativeController {
             [initiativeId]
           );
           const cReady = Number((readyCount as any)?.c || 0);
-          addCheck('benefits_kpi_targets', 'KPI targets + units defined', cReady > 0, 'warning');
+          addCheck(
+            'benefits_kpi_targets',
+            'KPI targets + units defined',
+            cReady > 0,
+            'warning',
+            'Set numeric targets and units for each KPI.',
+            'Business Owner'
+          );
         } catch (e: any) {
-          // If KPI schema is missing, treat as blocking (cannot start Benefits safely).
           addCheck('benefits_kpis', 'KPIs defined', false, 'blocking');
         }
       }
@@ -5067,7 +5154,9 @@ export class InitiativeController {
             `gate_role_${transition.gate}`,
             `Gate approver assigned for ${transition.gate}: ${missingRoles.join(', ')}`,
             false,
-            'warning'
+            'warning',
+            `Assign users to roles: ${missingRoles.join(', ')} so the gate can be approved.`,
+            'PMO / Project Manager'
           );
         }
       }
@@ -5169,8 +5258,8 @@ export class InitiativeController {
 
       let rows: any[] = [];
       try {
-        // Some dev SQLite schemas don't have the newer `gate_type` column yet.
-        // Try selecting it first, then fall back to a NULL gateType to avoid 500s.
+        // Try full schema (532+) first: gate_type, created_at, organization_id.
+        // Fall back to legacy schema (061): changed_at only, filter org via initiatives join.
         try {
           rows = await queryHelpers.queryAll(
             `SELECT
@@ -5193,11 +5282,14 @@ export class InitiativeController {
             [initiativeId, orgId]
           );
         } catch (e: any) {
-          const msg = String(e?.message || e || '');
-          if (
-            msg.toLowerCase().includes('gate_type') ||
-            msg.toLowerCase().includes('no such column')
-          ) {
+          const msg = String(e?.message || e || '').toLowerCase();
+          const missingColumn =
+            msg.includes('does not exist') ||
+            msg.includes('no such column') ||
+            msg.includes('gate_type') ||
+            msg.includes('created_at') ||
+            msg.includes('organization_id');
+          if (missingColumn) {
             rows = await queryHelpers.queryAll(
               `SELECT
                 h.id,
@@ -5207,16 +5299,17 @@ export class InitiativeController {
                 h.changed_by as changedBy,
                 h.reason,
                 NULL as gateType,
-                h.created_at as createdAt,
+                h.changed_at as createdAt,
                 u.first_name as changedByFirstName,
                 u.last_name as changedByLastName,
                 u.email as changedByEmail
               FROM initiative_status_history h
               LEFT JOIN users u ON u.id = h.changed_by
-              WHERE h.initiative_id = ? AND h.organization_id = ?
-              ORDER BY h.created_at DESC
+              JOIN initiatives i ON i.id = h.initiative_id AND i.organization_id = ?
+              WHERE h.initiative_id = ?
+              ORDER BY h.changed_at DESC
               LIMIT 100`,
-              [initiativeId, orgId]
+              [orgId, initiativeId]
             );
           } else {
             throw e;

@@ -48,7 +48,7 @@ export const BottomNavigation: React.FC = () => {
     },
     {
       id: 'assessment',
-      label: t('sidebar.assessment', 'Oceny'),
+      label: t('licensedTools.moduleName', 'Licensed Tools'),
       icon: <ClipboardCheck size={22} />,
       view: AppView.ASSESSMENT_DRD,
     },

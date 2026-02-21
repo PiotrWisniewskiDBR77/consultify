@@ -7,14 +7,16 @@
 
 import type { NextFunction, Request, Response } from 'express';
 
+import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // CONSTANTS
 // ==========================================
 
-export const DEMO_ORG_ID = 'demo-org';
-export const DEMO_ORG_NAME = 'Demo Organization';
+export const DEMO_ORG_ID = process.env.DEMO_ORG_ID || 'demo-org';
+export const DEMO_ORG_NAME = process.env.DEMO_ORG_NAME || 'Demo Organization';
+const DEMO_PREF_KEY = 'demo:enabled';
 
 // ==========================================
 // TYPES
@@ -35,6 +37,13 @@ export interface DemoStats {
   users: number;
 }
 
+type DemoRequest = Request & {
+  demo?: {
+    enabled: boolean;
+    organizationId: string;
+  };
+};
+
 // ==========================================
 // MIDDLEWARE
 // ==========================================
@@ -42,16 +51,43 @@ export interface DemoStats {
 /**
  * Demo context middleware - attaches demo context to request
  */
-export const demoContextMiddleware = (_req: Request, _res: Response, next: NextFunction): void => {
+export const demoContextMiddleware = (req: Request, _res: Response, next: NextFunction): void => {
+  const isDemoHeader = String(req.get('X-Demo-Mode') || '').toLowerCase() === 'true';
+  if (isDemoHeader) {
+    (req as DemoRequest).demo = { enabled: true, organizationId: DEMO_ORG_ID };
+    // Legacy compatibility: many routes read org context from req/user.
+    (req as any).organizationId = DEMO_ORG_ID;
+    if ((req as any).user && typeof (req as any).user === 'object') {
+      (req as any).user.organizationId = DEMO_ORG_ID;
+      (req as any).user.organization_id = DEMO_ORG_ID;
+    }
+  }
   next();
 };
 
 /**
  * Demo write protection - prevents writes in demo mode
  */
-export const demoWriteProtection = (_options: Record<string, unknown> = {}) => {
-  return (_req: Request, _res: Response, next: NextFunction): void => {
-    next();
+export const demoWriteProtection = (options: { allowedRoutes?: string[] } = {}) => {
+  const allowedRoutes = Array.isArray(options.allowedRoutes) ? options.allowedRoutes : [];
+
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const isDemoHeader = String(req.get('X-Demo-Mode') || '').toLowerCase() === 'true';
+    if (!isDemoHeader) return next();
+
+    const method = String(req.method || '').toUpperCase();
+    const isWrite = !['GET', 'HEAD', 'OPTIONS'].includes(method);
+    if (!isWrite) return next();
+
+    const url = String(req.originalUrl || req.url || '');
+    const isAllowed = allowedRoutes.some((prefix) => url.startsWith(prefix));
+    if (isAllowed) return next();
+
+    res.status(403).json({
+      error: 'Demo mode is read-only',
+      code: 'DEMO_READ_ONLY',
+    });
+    return;
   };
 };
 
@@ -64,43 +100,153 @@ export const demoGuard = demoContextMiddleware;
 // HELPERS
 // ==========================================
 
+function isMissingTableError(error: unknown): boolean {
+  const message = (error as any)?.message;
+  if (typeof message !== 'string') return false;
+  return (
+    message.includes('no such table') ||
+    message.includes('does not exist') ||
+    message.includes('relation') ||
+    message.includes('Database not initialized')
+  );
+}
+
+function parseBool(value: unknown): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value === 1;
+  if (typeof value === 'string') {
+    const v = value.trim().toLowerCase();
+    if (v === 'true' || v === '1' || v === 'yes') return true;
+    if (v === 'false' || v === '0' || v === 'no') return false;
+  }
+  return false;
+}
+
+async function requireUserPreferencesTable(): Promise<void> {
+  await dbRun(
+    `
+      CREATE TABLE IF NOT EXISTS user_preferences (
+        user_id TEXT NOT NULL,
+        key TEXT NOT NULL,
+        value TEXT NOT NULL,
+        updated_at TEXT DEFAULT (datetime('now')),
+        PRIMARY KEY (user_id, key)
+      )
+    `,
+    [],
+    { fallback: false }
+  );
+}
+
 /**
  * Check if user has demo preference enabled
  */
-export const checkUserDemoPreference = async (_userId: string): Promise<boolean> => {
-  return false;
+export const checkUserDemoPreference = async (userId: string): Promise<boolean> => {
+  try {
+    await requireUserPreferencesTable();
+    const row = await dbGet<{ value: string }>(
+      `SELECT value FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, DEMO_PREF_KEY],
+      { fallback: false }
+    );
+    if (!row?.value) return false;
+    try {
+      return parseBool(JSON.parse(row.value));
+    } catch {
+      return parseBool(row.value);
+    }
+  } catch (error: unknown) {
+    if (isMissingTableError(error)) throw new Error('Demo preference storage unavailable');
+    throw error;
+  }
 };
 
 /**
  * Set user demo preference
  */
-export const setUserDemoPreference = async (_userId: string, _enabled: boolean): Promise<void> => {
-  // No-op
+export const setUserDemoPreference = async (userId: string, enabled: boolean): Promise<void> => {
+  try {
+    await requireUserPreferencesTable();
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, DEMO_PREF_KEY, JSON.stringify(Boolean(enabled))],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to store demo preference');
+  } catch (error: unknown) {
+    if (isMissingTableError(error)) throw new Error('Demo preference storage unavailable');
+    throw error;
+  }
 };
 
 /**
  * Get demo organization
  */
 export const getDemoOrganization = async (): Promise<DemoOrganization> => {
-  return {
-    id: DEMO_ORG_ID,
-    name: DEMO_ORG_NAME,
-    slug: 'demo-org',
-    description: 'Demo organization',
-    settings: {},
-  };
+  try {
+    const org = await dbGet<{ id: string; name: string }>(
+      `SELECT id, name FROM organizations WHERE id = ?`,
+      [DEMO_ORG_ID],
+      { fallback: false }
+    );
+    if (!org?.id) throw new Error('Demo organization not configured');
+
+    return {
+      id: org.id,
+      name: org.name || DEMO_ORG_NAME,
+      slug: process.env.DEMO_ORG_SLUG || 'demo-org',
+      description: process.env.DEMO_ORG_DESCRIPTION || 'Demo organization',
+      settings: {},
+    };
+  } catch (error: unknown) {
+    if (isMissingTableError(error)) throw new Error('Demo organization storage unavailable');
+    throw error;
+  }
 };
 
 /**
  * Get demo statistics
  */
 export const getDemoStats = async (): Promise<DemoStats> => {
-  return {
-    initiatives: 0,
-    tasks: 0,
-    decisions: 0,
-    users: 0,
-  };
+  try {
+    const [initiatives, tasks, decisions, users] = await Promise.all([
+      dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM initiatives WHERE organization_id = ?`,
+        [DEMO_ORG_ID],
+        { fallback: false }
+      ),
+      dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM tasks WHERE organization_id = ?`,
+        [DEMO_ORG_ID],
+        {
+          fallback: false,
+        }
+      ),
+      dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM decisions WHERE organization_id = ?`,
+        [DEMO_ORG_ID],
+        { fallback: false }
+      ),
+      dbGet<{ c: number }>(
+        `SELECT COUNT(*) as c FROM users WHERE organization_id = ?`,
+        [DEMO_ORG_ID],
+        {
+          fallback: false,
+        }
+      ),
+    ]);
+
+    return {
+      initiatives: initiatives?.c || 0,
+      tasks: tasks?.c || 0,
+      decisions: decisions?.c || 0,
+      users: users?.c || 0,
+    };
+  } catch (error: unknown) {
+    if (isMissingTableError(error)) throw new Error('Demo statistics unavailable');
+    throw error;
+  }
 };
 
 // ==========================================

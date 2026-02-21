@@ -34,7 +34,7 @@ async function getPromptAddendum(params: PromptAddendumParams): Promise<string> 
        WHERE (user_id = ? OR organization_id = ?) AND active = 1
        ORDER BY updated_at DESC LIMIT 20`,
       [userId || '', organizationId || '']
-    )) as Array<{ key: string; value: string }> | null;
+    ).catch(() => null)) as Array<{ key: string; value: string }> | null;
 
     if (!rows || rows.length === 0) return '';
 

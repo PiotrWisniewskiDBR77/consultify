@@ -591,21 +591,31 @@ export class AIPipeline {
           logger.debug(`[AIPipeline] Org memory not available: ${memErr?.message}`);
         }
 
-        // Load custom instructions from key-value memory
+        // Load custom instructions (075 schema: key/value; 250 schema: preferences JSON, no key)
         let customInstructions: string | null = null;
+        const { get: dbGet } = await import('../../utils/DbPromise.js');
         try {
-          const { get: dbGet } = await import('../../utils/DbPromise.js');
-          const ciRow = await dbGet(
+          const ciRow = (await dbGet(
             'SELECT value FROM ai_user_memory WHERE user_id = ? AND key = ?',
             [userId, 'custom_instructions']
-          );
-          if (ciRow && (ciRow as any).value) {
-            customInstructions = String((ciRow as any).value)
-              .trim()
-              .slice(0, 1000);
+          )) as { value?: string } | null;
+          if (ciRow?.value) {
+            customInstructions = String(ciRow.value).trim().slice(0, 1000);
           }
         } catch {
-          // ignore — custom instructions are non-critical
+          try {
+            const prefsRow = (await dbGet(
+              'SELECT preferences FROM ai_user_memory WHERE user_id = ?',
+              [userId]
+            )) as { preferences?: string } | null;
+            if (prefsRow?.preferences) {
+              const prefs = JSON.parse(prefsRow.preferences || '{}');
+              const ci = prefs?.customInstructions || prefs?.system_instructions;
+              if (ci) customInstructions = String(ci).trim().slice(0, 1000);
+            }
+          } catch {
+            // Schema may differ
+          }
         }
 
         // Merge memory into context
@@ -909,6 +919,32 @@ export class AIPipeline {
         if (graphCtx) parts.push(graphCtx);
       } catch {
         // Knowledge graph not available — continue
+      }
+    }
+
+    // 7.10 Help docs context (T071) — auto-inject KB docs for product/how-to questions
+    if (request.prompt && !ctx?.external?.helpDocs) {
+      try {
+        const { isProductOrHowToQuery } = await import('./helpDocsContext.js');
+        const userLang =
+          ctx?.conversationLanguage || ctx?.userMemory?.preferences?.language || null;
+        if (isProductOrHowToQuery(request.prompt, userLang === 'pl' ? 'pl' : 'en')) {
+          const { buildHelpDocsContext } = await import('./helpDocsContext.js');
+          const kbModuleId =
+            String(ctx?.currentScreen || ctx?.screenContext?.screenId || '').trim() || null;
+          const kb = await buildHelpDocsContext({
+            query: request.prompt,
+            language: userLang || undefined,
+            moduleId: kbModuleId,
+            maxArticles: 3,
+            maxCharsPerArticle: 1200,
+          });
+          if (kb?.systemInstructionAddon?.trim()) {
+            parts.push(kb.systemInstructionAddon);
+          }
+        }
+      } catch {
+        // Help docs context not available — continue
       }
     }
 

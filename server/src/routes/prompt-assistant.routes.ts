@@ -14,7 +14,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import promptAssembler from '../services/ai/promptAssembler.js';
+import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
+import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -243,29 +245,42 @@ router.post(
       }
 
       // Get the template
-      const template = await dbGet(
+      const template = (await dbGet(
         `SELECT * FROM ai_system_prompts WHERE key = ? OR id = ? OR name = ?`,
         [templateCode, templateCode, templateCode]
-      );
+      )) as any;
 
-      // Simulate test results (in production, this would call actual LLM)
-      const results = languages.map((lang: string) => ({
-        language: lang,
-        success: true,
-        expectedLanguage: lang,
-        detectedLanguage: lang,
-        languageMatch: true,
-        response: template
-          ? `[${lang.toUpperCase()}] Response generated from template "${templateCode}"`
-          : `[${lang.toUpperCase()}] Template not found, using default response`,
-        tokenCount: Math.floor(Math.random() * 200) + 50,
-      }));
+      const { generateChatResponse } = await import('../services/aiService.js');
 
-      const summary = {
-        tested: languages.length,
-        passed: results.filter((r: any) => r.success).length,
-        languageAccuracy: 100,
-      };
+      const results = [];
+      for (const lang of languages) {
+        const prompt = [
+          `Return a helpful response in language: ${String(lang)}.`,
+          '',
+          `Template code: ${String(templateCode)}`,
+          template?.content
+            ? `Template content:\n${String(template.content)}`
+            : 'Template not found.',
+          sampleInput ? `Sample input:\n${String(sampleInput)}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n');
+
+        const r = await generateChatResponse({
+          messages: [{ role: 'user', content: prompt }],
+          systemPrompt: 'Return plain text only.',
+          model: 'default',
+          maxTokens: 600,
+        });
+
+        results.push({
+          language: lang,
+          success: true,
+          response: r.content,
+        });
+      }
+
+      const summary = { tested: results.length, passed: results.length };
 
       return res.json({
         success: true,
@@ -273,6 +288,11 @@ router.post(
       });
     } catch (err: any) {
       logger.warn('[prompt-assistant] test failed', err);
+      if (err instanceof AppError) {
+        return res
+          .status(err.statusCode)
+          .json({ success: false, error: err.message, code: err.code });
+      }
       return res.status(500).json({ success: false, error: 'Test execution failed' });
     }
   }
@@ -307,165 +327,34 @@ router.post('/chat', async (req: AuthRequest, res: Response) => {
     // Add user message to history
     history.push({ role: 'user', content: message });
 
-    // Generate response based on message content
-    let responseMessage = '';
-    let suggestions: Array<{ title: string; description: string }> = [];
-    let codeBlocks: Array<{ language: string; content: string }> = [];
+    const { generateChatResponse } = await import('../services/aiService.js');
 
-    const lowerMessage = message.toLowerCase();
+    const systemPrompt = 'You are a helpful prompt engineering assistant.';
+    const r = await generateChatResponse({
+      messages: history.map((m) => ({ role: m.role as any, content: m.content })),
+      systemPrompt,
+      model: 'default',
+      maxTokens: 800,
+    });
 
-    if (lowerMessage.includes('analyze') || lowerMessage.includes('analiz')) {
-      responseMessage = `**Prompt Analysis Results:**
-
-I've analyzed the prompt and found the following:
-
-✅ **Strengths:**
-- Clear role definition
-- Specific task instructions
-- Good context boundaries
-
-⚠️ **Suggestions for improvement:**
-- Consider making instructions more language-independent
-- Add explicit output format specification
-- Include error handling instructions
-
-**Language Independence Score: 7/10**
-
-Would you like me to suggest specific improvements?`;
-
-      suggestions = [
-        { title: 'Make more specific', description: 'Add detailed task breakdown' },
-        { title: 'Add constraints', description: 'Include boundary conditions' },
-      ];
-    } else if (lowerMessage.includes('improve') || lowerMessage.includes('better')) {
-      responseMessage = `**Improved Prompt Suggestion:**
-
-Here's an enhanced version of your prompt:`;
-
-      codeBlocks = [
-        {
-          language: 'text',
-          content: `You are a strategic consultant with expertise in digital transformation.
-
-TASK: {{task_description}}
-
-CONTEXT:
-- Organization: {{organization_name}}
-- Industry: {{industry}}
-- Current maturity: {{maturity_level}}
-
-INSTRUCTIONS:
-1. Analyze the situation objectively
-2. Provide actionable recommendations
-3. Consider both short-term and long-term implications
-4. Use clear, professional language
-
-OUTPUT FORMAT:
-- Executive Summary (2-3 sentences)
-- Key Findings (bullet points)
-- Recommendations (numbered list)
-- Next Steps (actionable items)`,
-        },
-      ];
-
-      responseMessage += `
-
-This version includes:
-- Clear role definition
-- Structured context variables
-- Step-by-step instructions
-- Defined output format
-
-Click the ⚡ button to apply this to your editor.`;
-    } else if (lowerMessage.includes('block') || lowerMessage.includes('suggest')) {
-      responseMessage = `**Recommended Blocks for Your Prompt:**
-
-Based on your context, I recommend these blocks:
-
-1. **ROLE_STRATEGIC_CONSULTANT** - Establishes Harvard MBA/PhD level expertise
-2. **BEHAVIOR_PROFESSIONAL** - Sets professional communication style
-3. **OUTPUT_STRUCTURED** - Ensures organized response format
-4. **CONSTRAINT_FACTUAL** - Limits responses to verifiable information
-
-Would you like me to explain any of these blocks in detail?`;
-
-      suggestions = [
-        { title: 'Show ROLE blocks', description: 'View available role definition blocks' },
-        { title: 'Show OUTPUT blocks', description: 'View output format blocks' },
-      ];
-    } else if (lowerMessage.includes('test') || lowerMessage.includes('language')) {
-      responseMessage = `**Multi-Language Testing Guide:**
-
-To test "${templateCode || 'your prompt'}" across languages:
-
-1. Go to **Test Bench** tab
-2. Select target languages (EN, PL, DE, ES, JA, AR)
-3. Enter a sample input in English
-4. Click **Run Tests**
-
-The system will:
-- Translate input to each language
-- Execute prompt in each language
-- Verify response language matches input
-- Report language accuracy score
-
-**Tip:** Language-independent prompts should achieve >95% accuracy.`;
-    } else if (lowerMessage.includes('best practice') || lowerMessage.includes('tip')) {
-      responseMessage = `**Top 5 Prompt Engineering Best Practices:**
-
-1. **Be Specific, Not Vague**
-   - ❌ "Help me with my project"
-   - ✅ "Analyze the risk factors for our Q2 digital transformation initiative"
-
-2. **Use Semantic Instructions**
-   - Use concepts that translate well across languages
-   - Avoid idioms, slang, or culture-specific references
-
-3. **Structure with Templates**
-   - Use {{variables}} for dynamic content
-   - Define clear sections: Context, Task, Output
-
-4. **Include Examples**
-   - Show desired output format
-   - Provide edge case handling
-
-5. **Test Iteratively**
-   - Test in multiple languages
-   - A/B test variants before deploying
-
-Would you like me to elaborate on any of these?`;
-    } else {
-      responseMessage = `I understand you're asking about: "${message.slice(0, 100)}..."
-
-I can help you with:
-- **Analyzing** prompts for issues
-- **Improving** language independence
-- **Suggesting** appropriate blocks
-- **Testing** across languages
-- **Best practices** for prompt engineering
-
-What would you like to explore?`;
-    }
-
-    // Add assistant response to history
-    history.push({ role: 'assistant', content: responseMessage });
-
-    // Keep only last 20 messages
-    if (history.length > 20) {
-      conversations.set(convId, history.slice(-20));
-    }
+    history.push({ role: 'assistant', content: r.content });
+    if (history.length > 20) conversations.set(convId, history.slice(-20));
 
     return res.json({
       success: true,
       data: {
         conversationId: convId,
-        message: responseMessage,
-        suggestions,
-        codeBlocks,
+        message: r.content,
+        history: conversations.get(convId),
       },
     });
   } catch (err: any) {
     logger.warn('[prompt-assistant] chat failed', err);
+    if (err instanceof AppError) {
+      return res
+        .status(err.statusCode)
+        .json({ success: false, error: err.message, code: err.code });
+    }
     return res.status(500).json({ success: false, error: 'Chat failed' });
   }
 });
@@ -486,6 +375,38 @@ router.delete('/chat/history', async (req: AuthRequest, res: Response) => {
   } catch (err: any) {
     logger.warn('[prompt-assistant] clear history failed', err);
     return res.status(500).json({ success: false, error: 'Failed to clear history' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ASSEMBLER (T116) — Prompt compilation pipeline
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/prompt-assistant/assemble
+ * Compile a full prompt using the Prompt Assembler pipeline.
+ * Used by: test bench, preview, and production endpoints.
+ */
+router.post('/assemble', async (req: AuthRequest, res: Response) => {
+  try {
+    const { promptKey, blockCodes, variables, organizationId, language } = req.body;
+
+    if (!promptKey) {
+      return res.status(400).json({ success: false, error: 'promptKey is required' });
+    }
+
+    const result = await promptAssembler.preview({
+      promptKey,
+      blockCodes,
+      variables,
+      organizationId,
+      language,
+    });
+
+    return res.json({ success: true, data: result });
+  } catch (err: any) {
+    logger.warn('[prompt-assistant] assemble failed', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Assembly failed' });
   }
 });
 

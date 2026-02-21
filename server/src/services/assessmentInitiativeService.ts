@@ -11,6 +11,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { AppError } from '../utils/ErrorHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 // Types
@@ -391,7 +392,6 @@ Return a JSON array with exactly ${count} initiatives in this format:
    * Call AI service
    */
   private static async callAI(prompt: string, count: number): Promise<GeneratedInitiative[]> {
-    // Try to import and use existing AI service
     try {
       const { generateChatResponse } = await import('./aiService.js');
 
@@ -412,11 +412,13 @@ Return a JSON array with exactly ${count} initiatives in this format:
           }
         }
       }
-    } catch (err) {
-      console.error('[AssessmentInitiativeService] AI service call failed:', err);
+      throw new AppError('AI returned invalid initiatives payload', 503, 'FEATURE_UNAVAILABLE');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new AppError('Initiative generation is not available', 503, 'FEATURE_UNAVAILABLE', {
+        message: msg,
+      });
     }
-
-    return [];
   }
 
   /**
@@ -573,9 +575,7 @@ Return a JSON array with exactly ${count} initiatives in this format:
       return async (): Promise<Set<string> | null> => {
         if (cache !== undefined) return cache;
         try {
-          const rows = (await queryHelpers.queryAll(`PRAGMA table_info(initiatives)`)) as Array<{
-            name?: string;
-          }>;
+          const rows = await queryHelpers.getTableColumns('initiatives');
           cache = new Set((rows || []).map((r) => r.name).filter(Boolean) as string[]);
           return cache;
         } catch {

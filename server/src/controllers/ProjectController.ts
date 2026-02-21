@@ -505,8 +505,19 @@ export class ProjectController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { id } = req.params;
 
-      // const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
-      const AIRoleGuard = {} as any; // Stubbed missing service
+      const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
+      if (
+        !AIRoleGuard ||
+        AIRoleGuard.__unavailable__ === true ||
+        typeof AIRoleGuard.getRoleConfig !== 'function'
+      ) {
+        res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'AI role management is not available',
+        });
+        return;
+      }
       const roleConfig = await AIRoleGuard.getRoleConfig(id);
 
       res.json({
@@ -542,16 +553,31 @@ export class ProjectController {
         return;
       }
 
-      // Check admin permission
-      if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPERADMIN') {
+      // Check admin permission (roles are normalized by auth middleware)
+      const role = String(req.user?.role || '').toLowerCase();
+      const isAdmin =
+        role === 'admin' || role === 'administrator' || role === 'owner' || role === 'superadmin';
+      if (!isAdmin) {
         res.status(403).json({
           error: 'Only admins can change project AI role',
         });
         return;
       }
 
-      // const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
-      const AIRoleGuard = {} as any; // Stubbed missing service
+      const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
+      if (
+        !AIRoleGuard ||
+        AIRoleGuard.__unavailable__ === true ||
+        typeof AIRoleGuard.getProjectRole !== 'function' ||
+        typeof AIRoleGuard.setProjectRole !== 'function'
+      ) {
+        res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'AI role management is not available',
+        });
+        return;
+      }
 
       const AIAuditLogger = await import('../services/aiAuditLogger.js').then(
         (m) => m.default || m
@@ -560,7 +586,7 @@ export class ProjectController {
       // Get current role for audit
       const currentRole = await AIRoleGuard.getProjectRole(projectId);
 
-      // Update the role
+      // Update role in `project_ai_settings`
       await AIRoleGuard.setProjectRole(projectId, aiRole, userId);
 
       // Audit the change
@@ -597,8 +623,21 @@ export class ProjectController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { id } = req.params;
 
-      // const RegulatoryModeGuard = await import('../services/regulatoryModeGuard.js').then((m) => m.default || m);
-      const RegulatoryModeGuard = {} as any; // Stubbed missing service
+      const RegulatoryModeGuard = await import('../services/regulatoryModeGuard.js').then(
+        (m) => m.default || m
+      );
+      if (
+        !RegulatoryModeGuard ||
+        RegulatoryModeGuard.__unavailable__ === true ||
+        typeof RegulatoryModeGuard.getStatus !== 'function'
+      ) {
+        res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'Regulatory mode is not available',
+        });
+        return;
+      }
       const status = await RegulatoryModeGuard.getStatus(id);
 
       res.json({
@@ -625,8 +664,11 @@ export class ProjectController {
         return;
       }
 
-      // Check admin permission
-      if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPERADMIN') {
+      // Check admin permission (roles are normalized by auth middleware)
+      const role = String(req.user?.role || '').toLowerCase();
+      const isAdmin =
+        role === 'admin' || role === 'administrator' || role === 'owner' || role === 'superadmin';
+      if (!isAdmin) {
         res.status(403).json({
           error: 'Only admins can change Regulatory Mode settings',
         });
@@ -641,8 +683,22 @@ export class ProjectController {
         return;
       }
 
-      // const RegulatoryModeGuard = await import('../services/regulatoryModeGuard.js').then((m) => m.default || m);
-      const RegulatoryModeGuard = {} as any; // Stubbed missing service
+      const RegulatoryModeGuard = await import('../services/regulatoryModeGuard.js').then(
+        (m) => m.default || m
+      );
+      if (
+        !RegulatoryModeGuard ||
+        RegulatoryModeGuard.__unavailable__ === true ||
+        typeof RegulatoryModeGuard.isEnabled !== 'function' ||
+        typeof RegulatoryModeGuard.setEnabled !== 'function'
+      ) {
+        res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'Regulatory mode is not available',
+        });
+        return;
+      }
 
       const AIAuditLogger = await import('../services/aiAuditLogger.js').then(
         (m) => m.default || m

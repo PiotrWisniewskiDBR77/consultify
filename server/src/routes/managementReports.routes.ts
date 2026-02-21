@@ -12,6 +12,16 @@ import managementReportsService from '../services/managementReportsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
+const EXPORT_FEATURE = 'management-reports-export';
+
+const respondFeatureUnavailable = (res: Response, detail?: string) =>
+  res.status(503).json({
+    success: false,
+    error: 'Feature unavailable',
+    code: 'FEATURE_UNAVAILABLE',
+    feature: EXPORT_FEATURE,
+    detail,
+  });
 
 router.use(verifyToken);
 router.use(demoContextMiddleware);
@@ -338,21 +348,19 @@ router.get(
       if (status === 404)
         return res.status(404).json({ success: false, error: 'Report not found' });
       if (error?.code === 'DEPENDENCY_MISSING') {
-        return res.status(503).json({
-          success: false,
-          error: `Export temporarily unavailable (missing dependency: ${error.dependency || 'unknown'})`,
-        });
+        return respondFeatureUnavailable(
+          res,
+          `missing dependency: ${error.dependency || 'unknown'}`
+        );
       }
       const msg = String(error?.message || '').toLowerCase();
       if (
         msg.includes('no such table') ||
+        msg.includes('no such column') ||
         msg.includes('does not exist') ||
         msg.includes('relation')
       ) {
-        return res.status(503).json({
-          success: false,
-          error: 'Management reports storage not available (schema missing)',
-        });
+        return respondFeatureUnavailable(res, 'schema missing');
       }
       throw error;
     }
@@ -374,21 +382,19 @@ router.get(
       if (status === 404)
         return res.status(404).json({ success: false, error: 'Report not found' });
       if (error?.code === 'DEPENDENCY_MISSING') {
-        return res.status(503).json({
-          success: false,
-          error: `Export temporarily unavailable (missing dependency: ${error.dependency || 'unknown'})`,
-        });
+        return respondFeatureUnavailable(
+          res,
+          `missing dependency: ${error.dependency || 'unknown'}`
+        );
       }
       const msg = String(error?.message || '').toLowerCase();
       if (
         msg.includes('no such table') ||
+        msg.includes('no such column') ||
         msg.includes('does not exist') ||
         msg.includes('relation')
       ) {
-        return res.status(503).json({
-          success: false,
-          error: 'Management reports storage not available (schema missing)',
-        });
+        return respondFeatureUnavailable(res, 'schema missing');
       }
       throw error;
     }

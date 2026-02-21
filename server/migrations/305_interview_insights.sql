@@ -44,9 +44,10 @@ CREATE INDEX IF NOT EXISTS idx_interview_insights_created_at
 -- PERMISSIONS FOR INSIGHTS
 -- ==========================================
 
-INSERT OR IGNORE INTO permissions (key, name, description, category, icon) VALUES
-    ('INTERVIEW_INSIGHTS_VIEW', 'Interview: View Insights', 'View AI-generated interview insights', 'INTERVIEW', 'lightbulb'),
-    ('INTERVIEW_INSIGHTS_CREATE', 'Interview: Create Insights', 'Generate new AI insights from interviews', 'INTERVIEW', 'sparkles');
+-- Note: PostgreSQL permissions table may not have 'name' and 'icon' columns
+INSERT OR IGNORE INTO permissions (key, description, category) VALUES
+    ('INTERVIEW_INSIGHTS_VIEW', 'View AI-generated interview insights', 'INTERVIEW'),
+    ('INTERVIEW_INSIGHTS_CREATE', 'Generate new AI insights from interviews', 'INTERVIEW');
 
 INSERT OR IGNORE INTO role_permissions (id, role, permission_key, description) VALUES
     ('rp_interview_insights_view_member', 'MEMBER', 'INTERVIEW_INSIGHTS_VIEW', 'View interview insights'),

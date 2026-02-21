@@ -50,9 +50,9 @@ export interface UISlice {
 
   // Cross-module deep links (e.g., header → My Work)
   myWorkIntent: {
-    tab?: 'executive' | 'inbox' | 'focus' | 'tasks' | 'decisions' | 'notifications';
+    tab?: 'executive' | 'inbox' | 'focus' | 'tasks' | 'ideas' | 'decisions' | 'notifications';
     open?: {
-      type: 'notification' | 'task' | 'decision';
+      type: 'notification' | 'task' | 'idea' | 'decision';
       id: string;
       name?: string;
       data?: unknown;

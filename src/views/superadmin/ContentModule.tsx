@@ -4,11 +4,12 @@
  * Tabs: Playbooks | Email Templates
  */
 
-import { Layers, Mail } from 'lucide-react';
+import { Layers, Mail, Megaphone } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { InfoButton } from '../../components/shared/InfoButton';
 import { EmailTemplatesPanel } from '../../components/SuperAdmin/EmailTemplatesPanel';
+import { PartnerOutreachPanel } from '../../components/SuperAdmin/PartnerOutreachPanel';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { PlaybookTemplatesListView } from './PlaybookTemplatesListView';
 
@@ -22,6 +23,7 @@ export const ContentModule: React.FC<ContentModuleProps> = ({ initialTab }) => {
   const tabs: Tab[] = [
     { id: 'playbooks', label: 'Playbooks', icon: <Layers size={16} /> },
     { id: 'email-templates', label: 'Email Templates', icon: <Mail size={16} /> },
+    { id: 'partner-outreach', label: 'Partner Outreach', icon: <Megaphone size={16} /> },
   ];
 
   const getCardId = () => {
@@ -30,6 +32,8 @@ export const ContentModule: React.FC<ContentModuleProps> = ({ initialTab }) => {
         return 'superadmin-playbooks';
       case 'email-templates':
         return 'superadmin-email-templates';
+      case 'partner-outreach':
+        return 'partners.outreach';
       default:
         return 'superadmin-playbooks';
     }
@@ -41,6 +45,8 @@ export const ContentModule: React.FC<ContentModuleProps> = ({ initialTab }) => {
         return <PlaybookTemplatesListView />;
       case 'email-templates':
         return <EmailTemplatesPanel />;
+      case 'partner-outreach':
+        return <PartnerOutreachPanel />;
       default:
         return null;
     }

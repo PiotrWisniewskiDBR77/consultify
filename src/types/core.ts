@@ -4351,8 +4351,17 @@ export interface Feedback {
 // LEGAL & COMPLIANCE
 // ==========================================
 
-/** Legal Document Types */
-export type LegalDocType = 'TOS' | 'PRIVACY' | 'COOKIES' | 'AUP' | 'AI_POLICY' | 'DPA';
+/** Legal Document Types (T093 canonical set) */
+export type LegalDocType =
+  | 'TOS'
+  | 'PRIVACY'
+  | 'COOKIES'
+  | 'AUP'
+  | 'AI_POLICY'
+  | 'DPA'
+  | 'SUBSCRIPTION'
+  | 'SLA'
+  | 'REFUNDS';
 
 /** Legal Document (from legal_documents table) */
 export interface LegalDocument {
@@ -4363,6 +4372,9 @@ export interface LegalDocument {
   contentMd?: string;
   effectiveFrom: string;
   isActive: boolean;
+  changeSummary?: string;
+  expiresAt?: string;
+  scopeType?: string;
   createdAt?: string;
   createdBy?: string;
 }

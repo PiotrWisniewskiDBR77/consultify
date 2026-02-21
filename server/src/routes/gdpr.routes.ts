@@ -12,17 +12,12 @@
  */
 
 import { type Request, type Response, Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import {
-  collectUserData,
-  createAccountDeletionRequest,
-  createDataExportRequest,
-  getLatestDataExportRequest,
-  getLatestDeletionRequest,
-} from '../services/gdprService.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 // Apply rate limiting
@@ -307,7 +302,16 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
-      const request = await getLatestDataExportRequest(userId);
+
+      const request = await dbGet<ExportRequest>(
+        `SELECT id, status, requested_at as requestedAt,
+                    expires_at as expiresAt, download_url as downloadUrl
+            FROM data_export_requests
+            WHERE user_id = ?
+            ORDER BY requested_at DESC
+            LIMIT 1`,
+        [userId]
+      );
 
       return res.json({
         success: true,
@@ -329,14 +333,60 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
-      const request = await createDataExportRequest({
-        userId,
-        organizationId: req.organizationId,
-        format: (req.body as any)?.format,
-        include: (req.body as any)?.include,
-      });
 
-      return res.json({ success: true, request });
+      // Check for existing pending request
+      const existing = await dbGet<{ id: string }>(
+        `SELECT id FROM data_export_requests
+            WHERE user_id = ? AND status IN ('pending', 'processing')`,
+        [userId]
+      );
+
+      if (existing) {
+        return res.status(400).json({
+          error: 'An export request is already in progress',
+        });
+      }
+
+      const requestId = uuidv4();
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+      await dbRun(
+        `INSERT INTO data_export_requests (
+                id, user_id, status, requested_at, expires_at
+            ) VALUES (?, ?, 'pending', datetime('now'), ?)`,
+        [requestId, userId, expiresAt.toISOString()]
+      );
+
+      // In a real implementation, this would queue a background job
+      // For now, we'll simulate processing
+      setTimeout(async () => {
+        try {
+          // Generate export data
+          const _userData = await collectUserData(userId);
+
+          // In production, this would be stored in cloud storage
+          // For now, we mark as ready
+          await dbRun(
+            `UPDATE data_export_requests 
+                    SET status = 'ready', 
+                        download_url = ?
+                    WHERE id = ?`,
+            [`/api/gdpr/download-export/${requestId}`, requestId]
+          );
+        } catch (err: any) {
+          logger.error('[GDPR] Export processing error:', err);
+        }
+      }, 2000);
+
+      return res.json({
+        success: true,
+        request: {
+          id: requestId,
+          status: 'pending',
+          requestedAt: new Date().toISOString(),
+          expiresAt: expiresAt.toISOString(),
+        },
+      });
     } catch (err: any) {
       logger.error('[GDPR] Export request error:', err);
       return res.status(500).json({ error: 'Failed to request export' });
@@ -355,18 +405,18 @@ router.get(
       const userId = req.user!.id;
       const { requestId } = req.params;
 
-      const request = await dbGet<any>(
-        `SELECT * FROM data_export_requests WHERE id = ? AND user_id = ?`,
+      const request = await dbGet<{ expires_at: string }>(
+        `SELECT * FROM data_export_requests
+            WHERE id = ? AND user_id = ? AND status = 'ready'`,
         [requestId, userId]
       );
 
       if (!request) {
-        return res.status(404).json({ error: 'Export not found' });
+        return res.status(404).json({ error: 'Export not found or not ready' });
       }
 
       // Check expiration
-      const expiresAt = request.expires_at || request.file_expires_at || request.expiresAt;
-      if (expiresAt && new Date(expiresAt) < new Date()) {
+      if (new Date(request.expires_at) < new Date()) {
         return res.status(410).json({ error: 'Export has expired' });
       }
 
@@ -399,12 +449,39 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
-      const request = await createAccountDeletionRequest({
-        userId,
-        reason: (req.body as any)?.reason,
-      });
 
-      return res.json({ success: true, request });
+      // Check for existing pending deletion
+      const existing = await dbGet<{ id: string }>(
+        `SELECT id FROM account_deletion_requests
+            WHERE user_id = ? AND status IN ('pending', 'scheduled')`,
+        [userId]
+      );
+
+      if (existing) {
+        return res.status(400).json({
+          error: 'A deletion request is already pending',
+        });
+      }
+
+      const requestId = uuidv4();
+      const scheduledFor = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days grace period
+
+      await dbRun(
+        `INSERT INTO account_deletion_requests (
+                id, user_id, status, requested_at, scheduled_for
+            ) VALUES (?, ?, 'scheduled', datetime('now'), ?)`,
+        [requestId, userId, scheduledFor.toISOString()]
+      );
+
+      return res.json({
+        success: true,
+        request: {
+          id: requestId,
+          status: 'scheduled',
+          requestedAt: new Date().toISOString(),
+          scheduledFor: scheduledFor.toISOString(),
+        },
+      });
     } catch (err: any) {
       logger.error('[GDPR] Deletion request error:', err);
       return res.status(500).json({ error: 'Failed to request deletion' });
@@ -455,7 +532,16 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
-      const request = await getLatestDeletionRequest(userId);
+
+      const request = await dbGet<ExportRequest>(
+        `SELECT id, status, requested_at as requestedAt,
+                    scheduled_for as scheduledFor
+            FROM account_deletion_requests
+            WHERE user_id = ?
+            ORDER BY requested_at DESC
+            LIMIT 1`,
+        [userId]
+      );
 
       return res.json({
         success: true,
@@ -467,5 +553,99 @@ router.get(
     }
   })
 );
+
+// ==========================================
+// HELPER FUNCTIONS
+// ==========================================
+
+/**
+ * Collect all user data for export
+ */
+async function collectUserData(userId: string): Promise<UserDataExport> {
+  const data: UserDataExport = {
+    exportDate: new Date().toISOString(),
+    user: null,
+    profile: null,
+    preferences: null,
+    projects: [],
+    tasks: [],
+    assessments: [],
+    notifications: [],
+    securityEvents: [],
+  };
+
+  // Get user basic info
+  data.user = await dbGet<{
+    id: string;
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+    phone: string | null;
+    role: string;
+    created_at: string;
+    last_login_at: string | null;
+  }>(
+    `SELECT id, email, first_name, last_name, phone, role, 
+                created_at, last_login_at
+        FROM users WHERE id = ?`,
+    [userId]
+  );
+
+  // Get extended preferences
+  const prefsRow = await dbGet<{ extended_preferences?: string }>(
+    `SELECT extended_preferences FROM users WHERE id = ?`,
+    [userId]
+  );
+  data.preferences = prefsRow?.extended_preferences
+    ? JSON.parse(prefsRow.extended_preferences)
+    : null;
+
+  // Get projects
+  data.projects = await dbAll<{
+    id: string;
+    name: string;
+    description: string | null;
+    status: string;
+    created_at: string;
+    updated_at: string;
+  }>(
+    `SELECT id, name, description, status, created_at, updated_at
+        FROM projects WHERE owner_id = ? OR id IN (
+            SELECT project_id FROM project_members WHERE user_id = ?
+        )`,
+    [userId, userId]
+  );
+
+  // Get tasks
+  data.tasks = await dbAll<{
+    id: string;
+    title: string;
+    description: string | null;
+    status: string;
+    priority: string;
+    due_date: string | null;
+    created_at: string;
+  }>(
+    `SELECT id, title, description, status, priority, due_date, created_at
+        FROM tasks WHERE assignee_id = ? OR created_by = ?`,
+    [userId, userId]
+  );
+
+  // Get security events
+  data.securityEvents = await dbAll<{
+    type: string;
+    title: string;
+    description: string | null;
+    ip_address: string | null;
+    created_at: string;
+  }>(
+    `SELECT type, title, description, ip_address, created_at
+        FROM security_events WHERE user_id = ?
+        ORDER BY created_at DESC LIMIT 100`,
+    [userId]
+  );
+
+  return data;
+}
 
 export default router;

@@ -6,7 +6,7 @@ import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -14,7 +14,7 @@ import logger from '../utils/Logger.js';
 const router = Router();
 
 // Apply rate limiting and auth
-router.use(authRateLimiter);
+router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 
 // Ensure compliance_settings table exists

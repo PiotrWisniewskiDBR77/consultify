@@ -1386,5 +1386,10 @@
     "searchQueries": "Search Queries",
     "topSources": "Top Sources",
     "researching": "Researching"
+  },
+  "licensedTools": {
+    "moduleName": "Licensed Tools",
+    "hubTitle": "Licensed Tools Hub",
+    "backToHub": "Back to Licensed Tools Hub"
   }
 }

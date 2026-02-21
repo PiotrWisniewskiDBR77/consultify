@@ -1,7 +1,12 @@
 /**
- * MFA Service - Stub Implementation
- * Returns disabled MFA status by default to allow login without MFA
+ * MFA Service
+ *
+ * This codebase does not currently ship a complete MFA implementation in the service layer.
+ * Do not return fake-success responses; expose honest contracts so callers can handle
+ * unavailability explicitly.
  */
+
+import { AppError } from '../utils/ErrorHandler.js';
 
 const mfaService = {
   /**
@@ -21,7 +26,7 @@ const mfaService = {
    */
   isDeviceTrusted: async (userId: string, deviceFingerprint: string) => {
     console.log(`[MFAService] isDeviceTrusted called for user: ${userId}`);
-    return true; // Trust all devices when MFA is disabled
+    return false;
   },
 
   /**
@@ -29,7 +34,7 @@ const mfaService = {
    */
   trustDevice: async (userId: string, deviceFingerprint: string, deviceName: string) => {
     console.log(`[MFAService] trustDevice called for user: ${userId}`);
-    return { success: true };
+    return { success: false, error: 'Device trust is not available' };
   },
 
   /**
@@ -37,7 +42,11 @@ const mfaService = {
    */
   verifyTOTP: async (userId: string, code: string) => {
     console.log(`[MFAService] verifyTOTP called for user: ${userId}`);
-    return { success: false, error: 'MFA not configured' };
+    return {
+      success: false,
+      error: 'MFA verification is not available',
+      code: 'FEATURE_UNAVAILABLE',
+    };
   },
 
   /**
@@ -45,7 +54,7 @@ const mfaService = {
    */
   setupMFA: async (userId: string, email: string) => {
     console.log(`[MFAService] setupMFA called for user: ${userId}`);
-    return { success: false, error: 'MFA setup not implemented' };
+    throw new AppError('MFA setup is not available', 503, 'FEATURE_UNAVAILABLE');
   },
 
   /**
@@ -53,7 +62,7 @@ const mfaService = {
    */
   verifyAndEnableMFA: async (userId: string, token: string) => {
     console.log(`[MFAService] verifyAndEnableMFA called for user: ${userId}`);
-    return { success: false, error: 'MFA not implemented' };
+    throw new AppError('MFA enable is not available', 503, 'FEATURE_UNAVAILABLE');
   },
 
   /**
@@ -61,7 +70,7 @@ const mfaService = {
    */
   disableMFA: async (userId: string, token: string) => {
     console.log(`[MFAService] disableMFA called for user: ${userId}`);
-    return { success: true };
+    throw new AppError('MFA disable is not available', 503, 'FEATURE_UNAVAILABLE');
   },
 
   /**

@@ -10,7 +10,7 @@ import express from 'express';
 
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
-import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
@@ -18,7 +18,7 @@ import logger from '../../utils/Logger.js';
 const router = Router();
 
 // Apply rate limiting
-router.use(authRateLimiter);
+router.use(apiAuthRateLimiter);
 
 // Dynamic imports for services that may not be migrated yet
 let TokenBillingService: any = null;

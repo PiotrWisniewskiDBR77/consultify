@@ -14,6 +14,7 @@ import type { IDatabase, QueryResult, RunResult } from './IDatabase.js';
 
 let pool: Pool | null = null;
 let readPool: Pool | null = null;
+let initDbPromise: Promise<void> | null = null;
 const SLOW_QUERY_THRESHOLD_MS = 1000;
 
 /**
@@ -53,6 +54,7 @@ const BOOLEAN_IS_ACTIVE_TABLES = new Set<string>([
   'llm_providers',
   'llm_tier_assignments',
   'locations',
+  'organization_memory',
   'management_report_templates',
   'mobile_devices',
   'module_help',
@@ -140,20 +142,21 @@ function getPool(): Pool {
       logger.info('[Postgres] Client connected');
     });
 
-    // Initialize schema lazily if needed
+    // Initialize schema lazily if needed - must complete before first query
     if (process.env.NODE_ENV !== 'test') {
-      initDb()
+      initDbPromise = initDb()
         .then(() => {
           logger.info('[Postgres] Schema initialization completed successfully');
         })
         .catch((err: Error | null) => {
           logger.error('[Postgres] Failed to initialize database:', err);
-          // In production, this is critical - log but don't crash immediately
-          // The DatabaseInitializer will catch this and handle it
           if (process.env.NODE_ENV === 'production') {
             logger.error('[Postgres] CRITICAL: Schema initialization failed in production!');
           }
+          throw err;
         });
+    } else {
+      initDbPromise = Promise.resolve();
     }
   }
   return pool;
@@ -188,7 +191,8 @@ async function executeWithLogging<T>(
 ): Promise<{ rows: T[]; rowCount: number | null }> {
   const start = Date.now();
   try {
-    const pool = poolFn();
+    const pool = poolFn(); // Triggers getPool() which may start initDb and set initDbPromise
+    if (initDbPromise) await initDbPromise;
     const res = await pool.query(sql, params);
 
     const duration = Date.now() - start;
@@ -285,11 +289,55 @@ function adaptQuery(sql: string): string {
     }
   );
 
+  // Replace date('now', 'start of month', '-N months') FIRST (most specific)
+  // Handle both single and double quotes, flexible whitespace (including newlines via \s)
+  // Match with non-greedy quantifiers to avoid over-matching
+  adapted = adapted.replace(
+    /date\s*\(\s*['"]now['"]\s*,\s*['"]start\s+of\s+month['"]\s*,\s*['"]-(\d+)\s+months?['"]\s*\)/gi,
+    (_match, months) => {
+      return `date_trunc('month', CURRENT_DATE) - INTERVAL '${months} month'`;
+    }
+  );
+
+  // Replace date('now', 'start of month') - must come after the pattern with 3 args
+  adapted = adapted.replace(
+    /date\s*\(\s*['"]now['"]\s*,\s*['"]start\s+of\s+month['"]\s*\)/gi,
+    "date_trunc('month', CURRENT_DATE)"
+  );
+
+  // Debug: Log if date functions are still present (for troubleshooting)
+  if (adapted.includes("date('now'") || adapted.includes('date("now"')) {
+    logger.warn(
+      '[Postgres] adaptQuery: Date function still present after replacement:',
+      adapted.substring(0, 200)
+    );
+  }
+
   // Replace date('now') with CURRENT_DATE
-  adapted = adapted.replace(/date\(['"]now['"]\)/g, 'CURRENT_DATE');
+  adapted = adapted.replace(/date\s*\(\s*['"]now['"]\s*\)/g, 'CURRENT_DATE');
 
   // Replace date(column) with column::date (PostgreSQL cast)
-  adapted = adapted.replace(/date\(([^)]+)\)/g, '$1::date');
+  // This must come LAST - all date('now', ...) patterns should already be replaced above
+  // Match date(anything) that hasn't been replaced yet (doesn't start with quotes or 'now')
+  adapted = adapted.replace(/date\s*\(\s*([^'"]+?)\s*\)/g, (match, content) => {
+    // Skip if it looks like it might be a date('now', ...) pattern that wasn't caught
+    if (content.trim().startsWith('now')) {
+      return match; // Don't replace
+    }
+    return `${content}::date`;
+  });
+
+  // Replace datetime(column) with just column (PostgreSQL timestamps can be compared directly)
+  // This must come after datetime('now', ...) patterns are replaced
+  // Match datetime(column) where column is not 'now' or a string literal
+  adapted = adapted.replace(/datetime\s*\(\s*([^'"]+?)\s*\)/gi, (match, content) => {
+    // Skip if it looks like datetime('now', ...) that wasn't caught
+    if (content.trim().startsWith('now') || content.trim().startsWith('now')) {
+      return match; // Don't replace
+    }
+    // Return just the column/expression - PostgreSQL timestamps can be compared directly
+    return content.trim();
+  });
 
   // Replace DATETIME column type with TIMESTAMP for PostgreSQL
   adapted = adapted.replace(/\bDATETIME\b/gi, 'TIMESTAMP');
@@ -316,10 +364,82 @@ function adaptQuery(sql: string): string {
   }
 
   // Replace INSERT OR IGNORE with INSERT ... ON CONFLICT DO NOTHING
-  // This is a naive regex, might need more care for specific tables involving constraints
-  if (adapted.includes('INSERT OR IGNORE')) {
-    adapted = adapted.replace('INSERT OR IGNORE', 'INSERT');
-    adapted += ' ON CONFLICT DO NOTHING';
+  // Handle both single-line and multi-line INSERT statements
+  // Track if we replaced INSERT OR IGNORE so we only add ON CONFLICT for those
+  const hadInsertOrIgnore = /INSERT\s+OR\s+IGNORE/gi.test(adapted);
+
+  // Step 1: Replace INSERT OR IGNORE with INSERT
+  adapted = adapted.replace(/INSERT\s+OR\s+IGNORE/gi, 'INSERT');
+
+  // Step 2: Add ON CONFLICT clause AFTER VALUES for INSERT statements that had INSERT OR IGNORE
+  // Only process if we actually replaced INSERT OR IGNORE (don't modify regular INSERT statements)
+  // CRITICAL: Double-check that we're not processing a regular INSERT INTO statement
+  if (hadInsertOrIgnore && !adapted.includes('ON CONFLICT') && adapted.includes('VALUES')) {
+    // Handle multi-line INSERT statements where column list and VALUES might span multiple lines
+    // Pattern: INSERT INTO table (columns...)\nVALUES (values...)
+    // We need to find VALUES and add ON CONFLICT after the VALUES clause, not before
+
+    // Strategy: Find the VALUES keyword and insert ON CONFLICT after the VALUES clause
+    // Match: INSERT INTO table (columns) ... VALUES (values)
+    // Use non-greedy matching with [\s\S] to handle newlines and match balanced parentheses
+
+    // Extract the column list first to get the first column for conflict target
+    const insertMatch = adapted.match(/INSERT\s+INTO\s+\w+\s*\(([\s\S]+?)\)/i);
+    if (insertMatch) {
+      const columns = insertMatch[1];
+      const firstColumn = columns.split(',')[0].trim().split(/\s+/)[0];
+
+      // Find the position of VALUES in the INSERT statement
+      const valuesMatch = adapted.match(/\bVALUES\s*\(/i);
+      if (valuesMatch && valuesMatch.index !== undefined) {
+        // Multi-row INSERT: VALUES (row1),(row2),(row3) - there is no single enclosing ().
+        // Use the LAST ) after VALUES as the end of the VALUES clause.
+        const afterValues = adapted.substring(valuesMatch.index);
+        const lastParen = afterValues.lastIndexOf(')');
+        const foundEnd = lastParen >= 0;
+        const valuesEndPos = foundEnd
+          ? valuesMatch.index + lastParen + 1
+          : valuesMatch.index + valuesMatch[0].length;
+
+        if (foundEnd) {
+          // CRITICAL: Verify VALUES comes before any existing ON CONFLICT
+          // Insert ON CONFLICT after the VALUES clause
+          const beforeValues = adapted.substring(0, valuesEndPos);
+          const afterValues = adapted.substring(valuesEndPos);
+          // Double-check: VALUES should be in beforeValues, not afterValues
+          if (beforeValues.includes('VALUES') && !beforeValues.includes('ON CONFLICT')) {
+            adapted = `${beforeValues} ON CONFLICT (${firstColumn}) DO NOTHING${afterValues}`;
+          }
+        } else {
+          // Fallback: Use regex if we can't find balanced parentheses
+          adapted = adapted.replace(
+            /(VALUES\s*\([\s\S]+?\))/i,
+            (match) => `${match} ON CONFLICT (${firstColumn}) DO NOTHING`
+          );
+        }
+      } else {
+        // Fallback: Use regex for simpler cases
+        // Match INSERT INTO ... (columns) ... VALUES (values) with flexible whitespace
+        adapted = adapted.replace(
+          /(INSERT\s+INTO\s+\w+\s*\([\s\S]+?\))\s+(VALUES\s*\([\s\S]+?\))/gi,
+          (match, insertPart, valuesPart) => {
+            // Skip if already has ON CONFLICT
+            if (match.includes('ON CONFLICT')) {
+              return match;
+            }
+            // Extract first column from column list
+            const columnsMatch = insertPart.match(/\(([\s\S]+?)\)/);
+            if (columnsMatch) {
+              const columns = columnsMatch[1];
+              const firstColumn = columns.split(',')[0].trim().split(/\s+/)[0];
+              // Add ON CONFLICT after VALUES clause
+              return `${insertPart} ${valuesPart} ON CONFLICT (${firstColumn}) DO NOTHING`;
+            }
+            return match;
+          }
+        );
+      }
+    }
   }
 
   /**
@@ -643,8 +763,22 @@ export async function initDb(): Promise<void> {
       try {
         const result = await getPool().query(
           `SELECT 1 FROM information_schema.columns 
-           WHERE table_name = $1 AND column_name = $2`,
+           WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2`,
           [tableName, columnName]
+        );
+        return result.rows.length > 0;
+      } catch {
+        return false;
+      }
+    };
+
+    // Helper to check if a table exists
+    const tableExists = async (tableName: string): Promise<boolean> => {
+      try {
+        const result = await getPool().query(
+          `SELECT 1 FROM information_schema.tables 
+           WHERE table_schema = 'public' AND table_name = $1`,
+          [tableName]
         );
         return result.rows.length > 0;
       } catch {
@@ -671,6 +805,24 @@ export async function initDb(): Promise<void> {
         return false;
       }
     };
+
+    // CRITICAL: Ensure initiatives has created_by/updated_by early (table may exist from migrations)
+    if (await tableExists('initiatives')) {
+      if (!(await columnExists('initiatives', 'created_by'))) {
+        await querySafe(
+          'ALTER TABLE initiatives ADD COLUMN created_by TEXT',
+          [],
+          'initiatives.created_by'
+        );
+      }
+      if (!(await columnExists('initiatives', 'updated_by'))) {
+        await querySafe(
+          'ALTER TABLE initiatives ADD COLUMN updated_by TEXT',
+          [],
+          'initiatives.updated_by'
+        );
+      }
+    }
 
     // Organizations Table
     await query(`CREATE TABLE IF NOT EXISTS organizations (
@@ -768,6 +920,18 @@ export async function initDb(): Promise<void> {
             FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
+    // Project AI settings (AI role + regulatory mode)
+    await query(`CREATE TABLE IF NOT EXISTS project_ai_settings(
+            project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+            ai_role TEXT NOT NULL DEFAULT 'ADVISOR',
+            regulatory_mode_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            regulatory_prompt TEXT DEFAULT '',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_project_ai_settings_role ON project_ai_settings(ai_role)`
+    );
+
     // Ensure projects table has current_phase column (migration for existing tables)
     await query(`
             DO $$
@@ -811,14 +975,27 @@ export async function initDb(): Promise<void> {
                 FOREIGN KEY(project_id) REFERENCES projects(id)
             )`);
 
-    // Knowledge Docs
+    // Knowledge Docs (project_id needed for project list counts; organization_id for org-scoped index)
     await query(`CREATE TABLE IF NOT EXISTS knowledge_docs(
                 id TEXT PRIMARY KEY,
                 filename TEXT,
                 filepath TEXT,
                 status TEXT DEFAULT 'pending',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                organization_id TEXT,
+                project_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
             )`);
+
+    // Ensure knowledge_docs has project_id/organization_id on existing DBs (Railway etc.)
+    const ensureKnowledgeDocColumn = async (col: string, ddl: string) => {
+      if (!(await columnExists('knowledge_docs', col))) {
+        await query(`ALTER TABLE knowledge_docs ADD COLUMN ${ddl}`);
+      }
+    };
+    await ensureKnowledgeDocColumn('organization_id', 'organization_id TEXT');
+    await ensureKnowledgeDocColumn('project_id', 'project_id TEXT');
 
     // Knowledge Chunks
     await query(`CREATE TABLE IF NOT EXISTS knowledge_chunks(
@@ -1518,6 +1695,13 @@ export async function initDb(): Promise<void> {
     await ensureColumn('resource_tools', "resource_tools TEXT DEFAULT '[]'");
     await ensureColumn('tags', "tags TEXT DEFAULT '[]'");
     await ensureColumn('target_state', "target_state TEXT DEFAULT '{}'");
+    await ensureColumn('source_assessment_id', 'source_assessment_id TEXT');
+    await ensureColumn('source_report_id', 'source_report_id TEXT');
+    await ensureColumn('source_type', 'source_type TEXT');
+    await ensureColumn('source_id', 'source_id TEXT');
+    await ensureColumn('created_from', 'created_from TEXT');
+    await ensureColumn('created_by', 'created_by TEXT');
+    await ensureColumn('updated_by', 'updated_by TEXT');
 
     // Task Dependencies
     await query(`CREATE TABLE IF NOT EXISTS task_dependencies(
@@ -1528,6 +1712,23 @@ export async function initDb(): Promise<void> {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(from_task_id) REFERENCES tasks(id) ON DELETE CASCADE,
             FOREIGN KEY(to_task_id) REFERENCES tasks(id) ON DELETE CASCADE
+        )`);
+
+    // PMO Audit Trail (used by TaskController, taskAssignmentService, projectMemberService, pmoDomainRegistry)
+    await query(`CREATE TABLE IF NOT EXISTS pmo_audit_trail (
+            id TEXT PRIMARY KEY,
+            project_id TEXT,
+            pmo_domain_id TEXT,
+            pmo_phase TEXT,
+            object_type TEXT,
+            object_id TEXT,
+            action TEXT,
+            actor_id TEXT,
+            iso21500_mapping TEXT,
+            pmbok_mapping TEXT,
+            prince2_mapping TEXT,
+            metadata TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
 
     // Subscription Plans
@@ -2389,6 +2590,36 @@ export async function initDb(): Promise<void> {
       [],
       'Skipping organization_id time index on usage_records'
     );
+
+    // ai_partial_responses (from 000) may have response_chunk but need content/session_id for streaming
+    if (await columnExists('ai_partial_responses', 'id')) {
+      if (!(await columnExists('ai_partial_responses', 'session_id'))) {
+        await querySafe(
+          `ALTER TABLE ai_partial_responses ADD COLUMN session_id TEXT`,
+          [],
+          'Skipping session_id on ai_partial_responses'
+        );
+        await querySafe(
+          `CREATE UNIQUE INDEX IF NOT EXISTS idx_partial_responses_session ON ai_partial_responses(session_id)`,
+          [],
+          'Skipping session index'
+        );
+      }
+      if (!(await columnExists('ai_partial_responses', 'content'))) {
+        await querySafe(
+          `ALTER TABLE ai_partial_responses ADD COLUMN content TEXT DEFAULT ''`,
+          [],
+          'Skipping content on ai_partial_responses'
+        );
+      }
+      if (!(await columnExists('ai_partial_responses', 'updated_at'))) {
+        await querySafe(
+          `ALTER TABLE ai_partial_responses ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`,
+          [],
+          'Skipping updated_at on ai_partial_responses'
+        );
+      }
+    }
 
     logger.info('[Postgres] Schema Check Complete.');
 

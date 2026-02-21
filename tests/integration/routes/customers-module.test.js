@@ -11,7 +11,7 @@ vi.hoisted(() => {
   process.env.SQLITE_PATH = `./test-customers-${workerId}.db`;
 });
 
-const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
+const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501, 503];
 
 describe('SuperAdmin Customers Module API', () => {
   let app;

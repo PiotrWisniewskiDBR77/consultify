@@ -11,6 +11,17 @@ import NotificationService from '../../services/notificationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll } from '../../utils/DbPromise.js';
 
+function isMissingTableError(error: unknown): boolean {
+  const message = (error as any)?.message;
+  if (typeof message !== 'string') return false;
+  return (
+    message.includes('no such table') ||
+    message.includes('does not exist') ||
+    message.includes('relation') ||
+    message.includes('Database not initialized')
+  );
+}
+
 // Validate verifyToken is available at module load time
 if (!verifyToken || typeof verifyToken !== 'function') {
   const error = new Error(
@@ -97,13 +108,22 @@ router.post(
     const resolvedBody =
       typeof body === 'string' ? body : typeof message === 'string' ? message : '';
 
-    const targets: { id: string }[] =
-      Array.isArray(userIds) && userIds.length > 0
-        ? userIds.filter((x: any) => typeof x === 'string').map((id: string) => ({ id }))
-        : await dbAll<{ id: string }>(
-            `SELECT id FROM users WHERE organization_id = ? AND (status IS NULL OR status = 'active')`,
-            [orgId]
-          );
+    let targets: { id: string }[] = [];
+    try {
+      targets =
+        Array.isArray(userIds) && userIds.length > 0
+          ? userIds.filter((x: any) => typeof x === 'string').map((id: string) => ({ id }))
+          : await dbAll<{ id: string }>(
+              `SELECT id FROM users WHERE organization_id = ? AND (status IS NULL OR status = 'active')`,
+              [orgId],
+              { fallback: false }
+            );
+    } catch (err: unknown) {
+      if (isMissingTableError(err)) {
+        return res.status(503).json({ error: 'Notification broadcast unavailable' });
+      }
+      throw err;
+    }
 
     const results = await Promise.allSettled(
       (targets || []).map((u) =>
@@ -312,14 +332,14 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const service = EscalationService;
 
-    // Check permissions - simple version for now
-    // In a real app we'd use a more robust policy engine
-    if (!(req as any).can || !(req as any).can('edit_project_settings')) {
-      // Fallback for when 'can' helper isn't available
-      if (req.user?.role !== 'SUPERADMIN' && req.user?.role !== 'ADMIN') {
-        // Check if user is PM of this project
-        // This is just a placeholder logic
-      }
+    const role = (req as any).userRole || req.user?.role;
+    const canEditProject =
+      typeof (req as any).can === 'function'
+        ? Boolean((req as any).can('edit_project_settings'))
+        : false;
+    const isAdmin = role === 'ADMIN' || role === 'SUPERADMIN';
+    if (!isAdmin && !canEditProject) {
+      return res.status(403).json({ error: 'Forbidden' });
     }
 
     try {

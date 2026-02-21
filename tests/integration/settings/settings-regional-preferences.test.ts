@@ -101,8 +101,9 @@ describe('Settings regional preferences (REAL integration)', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ success: true });
     expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO user_preferences'),
-      expect.any(Array)
+      expect.stringContaining('INSERT OR REPLACE INTO user_preferences'),
+      expect.any(Array),
+      expect.any(Object)
     );
   });
 });

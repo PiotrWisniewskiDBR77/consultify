@@ -23,7 +23,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 // ── Canonical enum ───────────────────────────────────────────────────────────
 export type PresentationMode = 'n' | 'c';
-export type EntityType = 'task' | 'decision' | 'notification' | 'initiative';
+export type EntityType = 'task' | 'decision' | 'notification' | 'initiative' | 'tool';
 
 const VALID_MODES: PresentationMode[] = ['n', 'c'];
 const FALLBACK_MODE: PresentationMode = 'n';

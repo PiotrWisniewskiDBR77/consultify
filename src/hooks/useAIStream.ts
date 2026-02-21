@@ -1134,7 +1134,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
             webSearch: aiConfig?.webSearch,
             showReasoning: aiConfig?.showReasoning,
             multiAgent: aiConfig?.multiAgent,
-            // Knowledge sources always enabled — no UI toggle needed
+            marketResearch: (aiConfig as any)?.marketResearch,
+            coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
             knowledgeSources: {
               pmoDocuments: true,
               projectData: true,
@@ -1187,7 +1188,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
                   webSearch: aiConfig?.webSearch,
                   showReasoning: aiConfig?.showReasoning,
                   multiAgent: aiConfig?.multiAgent,
-                  // Knowledge sources always enabled
+                  marketResearch: (aiConfig as any)?.marketResearch,
+                  coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
                   knowledgeSources: {
                     pmoDocuments: true,
                     projectData: true,

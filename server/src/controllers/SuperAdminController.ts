@@ -10,6 +10,8 @@ import { activityService } from '../services/ActivityService.js';
 import adminSessionService from '../services/adminSessionService.js';
 import complianceService from '../services/complianceService.js';
 import integrationService from '../services/integrationService.js';
+import legalService from '../services/legalService.js';
+import permissionsMatrixService from '../services/permissionsMatrixService.js';
 import securityIncidentService from '../services/securityIncidentService.js';
 import usageService from '../services/usageService.js';
 import webhookService from '../services/WebhookService.js';
@@ -88,6 +90,7 @@ const deps: {
   WebhookService: any;
   AdminSessionService: any;
   ComplianceService: any;
+  PermissionsMatrixService: any;
 } = {
   db: getDatabase(),
   ActivityService: activityService,
@@ -100,13 +103,7 @@ const deps: {
     listFiles: async () => [],
     deleteFile: async () => true,
   } as any,
-  LegalService: {
-    getDocument: async () => ({}),
-    getAllDocuments: async () => [],
-    publishDocument: async (d: any) => d,
-    toggleDocumentActive: async () => ({}),
-    getDocumentById: async () => null,
-  } as any,
+  LegalService: legalService as any,
   LegalEventLogger: {
     logEvent: async () => ({}),
     getEvents: async () => [],
@@ -129,7 +126,16 @@ const deps: {
     addTag: async () => ({}),
     removeTag: async () => ({}),
   } as any,
-  OrganizationHealthService: { calculateHealthScore: async () => ({}) } as any,
+  OrganizationHealthService: {
+    calculateHealthScore: async (orgId: string) => {
+      try {
+        const svc = await import('../services/behaviorIntelligenceService.js');
+        return svc.calculateHealthScore(orgId);
+      } catch {
+        return { overallScore: 0, churnRisk: 'UNKNOWN', healthTrend: 'unknown', dimensions: {} };
+      }
+    },
+  } as any,
   OrganizationRelationshipService: { getRelationships: async () => [] } as any,
   OrganizationSegmentService: { getSegments: async () => [] } as any,
   OrganizationAnalyticsService: { getAnalytics: async () => ({}) } as any,
@@ -161,6 +167,7 @@ const deps: {
   WebhookService: webhookService,
   AdminSessionService: adminSessionService,
   ComplianceService: complianceService,
+  PermissionsMatrixService: permissionsMatrixService,
 };
 
 /**
@@ -1305,27 +1312,21 @@ const markInvoicePaid = catchAsync(async (req, res, next) => {
 });
 
 /**
- * Get invoice PDF (placeholder)
+ * Get invoice PDF
+ *
+ * Not implemented in this codebase yet → honest 503.
  */
 const getInvoicePdf = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const db = deps.db;
-
-  db.get('SELECT * FROM invoices WHERE id = ?', [id], (err, invoice) => {
-    if (err) return next(err);
-    if (!invoice) {
-      return res.status(404).json({ error: 'Invoice not found' });
-    }
-    res.json({ invoice, pdf: 'PDF generation not implemented yet' });
-  });
+  return next(new AppError('Invoice PDF generation is not available', 503, 'FEATURE_UNAVAILABLE'));
 });
 
 /**
- * Upload branding logo (placeholder)
+ * Upload branding logo
+ *
+ * Not implemented in this codebase yet → honest 503.
  */
 const uploadBrandingLogo = catchAsync(async (req, res, next) => {
-  const { orgId } = req.params;
-  res.json({ success: true, message: 'Logo uploaded', orgId });
+  return next(new AppError('Branding logo upload is not available', 503, 'FEATURE_UNAVAILABLE'));
 });
 
 /**
@@ -1444,7 +1445,12 @@ const getApiKeyUsage = catchAsync(async (req, res, next) => {
  * Get compliance frameworks list
  */
 const getComplianceFrameworks = catchAsync(async (req, res, next) => {
-  const frameworks = await deps.ComplianceService.getFrameworks();
+  const frameworks = deps.ComplianceService?.COMPLIANCE_STANDARDS || [];
+  if (!frameworks.length) {
+    return next(
+      new AppError('Compliance frameworks are not available', 503, 'FEATURE_UNAVAILABLE')
+    );
+  }
   res.json({ frameworks });
 });
 
@@ -1453,11 +1459,31 @@ const getComplianceFrameworks = catchAsync(async (req, res, next) => {
  */
 const getComplianceStatus = catchAsync(async (req, res, next) => {
   const { frameworkId } = req.params;
+  const organizationId =
+    req.query.organizationId || req.user?.organization_id || req.user?.organizationId;
+  if (!organizationId) {
+    return next(new AppError('organizationId is required', 400));
+  }
+
+  const hasComplianceTable = await tableExists('compliance_status');
+  if (!hasComplianceTable) {
+    return next(new AppError('Compliance status is not available', 503, 'FEATURE_UNAVAILABLE'));
+  }
+
+  const row = await deps.db.get(
+    `SELECT status, score, updated_at FROM compliance_status WHERE organization_id = ? AND framework_id = ? ORDER BY updated_at DESC LIMIT 1`,
+    [organizationId, frameworkId]
+  );
+
+  if (!row) {
+    return next(new AppError('Compliance status is not available', 503, 'FEATURE_UNAVAILABLE'));
+  }
+
   res.json({
     framework: frameworkId,
-    status: 'compliant',
-    lastAudit: new Date().toISOString(),
-    score: 95,
+    status: row.status,
+    lastAudit: row.updated_at,
+    score: row.score,
   });
 });
 
@@ -1491,12 +1517,7 @@ const getDsarRequests = catchAsync(async (req, res, next) => {
  * Get compliance audits list (placeholder)
  */
 const getComplianceAudits = catchAsync(async (req, res, next) => {
-  try {
-    res.json([]);
-  } catch (error) {
-    console.error('[SuperAdmin] Get compliance audits error:', error);
-    res.status(500).json({ error: 'Failed to get compliance audits' });
-  }
+  return next(new AppError('Compliance audits are not available', 503, 'FEATURE_UNAVAILABLE'));
 });
 
 /**
@@ -1506,23 +1527,7 @@ const getComplianceSummary = catchAsync(async (_req, res, next) => {
   try {
     const hasComplianceTable = await tableExists('compliance_status');
     if (!hasComplianceTable) {
-      deps.db.all(`SELECT id as org_id, name as org_name FROM organizations`, [], (err, rows) => {
-        if (err) {
-          console.error('[SuperAdmin] Compliance summary fallback error:', err);
-          return res.json({ items: [] });
-        }
-        const items = (rows || []).map((row: any) => ({
-          org_id: row.org_id,
-          org_name: row.org_name,
-          gdpr_compliant: false,
-          dpa_signed: false,
-          data_retention_policy: false,
-          security_audit_passed: false,
-          last_audit_date: null,
-        }));
-        return res.json({ items });
-      });
-      return;
+      return next(new AppError('Compliance summary is not available', 503, 'FEATURE_UNAVAILABLE'));
     }
 
     const isPg =
@@ -2630,44 +2635,6 @@ const updateNotificationPreferences = catchAsync(async (req, res, next) => {
 // PHASE 1: ADVANCED IAM MODULE
 // =========================================
 
-// Import Admin Session Service
-const AdminSessionService = {
-  getActiveSessions: async (adminId) => [],
-  createSession: async (data) => ({
-    id: 'new-session-id',
-    ...data,
-    sessionToken: 'mock-session-token-' + Date.now(),
-    createdAt: new Date(),
-  }),
-  revokeSession: async (id) => true,
-  revokeAllSessions: async (adminId, exceptSessionId) => 0,
-  getSessionStats: async () => ({ activeSessions: 0, totalSessions: 0 }),
-};
-
-const PermissionsMatrixService = {
-  getMatrix: async () => [],
-  updateRolePermissions: async () => ({ success: true }),
-  toggleRolePermission: async () => ({ success: true }),
-  copyRolePermissions: async () => ({ success: true }),
-  compareRoles: async () => ({ differences: [] }),
-  getPermissionsStats: async () => ({ totalPermissions: 0, roleCount: 0 }),
-};
-
-const ApprovalWorkflowService = {
-  getWorkflows: async (filters) => [],
-  createWorkflow: async (data) => ({ id: 'new-workflow-id', ...data }),
-  updateWorkflow: async (id, data) => ({ id, ...data }),
-  deleteWorkflow: async (id) => true,
-  getRequests: async (filters) => [],
-  approveRequest: async (id, userId) => ({ success: true }),
-  rejectRequest: async (id, userId, reason) => ({ success: true }),
-};
-
-const AdminAuditLogService = {
-  getLogs: async (filters) => [],
-  getStats: async () => ({ totalLogs: 0, unresolvedCount: 0 }),
-};
-
 // Admin Sessions
 const getAdminSessions = catchAsync(async (req, res, next) => {
   const { adminId } = req.query;
@@ -2956,17 +2923,16 @@ const deleteAdminPermission = catchAsync(async (req, res, next) => {
 });
 
 const getPermissionsMatrix = catchAsync(async (req, res, next) => {
-  const PermissionsMatrixService = Promise.resolve(
-    {}
-  ); /* Stubbed missing permissionsMatrixService.js */
-  const matrix = await PermissionsMatrixService.getMatrix();
+  if (!deps.PermissionsMatrixService?.getMatrix) {
+    return next(
+      new AppError('Permissions matrix service is not available', 503, 'FEATURE_UNAVAILABLE')
+    );
+  }
+  const matrix = await deps.PermissionsMatrixService.getMatrix();
   res.json(matrix);
 });
 
 const updateRolePermissions = catchAsync(async (req, res, next) => {
-  const PermissionsMatrixService = Promise.resolve(
-    {}
-  ); /* Stubbed missing permissionsMatrixService.js */
   const { roleId } = req.params;
   const { permissions } = req.body;
 
@@ -2974,54 +2940,71 @@ const updateRolePermissions = catchAsync(async (req, res, next) => {
     return res.status(400).json({ error: 'permissions array is required' });
   }
 
-  const result = await PermissionsMatrixService.updateRolePermissions(roleId, permissions);
+  if (!deps.PermissionsMatrixService?.updateRolePermissions) {
+    return next(
+      new AppError('Permissions matrix service is not available', 503, 'FEATURE_UNAVAILABLE')
+    );
+  }
+  const result = await deps.PermissionsMatrixService.updateRolePermissions(roleId, permissions);
   res.json({ success: true, message: 'Role permissions updated', ...result });
 });
 
 const toggleRolePermission = catchAsync(async (req, res, next) => {
-  const PermissionsMatrixService = Promise.resolve(
-    {}
-  ); /* Stubbed missing permissionsMatrixService.js */
   const { roleId, permissionKey } = req.params;
   const { enabled } = req.body;
 
-  const result = await PermissionsMatrixService.togglePermission(roleId, permissionKey, enabled);
+  if (!deps.PermissionsMatrixService?.togglePermission) {
+    return next(
+      new AppError('Permissions matrix service is not available', 503, 'FEATURE_UNAVAILABLE')
+    );
+  }
+  const result = await deps.PermissionsMatrixService.togglePermission(
+    roleId,
+    permissionKey,
+    enabled
+  );
   res.json({ success: true, ...result });
 });
 
 const copyRolePermissions = catchAsync(async (req, res, next) => {
-  const PermissionsMatrixService = Promise.resolve(
-    {}
-  ); /* Stubbed missing permissionsMatrixService.js */
   const { sourceRole, targetRole } = req.body;
 
   if (!sourceRole || !targetRole) {
     return res.status(400).json({ error: 'sourceRole and targetRole are required' });
   }
 
-  const result = await PermissionsMatrixService.copyRolePermissions(sourceRole, targetRole);
+  if (!deps.PermissionsMatrixService?.copyRolePermissions) {
+    return next(
+      new AppError('Permissions matrix service is not available', 503, 'FEATURE_UNAVAILABLE')
+    );
+  }
+  const result = await deps.PermissionsMatrixService.copyRolePermissions(sourceRole, targetRole);
   res.json({ success: true, message: 'Permissions copied', ...result });
 });
 
 const compareRoles = catchAsync(async (req, res, next) => {
-  const PermissionsMatrixService = Promise.resolve(
-    {}
-  ); /* Stubbed missing permissionsMatrixService.js */
   const { role1, role2 } = req.query;
 
   if (!role1 || !role2) {
     return res.status(400).json({ error: 'role1 and role2 query params are required' });
   }
 
-  const diff = await PermissionsMatrixService.compareRoles(role1, role2);
+  if (!deps.PermissionsMatrixService?.compareRoles) {
+    return next(
+      new AppError('Permissions matrix service is not available', 503, 'FEATURE_UNAVAILABLE')
+    );
+  }
+  const diff = await deps.PermissionsMatrixService.compareRoles(role1, role2);
   res.json(diff);
 });
 
 const getPermissionsStats = catchAsync(async (req, res, next) => {
-  const PermissionsMatrixService = Promise.resolve(
-    {}
-  ); /* Stubbed missing permissionsMatrixService.js */
-  const stats = await PermissionsMatrixService.getStats();
+  if (!deps.PermissionsMatrixService?.getStats) {
+    return next(
+      new AppError('Permissions matrix service is not available', 503, 'FEATURE_UNAVAILABLE')
+    );
+  }
+  const stats = await deps.PermissionsMatrixService.getStats();
   res.json(stats);
 });
 
@@ -4225,9 +4208,7 @@ const rejectSubscriptionChange = catchAsync(async (req, res, next) => {
 const calculateProration = catchAsync(async (req, res, next) => {
   const { organizationId, fromPlanId, toPlanId, effectiveDate } = req.body;
 
-  // Simple proration calculation
-  const prorationAmount = Math.random() * 50; // Placeholder
-  res.json({ prorationAmount: prorationAmount.toFixed(2), effectiveDate });
+  return next(new AppError('Proration calculation is not available', 503, 'FEATURE_UNAVAILABLE'));
 });
 
 const getSubscriptionChangeStats = catchAsync(async (req, res, next) => {

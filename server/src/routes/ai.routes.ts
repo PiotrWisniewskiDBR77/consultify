@@ -28,7 +28,9 @@ import logger from '../utils/Logger.js';
 import {
   ActionIdParamSchema,
   ActionTypeParamSchema,
+  AIAuthoringAuditRequestSchema,
   AIContextQuerySchema,
+  AIReadinessAnalysisRequestSchema,
   ApproveActionRequestSchema,
   AuditIdParamSchema,
   CalculateQualityRequestSchema,
@@ -38,6 +40,7 @@ import {
   ChatStreamRequestSchema,
   CreateDraftRequestSchema,
   ExportExplanationsQuerySchema,
+  GenerateCardDraftRequestSchema,
   GenerateProposalsQuerySchema,
   GetAggregateQualityQuerySchema,
   GetAuditLogsQuerySchema,
@@ -382,6 +385,73 @@ router.post(
 );
 
 /**
+ * GET /api/ai/co-thinker/modes
+ * Returns available Co-Thinker modes for the UI.
+ */
+router.get(
+  '/co-thinker/modes',
+  verifyToken,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const { getAvailableCoThinkerModes } = await import('../services/ai/coThinkerService.js');
+      const modes = getAvailableCoThinkerModes();
+      return res.json({ modes });
+    } catch (err: any) {
+      logger.warn('[AI Routes] Co-Thinker modes fetch failed:', err?.message);
+      return res.json({ modes: [] });
+    }
+  })
+);
+
+/**
+ * POST /api/ai/deep-research/export
+ * Export a deep research report as a structured document.
+ */
+router.post(
+  '/deep-research/export',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { conversationId, format } = req.body as {
+      conversationId: string;
+      format?: 'markdown' | 'html' | 'pdf';
+    };
+
+    if (!conversationId) {
+      return res.status(400).json({ error: 'conversationId is required' });
+    }
+
+    try {
+      const dbMod = await import('../utils/DbPromise.js');
+      const db = dbMod;
+
+      const messages = (await db.all(
+        `SELECT content, metadata, role FROM conversation_messages
+         WHERE conversation_id = ? AND role = 'ai'
+         ORDER BY created_at DESC LIMIT 1`,
+        [conversationId]
+      )) as any[];
+
+      if (!messages.length) {
+        return res.status(404).json({ error: 'No AI messages found in conversation' });
+      }
+
+      const content = messages[0].content || '';
+      const exportFormat = format || 'markdown';
+
+      return res.json({
+        success: true,
+        format: exportFormat,
+        content,
+        exportedAt: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      logger.error('[AI Routes] Deep research export failed:', error);
+      return res.status(500).json({ error: 'Failed to export research report' });
+    }
+  })
+);
+
+/**
  * Engagement Summary (R13)
  *
  * Generates periodic engagement reports (weekly/monthly) as downloadable artifacts.
@@ -487,6 +557,8 @@ router.post(
         webSearch?: boolean;
         showReasoning?: boolean;
         multiAgent?: boolean;
+        marketResearch?: boolean;
+        coThinkerMode?: string | null;
       };
       knowledgeSources?: {
         pmoDocuments?: boolean;
@@ -733,6 +805,8 @@ router.post(
         webSearch?: boolean;
         showReasoning?: boolean;
         multiAgent?: boolean;
+        marketResearch?: boolean;
+        coThinkerMode?: string | null;
       };
       knowledgeSources?: {
         pmoDocuments?: boolean;
@@ -760,6 +834,12 @@ router.post(
       knowledgeSources,
       responseStyle,
     } = body;
+
+    // Market Research → Deep Research conversion
+    if (aiModes?.marketResearch && !aiModes?.deepResearch) {
+      (aiModes as any).deepResearch = true;
+      (context as any).__forceResearchType = 'market_research';
+    }
 
     // Detect "force depth" triggers (user control). These must cause a real structure change.
     const rawMsg = String(message || '').trim();
@@ -811,7 +891,23 @@ router.post(
     const langName = languageMap[language || 'pl'] || languageMap['pl'];
     const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Always respond in ${langName}. This is critical - the user's interface is set to ${langName}, so ALL your responses MUST be in ${langName}.]\n`;
 
-    const enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
+    let enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
+
+    // Co-Thinker mode: inject persona-specific system prompt
+    if (aiModes?.coThinkerMode && typeof aiModes.coThinkerMode === 'string') {
+      try {
+        const { buildCoThinkerSystemPrompt } = await import('../services/ai/coThinkerService.js');
+        const coThinkerPrompt = buildCoThinkerSystemPrompt(
+          aiModes.coThinkerMode as any,
+          (language || 'en').split('-')[0]
+        );
+        if (coThinkerPrompt) {
+          enhancedSystemInstruction = coThinkerPrompt + '\n\n' + enhancedSystemInstruction;
+        }
+      } catch (ctErr: any) {
+        logger.warn('[AI Routes] Co-Thinker prompt injection failed:', ctErr?.message);
+      }
+    }
 
     // Prevent Node.js / proxy / ALB socket timeouts for long-running SSE streams
     // (Deep Thinking can run 30–90 seconds; default 2min timeout gives safety margin)
@@ -935,23 +1031,22 @@ router.post(
     req.socket?.on('error', connectionCleanup);
     res.on('close', connectionCleanup);
 
-    const savePartialResponse = async (
+    const savePartialResponse = (
       sessionId: string,
       content: string,
       userId: string,
       orgId: string
-    ) => {
-      await dbRun(
+    ) =>
+      dbRun(
         `
-            INSERT INTO ai_partial_responses (id, session_id, user_id, organization_id, content, updated_at)
-            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(session_id) DO UPDATE SET
-                content = excluded.content,
-                updated_at = CURRENT_TIMESTAMP
+          INSERT INTO ai_partial_responses (id, session_id, user_id, organization_id, content, updated_at)
+          VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          ON CONFLICT(session_id) DO UPDATE SET
+              content = excluded.content,
+              updated_at = CURRENT_TIMESTAMP
         `,
         [uuidv4(), sessionId, userId, orgId, content]
       );
-    };
 
     try {
       // --------------------------------------------------------
@@ -1035,11 +1130,16 @@ router.post(
       }
 
       if (resumeFromPartial && conversationId) {
-        const row = (await dbGet(
-          `SELECT content FROM ai_partial_responses WHERE session_id = ? AND user_id = ?`,
-          [conversationId, req.userId]
-        )) as { content: string } | null;
-        const partial = row?.content || null;
+        let partial: string | null = null;
+        try {
+          const row = (await dbGet(
+            `SELECT content FROM ai_partial_responses WHERE session_id = ? AND user_id = ?`,
+            [conversationId, req.userId]
+          )) as { content?: string } | null;
+          partial = row?.content ?? null;
+        } catch {
+          // ai_partial_responses may have different schema (content vs response_chunk)
+        }
 
         if (partial) {
           accumulatedContent = partial;
@@ -4258,6 +4358,17 @@ router.get(
     try {
       const AIMemoryMetricsService = (await import('../services/ai/aiMemoryMetricsService.js'))
         .default as any;
+      if (
+        !AIMemoryMetricsService ||
+        AIMemoryMetricsService.__unavailable__ === true ||
+        typeof AIMemoryMetricsService.getDashboardMetrics !== 'function'
+      ) {
+        return res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'AI memory metrics are not available',
+        });
+      }
       const { period } = req.query as any;
 
       const metrics = await AIMemoryMetricsService.getDashboardMetrics(req.organizationId!, period);
@@ -4265,7 +4376,11 @@ router.get(
       return res.json({ success: true, ...metrics });
     } catch (err: any) {
       logger.error('[AI] Memory metrics error:', err);
-      return res.status(500).json({ success: false, error: (err as Error).message });
+      return res.status(503).json({
+        success: false,
+        code: 'FEATURE_UNAVAILABLE',
+        error: 'AI memory metrics are not available',
+      });
     }
   })
 );
@@ -4278,6 +4393,17 @@ router.get(
     try {
       const AIMemoryMetricsService = (await import('../services/ai/aiMemoryMetricsService.js'))
         .default as any;
+      if (
+        !AIMemoryMetricsService ||
+        AIMemoryMetricsService.__unavailable__ === true ||
+        typeof AIMemoryMetricsService.getCurrentMemoryState !== 'function'
+      ) {
+        return res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'AI memory state is not available',
+        });
+      }
       const { projectId } = req.query as any;
 
       const state = await AIMemoryMetricsService.getCurrentMemoryState(
@@ -4288,7 +4414,11 @@ router.get(
       return res.json({ success: true, ...state });
     } catch (err: any) {
       logger.error('[AI] Current memory state error:', err);
-      return res.status(500).json({ success: false, error: (err as Error).message });
+      return res.status(503).json({
+        success: false,
+        code: 'FEATURE_UNAVAILABLE',
+        error: 'AI memory state is not available',
+      });
     }
   })
 );
@@ -4301,6 +4431,17 @@ router.get(
     try {
       const AIMemoryMetricsService = (await import('../services/ai/aiMemoryMetricsService.js'))
         .default as any;
+      if (
+        !AIMemoryMetricsService ||
+        AIMemoryMetricsService.__unavailable__ === true ||
+        typeof AIMemoryMetricsService.getLatencyPercentiles !== 'function'
+      ) {
+        return res.status(503).json({
+          success: false,
+          code: 'FEATURE_UNAVAILABLE',
+          error: 'AI memory latency metrics are not available',
+        });
+      }
       const { hours } = req.query as any;
 
       const latency = await AIMemoryMetricsService.getLatencyPercentiles(
@@ -4311,7 +4452,11 @@ router.get(
       return res.json({ success: true, ...latency });
     } catch (err: any) {
       logger.error('[AI] Latency metrics error:', err);
-      return res.status(500).json({ success: false, error: (err as Error).message });
+      return res.status(503).json({
+        success: false,
+        code: 'FEATURE_UNAVAILABLE',
+        error: 'AI memory latency metrics are not available',
+      });
     }
   })
 );
@@ -4956,6 +5101,322 @@ router.post(
       logger.error('[AI Routes] Failed to trigger AI notification:', err);
       return res.status(500).json({ error: err.message });
     }
+  })
+);
+
+// ── T032: Generate Card Draft (whole-card AI authoring) ──────────────
+
+router.post(
+  '/generate-card-draft',
+  verifyToken,
+  validateBody(GenerateCardDraftRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { artifactType, brief, projectId, language } = req.body;
+    const orgId = req.organizationId;
+    const userId = req.userId;
+
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+    const aiAccessCheck = await AccessPolicyService.checkAccess(orgId, 'ai_call');
+    if (!aiAccessCheck.allowed) {
+      return res.status(403).json({
+        error: aiAccessCheck.reason || 'Access blocked',
+        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
+      });
+    }
+
+    AccessPolicyService.incrementUsage(orgId, 'ai_calls', 1).catch((err: any) => {
+      logger.warn('[AI CardDraft] Failed to increment ai_calls usage:', err?.message || err);
+    });
+
+    const langCode = (language || 'pl').split('-')[0];
+    const langMap: Record<string, string> = {
+      pl: 'Polish',
+      en: 'English',
+      de: 'German',
+      es: 'Spanish',
+    };
+    const langName = langMap[langCode] || 'Polish';
+
+    const fieldsByType: Record<string, string[]> = {
+      initiative: [
+        'name',
+        'summary',
+        'problem_statement',
+        'objectives',
+        'scope',
+        'expected_benefits',
+        'success_criteria',
+        'risks_overview',
+      ],
+      task: ['title', 'description', 'acceptance_criteria', 'definition_of_done'],
+      decision: ['title', 'context', 'options_considered', 'recommendation', 'rationale'],
+    };
+    const fields = fieldsByType[artifactType] || fieldsByType.initiative;
+
+    const sys = [
+      `You are a PMO content generator for a Consultify enterprise platform.`,
+      `Generate a structured draft for a new ${artifactType} card based on the user's brief.`,
+      `Return ONLY valid JSON with these fields: ${fields.join(', ')}.`,
+      `Each field value must be plain text (no markdown, no bullets with -, use numbered lists or sentences).`,
+      `Be professional, concise, and actionable. Follow enterprise PMO standards.`,
+      `\n[LANGUAGE INSTRUCTION: Always respond in ${langName}.]`,
+    ].join('\n');
+
+    const userPrompt = `Brief:\n${brief}`;
+
+    const { modelRouter } = await import('../services/ai/modelRouter.js');
+    const { llmService } = await import('../services/ai/llmService.js');
+
+    const modelCfg = await modelRouter.select({
+      capability: 'chat_confirm',
+      organizationId: orgId,
+      tier: 'BUDGET',
+    } as any);
+
+    const result = (await llmService.callText({
+      type: 'chat',
+      modelConfig: {
+        provider: modelCfg.provider,
+        id: modelCfg.id,
+        endpoint: (modelCfg as any).endpoint,
+        apiKey: (modelCfg as any).apiKey,
+      },
+      systemPrompt: sys,
+      messages: [{ role: 'user', content: userPrompt }],
+      timeoutMs: 30000,
+      breakerOptions: { retryAttempts: 1, retryBaseDelay: 500, retryMaxDelay: 2000 },
+    } as any)) as any;
+
+    const rawText = String(result?.content || result?.text || '').trim();
+
+    let draft: Record<string, string> = {};
+    try {
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) draft = JSON.parse(jsonMatch[0]);
+    } catch {
+      return res
+        .status(502)
+        .json({ error: 'LLM returned invalid JSON', code: 'INVALID_LLM_JSON', raw: rawText });
+    }
+
+    try {
+      await dbRun(
+        `INSERT INTO ai_authoring_audit (organization_id, project_id, user_id, artifact_type, action_type, input_text, output_text, was_applied, metadata)
+         VALUES (?, ?, ?, ?, 'card_generate', ?, ?, 0, ?)`,
+        [
+          orgId,
+          projectId,
+          userId,
+          artifactType,
+          brief,
+          JSON.stringify(draft),
+          JSON.stringify({ fields: Object.keys(draft) }),
+        ]
+      );
+    } catch (err: any) {
+      logger.warn('[AI CardDraft] Audit insert failed:', err?.message);
+    }
+
+    return res.json({ draft, artifactType, fields: Object.keys(draft) });
+  })
+);
+
+// ── T033: AI Readiness Analysis ──────────────────────────────────────
+
+router.post(
+  '/readiness-analysis',
+  verifyToken,
+  validateBody(AIReadinessAnalysisRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { initiativeId, projectId, targetGate, language } = req.body;
+    const orgId = req.organizationId;
+
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+    const aiAccessCheck = await AccessPolicyService.checkAccess(orgId, 'ai_call');
+    if (!aiAccessCheck.allowed) {
+      return res.status(403).json({
+        error: aiAccessCheck.reason || 'Access blocked',
+        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
+      });
+    }
+
+    AccessPolicyService.incrementUsage(orgId, 'ai_calls', 1).catch((err: any) => {
+      logger.warn('[AI Readiness] Failed to increment ai_calls usage:', err?.message || err);
+    });
+
+    const initiative = await dbGet(
+      `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, orgId]
+    );
+    if (!initiative) return res.status(404).json({ error: 'Initiative not found' });
+
+    const ini = initiative as any;
+
+    let tasks: any[] = [];
+    let risks: any[] = [];
+    let decisions: any[] = [];
+    try {
+      tasks =
+        (await dbAll(
+          `SELECT id, title, status, priority FROM tasks WHERE initiative_id = ? LIMIT 50`,
+          [initiativeId]
+        )) || [];
+      risks =
+        (await dbAll(
+          `SELECT id, title, type, severity, status FROM initiative_raids WHERE initiative_id = ? AND type = 'RISK' LIMIT 30`,
+          [initiativeId]
+        )) || [];
+      decisions =
+        (await dbAll(`SELECT id, title, status FROM decisions WHERE initiative_id = ? LIMIT 20`, [
+          initiativeId,
+        ])) || [];
+    } catch {
+      /* best-effort */
+    }
+
+    const langCode = (language || 'pl').split('-')[0];
+    const langMap: Record<string, string> = {
+      pl: 'Polish',
+      en: 'English',
+      de: 'German',
+      es: 'Spanish',
+    };
+    const langName = langMap[langCode] || 'Polish';
+
+    const currentStatus = String(ini.status || 'DRAFT').toUpperCase();
+    const gate = targetGate || currentStatus;
+
+    const sys = [
+      `You are a PMO readiness analyst for Consultify. Analyze the initiative data and produce a readiness assessment.`,
+      `Return ONLY valid JSON with this structure:`,
+      `{ "overallScore": number (0-100), "summary": "string", "findings": [{"key": "string", "severity": "blocking"|"warning", "pass": boolean, "message": "string", "suggestedAction": "string", "suggestedActor": "string"}] }`,
+      `Focus on completeness, risk coverage, stakeholder alignment, and timeline feasibility.`,
+      `Be specific and actionable in your findings.`,
+      `\n[LANGUAGE INSTRUCTION: Always respond in ${langName}.]`,
+    ].join('\n');
+
+    const contextData = {
+      name: ini.name,
+      status: currentStatus,
+      targetGate: gate,
+      summary: ini.summary || ini.problem_statement || '',
+      objectives: ini.objectives || '',
+      scope: ini.scope || '',
+      sponsor: ini.sponsor_id ? 'assigned' : 'not assigned',
+      ownerBusiness: ini.owner_business_id ? 'assigned' : 'not assigned',
+      ownerExecution: ini.owner_execution_id ? 'assigned' : 'not assigned',
+      startDate: ini.start_date || ini.planned_start_date || 'not set',
+      endDate: ini.end_date || ini.planned_end_date || 'not set',
+      priority: ini.priority || 'not set',
+      tasksCount: tasks.length,
+      tasksSummary: tasks
+        .slice(0, 10)
+        .map((t: any) => `${t.title} [${t.status}]`)
+        .join('; '),
+      risksCount: risks.length,
+      risksSummary: risks
+        .slice(0, 10)
+        .map((r: any) => `${r.title} [${r.severity}/${r.status}]`)
+        .join('; '),
+      decisionsCount: decisions.length,
+    };
+
+    const userPrompt = `Analyze readiness for gate "${gate}":\n${JSON.stringify(contextData, null, 2)}`;
+
+    const { modelRouter } = await import('../services/ai/modelRouter.js');
+    const { llmService } = await import('../services/ai/llmService.js');
+
+    const modelCfg = await modelRouter.select({
+      capability: 'chat_confirm',
+      organizationId: orgId,
+      tier: 'BUDGET',
+    } as any);
+
+    const result = (await llmService.callText({
+      type: 'chat',
+      modelConfig: {
+        provider: modelCfg.provider,
+        id: modelCfg.id,
+        endpoint: (modelCfg as any).endpoint,
+        apiKey: (modelCfg as any).apiKey,
+      },
+      systemPrompt: sys,
+      messages: [{ role: 'user', content: userPrompt }],
+      timeoutMs: 30000,
+      breakerOptions: { retryAttempts: 1, retryBaseDelay: 500, retryMaxDelay: 2000 },
+    } as any)) as any;
+
+    const rawText = String(result?.content || result?.text || '').trim();
+
+    let analysis: any = {};
+    try {
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) analysis = JSON.parse(jsonMatch[0]);
+    } catch {
+      return res.status(502).json({ error: 'LLM returned invalid JSON', code: 'INVALID_LLM_JSON' });
+    }
+
+    return res.json({
+      overallScore: Number(analysis.overallScore || 0),
+      summary: String(analysis.summary || ''),
+      findings: Array.isArray(analysis.findings) ? analysis.findings : [],
+      gate,
+      initiativeId,
+    });
+  })
+);
+
+// ── T032: AI Authoring Audit Log ─────────────────────────────────────
+
+router.post(
+  '/authoring-audit',
+  verifyToken,
+  validateBody(AIAuthoringAuditRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    const userId = req.userId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const {
+      artifactType,
+      artifactId,
+      actionType,
+      fieldKey,
+      inputText,
+      outputText,
+      wasApplied,
+      wasUndone,
+      metadata,
+    } = req.body;
+
+    try {
+      await dbRun(
+        `INSERT INTO ai_authoring_audit (organization_id, user_id, artifact_type, artifact_id, action_type, field_key, input_text, output_text, was_applied, was_undone, metadata)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          orgId,
+          userId,
+          artifactType,
+          artifactId || null,
+          actionType,
+          fieldKey || null,
+          inputText || null,
+          outputText || null,
+          wasApplied ? 1 : 0,
+          wasUndone ? 1 : 0,
+          metadata ? JSON.stringify(metadata) : null,
+        ]
+      );
+    } catch (err: any) {
+      logger.warn('[AI Authoring Audit] Insert failed:', err?.message);
+      return res.status(500).json({ error: 'Failed to log audit event' });
+    }
+
+    return res.json({ success: true });
   })
 );
 

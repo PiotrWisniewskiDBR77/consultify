@@ -206,7 +206,7 @@ export const GridView: React.FC<GridViewProps> = ({
           >
             {/* Header */}
             <div className="flex items-start justify-between p-4 pb-2">
-              <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
+              <span className="font-mono text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                 {item.type}
               </span>
               <div className="relative">

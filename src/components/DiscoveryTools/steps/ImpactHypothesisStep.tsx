@@ -1,0 +1,188 @@
+import React, { useMemo, useState } from 'react';
+
+import { ToolImpactHypothesis, ToolSession, useToolStore } from '@/store/useToolStore';
+
+function coerceNumber(value: string): number | null {
+  const v = value.trim();
+  if (!v) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function ImpactHypothesisStep(props: { session: ToolSession; isPolish: boolean }) {
+  const { session, isPolish } = props;
+  const { updateInputData } = useToolStore();
+
+  const flow = (session.inputData as any)?.flow || {};
+  const impactHypothesis: ToolImpactHypothesis = {
+    metricName: '',
+    baseline: null,
+    target: null,
+    unit: '',
+    timeframe: '',
+    assumptions: [],
+    ...(flow.impactHypothesis || {}),
+  };
+
+  const [assumptionDraft, setAssumptionDraft] = useState('');
+
+  const baselineText = useMemo(
+    () => (impactHypothesis.baseline == null ? '' : String(impactHypothesis.baseline)),
+    [impactHypothesis.baseline]
+  );
+  const targetText = useMemo(
+    () => (impactHypothesis.target == null ? '' : String(impactHypothesis.target)),
+    [impactHypothesis.target]
+  );
+
+  const patch = (next: Partial<ToolImpactHypothesis>) => {
+    updateInputData({
+      flow: {
+        ...flow,
+        impactHypothesis: { ...impactHypothesis, ...next },
+      },
+    });
+  };
+
+  const addAssumption = () => {
+    const value = assumptionDraft.trim();
+    if (!value) return;
+    const existing = Array.isArray(impactHypothesis.assumptions)
+      ? impactHypothesis.assumptions
+      : [];
+    patch({ assumptions: [...existing, value] });
+    setAssumptionDraft('');
+  };
+
+  const removeAssumption = (idx: number) => {
+    const existing = Array.isArray(impactHypothesis.assumptions)
+      ? impactHypothesis.assumptions
+      : [];
+    patch({ assumptions: existing.filter((_, i) => i !== idx) });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+          {isPolish ? 'Hipoteza wpływu' : 'Impact Hypothesis'}
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {isPolish
+            ? 'Zdefiniuj mierzalny baseline → target oraz kluczowe założenia.'
+            : 'Define a measurable baseline → target and key assumptions.'}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            {isPolish ? 'Metryka' : 'Metric'}
+          </label>
+          <input
+            value={impactHypothesis.metricName}
+            onChange={(e) => patch({ metricName: e.target.value })}
+            placeholder={
+              isPolish ? 'np. czas cyklu, koszt, błędy...' : 'e.g. cycle time, cost, errors...'
+            }
+            className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            {isPolish ? 'Jednostka' : 'Unit'}
+          </label>
+          <input
+            value={impactHypothesis.unit}
+            onChange={(e) => patch({ unit: e.target.value })}
+            placeholder={isPolish ? 'np. min/tydzień, %, PLN' : 'e.g. min/week, %, USD'}
+            className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            {isPolish ? 'Baseline' : 'Baseline'}
+          </label>
+          <input
+            inputMode="decimal"
+            value={baselineText}
+            onChange={(e) => patch({ baseline: coerceNumber(e.target.value) })}
+            placeholder={isPolish ? 'Wartość bazowa' : 'Baseline value'}
+            className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            {isPolish ? 'Target' : 'Target'}
+          </label>
+          <input
+            inputMode="decimal"
+            value={targetText}
+            onChange={(e) => patch({ target: coerceNumber(e.target.value) })}
+            placeholder={isPolish ? 'Wartość docelowa' : 'Target value'}
+            className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+          />
+        </div>
+
+        <div className="space-y-1 md:col-span-2">
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            {isPolish ? 'Horyzont' : 'Timeframe'}
+          </label>
+          <input
+            value={impactHypothesis.timeframe}
+            onChange={(e) => patch({ timeframe: e.target.value })}
+            placeholder={isPolish ? 'np. 6 tygodni / Q2' : 'e.g. 6 weeks / Q2'}
+            className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="text-sm font-medium text-slate-900 dark:text-white">
+          {isPolish ? 'Założenia' : 'Assumptions'}
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={assumptionDraft}
+            onChange={(e) => setAssumptionDraft(e.target.value)}
+            placeholder={isPolish ? 'Dodaj założenie...' : 'Add an assumption...'}
+            className="flex-1 px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+          />
+          <button
+            onClick={addAssumption}
+            disabled={!assumptionDraft.trim()}
+            className="px-4 py-3 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
+          >
+            {isPolish ? 'Dodaj' : 'Add'}
+          </button>
+        </div>
+
+        {impactHypothesis.assumptions.length === 0 ? (
+          <div className="p-6 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-400 text-sm">
+            {isPolish ? 'Brak założeń.' : 'No assumptions yet.'}
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {impactHypothesis.assumptions.map((a, idx) => (
+              <li
+                key={`${idx}-${a}`}
+                className="flex items-start justify-between gap-3 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700"
+              >
+                <div className="text-sm text-slate-700 dark:text-slate-200">{a}</div>
+                <button
+                  onClick={() => removeAssumption(idx)}
+                  className="text-xs text-slate-500 hover:text-red-600"
+                >
+                  {isPolish ? 'Usuń' : 'Remove'}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}

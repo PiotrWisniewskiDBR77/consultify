@@ -8,7 +8,7 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
-import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
 
@@ -47,15 +47,8 @@ try {
   const module = nudgesModule.default || nudgesModule;
   proactiveNudges = (module.proactiveNudges || module) as ProactiveNudgesInterface;
 } catch {
-  logger.warn('[AI Nudges Routes] proactiveNudges service not available - using mock');
-  proactiveNudges = {
-    getPendingNudges: async () => [],
-    trackActivity: async () => {},
-    checkAndGenerateNudges: async () => [],
-    dismissNudge: async () => {},
-    markNudgeActed: async () => {},
-    suppressNudgeType: async () => {},
-  };
+  logger.warn('[AI Nudges Routes] proactiveNudges service not available');
+  proactiveNudges = null;
 }
 
 // All routes require authentication
@@ -72,6 +65,7 @@ router.get(
       return res.status(503).json({
         success: false,
         error: 'Proactive nudges service not available',
+        code: 'FEATURE_UNAVAILABLE',
       });
     }
 
@@ -113,6 +107,7 @@ router.post(
       return res.status(503).json({
         success: false,
         error: 'Proactive nudges service not available',
+        code: 'FEATURE_UNAVAILABLE',
       });
     }
 
@@ -164,6 +159,7 @@ router.post(
       return res.status(503).json({
         success: false,
         error: 'Proactive nudges service not available',
+        code: 'FEATURE_UNAVAILABLE',
       });
     }
 
@@ -211,6 +207,7 @@ router.post(
       return res.status(503).json({
         success: false,
         error: 'Proactive nudges service not available',
+        code: 'FEATURE_UNAVAILABLE',
       });
     }
 
@@ -258,6 +255,7 @@ router.post(
       return res.status(503).json({
         success: false,
         error: 'Proactive nudges service not available',
+        code: 'FEATURE_UNAVAILABLE',
       });
     }
 

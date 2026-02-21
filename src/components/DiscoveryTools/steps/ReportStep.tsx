@@ -1,0 +1,89 @@
+import { Download } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+
+import { ToolSession, ToolType } from '@/store/useToolStore';
+import { exportToPDF } from '@/utils/pdfExport';
+
+export function ReportStep(props: { toolType: ToolType; session: ToolSession; isPolish: boolean }) {
+  const { toolType, session, isPolish } = props;
+  const [exporting, setExporting] = useState(false);
+
+  const canExport = useMemo(() => typeof document !== 'undefined', []);
+
+  const handleExport = async () => {
+    if (!canExport) return;
+    const el = document.getElementById('tool-report-export');
+    if (!el) {
+      toast.error(
+        isPolish
+          ? 'Brak widoku raportu do eksportu w tym ekranie.'
+          : 'No exportable report view found in this screen.'
+      );
+      return;
+    }
+    try {
+      setExporting(true);
+      const safeName = String(session.name || toolType)
+        .replace(/[^\w\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .toLowerCase();
+      const date = new Date().toISOString().slice(0, 10);
+      await exportToPDF('tool-report-export', {
+        filename: `tool-report-${toolType}-${safeName}-${date}.pdf`,
+        title: `${toolType} • Tool Report`,
+        orientation: 'portrait',
+      });
+      toast.success(isPolish ? 'Wyeksportowano PDF' : 'PDF exported');
+    } catch {
+      toast.error(isPolish ? 'Nie udało się wyeksportować PDF' : 'PDF export failed');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+          {isPolish ? 'Raport / Deck' : 'Report / Deck'}
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {isPolish
+            ? 'Wyeksportuj raport do PDF (do wysłania do stakeholderów).'
+            : 'Export a stakeholder-ready PDF report.'}
+        </p>
+      </div>
+
+      <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-slate-900 dark:text-white">
+              {isPolish ? 'Eksport PDF' : 'PDF export'}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {isPolish
+                ? 'Jeśli pracujesz w widoku dokumentu narzędzia, eksport użyje ukrytego szablonu raportu.'
+                : 'If you are in the tool document view, export uses the hidden report template.'}
+            </div>
+          </div>
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
+          >
+            <Download className="w-4 h-4" />
+            {exporting
+              ? isPolish
+                ? 'Eksport...'
+                : 'Exporting...'
+              : isPolish
+                ? 'Pobierz PDF'
+                : 'Download PDF'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

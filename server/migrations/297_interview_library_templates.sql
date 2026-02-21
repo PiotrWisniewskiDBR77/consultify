@@ -48,10 +48,11 @@ CREATE INDEX IF NOT EXISTS idx_interview_library_template_questions_category ON 
 -- PERMISSIONS (Templates library)
 -- ==========================================
 
-INSERT OR IGNORE INTO permissions (key, name, description, category, icon) VALUES
-('INTERVIEW_TEMPLATE_VIEW', 'Interview: View Templates', 'View interview templates library', 'INTERVIEW', 'library_books'),
-('INTERVIEW_TEMPLATE_USE', 'Interview: Use Templates', 'Create interview session from template', 'INTERVIEW', 'note_add'),
-('INTERVIEW_TEMPLATE_MANAGE', 'Interview: Manage Templates', 'Create/edit/publish interview templates', 'INTERVIEW', 'tune');
+-- Note: PostgreSQL permissions table may not have 'name' and 'icon' columns
+INSERT OR IGNORE INTO permissions (key, description, category) VALUES
+('INTERVIEW_TEMPLATE_VIEW', 'View interview templates library', 'INTERVIEW'),
+('INTERVIEW_TEMPLATE_USE', 'Create interview session from template', 'INTERVIEW'),
+('INTERVIEW_TEMPLATE_MANAGE', 'Create/edit/publish interview templates', 'INTERVIEW');
 
 INSERT OR IGNORE INTO role_permissions (id, role, permission_key, description) VALUES
 ('rp_interview_tpl_view_user', 'USER', 'INTERVIEW_TEMPLATE_VIEW', 'View interview templates'),

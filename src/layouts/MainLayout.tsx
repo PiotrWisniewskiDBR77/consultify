@@ -12,11 +12,13 @@ import { FeedbackSidePanel } from '../components/Feedback/FeedbackSidePanel';
 import { FeedbackToggleButton } from '../components/Feedback/FeedbackToggleButton';
 import { HelpSidePanel } from '../components/Help/HelpSidePanel';
 import { HelpToggleButton } from '../components/Help/HelpToggleButton';
+import { MicroVideoHelpTrigger } from '../components/Help/MicroVideoHelpTrigger';
 import { NotificationDropdown } from '../components/layout/NotificationDropdown';
 import { UserProfileMenu } from '../components/layout/UserProfileMenu';
 import { LLMSelector } from '../components/LLMSelector';
 import { BottomNavigation } from '../components/navigation/BottomNavigation';
 import { Sidebar } from '../components/navigation/Sidebar';
+import { OnboardingFirstLoginCTA } from '../components/Onboarding/OnboardingFirstLoginCTA';
 import { SystemHealth } from '../components/SystemHealth';
 import { TaskDropdown } from '../components/TaskDropdown';
 import { TrialExpiredGate } from '../components/Trial/TrialExpiredGate';
@@ -146,6 +148,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       {/* Demo Session Manager - Handles banner, tour, prompts, exit intent */}
       <DemoSessionManager />
+
+      {/* First-login onboarding CTA (dismissible) */}
+      <OnboardingFirstLoginCTA />
+
+      {/* Contextual micro-video help (T073) — shows once per module per user */}
+      <MicroVideoHelpTrigger />
 
       {/* Impersonation Banner */}
       {currentUser?.impersonatorId && (

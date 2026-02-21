@@ -12,7 +12,7 @@ const ProjectController = ProjectControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { checkPlanLimit } from '../../middleware/planLimits.middleware.js';
-import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody, validateQuery } from '../../middleware/validation.middleware.js';
 import {
   ArchiveProjectSchema,
@@ -26,7 +26,7 @@ import {
 const router = Router();
 
 // Apply rate limiting
-router.use(authRateLimiter);
+router.use(apiAuthRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);

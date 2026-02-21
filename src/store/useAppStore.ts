@@ -120,6 +120,7 @@ export const useAppStore = create<AppState>()(
 
         // UISlice
         currentView: state.currentView,
+        isSidebarCollapsed: state.isSidebarCollapsed,
         isChatCollapsed: state.isChatCollapsed,
         chatPanelWidth: state.chatPanelWidth,
         isChatSlidingPanelOpen: state.isChatSlidingPanelOpen,

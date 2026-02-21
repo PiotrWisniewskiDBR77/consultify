@@ -32,6 +32,35 @@ export const DEFAULT_DEMO_LIMITS = {
 
 export const TRIAL_DURATION_DAYS = 14;
 
+// Subscription statuses used across policy snapshots and banners.
+// Keep aligned with Stripe vocabulary where possible (e.g. `canceled`, `past_due`).
+export const SUBSCRIPTION_STATUSES = {
+  TRIALING: 'trialing',
+  ACTIVE: 'active',
+  PAST_DUE: 'past_due',
+  CANCELED: 'canceled',
+  CANCELING: 'canceling',
+} as const;
+
+export type SubscriptionStatus =
+  | (typeof SUBSCRIPTION_STATUSES)[keyof typeof SUBSCRIPTION_STATUSES]
+  | null;
+
+// Percent thresholds for usage banners/meters.
+export const USAGE_THRESHOLD_PERCENT = {
+  APPROACHING: 70,
+  EXCEEDED: 100,
+} as const;
+
+// Entitlements matrix (feature-level) consumed by AccessPolicyService.
+export const ENTITLEMENTS_MATRIX: Record<OrgType, Record<string, 'allowed' | 'blocked'>> = {
+  DEMO: {
+    SSO: 'blocked',
+  },
+  TRIAL: {},
+  PAID: {},
+};
+
 export interface OrganizationType {
   id: string;
   name: string;
@@ -108,6 +137,7 @@ export interface PolicySnapshot {
   isDemo: boolean;
   isTrial: boolean;
   isPaid: boolean;
+  subscriptionStatus: SubscriptionStatus | null;
   trialStartedAt?: string | null;
   trialExpiresAt?: string | null;
   trialDaysLeft: number;
@@ -119,23 +149,40 @@ export interface PolicySnapshot {
     maxAICallsPerDay: number;
     maxInitiatives: number;
     maxStorageMb: number;
+    maxTotalTokens: number;
     aiRolesEnabled: string[];
   } | null;
   usageToday: {
     aiCalls: number;
     projects: number;
     users: number;
+    initiatives: number;
+    storageMb: number;
+    tokensUsed: number;
+  };
+  usagePercent: {
+    aiCalls: number;
+    projects: number;
+    users: number;
+    initiatives: number;
+    storage: number;
+    tokens: number;
   };
   blockedFeatures: string[];
   blockedActions: string[];
   upgradeCtas: {
     primaryAction: string;
+    primaryActionKey: string;
     urlOrRoute: string;
+    reason?: string;
   };
   messages: {
     bannerText: string | null;
+    bannerTextKey: string | null;
     modalText: string | null;
+    modalTextKey: string | null;
   };
+  hasPaymentMethod: boolean;
 }
 
 export interface OrganizationRow {
@@ -194,3 +241,41 @@ export interface SeatAvailabilityEnhanced extends SeatAvailability {
   additionalSeatsPurchased: number;
   autoAddEnabled: boolean;
 }
+
+export interface TrialConversionResult {
+  newOrganizationId: string;
+  previousOrgType: OrgType;
+  newOrgType: OrgType;
+  convertedAt: string;
+}
+
+export interface TrialWarningResult {
+  organizationId: string;
+  warningLevel: 'warning' | 'critical';
+  daysRemaining: number;
+  notifiedUserIds: string[];
+}
+
+export interface TrialLockdownResult {
+  organizationId: string;
+  lockedAt: string;
+  previousStatus: string;
+}
+
+export type AccessErrorCode =
+  | 'ORG_NOT_FOUND'
+  | 'ORG_INACTIVE'
+  | 'TRIAL_EXPIRED'
+  | 'TRIAL_PROFILE_INCOMPLETE'
+  | 'DEMO_READ_ONLY'
+  | 'DEMO_TIME_EXPIRED'
+  | 'DEMO_AI_SESSION_LIMIT_REACHED'
+  | 'AI_LIMIT_REACHED'
+  | 'AI_TOKEN_BUDGET_EXCEEDED'
+  | 'INSUFFICIENT_TOKENS'
+  | 'PROJECT_LIMIT_REACHED'
+  | 'INITIATIVE_LIMIT_REACHED'
+  | 'USER_LIMIT_REACHED'
+  | 'STORAGE_LIMIT_REACHED'
+  | 'SUBSCRIPTION_PAST_DUE'
+  | 'SUBSCRIPTION_CANCELLED';

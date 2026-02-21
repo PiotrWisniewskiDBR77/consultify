@@ -19,7 +19,38 @@ describe('Megatrend Integration', () => {
   let testUserId;
   let testOrgId;
   let testToken;
+  let testMegatrendId;
+  let customTrendId;
   const db = getDatabase();
+
+  const baselineTrend = {
+    industry: 'manufacturing',
+    type: 'Technology',
+    label: 'Test Megatrend',
+    description: 'Test megatrend description',
+    baseImpactScore: 6,
+    initialRing: 'Now',
+  };
+
+  const insertBaselineTrend = async () => {
+    testMegatrendId = `mt-${uuidv4()}`;
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO megatrends (id, industry, type, label, description, base_impact_score, initial_ring)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          testMegatrendId,
+          baselineTrend.industry,
+          baselineTrend.type,
+          baselineTrend.label,
+          baselineTrend.description,
+          baselineTrend.baseImpactScore,
+          baselineTrend.initialRing,
+        ],
+        (err) => (err ? reject(err) : resolve())
+      );
+    });
+  };
 
   beforeAll(async () => {
     await initializeDatabase();
@@ -65,9 +96,17 @@ describe('Megatrend Integration', () => {
       });
 
     testToken = loginRes.body.token;
+
+    await insertBaselineTrend();
   });
 
   afterAll(async () => {
+    await new Promise((resolve) => {
+      db.run(`DELETE FROM custom_trends WHERE company_id = ?`, [testOrgId], () => resolve());
+    });
+    await new Promise((resolve) => {
+      db.run(`DELETE FROM megatrends WHERE id = ?`, [testMegatrendId], () => resolve());
+    });
     await new Promise((resolve) => {
       db.run(`DELETE FROM users WHERE id = ?`, [testUserId], () => resolve());
     });
@@ -76,65 +115,87 @@ describe('Megatrend Integration', () => {
     });
   });
 
-  it('should list megatrends', async () => {
+  it('should return 503 when baseline data is empty', async () => {
+    if (!testToken) return;
+
+    await new Promise((resolve) => {
+      db.run(`DELETE FROM megatrends`, [], () => resolve());
+    });
+
+    const res = await request(app)
+      .get('/api/megatrends/baseline')
+      .set('Authorization', `Bearer ${testToken}`);
+
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('FEATURE_UNAVAILABLE');
+
+    await insertBaselineTrend();
+  });
+
+  it('should list baseline megatrends when data exists', async () => {
     if (!testToken) return;
 
     const res = await request(app)
-      .get('/api/megatrends')
+      .get('/api/megatrends/baseline')
       .set('Authorization', `Bearer ${testToken}`);
 
-    expect([200, 403, 404, 500]).toContain(res.status);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBeTruthy();
+    expect(res.body.length).toBeGreaterThan(0);
+  });
 
-    if (res.status === 200) {
-      expect(Array.isArray(res.body) || res.body.megatrends).toBeTruthy();
-    }
+  it('should return radar data', async () => {
+    if (!testToken) return;
+
+    const res = await request(app)
+      .get('/api/megatrends/radar')
+      .set('Authorization', `Bearer ${testToken}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBeTruthy();
+    expect(res.body.length).toBeGreaterThan(0);
   });
 
   it('should return megatrend by id', async () => {
     if (!testToken) return;
 
     const res = await request(app)
-      .get('/api/megatrends/mt-ai-automation')
+      .get(`/api/megatrends/${testMegatrendId}`)
       .set('Authorization', `Bearer ${testToken}`);
 
-    expect([200, 404, 500, 501, 503]).toContain(res.status);
-  });
-
-  it('should filter megatrends by ring', async () => {
-    if (!testToken) return;
-
-    const res = await request(app)
-      .get('/api/megatrends?ring=Now')
-      .set('Authorization', `Bearer ${testToken}`);
-
-    expect([200, 400, 404, 500, 501]).toContain(res.status);
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe(testMegatrendId);
   });
 
   it('should create custom megatrend', async () => {
     if (!testToken) return;
 
     const res = await request(app)
-      .post('/api/megatrends')
+      .post('/api/megatrends/custom')
       .set('Authorization', `Bearer ${testToken}`)
       .send({
+        industry: 'manufacturing',
+        type: 'Business',
         label: 'Custom Megatrend',
         ring: 'Now',
-        description: 'Test megatrend',
+        description: 'Test custom megatrend',
       });
 
-    expect([200, 201, 403, 404, 500, 501]).toContain(res.status);
+    expect([200, 201]).toContain(res.status);
+    expect(res.body.id).toBeTruthy();
+    customTrendId = res.body.id;
   });
 
-  it('should update megatrend ring', async () => {
-    if (!testToken) return;
+  it('should update custom megatrend ring', async () => {
+    if (!testToken || !customTrendId) return;
 
     const res = await request(app)
-      .patch('/api/megatrends/mt-ai-automation')
+      .put(`/api/megatrends/custom/${customTrendId}`)
       .set('Authorization', `Bearer ${testToken}`)
       .send({
         ring: 'Next',
       });
 
-    expect([200, 403, 404, 500]).toContain(res.status);
+    expect(res.status).toBe(200);
   });
 });

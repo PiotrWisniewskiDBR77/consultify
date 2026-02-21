@@ -88,7 +88,6 @@ class ActivityService {
    */
   async log(params: ActivityLogParams): Promise<void> {
     try {
-      const correlationId = getCorrelationId();
       const {
         organizationId,
         userId,
@@ -103,6 +102,12 @@ class ActivityService {
         metadata,
       } = params;
 
+      // Skip when organization_id is invalid – Postgres FK requires it to exist in organizations
+      if (!organizationId || organizationId === 'unknown' || organizationId === 'anonymous') {
+        return;
+      }
+
+      const correlationId = getCorrelationId();
       const sql = `
                 INSERT INTO activity_logs 
                 (id, organization_id, user_id, action, entity_type, entity_id, entity_name, old_value, new_value, ip_address, user_agent, correlation_id)

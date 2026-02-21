@@ -8,6 +8,7 @@
 import { Request, Response, Router } from 'express';
 import multer from 'multer';
 
+import { getDatabase } from '../database/index.js';
 import { verifyToken as authenticateToken } from '../middleware/auth.middleware.js';
 import ReportImportService from '../services/reportImportService.js';
 import logger from '../utils/Logger.js';
@@ -59,12 +60,10 @@ function notFoundMessage(error: any) {
 // ============================================
 
 router.use((req: any, res, next) => {
-  if (req.db) {
-    reportImportService.setDependencies({
-      db: req.db,
-      aiService: req.aiService,
-    });
-  }
+  reportImportService.setDependencies({
+    db: req.db || getDatabase(),
+    aiService: req.aiService,
+  });
   next();
 });
 

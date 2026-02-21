@@ -12,7 +12,7 @@ import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
-import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
+import { buildHelpDocsContext, isProductOrHowToQuery } from '../services/ai/helpDocsContext.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -64,8 +64,21 @@ router.post(
         maxCharsPerArticle: 1200,
       });
 
-      // Build system prompt for help context
-      const systemPrompt = buildHelpSystemPrompt(context) + (kb.systemInstructionAddon || '');
+      const isProduct = kb.isProductQuestion || isProductOrHowToQuery(message);
+
+      // Build system prompt with citation policy awareness
+      let systemPrompt = buildHelpSystemPrompt(context, isProduct);
+      if (kb.systemInstructionAddon) {
+        systemPrompt += kb.systemInstructionAddon;
+      }
+
+      // When no KB docs matched a product question, append explicit fallback instruction
+      if (isProduct && kb.citations.length === 0) {
+        systemPrompt +=
+          '\n\nIMPORTANT: No matching documentation was found for this product question. ' +
+          'Acknowledge that the docs do not cover this topic yet, then help from general platform knowledge. ' +
+          'Do NOT invent documentation links or article names.\n';
+      }
 
       // Format conversation history
       const formattedHistory = (history || []).map((h: { role: string; content: string }) => ({
@@ -104,6 +117,7 @@ router.post(
       return res.json({
         message: responseText,
         sources,
+        isProductQuestion: isProduct,
       });
     } catch (err: any) {
       logger.error('[HelpChat] Error:', err);
@@ -125,19 +139,12 @@ router.post(
     const { content_type, content_id, is_helpful, comment } = req.body;
 
     try {
-      // Log feedback (could be stored in database for analysis)
       logger.info(
         `[HelpFeedback] User ${req.userId} - ${content_type}:${content_id} - helpful: ${is_helpful}`,
         {
           comment,
         }
       );
-
-      // Optionally store in database
-      // await dbRun(`
-      //     INSERT INTO help_feedback (user_id, content_type, content_id, is_helpful, comment, created_at)
-      //     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-      // `, [req.userId, content_type, content_id, is_helpful, comment || null]);
 
       return res.json({ success: true });
     } catch (err: any) {
@@ -274,7 +281,7 @@ const MODULE_KNOWLEDGE: Record<
 
 // ==================== HELPER FUNCTIONS ====================
 
-function buildHelpSystemPrompt(context?: string): string {
+function buildHelpSystemPrompt(context?: string, isProductQuestion?: boolean): string {
   const basePrompt = `You are the Consultinity Help Assistant, an AI-powered guide for the Consultinity enterprise PMO platform.
 
 ROLE: Help users understand features, troubleshoot issues, and maximize platform value.
@@ -302,7 +309,13 @@ COMMUNICATION STYLE:
 - Reference specific UI elements (e.g., "Click the blue '+' button in the top right")
 - Provide keyboard shortcuts when relevant
 - If uncertain, acknowledge it and suggest alternatives
-- Adapt tone to user's apparent expertise level`;
+- Adapt tone to user's apparent expertise level
+
+CITATION POLICY:
+- When KB documentation is provided, cite relevant articles inline as [KB1], [KB2], etc.
+- Only cite articles that actually appear in the KB context below.
+- NEVER fabricate documentation URLs, article titles, or menu paths.
+- If documentation does not cover the question, clearly state: "Our documentation does not cover this topic yet."`;
 
   if (context && MODULE_KNOWLEDGE[context.toLowerCase()]) {
     const module = MODULE_KNOWLEDGE[context.toLowerCase()];
@@ -317,7 +330,7 @@ Key Features:
 ${module.features.map((f) => `• ${f}`).join('\n')}
 
 Pro Tips:
-${module.tips.map((t) => `💡 ${t}`).join('\n')}
+${module.tips.map((t) => `- ${t}`).join('\n')}
 
 Focus your answers on this module's functionality. Reference related modules when helpful.`;
   }
@@ -326,7 +339,6 @@ Focus your answers on this module's functionality. Reference related modules whe
 }
 
 function extractSources(response: any): Array<{ id: string; type: string; title: string }> {
-  // Extract sources from RAG response if available
   const sources: Array<{ id: string; type: string; title: string }> = [];
 
   if (response.sources && Array.isArray(response.sources)) {
@@ -339,7 +351,6 @@ function extractSources(response: any): Array<{ id: string; type: string; title:
     }
   }
 
-  // Check for citations in metadata
   if (response.metadata?.citations) {
     for (const citation of response.metadata.citations) {
       sources.push({
@@ -353,9 +364,7 @@ function extractSources(response: any): Array<{ id: string; type: string; title:
   return sources;
 }
 
-function getErrorMessage(context?: string): string {
-  // Return appropriate error message based on language
-  // In production, this would use i18n
+function getErrorMessage(_context?: string): string {
   return 'I apologize, but I encountered an error while processing your question. Please try again or contact support if the issue persists.';
 }
 

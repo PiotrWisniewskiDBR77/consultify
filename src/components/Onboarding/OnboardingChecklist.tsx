@@ -51,7 +51,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'first_assessment',
     titleKey: 'onboarding.checklist.firstAssessment.title',
     descriptionKey: 'onboarding.checklist.firstAssessment.description',
-    targetView: AppView.ASSESSMENT_HUB,
+    targetView: AppView.ASSESSMENT_SUMMARY,
     checkFn: () => {
       const { fullSessionData } = useAppStore.getState();
       return fullSessionData.step1Completed;
@@ -62,7 +62,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'first_initiative',
     titleKey: 'onboarding.checklist.firstInitiative.title',
     descriptionKey: 'onboarding.checklist.firstInitiative.description',
-    targetView: AppView.INITIATIVES,
+    targetView: AppView.FULL_STEP2_INITIATIVES,
     checkFn: () => {
       const { fullSessionData } = useAppStore.getState();
       return fullSessionData.step2Completed;
@@ -73,7 +73,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'explore_roadmap',
     titleKey: 'onboarding.checklist.roadmap.title',
     descriptionKey: 'onboarding.checklist.roadmap.description',
-    targetView: AppView.ROADMAP,
+    targetView: AppView.PORTFOLIO_ROADMAP,
     checkFn: () => {
       return localStorage.getItem('consultinity_roadmap_visited') === 'true';
     },
@@ -87,7 +87,7 @@ const ADMIN_ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'invite_team',
     titleKey: 'onboarding.checklist.inviteTeam.title',
     descriptionKey: 'onboarding.checklist.inviteTeam.description',
-    targetView: AppView.ADMIN_TEAM,
+    targetView: AppView.ADMIN_TEAMS,
     checkFn: () => {
       return localStorage.getItem('consultinity_team_invited') === 'true';
     },

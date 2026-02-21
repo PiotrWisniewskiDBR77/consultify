@@ -61,6 +61,24 @@ describe('Documents routes (no stub responses)', () => {
     expect(res.body).toEqual(expect.objectContaining({ error: expect.any(String) }));
   });
 
+  it('GET /api/documents/all returns 503 when service is unavailable (no fake [])', async () => {
+    const res = await request(mount()).get(`${basePath}/all`);
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual(expect.objectContaining({ error: expect.any(String) }));
+  });
+
+  it('GET /api/documents/user returns 503 when service is unavailable (no fake [])', async () => {
+    const res = await request(mount()).get(`${basePath}/user`);
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual(expect.objectContaining({ error: expect.any(String) }));
+  });
+
+  it('GET /api/documents/project/p-1 returns 503 when service is unavailable (no fake [])', async () => {
+    const res = await request(mount()).get(`${basePath}/project/p-1`);
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual(expect.objectContaining({ error: expect.any(String) }));
+  });
+
   it('POST /api/documents/upload returns 400 when file missing', async () => {
     const res = await request(mount()).post(`${basePath}/upload`);
     expect(res.status).toBe(400);

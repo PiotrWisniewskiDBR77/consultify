@@ -1,14 +1,8 @@
 /**
- * Reportagents Service
- * Enterprise SaaS Architecture - TypeScript Backend
+ * AI Report Agents (legacy wrapper)
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * Not implemented in this codebase; export an explicit marker.
  */
+const reportAgents = { __unavailable__: true } as const;
 
-import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
-
-// Lazy load the JS service module
-const loadReportagents = createCachedLazyService('../../../ai/pipeline/reportAgents.js');
-
-// Export default instance (for backward compatibility)
-export default loadReportagents();
+export default reportAgents;

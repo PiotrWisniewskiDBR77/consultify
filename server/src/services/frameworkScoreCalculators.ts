@@ -1,7 +1,9 @@
-import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
+/**
+ * Framework Score Calculators
+ *
+ * Not implemented in this codebase. Export an explicit marker so runtime code can return an
+ * honest `503` instead of relying on lazy-loader wrappers.
+ */
+const frameworkScoreCalculators = { __unavailable__: true } as const;
 
-// Lazy load the JS service module
-const loadFrameworkscorecalculators = createCachedLazyService('./frameworkScoreCalculators.js');
-
-// Export default instance (for backward compatibility)
-export default loadFrameworkscorecalculators();
+export default frameworkScoreCalculators;

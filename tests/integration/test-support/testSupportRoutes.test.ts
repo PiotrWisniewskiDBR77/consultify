@@ -1,10 +1,12 @@
 import os from 'node:os';
 import path from 'node:path';
 
+import jwt from 'jsonwebtoken';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
 import { makeTestApp } from '../_helpers/testApp';
+import config from '../../../server/src/config/Config.js';
 
 type DbHandle = {
   exec: (sql: string) => Promise<unknown>;
@@ -133,6 +135,16 @@ describe('Test-support routes', () => {
 
     const orgId = String(boot.body.organizationId);
     const userId = String(boot.body.userId);
+    const token = String(boot.body.token);
+
+    const decoded = jwt.verify(token, config.JWT_SECRET) as any;
+    expect(decoded).toEqual(
+      expect.objectContaining({
+        id: userId,
+        organizationId: orgId,
+        role: 'ADMIN',
+      })
+    );
 
     // Seed an org-scoped table to prove cleanup uses the org column scan.
     await db.run(`INSERT INTO projects (id, organization_id, name) VALUES (?, ?, ?)`, [

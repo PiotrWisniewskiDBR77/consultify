@@ -193,6 +193,31 @@ async function getLLMConfigService(): Promise<{
   } | null;
 }
 
+function normalizeBaseUrl(endpoint?: string): string | undefined {
+  if (!endpoint) return undefined;
+  let base = String(endpoint).trim();
+  if (!base) return undefined;
+  base = base.replace(/\/+$/, '');
+
+  // Many DB rows store full "chat completions" endpoints, but provider SDKs expect a base URL.
+  // Example: https://openrouter.ai/api/v1/chat/completions -> https://openrouter.ai/api/v1
+  const suffixes = [
+    '/chat/completions',
+    '/v1/chat/completions',
+    '/v1/completions',
+    '/v1/responses',
+    '/v1/messages',
+  ];
+  const lower = base.toLowerCase();
+  for (const s of suffixes) {
+    if (lower.endsWith(s)) {
+      base = base.slice(0, -s.length).replace(/\/+$/, '');
+      break;
+    }
+  }
+  return base || undefined;
+}
+
 function getProviderSync(modelConfig: ModelConfig) {
   const providerName = String(modelConfig.provider || '');
   const apiKey =
@@ -202,6 +227,7 @@ function getProviderSync(modelConfig: ModelConfig) {
         ? modelConfig.api_key
         : undefined;
   const endpoint = typeof modelConfig.endpoint === 'string' ? modelConfig.endpoint : undefined;
+  const normalizedBaseUrl = normalizeBaseUrl(endpoint);
   const normalizedApiKey = apiKey?.trim();
   const isPlaceholderKey =
     !!normalizedApiKey &&
@@ -258,27 +284,27 @@ function getProviderSync(modelConfig: ModelConfig) {
     case 'mistral':
       return createOpenAI({
         apiKey: effectiveApiKey,
-        baseURL: endpoint || 'https://api.deepseek.com',
+        baseURL: normalizedBaseUrl || 'https://api.deepseek.com',
       });
     case 'nvidia':
       return createOpenAI({
         apiKey: effectiveApiKey,
-        baseURL: endpoint || 'https://integrate.api.nvidia.com/v1',
+        baseURL: normalizedBaseUrl || 'https://integrate.api.nvidia.com/v1',
       });
     case 'cohere':
       return createOpenAI({
         apiKey: effectiveApiKey,
-        baseURL: endpoint || 'https://api.cohere.ai/v1',
+        baseURL: normalizedBaseUrl || 'https://api.cohere.ai/v1',
       });
     case 'openrouter':
       return createOpenAI({
         apiKey: effectiveApiKey || process.env.OPENROUTER_API_KEY,
-        baseURL: endpoint || 'https://openrouter.ai/api/v1',
+        baseURL: normalizedBaseUrl || 'https://openrouter.ai/api/v1',
       });
     case 'ollama':
       return createOpenAI({
         apiKey: 'ollama',
-        baseURL: endpoint || 'http://localhost:11434/v1',
+        baseURL: normalizedBaseUrl || 'http://localhost:11434/v1',
       });
     default:
       return createOpenAI({
@@ -882,13 +908,69 @@ export class LLMService {
     const providerId = String(modelConfig.provider || 'openai');
 
     try {
+      const timeoutMsRaw = (modelConfig as any)?.timeoutMs;
+      const timeoutMs =
+        typeof timeoutMsRaw === 'number' && Number.isFinite(timeoutMsRaw)
+          ? Math.min(20000, Math.max(300, timeoutMsRaw))
+          : 5000;
+      const startedAt = Date.now();
+
+      // Fast-path for OpenAI: avoid SDK retries/backoff in health checks.
+      // This gives clearer error messages (e.g. insufficient_quota) and deterministic timeouts.
+      if (providerId.toLowerCase() === 'openai') {
+        const apiKey =
+          (typeof modelConfig.apiKey === 'string' ? modelConfig.apiKey : undefined) ||
+          (typeof modelConfig.api_key === 'string' ? modelConfig.api_key : undefined) ||
+          process.env.OPENAI_API_KEY;
+        if (!apiKey) throw new Error('No OpenAI API key configured (set OPENAI_API_KEY).');
+
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${String(apiKey).trim()}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: String(modelConfig.id || 'gpt-4o-mini'),
+            messages: [{ role: 'user', content: 'ping' }],
+            max_tokens: 5,
+          }),
+          signal: AbortSignal.timeout(timeoutMs),
+        });
+
+        if (res.ok) {
+          await circuitBreaker.recordSuccess(providerId);
+          return {
+            success: true,
+            latency: Date.now() - startedAt,
+            circuitState: (await circuitBreaker.canExecute(providerId)).state,
+          };
+        }
+
+        const data: any = await res.json().catch(() => null);
+        const msg =
+          data?.error?.message ||
+          data?.message ||
+          `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
+        await circuitBreaker.recordFailure(providerId, new Error(msg));
+        return {
+          success: false,
+          latency: Date.now() - startedAt,
+          error: msg,
+          code: data?.error?.code,
+          type: data?.error?.type,
+          httpStatus: res.status,
+          circuitState: (await circuitBreaker.canExecute(providerId)).state,
+        };
+      }
+
       const provider = getProvider(modelConfig);
       const model = provider(modelConfig.id as string);
-
       const result = await generateText({
         model,
         messages: [{ role: 'user', content: 'Say "pong"' }] as any,
         maxTokens: 5,
+        abortSignal: AbortSignal.timeout(timeoutMs),
       } as any);
 
       await circuitBreaker.recordSuccess(providerId);
@@ -897,6 +979,7 @@ export class LLMService {
         success: true,
         response: result.text,
         usage: result.usage,
+        latency: Date.now() - startedAt,
         circuitState: (await circuitBreaker.canExecute(providerId)).state,
       };
     } catch (error) {

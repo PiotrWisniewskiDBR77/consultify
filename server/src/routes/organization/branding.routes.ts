@@ -470,26 +470,10 @@ router.post(
         return res.status(400).json({ error: 'No custom domain configured' });
       }
 
-      // In production, this would verify DNS records
-      // For now, we'll simulate verification
-      // TODO: Implement real DNS verification in production
-
-      await dbRun(
-        `UPDATE organization_branding 
-                 SET custom_domain_verified = 1, 
-                     custom_domain_ssl_status = 'active',
-                     updated_at = datetime('now')
-                 WHERE organization_id = ?`,
-        [orgId]
-      );
-
-      logger.info(`[branding] Verified custom domain for organization ${orgId}`);
-
-      return res.json({
-        success: true,
-        verified: true,
-        sslStatus: 'active',
-        message: 'Domain verified successfully. SSL certificate is active.',
+      // No simulated DNS verification in runtime.
+      return res.status(503).json({
+        error: 'Custom domain verification is not available',
+        code: 'FEATURE_UNAVAILABLE',
       });
     } catch (err: any) {
       logger.error(`[branding] Error verifying domain for ${orgId}:`, err);

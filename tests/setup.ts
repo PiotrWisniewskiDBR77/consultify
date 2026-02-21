@@ -558,9 +558,14 @@ vi.mock('../server/src/middleware/auth.middleware.js', async (importOriginal) =>
   };
 });
 
-// Global mock for Api service - comprehensive mock for component tests
-vi.mock('@/services/api', () => ({
-  Api: {
+// Global mock for Api service (keep real methods when needed).
+vi.mock('@/services/api', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  const base = (actual as any)?.default || (actual as any)?.api || {};
+
+  const Api = {
+    ...base,
+
     // Dashboard & Overview
     getDashboardData: vi
       .fn()
@@ -646,40 +651,21 @@ vi.mock('@/services/api', () => ({
     put: vi.fn().mockResolvedValue({}),
     patch: vi.fn().mockResolvedValue({}),
     delete: vi.fn().mockResolvedValue({}),
-  },
-}));
+  };
 
-// Also mock the path without @ alias
-vi.mock('../../src/services/api', () => ({
-  Api: {
-    getDashboardData: vi
-      .fn()
-      .mockResolvedValue({ overview: {}, recentActivity: [], quickStats: {} }),
-    getRecentActivity: vi.fn().mockResolvedValue([]),
-    getAnalysisBenefits: vi.fn().mockResolvedValue([]),
-    getTasks: vi.fn().mockResolvedValue([]),
-    getTask: vi.fn().mockResolvedValue(null),
-    createTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
-    updateTask: vi.fn().mockResolvedValue({}),
-    deleteTask: vi.fn().mockResolvedValue({}),
-    getProjects: vi.fn().mockResolvedValue([]),
-    getUsers: vi.fn().mockResolvedValue([]),
-    getUserPlans: vi.fn().mockResolvedValue([]),
-    getOrganization: vi.fn().mockResolvedValue({ id: 'org-1' }),
-    chatWithAI: vi.fn().mockResolvedValue('AI Response'),
-    agentAuditListAgents: vi.fn().mockResolvedValue({ success: true, agents: [] }),
-    agentAuditSuggest: vi.fn().mockResolvedValue({ success: true, suggested: { agents: [] } }),
-    agentAuditReview: vi
-      .fn()
-      .mockResolvedValue({ success: true, orchestratorRunId: 'run-1', verdict: {}, reviews: [] }),
-    agentAuditAcceptRun: vi.fn().mockResolvedValue({ success: true }),
-    getPublicLLMProviders: vi.fn().mockResolvedValue([]),
-    getRecommendedProvider: vi.fn().mockResolvedValue({ recommendation: { model_id: 'gpt-4' } }),
-    getNotifications: vi.fn().mockResolvedValue([]),
-    get: vi.fn().mockResolvedValue({}),
-    post: vi.fn().mockResolvedValue({}),
-  },
-}));
+  return {
+    ...actual,
+    default: Api,
+    Api,
+    api: Api,
+  };
+});
+
+// Also mock the path without @ alias (delegate to the same module)
+vi.mock('../../src/services/api', async () => {
+  const mod = await import('@/services/api');
+  return mod as any;
+});
 
 // Mock the other aliases too
 
