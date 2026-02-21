@@ -3770,7 +3770,6 @@
     "healthCheck": "Zdrowie systemu",
     "duplicateMounts": "Zduplikowane trasy"
   },
-<<<<<<< HEAD
   "cv": {
     "searchCandidates": "Szukaj kandydatów...",
     "addCandidate": "Dodaj kandydata",
@@ -3809,7 +3808,7 @@
     "typeVendor": "Dostawca",
     "cancel": "Anuluj",
     "create": "Utwórz"
-=======
+  },
   "impersonation": {
     "banner": "Przeglądasz jako inny użytkownik",
     "exit": "Zakończ impersonację",
@@ -3822,6 +3821,5 @@
     "confirm": "Potwierdź akcję",
     "cancel": "Anuluj",
     "auditLogged": "Ta akcja zostanie zapisana w dzienniku audytu"
->>>>>>> origin/bundle-30b-superadmin-control-testing-cursor
   }
 }
