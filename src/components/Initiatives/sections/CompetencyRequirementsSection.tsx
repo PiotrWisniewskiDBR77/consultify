@@ -133,7 +133,16 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
     } catch {
       toast.error(t('competency.requirements.addFailed', 'Failed to add requirement'));
     }
-  }, [initiativeId, newCapId, newMinLevel, newPriority, newHeadcount, newJustification, loadData, t]);
+  }, [
+    initiativeId,
+    newCapId,
+    newMinLevel,
+    newPriority,
+    newHeadcount,
+    newJustification,
+    loadData,
+    t,
+  ]);
 
   const handleDelete = useCallback(
     async (reqId: string) => {
@@ -233,14 +242,13 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
                 onChange={(e) => setNewMinLevel(parseInt(e.target.value, 10))}
                 className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white"
               >
-                {(levels.length > 0
-                  ? levels.map((l) => l.levelValue)
-                  : [1, 2, 3, 4, 5]
-                ).map((v) => (
-                  <option key={v} value={v}>
-                    {getLevelLabel(v)}
-                  </option>
-                ))}
+                {(levels.length > 0 ? levels.map((l) => l.levelValue) : [1, 2, 3, 4, 5]).map(
+                  (v) => (
+                    <option key={v} value={v}>
+                      {getLevelLabel(v)}
+                    </option>
+                  )
+                )}
               </select>
             </div>
           </div>

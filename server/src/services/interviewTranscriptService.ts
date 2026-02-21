@@ -66,15 +66,12 @@ export async function getMessages(
     organizationId: r.organization_id,
     role: r.role,
     content: r.content,
-    metadata: typeof r.metadata === 'string' ? JSON.parse(r.metadata || '{}') : (r.metadata || {}),
+    metadata: typeof r.metadata === 'string' ? JSON.parse(r.metadata || '{}') : r.metadata || {},
     createdAt: r.created_at,
   }));
 }
 
-export async function getMessageCount(
-  organizationId: string,
-  sessionId: string
-): Promise<number> {
+export async function getMessageCount(organizationId: string, sessionId: string): Promise<number> {
   const row = await dbGet(
     `SELECT COUNT(*) as cnt FROM interview_transcript_messages
      WHERE session_id = ? AND organization_id = ?`,
@@ -83,10 +80,7 @@ export async function getMessageCount(
   return (row as any)?.cnt || 0;
 }
 
-export async function deleteMessages(
-  organizationId: string,
-  sessionId: string
-): Promise<void> {
+export async function deleteMessages(organizationId: string, sessionId: string): Promise<void> {
   await dbRun(
     `DELETE FROM interview_transcript_messages
      WHERE session_id = ? AND organization_id = ?`,

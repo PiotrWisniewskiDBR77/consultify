@@ -70,6 +70,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
   const answeredCount = questions.filter((q) => q.status === 'answered').length;
   const totalCount = questions.length;
   const progressPct = totalCount > 0 ? Math.round((answeredCount / totalCount) * 100) : 0;
+  const acceptedDraftCount = draftMappings?.filter((m) => m.accepted).length ?? 0;
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -188,9 +189,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
 
   const toggleMapping = (index: number) => {
     setDraftMappings((prev) =>
-      prev
-        ? prev.map((m, i) => (i === index ? { ...m, accepted: !m.accepted } : m))
-        : null
+      prev ? prev.map((m, i) => (i === index ? { ...m, accepted: !m.accepted } : m)) : null
     );
   };
 
@@ -286,10 +285,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
                     : 'border-red-200 bg-red-50/30 dark:border-red-800 dark:bg-red-950/20 opacity-60'
                 }`}
               >
-                <button
-                  onClick={() => toggleMapping(idx)}
-                  className="mt-0.5 flex-shrink-0"
-                >
+                <button onClick={() => toggleMapping(idx)} className="mt-0.5 flex-shrink-0">
                   {mapping.accepted ? (
                     <CheckCircle className="w-4 h-4 text-green-500" />
                   ) : (
@@ -312,7 +308,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
             className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
           >
             <Check className="w-4 h-4" />
-            {t('interview.conversational.acceptAnswer')} ({draftMappings.filter((m) => m.accepted).length})
+            {t('interview.conversational.acceptAnswer')} ({acceptedDraftCount})
           </button>
         </div>
       )}

@@ -211,24 +211,18 @@ describe('inputSanitizationMiddleware (L1)', () => {
     await expect(mod.inputSanitizationMiddleware(req, {} as any, next)).rejects.toThrow('boom');
   });
 
-  it('loadSecurityUtils falls back when preferred import fails (covers loader catch path)', async () => {
-    vi.resetModules();
-
+  it('loadSecurityUtils: attempts fallback spec when preferred import fails', async () => {
     const sanitizeObject = vi.fn((x: unknown) => x);
 
-    const root = process.cwd();
-    const tsId = `${root}/server/src/utils/security.utils.ts`;
-    const jsId = `${root}/server/src/utils/security.utils.js`;
-
-    vi.doMock(tsId, () => {
-      throw new Error('ts utils import failed');
+    vi.doMock('../../../../server/src/utils/security.utils.ts', () => {
+      throw new Error('preferred import failed');
     });
-    vi.doMock(jsId, () => ({
-      sanitizeObject,
-    }));
+    vi.doMock('../../../../server/src/utils/security.utils.js', () => ({ sanitizeObject }));
 
     try {
-      const mod = await import('../../../../server/src/middleware/inputSanitization.middleware.ts');
+      const mod = await import(
+        '../../../../server/src/middleware/inputSanitization.middleware.ts?loader_fallback'
+      );
       const req = createReq({ body: { html: '<b>bold</b>' } });
       const next = vi.fn();
 
@@ -237,9 +231,8 @@ describe('inputSanitizationMiddleware (L1)', () => {
       expect(next).toHaveBeenCalled();
       expect(sanitizeObject).toHaveBeenCalled();
     } finally {
-      vi.resetModules();
-      vi.unmock(tsId);
-      vi.unmock(jsId);
+      vi.unmock('../../../../server/src/utils/security.utils.ts');
+      vi.unmock('../../../../server/src/utils/security.utils.js');
     }
   });
 });

@@ -162,10 +162,16 @@ export async function createCategory(
     `INSERT INTO competency_categories (id, organization_id, name, name_pl, description, description_pl, icon, color, sort_order, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [
-      id, orgId, data.name, data.namePl ?? null,
-      data.description ?? null, data.descriptionPl ?? null,
-      data.icon ?? 'Layers', data.color ?? '#6366f1',
-      data.sortOrder ?? 0, data.createdBy ?? null,
+      id,
+      orgId,
+      data.name,
+      data.namePl ?? null,
+      data.description ?? null,
+      data.descriptionPl ?? null,
+      data.icon ?? 'Layers',
+      data.color ?? '#6366f1',
+      data.sortOrder ?? 0,
+      data.createdBy ?? null,
     ]
   );
   return getCategory(orgId, id) as Promise<CompetencyCategory>;
@@ -205,8 +211,13 @@ export async function updateCategory(
   let idx = 1;
 
   const fieldMap: Record<string, string> = {
-    name: 'name', namePl: 'name_pl', description: 'description',
-    descriptionPl: 'description_pl', icon: 'icon', color: 'color', sortOrder: 'sort_order',
+    name: 'name',
+    namePl: 'name_pl',
+    description: 'description',
+    descriptionPl: 'description_pl',
+    icon: 'icon',
+    color: 'color',
+    sortOrder: 'sort_order',
   };
 
   for (const [key, col] of Object.entries(fieldMap)) {
@@ -250,11 +261,41 @@ export async function seedDefaultLevels(orgId: string): Promise<CompetencyLevel[
   if (existing.length > 0) return existing;
 
   const defaults = [
-    { value: 1, label: 'Novice', labelPl: 'Początkujący', desc: 'Basic awareness, needs guidance', descPl: 'Podstawowa świadomość, wymaga prowadzenia' },
-    { value: 2, label: 'Beginner', labelPl: 'Podstawowy', desc: 'Can perform simple tasks with support', descPl: 'Wykonuje proste zadania z pomocą' },
-    { value: 3, label: 'Intermediate', labelPl: 'Średniozaawansowany', desc: 'Works independently on standard tasks', descPl: 'Pracuje samodzielnie nad standardowymi zadaniami' },
-    { value: 4, label: 'Advanced', labelPl: 'Zaawansowany', desc: 'Handles complex situations, mentors others', descPl: 'Radzi sobie ze złożonymi sytuacjami, mentoruje innych' },
-    { value: 5, label: 'Expert', labelPl: 'Ekspert', desc: 'Recognized authority, shapes organizational standards', descPl: 'Uznany autorytet, kształtuje standardy organizacyjne' },
+    {
+      value: 1,
+      label: 'Novice',
+      labelPl: 'Początkujący',
+      desc: 'Basic awareness, needs guidance',
+      descPl: 'Podstawowa świadomość, wymaga prowadzenia',
+    },
+    {
+      value: 2,
+      label: 'Beginner',
+      labelPl: 'Podstawowy',
+      desc: 'Can perform simple tasks with support',
+      descPl: 'Wykonuje proste zadania z pomocą',
+    },
+    {
+      value: 3,
+      label: 'Intermediate',
+      labelPl: 'Średniozaawansowany',
+      desc: 'Works independently on standard tasks',
+      descPl: 'Pracuje samodzielnie nad standardowymi zadaniami',
+    },
+    {
+      value: 4,
+      label: 'Advanced',
+      labelPl: 'Zaawansowany',
+      desc: 'Handles complex situations, mentors others',
+      descPl: 'Radzi sobie ze złożonymi sytuacjami, mentoruje innych',
+    },
+    {
+      value: 5,
+      label: 'Expert',
+      labelPl: 'Ekspert',
+      desc: 'Recognized authority, shapes organizational standards',
+      descPl: 'Uznany autorytet, kształtuje standardy organizacyjne',
+    },
   ];
 
   for (const d of defaults) {
@@ -282,7 +323,15 @@ export async function upsertLevel(
        label_pl = EXCLUDED.label_pl,
        description = EXCLUDED.description,
        description_pl = EXCLUDED.description_pl`,
-    [id, orgId, levelValue, data.label, data.labelPl ?? null, data.description ?? null, data.descriptionPl ?? null]
+    [
+      id,
+      orgId,
+      levelValue,
+      data.label,
+      data.labelPl ?? null,
+      data.description ?? null,
+      data.descriptionPl ?? null,
+    ]
   );
   const row = await dbGet(
     `SELECT * FROM competency_levels WHERE organization_id = $1 AND level_value = $2`,
@@ -368,10 +417,16 @@ export async function addInitiativeRequirement(
     `INSERT INTO capability_requirements (id, organization_id, initiative_id, capability_id, min_level, priority, headcount, justification, notes, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [
-      id, orgId, data.initiativeId, data.capabilityId,
-      data.minLevel, data.priority ?? 'required',
-      data.headcount ?? null, data.justification ?? null,
-      data.notes ?? null, data.createdBy ?? null,
+      id,
+      orgId,
+      data.initiativeId,
+      data.capabilityId,
+      data.minLevel,
+      data.priority ?? 'required',
+      data.headcount ?? null,
+      data.justification ?? null,
+      data.notes ?? null,
+      data.createdBy ?? null,
     ]
   );
   const row = await dbGet(
@@ -401,8 +456,11 @@ export async function updateInitiativeRequirement(
   let idx = 1;
 
   const fieldMap: Record<string, string> = {
-    minLevel: 'min_level', priority: 'priority', headcount: 'headcount',
-    justification: 'justification', notes: 'notes',
+    minLevel: 'min_level',
+    priority: 'priority',
+    headcount: 'headcount',
+    justification: 'justification',
+    notes: 'notes',
   };
 
   for (const [key, col] of Object.entries(fieldMap)) {
@@ -422,33 +480,58 @@ export async function updateInitiativeRequirement(
 }
 
 export async function deleteInitiativeRequirement(orgId: string, reqId: string): Promise<void> {
-  await dbRun(
-    `DELETE FROM capability_requirements WHERE id = $1 AND organization_id = $2`,
-    [reqId, orgId]
-  );
+  await dbRun(`DELETE FROM capability_requirements WHERE id = $1 AND organization_id = $2`, [
+    reqId,
+    orgId,
+  ]);
 }
 
 /* ------------------------------------------------------------------ */
 /*  Seed default categories                                            */
 /* ------------------------------------------------------------------ */
 
-export async function seedDefaultCategories(orgId: string, createdBy?: string): Promise<CompetencyCategory[]> {
+export async function seedDefaultCategories(
+  orgId: string,
+  createdBy?: string
+): Promise<CompetencyCategory[]> {
   const existing = await getCategories(orgId);
   if (existing.length > 0) return existing;
 
   const defaults = [
     { name: 'Strategy', namePl: 'Strategia', icon: 'Target', color: '#8b5cf6', order: 1 },
     { name: 'Operations', namePl: 'Operacje', icon: 'Settings', color: '#3b82f6', order: 2 },
-    { name: 'Digital & Technology', namePl: 'Cyfryzacja i technologia', icon: 'Cpu', color: '#06b6d4', order: 3 },
-    { name: 'Change Management', namePl: 'Zarządzanie zmianą', icon: 'RefreshCw', color: '#f59e0b', order: 4 },
+    {
+      name: 'Digital & Technology',
+      namePl: 'Cyfryzacja i technologia',
+      icon: 'Cpu',
+      color: '#06b6d4',
+      order: 3,
+    },
+    {
+      name: 'Change Management',
+      namePl: 'Zarządzanie zmianą',
+      icon: 'RefreshCw',
+      color: '#f59e0b',
+      order: 4,
+    },
     { name: 'Finance', namePl: 'Finanse', icon: 'DollarSign', color: '#10b981', order: 5 },
-    { name: 'People & Leadership', namePl: 'Ludzie i przywództwo', icon: 'Users', color: '#ec4899', order: 6 },
+    {
+      name: 'People & Leadership',
+      namePl: 'Ludzie i przywództwo',
+      icon: 'Users',
+      color: '#ec4899',
+      order: 6,
+    },
   ];
 
   for (const d of defaults) {
     await createCategory(orgId, {
-      name: d.name, namePl: d.namePl, icon: d.icon,
-      color: d.color, sortOrder: d.order, createdBy,
+      name: d.name,
+      namePl: d.namePl,
+      icon: d.icon,
+      color: d.color,
+      sortOrder: d.order,
+      createdBy,
     });
   }
   return getCategories(orgId);

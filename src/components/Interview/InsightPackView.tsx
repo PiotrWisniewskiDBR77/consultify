@@ -114,9 +114,7 @@ const ConfidenceStars: React.FC<{ score: number }> = ({ score }) => (
       <Star
         key={s}
         className={`w-3.5 h-3.5 ${
-          s <= score
-            ? 'fill-amber-400 text-amber-400'
-            : 'text-gray-300 dark:text-gray-600'
+          s <= score ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-gray-600'
         }`}
       />
     ))}
@@ -156,16 +154,11 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
           typeof r.evidence_links === 'string'
             ? JSON.parse(r.evidence_links)
             : r.evidence_links || r.evidenceLinks || [],
-        unknowns:
-          typeof r.unknowns === 'string' ? JSON.parse(r.unknowns) : r.unknowns || [],
+        unknowns: typeof r.unknowns === 'string' ? JSON.parse(r.unknowns) : r.unknowns || [],
         counterpoints:
-          typeof r.counterpoints === 'string'
-            ? JSON.parse(r.counterpoints)
-            : r.counterpoints || [],
+          typeof r.counterpoints === 'string' ? JSON.parse(r.counterpoints) : r.counterpoints || [],
         assumptions:
-          typeof r.assumptions === 'string'
-            ? JSON.parse(r.assumptions)
-            : r.assumptions || [],
+          typeof r.assumptions === 'string' ? JSON.parse(r.assumptions) : r.assumptions || [],
         confidenceScore: r.confidence_score || r.confidenceScore || 3,
         insightCategory: r.insight_category || r.insightCategory || r.category || 'gap',
         inferenceRunId: r.inference_run_id || r.inferenceRunId || '',
@@ -252,9 +245,7 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
 
   const filteredInsights = useMemo(
     () =>
-      selectedCategory
-        ? insights.filter((i) => i.insightCategory === selectedCategory)
-        : insights,
+      selectedCategory ? insights.filter((i) => i.insightCategory === selectedCategory) : insights,
     [insights, selectedCategory]
   );
 
@@ -314,17 +305,13 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
                 {latestRun.status === 'running' && (
                   <Loader2 className="w-3 h-3 animate-spin text-purple-500" />
                 )}
-                {latestRun.status === 'completed' && (
-                  <Check className="w-3 h-3 text-green-500" />
-                )}
+                {latestRun.status === 'completed' && <Check className="w-3 h-3 text-green-500" />}
                 {latestRun.status === 'failed' && (
                   <AlertTriangle className="w-3 h-3 text-red-500" />
                 )}
                 <span className="capitalize">{latestRun.status}</span>
               </div>
-              {latestRun.insightsCount > 0 && (
-                <p>{latestRun.insightsCount} insights</p>
-              )}
+              {latestRun.insightsCount > 0 && <p>{latestRun.insightsCount} insights</p>}
               {latestRun.generationTimeMs > 0 && (
                 <p>{(latestRun.generationTimeMs / 1000).toFixed(1)}s</p>
               )}
@@ -418,9 +405,7 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
                       <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">
                         {t('interview.inference.whyItMatters')}
                       </h4>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {sc.whyItMatters}
-                      </p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{sc.whyItMatters}</p>
                     </div>
 
                     {/* Recommendation */}
@@ -518,7 +503,9 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
                                 : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
                           }`}
                         >
-                          {t(`interview.inference.${insight.status === 'approved' ? 'approved' : insight.status === 'reviewed' ? 'reviewed' : 'draft'}`)}
+                          {t(
+                            `interview.inference.${insight.status === 'approved' ? 'approved' : insight.status === 'reviewed' ? 'reviewed' : 'draft'}`
+                          )}
                         </span>
                         <div className="flex-1" />
                         <button

@@ -3933,7 +3933,13 @@ ${JSON.stringify(questions || [], null, 2)}
       return;
     }
     const transcriptService = await import('../services/interviewTranscriptService.js');
-    const msg = await transcriptService.addMessage(user.organizationId, sessionId, role, content, metadata);
+    const msg = await transcriptService.addMessage(
+      user.organizationId,
+      sessionId,
+      role,
+      content,
+      metadata
+    );
     res.status(201).json(msg);
   }),
 
@@ -3949,7 +3955,12 @@ ${JSON.stringify(questions || [], null, 2)}
       return;
     }
     const inferenceService = await import('../services/interviewInferenceService.js');
-    const runId = await inferenceService.startInferenceRun(user.organizationId, projectId, sessionIds, user.id);
+    const runId = await inferenceService.startInferenceRun(
+      user.organizationId,
+      projectId,
+      sessionIds,
+      user.id
+    );
     inferenceService.executeInference(user.organizationId, runId).catch((err: any) => {
       logger.error(`[Inference] Run ${runId} failed:`, err.message);
     });

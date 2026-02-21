@@ -1,4 +1,4 @@
-import { Router, type Response } from 'express';
+import { type Response, Router } from 'express';
 
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 import * as taxonomy from '../services/competencyTaxonomyService.js';

@@ -13,7 +13,14 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js'
 import logger from '../utils/Logger.js';
 import { llmService } from './ai/llmService.js';
 
-const INSIGHT_CATEGORIES = ['risk', 'opportunity', 'constraint', 'priority', 'trend', 'gap'] as const;
+const INSIGHT_CATEGORIES = [
+  'risk',
+  'opportunity',
+  'constraint',
+  'priority',
+  'trend',
+  'gap',
+] as const;
 type InsightCategory = (typeof INSIGHT_CATEGORIES)[number];
 
 const EvidenceItemSchema = z.object({
@@ -57,10 +64,7 @@ export async function startInferenceRun(
   return id;
 }
 
-export async function executeInference(
-  organizationId: string,
-  runId: string
-): Promise<void> {
+export async function executeInference(organizationId: string, runId: string): Promise<void> {
   const startTime = Date.now();
 
   const run = await dbGet(
@@ -93,17 +97,14 @@ export async function executeInference(
       [...sessionIds, organizationId]
     );
 
-    const primaryEvidence = (answeredQuestions || []).filter(
-      (q: any) => (q.confidence || 0) >= 3
-    );
+    const primaryEvidence = (answeredQuestions || []).filter((q: any) => (q.confidence || 0) >= 3);
     const gaps = (answeredQuestions || []).filter(
       (q: any) => q.needs_follow_up === 1 || q.needs_follow_up === true
     );
 
-    const orgContext = await dbGet(
-      `SELECT * FROM organization_context WHERE organization_id = ?`,
-      [organizationId]
-    );
+    const orgContext = await dbGet(`SELECT * FROM organization_context WHERE organization_id = ?`, [
+      organizationId,
+    ]);
 
     const systemPrompt = `You are a senior management consultant performing structured analysis of interview data.
 Your task is to generate categorized insights from interview responses.
@@ -120,23 +121,31 @@ Rules:
 ${orgContext ? JSON.stringify(orgContext, null, 2) : 'No organization context available.'}
 
 Primary evidence (high-confidence answers):
-${JSON.stringify(primaryEvidence.map((q: any) => ({
-  id: q.id,
-  sessionId: q.session_id,
-  category: q.category,
-  question: q.question_text,
-  answer: q.answer_text,
-  confidence: q.confidence,
-})), null, 2)}
+${JSON.stringify(
+  primaryEvidence.map((q: any) => ({
+    id: q.id,
+    sessionId: q.session_id,
+    category: q.category,
+    question: q.question_text,
+    answer: q.answer_text,
+    confidence: q.confidence,
+  })),
+  null,
+  2
+)}
 
 Gaps (needs follow-up):
-${JSON.stringify(gaps.map((q: any) => ({
-  id: q.id,
-  sessionId: q.session_id,
-  category: q.category,
-  question: q.question_text,
-  answer: q.answer_text,
-})), null, 2)}
+${JSON.stringify(
+  gaps.map((q: any) => ({
+    id: q.id,
+    sessionId: q.session_id,
+    category: q.category,
+    question: q.question_text,
+    answer: q.answer_text,
+  })),
+  null,
+  2
+)}
 
 Analyze the above interview data and generate structured insights.`;
 
@@ -193,7 +202,9 @@ Analyze the above interview data and generate structured insights.`;
       [insights.length, tokensUsed, generationTimeMs, now, runId]
     );
 
-    logger.info(`[Inference] Run ${runId} completed: ${insights.length} insights in ${generationTimeMs}ms`);
+    logger.info(
+      `[Inference] Run ${runId} completed: ${insights.length} insights in ${generationTimeMs}ms`
+    );
   } catch (err: any) {
     const errorMessage = err?.message || 'Unknown error';
     logger.error(`[Inference] Run ${runId} failed: ${errorMessage}`);
@@ -242,7 +253,8 @@ function formatRun(row: any): Record<string, unknown> {
     id: row.id,
     organizationId: row.organization_id,
     projectId: row.project_id,
-    sessionIds: typeof row.session_ids === 'string' ? JSON.parse(row.session_ids) : (row.session_ids || []),
+    sessionIds:
+      typeof row.session_ids === 'string' ? JSON.parse(row.session_ids) : row.session_ids || [],
     status: row.status,
     insightsCount: row.insights_count,
     tokensUsed: row.tokens_used,
