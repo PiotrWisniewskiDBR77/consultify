@@ -34,6 +34,7 @@ interface Candidate {
   display_name: string;
   email: string | null;
   candidate_type: string;
+  user_id?: string | null;
   document_count: number;
   approved_signals: number;
   created_at: string;
