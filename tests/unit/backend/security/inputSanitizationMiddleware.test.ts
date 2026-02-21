@@ -95,10 +95,29 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(next).toHaveBeenCalled();
   });
 
-  it('detects suspicious patterns (private helper)', () => {
-    expect(__private__.isSuspicious('<script>alert(1)</script>')).toBe(true);
-    expect(__private__.isSuspicious('javascript:alert(1)')).toBe(true);
-    expect(__private__.isSuspicious('totally safe text')).toBe(false);
+  it.each([
+    '<script>alert(1)</script>',
+    '<ScRiPt>alert(1)</ScRiPt>',
+    'javascript:alert(1)',
+    'onerror=alert(1)',
+    'onload = alert(1)',
+    'data:text/html,<svg/onload=alert(1)>',
+    'eval(alert(1))',
+    'document.cookie',
+    'window.location',
+    '<img src=x onerror="alert(1)">',
+  ])('detects suspicious patterns: %s', (value) => {
+    expect(__private__.isSuspicious(value)).toBe(true);
+  });
+
+  it.each([
+    'totally safe text',
+    '<scrpt>alert(1)</scrpt>',
+    'java script:alert(1)',
+    'on load=alert(1)',
+    'data:text/plain,hello',
+  ])('does not flag safe-ish text: %s', (value) => {
+    expect(__private__.isSuspicious(value)).toBe(false);
   });
 
   it('truncates overly long strings (private helper)', () => {
@@ -108,6 +127,22 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(__private__.truncateStrings(['a', long], 5)).toEqual(['a', 'x'.repeat(5)]);
     // Non-string primitives are preserved
     expect(__private__.truncateStrings(123, 5)).toBe(123);
+  });
+
+  it('truncateStrings: preserves null/undefined and exact-length strings', () => {
+    expect(__private__.truncateStrings(null, 5)).toBeNull();
+    expect(__private__.truncateStrings(undefined, 5)).toBeUndefined();
+    expect(__private__.truncateStrings('abcde', 5)).toBe('abcde');
+  });
+
+  it('truncateStrings: truncates deeply nested objects/arrays', () => {
+    const long = 'x'.repeat(10);
+    const input = { a: [{ b: { c: long } }], ok: true, n: 1 };
+    expect(__private__.truncateStrings(input, 5)).toEqual({
+      a: [{ b: { c: 'x'.repeat(5) } }],
+      ok: true,
+      n: 1,
+    });
   });
 
   it('logs suspicious nested payloads (private helper)', async () => {
@@ -130,6 +165,57 @@ describe('inputSanitizationMiddleware (L1)', () => {
     expect(() =>
       __private__.checkForSuspiciousContent('not-an-object' as any, '/api/test', 'POST')
     ).not.toThrow();
+  });
+
+  it('checkForSuspiciousContent: logs suspicious strings inside arrays', async () => {
+    const logger = (await import('../../../../server/src/utils/Logger.js')).default as any;
+    const origWarn = logger.warn;
+    logger.warn = vi.fn();
+    try {
+      __private__.checkForSuspiciousContent(['safe', 'javascript:alert(1)'], '/api/test', 'POST');
+      expect(logger.warn).toHaveBeenCalledTimes(1);
+    } finally {
+      logger.warn = origWarn;
+    }
+  });
+
+  it('middleware: preserves non-string primitives while sanitizing strings', async () => {
+    const req = createReq({
+      body: {
+        count: 123,
+        ok: true,
+        html: '<b>bold</b>',
+        tricky: 'onload=alert(1)',
+      },
+    });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.body.count).toBe(123);
+    expect(req.body.ok).toBe(true);
+    expect(String(req.body.html)).not.toContain('<b>');
+    expect(String(req.body.tricky)).not.toContain('onload=');
+  });
+
+  it('middleware: ignores non-object bodies (still calls next)', async () => {
+    const req = createReq({ body: '<b>not-an-object</b>' });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.body).toBe('<b>not-an-object</b>');
+  });
+
+  it('middleware: ignores null query (still calls next)', async () => {
+    const req = createReq({ method: 'GET', query: null });
+    const next = vi.fn();
+
+    await inputSanitizationMiddleware(req, {} as any, next);
+
+    expect(next).toHaveBeenCalled();
   });
 
   it('in non-test env: logs suspicious content during middleware execution', async () => {
@@ -211,28 +297,4 @@ describe('inputSanitizationMiddleware (L1)', () => {
     await expect(mod.inputSanitizationMiddleware(req, {} as any, next)).rejects.toThrow('boom');
   });
 
-  it('loadSecurityUtils: attempts fallback spec when preferred import fails', async () => {
-    const sanitizeObject = vi.fn((x: unknown) => x);
-
-    vi.doMock('../../../../server/src/utils/security.utils.ts', () => {
-      throw new Error('preferred import failed');
-    });
-    vi.doMock('../../../../server/src/utils/security.utils.js', () => ({ sanitizeObject }));
-
-    try {
-      const mod = await import(
-        '../../../../server/src/middleware/inputSanitization.middleware.ts?loader_fallback'
-      );
-      const req = createReq({ body: { html: '<b>bold</b>' } });
-      const next = vi.fn();
-
-      await mod.inputSanitizationMiddleware(req, {} as any, next);
-
-      expect(next).toHaveBeenCalled();
-      expect(sanitizeObject).toHaveBeenCalled();
-    } finally {
-      vi.unmock('../../../../server/src/utils/security.utils.ts');
-      vi.unmock('../../../../server/src/utils/security.utils.js');
-    }
-  });
 });

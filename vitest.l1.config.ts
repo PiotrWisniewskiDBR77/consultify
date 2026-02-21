@@ -25,6 +25,7 @@ export default defineConfig({
       'tests/unit/backend/security/csrfMiddleware.test.ts',
       'tests/unit/backend/security/inputSanitization.test.ts',
       'tests/unit/backend/security/inputSanitizationMiddleware.test.ts',
+      'tests/unit/backend/security/inputSanitizationMiddleware.loaderFallback.test.ts',
       'tests/unit/backend/middleware/auth.middleware.test.ts',
       'tests/unit/backend/middleware/permissionMiddleware.test.ts',
       'tests/unit/backend/middleware/rateLimitUserId.middleware.test.ts',
