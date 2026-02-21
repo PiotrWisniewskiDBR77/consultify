@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 import { AppView, UserRole } from '../../../../src/types';
 
@@ -385,5 +385,45 @@ describe('Sidebar (L2)', () => {
     });
 
     vi.useRealTimers();
+  });
+
+  it('applies correct translate class when sidebar is closed on mobile vs tablet', () => {
+    // Mobile closed -> off-canvas
+    deviceState.isMobile = true;
+    deviceState.isTablet = false;
+    appState.isSidebarOpen = false;
+    const { unmount } = render(<Sidebar />);
+    const sidebar = document.querySelector('[data-tour="sidebar-nav"]') as HTMLElement;
+    expect(sidebar.className).toContain('-translate-x-full');
+    unmount();
+
+    // Tablet closed -> stays visible
+    deviceState.isMobile = false;
+    deviceState.isTablet = true;
+    appState.isSidebarOpen = false;
+    render(<Sidebar />);
+    const sidebarTablet = document.querySelector('[data-tour="sidebar-nav"]') as HTMLElement;
+    expect(sidebarTablet.className).toContain('translate-x-0');
+  });
+
+  it('shows floating submenu even for items without subItems when sidebar is collapsed', () => {
+    appState.isSidebarCollapsed = true; // showFull=false => shouldShow=true even if no subItems
+    render(<Sidebar />);
+
+    fireEvent.mouseEnter(screen.getByTestId('navitem-NO_VIEW'));
+    expect(screen.getByTestId('floating-submenu')).toBeInTheDocument();
+    expect(within(screen.getByTestId('floating-submenu')).getByText('NoView')).toBeInTheDocument();
+  });
+
+  it('does not close sidebar on flyout navigation when window is wide', () => {
+    appState.isSidebarCollapsed = true; // showFull=false
+    (window as any).innerWidth = 1200;
+    render(<Sidebar />);
+
+    fireEvent.mouseEnter(screen.getByTestId('navitem-HAS_SUB'));
+    expect(screen.getByTestId('floating-submenu')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('flyout-nav'));
+    expect(appState.setIsSidebarOpen).not.toHaveBeenCalled();
   });
 });

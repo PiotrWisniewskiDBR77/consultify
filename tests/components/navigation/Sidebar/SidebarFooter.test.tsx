@@ -45,4 +45,16 @@ describe('SidebarFooter (L2)', () => {
 
     expect(screen.queryByTitle('Partner Portal')).not.toBeInTheDocument();
   });
+
+  it('in collapsed mode uses title attributes and does not render text labels', () => {
+    render(<SidebarFooter showFull={false} onLogout={() => {}} onNavigate={() => {}} t={t} />);
+
+    const partner = screen.getByTitle('Partner Portal');
+    expect(partner).toBeInTheDocument();
+    expect(screen.queryByText('Partner Portal')).not.toBeInTheDocument();
+
+    const logout = screen.getByTitle('sidebar.logOut');
+    expect(logout).toBeInTheDocument();
+    expect(screen.queryByText('sidebar.logOut')).not.toBeInTheDocument();
+  });
 });
