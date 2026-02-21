@@ -18,7 +18,16 @@
  * @version 1.0.0
  */
 
-import { Bot, Briefcase, History, MessageSquare, Plus, Volume2, VolumeX } from 'lucide-react';
+import {
+  Bot,
+  Briefcase,
+  History,
+  MessageSquare,
+  Plus,
+  Sparkles,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -45,6 +54,7 @@ import {
 } from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
+import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';
 import { EnhancedChatInput } from './EnhancedChatInput';
@@ -187,6 +197,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>('');
   const [editBusy, setEditBusy] = useState(false);
+  const [signalsOpen, setSignalsOpen] = useState(false);
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
@@ -2139,6 +2150,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               </span>
             )}
           </button>
+
+          {/* T012: Important signals (chat-active) */}
+          <button
+            onClick={() => setSignalsOpen(true)}
+            data-testid="chat-signals-button"
+            className="p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
+            title={t('aiChat.signals.title', 'Important signals')}
+            aria-label={t('aiChat.signals.title', 'Important signals')}
+          >
+            <Sparkles size={18} strokeWidth={1.75} />
+          </button>
         </div>
 
         <div className="flex items-center gap-0.5">
@@ -2311,6 +2333,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         onNewChat={handleNewChat}
         onSelectConversation={handleSelectConversation}
         activeConversationId={activeConversationId}
+      />
+
+      {/* Important signals panel (T012) */}
+      <ChatSignalsPanel
+        open={signalsOpen}
+        onClose={() => setSignalsOpen(false)}
+        projectId={workspaceContext?.projectId || null}
       />
     </div>
   );

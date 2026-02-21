@@ -16,6 +16,62 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+let ensured = false;
+async function ensureHelpSchema() {
+  if (ensured) return;
+  ensured = true;
+  try {
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS help_categories (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        sort_order INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+      []
+    );
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS help_articles (
+        id TEXT PRIMARY KEY,
+        category_id TEXT,
+        title TEXT NOT NULL,
+        body TEXT,
+        status TEXT DEFAULT 'published',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+      []
+    );
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS help_playbooks (
+        id TEXT PRIMARY KEY,
+        key TEXT,
+        title TEXT,
+        content TEXT,
+        status TEXT DEFAULT 'published',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+      []
+    );
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS help_events (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        organization_id TEXT,
+        event_type TEXT,
+        article_id TEXT,
+        metadata TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+      []
+    );
+  } catch (e) {
+    logger.warn('[Help] ensureHelpSchema failed (continuing)', {
+      error: (e as Error)?.message || e,
+    });
+  }
+}
+
 /**
  * GET /api/help/playbooks
  * List all help playbooks
@@ -25,6 +81,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
+      await ensureHelpSchema();
       const playbooks = await dbAll<any>(
         `SELECT * FROM help_playbooks WHERE status = 'published' ORDER BY created_at DESC`,
         []
@@ -56,6 +113,7 @@ router.get(
     const { id } = req.params;
 
     try {
+      await ensureHelpSchema();
       const playbooks = await dbAll<any>(`SELECT * FROM help_playbooks WHERE id = ?`, [id]);
 
       if (!playbooks || playbooks.length === 0) {
@@ -78,13 +136,31 @@ router.get(
   '/articles',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { q } = req.query;
+    await ensureHelpSchema();
 
-    // Return empty array for search (stub implementation)
-    return res.json({
-      success: true,
-      data: [],
-      query: q || '',
-    });
+    const query = String(q || '').trim();
+    if (!query) {
+      const data = await dbAll<any>(
+        `SELECT id, category_id as categoryId, title, status, created_at as createdAt, updated_at as updatedAt
+         FROM help_articles
+         WHERE status = 'published'
+         ORDER BY updated_at DESC
+         LIMIT 50`,
+        []
+      ).catch(() => []);
+      return res.json({ success: true, data: data || [], query: '' });
+    }
+
+    const like = `%${query}%`;
+    const data = await dbAll<any>(
+      `SELECT id, category_id as categoryId, title, status, created_at as createdAt, updated_at as updatedAt
+       FROM help_articles
+       WHERE status = 'published' AND (title LIKE ? OR body LIKE ?)
+       ORDER BY updated_at DESC
+       LIMIT 50`,
+      [like, like]
+    ).catch(() => []);
+    return res.json({ success: true, data: data || [], query });
   })
 );
 
@@ -95,14 +171,35 @@ router.get(
 router.get(
   '/categories',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
+    await ensureHelpSchema();
+
+    const categories = await dbAll<any>(
+      `SELECT id, name, sort_order as sortOrder FROM help_categories ORDER BY sort_order ASC, name ASC`,
+      []
+    ).catch(() => []);
+
+    const counts = await dbAll<{ category_id: string; count: number }>(
+      `SELECT category_id, COUNT(1) as count
+       FROM help_articles
+       WHERE status = 'published' AND category_id IS NOT NULL
+       GROUP BY category_id`,
+      []
+    ).catch(() => []);
+
+    const countMap = new Map<string, number>();
+    for (const r of counts || []) {
+      if (r?.category_id) countMap.set(String(r.category_id), Number((r as any).count || 0));
+    }
+
+    const data = (categories || []).map((c: any) => ({
+      id: String(c.id),
+      name: String(c.name),
+      count: countMap.get(String(c.id)) || 0,
+    }));
+
     return res.json({
       success: true,
-      data: [
-        { id: 'getting-started', name: 'Getting Started', count: 5 },
-        { id: 'projects', name: 'Projects', count: 10 },
-        { id: 'teams', name: 'Teams', count: 8 },
-        { id: 'billing', name: 'Billing', count: 3 },
-      ],
+      data,
     });
   })
 );
@@ -117,17 +214,37 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { eventType, articleId, metadata } = req.body;
     const userId = req.user?.id;
+    const organizationId = (req as any).organizationId || req.user?.organizationId || null;
 
-    // Log help event (stub - in production would save to database)
-    logger.info(`[Help] Event logged: ${eventType} by user ${userId}`, {
-      articleId,
-      metadata,
-    });
+    await ensureHelpSchema();
+
+    let stored = false;
+    const eventId = `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    try {
+      await dbRun(
+        `INSERT INTO help_events (id, user_id, organization_id, event_type, article_id, metadata)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          eventId,
+          userId || null,
+          organizationId ? String(organizationId) : null,
+          String(eventType || ''),
+          articleId ? String(articleId) : null,
+          metadata ? JSON.stringify(metadata) : null,
+        ]
+      );
+      stored = true;
+    } catch (e) {
+      logger.warn('[Help] Failed to persist help event (continuing)', {
+        error: (e as Error)?.message || e,
+      });
+    }
 
     return res.json({
       success: true,
       message: 'Event logged',
-      eventId: `evt-${Date.now()}`,
+      eventId,
+      stored,
     });
   })
 );

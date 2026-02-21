@@ -314,7 +314,8 @@ export async function getReferralTools(partnerOrgId: string): Promise<PartnerRef
     const partner = await DbPromise.get<PartnerOrgRow>(
       db,
       `SELECT id, name, referral_code, referral_link_slug FROM partner_organizations WHERE id = ?`,
-      [partnerOrgId]
+      [partnerOrgId],
+      { fallback: false }
     );
 
     if (!partner) {
@@ -327,7 +328,8 @@ export async function getReferralTools(partnerOrgId: string): Promise<PartnerRef
       `SELECT * FROM partner_campaign_links 
              WHERE partner_org_id = ? AND is_active = true
              ORDER BY created_at DESC`,
-      [partnerOrgId]
+      [partnerOrgId],
+      { fallback: false }
     );
 
     const referralLink = `${BASE_URL}/r/${partner.referral_link_slug}`;

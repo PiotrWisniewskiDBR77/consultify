@@ -22,12 +22,15 @@ export class VoiceService {
     if (this.openai) return this.openai;
 
     const config = await llmConfigService.getProviderConfig('openai');
-    if (!config || !config.api_key) {
+    const apiKey = config?.api_key || '';
+    // Prevent accidental real network calls in test/dev environments where
+    // we intentionally stub keys (e.g. `sk-test-*`).
+    if (!config || !apiKey || String(apiKey).startsWith('sk-test')) {
       throw new Error('OpenAI API key not configured in llmConfigService');
     }
 
     this.openai = new OpenAI({
-      apiKey: config.api_key,
+      apiKey,
     });
 
     return this.openai;

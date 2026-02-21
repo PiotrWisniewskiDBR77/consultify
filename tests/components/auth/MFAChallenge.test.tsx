@@ -238,6 +238,28 @@ describe('MFAChallenge Component', () => {
       });
     });
 
+    it('falls back to default failed message when API returns no error payload', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({}),
+      });
+
+      const user = userEvent.setup();
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+
+      const inputs = screen.getAllByRole('textbox');
+      for (let i = 0; i < 6; i++) {
+        await user.type(inputs[i], String(i + 1));
+      }
+
+      await waitFor(() => {
+        expect(screen.getByText('Verification failed')).toBeInTheDocument();
+      });
+      // The inputs may re-mount after state resets; re-query for stable refs.
+      const inputsAfter = screen.getAllByRole('textbox');
+      inputsAfter.forEach((i) => expect(i).toHaveValue(''));
+    });
+
     it('shows blocked message when API responds blocked', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -270,6 +292,22 @@ describe('MFAChallenge Component', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Network down')).toBeInTheDocument();
+      });
+    });
+
+    it('falls back to default error message when rejection has no message', async () => {
+      mockFetch.mockRejectedValueOnce({});
+
+      const user = userEvent.setup();
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+
+      const inputs = screen.getAllByRole('textbox');
+      for (let i = 0; i < 6; i++) {
+        await user.type(inputs[i], String(i + 1));
+      }
+
+      await waitFor(() => {
+        expect(screen.getByText('An error occurred')).toBeInTheDocument();
       });
     });
   });
@@ -326,6 +364,24 @@ describe('MFAChallenge Component', () => {
       expect((input as HTMLInputElement).value).toBe('');
     });
 
+    it('falls back to default invalid backup code message when API returns no error payload', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({}),
+      });
+
+      const user = userEvent.setup();
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+
+      await user.click(screen.getByText(/Use a backup code instead/i));
+      const input = screen.getByPlaceholderText('XXXX-XXXX');
+      await user.type(input, 'ABCD-1234');
+      await user.click(screen.getByText('Verify'));
+
+      expect(await screen.findByText('Invalid backup code')).toBeInTheDocument();
+      expect((input as HTMLInputElement).value).toBe('');
+    });
+
     it('shows blocked message and clears backup code when API responds blocked', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -358,6 +414,20 @@ describe('MFAChallenge Component', () => {
       await user.click(screen.getByText('Verify'));
 
       expect(await screen.findByText('Network down')).toBeInTheDocument();
+    });
+
+    it('falls back to default error message when backup rejection has no message', async () => {
+      mockFetch.mockRejectedValueOnce({});
+
+      const user = userEvent.setup();
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+
+      await user.click(screen.getByText(/Use a backup code instead/i));
+      const input = screen.getByPlaceholderText('XXXX-XXXX');
+      await user.type(input, 'ABCD-1234');
+      await user.click(screen.getByText('Verify'));
+
+      expect(await screen.findByText('An error occurred')).toBeInTheDocument();
     });
   });
 

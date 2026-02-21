@@ -353,9 +353,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             setReports(Array.isArray(reportData) ? reportData : []);
 
             // Fetch initiatives derived from assessments
-            const initiativesResponse = await Api.get('/initiatives?source=assessment').catch(
-              () => []
-            );
+            // IMPORTANT: Do NOT swallow errors here — this runs inside the cold-start retry loop.
+            // If we `catch(() => [])` we can incorrectly "succeed" on attempt 1 and persist an empty list,
+            // which looks like "the first initiative didn't load until I come back".
+            const initiativesResponse = await Api.get('/initiatives?source=assessment');
             const rawInits = Array.isArray(initiativesResponse) ? initiativesResponse : [];
             setInitiatives(rawInits.filter(isAssessmentModuleInitiative));
 
@@ -1344,10 +1345,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-semibold
-              bg-indigo-600 text-white hover:bg-indigo-500
-              shadow-sm shadow-indigo-600/25
-              transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-medium
+              text-slate-700 dark:text-slate-300
+              hover:bg-slate-100/70 dark:hover:bg-white/[0.05]
+              border border-slate-200/60 dark:border-white/10
+              transition-colors duration-150
+              disabled:opacity-50 disabled:cursor-not-allowed"
             title="Upload DRD report (PDF)"
           >
             {isUploading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}

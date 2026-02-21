@@ -125,10 +125,27 @@ router.get(
   verifyToken,
   requireRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    return res.status(501).json({ error: 'Not implemented: aiBudgetService missing' });
-    // const { projectId } = req.query;
-    // const budgets = await aiBudgetService.getBudgets(req.organizationId!, projectId as string);
-    // return res.json({ success: true, budgets });
+    if (!aiBudgetService?.getOrganizationBudgets) {
+      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+    }
+
+    try {
+      const organizationId = req.user?.organizationId || req.organizationId;
+      if (!organizationId) {
+        return res.status(403).json({ success: false, error: 'Organization access required' });
+      }
+
+      const includeUserBudgets =
+        String(req.query.includeUserBudgets || '').toLowerCase() === 'true';
+      const budgets = await aiBudgetService.getOrganizationBudgets(
+        organizationId,
+        includeUserBudgets
+      );
+      return res.json({ success: true, data: budgets });
+    } catch (error: unknown) {
+      logger.error('[AI Budgets] List budgets error:', error);
+      return res.status(500).json({ success: false, error: 'Failed to list budgets' });
+    }
   })
 );
 
@@ -142,9 +159,26 @@ router.post(
   requireRole('admin'),
   validateBody(CreateBudgetSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    return res.status(501).json({ error: 'Not implemented: aiBudgetService missing' });
-    // const budget = await aiBudgetService.createBudget(req.organizationId!, req.body);
-    // return res.status(201).json({ success: true, budget });
+    if (!aiBudgetService?.createBudget) {
+      return res.status(503).json({ success: false, error: 'AI Budget service not available' });
+    }
+
+    try {
+      const organizationId = req.user?.organizationId || req.organizationId;
+      const createdBy = req.user?.id;
+      if (!organizationId) {
+        return res.status(403).json({ success: false, error: 'Organization access required' });
+      }
+      if (!createdBy) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+      }
+
+      const budget = await aiBudgetService.createBudget(organizationId, { ...req.body, createdBy });
+      return res.status(201).json({ success: true, data: budget });
+    } catch (error: unknown) {
+      logger.error('[AI Budgets] Create budget error:', error);
+      return res.status(500).json({ success: false, error: 'Failed to create budget' });
+    }
   })
 );
 

@@ -25,8 +25,6 @@ const HTML_ENTITIES: Record<string, string> = {
   '"': '&quot;',
   "'": '&#x27;',
   '`': '&#96;',
-  '/': '&#x2F;',
-  '=': '&#x3D;',
 };
 
 /**
@@ -37,9 +35,11 @@ export function sanitizeString(input: unknown): string {
   if (input === null || input === undefined) return '';
   if (typeof input !== 'string') return String(input);
 
-  // NOTE: This is used as a defensive layer against XSS payloads reaching HTML contexts.
-  // The unit tests require escaping `/` and `=` to neutralize common attribute-based vectors.
-  return input.replace(/[&<>"'`/=]/g, (char) => HTML_ENTITIES[char] || char);
+  // Important:
+  // - This runs on API input (JSON), not on HTML rendering.
+  // - Escaping `/` or `=` breaks legitimate data (URLs, tokens, base64).
+  // - Keep escaping to the minimal set needed to neutralize HTML contexts.
+  return input.replace(/[&<>"'`]/g, (char) => HTML_ENTITIES[char] || char);
 }
 
 /**

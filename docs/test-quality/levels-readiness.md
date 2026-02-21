@@ -29,8 +29,9 @@ Goal: security boundary + policy enforcement logic with high coverage.
 
 - Status: runnable ✅
 - Latest run: `npm run test:l1:coverage`
-- Result: 393 tests, pass ✅
+- Result: 509 tests, pass ✅
 - Coverage output: `test-results/coverage/l1/`
+- Gate scope: `vitest.l1.config.ts` + `scripts/testing/coverage-thresholds.ts --profile l1`
 
 ## L2 — Component/UI (auth)
 

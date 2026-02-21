@@ -264,22 +264,10 @@ router.post(
         });
         return res.json({ success: true, checkoutUrl: session.url, sessionId: session.id });
       } else {
-        // Demo mode: directly credit tokens
-        if (!TokenBillingService?.creditTokens) {
-          return res
-            .status(503)
-            .json({ success: false, error: 'Token credit service not available' });
-        }
-
-        const bonusTokens = Math.floor(pkg.tokens * (pkg.bonus_percent / 100));
-        await TokenBillingService.creditTokens(userId, pkg.tokens, bonusTokens, {
-          packageId,
-          organizationId: req.user?.organizationId,
-        });
-        return res.json({
-          success: true,
-          message: 'Tokens credited (demo mode)',
-          tokens: pkg.tokens + bonusTokens,
+        return res.status(503).json({
+          success: false,
+          error:
+            'Token purchases are not available (Stripe not configured for this package/environment).',
         });
       }
     } catch (error: any) {

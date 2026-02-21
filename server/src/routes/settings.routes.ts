@@ -6,6 +6,7 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { createAccountDeletionRequest, createDataExportRequest } from '../services/gdprService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -1278,7 +1279,7 @@ router.put(
 
 /**
  * POST /api/settings/export-data
- * Create data export request (stub)
+ * Create data export request
  */
 router.post(
   '/export-data',
@@ -1288,22 +1289,22 @@ router.post(
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
     const { format, include } = req.body || {};
-    const requestId = `export-${Date.now()}`;
-
     logger.info(`[settings] Export requested by user ${userId} format=${format || 'json'}`);
 
-    return res.json({
-      requestId,
-      status: 'processing',
-      etaHours: 48,
+    const request = await createDataExportRequest({
+      userId,
+      organizationId: req.organizationId,
+      format,
       include,
     });
+
+    return res.status(202).json({ success: true, request });
   })
 );
 
 /**
  * POST /api/settings/request-deletion
- * Account deletion request (stub)
+ * Account deletion request
  */
 router.post(
   '/request-deletion',
@@ -1317,7 +1318,8 @@ router.post(
       `[settings] Account deletion requested by user ${userId}, reason=${reason || 'n/a'}`
     );
 
-    return res.json({ success: true, message: 'Deletion request received' });
+    const request = await createAccountDeletionRequest({ userId, reason });
+    return res.status(202).json({ success: true, request });
   })
 );
 

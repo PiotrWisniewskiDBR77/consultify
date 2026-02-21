@@ -43,6 +43,18 @@ const upload = multer({
 // Service instance
 const reportImportService = new ReportImportService();
 
+function isNotFoundError(error: any) {
+  const message = String(error?.message || '');
+  return message === 'Import not found' || message === 'Source file not found';
+}
+
+function notFoundMessage(error: any) {
+  const message = String(error?.message || '');
+  if (message === 'Import not found') return 'Import not found';
+  if (message === 'Source file not found') return 'Source file not found';
+  return 'Not found';
+}
+
 // ============================================
 // MIDDLEWARE: Inject dependencies
 // ============================================
@@ -116,7 +128,7 @@ router.post(
       }
 
       const organizationId = req.user?.organizationId;
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const projectId = req.body.projectId;
 
       if (!organizationId || !userId) {
@@ -176,11 +188,11 @@ router.post('/detect/:id', authenticateToken, async (req: any, res: Response) =>
       data: extractedData,
     });
   } catch (error: any) {
+    if (isNotFoundError(error)) {
+      return res.status(404).json({ success: false, error: notFoundMessage(error) });
+    }
     logger.error('[ReportImport] Detection error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -238,11 +250,11 @@ router.get('/preview/:id', authenticateToken, async (req: any, res: Response) =>
       },
     });
   } catch (error: any) {
+    if (isNotFoundError(error)) {
+      return res.status(404).json({ success: false, error: notFoundMessage(error) });
+    }
     logger.error('[ReportImport] Preview error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -256,7 +268,7 @@ router.post('/confirm/:id', authenticateToken, async (req: any, res: Response) =
     const { id } = req.params;
     const { targetType, projectId, overrides } = req.body;
     const organizationId = req.user?.organizationId;
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
 
     if (!organizationId || !userId) {
       return res.status(401).json({
@@ -286,11 +298,11 @@ router.post('/confirm/:id', authenticateToken, async (req: any, res: Response) =
       data: result,
     });
   } catch (error: any) {
+    if (isNotFoundError(error)) {
+      return res.status(404).json({ success: false, error: notFoundMessage(error) });
+    }
     logger.error('[ReportImport] Confirm error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -356,11 +368,11 @@ router.get('/:id', authenticateToken, async (req: any, res: Response) => {
       data: importRecord,
     });
   } catch (error: any) {
+    if (isNotFoundError(error)) {
+      return res.status(404).json({ success: false, error: notFoundMessage(error) });
+    }
     logger.error('[ReportImport] Get error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -388,11 +400,11 @@ router.delete('/:id', authenticateToken, async (req: any, res: Response) => {
       message: 'Import deleted successfully',
     });
   } catch (error: any) {
+    if (isNotFoundError(error)) {
+      return res.status(404).json({ success: false, error: notFoundMessage(error) });
+    }
     logger.error('[ReportImport] Delete error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -406,7 +418,7 @@ router.post('/:id/create-assessment', authenticateToken, async (req: any, res: R
     const { id } = req.params;
     const { projectId } = req.body;
     const organizationId = req.user?.organizationId;
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
 
     if (!organizationId || !userId) {
       return res.status(401).json({
@@ -427,11 +439,11 @@ router.post('/:id/create-assessment', authenticateToken, async (req: any, res: R
       data: result,
     });
   } catch (error: any) {
+    if (isNotFoundError(error)) {
+      return res.status(404).json({ success: false, error: notFoundMessage(error) });
+    }
     logger.error('[ReportImport] Create assessment error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -445,7 +457,7 @@ router.post('/:id/create-initiatives', authenticateToken, async (req: any, res: 
     const { id } = req.params;
     const { projectId } = req.body;
     const organizationId = req.user?.organizationId;
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
 
     if (!organizationId || !userId) {
       return res.status(401).json({
@@ -466,11 +478,11 @@ router.post('/:id/create-initiatives', authenticateToken, async (req: any, res: 
       data: result,
     });
   } catch (error: any) {
+    if (isNotFoundError(error)) {
+      return res.status(404).json({ success: false, error: notFoundMessage(error) });
+    }
     logger.error('[ReportImport] Create initiatives error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -513,11 +525,11 @@ router.get('/:id/download', authenticateToken, async (req: any, res: any) => {
     const stream = fs.createReadStream(importRecord.sourceFilePath);
     stream.pipe(res);
   } catch (error: any) {
+    if (isNotFoundError(error)) {
+      return res.status(404).json({ success: false, error: notFoundMessage(error) });
+    }
     logger.error('[ReportImport] Download error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -582,11 +594,11 @@ router.put('/:id/scores', authenticateToken, async (req: any, res: Response) => 
       },
     });
   } catch (error: any) {
+    if (isNotFoundError(error)) {
+      return res.status(404).json({ success: false, error: notFoundMessage(error) });
+    }
     logger.error('[ReportImport] Update scores error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

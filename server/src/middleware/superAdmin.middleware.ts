@@ -84,41 +84,29 @@ export const verifySuperAdmin = async (
       });
     });
 
-    // Check role from token first
+    // Check role from token first, but ALWAYS verify against DB to prevent stale privilege tokens.
     let userRole = decoded.role;
 
-    // If role is not SUPERADMIN, check database as fallback (in case role was changed)
-    if (userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
-      logger.info(`[SuperAdmin Middleware] Initial role check failed for: ${userRole}`);
-
-      try {
-        const user = await db<UserRow>('SELECT role FROM users WHERE id = ?', [decoded.id]);
-
-        if (user && (user.role === 'SUPERADMIN' || user.role === 'SUPER_ADMIN')) {
-          logger.info('[SuperAdmin Middleware] Role promoted via DB check');
-          userRole = user.role;
-        } else {
-          logger.info(
-            `[SuperAdmin Middleware] DB check validated non-superadmin role: ${user?.role}`
-          );
-          logger.info(`[SuperAdmin Middleware] Access Denied. Role: ${user?.role || userRole}`);
-          res.status(403).json({ error: 'Requires Super Admin privileges' });
-          return;
-        }
-      } catch (dbError) {
-        logger.error('[SuperAdmin Middleware] Database check error:', dbError);
-        // If DB check fails, we fall back to token role which failed check
-        res.status(403).json({ error: 'Requires Super Admin privileges' });
-        return;
-      }
-    }
-
-    // If after all checks, the role is still not SUPERADMIN, deny access
-    if (userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
-      logger.info(`[SuperAdmin Middleware] Access Denied. Role: ${userRole}`);
+    let dbRole: string | undefined;
+    try {
+      const user = await db<UserRow>('SELECT role FROM users WHERE id = ?', [decoded.id]);
+      dbRole = user?.role;
+    } catch (dbError) {
+      logger.error('[SuperAdmin Middleware] Database check error:', dbError);
       res.status(403).json({ error: 'Requires Super Admin privileges' });
       return;
     }
+
+    // Prefer DB truth when available; fall back to token role if DB doesn't return a row.
+    const effectiveRole = dbRole || userRole;
+
+    if (effectiveRole !== 'SUPERADMIN' && effectiveRole !== 'SUPER_ADMIN') {
+      logger.info(`[SuperAdmin Middleware] Access Denied. Role: ${effectiveRole}`);
+      res.status(403).json({ error: 'Requires Super Admin privileges' });
+      return;
+    }
+
+    userRole = effectiveRole;
 
     // Attach super admin status to request
     if (req.user) {

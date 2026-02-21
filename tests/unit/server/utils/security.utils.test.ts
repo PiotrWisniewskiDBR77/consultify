@@ -28,7 +28,7 @@ describe('server utils/security.utils', () => {
   it('sanitizeObject sanitizes nested values and arrays', () => {
     const input = { a: '<b>1</b>', nested: [{ v: '"x"' }, 'y&z'] };
     const out = sanitizeObject(input);
-    expect(out.a).toBe('&lt;b&gt;1&lt;&#x2F;b&gt;');
+    expect(out.a).toBe('&lt;b&gt;1&lt;/b&gt;');
     expect((out as any).nested[0].v).toBe('&quot;x&quot;');
     expect((out as any).nested[1]).toBe('y&amp;z');
   });

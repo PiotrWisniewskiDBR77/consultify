@@ -247,71 +247,71 @@ export class AIPipeline {
             content: m.content,
           }));
 
-        // Try primary provider, with automatic fallback on failure (e.g. Gemini 429)
-        const FALLBACK_MODELS = [
-          { provider: 'openai', id: 'gpt-4o-mini' },
-          { provider: 'openai', id: 'gpt-4o' },
-        ];
+        // Try primary model, with automatic cross-provider fallback on failure.
+        // Important: having multiple API keys (e.g. OpenAI + Gemini) must actually enable failover.
+        const tierForFallback = ((request.options as any)?.selectedTier || 'STANDARD') as any;
+        const fallbackChain: string[] =
+          typeof (modelRouter as any).getFallbackChain === 'function'
+            ? ((modelRouter as any).getFallbackChain(tierForFallback) as string[])
+            : [];
+
+        const candidateModelIds = Array.from(
+          new Set([modelConfig.model, ...fallbackChain].filter(Boolean))
+        ) as string[];
 
         let usedProvider = modelConfig.provider;
         let usedModel = modelConfig.model;
         let streamResponse: Record<string, unknown> | null = null;
+        let lastError: Error | null = null;
 
-        // Attempt primary model
-        try {
-          logger.info(
-            `[AIPipeline] Starting stream with ${modelConfig.provider}/${modelConfig.model}`
-          );
-          streamResponse = await llmService.callStream({
-            type: 'chat',
-            modelConfig: {
-              provider: modelConfig.provider,
-              id: modelConfig.model,
-              endpoint: (modelConfig as any).endpoint,
-              apiKey: (modelConfig as any).apiKey,
-            },
-            systemPrompt: systemPromptStr,
-            messages: nonSystemMsgs,
-            maxTokens: modelConfig.maxTokens,
-            temperature: request.options?.temperature ?? 0.7,
-            stream: true,
-          });
-        } catch (primaryError: any) {
-          const isRateLimit = /quota|rate.limit|429|too many requests/i.test(
-            primaryError?.message || ''
-          );
-          logger.warn(
-            `[AIPipeline] Primary stream failed (${modelConfig.provider}/${modelConfig.model}): ${primaryError?.message?.slice(0, 200)}${isRateLimit ? ' [RATE_LIMIT — trying fallback]' : ''}`
-          );
+        for (const candidateModelId of candidateModelIds) {
+          try {
+            const cfg = await modelRouter.getProviderConfig(candidateModelId, tierForFallback);
+            const providerId = String((cfg as any)?.provider || '');
+            const modelId = String((cfg as any)?.id || candidateModelId);
+            const apiKey = (cfg as any)?.apiKey;
+            const endpoint = (cfg as any)?.endpoint;
 
-          // Try fallback models if primary fails
-          for (const fb of FALLBACK_MODELS) {
-            if (fb.provider === modelConfig.provider && fb.id === modelConfig.model) continue;
-            try {
-              logger.info(`[AIPipeline] Attempting fallback stream: ${fb.provider}/${fb.id}`);
-              streamResponse = await llmService.callStream({
-                type: 'chat',
-                modelConfig: { provider: fb.provider, id: fb.id },
-                systemPrompt: systemPromptStr,
-                messages: nonSystemMsgs,
-                maxTokens: modelConfig.maxTokens,
-                temperature: request.options?.temperature ?? 0.7,
-                stream: true,
-              });
-              usedProvider = fb.provider;
-              usedModel = fb.id;
-              logger.info(`[AIPipeline] Fallback stream started: ${fb.provider}/${fb.id}`);
-              break;
-            } catch (fbError: any) {
-              logger.warn(
-                `[AIPipeline] Fallback ${fb.provider}/${fb.id} also failed: ${fbError?.message?.slice(0, 150)}`
-              );
+            const isConfigured =
+              providerId.toLowerCase() === 'ollama' ||
+              (typeof apiKey === 'string' && apiKey.trim().length > 0);
+            if (!isConfigured) {
+              logger.info(`[AIPipeline] Skipping unconfigured fallback: ${providerId}/${modelId}`);
+              continue;
             }
-          }
 
-          if (!streamResponse) {
-            throw primaryError; // All fallbacks failed — propagate original error
+            logger.info(`[AIPipeline] Starting stream with ${providerId}/${modelId}`);
+            streamResponse = await llmService.callStream({
+              type: 'chat',
+              modelConfig: {
+                provider: providerId,
+                id: modelId,
+                endpoint,
+                apiKey,
+              },
+              systemPrompt: systemPromptStr,
+              messages: nonSystemMsgs,
+              maxTokens: modelConfig.maxTokens,
+              temperature: request.options?.temperature ?? 0.7,
+              stream: true,
+            });
+
+            usedProvider = providerId;
+            usedModel = modelId;
+            logger.info(`[AIPipeline] Stream started: ${providerId}/${modelId}`);
+            break;
+          } catch (err: any) {
+            lastError = err as Error;
+            const msg = String(err?.message || err || '');
+            const isRateLimit = /quota|rate\\.limit|429|too many requests/i.test(msg);
+            logger.warn(
+              `[AIPipeline] Stream failed (${candidateModelId}): ${msg.slice(0, 200)}${isRateLimit ? ' [RATE_LIMIT]' : ''}`
+            );
           }
+        }
+
+        if (!streamResponse) {
+          throw lastError || new Error('All streaming providers failed');
         }
 
         return {
@@ -1550,17 +1550,22 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
     usage?: TokenUsage;
     cached?: boolean;
   }> {
-    try {
-      const systemMessage = messages.find((m) => m.role === 'system');
-      const nonSystemMessages = messages.filter((m) => m.role !== 'system');
+    const systemMessage = messages.find((m) => m.role === 'system');
+    const nonSystemMessages = messages.filter((m) => m.role !== 'system');
 
+    const callOnce = async (cfg: {
+      provider: string;
+      model: string;
+      endpoint?: string | null;
+      apiKey?: string | null;
+    }) => {
       const response = await llmService.call({
         type: 'chat',
         modelConfig: {
-          provider: modelConfig.provider,
-          id: modelConfig.model,
-          endpoint: modelConfig.endpoint || undefined,
-          apiKey: modelConfig.apiKey || undefined,
+          provider: cfg.provider,
+          id: cfg.model,
+          endpoint: cfg.endpoint || undefined,
+          apiKey: cfg.apiKey || undefined,
         },
         systemPrompt: systemMessage?.content || '',
         messages: nonSystemMessages.map((m) => ({
@@ -1581,9 +1586,50 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
         },
         cached: false,
       };
-    } catch (error: any) {
-      logger.error(`[AIPipeline] Provider execution failed: ${error.message}`);
-      throw error;
+    };
+
+    try {
+      return await callOnce(modelConfig);
+    } catch (primaryError: any) {
+      const primaryMsg = String(primaryError?.message || primaryError || '');
+      logger.warn(
+        `[AIPipeline] Primary provider failed (${modelConfig.provider}/${modelConfig.model}): ${primaryMsg.slice(0, 200)}`
+      );
+
+      const tierForFallback = ((options as any)?.selectedTier || 'STANDARD') as any;
+      const fallbackChain: string[] =
+        typeof (modelRouter as any).getFallbackChain === 'function'
+          ? ((modelRouter as any).getFallbackChain(tierForFallback) as string[])
+          : [];
+
+      const candidateModelIds = Array.from(new Set(fallbackChain.filter(Boolean))) as string[];
+
+      let lastError: Error | null = primaryError as Error;
+      for (const candidateModelId of candidateModelIds) {
+        if (candidateModelId === modelConfig.model) continue;
+        try {
+          const cfg = await modelRouter.getProviderConfig(candidateModelId, tierForFallback);
+          const providerId = String((cfg as any)?.provider || '');
+          const modelId = String((cfg as any)?.id || candidateModelId);
+          const apiKey = (cfg as any)?.apiKey;
+          const endpoint = (cfg as any)?.endpoint;
+
+          const isConfigured =
+            providerId.toLowerCase() === 'ollama' ||
+            (typeof apiKey === 'string' && apiKey.trim().length > 0);
+          if (!isConfigured) continue;
+
+          logger.info(`[AIPipeline] Attempting fallback: ${providerId}/${modelId}`);
+          return await callOnce({ provider: providerId, model: modelId, endpoint, apiKey });
+        } catch (fbError: any) {
+          lastError = fbError as Error;
+          const fbMsg = String(fbError?.message || fbError || '');
+          logger.warn(`[AIPipeline] Fallback failed (${candidateModelId}): ${fbMsg.slice(0, 200)}`);
+        }
+      }
+
+      logger.error(`[AIPipeline] Provider execution failed after fallbacks: ${primaryMsg}`);
+      throw lastError || primaryError;
     }
   }
 
