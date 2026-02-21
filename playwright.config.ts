@@ -1,5 +1,6 @@
-import { defineConfig, devices } from '@playwright/test';
 import path from 'node:path';
+
+import { defineConfig, devices } from '@playwright/test';
 
 const backendUrl = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const frontendUrl = process.env.E2E_BASE_URL || 'http://localhost:3000';

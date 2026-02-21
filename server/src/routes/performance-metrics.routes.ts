@@ -6,9 +6,9 @@ import os from 'node:os';
 
 import { Router } from 'express';
 
-import logger from '../utils/Logger.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 

@@ -6,10 +6,10 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { createAccountDeletionRequest, createDataExportRequest } from '../services/gdprService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import { createAccountDeletionRequest, createDataExportRequest } from '../services/gdprService.js';
 
 const router = Router();
 
@@ -1460,7 +1460,9 @@ router.post(
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
     const { reason } = req.body || {};
-    logger.warn(`[settings] Account deletion requested by user ${userId}, reason=${reason || 'n/a'}`);
+    logger.warn(
+      `[settings] Account deletion requested by user ${userId}, reason=${reason || 'n/a'}`
+    );
 
     const request = await createAccountDeletionRequest({ userId, reason });
     return res.status(202).json({ success: true, request });

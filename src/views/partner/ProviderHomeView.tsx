@@ -77,11 +77,16 @@ const WelcomeHeroBanner: React.FC = () => {
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
           {t('partner.hero.title1', 'Be Our Partner.')}
           <br />
-          <span className="text-violet-200">{t('partner.hero.title2', "Let's Grow Together.")}</span>
+          <span className="text-violet-200">
+            {t('partner.hero.title2', "Let's Grow Together.")}
+          </span>
         </h1>
 
         <p className="text-lg md:text-xl text-white/80 mb-8 max-w-2xl">
-          {t('partner.hero.description', 'Join our network of transformation experts. Earn recurring revenue, access premium tools, and help businesses achieve digital excellence.')}
+          {t(
+            'partner.hero.description',
+            'Join our network of transformation experts. Earn recurring revenue, access premium tools, and help businesses achieve digital excellence.'
+          )}
         </p>
 
         <div className="flex flex-wrap gap-4">
@@ -187,7 +192,7 @@ const BetaSuccessStories: React.FC = () => {
     type: t(`partner.beta.stories.${i}.type`),
     location: t(`partner.beta.stories.${i}.location`),
     quote: t(`partner.beta.stories.${i}.quote`),
-    results: (t(`partner.beta.stories.${i}.results`, { returnObjects: true }) as string[]),
+    results: t(`partner.beta.stories.${i}.results`, { returnObjects: true }) as string[],
     since: t(`partner.beta.stories.${i}.since`),
     logo: storyLogos[i],
   }));
@@ -203,7 +208,10 @@ const BetaSuccessStories: React.FC = () => {
           {t('partner.beta.title', 'Early Adopters Already See Results')}
         </h2>
         <p className="text-slate-600 dark:text-slate-400">
-          {t('partner.beta.subtitle', 'Our beta partners are transforming how they work with clients')}
+          {t(
+            'partner.beta.subtitle',
+            'Our beta partners are transforming how they work with clients'
+          )}
         </p>
       </div>
 
@@ -262,7 +270,14 @@ const BetaSuccessStories: React.FC = () => {
       <div className="text-center p-4 bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 rounded-xl border border-violet-200 dark:border-violet-800">
         <p className="text-sm text-violet-700 dark:text-violet-300">
           <Rocket className="w-4 h-4 inline mr-2" />
-          <span dangerouslySetInnerHTML={{ __html: t('partner.beta.launchNotice', '<strong>Official Partner Program launch coming Q1 2026.</strong> Join now as an early adopter and get priority access, special commission rates, and direct input on product roadmap.') }} />
+          <span
+            dangerouslySetInnerHTML={{
+              __html: t(
+                'partner.beta.launchNotice',
+                '<strong>Official Partner Program launch coming Q1 2026.</strong> Join now as an early adopter and get priority access, special commission rates, and direct input on product roadmap.'
+              ),
+            }}
+          />
         </p>
       </div>
     </div>
@@ -278,7 +293,13 @@ const TierProgressionSection: React.FC = () => {
 
   const tierKeys = ['registered', 'bronze', 'silver', 'gold', 'platinum'] as const;
   const tierCommissions = ['10%', '12%', '15%', '18%', '20%'];
-  const tierColors = ['bg-slate-400', 'bg-amber-600', 'bg-slate-300', 'bg-yellow-500', 'bg-violet-600'];
+  const tierColors = [
+    'bg-slate-400',
+    'bg-amber-600',
+    'bg-slate-300',
+    'bg-yellow-500',
+    'bg-violet-600',
+  ];
   const tierBadges = [
     '/images/partner/tier-registered.png',
     '/images/partner/tier-bronze.png',
@@ -303,7 +324,10 @@ const TierProgressionSection: React.FC = () => {
           {t('partner.tiers.title', 'Your Path to Partnership Success')}
         </h2>
         <p className="text-slate-600 dark:text-slate-400">
-          {t('partner.tiers.subtitle', 'Progress through tiers as you grow. Higher tiers = higher rewards.')}
+          {t(
+            'partner.tiers.subtitle',
+            'Progress through tiers as you grow. Higher tiers = higher rewards.'
+          )}
         </p>
       </div>
 
@@ -383,14 +407,19 @@ const OnboardingChecklistSection: React.FC = () => {
             {t('partner.onboarding.title', 'Get Started in 10 Minutes')}
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            {t('partner.onboarding.subtitle', "We've made it simple. Complete these steps to unlock your partner benefits.")}
+            {t(
+              'partner.onboarding.subtitle',
+              "We've made it simple. Complete these steps to unlock your partner benefits."
+            )}
           </p>
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
             {completedCount}/{steps.length}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{t('partner.onboarding.stepsCompleted', 'steps completed')}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {t('partner.onboarding.stepsCompleted', 'steps completed')}
+          </p>
         </div>
       </div>
 

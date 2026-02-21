@@ -119,7 +119,10 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
     return res.json({ success: true, message: 'Restore completed' });
   } catch (error: any) {
     logger.warn('[BackupRoutes] BackupService not available for restore');
-    return respondBackupUnavailable(res, 'Backup restore is not available (service missing or not configured).');
+    return respondBackupUnavailable(
+      res,
+      'Backup restore is not available (service missing or not configured).'
+    );
   }
 });
 
@@ -138,7 +141,10 @@ router.delete('/:id', verifySuperAdmin, async (req, res) => {
     return res.json({ success: true });
   } catch (error: any) {
     logger.warn('[BackupRoutes] BackupService not available for delete');
-    return respondBackupUnavailable(res, 'Backup delete is not available (service missing or not configured).');
+    return respondBackupUnavailable(
+      res,
+      'Backup delete is not available (service missing or not configured).'
+    );
   }
 });
 
@@ -157,7 +163,10 @@ router.post('/manual', verifySuperAdmin, async (req, res) => {
     return res.json({ success: true, backup });
   } catch (error: any) {
     logger.warn('[BackupRoutes] BackupService not available for manual backup');
-    return respondBackupUnavailable(res, 'Manual backup is not available (service missing or not configured).');
+    return respondBackupUnavailable(
+      res,
+      'Manual backup is not available (service missing or not configured).'
+    );
   }
 });
 

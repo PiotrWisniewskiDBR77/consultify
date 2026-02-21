@@ -14,7 +14,9 @@ interface AuthRequest extends Request {
 
 function isSchemaMissingError(err: unknown): boolean {
   const msg = String((err as any)?.message || '').toLowerCase();
-  return msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation');
+  return (
+    msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')
+  );
 }
 
 router.get(
@@ -35,7 +37,9 @@ router.get(
       res.json(reports || []);
     } catch (error: unknown) {
       if (isSchemaMissingError(error)) {
-        return res.status(503).json({ error: 'Premium reports storage not available (schema missing)' });
+        return res
+          .status(503)
+          .json({ error: 'Premium reports storage not available (schema missing)' });
       }
       throw error;
     }
@@ -55,7 +59,9 @@ router.get(
       res.json(report);
     } catch (error: unknown) {
       if (isSchemaMissingError(error)) {
-        return res.status(503).json({ error: 'Premium reports storage not available (schema missing)' });
+        return res
+          .status(503)
+          .json({ error: 'Premium reports storage not available (schema missing)' });
       }
       throw error;
     }
@@ -80,7 +86,9 @@ router.get(
       res.json({ hasAccess: !!access });
     } catch (error: unknown) {
       if (isSchemaMissingError(error)) {
-        return res.status(503).json({ error: 'Premium reports storage not available (schema missing)' });
+        return res
+          .status(503)
+          .json({ error: 'Premium reports storage not available (schema missing)' });
       }
       throw error;
     }

@@ -135,8 +135,12 @@ router.get(
         return res.status(403).json({ success: false, error: 'Organization access required' });
       }
 
-      const includeUserBudgets = String(req.query.includeUserBudgets || '').toLowerCase() === 'true';
-      const budgets = await aiBudgetService.getOrganizationBudgets(organizationId, includeUserBudgets);
+      const includeUserBudgets =
+        String(req.query.includeUserBudgets || '').toLowerCase() === 'true';
+      const budgets = await aiBudgetService.getOrganizationBudgets(
+        organizationId,
+        includeUserBudgets
+      );
       return res.json({ success: true, data: budgets });
     } catch (error: unknown) {
       logger.error('[AI Budgets] List budgets error:', error);

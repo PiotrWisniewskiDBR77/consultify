@@ -1161,7 +1161,9 @@ Extract and return JSON:
         const pdfParse = (await import('pdf-parse')).default;
         const buffer = fs.readFileSync(filePath);
         const pdfData = await pdfParse(buffer);
-        logger.info(`[ReportImport] PDF parsed: ${pdfData.numpages} pages, ${pdfData.text.length} chars`);
+        logger.info(
+          `[ReportImport] PDF parsed: ${pdfData.numpages} pages, ${pdfData.text.length} chars`
+        );
         return pdfData.text;
       } catch (err: any) {
         logger.warn(`[ReportImport] pdf-parse failed: ${err.message}, falling back to raw read`);
@@ -1291,7 +1293,10 @@ Extract and return JSON:
   /**
    * Extract initiatives from document text using pattern matching + AI
    */
-  async extractInitiatives(text: string, framework: SupportedFramework): Promise<ExtractedInitiative[]> {
+  async extractInitiatives(
+    text: string,
+    framework: SupportedFramework
+  ): Promise<ExtractedInitiative[]> {
     const initiatives: ExtractedInitiative[] = [];
 
     // Pattern-based extraction: look for numbered initiative lists
@@ -1310,7 +1315,7 @@ Extract and return JSON:
         const title = match[1]?.trim();
         if (title && title.length > 10 && title.length < 500) {
           // Avoid duplicates
-          if (!initiatives.find(i => i.title.toLowerCase() === title.toLowerCase())) {
+          if (!initiatives.find((i) => i.title.toLowerCase() === title.toLowerCase())) {
             initiatives.push({
               title,
               priority: 'medium',
@@ -1354,7 +1359,9 @@ Respond in JSON format:
           return parsed.initiatives.map((init: any) => ({
             title: String(init.title || '').substring(0, 200),
             description: String(init.description || '').substring(0, 500),
-            priority: ['low', 'medium', 'high', 'critical'].includes(init.priority) ? init.priority : 'medium',
+            priority: ['low', 'medium', 'high', 'critical'].includes(init.priority)
+              ? init.priority
+              : 'medium',
             effort: ['low', 'medium', 'high'].includes(init.effort) ? init.effort : 'medium',
             impact: ['low', 'medium', 'high'].includes(init.impact) ? init.impact : 'medium',
             timeline: String(init.timeline || ''),
@@ -1411,7 +1418,9 @@ Respond in JSON format:
         for (const axis of DRD_AXES) {
           const axisScore = drd.axes[axis.id.toString()];
           if (axisScore) {
-            parts.push(`- **${axis.name}**: ${axisScore.actual}${axisScore.target ? ` → ${axisScore.target}` : ''}`);
+            parts.push(
+              `- **${axis.name}**: ${axisScore.actual}${axisScore.target ? ` → ${axisScore.target}` : ''}`
+            );
           } else {
             parts.push(`- **${axis.name}**: _not recognized_`);
           }
@@ -1553,11 +1562,7 @@ Respond in JSON format:
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `;
-    await DbPromise.run(updateSql, [
-      initiativeIds.length,
-      JSON.stringify(initiativeIds),
-      importId,
-    ]);
+    await DbPromise.run(updateSql, [initiativeIds.length, JSON.stringify(initiativeIds), importId]);
 
     logger.info(
       `[ReportImport] ${initiativeIds.length} initiatives created from import ${importId}`

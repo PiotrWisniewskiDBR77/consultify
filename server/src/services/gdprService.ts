@@ -55,9 +55,7 @@ async function getTableColumns(tableName: string): Promise<Set<string>> {
     `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ?`,
     [tableName]
   );
-  const pgCols = info
-    .map((r) => r.column_name)
-    .filter((v): v is string => typeof v === 'string');
+  const pgCols = info.map((r) => r.column_name).filter((v): v is string => typeof v === 'string');
 
   const set = new Set(pgCols);
   columnsCache.set(tableName, set);
@@ -161,10 +159,9 @@ export async function createDataExportRequest(input: {
 
   // Best-effort timestamp columns
   if (columns.has('requested_at')) {
-    await dbRun(
-      `UPDATE data_export_requests SET requested_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      [requestId]
-    );
+    await dbRun(`UPDATE data_export_requests SET requested_at = CURRENT_TIMESTAMP WHERE id = ?`, [
+      requestId,
+    ]);
   }
   if (columns.has('created_at')) {
     await dbRun(`UPDATE data_export_requests SET created_at = CURRENT_TIMESTAMP WHERE id = ?`, [
@@ -249,7 +246,8 @@ export async function getLatestDataExportRequest(
     id: String(row.id),
     status: String(row.status || 'pending') as ExportRequestStatus,
     requestedAt: String(
-      pickFirstDefined(row.requestedAt, row.requested_at, row.created_at) || new Date().toISOString()
+      pickFirstDefined(row.requestedAt, row.requested_at, row.created_at) ||
+        new Date().toISOString()
     ),
     expiresAt: pickFirstDefined(row.expiresAt, row.expires_at, row.file_expires_at) as
       | string
@@ -284,7 +282,9 @@ export async function getLatestDeletionRequest(
   return {
     id: String(row.id),
     status: String(row.status || 'scheduled') as ExportRequestStatus,
-    requestedAt: String(pickFirstDefined(row.requestedAt, row.requested_at) || new Date().toISOString()),
+    requestedAt: String(
+      pickFirstDefined(row.requestedAt, row.requested_at) || new Date().toISOString()
+    ),
     scheduledFor: pickFirstDefined(row.scheduledFor, row.scheduled_for) as string | undefined,
   };
 }

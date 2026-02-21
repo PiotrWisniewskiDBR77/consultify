@@ -437,7 +437,9 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                 <Target className="w-5 h-5 text-purple-400" />
               </div>
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{t('benefits.kpiCards.totalKpis', 'Total KPIs')}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {t('benefits.kpiCards.totalKpis', 'Total KPIs')}
+                </p>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">
                   {kpiStats.total}
                 </p>
@@ -450,7 +452,9 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                 <TrendingUp className="w-5 h-5 text-green-400" />
               </div>
               <div>
-                <p className="text-sm text-slate-400">{t('benefits.kpiCards.onTarget', 'On Target')}</p>
+                <p className="text-sm text-slate-400">
+                  {t('benefits.kpiCards.onTarget', 'On Target')}
+                </p>
                 <p className="text-2xl font-bold text-green-400">{kpiStats.onTarget}</p>
               </div>
             </div>
@@ -461,7 +465,9 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                 <TrendingDown className="w-5 h-5 text-red-400" />
               </div>
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{t('benefits.kpiCards.belowTarget', 'Below Target')}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {t('benefits.kpiCards.belowTarget', 'Below Target')}
+                </p>
                 <p className="text-2xl font-bold text-red-400">{kpiStats.belowTarget}</p>
               </div>
             </div>
@@ -472,9 +478,14 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
         {kpis.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <BarChart3 className="w-12 h-12 text-slate-600 mb-3" />
-            <p className="text-slate-500 dark:text-slate-400">{t('benefits.kpiEmpty.noKpis', 'No KPIs defined yet')}</p>
+            <p className="text-slate-500 dark:text-slate-400">
+              {t('benefits.kpiEmpty.noKpis', 'No KPIs defined yet')}
+            </p>
             <p className="text-sm text-slate-500 mt-1">
-              {t('benefits.kpiEmpty.completeToTrack', 'Complete initiatives and add KPIs to track benefits')}
+              {t(
+                'benefits.kpiEmpty.completeToTrack',
+                'Complete initiatives and add KPIs to track benefits'
+              )}
             </p>
           </div>
         ) : (
@@ -505,7 +516,10 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
 
                 {initiativeKpis.length === 0 ? (
                   <div className="p-6 text-center text-slate-500">
-                    {t('benefits.kpiEmpty.noKpisForInitiative', 'No KPIs defined for this initiative')}
+                    {t(
+                      'benefits.kpiEmpty.noKpisForInitiative',
+                      'No KPIs defined for this initiative'
+                    )}
                   </div>
                 ) : (
                   <div className="divide-y divide-navy-700">
@@ -538,7 +552,9 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                           </div>
                           <div className="flex items-center gap-6 text-right">
                             <div>
-                              <p className="text-xs text-slate-500">{t('benefits.kpiLabels.current', 'Current')}</p>
+                              <p className="text-xs text-slate-500">
+                                {t('benefits.kpiLabels.current', 'Current')}
+                              </p>
                               <p
                                 className={`text-lg font-bold ${kpi.isOnTarget ? 'text-green-400' : 'text-red-400'}`}
                               >
@@ -546,7 +562,9 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                               </p>
                             </div>
                             <div>
-                              <p className="text-xs text-slate-500">{t('benefits.kpiLabels.target', 'Target')}</p>
+                              <p className="text-xs text-slate-500">
+                                {t('benefits.kpiLabels.target', 'Target')}
+                              </p>
                               <p className="text-lg font-bold text-slate-900 dark:text-white">
                                 {kpi.targetValue ?? '-'} {kpi.unit}
                               </p>
@@ -628,7 +646,9 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
         <div className="flex items-center justify-center h-full text-slate-500">
           <div className="text-center">
             <TrendingUp className="w-12 h-12 mx-auto mb-4 text-emerald-400/50" />
-            <p className="text-lg text-slate-900 dark:text-white">{t('benefits.roiAnalysis.title', 'ROI Analysis')}</p>
+            <p className="text-lg text-slate-900 dark:text-white">
+              {t('benefits.roiAnalysis.title', 'ROI Analysis')}
+            </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {t('benefits.roiAnalysis.subtitle', 'Return on investment calculations')}
             </p>

@@ -8,7 +8,9 @@ import logger from '../../utils/Logger.js';
 
 function isSchemaMissingError(err: unknown): boolean {
   const msg = String((err as any)?.message || '').toLowerCase();
-  return msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation');
+  return (
+    msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')
+  );
 }
 
 export class AIPlaybooksController {

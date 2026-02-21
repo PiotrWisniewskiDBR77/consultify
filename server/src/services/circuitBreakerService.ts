@@ -234,7 +234,10 @@ export class CircuitBreaker {
       // standard HALF_OPEN branch increment once.
       this.state = STATES.HALF_OPEN;
       this.successes = 0;
-      aiLogger.info('CircuitBreaker', `Circuit [${this.name}] promoted OPEN → HALF_OPEN on success`);
+      aiLogger.info(
+        'CircuitBreaker',
+        `Circuit [${this.name}] promoted OPEN → HALF_OPEN on success`
+      );
     }
 
     if (this.state === STATES.HALF_OPEN) {

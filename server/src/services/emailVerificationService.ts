@@ -2,10 +2,10 @@ import crypto from 'node:crypto';
 
 import { v4 as uuidv4 } from 'uuid';
 
-import EmailService from './emailService.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import EmailService from './emailService.js';
 
 type VerifyResult =
   | { success: true; userId: string; email: string }
@@ -108,9 +108,14 @@ async function createVerificationToken(userId: string, email: string): Promise<s
   return token;
 }
 
-async function sendVerificationEmail(email: string, firstName: string, token: string): Promise<void> {
-  const baseUrl = String(process.env.APP_URL || process.env.FRONTEND_URL || 'http://localhost:3000')
-    .replace(/\/$/, '');
+async function sendVerificationEmail(
+  email: string,
+  firstName: string,
+  token: string
+): Promise<void> {
+  const baseUrl = String(
+    process.env.APP_URL || process.env.FRONTEND_URL || 'http://localhost:3000'
+  ).replace(/\/$/, '');
   const verifyLink = `${baseUrl}/auth/verify-email?token=${encodeURIComponent(token)}`;
 
   await EmailService.send({
@@ -143,7 +148,8 @@ async function verifyEmail(token: string): Promise<VerifyResult> {
 
   if (!row) return { success: false, error: 'Invalid token' };
   if (row.used_at) return { success: false, error: 'Token already used' };
-  if (row.expires_at && new Date(row.expires_at) < new Date()) return { success: false, error: 'Token expired' };
+  if (row.expires_at && new Date(row.expires_at) < new Date())
+    return { success: false, error: 'Token expired' };
 
   await DbPromise.run(
     `UPDATE email_verification_tokens SET used_at = CURRENT_TIMESTAMP WHERE token_hash = ?`,
@@ -155,7 +161,9 @@ async function verifyEmail(token: string): Promise<VerifyResult> {
   return { success: true, userId: String(row.user_id), email: String(row.email) };
 }
 
-async function resendVerificationEmail(userId: string): Promise<{ success: boolean; error?: string }> {
+async function resendVerificationEmail(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
   const user = await getUserEmail(userId);
   if (!user) return { success: false, error: 'User not found' };
 
@@ -184,4 +192,3 @@ export default {
   resendVerificationEmail,
   isEmailVerified,
 };
-

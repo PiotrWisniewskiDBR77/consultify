@@ -64,7 +64,9 @@ async function ensureHelpSchema() {
       []
     );
   } catch (e) {
-    logger.warn('[Help] ensureHelpSchema failed (continuing)', { error: (e as Error)?.message || e });
+    logger.warn('[Help] ensureHelpSchema failed (continuing)', {
+      error: (e as Error)?.message || e,
+    });
   }
 }
 

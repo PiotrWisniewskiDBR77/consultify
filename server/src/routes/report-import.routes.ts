@@ -522,10 +522,7 @@ router.get('/:id/download', authenticateToken, async (req: any, res: any) => {
     }
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${importRecord.sourceFileName}"`
-    );
+    res.setHeader('Content-Disposition', `attachment; filename="${importRecord.sourceFileName}"`);
     const stream = fs.createReadStream(importRecord.sourceFilePath);
     stream.pipe(res);
   } catch (error: any) {

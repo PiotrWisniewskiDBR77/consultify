@@ -52,10 +52,24 @@ import { DigitizationAnalysis } from './types';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 
 // Analysis status mapping
-const getStatusMeta = (t: (key: string, fallback?: string) => string): Record<string, { label: string; dotColor: string; itemStatus: ItemStatus }> => ({
-  DRAFT: { label: t('economics.status.draft', 'Draft'), dotColor: 'bg-slate-400', itemStatus: 'DRAFT' },
-  REVIEW: { label: t('economics.status.inReview', 'In Review'), dotColor: 'bg-amber-400', itemStatus: 'REVIEW' },
-  APPROVED: { label: t('economics.status.completed', 'Completed'), dotColor: 'bg-emerald-400', itemStatus: 'DONE' },
+const getStatusMeta = (
+  t: (key: string, fallback?: string) => string
+): Record<string, { label: string; dotColor: string; itemStatus: ItemStatus }> => ({
+  DRAFT: {
+    label: t('economics.status.draft', 'Draft'),
+    dotColor: 'bg-slate-400',
+    itemStatus: 'DRAFT',
+  },
+  REVIEW: {
+    label: t('economics.status.inReview', 'In Review'),
+    dotColor: 'bg-amber-400',
+    itemStatus: 'REVIEW',
+  },
+  APPROVED: {
+    label: t('economics.status.completed', 'Completed'),
+    dotColor: 'bg-emerald-400',
+    itemStatus: 'DONE',
+  },
 });
 
 // Type codes for analysis types
@@ -378,7 +392,9 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
               <h3 className="text-sm font-semibold text-white">{selectedAnalysis.name}</h3>
               <p className="text-xs text-slate-400">
                 {selectedAnalysis.projectName
-                  ? t('economics.detail.project', 'Project: {{name}}', { name: selectedAnalysis.projectName })
+                  ? t('economics.detail.project', 'Project: {{name}}', {
+                      name: selectedAnalysis.projectName,
+                    })
                   : t('economics.detail.noProject', 'No project')}{' '}
                 • {t('economics.detail.score', 'Score:')}{' '}
                 <span className="text-emerald-400 font-medium">
@@ -467,7 +483,10 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
             }}
             onNewItem={handleNewAnalysis}
             newItemLabel={t('economics.actions.newAnalysis', 'New Analysis')}
-            emptyMessage={t('economics.empty.noAnalyses', 'No analyses yet. Create your first analysis.')}
+            emptyMessage={t(
+              'economics.empty.noAnalyses',
+              'No analyses yet. Create your first analysis.'
+            )}
           />
         );
       }
@@ -481,7 +500,10 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
           }
           activeFilters={activeFilters}
           onFilterChange={setActiveFilters}
-          emptyMessage={t('economics.empty.noAnalyses', 'No analyses yet. Create your first analysis.')}
+          emptyMessage={t(
+            'economics.empty.noAnalyses',
+            'No analyses yet. Create your first analysis.'
+          )}
         />
       );
     }
@@ -494,9 +516,14 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
         return (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <BarChart3 className="w-16 h-16 text-slate-600 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">{t('economics.empty.noCompleted', 'No completed analyses')}</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              {t('economics.empty.noCompleted', 'No completed analyses')}
+            </h3>
             <p className="text-sm text-slate-400 mb-6">
-              {t('economics.empty.completeToSee', 'Complete analyses to see results and recommendations.')}
+              {t(
+                'economics.empty.completeToSee',
+                'Complete analyses to see results and recommendations.'
+              )}
             </p>
           </div>
         );

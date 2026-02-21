@@ -82,13 +82,41 @@ const IMPORT_STATUS_CONFIG: Record<
   string,
   { label: string; color: string; icon: 'clock' | 'check' | 'spinner' | 'alert' }
 > = {
-  pending: { label: 'Uploaded', color: 'text-slate-400 bg-slate-500/15 border-slate-500/20', icon: 'clock' },
-  detecting: { label: 'Detecting framework...', color: 'text-amber-400 bg-amber-500/15 border-amber-500/20', icon: 'spinner' },
-  extracting: { label: 'Extracting data...', color: 'text-amber-400 bg-amber-500/15 border-amber-500/20', icon: 'spinner' },
-  ready_for_review: { label: 'Ready for review', color: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/20', icon: 'check' },
-  assessment_created: { label: 'Assessment created', color: 'text-blue-400 bg-blue-500/15 border-blue-500/20', icon: 'check' },
-  initiatives_created: { label: 'Initiatives created', color: 'text-cyan-400 bg-cyan-500/15 border-cyan-500/20', icon: 'check' },
-  completed: { label: 'Completed', color: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/20', icon: 'check' },
+  pending: {
+    label: 'Uploaded',
+    color: 'text-slate-400 bg-slate-500/15 border-slate-500/20',
+    icon: 'clock',
+  },
+  detecting: {
+    label: 'Detecting framework...',
+    color: 'text-amber-400 bg-amber-500/15 border-amber-500/20',
+    icon: 'spinner',
+  },
+  extracting: {
+    label: 'Extracting data...',
+    color: 'text-amber-400 bg-amber-500/15 border-amber-500/20',
+    icon: 'spinner',
+  },
+  ready_for_review: {
+    label: 'Ready for review',
+    color: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/20',
+    icon: 'check',
+  },
+  assessment_created: {
+    label: 'Assessment created',
+    color: 'text-blue-400 bg-blue-500/15 border-blue-500/20',
+    icon: 'check',
+  },
+  initiatives_created: {
+    label: 'Initiatives created',
+    color: 'text-cyan-400 bg-cyan-500/15 border-cyan-500/20',
+    icon: 'check',
+  },
+  completed: {
+    label: 'Completed',
+    color: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/20',
+    icon: 'check',
+  },
   failed: { label: 'Failed', color: 'text-red-400 bg-red-500/15 border-red-500/20', icon: 'alert' },
 };
 
@@ -224,8 +252,13 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
   const fieldsMissing = extractedData?.extractionDetails?.fieldsMissing || [];
   const hasAssessment = !!data.targetId;
   const hasInitiatives = (data.initiativesCreated || 0) > 0;
-  const canCreateAssessment = !hasAssessment && data.status !== 'pending' && data.status !== 'failed';
-  const canCreateInitiatives = !hasInitiatives && initiatives.length > 0 && data.status !== 'pending' && data.status !== 'failed';
+  const canCreateAssessment =
+    !hasAssessment && data.status !== 'pending' && data.status !== 'failed';
+  const canCreateInitiatives =
+    !hasInitiatives &&
+    initiatives.length > 0 &&
+    data.status !== 'pending' &&
+    data.status !== 'failed';
 
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
@@ -249,14 +282,17 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
               </span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {data.detectedFramework} · Uploaded {data.createdAt ? new Date(data.createdAt).toLocaleDateString() : ''}
+              {data.detectedFramework} · Uploaded{' '}
+              {data.createdAt ? new Date(data.createdAt).toLocaleDateString() : ''}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Status badge */}
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${statusCfg.color}`}>
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${statusCfg.color}`}
+          >
             {statusCfg.icon === 'spinner' && <Loader2 size={12} className="animate-spin" />}
             {statusCfg.icon === 'check' && <CheckCircle2 size={12} />}
             {statusCfg.icon === 'clock' && <Clock size={12} />}
@@ -289,14 +325,15 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-5xl mx-auto space-y-6">
-
           {/* Coverage & Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Coverage */}
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Coverage</p>
               <div className="flex items-end gap-2">
-                <span className="text-2xl font-bold text-white">{Math.round(data.coveragePercent || 0)}%</span>
+                <span className="text-2xl font-bold text-white">
+                  {Math.round(data.coveragePercent || 0)}%
+                </span>
               </div>
               <div className="mt-2 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                 <div
@@ -320,7 +357,9 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Fields Recognized</p>
               <div className="flex items-end gap-2">
                 <span className="text-lg font-bold text-emerald-400">{fieldsFound.length}</span>
-                <span className="text-sm text-slate-500">/ {fieldsFound.length + fieldsMissing.length}</span>
+                <span className="text-sm text-slate-500">
+                  / {fieldsFound.length + fieldsMissing.length}
+                </span>
               </div>
               {fieldsMissing.length > 0 && (
                 <p className="text-xs text-amber-400 mt-1">{fieldsMissing.length} missing</p>
@@ -386,8 +425,10 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                   Create Initiatives ({initiatives.length})
                 </button>
               ) : hasInitiatives ? (
-                <span className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium
-                  bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 rounded-xl">
+                <span
+                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium
+                  bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 rounded-xl"
+                >
                   <CheckCircle2 size={16} />
                   {data.initiativesCreated} Initiatives Created
                 </span>
@@ -409,20 +450,38 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
           {/* Auto-Summary */}
           {data.autoSummary && (
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Report Summary</h3>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
+                Report Summary
+              </h3>
               <div className="prose prose-sm prose-invert max-w-none text-slate-300">
                 {data.autoSummary.split('\n').map((line, i) => {
                   if (line.startsWith('## ')) {
-                    return <h2 key={i} className="text-base font-bold text-white mt-4 mb-2">{line.replace('## ', '')}</h2>;
+                    return (
+                      <h2 key={i} className="text-base font-bold text-white mt-4 mb-2">
+                        {line.replace('## ', '')}
+                      </h2>
+                    );
                   }
                   if (line.startsWith('### ')) {
-                    return <h3 key={i} className="text-sm font-semibold text-slate-200 mt-3 mb-1">{line.replace('### ', '')}</h3>;
+                    return (
+                      <h3 key={i} className="text-sm font-semibold text-slate-200 mt-3 mb-1">
+                        {line.replace('### ', '')}
+                      </h3>
+                    );
                   }
                   if (line.startsWith('**') && line.endsWith('**')) {
-                    return <p key={i} className="font-medium text-white text-sm">{line.replace(/\*\*/g, '')}</p>;
+                    return (
+                      <p key={i} className="font-medium text-white text-sm">
+                        {line.replace(/\*\*/g, '')}
+                      </p>
+                    );
                   }
                   if (line.startsWith('- ')) {
-                    return <li key={i} className="text-sm text-slate-400 ml-4">{line.replace('- ', '')}</li>;
+                    return (
+                      <li key={i} className="text-sm text-slate-400 ml-4">
+                        {line.replace('- ', '')}
+                      </li>
+                    );
                   }
                   if (line.startsWith('**')) {
                     const parts = line.split('**');
@@ -434,7 +493,11 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                     );
                   }
                   if (line.trim() === '') return <br key={i} />;
-                  return <p key={i} className="text-sm text-slate-400">{line}</p>;
+                  return (
+                    <p key={i} className="text-sm text-slate-400">
+                      {line}
+                    </p>
+                  );
                 })}
               </div>
             </div>
@@ -466,12 +529,17 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                       )}
                       <div className="flex items-center gap-2 mt-1.5">
                         {init.priority && (
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                            init.priority === 'critical' ? 'bg-red-500/15 text-red-400' :
-                            init.priority === 'high' ? 'bg-orange-500/15 text-orange-400' :
-                            init.priority === 'medium' ? 'bg-blue-500/15 text-blue-400' :
-                            'bg-slate-500/15 text-slate-400'
-                          }`}>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                              init.priority === 'critical'
+                                ? 'bg-red-500/15 text-red-400'
+                                : init.priority === 'high'
+                                  ? 'bg-orange-500/15 text-orange-400'
+                                  : init.priority === 'medium'
+                                    ? 'bg-blue-500/15 text-blue-400'
+                                    : 'bg-slate-500/15 text-slate-400'
+                            }`}
+                          >
                             {init.priority}
                           </span>
                         )}
@@ -501,7 +569,9 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
           {/* Coverage Details */}
           {(fieldsFound.length > 0 || fieldsMissing.length > 0) && (
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Coverage Details</h3>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
+                Coverage Details
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Recognized */}
                 {fieldsFound.length > 0 && (
@@ -511,7 +581,10 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {fieldsFound.map((field, i) => (
-                        <span key={i} className="text-[11px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/15">
+                        <span
+                          key={i}
+                          className="text-[11px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/15"
+                        >
                           {field}
                         </span>
                       ))}
@@ -527,7 +600,10 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {fieldsMissing.map((field, i) => (
-                        <span key={i} className="text-[11px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/15">
+                        <span
+                          key={i}
+                          className="text-[11px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/15"
+                        >
                           {field}
                         </span>
                       ))}

@@ -1051,10 +1051,18 @@ if (startServer && shouldStartHttpServer) {
 
     // Extra diagnostics: capture exits and crashes (helps identify "who killed us" vs internal exit paths)
     process.on('exit', (code) => {
-      logger.info('[Process] exit', { code, pid: process.pid, uptimeSeconds: Math.round(process.uptime()) });
+      logger.info('[Process] exit', {
+        code,
+        pid: process.pid,
+        uptimeSeconds: Math.round(process.uptime()),
+      });
     });
     process.on('beforeExit', (code) => {
-      logger.info('[Process] beforeExit', { code, pid: process.pid, uptimeSeconds: Math.round(process.uptime()) });
+      logger.info('[Process] beforeExit', {
+        code,
+        pid: process.pid,
+        uptimeSeconds: Math.round(process.uptime()),
+      });
     });
     process.on('uncaughtException', (err) => {
       logger.error('[Process] uncaughtException', { message: err?.message, stack: err?.stack });

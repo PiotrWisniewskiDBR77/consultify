@@ -409,14 +409,7 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
     'updated_at',
   ],
   user_data_retention: ['user_id', 'retention_period', 'auto_delete', 'updated_at'],
-  data_export_requests: [
-    'id',
-    'user_id',
-    'status',
-    'requested_at',
-    'expires_at',
-    'download_url',
-  ],
+  data_export_requests: ['id', 'user_id', 'status', 'requested_at', 'expires_at', 'download_url'],
   account_deletion_requests: [
     'id',
     'user_id',
@@ -1283,12 +1276,8 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         for (const table of Object.keys(verification.missingColumns)) {
           for (const column of verification.missingColumns[table]) {
             try {
-              await db.query(
-                `ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} TEXT`
-              );
-              logger.info(
-                `[DatabaseInitializer] Added missing column ${table}.${column}`
-              );
+              await db.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} TEXT`);
+              logger.info(`[DatabaseInitializer] Added missing column ${table}.${column}`);
             } catch (colErr: any) {
               logger.warn(
                 `[DatabaseInitializer] Failed to add column ${table}.${column}: ${colErr?.message}`
@@ -1455,7 +1444,10 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         await new Promise<void>((resolve) => {
           db.run(`ALTER TABLE knowledge_docs ADD COLUMN project_id TEXT`, (err: Error | null) => {
             if (err && !err.message.includes('duplicate column name')) {
-              logger.warn('[DatabaseInitializer] knowledge_docs.project_id add failed:', err.message);
+              logger.warn(
+                '[DatabaseInitializer] knowledge_docs.project_id add failed:',
+                err.message
+              );
             }
             resolve();
           });
@@ -1469,7 +1461,10 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
             `ALTER TABLE knowledge_docs ADD COLUMN deleted_at DATETIME`,
             (err: Error | null) => {
               if (err && !err.message.includes('duplicate column name')) {
-                logger.warn('[DatabaseInitializer] knowledge_docs.deleted_at add failed:', err.message);
+                logger.warn(
+                  '[DatabaseInitializer] knowledge_docs.deleted_at add failed:',
+                  err.message
+                );
               }
               resolve();
             }

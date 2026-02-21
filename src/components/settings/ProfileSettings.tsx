@@ -145,7 +145,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
   const PRONOUNS_OPTIONS = useMemo(
     () => [
-      { value: '', label: t('settings.profile.pronounsOptions.preferNotToSay', 'Prefer not to say') },
+      {
+        value: '',
+        label: t('settings.profile.pronounsOptions.preferNotToSay', 'Prefer not to say'),
+      },
       { value: 'he/him', label: t('settings.profile.pronounsOptions.heHim', 'He/Him') },
       { value: 'she/her', label: t('settings.profile.pronounsOptions.sheHer', 'She/Her') },
       { value: 'they/them', label: t('settings.profile.pronounsOptions.theyThem', 'They/Them') },
@@ -156,17 +159,29 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
   const DEPARTMENT_OPTIONS = useMemo(
     () => [
-      { value: '', label: t('settings.profile.departmentOptions.selectDepartment', 'Select department...') },
-      { value: 'Engineering', label: t('settings.profile.departmentOptions.engineering', 'Engineering') },
+      {
+        value: '',
+        label: t('settings.profile.departmentOptions.selectDepartment', 'Select department...'),
+      },
+      {
+        value: 'Engineering',
+        label: t('settings.profile.departmentOptions.engineering', 'Engineering'),
+      },
       { value: 'Product', label: t('settings.profile.departmentOptions.product', 'Product') },
       { value: 'Design', label: t('settings.profile.departmentOptions.design', 'Design') },
       { value: 'Marketing', label: t('settings.profile.departmentOptions.marketing', 'Marketing') },
       { value: 'Sales', label: t('settings.profile.departmentOptions.sales', 'Sales') },
-      { value: 'Operations', label: t('settings.profile.departmentOptions.operations', 'Operations') },
+      {
+        value: 'Operations',
+        label: t('settings.profile.departmentOptions.operations', 'Operations'),
+      },
       { value: 'Finance', label: t('settings.profile.departmentOptions.finance', 'Finance') },
       { value: 'HR', label: t('settings.profile.departmentOptions.hr', 'Human Resources') },
       { value: 'Legal', label: t('settings.profile.departmentOptions.legal', 'Legal') },
-      { value: 'Customer Success', label: t('settings.profile.departmentOptions.customerSuccess', 'Customer Success') },
+      {
+        value: 'Customer Success',
+        label: t('settings.profile.departmentOptions.customerSuccess', 'Customer Success'),
+      },
       { value: 'Support', label: t('settings.profile.departmentOptions.support', 'Support') },
       { value: 'Executive', label: t('settings.profile.departmentOptions.executive', 'Executive') },
       { value: 'Other', label: t('settings.profile.departmentOptions.other', 'Other') },
@@ -322,7 +337,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     <CalendarOff size={12} />
                     {t('settings.profile.outOfOfficeBadge', 'Out of Office')}
                     {formState.outOfOfficeUntil && (
-                      <span>{t('settings.profile.outOfOfficeUntil', 'until {{date}}', { date: new Date(formState.outOfOfficeUntil).toLocaleDateString() })}</span>
+                      <span>
+                        {t('settings.profile.outOfOfficeUntil', 'until {{date}}', {
+                          date: new Date(formState.outOfOfficeUntil).toLocaleDateString(),
+                        })}
+                      </span>
                     )}
                   </div>
                 ) : (
@@ -380,7 +399,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   />
                 </div>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
-                  {t('settings.profile.displayNameHint', 'This is how your name will appear to other users. Leave empty to use your full name.')}
+                  {t(
+                    'settings.profile.displayNameHint',
+                    'This is how your name will appear to other users. Leave empty to use your full name.'
+                  )}
                 </p>
               </div>
               <div className="space-y-1.5">
@@ -507,7 +529,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 </div>
               </div>
               <div className="space-y-1.5 md:col-span-2">
-                <label className={labelClass}>{t('settings.profile.linkedinId', 'LinkedIn Profile ID')}</label>
+                <label className={labelClass}>
+                  {t('settings.profile.linkedinId', 'LinkedIn Profile ID')}
+                </label>
                 <div className="relative">
                   <Globe
                     size={14}
@@ -520,7 +544,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     className={inputWithIconClass}
                   />
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 ml-1">
-                    {t('settings.profile.linkedinHint', 'Enter your profile ID from the LinkedIn URL (after /in/)')}
+                    {t(
+                      'settings.profile.linkedinHint',
+                      'Enter your profile ID from the LinkedIn URL (after /in/)'
+                    )}
                   </p>
                 </div>
               </div>
@@ -585,13 +612,20 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   <input
                     value={formState.statusMessage}
                     onChange={(e) => setFormState({ ...formState, statusMessage: e.target.value })}
-                    placeholder={t('settings.profile.statusPlaceholder', 'e.g. In meetings until 3pm, Working remotely...')}
+                    placeholder={t(
+                      'settings.profile.statusPlaceholder',
+                      'e.g. In meetings until 3pm, Working remotely...'
+                    )}
                     maxLength={100}
                     className={inputWithIconClass}
                   />
                 </div>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
-                  {t('settings.profile.statusHint', 'Let your team know what you\'re up to ({{count}}/100)', { count: formState.statusMessage.length })}
+                  {t(
+                    'settings.profile.statusHint',
+                    "Let your team know what you're up to ({{count}}/100)",
+                    { count: formState.statusMessage.length }
+                  )}
                 </p>
               </div>
 
@@ -616,7 +650,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                         {t('settings.profile.outOfOffice', 'Out of Office')}
                       </label>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {t('settings.profile.outOfOfficeNotify', 'Automatically notify others when you\'re away')}
+                        {t(
+                          'settings.profile.outOfOfficeNotify',
+                          "Automatically notify others when you're away"
+                        )}
                       </p>
                     </div>
                   </div>
@@ -661,7 +698,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                         onChange={(e) =>
                           setFormState({ ...formState, outOfOfficeMessage: e.target.value })
                         }
-                        placeholder={t('settings.profile.outOfOfficePlaceholder', 'I\'m currently out of office and will respond when I return...')}
+                        placeholder={t(
+                          'settings.profile.outOfOfficePlaceholder',
+                          "I'm currently out of office and will respond when I return..."
+                        )}
                         rows={3}
                         className={inputClass + ' resize-none'}
                       />

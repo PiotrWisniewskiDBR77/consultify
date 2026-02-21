@@ -355,10 +355,10 @@ router.get(
       const userId = req.user!.id;
       const { requestId } = req.params;
 
-      const request = await dbGet<any>(`SELECT * FROM data_export_requests WHERE id = ? AND user_id = ?`, [
-        requestId,
-        userId,
-      ]);
+      const request = await dbGet<any>(
+        `SELECT * FROM data_export_requests WHERE id = ? AND user_id = ?`,
+        [requestId, userId]
+      );
 
       if (!request) {
         return res.status(404).json({ error: 'Export not found' });

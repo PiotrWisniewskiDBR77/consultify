@@ -117,7 +117,8 @@ export const TaskDropdown = () => {
     const now = new Date();
     const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 0) return t('taskDropdown.dOverdue', '{{count}}d overdue', { count: Math.abs(diffDays) });
+    if (diffDays < 0)
+      return t('taskDropdown.dOverdue', '{{count}}d overdue', { count: Math.abs(diffDays) });
     if (diffDays === 0) return t('taskDropdown.today', 'Today');
     if (diffDays === 1) return t('taskDropdown.tomorrow', 'Tomorrow');
     return d.toLocaleDateString();
@@ -278,7 +279,9 @@ export const TaskDropdown = () => {
                       onClick={handleNavigateToTasks}
                       className="text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors"
                     >
-                      {t('taskDropdown.viewMore', 'View {{count}} more tasks', { count: tasks.length - 5 })}
+                      {t('taskDropdown.viewMore', 'View {{count}} more tasks', {
+                        count: tasks.length - 5,
+                      })}
                     </button>
                   </div>
                 )}

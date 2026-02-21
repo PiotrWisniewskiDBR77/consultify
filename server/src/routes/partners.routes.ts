@@ -26,7 +26,9 @@ const router = Router();
 
 function isSchemaMissingError(err: unknown): boolean {
   const msg = String((err as any)?.message || '').toLowerCase();
-  return msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation');
+  return (
+    msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')
+  );
 }
 
 // Apply authentication to all routes

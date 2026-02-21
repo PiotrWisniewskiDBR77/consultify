@@ -210,7 +210,10 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
               </div>
             )}
             <p className="text-[10px] text-slate-400 dark:text-slate-500">
-              {t('llm.description', 'Define which LLM level to use. System automatically selects the best available model in that tier.')}
+              {t(
+                'llm.description',
+                'Define which LLM level to use. System automatically selects the best available model in that tier.'
+              )}
             </p>
           </div>
 

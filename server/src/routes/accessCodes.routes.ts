@@ -153,7 +153,11 @@ router.post(
         type === AccessCodeService.CODE_TYPES.TRIAL
       ) {
         const normalizedRole = (userRole || '').toLowerCase();
-        if (!['superadmin', 'super_admin', 'owner', 'admin', 'administrator', 'consultant'].includes(normalizedRole)) {
+        if (
+          !['superadmin', 'super_admin', 'owner', 'admin', 'administrator', 'consultant'].includes(
+            normalizedRole
+          )
+        ) {
           return res.status(403).json({ error: 'Insufficient permissions' });
         }
         if (normalizedRole === 'consultant') {
@@ -161,12 +165,18 @@ router.post(
         }
       } else if (type === AccessCodeService.CODE_TYPES.INVITE) {
         const normalizedRole = (userRole || '').toLowerCase();
-        if (!['superadmin', 'super_admin', 'owner', 'admin', 'administrator'].includes(normalizedRole)) {
+        if (
+          !['superadmin', 'super_admin', 'owner', 'admin', 'administrator'].includes(normalizedRole)
+        ) {
           return res.status(403).json({ error: 'Only Admins can generate team invites' });
         }
         // Org scoping
         const userOrgId = req.user?.organizationId || req.user?.organization_id;
-        if (['admin', 'administrator'].includes(normalizedRole) && organizationId && organizationId !== userOrgId) {
+        if (
+          ['admin', 'administrator'].includes(normalizedRole) &&
+          organizationId &&
+          organizationId !== userOrgId
+        ) {
           return res.status(403).json({ error: 'Cannot generate invite for another organization' });
         }
       }

@@ -2,7 +2,7 @@
  * user-data-controls Routes
  * Data export and privacy controls (no stubs)
  */
-import { Router, type Response } from 'express';
+import { type Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { collectUserData } from '../../services/gdprService.js';
@@ -27,4 +27,3 @@ router.get(
 );
 
 export default router;
-

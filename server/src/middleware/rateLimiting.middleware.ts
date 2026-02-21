@@ -91,6 +91,16 @@ export const defaultRateLimiter = createLimiter({
   prefix: 'api',
 });
 
+/**
+ * API auth surface (token-protected endpoints) has a higher ceiling than public auth.
+ * Kept as a separate export because unit tests (and some routes) reference it explicitly.
+ */
+export const apiAuthRateLimiter = createLimiter({
+  windowMs: 15 * 60_000,
+  max: isProd ? 1000 : 5000,
+  prefix: 'api-auth',
+});
+
 /** AI Chat stream: 30 req / min (prod) */
 export const aiRateLimiter = createLimiter({
   windowMs: 60_000,

@@ -56,7 +56,9 @@ router.use(defaultRateLimiter);
 
 function isSchemaMissingError(err: unknown): boolean {
   const msg = String((err as any)?.message || '').toLowerCase();
-  return msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation');
+  return (
+    msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')
+  );
 }
 
 function respondSchemaUnavailable(res: Response, feature: string) {
@@ -198,19 +200,19 @@ router.get(
  * GET /billing/analytics/mrr/trend
  * Get MRR trend over time
  */
-	router.get(
-	  '/analytics/mrr/trend',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
-	      const days = parseInt(req.query.days as string) || 30;
-	      const granularity = days <= 7 ? 'daily' : days <= 30 ? 'daily' : 'weekly';
-	      const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+router.get(
+  '/analytics/mrr/trend',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const days = parseInt(req.query.days as string) || 30;
+      const granularity = days <= 7 ? 'daily' : days <= 30 ? 'daily' : 'weekly';
+      const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-	      // Get MRR snapshots or calculate from subscription events
-	      const snapshots = await dbAll(
-	        `
+      // Get MRR snapshots or calculate from subscription events
+      const snapshots = await dbAll(
+        `
 	                SELECT 
 	                    DATE(created_at) as date,
 	                    SUM(CASE WHEN event_type = 'new' THEN mrr_delta ELSE 0 END) as new_mrr,
@@ -221,90 +223,92 @@ router.get(
 	                GROUP BY DATE(created_at)
 	                ORDER BY date ASC
 	            `,
-	        [startDate.toISOString()],
-	        { fallback: false }
-	      );
+        [startDate.toISOString()],
+        { fallback: false }
+      );
 
-	      const currentMRRRow = (await dbGet(
-	        `
+      const currentMRRRow = (await dbGet(
+        `
 	          SELECT SUM(COALESCE(sp.price_monthly, 0)) as mrr
 	          FROM subscriptions s
 	          LEFT JOIN subscription_plans sp ON s.plan_id = sp.id
 	          WHERE s.status = 'active'
 	        `,
-	        [],
-	        { fallback: false }
-	      )) as any;
-	      const currentMRR = Number(currentMRRRow?.mrr || 0);
+        [],
+        { fallback: false }
+      )) as any;
+      const currentMRR = Number(currentMRRRow?.mrr || 0);
 
-	      const totalNetDelta = (snapshots || []).reduce((sum: number, s: any) => {
-	        const newMrr = Number(s?.new_mrr || 0);
-	        const expansionMrr = Number(s?.expansion_mrr || 0);
-	        const churnMrr = Number(s?.churn_mrr || 0);
-	        return sum + (newMrr + expansionMrr - churnMrr);
-	      }, 0);
+      const totalNetDelta = (snapshots || []).reduce((sum: number, s: any) => {
+        const newMrr = Number(s?.new_mrr || 0);
+        const expansionMrr = Number(s?.expansion_mrr || 0);
+        const churnMrr = Number(s?.churn_mrr || 0);
+        return sum + (newMrr + expansionMrr - churnMrr);
+      }, 0);
 
-	      const startMRR = currentMRR - totalNetDelta;
-	      let runningMRR = startMRR;
+      const startMRR = currentMRR - totalNetDelta;
+      let runningMRR = startMRR;
 
-	      const data = (snapshots || []).map((s: any) => {
-	        const newMrr = Number(s?.new_mrr || 0);
-	        const expansionMrr = Number(s?.expansion_mrr || 0);
-	        const churnMrr = Number(s?.churn_mrr || 0);
-	        const netDelta = newMrr + expansionMrr - churnMrr;
-	        const growth = runningMRR ? (netDelta / (runningMRR || 1)) * 100 : 0;
-	        runningMRR += netDelta;
-	        return {
-	          date: s.date,
-	          mrr: runningMRR,
-	          new_mrr: newMrr,
-	          expansion_mrr: expansionMrr,
-	          churn_mrr: churnMrr,
-	          growth,
-	        };
-	      });
+      const data = (snapshots || []).map((s: any) => {
+        const newMrr = Number(s?.new_mrr || 0);
+        const expansionMrr = Number(s?.expansion_mrr || 0);
+        const churnMrr = Number(s?.churn_mrr || 0);
+        const netDelta = newMrr + expansionMrr - churnMrr;
+        const growth = runningMRR ? (netDelta / (runningMRR || 1)) * 100 : 0;
+        runningMRR += netDelta;
+        return {
+          date: s.date,
+          mrr: runningMRR,
+          new_mrr: newMrr,
+          expansion_mrr: expansionMrr,
+          churn_mrr: churnMrr,
+          growth,
+        };
+      });
 
-	      const endMRR = data.length > 0 ? data[data.length - 1].mrr : startMRR;
-	      const avgGrowth =
-	        data.length > 0 ? data.reduce((sum: number, d: any) => sum + Number(d.growth || 0), 0) / data.length : 0;
+      const endMRR = data.length > 0 ? data[data.length - 1].mrr : startMRR;
+      const avgGrowth =
+        data.length > 0
+          ? data.reduce((sum: number, d: any) => sum + Number(d.growth || 0), 0) / data.length
+          : 0;
 
-	      return res.json({
-	        trend: {
-	          period: { days, granularity },
-	          data,
-	          summary: {
-	            startMRR,
-	            endMRR,
-	            totalGrowth: `${(((endMRR - startMRR) / (startMRR || 1)) * 100).toFixed(1)}%`,
-	            avgGrowth: `${avgGrowth.toFixed(1)}%`,
-	          },
-	        },
-	      });
-	    } catch (error: any) {
-	      logger.error('[Billing Analytics] MRR trend error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'MRR trend analytics');
-	      }
-	      return res.status(500).json({ error: 'Failed to get MRR trend' });
-	    }
-	  })
-	);
+      return res.json({
+        trend: {
+          period: { days, granularity },
+          data,
+          summary: {
+            startMRR,
+            endMRR,
+            totalGrowth: `${(((endMRR - startMRR) / (startMRR || 1)) * 100).toFixed(1)}%`,
+            avgGrowth: `${avgGrowth.toFixed(1)}%`,
+          },
+        },
+      });
+    } catch (error: any) {
+      logger.error('[Billing Analytics] MRR trend error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'MRR trend analytics');
+      }
+      return res.status(500).json({ error: 'Failed to get MRR trend' });
+    }
+  })
+);
 
 /**
  * GET /billing/analytics/churn
  * Get churn analysis
  */
-	router.get(
-	  '/analytics/churn',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req: AuthRequest, res: Response) => {
-	    try {
-	      const months = 6;
+router.get(
+  '/analytics/churn',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const months = 6;
 
-	      // Get churn data from subscription events or subscriptions table
-	      const churnData = await dbAll(
-	        `
+      // Get churn data from subscription events or subscriptions table
+      const churnData = await dbAll(
+        `
 	                SELECT 
 	                    strftime('%Y-%m', canceled_at) as month,
 	                    COUNT(*) as churned_customers,
@@ -315,59 +319,60 @@ router.get(
 	                GROUP BY strftime('%Y-%m', canceled_at)
 	                ORDER BY month DESC
 	            `,
-	        [],
-	        { fallback: false }
-	      );
+        [],
+        { fallback: false }
+      );
 
-	      // Get total active at start of each month for rate calculation
-	      const activeStart = (await dbGet(
-	        `
+      // Get total active at start of each month for rate calculation
+      const activeStart = (await dbGet(
+        `
 	          SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'
 	        `,
-	        [],
-	        { fallback: false }
-	      )) as any;
+        [],
+        { fallback: false }
+      )) as any;
 
-	      const totalActive = Number(activeStart?.count || 0);
-	      const currentMRRRow = (await dbGet(
-	        `
+      const totalActive = Number(activeStart?.count || 0);
+      const currentMRRRow = (await dbGet(
+        `
 	          SELECT SUM(COALESCE(sp.price_monthly, 0)) as mrr
 	          FROM subscriptions s
 	          LEFT JOIN subscription_plans sp ON s.plan_id = sp.id
 	          WHERE s.status = 'active'
 	        `,
-	        [],
-	        { fallback: false }
-	      )) as any;
-	      const avgMRR = Number(currentMRRRow?.mrr || 0);
+        [],
+        { fallback: false }
+      )) as any;
+      const avgMRR = Number(currentMRRRow?.mrr || 0);
 
-	      const data = (churnData || []).map((c: any) => {
-	        const churnedCustomers = Number(c?.churned_customers || 0);
-	        const churnedMRR = Number(c?.churned_mrr || 0);
-	        const customerRate = totalActive > 0 ? (churnedCustomers / totalActive) * 100 : 0;
-	        const mrrRate = avgMRR > 0 ? (churnedMRR / avgMRR) * 100 : 0;
-	        return {
-	          month: c.month,
-	          churnedCustomers,
-	          churnedMRR,
-	          customerChurnRate: `${customerRate.toFixed(1)}%`,
-	          mrrChurnRate: `${mrrRate.toFixed(1)}%`,
-	        };
-	      });
+      const data = (churnData || []).map((c: any) => {
+        const churnedCustomers = Number(c?.churned_customers || 0);
+        const churnedMRR = Number(c?.churned_mrr || 0);
+        const customerRate = totalActive > 0 ? (churnedCustomers / totalActive) * 100 : 0;
+        const mrrRate = avgMRR > 0 ? (churnedMRR / avgMRR) * 100 : 0;
+        return {
+          month: c.month,
+          churnedCustomers,
+          churnedMRR,
+          customerChurnRate: `${customerRate.toFixed(1)}%`,
+          mrrChurnRate: `${mrrRate.toFixed(1)}%`,
+        };
+      });
 
-	      const avgCustomerChurn =
-	        data.length > 0
-	          ? data.reduce((sum: number, d: any) => sum + parseFloat(String(d.customerChurnRate)), 0) /
-	            data.length
-	          : 0;
-	      const avgMRRChurn =
-	        data.length > 0
-	          ? data.reduce((sum: number, d: any) => sum + parseFloat(String(d.mrrChurnRate)), 0) / data.length
-	          : 0;
+      const avgCustomerChurn =
+        data.length > 0
+          ? data.reduce((sum: number, d: any) => sum + parseFloat(String(d.customerChurnRate)), 0) /
+            data.length
+          : 0;
+      const avgMRRChurn =
+        data.length > 0
+          ? data.reduce((sum: number, d: any) => sum + parseFloat(String(d.mrrChurnRate)), 0) /
+            data.length
+          : 0;
 
-	      return res.json({
-	        churn: {
-	          period: { months },
+      return res.json({
+        churn: {
+          period: { months },
           data,
           averages: {
             customerChurnRate: `${avgCustomerChurn.toFixed(1)}%`,
@@ -375,15 +380,15 @@ router.get(
           },
         },
       });
-	    } catch (error: any) {
-	      logger.error('[Billing Analytics] Churn error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Churn analytics');
-	      }
-	      return res.status(500).json({ error: 'Failed to get churn data' });
-	    }
-	  })
-	);
+    } catch (error: any) {
+      logger.error('[Billing Analytics] Churn error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Churn analytics');
+      }
+      return res.status(500).json({ error: 'Failed to get churn data' });
+    }
+  })
+);
 
 /**
  * GET /billing/analytics/ltv
@@ -432,18 +437,18 @@ router.get(
  * GET /billing/analytics/cohorts
  * Get cohort retention analysis
  */
-	router.get(
-	  '/analytics/cohorts',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req: AuthRequest, res: Response) => {
-	    try {
-	      const cohortMonths = 6;
-	      const retentionMonths = 3;
+router.get(
+  '/analytics/cohorts',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const cohortMonths = 6;
+      const retentionMonths = 3;
 
-	      // Get cohort data
-	      const cohorts = await dbAll(
-	        `
+      // Get cohort data
+      const cohorts = await dbAll(
+        `
 	                SELECT 
 	                    strftime('%Y-%m', created_at) as cohort,
 	                    COUNT(*) as starting_count,
@@ -453,51 +458,51 @@ router.get(
 	                GROUP BY strftime('%Y-%m', created_at)
 	                ORDER BY cohort DESC
 	            `,
-	        [],
-	        { fallback: false }
-	      );
+        [],
+        { fallback: false }
+      );
 
-	      const data = (cohorts || []).map((c: any) => ({
-	        cohort: c.cohort,
-	        startingCount: Number(c?.starting_count || 0),
-	        currentActive: Number(c?.current_active || 0),
-	        retentionRate: `${(
-	          (Number(c?.current_active || 0) / (Number(c?.starting_count || 0) || 1)) *
-	          100
-	        ).toFixed(1)}%`,
-	      }));
+      const data = (cohorts || []).map((c: any) => ({
+        cohort: c.cohort,
+        startingCount: Number(c?.starting_count || 0),
+        currentActive: Number(c?.current_active || 0),
+        retentionRate: `${(
+          (Number(c?.current_active || 0) / (Number(c?.starting_count || 0) || 1)) *
+          100
+        ).toFixed(1)}%`,
+      }));
 
-	      return res.json({
-	        cohorts: {
-	          period: { cohortMonths, retentionMonths },
+      return res.json({
+        cohorts: {
+          period: { cohortMonths, retentionMonths },
           cohorts: data,
         },
       });
-	    } catch (error: any) {
-	      logger.error('[Billing Analytics] Cohorts error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Cohort analytics');
-	      }
-	      return res.status(500).json({ error: 'Failed to get cohort data' });
-	    }
-	  })
-	);
+    } catch (error: any) {
+      logger.error('[Billing Analytics] Cohorts error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Cohort analytics');
+      }
+      return res.status(500).json({ error: 'Failed to get cohort data' });
+    }
+  })
+);
 
 /**
  * GET /billing/analytics/expansion
  * Get expansion/contraction revenue analysis
  */
-	router.get(
-	  '/analytics/expansion',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req: AuthRequest, res: Response) => {
-	    try {
-	      const months = 6;
+router.get(
+  '/analytics/expansion',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const months = 6;
 
-	      // Get expansion/contraction from subscription events
-	      const expansionData = await dbAll(
-	        `
+      // Get expansion/contraction from subscription events
+      const expansionData = await dbAll(
+        `
 	                SELECT 
 	                    strftime('%Y-%m', created_at) as month,
 	                    SUM(CASE WHEN event_type = 'expansion' THEN mrr_delta ELSE 0 END) as expansion_mrr,
@@ -508,19 +513,19 @@ router.get(
 	                GROUP BY strftime('%Y-%m', created_at)
 	                ORDER BY month DESC
 	            `,
-	        [],
-	        { fallback: false }
-	      );
+        [],
+        { fallback: false }
+      );
 
-	      const data = (expansionData || []).map((e: any) => ({
-	        month: e.month,
-	        expansion_mrr: Number(e?.expansion_mrr || 0),
-	        contraction_mrr: Number(e?.contraction_mrr || 0),
-	        netExpansion: Number(e?.expansion_mrr || 0) - Number(e?.contraction_mrr || 0),
-	      }));
+      const data = (expansionData || []).map((e: any) => ({
+        month: e.month,
+        expansion_mrr: Number(e?.expansion_mrr || 0),
+        contraction_mrr: Number(e?.contraction_mrr || 0),
+        netExpansion: Number(e?.expansion_mrr || 0) - Number(e?.contraction_mrr || 0),
+      }));
 
-	      const totalExpansion = data.reduce((s: number, d: any) => s + d.expansion_mrr, 0);
-	      const totalContraction = data.reduce((s: number, d: any) => s + d.contraction_mrr, 0);
+      const totalExpansion = data.reduce((s: number, d: any) => s + d.expansion_mrr, 0);
+      const totalContraction = data.reduce((s: number, d: any) => s + d.contraction_mrr, 0);
 
       return res.json({
         expansion: {
@@ -533,239 +538,239 @@ router.get(
           },
         },
       });
-	    } catch (error: any) {
-	      logger.error('[Billing Analytics] Expansion error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Expansion analytics');
-	      }
-	      return res.status(500).json({ error: 'Failed to get expansion data' });
-	    }
-	  })
-	);
+    } catch (error: any) {
+      logger.error('[Billing Analytics] Expansion error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Expansion analytics');
+      }
+      return res.status(500).json({ error: 'Failed to get expansion data' });
+    }
+  })
+);
 
-	router.get(
-	  '/admin/plans',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req: AuthRequest, res: Response) => {
-	    try {
-	      const plans = await dbAll<any>(
-	        `SELECT * FROM subscription_plans ORDER BY sort_order ASC`,
-	        [],
-	        { fallback: false }
-	      );
-	      return res.json(
-	        (plans || []).map((plan: any) => ({
-	          ...plan,
-	          features: plan.features ? JSON.parse(plan.features) : [],
-	          limits: plan.limits ? JSON.parse(plan.limits) : {},
-	        }))
-	      );
-	    } catch (error: any) {
-	      logger.error('[Billing Admin] List plans error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Admin plans');
-	      }
-	      return res.status(500).json({ error: 'Failed to list plans' });
-	    }
-	  })
-	);
+router.get(
+  '/admin/plans',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const plans = await dbAll<any>(
+        `SELECT * FROM subscription_plans ORDER BY sort_order ASC`,
+        [],
+        { fallback: false }
+      );
+      return res.json(
+        (plans || []).map((plan: any) => ({
+          ...plan,
+          features: plan.features ? JSON.parse(plan.features) : [],
+          limits: plan.limits ? JSON.parse(plan.limits) : {},
+        }))
+      );
+    } catch (error: any) {
+      logger.error('[Billing Admin] List plans error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Admin plans');
+      }
+      return res.status(500).json({ error: 'Failed to list plans' });
+    }
+  })
+);
 
-	router.post(
-	  '/admin/plans',
-	  verifyToken,
-	  requireSuperAdmin,
-	  validateBody(CreatePlanRequestSchema),
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
-	      const {
-	        name,
-	        description,
-	        priceMonthly,
-	        priceYearly,
-	        currency,
-	        features,
-	        limits,
-	        trialDays,
-	        isPublic,
-	        sortOrder,
-	      } = req.body;
+router.post(
+  '/admin/plans',
+  verifyToken,
+  requireSuperAdmin,
+  validateBody(CreatePlanRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const {
+        name,
+        description,
+        priceMonthly,
+        priceYearly,
+        currency,
+        features,
+        limits,
+        trialDays,
+        isPublic,
+        sortOrder,
+      } = req.body;
 
-	      const id = uuidv4();
-	      await dbRun(
-	        `
+      const id = uuidv4();
+      await dbRun(
+        `
 	          INSERT INTO subscription_plans (
 	            id, name, description, price_monthly, price_yearly, currency,
 	            features, limits, trial_days, is_public, sort_order
 	          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	        `,
-	        [
-	          id,
-	          name,
-	          description,
-	          priceMonthly,
-	          priceYearly,
-	          currency,
-	          JSON.stringify(features),
-	          JSON.stringify(limits),
-	          trialDays,
-	          isPublic ? 1 : 0,
-	          sortOrder,
-	        ],
-	        { fallback: false }
-	      );
+        [
+          id,
+          name,
+          description,
+          priceMonthly,
+          priceYearly,
+          currency,
+          JSON.stringify(features),
+          JSON.stringify(limits),
+          trialDays,
+          isPublic ? 1 : 0,
+          sortOrder,
+        ],
+        { fallback: false }
+      );
 
-	      return res.json({ success: true, id });
-	    } catch (error: any) {
-	      logger.error('[Billing Admin] Create plan error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Admin plan create');
-	      }
-	      return res.status(500).json({ error: 'Failed to create plan' });
-	    }
-	  })
-	);
-	router.put(
-	  '/admin/plans/:id',
-	  verifyToken,
-	  requireSuperAdmin,
-	  validateParams(PlanIdParamSchema),
-	  validateBody(UpdatePlanRequestSchema),
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
-	      const { id } = req.params;
-	      const updates: string[] = [];
-	      const params: SQLParams = [];
+      return res.json({ success: true, id });
+    } catch (error: any) {
+      logger.error('[Billing Admin] Create plan error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Admin plan create');
+      }
+      return res.status(500).json({ error: 'Failed to create plan' });
+    }
+  })
+);
+router.put(
+  '/admin/plans/:id',
+  verifyToken,
+  requireSuperAdmin,
+  validateParams(PlanIdParamSchema),
+  validateBody(UpdatePlanRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const updates: string[] = [];
+      const params: SQLParams = [];
 
-	      const fields = [
-	        'name',
-	        'description',
-	        'price_monthly',
-	        'price_yearly',
-	        'currency',
-	        'trial_days',
-	        'is_public',
-	        'is_active',
-	        'sort_order',
-	      ];
+      const fields = [
+        'name',
+        'description',
+        'price_monthly',
+        'price_yearly',
+        'currency',
+        'trial_days',
+        'is_public',
+        'is_active',
+        'sort_order',
+      ];
 
-	      for (const field of fields) {
-	        const key = field.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
-	        if (req.body[key] !== undefined) {
-	          updates.push(`${field} = ?`);
-	          params.push(typeof req.body[key] === 'boolean' ? (req.body[key] ? 1 : 0) : req.body[key]);
-	        }
-	      }
+      for (const field of fields) {
+        const key = field.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+        if (req.body[key] !== undefined) {
+          updates.push(`${field} = ?`);
+          params.push(typeof req.body[key] === 'boolean' ? (req.body[key] ? 1 : 0) : req.body[key]);
+        }
+      }
 
-	      if (req.body.features) {
-	        updates.push('features = ?');
-	        params.push(JSON.stringify(req.body.features));
-	      }
+      if (req.body.features) {
+        updates.push('features = ?');
+        params.push(JSON.stringify(req.body.features));
+      }
 
-	      if (req.body.limits) {
-	        updates.push('limits = ?');
-	        params.push(JSON.stringify(req.body.limits));
-	      }
+      if (req.body.limits) {
+        updates.push('limits = ?');
+        params.push(JSON.stringify(req.body.limits));
+      }
 
-	      if (updates.length === 0) {
-	        return res.status(400).json({ error: 'No updates provided' });
-	      }
+      if (updates.length === 0) {
+        return res.status(400).json({ error: 'No updates provided' });
+      }
 
-	      updates.push('updated_at = datetime(\"now\")');
-	      params.push(id);
+      updates.push('updated_at = datetime("now")');
+      params.push(id);
 
-	      const result = await dbRun(
-	        `UPDATE subscription_plans SET ${updates.join(', ')} WHERE id = ?`,
-	        params,
-	        { fallback: false }
-	      );
+      const result = await dbRun(
+        `UPDATE subscription_plans SET ${updates.join(', ')} WHERE id = ?`,
+        params,
+        { fallback: false }
+      );
 
-	      if (!result?.changes) {
-	        return res.status(404).json({ error: 'Plan not found' });
-	      }
+      if (!result?.changes) {
+        return res.status(404).json({ error: 'Plan not found' });
+      }
 
-	      return res.json({ success: true });
-	    } catch (error: any) {
-	      logger.error('[Billing Admin] Update plan error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Admin plan update');
-	      }
-	      return res.status(500).json({ error: 'Failed to update plan' });
-	    }
-	  })
-	);
-	router.delete(
-	  '/admin/plans/:id',
-	  verifyToken,
-	  requireSuperAdmin,
-	  validateParams(PlanIdParamSchema),
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
-	      const { id } = req.params;
-	      const result = await dbRun(`DELETE FROM subscription_plans WHERE id = ?`, [id], {
-	        fallback: false,
-	      });
+      return res.json({ success: true });
+    } catch (error: any) {
+      logger.error('[Billing Admin] Update plan error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Admin plan update');
+      }
+      return res.status(500).json({ error: 'Failed to update plan' });
+    }
+  })
+);
+router.delete(
+  '/admin/plans/:id',
+  verifyToken,
+  requireSuperAdmin,
+  validateParams(PlanIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = await dbRun(`DELETE FROM subscription_plans WHERE id = ?`, [id], {
+        fallback: false,
+      });
 
-	      if (!result?.changes) {
-	        return res.status(404).json({ success: false, error: 'Plan not found' });
-	      }
+      if (!result?.changes) {
+        return res.status(404).json({ success: false, error: 'Plan not found' });
+      }
 
-	      return res.json({ success: true });
-	    } catch (error: any) {
-	      logger.error('[Billing Admin] Delete plan error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Admin plan delete');
-	      }
-	      return res.status(500).json({ error: 'Failed to delete plan' });
-	    }
-	  })
-	);
+      return res.json({ success: true });
+    } catch (error: any) {
+      logger.error('[Billing Admin] Delete plan error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Admin plan delete');
+      }
+      return res.status(500).json({ error: 'Failed to delete plan' });
+    }
+  })
+);
 
-	router.get(
-	  '/admin/user-plans',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req: AuthRequest, res: Response) => {
-	    return res.status(503).json({
-	      error: 'User seat plans are not available (no real implementation)',
-	    });
-	  })
-	);
-	router.post(
-	  '/admin/user-plans',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req, res) =>
-	    res.status(503).json({ success: false, error: 'User seat plans are not available' })
-	  )
-	);
-	router.put(
-	  '/admin/user-plans/:id',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req, res) =>
-	    res.status(503).json({ success: false, error: 'User seat plans are not available' })
-	  )
-	);
-	router.delete(
-	  '/admin/user-plans/:id',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req, res) =>
-	    res.status(503).json({ success: false, error: 'User seat plans are not available' })
-	  )
-	);
+router.get(
+  '/admin/user-plans',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    return res.status(503).json({
+      error: 'User seat plans are not available (no real implementation)',
+    });
+  })
+);
+router.post(
+  '/admin/user-plans',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req, res) =>
+    res.status(503).json({ success: false, error: 'User seat plans are not available' })
+  )
+);
+router.put(
+  '/admin/user-plans/:id',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req, res) =>
+    res.status(503).json({ success: false, error: 'User seat plans are not available' })
+  )
+);
+router.delete(
+  '/admin/user-plans/:id',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req, res) =>
+    res.status(503).json({ success: false, error: 'User seat plans are not available' })
+  )
+);
 
-	router.get(
-	  '/admin/transactions',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req: AuthRequest, res: Response) => {
-	    return res.status(503).json({
-	      error: 'Billing transactions are not available (no real implementation)',
-	    });
-	  })
-	);
+router.get(
+  '/admin/transactions',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    return res.status(503).json({
+      error: 'Billing transactions are not available (no real implementation)',
+    });
+  })
+);
 
 // ==========================================
 // BILLING STATS (SuperAdmin)
@@ -2452,12 +2457,12 @@ router.post(
 // USAGE TRACKING
 // ==========================================
 
-	router.get(
-	  '/usage',
-	  verifyToken,
-	  validateQuery(UsageQuerySchema),
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
+router.get(
+  '/usage',
+  verifyToken,
+  validateQuery(UsageQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
       const { organizationId, metric, startDate, endDate } = req.query as {
         organizationId?: string;
         metric?: string;
@@ -2491,12 +2496,12 @@ router.post(
         params.push(endDate);
       }
 
-	      query += ` GROUP BY metric_name, DATE(recorded_at) ORDER BY date DESC`;
+      query += ` GROUP BY metric_name, DATE(recorded_at) ORDER BY date DESC`;
 
-	      const usage = await dbAll(query, params, { fallback: false });
+      const usage = await dbAll(query, params, { fallback: false });
 
-	      const org = (await dbGet(
-	        `
+      const org = (await dbGet(
+        `
 	          SELECT
 	            o.token_balance,
 	            o.plan,
@@ -2508,95 +2513,97 @@ router.post(
 	          LEFT JOIN subscription_plans sp ON sp.id = s.plan_id
 	          WHERE o.id = ?
 	        `,
-	        [orgId],
-	        { fallback: false }
-	      )) as {
-	        token_balance?: number;
-	        plan?: string;
-	        trial_tokens_used?: number;
-	        token_limit?: number;
-	        storage_limit_gb?: number;
-	      } | null;
+        [orgId],
+        { fallback: false }
+      )) as {
+        token_balance?: number;
+        plan?: string;
+        trial_tokens_used?: number;
+        token_limit?: number;
+        storage_limit_gb?: number;
+      } | null;
 
-	      const seats = (await dbGet(
-	        `
+      const seats = (await dbGet(
+        `
 	            SELECT COUNT(*) as used, (SELECT COUNT(id) FROM organization_members WHERE organization_id = ?) as total
 	            FROM organization_members 
 	            WHERE organization_id = ? AND status = 'ACTIVE'
 	        `,
-	        [orgId, orgId],
-	        { fallback: false }
-	      )) as {
-	        used?: number;
-	        total?: number;
-	      } | null;
+        [orgId, orgId],
+        { fallback: false }
+      )) as {
+        used?: number;
+        total?: number;
+      } | null;
 
-	      interface UsageTotalRow {
-	        metric_name: string;
-	        total: number;
-	      }
-	      const totals = await dbAll<UsageTotalRow>(
-	        `SELECT metric_name, SUM(quantity) as total FROM usage_records WHERE organization_id = ? GROUP BY metric_name`,
-	        [orgId],
-	        { fallback: false }
-	      );
+      interface UsageTotalRow {
+        metric_name: string;
+        total: number;
+      }
+      const totals = await dbAll<UsageTotalRow>(
+        `SELECT metric_name, SUM(quantity) as total FROM usage_records WHERE organization_id = ? GROUP BY metric_name`,
+        [orgId],
+        { fallback: false }
+      );
 
-	      const totalsByMetric = new Map<string, number>(
-	        (totals || []).map((t) => [String((t as any).metric_name), Number((t as any).total || 0)])
-	      );
+      const totalsByMetric = new Map<string, number>(
+        (totals || []).map((t) => [String((t as any).metric_name), Number((t as any).total || 0)])
+      );
 
-	      const tokensUsedFromRecords = totalsByMetric.get('tokens') || 0;
-	      const tokensUsed =
-	        Number(org?.trial_tokens_used || 0) > 0 ? Number(org?.trial_tokens_used || 0) : tokensUsedFromRecords;
+      const tokensUsedFromRecords = totalsByMetric.get('tokens') || 0;
+      const tokensUsed =
+        Number(org?.trial_tokens_used || 0) > 0
+          ? Number(org?.trial_tokens_used || 0)
+          : tokensUsedFromRecords;
 
-	      const structuredUsage = {
-	        tokens: {
-	          used: tokensUsed,
-	          limit: Number(org?.token_limit || 0),
-	        },
-	        storage: {
-	          used_gb: Number(totalsByMetric.get('storage_gb') || 0),
-	          limit_gb: Number(org?.storage_limit_gb || 0),
-	        },
-	        seats: {
-	          used: Number(seats?.used || 0),
-	          total: Number(seats?.total || 0),
-	        },
-	        spend: {
-	          current_period: Number(totalsByMetric.get('spend_usd') || 0),
-	          budget: null as number | null,
-	        },
-	      };
+      const structuredUsage = {
+        tokens: {
+          used: tokensUsed,
+          limit: Number(org?.token_limit || 0),
+        },
+        storage: {
+          used_gb: Number(totalsByMetric.get('storage_gb') || 0),
+          limit_gb: Number(org?.storage_limit_gb || 0),
+        },
+        seats: {
+          used: Number(seats?.used || 0),
+          total: Number(seats?.total || 0),
+        },
+        spend: {
+          current_period: Number(totalsByMetric.get('spend_usd') || 0),
+          budget: null as number | null,
+        },
+      };
 
-	      const usageResult = usage || [];
+      const usageResult = usage || [];
 
-	      return res.json({
-	        usage: usageResult,
-	        structuredUsage,
-	        totals:
+      return res.json({
+        usage: usageResult,
+        structuredUsage,
+        totals:
           totals && totals.length
             ? totals
             : usageResult.map((u: any) => ({ metric_name: u.metric_name, total: u.total })),
       });
-	    } catch (error: unknown) {
-	      logger.error('[Billing] Get usage error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Usage tracking');
-	      }
-	      return res.status(500).json({ error: 'Failed to get usage' });
-	    }
-	  })
-	);
+    } catch (error: unknown) {
+      logger.error('[Billing] Get usage error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Usage tracking');
+      }
+      return res.status(500).json({ error: 'Failed to get usage' });
+    }
+  })
+);
 
-	router.get(
-	  '/usage-summary',
-	  verifyToken,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    return res.status(503).json({
-	      error: 'Usage summary is not available (no real implementation)',
-	    });
-	  })
-	);
+router.get(
+  '/usage-summary',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    return res.status(503).json({
+      error: 'Usage summary is not available (no real implementation)',
+    });
+  })
+);
 
 router.post(
   '/usage',
@@ -2869,75 +2876,75 @@ router.put(
 // ==========================================
 // TAX SETTINGS (DB-backed)
 // ==========================================
-	router.get(
-	  '/tax-settings',
-	  verifyToken,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
-	      const orgId = req.user!.organizationId;
-	      const settings = await dbGet(
-	        `SELECT * FROM billing_tax_settings WHERE organization_id = ?`,
-	        [orgId],
-	        { fallback: false }
-	      );
+router.get(
+  '/tax-settings',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user!.organizationId;
+      const settings = await dbGet(
+        `SELECT * FROM billing_tax_settings WHERE organization_id = ?`,
+        [orgId],
+        { fallback: false }
+      );
 
-	      if (!settings) {
-	        return res.json({
-	          company: { legalName: null, billingEmail: null },
-	          tax: { taxIdType: null, taxId: null, taxExempt: false },
-	          address: {
-	            line1: null,
-	            line2: null,
-	            city: null,
-	            state: null,
-	            postalCode: null,
-	            country: null,
-	          },
-	          invoicePrefix: null,
-	          poNumber: null,
-	        });
-	      }
+      if (!settings) {
+        return res.json({
+          company: { legalName: null, billingEmail: null },
+          tax: { taxIdType: null, taxId: null, taxExempt: false },
+          address: {
+            line1: null,
+            line2: null,
+            city: null,
+            state: null,
+            postalCode: null,
+            country: null,
+          },
+          invoicePrefix: null,
+          poNumber: null,
+        });
+      }
 
-	      return res.json({
-	        company: {
-	          legalName: (settings as any).billing_name,
-	          billingEmail: (settings as any).billing_email,
-	        },
-	        tax: {
-	          taxIdType: (settings as any).tax_id_type,
-	          taxId: (settings as any).tax_id,
-	          taxExempt: !!(settings as any).tax_exempt,
-	        },
-	        address: {
-	          line1: (settings as any).billing_address_line1,
-	          line2: (settings as any).billing_address_line2,
-	          city: (settings as any).billing_city,
-	          state: (settings as any).billing_state,
-	          postalCode: (settings as any).billing_postal_code,
-	          country: (settings as any).billing_country,
-	        },
-	        invoicePrefix: (settings as any).invoice_prefix,
-	        poNumber: (settings as any).po_number,
-	      });
-	    } catch (error: any) {
-	      logger.error('[Billing] Get tax settings error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Tax settings');
-	      }
-	      return res.status(500).json({ error: 'Failed to get tax settings' });
-	    }
-	  })
-	);
+      return res.json({
+        company: {
+          legalName: (settings as any).billing_name,
+          billingEmail: (settings as any).billing_email,
+        },
+        tax: {
+          taxIdType: (settings as any).tax_id_type,
+          taxId: (settings as any).tax_id,
+          taxExempt: !!(settings as any).tax_exempt,
+        },
+        address: {
+          line1: (settings as any).billing_address_line1,
+          line2: (settings as any).billing_address_line2,
+          city: (settings as any).billing_city,
+          state: (settings as any).billing_state,
+          postalCode: (settings as any).billing_postal_code,
+          country: (settings as any).billing_country,
+        },
+        invoicePrefix: (settings as any).invoice_prefix,
+        poNumber: (settings as any).po_number,
+      });
+    } catch (error: any) {
+      logger.error('[Billing] Get tax settings error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Tax settings');
+      }
+      return res.status(500).json({ error: 'Failed to get tax settings' });
+    }
+  })
+);
 
-	router.put(
-	  '/tax-settings',
-	  verifyToken,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
-	      const orgId = req.user!.organizationId;
-	      const { company, tax, address, invoicePrefix, poNumber } = req.body || {};
-	      await dbRun(
-	        `INSERT INTO billing_tax_settings (id, organization_id, tax_id, tax_id_type, tax_exempt, billing_name, billing_email, billing_address_line1, billing_address_line2, billing_city, billing_state, billing_postal_code, billing_country, invoice_prefix, po_number)
+router.put(
+  '/tax-settings',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const orgId = req.user!.organizationId;
+      const { company, tax, address, invoicePrefix, poNumber } = req.body || {};
+      await dbRun(
+        `INSERT INTO billing_tax_settings (id, organization_id, tax_id, tax_id_type, tax_exempt, billing_name, billing_email, billing_address_line1, billing_address_line2, billing_city, billing_state, billing_postal_code, billing_country, invoice_prefix, po_number)
 	               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	               ON CONFLICT(organization_id) DO UPDATE SET
 	                  tax_id=excluded.tax_id,
@@ -2954,35 +2961,35 @@ router.put(
 	                  invoice_prefix=excluded.invoice_prefix,
 	                  po_number=excluded.po_number,
 	                  updated_at=CURRENT_TIMESTAMP`,
-	        [
-	          uuidv4(),
-	          orgId,
-	          tax?.taxId || null,
-	          tax?.taxIdType || null,
-	          tax?.taxExempt ? 1 : 0,
-	          company?.legalName || null,
-	          company?.billingEmail || null,
-	          address?.line1 || null,
-	          address?.line2 || null,
-	          address?.city || null,
-	          address?.state || null,
-	          address?.postalCode || null,
-	          address?.country || null,
-	          invoicePrefix || null,
-	          poNumber || null,
-	        ],
-	        { fallback: false }
-	      );
-	      return res.json({ success: true });
-	    } catch (error: any) {
-	      logger.error('[Billing] Update tax settings error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Tax settings update');
-	      }
-	      return res.status(500).json({ error: 'Failed to update tax settings' });
-	    }
-	  })
-	);
+        [
+          uuidv4(),
+          orgId,
+          tax?.taxId || null,
+          tax?.taxIdType || null,
+          tax?.taxExempt ? 1 : 0,
+          company?.legalName || null,
+          company?.billingEmail || null,
+          address?.line1 || null,
+          address?.line2 || null,
+          address?.city || null,
+          address?.state || null,
+          address?.postalCode || null,
+          address?.country || null,
+          invoicePrefix || null,
+          poNumber || null,
+        ],
+        { fallback: false }
+      );
+      return res.json({ success: true });
+    } catch (error: any) {
+      logger.error('[Billing] Update tax settings error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Tax settings update');
+      }
+      return res.status(500).json({ error: 'Failed to update tax settings' });
+    }
+  })
+);
 
 // ==========================================
 // ADD-ONS
@@ -3054,49 +3061,49 @@ router.get(
 );
 
 // POST /billing/tax/validate-vat - validate VAT number
-	router.post(
-	  '/tax/validate-vat',
-	  verifyToken,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
-	      const { vatNumber, countryCode } = req.body;
+router.post(
+  '/tax/validate-vat',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { vatNumber, countryCode } = req.body;
 
       if (!vatNumber || !countryCode) {
         return res.status(400).json({ error: 'VAT number and country code are required' });
       }
 
-	      // Check cache first
-	      const cached = (await dbGet(
-	        'SELECT * FROM vat_validations WHERE vat_number = ? AND country_code = ? AND expires_at > datetime("now")',
-	        [vatNumber, countryCode],
-	        { fallback: false }
-	      )) as any;
+      // Check cache first
+      const cached = (await dbGet(
+        'SELECT * FROM vat_validations WHERE vat_number = ? AND country_code = ? AND expires_at > datetime("now")',
+        [vatNumber, countryCode],
+        { fallback: false }
+      )) as any;
 
-	      if (cached && String(cached.validation_source || '').toLowerCase() !== 'demo') {
-	        return res.json({
-	          validation: {
-	            isValid: !!cached.is_valid,
-	            companyName: cached.company_name,
-	            companyAddress: cached.company_address,
+      if (cached && String(cached.validation_source || '').toLowerCase() !== 'demo') {
+        return res.json({
+          validation: {
+            isValid: !!cached.is_valid,
+            companyName: cached.company_name,
+            companyAddress: cached.company_address,
             validationSource: cached.validation_source,
             cached: true,
             validatedAt: cached.validated_at,
-	          },
-	        });
-	      }
+          },
+        });
+      }
 
-	      return res.status(503).json({
-	        error: 'VAT validation is not available (no real integration configured)',
-	      });
-	    } catch (error: any) {
-	      logger.error('[Billing] Validate VAT error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'VAT validation');
-	      }
-	      return res.status(500).json({ error: 'Failed to validate VAT number' });
-	    }
-	  })
-	);
+      return res.status(503).json({
+        error: 'VAT validation is not available (no real integration configured)',
+      });
+    } catch (error: any) {
+      logger.error('[Billing] Validate VAT error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'VAT validation');
+      }
+      return res.status(500).json({ error: 'Failed to validate VAT number' });
+    }
+  })
+);
 
 // POST /billing/tax/calculate - calculate tax for amount
 router.post(
@@ -3666,145 +3673,145 @@ router.put(
 // REVENUE RECOGNITION (ASC 606)
 // ==========================================
 
-	// GET /billing/revenue-recognitions - list all revenue recognition items
-	router.get(
-	  '/revenue-recognitions',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    return res.status(503).json({
-	      error: 'Revenue recognition (ASC 606) is not available (no real implementation)',
-	    });
-	  })
-	);
+// GET /billing/revenue-recognitions - list all revenue recognition items
+router.get(
+  '/revenue-recognitions',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    return res.status(503).json({
+      error: 'Revenue recognition (ASC 606) is not available (no real implementation)',
+    });
+  })
+);
 
-	// GET /billing/revenue-recognitions/stats - stats
-	router.get(
-	  '/revenue-recognitions/stats',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req: AuthRequest, res: Response) => {
-	    return res.status(503).json({
-	      error: 'Revenue recognition (ASC 606) stats are not available (no real implementation)',
-	    });
-	  })
-	);
+// GET /billing/revenue-recognitions/stats - stats
+router.get(
+  '/revenue-recognitions/stats',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    return res.status(503).json({
+      error: 'Revenue recognition (ASC 606) stats are not available (no real implementation)',
+    });
+  })
+);
 
-	// GET /billing/revenue-recognitions/:id/schedule - get recognition schedule
-	router.get(
-	  '/revenue-recognitions/:id/schedule',
-	  verifyToken,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    return res.status(503).json({
-	      error: 'Revenue recognition (ASC 606) schedule is not available (no real implementation)',
-	    });
-	  })
-	);
+// GET /billing/revenue-recognitions/:id/schedule - get recognition schedule
+router.get(
+  '/revenue-recognitions/:id/schedule',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    return res.status(503).json({
+      error: 'Revenue recognition (ASC 606) schedule is not available (no real implementation)',
+    });
+  })
+);
 
-	// POST /billing/revenue-recognitions - create new
-	router.post(
-	  '/revenue-recognitions',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    return res.status(503).json({
-	      success: false,
-	      error: 'Revenue recognition (ASC 606) create is not available (no real implementation)',
-	    });
-	  })
-	);
+// POST /billing/revenue-recognitions - create new
+router.post(
+  '/revenue-recognitions',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    return res.status(503).json({
+      success: false,
+      error: 'Revenue recognition (ASC 606) create is not available (no real implementation)',
+    });
+  })
+);
 
-	// POST /billing/revenue-recognitions/:id/recognize - recognize next period
-	router.post(
-	  '/revenue-recognitions/:id/recognize',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    return res.status(503).json({
-	      success: false,
-	      error: 'Revenue recognition (ASC 606) recognize is not available (no real implementation)',
-	    });
-	  })
-	);
+// POST /billing/revenue-recognitions/:id/recognize - recognize next period
+router.post(
+  '/revenue-recognitions/:id/recognize',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    return res.status(503).json({
+      success: false,
+      error: 'Revenue recognition (ASC 606) recognize is not available (no real implementation)',
+    });
+  })
+);
 
 // ==========================================
 // REVENUE FORECASTING
 // ==========================================
 
-	// GET /billing/revenue-forecasts - list forecasts
-	router.get(
-	  '/revenue-forecasts',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req: AuthRequest, res: Response) => {
-	    try {
-	      const forecasts = await dbAll(
-	        `SELECT * FROM revenue_forecasts ORDER BY forecast_date DESC LIMIT 100`,
-	        [],
-	        { fallback: false }
-	      );
-	      return res.json(forecasts || []);
-	    } catch (error: any) {
-	      logger.error('[Billing] Get revenue forecasts error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Revenue forecasts');
-	      }
-	      return res.status(500).json({ error: 'Failed to get revenue forecasts' });
-	    }
-	  })
-	);
+// GET /billing/revenue-forecasts - list forecasts
+router.get(
+  '/revenue-forecasts',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const forecasts = await dbAll(
+        `SELECT * FROM revenue_forecasts ORDER BY forecast_date DESC LIMIT 100`,
+        [],
+        { fallback: false }
+      );
+      return res.json(forecasts || []);
+    } catch (error: any) {
+      logger.error('[Billing] Get revenue forecasts error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue forecasts');
+      }
+      return res.status(500).json({ error: 'Failed to get revenue forecasts' });
+    }
+  })
+);
 
 // GET /billing/revenue-forecasts/stats - forecast statistics
-	router.get(
-	  '/revenue-forecasts/stats',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req: AuthRequest, res: Response) => {
-	    return res.status(503).json({
-	      error: 'Revenue forecast statistics are not available (no real implementation)',
-	    });
-	  })
-	);
+router.get(
+  '/revenue-forecasts/stats',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    return res.status(503).json({
+      error: 'Revenue forecast statistics are not available (no real implementation)',
+    });
+  })
+);
 
 // POST /billing/revenue-forecasts/generate - generate new forecast
-	router.post(
-	  '/revenue-forecasts/generate',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    return res.status(503).json({
-	      success: false,
-	      error: 'Revenue forecast generation is not available (no real implementation)',
-	    });
-	  })
-	);
+router.post(
+  '/revenue-forecasts/generate',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    return res.status(503).json({
+      success: false,
+      error: 'Revenue forecast generation is not available (no real implementation)',
+    });
+  })
+);
 
 // DELETE /billing/revenue-forecasts/:id - delete forecast
-	router.delete(
-	  '/revenue-forecasts/:id',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
-	      const { id } = req.params;
-	      const result = await dbRun(`DELETE FROM revenue_forecasts WHERE id = ?`, [id], {
-	        fallback: false,
-	      });
+router.delete(
+  '/revenue-forecasts/:id',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = await dbRun(`DELETE FROM revenue_forecasts WHERE id = ?`, [id], {
+        fallback: false,
+      });
 
-	      if (!result?.changes) {
-	        return res.status(404).json({ success: false, error: 'Forecast not found' });
-	      }
+      if (!result?.changes) {
+        return res.status(404).json({ success: false, error: 'Forecast not found' });
+      }
 
-	      return res.json({ success: true });
-	    } catch (error: any) {
-	      logger.error('[Billing] Delete forecast error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Revenue forecast delete');
-	      }
-	      return res.status(500).json({ error: 'Failed to delete forecast' });
-	    }
-	  })
-	);
+      return res.json({ success: true });
+    } catch (error: any) {
+      logger.error('[Billing] Delete forecast error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue forecast delete');
+      }
+      return res.status(500).json({ error: 'Failed to delete forecast' });
+    }
+  })
+);
 
 // ==========================================
 // BILLING WEBHOOK EVENTS ROUTES
@@ -3965,12 +3972,12 @@ router.get(
  * GET /billing/subscription-changes
  * Get subscription change requests
  */
-	router.get(
-	  '/subscription-changes',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
+router.get(
+  '/subscription-changes',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
       const { status, change_type, limit = 50, offset = 0 } = req.query;
 
       let query = `
@@ -3998,33 +4005,33 @@ router.get(
         params.push(change_type);
       }
 
-	      query += ` ORDER BY sc.created_at DESC LIMIT ? OFFSET ?`;
-	      params.push(parseInt(limit as string), parseInt(offset as string));
+      query += ` ORDER BY sc.created_at DESC LIMIT ? OFFSET ?`;
+      params.push(parseInt(limit as string), parseInt(offset as string));
 
-	      const changes = await dbAll(query, params, { fallback: false });
-	      return res.json(changes || []);
-	    } catch (error: any) {
-	      logger.error('[Billing] Subscription changes error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Subscription changes');
-	      }
-	      return res.status(500).json({ error: 'Failed to get subscription changes' });
-	    }
-	  })
-	);
+      const changes = await dbAll(query, params, { fallback: false });
+      return res.json(changes || []);
+    } catch (error: any) {
+      logger.error('[Billing] Subscription changes error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Subscription changes');
+      }
+      return res.status(500).json({ error: 'Failed to get subscription changes' });
+    }
+  })
+);
 
 /**
  * GET /billing/subscription-changes/stats
  * Get subscription change statistics
  */
-	router.get(
-	  '/subscription-changes/stats',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req: AuthRequest, res: Response) => {
-	    try {
-	      const stats = (await dbGet(
-	        `
+router.get(
+  '/subscription-changes/stats',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const stats = (await dbGet(
+        `
 	                SELECT 
 	                    COUNT(*) as total,
 	                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
@@ -4037,29 +4044,29 @@ router.get(
 	                FROM subscription_changes
 	                WHERE created_at >= date('now', '-30 days')
 	            `,
-	        [],
-	        { fallback: false }
-	      )) as any;
+        [],
+        { fallback: false }
+      )) as any;
 
-	      return res.json({
-	        total: Number(stats?.total || 0),
-	        pending: Number(stats?.pending || 0),
-	        approved: Number(stats?.approved || 0),
-	        rejected: Number(stats?.rejected || 0),
-	        upgrades: Number(stats?.upgrades || 0),
-	        downgrades: Number(stats?.downgrades || 0),
-	        cancellations: Number(stats?.cancellations || 0),
-	        totalProration: Number(stats?.total_proration || 0),
-	      });
-	    } catch (error: any) {
-	      logger.error('[Billing] Subscription change stats error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Subscription change stats');
-	      }
-	      return res.status(500).json({ error: 'Failed to get subscription change stats' });
-	    }
-	  })
-	);
+      return res.json({
+        total: Number(stats?.total || 0),
+        pending: Number(stats?.pending || 0),
+        approved: Number(stats?.approved || 0),
+        rejected: Number(stats?.rejected || 0),
+        upgrades: Number(stats?.upgrades || 0),
+        downgrades: Number(stats?.downgrades || 0),
+        cancellations: Number(stats?.cancellations || 0),
+        totalProration: Number(stats?.total_proration || 0),
+      });
+    } catch (error: any) {
+      logger.error('[Billing] Subscription change stats error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Subscription change stats');
+      }
+      return res.status(500).json({ error: 'Failed to get subscription change stats' });
+    }
+  })
+);
 
 /**
  * POST /billing/subscription-changes/:id/approve
@@ -4135,12 +4142,12 @@ router.post(
  * GET /billing/revenue-recognition
  * Get revenue recognition records
  */
-	router.get(
-	  '/revenue-recognition',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
+router.get(
+  '/revenue-recognition',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
       const { status, limit = 50, offset = 0 } = req.query;
 
       let query = `
@@ -4160,33 +4167,33 @@ router.post(
         params.push(status);
       }
 
-	      query += ` ORDER BY rr.recognition_date DESC LIMIT ? OFFSET ?`;
-	      params.push(parseInt(limit as string), parseInt(offset as string));
+      query += ` ORDER BY rr.recognition_date DESC LIMIT ? OFFSET ?`;
+      params.push(parseInt(limit as string), parseInt(offset as string));
 
-	      const recognitions = await dbAll(query, params, { fallback: false });
-	      return res.json(recognitions || []);
-	    } catch (error: any) {
-	      logger.error('[Billing] Revenue recognition error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Revenue recognition');
-	      }
-	      return res.status(500).json({ error: 'Failed to get revenue recognitions' });
-	    }
-	  })
-	);
+      const recognitions = await dbAll(query, params, { fallback: false });
+      return res.json(recognitions || []);
+    } catch (error: any) {
+      logger.error('[Billing] Revenue recognition error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue recognition');
+      }
+      return res.status(500).json({ error: 'Failed to get revenue recognitions' });
+    }
+  })
+);
 
 /**
  * GET /billing/revenue-recognition/stats
  * Get revenue recognition statistics
  */
-	router.get(
-	  '/revenue-recognition/stats',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req: AuthRequest, res: Response) => {
-	    try {
-	      const stats = (await dbGet(
-	        `
+router.get(
+  '/revenue-recognition/stats',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const stats = (await dbGet(
+        `
 	                SELECT 
 	                    COUNT(*) as total,
 	                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
@@ -4197,28 +4204,28 @@ router.post(
 	                FROM revenue_recognition
 	                WHERE recognition_date >= date('now', '-30 days')
 	            `,
-	        [],
-	        { fallback: false }
-	      )) as any;
+        [],
+        { fallback: false }
+      )) as any;
 
-	      return res.json({
-	        total: Number(stats?.total || 0),
-	        pending: Number(stats?.pending || 0),
-	        recognized: Number(stats?.recognized || 0),
-	        deferred: Number(stats?.deferred || 0),
-	        totalAmount: Number(stats?.total_amount || 0),
-	        recognizedAmount: Number(stats?.recognized_amount || 0),
-	        remainingAmount: Number(stats?.total_amount || 0) - Number(stats?.recognized_amount || 0),
-	      });
-	    } catch (error: any) {
-	      logger.error('[Billing] Revenue recognition stats error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Revenue recognition stats');
-	      }
-	      return res.status(500).json({ error: 'Failed to get revenue recognition stats' });
-	    }
-	  })
-	);
+      return res.json({
+        total: Number(stats?.total || 0),
+        pending: Number(stats?.pending || 0),
+        recognized: Number(stats?.recognized || 0),
+        deferred: Number(stats?.deferred || 0),
+        totalAmount: Number(stats?.total_amount || 0),
+        recognizedAmount: Number(stats?.recognized_amount || 0),
+        remainingAmount: Number(stats?.total_amount || 0) - Number(stats?.recognized_amount || 0),
+      });
+    } catch (error: any) {
+      logger.error('[Billing] Revenue recognition stats error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue recognition stats');
+      }
+      return res.status(500).json({ error: 'Failed to get revenue recognition stats' });
+    }
+  })
+);
 
 /**
  * POST /billing/revenue-recognition/:id/recognize
@@ -4291,12 +4298,12 @@ router.post(
  * GET /billing/revenue-forecast
  * Get revenue forecasts
  */
-	router.get(
-	  '/revenue-forecast',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
+router.get(
+  '/revenue-forecast',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
       const { scenario, limit = 20, offset = 0 } = req.query;
 
       let query = `
@@ -4311,33 +4318,33 @@ router.post(
         params.push(scenario);
       }
 
-	      query += ` ORDER BY forecast_date DESC LIMIT ? OFFSET ?`;
-	      params.push(parseInt(limit as string), parseInt(offset as string));
+      query += ` ORDER BY forecast_date DESC LIMIT ? OFFSET ?`;
+      params.push(parseInt(limit as string), parseInt(offset as string));
 
-	      const forecasts = await dbAll(query, params, { fallback: false });
-	      return res.json(forecasts || []);
-	    } catch (error: any) {
-	      logger.error('[Billing] Revenue forecast error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Revenue forecast');
-	      }
-	      return res.status(500).json({ error: 'Failed to get revenue forecasts' });
-	    }
-	  })
-	);
+      const forecasts = await dbAll(query, params, { fallback: false });
+      return res.json(forecasts || []);
+    } catch (error: any) {
+      logger.error('[Billing] Revenue forecast error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue forecast');
+      }
+      return res.status(500).json({ error: 'Failed to get revenue forecasts' });
+    }
+  })
+);
 
 /**
  * GET /billing/revenue-forecast/stats
  * Get revenue forecast statistics
  */
-	router.get(
-	  '/revenue-forecast/stats',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (_req: AuthRequest, res: Response) => {
-	    try {
-	      const stats = (await dbGet(
-	        `
+router.get(
+  '/revenue-forecast/stats',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const stats = (await dbGet(
+        `
 	                SELECT 
 	                    COUNT(*) as total,
 	                    AVG(accuracy) as avg_accuracy,
@@ -4345,53 +4352,53 @@ router.post(
 	                FROM revenue_forecasts
 	                WHERE created_at >= date('now', '-90 days')
 	            `,
-	        [],
-	        { fallback: false }
-	      )) as any;
+        [],
+        { fallback: false }
+      )) as any;
 
-	      return res.json({
-	        total: Number(stats?.total || 0),
-	        accuracy: Math.round(Number(stats?.avg_accuracy || 0) * 10) / 10,
-	        scenarios: Number(stats?.scenarios || 0),
-	      });
-	    } catch (error: any) {
-	      logger.error('[Billing] Revenue forecast stats error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Revenue forecast stats');
-	      }
-	      return res.status(500).json({ error: 'Failed to get revenue forecast stats' });
-	    }
-	  })
-	);
+      return res.json({
+        total: Number(stats?.total || 0),
+        accuracy: Math.round(Number(stats?.avg_accuracy || 0) * 10) / 10,
+        scenarios: Number(stats?.scenarios || 0),
+      });
+    } catch (error: any) {
+      logger.error('[Billing] Revenue forecast stats error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue forecast stats');
+      }
+      return res.status(500).json({ error: 'Failed to get revenue forecast stats' });
+    }
+  })
+);
 
 /**
  * POST /billing/revenue-forecast/generate
  * Generate a new revenue forecast
  */
-	router.post(
-	  '/revenue-forecast/generate',
-	  verifyToken,
-	  requireSuperAdmin,
-	  asyncHandler(async (req: AuthRequest, res: Response) => {
-	    try {
+router.post(
+  '/revenue-forecast/generate',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
       const { scenario, months = 12, assumptions } = req.body;
       const id = uuidv4();
 
       // Generate forecast data based on current MRR and growth assumptions
-	      const currentMRR = (await dbGet(
-	        `
+      const currentMRR = (await dbGet(
+        `
 	                SELECT SUM(sp.price_monthly) as mrr
 	                FROM subscriptions s
 	                JOIN subscription_plans sp ON s.plan_id = sp.id
 	                WHERE s.status = 'active'
 	            `,
-	        [],
-	        { fallback: false }
-	      )) as any;
+        [],
+        { fallback: false }
+      )) as any;
 
-	      const baseMRR = Number(currentMRR?.mrr || 0);
-	      const growthRate = assumptions?.growthRate || 0.05; // 5% monthly default
-	      const churnRate = assumptions?.churnRate || 0.02; // 2% monthly default
+      const baseMRR = Number(currentMRR?.mrr || 0);
+      const growthRate = assumptions?.growthRate || 0.05; // 5% monthly default
+      const churnRate = assumptions?.churnRate || 0.02; // 2% monthly default
 
       const forecast = [];
       let projectedMRR = baseMRR;
@@ -4432,15 +4439,15 @@ router.post(
       );
 
       return res.json({ id, forecast });
-	    } catch (error: any) {
-	      logger.error('[Billing] Generate revenue forecast error:', error);
-	      if (isSchemaMissingError(error)) {
-	        return respondSchemaUnavailable(res, 'Revenue forecast generation');
-	      }
-	      return res.status(500).json({ error: 'Failed to generate revenue forecast' });
-	    }
-	  })
-	);
+    } catch (error: any) {
+      logger.error('[Billing] Generate revenue forecast error:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res, 'Revenue forecast generation');
+      }
+      return res.status(500).json({ error: 'Failed to generate revenue forecast' });
+    }
+  })
+);
 
 /**
  * DELETE /billing/revenue-forecast/:id
@@ -4462,4 +4469,4 @@ router.delete(
   })
 );
 
-	export default router;
+export default router;

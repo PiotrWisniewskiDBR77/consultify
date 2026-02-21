@@ -12,9 +12,9 @@ export type NewFeedbackAlert = {
 function isConfigured() {
   return Boolean(
     process.env.WHATSAPP_SID &&
-      process.env.WHATSAPP_TOKEN &&
-      process.env.WHATSAPP_FROM &&
-      process.env.WHATSAPP_TO
+    process.env.WHATSAPP_TOKEN &&
+    process.env.WHATSAPP_FROM &&
+    process.env.WHATSAPP_TO
   );
 }
 
@@ -44,4 +44,3 @@ async function sendNewFeedbackAlert(feedback: NewFeedbackAlert): Promise<void> {
 export default {
   sendNewFeedbackAlert,
 };
-

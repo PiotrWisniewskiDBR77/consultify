@@ -266,7 +266,8 @@ router.post(
       } else {
         return res.status(503).json({
           success: false,
-          error: 'Token purchases are not available (Stripe not configured for this package/environment).',
+          error:
+            'Token purchases are not available (Stripe not configured for this package/environment).',
         });
       }
     } catch (error: any) {

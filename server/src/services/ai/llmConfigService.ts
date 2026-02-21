@@ -373,14 +373,23 @@ export class LLMConfigService {
         const rows = await this.allAsync<{ name: string }>('PRAGMA table_info(llm_providers)');
         for (const r of rows || []) existingColumns.add(String((r as any).name || ''));
       } catch (err: unknown) {
-        aiLogger.warn('LLMConfigService', `SQLite PRAGMA table_info failed: ${(err as any)?.message}`);
+        aiLogger.warn(
+          'LLMConfigService',
+          `SQLite PRAGMA table_info failed: ${(err as any)?.message}`
+        );
       }
     }
 
     const migrations = [
       { col: 'priority', sql: 'ALTER TABLE llm_providers ADD COLUMN priority INTEGER DEFAULT 0' },
-      { col: 'last_health_check', sql: 'ALTER TABLE llm_providers ADD COLUMN last_health_check TEXT' },
-      { col: 'health_status', sql: "ALTER TABLE llm_providers ADD COLUMN health_status TEXT DEFAULT 'unknown'" },
+      {
+        col: 'last_health_check',
+        sql: 'ALTER TABLE llm_providers ADD COLUMN last_health_check TEXT',
+      },
+      {
+        col: 'health_status',
+        sql: "ALTER TABLE llm_providers ADD COLUMN health_status TEXT DEFAULT 'unknown'",
+      },
       { col: 'updated_at', sql: 'ALTER TABLE llm_providers ADD COLUMN updated_at TEXT' },
       { col: 'description', sql: 'ALTER TABLE llm_providers ADD COLUMN description TEXT' },
       { col: 'tier', sql: "ALTER TABLE llm_providers ADD COLUMN tier TEXT DEFAULT 'STANDARD'" },
@@ -396,10 +405,7 @@ export class LLMConfigService {
         }
       } catch (error: unknown) {
         const err = error as Error;
-        if (
-          !err.message.includes('duplicate column') &&
-          !err.message.includes('already exists')
-        ) {
+        if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
           aiLogger.warn('LLMConfigService', `Migration warning: ${err.message}`);
         }
       }

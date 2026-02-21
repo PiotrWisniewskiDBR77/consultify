@@ -1,8 +1,8 @@
 import express, { type Request, type Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import * as DbPromise from '../utils/DbPromise.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const router = express.Router();
@@ -132,11 +132,13 @@ router.post(
 
     await ensureRunsTable();
 
-    const existing = await DbPromise.get<{ run_id: string; organization_id: string; user_id: string }>(
-      `SELECT run_id, organization_id, user_id FROM test_support_runs WHERE run_id = ?`,
-      [runId],
-      { fallback: false }
-    );
+    const existing = await DbPromise.get<{
+      run_id: string;
+      organization_id: string;
+      user_id: string;
+    }>(`SELECT run_id, organization_id, user_id FROM test_support_runs WHERE run_id = ?`, [runId], {
+      fallback: false,
+    });
 
     let organizationId = existing?.organization_id || '';
     let userId = existing?.user_id || '';
@@ -219,11 +221,13 @@ router.post(
 
     await ensureRunsTable();
 
-    const existing = await DbPromise.get<{ run_id: string; organization_id: string; user_id: string }>(
-      `SELECT run_id, organization_id, user_id FROM test_support_runs WHERE run_id = ?`,
-      [runId],
-      { fallback: false }
-    );
+    const existing = await DbPromise.get<{
+      run_id: string;
+      organization_id: string;
+      user_id: string;
+    }>(`SELECT run_id, organization_id, user_id FROM test_support_runs WHERE run_id = ?`, [runId], {
+      fallback: false,
+    });
 
     if (!existing) {
       return res.status(200).json({ ok: true, runId, deleted: false });

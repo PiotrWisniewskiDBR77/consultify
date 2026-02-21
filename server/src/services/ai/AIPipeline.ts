@@ -1588,9 +1588,7 @@ Użytkownik może zapytać o te akcje - możesz mu pomóc je przejrzeć i zatwie
         } catch (fbError: any) {
           lastError = fbError as Error;
           const fbMsg = String(fbError?.message || fbError || '');
-          logger.warn(
-            `[AIPipeline] Fallback failed (${candidateModelId}): ${fbMsg.slice(0, 200)}`
-          );
+          logger.warn(`[AIPipeline] Fallback failed (${candidateModelId}): ${fbMsg.slice(0, 200)}`);
         }
       }
 

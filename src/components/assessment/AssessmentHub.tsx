@@ -563,18 +563,41 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           render: (row) => {
             if (row._isImported) {
               const importStatusConfig: Record<string, { label: string; color: string }> = {
-                pending: { label: 'Uploaded', color: 'bg-slate-500/15 text-slate-400 border-slate-500/20' },
-                detecting: { label: 'Detecting...', color: 'bg-amber-500/15 text-amber-400 border-amber-500/20' },
-                extracting: { label: 'Extracting...', color: 'bg-amber-500/15 text-amber-400 border-amber-500/20' },
-                ready_for_review: { label: 'Ready for review', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' },
-                assessment_created: { label: 'Assessment created', color: 'bg-blue-500/15 text-blue-400 border-blue-500/20' },
-                initiatives_created: { label: 'Initiatives created', color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/20' },
-                completed: { label: 'Completed', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' },
+                pending: {
+                  label: 'Uploaded',
+                  color: 'bg-slate-500/15 text-slate-400 border-slate-500/20',
+                },
+                detecting: {
+                  label: 'Detecting...',
+                  color: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+                },
+                extracting: {
+                  label: 'Extracting...',
+                  color: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+                },
+                ready_for_review: {
+                  label: 'Ready for review',
+                  color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+                },
+                assessment_created: {
+                  label: 'Assessment created',
+                  color: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
+                },
+                initiatives_created: {
+                  label: 'Initiatives created',
+                  color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/20',
+                },
+                completed: {
+                  label: 'Completed',
+                  color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+                },
                 failed: { label: 'Failed', color: 'bg-red-500/15 text-red-400 border-red-500/20' },
               };
               const cfg = importStatusConfig[row._importStatus] || importStatusConfig.pending;
               return (
-                <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium border ${cfg.color}`}>
+                <span
+                  className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium border ${cfg.color}`}
+                >
                   {cfg.label}
                 </span>
               );
@@ -1251,58 +1274,61 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   };
 
   // Handle PDF file upload
-  const handleUploadPDF = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleUploadPDF = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
-      toast.error('Only PDF files are supported');
-      return;
-    }
-
-    setIsUploading(true);
-    const toastId = toast.loading('Uploading DRD report...');
-
-    try {
-      const result = await Api.uploadReportImport(file);
-      const importId = result?.data?.id;
-
-      if (!importId) {
-        throw new Error('Upload failed: no import ID returned');
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        toast.error('Only PDF files are supported');
+        return;
       }
 
-      toast.loading('Processing PDF...', { id: toastId });
+      setIsUploading(true);
+      const toastId = toast.loading('Uploading DRD report...');
 
-      // Trigger detection + extraction
-      await Api.detectReportImport(importId);
+      try {
+        const result = await Api.uploadReportImport(file);
+        const importId = result?.data?.id;
 
-      toast.success('Report uploaded and processed!', { id: toastId });
-      await refreshData();
+        if (!importId) {
+          throw new Error('Upload failed: no import ID returned');
+        }
 
-      // Open the imported report detail view
-      const doc: OpenDocument = {
-        id: `import-${importId}`,
-        type: 'report',
-        subType: 'imported',
-        name: file.name,
-        status: 'PENDING_REVIEW',
-      };
-      setOpenDocuments((prev) => {
-        if (prev.find((d) => d.id === doc.id)) return prev;
-        return [...prev, doc];
-      });
-      setActiveDocumentId(doc.id);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to upload report', { id: toastId });
-      console.error('[AssessmentHub] Upload error:', err);
-    } finally {
-      setIsUploading(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        toast.loading('Processing PDF...', { id: toastId });
+
+        // Trigger detection + extraction
+        await Api.detectReportImport(importId);
+
+        toast.success('Report uploaded and processed!', { id: toastId });
+        await refreshData();
+
+        // Open the imported report detail view
+        const doc: OpenDocument = {
+          id: `import-${importId}`,
+          type: 'report',
+          subType: 'imported',
+          name: file.name,
+          status: 'PENDING_REVIEW',
+        };
+        setOpenDocuments((prev) => {
+          if (prev.find((d) => d.id === doc.id)) return prev;
+          return [...prev, doc];
+        });
+        setActiveDocumentId(doc.id);
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to upload report', { id: toastId });
+        console.error('[AssessmentHub] Upload error:', err);
+      } finally {
+        setIsUploading(false);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
-    }
-  }, [refreshData]);
+    },
+    [refreshData]
+  );
 
   // Status dropdown component for right controls (+ upload button on Reports tab)
   const statusDropdownControl = (
@@ -1327,11 +1353,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
               disabled:opacity-50 disabled:cursor-not-allowed"
             title="Upload DRD report (PDF)"
           >
-            {isUploading ? (
-              <Loader2 size={15} className="animate-spin" />
-            ) : (
-              <Upload size={15} />
-            )}
+            {isUploading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
             Upload PDF
           </button>
         </>

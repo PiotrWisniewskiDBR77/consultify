@@ -327,11 +327,16 @@ router.get(
   '/:id/pdf',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const result = await managementReportsService.generateExport(req.params.id, 'pdf', req.userId);
+      const result = await managementReportsService.generateExport(
+        req.params.id,
+        'pdf',
+        req.userId
+      );
       return res.json({ success: true, pdfUrl: result.filePath });
     } catch (error: any) {
       const status = Number(error?.status) || 500;
-      if (status === 404) return res.status(404).json({ success: false, error: 'Report not found' });
+      if (status === 404)
+        return res.status(404).json({ success: false, error: 'Report not found' });
       if (error?.code === 'DEPENDENCY_MISSING') {
         return res.status(503).json({
           success: false,
@@ -339,7 +344,11 @@ router.get(
         });
       }
       const msg = String(error?.message || '').toLowerCase();
-      if (msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')) {
+      if (
+        msg.includes('no such table') ||
+        msg.includes('does not exist') ||
+        msg.includes('relation')
+      ) {
         return res.status(503).json({
           success: false,
           error: 'Management reports storage not available (schema missing)',
@@ -354,11 +363,16 @@ router.get(
   '/:id/pptx',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const result = await managementReportsService.generateExport(req.params.id, 'pptx', req.userId);
+      const result = await managementReportsService.generateExport(
+        req.params.id,
+        'pptx',
+        req.userId
+      );
       return res.json({ success: true, pptxUrl: result.filePath });
     } catch (error: any) {
       const status = Number(error?.status) || 500;
-      if (status === 404) return res.status(404).json({ success: false, error: 'Report not found' });
+      if (status === 404)
+        return res.status(404).json({ success: false, error: 'Report not found' });
       if (error?.code === 'DEPENDENCY_MISSING') {
         return res.status(503).json({
           success: false,
@@ -366,7 +380,11 @@ router.get(
         });
       }
       const msg = String(error?.message || '').toLowerCase();
-      if (msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')) {
+      if (
+        msg.includes('no such table') ||
+        msg.includes('does not exist') ||
+        msg.includes('relation')
+      ) {
         return res.status(503).json({
           success: false,
           error: 'Management reports storage not available (schema missing)',
