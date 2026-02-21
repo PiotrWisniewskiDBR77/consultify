@@ -151,7 +151,6 @@ import roadmapRoutes from './routes/pmo/roadmap.routes.js';
 import taskRoutes from './routes/pmo/tasks.routes.js';
 import workstreamsRoutes from './routes/pmo/workstreams.routes.js';
 import portfolioOptimizationRoutes from './routes/portfolioOptimization.routes.js';
-import portfolioOptimizationRoutes from './routes/portfolioOptimization.routes.js';
 import premiumReportsRoutes from './routes/premiumReports.routes.js';
 import presentationsRoutes from './routes/presentations.routes.js';
 import promptAssistantRoutes from './routes/prompt-assistant.routes.js';
