@@ -49,7 +49,10 @@ router.get(
         avatar_url: string | null;
         timezone: string | null;
         mfa_enabled: boolean | null;
-      }>(`SELECT id, email, first_name, last_name, phone, avatar_url, timezone, mfa_enabled FROM users WHERE id = ?`, [userId]);
+      }>(
+        `SELECT id, email, first_name, last_name, phone, avatar_url, timezone, mfa_enabled FROM users WHERE id = ?`,
+        [userId]
+      );
 
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
@@ -76,7 +79,7 @@ router.get(
           `SELECT job_title FROM user_profiles WHERE user_id = ?`,
           [userId]
         );
-        hasJobTitle = !!(profile?.job_title);
+        hasJobTitle = !!profile?.job_title;
       } catch {
         // table may not exist
       }
@@ -141,7 +144,9 @@ router.get(
       ];
 
       const totalWeight = items.reduce((sum, i) => sum + i.weight, 0);
-      const completedWeight = items.filter((i) => i.isComplete).reduce((sum, i) => sum + i.weight, 0);
+      const completedWeight = items
+        .filter((i) => i.isComplete)
+        .reduce((sum, i) => sum + i.weight, 0);
       const percentage = Math.round((completedWeight / totalWeight) * 100);
 
       // Build suggestions
@@ -179,10 +184,26 @@ router.get(
 
       // Check achievements
       const achievements: Array<{ achievement_type: string; unlocked_at: string }> = [];
-      if (percentage >= 25) achievements.push({ achievement_type: 'PROFILE_COMPLETE_25', unlocked_at: new Date().toISOString() });
-      if (percentage >= 50) achievements.push({ achievement_type: 'PROFILE_COMPLETE_50', unlocked_at: new Date().toISOString() });
-      if (percentage >= 75) achievements.push({ achievement_type: 'PROFILE_COMPLETE_75', unlocked_at: new Date().toISOString() });
-      if (percentage >= 100) achievements.push({ achievement_type: 'PROFILE_COMPLETE_100', unlocked_at: new Date().toISOString() });
+      if (percentage >= 25)
+        achievements.push({
+          achievement_type: 'PROFILE_COMPLETE_25',
+          unlocked_at: new Date().toISOString(),
+        });
+      if (percentage >= 50)
+        achievements.push({
+          achievement_type: 'PROFILE_COMPLETE_50',
+          unlocked_at: new Date().toISOString(),
+        });
+      if (percentage >= 75)
+        achievements.push({
+          achievement_type: 'PROFILE_COMPLETE_75',
+          unlocked_at: new Date().toISOString(),
+        });
+      if (percentage >= 100)
+        achievements.push({
+          achievement_type: 'PROFILE_COMPLETE_100',
+          unlocked_at: new Date().toISOString(),
+        });
 
       return res.json({
         success: true,

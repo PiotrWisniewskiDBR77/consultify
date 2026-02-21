@@ -33,7 +33,11 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { default as defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
 import notificationService from '../services/notificationService.js';
-import { applyAgentAction, getAgentMessages, processAgentMessage } from '../services/reportAgentService.js';
+import {
+  applyAgentAction,
+  getAgentMessages,
+  processAgentMessage,
+} from '../services/reportAgentService.js';
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import ReportGenerationService from '../services/reportGenerationService.js';
@@ -2546,9 +2550,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
       const allBlockTypes = await ReportBuilderService.listBlockTypes(organizationId).catch(
         () => []
       );
-      const btMap = new Map(
-        allBlockTypes.map((bt) => [bt.id, bt] as [string, typeof bt])
-      );
+      const btMap = new Map(allBlockTypes.map((bt) => [bt.id, bt] as [string, typeof bt]));
 
       const v2Sections = (reportData.sections || []).map((s: any) => {
         const btId = s.blockTypeId || s.block_type_id;

@@ -334,25 +334,53 @@ export interface FrameworkIntegrationChecklist {
   smokeTest: boolean;
 }
 
-export function validateFrameworkIntegration(
-  checklist: Partial<FrameworkIntegrationChecklist>
-): { valid: boolean; missing: string[] } {
+export function validateFrameworkIntegration(checklist: Partial<FrameworkIntegrationChecklist>): {
+  valid: boolean;
+  missing: string[];
+} {
   const REQUIRED: (keyof FrameworkIntegrationChecklist)[] = [
-    'registryConfig', 'structureDefinition', 'editorComponent', 'mapComponent',
-    'reportTemplate', 'initiativeMapping', 'i18nStrings', 'legalNotice',
-    'knowledgeBase', 'analyticsHooks', 'entitlementConfig',
+    'registryConfig',
+    'structureDefinition',
+    'editorComponent',
+    'mapComponent',
+    'reportTemplate',
+    'initiativeMapping',
+    'i18nStrings',
+    'legalNotice',
+    'knowledgeBase',
+    'analyticsHooks',
+    'entitlementConfig',
   ];
   const missing = REQUIRED.filter((f) => !checklist[f]);
   return { valid: missing.length === 0, missing };
 }
 
-export function getFrameworkIntegrationStatus(): Record<FrameworkId, FrameworkIntegrationChecklist> {
+export function getFrameworkIntegrationStatus(): Record<
+  FrameworkId,
+  FrameworkIntegrationChecklist
+> {
   const full = (id: FrameworkId, kb = true): FrameworkIntegrationChecklist => ({
-    frameworkId: id, registryConfig: true, structureDefinition: true, editorComponent: true,
-    mapComponent: true, reportTemplate: true, initiativeMapping: true, i18nStrings: true,
-    legalNotice: true, knowledgeBase: kb, analyticsHooks: true, entitlementConfig: true, smokeTest: false,
+    frameworkId: id,
+    registryConfig: true,
+    structureDefinition: true,
+    editorComponent: true,
+    mapComponent: true,
+    reportTemplate: true,
+    initiativeMapping: true,
+    i18nStrings: true,
+    legalNotice: true,
+    knowledgeBase: kb,
+    analyticsHooks: true,
+    entitlementConfig: true,
+    smokeTest: false,
   });
-  return { DRD: full('DRD'), SIRI: full('SIRI'), ADMA: full('ADMA'), CMMI: full('CMMI', false), LEAN: full('LEAN') };
+  return {
+    DRD: full('DRD'),
+    SIRI: full('SIRI'),
+    ADMA: full('ADMA'),
+    CMMI: full('CMMI', false),
+    LEAN: full('LEAN'),
+  };
 }
 
 export default FRAMEWORK_CONFIGS;

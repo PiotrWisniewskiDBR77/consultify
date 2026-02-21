@@ -4,7 +4,7 @@
 import { type Response, Router } from 'express';
 import { z } from 'zod';
 
-import { isAuthenticated, type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { type AuthRequest, isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody, validateQuery } from '../middleware/validation.middleware.js';
 import { TaskAssignmentService } from '../services/taskAssignmentService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -107,8 +107,16 @@ const writeAuditLog = async (params: {
   ipAddress?: string | null;
   userAgent?: string | null;
 }) => {
-  const { userId, organizationId, actionType, resourceType, resourceId, details, ipAddress, userAgent } =
-    params;
+  const {
+    userId,
+    organizationId,
+    actionType,
+    resourceType,
+    resourceId,
+    details,
+    ipAddress,
+    userAgent,
+  } = params;
   await dbRun(
     `INSERT INTO audit_logs (id, timestamp, user_id, action_type, resource_type, resource_id, organization_id, details, ip_address, user_agent, created_at)
      VALUES (gen_random_uuid()::TEXT, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
@@ -317,8 +325,7 @@ router.post(
       .filter((v) => v.initiativeIds.size >= 2)
       .map((v) => ({
         type: 'duplicate_purchase' as const,
-        severity:
-          v.initiativeIds.size >= 4 ? 'high' : v.initiativeIds.size >= 3 ? 'medium' : 'low',
+        severity: v.initiativeIds.size >= 4 ? 'high' : v.initiativeIds.size >= 3 ? 'medium' : 'low',
         tool: v.name,
         vendor: v.vendor,
         initiatives: Array.from(v.initiativeIds.values()),
@@ -369,7 +376,12 @@ router.post(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
     const { schedule, scenarioType } = req.body as {
-      schedule: Array<{ id: string; plannedStartDate: string; plannedEndDate: string; quarter?: string }>;
+      schedule: Array<{
+        id: string;
+        plannedStartDate: string;
+        plannedEndDate: string;
+        quarter?: string;
+      }>;
       scenarioType?: string;
     };
 
@@ -684,4 +696,3 @@ router.post(
 );
 
 export default router;
-

@@ -74,7 +74,11 @@ export const KPIAttributionPanel: React.FC = () => {
       const uniqueKpis = new Map<string, KPIOption>();
       (res.data || []).forEach((m: any) => {
         if (m.kpi_id && !uniqueKpis.has(m.kpi_id)) {
-          uniqueKpis.set(m.kpi_id, { id: m.kpi_id, name: m.kpi_name || 'Unknown', unit: m.unit || '' });
+          uniqueKpis.set(m.kpi_id, {
+            id: m.kpi_id,
+            name: m.kpi_name || 'Unknown',
+            unit: m.unit || '',
+          });
         }
       });
       setKpis(Array.from(uniqueKpis.values()));
@@ -117,9 +121,14 @@ export const KPIAttributionPanel: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center p-6">
         <PieChart className="w-12 h-12 text-purple-400/50 mb-3" />
-        <p className="text-lg text-slate-900 dark:text-white">{t('kpi.attribution.noMappings', 'No KPI Mappings Found')}</p>
+        <p className="text-lg text-slate-900 dark:text-white">
+          {t('kpi.attribution.noMappings', 'No KPI Mappings Found')}
+        </p>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          {t('kpi.attribution.noMappingsHint', 'Map KPIs to initiatives first to see attribution analysis.')}
+          {t(
+            'kpi.attribution.noMappingsHint',
+            'Map KPIs to initiatives first to see attribution analysis.'
+          )}
         </p>
       </div>
     );
@@ -129,7 +138,9 @@ export const KPIAttributionPanel: React.FC = () => {
     <div className="p-6 space-y-6">
       {/* KPI Selector */}
       <div className="flex items-center gap-4">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('kpi.attribution.selectKpi', 'Select KPI')}:</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          {t('kpi.attribution.selectKpi', 'Select KPI')}:
+        </label>
         <select
           value={selectedKpi}
           onChange={(e) => handleKpiSelect(e.target.value)}
@@ -137,7 +148,9 @@ export const KPIAttributionPanel: React.FC = () => {
         >
           <option value="">{t('kpi.attribution.choose', '— Choose a KPI —')}</option>
           {kpis.map((k) => (
-            <option key={k.id} value={k.id}>{k.name} ({k.unit})</option>
+            <option key={k.id} value={k.id}>
+              {k.name} ({k.unit})
+            </option>
           ))}
         </select>
       </div>
@@ -152,16 +165,30 @@ export const KPIAttributionPanel: React.FC = () => {
         <>
           {/* Overview */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <MetricCard label={t('kpi.attribution.kpiDelta', 'KPI Change')} value={attribution.kpiDelta.toFixed(2)} icon={<TrendingUp className="w-5 h-5 text-blue-400" />} />
-            <MetricCard label={t('kpi.attribution.contributors', 'Contributors')} value={String(attribution.contributions.length)} icon={<Target className="w-5 h-5 text-green-400" />} />
-            <MetricCard label={t('kpi.attribution.unexplained', 'Unexplained')} value={`${attribution.unexplainedPercent.toFixed(1)}%`} icon={<HelpCircle className="w-5 h-5 text-yellow-400" />} />
+            <MetricCard
+              label={t('kpi.attribution.kpiDelta', 'KPI Change')}
+              value={attribution.kpiDelta.toFixed(2)}
+              icon={<TrendingUp className="w-5 h-5 text-blue-400" />}
+            />
+            <MetricCard
+              label={t('kpi.attribution.contributors', 'Contributors')}
+              value={String(attribution.contributions.length)}
+              icon={<Target className="w-5 h-5 text-green-400" />}
+            />
+            <MetricCard
+              label={t('kpi.attribution.unexplained', 'Unexplained')}
+              value={`${attribution.unexplainedPercent.toFixed(1)}%`}
+              icon={<HelpCircle className="w-5 h-5 text-yellow-400" />}
+            />
             <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-500/10 rounded-lg">
                   <Shield className="w-5 h-5 text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{t('kpi.attribution.confidence', 'Confidence')}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('kpi.attribution.confidence', 'Confidence')}
+                  </p>
                   <ConfBadge level={attribution.overallConfidence} />
                 </div>
               </div>
@@ -171,15 +198,22 @@ export const KPIAttributionPanel: React.FC = () => {
           {/* Contribution Bar */}
           {attribution.contributions.length > 0 && (
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-              <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">{t('kpi.attribution.breakdown', 'Attribution Breakdown')}</h4>
+              <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                {t('kpi.attribution.breakdown', 'Attribution Breakdown')}
+              </h4>
               <div className="flex rounded-lg overflow-hidden h-8">
                 {attribution.contributions.map((c, i) => (
                   <div
                     key={c.initiativeId}
                     className="flex items-center justify-center text-xs font-medium text-white cursor-pointer hover:opacity-80 transition-opacity"
-                    style={{ width: `${Math.max(c.contributionPercent, 3)}%`, backgroundColor: COLORS[i % COLORS.length] }}
+                    style={{
+                      width: `${Math.max(c.contributionPercent, 3)}%`,
+                      backgroundColor: COLORS[i % COLORS.length],
+                    }}
                     title={`${c.initiativeName}: ${c.contributionPercent}%`}
-                    onClick={() => setExpandedContrib(expandedContrib === c.initiativeId ? null : c.initiativeId)}
+                    onClick={() =>
+                      setExpandedContrib(expandedContrib === c.initiativeId ? null : c.initiativeId)
+                    }
                   >
                     {c.contributionPercent > 8 ? `${c.contributionPercent}%` : ''}
                   </div>
@@ -189,21 +223,28 @@ export const KPIAttributionPanel: React.FC = () => {
                     className="flex items-center justify-center text-xs font-medium text-slate-500 bg-slate-200 dark:bg-navy-700"
                     style={{ width: `${attribution.unexplainedPercent}%` }}
                   >
-                    {attribution.unexplainedPercent > 8 ? `${attribution.unexplainedPercent.toFixed(0)}%` : ''}
+                    {attribution.unexplainedPercent > 8
+                      ? `${attribution.unexplainedPercent.toFixed(0)}%`
+                      : ''}
                   </div>
                 )}
               </div>
               <div className="flex flex-wrap gap-3 mt-3">
                 {attribution.contributions.map((c, i) => (
                   <div key={c.initiativeId} className="flex items-center gap-1.5 text-xs">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    <div
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: COLORS[i % COLORS.length] }}
+                    />
                     <span className="text-slate-600 dark:text-slate-300">{c.initiativeName}</span>
                   </div>
                 ))}
                 {attribution.unexplainedPercent > 2 && (
                   <div className="flex items-center gap-1.5 text-xs">
                     <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-navy-600" />
-                    <span className="text-slate-400">{t('kpi.attribution.unexplainedLabel', 'Unexplained / External')}</span>
+                    <span className="text-slate-400">
+                      {t('kpi.attribution.unexplainedLabel', 'Unexplained / External')}
+                    </span>
                   </div>
                 )}
               </div>
@@ -213,19 +254,35 @@ export const KPIAttributionPanel: React.FC = () => {
           {/* Contributors List */}
           <div className="space-y-2">
             {attribution.contributions.map((c) => (
-              <div key={c.initiativeId} className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+              <div
+                key={c.initiativeId}
+                className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden"
+              >
                 <button
                   className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-navy-800/50"
-                  onClick={() => setExpandedContrib(expandedContrib === c.initiativeId ? null : c.initiativeId)}
+                  onClick={() =>
+                    setExpandedContrib(expandedContrib === c.initiativeId ? null : c.initiativeId)
+                  }
                 >
                   <div className="flex items-center gap-3">
-                    {expandedContrib === c.initiativeId ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
-                    <span className="font-medium text-slate-900 dark:text-white">{c.initiativeName}</span>
+                    {expandedContrib === c.initiativeId ? (
+                      <ChevronDown size={16} className="text-slate-400" />
+                    ) : (
+                      <ChevronRight size={16} className="text-slate-400" />
+                    )}
+                    <span className="font-medium text-slate-900 dark:text-white">
+                      {c.initiativeName}
+                    </span>
                     <ConfBadge level={c.confidence} />
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-sm font-bold text-purple-500">{c.contributionPercent}%</span>
-                    <span className="text-sm text-slate-500">({c.contributionValue > 0 ? '+' : ''}{c.contributionValue.toFixed(2)})</span>
+                    <span className="text-sm font-bold text-purple-500">
+                      {c.contributionPercent}%
+                    </span>
+                    <span className="text-sm text-slate-500">
+                      ({c.contributionValue > 0 ? '+' : ''}
+                      {c.contributionValue.toFixed(2)})
+                    </span>
                   </div>
                 </button>
                 {expandedContrib === c.initiativeId && (
@@ -233,7 +290,12 @@ export const KPIAttributionPanel: React.FC = () => {
                     <p className="text-sm text-slate-600 dark:text-slate-300">{c.explanation}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {c.signals.map((s, i) => (
-                        <span key={i} className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-navy-700 rounded-full text-slate-500 dark:text-slate-400">{s}</span>
+                        <span
+                          key={i}
+                          className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-navy-700 rounded-full text-slate-500 dark:text-slate-400"
+                        >
+                          {s}
+                        </span>
                       ))}
                     </div>
                     <p className="text-xs text-slate-400 italic">{c.confidenceReason}</p>
@@ -249,10 +311,14 @@ export const KPIAttributionPanel: React.FC = () => {
               <div className="flex items-start gap-2">
                 <AlertTriangle className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium text-yellow-800 dark:text-yellow-400 text-sm">{t('kpi.attribution.qualitySignals', 'Quality Signals')}</p>
+                  <p className="font-medium text-yellow-800 dark:text-yellow-400 text-sm">
+                    {t('kpi.attribution.qualitySignals', 'Quality Signals')}
+                  </p>
                   <ul className="mt-1 space-y-0.5">
                     {attribution.confidenceReasons.map((r, i) => (
-                      <li key={i} className="text-sm text-yellow-700 dark:text-yellow-300/80">• {r}</li>
+                      <li key={i} className="text-sm text-yellow-700 dark:text-yellow-300/80">
+                        • {r}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -271,9 +337,22 @@ export const KPIAttributionPanel: React.FC = () => {
   );
 };
 
-const COLORS = ['#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444', '#22c55e', '#ec4899', '#3b82f6', '#f97316'];
+const COLORS = [
+  '#8b5cf6',
+  '#06b6d4',
+  '#f59e0b',
+  '#ef4444',
+  '#22c55e',
+  '#ec4899',
+  '#3b82f6',
+  '#f97316',
+];
 
-const MetricCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({ label, value, icon }) => (
+const MetricCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({
+  label,
+  value,
+  icon,
+}) => (
   <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
     <div className="flex items-center gap-3">
       <div className="p-2 bg-slate-100 dark:bg-navy-700 rounded-lg">{icon}</div>
@@ -291,7 +370,11 @@ const ConfBadge: React.FC<{ level: string }> = ({ level }) => {
     medium: 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400',
     low: 'bg-red-500/20 text-red-600 dark:text-red-400',
   };
-  return <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cls[level] || cls.low}`}>{level}</span>;
+  return (
+    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cls[level] || cls.low}`}>
+      {level}
+    </span>
+  );
 };
 
 export default KPIAttributionPanel;

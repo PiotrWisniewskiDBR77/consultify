@@ -90,9 +90,13 @@ router.post(
 
     try {
       // Check if user exists
-      const user = await dbGet('SELECT id, first_name, last_name FROM users WHERE id = ?', [userId], {
-        fallback: false,
-      });
+      const user = await dbGet(
+        'SELECT id, first_name, last_name FROM users WHERE id = ?',
+        [userId],
+        {
+          fallback: false,
+        }
+      );
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }

@@ -5,14 +5,27 @@
  * Pattern based on PDFImportWizard / ExcelImportWizard.
  */
 
-import React, { useState, useCallback, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-  Upload, FileText, Check, AlertTriangle, ChevronRight, ChevronLeft,
-  Loader2, X, Info, CheckCircle2, XCircle, Edit3, Search, ArrowRight,
+  AlertTriangle,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Edit3,
+  FileText,
+  Info,
+  Loader2,
+  Search,
+  Upload,
+  X,
+  XCircle,
 } from 'lucide-react';
+import React, { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import Api from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
-import Api from '../../services/Api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -97,7 +110,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
   // Validation state
-  const [validation, setValidation] = useState<{ status: string; messages: ValidationMessage[] } | null>(null);
+  const [validation, setValidation] = useState<{
+    status: string;
+    messages: ValidationMessage[];
+  } | null>(null);
 
   // Override detection
   const [overrideType, setOverrideType] = useState<string>('');
@@ -115,12 +131,15 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     setError(null);
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    const f = e.dataTransfer.files[0];
-    if (f && f.type === 'application/pdf') setFile(f);
-    else setError(t('finance.importWizard.pdfOnly', 'Only PDF files are supported'));
-  }, [t]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      const f = e.dataTransfer.files[0];
+      if (f && f.type === 'application/pdf') setFile(f);
+      else setError(t('finance.importWizard.pdfOnly', 'Only PDF files are supported'));
+    },
+    [t]
+  );
 
   const handleUpload = async () => {
     if (!file) return;
@@ -129,8 +148,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const resp = await Api.postMultipart('/api/finance-statements/upload', formData);
-      const data = resp.data;
+      const data = await Api.postMultipart('/api/finance-statements/upload', formData);
       setStatementId(data.statementId);
       setDetection(data.detection);
       setOverrideType(data.detection.statementType);
@@ -139,7 +157,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       trackFunnelEvent('financial_statement_import_started', { statementId: data.statementId });
       setStep('detect');
     } catch (e: any) {
-      setError(e?.response?.data?.error || e.message);
+      setError(e?.response?.data?.error || e?.message || String(e));
     } finally {
       setLoading(false);
     }
@@ -152,20 +170,20 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     setLoading(true);
     setError(null);
     try {
-      const extractResp = await Api.post(`/api/finance-statements/${statementId}/extract`, {});
-      const { lines } = extractResp.data;
+      const extractData = await Api.post(`/api/finance-statements/${statementId}/extract`, {});
+      const { lines } = extractData as { lines: ExtractedLine[] };
       setExtractedLines(lines);
 
       // Auto-map
-      const mapResp = await Api.post(`/api/finance-statements/${statementId}/map`, { lines });
-      const { mappedLines } = mapResp.data;
+      const mapData = await Api.post(`/api/finance-statements/${statementId}/map`, { lines });
+      const { mappedLines } = mapData as { mappedLines: ExtractedLine[] };
 
       // Load canonical lines for dropdown
-      const canonResp = await Api.get('/api/finance-statements/canonical-lines');
-      setCanonicalLines(canonResp.data || []);
+      const canonData = await Api.get('/api/finance-statements/canonical-lines');
+      setCanonicalLines((canonData as any) || []);
 
       // Build mapped values
-      const mv: MappedValue[] = (mappedLines as ExtractedLine[]).map(l => ({
+      const mv: MappedValue[] = (mappedLines as ExtractedLine[]).map((l) => ({
         originalLabel: l.originalLabel,
         value: l.value,
         confidence: l.confidence,
@@ -177,7 +195,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       setMappedValues(mv);
       setStep('map');
     } catch (e: any) {
-      setError(e?.response?.data?.error || e.message);
+      setError(e?.response?.data?.error || e?.message || String(e));
     } finally {
       setLoading(false);
     }
@@ -186,17 +204,23 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
   // ── Step 3: Map & Correct ──
 
   const handleValueChange = (idx: number, field: string, val: any) => {
-    setMappedValues(prev => prev.map((v, i) => i === idx ? { ...v, [field]: val } : v));
+    setMappedValues((prev) => prev.map((v, i) => (i === idx ? { ...v, [field]: val } : v)));
   };
 
   const handleCanonicalChange = (idx: number, canonId: string) => {
-    const canon = canonicalLines.find(c => c.id === canonId);
-    setMappedValues(prev => prev.map((v, i) => i === idx ? {
-      ...v,
-      canonicalLineId: canonId || null,
-      canonicalLabel: canon ? (isPl ? canon.line_name_pl : canon.line_name) : '',
-      mappingStatus: canonId ? 'manual' : 'unmapped',
-    } : v));
+    const canon = canonicalLines.find((c) => c.id === canonId);
+    setMappedValues((prev) =>
+      prev.map((v, i) =>
+        i === idx
+          ? {
+              ...v,
+              canonicalLineId: canonId || null,
+              canonicalLabel: canon ? (isPl ? canon.line_name_pl : canon.line_name) : '',
+              mappingStatus: canonId ? 'manual' : 'unmapped',
+            }
+          : v
+      )
+    );
   };
 
   const handleSaveMapping = async () => {
@@ -204,8 +228,8 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     setLoading(true);
     setError(null);
     try {
-      const resp = await Api.put(`/api/finance-statements/${statementId}/values`, {
-        values: mappedValues.map(v => ({
+      const data = await Api.put(`/api/finance-statements/${statementId}/values`, {
+        values: mappedValues.map((v) => ({
           canonicalLineId: v.canonicalLineId,
           originalLabel: v.originalLabel,
           value: v.value,
@@ -214,11 +238,14 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           mappingStatus: v.mappingStatus,
         })),
       });
-      setValidation(resp.data.validation);
-      trackFunnelEvent('financial_statement_import_completed', { statementId, lineCount: mappedValues.length });
+      setValidation((data as any)?.validation || null);
+      trackFunnelEvent('financial_statement_import_completed', {
+        statementId,
+        lineCount: mappedValues.length,
+      });
       setStep('confirm');
     } catch (e: any) {
-      setError(e?.response?.data?.error || e.message);
+      setError(e?.response?.data?.error || e?.message || String(e));
     } finally {
       setLoading(false);
     }
@@ -233,7 +260,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       await Api.post(`/api/finance-statements/${statementId}/confirm`, {});
       onComplete?.(statementId);
     } catch (e: any) {
-      setError(e?.response?.data?.error || e.message);
+      setError(e?.response?.data?.error || e?.message || String(e));
     } finally {
       setLoading(false);
     }
@@ -243,7 +270,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
 
   const confidenceBadge = (conf: number) => {
     const pct = Math.round(conf * 100);
-    const color = pct >= 70 ? 'text-emerald-600 bg-emerald-50' : pct >= 40 ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50';
+    const color =
+      pct >= 70
+        ? 'text-emerald-600 bg-emerald-50'
+        : pct >= 40
+          ? 'text-amber-600 bg-amber-50'
+          : 'text-red-600 bg-red-50';
     return <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${color}`}>{pct}%</span>;
   };
 
@@ -269,11 +301,17 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
             {t('finance.importWizard.title', 'Import Financial Statement')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            {t('finance.importWizard.subtitle', 'Upload a PDF to extract and standardize financial data')}
+            {t(
+              'finance.importWizard.subtitle',
+              'Upload a PDF to extract and standardize financial data'
+            )}
           </p>
         </div>
         {onClose && (
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+          >
             <X size={20} className="text-slate-500" />
           </button>
         )}
@@ -283,12 +321,22 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       <div className="flex items-center gap-2 mb-8">
         {STEPS.map((s, i) => (
           <React.Fragment key={s}>
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              i < stepIdx ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-              i === stepIdx ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-              'bg-slate-100 text-slate-400 dark:bg-navy-800 dark:text-navy-400'
-            }`}>
-              {i < stepIdx ? <Check size={14} /> : <span className="w-5 h-5 flex items-center justify-center rounded-full text-xs border border-current">{i + 1}</span>}
+            <div
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                i < stepIdx
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                  : i === stepIdx
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    : 'bg-slate-100 text-slate-400 dark:bg-navy-800 dark:text-navy-400'
+              }`}
+            >
+              {i < stepIdx ? (
+                <Check size={14} />
+              ) : (
+                <span className="w-5 h-5 flex items-center justify-center rounded-full text-xs border border-current">
+                  {i + 1}
+                </span>
+              )}
               <span className="hidden sm:inline">{stepLabels[i]}</span>
             </div>
             {i < STEPS.length - 1 && <ChevronRight size={16} className="text-slate-300" />}
@@ -310,26 +358,40 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
             className="border-2 border-dashed border-slate-300 dark:border-navy-600 rounded-2xl p-12 text-center hover:border-blue-400 transition-colors cursor-pointer"
             onClick={() => fileInputRef.current?.click()}
             onDrop={handleDrop}
-            onDragOver={e => e.preventDefault()}
+            onDragOver={(e) => e.preventDefault()}
           >
             <Upload size={48} className="mx-auto text-slate-400 mb-4" />
             <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">
               {t('finance.importWizard.dropOrClick', 'Drop PDF here or click to browse')}
             </p>
             <p className="text-sm text-slate-400">
-              {t('finance.importWizard.supportedFormats', 'Supported: PDF financial statements (Balance Sheet, P&L, Cash Flow)')}
+              {t(
+                'finance.importWizard.supportedFormats',
+                'Supported: PDF financial statements (Balance Sheet, P&L, Cash Flow)'
+              )}
             </p>
-            <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleFileSelect} className="hidden" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
           </div>
 
           {file && (
             <div className="mt-6 p-4 bg-slate-50 dark:bg-navy-900 rounded-xl flex items-center gap-3">
               <FileText size={20} className="text-blue-500" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{file.name}</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                  {file.name}
+                </p>
                 <p className="text-xs text-slate-400">{(file.size / 1024).toFixed(1)} KB</p>
               </div>
-              <button onClick={() => setFile(null)} className="p-1 hover:bg-slate-200 dark:hover:bg-navy-700 rounded">
+              <button
+                onClick={() => setFile(null)}
+                className="p-1 hover:bg-slate-200 dark:hover:bg-navy-700 rounded"
+              >
                 <X size={16} className="text-slate-400" />
               </button>
             </div>
@@ -362,7 +424,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                 </label>
                 <select
                   value={overrideType || detection.statementType}
-                  onChange={e => setOverrideType(e.target.value)}
+                  onChange={(e) => setOverrideType(e.target.value)}
                   className="mt-1 w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm"
                 >
                   <option value="P&L">P&L (Income Statement)</option>
@@ -376,7 +438,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                 </label>
                 <div className="mt-1 flex items-center gap-2">
                   {confidenceBadge(detection.confidence)}
-                  <span className="text-sm text-slate-600 dark:text-slate-300">{detection.language?.toUpperCase()}</span>
+                  <span className="text-sm text-slate-600 dark:text-slate-300">
+                    {detection.language?.toUpperCase()}
+                  </span>
                 </div>
               </div>
               <div>
@@ -386,7 +450,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                 <input
                   type="text"
                   value={overridePeriod || detection.periodLabel || ''}
-                  onChange={e => setOverridePeriod(e.target.value)}
+                  onChange={(e) => setOverridePeriod(e.target.value)}
                   placeholder="e.g. 2024"
                   className="mt-1 w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm"
                 />
@@ -397,11 +461,13 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                 </label>
                 <select
                   value={overrideCurrency || detection.currency}
-                  onChange={e => setOverrideCurrency(e.target.value)}
+                  onChange={(e) => setOverrideCurrency(e.target.value)}
                   className="mt-1 w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm"
                 >
-                  {['PLN', 'EUR', 'USD', 'GBP', 'CZK', 'CHF'].map(c => (
-                    <option key={c} value={c}>{c}</option>
+                  {['PLN', 'EUR', 'USD', 'GBP', 'CZK', 'CHF'].map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -409,7 +475,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
 
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <Info size={12} />
-              <span>{t('finance.importWizard.scaleDetected', 'Scale detected')}: <strong>{detection.scaling}</strong></span>
+              <span>
+                {t('finance.importWizard.scaleDetected', 'Scale detected')}:{' '}
+                <strong>{detection.scaling}</strong>
+              </span>
             </div>
           </div>
 
@@ -440,7 +509,8 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               {t('finance.importWizard.mappingTitle', 'Map Extracted Lines')}
             </h3>
             <span className="text-sm text-slate-500">
-              {mappedValues.filter(v => v.canonicalLineId).length}/{mappedValues.length} {t('finance.importWizard.mapped', 'mapped')}
+              {mappedValues.filter((v) => v.canonicalLineId).length}/{mappedValues.length}{' '}
+              {t('finance.importWizard.mapped', 'mapped')}
             </span>
           </div>
 
@@ -448,30 +518,51 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
             <table className="w-full text-sm">
               <thead className="bg-slate-50 dark:bg-navy-800">
                 <tr>
-                  <th className="text-left px-4 py-2 font-medium text-slate-500">{t('finance.importWizard.originalLabel', 'Original Label')}</th>
-                  <th className="text-right px-4 py-2 font-medium text-slate-500">{t('finance.importWizard.value', 'Value')}</th>
-                  <th className="text-center px-4 py-2 font-medium text-slate-500">{t('finance.importWizard.conf', 'Conf.')}</th>
-                  <th className="text-left px-4 py-2 font-medium text-slate-500">{t('finance.importWizard.mappedTo', 'Mapped To')}</th>
+                  <th className="text-left px-4 py-2 font-medium text-slate-500">
+                    {t('finance.importWizard.originalLabel', 'Original Label')}
+                  </th>
+                  <th className="text-right px-4 py-2 font-medium text-slate-500">
+                    {t('finance.importWizard.value', 'Value')}
+                  </th>
+                  <th className="text-center px-4 py-2 font-medium text-slate-500">
+                    {t('finance.importWizard.conf', 'Conf.')}
+                  </th>
+                  <th className="text-left px-4 py-2 font-medium text-slate-500">
+                    {t('finance.importWizard.mappedTo', 'Mapped To')}
+                  </th>
                   <th className="w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-navy-700">
                 {mappedValues.map((v, idx) => (
-                  <tr key={idx} className={`hover:bg-slate-50 dark:hover:bg-navy-800/50 ${!v.canonicalLineId ? 'bg-amber-50/30 dark:bg-amber-900/10' : ''}`}>
-                    <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{v.originalLabel}</td>
+                  <tr
+                    key={idx}
+                    className={`hover:bg-slate-50 dark:hover:bg-navy-800/50 ${!v.canonicalLineId ? 'bg-amber-50/30 dark:bg-amber-900/10' : ''}`}
+                  >
+                    <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">
+                      {v.originalLabel}
+                    </td>
                     <td className="px-4 py-2.5 text-right font-mono text-slate-900 dark:text-white">
                       {editingIdx === idx ? (
                         <input
                           type="number"
                           value={v.value}
-                          onChange={e => handleValueChange(idx, 'value', parseFloat(e.target.value) || 0)}
+                          onChange={(e) =>
+                            handleValueChange(idx, 'value', parseFloat(e.target.value) || 0)
+                          }
                           onBlur={() => setEditingIdx(null)}
                           autoFocus
                           className="w-28 px-2 py-1 border border-blue-300 rounded text-right text-sm"
                         />
                       ) : (
-                        <span onClick={() => setEditingIdx(idx)} className="cursor-pointer hover:text-blue-600">
-                          {v.value.toLocaleString(isPl ? 'pl-PL' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                        <span
+                          onClick={() => setEditingIdx(idx)}
+                          className="cursor-pointer hover:text-blue-600"
+                        >
+                          {v.value.toLocaleString(isPl ? 'pl-PL' : 'en-US', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          })}
                         </span>
                       )}
                     </td>
@@ -479,28 +570,43 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                     <td className="px-4 py-2.5">
                       <select
                         value={v.canonicalLineId || ''}
-                        onChange={e => handleCanonicalChange(idx, e.target.value)}
+                        onChange={(e) => handleCanonicalChange(idx, e.target.value)}
                         className={`w-full px-2 py-1 border rounded text-sm ${
-                          v.canonicalLineId ? 'border-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-700' : 'border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700'
+                          v.canonicalLineId
+                            ? 'border-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-700'
+                            : 'border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700'
                         }`}
                       >
-                        <option value="">{t('finance.importWizard.selectLine', '— Select canonical line —')}</option>
+                        <option value="">
+                          {t('finance.importWizard.selectLine', '— Select canonical line —')}
+                        </option>
                         {canonicalLines
-                          .filter(c => c.statement_type === (overrideType || detection?.statementType))
-                          .map(c => (
-                            <option key={c.id} value={c.id}>{isPl ? c.line_name_pl : c.line_name} ({c.line_code})</option>
+                          .filter(
+                            (c) => c.statement_type === (overrideType || detection?.statementType)
+                          )
+                          .map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {isPl ? c.line_name_pl : c.line_name} ({c.line_code})
+                            </option>
                           ))}
                         <optgroup label={t('finance.importWizard.otherTypes', 'Other types')}>
                           {canonicalLines
-                            .filter(c => c.statement_type !== (overrideType || detection?.statementType))
-                            .map(c => (
-                              <option key={c.id} value={c.id}>[{c.statement_type}] {isPl ? c.line_name_pl : c.line_name}</option>
+                            .filter(
+                              (c) => c.statement_type !== (overrideType || detection?.statementType)
+                            )
+                            .map((c) => (
+                              <option key={c.id} value={c.id}>
+                                [{c.statement_type}] {isPl ? c.line_name_pl : c.line_name}
+                              </option>
                             ))}
                         </optgroup>
                       </select>
                     </td>
                     <td className="px-2">
-                      <button onClick={() => setEditingIdx(editingIdx === idx ? null : idx)} className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded">
+                      <button
+                        onClick={() => setEditingIdx(editingIdx === idx ? null : idx)}
+                        className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded"
+                      >
                         <Edit3 size={14} className="text-slate-400" />
                       </button>
                     </td>
@@ -513,7 +619,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           {mappedValues.length === 0 && (
             <div className="text-center py-12 text-slate-400">
               <AlertTriangle size={32} className="mx-auto mb-3" />
-              <p>{t('finance.importWizard.noLinesExtracted', 'No financial lines were extracted. The PDF may need OCR or manual entry.')}</p>
+              <p>
+                {t(
+                  'finance.importWizard.noLinesExtracted',
+                  'No financial lines were extracted. The PDF may need OCR or manual entry.'
+                )}
+              </p>
             </div>
           )}
 
@@ -540,23 +651,34 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       {step === 'confirm' && validation && (
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Validation summary */}
-          <div className={`p-6 rounded-xl border ${
-            validation.status === 'pass' ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800' :
-            validation.status === 'warnings' ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800' :
-            'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
-          }`}>
+          <div
+            className={`p-6 rounded-xl border ${
+              validation.status === 'pass'
+                ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
+                : validation.status === 'warnings'
+                  ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800'
+                  : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
+            }`}
+          >
             <div className="flex items-center gap-3 mb-4">
-              {validation.status === 'pass' ? <CheckCircle2 size={24} className="text-emerald-500" /> :
-               validation.status === 'warnings' ? <AlertTriangle size={24} className="text-amber-500" /> :
-               <XCircle size={24} className="text-red-500" />}
+              {validation.status === 'pass' ? (
+                <CheckCircle2 size={24} className="text-emerald-500" />
+              ) : validation.status === 'warnings' ? (
+                <AlertTriangle size={24} className="text-amber-500" />
+              ) : (
+                <XCircle size={24} className="text-red-500" />
+              )}
               <div>
                 <h3 className="font-semibold text-slate-900 dark:text-white">
-                  {validation.status === 'pass' ? t('finance.importWizard.validationPass', 'All validations passed') :
-                   validation.status === 'warnings' ? t('finance.importWizard.validationWarnings', 'Imported with warnings') :
-                   t('finance.importWizard.validationErrors', 'Review required')}
+                  {validation.status === 'pass'
+                    ? t('finance.importWizard.validationPass', 'All validations passed')
+                    : validation.status === 'warnings'
+                      ? t('finance.importWizard.validationWarnings', 'Imported with warnings')
+                      : t('finance.importWizard.validationErrors', 'Review required')}
                 </h3>
                 <p className="text-sm text-slate-500">
-                  {mappedValues.filter(v => v.canonicalLineId).length} {t('finance.importWizard.linesMapped', 'lines mapped')}
+                  {mappedValues.filter((v) => v.canonicalLineId).length}{' '}
+                  {t('finance.importWizard.linesMapped', 'lines mapped')}
                 </p>
               </div>
             </div>
@@ -568,7 +690,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                     {validationIcon(msg.type)}
                     <div>
                       <span className="text-slate-700 dark:text-slate-300">{msg.message}</span>
-                      {msg.details && <p className="text-xs text-slate-400 mt-0.5">{msg.details}</p>}
+                      {msg.details && (
+                        <p className="text-xs text-slate-400 mt-0.5">{msg.details}</p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -580,15 +704,23 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           <div className="bg-slate-50 dark:bg-navy-900 rounded-xl p-5 grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-slate-500">{t('finance.importWizard.type', 'Type')}</span>
-              <p className="font-medium text-slate-900 dark:text-white">{overrideType || detection?.statementType}</p>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {overrideType || detection?.statementType}
+              </p>
             </div>
             <div>
               <span className="text-slate-500">{t('finance.importWizard.period', 'Period')}</span>
-              <p className="font-medium text-slate-900 dark:text-white">{overridePeriod || detection?.periodLabel || '—'}</p>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {overridePeriod || detection?.periodLabel || '—'}
+              </p>
             </div>
             <div>
-              <span className="text-slate-500">{t('finance.importWizard.currency', 'Currency')}</span>
-              <p className="font-medium text-slate-900 dark:text-white">{overrideCurrency || detection?.currency}</p>
+              <span className="text-slate-500">
+                {t('finance.importWizard.currency', 'Currency')}
+              </span>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {overrideCurrency || detection?.currency}
+              </p>
             </div>
             <div>
               <span className="text-slate-500">{t('finance.importWizard.file', 'Source')}</span>
@@ -608,7 +740,11 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               disabled={loading}
               className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-500 disabled:opacity-50"
             >
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+              {loading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <CheckCircle2 size={16} />
+              )}
               {t('finance.importWizard.confirmAndSave', 'Confirm & Save')}
             </button>
           </div>

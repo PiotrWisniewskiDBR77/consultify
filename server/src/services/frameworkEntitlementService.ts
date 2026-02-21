@@ -45,16 +45,40 @@ class FrameworkEntitlementServiceClass {
 
       const level = ent.access_level as FrameworkAccessLevel;
       if (level === 'locked') {
-        return { allowed: false, accessLevel: 'locked', reason: 'Framework access is locked', requiresLegalNotice: false, upgradeCTA: 'Upgrade your plan' };
+        return {
+          allowed: false,
+          accessLevel: 'locked',
+          reason: 'Framework access is locked',
+          requiresLegalNotice: false,
+          upgradeCTA: 'Upgrade your plan',
+        };
       }
       if (level === 'trial' && ent.expires_at && new Date(ent.expires_at) < new Date()) {
-        return { allowed: false, accessLevel: 'locked', reason: 'Trial expired', expiresAt: ent.expires_at, requiresLegalNotice: false, upgradeCTA: 'Trial expired — upgrade to continue' };
+        return {
+          allowed: false,
+          accessLevel: 'locked',
+          reason: 'Trial expired',
+          expiresAt: ent.expires_at,
+          requiresLegalNotice: false,
+          upgradeCTA: 'Trial expired — upgrade to continue',
+        };
       }
-      return { allowed: true, accessLevel: level, expiresAt: ent.expires_at, requiresLegalNotice: level === 'educational' };
+      return {
+        allowed: true,
+        accessLevel: level,
+        expiresAt: ent.expires_at,
+        requiresLegalNotice: level === 'educational',
+      };
     } catch (err) {
       logger.error(`[FrameworkEntitlement] Error:`, err);
-      if (EDUCATIONAL_FRAMEWORKS.includes(frameworkId)) return { allowed: true, accessLevel: 'educational', requiresLegalNotice: true };
-      return { allowed: false, accessLevel: 'locked', reason: 'Access check failed', requiresLegalNotice: false };
+      if (EDUCATIONAL_FRAMEWORKS.includes(frameworkId))
+        return { allowed: true, accessLevel: 'educational', requiresLegalNotice: true };
+      return {
+        allowed: false,
+        accessLevel: 'locked',
+        reason: 'Access check failed',
+        requiresLegalNotice: false,
+      };
     }
   }
 
@@ -65,18 +89,30 @@ class FrameworkEntitlementServiceClass {
     return result;
   }
 
-  async grantAccess(organizationId: string, frameworkId: string, accessLevel: FrameworkAccessLevel, grantedBy: string, expiresAt?: string | null, notes?: string): Promise<void> {
+  async grantAccess(
+    organizationId: string,
+    frameworkId: string,
+    accessLevel: FrameworkAccessLevel,
+    grantedBy: string,
+    expiresAt?: string | null,
+    notes?: string
+  ): Promise<void> {
     await dbRun(
       `INSERT INTO framework_entitlements (organization_id, framework_id, access_level, granted_by, expires_at, notes, granted_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
        ON CONFLICT(organization_id, framework_id) DO UPDATE SET access_level = excluded.access_level, granted_by = excluded.granted_by, expires_at = excluded.expires_at, notes = excluded.notes, updated_at = datetime('now')`,
       [organizationId, frameworkId, accessLevel, grantedBy, expiresAt || null, notes || null]
     );
-    logger.info(`[FrameworkEntitlement] Granted ${accessLevel} for ${frameworkId} to org=${organizationId}`);
+    logger.info(
+      `[FrameworkEntitlement] Granted ${accessLevel} for ${frameworkId} to org=${organizationId}`
+    );
   }
 
   async revokeAccess(organizationId: string, frameworkId: string): Promise<void> {
-    await dbRun(`UPDATE framework_entitlements SET access_level = 'locked', updated_at = datetime('now') WHERE organization_id = ? AND framework_id = ?`, [organizationId, frameworkId]);
+    await dbRun(
+      `UPDATE framework_entitlements SET access_level = 'locked', updated_at = datetime('now') WHERE organization_id = ? AND framework_id = ?`,
+      [organizationId, frameworkId]
+    );
   }
 }
 

@@ -35,11 +35,11 @@ import {
   initializeConnectionPool,
   shutdownConnectionPool,
 } from './database/index.js';
+import { rateLimitUserIdMiddleware } from './middleware/rateLimitUserId.middleware.js';
 // TypeScript routes (migrated)
 import { get as dbGet } from './utils/DbPromise.js';
 import logger from './utils/Logger.js';
 import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
-import { rateLimitUserIdMiddleware } from './middleware/rateLimitUserId.middleware.js';
 import { correlationMiddleware } from './utils/RequestStore.js';
 import { getShutdownManager } from './utils/ShutdownManager.js';
 
@@ -603,7 +603,17 @@ app.use(sentryHandlers.requestHandler);
 app.use(sentryHandlers.tracingHandler);
 
 // Body Parsing, Cookies & Static Files
-app.use(express.json({ limit: '10mb' }));
+// Stripe webhooks require the *raw* request body for signature verification.
+// Since `express.json()` consumes the stream, we conditionally route body parsing.
+const jsonParser = express.json({ limit: '10mb' });
+const stripeRawParser = express.raw({ type: 'application/json' });
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const path = req.path;
+  if (path === '/api/webhooks/stripe' || path === '/api/token-billing/webhook') {
+    return stripeRawParser(req, res, next);
+  }
+  return jsonParser(req, res, next);
+});
 app.use(cookieParser()); // Required for CSRF protection
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
@@ -1049,10 +1059,18 @@ if (startServer && shouldStartHttpServer) {
 
     // Extra diagnostics: capture exits and crashes (helps identify "who killed us" vs internal exit paths)
     process.on('exit', (code) => {
-      logger.info('[Process] exit', { code, pid: process.pid, uptimeSeconds: Math.round(process.uptime()) });
+      logger.info('[Process] exit', {
+        code,
+        pid: process.pid,
+        uptimeSeconds: Math.round(process.uptime()),
+      });
     });
     process.on('beforeExit', (code) => {
-      logger.info('[Process] beforeExit', { code, pid: process.pid, uptimeSeconds: Math.round(process.uptime()) });
+      logger.info('[Process] beforeExit', {
+        code,
+        pid: process.pid,
+        uptimeSeconds: Math.round(process.uptime()),
+      });
     });
     process.on('uncaughtException', (err) => {
       logger.error('[Process] uncaughtException', { message: err?.message, stack: err?.stack });

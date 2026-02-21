@@ -141,14 +141,10 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 
       sql += ' ORDER BY created_at DESC';
 
-      db.all(
-        sql,
-        params,
-        (err: Error | null, rows: any[]) => {
-          if (err) reject(err);
-          else resolve(rows || []);
-        }
-      );
+      db.all(sql, params, (err: Error | null, rows: any[]) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      });
     });
 
     const normalized = (assessments || []).map((a: any) => {
@@ -210,7 +206,10 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Assessment not found' });
     }
 
-    const data = safeJsonParse<{ progress?: number; overallScore?: number }>(assessment.frameworkData, {});
+    const data = safeJsonParse<{ progress?: number; overallScore?: number }>(
+      assessment.frameworkData,
+      {}
+    );
     res.json({
       assessment: {
         ...assessment,

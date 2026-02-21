@@ -101,7 +101,9 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
       const headers = { Authorization: `Bearer ${token}` };
 
       if (initiativeId) {
-        const res = await fetch(`/api/execution-control/budget/initiative/${initiativeId}`, { headers });
+        const res = await fetch(`/api/execution-control/budget/initiative/${initiativeId}`, {
+          headers,
+        });
         if (res.ok) setInitSummary(await res.json());
       } else {
         const params = new URLSearchParams();
@@ -172,7 +174,9 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             {t('execution.budget.title')}
           </h3>
-          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${style.bg} ${style.text}`}>
+          <span
+            className={`px-2 py-0.5 text-xs font-medium rounded-full ${style.bg} ${style.text}`}
+          >
             {t(`execution.budget.status.${initSummary.status.toLowerCase()}`)}
           </span>
         </div>
@@ -260,14 +264,20 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
               <span className="text-xs font-semibold text-slate-900 dark:text-white">
                 {t('execution.budget.newEntry')}
               </span>
-              <button type="button" onClick={() => setShowAddEntry(false)} className="text-slate-400 hover:text-slate-300">
+              <button
+                type="button"
+                onClick={() => setShowAddEntry(false)}
+                className="text-slate-400 hover:text-slate-300"
+              >
                 <X size={14} />
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <select
                 value={entryForm.costType}
-                onChange={(e) => setEntryForm((p) => ({ ...p, costType: e.target.value as 'CAPEX' | 'OPEX' }))}
+                onChange={(e) =>
+                  setEntryForm((p) => ({ ...p, costType: e.target.value as 'CAPEX' | 'OPEX' }))
+                }
                 className="text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-slate-700 dark:text-slate-300"
               >
                 <option value="CAPEX">CAPEX</option>
@@ -347,20 +357,30 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
       {/* Portfolio Totals */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-3 bg-white dark:bg-navy-900">
-          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('execution.budget.planned')}</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+            {t('execution.budget.planned')}
+          </div>
           <div className="text-base font-bold text-slate-900 dark:text-white">
             {formatCurrency(portfolio.totalPlanned, portfolio.currency)}
           </div>
         </div>
         <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-3 bg-white dark:bg-navy-900">
-          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('execution.budget.actual')}</div>
-          <div className={`text-base font-bold ${portfolio.variancePercent >= 90 ? 'text-red-400' : portfolio.variancePercent >= 80 ? 'text-amber-400' : 'text-green-400'}`}>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+            {t('execution.budget.actual')}
+          </div>
+          <div
+            className={`text-base font-bold ${portfolio.variancePercent >= 90 ? 'text-red-400' : portfolio.variancePercent >= 80 ? 'text-amber-400' : 'text-green-400'}`}
+          >
             {formatCurrency(portfolio.totalActual, portfolio.currency)}
           </div>
         </div>
         <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-3 bg-white dark:bg-navy-900">
-          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('execution.budget.variance')}</div>
-          <div className={`text-base font-bold flex items-center gap-1 ${portfolio.totalVariance > 0 ? 'text-red-400' : 'text-green-400'}`}>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+            {t('execution.budget.variance')}
+          </div>
+          <div
+            className={`text-base font-bold flex items-center gap-1 ${portfolio.totalVariance > 0 ? 'text-red-400' : 'text-green-400'}`}
+          >
             {portfolio.totalVariance > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
             {formatCurrency(Math.abs(portfolio.totalVariance), portfolio.currency)}
           </div>
@@ -387,7 +407,11 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
               <AlertTriangle
                 size={14}
                 className={
-                  sig.severity === 'CRITICAL' ? 'text-red-400' : sig.severity === 'HIGH' ? 'text-orange-400' : 'text-amber-400'
+                  sig.severity === 'CRITICAL'
+                    ? 'text-red-400'
+                    : sig.severity === 'HIGH'
+                      ? 'text-orange-400'
+                      : 'text-amber-400'
                 }
               />
               <div className="flex-1 min-w-0">
@@ -425,7 +449,10 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
             const isExpanded = expandedInit === summary.initiativeId;
 
             return (
-              <div key={summary.initiativeId} className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+              <div
+                key={summary.initiativeId}
+                className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900"
+              >
                 <button
                   type="button"
                   className="w-full flex items-center gap-3 px-3 py-2 text-left"
@@ -435,27 +462,41 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
                   <span className="text-sm font-medium text-slate-900 dark:text-white flex-1 truncate">
                     {summary.initiativeName}
                   </span>
-                  <span className={`text-xs font-bold tabular-nums ${style.text}`}>{summary.burnRate}%</span>
+                  <span className={`text-xs font-bold tabular-nums ${style.text}`}>
+                    {summary.burnRate}%
+                  </span>
                   <div className="w-16 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full ${
-                        summary.burnRate >= 100 ? 'bg-red-500' : summary.burnRate >= 80 ? 'bg-amber-500' : 'bg-green-500'
+                        summary.burnRate >= 100
+                          ? 'bg-red-500'
+                          : summary.burnRate >= 80
+                            ? 'bg-amber-500'
+                            : 'bg-green-500'
                       }`}
                       style={{ width: `${Math.min(summary.burnRate, 100)}%` }}
                     />
                   </div>
-                  {isExpanded ? <ChevronUp size={12} className="text-slate-400" /> : <ChevronDown size={12} className="text-slate-400" />}
+                  {isExpanded ? (
+                    <ChevronUp size={12} className="text-slate-400" />
+                  ) : (
+                    <ChevronDown size={12} className="text-slate-400" />
+                  )}
                 </button>
                 {isExpanded && (
                   <div className="px-3 pb-3 border-t border-slate-100 dark:border-navy-700/50 pt-2 grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <div>
-                      <span className="block text-[10px] uppercase opacity-70">{t('execution.budget.planned')}</span>
+                      <span className="block text-[10px] uppercase opacity-70">
+                        {t('execution.budget.planned')}
+                      </span>
                       <span className="font-medium text-slate-700 dark:text-slate-300">
                         {formatCurrency(summary.planned.total, summary.currency)}
                       </span>
                     </div>
                     <div>
-                      <span className="block text-[10px] uppercase opacity-70">{t('execution.budget.actual')}</span>
+                      <span className="block text-[10px] uppercase opacity-70">
+                        {t('execution.budget.actual')}
+                      </span>
                       <span className={`font-medium ${style.text}`}>
                         {formatCurrency(summary.actual.total, summary.currency)}
                       </span>
@@ -463,13 +504,15 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
                     <div>
                       <span className="block text-[10px] uppercase opacity-70">CAPEX</span>
                       <span className="font-medium text-slate-700 dark:text-slate-300">
-                        {formatCurrency(summary.planned.capex, summary.currency)} / {formatCurrency(summary.actual.capex, summary.currency)}
+                        {formatCurrency(summary.planned.capex, summary.currency)} /{' '}
+                        {formatCurrency(summary.actual.capex, summary.currency)}
                       </span>
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase opacity-70">OPEX</span>
                       <span className="font-medium text-slate-700 dark:text-slate-300">
-                        {formatCurrency(summary.planned.opex, summary.currency)} / {formatCurrency(summary.actual.opex, summary.currency)}
+                        {formatCurrency(summary.planned.opex, summary.currency)} /{' '}
+                        {formatCurrency(summary.actual.opex, summary.currency)}
                       </span>
                     </div>
                     {onInitiativeClick && (

@@ -135,16 +135,26 @@ export const ROITrackingPanel: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center p-6">
         <DollarSign className="w-12 h-12 text-emerald-400/50 mb-3" />
-        <p className="text-lg text-slate-900 dark:text-white">{t('benefits.roi.noData', 'No ROI Assumptions Yet')}</p>
+        <p className="text-lg text-slate-900 dark:text-white">
+          {t('benefits.roi.noData', 'No ROI Assumptions Yet')}
+        </p>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          {t('benefits.roi.noDataHint', 'Set ROI assumptions on initiatives to track projected vs realized returns.')}
+          {t(
+            'benefits.roi.noDataHint',
+            'Set ROI assumptions on initiatives to track projected vs realized returns.'
+          )}
         </p>
       </div>
     );
   }
 
   const { summary, items } = portfolio;
-  const varianceColor = summary.totalVariance > 0 ? 'text-green-500' : summary.totalVariance < 0 ? 'text-red-500' : 'text-slate-400';
+  const varianceColor =
+    summary.totalVariance > 0
+      ? 'text-green-500'
+      : summary.totalVariance < 0
+        ? 'text-red-500'
+        : 'text-slate-400';
 
   return (
     <div className="p-6 space-y-6">
@@ -174,9 +184,15 @@ export const ROITrackingPanel: React.FC = () => {
               <BarChart3 className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{t('benefits.roi.coverage', 'Data Coverage')}</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{summary.coveragePercent}%</p>
-              <p className="text-xs text-slate-400">{summary.initiativeCount} {t('benefits.roi.initiatives', 'initiatives')}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {t('benefits.roi.coverage', 'Data Coverage')}
+              </p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                {summary.coveragePercent}%
+              </p>
+              <p className="text-xs text-slate-400">
+                {summary.initiativeCount} {t('benefits.roi.initiatives', 'initiatives')}
+              </p>
             </div>
           </div>
         </div>
@@ -184,7 +200,9 @@ export const ROITrackingPanel: React.FC = () => {
 
       {/* Variance Signal */}
       {summary.totalRealized !== 0 && (
-        <div className={`rounded-xl p-4 border ${summary.totalVariance >= 0 ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+        <div
+          className={`rounded-xl p-4 border ${summary.totalVariance >= 0 ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'}`}
+        >
           <div className="flex items-center gap-3">
             {summary.totalVariance >= 0 ? (
               <ArrowUp className="w-5 h-5 text-green-500" />
@@ -193,12 +211,17 @@ export const ROITrackingPanel: React.FC = () => {
             )}
             <div>
               <p className={`font-semibold ${varianceColor}`}>
-                {t('benefits.roi.variance', 'Portfolio Variance')}: {summary.totalVariance >= 0 ? '+' : ''}{fmtCurrency(summary.totalVariance)}
+                {t('benefits.roi.variance', 'Portfolio Variance')}:{' '}
+                {summary.totalVariance >= 0 ? '+' : ''}
+                {fmtCurrency(summary.totalVariance)}
               </p>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 {summary.totalVariance >= 0
                   ? t('benefits.roi.abovePlan', 'Realized benefits exceed projections')
-                  : t('benefits.roi.belowPlan', 'Realized benefits below projections — review assumptions')}
+                  : t(
+                      'benefits.roi.belowPlan',
+                      'Realized benefits below projections — review assumptions'
+                    )}
               </p>
             </div>
           </div>
@@ -208,29 +231,49 @@ export const ROITrackingPanel: React.FC = () => {
       {/* Initiative ROI Table */}
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700">
-          <h3 className="font-semibold text-slate-900 dark:text-white">{t('benefits.roi.byInitiative', 'ROI by Initiative')}</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-white">
+            {t('benefits.roi.byInitiative', 'ROI by Initiative')}
+          </h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
               <tr>
-                <th className="px-4 py-2 text-left font-medium">{t('benefits.roi.initiative', 'Initiative')}</th>
+                <th className="px-4 py-2 text-left font-medium">
+                  {t('benefits.roi.initiative', 'Initiative')}
+                </th>
                 <th className="px-4 py-2 text-right font-medium">CAPEX</th>
-                <th className="px-4 py-2 text-right font-medium">{t('benefits.roi.projected', 'Projected')}</th>
-                <th className="px-4 py-2 text-right font-medium">{t('benefits.roi.realized', 'Realized')}</th>
-                <th className="px-4 py-2 text-right font-medium">{t('benefits.roi.variance', 'Variance')}</th>
-                <th className="px-4 py-2 text-center font-medium">{t('benefits.roi.confidence', 'Conf.')}</th>
+                <th className="px-4 py-2 text-right font-medium">
+                  {t('benefits.roi.projected', 'Projected')}
+                </th>
+                <th className="px-4 py-2 text-right font-medium">
+                  {t('benefits.roi.realized', 'Realized')}
+                </th>
+                <th className="px-4 py-2 text-right font-medium">
+                  {t('benefits.roi.variance', 'Variance')}
+                </th>
+                <th className="px-4 py-2 text-center font-medium">
+                  {t('benefits.roi.confidence', 'Conf.')}
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-navy-700">
               {items.map((item) => (
                 <tr key={item.initiativeId} className="hover:bg-slate-50 dark:hover:bg-navy-800/50">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-slate-900 dark:text-white">{item.initiativeName}</div>
-                    <div className="text-xs text-slate-400">{item.status} · {item.priority}</div>
+                    <div className="font-medium text-slate-900 dark:text-white">
+                      {item.initiativeName}
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      {item.status} · {item.priority}
+                    </div>
                   </td>
-                  <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-300">{fmtCurrency(item.capex || 0)}</td>
-                  <td className="px-4 py-3 text-right text-blue-500">{fmtCurrency(item.projectedBenefit)}</td>
+                  <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-300">
+                    {fmtCurrency(item.capex || 0)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-blue-500">
+                    {fmtCurrency(item.projectedBenefit)}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     {item.hasRealized ? (
                       <span className="text-green-500">{fmtCurrency(item.realizedBenefit)}</span>
@@ -241,7 +284,8 @@ export const ROITrackingPanel: React.FC = () => {
                   <td className="px-4 py-3 text-right">
                     {item.hasRealized ? (
                       <span className={item.variance >= 0 ? 'text-green-500' : 'text-red-500'}>
-                        {item.variance >= 0 ? '+' : ''}{fmtCurrency(item.variance)}
+                        {item.variance >= 0 ? '+' : ''}
+                        {fmtCurrency(item.variance)}
                       </span>
                     ) : (
                       <span className="text-slate-400">—</span>
@@ -259,13 +303,21 @@ export const ROITrackingPanel: React.FC = () => {
 
       {/* Disclaimer */}
       <p className="text-xs text-slate-400 text-center italic">
-        {t('benefits.roi.disclaimer', 'ROI figures are based on stated assumptions. Realized values may differ from projections due to external factors.')}
+        {t(
+          'benefits.roi.disclaimer',
+          'ROI figures are based on stated assumptions. Realized values may differ from projections due to external factors.'
+        )}
       </p>
     </div>
   );
 };
 
-const SummaryCard: React.FC<{ icon: React.ReactNode; label: string; value: string; bg: string }> = ({ icon, label, value, bg }) => (
+const SummaryCard: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  bg: string;
+}> = ({ icon, label, value, bg }) => (
   <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
     <div className="flex items-center gap-3">
       <div className={`p-2 ${bg} rounded-lg`}>{icon}</div>

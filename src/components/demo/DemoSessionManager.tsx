@@ -242,7 +242,8 @@ export const DemoSessionManager: React.FC = () => {
     };
 
     window.addEventListener('demo:value_moment', handleValueMoment as EventListener);
-    return () => window.removeEventListener('demo:value_moment', handleValueMoment as EventListener);
+    return () =>
+      window.removeEventListener('demo:value_moment', handleValueMoment as EventListener);
   }, [isDemo]);
 
   const handleStartTrialFromCTA = useCallback(() => {

@@ -6,12 +6,24 @@
  */
 
 import { motion } from 'framer-motion';
-import { Check, CheckCircle2, Clock, Flag, Loader2, Send, Sparkles, User, X } from 'lucide-react';
+import {
+  Brain,
+  Check,
+  CheckCircle2,
+  Clock,
+  Flag,
+  Loader2,
+  Send,
+  Sparkles,
+  User,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
-import { Api } from '@/services/api';
+import Api from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { getStatusMeta } from '@/services/initiativeLifecycle';
 
 import { CollapsibleSection } from './CollapsibleSection';
@@ -211,6 +223,9 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
   const [noSuggestionsMessage, setNoSuggestionsMessage] = useState<string | null>(null);
   const noSuggestionsTimerRef = useRef<number | null>(null);
 
+  const [isAIReadinessLoading, setIsAIReadinessLoading] = useState(false);
+  const [aiReadinessResult, setAiReadinessResult] = useState<any | null>(null);
+
   const requiredGates = useMemo(
     () => GATE_DEFINITIONS.filter((g) => g.forStatus === status),
     [status]
@@ -291,6 +306,8 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
       label: String(r.label || r.key || ''),
       pass: !!r.pass,
       severity: String(r.severity || 'warning'),
+      suggestedAction: String(r.suggestedAction || r.suggested_action || ''),
+      suggestedActor: String(r.suggestedActor || r.suggested_actor || ''),
     }));
     // Sort: blocking fails first, then warnings fails, then passes.
     const weight = (x: { pass: boolean; severity: string }) => {
@@ -1848,7 +1865,9 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                         </div>
                         {!r.pass && r.suggestedAction && (
                           <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                            <span className="font-medium">{isPolish ? 'Sugerowana akcja' : 'Suggested action'}:</span>{' '}
+                            <span className="font-medium">
+                              {isPolish ? 'Sugerowana akcja' : 'Suggested action'}:
+                            </span>{' '}
                             {r.suggestedAction}
                             {r.suggestedActor && (
                               <span className="ml-2 text-slate-400 dark:text-slate-500">
@@ -1936,7 +1955,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
                       {isPolish ? 'Wnioski AI' : 'AI Findings'}
                     </span>
-                    {aiReadinessResult.findings.map((f, idx) => (
+                    {aiReadinessResult.findings.map((f: any, idx: number) => (
                       <div
                         key={f.key || idx}
                         className={`p-2.5 rounded-lg border ${
@@ -1950,7 +1969,11 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                         <div className="flex items-start gap-2">
                           <div
                             className={`w-4 h-4 rounded-full flex items-center justify-center mt-0.5 shrink-0 ${
-                              f.pass ? 'bg-emerald-500' : f.severity === 'blocking' ? 'bg-red-500' : 'bg-amber-500'
+                              f.pass
+                                ? 'bg-emerald-500'
+                                : f.severity === 'blocking'
+                                  ? 'bg-red-500'
+                                  : 'bg-amber-500'
                             }`}
                           >
                             {f.pass ? (
@@ -1965,7 +1988,10 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             </div>
                             {f.suggestedAction && (
                               <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                <span className="font-medium">{isPolish ? 'Akcja' : 'Action'}:</span> {f.suggestedAction}
+                                <span className="font-medium">
+                                  {isPolish ? 'Akcja' : 'Action'}:
+                                </span>{' '}
+                                {f.suggestedAction}
                                 {f.suggestedActor && (
                                   <span className="ml-1.5 text-slate-400 dark:text-slate-500">
                                     ({f.suggestedActor})
@@ -1980,7 +2006,9 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                   </div>
                 ) : (
                   <div className="text-xs text-slate-500 dark:text-slate-400 italic p-2">
-                    {isPolish ? 'AI nie znalazło dodatkowych problemów.' : 'AI found no additional issues.'}
+                    {isPolish
+                      ? 'AI nie znalazło dodatkowych problemów.'
+                      : 'AI found no additional issues.'}
                   </div>
                 )}
               </div>

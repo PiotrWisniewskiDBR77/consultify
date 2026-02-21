@@ -65,12 +65,15 @@ export async function listCloudSources(organizationId: string): Promise<CloudSou
   return rows.map(mapCloudSource);
 }
 
-export async function getCloudSource(id: string, organizationId: string): Promise<CloudSource | null> {
+export async function getCloudSource(
+  id: string,
+  organizationId: string
+): Promise<CloudSource | null> {
   const db = await getDb();
-  const row = (await db.get(
-    'SELECT * FROM cloud_sources WHERE id = ? AND organization_id = ?',
-    [id, organizationId]
-  )) as any;
+  const row = (await db.get('SELECT * FROM cloud_sources WHERE id = ? AND organization_id = ?', [
+    id,
+    organizationId,
+  ])) as any;
   return row ? mapCloudSource(row) : null;
 }
 
@@ -110,7 +113,10 @@ export async function createCloudSource(data: {
 
 export async function deleteCloudSource(id: string, organizationId: string): Promise<void> {
   const db = await getDb();
-  await db.run('DELETE FROM cloud_sources WHERE id = ? AND organization_id = ?', [id, organizationId]);
+  await db.run('DELETE FROM cloud_sources WHERE id = ? AND organization_id = ?', [
+    id,
+    organizationId,
+  ]);
 }
 
 export async function listCloudFiles(
@@ -174,7 +180,16 @@ export async function startImportJob(data: {
   await db.run(
     `INSERT INTO cloud_import_jobs (id, cloud_source_id, organization_id, user_id, file_path, file_name, file_type, file_size)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, data.cloudSourceId, data.organizationId, data.userId, data.filePath, data.fileName, data.fileType || null, data.fileSize || null]
+    [
+      id,
+      data.cloudSourceId,
+      data.organizationId,
+      data.userId,
+      data.filePath,
+      data.fileName,
+      data.fileType || null,
+      data.fileSize || null,
+    ]
   );
 
   // In a production system, this would queue a background job
@@ -184,7 +199,10 @@ export async function startImportJob(data: {
   return mapImportJob(row);
 }
 
-export async function getImportJob(id: string, organizationId: string): Promise<CloudImportJob | null> {
+export async function getImportJob(
+  id: string,
+  organizationId: string
+): Promise<CloudImportJob | null> {
   const db = await getDb();
   const row = (await db.get(
     'SELECT * FROM cloud_import_jobs WHERE id = ? AND organization_id = ?',

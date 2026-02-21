@@ -60,8 +60,16 @@ import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
-import { FilterableTable, FilterChip, ModuleHub, ModuleTab, OpenDocument, TableColumn, ViewMode } from '../shared/ModuleHub';
 import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
+import {
+  FilterableTable,
+  FilterChip,
+  ModuleHub,
+  ModuleTab,
+  OpenDocument,
+  TableColumn,
+  ViewMode,
+} from '../shared/ModuleHub';
 import { BudgetControlPanel } from './BudgetControlPanel';
 import { DelayDetectionPanel } from './DelayDetectionPanel';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
@@ -698,13 +706,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         icon: <Heart size={16} />,
       },
     ],
-    [
-      t,
-      filteredInitiatives.length,
-      stats.blocked,
-      tasks.length,
-      decisions,
-    ]
+    [t, filteredInitiatives.length, stats.blocked, tasks.length, decisions]
   );
 
   // Table columns
@@ -1077,7 +1079,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const heatmapShortcut = (
       <button
         type="button"
-        onClick={() => setActiveTab(activeTab === 'team' ? ('initiatives' as ModuleTab) : ('team' as ModuleTab))}
+        onClick={() =>
+          setActiveTab(activeTab === 'team' ? ('initiatives' as ModuleTab) : ('team' as ModuleTab))
+        }
         className={`h-9 w-9 rounded-lg flex items-center justify-center border transition-colors ${
           activeTab === 'team'
             ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
@@ -1121,8 +1125,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             }`}
             title="Weekly"
           >
-            <LayoutGrid size={14} />
-            W
+            <LayoutGrid size={14} />W
           </button>
           <button
             type="button"
@@ -1134,8 +1137,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             }`}
             title="Monthly"
           >
-            <CalendarDays size={14} />
-            M
+            <CalendarDays size={14} />M
           </button>
         </div>
 
@@ -1170,14 +1172,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {heatmapControls}
       </div>
     );
-  }, [
-    activeTab,
-    scopeToggle,
-    t,
-    workloadMonthCount,
-    workloadViewMode,
-    workloadWeekCount,
-  ]);
+  }, [activeTab, scopeToggle, t, workloadMonthCount, workloadViewMode, workloadWeekCount]);
 
   const portfolioMetrics = useMemo(() => {
     const totalInitiatives = initiatives.length;
@@ -1818,7 +1813,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               {t('execution.portfolio.escalationsGates')}
             </p>
             <span className="text-xs text-slate-500">
-              {portfolioMetrics.stageGate?.gateType || t('execution.portfolio.noGateInfo', 'No gate info')}
+              {portfolioMetrics.stageGate?.gateType ||
+                t('execution.portfolio.noGateInfo', 'No gate info')}
             </span>
           </div>
           {portfolioMetrics.blockers.length === 0 ? (
@@ -1986,13 +1982,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       `- Pending decisions: ${healthSnapshot?.decisions?.pendingCount ?? 0} (overdue: ${healthSnapshot?.decisions?.overdueCount ?? 0})`,
       ``,
       `## Top blockers (action required)`,
-      blockers.length
-        ? blockers.map((b) => `- [${b.type}] ${b.message}`).join('\n')
-        : `- None`,
+      blockers.length ? blockers.map((b) => `- [${b.type}] ${b.message}`).join('\n') : `- None`,
       ``,
       `## Overdue decisions (resolve / escalate)`,
       overdueDecisions.length
-        ? overdueDecisions.map((d) => `- ${d.title}${d.dueDate ? ` (due: ${d.dueDate})` : ''}`).join('\n')
+        ? overdueDecisions
+            .map((d) => `- ${d.title}${d.dueDate ? ` (due: ${d.dueDate})` : ''}`)
+            .join('\n')
         : `- None`,
       ``,
       `## Due soon tasks (next 7 days)`,
@@ -2055,9 +2051,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   const activeExecutionInitiativeIds = useMemo(() => {
     return new Set(
-      initiatives
-        .filter((i) => ACTIVE_EXECUTION_STATUSES.includes(i.status))
-        .map((i) => i.id)
+      initiatives.filter((i) => ACTIVE_EXECUTION_STATUSES.includes(i.status)).map((i) => i.id)
     );
   }, [initiatives]);
 
@@ -2122,9 +2116,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               handleOpenSidePanel(initiative);
               return;
             }
-            toast.error(
-              t('execution.toast.initiativeNotFound', 'Related initiative not found')
-            );
+            toast.error(t('execution.toast.initiativeNotFound', 'Related initiative not found'));
           }}
           className="w-full text-left flex items-start justify-between gap-4 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-cyan-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
           title={t('execution.tasks.openInitiative', 'Open related initiative')}
@@ -2169,10 +2161,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       </div>
     );
 
-    const listItems = [...taskBuckets.overdue, ...taskBuckets.dueSoon, ...taskBuckets.upcoming].slice(
-      0,
-      12
-    );
+    const listItems = [
+      ...taskBuckets.overdue,
+      ...taskBuckets.dueSoon,
+      ...taskBuckets.upcoming,
+    ].slice(0, 12);
 
     return (
       <div className="p-4 space-y-4">
@@ -2190,8 +2183,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               </div>
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              {taskBuckets.overdue.length} {t('execution.badges.overdue')} · {taskBuckets.dueSoon.length}{' '}
-              {t('execution.attention.dueSoonTasks', 'Due soon')}
+              {taskBuckets.overdue.length} {t('execution.badges.overdue')} ·{' '}
+              {taskBuckets.dueSoon.length} {t('execution.attention.dueSoonTasks', 'Due soon')}
             </div>
           </div>
         </div>
@@ -2301,9 +2294,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               handleOpenSidePanel(initiative);
               return;
             }
-            toast.error(
-              t('execution.toast.initiativeNotFound', 'Related initiative not found')
-            );
+            toast.error(t('execution.toast.initiativeNotFound', 'Related initiative not found'));
           }}
           className="w-full text-left p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-cyan-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
           title={t('execution.decisionsBuckets.openInitiative', 'Open related initiative')}
@@ -2338,9 +2329,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         </div>
         <div className="p-3 space-y-3 max-h-[560px] overflow-y-auto">
           {items.length === 0 ? (
-            <div className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">
-              —
-            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">—</div>
           ) : (
             items.slice(0, 30).map((d) => <DecisionRow key={d.id} d={d} />)
           )}
@@ -2899,8 +2888,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         onClearFilters={handleClearFilters}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}
-        statusDropdownContext={activeTab === 'list' || activeTab === 'initiatives' ? 'execution' : undefined}
-        statusCounts={activeTab === 'list' || activeTab === 'initiatives' ? statusDropdownCounts : undefined}
+        statusDropdownContext={
+          activeTab === 'list' || activeTab === 'initiatives' ? 'execution' : undefined
+        }
+        statusCounts={
+          activeTab === 'list' || activeTab === 'initiatives' ? statusDropdownCounts : undefined
+        }
         rightControls={rightControls}
         availableViewModes={availableViewModes}
       >

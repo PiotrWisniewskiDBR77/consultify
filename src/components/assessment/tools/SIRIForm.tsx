@@ -470,8 +470,14 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
                 </label>
                 <textarea
                   value={dimData.notes || ''}
-                  onChange={(e) => handleDimensionNotesChange(dimension.id, 'notes', e.target.value)}
-                  placeholder={isPolish ? 'Kluczowe obserwacje, kontekst, uzasadnienie oceny...' : 'Key observations, context, rationale for the score...'}
+                  onChange={(e) =>
+                    handleDimensionNotesChange(dimension.id, 'notes', e.target.value)
+                  }
+                  placeholder={
+                    isPolish
+                      ? 'Kluczowe obserwacje, kontekst, uzasadnienie oceny...'
+                      : 'Key observations, context, rationale for the score...'
+                  }
                   className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 resize-none"
                   rows={2}
                   disabled={readOnly}
@@ -483,8 +489,14 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
                 </label>
                 <textarea
                   value={dimData.evidence || ''}
-                  onChange={(e) => handleDimensionNotesChange(dimension.id, 'evidence', e.target.value)}
-                  placeholder={isPolish ? 'Systemy, dokumenty, metryki, procesy potwierdzające ocenę...' : 'Systems, documents, metrics, processes that support this score...'}
+                  onChange={(e) =>
+                    handleDimensionNotesChange(dimension.id, 'evidence', e.target.value)
+                  }
+                  placeholder={
+                    isPolish
+                      ? 'Systemy, dokumenty, metryki, procesy potwierdzające ocenę...'
+                      : 'Systems, documents, metrics, processes that support this score...'
+                  }
                   className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 resize-none"
                   rows={2}
                   disabled={readOnly}
@@ -502,15 +514,25 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
                       disabled={readOnly}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         dimData.confidence === level
-                          ? level === 'high' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 ring-1 ring-green-500'
-                            : level === 'medium' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500'
-                            : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 ring-1 ring-red-500'
+                          ? level === 'high'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 ring-1 ring-green-500'
+                            : level === 'medium'
+                              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500'
+                              : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 ring-1 ring-red-500'
                           : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                       } ${readOnly ? 'cursor-default' : 'cursor-pointer hover:opacity-80'}`}
                     >
-                      {level === 'low' ? (isPolish ? 'Niska' : 'Low')
-                        : level === 'medium' ? (isPolish ? 'Średnia' : 'Medium')
-                        : (isPolish ? 'Wysoka' : 'High')}
+                      {level === 'low'
+                        ? isPolish
+                          ? 'Niska'
+                          : 'Low'
+                        : level === 'medium'
+                          ? isPolish
+                            ? 'Średnia'
+                            : 'Medium'
+                          : isPolish
+                            ? 'Wysoka'
+                            : 'High'}
                     </button>
                   ))}
                 </div>
@@ -572,7 +594,9 @@ export const SIRIForm: React.FC<SIRIFormProps> = ({
             </span>
             <span className="text-xs text-slate-500 dark:text-slate-400">
               {isPolish ? 'Z dowodami' : 'With evidence'}:{' '}
-              <span className="font-medium text-navy-900 dark:text-white">{progress.evidenceCount}/{progress.completed}</span>
+              <span className="font-medium text-navy-900 dark:text-white">
+                {progress.evidenceCount}/{progress.completed}
+              </span>
             </span>
           </div>
         </div>

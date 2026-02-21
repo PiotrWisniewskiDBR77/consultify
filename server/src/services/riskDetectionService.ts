@@ -167,7 +167,8 @@ export async function detectRiskSignals(
           severity: daysUntilSla <= 3 ? 'HIGH' : 'MEDIUM',
           title: `SLA deadline in ${daysUntilSla} days`,
           description: `"${init.name}" has an SLA deadline on ${new Date(init.sla_deadline).toLocaleDateString()}. Only ${daysUntilSla} days remain.`,
-          suggestedAction: 'Prioritize this initiative. Ensure resources are allocated and blockers removed.',
+          suggestedAction:
+            'Prioritize this initiative. Ensure resources are allocated and blockers removed.',
           sourceData: { daysUntilSla, slaDeadline: init.sla_deadline },
         });
       }
@@ -198,7 +199,8 @@ export async function detectRiskSignals(
           severity: 'HIGH',
           title: `Dependency conflict with "${fromInit.name}"`,
           description: `"${toInit.name}" starts before its predecessor "${fromInit.name}" ends. This creates a scheduling conflict.`,
-          suggestedAction: 'Adjust timelines: either delay the dependent initiative or accelerate the predecessor.',
+          suggestedAction:
+            'Adjust timelines: either delay the dependent initiative or accelerate the predecessor.',
           sourceData: {
             predecessorId: fromInit.id,
             predecessorEnd: predEnd,
@@ -233,7 +235,8 @@ export async function detectRiskSignals(
           severity: raid.impact === 'CRITICAL' ? 'CRITICAL' : 'HIGH',
           title: `High risk without owner: "${raid.title}"`,
           description: `Risk "${raid.title}" (${raid.impact} impact) has no assigned owner.`,
-          suggestedAction: 'Assign a risk owner immediately. High-impact risks must have clear ownership.',
+          suggestedAction:
+            'Assign a risk owner immediately. High-impact risks must have clear ownership.',
           sourceData: { raidId: raid.id, impact: raid.impact },
         });
       }

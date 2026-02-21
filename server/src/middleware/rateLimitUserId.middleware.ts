@@ -16,11 +16,9 @@ const extractToken = (req: Request): string | null => {
   return null;
 };
 
-declare global {
-  namespace Express {
-    interface Request {
-      _rateLimitUserId?: string;
-    }
+declare module 'express-serve-static-core' {
+  interface Request {
+    _rateLimitUserId?: string;
   }
 }
 

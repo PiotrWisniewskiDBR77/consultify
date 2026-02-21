@@ -55,10 +55,11 @@ router.post(
 
     try {
       const sql = `INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`;
-      const result = await dbRun(sql, [
-        key,
-        typeof value === 'object' ? JSON.stringify(value) : String(value),
-      ], { fallback: false });
+      const result = await dbRun(
+        sql,
+        [key, typeof value === 'object' ? JSON.stringify(value) : String(value)],
+        { fallback: false }
+      );
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to save setting');
@@ -94,11 +95,9 @@ const ensureUserPreferencesTable = async () => {
     [],
     { fallback: false }
   );
-  await dbRun(
-    `CREATE INDEX IF NOT EXISTS idx_user_prefs_user ON user_preferences(user_id)`,
-    [],
-    { fallback: false }
-  );
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_user_prefs_user ON user_preferences(user_id)`, [], {
+    fallback: false,
+  });
 };
 
 /**

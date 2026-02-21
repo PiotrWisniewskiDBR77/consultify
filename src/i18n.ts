@@ -99,8 +99,7 @@ i18n
 
     // Backend configuration for loading translation files
     backend: {
-      loadPath:
-        `${(import.meta.env.BASE_URL || '/').replace(/\/$/, '') || ''}/locales/{{lng}}/{{ns}}.json`,
+      loadPath: `${(import.meta.env.BASE_URL || '/').replace(/\/$/, '') || ''}/locales/{{lng}}/{{ns}}.json`,
       // In dev, bypass cache so locale changes are picked up; avoids stale 404/parse errors
       requestOptions: import.meta.env.DEV ? { cache: 'no-store' } : undefined,
     },

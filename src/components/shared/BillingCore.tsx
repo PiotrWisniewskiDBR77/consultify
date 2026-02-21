@@ -1,4 +1,14 @@
-import { AlertCircle, Cpu, CreditCard, DollarSign, Globe, Package, TrendingUp, UserCircle, Zap } from 'lucide-react';
+import {
+  AlertCircle,
+  Cpu,
+  CreditCard,
+  DollarSign,
+  Globe,
+  Package,
+  TrendingUp,
+  UserCircle,
+  Zap,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -366,11 +376,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
         >
           <Zap
             size={20}
-            className={
-              snapshot.warningLevel === 'critical'
-                ? 'text-orange-500'
-                : 'text-blue-500'
-            }
+            className={snapshot.warningLevel === 'critical' ? 'text-orange-500' : 'text-blue-500'}
           />
           <p
             className={`text-sm flex-1 ${

@@ -48,14 +48,17 @@ export async function checkQualityGates(
      ORDER BY order_index ASC`,
     [reportId]
   )) || []) as Array<{
-    key: string; type: string; title: string; enabled: boolean;
-    content: string | null; order_index: number;
+    key: string;
+    type: string;
+    title: string;
+    enabled: boolean;
+    content: string | null;
+    order_index: number;
   }>;
 
-  const report = (await dbAll(
-    `SELECT status, title FROM report_builder_reports WHERE id = ?`,
-    [reportId]
-  )) as Array<{ status: string; title: string }> | null;
+  const report = (await dbAll(`SELECT status, title FROM report_builder_reports WHERE id = ?`, [
+    reportId,
+  ])) as Array<{ status: string; title: string }> | null;
 
   const status = report?.[0]?.status || 'DRAFT';
   const enabledSections = sections.filter((s) => s.enabled);
@@ -110,7 +113,11 @@ export async function checkQualityGates(
   // Gate 5: Very short content
   const shortThreshold = 50;
   const shortSections = enabledSections.filter(
-    (s) => s.content && s.content.trim().length > 0 && s.content.trim().length < shortThreshold && s.type !== 'cover'
+    (s) =>
+      s.content &&
+      s.content.trim().length > 0 &&
+      s.content.trim().length < shortThreshold &&
+      s.type !== 'cover'
   );
   for (const short of shortSections) {
     gates.push({
@@ -137,7 +144,15 @@ export async function checkQualityGates(
       `INSERT INTO report_quality_gates
          (id, organization_id, report_id, gate_type, severity, message, section_key)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [gate.id, organizationId, reportId, gate.gateType, gate.severity, gate.message, gate.sectionKey || null]
+      [
+        gate.id,
+        organizationId,
+        reportId,
+        gate.gateType,
+        gate.severity,
+        gate.message,
+        gate.sectionKey || null,
+      ]
     );
   }
 

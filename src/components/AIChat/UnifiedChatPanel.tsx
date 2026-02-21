@@ -34,7 +34,14 @@ import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { useConversationStore } from '../../store/useConversationStore';
-import { AppView, Artifact, ChatMessage, FocusMode, ResponseFeedback, ThinkingStep } from '../../types';
+import {
+  AppView,
+  Artifact,
+  ChatMessage,
+  FocusMode,
+  ResponseFeedback,
+  ThinkingStep,
+} from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { ChatSlidingPanel } from './ChatSlidingPanel';

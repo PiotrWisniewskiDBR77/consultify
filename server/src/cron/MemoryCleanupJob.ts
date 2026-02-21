@@ -10,9 +10,9 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { getMemoryMonitor } from '../services/MemoryMonitor.js';
-import logger from '../utils/Logger.js';
 import { benchmarkCache } from '../utils/BenchmarkCache.js';
 import { clearSchemaCache } from '../utils/dbSchema.js';
+import logger from '../utils/Logger.js';
 import { clearOrgColumnCache } from '../utils/orgColumn.js';
 
 // ==========================================
@@ -113,7 +113,7 @@ export async function runMemoryCleanup(): Promise<CleanupResult> {
  */
 async function cleanupCache(): Promise<{ itemsCleaned: number; memoryFreed: number }> {
   let itemsCleaned = 0;
-  let memoryFreed = 0;
+  const memoryFreed = 0;
 
   try {
     // In-memory cache cleanup

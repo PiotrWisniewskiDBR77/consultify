@@ -14,8 +14,8 @@ import {
   GitBranch,
   Globe,
   History,
-  Link2,
   Lightbulb,
+  Link2,
   MessageSquare,
   Save,
   Send,
@@ -635,7 +635,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                   .filter(Boolean)
                                   .join('\n');
                                 setInitiative({ ...initiative, applicantOneLiner: insert });
-                                trackFunnelEvent('my_idea_used', { surface: 'initiative', ideaId: idea.id });
+                                trackFunnelEvent('my_idea_used', {
+                                  surface: 'initiative',
+                                  ideaId: idea.id,
+                                });
                                 toast.success(t('myWork.ideas.insertedToast', 'Inserted'));
                               }}
                             >

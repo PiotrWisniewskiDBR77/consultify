@@ -21,7 +21,7 @@ export const BillingApi = {
     const res = await fetch(`${API_URL}/billing/plans`, { headers: getHeaders() });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Failed to fetch plans');
-    return json;
+    return (Array.isArray(json) ? json : json.plans) || [];
   },
 
   getUserPlans: async (): Promise<SubscriptionPlan[]> => {

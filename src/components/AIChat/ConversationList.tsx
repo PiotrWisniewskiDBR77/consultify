@@ -114,11 +114,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               aria-label={t('aiChat.toggleGroup', 'Toggle {{label}}', { label: config.label })}
             >
               <span className="shrink-0 text-slate-400 dark:text-slate-500 group-hover/header:text-slate-600 dark:group-hover/header:text-slate-300">
-                {isGroupCollapsed ? (
-                  <ChevronRight size={12} />
-                ) : (
-                  <ChevronDown size={12} />
-                )}
+                {isGroupCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
               </span>
               {Icon && (
                 <Icon

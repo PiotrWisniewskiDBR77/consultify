@@ -8,10 +8,10 @@ export type { ADMADimensionLevelKey, ADMALevelKnowledge } from './admaKnowledge'
 export { getADMAKnowledge, getADMAPillarInfo } from './admaKnowledge';
 export type { DRDAreaLevelKey, DRDLevelKnowledge } from './drdKnowledge';
 export { getDRDKnowledge } from './drdKnowledge';
+export type { LeanLevelKnowledge, LeanWasteKnowledge } from './leanKnowledge';
+export { getLeanKnowledge, getLeanLevelMeaning, getLeanWasteKnowledge } from './leanKnowledge';
 export type { SIRIDimensionLevelKey, SIRILevelKnowledge } from './siriKnowledge';
 export { getSIRIBuildingBlockInfo, getSIRIKnowledge } from './siriKnowledge';
-export type { LeanLevelKnowledge, LeanWasteKnowledge } from './leanKnowledge';
-export { getLeanKnowledge, getLeanWasteKnowledge, getLeanLevelMeaning } from './leanKnowledge';
 
 /**
  * Universal knowledge getter for any framework

@@ -121,29 +121,26 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
     fetchSignals();
   }, [fetchSignals]);
 
-  const handleDismiss = useCallback(
-    async (signalId: string) => {
-      try {
-        const token = getAuthToken();
-        if (!token) return;
+  const handleDismiss = useCallback(async (signalId: string) => {
+    try {
+      const token = getAuthToken();
+      if (!token) return;
 
-        await fetch('/api/execution-control/risk-signals/dismiss', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ signalId }),
-        });
+      await fetch('/api/execution-control/risk-signals/dismiss', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ signalId }),
+      });
 
-        setDismissedIds((prev) => new Set([...prev, signalId]));
-        trackFunnelEvent('execution_risk_signal_dismissed', { signalId });
-      } catch {
-        // noop
-      }
-    },
-    []
-  );
+      setDismissedIds((prev) => new Set([...prev, signalId]));
+      trackFunnelEvent('execution_risk_signal_dismissed', { signalId });
+    } catch {
+      // noop
+    }
+  }, []);
 
   const visibleSignals = signals.filter((s) => !dismissedIds.has(s.id));
 
@@ -210,7 +207,9 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
                     <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                       {signal.title}
                     </span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${config.badge} font-medium`}>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.5 rounded ${config.badge} font-medium`}
+                    >
                       {signal.severity}
                     </span>
                   </div>
@@ -232,7 +231,9 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
                     <span className="text-[10px] uppercase font-semibold text-slate-400 shrink-0 mt-px">
                       {t('execution.riskSignals.suggestedAction')}:
                     </span>
-                    <p className="text-xs text-cyan-600 dark:text-cyan-400">{signal.suggestedAction}</p>
+                    <p className="text-xs text-cyan-600 dark:text-cyan-400">
+                      {signal.suggestedAction}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 pt-1">
                     {onInitiativeClick && signal.initiativeId && (

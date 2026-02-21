@@ -109,8 +109,8 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
     );
   }
 
-  const systemTemplates = templates.filter(t => t.is_system);
-  const orgTemplates = templates.filter(t => !t.is_system);
+  const systemTemplates = templates.filter((t) => t.is_system);
+  const orgTemplates = templates.filter((t) => !t.is_system);
 
   return (
     <div className="space-y-8">
@@ -121,7 +121,7 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
           {t('presentations.templates.systemTemplates', 'System Templates')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {systemTemplates.map(tmpl => (
+          {systemTemplates.map((tmpl) => (
             <TemplateCard
               key={tmpl.id}
               template={tmpl}
@@ -144,7 +144,7 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
             {t('presentations.templates.orgTemplates', 'Organization Templates')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {orgTemplates.map(tmpl => (
+            {orgTemplates.map((tmpl) => (
               <TemplateCard
                 key={tmpl.id}
                 template={tmpl}
@@ -173,7 +173,9 @@ const TemplateCard: React.FC<{
 }> = ({ template, isPl, isExpanded, onToggle, onSelect, onClone, cloning }) => {
   const { t } = useTranslation();
   const gradientClass = DECK_TYPE_COLORS[template.deck_type] || 'from-slate-500 to-slate-600';
-  const audience = isPl ? AUDIENCE_LABELS[template.audience]?.pl : AUDIENCE_LABELS[template.audience]?.en;
+  const audience = isPl
+    ? AUDIENCE_LABELS[template.audience]?.pl
+    : AUDIENCE_LABELS[template.audience]?.en;
   const goal = isPl ? GOAL_LABELS[template.goal]?.pl : GOAL_LABELS[template.goal]?.en;
 
   return (
@@ -185,10 +187,14 @@ const TemplateCard: React.FC<{
         <div className="flex items-start justify-between">
           <div>
             <h4 className="font-semibold text-slate-900 dark:text-white">{template.name}</h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{template.description}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+              {template.description}
+            </p>
           </div>
           {template.is_system && (
-            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 ml-2">SYSTEM</span>
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 ml-2">
+              SYSTEM
+            </span>
           )}
         </div>
 
@@ -201,9 +207,17 @@ const TemplateCard: React.FC<{
         </div>
 
         {/* Outline preview */}
-        <button onClick={onToggle} className="flex items-center gap-1.5 mt-3 text-sm text-purple-500 hover:text-purple-400">
-          {isExpanded ? <ChevronRight size={14} className="rotate-90" /> : <ChevronRight size={14} />}
-          {t('presentations.templates.viewOutline', 'View outline')} ({template.outline_json.length} {t('presentations.outline.slides', 'slides')})
+        <button
+          onClick={onToggle}
+          className="flex items-center gap-1.5 mt-3 text-sm text-purple-500 hover:text-purple-400"
+        >
+          {isExpanded ? (
+            <ChevronRight size={14} className="rotate-90" />
+          ) : (
+            <ChevronRight size={14} />
+          )}
+          {t('presentations.templates.viewOutline', 'View outline')} ({template.outline_json.length}{' '}
+          {t('presentations.outline.slides', 'slides')})
         </button>
 
         {isExpanded && (
@@ -222,12 +236,19 @@ const TemplateCard: React.FC<{
         {/* Actions */}
         <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-navy-700">
           {onSelect && (
-            <button onClick={onSelect} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-500">
+            <button
+              onClick={onSelect}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-500"
+            >
               <Sparkles size={14} /> {t('presentations.templates.use', 'Use')}
             </button>
           )}
           {onClone && template.is_system && (
-            <button onClick={onClone} disabled={cloning} className="flex items-center gap-1.5 px-3 py-2 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 text-sm rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50">
+            <button
+              onClick={onClone}
+              disabled={cloning}
+              className="flex items-center gap-1.5 px-3 py-2 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 text-sm rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+            >
               {cloning ? <Loader2 size={14} className="animate-spin" /> : <Copy size={14} />}
               {t('presentations.templates.clone', 'Clone')}
             </button>
@@ -239,7 +260,9 @@ const TemplateCard: React.FC<{
 };
 
 const Tag: React.FC<{ label: string }> = ({ label }) => (
-  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400">{label}</span>
+  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400">
+    {label}
+  </span>
 );
 
 export default DeckTemplateGallery;

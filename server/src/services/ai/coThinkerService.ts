@@ -302,11 +302,7 @@ export function buildCoThinkerSystemPrompt(
     return buildCoThinkerSystemPrompt('multi_consultant', language, orgContext);
   }
 
-  const parts = [
-    config.systemPrompt,
-    '',
-    langInstruction(language),
-  ];
+  const parts = [config.systemPrompt, '', langInstruction(language)];
 
   if (orgContext?.organizationName || orgContext?.industry) {
     parts.push(

@@ -999,10 +999,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               {t('myWork.personalTasks.empty.title', 'No tasks yet')}
             </h3>
             <p className="text-sm text-slate-500 mb-4">
-              {t(
-                'myWork.personalTasks.empty.description',
-                'Create your first task to get started'
-              )}
+              {t('myWork.personalTasks.empty.description', 'Create your first task to get started')}
             </p>
             <button
               onClick={onCreateTask}

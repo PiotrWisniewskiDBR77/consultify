@@ -68,11 +68,27 @@ interface SectionRow {
 
 const COMMAND_PATTERNS: Array<{ pattern: RegExp; action: AgentActionType }> = [
   { pattern: /(?:move|reorder|swap|put|shift)\b/i, action: 'REORDER_SECTIONS' },
-  { pattern: /(?:add|insert|include|create)\s+(?:a\s+)?(?:section|block|chapter)/i, action: 'ADD_SECTION' },
-  { pattern: /(?:remove|delete|drop|hide)\s+(?:the\s+)?(?:section|block)/i, action: 'REMOVE_SECTION' },
-  { pattern: /(?:shorten|lengthen|change.*(?:length|style|prompt)|set.*(?:length|style))/i, action: 'UPDATE_SECTION' },
-  { pattern: /(?:suggest|recommend|best.?practice|propose)\s+(?:a\s+)?(?:structure|layout|outline)/i, action: 'SUGGEST_STRUCTURE' },
-  { pattern: /(?:regenerate|re-?generate|refresh|redo)\s+(?:the\s+)?(?:section|block)/i, action: 'REGENERATE_SECTION' },
+  {
+    pattern: /(?:add|insert|include|create)\s+(?:a\s+)?(?:section|block|chapter)/i,
+    action: 'ADD_SECTION',
+  },
+  {
+    pattern: /(?:remove|delete|drop|hide)\s+(?:the\s+)?(?:section|block)/i,
+    action: 'REMOVE_SECTION',
+  },
+  {
+    pattern: /(?:shorten|lengthen|change.*(?:length|style|prompt)|set.*(?:length|style))/i,
+    action: 'UPDATE_SECTION',
+  },
+  {
+    pattern:
+      /(?:suggest|recommend|best.?practice|propose)\s+(?:a\s+)?(?:structure|layout|outline)/i,
+    action: 'SUGGEST_STRUCTURE',
+  },
+  {
+    pattern: /(?:regenerate|re-?generate|refresh|redo)\s+(?:the\s+)?(?:section|block)/i,
+    action: 'REGENERATE_SECTION',
+  },
   { pattern: /(?:regenerate|refresh)\s+(?:all|everything|entire)/i, action: 'REGENERATE_ALL' },
   { pattern: /(?:check|audit|review|what.s missing|quality)/i, action: 'QUALITY_CHECK' },
 ];
@@ -132,12 +148,7 @@ export async function processAgentMessage(
     `INSERT INTO report_agent_messages
        (id, organization_id, report_id, role, content, structured_action, diff_preview, applied)
      VALUES (?, ?, ?, 'user', ?, NULL, NULL, FALSE)`,
-    [
-      `${msgId}-user`,
-      organizationId,
-      reportId,
-      userMessage,
-    ]
+    [`${msgId}-user`, organizationId, reportId, userMessage]
   );
 
   await dbRun(
@@ -189,7 +200,13 @@ export async function applyAgentAction(
             `INSERT INTO report_builder_sections
                (id, report_id, key, type, title, order_index, enabled, created_at)
              VALUES (gen_random_uuid()::TEXT, ?, ?, ?, ?, (SELECT COALESCE(MAX(order_index),0)+1 FROM report_builder_sections WHERE report_id = ?), TRUE, NOW())`,
-            [reportId, change.sectionKey, change.field || 'custom', change.after || 'New Section', reportId]
+            [
+              reportId,
+              change.sectionKey,
+              change.field || 'custom',
+              change.after || 'New Section',
+              reportId,
+            ]
           );
           break;
         case 'remove':
@@ -213,10 +230,9 @@ export async function applyAgentAction(
     }
   }
 
-  await dbRun(
-    `UPDATE report_agent_messages SET applied = TRUE, applied_at = NOW() WHERE id = ?`,
-    [messageId]
-  );
+  await dbRun(`UPDATE report_agent_messages SET applied = TRUE, applied_at = NOW() WHERE id = ?`, [
+    messageId,
+  ]);
 
   return { success: true, message: 'Changes applied successfully' };
 }
@@ -232,9 +248,14 @@ export async function getAgentMessages(
      ORDER BY created_at ASC`,
     [reportId, organizationId]
   )) || []) as Array<{
-    id: string; report_id: string; role: string; content: string;
-    structured_action: string | null; diff_preview: string | null;
-    applied: boolean; created_at: string;
+    id: string;
+    report_id: string;
+    role: string;
+    content: string;
+    structured_action: string | null;
+    diff_preview: string | null;
+    applied: boolean;
+    created_at: string;
   }>;
 
   return rows.map((r) => ({
@@ -261,7 +282,10 @@ async function getReportSections(reportId: string): Promise<SectionRow[]> {
   )) || []) as SectionRow[];
 }
 
-function handleReorder(userMessage: string, sections: SectionRow[]): { response: string; diffPreview: DiffPreview } {
+function handleReorder(
+  userMessage: string,
+  sections: SectionRow[]
+): { response: string; diffPreview: DiffPreview } {
   const sectionNames = sections.map((s) => s.title.toLowerCase());
   const lowerMsg = userMessage.toLowerCase();
 
@@ -288,27 +312,37 @@ function handleReorder(userMessage: string, sections: SectionRow[]): { response:
   return {
     response: `I'll move **"${movingSection.title}"** ${beforeOrAfter} position ${targetPos + 1}. Click "Apply" to confirm.`,
     diffPreview: {
-      changes: [{ type: 'move', sectionKey: movingSection.key, before: `position ${sourceIdx + 1}`, after: `position ${targetPos + 1}` }],
+      changes: [
+        {
+          type: 'move',
+          sectionKey: movingSection.key,
+          before: `position ${sourceIdx + 1}`,
+          after: `position ${targetPos + 1}`,
+        },
+      ],
       summary: `Move "${movingSection.title}" from position ${sourceIdx + 1} to ${targetPos + 1}`,
     },
   };
 }
 
-function handleAddSection(userMessage: string, sections: SectionRow[]): { response: string; diffPreview: DiffPreview } {
+function handleAddSection(
+  userMessage: string,
+  sections: SectionRow[]
+): { response: string; diffPreview: DiffPreview } {
   const blockTypes: Record<string, { type: string; title: string }> = {
     'executive summary': { type: 'summary', title: 'Executive Summary' },
-    'findings': { type: 'findings', title: 'Key Findings' },
-    'recommendations': { type: 'recommendations', title: 'Recommendations' },
-    'kpi': { type: 'kpis', title: 'KPI Dashboard' },
-    'risk': { type: 'consulting_risks_register', title: 'Risk Assessment' },
-    'roadmap': { type: 'roadmap', title: 'Implementation Roadmap' },
-    'timeline': { type: 'timeline', title: 'Timeline' },
-    'methodology': { type: 'methodology', title: 'Methodology' },
-    'analysis': { type: 'analysis', title: 'Analysis' },
+    findings: { type: 'findings', title: 'Key Findings' },
+    recommendations: { type: 'recommendations', title: 'Recommendations' },
+    kpi: { type: 'kpis', title: 'KPI Dashboard' },
+    risk: { type: 'consulting_risks_register', title: 'Risk Assessment' },
+    roadmap: { type: 'roadmap', title: 'Implementation Roadmap' },
+    timeline: { type: 'timeline', title: 'Timeline' },
+    methodology: { type: 'methodology', title: 'Methodology' },
+    analysis: { type: 'analysis', title: 'Analysis' },
     'next steps': { type: 'consulting_decisions', title: 'Next Steps & Actions' },
-    'budget': { type: 'analysis', title: 'Budget Analysis' },
-    'finance': { type: 'analysis', title: 'Financial Overview' },
-    'benchmark': { type: 'consulting_benchmark_bar', title: 'Benchmark Comparison' },
+    budget: { type: 'analysis', title: 'Budget Analysis' },
+    finance: { type: 'analysis', title: 'Financial Overview' },
+    benchmark: { type: 'consulting_benchmark_bar', title: 'Benchmark Comparison' },
   };
 
   const lower = userMessage.toLowerCase();
@@ -337,9 +371,14 @@ function handleAddSection(userMessage: string, sections: SectionRow[]): { respon
   };
 }
 
-function handleRemoveSection(userMessage: string, sections: SectionRow[]): { response: string; diffPreview: DiffPreview } {
+function handleRemoveSection(
+  userMessage: string,
+  sections: SectionRow[]
+): { response: string; diffPreview: DiffPreview } {
   const lower = userMessage.toLowerCase();
-  const found = sections.find((s) => lower.includes(s.title.toLowerCase()) || lower.includes(s.key.toLowerCase()));
+  const found = sections.find(
+    (s) => lower.includes(s.title.toLowerCase()) || lower.includes(s.key.toLowerCase())
+  );
 
   if (!found) {
     return {
@@ -357,7 +396,10 @@ function handleRemoveSection(userMessage: string, sections: SectionRow[]): { res
   };
 }
 
-function handleUpdateSection(userMessage: string, sections: SectionRow[]): { response: string; diffPreview: DiffPreview } {
+function handleUpdateSection(
+  userMessage: string,
+  sections: SectionRow[]
+): { response: string; diffPreview: DiffPreview } {
   const lower = userMessage.toLowerCase();
   const found = sections.find((s) => lower.includes(s.title.toLowerCase()));
 
@@ -369,14 +411,24 @@ function handleUpdateSection(userMessage: string, sections: SectionRow[]): { res
   }
 
   let newLength = found.length;
-  if (lower.includes('short') || lower.includes('shorten') || lower.includes('concise')) newLength = 'short';
-  else if (lower.includes('long') || lower.includes('lengthen') || lower.includes('detailed')) newLength = 'long';
+  if (lower.includes('short') || lower.includes('shorten') || lower.includes('concise'))
+    newLength = 'short';
+  else if (lower.includes('long') || lower.includes('lengthen') || lower.includes('detailed'))
+    newLength = 'long';
   else if (lower.includes('medium')) newLength = 'medium';
 
   return {
     response: `I'll update **"${found.title}"** length to **${newLength}**. Click "Apply" to confirm.`,
     diffPreview: {
-      changes: [{ type: 'modify', sectionKey: found.key, field: 'length', before: found.length, after: newLength }],
+      changes: [
+        {
+          type: 'modify',
+          sectionKey: found.key,
+          field: 'length',
+          before: found.length,
+          after: newLength,
+        },
+      ],
       summary: `Update "${found.title}" length: ${found.length} → ${newLength}`,
     },
   };
@@ -419,7 +471,9 @@ async function performQualityCheck(reportId: string, sections: SectionRow[]): Pr
   )) as Array<{ key: string; title: string }> | null;
 
   if (emptyContent?.length) {
-    issues.push(`${emptyContent.length} section(s) have no content yet: ${emptyContent.map((s) => `"${s.title}"`).join(', ')}`);
+    issues.push(
+      `${emptyContent.length} section(s) have no content yet: ${emptyContent.map((s) => `"${s.title}"`).join(', ')}`
+    );
   }
 
   if (issues.length === 0) {
@@ -430,7 +484,8 @@ async function performQualityCheck(reportId: string, sections: SectionRow[]): Pr
 }
 
 function generateConversationalResponse(userMessage: string, sections: SectionRow[]): string {
-  return `I'm your report assistant. Here's what I can help with:\n\n` +
+  return (
+    `I'm your report assistant. Here's what I can help with:\n\n` +
     `- **Reorder sections**: "Move Recommendations before Analysis"\n` +
     `- **Add sections**: "Add a KPI Dashboard section"\n` +
     `- **Remove sections**: "Remove the Methodology section"\n` +
@@ -438,5 +493,6 @@ function generateConversationalResponse(userMessage: string, sections: SectionRo
     `- **Best practices**: "Suggest a structure for this report"\n` +
     `- **Quality check**: "Check what's missing"\n` +
     `- **Regenerate**: "Regenerate the Analysis section"\n\n` +
-    `Your report currently has **${sections.length} sections**. What would you like to do?`;
+    `Your report currently has **${sections.length} sections**. What would you like to do?`
+  );
 }

@@ -18,9 +18,7 @@ export const LEGAL_DOC_TYPES = [
 ] as const;
 
 export const acceptDocumentsSchema = z.object({
-  docTypes: z
-    .array(z.string().toUpperCase())
-    .min(1, 'At least one document type is required'),
+  docTypes: z.array(z.string().toUpperCase()).min(1, 'At least one document type is required'),
   scope: z.enum(['USER', 'ORG_ADMIN']).default('USER'),
 });
 

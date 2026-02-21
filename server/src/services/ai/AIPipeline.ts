@@ -604,9 +604,10 @@ export class AIPipeline {
           }
         } catch {
           try {
-            const prefsRow = (await dbGet('SELECT preferences FROM ai_user_memory WHERE user_id = ?', [
-              userId,
-            ])) as { preferences?: string } | null;
+            const prefsRow = (await dbGet(
+              'SELECT preferences FROM ai_user_memory WHERE user_id = ?',
+              [userId]
+            )) as { preferences?: string } | null;
             if (prefsRow?.preferences) {
               const prefs = JSON.parse(prefsRow.preferences || '{}');
               const ci = prefs?.customInstructions || prefs?.system_instructions;

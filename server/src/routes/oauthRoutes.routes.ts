@@ -7,8 +7,8 @@ import { Response, Router } from 'express';
 
 import config from '../config/Config.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import refreshTokenService from '../services/RefreshTokenService.js';
 import { oauthService } from '../services/oauthService.js';
+import refreshTokenService from '../services/RefreshTokenService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -93,19 +93,25 @@ router.get(
     const stateData = oauthService.validateState(state);
     if (!stateData) {
       logger.warn('[OAuth] Invalid or expired Google state');
-      return res.redirect(`${FRONTEND_URL}/oauth/callback?auth_error=google_failed&reason=invalid_state`);
+      return res.redirect(
+        `${FRONTEND_URL}/oauth/callback?auth_error=google_failed&reason=invalid_state`
+      );
     }
 
     // Exchange code for tokens
     const tokens = await oauthService.exchangeCode('google', code);
     if (!tokens) {
-      return res.redirect(`${FRONTEND_URL}/oauth/callback?auth_error=google_failed&reason=token_exchange`);
+      return res.redirect(
+        `${FRONTEND_URL}/oauth/callback?auth_error=google_failed&reason=token_exchange`
+      );
     }
 
     // Get user info
     const userInfo = await oauthService.getUserInfo('google', tokens.accessToken);
     if (!userInfo) {
-      return res.redirect(`${FRONTEND_URL}/oauth/callback?auth_error=google_failed&reason=userinfo`);
+      return res.redirect(
+        `${FRONTEND_URL}/oauth/callback?auth_error=google_failed&reason=userinfo`
+      );
     }
 
     // Find or create user
@@ -118,7 +124,9 @@ router.get(
         userAgent: req.get('user-agent'),
         details: { provider: 'google', reason: result.error },
       });
-      return res.redirect(`${FRONTEND_URL}/oauth/callback?auth_error=google_failed&reason=${result.error}`);
+      return res.redirect(
+        `${FRONTEND_URL}/oauth/callback?auth_error=google_failed&reason=${result.error}`
+      );
     }
 
     // Generate session token
@@ -143,7 +151,12 @@ router.get(
       severity: 'info',
       ipAddress: req.ip,
       userAgent: req.get('user-agent'),
-      details: { auth_method: 'oauth', provider: 'google', isNew: result.isNew, linked: result.linked },
+      details: {
+        auth_method: 'oauth',
+        provider: 'google',
+        isNew: result.isNew,
+        linked: result.linked,
+      },
     });
 
     const safeUser = {
@@ -213,17 +226,23 @@ router.get(
     const stateData = oauthService.validateState(state);
     if (!stateData) {
       logger.warn('[OAuth] Invalid or expired LinkedIn state');
-      return res.redirect(`${FRONTEND_URL}/oauth/callback?auth_error=linkedin_failed&reason=invalid_state`);
+      return res.redirect(
+        `${FRONTEND_URL}/oauth/callback?auth_error=linkedin_failed&reason=invalid_state`
+      );
     }
 
     const tokens = await oauthService.exchangeCode('linkedin', code);
     if (!tokens) {
-      return res.redirect(`${FRONTEND_URL}/oauth/callback?auth_error=linkedin_failed&reason=token_exchange`);
+      return res.redirect(
+        `${FRONTEND_URL}/oauth/callback?auth_error=linkedin_failed&reason=token_exchange`
+      );
     }
 
     const userInfo = await oauthService.getUserInfo('linkedin', tokens.accessToken);
     if (!userInfo) {
-      return res.redirect(`${FRONTEND_URL}/oauth/callback?auth_error=linkedin_failed&reason=userinfo`);
+      return res.redirect(
+        `${FRONTEND_URL}/oauth/callback?auth_error=linkedin_failed&reason=userinfo`
+      );
     }
 
     // LinkedIn email fallback: if no email, redirect with error
@@ -235,7 +254,9 @@ router.get(
         userAgent: req.get('user-agent'),
         details: { provider: 'linkedin', reason: 'no_email' },
       });
-      return res.redirect(`${FRONTEND_URL}/oauth/callback?auth_error=linkedin_failed&reason=no_email`);
+      return res.redirect(
+        `${FRONTEND_URL}/oauth/callback?auth_error=linkedin_failed&reason=no_email`
+      );
     }
 
     const result = await oauthService.findOrCreateUser('linkedin', userInfo);
@@ -247,7 +268,9 @@ router.get(
         userAgent: req.get('user-agent'),
         details: { provider: 'linkedin', reason: result.error },
       });
-      return res.redirect(`${FRONTEND_URL}/oauth/callback?auth_error=linkedin_failed&reason=${result.error}`);
+      return res.redirect(
+        `${FRONTEND_URL}/oauth/callback?auth_error=linkedin_failed&reason=${result.error}`
+      );
     }
 
     const tokenPair = await refreshTokenService.generateTokenPair(
@@ -271,7 +294,12 @@ router.get(
       severity: 'info',
       ipAddress: req.ip,
       userAgent: req.get('user-agent'),
-      details: { auth_method: 'oauth', provider: 'linkedin', isNew: result.isNew, linked: result.linked },
+      details: {
+        auth_method: 'oauth',
+        provider: 'linkedin',
+        isNew: result.isNew,
+        linked: result.linked,
+      },
     });
 
     const safeUser = {
@@ -311,7 +339,9 @@ router.get(
 
     const result = oauthService.generateAuthUrl('linkedin', 'connect', userId);
     if (!result) {
-      return res.redirect(`${FRONTEND_URL}/settings/security?connect_error=linkedin_not_configured`);
+      return res.redirect(
+        `${FRONTEND_URL}/settings/security?connect_error=linkedin_not_configured`
+      );
     }
 
     res.cookie('oauth_state', result.state, {

@@ -457,44 +457,87 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
         </h2>
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 font-bold text-sm">1</div>
-            <h3 className="font-bold text-slate-800 dark:text-white">Phase 1: Lean Quick Wins (0–30 days)</h3>
+            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 font-bold text-sm">
+              1
+            </div>
+            <h3 className="font-bold text-slate-800 dark:text-white">
+              Phase 1: Lean Quick Wins (0–30 days)
+            </h3>
           </div>
           <div className="ml-10 space-y-2">
-            {data.processes.filter((p: any) => p.leanAssessment.fiveSLevel < 3 || !p.leanAssessment.standardWorkDefined).slice(0, 5).map((p: any) => (
-              <div key={p.id} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                <Star className="text-yellow-500 flex-shrink-0" size={14} />
-                <span>{p.name}: {p.leanAssessment.fiveSLevel < 3 ? '5S improvement' : 'Standard work definition'}</span>
-              </div>
-            ))}
+            {data.processes
+              .filter(
+                (p: any) => p.leanAssessment.fiveSLevel < 3 || !p.leanAssessment.standardWorkDefined
+              )
+              .slice(0, 5)
+              .map((p: any) => (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
+                >
+                  <Star className="text-yellow-500 flex-shrink-0" size={14} />
+                  <span>
+                    {p.name}:{' '}
+                    {p.leanAssessment.fiveSLevel < 3
+                      ? '5S improvement'
+                      : 'Standard work definition'}
+                  </span>
+                </div>
+              ))}
           </div>
         </div>
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-bold text-sm">2</div>
-            <h3 className="font-bold text-slate-800 dark:text-white">Phase 2: Lean Optimization (30–90 days)</h3>
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-bold text-sm">
+              2
+            </div>
+            <h3 className="font-bold text-slate-800 dark:text-white">
+              Phase 2: Lean Optimization (30–90 days)
+            </h3>
           </div>
           <div className="ml-10 space-y-2">
-            {data.processes.filter((p: any) => p.leanAssessment.wasteIdentified.length > 0).slice(0, 5).map((p: any) => (
-              <div key={p.id} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                <TrendingUp className="text-blue-500 flex-shrink-0" size={14} />
-                <span>{p.name}: Waste elimination ({p.leanAssessment.wasteIdentified.length} wastes)</span>
-              </div>
-            ))}
+            {data.processes
+              .filter((p: any) => p.leanAssessment.wasteIdentified.length > 0)
+              .slice(0, 5)
+              .map((p: any) => (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
+                >
+                  <TrendingUp className="text-blue-500 flex-shrink-0" size={14} />
+                  <span>
+                    {p.name}: Waste elimination ({p.leanAssessment.wasteIdentified.length} wastes)
+                  </span>
+                </div>
+              ))}
           </div>
         </div>
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 font-bold text-sm">3</div>
-            <h3 className="font-bold text-slate-800 dark:text-white">Phase 3: Automation & AI (90+ days)</h3>
+            <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 font-bold text-sm">
+              3
+            </div>
+            <h3 className="font-bold text-slate-800 dark:text-white">
+              Phase 3: Automation & AI (90+ days)
+            </h3>
           </div>
           <div className="ml-10 space-y-2">
-            {data.processes.filter((p: any) => p.automationPotential.feasibility >= 3).sort((a: any, b: any) => b.automationPotential.roi - a.automationPotential.roi).slice(0, 5).map((p: any) => (
-              <div key={p.id} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                <Cpu className="text-purple-500 flex-shrink-0" size={14} />
-                <span>{p.name}: {p.automationPotential.recommendedTechnologies.slice(0, 2).join(', ')} (ROI: {p.automationPotential.roi}%)</span>
-              </div>
-            ))}
+            {data.processes
+              .filter((p: any) => p.automationPotential.feasibility >= 3)
+              .sort((a: any, b: any) => b.automationPotential.roi - a.automationPotential.roi)
+              .slice(0, 5)
+              .map((p: any) => (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
+                >
+                  <Cpu className="text-purple-500 flex-shrink-0" size={14} />
+                  <span>
+                    {p.name}: {p.automationPotential.recommendedTechnologies.slice(0, 2).join(', ')}{' '}
+                    (ROI: {p.automationPotential.roi}%)
+                  </span>
+                </div>
+              ))}
           </div>
         </div>
       </div>
@@ -510,28 +553,67 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
           <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4">
             <h3 className="font-bold text-slate-800 dark:text-white mb-3">Key Findings</h3>
             <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
-              <div className="flex items-start gap-2"><CheckCircle className="text-green-500 mt-0.5 flex-shrink-0" size={14} /><span>{data.processes.length} processes and {data.workstations.length} workstations assessed</span></div>
-              <div className="flex items-start gap-2"><CheckCircle className="text-green-500 mt-0.5 flex-shrink-0" size={14} /><span>Total headcount: {data.workstations.reduce((s: number, w: any) => s + w.headcount, 0)} FTE</span></div>
-              {data.summary?.totalEstimatedSavings > 0 && <div className="flex items-start gap-2"><DollarSign className="text-emerald-500 mt-0.5 flex-shrink-0" size={14} /><span>Estimated savings: {data.summary.totalEstimatedSavings.toLocaleString()} PLN/yr</span></div>}
+              <div className="flex items-start gap-2">
+                <CheckCircle className="text-green-500 mt-0.5 flex-shrink-0" size={14} />
+                <span>
+                  {data.processes.length} processes and {data.workstations.length} workstations
+                  assessed
+                </span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle className="text-green-500 mt-0.5 flex-shrink-0" size={14} />
+                <span>
+                  Total headcount:{' '}
+                  {data.workstations.reduce((s: number, w: any) => s + w.headcount, 0)} FTE
+                </span>
+              </div>
+              {data.summary?.totalEstimatedSavings > 0 && (
+                <div className="flex items-start gap-2">
+                  <DollarSign className="text-emerald-500 mt-0.5 flex-shrink-0" size={14} />
+                  <span>
+                    Estimated savings: {data.summary.totalEstimatedSavings.toLocaleString()} PLN/yr
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4">
             <h3 className="font-bold text-slate-800 dark:text-white mb-3">Data Gaps</h3>
             <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
-              {data.processes.filter((p: any) => p.currentState.oee === 0).slice(0, 3).map((p: any) => (
-                <div key={p.id} className="flex items-start gap-2"><Eye className="text-amber-500 mt-0.5 flex-shrink-0" size={14} /><span>{p.name}: OEE not measured</span></div>
-              ))}
-              {data.processes.filter((p: any) => p.currentState.oee === 0).length === 0 && <p className="text-slate-500 italic">All key metrics collected</p>}
+              {data.processes
+                .filter((p: any) => p.currentState.oee === 0)
+                .slice(0, 3)
+                .map((p: any) => (
+                  <div key={p.id} className="flex items-start gap-2">
+                    <Eye className="text-amber-500 mt-0.5 flex-shrink-0" size={14} />
+                    <span>{p.name}: OEE not measured</span>
+                  </div>
+                ))}
+              {data.processes.filter((p: any) => p.currentState.oee === 0).length === 0 && (
+                <p className="text-slate-500 italic">All key metrics collected</p>
+              )}
             </div>
           </div>
         </div>
         <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-5 border border-cyan-200 dark:border-cyan-800/30">
           <h3 className="font-bold text-cyan-900 dark:text-cyan-300 mb-2">Next Steps</h3>
           <div className="space-y-2 text-sm text-cyan-800 dark:text-cyan-200">
-            <div className="flex items-center gap-2"><ArrowRight size={14} /><span>Approve assessment to unlock initiative generation</span></div>
-            <div className="flex items-center gap-2"><ArrowRight size={14} /><span>Create initiatives from roadmap recommendations</span></div>
-            <div className="flex items-center gap-2"><ArrowRight size={14} /><span>Address data gaps for higher confidence</span></div>
-            <div className="flex items-center gap-2"><ArrowRight size={14} /><span>Schedule follow-up gemba walks</span></div>
+            <div className="flex items-center gap-2">
+              <ArrowRight size={14} />
+              <span>Approve assessment to unlock initiative generation</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ArrowRight size={14} />
+              <span>Create initiatives from roadmap recommendations</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ArrowRight size={14} />
+              <span>Address data gaps for higher confidence</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ArrowRight size={14} />
+              <span>Schedule follow-up gemba walks</span>
+            </div>
           </div>
         </div>
       </div>

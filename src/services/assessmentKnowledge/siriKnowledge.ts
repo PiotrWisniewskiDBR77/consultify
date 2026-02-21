@@ -310,11 +310,20 @@ function getTechnologies(dimensionId: string, level: number): string[] {
 // ============================================
 
 function getEvidenceGuidance(dimensionId: string, level: number): string {
-  return DIMENSION_EVIDENCE_GUIDANCE[dimensionId]?.[level] || 'Look for documented processes, systems in active use, and measurable outcomes at this level.';
+  return (
+    DIMENSION_EVIDENCE_GUIDANCE[dimensionId]?.[level] ||
+    'Look for documented processes, systems in active use, and measurable outcomes at this level.'
+  );
 }
 
 function getCommonMistakes(dimensionId: string): string[] {
-  return DIMENSION_COMMON_MISTAKES[dimensionId] || ['Ensure scores reflect actual practice, not aspirations.', 'Verify with evidence, not just management perception.', 'Check consistency across the organization.'];
+  return (
+    DIMENSION_COMMON_MISTAKES[dimensionId] || [
+      'Ensure scores reflect actual practice, not aspirations.',
+      'Verify with evidence, not just management perception.',
+      'Check consistency across the organization.',
+    ]
+  );
 }
 
 function getLevelMeaning(level: number): string {
@@ -362,7 +371,9 @@ export function getSIRIKnowledge(dimensionId: string, levelNumber: number): SIRI
   };
 }
 
-export function getSIRILevelMeaning(level: number): { title: string; meaning: string; evidencePattern: string } | null {
+export function getSIRILevelMeaning(
+  level: number
+): { title: string; meaning: string; evidencePattern: string } | null {
   return SIRI_LEVEL_MEANINGS[level] || null;
 }
 

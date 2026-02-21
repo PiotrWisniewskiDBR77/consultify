@@ -15,12 +15,12 @@
  * @module routes/partners
  */
 
-import { NextFunction, Request, Response, Router } from 'express';
-
 import crypto from 'crypto';
+import { NextFunction, Request, Response, Router } from 'express';
 
 import { getDatabase } from '../database/Database.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { generatePartnerCertificatePdf } from '../services/partnerCertificatePdf.js';
 import {
   ensureLearningProgressRows,
   ensureSalesCertification,
@@ -30,7 +30,6 @@ import {
   startSalesExam,
   submitSalesExam,
 } from '../services/partnerCertificationService.js';
-import { generatePartnerCertificatePdf } from '../services/partnerCertificatePdf.js';
 import PartnerCommissionService from '../services/partnerCommissionService.js';
 import PartnerReferralService from '../services/partnerReferralService.js';
 import { generatePartnerToolkitResourceFile } from '../services/partnerToolkitResources.js';
@@ -41,7 +40,9 @@ const router = Router();
 
 function isSchemaMissingError(err: unknown): boolean {
   const msg = String((err as any)?.message || '').toLowerCase();
-  return msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation');
+  return (
+    msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')
+  );
 }
 
 const FEATURE_UNAVAILABLE_CODE = 'FEATURE_UNAVAILABLE';
@@ -212,14 +213,7 @@ router.put('/organization', async (req: Request, res: Response, next: NextFuncti
       `UPDATE partner_organizations
        SET name = ?, tax_id = ?, contact_email = ?, contact_phone = ?, website = ?, updated_at = NOW()
        WHERE id = ?`,
-      [
-        name,
-        taxId || null,
-        contactEmail,
-        contactPhone || null,
-        website || null,
-        partnerOrgId,
-      ]
+      [name, taxId || null, contactEmail, contactPhone || null, website || null, partnerOrgId]
     );
 
     return res.json({ success: true, message: 'Organization updated successfully' });
@@ -254,7 +248,10 @@ router.put(
       );
 
       const statements = [
-        { sql: `DELETE FROM partner_specializations WHERE partner_org_id = ?`, params: [partnerOrgId] },
+        {
+          sql: `DELETE FROM partner_specializations WHERE partner_org_id = ?`,
+          params: [partnerOrgId],
+        },
         ...uniqueFrameworks.map((fw) => ({
           sql: `INSERT INTO partner_specializations (id, partner_org_id, framework, certified, created_at)
                 VALUES (?, ?, ?, FALSE, NOW())
@@ -904,7 +901,10 @@ router.get('/employees', async (req: Request, res: Response, next: NextFunction)
  */
 router.post('/employees', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(res, 'Partner employee creation unavailable (no real implementation)');
+    return featureUnavailable(
+      res,
+      'Partner employee creation unavailable (no real implementation)'
+    );
   } catch (error: any) {
     logger.error('Error creating employee:', error);
     next(error);
@@ -1263,7 +1263,7 @@ router.get(
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename=\"partner-certificate-${certificateId}.pdf\"`
+        `attachment; filename="partner-certificate-${certificateId}.pdf"`
       );
       return res.status(200).send(pdf);
     } catch (error: any) {
@@ -1345,7 +1345,10 @@ router.get(
   '/invoices/:invoiceId/download',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      return featureUnavailable(res, 'Partner invoice downloads unavailable (no real implementation)');
+      return featureUnavailable(
+        res,
+        'Partner invoice downloads unavailable (no real implementation)'
+      );
     } catch (error: any) {
       logger.error('Error downloading invoice:', error);
       next(error);
@@ -1454,9 +1457,7 @@ router.get(
 
       // Audit download (best-effort)
       const ip = String((req.headers['x-forwarded-for'] as any) || req.socket.remoteAddress || '');
-      const ipHash = ip
-        ? crypto.createHash('sha256').update(String(ip)).digest('hex')
-        : null;
+      const ipHash = ip ? crypto.createHash('sha256').update(String(ip)).digest('hex') : null;
       const userAgent = String(req.headers['user-agent'] || '');
 
       try {

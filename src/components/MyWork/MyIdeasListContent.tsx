@@ -64,7 +64,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   const filteredIdeas = useMemo(() => {
     if (activeTag === 'all') return ideas;
-    return ideas.filter((i) => (i.tags || []).map((x) => String(x).toLowerCase()).includes(activeTag));
+    return ideas.filter((i) =>
+      (i.tags || []).map((x) => String(x).toLowerCase()).includes(activeTag)
+    );
   }, [ideas, activeTag]);
 
   if (loading) {
@@ -174,4 +176,3 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 };
 
 export default MyIdeasListContent;
-

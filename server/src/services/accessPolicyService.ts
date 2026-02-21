@@ -44,6 +44,33 @@ interface AccessPolicyDeps {
   SeatManagementService: any; // Dynamic type
 }
 
+function normalizeSubscriptionStatus(raw: string | null | undefined): SubscriptionStatus | null {
+  if (!raw) return null;
+  const s = String(raw).toLowerCase();
+  if (s === 'active') return SUBSCRIPTION_STATUSES.ACTIVE;
+  if (s === 'trialing') return SUBSCRIPTION_STATUSES.TRIALING;
+  if (s === 'past_due') return SUBSCRIPTION_STATUSES.PAST_DUE;
+  if (s === 'canceling' || s === 'cancelling') return SUBSCRIPTION_STATUSES.CANCELING;
+  if (s === 'canceled' || s === 'cancelled') return SUBSCRIPTION_STATUSES.CANCELED;
+  return null;
+}
+
+function resolveOrgTypeFromBilling(
+  orgType: OrgType,
+  subscriptionStatus: SubscriptionStatus | null
+) {
+  if (orgType === ORG_TYPES.DEMO) return ORG_TYPES.DEMO;
+  if (
+    subscriptionStatus === SUBSCRIPTION_STATUSES.ACTIVE ||
+    subscriptionStatus === SUBSCRIPTION_STATUSES.TRIALING ||
+    subscriptionStatus === SUBSCRIPTION_STATUSES.CANCELING ||
+    subscriptionStatus === SUBSCRIPTION_STATUSES.PAST_DUE
+  ) {
+    return ORG_TYPES.PAID;
+  }
+  return orgType;
+}
+
 class AccessPolicyServiceClass {
   private deps: AccessPolicyDeps;
 
@@ -157,12 +184,18 @@ class AccessPolicyServiceClass {
     action: 'create_project' | 'create_initiative' | 'invite_user' | 'ai_call' | 'upload' | 'write'
   ): Promise<CheckAccessResult> {
     try {
-      const [orgInfo, trialStatus, limits, usage, trialUsage] = await Promise.all([
+      const [orgInfo, trialStatus, limits, usage, trialUsage, billingRow] = await Promise.all([
         this.getOrganizationType(organizationId),
         this.checkTrialStatus(organizationId),
         this.getOrganizationLimits(organizationId),
         this.getDailyUsage(organizationId),
         this.getTrialUsage(organizationId),
+        DbPromise.get<{ status?: string | null }>(
+          this.deps.db,
+          `SELECT status FROM organization_billing WHERE organization_id = ?`,
+          [organizationId],
+          { fallback: true }
+        ),
       ]);
 
       if (!orgInfo)
@@ -170,8 +203,33 @@ class AccessPolicyServiceClass {
       if (!orgInfo.isActive)
         return { allowed: false, reason: 'Organization is inactive', errorCode: 'ORG_INACTIVE' };
 
+      const subscriptionStatus = normalizeSubscriptionStatus((billingRow as any)?.status);
+      const effectiveOrgType = resolveOrgTypeFromBilling(
+        orgInfo.organizationType,
+        subscriptionStatus
+      );
+
+      // Dunning / past-due restrictions (Stripe is SSOT).
+      if (subscriptionStatus === SUBSCRIPTION_STATUSES.PAST_DUE) {
+        const blockedWhenPastDue = new Set([
+          'create_project',
+          'create_initiative',
+          'invite_user',
+          'ai_call',
+          'upload',
+          'write',
+        ]);
+        if (blockedWhenPastDue.has(action)) {
+          return {
+            allowed: false,
+            reason: 'Payment failed. Please update your payment method to restore access.',
+            errorCode: 'SUBSCRIPTION_PAST_DUE',
+          };
+        }
+      }
+
       // Trial Expired check
-      if (trialStatus.expired && orgInfo.organizationType !== ORG_TYPES.PAID) {
+      if (trialStatus.expired && effectiveOrgType !== ORG_TYPES.PAID) {
         return {
           allowed: false,
           reason: 'Trial period has expired. Please upgrade to continue.',
@@ -180,7 +238,7 @@ class AccessPolicyServiceClass {
       }
 
       // Demo Mode check
-      if (orgInfo.organizationType === ORG_TYPES.DEMO) {
+      if (effectiveOrgType === ORG_TYPES.DEMO) {
         const writeActions = [
           'create_project',
           'create_initiative',
@@ -198,7 +256,7 @@ class AccessPolicyServiceClass {
       }
 
       // Trial gating: require org setup completion before using AI
-      if (orgInfo.organizationType === ORG_TYPES.TRIAL && action === 'ai_call') {
+      if (effectiveOrgType === ORG_TYPES.TRIAL && action === 'ai_call') {
         try {
           const row = await DbPromise.get<{ onboarding_status?: string | null }>(
             this.deps.db,
@@ -219,7 +277,7 @@ class AccessPolicyServiceClass {
       }
 
       // Paid check
-      if (orgInfo.organizationType === ORG_TYPES.PAID) return { allowed: true };
+      if (effectiveOrgType === ORG_TYPES.PAID) return { allowed: true };
 
       if (!limits) return { allowed: true };
 
@@ -330,17 +388,28 @@ class AccessPolicyServiceClass {
   }
 
   async getAIAccessContext(organizationId: string): Promise<AIAccessContext> {
-    const [orgInfo, trialStatus, limits, usage] = await Promise.all([
+    const [orgInfo, trialStatus, limits, usage, billingRow] = await Promise.all([
       this.getOrganizationType(organizationId),
       this.checkTrialStatus(organizationId),
       this.getOrganizationLimits(organizationId),
       this.getDailyUsage(organizationId),
+      DbPromise.get<{ status?: string | null }>(
+        this.deps.db,
+        `SELECT status FROM organization_billing WHERE organization_id = ?`,
+        [organizationId],
+        { fallback: true }
+      ),
     ]);
+    const subscriptionStatus = normalizeSubscriptionStatus((billingRow as any)?.status);
+    const effectiveOrgType = resolveOrgTypeFromBilling(
+      orgInfo?.organizationType || ORG_TYPES.TRIAL,
+      subscriptionStatus
+    );
     return {
-      organizationType: orgInfo?.organizationType || ORG_TYPES.TRIAL,
-      isDemo: orgInfo?.organizationType === ORG_TYPES.DEMO,
-      isTrial: orgInfo?.organizationType === ORG_TYPES.TRIAL,
-      isPaid: orgInfo?.organizationType === ORG_TYPES.PAID,
+      organizationType: effectiveOrgType,
+      isDemo: effectiveOrgType === ORG_TYPES.DEMO,
+      isTrial: effectiveOrgType === ORG_TYPES.TRIAL,
+      isPaid: effectiveOrgType === ORG_TYPES.PAID,
       trialStatus,
       allowedAIRoles: limits?.aiRolesEnabled || ['ADVISOR'],
       dailyAIUsage: {
@@ -348,30 +417,42 @@ class AccessPolicyServiceClass {
         limit: limits?.maxAICallsPerDay || 50,
         remaining: Math.max(0, (limits?.maxAICallsPerDay || 50) - (usage?.aiCallsCount || 0)),
       },
-      canExecuteAIActions: orgInfo?.organizationType === ORG_TYPES.PAID,
+      canExecuteAIActions: effectiveOrgType === ORG_TYPES.PAID,
       aiResponseBadge:
-        orgInfo?.organizationType === ORG_TYPES.DEMO
+        effectiveOrgType === ORG_TYPES.DEMO
           ? '🎯 Demo AI'
-          : orgInfo?.organizationType === ORG_TYPES.TRIAL
+          : effectiveOrgType === ORG_TYPES.TRIAL
             ? '🔬 Trial AI'
             : null,
     };
   }
 
   async buildPolicySnapshot(organizationId: string): Promise<PolicySnapshot | null> {
-    const [orgInfo, trialStatus, limits, usage, trialUsage] = await Promise.all([
+    const [orgInfo, trialStatus, limits, usage, trialUsage, billingRow] = await Promise.all([
       this.getOrganizationType(organizationId),
       this.checkTrialStatus(organizationId),
       this.getOrganizationLimits(organizationId),
       this.getDailyUsage(organizationId),
       this.getTrialUsage(organizationId),
+      DbPromise.get<{ status?: string | null; subscription_plan_id?: string | null }>(
+        this.deps.db,
+        `SELECT status, subscription_plan_id FROM organization_billing WHERE organization_id = ?`,
+        [organizationId],
+        { fallback: true }
+      ),
     ]);
 
     if (!orgInfo) return null;
 
-    const isDemo = orgInfo.organizationType === ORG_TYPES.DEMO;
-    const isTrial = orgInfo.organizationType === ORG_TYPES.TRIAL;
-    const isPaid = orgInfo.organizationType === ORG_TYPES.PAID;
+    const subscriptionStatus = normalizeSubscriptionStatus((billingRow as any)?.status);
+    const effectiveOrgType = resolveOrgTypeFromBilling(
+      orgInfo.organizationType,
+      subscriptionStatus
+    );
+
+    const isDemo = effectiveOrgType === ORG_TYPES.DEMO;
+    const isTrial = effectiveOrgType === ORG_TYPES.TRIAL;
+    const isPaid = effectiveOrgType === ORG_TYPES.PAID;
 
     const projectCount = await this.deps.resourceService.countOrgProjects(organizationId);
     const userCount = await this.deps.resourceService.countOrgUsers(organizationId);
@@ -395,24 +476,9 @@ class AccessPolicyServiceClass {
       // table may not exist
     }
 
-    let subscriptionStatus: SubscriptionStatus | null = null;
-    try {
-      const subRow = await DbPromise.get<{ status: string }>(
-        this.deps.db,
-        `SELECT status FROM subscriptions WHERE organization_id = ? ORDER BY created_at DESC LIMIT 1`,
-        [organizationId],
-        { fallback: false }
-      );
-      if (subRow?.status) {
-        subscriptionStatus = subRow.status as SubscriptionStatus;
-      }
-    } catch {
-      // table may not exist
-    }
-
     const blockedFeatures: string[] = [];
     const blockedActions: string[] = [];
-    const entitlements = ENTITLEMENTS_MATRIX[orgInfo.organizationType] || {};
+    const entitlements = ENTITLEMENTS_MATRIX[effectiveOrgType] || {};
 
     for (const [feature, status] of Object.entries(entitlements)) {
       if (status === 'blocked') {
@@ -443,17 +509,75 @@ class AccessPolicyServiceClass {
       blockedActions.push('AI_DO_ACTIONS', 'CREATE_PROJECT', 'CREATE_INITIATIVE', 'INVITES');
     }
 
-    if ((isTrial || isDemo) && limits) {
-      if (projectCount >= limits.maxProjects && limits.maxProjects >= 0)
+    // Resolve token/storage limits from subscribed plan (Stripe SSOT → DB-configured plan limits),
+    // falling back to organization_limits defaults when missing.
+    const subscribedPlanId = (billingRow as any)?.subscription_plan_id as string | null | undefined;
+    let resolvedLimits: OrganizationLimits | null = limits;
+    if (subscribedPlanId) {
+      try {
+        const planRow = await DbPromise.get<{
+          limits?: string | null;
+          token_limit?: number | null;
+          storage_limit_gb?: number | null;
+        }>(
+          this.deps.db,
+          `SELECT limits, token_limit, storage_limit_gb FROM subscription_plans WHERE id = ?`,
+          [subscribedPlanId],
+          { fallback: true }
+        );
+        const planLimits = planRow?.limits ? JSON.parse(planRow.limits) : {};
+
+        const tokens =
+          typeof (planLimits as any)?.tokens === 'number'
+            ? (planLimits as any).tokens
+            : typeof planRow?.token_limit === 'number'
+              ? planRow.token_limit
+              : undefined;
+        const storageMb =
+          typeof (planLimits as any)?.storage_gb === 'number'
+            ? Math.round((planLimits as any).storage_gb * 1024)
+            : typeof planRow?.storage_limit_gb === 'number'
+              ? Math.round(planRow.storage_limit_gb * 1024)
+              : undefined;
+
+        if (!resolvedLimits) {
+          resolvedLimits = {
+            organizationId,
+            maxProjects: -1,
+            maxUsers: -1,
+            maxAICallsPerDay: -1,
+            maxInitiatives: -1,
+            maxStorageMb: storageMb ?? -1,
+            maxTotalTokens: tokens ?? -1,
+            aiRolesEnabled: ['ADVISOR'],
+          };
+        } else {
+          resolvedLimits = {
+            ...resolvedLimits,
+            maxTotalTokens: tokens ?? resolvedLimits.maxTotalTokens,
+            maxStorageMb: storageMb ?? resolvedLimits.maxStorageMb,
+          };
+        }
+      } catch {
+        // fail open
+      }
+    }
+
+    if ((isTrial || isDemo) && resolvedLimits) {
+      if (projectCount >= resolvedLimits.maxProjects && resolvedLimits.maxProjects >= 0)
         blockedActions.push('CREATE_PROJECT');
-      if (userCount >= limits.maxUsers && limits.maxUsers >= 0) blockedActions.push('INVITES');
-      if (usage.aiCallsCount >= limits.maxAICallsPerDay && limits.maxAICallsPerDay >= 0)
+      if (userCount >= resolvedLimits.maxUsers && resolvedLimits.maxUsers >= 0)
+        blockedActions.push('INVITES');
+      if (
+        usage.aiCallsCount >= resolvedLimits.maxAICallsPerDay &&
+        resolvedLimits.maxAICallsPerDay >= 0
+      )
         blockedActions.push('AI_CALL');
-      if (initiativeCount >= limits.maxInitiatives && limits.maxInitiatives >= 0)
+      if (initiativeCount >= resolvedLimits.maxInitiatives && resolvedLimits.maxInitiatives >= 0)
         blockedActions.push('CREATE_INITIATIVE');
       if (
-        limits.maxTotalTokens > 0 &&
-        trialUsage.tokensUsed >= limits.maxTotalTokens &&
+        resolvedLimits.maxTotalTokens > 0 &&
+        trialUsage.tokensUsed >= resolvedLimits.maxTotalTokens &&
         !hasPaymentMethod
       ) {
         blockedActions.push('AI_TOKEN_BUDGET');
@@ -466,12 +590,12 @@ class AccessPolicyServiceClass {
     };
 
     const usagePercent = {
-      aiCalls: safePercent(usage?.aiCallsCount || 0, limits?.maxAICallsPerDay || 1),
-      projects: safePercent(projectCount, limits?.maxProjects || 1),
-      users: safePercent(userCount, limits?.maxUsers || 1),
-      initiatives: safePercent(initiativeCount, limits?.maxInitiatives || 1),
-      storage: safePercent(usage?.storageUsedMb || 0, limits?.maxStorageMb || 1),
-      tokens: safePercent(trialUsage.tokensUsed, limits?.maxTotalTokens || 1),
+      aiCalls: safePercent(usage?.aiCallsCount || 0, resolvedLimits?.maxAICallsPerDay || 1),
+      projects: safePercent(projectCount, resolvedLimits?.maxProjects || 1),
+      users: safePercent(userCount, resolvedLimits?.maxUsers || 1),
+      initiatives: safePercent(initiativeCount, resolvedLimits?.maxInitiatives || 1),
+      storage: safePercent(usage?.storageUsedMb || 0, resolvedLimits?.maxStorageMb || 1),
+      tokens: safePercent(trialUsage.tokensUsed, resolvedLimits?.maxTotalTokens || 1),
     };
 
     let bannerText: string | null = null;
@@ -483,7 +607,8 @@ class AccessPolicyServiceClass {
       bannerText = 'You are viewing a demo environment (read-only)';
       bannerTextKey = 'access.banner.demo';
     } else if (subscriptionStatus === SUBSCRIPTION_STATUSES.PAST_DUE) {
-      bannerText = 'Payment failed. Please update your payment method to avoid service interruption.';
+      bannerText =
+        'Payment failed. Please update your payment method to avoid service interruption.';
       bannerTextKey = 'access.banner.pastDue';
     } else if (isTrial && trialStatus.expired) {
       bannerText = 'Your trial has expired. Upgrade to continue.';
@@ -495,7 +620,7 @@ class AccessPolicyServiceClass {
       bannerText = `Trial expires in ${trialStatus.daysRemaining} day${trialStatus.daysRemaining !== 1 ? 's' : ''}. Upgrade now to keep full access.`;
       bannerTextKey = 'access.banner.trialCritical';
     } else if (isTrial && trialStatus.warningLevel === 'warning') {
-      bannerText = `${trialStatus.daysRemaining} day${trialStatus.daysRemaining !== 1 ? 's' : ''} left in your trial`;
+      bannerText = `${trialStatus.daysRemaining} day${trialStatus.daysRemaining !== 1 ? 's' : ''} remaining`;
       bannerTextKey = 'access.banner.trialWarning';
     }
 
@@ -503,7 +628,8 @@ class AccessPolicyServiceClass {
       (p) => p >= USAGE_THRESHOLD_PERCENT.APPROACHING && p < USAGE_THRESHOLD_PERCENT.EXCEEDED
     );
     if (isTrial && !trialStatus.expired && anyApproaching && !bannerText) {
-      bannerText = 'You are approaching your usage limits. Consider upgrading for uninterrupted access.';
+      bannerText =
+        'You are approaching your usage limits. Consider upgrading for uninterrupted access.';
       bannerTextKey = 'access.banner.approachingLimits';
     }
 
@@ -521,9 +647,9 @@ class AccessPolicyServiceClass {
       ctaReason = 'payment_failed';
     } else if (
       isTrial &&
-      limits &&
-      limits.maxTotalTokens > 0 &&
-      trialUsage.tokensUsed >= limits.maxTotalTokens &&
+      resolvedLimits &&
+      resolvedLimits.maxTotalTokens > 0 &&
+      trialUsage.tokensUsed >= resolvedLimits.maxTotalTokens &&
       !hasPaymentMethod
     ) {
       primaryAction = 'Add Payment Method';
@@ -532,7 +658,7 @@ class AccessPolicyServiceClass {
     }
 
     return {
-      orgType: orgInfo.organizationType,
+      orgType: effectiveOrgType,
       isDemo,
       isTrial,
       isPaid,
@@ -542,15 +668,15 @@ class AccessPolicyServiceClass {
       trialDaysLeft: trialStatus.daysRemaining,
       isTrialExpired: trialStatus.expired,
       warningLevel: trialStatus.warningLevel,
-      limits: limits
+      limits: resolvedLimits
         ? {
-            maxProjects: limits.maxProjects,
-            maxUsers: limits.maxUsers,
-            maxAICallsPerDay: limits.maxAICallsPerDay,
-            maxInitiatives: limits.maxInitiatives,
-            maxStorageMb: limits.maxStorageMb,
-            maxTotalTokens: limits.maxTotalTokens,
-            aiRolesEnabled: limits.aiRolesEnabled,
+            maxProjects: resolvedLimits.maxProjects,
+            maxUsers: resolvedLimits.maxUsers,
+            maxAICallsPerDay: resolvedLimits.maxAICallsPerDay,
+            maxInitiatives: resolvedLimits.maxInitiatives,
+            maxStorageMb: resolvedLimits.maxStorageMb,
+            maxTotalTokens: resolvedLimits.maxTotalTokens,
+            aiRolesEnabled: resolvedLimits.aiRolesEnabled,
           }
         : null,
       usageToday: {

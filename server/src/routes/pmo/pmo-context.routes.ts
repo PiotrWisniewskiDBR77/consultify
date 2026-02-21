@@ -160,13 +160,17 @@ router.get(
       // Get custom labels for tasks (table may not exist in older DBs)
       let customLabels: Array<{ label: string }> = [];
       try {
-        customLabels = (await dbAll<any>(
-          `SELECT DISTINCT label FROM task_labels WHERE project_id = ?`,
-          [projectId]
-        )) || [];
+        customLabels =
+          (await dbAll<any>(`SELECT DISTINCT label FROM task_labels WHERE project_id = ?`, [
+            projectId,
+          ])) || [];
       } catch (e: any) {
         const msg = String(e?.message || '');
-        if (msg.includes('does not exist') || msg.includes('no such table') || msg.includes('relation')) {
+        if (
+          msg.includes('does not exist') ||
+          msg.includes('no such table') ||
+          msg.includes('relation')
+        ) {
           customLabels = [];
         } else {
           throw e;

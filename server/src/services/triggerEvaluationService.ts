@@ -405,10 +405,7 @@ function matchesConditions(signal: TriggerSignal, conditions: TriggerConditions)
 /**
  * Get trigger fire log for a schedule
  */
-export async function getTriggerFireLog(
-  scheduleId: string,
-  limit: number = 20
-): Promise<any[]> {
+export async function getTriggerFireLog(scheduleId: string, limit: number = 20): Promise<any[]> {
   const rows = await dbAll(
     `SELECT * FROM trigger_fire_log
      WHERE schedule_id = ?

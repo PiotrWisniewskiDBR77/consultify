@@ -28,7 +28,9 @@ import logger from '../utils/Logger.js';
 import {
   ActionIdParamSchema,
   ActionTypeParamSchema,
+  AIAuthoringAuditRequestSchema,
   AIContextQuerySchema,
+  AIReadinessAnalysisRequestSchema,
   ApproveActionRequestSchema,
   AuditIdParamSchema,
   CalculateQualityRequestSchema,
@@ -38,6 +40,7 @@ import {
   ChatStreamRequestSchema,
   CreateDraftRequestSchema,
   ExportExplanationsQuerySchema,
+  GenerateCardDraftRequestSchema,
   GenerateProposalsQuerySchema,
   GetAggregateQualityQuerySchema,
   GetAuditLogsQuerySchema,
@@ -68,9 +71,6 @@ import {
   ToggleAutoApplyRequestSchema,
   UpdatePolicyRequestSchema,
   UpdateUserPreferencesRequestSchema,
-  GenerateCardDraftRequestSchema,
-  AIReadinessAnalysisRequestSchema,
-  AIAuthoringAuditRequestSchema,
 } from '../validators/ai.validators.js';
 
 const router = Router();
@@ -421,7 +421,7 @@ router.post(
     }
 
     try {
-      const dbMod = await import('../../utils/DbPromise.js');
+      const dbMod = await import('../utils/DbPromise.js');
       const db = dbMod;
 
       const messages = (await db.all(
@@ -897,7 +897,10 @@ router.post(
     if (aiModes?.coThinkerMode && typeof aiModes.coThinkerMode === 'string') {
       try {
         const { buildCoThinkerSystemPrompt } = await import('../services/ai/coThinkerService.js');
-        const coThinkerPrompt = buildCoThinkerSystemPrompt(aiModes.coThinkerMode as any, (language || 'en').split('-')[0]);
+        const coThinkerPrompt = buildCoThinkerSystemPrompt(
+          aiModes.coThinkerMode as any,
+          (language || 'en').split('-')[0]
+        );
         if (coThinkerPrompt) {
           enhancedSystemInstruction = coThinkerPrompt + '\n\n' + enhancedSystemInstruction;
         }
@@ -5128,11 +5131,25 @@ router.post(
     });
 
     const langCode = (language || 'pl').split('-')[0];
-    const langMap: Record<string, string> = { pl: 'Polish', en: 'English', de: 'German', es: 'Spanish' };
+    const langMap: Record<string, string> = {
+      pl: 'Polish',
+      en: 'English',
+      de: 'German',
+      es: 'Spanish',
+    };
     const langName = langMap[langCode] || 'Polish';
 
     const fieldsByType: Record<string, string[]> = {
-      initiative: ['name', 'summary', 'problem_statement', 'objectives', 'scope', 'expected_benefits', 'success_criteria', 'risks_overview'],
+      initiative: [
+        'name',
+        'summary',
+        'problem_statement',
+        'objectives',
+        'scope',
+        'expected_benefits',
+        'success_criteria',
+        'risks_overview',
+      ],
       task: ['title', 'description', 'acceptance_criteria', 'definition_of_done'],
       decision: ['title', 'context', 'options_considered', 'recommendation', 'rationale'],
     };
@@ -5179,14 +5196,24 @@ router.post(
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
       if (jsonMatch) draft = JSON.parse(jsonMatch[0]);
     } catch {
-      return res.status(502).json({ error: 'LLM returned invalid JSON', code: 'INVALID_LLM_JSON', raw: rawText });
+      return res
+        .status(502)
+        .json({ error: 'LLM returned invalid JSON', code: 'INVALID_LLM_JSON', raw: rawText });
     }
 
     try {
       await dbRun(
         `INSERT INTO ai_authoring_audit (organization_id, project_id, user_id, artifact_type, action_type, input_text, output_text, was_applied, metadata)
          VALUES (?, ?, ?, ?, 'card_generate', ?, ?, 0, ?)`,
-        [orgId, projectId, userId, artifactType, brief, JSON.stringify(draft), JSON.stringify({ fields: Object.keys(draft) })]
+        [
+          orgId,
+          projectId,
+          userId,
+          artifactType,
+          brief,
+          JSON.stringify(draft),
+          JSON.stringify({ fields: Object.keys(draft) }),
+        ]
       );
     } catch (err: any) {
       logger.warn('[AI CardDraft] Audit insert failed:', err?.message);
@@ -5233,13 +5260,31 @@ router.post(
     let risks: any[] = [];
     let decisions: any[] = [];
     try {
-      tasks = (await dbAll(`SELECT id, title, status, priority FROM tasks WHERE initiative_id = ? LIMIT 50`, [initiativeId])) || [];
-      risks = (await dbAll(`SELECT id, title, type, severity, status FROM initiative_raids WHERE initiative_id = ? AND type = 'RISK' LIMIT 30`, [initiativeId])) || [];
-      decisions = (await dbAll(`SELECT id, title, status FROM decisions WHERE initiative_id = ? LIMIT 20`, [initiativeId])) || [];
-    } catch { /* best-effort */ }
+      tasks =
+        (await dbAll(
+          `SELECT id, title, status, priority FROM tasks WHERE initiative_id = ? LIMIT 50`,
+          [initiativeId]
+        )) || [];
+      risks =
+        (await dbAll(
+          `SELECT id, title, type, severity, status FROM initiative_raids WHERE initiative_id = ? AND type = 'RISK' LIMIT 30`,
+          [initiativeId]
+        )) || [];
+      decisions =
+        (await dbAll(`SELECT id, title, status FROM decisions WHERE initiative_id = ? LIMIT 20`, [
+          initiativeId,
+        ])) || [];
+    } catch {
+      /* best-effort */
+    }
 
     const langCode = (language || 'pl').split('-')[0];
-    const langMap: Record<string, string> = { pl: 'Polish', en: 'English', de: 'German', es: 'Spanish' };
+    const langMap: Record<string, string> = {
+      pl: 'Polish',
+      en: 'English',
+      de: 'German',
+      es: 'Spanish',
+    };
     const langName = langMap[langCode] || 'Polish';
 
     const currentStatus = String(ini.status || 'DRAFT').toUpperCase();
@@ -5268,9 +5313,15 @@ router.post(
       endDate: ini.end_date || ini.planned_end_date || 'not set',
       priority: ini.priority || 'not set',
       tasksCount: tasks.length,
-      tasksSummary: tasks.slice(0, 10).map((t: any) => `${t.title} [${t.status}]`).join('; '),
+      tasksSummary: tasks
+        .slice(0, 10)
+        .map((t: any) => `${t.title} [${t.status}]`)
+        .join('; '),
       risksCount: risks.length,
-      risksSummary: risks.slice(0, 10).map((r: any) => `${r.title} [${r.severity}/${r.status}]`).join('; '),
+      risksSummary: risks
+        .slice(0, 10)
+        .map((r: any) => `${r.title} [${r.severity}/${r.status}]`)
+        .join('; '),
       decisionsCount: decisions.length,
     };
 
@@ -5330,13 +5381,35 @@ router.post(
     const userId = req.userId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { artifactType, artifactId, actionType, fieldKey, inputText, outputText, wasApplied, wasUndone, metadata } = req.body;
+    const {
+      artifactType,
+      artifactId,
+      actionType,
+      fieldKey,
+      inputText,
+      outputText,
+      wasApplied,
+      wasUndone,
+      metadata,
+    } = req.body;
 
     try {
       await dbRun(
         `INSERT INTO ai_authoring_audit (organization_id, user_id, artifact_type, artifact_id, action_type, field_key, input_text, output_text, was_applied, was_undone, metadata)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [orgId, userId, artifactType, artifactId || null, actionType, fieldKey || null, inputText || null, outputText || null, wasApplied ? 1 : 0, wasUndone ? 1 : 0, metadata ? JSON.stringify(metadata) : null]
+        [
+          orgId,
+          userId,
+          artifactType,
+          artifactId || null,
+          actionType,
+          fieldKey || null,
+          inputText || null,
+          outputText || null,
+          wasApplied ? 1 : 0,
+          wasUndone ? 1 : 0,
+          metadata ? JSON.stringify(metadata) : null,
+        ]
       );
     } catch (err: any) {
       logger.warn('[AI Authoring Audit] Insert failed:', err?.message);

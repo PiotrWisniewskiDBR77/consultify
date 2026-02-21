@@ -141,7 +141,8 @@ export const ADMA_LEVEL_MEANINGS: Record<
     title: 'Newcomer',
     meaning:
       'No or very limited digital capabilities. Traditional, manual methods dominate all operations. No digital strategy or roadmap exists.',
-    evidencePattern: 'Paper-based processes, no digital tools beyond basic office software, no data collection.',
+    evidencePattern:
+      'Paper-based processes, no digital tools beyond basic office software, no data collection.',
   },
   2: {
     title: 'Beginner',
@@ -370,11 +371,20 @@ function getTechnologies(dimensionId: string, level: number): string[] {
 // ============================================
 
 function getEvidenceGuidance(dimensionId: string, level: number): string {
-  return DIMENSION_EVIDENCE_GUIDANCE[dimensionId]?.[level] || 'Look for documented processes, systems in active use, and measurable outcomes at this level.';
+  return (
+    DIMENSION_EVIDENCE_GUIDANCE[dimensionId]?.[level] ||
+    'Look for documented processes, systems in active use, and measurable outcomes at this level.'
+  );
 }
 
 function getCommonMistakes(dimensionId: string): string[] {
-  return DIMENSION_COMMON_MISTAKES[dimensionId] || ['Ensure scores reflect actual practice, not aspirations.', 'Verify with evidence, not just management perception.', 'Check consistency across the organization.'];
+  return (
+    DIMENSION_COMMON_MISTAKES[dimensionId] || [
+      'Ensure scores reflect actual practice, not aspirations.',
+      'Verify with evidence, not just management perception.',
+      'Check consistency across the organization.',
+    ]
+  );
 }
 
 function getAdmaLevelMeaning(level: number): string {
@@ -422,7 +432,9 @@ export function getADMAKnowledge(dimensionId: string, levelNumber: number): ADMA
   };
 }
 
-export function getADMALevelMeaning(level: number): { title: string; meaning: string; evidencePattern: string } | null {
+export function getADMALevelMeaning(
+  level: number
+): { title: string; meaning: string; evidencePattern: string } | null {
   return ADMA_LEVEL_MEANINGS[level] || null;
 }
 

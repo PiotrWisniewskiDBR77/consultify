@@ -213,7 +213,9 @@ router.post(
       if (
         !userId ||
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -263,7 +265,9 @@ router.get(
       const userRole = req.user?.role;
       if (
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -318,7 +322,9 @@ router.post(
       if (
         !userId ||
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -388,7 +394,9 @@ router.post(
       if (
         !userId ||
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -446,7 +454,9 @@ router.get(
       const userRole = req.user?.role;
       if (
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -507,7 +517,9 @@ router.get(
       const userRole = req.user?.role;
       if (
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -571,7 +583,9 @@ router.get(
       const userRole = req.user?.role;
       if (
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -614,7 +628,9 @@ router.patch(
       const userRole = req.user?.role;
       if (
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -654,7 +670,9 @@ router.post(
       const userRole = req.user?.role;
       if (
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -794,7 +812,9 @@ router.post(
       const userRole = req.user?.role;
       if (
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -852,7 +872,9 @@ router.post(
       if (
         !userId ||
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -928,7 +950,9 @@ router.get(
 
       if (
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -977,7 +1001,9 @@ router.post(
 
       if (
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -1030,7 +1056,9 @@ router.post(
 
       if (
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -1078,7 +1106,9 @@ router.get(
       const userRole = req.user?.role;
       if (
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }
@@ -1126,7 +1156,9 @@ router.get(
       const userRole = req.user?.role;
       if (
         !userRole ||
-        (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes((userRole || '').toLowerCase()))
+        !['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+          (userRole || '').toLowerCase()
+        )
       ) {
         return res.status(403).json({ error: 'Forbidden: Admin access required' });
       }

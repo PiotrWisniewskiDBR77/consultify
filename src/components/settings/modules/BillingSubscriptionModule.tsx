@@ -30,12 +30,9 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import {
-  usePolicySnapshot,
-  useSubscriptionStatus,
-} from '../../../contexts/AccessPolicyContext';
-import { trackFunnelEvent } from '../../../services/funnelAnalytics';
+import { usePolicySnapshot, useSubscriptionStatus } from '../../../contexts/AccessPolicyContext';
 import { Api } from '../../../services/api';
+import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
@@ -271,16 +268,17 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           <div className="flex items-center gap-2">
             <span className="font-medium text-slate-900 dark:text-white">
               {used.toLocaleString()}
-              {unit} {isUnlimited ? `(${t('access.upgrade.unlimited')})` : `/ ${limit.toLocaleString()}${unit}`}
+              {unit}{' '}
+              {isUnlimited
+                ? `(${t('access.upgrade.unlimited')})`
+                : `/ ${limit.toLocaleString()}${unit}`}
             </span>
             {isApproaching && (
               <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
                 {Math.round(percentage)}%
               </span>
             )}
-            {(isHigh || isExceeded) && (
-              <AlertCircle size={14} className="text-red-500" />
-            )}
+            {(isHigh || isExceeded) && <AlertCircle size={14} className="text-red-500" />}
           </div>
         </div>
         {!isUnlimited && (
@@ -482,14 +480,12 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                 </h3>
                 {subscription?.currentPeriodEnd && (
                   <p className="text-emerald-100 mt-2">
-                    Renews on{' '}
-                    {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                    Renews on {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
                   </p>
                 )}
                 {snapshot?.isTrial && snapshot.trialExpiresAt && (
                   <p className="text-emerald-100 mt-2">
-                    Trial expires{' '}
-                    {new Date(snapshot.trialExpiresAt).toLocaleDateString()}
+                    Trial expires {new Date(snapshot.trialExpiresAt).toLocaleDateString()}
                     {snapshot.trialDaysLeft > 0 && ` (${snapshot.trialDaysLeft} days left)`}
                   </p>
                 )}
@@ -632,9 +628,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                 />
               </>
             ) : (
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                No usage data available.
-              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No usage data available.</p>
             )}
           </div>
 
@@ -642,10 +636,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             <div className="p-4 bg-purple-50 dark:bg-purple-500/10 rounded-lg border border-purple-200 dark:border-purple-500/20">
               <p className="text-sm text-purple-700 dark:text-purple-300">
                 {t('access.upgrade.instantUnlock')}{' '}
-                <button
-                  onClick={() => setActiveTab('overview')}
-                  className="underline font-medium"
-                >
+                <button onClick={() => setActiveTab('overview')} className="underline font-medium">
                   {t('access.cta.upgradePlan')}
                 </button>
               </p>
@@ -714,9 +705,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                   {t('access.upgrade.subscription.past_due')}
                 </p>
               </div>
-              <p className="text-xs text-red-600 dark:text-red-400">
-                {t('access.banner.pastDue')}
-              </p>
+              <p className="text-xs text-red-600 dark:text-red-400">{t('access.banner.pastDue')}</p>
             </div>
           )}
 

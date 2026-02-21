@@ -83,7 +83,8 @@ router.post('/accept-terms', async (req: AuthRequest, res: Response) => {
     // T093: Also record in legal_document_acceptances (single source of truth)
     const ipAddress =
       (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-      req.socket?.remoteAddress || '';
+      req.socket?.remoteAddress ||
+      '';
     const userAgent = (req.headers['user-agent'] as string) || '';
     const organizationId = req.organizationId || req.user?.organizationId;
 

@@ -159,7 +159,9 @@ router.post(
 
     const role = (req as any).userRole || req.user?.role;
     const canEditProject =
-      typeof (req as any).can === 'function' ? Boolean((req as any).can('edit_project_settings')) : false;
+      typeof (req as any).can === 'function'
+        ? Boolean((req as any).can('edit_project_settings'))
+        : false;
     const isAdmin = role === 'ADMIN' || role === 'SUPERADMIN';
     if (!isAdmin && !canEditProject) {
       return res.status(403).json({ error: 'Forbidden' });

@@ -9,8 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
-import logger from '../utils/Logger.js';
 import { AppError } from '../utils/ErrorHandler.js';
+import logger from '../utils/Logger.js';
 import ReportBuilderService, {
   ReportRecord,
   SectionLanguage,
@@ -880,7 +880,8 @@ async function callAI(
 
     const content = String(result?.content || '');
     const usage = (result?.usage || {}) as Record<string, number>;
-    const tokensUsed = usage.totalTokens || usage.completionTokens || Math.floor(content.length / 4);
+    const tokensUsed =
+      usage.totalTokens || usage.completionTokens || Math.floor(content.length / 4);
     const model = String(result?.model || result?.modelId || 'llm-standard');
 
     if (!content || content.length < 50) {
@@ -901,7 +902,6 @@ async function callAI(
     throw new AppError('AI report generation failed', 503, 'FEATURE_UNAVAILABLE', { message: msg });
   }
 }
-
 
 // ==========================================
 // GENERATION SERVICE

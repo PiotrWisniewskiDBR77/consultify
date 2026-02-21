@@ -51,7 +51,7 @@ import { ExecutiveDashboard } from './Executive/ExecutiveDashboard';
 import { type FocusItem, FocusView } from './Focus/FocusView';
 import { IdeaDetailView } from './IdeaDetailView';
 import { InboxContent } from './InboxContent';
-import { MyIdeasListContent, type MyIdea } from './MyIdeasListContent';
+import { type MyIdea, MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
 import { NotificationDetailView } from './NotificationDetailView';
 import { NotificationsContent } from './NotificationsContent';
@@ -60,7 +60,14 @@ import { TaskDetailView } from './TaskDetailView';
 import { TasksKanbanBoard } from './TasksKanbanBoard';
 
 // Types
-type ModuleTab = 'executive' | 'inbox' | 'focus' | 'tasks' | 'ideas' | 'decisions' | 'notifications';
+type ModuleTab =
+  | 'executive'
+  | 'inbox'
+  | 'focus'
+  | 'tasks'
+  | 'ideas'
+  | 'decisions'
+  | 'notifications';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban';
 type DecisionsViewMode = 'list' | 'kanban';
@@ -621,14 +628,21 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           if (without.some((d) => d.id === nextId)) return without;
           return [
             ...without,
-            { ...existing, id: nextId, name: updatedData.title || existing.name, data: updatedData },
+            {
+              ...existing,
+              id: nextId,
+              name: updatedData.title || existing.name,
+              data: updatedData,
+            },
           ];
         });
         setActiveDocumentId((cur) => (cur === docId ? nextId : cur));
       } else {
         setOpenDocuments((prev) =>
           prev.map((doc) =>
-            doc.id === docId ? { ...doc, name: updatedData.title || doc.name, data: updatedData } : doc
+            doc.id === docId
+              ? { ...doc, name: updatedData.title || doc.name, data: updatedData }
+              : doc
           )
         );
       }
@@ -733,7 +747,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       default:
         return null;
     }
-  }, [activeTab, isPolish, handleCreateTask, handleCreateIdea, handleCreateDecision, activeDocumentId]);
+  }, [
+    activeTab,
+    isPolish,
+    handleCreateTask,
+    handleCreateIdea,
+    handleCreateDecision,
+    activeDocumentId,
+  ]);
 
   // Get current filters based on active tab
   const currentFilters = useMemo(() => {
@@ -1264,13 +1285,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       ? isPolish
                         ? 'Szukaj pomysłów...'
                         : 'Search ideas...'
-                    : activeTab === 'decisions'
-                      ? isPolish
-                        ? 'Szukaj decyzji...'
-                        : 'Search decisions...'
-                      : isPolish
-                        ? 'Szukaj powiadomień...'
-                        : 'Search notifications...'
+                      : activeTab === 'decisions'
+                        ? isPolish
+                          ? 'Szukaj decyzji...'
+                          : 'Search decisions...'
+                        : isPolish
+                          ? 'Szukaj powiadomień...'
+                          : 'Search notifications...'
                 }
                 autoFocus
                 className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:text-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"

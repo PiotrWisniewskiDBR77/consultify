@@ -4,8 +4,8 @@
  */
 
 import { get as dbGetOrig, run as dbRunOrig } from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
 import { AppError } from '../utils/ErrorHandler.js';
+import logger from '../utils/Logger.js';
 
 // Mutable dependency references for injection
 let dbGet = dbGetOrig;

@@ -8,26 +8,15 @@ import { verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import stripeWebhookRoutes from '../webhooks/stripe.routes.js';
 
 const router = Router();
 interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
 
-// Stripe webhook
-router.post(
-  '/stripe',
-  asyncHandler(async (req: Request, res: Response) => {
-    const event = req.body;
-    logger.info(`[Webhook] Stripe event: ${event?.type}`);
-    await dbRun(
-      `INSERT INTO webhook_events (id, provider, event_type, payload, processed, created_at)
-    VALUES (?, 'stripe', ?, ?, 0, datetime('now'))`,
-      [event?.id || 'unknown', event?.type || 'unknown', JSON.stringify(event)]
-    );
-    res.json({ received: true });
-  })
-);
+// Canonical Stripe webhook handler (signature-verified + idempotent).
+router.use(stripeWebhookRoutes);
 
 // GitHub webhook
 router.post(

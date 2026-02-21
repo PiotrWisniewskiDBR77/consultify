@@ -86,6 +86,8 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
         // Keep chat experience competitive after logout/login cycles.
         selectedTier: 'STANDARD',
         deepResearch: false,
+        marketResearch: false,
+        coThinkerMode: null,
         webSearch: true,
         showReasoning: false,
         multiAgent: false,

@@ -48,7 +48,9 @@ export function PortfolioAiPanel(props: {
   );
 
   const normalizeRecommendedPriority = (p: unknown): PortfolioInitiative['priority'] | null => {
-    const raw = String(p || '').trim().toUpperCase();
+    const raw = String(p || '')
+      .trim()
+      .toUpperCase();
     if (raw === 'CRITICAL') return 'CRITICAL';
     if (raw === 'HIGH') return 'HIGH';
     if (raw === 'MEDIUM') return 'MEDIUM';
@@ -68,7 +70,10 @@ export function PortfolioAiPanel(props: {
     setNonHuman(null);
     setScenarios([]);
 
-    trackFunnelEvent('portfolio_ai_analysis_requested', { countInitiatives: selected.length, mode: 'full' });
+    trackFunnelEvent('portfolio_ai_analysis_requested', {
+      countInitiatives: selected.length,
+      mode: 'full',
+    });
 
     const ids = selected.map((i) => i.id);
     const settled = await Promise.allSettled([
@@ -91,21 +96,27 @@ export function PortfolioAiPanel(props: {
 
     if (conflictsRes.status === 'fulfilled') {
       const data: any = conflictsRes.value;
-      setConflicts(Array.isArray(data?.conflicts) ? data.conflicts : Array.isArray(data) ? data : []);
+      setConflicts(
+        Array.isArray(data?.conflicts) ? data.conflicts : Array.isArray(data) ? data : []
+      );
     } else {
       toast.error(t('portfolio.ai.conflictsError', 'Failed to analyze conflicts.'));
     }
 
     if (prioritiesRes.status === 'fulfilled') {
       const data: any = prioritiesRes.value;
-      setPriorities(Array.isArray(data?.priorities) ? data.priorities : Array.isArray(data) ? data : []);
+      setPriorities(
+        Array.isArray(data?.priorities) ? data.priorities : Array.isArray(data) ? data : []
+      );
     } else {
       toast.error(t('portfolio.ai.prioritiesError', 'Failed to generate priority suggestions.'));
     }
 
     if (overlapRes.status === 'fulfilled') {
       const data: any = overlapRes.value;
-      setOverlap(Array.isArray(data?.suggestions) ? data.suggestions : Array.isArray(data) ? data : []);
+      setOverlap(
+        Array.isArray(data?.suggestions) ? data.suggestions : Array.isArray(data) ? data : []
+      );
     } else {
       toast.error(t('portfolio.ai.overlapError', 'Failed to detect overlap suggestions.'));
     }
@@ -131,13 +142,21 @@ export function PortfolioAiPanel(props: {
     }
 
     onQuickUpdate(initiative.id, { priority: newPriority });
-    trackFunnelEvent('portfolio_ai_suggestion_applied', { type: 'priority', initiativeId: initiative.id });
+    trackFunnelEvent('portfolio_ai_suggestion_applied', {
+      type: 'priority',
+      initiativeId: initiative.id,
+    });
     try {
       await Api.post('/portfolio-optimization/audit', {
         actionType: 'portfolio_ai_suggestion_applied',
         resourceType: 'initiative',
         resourceId: initiative.id,
-        details: { type: 'priority', from: initiative.priority, to: newPriority, rationale: suggestion?.rationale },
+        details: {
+          type: 'priority',
+          from: initiative.priority,
+          to: newPriority,
+          rationale: suggestion?.rationale,
+        },
       });
     } catch {
       // best-effort
@@ -160,7 +179,13 @@ export function PortfolioAiPanel(props: {
     const currentYear = now.getFullYear();
     const currentQuarter = Math.floor(now.getMonth() / 3) + 1;
 
-    const schedule: Array<{ id: string; name: string; quarter: string; plannedStartDate: string; plannedEndDate: string }> = [];
+    const schedule: Array<{
+      id: string;
+      name: string;
+      quarter: string;
+      plannedStartDate: string;
+      plannedEndDate: string;
+    }> = [];
     let index = 0;
     for (const initiative of ordered) {
       const slot = Math.floor(index / maxPerQuarter);
@@ -179,10 +204,19 @@ export function PortfolioAiPanel(props: {
 
     const summary =
       labelPrefix === 'time'
-        ? t('portfolio.ai.scenarioTimeSummary', 'Prioritizes earlier delivery by pulling key items forward.')
+        ? t(
+            'portfolio.ai.scenarioTimeSummary',
+            'Prioritizes earlier delivery by pulling key items forward.'
+          )
         : labelPrefix === 'budget'
-          ? t('portfolio.ai.scenarioBudgetSummary', 'Spreads work to reduce quarterly budget spikes (conservative capacity).')
-          : t('portfolio.ai.scenarioBalancedSummary', 'Balances quick wins and workload distribution.');
+          ? t(
+              'portfolio.ai.scenarioBudgetSummary',
+              'Spreads work to reduce quarterly budget spikes (conservative capacity).'
+            )
+          : t(
+              'portfolio.ai.scenarioBalancedSummary',
+              'Balances quick wins and workload distribution.'
+            );
 
     return { schedule, summary };
   };
@@ -203,8 +237,14 @@ export function PortfolioAiPanel(props: {
   const generateScenarios = async () => {
     if (selected.length === 0) return;
     setScenariosLoading(true);
-    trackFunnelEvent('portfolio_timeline_optimization_requested', { countInitiatives: selected.length, scenarios: 3 });
-    trackFunnelEvent('portfolio_scenario_optimization_requested', { constraintsType: 'default', countInitiatives: selected.length });
+    trackFunnelEvent('portfolio_timeline_optimization_requested', {
+      countInitiatives: selected.length,
+      scenarios: 3,
+    });
+    trackFunnelEvent('portfolio_scenario_optimization_requested', {
+      constraintsType: 'default',
+      countInitiatives: selected.length,
+    });
 
     try {
       const response: any = await Api.post('/ai/initiatives/schedule', {
@@ -217,7 +257,9 @@ export function PortfolioAiPanel(props: {
       });
 
       const balancedSchedule = Array.isArray(response?.schedule) ? response.schedule : [];
-      const byPriority = [...selected].sort((a, b) => (PRIORITY_ORDER[a.priority] || 99) - (PRIORITY_ORDER[b.priority] || 99));
+      const byPriority = [...selected].sort(
+        (a, b) => (PRIORITY_ORDER[a.priority] || 99) - (PRIORITY_ORDER[b.priority] || 99)
+      );
       const timeBoxed = generateHeuristicSchedule(byPriority, 4, 'time');
       const byBudget = [...selected].sort((a, b) => Number(a.budget || 0) - Number(b.budget || 0));
       const budgetBoxed = generateHeuristicSchedule(byBudget, 3, 'budget');
@@ -240,7 +282,10 @@ export function PortfolioAiPanel(props: {
         {
           type: 'balanced',
           title: t('portfolio.ai.scenarioBalanced', 'Balanced (AI baseline)'),
-          summary: t('portfolio.ai.scenarioBalancedAiSummary', 'Uses AI scheduling baseline to balance quick wins and workload.'),
+          summary: t(
+            'portfolio.ai.scenarioBalancedAiSummary',
+            'Uses AI scheduling baseline to balance quick wins and workload.'
+          ),
           schedule: balancedSchedule,
           budgetByQuarter: buildScenarioBudgets(balancedSchedule),
         },
@@ -270,7 +315,10 @@ export function PortfolioAiPanel(props: {
       });
 
       for (const s of scenario.schedule) {
-        onQuickUpdate(String(s.id), { plannedStartDate: s.plannedStartDate, plannedEndDate: s.plannedEndDate });
+        onQuickUpdate(String(s.id), {
+          plannedStartDate: s.plannedStartDate,
+          plannedEndDate: s.plannedEndDate,
+        });
       }
       toast.success(t('portfolio.ai.scenarioApplied', 'Scenario applied.'));
     } catch {
@@ -316,7 +364,8 @@ export function PortfolioAiPanel(props: {
             </h3>
             {loading ? (
               <div className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                <Loader2 size={16} className="animate-spin" /> {t('portfolio.ai.loading', 'Loading…')}
+                <Loader2 size={16} className="animate-spin" />{' '}
+                {t('portfolio.ai.loading', 'Loading…')}
               </div>
             ) : conflicts.length === 0 ? (
               <div className="text-sm text-slate-500 dark:text-slate-400">
@@ -325,7 +374,10 @@ export function PortfolioAiPanel(props: {
             ) : (
               <div className="space-y-2">
                 {conflicts.slice(0, 10).map((c, idx) => (
-                  <div key={idx} className="rounded-xl border border-slate-200 dark:border-white/10 p-3">
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-slate-200 dark:border-white/10 p-3"
+                  >
                     <div className="text-sm font-medium text-slate-900 dark:text-white">
                       {String(c?.type || 'conflict')}
                     </div>
@@ -354,14 +406,18 @@ export function PortfolioAiPanel(props: {
             ) : (
               <div className="space-y-2">
                 {priorities.slice(0, 12).map((p, idx) => (
-                  <div key={idx} className="rounded-xl border border-slate-200 dark:border-white/10 p-3">
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-slate-200 dark:border-white/10 p-3"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-sm font-medium text-slate-900 dark:text-white">
                           {String(p?.name || '')}
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {t('portfolio.ai.recommendedPriority', 'Recommended priority')}: {String(p?.recommendedPriority || '—')}
+                          {t('portfolio.ai.recommendedPriority', 'Recommended priority')}:{' '}
+                          {String(p?.recommendedPriority || '—')}
                         </div>
                       </div>
                       <button
@@ -399,12 +455,18 @@ export function PortfolioAiPanel(props: {
 
             {scenarios.length === 0 ? (
               <div className="text-sm text-slate-500 dark:text-slate-400">
-                {t('portfolio.ai.scenariosHint', 'Generate 2–3 options to compare time vs budget trade-offs, then apply a selected plan.')}
+                {t(
+                  'portfolio.ai.scenariosHint',
+                  'Generate 2–3 options to compare time vs budget trade-offs, then apply a selected plan.'
+                )}
               </div>
             ) : (
               <div className="space-y-3">
                 {scenarios.map((s: any) => (
-                  <div key={String(s.type)} className="rounded-xl border border-slate-200 dark:border-white/10 p-3">
+                  <div
+                    key={String(s.type)}
+                    className="rounded-xl border border-slate-200 dark:border-white/10 p-3"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -450,4 +512,3 @@ export function PortfolioAiPanel(props: {
     </div>
   );
 }
-

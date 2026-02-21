@@ -155,33 +155,69 @@ const CURRENCIES = [
 ];
 
 const COUNTRY_TO_CURRENCY: Record<string, string> = {
-  poland: 'PLN', polska: 'PLN', pl: 'PLN',
-  germany: 'EUR', deutschland: 'EUR', de: 'EUR',
-  france: 'EUR', fr: 'EUR',
-  italy: 'EUR', italia: 'EUR', it: 'EUR',
-  spain: 'EUR', españa: 'EUR', es: 'EUR',
-  netherlands: 'EUR', nl: 'EUR',
-  austria: 'EUR', österreich: 'EUR', at: 'EUR',
-  belgium: 'EUR', be: 'EUR',
-  ireland: 'EUR', ie: 'EUR',
-  portugal: 'EUR', pt: 'EUR',
-  finland: 'EUR', fi: 'EUR',
-  greece: 'EUR', gr: 'EUR',
-  'united states': 'USD', usa: 'USD', us: 'USD',
-  'united kingdom': 'GBP', uk: 'GBP', gb: 'GBP',
-  switzerland: 'CHF', schweiz: 'CHF', ch: 'CHF',
-  sweden: 'SEK', se: 'SEK',
-  norway: 'NOK', no: 'NOK',
-  denmark: 'DKK', dk: 'DKK',
-  'czech republic': 'CZK', czechia: 'CZK', cz: 'CZK',
-  hungary: 'HUF', hu: 'HUF',
-  romania: 'RON', ro: 'RON',
-  canada: 'CAD', ca: 'CAD',
-  australia: 'AUD', au: 'AUD',
-  japan: 'JPY', jp: 'JPY',
-  china: 'CNY', cn: 'CNY',
-  india: 'INR', in: 'INR',
-  brazil: 'BRL', br: 'BRL',
+  poland: 'PLN',
+  polska: 'PLN',
+  pl: 'PLN',
+  germany: 'EUR',
+  deutschland: 'EUR',
+  de: 'EUR',
+  france: 'EUR',
+  fr: 'EUR',
+  italy: 'EUR',
+  italia: 'EUR',
+  it: 'EUR',
+  spain: 'EUR',
+  españa: 'EUR',
+  es: 'EUR',
+  netherlands: 'EUR',
+  nl: 'EUR',
+  austria: 'EUR',
+  österreich: 'EUR',
+  at: 'EUR',
+  belgium: 'EUR',
+  be: 'EUR',
+  ireland: 'EUR',
+  ie: 'EUR',
+  portugal: 'EUR',
+  pt: 'EUR',
+  finland: 'EUR',
+  fi: 'EUR',
+  greece: 'EUR',
+  gr: 'EUR',
+  'united states': 'USD',
+  usa: 'USD',
+  us: 'USD',
+  'united kingdom': 'GBP',
+  uk: 'GBP',
+  gb: 'GBP',
+  switzerland: 'CHF',
+  schweiz: 'CHF',
+  ch: 'CHF',
+  sweden: 'SEK',
+  se: 'SEK',
+  norway: 'NOK',
+  no: 'NOK',
+  denmark: 'DKK',
+  dk: 'DKK',
+  'czech republic': 'CZK',
+  czechia: 'CZK',
+  cz: 'CZK',
+  hungary: 'HUF',
+  hu: 'HUF',
+  romania: 'RON',
+  ro: 'RON',
+  canada: 'CAD',
+  ca: 'CAD',
+  australia: 'AUD',
+  au: 'AUD',
+  japan: 'JPY',
+  jp: 'JPY',
+  china: 'CNY',
+  cn: 'CNY',
+  india: 'INR',
+  in: 'INR',
+  brazil: 'BRL',
+  br: 'BRL',
 };
 
 const getDefaultCurrency = (country: string | undefined): string => {
@@ -552,7 +588,10 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                   return (
                     <>
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        {t('admin.strategicProfile.industryCode', { system: codeSystem.label, defaultValue: `Industry Code (${codeSystem.label})` })}
+                        {t('admin.strategicProfile.industryCode', {
+                          system: codeSystem.label,
+                          defaultValue: `Industry Code (${codeSystem.label})`,
+                        })}
                       </label>
                       <input
                         type="text"
@@ -608,7 +647,8 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     {t('admin.strategicProfile.annualRevenue', {
-                      currency: profile.currency || getDefaultCurrency(profile.headquarters_country),
+                      currency:
+                        profile.currency || getDefaultCurrency(profile.headquarters_country),
                       defaultValue: `Annual Revenue (${profile.currency || getDefaultCurrency(profile.headquarters_country)})`,
                     })}
                   </label>
@@ -875,10 +915,15 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
             <div className="p-6 space-y-4 border-t border-slate-200 dark:border-navy-700">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {t('admin.strategicProfile.regulatoryEnvironment', { defaultValue: 'Regulatory Environment' })}
+                  {t('admin.strategicProfile.regulatoryEnvironment', {
+                    defaultValue: 'Regulatory Environment',
+                  })}
                 </label>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                  {t('admin.strategicProfile.regulatoryEnvironmentHint', { defaultValue: 'Select regulations and standards your organization is currently subject to or must comply with.' })}
+                  {t('admin.strategicProfile.regulatoryEnvironmentHint', {
+                    defaultValue:
+                      'Select regulations and standards your organization is currently subject to or must comply with.',
+                  })}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {REGULATIONS.map((reg) => (
@@ -919,31 +964,47 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {t('admin.strategicProfile.budgetConstraints', { defaultValue: 'Strategic Initiative Budget Constraints' })}
+                  {t('admin.strategicProfile.budgetConstraints', {
+                    defaultValue: 'Strategic Initiative Budget Constraints',
+                  })}
                 </label>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                  {t('admin.strategicProfile.budgetConstraintsHint', { defaultValue: 'Describe budget limits for digital transformation, consulting, or strategic projects — not the overall company budget.' })}
+                  {t('admin.strategicProfile.budgetConstraintsHint', {
+                    defaultValue:
+                      'Describe budget limits for digital transformation, consulting, or strategic projects — not the overall company budget.',
+                  })}
                 </p>
                 <textarea
                   value={profile.budget_constraints || ''}
                   onChange={(e) => updateField('budget_constraints', e.target.value)}
                   rows={2}
-                  placeholder={t('admin.strategicProfile.budgetConstraintsPlaceholder', { defaultValue: 'e.g., Max 500k EUR/year for digital initiatives; IT modernization capped at 200k' })}
+                  placeholder={t('admin.strategicProfile.budgetConstraintsPlaceholder', {
+                    defaultValue:
+                      'e.g., Max 500k EUR/year for digital initiatives; IT modernization capped at 200k',
+                  })}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none resize-none"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {t('admin.strategicProfile.timelineConstraints', { defaultValue: 'Timeline Constraints' })}
+                  {t('admin.strategicProfile.timelineConstraints', {
+                    defaultValue: 'Timeline Constraints',
+                  })}
                 </label>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                  {t('admin.strategicProfile.timelineConstraintsHint', { defaultValue: 'Key deadlines or time pressures affecting strategic decisions — e.g., regulatory deadlines, board milestones, contract renewals.' })}
+                  {t('admin.strategicProfile.timelineConstraintsHint', {
+                    defaultValue:
+                      'Key deadlines or time pressures affecting strategic decisions — e.g., regulatory deadlines, board milestones, contract renewals.',
+                  })}
                 </p>
                 <textarea
                   value={profile.timeline_constraints || ''}
                   onChange={(e) => updateField('timeline_constraints', e.target.value)}
                   rows={2}
-                  placeholder={t('admin.strategicProfile.timelineConstraintsPlaceholder', { defaultValue: 'e.g., DORA compliance by Q1 2027; ERP migration must finish before license renewal in Oct 2026' })}
+                  placeholder={t('admin.strategicProfile.timelineConstraintsPlaceholder', {
+                    defaultValue:
+                      'e.g., DORA compliance by Q1 2027; ERP migration must finish before license renewal in Oct 2026',
+                  })}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none resize-none"
                 />
               </div>

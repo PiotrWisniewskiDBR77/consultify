@@ -379,10 +379,7 @@ export class LLMConfigService {
         await this.runAsync(sql);
       } catch (error: unknown) {
         const err = error as Error;
-        if (
-          !err.message.includes('duplicate column') &&
-          !err.message.includes('already exists')
-        ) {
+        if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
           aiLogger.warn('LLMConfigService', `Migration warning: ${err.message}`);
         }
       }

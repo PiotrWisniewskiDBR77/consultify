@@ -60,7 +60,10 @@ interface UserRow {
 // STATE MANAGEMENT (in-memory, TTL ~10min)
 // ==========================================
 
-const pendingStates = new Map<string, { createdAt: number; mode: 'login' | 'connect'; userId?: string }>();
+const pendingStates = new Map<
+  string,
+  { createdAt: number; mode: 'login' | 'connect'; userId?: string }
+>();
 const STATE_TTL_MS = 10 * 60 * 1000;
 
 function cleanExpiredStates(): void {
@@ -123,9 +126,10 @@ class OAuthService {
     const state = crypto.randomBytes(32).toString('hex');
     pendingStates.set(state, { createdAt: Date.now(), mode, userId });
 
-    const callbackUrl = mode === 'connect' && provider === 'linkedin'
-      ? cfg.callbackUrl.replace('/callback', '/connect/callback')
-      : cfg.callbackUrl;
+    const callbackUrl =
+      mode === 'connect' && provider === 'linkedin'
+        ? cfg.callbackUrl.replace('/callback', '/connect/callback')
+        : cfg.callbackUrl;
 
     const params = new URLSearchParams({
       client_id: cfg.clientId,
@@ -165,9 +169,10 @@ class OAuthService {
     const cfg = provider === 'google' ? getGoogleConfig() : getLinkedInConfig();
     if (!cfg) return null;
 
-    const callbackUrl = mode === 'connect' && provider === 'linkedin'
-      ? cfg.callbackUrl.replace('/callback', '/connect/callback')
-      : cfg.callbackUrl;
+    const callbackUrl =
+      mode === 'connect' && provider === 'linkedin'
+        ? cfg.callbackUrl.replace('/callback', '/connect/callback')
+        : cfg.callbackUrl;
 
     const body = new URLSearchParams({
       client_id: cfg.clientId,
@@ -256,10 +261,7 @@ class OAuthService {
     );
 
     if (existingLink) {
-      const user = await dbGet<UserRow>(
-        `SELECT * FROM users WHERE id = ?`,
-        [existingLink.user_id]
-      );
+      const user = await dbGet<UserRow>(`SELECT * FROM users WHERE id = ?`, [existingLink.user_id]);
       if (user) {
         await dbRun(
           `UPDATE oauth_links SET last_login_at = NOW(), provider_email = ? WHERE id = ?`,
@@ -278,10 +280,9 @@ class OAuthService {
       return { error: 'email_not_verified' };
     }
 
-    const existingUser = await dbGet<UserRow>(
-      `SELECT * FROM users WHERE LOWER(email) = LOWER(?)`,
-      [userInfo.email]
-    );
+    const existingUser = await dbGet<UserRow>(`SELECT * FROM users WHERE LOWER(email) = LOWER(?)`, [
+      userInfo.email,
+    ]);
 
     if (existingUser) {
       // Link existing account
@@ -325,11 +326,7 @@ class OAuthService {
   /**
    * Create oauth_link record
    */
-  async createOAuthLink(
-    provider: string,
-    userInfo: OAuthUserInfo,
-    userId: string
-  ): Promise<void> {
+  async createOAuthLink(provider: string, userInfo: OAuthUserInfo, userId: string): Promise<void> {
     const id = uuidv4();
     await dbRun(
       `INSERT INTO oauth_links (id, user_id, provider, provider_user_id, provider_email, display_name, linked_at, last_login_at)
@@ -383,10 +380,7 @@ class OAuthService {
       return { error: 'not_connected' };
     }
 
-    await dbRun(
-      `UPDATE oauth_links SET revoked_at = NOW() WHERE id = ?`,
-      [link.id]
-    );
+    await dbRun(`UPDATE oauth_links SET revoked_at = NOW() WHERE id = ?`, [link.id]);
 
     return { success: true };
   }
@@ -394,13 +388,15 @@ class OAuthService {
   /**
    * Get connected accounts for a user
    */
-  async getConnectedAccounts(userId: string): Promise<Array<{
-    provider: string;
-    email: string | null;
-    displayName: string | null;
-    connectedAt: string;
-    status: string;
-  }>> {
+  async getConnectedAccounts(userId: string): Promise<
+    Array<{
+      provider: string;
+      email: string | null;
+      displayName: string | null;
+      connectedAt: string;
+      status: string;
+    }>
+  > {
     const links = await dbAll<OAuthLink>(
       `SELECT * FROM oauth_links WHERE user_id = ? AND revoked_at IS NULL`,
       [userId]

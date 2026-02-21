@@ -42,7 +42,11 @@ const mfaService = {
    */
   verifyTOTP: async (userId: string, code: string) => {
     console.log(`[MFAService] verifyTOTP called for user: ${userId}`);
-    return { success: false, error: 'MFA verification is not available', code: 'FEATURE_UNAVAILABLE' };
+    return {
+      success: false,
+      error: 'MFA verification is not available',
+      code: 'FEATURE_UNAVAILABLE',
+    };
   },
 
   /**

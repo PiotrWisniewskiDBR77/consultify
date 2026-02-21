@@ -1,8 +1,8 @@
 import { Bell, ChevronLeft, ExternalLink, Loader2, Plus, Send, Tag } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { useAppStore } from '../../store/useAppStore';
@@ -137,7 +137,11 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
     setItems((prev) => prev.map((x) => (x.id === u.id ? { ...x, isRead: true } : x)));
 
     try {
-      await fetch(`/api/updates/${u.id}/opened`, { method: 'POST', headers: authHeaders, body: '{}' });
+      await fetch(`/api/updates/${u.id}/opened`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: '{}',
+      });
     } catch {
       // ignore
     }
@@ -186,7 +190,11 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
           bodyMd: bodyMd.trim(),
           tags: tagsArr,
           importance,
-          actionPayload: { kind: 'view', view: actionView, label: t('help.updates.tryItNow', 'Try it now') },
+          actionPayload: {
+            kind: 'view',
+            view: actionView,
+            label: t('help.updates.tryItNow', 'Try it now'),
+          },
         }),
       });
       if (!createRes.ok) throw new Error('Create failed');
@@ -224,7 +232,8 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
 
   if (selected) {
     const badgeCls = importanceBadge(selected.importance);
-    const canAction = selected.actionPayload?.kind === 'view' && typeof selected.actionPayload?.view === 'string';
+    const canAction =
+      selected.actionPayload?.kind === 'view' && typeof selected.actionPayload?.view === 'string';
 
     return (
       <div className="space-y-4">
@@ -241,7 +250,9 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
             <div className="min-w-0">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">{selected.title}</h3>
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badgeCls}`}>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badgeCls}`}
+                >
                   {t(`help.updates.importance.${selected.importance}`, selected.importance)}
                 </span>
                 {selected.publishedAt && (
@@ -424,7 +435,10 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
                       value={tags}
                       onChange={(e) => setTags(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
-                      placeholder={t('help.updates.admin.placeholders.tags', 'e.g. roadmap, reports')}
+                      placeholder={t(
+                        'help.updates.admin.placeholders.tags',
+                        'e.g. roadmap, reports'
+                      )}
                     />
                   </div>
 
@@ -438,7 +452,9 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
                     >
                       <option value="low">{t('help.updates.importance.low', 'Low')}</option>
-                      <option value="normal">{t('help.updates.importance.normal', 'Normal')}</option>
+                      <option value="normal">
+                        {t('help.updates.importance.normal', 'Normal')}
+                      </option>
                       <option value="high">{t('help.updates.importance.high', 'High')}</option>
                     </select>
                   </div>
@@ -473,7 +489,11 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
                     disabled={publishing}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white text-xs font-semibold transition-colors"
                   >
-                    {publishing ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                    {publishing ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Send size={14} />
+                    )}
                     {t('help.updates.admin.publish', 'Publish')}
                   </button>
                 </div>

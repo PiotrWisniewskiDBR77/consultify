@@ -93,7 +93,9 @@ class SimulationEngine {
     if (typeof this.deps.SimulationService.generateWhatIfScenarios === 'function') {
       return this.deps.SimulationService.generateWhatIfScenarios(baseline, variables);
     }
-    throw new Error('Feature unavailable: SimulationService.generateWhatIfScenarios is not implemented');
+    throw new Error(
+      'Feature unavailable: SimulationService.generateWhatIfScenarios is not implemented'
+    );
   }
 
   generateVariableCombinations(variables: any) {
@@ -265,7 +267,9 @@ class SimulationEngine {
     if (typeof this.deps.SimulationService.getSimulationResults === 'function') {
       return this.deps.SimulationService.getSimulationResults(id);
     }
-    throw new Error('Feature unavailable: SimulationService.getSimulationResults is not implemented');
+    throw new Error(
+      'Feature unavailable: SimulationService.getSimulationResults is not implemented'
+    );
   }
 
   _simulateRecommendation(recommendation: any) {
@@ -273,7 +277,9 @@ class SimulationEngine {
     if (typeof this.deps.SimulationService.simulateRecommendation === 'function') {
       return this.deps.SimulationService.simulateRecommendation(recommendation);
     }
-    throw new Error('Feature unavailable: SimulationService.simulateRecommendation is not implemented');
+    throw new Error(
+      'Feature unavailable: SimulationService.simulateRecommendation is not implemented'
+    );
   }
 
   // Missing method implementation

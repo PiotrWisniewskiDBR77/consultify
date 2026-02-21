@@ -12,14 +12,16 @@ export type ValueMomentType =
   | 'execution_signal_viewed'
   | 'deck_exported';
 
-const VALUE_MOMENT_CONFIG: Record<ValueMomentType, { icon: React.ElementType; colorClass: string }> =
-  {
-    report_generated: { icon: FileText, colorClass: 'from-emerald-500 to-teal-500' },
-    initiative_created: { icon: Rocket, colorClass: 'from-purple-500 to-indigo-500' },
-    tool_session_completed: { icon: Lightbulb, colorClass: 'from-amber-500 to-orange-500' },
-    execution_signal_viewed: { icon: Zap, colorClass: 'from-blue-500 to-cyan-500' },
-    deck_exported: { icon: BarChart3, colorClass: 'from-rose-500 to-pink-500' },
-  };
+const VALUE_MOMENT_CONFIG: Record<
+  ValueMomentType,
+  { icon: React.ElementType; colorClass: string }
+> = {
+  report_generated: { icon: FileText, colorClass: 'from-emerald-500 to-teal-500' },
+  initiative_created: { icon: Rocket, colorClass: 'from-purple-500 to-indigo-500' },
+  tool_session_completed: { icon: Lightbulb, colorClass: 'from-amber-500 to-orange-500' },
+  execution_signal_viewed: { icon: Zap, colorClass: 'from-blue-500 to-cyan-500' },
+  deck_exported: { icon: BarChart3, colorClass: 'from-rose-500 to-pink-500' },
+};
 
 interface DemoConversionCTAProps {
   isVisible: boolean;

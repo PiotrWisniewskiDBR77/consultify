@@ -98,4 +98,3 @@ export const OnboardingFirstLoginCTA: React.FC = () => {
 };
 
 export default OnboardingFirstLoginCTA;
-

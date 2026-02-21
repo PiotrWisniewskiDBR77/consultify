@@ -2,9 +2,9 @@ import crypto from 'crypto';
 
 import config from '../config/Config.js';
 import { getDatabase } from '../database/Database.js';
-import EmailService from './emailService.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import EmailService from './emailService.js';
 
 function serverOrigin(): string {
   try {
@@ -231,4 +231,3 @@ export async function processPartnerOutreachDueMessages(params: { limit?: number
 
   return { processed, sent, skipped };
 }
-

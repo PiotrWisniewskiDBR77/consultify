@@ -43,7 +43,8 @@ export async function computeAttribution(
   periodStart: string,
   periodEnd: string
 ): Promise<AttributionResult> {
-  const disclaimer = 'This is a contribution estimate based on heuristics, not a causal proof. Actual attribution may differ.';
+  const disclaimer =
+    'This is a contribution estimate based on heuristics, not a causal proof. Actual attribution may differ.';
 
   const kpiRows = await dbAll(
     `SELECT ik.id, ik.name, ik.unit, ik.baseline_value, ik.target_value, ik.current_value
@@ -62,7 +63,9 @@ export async function computeAttribution(
 
   const timeSeries = (tsRows || []) as any[];
   if (timeSeries.length < 2) {
-    return emptyResult(kpiId, kpi.name, periodStart, periodEnd, disclaimer, ['Insufficient KPI history (need at least 2 data points)']);
+    return emptyResult(kpiId, kpi.name, periodStart, periodEnd, disclaimer, [
+      'Insufficient KPI history (need at least 2 data points)',
+    ]);
   }
 
   const firstVal = timeSeries[0].value;
@@ -70,7 +73,9 @@ export async function computeAttribution(
   const kpiDelta = lastVal - firstVal;
 
   if (Math.abs(kpiDelta) < 0.001) {
-    return emptyResult(kpiId, kpi.name, periodStart, periodEnd, disclaimer, ['No significant KPI change in period']);
+    return emptyResult(kpiId, kpi.name, periodStart, periodEnd, disclaimer, [
+      'No significant KPI change in period',
+    ]);
   }
 
   const mappings = await dbAll(
@@ -152,7 +157,8 @@ export async function computeAttribution(
   const unexplainedPercent = Math.round((100 - totalAttributed) * 10) / 10;
   const unexplainedRemainder = Math.round(kpiDelta * (unexplainedPercent / 100) * 100) / 100;
 
-  if (maps.length > 5) confidenceReasons.push('Many overlapping initiatives reduce attribution precision');
+  if (maps.length > 5)
+    confidenceReasons.push('Many overlapping initiatives reduce attribution precision');
   if (timeSeries.length < 4) confidenceReasons.push('Limited KPI history reduces trend confidence');
   if (totalWeight < maps.length * 0.3) confidenceReasons.push('Low overall initiative progress');
 
@@ -176,13 +182,21 @@ export async function computeAttribution(
 
 function getStatusMultiplier(status: string): number {
   const map: Record<string, number> = {
-    DONE: 1.0, TRACKING: 0.9, EXECUTING: 0.7, PROMOTED: 0.5,
-    PENDING_REVIEW: 0.2, BLOCKED: 0.1, CANCELLED: 0,
+    DONE: 1.0,
+    TRACKING: 0.9,
+    EXECUTING: 0.7,
+    PROMOTED: 0.5,
+    PENDING_REVIEW: 0.2,
+    BLOCKED: 0.1,
+    CANCELLED: 0,
   };
   return map[status] || 0.3;
 }
 
-function computeContributionConfidence(mapping: any, dataPoints: number): 'low' | 'medium' | 'high' {
+function computeContributionConfidence(
+  mapping: any,
+  dataPoints: number
+): 'low' | 'medium' | 'high' {
   let score = 0;
   if (mapping.impact_weight > 0) score += 1;
   if (mapping.expected_delta) score += 1;
@@ -200,7 +214,11 @@ function getConfidenceReason(conf: string, mapping: any, dp: number): string {
   return `Low confidence: ${dp < 3 ? 'limited KPI history' : ''}${!mapping.expected_delta ? ', no expected delta' : ''}${mapping.progress < 0.3 ? ', low progress' : ''}.`;
 }
 
-function computeOverallConfidence(dataPoints: number, mappingCount: number, coverage: number): 'low' | 'medium' | 'high' {
+function computeOverallConfidence(
+  dataPoints: number,
+  mappingCount: number,
+  coverage: number
+): 'low' | 'medium' | 'high' {
   let score = 0;
   if (dataPoints >= 6) score += 2;
   else if (dataPoints >= 3) score += 1;
@@ -211,11 +229,26 @@ function computeOverallConfidence(dataPoints: number, mappingCount: number, cove
   return 'low';
 }
 
-function emptyResult(kpiId: string, kpiName: string, periodStart: string, periodEnd: string, disclaimer: string, reasons: string[] = []): AttributionResult {
+function emptyResult(
+  kpiId: string,
+  kpiName: string,
+  periodStart: string,
+  periodEnd: string,
+  disclaimer: string,
+  reasons: string[] = []
+): AttributionResult {
   return {
-    kpiId, kpiName, periodStart, periodEnd, kpiDelta: 0,
-    contributions: [], unexplainedRemainder: 0, unexplainedPercent: 100,
-    overallConfidence: 'low', confidenceReasons: reasons.length ? reasons : ['No data available for attribution'],
-    assumptions: [], disclaimer,
+    kpiId,
+    kpiName,
+    periodStart,
+    periodEnd,
+    kpiDelta: 0,
+    contributions: [],
+    unexplainedRemainder: 0,
+    unexplainedPercent: 100,
+    overallConfidence: 'low',
+    confidenceReasons: reasons.length ? reasons : ['No data available for attribution'],
+    assumptions: [],
+    disclaimer,
   };
 }

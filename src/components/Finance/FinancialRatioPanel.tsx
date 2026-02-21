@@ -6,15 +6,31 @@
  * and coverage indicators.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-  TrendingUp, TrendingDown, Minus, ChevronDown, ChevronRight, Info,
-  AlertTriangle, CheckCircle2, XCircle, BarChart3, Target, HelpCircle,
-  ArrowUpRight, ArrowDownRight, Loader2, RefreshCw, Download, Settings,
+  AlertTriangle,
+  ArrowDownRight,
+  ArrowUpRight,
+  BarChart3,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Download,
+  HelpCircle,
+  Info,
+  Loader2,
+  Minus,
+  RefreshCw,
+  Settings,
+  Target,
+  TrendingDown,
+  TrendingUp,
+  XCircle,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import Api from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
-import Api from '../../services/Api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -33,7 +49,14 @@ interface ComputedRatio {
   unit: string;
   coveragePct: number;
   missingLines: string[];
-  benchmark?: { p25?: number; median?: number; p75?: number; targetMin?: number; targetMax?: number; source?: string };
+  benchmark?: {
+    p25?: number;
+    median?: number;
+    p75?: number;
+    targetMin?: number;
+    targetMax?: number;
+    source?: string;
+  };
 }
 
 interface RatioAnalysisResult {
@@ -62,11 +85,34 @@ interface Props {
 // Category config
 // ---------------------------------------------------------------------------
 
-const CATEGORY_CONFIG: Record<string, { label: string; labelPl: string; icon: React.ReactNode; color: string }> = {
-  liquidity: { label: 'Liquidity', labelPl: 'Płynność', icon: <BarChart3 size={16} />, color: 'blue' },
-  profitability: { label: 'Profitability', labelPl: 'Rentowność', icon: <TrendingUp size={16} />, color: 'emerald' },
-  leverage: { label: 'Leverage', labelPl: 'Zadłużenie', icon: <Target size={16} />, color: 'amber' },
-  efficiency: { label: 'Efficiency', labelPl: 'Efektywność', icon: <RefreshCw size={16} />, color: 'purple' },
+const CATEGORY_CONFIG: Record<
+  string,
+  { label: string; labelPl: string; icon: React.ReactNode; color: string }
+> = {
+  liquidity: {
+    label: 'Liquidity',
+    labelPl: 'Płynność',
+    icon: <BarChart3 size={16} />,
+    color: 'blue',
+  },
+  profitability: {
+    label: 'Profitability',
+    labelPl: 'Rentowność',
+    icon: <TrendingUp size={16} />,
+    color: 'emerald',
+  },
+  leverage: {
+    label: 'Leverage',
+    labelPl: 'Zadłużenie',
+    icon: <Target size={16} />,
+    color: 'amber',
+  },
+  efficiency: {
+    label: 'Efficiency',
+    labelPl: 'Efektywność',
+    icon: <RefreshCw size={16} />,
+    color: 'purple',
+  },
   growth: { label: 'Growth', labelPl: 'Wzrost', icon: <ArrowUpRight size={16} />, color: 'sky' },
 };
 
@@ -84,7 +130,9 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
   const [result, setResult] = useState<RatioAnalysisResult | null>(null);
   const [growthRatios, setGrowthRatios] = useState<ComputedRatio[]>([]);
   const [loading, setLoading] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['liquidity', 'profitability', 'leverage', 'efficiency']));
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set(['liquidity', 'profitability', 'leverage', 'efficiency'])
+  );
   const [showFormula, setShowFormula] = useState<string | null>(null);
   const [showBenchmarkEditor, setShowBenchmarkEditor] = useState(false);
 
@@ -93,11 +141,13 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
     const load = async () => {
       try {
         const resp = await Api.get('/api/finance-statements');
-        const confirmed = (resp.data || []).filter((s: Statement) => s.status === 'confirmed');
+        const confirmed = ((resp as any) || []).filter((s: Statement) => s.status === 'confirmed');
         setStatements(confirmed);
         if (confirmed.length > 0) setSelectedStatementId(confirmed[0].id);
         if (confirmed.length > 1) setPreviousStatementId(confirmed[1].id);
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
     };
     load();
   }, []);
@@ -107,7 +157,7 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
     setLoading(true);
     try {
       const resp = await Api.get(`/api/finance-statements/${selectedStatementId}/ratios`);
-      setResult(resp.data);
+      setResult(resp as any);
       trackFunnelEvent('financial_ratios_viewed', { statementId: selectedStatementId });
 
       if (previousStatementId) {
@@ -115,18 +165,23 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
           currentStatementId: selectedStatementId,
           previousStatementId,
         });
-        setGrowthRatios(gResp.data || []);
+        setGrowthRatios((gResp as any) || []);
       }
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
     setLoading(false);
   }, [selectedStatementId, previousStatementId]);
 
-  useEffect(() => { loadRatios(); }, [loadRatios]);
+  useEffect(() => {
+    loadRatios();
+  }, [loadRatios]);
 
   const toggleCategory = (cat: string) => {
-    setExpandedCategories(prev => {
+    setExpandedCategories((prev) => {
       const next = new Set(prev);
-      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
       return next;
     });
   };
@@ -149,7 +204,10 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
 
   const formatValue = (value: number | null, unit: string) => {
     if (value === null) return 'N/A';
-    const formatted = value.toLocaleString(isPl ? 'pl-PL' : 'en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+    const formatted = value.toLocaleString(isPl ? 'pl-PL' : 'en-US', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 2,
+    });
     return `${formatted}${unit === '%' ? '%' : unit === 'days' ? ` ${t('finance.ratios.days', 'days')}` : `${unit}`}`;
   };
 
@@ -167,7 +225,10 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
           {bm.p25 !== undefined && bm.p75 !== undefined && (
             <div
               className="absolute h-full bg-emerald-200 dark:bg-emerald-800 rounded-full"
-              style={{ left: `${Math.max(0, ((bm.p25 - min) / range) * 100)}%`, width: `${Math.max(0, ((bm.p75 - bm.p25) / range) * 100)}%` }}
+              style={{
+                left: `${Math.max(0, ((bm.p25 - min) / range) * 100)}%`,
+                width: `${Math.max(0, ((bm.p75 - bm.p25) / range) * 100)}%`,
+              }}
             />
           )}
           <div
@@ -185,7 +246,10 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
   };
 
   const renderRatioCard = (ratio: ComputedRatio) => (
-    <div key={ratio.code} className={`p-4 rounded-xl border border-slate-200 dark:border-navy-700 ${statusBg(ratio.status)} transition-all hover:shadow-sm`}>
+    <div
+      key={ratio.code}
+      className={`p-4 rounded-xl border border-slate-200 dark:border-navy-700 ${statusBg(ratio.status)} transition-all hover:shadow-sm`}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2">
@@ -193,7 +257,10 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
             <span className="text-sm font-medium text-slate-900 dark:text-white">
               {isPl ? ratio.namePl : ratio.name}
             </span>
-            <button onClick={() => setShowFormula(showFormula === ratio.code ? null : ratio.code)} className="p-0.5 hover:bg-slate-200 dark:hover:bg-navy-600 rounded">
+            <button
+              onClick={() => setShowFormula(showFormula === ratio.code ? null : ratio.code)}
+              className="p-0.5 hover:bg-slate-200 dark:hover:bg-navy-600 rounded"
+            >
               <HelpCircle size={12} className="text-slate-400" />
             </button>
           </div>
@@ -203,7 +270,9 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
           {ratio.coveragePct < 100 && (
             <div className="mt-1 flex items-center gap-1 text-[10px] text-amber-600">
               <AlertTriangle size={10} />
-              <span>{ratio.coveragePct}% {t('finance.ratios.dataCoverage', 'data coverage')}</span>
+              <span>
+                {ratio.coveragePct}% {t('finance.ratios.dataCoverage', 'data coverage')}
+              </span>
             </div>
           )}
           {ratio.missingLines.length > 0 && ratio.status === 'na' && (
@@ -217,7 +286,9 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
       {showFormula === ratio.code && (
         <div className="mt-3 p-3 bg-white dark:bg-navy-900 rounded-lg border border-slate-100 dark:border-navy-700 text-xs space-y-1">
           <div className="font-mono text-blue-600 dark:text-blue-400">{ratio.formula}</div>
-          <div className="text-slate-500">{isPl ? ratio.formulaDescriptionPl : ratio.formulaDescription}</div>
+          <div className="text-slate-500">
+            {isPl ? ratio.formulaDescriptionPl : ratio.formulaDescription}
+          </div>
         </div>
       )}
 
@@ -226,7 +297,7 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
   );
 
   const allRatios = [...(result?.ratios || []), ...growthRatios];
-  const categories = { ...result?.categories || {}, growth: growthRatios };
+  const categories = { ...(result?.categories || {}), growth: growthRatios };
 
   return (
     <div className="space-y-6">
@@ -244,28 +315,42 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
         <div className="flex items-center gap-3">
           <select
             value={selectedStatementId}
-            onChange={e => setSelectedStatementId(e.target.value)}
+            onChange={(e) => setSelectedStatementId(e.target.value)}
             className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm"
           >
             <option value="">{t('finance.ratios.selectStatement', 'Select statement…')}</option>
-            {statements.map(s => (
-              <option key={s.id} value={s.id}>{s.statement_type} — {s.period_label || s.period_end} ({s.currency})</option>
+            {statements.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.statement_type} — {s.period_label || s.period_end} ({s.currency})
+              </option>
             ))}
           </select>
           {statements.length > 1 && (
             <select
               value={previousStatementId}
-              onChange={e => setPreviousStatementId(e.target.value)}
+              onChange={(e) => setPreviousStatementId(e.target.value)}
               className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm"
             >
               <option value="">{t('finance.ratios.comparePeriod', 'Compare with…')}</option>
-              {statements.filter(s => s.id !== selectedStatementId).map(s => (
-                <option key={s.id} value={s.id}>{s.statement_type} — {s.period_label || s.period_end}</option>
-              ))}
+              {statements
+                .filter((s) => s.id !== selectedStatementId)
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.statement_type} — {s.period_label || s.period_end}
+                  </option>
+                ))}
             </select>
           )}
-          <button onClick={loadRatios} disabled={loading} className="p-2 border border-slate-200 dark:border-navy-600 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800">
-            {loading ? <Loader2 size={16} className="animate-spin text-blue-500" /> : <RefreshCw size={16} className="text-slate-500" />}
+          <button
+            onClick={loadRatios}
+            disabled={loading}
+            className="p-2 border border-slate-200 dark:border-navy-600 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800"
+          >
+            {loading ? (
+              <Loader2 size={16} className="animate-spin text-blue-500" />
+            ) : (
+              <RefreshCw size={16} className="text-slate-500" />
+            )}
           </button>
         </div>
       </div>
@@ -303,50 +388,76 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
         </div>
       )}
 
-      {result && Object.entries(categories).map(([cat, ratios]) => {
-        if (!ratios || ratios.length === 0) return null;
-        const config = CATEGORY_CONFIG[cat];
-        if (!config) return null;
-        const isExpanded = expandedCategories.has(cat);
-        const okCount = ratios.filter((r: ComputedRatio) => r.status === 'ok').length;
-        const warnCount = ratios.filter((r: ComputedRatio) => r.status === 'warn' || r.status === 'critical').length;
+      {result &&
+        Object.entries(categories).map(([cat, ratios]) => {
+          if (!ratios || ratios.length === 0) return null;
+          const config = CATEGORY_CONFIG[cat];
+          if (!config) return null;
+          const isExpanded = expandedCategories.has(cat);
+          const okCount = ratios.filter((r: ComputedRatio) => r.status === 'ok').length;
+          const warnCount = ratios.filter(
+            (r: ComputedRatio) => r.status === 'warn' || r.status === 'critical'
+          ).length;
 
-        return (
-          <div key={cat} className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-            <button
-              onClick={() => toggleCategory(cat)}
-              className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+          return (
+            <div
+              key={cat}
+              className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden"
             >
-              <div className="flex items-center gap-3">
-                <div className={`p-1.5 rounded-lg bg-${config.color}-100 dark:bg-${config.color}-900/30 text-${config.color}-600`}>
-                  {config.icon}
+              <button
+                onClick={() => toggleCategory(cat)}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`p-1.5 rounded-lg bg-${config.color}-100 dark:bg-${config.color}-900/30 text-${config.color}-600`}
+                  >
+                    {config.icon}
+                  </div>
+                  <span className="font-semibold text-slate-900 dark:text-white">
+                    {isPl ? config.labelPl : config.label}
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    {ratios.length} {t('finance.ratios.ratios', 'ratios')}
+                  </span>
                 </div>
-                <span className="font-semibold text-slate-900 dark:text-white">
-                  {isPl ? config.labelPl : config.label}
-                </span>
-                <span className="text-xs text-slate-400">{ratios.length} {t('finance.ratios.ratios', 'ratios')}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                {okCount > 0 && <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full">{okCount} OK</span>}
-                {warnCount > 0 && <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-full">{warnCount} ⚠</span>}
-                {isExpanded ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
-              </div>
-            </button>
+                <div className="flex items-center gap-3">
+                  {okCount > 0 && (
+                    <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full">
+                      {okCount} OK
+                    </span>
+                  )}
+                  {warnCount > 0 && (
+                    <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-full">
+                      {warnCount} ⚠
+                    </span>
+                  )}
+                  {isExpanded ? (
+                    <ChevronDown size={16} className="text-slate-400" />
+                  ) : (
+                    <ChevronRight size={16} className="text-slate-400" />
+                  )}
+                </div>
+              </button>
 
-            {isExpanded && (
-              <div className="px-5 pb-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {ratios.map((r: ComputedRatio) => renderRatioCard(r))}
-              </div>
-            )}
-          </div>
-        );
-      })}
+              {isExpanded && (
+                <div className="px-5 pb-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {ratios.map((r: ComputedRatio) => renderRatioCard(r))}
+                </div>
+              )}
+            </div>
+          );
+        })}
 
       {!result && !loading && (
         <div className="text-center py-16 text-slate-400">
           <BarChart3 size={40} className="mx-auto mb-3 opacity-40" />
-          <p className="text-lg">{t('finance.ratios.noData', 'No confirmed financial statements yet')}</p>
-          <p className="text-sm mt-1">{t('finance.ratios.importFirst', 'Import a statement first to see ratio analysis')}</p>
+          <p className="text-lg">
+            {t('finance.ratios.noData', 'No confirmed financial statements yet')}
+          </p>
+          <p className="text-sm mt-1">
+            {t('finance.ratios.importFirst', 'Import a statement first to see ratio analysis')}
+          </p>
         </div>
       )}
     </div>
@@ -355,7 +466,11 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
 
 // ── Sub-components ──
 
-const SummaryCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({ label, value, icon }) => (
+const SummaryCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({
+  label,
+  value,
+  icon,
+}) => (
   <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 flex items-center gap-3">
     <div className="p-2 bg-slate-50 dark:bg-navy-800 rounded-lg">{icon}</div>
     <div>

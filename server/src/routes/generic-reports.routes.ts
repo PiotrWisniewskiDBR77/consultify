@@ -187,9 +187,13 @@ router.post(
         return respondFeatureUnavailable(res, 'llm returned empty response');
       }
 
-      await dbRun(`UPDATE reports SET status = 'completed', content = ? WHERE id = ?`, [content, id], {
-        fallback: false,
-      });
+      await dbRun(
+        `UPDATE reports SET status = 'completed', content = ? WHERE id = ?`,
+        [content, id],
+        {
+          fallback: false,
+        }
+      );
 
       res.json({ success: true, message: 'Report generation completed', generated: true });
     } catch (error) {

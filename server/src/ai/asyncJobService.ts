@@ -5,6 +5,7 @@ import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
 const db: IDatabase = getDatabase() as IDatabase;
 import { v4 as uuidv4 } from 'uuid';
+
 import { AppError } from '../utils/ErrorHandler.js';
 
 // Type for aiQueue (BullMQ Queue or unavailable)
@@ -569,7 +570,7 @@ const AsyncJobService = {
             runId: job.entity_id,
             organizationId: job.organization_id,
             correlationId: job.correlation_id,
-      };
+          };
 
     try {
       await aiQueue.add(

@@ -3,18 +3,26 @@
  */
 
 import crypto from 'crypto';
-
 import { Request, Response, Router } from 'express';
 
-import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { getDatabase } from '../database/Database.js';
+import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
 router.use(verifySuperAdmin);
 
-function parseCsvLeads(csv: string): Array<{ email: string; company?: string; firstName?: string; lastName?: string; country?: string; region?: string; source?: string; lawfulBasis?: string }> {
+function parseCsvLeads(csv: string): Array<{
+  email: string;
+  company?: string;
+  firstName?: string;
+  lastName?: string;
+  country?: string;
+  region?: string;
+  source?: string;
+  lawfulBasis?: string;
+}> {
   const lines = csv
     .split(/\r?\n/)
     .map((l) => l.trim())
@@ -50,7 +58,9 @@ function parseCsvLeads(csv: string): Array<{ email: string; company?: string; fi
  */
 router.get('/leads', async (req: Request, res: Response) => {
   const db = getDatabase();
-  const q = String(req.query.q || '').trim().toLowerCase();
+  const q = String(req.query.q || '')
+    .trim()
+    .toLowerCase();
   const status = String(req.query.status || '').trim();
 
   const params: any[] = [];
@@ -94,7 +104,9 @@ router.post('/leads/import', async (req: Request, res: Response) => {
 
     let inserted = 0;
     for (const lead of leads) {
-      const email = String(lead.email || '').trim().toLowerCase();
+      const email = String(lead.email || '')
+        .trim()
+        .toLowerCase();
       if (!email) continue;
 
       const result = await DbPromise.run(
@@ -241,13 +253,10 @@ router.post('/campaigns/:campaignId/pause', async (req: Request, res: Response) 
 router.post('/campaigns/:campaignId/resume', async (req: Request, res: Response) => {
   const db = getDatabase();
   const { campaignId } = req.params;
-  await DbPromise.run(
-    db,
-    `UPDATE partner_outreach_campaigns SET status = 'running' WHERE id = ?`,
-    [campaignId]
-  );
+  await DbPromise.run(db, `UPDATE partner_outreach_campaigns SET status = 'running' WHERE id = ?`, [
+    campaignId,
+  ]);
   return res.json({ success: true });
 });
 
 export default router;
-

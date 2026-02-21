@@ -161,7 +161,9 @@ router.post(
 
     // New integrations system schema
     if (cols.has('provider_id') && cols.has('settings') && cols.has('auth_type')) {
-      const providerKey = String(provider || '').trim().toLowerCase();
+      const providerKey = String(provider || '')
+        .trim()
+        .toLowerCase();
       const providerRow = await dbGet<{ id: string; auth_type?: string }>(
         `SELECT id, auth_type FROM integration_providers WHERE name = ? LIMIT 1`,
         [providerKey]
@@ -180,7 +182,14 @@ router.post(
         INSERT INTO integrations (id, organization_id, provider_id, auth_type, settings, status, connected_by)
         VALUES (?, ?, ?, ?, ?, 'active', ?)
       `,
-        [id, orgId, providerId, inferredAuthType, JSON.stringify(config || {}), req.user?.id || 'system']
+        [
+          id,
+          orgId,
+          providerId,
+          inferredAuthType,
+          JSON.stringify(config || {}),
+          req.user?.id || 'system',
+        ]
       );
       if (!(runResult as any)?.success) {
         return res
@@ -219,7 +228,9 @@ router.post(
       [id, orgId, integrationType, JSON.stringify(config || {})]
     );
     if (!(runResult as any)?.success) {
-      return res.status(500).json({ error: (runResult as any)?.error || 'Failed to connect integration' });
+      return res
+        .status(500)
+        .json({ error: (runResult as any)?.error || 'Failed to connect integration' });
     }
     logger.info(`[Integrations] Connected ${integrationType} for org ${orgId}`);
     return res.status(201).json({ success: true, id });

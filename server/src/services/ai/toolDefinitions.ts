@@ -349,7 +349,16 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
   try {
     const ragMod = await import('../ragService.js');
     const ragService = (ragMod.default || ragMod) as {
-      hybridSearch?: (query: string, opts?: { organizationId?: string; limit?: number }) => Promise<Array<{ content?: string; metadata?: { documentTitle?: string; documentId?: string }; score?: number }>>;
+      hybridSearch?: (
+        query: string,
+        opts?: { organizationId?: string; limit?: number }
+      ) => Promise<
+        Array<{
+          content?: string;
+          metadata?: { documentTitle?: string; documentId?: string };
+          score?: number;
+        }>
+      >;
     };
     if (!ragService?.hybridSearch) {
       return JSON.stringify({

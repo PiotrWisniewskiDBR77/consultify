@@ -2969,10 +2969,7 @@ const copyRolePermissions = catchAsync(async (req, res, next) => {
       new AppError('Permissions matrix service is not available', 503, 'FEATURE_UNAVAILABLE')
     );
   }
-  const result = await deps.PermissionsMatrixService.copyRolePermissions(
-    sourceRole,
-    targetRole
-  );
+  const result = await deps.PermissionsMatrixService.copyRolePermissions(sourceRole, targetRole);
   res.json({ success: true, message: 'Permissions copied', ...result });
 });
 

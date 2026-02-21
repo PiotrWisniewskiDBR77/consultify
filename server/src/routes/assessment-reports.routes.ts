@@ -11,8 +11,8 @@ import PptxGenJS from 'pptxgenjs';
 import { v4 as uuidv4 } from 'uuid';
 import * as xlsx from 'xlsx';
 
-import { getDatabase } from '../database/index.js';
 import { getDatabaseType } from '../config/DatabaseConfig.js';
+import { getDatabase } from '../database/index.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -1484,7 +1484,10 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
       }
     }
 
-    if (!customPrompt && !['summarize', 'expand', 'regenerate', 'improve', 'translate'].includes(act)) {
+    if (
+      !customPrompt &&
+      !['summarize', 'expand', 'regenerate', 'improve', 'translate'].includes(act)
+    ) {
       return res.status(400).json({ error: 'Invalid action' });
     }
 
@@ -2275,13 +2278,19 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
     let orgName = 'Organization';
     try {
       const orgRow = await new Promise<any>((resolve, reject) => {
-        db.get(`SELECT name FROM organizations WHERE id = ?`, [organizationId], (err: Error | null, row: any) => {
-          if (err) reject(err);
-          else resolve(row);
-        });
+        db.get(
+          `SELECT name FROM organizations WHERE id = ?`,
+          [organizationId],
+          (err: Error | null, row: any) => {
+            if (err) reject(err);
+            else resolve(row);
+          }
+        );
       });
       if (orgRow?.name) orgName = orgRow.name;
-    } catch { /* use fallback */ }
+    } catch {
+      /* use fallback */
+    }
 
     const categories: Array<{
       id: string;
@@ -2291,63 +2300,158 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
     }> = [];
 
     const topStrengths: Array<{ name: string; score: number; category: string }> = [];
-    const topGaps: Array<{ name: string; current: number; target: number; gap: number; category: string }> = [];
+    const topGaps: Array<{
+      name: string;
+      current: number;
+      target: number;
+      gap: number;
+      category: string;
+    }> = [];
     const dataGaps: Array<{ name: string; reason: string }> = [];
 
     if (framework === 'SIRI') {
       const dims = formData.dimensions || {};
       const blocks = [
-        { id: 'PROCESS', name: 'Process', dimIds: ['operations', 'supply_chain', 'product_lifecycle'] },
-        { id: 'TECHNOLOGY', name: 'Technology', dimIds: ['automation', 'connectivity', 'intelligence'] },
-        { id: 'ORGANIZATION', name: 'Organization', dimIds: ['talent_readiness', 'structure_management'] },
+        {
+          id: 'PROCESS',
+          name: 'Process',
+          dimIds: ['operations', 'supply_chain', 'product_lifecycle'],
+        },
+        {
+          id: 'TECHNOLOGY',
+          name: 'Technology',
+          dimIds: ['automation', 'connectivity', 'intelligence'],
+        },
+        {
+          id: 'ORGANIZATION',
+          name: 'Organization',
+          dimIds: ['talent_readiness', 'structure_management'],
+        },
       ];
       for (const block of blocks) {
         const blockDims = block.dimIds.map((id) => {
           const d = dims[id] || { current: 0, target: 0, gap: 0 };
-          return { id, name: id.replace(/_/g, ' '), current: d.current || 0, target: d.target || 0, gap: d.gap || 0 };
+          return {
+            id,
+            name: id.replace(/_/g, ' '),
+            current: d.current || 0,
+            target: d.target || 0,
+            gap: d.gap || 0,
+          };
         });
-        const avg = blockDims.length > 0 ? blockDims.reduce((s, d) => s + d.current, 0) / blockDims.length : 0;
-        categories.push({ id: block.id, name: block.name, score: Math.round(avg * 10) / 10, dimensions: blockDims });
+        const avg =
+          blockDims.length > 0
+            ? blockDims.reduce((s, d) => s + d.current, 0) / blockDims.length
+            : 0;
+        categories.push({
+          id: block.id,
+          name: block.name,
+          score: Math.round(avg * 10) / 10,
+          dimensions: blockDims,
+        });
         for (const d of blockDims) {
-          if (d.current >= 3) topStrengths.push({ name: d.name, score: d.current, category: block.name });
-          if (d.gap > 0) topGaps.push({ name: d.name, current: d.current, target: d.target, gap: d.gap, category: block.name });
+          if (d.current >= 3)
+            topStrengths.push({ name: d.name, score: d.current, category: block.name });
+          if (d.gap > 0)
+            topGaps.push({
+              name: d.name,
+              current: d.current,
+              target: d.target,
+              gap: d.gap,
+              category: block.name,
+            });
           if (d.current === 0) dataGaps.push({ name: d.name, reason: 'Not assessed' });
         }
       }
     } else if (framework === 'ADMA') {
       const pillars = formData.pillars || {};
-      const pillarOrder = ['strategy', 'smart_products', 'smart_operations', 'smart_supply', 'data_driven'];
+      const pillarOrder = [
+        'strategy',
+        'smart_products',
+        'smart_operations',
+        'smart_supply',
+        'data_driven',
+      ];
       const pillarNames: Record<string, string> = {
-        strategy: 'Strategy', smart_products: 'Smart Products', smart_operations: 'Smart Operations',
-        smart_supply: 'Smart Supply Chain', data_driven: 'Data-Driven Services',
+        strategy: 'Strategy',
+        smart_products: 'Smart Products',
+        smart_operations: 'Smart Operations',
+        smart_supply: 'Smart Supply Chain',
+        data_driven: 'Data-Driven Services',
       };
       for (const pid of pillarOrder) {
         const p = pillars[pid] || { current: 0, target: 0, gap: 0, dimensionScores: {} };
-        const dimEntries = Object.entries(p.dimensionScores || {}).map(([id, d]: [string, any]) => ({
-          id, name: id.replace(/_/g, ' '), current: d?.current || 0, target: d?.target || 0,
-          gap: (d?.target || 0) - (d?.current || 0),
-        }));
-        categories.push({ id: pid, name: pillarNames[pid] || pid, score: p.current || 0, dimensions: dimEntries });
+        const dimEntries = Object.entries(p.dimensionScores || {}).map(
+          ([id, d]: [string, any]) => ({
+            id,
+            name: id.replace(/_/g, ' '),
+            current: d?.current || 0,
+            target: d?.target || 0,
+            gap: (d?.target || 0) - (d?.current || 0),
+          })
+        );
+        categories.push({
+          id: pid,
+          name: pillarNames[pid] || pid,
+          score: p.current || 0,
+          dimensions: dimEntries,
+        });
         for (const d of dimEntries) {
-          if (d.current >= 3) topStrengths.push({ name: d.name, score: d.current, category: pillarNames[pid] || pid });
-          if (d.gap > 0) topGaps.push({ name: d.name, current: d.current, target: d.target, gap: d.gap, category: pillarNames[pid] || pid });
+          if (d.current >= 3)
+            topStrengths.push({
+              name: d.name,
+              score: d.current,
+              category: pillarNames[pid] || pid,
+            });
+          if (d.gap > 0)
+            topGaps.push({
+              name: d.name,
+              current: d.current,
+              target: d.target,
+              gap: d.gap,
+              category: pillarNames[pid] || pid,
+            });
           if (d.current === 0) dataGaps.push({ name: d.name, reason: 'Not assessed' });
         }
       }
     } else {
       const axes = formData.axes || formData.areas || {};
-      const axisNames = ['processes', 'digitalProducts', 'businessModels', 'dataManagement', 'culture', 'cybersecurity', 'aiMaturity'];
+      const axisNames = [
+        'processes',
+        'digitalProducts',
+        'businessModels',
+        'dataManagement',
+        'culture',
+        'cybersecurity',
+        'aiMaturity',
+      ];
       for (const axisId of axisNames) {
         const ax = axes[axisId] || { actual: 0, target: 0 };
         categories.push({
           id: axisId,
           name: axisId.replace(/([A-Z])/g, ' $1').trim(),
           score: ax.actual || 0,
-          dimensions: [{ id: axisId, name: axisId.replace(/([A-Z])/g, ' $1').trim(), current: ax.actual || 0, target: ax.target || 0, gap: Math.max(0, (ax.target || 0) - (ax.actual || 0)) }],
+          dimensions: [
+            {
+              id: axisId,
+              name: axisId.replace(/([A-Z])/g, ' $1').trim(),
+              current: ax.actual || 0,
+              target: ax.target || 0,
+              gap: Math.max(0, (ax.target || 0) - (ax.actual || 0)),
+            },
+          ],
         });
-        if ((ax.actual || 0) >= 4) topStrengths.push({ name: axisId, score: ax.actual || 0, category: 'DRD' });
+        if ((ax.actual || 0) >= 4)
+          topStrengths.push({ name: axisId, score: ax.actual || 0, category: 'DRD' });
         const gap = Math.max(0, (ax.target || 0) - (ax.actual || 0));
-        if (gap > 0) topGaps.push({ name: axisId, current: ax.actual || 0, target: ax.target || 0, gap, category: 'DRD' });
+        if (gap > 0)
+          topGaps.push({
+            name: axisId,
+            current: ax.actual || 0,
+            target: ax.target || 0,
+            gap,
+            category: 'DRD',
+          });
         if ((ax.actual || 0) === 0) dataGaps.push({ name: axisId, reason: 'Not assessed' });
       }
     }
@@ -2356,8 +2460,12 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
     topGaps.sort((a, b) => b.gap - a.gap);
 
     const scaleMax = framework === 'DRD' ? 7 : framework === 'SIRI' ? 5 : 5;
-    const overallScore = formData.overallScore || formData.overallMaturity ||
-      (categories.length > 0 ? Math.round((categories.reduce((s, c) => s + c.score, 0) / categories.length) * 10) / 10 : 0);
+    const overallScore =
+      formData.overallScore ||
+      formData.overallMaturity ||
+      (categories.length > 0
+        ? Math.round((categories.reduce((s, c) => s + c.score, 0) / categories.length) * 10) / 10
+        : 0);
 
     const { generateAssessmentDeck } = await import('../services/assessmentDeckService.js');
     const result = await generateAssessmentDeck({
@@ -2374,7 +2482,10 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
       language,
     });
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    );
     res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
     return res.send(result.buffer);
   } catch (err: any) {
