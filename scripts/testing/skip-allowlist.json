@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "kind": "skip",
+      "filePattern": "^tests/unit/backend/assessmentReportService\\.test$",
+      "matchPattern": "describe\\.skip\\(",
+      "reason": "Temporary: CJS mock limitation noted in test file; tracked as debt until full TS/ESM migration.",
+      "expiresOn": "2026-03-31"
+    }
+  ]
+}
+
