@@ -197,6 +197,8 @@ async function computeDimensions(organizationId: string): Promise<{
 }> {
   const flags: ReadinessBlockFlag[] = [];
   const penalties: ReadinessPenalty[] = [];
+  const since30dIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const since30dDate = since30dIso.slice(0, 10);
 
   // ======================
   // D1: Identity & Security (max 20)
@@ -236,8 +238,8 @@ async function computeDimensions(organizationId: string): Promise<{
         `SELECT COUNT(DISTINCT event_name) as count
          FROM journey_events
          WHERE organization_id = ?
-           AND created_at >= date('now', '-30 days')`,
-        [organizationId]
+           AND created_at >= ?`,
+        [organizationId, since30dIso]
       );
       milestoneCount30d = row?.count || 0;
     }
@@ -252,8 +254,8 @@ async function computeDimensions(organizationId: string): Promise<{
         `SELECT AVG(engagement_score) as avg
          FROM user_adoption_metrics
          WHERE organization_id = ?
-           AND metric_date >= date('now', '-30 days')`,
-        [organizationId]
+           AND metric_date >= ?`,
+        [organizationId, since30dDate]
       );
       engagementScore = Math.round(Number(row?.avg || 0));
     }
@@ -558,6 +560,7 @@ export async function getTransactionReadinessRanking(opts: {
   await ensureTables();
   const days = Math.max(1, Math.min(365, Number(opts.days || 30)));
   const limit = Math.max(1, Math.min(200, Number(opts.limit || 50)));
+  const sinceIso = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
   // Pick latest snapshot per org within window.
   const rows = await dbAll<Record<string, unknown>>(
@@ -567,14 +570,14 @@ export async function getTransactionReadinessRanking(opts: {
     JOIN (
       SELECT organization_id, MAX(computed_at) AS max_ts
       FROM transaction_readiness_scores
-      WHERE computed_at >= date('now', '-' || ? || ' days')
+      WHERE computed_at >= ?
       GROUP BY organization_id
     ) latest
       ON latest.organization_id = t.organization_id AND latest.max_ts = t.computed_at
     ORDER BY t.score DESC
     LIMIT ?
     `,
-    [days, limit]
+    [sinceIso, limit]
   );
 
   return (rows || []).map((r) => ({

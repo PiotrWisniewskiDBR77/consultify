@@ -603,7 +603,14 @@ app.use(sentryHandlers.requestHandler);
 app.use(sentryHandlers.tracingHandler);
 
 // Body Parsing, Cookies & Static Files
-app.use(express.json({ limit: '10mb' }));
+// IMPORTANT: external webhooks must verify signatures against the raw request body.
+// Use a dedicated parser for Sellix before JSON parsing and skip JSON parsing on that path.
+app.use('/api/webhooks/sellix', express.text({ type: '*/*', limit: '2mb' }));
+const jsonParser = express.json({ limit: '10mb' });
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.originalUrl?.startsWith('/api/webhooks/sellix')) return next();
+  return jsonParser(req, res, next);
+});
 app.use(cookieParser()); // Required for CSRF protection
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 

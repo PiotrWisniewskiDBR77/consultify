@@ -84,6 +84,7 @@ import scimRoutes from './routes/integrations/scim.routes.js';
 import ssoRoutes from './routes/integrations/sso.routes.js';
 import webhookRoutes from './routes/integrations/webhooks.routes.js';
 import webhookSubRoutes from './routes/integrations/webhookSubscriptions.routes.js';
+import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
 import intelligenceRoutes from './routes/intelligence.routes.js';
 import interviewRoutes from './routes/interview.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
@@ -342,6 +343,7 @@ export class ApiGateway {
       mountStub('/api/permission-requests', permissionRequestsRoutes, 'permissionRequestsRoutes');
 
       // Webhook routes (stripe webhook is handled by webhookRoutes)
+      app.use('/api/webhooks', sellixInboundWebhookRoutes);
       app.use('/api/webhooks', webhookRoutes);
 
       // Billing routes
