@@ -22,20 +22,18 @@ const safeParse = (raw: string | null): NotebookPage[] => {
   try {
     const data = JSON.parse(raw);
     if (!Array.isArray(data)) return [];
-    return data
-      .filter(Boolean)
-      .map((x: any) => ({
-        id: String(x.id),
-        title: String(x.title || ''),
-        parentId: x.parentId ? String(x.parentId) : null,
-        projectId: x.projectId ? String(x.projectId) : null,
-        visibility: x.visibility === 'project' ? 'project' : 'private',
-        tags: Array.isArray(x.tags) ? x.tags.map((t: any) => String(t)).filter(Boolean) : [],
-        contentJson: x.contentJson ?? { type: 'doc', content: [] },
-        contentText: String(x.contentText || ''),
-        createdAt: String(x.createdAt || new Date().toISOString()),
-        updatedAt: String(x.updatedAt || new Date().toISOString()),
-      })) as NotebookPage[];
+    return data.filter(Boolean).map((x: any) => ({
+      id: String(x.id),
+      title: String(x.title || ''),
+      parentId: x.parentId ? String(x.parentId) : null,
+      projectId: x.projectId ? String(x.projectId) : null,
+      visibility: x.visibility === 'project' ? 'project' : 'private',
+      tags: Array.isArray(x.tags) ? x.tags.map((t: any) => String(t)).filter(Boolean) : [],
+      contentJson: x.contentJson ?? { type: 'doc', content: [] },
+      contentText: String(x.contentText || ''),
+      createdAt: String(x.createdAt || new Date().toISOString()),
+      updatedAt: String(x.updatedAt || new Date().toISOString()),
+    })) as NotebookPage[];
   } catch {
     return [];
   }
@@ -77,7 +75,12 @@ export const deleteNotebookPage = (userId: string, pageId: string): NotebookPage
 
 export const createNotebookPage = (
   userId: string,
-  input: Partial<Pick<NotebookPage, 'title' | 'projectId' | 'visibility' | 'tags' | 'contentJson' | 'contentText'>>
+  input: Partial<
+    Pick<
+      NotebookPage,
+      'title' | 'projectId' | 'visibility' | 'tags' | 'contentJson' | 'contentText'
+    >
+  >
 ): NotebookPage => {
   const now = new Date().toISOString();
   const page: NotebookPage = {
@@ -95,4 +98,3 @@ export const createNotebookPage = (
   upsertNotebookPage(userId, page);
   return page;
 };
-

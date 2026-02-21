@@ -18,7 +18,16 @@
  * @version 1.0.0
  */
 
-import { Bot, Briefcase, History, MessageSquare, Plus, Sparkles, Volume2, VolumeX } from 'lucide-react';
+import {
+  Bot,
+  Briefcase,
+  History,
+  MessageSquare,
+  Plus,
+  Sparkles,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -45,13 +54,13 @@ import {
 } from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
+import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
-import { ChatSignalsPanel } from './ChatSignalsPanel';
 
 // ============================================================================
 // Types

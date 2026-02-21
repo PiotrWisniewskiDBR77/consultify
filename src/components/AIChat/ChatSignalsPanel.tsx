@@ -3,16 +3,16 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { useNotificationSnooze, type SnoozePreset } from '@/hooks/useNotificationSnooze';
+import { type SnoozePreset, useNotificationSnooze } from '@/hooks/useNotificationSnooze';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
+import { createNotebookPage } from '@/utils/notebookStorage';
 import {
   getMutedNotificationTypes,
   isNotificationTypeMuted,
   muteNotificationTypeForSession,
   NOTIFICATION_MUTE_SESSION_CHANGED_EVENT,
 } from '@/utils/notificationMuteSession';
-import { createNotebookPage } from '@/utils/notebookStorage';
 
 type Notification = {
   id: string;
@@ -35,7 +35,9 @@ interface ChatSignalsPanelProps {
 
 const isAiSignal = (n: Notification) => {
   const t = String(n.type || '').toUpperCase();
-  return t.includes('AI') || t.includes('RECOMMENDATION') || t.includes('INSIGHT') || t.includes('RISK');
+  return (
+    t.includes('AI') || t.includes('RECOMMENDATION') || t.includes('INSIGHT') || t.includes('RISK')
+  );
 };
 
 const clampText = (s: string, max = 220) => {
@@ -76,7 +78,8 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
   useEffect(() => {
     const handler = () => setMutedTypes(getMutedNotificationTypes());
     window.addEventListener(NOTIFICATION_MUTE_SESSION_CHANGED_EVENT, handler as any);
-    return () => window.removeEventListener(NOTIFICATION_MUTE_SESSION_CHANGED_EVENT, handler as any);
+    return () =>
+      window.removeEventListener(NOTIFICATION_MUTE_SESSION_CHANGED_EVENT, handler as any);
   }, []);
 
   const visibleSignals = useMemo(() => {
@@ -108,9 +111,7 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
           sourceConversationId: null,
           sourceMessageId: null,
         });
-        toast.success(
-          isPolish ? 'Zapisano do My Ideas' : 'Saved to My Ideas'
-        );
+        toast.success(isPolish ? 'Zapisano do My Ideas' : 'Saved to My Ideas');
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error('Failed to save to My Ideas:', e);
@@ -134,9 +135,7 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
         contentText: body,
         contentJson: {
           type: 'doc',
-          content: [
-            { type: 'paragraph', content: [{ type: 'text', text: body || '' }] },
-          ],
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: body || '' }] }],
         },
       });
       toast.success(isPolish ? 'Zapisano do Notebook' : 'Saved to Notebook');
@@ -216,7 +215,8 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
                     {n.title || t('aiChat.signals.untitled', 'Signal')}
                   </div>
                   <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                    {clampText(n.message || n.body || '') || t('aiChat.signals.noDetails', 'No details')}
+                    {clampText(n.message || n.body || '') ||
+                      t('aiChat.signals.noDetails', 'No details')}
                   </div>
 
                   {(n.projectName || n.projectId) && (
@@ -245,7 +245,13 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
                     <button
                       onClick={() => handleSnooze(n, '1h')}
                       className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 px-2.5 py-1.5 text-xs font-medium hover:bg-slate-200 dark:hover:bg-white/[0.10]"
-                      title={snoozedLabel ? (isPolish ? `Wyciszone: ${snoozedLabel}` : `Snoozed: ${snoozedLabel}`) : undefined}
+                      title={
+                        snoozedLabel
+                          ? isPolish
+                            ? `Wyciszone: ${snoozedLabel}`
+                            : `Snoozed: ${snoozedLabel}`
+                          : undefined
+                      }
                     >
                       <Clock size={14} />
                       {t('aiChat.signals.snooze', 'Snooze')}
@@ -287,4 +293,3 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
     </div>
   );
 };
-

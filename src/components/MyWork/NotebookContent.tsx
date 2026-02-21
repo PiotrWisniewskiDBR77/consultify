@@ -1,8 +1,8 @@
-import { EditorContent, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
+import { EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
 import { BookOpen, Plus, Search, Trash2 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -83,12 +83,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   useEffect(() => {
     if (!editor) return;
     if (!activePage) {
-      editor.commands.setContent({ type: 'doc', content: [] }, false);
+      editor.commands.setContent({ type: 'doc', content: [] }, { emitUpdate: false });
       setTitle('');
       setPageProjectId('');
       return;
     }
-    editor.commands.setContent(activePage.contentJson || { type: 'doc', content: [] }, false);
+    editor.commands.setContent(activePage.contentJson || { type: 'doc', content: [] }, { emitUpdate: false });
     setTitle(activePage.title || '');
     setPageProjectId(activePage.projectId || '');
   }, [activePage?.id, editor]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -99,7 +99,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   }, [pages.length, onCountsChange]);
 
   const filteredPages = useMemo(() => {
-    const q = String(searchQuery || '').trim().toLowerCase();
+    const q = String(searchQuery || '')
+      .trim()
+      .toLowerCase();
     let list = pages;
     if (projectId) {
       list = list.filter((p) => p.projectId === projectId);
@@ -108,7 +110,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     return list.filter((p) => {
       return (
         p.title.toLowerCase().includes(q) ||
-        String(p.contentText || '').toLowerCase().includes(q) ||
+        String(p.contentText || '')
+          .toLowerCase()
+          .includes(q) ||
         p.tags.some((t) => t.toLowerCase().includes(q))
       );
     });
@@ -212,9 +216,13 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       : 'hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-200'
                   }`}
                 >
-                  <div className="font-medium truncate">{p.title || (isPolish ? 'Bez tytułu' : 'Untitled')}</div>
+                  <div className="font-medium truncate">
+                    {p.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+                  </div>
                   <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    {p.projectId ? `${t('myWork.notebook.project', 'Project')}: ${p.projectId}` : t('myWork.notebook.private', 'Private')}
+                    {p.projectId
+                      ? `${t('myWork.notebook.project', 'Project')}: ${p.projectId}`
+                      : t('myWork.notebook.private', 'Private')}
                   </div>
                 </button>
               );
@@ -258,7 +266,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     value={pageProjectId}
                     onChange={(e) => {
                       setPageProjectId(e.target.value);
-                      scheduleSave({ projectId: e.target.value || null, visibility: e.target.value ? 'project' : 'private' });
+                      scheduleSave({
+                        projectId: e.target.value || null,
+                        visibility: e.target.value ? 'project' : 'private',
+                      });
                     }}
                     placeholder={isPolish ? 'Project ID (opcjonalnie)' : 'Project ID (optional)'}
                     className="w-72 max-w-full rounded-md border border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-900 px-2 py-1 text-xs text-slate-700 dark:text-slate-200 outline-none"
@@ -291,4 +302,3 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     </div>
   );
 };
-

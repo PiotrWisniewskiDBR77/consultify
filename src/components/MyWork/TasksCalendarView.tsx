@@ -34,7 +34,9 @@ const startOfWeekMonday = (d: Date) => {
 };
 
 const sameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
 
 const isTaskDone = (status?: string | null) => {
   const s = String(status || '').toLowerCase();
@@ -134,7 +136,9 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
       total: tasks.length,
       overdue: tasks.filter((x) => isOverdue(x.dueDate, x.status)).length,
       today: tasks.filter((x) => x.dueDate && sameDay(new Date(x.dueDate), today)).length,
-      week: tasks.filter((x) => x.dueDate && new Date(x.dueDate) >= start && new Date(x.dueDate) < end).length,
+      week: tasks.filter(
+        (x) => x.dueDate && new Date(x.dueDate) >= start && new Date(x.dueDate) < end
+      ).length,
       urgent: tasks.filter((x) => isUrgent(x.priority)).length,
     };
     onCountsChange(counts);
@@ -219,11 +223,13 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
         <div className="flex items-center gap-2">
           <button
             className="rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2 py-1 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
-            onClick={() => setWeekStart((d) => {
-              const next = new Date(d);
-              next.setDate(next.getDate() - 7);
-              return next;
-            })}
+            onClick={() =>
+              setWeekStart((d) => {
+                const next = new Date(d);
+                next.setDate(next.getDate() - 7);
+                return next;
+              })
+            }
           >
             {t('common.prev', 'Prev')}
           </button>
@@ -235,11 +241,13 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
           </button>
           <button
             className="rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2 py-1 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
-            onClick={() => setWeekStart((d) => {
-              const next = new Date(d);
-              next.setDate(next.getDate() + 7);
-              return next;
-            })}
+            onClick={() =>
+              setWeekStart((d) => {
+                const next = new Date(d);
+                next.setDate(next.getDate() + 7);
+                return next;
+              })
+            }
           >
             {t('common.next', 'Next')}
           </button>
@@ -306,7 +314,10 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
                         aria-label={t('myWork.calendar.setDueDate', 'Set due date')}
                       />
                       {updatingDueDate[task.id] && (
-                        <Loader2 size={14} className="animate-spin text-slate-500 dark:text-slate-400" />
+                        <Loader2
+                          size={14}
+                          className="animate-spin text-slate-500 dark:text-slate-400"
+                        />
                       )}
                     </div>
                   </div>
@@ -381,4 +392,3 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
     </div>
   );
 };
-

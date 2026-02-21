@@ -54,11 +54,11 @@ import { InboxContent } from './InboxContent';
 import { type MyIdea, MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
 import { NotebookContent } from './NotebookContent';
-import { TasksCalendarView } from './TasksCalendarView';
 import { NotificationDetailView } from './NotificationDetailView';
 import { NotificationsContent } from './NotificationsContent';
 import { NotificationsKanbanBoard } from './NotificationsKanbanBoard';
 import { TaskDetailView } from './TaskDetailView';
+import { TasksCalendarView } from './TasksCalendarView';
 import { TasksKanbanBoard } from './TasksKanbanBoard';
 
 // Types
