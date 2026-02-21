@@ -3910,6 +3910,71 @@ ${JSON.stringify(questions || [], null, 2)}
 
     res.json({ success: true, target: 'assessment', targetId: assessmentId, assessmentType });
   }),
+
+  // ==========================================
+  // TRANSCRIPT (T013)
+  // ==========================================
+
+  getTranscript: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 200;
+    const transcriptService = await import('../services/interviewTranscriptService.js');
+    const messages = await transcriptService.getMessages(user.organizationId, sessionId, limit);
+    res.json({ messages });
+  }),
+
+  addTranscriptMessage: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+    const { role, content, metadata } = req.body;
+    if (!content || !role) {
+      res.status(400).json({ error: 'role and content are required' });
+      return;
+    }
+    const transcriptService = await import('../services/interviewTranscriptService.js');
+    const msg = await transcriptService.addMessage(user.organizationId, sessionId, role, content, metadata);
+    res.status(201).json(msg);
+  }),
+
+  // ==========================================
+  // INFERENCE (T016)
+  // ==========================================
+
+  startInferenceRun: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { projectId, sessionIds } = req.body;
+    if (!sessionIds || !Array.isArray(sessionIds) || sessionIds.length === 0) {
+      res.status(400).json({ error: 'sessionIds array is required' });
+      return;
+    }
+    const inferenceService = await import('../services/interviewInferenceService.js');
+    const runId = await inferenceService.startInferenceRun(user.organizationId, projectId, sessionIds, user.id);
+    inferenceService.executeInference(user.organizationId, runId).catch((err: any) => {
+      logger.error(`[Inference] Run ${runId} failed:`, err.message);
+    });
+    res.status(201).json({ runId, status: 'running' });
+  }),
+
+  getInferenceRuns: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { projectId } = req.query;
+    const inferenceService = await import('../services/interviewInferenceService.js');
+    const runs = await inferenceService.getInferenceRuns(user.organizationId, projectId as string);
+    res.json({ runs });
+  }),
+
+  getInferenceRun: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { runId } = req.params;
+    const inferenceService = await import('../services/interviewInferenceService.js');
+    const run = await inferenceService.getInferenceRun(user.organizationId, runId);
+    if (!run) {
+      res.status(404).json({ error: 'Inference run not found' });
+      return;
+    }
+    res.json(run);
+  }),
 };
 
 export default InterviewController;

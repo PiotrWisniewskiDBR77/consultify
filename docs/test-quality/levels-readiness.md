@@ -1,6 +1,6 @@
 # Test system readiness (L1–L5) — honest audit
 
-Generated: 2026-02-15
+Generated: 2026-02-15 (snapshot)
 
 This document summarizes the current automated test system readiness by level L1–L5, focusing on **how much tests touch real application code** and whether the level is runnable deterministically.
 
@@ -87,3 +87,10 @@ Current gates:
 - Expand L1 scope file-by-file (keep narrow include lists and strict thresholds).
 - Grow L3 with more router/controller tests that do **not** require `listen()` in CI/sandbox.
 - Run L4 in CI with a deterministic environment (webServer enabled or test deployment) and keep skips explicit/reasoned.
+
+## 2026-02-21 plan update (scope expansion targets)
+
+Recent merges significantly expanded the runtime surface area (backend routes/services + frontend hubs/components). The next planned expansions are tracked in:
+
+- `docs/test-quality/levels-l1-l5-95-roadmap.md` (execution checklist)
+- `docs/plans/TESTING_BACKLOG_98_COVERAGE_ZERO_PLACEHOLDERS_2026-02-18.md` (epics/tickets)

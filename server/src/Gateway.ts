@@ -20,7 +20,7 @@ import aiInfrastructureRoutes from './routes/ai/ai-infrastructure.routes.js';
 import aiMemoryRoutes from './routes/ai/ai-memory.routes.js';
 import aiOperationsRoutes from './routes/ai/ai-operations.routes.js';
 import aiPreferencesExtendedRoutes from './routes/ai/ai-preferences-extended.routes.js';
-import aiPromptsRoutes from './routes/ai/ai-prompts.routes.js';
+import aiPromptsRoutes from './routes/ai-prompts.routes.js';
 import aiSecurityRoutes from './routes/ai/ai-security.routes.js';
 import aiSettingsRoutes from './routes/ai/ai-settings.routes.js';
 import aiTrainingRoutes from './routes/ai/ai-training.routes.js';
@@ -54,6 +54,7 @@ import tokenBillingRoutes from './routes/billing/tokenBilling.routes.js';
 import budgetRoutes from './routes/budget.routes.js';
 import budgetsRoutes from './routes/budgets.routes.js';
 import capabilityRoutes from './routes/capability.routes.js';
+import competencyRoutes from './routes/competency.routes.js';
 import changeSentimentRoutes from './routes/change-sentiment.routes.js';
 import chatProjectsRoutes from './routes/chat-projects.routes.js';
 import cloudRoutes from './routes/cloud.routes.js';
@@ -312,6 +313,8 @@ export class ApiGateway {
       app.use('/api/ai-memory', aiMemoryRoutes);
       app.use('/api/ai-drafts', aiDraftsRoutes);
       app.use('/api/ai-prompts', aiPromptsRoutes);
+      // T116: legacy alias — old controller-based path redirects to canonical
+      app.use('/api/ai/prompts', aiPromptsRoutes);
       app.use('/api/ai-security', aiSecurityRoutes);
       app.use('/api/ai-settings', aiSettingsRoutes);
       app.use('/api/ai-budgets', aiBudgetsRoutes);
@@ -358,6 +361,7 @@ export class ApiGateway {
       app.use('/api/analytics', analyticsRoutes);
       app.use('/api/feedback', feedbackRoutes);
       app.use('/api/capabilities', capabilityRoutes);
+      app.use('/api/competency', competencyRoutes);
       app.use('/api/change-sentiment', changeSentimentRoutes);
       app.use('/api/stakeholder-comm', stakeholderCommRoutes);
       app.use('/api/access-control', accessControlRoutes);

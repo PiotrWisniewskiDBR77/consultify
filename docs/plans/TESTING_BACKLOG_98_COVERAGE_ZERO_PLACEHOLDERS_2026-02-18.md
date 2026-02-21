@@ -366,6 +366,23 @@ These choices are **mandatory** for implementation. No alternative paths unless 
 - **Acceptance criteria**:
   - Add N new files per week into `scripts/testing/coverage-thresholds.ts` (or equivalent), each at ≥95% per-file.
   - Each addition comes with tests that exercise real code paths.
+  - Each tranche is recorded in `docs/test-quality/levels-l1-l5-95-roadmap.md` (treat it as the execution checklist).
+
+**2026-02-21 recommended first tranches (based on recent large merges touching `server/src/**` + `src/components/**`):**
+
+- **L1 (security boundary middleware):**
+  - `server/src/middleware/rateLimitUserId.middleware.ts`
+  - `server/src/middleware/resourceQuota.middleware.ts`
+  - `server/src/utils/security.utils.ts`
+- **L2 (UI boundary — AI Chat):**
+  - Ensure L2 runner includes `tests/components/AIChat/**` so it actually executes under `test:l2:coverage`.
+  - Gate files:
+    - `src/components/AIChat/UnifiedChatPanel.tsx`
+    - `src/components/AIChat/CoThinkerModeSelector.tsx`
+    - `src/components/AIChat/ToolsMenu.tsx`
+    - `src/components/AIChat/ConversationList.tsx`
+- **L3 (integration — deterministic DB-backed routes):**
+  - `server/src/routes/billing/billing.routes.ts` (align with existing integration suites under `tests/integration/routes/billing*.test.*`)
 
 ### QA-033 (P1) — Remove dead/unreachable code that blocks coverage
 **Goal**: don’t “test the impossible”; delete it.

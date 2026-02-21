@@ -21,9 +21,11 @@ export type FunnelEventName =
   | 'inference_run_started'
   | 'inference_run_completed'
   | 'inference_run_failed'
+  | 'insight_generated'
   | 'insight_approved'
   | 'insight_regenerated'
   | 'insight_exported'
+  | 'insight_used_in_ai_context'
   | 'sponsor_report_created'
   | 'sponsor_report_generated'
   | 'sponsor_report_section_edited'
@@ -248,7 +250,14 @@ export type FunnelEventName =
   | 'superadmin_impersonation_started'
   | 'superadmin_impersonation_ended'
   | 'test_support_bootstrap_called'
-  | 'test_support_cleanup_called';
+  | 'test_support_cleanup_called'
+  // T116 — AI Prompt Management & Learning
+  | 'prompt_version_published'
+  | 'prompt_version_rolled_back'
+  | 'prompt_ab_experiment_started'
+  | 'prompt_ab_experiment_winner_promoted'
+  | 'ai_feedback_submitted'
+  | 'ai_learning_instruction_applied';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

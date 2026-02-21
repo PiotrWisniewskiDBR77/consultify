@@ -5,6 +5,7 @@
  */
 
 import {
+  BookOpen,
   Building2,
   ChevronDown,
   CreditCard,
@@ -29,6 +30,7 @@ export type OrganizationSection =
   | 'megatrends'
   | 'strategy'
   | 'members'
+  | 'competencies'
   | 'billing'
   | 'limits'
   | 'domains'
@@ -113,6 +115,12 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
             labelKey: 'organization.sidebar.members',
             defaultLabel: 'Members',
             icon: Users,
+          },
+          {
+            id: 'competencies',
+            labelKey: 'organization.sidebar.competencies',
+            defaultLabel: 'Competencies',
+            icon: BookOpen,
           },
           {
             id: 'billing',

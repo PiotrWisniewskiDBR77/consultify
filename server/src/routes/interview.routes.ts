@@ -271,6 +271,29 @@ router.post('/questions/:questionId/ai-suggest', InterviewController.aiSuggestQu
 router.post('/sessions/:sessionId/ai-parse', InterviewController.aiParseSessionAnswers);
 
 // ==========================================
+// TRANSCRIPT ROUTES (T013 Conversational)
+// ==========================================
+
+/** GET /interview/sessions/:sessionId/transcript - Get transcript messages */
+router.get('/sessions/:sessionId/transcript', InterviewController.getTranscript);
+
+/** POST /interview/sessions/:sessionId/transcript - Add transcript message */
+router.post('/sessions/:sessionId/transcript', InterviewController.addTranscriptMessage);
+
+// ==========================================
+// INFERENCE ROUTES (T016 Structured Insights)
+// ==========================================
+
+/** POST /interview/inference/run - Start new inference run */
+router.post('/inference/run', InterviewController.startInferenceRun);
+
+/** GET /interview/inference/runs - List inference runs */
+router.get('/inference/runs', InterviewController.getInferenceRuns);
+
+/** GET /interview/inference/runs/:runId - Get inference run status */
+router.get('/inference/runs/:runId', InterviewController.getInferenceRun);
+
+// ==========================================
 // NOTES ROUTES
 // ==========================================
 

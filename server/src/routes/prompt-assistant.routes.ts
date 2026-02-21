@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
+import promptAssembler from '../services/ai/promptAssembler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
@@ -374,6 +375,38 @@ router.delete('/chat/history', async (req: AuthRequest, res: Response) => {
   } catch (err: any) {
     logger.warn('[prompt-assistant] clear history failed', err);
     return res.status(500).json({ success: false, error: 'Failed to clear history' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ASSEMBLER (T116) — Prompt compilation pipeline
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/prompt-assistant/assemble
+ * Compile a full prompt using the Prompt Assembler pipeline.
+ * Used by: test bench, preview, and production endpoints.
+ */
+router.post('/assemble', async (req: AuthRequest, res: Response) => {
+  try {
+    const { promptKey, blockCodes, variables, organizationId, language } = req.body;
+
+    if (!promptKey) {
+      return res.status(400).json({ success: false, error: 'promptKey is required' });
+    }
+
+    const result = await promptAssembler.preview({
+      promptKey,
+      blockCodes,
+      variables,
+      organizationId,
+      language,
+    });
+
+    return res.json({ success: true, data: result });
+  } catch (err: any) {
+    logger.warn('[prompt-assistant] assemble failed', err);
+    return res.status(500).json({ success: false, error: err?.message || 'Assembly failed' });
   }
 });
 
