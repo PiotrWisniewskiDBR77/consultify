@@ -1881,42 +1881,27 @@
       "registered": {
         "name": "Zarejestrowany",
         "requirement": "Zacznij tutaj",
-        "benefits": [
-          "Podstawowe narzędzia",
-          "Wpis w katalogu"
-        ]
+        "benefits": ["Podstawowe narzędzia", "Wpis w katalogu"]
       },
       "bronze": {
         "name": "Brązowy",
         "requirement": "3+ klientów, €5K ARR",
-        "benefits": [
-          "Priorytetowe wsparcie",
-          "Materiały szkoleniowe"
-        ]
+        "benefits": ["Priorytetowe wsparcie", "Materiały szkoleniowe"]
       },
       "silver": {
         "name": "Srebrny",
         "requirement": "10+ klientów, €25K ARR",
-        "benefits": [
-          "Dedykowany manager",
-          "Dostęp do beta funkcji"
-        ]
+        "benefits": ["Dedykowany manager", "Dostęp do beta funkcji"]
       },
       "gold": {
         "name": "Złoty",
         "requirement": "25+ klientów, €75K ARR",
-        "benefits": [
-          "Co-marketing",
-          "Wystąpienia na konferencjach"
-        ]
+        "benefits": ["Co-marketing", "Wystąpienia na konferencjach"]
       },
       "platinum": {
         "name": "Platynowy",
         "requirement": "50+ klientów, €200K+",
-        "benefits": [
-          "Zwiększony udział w przychodach",
-          "Partnerstwo na poziomie zarządu"
-        ]
+        "benefits": ["Zwiększony udział w przychodach", "Partnerstwo na poziomie zarządu"]
       }
     },
     "onboarding": {
@@ -3424,12 +3409,30 @@
     "conversion": {
       "startTrial": "Rozpocznij darmowy okres próbny",
       "persistentCta": "Rozpocznij darmowy okres próbny",
-      "reportGenerated": { "title": "Twój raport jest gotowy!", "desc": "Wyobraź sobie generowanie takich raportów z danymi Twojej firmy. Rozpocznij okres próbny." },
-      "deckExported": { "title": "Prezentacja wyeksportowana!", "desc": "Eksportuj gotowe prezentacje z danych transformacji Twojej firmy. Rozpocznij okres próbny." },
-      "initiativeCreated": { "title": "Inicjatywa utworzona!", "desc": "Śledź swoje inicjatywy z pełną widocznością realizacji. Rozpocznij okres próbny." },
-      "toolCompleted": { "title": "Ocena zakończona!", "desc": "Przeprowadzaj oceny ze swoim zespołem i uzyskaj wnioski AI. Rozpocznij okres próbny." },
-      "aiInsight": { "title": "Wygenerowano wniosek AI!", "desc": "Otrzymuj rekomendacje AI w kontekście Twojej organizacji. Rozpocznij okres próbny." },
-      "kpiViewed": { "title": "Śledzenie KPI w czasie rzeczywistym", "desc": "Śledź KPI w czasie rzeczywistym z automatyczną analizą trendów. Rozpocznij okres próbny." }
+      "reportGenerated": {
+        "title": "Twój raport jest gotowy!",
+        "desc": "Wyobraź sobie generowanie takich raportów z danymi Twojej firmy. Rozpocznij okres próbny."
+      },
+      "deckExported": {
+        "title": "Prezentacja wyeksportowana!",
+        "desc": "Eksportuj gotowe prezentacje z danych transformacji Twojej firmy. Rozpocznij okres próbny."
+      },
+      "initiativeCreated": {
+        "title": "Inicjatywa utworzona!",
+        "desc": "Śledź swoje inicjatywy z pełną widocznością realizacji. Rozpocznij okres próbny."
+      },
+      "toolCompleted": {
+        "title": "Ocena zakończona!",
+        "desc": "Przeprowadzaj oceny ze swoim zespołem i uzyskaj wnioski AI. Rozpocznij okres próbny."
+      },
+      "aiInsight": {
+        "title": "Wygenerowano wniosek AI!",
+        "desc": "Otrzymuj rekomendacje AI w kontekście Twojej organizacji. Rozpocznij okres próbny."
+      },
+      "kpiViewed": {
+        "title": "Śledzenie KPI w czasie rzeczywistym",
+        "desc": "Śledź KPI w czasie rzeczywistym z automatyczną analizą trendów. Rozpocznij okres próbny."
+      }
     },
     "signup": {
       "title": "Rozpocznij darmowy okres próbny",
@@ -3453,7 +3456,11 @@
       "name": "Archilex Group",
       "tagline": "Architecting Legal Excellence",
       "industry": "Usługi profesjonalne — prawo i compliance",
-      "scenario": { "executive": "Przegląd dla zarządu", "initiatives": "Inicjatywy i realizacja — szczegóły", "finance": "Finanse i ROI — szczegóły" }
+      "scenario": {
+        "executive": "Przegląd dla zarządu",
+        "initiatives": "Inicjatywy i realizacja — szczegóły",
+        "finance": "Finanse i ROI — szczegóły"
+      }
     }
   },
   "ui": {
@@ -3599,5 +3606,65 @@
       "addFailed": "Nie udało się dodać wymagania",
       "deleteFailed": "Nie udało się usunąć wymagania"
     }
+  },
+  "skillsGap": {
+    "title": "Analiza luk kompetencyjnych",
+    "empty": "Dodaj wymagania kompetencyjne, aby zobaczyć analizę luk",
+    "tabs": {
+      "requirements": "Wg wymagania",
+      "persons": "Wg osoby",
+      "summary": "Podsumowanie"
+    },
+    "status": {
+      "covered": "Pokryte",
+      "partial": "Częściowo",
+      "missing": "Brak",
+      "unknown": "Nieznane"
+    },
+    "unknownCoverage": {
+      "title": "Nieznane pokrycie",
+      "description": "{{count}} z {{total}} członków zespołu nie ma profilu kompetencji. Analiza luk może być niepełna."
+    },
+    "mustHave": "Wymagane",
+    "levelRequired": "P{{level}}",
+    "best": "najlepszy",
+    "noProfile": "Brak profilu",
+    "noGaps": "Brak luk",
+    "gapCount": "{{count}} luka/luki",
+    "noTeam": "Brak członków zespołu przypisanych do tej inicjatywy",
+    "summary": {
+      "readiness": "Gotowość",
+      "teamSize": "Wielkość zespołu",
+      "withProfiles": "z profilami",
+      "mustHaveGaps": "Luki wymagane",
+      "ofMustHave": "z {{total}} wymaganych",
+      "actions": "Zalecane działania"
+    }
+  },
+  "coreDocs": {
+    "title": "Dokumentacja systemowa",
+    "systemBrain": "Mózg systemu",
+    "status": "Status",
+    "indexed": "Zaindeksowane",
+    "stale": "Nieaktualne",
+    "notIndexed": "Niezaindeksowane",
+    "missingFile": "Brak pliku",
+    "upToDate": "Aktualne",
+    "version": "Wersja",
+    "lastIndexed": "Ostatnia indeksacja",
+    "fileHash": "Hash pliku",
+    "chunks": "Fragmenty",
+    "reindex": "Indeksuj teraz",
+    "reindexAll": "Reindeksuj całą dokumentację",
+    "reindexReason": "Powód reindeksacji",
+    "reindexSuccess": "Reindeksacja zakończona pomyślnie",
+    "drift": "Wykrywanie zmian",
+    "driftAlert": "Niektóre dokumenty zmieniły się od ostatniej indeksacji",
+    "noDrift": "Wszystkie dokumenty są aktualne",
+    "previewSnippets": "Podgląd fragmentów",
+    "totalDocs": "Łączna liczba dokumentów",
+    "citation": "Cytowanie",
+    "citations": "Cytowania",
+    "governanceWarning": "Odpowiedź dotycząca governance wymaga min. 1 cytowania z dokumentacji systemowej"
   }
 }

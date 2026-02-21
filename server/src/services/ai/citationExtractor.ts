@@ -17,7 +17,9 @@ export interface Citation {
     | 'roadmap'
     | 'external'
     | 'document'
-    | 'knowledge';
+    | 'knowledge'
+    | 'system_doc'
+    | 'core_doc';
   sourceId?: string;
   sourceTitle?: string;
   sourceUrl?: string;

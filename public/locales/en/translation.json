@@ -394,42 +394,27 @@
       "registered": {
         "name": "Registered",
         "requirement": "Start here",
-        "benefits": [
-          "Basic tools",
-          "Directory listing"
-        ]
+        "benefits": ["Basic tools", "Directory listing"]
       },
       "bronze": {
         "name": "Bronze",
         "requirement": "3+ clients, €5K ARR",
-        "benefits": [
-          "Priority support",
-          "Training materials"
-        ]
+        "benefits": ["Priority support", "Training materials"]
       },
       "silver": {
         "name": "Silver",
         "requirement": "10+ clients, €25K ARR",
-        "benefits": [
-          "Dedicated manager",
-          "Beta feature access"
-        ]
+        "benefits": ["Dedicated manager", "Beta feature access"]
       },
       "gold": {
         "name": "Gold",
         "requirement": "25+ clients, €75K ARR",
-        "benefits": [
-          "Co-marketing",
-          "Conference speaking"
-        ]
+        "benefits": ["Co-marketing", "Conference speaking"]
       },
       "platinum": {
         "name": "Platinum",
         "requirement": "50+ clients, €200K+",
-        "benefits": [
-          "Revenue share boost",
-          "Executive partnership"
-        ]
+        "benefits": ["Revenue share boost", "Executive partnership"]
       }
     },
     "onboarding": {
@@ -3424,12 +3409,30 @@
     "conversion": {
       "startTrial": "Start Free Trial",
       "persistentCta": "Start Free Trial",
-      "reportGenerated": { "title": "Your report is ready!", "desc": "Imagine generating reports like this with your own company data. Start a free trial." },
-      "deckExported": { "title": "Deck exported successfully!", "desc": "Export board-ready decks from your own transformation data. Start a free trial." },
-      "initiativeCreated": { "title": "Initiative created!", "desc": "Track your real initiatives with full execution visibility. Start a free trial." },
-      "toolCompleted": { "title": "Assessment complete!", "desc": "Run assessments with your team and get AI-powered insights. Start a free trial." },
-      "aiInsight": { "title": "AI insight generated!", "desc": "Get AI recommendations based on your organization's context. Start a free trial." },
-      "kpiViewed": { "title": "Real-time KPI tracking", "desc": "Track your KPIs in real-time with automatic trend analysis. Start a free trial." }
+      "reportGenerated": {
+        "title": "Your report is ready!",
+        "desc": "Imagine generating reports like this with your own company data. Start a free trial."
+      },
+      "deckExported": {
+        "title": "Deck exported successfully!",
+        "desc": "Export board-ready decks from your own transformation data. Start a free trial."
+      },
+      "initiativeCreated": {
+        "title": "Initiative created!",
+        "desc": "Track your real initiatives with full execution visibility. Start a free trial."
+      },
+      "toolCompleted": {
+        "title": "Assessment complete!",
+        "desc": "Run assessments with your team and get AI-powered insights. Start a free trial."
+      },
+      "aiInsight": {
+        "title": "AI insight generated!",
+        "desc": "Get AI recommendations based on your organization's context. Start a free trial."
+      },
+      "kpiViewed": {
+        "title": "Real-time KPI tracking",
+        "desc": "Track your KPIs in real-time with automatic trend analysis. Start a free trial."
+      }
     },
     "signup": {
       "title": "Start Your Free Trial",
@@ -3453,7 +3456,11 @@
       "name": "Archilex Group",
       "tagline": "Architecting Legal Excellence",
       "industry": "Professional Services — Legal & Compliance",
-      "scenario": { "executive": "Executive Overview", "initiatives": "Deep Dive: Initiatives & Execution", "finance": "Deep Dive: Finance & ROI" }
+      "scenario": {
+        "executive": "Executive Overview",
+        "initiatives": "Deep Dive: Initiatives & Execution",
+        "finance": "Deep Dive: Finance & ROI"
+      }
     }
   },
   "ui": {
@@ -3599,5 +3606,65 @@
       "addFailed": "Failed to add requirement",
       "deleteFailed": "Failed to remove requirement"
     }
+  },
+  "skillsGap": {
+    "title": "Skills Gap Analysis",
+    "empty": "Add competency requirements to see gap analysis",
+    "tabs": {
+      "requirements": "By Requirement",
+      "persons": "By Person",
+      "summary": "Summary"
+    },
+    "status": {
+      "covered": "Covered",
+      "partial": "Partial",
+      "missing": "Missing",
+      "unknown": "Unknown"
+    },
+    "unknownCoverage": {
+      "title": "Unknown coverage",
+      "description": "{{count}} of {{total}} team members have no competency profile. Gap analysis may be incomplete."
+    },
+    "mustHave": "Must-have",
+    "levelRequired": "L{{level}}",
+    "best": "best",
+    "noProfile": "No profile",
+    "noGaps": "No gaps",
+    "gapCount": "{{count}} gap(s)",
+    "noTeam": "No team members assigned to this initiative",
+    "summary": {
+      "readiness": "Readiness",
+      "teamSize": "Team Size",
+      "withProfiles": "with profiles",
+      "mustHaveGaps": "Must-Have Gaps",
+      "ofMustHave": "of {{total}} must-have",
+      "actions": "Recommended Actions"
+    }
+  },
+  "coreDocs": {
+    "title": "Core Documentation",
+    "systemBrain": "System Brain",
+    "status": "Status",
+    "indexed": "Indexed",
+    "stale": "Stale",
+    "notIndexed": "Not Indexed",
+    "missingFile": "File Missing",
+    "upToDate": "Up to Date",
+    "version": "Version",
+    "lastIndexed": "Last Indexed",
+    "fileHash": "File Hash",
+    "chunks": "Chunks",
+    "reindex": "Reindex Now",
+    "reindexAll": "Reindex All Core Docs",
+    "reindexReason": "Reason for reindex",
+    "reindexSuccess": "Reindex completed successfully",
+    "drift": "Drift Detection",
+    "driftAlert": "Some core docs have changed since last index",
+    "noDrift": "All core docs are up to date",
+    "previewSnippets": "Preview Snippets",
+    "totalDocs": "Total Documents",
+    "citation": "Citation",
+    "citations": "Citations",
+    "governanceWarning": "Governance response requires at least 1 citation from core docs"
   }
 }

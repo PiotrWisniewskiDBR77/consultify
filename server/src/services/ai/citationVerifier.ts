@@ -29,6 +29,18 @@ export interface VerificationReport {
 }
 
 class CitationVerifierService {
+  checkGovernanceCitations(
+    citations: Citation[],
+    isGovernanceResponse: boolean
+  ): { sufficient: boolean; warning: string | null } {
+    if (!isGovernanceResponse) return { sufficient: true, warning: null };
+    if (citations.length >= 1) return { sufficient: true, warning: null };
+    return {
+      sufficient: false,
+      warning: 'Governance response requires at least 1 citation from core docs.',
+    };
+  }
+
   async verify(
     citations: Citation[],
     conversationId?: string,
@@ -82,8 +94,27 @@ class CitationVerifierService {
   }
 
   private async verifySingle(c: Citation): Promise<VerificationResult> {
+    if (c.sourceType === 'system_doc' || c.sourceType === 'core_doc') {
+      const exists = await this.checkExists(c.sourceId || '', 'document');
+      return {
+        citationId: c.id,
+        status: exists ? 'verified' : 'partial',
+        confidence: exists ? 0.95 : 0.5,
+        reason: exists ? 'System doc verified' : 'System doc reference (unlinked)',
+        sourceExists: exists,
+      };
+    }
     if (c.sourceType === 'external') {
       const valid = c.sourceUrl && /^https?:\/\/.+/.test(c.sourceUrl);
+      if (valid && (c as any).retrievedBySystem) {
+        return {
+          citationId: c.id,
+          status: 'verified',
+          confidence: 0.8,
+          reason: 'System-retrieved external source',
+          sourceExists: true,
+        };
+      }
       return {
         citationId: c.id,
         status: valid ? 'partial' : 'broken',
@@ -118,6 +149,8 @@ class CitationVerifierService {
       report: 'reports',
       document: 'knowledge_documents',
       knowledge: 'knowledge_documents',
+      system_doc: 'knowledge_documents',
+      core_doc: 'knowledge_documents',
     };
     const t = tables[type];
     if (!t) return false;

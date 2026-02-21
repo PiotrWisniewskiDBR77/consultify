@@ -20,6 +20,7 @@ let _pmoHealthService: any = null;
 let _aiActionExecutor: any = null;
 let _aiSettingsService: any = null;
 let _knowledgeService: any = null;
+let _coreDocsService: any = null;
 
 // Interfaces
 export interface ContextOptions {
@@ -103,6 +104,49 @@ async function getKnowledgeService() {
   return _knowledgeService;
 }
 
+async function getCoreDocsService() {
+  if (!_coreDocsService) {
+    try {
+      const mod = (await import('./ai/coreDocsService.js')) as any;
+      _coreDocsService = mod.coreDocsService || mod.default || mod;
+    } catch (e: unknown) {
+      logger.warn('[AIContextBuilder] CoreDocsService not available:', (e as Error).message);
+    }
+  }
+  return _coreDocsService;
+}
+
+const GOVERNANCE_KEYWORDS = [
+  'governance',
+  'policy',
+  'role',
+  'permission',
+  'gate',
+  'approval',
+  'dod',
+  'definition of done',
+  'economics',
+  'reporting',
+  'compliance',
+  'audit',
+  'artefact',
+  'artifact',
+  'traceability',
+  'pmo',
+  'standard',
+  'unblock',
+  'change request',
+  'escalation',
+  'steering',
+  'consultant',
+];
+
+function isGovernanceQuery(query?: string | null): boolean {
+  if (!query) return false;
+  const lower = query.toLowerCase();
+  return GOVERNANCE_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
 export const AIContextBuilder = {
   /**
    * Set dependencies for testing
@@ -184,6 +228,36 @@ export const AIContextBuilder = {
       AIContextBuilder._buildHistoricalPatternsContext(projectId, organizationId),
     ]);
 
+    let systemDocs: any = null;
+    try {
+      const CoreDocsService = await getCoreDocsService();
+      if (CoreDocsService) {
+        const queryHint = options.currentScreen || '';
+        const isGov = isGovernanceQuery(queryHint);
+        const maxSnippets = isGov ? 7 : 3;
+        const maxChars = isGov ? 4000 : 2000;
+        const snippets = await CoreDocsService.getSystemSnippets(
+          queryHint || undefined,
+          maxSnippets,
+          maxChars
+        );
+        if (snippets?.length) {
+          systemDocs = {
+            snippets: snippets.map((s: any) => ({
+              docTitle: s.docTitle,
+              docSlug: s.docSlug,
+              section: s.sectionTitle,
+              content: s.content,
+            })),
+            count: snippets.length,
+            isGovernanceEnhanced: isGov,
+          };
+        }
+      }
+    } catch (err: any) {
+      logger.warn('[AIContextBuilder] System docs layer failed:', (err as Error).message);
+    }
+
     const fullContext = {
       platform,
       organization,
@@ -198,6 +272,7 @@ export const AIContextBuilder = {
       assessmentData,
       financialData,
       historicalPatterns,
+      systemDocs,
     };
 
     const filteredContext = AIContextBuilder._applyFocusModeFilter(fullContext, focusMode);
@@ -247,6 +322,7 @@ export const AIContextBuilder = {
    * Apply focus mode filtering
    */
   _applyFocusModeFilter: (fullContext: any, focusMode: string) => {
+    const systemDocs = fullContext.systemDocs || null;
     switch (focusMode) {
       case 'pmo-docs':
         return {
@@ -264,6 +340,7 @@ export const AIContextBuilder = {
           external: null,
           pmo: fullContext.pmo,
           pendingApprovals: [],
+          systemDocs,
         };
 
       case 'project-data':
@@ -280,6 +357,7 @@ export const AIContextBuilder = {
           external: null,
           pmo: fullContext.pmo,
           pendingApprovals: fullContext.pendingApprovals,
+          systemDocs,
         };
 
       case 'research':
@@ -292,6 +370,7 @@ export const AIContextBuilder = {
           external: null,
           pmo: fullContext.pmo,
           pendingApprovals: fullContext.pendingApprovals,
+          systemDocs,
         };
 
       case 'web':
@@ -311,6 +390,7 @@ export const AIContextBuilder = {
           },
           pmo: null,
           pendingApprovals: [],
+          systemDocs,
         };
 
       case 'all':
