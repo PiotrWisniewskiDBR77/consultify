@@ -1,7 +1,7 @@
 /**
- * SidebarHeader Component - Apple HIG Design System
+ * SidebarHeader — Tech Sexy (T102)
  *
- * Logo and collapse toggle for the sidebar.
+ * Logo + collapse toggle. Monochromatic chrome, invisible borders.
  */
 
 import { motion } from 'framer-motion';
@@ -27,42 +27,37 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
 
   return (
     <div
-      className={`
-        flex items-center shrink-0 transition-all duration-300
-        ${showFull ? 'justify-between px-4 h-16' : 'flex-col justify-center gap-4 py-6'}
-      `}
+      className={[
+        'flex items-center shrink-0 transition-all duration-200',
+        showFull ? 'justify-between px-4 h-14' : 'flex-col justify-center gap-3 py-5',
+      ].join(' ')}
     >
       {showFull ? (
         <>
-          {/* Full Logo */}
           <motion.div
             className="flex items-center overflow-hidden flex-1 min-w-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
           >
             <img src={logoSrc} alt="Consultinity" className="max-w-full h-auto object-contain" />
           </motion.div>
 
-          {/* Collapse Button */}
           <motion.button
             type="button"
             onClick={onToggleCollapse}
             whileTap={{ scale: 0.95 }}
-            className={`
-              p-2 rounded-xl transition-colors duration-150 shrink-0 ml-2
-              text-slate-400 dark:text-slate-500 hover:bg-slate-200/70 dark:hover:bg-white/[0.06]
-            `}
+            className="p-1.5 rounded-lg transition-colors duration-150 shrink-0 ml-2 text-slate-500 dark:text-slate-500 hover:bg-white/[0.06]"
             title={t('sidebar.collapse', 'Collapse')}
+            aria-label={t('sidebar.collapse', 'Collapse sidebar')}
           >
-            <PanelLeftClose size={20} />
+            <PanelLeftClose size={18} strokeWidth={1.75} />
           </motion.button>
         </>
       ) : (
         <>
-          {/* Mini Logo (77) */}
           <motion.span
-            className="text-2xl font-semibold tracking-tighter text-primary-600 dark:text-primary-400"
+            className="text-xl font-semibold tracking-tighter text-primary-500"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
@@ -70,18 +65,15 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
             77
           </motion.span>
 
-          {/* Expand Button */}
           <motion.button
             type="button"
             onClick={onToggleCollapse}
             whileTap={{ scale: 0.95 }}
-            className={`
-              p-2 rounded-xl transition-colors duration-150 flex justify-center items-center
-              text-slate-400 dark:text-slate-500 hover:bg-slate-200/70 dark:hover:bg-white/[0.06]
-            `}
+            className="p-1.5 rounded-lg transition-colors duration-150 text-slate-500 dark:text-slate-500 hover:bg-white/[0.06]"
             title={t('sidebar.expand', 'Expand')}
+            aria-label={t('sidebar.expand', 'Expand sidebar')}
           >
-            <PanelLeftClose size={20} className="rotate-180" />
+            <PanelLeftClose size={18} strokeWidth={1.75} className="rotate-180" />
           </motion.button>
         </>
       )}

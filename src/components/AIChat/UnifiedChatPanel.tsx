@@ -18,7 +18,7 @@
  * @version 1.0.0
  */
 
-import { Bot, History, MessageSquare, Plus, Volume2, VolumeX } from 'lucide-react';
+import { Bot, Briefcase, History, MessageSquare, Plus, Volume2, VolumeX } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -43,6 +43,7 @@ import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
+import { useAIActionsStore } from '../../store/useAIActionsStore';
 
 // ============================================================================
 // Types

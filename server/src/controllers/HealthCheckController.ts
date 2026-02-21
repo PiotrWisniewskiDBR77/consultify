@@ -173,4 +173,59 @@ export class HealthCheckController {
       uptime: process.uptime(),
     });
   }
+
+  /**
+   * Aggregated health dashboard (T107)
+   * Unified contract for SuperAdmin / monitoring
+   */
+  static async aggregatedHealth(_req: Request, res: Response): Promise<void> {
+    const timestamp = new Date().toISOString();
+    const components: Record<string, { status: string; details?: any }> = {};
+    let overall: 'healthy' | 'degraded' | 'down' = 'healthy';
+
+    try {
+      const db = getDatabase();
+      await db.query('SELECT 1');
+      components.database = { status: 'healthy' };
+    } catch (e: any) {
+      components.database = { status: 'down', details: e.message };
+      overall = 'down';
+    }
+
+    try {
+      let connected = false;
+      try {
+        const { isRedisConnected } = await import('../services/ai/redisClient.js');
+        connected = isRedisConnected();
+      } catch { /* ignore */ }
+      components.redis = { status: connected ? 'healthy' : 'degraded' };
+      if (!connected && overall === 'healthy') overall = 'degraded';
+    } catch {
+      components.redis = { status: 'degraded' };
+      if (overall === 'healthy') overall = 'degraded';
+    }
+
+    try {
+      const { getWatchdogStats } = await import('../middleware/alertWatchdog.middleware.js');
+      const stats = getWatchdogStats();
+      components.api = {
+        status: stats.windowFiveXx > 10 ? 'degraded' : 'healthy',
+        details: { totalRequests: stats.totalRequests, fiveXxRate: stats.totalFiveXx, p95Ms: stats.p95Ms },
+      };
+      if (stats.windowFiveXx > 10 && overall === 'healthy') overall = 'degraded';
+    } catch {
+      components.api = { status: 'healthy' };
+    }
+
+    try {
+      const { getRequestMetrics } = await import('../middleware/metrics.middleware.js');
+      const m = getRequestMetrics();
+      components.metrics = { status: 'healthy', details: { requests: m.requests, errors: m.errors, rateLimitHits: m.rateLimitHits, aiTimeouts: m.aiTimeouts } };
+    } catch {
+      components.metrics = { status: 'healthy' };
+    }
+
+    const httpStatus = overall === 'down' ? 503 : 200;
+    res.status(httpStatus).json({ status: overall, timestamp, uptime: process.uptime(), components });
+  }
 }

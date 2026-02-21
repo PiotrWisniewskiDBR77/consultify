@@ -1,7 +1,8 @@
 /**
- * SidebarFooter Component - Apple HIG Design System
+ * SidebarFooter — Tech Sexy (T102)
  *
- * Bottom actions: children (Organization, Admin, Settings) + Partner Portal + Logout
+ * Bottom actions: children (Organization, Admin, Settings) + Partner Portal + Logout.
+ * Monochromatic chrome, invisible border separator.
  */
 
 import { motion } from 'framer-motion';
@@ -27,50 +28,42 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   children,
   showPartnerPortal = true,
 }) => {
-  return (
-    <div className="p-3 mt-2 shrink-0">
-      <div className="space-y-1">
-        {/* Separator — ultra-subtle */}
-        <div className="my-1 border-t border-slate-200/30 dark:border-white/5" />
+  const btnBase = [
+    'w-full flex items-center gap-2.5 py-[7px] rounded-lg',
+    'text-[13px] font-medium transition-colors duration-150',
+    'text-slate-500 dark:text-slate-400',
+    showFull ? 'px-2.5' : 'px-0 justify-center',
+  ].join(' ');
 
-        {/* Admin/Settings menu items passed as children */}
+  return (
+    <div className="px-3 pb-3 pt-1 shrink-0">
+      <div className="space-y-0.5">
+        <div className="mb-1 h-px bg-white/[0.06]" />
+
         {children}
 
-        {/* Partner Portal Button - between Settings and Logout */}
         {showPartnerPortal && (
           <motion.button
             type="button"
             onClick={() => onNavigate(AppView.PARTNER_LANDING)}
             whileTap={{ scale: 0.98 }}
-            className={`
-                            w-full flex items-center gap-3 py-2.5 rounded-xl
-                            text-sm font-medium transition-all duration-150
-                            text-slate-600 dark:text-slate-400
-                            hover:bg-slate-200/60 dark:hover:bg-white/[0.06]
-                            ${!showFull ? 'justify-center px-0' : 'px-3'}
-                        `}
+            className={`${btnBase} hover:bg-white/[0.05] hover:text-slate-300`}
             title={t('sidebar.partnerPortal', 'Partner Portal')}
           >
-            <Users size={20} />
+            <Users size={18} strokeWidth={1.75} className="shrink-0" />
             {showFull && <span>{t('sidebar.partnerPortal', 'Partner Portal')}</span>}
           </motion.button>
         )}
 
-        {/* Logout Button */}
         <motion.button
           type="button"
           onClick={onLogout}
           whileTap={{ scale: 0.98 }}
-          className={`
-                        w-full flex items-center gap-3 py-2.5 rounded-xl
-                        text-sm font-medium transition-all duration-150
-                        text-slate-600 dark:text-slate-400 
-                        hover:bg-danger-50/50 dark:hover:bg-danger-500/10
-                        ${!showFull ? 'justify-center px-0' : 'px-3'}
-                    `}
+          className={`${btnBase} hover:bg-danger-500/10 hover:text-danger-400`}
           title={t('sidebar.logOut')}
+          aria-label={t('sidebar.logOut', 'Log out')}
         >
-          <LogOut size={18} />
+          <LogOut size={18} strokeWidth={1.75} className="shrink-0" />
           {showFull && <span>{t('sidebar.logOut')}</span>}
         </motion.button>
       </div>
