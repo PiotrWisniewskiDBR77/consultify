@@ -272,6 +272,14 @@ export type FunnelEventName =
   | 'core_docs_reindexed'
   | 'core_docs_drift_detected'
   | 'ai_citation_verification_score'
+  // T109 — Payment System Integration
+  | 'billing_checkout_started'
+  | 'billing_checkout_completed'
+  | 'billing_subscription_changed'
+  | 'billing_payment_failed'
+  | 'billing_payment_recovered'
+  | 'token_purchase_started'
+  | 'token_purchase_completed'
   // T118 — Web Search Governance
   | 'ai_web_search_used'
   | 'ai_web_search_blocked'

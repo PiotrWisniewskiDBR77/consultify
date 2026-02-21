@@ -1,8 +1,14 @@
 /**
- * Webhooks Routes
+ * Webhooks Routes (LEGACY — T109 deprecation)
  * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Webhook management endpoints and Stripe webhook handler
+ * Webhook management endpoints and Stripe webhook handler.
+ *
+ * DEPRECATED: The `/stripe` endpoint in this file does NOT verify webhook
+ * signatures and is NOT mounted in production. The canonical Stripe webhook
+ * lives in `server/src/routes/webhooks/stripe.routes.ts` (signature-verified,
+ * idempotent, with retry queue). It is mounted via
+ * `server/src/routes/integrations/webhooks.routes.ts` → `/api/webhooks/stripe`.
  */
 
 import { Response, Router } from 'express';
