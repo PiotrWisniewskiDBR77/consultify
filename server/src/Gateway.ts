@@ -47,6 +47,7 @@ import authRoutes from './routes/auth.routes.js';
 import backupRoutes from './routes/backup.routes.js';
 import baselinesRoutes from './routes/baselines.routes.js';
 import benefitsRoutes from './routes/benefits.routes.js';
+import billingAdminRoutes from './routes/billing/billingAdmin.routes.js';
 import billingRoutes from './routes/billing/billing.routes.js';
 import pricingRoutes from './routes/billing/pricing.routes.js';
 import promoRoutes from './routes/billing/promo.routes.js';
@@ -249,6 +250,7 @@ export class ApiGateway {
       app.use('/api/auth', authRoutes);
       console.log('[ApiGateway] Mounting /api/billing');
       app.use('/api/billing', billingRoutes);
+      app.use('/api/superadmin/billing', billingAdminRoutes);
       app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
       console.log('[ApiGateway] Mounting /api/ai');
       app.use('/api/ai', aiRoutes);

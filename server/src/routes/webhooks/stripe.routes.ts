@@ -214,6 +214,11 @@ router.post(
           organizationIdForEvent = await handleInvoiceFinalized(event.data.object as any);
           break;
 
+        // T109: Token billing — idempotent credit on checkout completion
+        case 'checkout.session.completed':
+          await handleCheckoutSessionCompleted(event.data.object as any);
+          break;
+
         default:
           logger.info(`Unhandled event type: ${event.type}`);
       }
@@ -410,6 +415,24 @@ async function handleInvoicePaid(invoice: StripeTypes.Invoice): Promise<string |
     });
   }
 
+  // T109: Exit dunning on successful payment
+  try {
+    const dunningModule = await import('../../services/dunningService.js');
+    const dunningService = dunningModule.default || dunningModule;
+    if (dunningService?.handlePaymentSucceeded) {
+      const paymentIntentId = invoice.payment_intent as string | undefined;
+      if (paymentIntentId && process.env.STRIPE_SECRET_KEY) {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+          apiVersion: '2024-11-20.acacia' as StripeTypes.LatestApiVersion,
+        });
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        await dunningService.handlePaymentSucceeded(paymentIntent);
+      }
+    }
+  } catch (dunningErr) {
+    logger.error('[Stripe Webhook] Dunning recovery error:', dunningErr);
+  }
+
   logger.info(`Invoice paid for org ${orgId}: ${invoice.id}`);
 
   // =========================================
@@ -528,6 +551,7 @@ async function handleInvoicePaid(invoice: StripeTypes.Invoice): Promise<string |
 
 /**
  * Handle invoice payment failed event
+ * T109: Integrates with DunningService for staged recovery flow.
  */
 async function handleInvoicePaymentFailed(invoice: StripeTypes.Invoice): Promise<string | null> {
   const customerId = invoice.customer as string;
@@ -543,6 +567,32 @@ async function handleInvoicePaymentFailed(invoice: StripeTypes.Invoice): Promise
   }
 
   logger.info(`Invoice payment failed for org ${orgId}: ${invoice.id}`);
+
+  // T109: Trigger dunning flow
+  try {
+    const dunningModule = await import('../../services/dunningService.js');
+    const dunningService = dunningModule.default || dunningModule;
+    if (dunningService?.handlePaymentFailed) {
+      const paymentIntentId = invoice.payment_intent as string | undefined;
+      if (paymentIntentId && process.env.STRIPE_SECRET_KEY) {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+          apiVersion: '2024-11-20.acacia' as StripeTypes.LatestApiVersion,
+        });
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        await dunningService.handlePaymentFailed(paymentIntent);
+      } else {
+        await dunningService.handlePaymentFailed({
+          id: invoice.id,
+          customer: customerId,
+          metadata: { organization_id: orgId },
+          status: 'requires_payment_method',
+        } as unknown as StripeTypes.PaymentIntent);
+      }
+      logger.info(`[Stripe Webhook] Dunning started for org ${orgId}`);
+    }
+  } catch (dunningErr) {
+    logger.error('[Stripe Webhook] Dunning service error:', dunningErr);
+  }
 
   await createNotification(
     orgId,
@@ -607,6 +657,52 @@ async function handleInvoiceFinalized(invoice: StripeTypes.Invoice): Promise<str
     );
   }
   return orgId;
+}
+
+/**
+ * T109: Handle checkout.session.completed for token billing (idempotent).
+ * Uses stripe_events dedup — if event was already processed, creditTokens is skipped.
+ */
+async function handleCheckoutSessionCompleted(session: Record<string, unknown>): Promise<void> {
+  const metadata = session.metadata as Record<string, string> | undefined;
+  if (!metadata?.userId || !metadata?.tokens) {
+    logger.info('[Stripe Webhook] checkout.session.completed without token metadata — skipping');
+    return;
+  }
+
+  const { userId, packageId, tokens, bonusPercent } = metadata;
+  const tokenCount = parseInt(tokens, 10);
+  const bonus = Math.floor(tokenCount * (parseInt(bonusPercent || '0', 10) / 100));
+  const stripePaymentId = session.payment_intent as string | undefined;
+
+  // Idempotency guard: check if this payment was already credited
+  if (stripePaymentId) {
+    const existing = await dbGet<{ id: string }>(
+      `SELECT id FROM token_transactions WHERE stripe_payment_id = ? LIMIT 1`,
+      [stripePaymentId]
+    );
+    if (existing) {
+      logger.info(`[Stripe Webhook] Token credit already applied for payment ${stripePaymentId}`);
+      return;
+    }
+  }
+
+  try {
+    const tokenBillingModule = await import('../../services/tokenBillingService.js');
+    const tokenBillingService = tokenBillingModule.default || tokenBillingModule;
+    if (tokenBillingService?.creditTokens) {
+      await tokenBillingService.creditTokens(userId, tokenCount, bonus, {
+        packageId,
+        stripePaymentId,
+      });
+      logger.info(
+        `[Stripe Webhook] Credited ${tokenCount}+${bonus} tokens to user ${userId} (payment: ${stripePaymentId})`
+      );
+    }
+  } catch (err) {
+    logger.error('[Stripe Webhook] Failed to credit tokens:', err);
+    throw err;
+  }
 }
 
 /**
