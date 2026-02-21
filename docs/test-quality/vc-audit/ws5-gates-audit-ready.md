@@ -53,3 +53,30 @@ rg "test\\.skip\\(|describe\\.skip\\(" tests -S
 - 2026-02-21 20:12:47 +0100 — `merge(L1)` applied on `Londyn` (`45e2d3105`)
   - `npm run test:quality-check`: **PASS** (REAL: 945, PLACEHOLDER: 0)
   - `npm run test:l1:coverage`: **PASS** (Coverage thresholds OK)
+
+- 2026-02-21 20:18:11 +0100 —  applied on  ()
+  - 
+> consultinity@0.0.1 test:quality-check
+> node --experimental-strip-types scripts/testing/quality-check.ts
+
+
+📊 Test Quality Report
+====================
+Scanned roots: tests/, e2e/
+REAL: 934
+PLACEHOLDER: 0
+OTHER: 0
+
+Breakdown:
+  - REAL_CODE: 773
+  - REAL_RUNTIME: 161
+  - FAKE_INTEGRATION: 0
+  - FAKE_INTEGRATION_RISK: 0
+  - FAKE_UNIT: 0
+  - SPEC_FILE: 0
+  - LOW_SIGNAL: 0
+  - OTHER: 0
+AUTHENTICITY (SCORED = REAL/(REAL+PLACEHOLDER)): 100.0
+- 2026-02-21 20:18:11 +0100 — `merge(L1)` applied on `Londyn` (`275e12403`)
+  - `npm run test:quality-check`: **PASS** (PLACEHOLDER: 0)
+  - `npm run test:l1:coverage`: **PASS** (Coverage thresholds OK)
