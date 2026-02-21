@@ -274,7 +274,13 @@ export type FunnelEventName =
   | 'ai_citation_verification_score'
   // T014 — Survey Shell (additional granularity)
   | 'survey_question_answered'
-  | 'survey_section_completed';
+  | 'survey_section_completed'
+  // T067 — CV-Based Matching Engine
+  | 'cv_uploaded'
+  | 'cv_extracted'
+  | 'cv_competencies_approved'
+  | 'cv_match_viewed'
+  | 'cv_match_applied';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {
