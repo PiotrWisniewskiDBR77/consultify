@@ -31,10 +31,18 @@ import { useDemoSession } from '../../hooks/useDemoSession';
 import { useUniversalVoice } from '../../hooks/useUniversalVoice';
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import { useAIActionsStore } from '../../store/useAIActionsStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { useConversationStore } from '../../store/useConversationStore';
-import { AppView, Artifact, ChatMessage, FocusMode, ResponseFeedback, ThinkingStep } from '../../types';
+import {
+  AppView,
+  Artifact,
+  ChatMessage,
+  FocusMode,
+  ResponseFeedback,
+  ThinkingStep,
+} from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
@@ -2077,41 +2085,62 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {t('wcag.skipToInput', 'Skip to chat input')}
       </a>
 
-      {/* Header - Simplified */}
+      {/* Header — Tech Sexy (T104/T105) */}
       <div
-        className={`flex items-center justify-between ${isCompact ? 'px-3 py-2' : 'px-4 py-3'} border-b border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-950/50 backdrop-blur-sm`}
+        className={`flex items-center justify-between ${isCompact ? 'px-3 py-1.5' : 'px-4 py-2'} border-b border-slate-200/60 dark:border-white/[0.06] bg-white/50 dark:bg-navy-950/60 backdrop-blur-sm`}
       >
-        <div className="flex items-center gap-1">
-          {/* New Chat button - first from left */}
+        <div className="flex items-center gap-0.5">
           <button
             onClick={handleNewChat}
             data-testid="chat-new-button"
-            className="p-1.5 text-slate-400 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
-            title={t('aiChat.newChat', 'Nowa rozmowa')}
+            className="p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
+            title={t('aiChat.newChat', 'New chat')}
+            aria-label={t('aiChat.newChat', 'New chat')}
           >
-            <Plus size={18} />
+            <Plus size={18} strokeWidth={1.75} />
           </button>
 
-          {/* History toggle - second from left */}
           {showHistoryTrigger && (
             <button
               onClick={() => toggleSidebar()}
               data-testid="chat-history-button"
               data-chat-toggle
-              className={`p-1.5 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors ${
+              className={`p-1.5 rounded-lg transition-colors ${
                 isSidebarOpen
-                  ? 'text-primary-600 dark:text-primary-400'
-                  : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/20'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
               }`}
-              title={t('aiChat.history', 'Historia')}
+              title={t('aiChat.history', 'History')}
+              aria-label={t('aiChat.history', 'Chat history')}
             >
-              <History size={18} />
+              <History size={18} strokeWidth={1.75} />
             </button>
           )}
+
+          {/* T105: 3rd "Business/Actions" button */}
+          <button
+            onClick={() => {
+              trackFunnelEvent('chat_business_button_clicked', {
+                mode: isSplitMode ? 'split' : 'full',
+                pendingCount: pendingActionsCount,
+              });
+              onNavigateToActions?.();
+            }}
+            data-testid="chat-business-button"
+            className="relative p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
+            title={t('aiChat.business', 'Business actions')}
+            aria-label={t('aiChat.business', 'Business actions')}
+          >
+            <Briefcase size={18} strokeWidth={1.75} />
+            {pendingActionsCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary-500 text-[10px] font-medium text-white px-1 leading-none">
+                {pendingActionsCount > 9 ? '9+' : pendingActionsCount}
+              </span>
+            )}
+          </button>
         </div>
 
-        <div className="flex items-center gap-1">
-          {/* Auto-read toggle (speaker) - right side */}
+        <div className="flex items-center gap-0.5">
           {ttsSupported && (
             <button
               onClick={() => {
@@ -2125,16 +2154,25 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               data-testid="chat-autoread-button"
               className={`p-1.5 rounded-lg transition-colors ${
                 autoReadEnabled
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30'
-                  : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/20'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
               }`}
               title={
                 autoReadEnabled
-                  ? t('aiChat.autoReadOff', 'Wyłącz czytanie na głos')
-                  : t('aiChat.autoReadOn', 'Włącz czytanie na głos')
+                  ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                  : t('aiChat.autoReadOn', 'Turn on auto-read')
+              }
+              aria-label={
+                autoReadEnabled
+                  ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                  : t('aiChat.autoReadOn', 'Turn on auto-read')
               }
             >
-              {autoReadEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+              {autoReadEnabled ? (
+                <Volume2 size={18} strokeWidth={1.75} />
+              ) : (
+                <VolumeX size={18} strokeWidth={1.75} />
+              )}
             </button>
           )}
         </div>
@@ -2146,9 +2184,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           projectId={workspaceContext?.projectId}
           compact={isCompact}
           onViewAll={onNavigateToActions}
-          onActionDecided={(actionId, decision) => {
-            console.log(`[UnifiedChatPanel] Action ${actionId} ${decision}`);
-          }}
+          onActionDecided={() => {}}
           maxPreview={isCompact ? 2 : 3}
         />
       </div>

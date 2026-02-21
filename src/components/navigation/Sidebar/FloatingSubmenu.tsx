@@ -84,12 +84,11 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
         animate={isPositioned ? 'visible' : 'hidden'}
         exit="exit"
         className={`
-          fixed z-[9999] w-64 py-2
+          fixed z-[9999] w-56 py-1.5
           rounded-xl
-          ${isDark ? 'bg-navy-900 border-white/10' : 'bg-white border-slate-200 dark:border-navy-700'}
+          ${isDark ? 'bg-navy-900 border-white/[0.08]' : 'bg-white border-slate-200/60'}
           border
-          shadow-[0_10px_40px_rgba(0,0,0,0.12)]
-          dark:shadow-[0_10px_40px_rgba(0,0,0,0.4)]
+          shadow-xl
           overflow-hidden
         `}
         style={{ top: position.top, left: position.left }}
@@ -100,9 +99,9 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
         {title && (
           <div
             className={`
-              px-4 py-3 text-sm font-semibold
-              ${hasItems ? 'border-b mb-1' : ''} 
-              ${isDark ? 'border-white/10 text-white' : 'border-slate-100 dark:border-navy-700 text-navy-900'}
+              px-3 py-2 text-[11px] font-medium uppercase tracking-wider
+              ${hasItems ? 'border-b mb-0.5' : ''} 
+              ${isDark ? 'border-white/[0.06] text-slate-400' : 'border-slate-100 text-slate-500'}
             `}
           >
             {title}
@@ -120,17 +119,17 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
               onClick={() => item.viewId && onNavigate(item.viewId)}
               whileTap={{ scale: 0.98 }}
               className={`
-                w-full flex items-center gap-3 px-4 py-2.5
-                text-sm font-medium text-left
+                w-full flex items-center gap-2.5 px-3 py-2
+                text-[13px] font-medium text-left
                 transition-colors duration-100
                 ${
                   isActive
                     ? isDark
-                      ? 'bg-primary-900/20 text-primary-300'
-                      : 'bg-primary-50 text-primary-600'
+                      ? 'bg-white/[0.08] text-slate-100'
+                      : 'bg-primary-50 text-primary-700'
                     : isDark
-                      ? 'text-slate-300 hover:bg-navy-800 hover:text-white'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/20 hover:text-slate-900 dark:hover:text-white'
+                      ? 'text-slate-400 hover:bg-white/[0.05] hover:text-slate-200'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }
               `}
             >
