@@ -46,6 +46,7 @@ interface SkipScanReport {
     other: { skip: number; only: number };
   };
   findings: Finding[];
+  gate: GateEvaluation;
 }
 
 interface AllowlistEntry {
@@ -59,6 +60,43 @@ interface AllowlistEntry {
 interface AllowlistFile {
   version: number;
   entries: AllowlistEntry[];
+}
+
+interface AllowlistedFinding {
+  finding: Finding;
+  allowlistEntry: AllowlistEntry;
+}
+
+interface GateEvaluation {
+  evaluatedAt: string;
+  dateIso: string; // YYYY-MM-DD
+  status: 'PASS' | 'FAIL';
+  allowlist: {
+    path: string;
+    version: number;
+    entriesTotal: number;
+    entriesExpired: number;
+    entriesUnusedActive: number;
+  };
+  totals: {
+    allowlisted: number;
+    blocked: number;
+    nonBlockingOtherSkips: number;
+  };
+  fatalReasons: string[];
+  blocked: {
+    only: Finding[];
+    smokeSkip: Finding[];
+    unitSkip: Finding[];
+  };
+  allowlisted: AllowlistedFinding[];
+  inventory: {
+    otherSkips: Finding[];
+  };
+  hygiene: {
+    expiredEntries: AllowlistEntry[];
+    unusedActiveEntries: AllowlistEntry[];
+  };
 }
 
 const projectRoot = process.cwd();
@@ -204,6 +242,7 @@ function runSkipScan(): SkipScanReport {
     },
     breakdown,
     findings: findings.sort((a, b) => (a.filePath + a.line).localeCompare(b.filePath + b.line)),
+    gate: evaluateGate(findings),
   };
 }
 
@@ -218,6 +257,8 @@ function writeSkipScanReport(report: SkipScanReport): void {
   md.push('');
   md.push(`Roots: ${report.roots.join(', ')}`);
   md.push('');
+  md.push(`Gate status: **${report.gate.status}**`);
+  md.push('');
   md.push(`## Totals`);
   md.push(`- Files scanned: ${report.totals.filesScanned}`);
   md.push(`- Findings: ${report.totals.findings}`);
@@ -229,14 +270,125 @@ function writeSkipScanReport(report: SkipScanReport): void {
   md.push(`- Unit: skip=${report.breakdown.unit.skip}, only=${report.breakdown.unit.only}`);
   md.push(`- Other: skip=${report.breakdown.other.skip}, only=${report.breakdown.other.only}`);
   md.push('');
-  md.push(`## Findings`);
-  if (report.findings.length === 0) md.push(`(none)`);
-  else {
-    for (const f of report.findings) {
+  md.push(`## Gate Evaluation`);
+  md.push(`- Evaluated: ${report.gate.evaluatedAt}`);
+  md.push(`- Date (ISO): ${report.gate.dateIso}`);
+  md.push(`- Allowlisted findings: ${report.gate.totals.allowlisted}`);
+  md.push(`- Blocked findings: ${report.gate.totals.blocked}`);
+  md.push(`- Non-blocking other skips (inventory): ${report.gate.totals.nonBlockingOtherSkips}`);
+  md.push('');
+
+  md.push(`## Gate Policy (L5)`);
+  md.push(`- \`.only(...)\`: must be 0`);
+  md.push(`- \`.skip(...)\` in smoke: must be 0`);
+  md.push(`- \`.skip(...)\` in unit: must be 0 unless allowlisted`);
+  md.push(`- other skips: inventory only (not blocking)`);
+  md.push('');
+
+  if (report.gate.fatalReasons.length > 0) {
+    md.push(`## FAIL Reasons`);
+    for (const r of report.gate.fatalReasons) md.push(`- ${r}`);
+    md.push('');
+  }
+
+  md.push(`## Blocked Findings`);
+  if (
+    report.gate.blocked.only.length === 0 &&
+    report.gate.blocked.smokeSkip.length === 0 &&
+    report.gate.blocked.unitSkip.length === 0
+  ) {
+    md.push(`(none)`);
+    md.push('');
+  } else {
+    if (report.gate.blocked.only.length > 0) {
+      md.push(`### Blocked: .only(...)`);
+      for (const f of report.gate.blocked.only) {
+        md.push(`- \`${f.kind}\` \`${f.subject}\` \`${f.filePath}:${f.line}:${f.column}\``);
+        md.push('```');
+        md.push(f.snippet);
+        md.push('```');
+      }
+      md.push('');
+    }
+
+    if (report.gate.blocked.smokeSkip.length > 0) {
+      md.push(`### Blocked: smoke .skip(...)`);
+      for (const f of report.gate.blocked.smokeSkip) {
+        md.push(`- \`${f.kind}\` \`${f.subject}\` \`${f.filePath}:${f.line}:${f.column}\``);
+        md.push('```');
+        md.push(f.snippet);
+        md.push('```');
+      }
+      md.push('');
+    }
+
+    if (report.gate.blocked.unitSkip.length > 0) {
+      md.push(`### Blocked: unit .skip(...)`);
+      for (const f of report.gate.blocked.unitSkip) {
+        md.push(`- \`${f.kind}\` \`${f.subject}\` \`${f.filePath}:${f.line}:${f.column}\``);
+        md.push('```');
+        md.push(f.snippet);
+        md.push('```');
+      }
+      md.push('');
+    }
+  }
+
+  md.push(`## Allowlisted Findings`);
+  if (report.gate.allowlisted.length === 0) {
+    md.push(`(none)`);
+    md.push('');
+  } else {
+    md.push(`Allowlist: \`${report.gate.allowlist.path}\``);
+    md.push('');
+    for (const a of report.gate.allowlisted) {
+      const f = a.finding;
+      const e = a.allowlistEntry;
+      md.push(
+        `- \`${f.kind}\` \`${f.subject}\` \`${f.filePath}:${f.line}:${f.column}\` (expires: ${e.expiresOn})`
+      );
+      md.push(`  - reason: ${e.reason}`);
+      md.push('```');
+      md.push(f.snippet);
+      md.push('```');
+    }
+    md.push('');
+  }
+
+  md.push(`## Inventory (Non-blocking)`);
+  if (report.gate.inventory.otherSkips.length === 0) {
+    md.push(`(none)`);
+  } else {
+    md.push(`Other skips outside smoke/unit (not blocking L5):`);
+    for (const f of report.gate.inventory.otherSkips) {
       md.push(`- \`${f.kind}\` \`${f.subject}\` \`${f.filePath}:${f.line}:${f.column}\``);
     }
   }
   md.push('');
+
+  md.push(`## Allowlist Hygiene`);
+  md.push(`- Allowlist file: \`${report.gate.allowlist.path}\``);
+  md.push(`- Version: ${report.gate.allowlist.version}`);
+  md.push(`- Entries total: ${report.gate.allowlist.entriesTotal}`);
+  md.push(`- Entries expired: ${report.gate.allowlist.entriesExpired}`);
+  md.push(`- Entries unused (active): ${report.gate.allowlist.entriesUnusedActive}`);
+  md.push('');
+
+  if (report.gate.hygiene.expiredEntries.length > 0) {
+    md.push(`### Expired Entries`);
+    for (const e of report.gate.hygiene.expiredEntries) {
+      md.push(`- \`${e.kind}\` \`${e.filePattern}\` (expires: ${e.expiresOn}) — ${e.reason}`);
+    }
+    md.push('');
+  }
+
+  if (report.gate.hygiene.unusedActiveEntries.length > 0) {
+    md.push(`### Unused Active Entries`);
+    for (const e of report.gate.hygiene.unusedActiveEntries) {
+      md.push(`- \`${e.kind}\` \`${e.filePattern}\` (expires: ${e.expiresOn}) — ${e.reason}`);
+    }
+    md.push('');
+  }
 
   fs.writeFileSync(reportMdPath, md.join('\n'));
 }
@@ -275,80 +427,119 @@ function formatFinding(f: Finding): string {
   return `${f.kind} ${f.subject} ${f.filePath}:${f.line}:${f.column}`;
 }
 
-function runGate(report: SkipScanReport): void {
+function evaluateGate(findings: Finding[]): GateEvaluation {
   const allowlist = loadAllowlist();
   const now = todayIsoDate();
 
-  const allowlisted: Finding[] = [];
+  const allowlisted: AllowlistedFinding[] = [];
   const blocked: Finding[] = [];
-  const onlyFindings = report.findings.filter((f) => f.kind === 'only');
 
-  for (const f of report.findings) {
+  for (const f of findings) {
     const entry = allowlist.entries.find((a) => isAllowlisted(f, a, now));
-    if (entry) allowlisted.push(f);
+    if (entry) allowlisted.push({ finding: f, allowlistEntry: entry });
     else blocked.push(f);
   }
 
   const blockedOnly = blocked.filter((f) => f.kind === 'only');
-
-  const blockedSmokeSkip = blocked.filter(
-    (f) => f.kind === 'skip' && bucketForGate(f) === 'smoke'
-  );
+  const blockedSmokeSkip = blocked.filter((f) => f.kind === 'skip' && bucketForGate(f) === 'smoke');
   const blockedUnitSkip = blocked.filter((f) => f.kind === 'skip' && bucketForGate(f) === 'unit');
 
   const fatal: string[] = [];
-
-  if (blockedOnly.length > 0) {
-    fatal.push(`Found .only() in repo: ${blockedOnly.length} (must be zero).`);
-  }
-  if (blockedSmokeSkip.length > 0) {
+  if (blockedOnly.length > 0) fatal.push(`Found .only() in repo: ${blockedOnly.length} (must be zero).`);
+  if (blockedSmokeSkip.length > 0)
     fatal.push(`Found .skip() in smoke tests: ${blockedSmokeSkip.length} (must be zero).`);
-  }
-  if (blockedUnitSkip.length > 0) {
+  if (blockedUnitSkip.length > 0)
     fatal.push(`Found .skip() in unit tests: ${blockedUnitSkip.length} (must be allowlisted).`);
-  }
 
-  const allowlistedCount = allowlisted.length;
-  const totalSkips = report.totals.skip;
-  const totalOnly = report.totals.only;
+  const otherSkips = findings.filter((f) => f.kind === 'skip' && bucketForGate(f) === 'other');
+
+  const expiredEntries = allowlist.entries.filter((e) => e.expiresOn && e.expiresOn < now);
+  const entryKey = (e: AllowlistEntry) =>
+    `${e.kind}|${e.filePattern}|${e.matchPattern || ''}|${e.expiresOn}|${e.reason}`;
+  const usedKeys = new Set(allowlisted.map((a) => entryKey(a.allowlistEntry)));
+  const unusedActiveEntries = allowlist.entries
+    .filter((e) => e.expiresOn && e.expiresOn >= now)
+    .filter((e) => !usedKeys.has(entryKey(e)));
+
+  return {
+    evaluatedAt: new Date().toISOString(),
+    dateIso: now,
+    status: fatal.length > 0 ? 'FAIL' : 'PASS',
+    allowlist: {
+      path: path.relative(projectRoot, allowlistPath).replace(/\\/g, '/'),
+      version: allowlist.version,
+      entriesTotal: allowlist.entries.length,
+      entriesExpired: expiredEntries.length,
+      entriesUnusedActive: unusedActiveEntries.length,
+    },
+    totals: {
+      allowlisted: allowlisted.length,
+      blocked: blocked.length,
+      nonBlockingOtherSkips: otherSkips.length,
+    },
+    fatalReasons: fatal,
+    blocked: {
+      only: blockedOnly,
+      smokeSkip: blockedSmokeSkip,
+      unitSkip: blockedUnitSkip,
+    },
+    allowlisted,
+    inventory: {
+      otherSkips,
+    },
+    hygiene: {
+      expiredEntries,
+      unusedActiveEntries,
+    },
+  };
+}
+
+function runGate(report: SkipScanReport): void {
+  const { gate } = report;
 
   console.log('\n🚦 Skip/Only Gate');
-  console.log(`  Findings: skip=${totalSkips}, only=${totalOnly}, allowlisted=${allowlistedCount}`);
-  if (allowlistedCount > 0) {
-    console.log(`  Allowlist: scripts/testing/skip-allowlist.json (date=${now})`);
+  console.log(
+    `  Findings: skip=${report.totals.skip}, only=${report.totals.only}, allowlisted=${gate.totals.allowlisted}`
+  );
+  if (gate.totals.allowlisted > 0 || gate.allowlist.entriesTotal > 0) {
+    console.log(`  Allowlist: ${gate.allowlist.path} (date=${gate.dateIso})`);
   }
+  console.log(`  Report written: ${path.relative(projectRoot, reportJsonPath).replace(/\\/g, '/')}`);
+  console.log(`  Report written: ${path.relative(projectRoot, reportMdPath).replace(/\\/g, '/')}`);
 
-  if (fatal.length > 0) {
-    console.error(`\n❌ skip-scan gate FAILED (${fatal.length} reasons):`);
-    for (const r of fatal) console.error(`  - ${r}`);
+  if (gate.status === 'FAIL') {
+    console.error(`\n❌ skip-scan gate FAILED (${gate.fatalReasons.length} reasons):`);
+    for (const r of gate.fatalReasons) console.error(`  - ${r}`);
 
-    if (blockedOnly.length > 0) {
+    if (gate.blocked.only.length > 0) {
       console.error('\nBlocked `.only(...)` findings:');
-      for (const f of blockedOnly.slice(0, 25)) console.error(`  - ${formatFinding(f)}`);
-      if (blockedOnly.length > 25) console.error(`  ... +${blockedOnly.length - 25} more`);
+      for (const f of gate.blocked.only.slice(0, 25)) console.error(`  - ${formatFinding(f)}`);
+      if (gate.blocked.only.length > 25)
+        console.error(`  ... +${gate.blocked.only.length - 25} more`);
     }
 
-    if (blockedSmokeSkip.length > 0) {
+    if (gate.blocked.smokeSkip.length > 0) {
       console.error('\nBlocked smoke `.skip(...)` findings:');
-      for (const f of blockedSmokeSkip.slice(0, 25)) console.error(`  - ${formatFinding(f)}`);
-      if (blockedSmokeSkip.length > 25) console.error(`  ... +${blockedSmokeSkip.length - 25} more`);
+      for (const f of gate.blocked.smokeSkip.slice(0, 25)) console.error(`  - ${formatFinding(f)}`);
+      if (gate.blocked.smokeSkip.length > 25)
+        console.error(`  ... +${gate.blocked.smokeSkip.length - 25} more`);
     }
 
-    if (blockedUnitSkip.length > 0) {
+    if (gate.blocked.unitSkip.length > 0) {
       console.error('\nBlocked unit `.skip(...)` findings:');
-      for (const f of blockedUnitSkip.slice(0, 25)) console.error(`  - ${formatFinding(f)}`);
-      if (blockedUnitSkip.length > 25) console.error(`  ... +${blockedUnitSkip.length - 25} more`);
+      for (const f of gate.blocked.unitSkip.slice(0, 25)) console.error(`  - ${formatFinding(f)}`);
+      if (gate.blocked.unitSkip.length > 25)
+        console.error(`  ... +${gate.blocked.unitSkip.length - 25} more`);
     }
 
     process.exit(1);
   }
 
   // Non-fatal: other skips exist (inventory + evidence)
-  const otherSkips = report.findings.filter(
-    (f) => f.kind === 'skip' && bucketForGate(f) === 'other'
-  );
-  if (otherSkips.length > 0) {
-    console.warn(`\n⚠️  Non-blocking skips found outside smoke/unit: ${otherSkips.length}`);
+  if (gate.inventory.otherSkips.length > 0) {
+    console.warn(
+      `\n⚠️  Non-blocking skips found outside smoke/unit: ${gate.inventory.otherSkips.length}`
+    );
     console.warn('   (Inventory only — consider paying down over time.)');
   }
 

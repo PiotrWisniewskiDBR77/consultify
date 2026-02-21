@@ -12,6 +12,13 @@ Kontrolować “test debt” i ryzyko fałszywego sygnału jakości (skippy / `.
 - Allowlist: `scripts/testing/skip-allowlist.json`
 - Evidence: `test-results/skip-scan/skip-scan.report.json` + `test-results/skip-scan/skip-scan.report.md`
 
+Raport zawiera:
+- status gate (PASS/FAIL) + powody FAIL (jeśli występują),
+- listę **blocked** (only / smoke skip / unit skip),
+- listę **allowlisted** wraz z `reason` i `expiresOn`,
+- inventory skipów poza smoke/unit (non-blocking),
+- hygiene allowlist (expired + unused-active entries).
+
 ## Uruchomienie
 ```bash
 npm run test:skip-scan
@@ -21,4 +28,3 @@ npm run test:skip-scan
 Allowlist to wyjątek i musi zawierać:
 - `reason` (konkretna przyczyna biznes/tech),
 - `expiresOn` (YYYY-MM-DD) — po tej dacie gate zacznie blokować.
-

@@ -10,6 +10,7 @@
 ## What changed (this iteration)
 - **P0 gate hardened:** `security:integrity` expanded from 9 → **29 checks** (adds **+20 real integrity/security cases**).
 - **Skip debt reduced (in-scope):** removed conditional `test.skip(...)` in `tests/e2e/smoke/deploy-gate-api-sso-scim-webhooks.spec.ts` by making PUT/DELETE assertions deterministic even when create is role-gated.
+- **Audit evidence hardened:** skip/only gate evidence (`test-results/skip-scan/*`) now includes allowlisted findings + allowlist hygiene (expired/unused-active).
 
 ## Current skip inventory (out of WS5 scope to fix)
 Found by `rg "test\\.skip\\(|describe\\.skip\\(" tests -S`:
@@ -22,7 +23,7 @@ Found by `rg "test\\.skip\\(|describe\\.skip\\(" tests -S`:
 
 ## Evidence snapshot
 
-**Timestamp (local):** 2026-02-21 13:20
+**Timestamp (local):** 2026-02-21 16:11
 
 ### Commands
 ```bash
@@ -33,12 +34,14 @@ rg "test\\.skip\\(|describe\\.skip\\(" tests -S
 
 ### Results
 - `npm run test:quality-check`: **PASS**
-  - REAL: 909
+  - REAL: 915
   - PLACEHOLDER: 0
   - AUTHENTICITY (SCORED): 100.0%
 - `npm run test:l5`: **PASS**
+  - `test:skip-scan`: **PASS**
+    - Findings: skip=8, only=0, allowlisted=1
+    - Evidence: `test-results/skip-scan/skip-scan.report.json` + `test-results/skip-scan/skip-scan.report.md`
   - `security:integrity`: **PASS** (29 checks)
   - `test:security`: **PASS**
   - `test:performance`: **PASS**
 - `rg ... skip scan`: **FOUND** (items listed above)
-
