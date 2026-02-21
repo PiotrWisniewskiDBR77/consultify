@@ -208,6 +208,31 @@ describe('AuthMiddleware', () => {
       expect(mockReq.user?.id).toBe('user-token-cookie');
     });
 
+    it('should ignore empty cookie token and fall back to body token', async () => {
+      mockReq.cookies!['access_token'] = '';
+      mockReq.body = { token: 'body-token' } as any;
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-body-fallback' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockJwt.verify).toHaveBeenCalledWith('body-token', 'test-secret', expect.any(Function));
+      expect(mockReq.user?.id).toBe('user-body-fallback');
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should not accept non-string query.token values', async () => {
+      mockReq.query = { token: ['x'] } as any;
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'No token provided' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should extract token from cookie if header is missing', async () => {
       mockReq.cookies!['access_token'] = 'cookie-token';
       mockJwt.verify.mockImplementation((token, secret, callback) => {
@@ -225,6 +250,64 @@ describe('AuthMiddleware', () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
+    it('should read legacy organization_id claim into req.organizationId', async () => {
+      mockReq.headers!['authorization'] = 'Bearer legacy-org-claim';
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-legacy', organization_id: 'org-legacy', role: 'admin' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.organizationId).toBe('org-legacy');
+      expect(mockReq.user?.organizationId).toBe('org-legacy');
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it.each([
+      { raw: 'admin', expected: 'administrator' },
+      { raw: 'super_admin', expected: 'owner' },
+      { raw: 'client', expected: 'guest' },
+      { raw: 'manager', expected: 'project_manager' },
+    ])('maps legacy role "$raw" to "$expected"', async ({ raw, expected }) => {
+      mockReq.headers!['authorization'] = `Bearer role-${raw}`;
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: `u-${raw}`, role: raw });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.user?.role).toBe(expected);
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it.each([
+      { decodedRole: 'administrator', expectedPermissionRole: 'ADMIN' },
+      { decodedRole: 'superadmin', expectedPermissionRole: 'SUPERADMIN' },
+      { decodedRole: 'member', expectedPermissionRole: 'TEAM_MEMBER' },
+      { decodedRole: 'user', expectedPermissionRole: 'TEAM_MEMBER' },
+      { decodedRole: 'guest', expectedPermissionRole: 'VIEWER' },
+    ])(
+      'normalizes permission role for req.can: $decodedRole -> $expectedPermissionRole',
+      async ({ decodedRole, expectedPermissionRole }) => {
+        mockReq.headers!['authorization'] = `Bearer perm-${decodedRole}`;
+        mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+          callback(null, { id: `u-${decodedRole}`, role: decodedRole });
+        });
+        mockDbGet.mockResolvedValue(null);
+
+        await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+        mockReq.can?.('cap');
+        expect(mockPermissionService.can).toHaveBeenCalledWith(
+          expect.objectContaining({ role: expectedPermissionRole }),
+          'cap',
+          expect.any(Object)
+        );
+      }
+    );
+
     it('should not overwrite existing req.user in test bypass mode', async () => {
       process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
       mockReq.user = { id: 'already', role: 'administrator' } as any;
@@ -233,6 +316,46 @@ describe('AuthMiddleware', () => {
 
       expect(mockReq.user?.id).toBe('already');
       expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('E2E_MODE is disabled in production (does not bypass verification)', async () => {
+      const origNodeEnv = process.env.NODE_ENV;
+      const origE2E = process.env.E2E_MODE;
+      try {
+        process.env.NODE_ENV = 'production';
+        process.env.E2E_MODE = 'true';
+
+        vi.resetModules();
+        const prodJwt = {
+          verify: vi.fn((_t: any, _s: any, cb: any) => cb(new Error('bad'), null)),
+          decode: vi.fn().mockReturnValue({ e2e: true, id: 'e2e-user' }),
+        };
+
+        const mod = await import(
+          '../../../../server/src/middleware/auth.middleware.ts?prod_e2e_no_bypass=1'
+        );
+        mod.setDependencies({
+          jwt: prodJwt as any,
+          config: mockConfig,
+          PermissionService: mockPermissionService,
+          dbGet: mockDbGet,
+        });
+
+        const req: any = { ...mockReq, headers: { authorization: 'Bearer prod' } };
+        const res: any = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+        const next = vi.fn();
+
+        await mod.verifyToken(req, res, next);
+
+        expect(prodJwt.decode).not.toHaveBeenCalled(); // E2E bypass never executes
+        expect(prodJwt.verify).toHaveBeenCalled();
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(next).not.toHaveBeenCalled();
+      } finally {
+        process.env.NODE_ENV = origNodeEnv;
+        if (origE2E === undefined) delete process.env.E2E_MODE;
+        else process.env.E2E_MODE = origE2E;
+      }
     });
 
     it('should map role "guest" and normalize permission role to VIEWER', async () => {
@@ -468,6 +591,21 @@ describe('AuthMiddleware', () => {
       mockReq.headers!['authorization'] = 'Bearer bad-token';
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {
         callback(new Error('invalid'), null);
+      });
+
+      await optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.user).toBeUndefined();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('continues without user when JWT_SECRET is missing', async () => {
+      mockReq.headers!['authorization'] = 'Bearer opt';
+      setDependencies({
+        jwt: mockJwt as any,
+        config: {},
+        PermissionService: mockPermissionService,
+        dbGet: mockDbGet,
       });
 
       await optionalAuth(mockReq as AuthRequest, mockRes as Response, mockNext);
