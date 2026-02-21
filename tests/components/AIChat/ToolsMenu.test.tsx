@@ -83,7 +83,7 @@ describe('ToolsMenu (L2)', () => {
     expect(toast.success).toHaveBeenCalled();
   });
 
-  it('supports Co-Thinker toggles and response style selection', () => {
+  it('supports Co-Thinker toggles and response style selection', async () => {
     render(<ToolsMenu onToolSelect={onToolSelect} />);
 
     fireEvent.click(screen.getByTestId('chat-tools-button'));
@@ -92,7 +92,8 @@ describe('ToolsMenu (L2)', () => {
     expect(onToolSelect).toHaveBeenCalledWith('cothinker:idea_maker');
 
     fireEvent.click(screen.getByRole('button', { name: /styl odpowiedzi/i }));
-    fireEvent.click(screen.getByRole('button', { name: 'aiChat.menu.styles.concise' }));
+    const concise = await screen.findByRole('button', { name: /aiChat\.menu\.styles\.concise/i });
+    fireEvent.click(concise);
     expect(setAIConfigMock).toHaveBeenCalledWith({ responseStyle: 'concise' });
     expect(onToolSelect).toHaveBeenCalledWith('style:concise');
   });
@@ -140,6 +141,65 @@ describe('ToolsMenu (L2)', () => {
     expect((window as any).speechSynthesis.speak).toHaveBeenCalled();
   });
 
+  it('does not open when disabled', () => {
+    render(<ToolsMenu onToolSelect={onToolSelect} disabled />);
+
+    const trigger = screen.getByTestId('chat-tools-button');
+    expect(trigger).toBeDisabled();
+    fireEvent.click(trigger);
+    expect(screen.queryByText(/tryby ai/i)).not.toBeInTheDocument();
+  });
+
+  it('toggling showReasoning twice disables maxMode', () => {
+    const { rerender } = render(<ToolsMenu onToolSelect={onToolSelect} />);
+
+    fireEvent.click(screen.getByTestId('chat-tools-button'));
+    setAIConfigMock.mockClear();
+
+    const btn = screen.getByRole('button', { name: 'aiChat.menu.modes.showReasoning.label' });
+    fireEvent.click(btn);
+    expect(setAIConfigMock).toHaveBeenCalledWith({ showReasoning: true });
+    expect(setAIConfigMock).toHaveBeenCalledWith({ maxMode: true });
+
+    // Simulate store update so the second click truly toggles off.
+    aiConfigState = { ...aiConfigState, showReasoning: true, maxMode: true };
+    rerender(<ToolsMenu onToolSelect={onToolSelect} />);
+
+    fireEvent.mouseDown(document.body);
+    fireEvent.click(screen.getByTestId('chat-tools-button'));
+    setAIConfigMock.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'aiChat.menu.modes.showReasoning.label' }));
+    expect(setAIConfigMock).toHaveBeenCalledWith({ showReasoning: false });
+    expect(setAIConfigMock).toHaveBeenCalledWith({ maxMode: false });
+  });
+
+  it('shows toast error when saving custom instructions fails', async () => {
+    const userFetch = vi.fn(async (url: any, init?: any) => {
+      if (String(url).includes('/api/ai-memory/custom_instructions') && init?.method === 'PUT') {
+        throw new Error('fail');
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          memories: [{ key: 'custom_instructions', value: 'Be concise.' }],
+        }),
+      } as any;
+    });
+    globalThis.fetch = userFetch as any;
+
+    render(<ToolsMenu onToolSelect={onToolSelect} />);
+
+    fireEvent.click(screen.getByTestId('chat-tools-button'));
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith('/api/ai-memory', expect.anything()));
+
+    fireEvent.click(screen.getByRole('button', { name: /moje instrukcje/i }));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'New' } });
+    fireEvent.click(screen.getByRole('button', { name: /zapisz/i }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+  });
+
   it('closes the menu on outside click', () => {
     render(<ToolsMenu onToolSelect={onToolSelect} />);
 
@@ -150,4 +210,3 @@ describe('ToolsMenu (L2)', () => {
     expect(screen.queryByText(/tryby ai/i)).not.toBeInTheDocument();
   });
 });
-

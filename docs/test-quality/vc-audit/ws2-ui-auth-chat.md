@@ -1,5 +1,32 @@
 # WS2 — L2 UI Critical (Auth + Sidebar + AI Chat)
 
+## 2026-02-21T19:55:59Z — Iteration report (branch: `codex/l2-ui-20260221-2030`)
+
+### AUDIT
+- `npm run test:quality-check`: **PASS** (PLACEHOLDER: 0)
+- `npm run test:l2:coverage`: **PASS** (thresholds OK; per-file gates met)
+
+### PLAN (scenarios domknięte)
+**Auth**
+- `MFAChallenge`: blocked path, trust-device (fingerprint), backup-code invalid clears input, verify-step UX (disabled state) w `MFASetup`.
+
+**Sidebar**
+- `NavItem` / `FloatingSubmenu` / `SidebarFooter`: aktualne a11y/styling (m.in. `aria-current`, aktualne klasy dark/light, `Log out` aria-label).
+- `Sidebar`: tablet close-on-navigate (kiedy sidebar otwarty).
+
+**AI Chat**
+- `ConversationList`: stable toggle (role button), active item, group ordering, show-more guard.
+- `ToolsMenu`: stabilne otwieranie submenu + styl odpowiedzi (name match), disabled state, error path zapisu instrukcji, showReasoning toggle on/off.
+- `UnifiedChatPanel`: stabilizacja hoisted mocks + dodatkowe ścieżki (history toggle, abort stream, copy, artifacts panel).
+
+### EXECUTE
+- Dodane/rozszerzone **~25+ realnych przypadków komponentowych** (zero snapshot-only, brak `*.skip`).
+- Naprawione flaki/false-negatives wynikające z i18n/aria-label oraz Vitest `vi.mock` hoisting.
+
+### VERIFY
+- `npm run test:quality-check`: **PASS**
+- `npm run test:l2:coverage`: **PASS**
+
 ## 2026-02-21T17:52:06Z — Iteration report (branch: `Londyn`)
 
 ### AUDIT
@@ -41,4 +68,3 @@
 
 ### NEXT (opcjonalne)
 - Jeśli chcemy “VC‑proof” coverage także dla `src/components/AIChat/**` w L2 gates: dodać je do profilu/threshold listy (obecnie nie pojawiają się w tabeli L2 coverage).
-

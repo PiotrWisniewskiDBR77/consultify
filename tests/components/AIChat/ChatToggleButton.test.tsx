@@ -38,6 +38,19 @@ describe('ChatToggleButton (L2)', () => {
     expect(aiContextState.toggleChat).toHaveBeenCalledTimes(1);
   });
 
+  it('does not render when chat is already open', () => {
+    aiContextState.isChatOpen = true;
+    render(<ChatToggleButton />);
+    expect(screen.queryByTitle('AI Assistant')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Asystent AI')).not.toBeInTheDocument();
+  });
+
+  it('falls back to English title for non-PL languages', () => {
+    i18nState.language = 'fr';
+    render(<ChatToggleButton />);
+    expect(screen.getByTitle('AI Assistant')).toBeInTheDocument();
+  });
+
   it('uses Polish title and shows green context dot when projectId is present', () => {
     i18nState.language = 'pl';
     aiContextState.pmoContext = { projectId: 'p1' };
@@ -48,5 +61,9 @@ describe('ChatToggleButton (L2)', () => {
     // The dot is a tiny span with animate-pulse class
     expect(document.querySelector('span.animate-pulse')).toBeTruthy();
   });
-});
 
+  it('does not show context dot when projectId is missing', () => {
+    render(<ChatToggleButton />);
+    expect(document.querySelector('span.animate-pulse')).toBeFalsy();
+  });
+});

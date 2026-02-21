@@ -1,115 +1,214 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { OrganizationView } from '../../../src/views/OrganizationView';
+import { ROUTES } from '../../../src/routes/routeConfig';
 import { AppView } from '../../../src/types';
+import { OrganizationView } from '../../../src/views/OrganizationView';
 
 const navigateMock = vi.fn();
 const setCurrentViewMock = vi.fn();
-const locationState = { pathname: '/organization/profile' };
+const trackFunnelEventMock = vi.fn();
+
+const locationState = { pathname: `${ROUTES.ORGANIZATION.ROOT}/profile` };
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => navigateMock,
   useLocation: () => locationState,
 }));
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (_key: string, fallback?: string) => fallback ?? _key }),
+}));
+
 vi.mock('../../../src/store/useAppStore', () => ({
   useAppStore: () => ({ setCurrentView: setCurrentViewMock }),
 }));
 
+vi.mock('../../../src/services/funnelAnalytics', () => ({
+  trackFunnelEvent: (...args: any[]) => trackFunnelEventMock(...args),
+}));
+
+vi.mock('../../../src/components/Organization/OrganizationSidebar', () => ({
+  __esModule: true,
+  default: ({
+    activeSection,
+    onSectionChange,
+    onBack,
+    className,
+  }: {
+    activeSection: string;
+    onSectionChange: (s: any) => void;
+    onBack: () => void;
+    className?: string;
+  }) => (
+    <nav aria-label={className ? 'org-sidebar-mobile' : 'org-sidebar-desktop'}>
+      <div>active:{activeSection}</div>
+      <button type="button" onClick={() => onSectionChange('goals')}>
+        Goals
+      </button>
+      <button type="button" onClick={() => onSectionChange('members')}>
+        Members
+      </button>
+      <button type="button" onClick={onBack}>
+        Back
+      </button>
+    </nav>
+  ),
+}));
+
+vi.mock('../../../src/components/Organization/OrganizationAdminPanel', () => ({
+  OrganizationAdminPanel: ({ section }: { section: string }) => (
+    <div aria-label="org-admin-panel">admin:{section}</div>
+  ),
+}));
+
 vi.mock('../../../src/views/ContextBuilder/modules/CompanyProfileModule', () => ({
-  CompanyProfileModule: () => <div data-testid="module-profile" />,
+  CompanyProfileModule: () => <div aria-label="module-profile" />,
 }));
 vi.mock('../../../src/views/ContextBuilder/modules/GoalsExpectationsModule', () => ({
-  GoalsExpectationsModule: () => <div data-testid="module-goals" />,
+  GoalsExpectationsModule: () => <div aria-label="module-goals" />,
 }));
 vi.mock('../../../src/views/ContextBuilder/modules/ChallengeMapModule', () => ({
-  ChallengeMapModule: () => <div data-testid="module-challenges" />,
-}));
-vi.mock('../../../src/views/ContextBuilder/modules/MegatrendScannerModule', () => ({
-  MegatrendScannerModule: () => <div data-testid="module-megatrends" />,
+  ChallengeMapModule: () => <div aria-label="module-challenges" />,
 }));
 vi.mock('../../../src/views/ContextBuilder/modules/StrategicSynthesisModule', () => ({
-  StrategicSynthesisModule: () => <div data-testid="module-strategy" />,
+  StrategicSynthesisModule: () => <div aria-label="module-strategy" />,
 }));
 
 describe('OrganizationView (L2)', () => {
   beforeEach(() => {
-    navigateMock.mockClear();
-    setCurrentViewMock.mockClear();
-    locationState.pathname = '/organization/profile';
+    navigateMock.mockReset();
+    setCurrentViewMock.mockReset();
+    trackFunnelEventMock.mockReset();
+    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/profile`;
   });
 
-  it('renders profile module by default and routes section from pathname', () => {
+  it('renders title/subtitle for profile by default', () => {
     render(<OrganizationView />);
-    expect(screen.getByTestId('module-profile')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Company Profile' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Company snapshot, operating model, and key facts')
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('module-profile')).toBeInTheDocument();
   });
 
-  it('navigates to another section when sidebar triggers onSectionChange', () => {
+  it('parses activeSection from pathname and forwards to OrganizationSidebar', () => {
+    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/goals`;
     render(<OrganizationView />);
-    const drawer = screen.getByTestId('organization-mobile-drawer');
-    fireEvent.click(within(drawer).getByRole('button', { name: /^Goals$/i }));
-    expect(navigateMock).toHaveBeenCalledWith('/organization/goals');
+    expect(
+      within(screen.getByLabelText('org-sidebar-desktop')).getByText('active:goals')
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('module-goals')).toBeInTheDocument();
   });
 
-  it('closes mobile drawer after section change', () => {
+  it('falls back to profile for unknown section', () => {
+    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/does-not-exist`;
     render(<OrganizationView />);
-    const drawer = screen.getByTestId('organization-mobile-drawer');
-
-    fireEvent.click(screen.getByTestId('organization-mobile-open'));
-    expect(drawer.className).toContain('translate-x-0');
-
-    fireEvent.click(within(drawer).getByRole('button', { name: /^Goals$/i }));
-    expect(navigateMock).toHaveBeenCalledWith('/organization/goals');
-    expect(drawer.className).toContain('-translate-x-full');
+    expect(
+      within(screen.getByLabelText('org-sidebar-desktop')).getByText('active:profile')
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('module-profile')).toBeInTheDocument();
   });
 
-  it('defaults to profile for unknown section and renders correct module per section', () => {
-    locationState.pathname = '/organization/unknown';
-    const { rerender } = render(<OrganizationView />);
-    expect(screen.getByTestId('module-profile')).toBeInTheDocument();
-
-    locationState.pathname = '/organization/challenges';
-    rerender(<OrganizationView />);
-    expect(screen.getByTestId('module-challenges')).toBeInTheDocument();
-
-    locationState.pathname = '/organization/megatrends';
-    rerender(<OrganizationView />);
-    expect(screen.getByTestId('module-megatrends')).toBeInTheDocument();
-
-    locationState.pathname = '/organization/strategy';
-    rerender(<OrganizationView />);
-    expect(screen.getByTestId('module-strategy')).toBeInTheDocument();
-  });
-
-  it('back button navigates to chat and sets current view', async () => {
+  it('renders Challenges module + meta for challenges route', () => {
+    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/challenges`;
     render(<OrganizationView />);
-    const drawer = screen.getByTestId('organization-mobile-drawer');
-    fireEvent.click(within(drawer).getByRole('button', { name: /Back to Dashboard/i }));
+    expect(screen.getByRole('heading', { name: 'Challenges' })).toBeInTheDocument();
+    expect(screen.getByText('Challenge map, evidence and root causes')).toBeInTheDocument();
+    expect(screen.getByLabelText('module-challenges')).toBeInTheDocument();
+  });
 
+  it('renders Strategic Synthesis module + meta for strategy route', () => {
+    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/strategy`;
+    render(<OrganizationView />);
+    expect(screen.getByRole('heading', { name: 'Strategic Synthesis' })).toBeInTheDocument();
+    expect(screen.getByText('Synthesis, scenarios and executive summary')).toBeInTheDocument();
+    expect(screen.getByLabelText('module-strategy')).toBeInTheDocument();
+  });
+
+  it('navigates + tracks when sidebar triggers onSectionChange', () => {
+    render(<OrganizationView />);
+
+    fireEvent.click(
+      within(screen.getByLabelText('org-sidebar-desktop')).getByRole('button', { name: 'Goals' })
+    );
+    expect(navigateMock).toHaveBeenCalledWith(`${ROUTES.ORGANIZATION.ROOT}/goals`);
+    expect(trackFunnelEventMock).toHaveBeenCalledWith('org_workspace_opened', { section: 'goals' });
+  });
+
+  it('closes mobile sidebar after section change', () => {
+    render(<OrganizationView />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+    expect(screen.getByRole('button', { name: 'Close organization navigation' })).toBeInTheDocument();
+
+    fireEvent.click(
+      within(screen.getByLabelText('org-sidebar-mobile')).getByRole('button', { name: 'Goals' })
+    );
+    expect(navigateMock).toHaveBeenCalledWith(`${ROUTES.ORGANIZATION.ROOT}/goals`);
+    expect(
+      screen.queryByRole('button', { name: 'Close organization navigation' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('mobile sidebar: close via header X and via overlay', () => {
+    render(<OrganizationView />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+    expect(screen.getByRole('button', { name: 'Close navigation' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close organization navigation' })).toBeInTheDocument();
+
+    // Close via header X
+    fireEvent.click(screen.getByRole('button', { name: 'Close navigation' }));
+    expect(
+      screen.queryByRole('button', { name: 'Close organization navigation' })
+    ).not.toBeInTheDocument();
+
+    // Re-open and close via overlay
+    fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close organization navigation' }));
+    expect(screen.queryByRole('button', { name: 'Close navigation' })).not.toBeInTheDocument();
+  });
+
+  it('back button navigates to chat and sets current view', () => {
+    render(<OrganizationView />);
+    fireEvent.click(
+      within(screen.getByLabelText('org-sidebar-desktop')).getByRole('button', { name: 'Back' })
+    );
     expect(setCurrentViewMock).toHaveBeenCalledWith(AppView.AI_CHAT);
-    expect(navigateMock).toHaveBeenCalledWith('/chat');
+    expect(navigateMock).toHaveBeenCalledWith(ROUTES.AI_CHAT);
   });
 
-  it('mobile menu button opens drawer; close buttons close it', () => {
+  it('renders OrganizationAdminPanel for admin sections', () => {
+    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/members`;
+    render(<OrganizationView />);
+    expect(screen.getByLabelText('org-admin-panel')).toHaveTextContent('admin:members');
+  });
+
+  it('redirects megatrends to canonical Discovery Tools route', async () => {
+    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/megatrends`;
     render(<OrganizationView />);
 
-    const drawer = screen.getByTestId('organization-mobile-drawer');
-    expect(drawer.className).toContain('-translate-x-full');
+    await waitFor(() =>
+      expect(navigateMock).toHaveBeenCalledWith(ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS, {
+        replace: true,
+      })
+    );
+    expect(trackFunnelEventMock).toHaveBeenCalledWith('megatrends_redirect_used', {
+      fromRoute: '/organization/megatrends',
+    });
+  });
 
-    fireEvent.click(screen.getByTestId('organization-mobile-open'));
-    expect(drawer.className).toContain('translate-x-0');
-    expect(screen.getByTestId('organization-mobile-overlay')).toBeInTheDocument();
-    expect(screen.getByTestId('organization-mobile-close')).toBeInTheDocument();
+  it('redirects megatrends even with trailing slash (path cleanup)', async () => {
+    locationState.pathname = `${ROUTES.ORGANIZATION.ROOT}/megatrends/`;
+    render(<OrganizationView />);
 
-    // Close via overlay
-    fireEvent.click(screen.getByTestId('organization-mobile-overlay'));
-    expect(drawer.className).toContain('-translate-x-full');
-
-    // Re-open and close via header X
-    fireEvent.click(screen.getByTestId('organization-mobile-open'));
-    fireEvent.click(screen.getByTestId('organization-mobile-close'));
-    expect(drawer.className).toContain('-translate-x-full');
+    await waitFor(() =>
+      expect(navigateMock).toHaveBeenCalledWith(ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS, {
+        replace: true,
+      })
+    );
   });
 });
+

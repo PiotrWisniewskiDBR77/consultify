@@ -200,6 +200,29 @@ describe('MFAChallenge Component', () => {
       });
     });
 
+    it('includes deviceFingerprint when "Trust this device" is checked', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ success: true }),
+      });
+
+      const user = userEvent.setup();
+      render(<MFAChallenge onVerify={mockOnVerify} trustDeviceOption />);
+
+      await user.click(screen.getByRole('checkbox'));
+
+      const inputs = screen.getAllByRole('textbox');
+      for (let i = 0; i < 6; i++) {
+        await user.type(inputs[i], String(i + 1));
+      }
+
+      await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+      const [_url, init] = mockFetch.mock.calls[0];
+      const body = JSON.parse(init.body);
+      expect(body.trustDevice).toBe(true);
+      expect(body.deviceFingerprint).toEqual(expect.any(String));
+    });
+
     it('should call onVerify on successful verification', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -217,6 +240,28 @@ describe('MFAChallenge Component', () => {
       await waitFor(() => {
         expect(mockOnVerify).toHaveBeenCalledWith(true);
       });
+    });
+
+    it('shows blocked message, clears inputs, and focuses first input when server blocks attempts', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({ blocked: true }),
+      });
+
+      const user = userEvent.setup();
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+
+      const inputs = screen.getAllByRole('textbox');
+      for (let i = 0; i < 6; i++) {
+        await user.type(inputs[i], String(i + 1));
+      }
+
+      await waitFor(() =>
+        expect(screen.getByText('Too many attempts. Please try again later.')).toBeInTheDocument()
+      );
+
+      const inputsAfter = screen.getAllByRole('textbox');
+      inputsAfter.forEach((i) => expect(i).toHaveValue(''));
     });
 
     it('should show error message on failed verification', async () => {
@@ -309,6 +354,27 @@ describe('MFAChallenge Component', () => {
       await waitFor(() => {
         expect(screen.getByText('An error occurred')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Backup Code Verification', () => {
+    it('clears backup code input on invalid backup code response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Invalid backup' }),
+      });
+
+      const user = userEvent.setup();
+      render(<MFAChallenge onVerify={mockOnVerify} />);
+
+      await user.click(screen.getByText(/Use a backup code instead/i));
+      const input = screen.getByPlaceholderText('XXXX-XXXX');
+
+      await user.type(input, 'abcd-efgh');
+      await user.click(screen.getByRole('button', { name: 'Verify' }));
+
+      await waitFor(() => expect(screen.getByText('Invalid backup')).toBeInTheDocument());
+      expect(input).toHaveValue('');
     });
   });
 

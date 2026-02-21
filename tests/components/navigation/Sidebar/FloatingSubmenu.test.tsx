@@ -190,9 +190,9 @@ describe('FloatingSubmenu (L2)', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Active' }).className).toContain('bg-primary-900/20');
+    expect(screen.getByRole('button', { name: 'Active' }).className).toContain('bg-white/[0.08]');
     expect(screen.getByRole('button', { name: /Inactive/ }).className).toContain(
-      'hover:bg-navy-800'
+      'hover:bg-white/[0.05]'
     );
   });
 

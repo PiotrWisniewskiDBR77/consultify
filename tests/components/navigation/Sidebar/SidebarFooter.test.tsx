@@ -28,7 +28,7 @@ describe('SidebarFooter (L2)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Partner Portal/i }));
     expect(onNavigate).toHaveBeenCalledWith(AppView.PARTNER_LANDING);
 
-    fireEvent.click(screen.getByRole('button', { name: /sidebar\.logOut/i }));
+    fireEvent.click(screen.getByRole('button', { name: /log out/i }));
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 

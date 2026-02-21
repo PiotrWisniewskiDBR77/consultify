@@ -265,6 +265,16 @@ describe('Sidebar (L2)', () => {
     expect(appState.setIsSidebarOpen).toHaveBeenCalledWith(false);
   });
 
+  it('closes sidebar on tablet after navigating when sidebar is open', () => {
+    deviceState.isTablet = true;
+    deviceState.isMobile = false;
+    appState.isSidebarOpen = true;
+    render(<Sidebar />);
+
+    fireEvent.click(screen.getByTestId('navitem-SETTINGS'));
+    expect(appState.setIsSidebarOpen).toHaveBeenCalledWith(false);
+  });
+
   it('mobile overlay click closes sidebar', () => {
     deviceState.isMobile = true;
     appState.isSidebarOpen = true;
