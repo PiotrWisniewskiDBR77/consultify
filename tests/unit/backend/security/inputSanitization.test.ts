@@ -300,6 +300,23 @@ describe('CSRF token management (L1)', () => {
 
     vi.useRealTimers();
   });
+
+  it('validateCsrfToken deletes expired token entries (expiry branch)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2020-01-01T00:00:00.000Z'));
+
+    const token = generateCsrfToken('sess-expire-direct');
+
+    // Expire without triggering cleanup via generateCsrfToken()
+    vi.setSystemTime(new Date('2020-01-01T02:00:00.000Z'));
+    expect(validateCsrfToken('sess-expire-direct', token)).toBe(false);
+
+    // Prove the entry was deleted: even if time is "un-expired", it should stay invalid
+    vi.setSystemTime(new Date('2020-01-01T00:30:00.000Z'));
+    expect(validateCsrfToken('sess-expire-direct', token)).toBe(false);
+
+    vi.useRealTimers();
+  });
 });
 
 // ═══════════════════════════════════════════════

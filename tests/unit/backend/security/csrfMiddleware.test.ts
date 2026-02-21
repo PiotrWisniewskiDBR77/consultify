@@ -60,6 +60,13 @@ describe('CSRF middleware (L1)', () => {
       expect(next).toHaveBeenCalled();
     });
 
+    it('treats non-string csrf_token cookie as missing (generates a new token)', () => {
+      const { req, res, next } = createMocks({ cookies: { csrf_token: 123 as any } });
+      csrfTokenMiddleware(req, res, next);
+      expect(res.cookie).toHaveBeenCalledWith('csrf_token', expect.any(String), expect.any(Object));
+      expect(next).toHaveBeenCalled();
+    });
+
     it('generated token is at least 32 chars', () => {
       const { req, res, next } = createMocks();
       csrfTokenMiddleware(req, res, next);
@@ -227,6 +234,29 @@ describe('CSRF middleware (L1)', () => {
       expect(next).toHaveBeenCalled();
     });
 
+    it('accepts header token when provided under uppercase header key', () => {
+      const tok = 'x'.repeat(64);
+      const { req, res, next } = createMocks({
+        method: 'POST',
+        path: '/api/test',
+        cookies: { csrf_token: tok },
+        headers: { 'X-CSRF-TOKEN': tok } as any,
+      });
+      csrfValidationMiddleware(req, res, next);
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('accepts non-string tokens that stringify to the same value', () => {
+      const { req, res, next } = createMocks({
+        method: 'POST',
+        path: '/api/test',
+        cookies: { csrf_token: 123 as any },
+        headers: { 'x-csrf-token': 123 as any } as any,
+      });
+      csrfValidationMiddleware(req, res, next);
+      expect(next).toHaveBeenCalled();
+    });
+
     // Exempt paths
     it.each([
       '/api/auth/login',
@@ -320,6 +350,14 @@ describe('CSRF middleware (L1)', () => {
       getCsrfTokenHandler(req, res);
       expect(res.json).toHaveBeenCalledWith({ token: 'existing-tok' });
       expect(res.cookie).not.toHaveBeenCalled();
+    });
+
+    it('generates a new token when cookie exists but is an empty string', () => {
+      const { req, res } = createMocks({ cookies: { csrf_token: '' } });
+      getCsrfTokenHandler(req, res);
+      expect(res.cookie).toHaveBeenCalledWith('csrf_token', expect.any(String), expect.any(Object));
+      const token = res.cookie.mock.calls[0][1];
+      expect(token.length).toBeGreaterThanOrEqual(32);
     });
 
     it('generates and sets new token when no cookie', () => {
