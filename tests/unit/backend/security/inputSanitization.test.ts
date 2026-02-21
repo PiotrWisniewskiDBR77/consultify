@@ -349,6 +349,7 @@ describe('isValidUUID (L1)', () => {
     '550e8400-e29b-41d4-a716-44665544000g', // non-hex
     '550e8400-e29b-41d4-a716-446655440000 ', // trailing space
     ' 550e8400-e29b-41d4-a716-446655440000', // leading space
+    '550e8400-e29b-41d4-a716-4466554400000', // too long
   ])('rejects UUID edge case: %s', (uuid) => {
     expect(isValidUUID(uuid)).toBe(false);
   });
