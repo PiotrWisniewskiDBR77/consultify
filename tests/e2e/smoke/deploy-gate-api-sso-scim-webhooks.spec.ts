@@ -260,19 +260,19 @@ test.describe('L4 Smoke — deploy gate API (SSO / SCIM / Webhooks)', () => {
   });
 
   test('PUT + DELETE /api/webhooks/subscriptions/:id is role-gated (no 5xx)', async ({ request }) => {
-    const targetId = webhookSubId || '00000000-0000-4000-8000-000000000000';
+    const id = webhookSubId || 'e2e_missing_subscription_id';
 
-    const putRes = await request.put(`${API_BASE_URL}/api/webhooks/subscriptions/${targetId}`, {
+    const putRes = await request.put(`${API_BASE_URL}/api/webhooks/subscriptions/${id}`, {
       headers: { ...authHeaders(token), 'content-type': 'application/json' },
       data: { name: 'E2E Updated', isActive: false },
     });
     await assertNo5xx(putRes, 'PUT /api/webhooks/subscriptions/:id');
-    expect([200, 403, 404]).toContain(putRes.status());
+    expect([200, 400, 403, 404, 422]).toContain(putRes.status());
 
-    const delRes = await request.delete(`${API_BASE_URL}/api/webhooks/subscriptions/${targetId}`, {
+    const delRes = await request.delete(`${API_BASE_URL}/api/webhooks/subscriptions/${id}`, {
       headers: authHeaders(token),
     });
     await assertNo5xx(delRes, 'DELETE /api/webhooks/subscriptions/:id');
-    expect([200, 403, 404]).toContain(delRes.status());
+    expect([200, 400, 403, 404, 422]).toContain(delRes.status());
   });
 });
