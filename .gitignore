@@ -186,6 +186,9 @@ _analysis/
 # Cursor IDE workspace
 .cursor/
 
+# Codex worktrees (local only)
+.codex-worktrees/
+
 # Client data (never commit)
 Plast-met/
 
