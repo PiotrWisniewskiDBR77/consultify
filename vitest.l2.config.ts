@@ -19,6 +19,7 @@ export default defineConfig({
       'tests/components/auth/**/*.{test,spec}.{ts,tsx}',
       'tests/components/navigation/**/*.{test,spec}.{ts,tsx}',
       'tests/components/organization/**/*.{test,spec}.{ts,tsx}',
+      'tests/components/AIChat/**/*.{test,spec}.{ts,tsx}',
     ],
     exclude: ['node_modules/**', 'tests/e2e/**'],
     coverage: {
@@ -36,6 +37,10 @@ export default defineConfig({
         'src/components/navigation/Sidebar/FloatingSubmenu.tsx',
         'src/views/OrganizationView.tsx',
         'src/components/Organization/OrganizationSidebar.tsx',
+        'src/components/AIChat/UnifiedChatPanel.tsx',
+        'src/components/AIChat/CoThinkerModeSelector.tsx',
+        'src/components/AIChat/ToolsMenu.tsx',
+        'src/components/AIChat/ConversationList.tsx',
       ],
       thresholds: {
         global: {
@@ -101,6 +106,30 @@ export default defineConfig({
             lines: 95,
           },
           'src/components/Organization/OrganizationSidebar.tsx': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
+          'src/components/AIChat/UnifiedChatPanel.tsx': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
+          'src/components/AIChat/CoThinkerModeSelector.tsx': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
+          'src/components/AIChat/ToolsMenu.tsx': {
+            statements: 95,
+            branches: 80,
+            functions: 95,
+            lines: 95,
+          },
+          'src/components/AIChat/ConversationList.tsx': {
             statements: 95,
             branches: 80,
             functions: 95,
