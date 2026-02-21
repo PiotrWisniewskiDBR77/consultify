@@ -75,7 +75,10 @@ interface CandidateProfileViewProps {
 
 type Tab = 'profile' | 'competencies' | 'matches';
 
-export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ organizationId, locked = false }) => {
+export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
+  organizationId,
+  locked = false,
+}) => {
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -96,7 +99,9 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
   const [searchQuery, setSearchQuery] = useState('');
   const [matchInitiativeId, setMatchInitiativeId] = useState('');
 
-  useEffect(() => { loadCandidates(); }, [organizationId]);
+  useEffect(() => {
+    loadCandidates();
+  }, [organizationId]);
 
   useEffect(() => {
     if (selectedId) {
@@ -108,7 +113,9 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
     try {
       const res = await Api.get('/api/cv-matching/candidates');
       if (Array.isArray(res)) setCandidates(res);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const loadCandidateDetail = async (id: string) => {
@@ -121,14 +128,18 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
       if (c?.id) setCandidate(c);
       if (Array.isArray(docs)) setDocuments(docs);
       if (Array.isArray(sigs)) setSignals(sigs);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleAddCandidate = useCallback(async () => {
     if (!newName.trim()) return;
     try {
       const res = await Api.post('/api/cv-matching/candidates', {
-        displayName: newName, email: newEmail || undefined, candidateType: newType,
+        displayName: newName,
+        email: newEmail || undefined,
+        candidateType: newType,
       });
       if (res?.id) {
         setShowAddModal(false);
@@ -137,56 +148,78 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
         await loadCandidates();
         setSelectedId(res.id);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [newName, newEmail, newType]);
 
-  const handleUploadCV = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!selectedId || !e.target.files?.[0]) return;
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append('cv', e.target.files[0]);
-    try {
-      const res = await fetch(`/api/cv-matching/candidates/${selectedId}/upload`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success) {
-        trackFunnelEvent('cv_uploaded');
-        await loadCandidateDetail(selectedId);
+  const handleUploadCV = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!selectedId || !e.target.files?.[0]) return;
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append('cv', e.target.files[0]);
+      try {
+        const res = await fetch(`/api/cv-matching/candidates/${selectedId}/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.success) {
+          trackFunnelEvent('cv_uploaded');
+          await loadCandidateDetail(selectedId);
+        }
+      } catch {
+        /* ignore */
       }
-    } catch { /* ignore */ }
-    setIsUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  }, [selectedId]);
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    },
+    [selectedId]
+  );
 
-  const handleMapCompetencies = useCallback(async (documentId: string) => {
-    setIsMapping(true);
-    try {
-      const res = await Api.post(`/api/cv-matching/documents/${documentId}/map`, {});
-      if (res?.success) {
-        trackFunnelEvent('cv_extracted');
+  const handleMapCompetencies = useCallback(
+    async (documentId: string) => {
+      setIsMapping(true);
+      try {
+        const res = await Api.post(`/api/cv-matching/documents/${documentId}/map`, {});
+        if (res?.success) {
+          trackFunnelEvent('cv_extracted');
+          if (selectedId) await loadCandidateDetail(selectedId);
+        }
+      } catch {
+        /* ignore */
+      }
+      setIsMapping(false);
+    },
+    [selectedId]
+  );
+
+  const handleApproveSignal = useCallback(
+    async (signalId: string, overrideLevel?: number) => {
+      try {
+        await Api.put(`/api/cv-matching/signals/${signalId}/approve`, { overrideLevel });
+        trackFunnelEvent('cv_competencies_approved');
         if (selectedId) await loadCandidateDetail(selectedId);
+      } catch {
+        /* ignore */
       }
-    } catch { /* ignore */ }
-    setIsMapping(false);
-  }, [selectedId]);
+    },
+    [selectedId]
+  );
 
-  const handleApproveSignal = useCallback(async (signalId: string, overrideLevel?: number) => {
-    try {
-      await Api.put(`/api/cv-matching/signals/${signalId}/approve`, { overrideLevel });
-      trackFunnelEvent('cv_competencies_approved');
-      if (selectedId) await loadCandidateDetail(selectedId);
-    } catch { /* ignore */ }
-  }, [selectedId]);
-
-  const handleRejectSignal = useCallback(async (signalId: string) => {
-    try {
-      await Api.delete(`/api/cv-matching/signals/${signalId}`);
-      if (selectedId) await loadCandidateDetail(selectedId);
-    } catch { /* ignore */ }
-  }, [selectedId]);
+  const handleRejectSignal = useCallback(
+    async (signalId: string) => {
+      try {
+        await Api.delete(`/api/cv-matching/signals/${signalId}`);
+        if (selectedId) await loadCandidateDetail(selectedId);
+      } catch {
+        /* ignore */
+      }
+    },
+    [selectedId]
+  );
 
   const handleMatch = useCallback(async () => {
     if (!matchInitiativeId.trim()) return;
@@ -197,16 +230,23 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
         setMatches(res);
         trackFunnelEvent('cv_match_viewed');
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setIsMatching(false);
   }, [matchInitiativeId]);
 
-  const handleDeleteDocument = useCallback(async (documentId: string) => {
-    try {
-      await Api.delete(`/api/cv-matching/documents/${documentId}`);
-      if (selectedId) await loadCandidateDetail(selectedId);
-    } catch { /* ignore */ }
-  }, [selectedId]);
+  const handleDeleteDocument = useCallback(
+    async (documentId: string) => {
+      try {
+        await Api.delete(`/api/cv-matching/documents/${documentId}`);
+        if (selectedId) await loadCandidateDetail(selectedId);
+      } catch {
+        /* ignore */
+      }
+    },
+    [selectedId]
+  );
 
   const handleApplyToProfile = useCallback(async () => {
     if (!selectedId || !candidate?.user_id) return;
@@ -217,14 +257,16 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
       if (res?.success) {
         trackFunnelEvent('cv_match_applied');
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [selectedId, candidate]);
 
   const filteredCandidates = useMemo(() => {
     if (!searchQuery) return candidates;
     const q = searchQuery.toLowerCase();
-    return candidates.filter((c) =>
-      c.display_name.toLowerCase().includes(q) || (c.email || '').toLowerCase().includes(q)
+    return candidates.filter(
+      (c) => c.display_name.toLowerCase().includes(q) || (c.email || '').toLowerCase().includes(q)
     );
   }, [candidates, searchQuery]);
 
@@ -277,11 +319,15 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
             <li key={c.id}>
               <button
                 type="button"
-                onClick={() => { setSelectedId(c.id); setActiveTab('profile'); }}
+                onClick={() => {
+                  setSelectedId(c.id);
+                  setActiveTab('profile');
+                }}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all
-                  ${selectedId === c.id
-                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  ${
+                    selectedId === c.id
+                      ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
               >
                 <div className="flex items-center gap-2">
@@ -289,7 +335,8 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
                   <div className="min-w-0">
                     <p className="font-medium truncate">{c.display_name}</p>
                     <p className="text-xs text-gray-400">
-                      {c.document_count} {t('cv.docs', 'docs')} · {c.approved_signals} {t('cv.skills', 'skills')}
+                      {c.document_count} {t('cv.docs', 'docs')} · {c.approved_signals}{' '}
+                      {t('cv.skills', 'skills')}
                     </p>
                   </div>
                 </div>
@@ -297,7 +344,9 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
             </li>
           ))}
           {filteredCandidates.length === 0 && (
-            <p className="text-xs text-gray-400 text-center py-4">{t('cv.noCandidates', 'No candidates yet')}</p>
+            <p className="text-xs text-gray-400 text-center py-4">
+              {t('cv.noCandidates', 'No candidates yet')}
+            </p>
           )}
         </ul>
       </nav>
@@ -311,7 +360,10 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
               {t('cv.selectCandidate', 'Select a Candidate')}
             </h3>
             <p className="text-sm text-gray-500 max-w-md">
-              {t('cv.selectHint', 'Choose a candidate from the list or add a new one to start CV analysis.')}
+              {t(
+                'cv.selectHint',
+                'Choose a candidate from the list or add a new one to start CV analysis.'
+              )}
             </p>
           </div>
         ) : (
@@ -320,7 +372,10 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
             <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
               <p className="text-xs text-amber-700 dark:text-amber-400">
-                {t('cv.disclaimer', 'Assistive ranking only — not a hiring decision. All mappings require human approval.')}
+                {t(
+                  'cv.disclaimer',
+                  'Assistive ranking only — not a hiring decision. All mappings require human approval.'
+                )}
               </p>
             </div>
 
@@ -331,9 +386,10 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors
-                    ${activeTab === tab
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                    ${
+                      activeTab === tab
+                        ? 'border-indigo-500 text-indigo-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
                 >
                   {tab === 'profile' && t('cv.tabProfile', 'Profile & Documents')}
@@ -351,8 +407,12 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
                     <User className="w-6 h-6 text-indigo-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{candidate.display_name}</h2>
-                    <p className="text-sm text-gray-500">{candidate.email || ''} · {candidate.candidate_type}</p>
+                    <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                      {candidate.display_name}
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      {candidate.email || ''} · {candidate.candidate_type}
+                    </p>
                   </div>
                 </div>
 
@@ -364,13 +424,23 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
                     </h3>
                     {!locked && (
                       <>
-                        <input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt" onChange={handleUploadCV} className="hidden" />
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept=".pdf,.docx,.txt"
+                          onChange={handleUploadCV}
+                          className="hidden"
+                        />
                         <button
                           onClick={() => fileInputRef.current?.click()}
                           disabled={isUploading}
                           className="flex items-center gap-1 px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
                         >
-                          {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                          {isUploading ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Upload className="w-3 h-3" />
+                          )}
                           {t('cv.uploadCV', 'Upload CV')}
                         </button>
                       </>
@@ -378,18 +448,29 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
                   </div>
 
                   {documents.length === 0 ? (
-                    <p className="text-sm text-gray-400">{t('cv.noDocuments', 'No documents uploaded yet.')}</p>
+                    <p className="text-sm text-gray-400">
+                      {t('cv.noDocuments', 'No documents uploaded yet.')}
+                    </p>
                   ) : (
                     <div className="space-y-2">
                       {documents.map((doc) => (
-                        <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div
+                          key={doc.id}
+                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                        >
                           <div className="flex items-center gap-2">
                             <FileText className="w-4 h-4 text-gray-400" />
                             <div>
-                              <p className="text-sm text-gray-700 dark:text-gray-300">{doc.original_filename}</p>
+                              <p className="text-sm text-gray-700 dark:text-gray-300">
+                                {doc.original_filename}
+                              </p>
                               <p className="text-xs text-gray-400">
                                 {(doc.file_size_bytes / 1024).toFixed(0)} KB ·{' '}
-                                <span className={`px-1.5 py-0.5 rounded text-xs ${statusBadge(doc.status)}`}>{doc.status}</span>
+                                <span
+                                  className={`px-1.5 py-0.5 rounded text-xs ${statusBadge(doc.status)}`}
+                                >
+                                  {doc.status}
+                                </span>
                               </p>
                             </div>
                           </div>
@@ -400,7 +481,11 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
                                 disabled={isMapping}
                                 className="flex items-center gap-1 px-2 py-1 text-xs text-indigo-600 hover:bg-indigo-50 rounded"
                               >
-                                {isMapping ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                                {isMapping ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Zap className="w-3 h-3" />
+                                )}
                                 {t('cv.mapCompetencies', 'Map')}
                               </button>
                             )}
@@ -429,18 +514,26 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
                   {t('cv.mappedCompetencies', 'Mapped Competencies')}
                 </h3>
                 {signals.length === 0 ? (
-                  <p className="text-sm text-gray-400">{t('cv.noSignals', 'No competencies mapped yet. Upload a CV and run mapping.')}</p>
+                  <p className="text-sm text-gray-400">
+                    {t('cv.noSignals', 'No competencies mapped yet. Upload a CV and run mapping.')}
+                  </p>
                 ) : (
                   <div className="space-y-2">
                     {signals.map((sig) => {
-                      const evidences = typeof sig.evidence_snippets === 'string'
-                        ? JSON.parse(sig.evidence_snippets) : (sig.evidence_snippets || []);
+                      const evidences =
+                        typeof sig.evidence_snippets === 'string'
+                          ? JSON.parse(sig.evidence_snippets)
+                          : sig.evidence_snippets || [];
                       const effectiveLevel = sig.manual_override_level || sig.inferred_level;
                       return (
-                        <div key={sig.id} className={`p-3 rounded-lg border ${sig.approved
-                          ? 'border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10'
-                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
-                        }`}>
+                        <div
+                          key={sig.id}
+                          className={`p-3 rounded-lg border ${
+                            sig.approved
+                              ? 'border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10'
+                              : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+                          }`}
+                        >
                           <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-2">
                               <Award className="w-4 h-4 text-indigo-500" />
@@ -448,16 +541,23 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
                                 {sig.capability_name || sig.capability_id}
                               </span>
                               {sig.capability_domain && (
-                                <span className="text-xs text-gray-400">({sig.capability_domain})</span>
+                                <span className="text-xs text-gray-400">
+                                  ({sig.capability_domain})
+                                </span>
                               )}
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="flex items-center gap-0.5">
                                 {Array.from({ length: 5 }, (_, i) => (
-                                  <Star key={i} className={`w-3 h-3 ${i < effectiveLevel ? 'text-indigo-500 fill-indigo-500' : 'text-gray-200'}`} />
+                                  <Star
+                                    key={i}
+                                    className={`w-3 h-3 ${i < effectiveLevel ? 'text-indigo-500 fill-indigo-500' : 'text-gray-200'}`}
+                                  />
                                 ))}
                               </div>
-                              <span className={`text-xs font-medium ${confidenceColor(sig.confidence)}`}>
+                              <span
+                                className={`text-xs font-medium ${confidenceColor(sig.confidence)}`}
+                              >
                                 {Math.round(sig.confidence * 100)}%
                               </span>
                             </div>
@@ -466,7 +566,12 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
                           {evidences.length > 0 && (
                             <div className="mt-2 pl-6">
                               {evidences.slice(0, 2).map((ev: string, i: number) => (
-                                <p key={i} className="text-xs text-gray-500 dark:text-gray-400 italic mb-1">"{ev}"</p>
+                                <p
+                                  key={i}
+                                  className="text-xs text-gray-500 dark:text-gray-400 italic mb-1"
+                                >
+                                  "{ev}"
+                                </p>
                               ))}
                             </div>
                           )}
@@ -490,7 +595,9 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
                           {sig.approved && (
                             <div className="flex items-center gap-1 mt-1 pl-6">
                               <UserCheck className="w-3 h-3 text-green-500" />
-                              <span className="text-xs text-green-600">{t('cv.approved', 'Approved')}</span>
+                              <span className="text-xs text-green-600">
+                                {t('cv.approved', 'Approved')}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -518,7 +625,11 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
                     disabled={isMatching || !matchInitiativeId.trim()}
                     className="flex items-center gap-1 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50"
                   >
-                    {isMatching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                    {isMatching ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Zap className="w-4 h-4" />
+                    )}
                     {t('cv.runMatching', 'Match')}
                   </button>
                 </div>
@@ -526,15 +637,22 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
                 {matches.length > 0 && (
                   <div className="space-y-3">
                     {matches.map((m, idx) => (
-                      <div key={m.candidateId} className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div
+                        key={m.candidateId}
+                        className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                      >
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">
                               {idx + 1}
                             </span>
-                            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{m.displayName}</span>
+                            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                              {m.displayName}
+                            </span>
                           </div>
-                          <span className={`text-lg font-bold ${m.matchScore >= 70 ? 'text-green-600' : m.matchScore >= 40 ? 'text-yellow-600' : 'text-red-600'}`}>
+                          <span
+                            className={`text-lg font-bold ${m.matchScore >= 70 ? 'text-green-600' : m.matchScore >= 40 ? 'text-yellow-600' : 'text-red-600'}`}
+                          >
                             {m.matchScore}%
                           </span>
                         </div>
@@ -555,7 +673,8 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
                         {m.missingEvidence.length > 0 && (
                           <div className="mt-2">
                             <p className="text-xs text-amber-600">
-                              {t('cv.missingEvidence', 'Missing evidence')}: {m.missingEvidence.join(', ')}
+                              {t('cv.missingEvidence', 'Missing evidence')}:{' '}
+                              {m.missingEvidence.join(', ')}
                             </p>
                           </div>
                         )}
@@ -579,14 +698,18 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
           <div className="space-y-3 text-sm">
             <div>
               <span className="text-gray-400 text-xs">{t('cv.type', 'Type')}</span>
-              <p className="font-medium text-gray-700 dark:text-gray-300 capitalize">{candidate.candidate_type}</p>
+              <p className="font-medium text-gray-700 dark:text-gray-300 capitalize">
+                {candidate.candidate_type}
+              </p>
             </div>
             <div>
               <span className="text-gray-400 text-xs">{t('cv.documentsCount', 'Documents')}</span>
               <p className="font-medium text-gray-700 dark:text-gray-300">{documents.length}</p>
             </div>
             <div>
-              <span className="text-gray-400 text-xs">{t('cv.approvedSkills', 'Approved Skills')}</span>
+              <span className="text-gray-400 text-xs">
+                {t('cv.approvedSkills', 'Approved Skills')}
+              </span>
               <p className="font-medium text-gray-700 dark:text-gray-300">
                 {signals.filter((s) => s.approved).length} / {signals.length}
               </p>
@@ -608,7 +731,10 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
               <div className="flex items-start gap-1">
                 <Shield className="w-3 h-3 text-gray-400 mt-0.5" />
                 <p className="text-xs text-gray-400">
-                  {t('cv.privacyNote', 'PII is redacted from AI processing. CV data subject to retention policy.')}
+                  {t(
+                    'cv.privacyNote',
+                    'PII is redacted from AI processing. CV data subject to retention policy.'
+                  )}
                 </p>
               </div>
             </div>
@@ -620,7 +746,9 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">{t('cv.addCandidate', 'Add Candidate')}</h3>
+            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">
+              {t('cv.addCandidate', 'Add Candidate')}
+            </h3>
             <div className="space-y-3">
               <input
                 type="text"
@@ -647,7 +775,12 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ orga
               </select>
             </div>
             <div className="flex gap-2 justify-end mt-4">
-              <button onClick={() => setShowAddModal(false)} className="px-4 py-2 text-sm text-gray-500">{t('cv.cancel', 'Cancel')}</button>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 text-sm text-gray-500"
+              >
+                {t('cv.cancel', 'Cancel')}
+              </button>
               <button
                 onClick={handleAddCandidate}
                 disabled={!newName.trim()}
