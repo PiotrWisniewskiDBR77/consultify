@@ -41,7 +41,12 @@ router.post(
     const { displayName, email, candidateType, userId, notes } = req.body;
     if (!displayName) return res.status(400).json({ error: 'displayName is required' });
     const id = await cvService.createCandidate({
-      organizationId: orgId, displayName, email, candidateType, userId, notes,
+      organizationId: orgId,
+      displayName,
+      email,
+      candidateType,
+      userId,
+      notes,
       createdBy: req.user!.id,
     });
     res.status(201).json({ success: true, id });
@@ -87,7 +92,10 @@ router.post(
     try {
       await cvService.extractCV(docId, orgId);
     } catch (err) {
-      logger.warn('[CVRoutes] Extraction failed, document saved with error status:', (err as Error).message);
+      logger.warn(
+        '[CVRoutes] Extraction failed, document saved with error status:',
+        (err as Error).message
+      );
     }
 
     res.status(201).json({ success: true, documentId: docId });
@@ -168,7 +176,12 @@ router.post(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: 'userId is required' });
-    const applied = await cvService.applyToUserProfile(req.params.candidateId, orgId, userId, req.user!.id);
+    const applied = await cvService.applyToUserProfile(
+      req.params.candidateId,
+      orgId,
+      userId,
+      req.user!.id
+    );
     res.json({ success: true, applied });
   })
 );

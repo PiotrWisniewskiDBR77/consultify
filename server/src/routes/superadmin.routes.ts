@@ -13,9 +13,9 @@ import { Response, Router } from 'express';
 
 import SuperAdminController from '../controllers/SuperAdminController.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { requireConfirmation } from '../middleware/confirmAction.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
-import { requireConfirmation } from '../middleware/confirmAction.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -50,7 +50,11 @@ router.put(
   validateBody(UpdateOrganizationAdminSchema),
   SuperAdminController.updateOrganization
 );
-router.delete('/organizations/:id', requireConfirmation('delete_organization', 'critical'), SuperAdminController.deleteOrganization);
+router.delete(
+  '/organizations/:id',
+  requireConfirmation('delete_organization', 'critical'),
+  SuperAdminController.deleteOrganization
+);
 router.get('/organizations/:id/billing', SuperAdminController.getOrgBilling);
 
 // ==========================================

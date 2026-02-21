@@ -138,7 +138,10 @@ async function extractText(filePath: string, fileType: string): Promise<string> 
       const data = await pdfParse(buffer);
       return String(data?.text || '');
     } catch (err) {
-      logger.warn('[CVMatching] PDF parse failed, falling back to raw read:', (err as Error).message);
+      logger.warn(
+        '[CVMatching] PDF parse failed, falling back to raw read:',
+        (err as Error).message
+      );
       return fs.readFileSync(filePath, 'utf-8');
     }
   }
@@ -174,29 +177,39 @@ export async function createCandidate(params: {
   await dbRun(
     `INSERT INTO candidate_profiles (id, organization_id, display_name, email, candidate_type, user_id, notes, created_by)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, params.organizationId, params.displayName, params.email || null,
-     params.candidateType || 'internal', params.userId || null, params.notes || null, params.createdBy]
+    [
+      id,
+      params.organizationId,
+      params.displayName,
+      params.email || null,
+      params.candidateType || 'internal',
+      params.userId || null,
+      params.notes || null,
+      params.createdBy,
+    ]
   );
   return id;
 }
 
 export async function getCandidates(organizationId: string): Promise<any[]> {
-  return (await dbAll(
-    `SELECT cp.*, 
+  return (
+    (await dbAll(
+      `SELECT cp.*, 
        (SELECT COUNT(*) FROM candidate_documents cd WHERE cd.candidate_id = cp.id) as document_count,
        (SELECT COUNT(*) FROM candidate_competency_signals cs WHERE cs.candidate_id = cp.id AND cs.approved = TRUE) as approved_signals
      FROM candidate_profiles cp 
      WHERE cp.organization_id = ? AND cp.is_active = TRUE 
      ORDER BY cp.created_at DESC`,
-    [organizationId]
-  )) || [];
+      [organizationId]
+    )) || []
+  );
 }
 
 export async function getCandidate(id: string, organizationId: string): Promise<any> {
-  return dbGet(
-    `SELECT * FROM candidate_profiles WHERE id = ? AND organization_id = ?`,
-    [id, organizationId]
-  );
+  return dbGet(`SELECT * FROM candidate_profiles WHERE id = ? AND organization_id = ?`, [
+    id,
+    organizationId,
+  ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -216,8 +229,16 @@ export async function uploadCV(params: {
   await dbRun(
     `INSERT INTO candidate_documents (id, candidate_id, organization_id, original_filename, stored_path, file_type, file_size_bytes, uploaded_by)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, params.candidateId, params.organizationId, params.originalFilename,
-     params.storedPath, params.fileType, params.fileSizeBytes, params.uploadedBy]
+    [
+      id,
+      params.candidateId,
+      params.organizationId,
+      params.originalFilename,
+      params.storedPath,
+      params.fileType,
+      params.fileSizeBytes,
+      params.uploadedBy,
+    ]
   );
 
   logAccess(id, params.organizationId, params.uploadedBy, 'view');
@@ -244,29 +265,39 @@ export async function extractCV(documentId: string, organizationId: string): Pro
       [safeText, JSON.stringify(sections), documentId]
     );
 
-    logger.info(`[CVMatching] Extracted document ${documentId}: ${Object.keys(sections).length} sections`);
-  } catch (err) {
-    await dbRun(
-      `UPDATE candidate_documents SET status = 'error', error_message = ? WHERE id = ?`,
-      [(err as Error).message, documentId]
+    logger.info(
+      `[CVMatching] Extracted document ${documentId}: ${Object.keys(sections).length} sections`
     );
+  } catch (err) {
+    await dbRun(`UPDATE candidate_documents SET status = 'error', error_message = ? WHERE id = ?`, [
+      (err as Error).message,
+      documentId,
+    ]);
     throw err;
   }
 }
 
-export async function getCandidateDocuments(candidateId: string, organizationId: string): Promise<any[]> {
-  return (await dbAll(
-    `SELECT id, candidate_id, original_filename, file_type, file_size_bytes, status, extracted_at, uploaded_at
+export async function getCandidateDocuments(
+  candidateId: string,
+  organizationId: string
+): Promise<any[]> {
+  return (
+    (await dbAll(
+      `SELECT id, candidate_id, original_filename, file_type, file_size_bytes, status, extracted_at, uploaded_at
      FROM candidate_documents WHERE candidate_id = ? AND organization_id = ? ORDER BY uploaded_at DESC`,
-    [candidateId, organizationId]
-  )) || [];
+      [candidateId, organizationId]
+    )) || []
+  );
 }
 
 // ---------------------------------------------------------------------------
 // Competency Mapping
 // ---------------------------------------------------------------------------
 
-export async function mapCompetencies(documentId: string, organizationId: string): Promise<CompetencySignal[]> {
+export async function mapCompetencies(
+  documentId: string,
+  organizationId: string
+): Promise<CompetencySignal[]> {
   const doc = await dbGet(
     `SELECT * FROM candidate_documents WHERE id = ? AND organization_id = ?`,
     [documentId, organizationId]
@@ -277,13 +308,16 @@ export async function mapCompetencies(documentId: string, organizationId: string
   await dbRun(`UPDATE candidate_documents SET status = 'mapping' WHERE id = ?`, [documentId]);
 
   try {
-    const sections = typeof doc.extracted_sections === 'string'
-      ? JSON.parse(doc.extracted_sections) : (doc.extracted_sections || {});
+    const sections =
+      typeof doc.extracted_sections === 'string'
+        ? JSON.parse(doc.extracted_sections)
+        : doc.extracted_sections || {};
 
-    const capabilities = await dbAll(
-      `SELECT id, name, description, domain FROM capabilities WHERE organization_id = ? AND is_active = TRUE`,
-      [organizationId]
-    ) || [];
+    const capabilities =
+      (await dbAll(
+        `SELECT id, name, description, domain FROM capabilities WHERE organization_id = ? AND is_active = TRUE`,
+        [organizationId]
+      )) || [];
 
     if (capabilities.length === 0) {
       await dbRun(`UPDATE candidate_documents SET status = 'mapped' WHERE id = ?`, [documentId]);
@@ -292,7 +326,8 @@ export async function mapCompetencies(documentId: string, organizationId: string
 
     const textForMapping = redactPII(
       [sections.skills, sections.experience, sections.certifications, sections.summary]
-        .filter(Boolean).join('\n\n')
+        .filter(Boolean)
+        .join('\n\n')
     ).substring(0, 3000);
 
     const signals: CompetencySignal[] = [];
@@ -305,7 +340,16 @@ export async function mapCompetencies(documentId: string, organizationId: string
           `INSERT INTO candidate_competency_signals 
            (id, candidate_id, document_id, organization_id, capability_id, inferred_level, confidence, evidence_snippets)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [signalId, doc.candidate_id, documentId, organizationId, cap.id, level, confidence, JSON.stringify(evidence)]
+          [
+            signalId,
+            doc.candidate_id,
+            documentId,
+            organizationId,
+            cap.id,
+            level,
+            confidence,
+            JSON.stringify(evidence),
+          ]
         );
         signals.push({
           id: signalId,
@@ -325,8 +369,10 @@ export async function mapCompetencies(documentId: string, organizationId: string
     logger.info(`[CVMatching] Mapped ${signals.length} competencies for document ${documentId}`);
     return signals;
   } catch (err) {
-    await dbRun(`UPDATE candidate_documents SET status = 'error', error_message = ? WHERE id = ?`,
-      [(err as Error).message, documentId]);
+    await dbRun(`UPDATE candidate_documents SET status = 'error', error_message = ? WHERE id = ?`, [
+      (err as Error).message,
+      documentId,
+    ]);
     throw err;
   }
 }
@@ -338,7 +384,10 @@ function inferCompetencyLevel(
   const lowerText = text.toLowerCase();
   const keywords = [
     capability.name.toLowerCase(),
-    ...(capability.description || '').toLowerCase().split(/[\s,;]+/).filter((w) => w.length > 3),
+    ...(capability.description || '')
+      .toLowerCase()
+      .split(/[\s,;]+/)
+      .filter((w) => w.length > 3),
   ];
 
   const matchedKeywords = keywords.filter((kw) => kw.length > 2 && lowerText.includes(kw));
@@ -354,7 +403,16 @@ function inferCompetencyLevel(
     }
   }
 
-  const seniorKeywords = ['lead', 'manage', 'architect', 'senior', 'principal', 'director', 'expert', 'years of experience'];
+  const seniorKeywords = [
+    'lead',
+    'manage',
+    'architect',
+    'senior',
+    'principal',
+    'director',
+    'expert',
+    'years of experience',
+  ];
   const midKeywords = ['develop', 'implement', 'design', 'optimize', 'build', 'responsible for'];
   const juniorKeywords = ['assist', 'support', 'learn', 'intern', 'junior', 'entry'];
 
@@ -368,27 +426,43 @@ function inferCompetencyLevel(
 
   const confidence = Math.min(0.95, 0.3 + matchedKeywords.length * 0.1 + evidence.length * 0.1);
 
-  return { level: Math.min(5, Math.max(1, level)), confidence: Math.round(confidence * 100) / 100, evidence };
+  return {
+    level: Math.min(5, Math.max(1, level)),
+    confidence: Math.round(confidence * 100) / 100,
+    evidence,
+  };
 }
 
-export async function getCandidateSignals(candidateId: string, organizationId: string): Promise<any[]> {
-  return (await dbAll(
-    `SELECT cs.*, c.name as capability_name, c.domain as capability_domain
+export async function getCandidateSignals(
+  candidateId: string,
+  organizationId: string
+): Promise<any[]> {
+  return (
+    (await dbAll(
+      `SELECT cs.*, c.name as capability_name, c.domain as capability_domain
      FROM candidate_competency_signals cs
      LEFT JOIN capabilities c ON c.id = cs.capability_id
      WHERE cs.candidate_id = ? AND cs.organization_id = ?
      ORDER BY cs.inferred_level DESC, cs.confidence DESC`,
-    [candidateId, organizationId]
-  )) || [];
+      [candidateId, organizationId]
+    )) || []
+  );
 }
 
-export async function approveSignal(signalId: string, organizationId: string, approvedBy: string, overrideLevel?: number): Promise<void> {
-  const updates = overrideLevel != null
-    ? `approved = TRUE, approved_by = ?, approved_at = NOW(), manual_override_level = ?, updated_at = NOW()`
-    : `approved = TRUE, approved_by = ?, approved_at = NOW(), updated_at = NOW()`;
-  const params = overrideLevel != null
-    ? [approvedBy, overrideLevel, signalId, organizationId]
-    : [approvedBy, signalId, organizationId];
+export async function approveSignal(
+  signalId: string,
+  organizationId: string,
+  approvedBy: string,
+  overrideLevel?: number
+): Promise<void> {
+  const updates =
+    overrideLevel != null
+      ? `approved = TRUE, approved_by = ?, approved_at = NOW(), manual_override_level = ?, updated_at = NOW()`
+      : `approved = TRUE, approved_by = ?, approved_at = NOW(), updated_at = NOW()`;
+  const params =
+    overrideLevel != null
+      ? [approvedBy, overrideLevel, signalId, organizationId]
+      : [approvedBy, signalId, organizationId];
 
   await dbRun(
     `UPDATE candidate_competency_signals SET ${updates} WHERE id = ? AND organization_id = ?`,
@@ -397,10 +471,10 @@ export async function approveSignal(signalId: string, organizationId: string, ap
 }
 
 export async function rejectSignal(signalId: string, organizationId: string): Promise<void> {
-  await dbRun(
-    `DELETE FROM candidate_competency_signals WHERE id = ? AND organization_id = ?`,
-    [signalId, organizationId]
-  );
+  await dbRun(`DELETE FROM candidate_competency_signals WHERE id = ? AND organization_id = ?`, [
+    signalId,
+    organizationId,
+  ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -411,33 +485,36 @@ export async function matchCandidatesToRequirements(
   organizationId: string,
   initiativeId: string
 ): Promise<MatchResult[]> {
-  const requirements = await dbAll(
-    `SELECT cr.*, c.name as capability_name 
+  const requirements =
+    (await dbAll(
+      `SELECT cr.*, c.name as capability_name 
      FROM capability_requirements cr
      LEFT JOIN capabilities c ON c.id = cr.capability_id
      WHERE cr.organization_id = ? AND cr.initiative_id = ?`,
-    [organizationId, initiativeId]
-  ) || [];
+      [organizationId, initiativeId]
+    )) || [];
 
   if (requirements.length === 0) return [];
 
-  const candidates = await dbAll(
-    `SELECT DISTINCT cp.id, cp.display_name, cp.candidate_type
+  const candidates =
+    (await dbAll(
+      `SELECT DISTINCT cp.id, cp.display_name, cp.candidate_type
      FROM candidate_profiles cp
      INNER JOIN candidate_competency_signals cs ON cs.candidate_id = cp.id AND cs.approved = TRUE
      WHERE cp.organization_id = ? AND cp.is_active = TRUE`,
-    [organizationId]
-  ) || [];
+      [organizationId]
+    )) || [];
 
   const results: MatchResult[] = [];
 
   for (const candidate of candidates) {
-    const signals = await dbAll(
-      `SELECT capability_id, COALESCE(manual_override_level, inferred_level) as level, confidence, evidence_snippets
+    const signals =
+      (await dbAll(
+        `SELECT capability_id, COALESCE(manual_override_level, inferred_level) as level, confidence, evidence_snippets
        FROM candidate_competency_signals
        WHERE candidate_id = ? AND organization_id = ? AND approved = TRUE`,
-      [candidate.id, organizationId]
-    ) || [];
+        [candidate.id, organizationId]
+      )) || [];
 
     const signalMap = new Map(signals.map((s: any) => [s.capability_id, s]));
     let totalScore = 0;
@@ -491,8 +568,15 @@ export async function matchCandidatesToRequirements(
     await dbRun(
       `INSERT INTO candidate_match_results (id, candidate_id, organization_id, initiative_id, match_score, explanation, missing_evidence)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [uuidv4(), r.candidateId, organizationId, initiativeId, r.matchScore,
-       JSON.stringify(r.explanation), JSON.stringify(r.missingEvidence)]
+      [
+        uuidv4(),
+        r.candidateId,
+        organizationId,
+        initiativeId,
+        r.matchScore,
+        JSON.stringify(r.explanation),
+        JSON.stringify(r.missingEvidence),
+      ]
     );
   }
 
@@ -505,11 +589,12 @@ export async function applyToUserProfile(
   userId: string,
   approvedBy: string
 ): Promise<number> {
-  const signals = await dbAll(
-    `SELECT * FROM candidate_competency_signals
+  const signals =
+    (await dbAll(
+      `SELECT * FROM candidate_competency_signals
      WHERE candidate_id = ? AND organization_id = ? AND approved = TRUE`,
-    [candidateId, organizationId]
-  ) || [];
+      [candidateId, organizationId]
+    )) || [];
 
   let applied = 0;
   for (const signal of signals) {
@@ -545,21 +630,31 @@ export async function applyToUserProfile(
 // Delete CV (right to be forgotten)
 // ---------------------------------------------------------------------------
 
-export async function deleteCV(documentId: string, organizationId: string, deletedBy: string): Promise<void> {
+export async function deleteCV(
+  documentId: string,
+  organizationId: string,
+  deletedBy: string
+): Promise<void> {
   const doc = await dbGet(
     `SELECT stored_path FROM candidate_documents WHERE id = ? AND organization_id = ?`,
     [documentId, organizationId]
   );
   if (!doc) throw new Error('Document not found');
 
-  await dbRun(`DELETE FROM candidate_competency_signals WHERE document_id = ? AND organization_id = ?`,
-    [documentId, organizationId]);
-  await dbRun(`DELETE FROM candidate_documents WHERE id = ? AND organization_id = ?`,
-    [documentId, organizationId]);
+  await dbRun(
+    `DELETE FROM candidate_competency_signals WHERE document_id = ? AND organization_id = ?`,
+    [documentId, organizationId]
+  );
+  await dbRun(`DELETE FROM candidate_documents WHERE id = ? AND organization_id = ?`, [
+    documentId,
+    organizationId,
+  ]);
 
   try {
     if (fs.existsSync(doc.stored_path)) fs.unlinkSync(doc.stored_path);
-  } catch { /* best effort file cleanup */ }
+  } catch {
+    /* best effort file cleanup */
+  }
 
   logAccess(documentId, organizationId, deletedBy, 'delete');
   logger.info(`[CVMatching] Deleted CV ${documentId} (right to be forgotten)`);
@@ -569,7 +664,12 @@ export async function deleteCV(documentId: string, organizationId: string, delet
 // Audit
 // ---------------------------------------------------------------------------
 
-function logAccess(documentId: string, organizationId: string, userId: string, action: string): void {
+function logAccess(
+  documentId: string,
+  organizationId: string,
+  userId: string,
+  action: string
+): void {
   dbRun(
     `INSERT INTO cv_access_log (id, document_id, organization_id, accessed_by, action) VALUES (?, ?, ?, ?, ?)`,
     [uuidv4(), documentId, organizationId, userId, action]

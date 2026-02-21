@@ -40,9 +40,13 @@ export function requireConfirmation(actionType: string, riskLevel: RiskLevel = '
            (id, admin_id, action_type, target_type, target_id, reason, risk_level, ip_address, user_agent, metadata)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
         [
-          uuidv4(), adminId, actionType,
-          targetType || null, targetId || null,
-          reason.trim(), riskLevel,
+          uuidv4(),
+          adminId,
+          actionType,
+          targetType || null,
+          targetId || null,
+          reason.trim(),
+          riskLevel,
           req.ip || null,
           req.headers['user-agent']?.substring(0, 255) || null,
           JSON.stringify({ method: req.method, path: req.originalUrl }),

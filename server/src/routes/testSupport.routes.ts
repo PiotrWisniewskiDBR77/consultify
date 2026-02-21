@@ -196,7 +196,9 @@ router.post(
         actionType: 'test_support_bootstrap',
         details: { runId, organizationId, env: process.env.NODE_ENV },
       });
-    } catch { /* audit best-effort */ }
+    } catch {
+      /* audit best-effort */
+    }
 
     return res.status(200).json({
       runId,
@@ -248,7 +250,9 @@ router.post(
         actionType: 'test_support_cleanup',
         details: { runId, organizationId: existing.organization_id, env: process.env.NODE_ENV },
       });
-    } catch { /* audit best-effort */ }
+    } catch {
+      /* audit best-effort */
+    }
 
     return res.status(200).json({ ok: true, runId, deleted: true });
   })
