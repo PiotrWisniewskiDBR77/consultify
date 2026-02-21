@@ -30,6 +30,7 @@ import { RaidSection } from './RaidSection';
 import { RemindersSection } from './RemindersSection';
 import { ResourcesSection } from './ResourcesSection';
 import { ScopeSection } from './ScopeSection';
+import { SkillsGapSection } from './SkillsGapSection';
 import { StakeholdersSection } from './StakeholdersSection';
 import { TagsSection } from './TagsSection';
 import { TargetStateSection } from './TargetStateSection';
@@ -60,6 +61,7 @@ export const SECTION_REGISTRY: Record<string, React.ComponentType<InitiativeSect
   financialImpact: FinancialImpactSection,
   kpis: KpisSection,
   competencyRequirements: CompetencyRequirementsSection,
+  skillsGap: SkillsGapSection,
   pilot: PilotSection,
   comments: CommentsSection,
   history: HistorySection,
@@ -108,6 +110,7 @@ export const DEFAULT_SECTION_ORDER: Record<string, number> = {
   financialImpact: 100,
   kpis: 110,
   competencyRequirements: 115,
+  skillsGap: 117,
   pilot: 120,
   comments: 130,
   history: 140,
@@ -146,6 +149,7 @@ export const DEFAULT_VISIBLE_SECTIONS: Record<string, boolean> = {
   financialImpact: true,
   kpis: true,
   competencyRequirements: true,
+  skillsGap: true,
   comments: true,
   history: true,
   control: true,

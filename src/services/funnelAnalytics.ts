@@ -84,6 +84,7 @@ export type FunnelEventName =
   | 'ai_card_generated'
   | 'initiative_gate_readiness_viewed'
   | 'initiative_gate_readiness_ai_requested'
+  | 'skills_gap_viewed'
   | 'licensed_tool_framework_opened'
   | 'licensed_tool_assessment_completed'
   | 'licensed_tool_assessment_approved'
