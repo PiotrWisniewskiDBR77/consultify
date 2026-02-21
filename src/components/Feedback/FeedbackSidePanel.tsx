@@ -183,7 +183,8 @@ export const FeedbackSidePanel: React.FC = () => {
           message,
           severity,
           routePath: currentContext,
-          deviceType: window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop',
+          deviceType:
+            window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop',
           screenSize: `${window.innerWidth}x${window.innerHeight}`,
           uiLanguage: document.documentElement.lang || navigator.language,
           uiTheme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',

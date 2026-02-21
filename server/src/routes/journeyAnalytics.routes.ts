@@ -21,8 +21,14 @@ router.post(
     const organizationId = (req as any).user?.organizationId || req.body.organizationId || null;
     if (!userId) return res.status(401).json({ error: 'User ID required' });
     const { eventType, eventName, phase, metadata } = req.body;
-    if (!eventType || !eventName) return res.status(400).json({ error: 'eventType and eventName are required' });
-    const result = await behaviorIntelligenceService.ingestJourneyEvent(userId, organizationId, { eventType, eventName, phase, metadata });
+    if (!eventType || !eventName)
+      return res.status(400).json({ error: 'eventType and eventName are required' });
+    const result = await behaviorIntelligenceService.ingestJourneyEvent(userId, organizationId, {
+      eventType,
+      eventName,
+      phase,
+      metadata,
+    });
     return res.json({ success: true, id: result.id });
   })
 );
@@ -37,7 +43,11 @@ router.post(
     if (!userId) return res.status(401).json({ error: 'User ID required' });
     const { events } = req.body;
     if (!Array.isArray(events)) return res.status(400).json({ error: 'events array is required' });
-    const result = await behaviorIntelligenceService.ingestJourneyBatch(userId, organizationId, events);
+    const result = await behaviorIntelligenceService.ingestJourneyBatch(
+      userId,
+      organizationId,
+      events
+    );
     return res.json({ success: true, ingested: result.ingested });
   })
 );

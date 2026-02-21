@@ -102,7 +102,14 @@ router.post(
     }
 
     if (cols.has('metadata')) {
-      const contextFields = ['routePath', 'deviceType', 'screenSize', 'uiLanguage', 'uiTheme', 'workspaceContext'];
+      const contextFields = [
+        'routePath',
+        'deviceType',
+        'screenSize',
+        'uiLanguage',
+        'uiTheme',
+        'workspaceContext',
+      ];
       const contextMeta: Record<string, unknown> = {};
       for (const field of contextFields) {
         if (req.body[field] !== undefined) contextMeta[field] = req.body[field];
@@ -127,7 +134,9 @@ router.post(
       screen_size: req.body.screenSize,
       ui_language: req.body.uiLanguage,
       ui_theme: req.body.uiTheme,
-      workspace_context_json: req.body.workspaceContext ? JSON.stringify(req.body.workspaceContext) : undefined,
+      workspace_context_json: req.body.workspaceContext
+        ? JSON.stringify(req.body.workspaceContext)
+        : undefined,
     };
     for (const [col, val] of Object.entries(contextCols)) {
       if (val !== undefined && cols.has(col)) {
@@ -241,7 +250,10 @@ router.patch(
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    const current = await dbGet<{ status: string }>(`SELECT status FROM system_feedback WHERE id = ?`, [id]);
+    const current = await dbGet<{ status: string }>(
+      `SELECT status FROM system_feedback WHERE id = ?`,
+      [id]
+    );
     const fromStatus = current?.status || null;
 
     const sql = `UPDATE system_feedback SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
@@ -259,7 +271,9 @@ router.patch(
          VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
         [histUuid(), id, fromStatus, status.toUpperCase(), changedBy, note || null]
       );
-    } catch { /* History table may not exist yet */ }
+    } catch {
+      /* History table may not exist yet */
+    }
 
     return res.json({ success: true });
   })
@@ -362,7 +376,9 @@ router.get(
         `SELECT * FROM feedback_status_history WHERE feedback_id = ? ORDER BY created_at ASC`,
         [id]
       );
-    } catch { /* Table may not exist */ }
+    } catch {
+      /* Table may not exist */
+    }
 
     return res.json({ ...row, statusHistory });
   })
