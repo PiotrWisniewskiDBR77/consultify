@@ -3770,6 +3770,7 @@
     "healthCheck": "Zdrowie systemu",
     "duplicateMounts": "Zduplikowane trasy"
   },
+<<<<<<< HEAD
   "cv": {
     "searchCandidates": "Szukaj kandydatów...",
     "addCandidate": "Dodaj kandydata",
@@ -3808,5 +3809,19 @@
     "typeVendor": "Dostawca",
     "cancel": "Anuluj",
     "create": "Utwórz"
+=======
+  "impersonation": {
+    "banner": "Przeglądasz jako inny użytkownik",
+    "exit": "Zakończ impersonację",
+    "reverting": "Powrót...",
+    "exitFailed": "Nie udało się zakończyć impersonacji"
+  },
+  "superadminGuardrails": {
+    "confirmRequired": "Ta akcja wymaga wyraźnego potwierdzenia",
+    "reasonRequired": "Podaj powód wykonania tej akcji",
+    "confirm": "Potwierdź akcję",
+    "cancel": "Anuluj",
+    "auditLogged": "Ta akcja zostanie zapisana w dzienniku audytu"
+>>>>>>> origin/bundle-30b-superadmin-control-testing-cursor
   }
 }

@@ -3770,6 +3770,7 @@
     "healthCheck": "System Health",
     "duplicateMounts": "Duplicate Route Mounts"
   },
+<<<<<<< HEAD
   "cv": {
     "searchCandidates": "Search candidates...",
     "addCandidate": "Add Candidate",
@@ -3808,5 +3809,19 @@
     "typeVendor": "Vendor",
     "cancel": "Cancel",
     "create": "Create"
+=======
+  "impersonation": {
+    "banner": "You are impersonating another user",
+    "exit": "Stop Impersonating",
+    "reverting": "Reverting...",
+    "exitFailed": "Failed to stop impersonation"
+  },
+  "superadminGuardrails": {
+    "confirmRequired": "This action requires explicit confirmation",
+    "reasonRequired": "Please provide a reason for this action",
+    "confirm": "Confirm Action",
+    "cancel": "Cancel",
+    "auditLogged": "This action will be logged in the audit trail"
+>>>>>>> origin/bundle-30b-superadmin-control-testing-cursor
   }
 }

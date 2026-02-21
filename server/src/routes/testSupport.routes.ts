@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
 import config from '../config/Config.js';
+import adminAuditService from '../services/adminAuditService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -189,6 +190,14 @@ router.post(
       jti: uuidv4(),
     });
 
+    try {
+      await adminAuditService.logAction({
+        adminId: 'test-support',
+        actionType: 'test_support_bootstrap',
+        details: { runId, organizationId, env: process.env.NODE_ENV },
+      });
+    } catch { /* audit best-effort */ }
+
     return res.status(200).json({
       runId,
       organizationId,
@@ -232,6 +241,14 @@ router.post(
     await DbPromise.run(`DELETE FROM test_support_runs WHERE run_id = ?`, [runId], {
       fallback: false,
     });
+
+    try {
+      await adminAuditService.logAction({
+        adminId: 'test-support',
+        actionType: 'test_support_cleanup',
+        details: { runId, organizationId: existing.organization_id, env: process.env.NODE_ENV },
+      });
+    } catch { /* audit best-effort */ }
 
     return res.status(200).json({ ok: true, runId, deleted: true });
   })

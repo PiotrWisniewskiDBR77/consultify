@@ -11,6 +11,7 @@ import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
 
 import { RouterSync } from './components/RouterSync';
+import { ImpersonationBanner } from './components/shared/ImpersonationBanner';
 import { LoadingScreen } from './components/ui/LoadingScreen';
 import { AppProviders } from './providers/AppProviders';
 import { AppRoutes } from './routes/AppRoutes';
@@ -209,6 +210,7 @@ function AppContent() {
 
   return (
     <>
+      <ImpersonationBanner />
       {/* Single source of truth for URL ↔ State sync */}
       <RouterSync />
       <Routes>
